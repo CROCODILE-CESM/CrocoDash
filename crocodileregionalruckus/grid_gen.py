@@ -1,4 +1,4 @@
-import xarry as xr
+import xarray as xr
 
 class GridGen:
 
