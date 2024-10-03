@@ -1,0 +1,3 @@
+[submodule "crocodileregionalruckus/regional_casegen"]
+	path = crocodileregionalruckus/regional_casegen
+	url = https://github.com/CROCODILE-CESM/regional-casegen
