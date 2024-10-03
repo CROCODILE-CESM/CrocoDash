@@ -3,50 +3,14 @@ driver_logger = logging.getLogger(__name__)
 import datetime as dt
 import xarray as xr
 import json
+from . import grid_gen
+from . import boundary_conditions
+from .regional_casegen import cesm_tools as rcg_ct
 import os
-
-
-
-
-class crr_experiment:
-    """The main class for setting up a regional experiment.
-
-    Everything about the regional experiment.
-
-    Methods in this class generate the various input files needed for a MOM6
-    experiment forced with open boundary conditions (OBCs). The code is agnostic
-    to the user's choice of boundary forcing, bathymetry, and surface forcing;
-    users need to prescribe what variables are all called via mapping dictionaries
-    from MOM6 variable/coordinate name to the name in the input dataset.
-
-    The class can be used to generate the grids for a new experiment, or to read in
-    an existing one (when ``read_existing_grids=True``; see argument description below).
-
-    Args:
-        longitude_extent (Tuple[float]): Extent of the region in longitude (in degrees). For
-            example: ``(40.5, 50.0)``.
-        latitude_extent (Tuple[float]): Extent of the region in latitude (in degrees). For
-            example: ``(-20.0, 30.0)``.
-        date_range (Tuple[str]): Start and end dates of the boundary forcing window. For
-            example: ``("2003-01-01", "2003-01-31")``.
-        resolution (float): Lateral resolution of the domain (in degrees).
-        number_vertical_layers (int): Number of vertical layers.
-        layer_thickness_ratio (float): Ratio of largest to smallest layer thickness;
-            used as input in :func:`~hyperbolictan_thickness_profile`.
-        depth (float): Depth of the domain.
-        mom_run_dir (str): Path of the MOM6 control directory.
-        mom_input_dir (str): Path of the MOM6 input directory, to receive the forcing files.
-        toolpath_dir (str): Path of GFDL's FRE tools (https://github.com/NOAA-GFDL/FRE-NCtools)
-            binaries.
-        grid_type (Optional[str]): Type of horizontal grid to generate.
-            Currently, only ``'even_spacing'`` is supported.
-        repeat_year_forcing (Optional[bool]): When ``True`` the experiment runs with
-            repeat-year forcing. When ``False`` (default) then inter-annual forcing is used.
-        read_existing_grids (Optional[Bool]): When ``True``, instead of generating the grids,
-            the grids and the ocean mask are being read from within the ``mom_input_dir`` and
-            ``mom_run_dir`` directories. Useful for modifying or troubleshooting experiments.
-            Default: ``False``.
-        minimum_depth (Optional[int]): The minimum depth in meters of a grid cell allowed before it is masked out and treated as land.
+from pathlib import Path
+import subprocess
+class crr_driver:
+    """Who needs documentation?
     """
 
     def __init__(
@@ -69,6 +33,9 @@ class crr_experiment:
     ):
         # ## Set up the experiment with no config file
         ## in case list was given, convert to tuples
+        self.grid_gen = grid_gen.GridGen()
+        self.boundary_conditions = boundary_conditions.BoundaryConditions()
+        self.rcg = rcg_ct.RegionalCaseGen()
         self.expt_name = name
         self.tidal_constituents = tidal_constituents
         self.repeat_year_forcing = repeat_year_forcing
@@ -86,16 +53,117 @@ class crr_experiment:
         self.ocean_mask = None
         self.layout = None
 
+        if date_range is not None:
+            try:
+                self.date_range = [
+                    dt.datetime.strptime(date_range[0], "%Y-%m-%d %H:%M:%S"),
+                    dt.datetime.strptime(date_range[1], "%Y-%m-%d %H:%M:%S"),
+                ]
+            except:
+                driver_logger.warning("Date range not formatted correctly. Please use 'YYYY-MM-DD HH:MM:SS' format in a list or tuple of two.")
+        
+    @classmethod
+    def load_experiment(self,config_file_path):
+        print("Reading from config file....")
+        with open(config_file_path, "r") as f:
+            config_dict = json.load(f)
 
+        print("Creating Empty Driver Object....")
+        expt = self()
+
+        print("Setting Default Variables.....")
+        expt.expt_name = config_dict["name"]
         try:
-            self.date_range = [
-                dt.datetime.strptime(date_range[0], "%Y-%m-%d %H:%M:%S"),
-                dt.datetime.strptime(date_range[1], "%Y-%m-%d %H:%M:%S"),
-            ]
+            expt.longitude_extent = tuple(config_dict["longitude_extent"])
+            expt.latitude_extent = tuple(config_dict["latitude_extent"])
         except:
-            driver_logger.warning("Date range not formatted correctly. Please use 'YYYY-MM-DD HH:MM:SS' format in a list or tuple of two.")
+            expt.longitude_extent = None
+            expt.latitude_extent = None
+        try:
+            expt.date_range = config_dict["date_range"]
+            expt.date_range[0] = dt.datetime.strptime(expt.date_range[0], "%Y-%m-%d")
+            expt.date_range[1] = dt.datetime.strptime(expt.date_range[1], "%Y-%m-%d")
+        except:
+            expt.date_range = None
+        expt.mom_run_dir = Path(config_dict["run_dir"])
+        expt.mom_input_dir = Path(config_dict["input_dir"])
+        expt.toolpath_dir = Path(config_dict["toolpath_dir"])
+        expt.resolution = config_dict["resolution"]
+        expt.number_vertical_layers = config_dict["number_vertical_layers"]
+        expt.layer_thickness_ratio = config_dict["layer_thickness_ratio"]
+        expt.depth = config_dict["depth"]
+        expt.grid_type = config_dict["grid_type"]
+        expt.repeat_year_forcing = config_dict["repeat_year_forcing"]
+        expt.ocean_mask = None
+        expt.layout = None
+        expt.min_depth = config_dict["min_depth"]
+        expt.tidal_constituents = config_dict["tidal_constituents"]
 
-    def setup_directories(self):
+        print("Checking for hgrid and vgrid....")
+        if os.path.exists(config_dict["hgrid"]):
+            print("Found")
+            expt.hgrid = xr.open_dataset(config_dict["hgrid"])
+        else:
+            print("Hgrid not found, call _make_hgrid when you're ready.")
+            expt.hgrid = None
+        if os.path.exists(config_dict["vgrid"]):
+            print("Found")
+            expt.vgrid = xr.open_dataset(config_dict["vgrid"])
+        else:
+            print("Vgrid not found, call _make_vgrid when ready")
+            expt.vgrid = None
+
+        print("Checking for bathymetry...")
+        if config_dict["bathymetry"] is not None and os.path.exists(
+            config_dict["bathymetry"]
+        ):
+            print("Found")
+            expt.bathymetry = xr.open_dataset(config_dict["bathymetry"])
+        else:
+            print(
+                "Bathymetry not found. Please provide bathymetry, or call setup_bathymetry method to set up bathymetry."
+            )
+
+        print("Checking for ocean state files....")
+        found = True
+        for path in config_dict["ocean_state"]:
+            if not os.path.exists(path):
+                found = False
+                print(
+                    "At least one ocean state file not found. Please provide ocean state files, or call setup_ocean_state_boundaries method to set up ocean state."
+                )
+                break
+        if found:
+            print("Found")
+        found = True
+        print("Checking for initial condition files....")
+        for path in config_dict["initial_conditions"]:
+            if not os.path.exists(path):
+                found = False
+                print(
+                    "At least one initial condition file not found. Please provide initial condition files, or call setup_initial_condition method to set up initial condition."
+                )
+                break
+        if found:
+            print("Found")
+        found = True
+        print("Checking for tides files....")
+        for path in config_dict["tides"]:
+            if not os.path.exists(path):
+                found = False
+                print(
+                    "At least one tides file not found. If you would like tides, call setup_tides_boundaries method to set up tides"
+                )
+                break
+        if found:
+            print("Found")
+        found = True
+
+        return expt
+
+    def setup_directories(self, mom_run_dir, mom_input_dir):
+        self.mom_run_dir = Path(mom_run_dir)
+        self.mom_input_dir = Path(mom_input_dir)
         self.mom_run_dir.mkdir(exist_ok=True)
         self.mom_input_dir.mkdir(exist_ok=True)        
         (self.mom_input_dir / "weights").mkdir(exist_ok=True)
@@ -173,6 +241,22 @@ class crr_experiment:
         if not quiet:
             print("Done.")
         return config_dict
-        
 
+    def generate_grids(self):
+        self.grid_gen.create_hgrid()
+    def generate_boundary_conditions(self):
+        # Set h and v grid
+        # Call rectangular boundaries
+        # Call tides 
+        return
+    def setup_MOM_files(self):
+        self.boundary_conditions.setup_MOM_files()
+        return
+    
+    def setup_CESM_case(self, sandbox_dir,case_dir):
+        """-compset  --res TL319_t232 --case /glade/u/home/manishrv/cases/hawaii_clean_demo_tides_v2 --machine derecho --run-unsupported --project p93300612 --non-local"""
+        subprocess.run(["./create_newcase", "--case", case_dir, "--compset", "1850_DATM%JRA_SLND_SICE_MOM6_SROF_SGLC_SWAV", "--res", "TL319_t232", "--machine", "derecho","--run-unsupported","--project","p93300612","--non-local"], cwd=sandbox_dir)
+        self.rcg.setup_cesm(CESMPath=case_dir, hgrid = self.hgrid, mom_input_dir=self.mom_input_dir, mom_run_dir=self.mom_run_dir,date_range = self.date_range)
+
+        return
 
