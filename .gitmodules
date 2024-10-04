@@ -2,5 +2,5 @@
 	path = crocodileregionalruckus/regional_casegen
 	url = https://github.com/CROCODILE-CESM/regional-casegen
 [submodule "crocodileregionalruckus/rm6_dir"]
-	path = crocodileregionalruckus/regional-mom6
+	path = crocodileregionalruckus/rm6_dir
 	url = https://github.com/CROCODILE-CESM/regional-mom6
