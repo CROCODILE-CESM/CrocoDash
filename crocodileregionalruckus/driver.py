@@ -1,4 +1,5 @@
 import logging
+
 driver_logger = logging.getLogger(__name__)
 import datetime as dt
 import xarray as xr
@@ -9,9 +10,11 @@ from .regional_casegen import cesm_tools as rcg_ct
 import os
 from pathlib import Path
 import subprocess
+from .rm6_dir import regional_mom6 as rm6
+
+
 class crr_driver:
-    """Who needs documentation?
-    """
+    """Who needs documentation?"""
 
     def __init__(
         self,
@@ -36,6 +39,30 @@ class crr_driver:
         self.grid_gen = grid_gen.GridGen()
         self.boundary_conditions = boundary_conditions.BoundaryConditions()
         self.rcg = rcg_ct.RegionalCaseGen()
+        self.og_mom6 = rm6.experiment.create_empty(
+            latitude_extent=latitude_extent,
+            longitude_extent=longitude_extent,
+            depth=depth,
+            resolution=resolution,
+            number_vertical_layers=number_vertical_layers,
+            layer_thickness_ratio=layer_thickness_ratio,
+            date_range=date_range,
+            mom_run_dir=mom_run_dir,
+            mom_input_dir=mom_input_dir,
+            toolpath_dir="",
+            grid_type=grid_type,
+            repeat_year_forcing=repeat_year_forcing,
+            minimum_depth=minimum_depth,
+            tidal_constituents=tidal_constituents,
+            name=name,
+        )
+
+
+        ## To ensure that the hgrid and vgrid are created in the original MOM6 expt, this is a hacky way to do it. Will be moved to grid gen when ready,
+        if self.og_mom6.latitude_extent is not None and self.og_mom6.longitude_extent is not None and self.og_mom6.grid_type is not None:
+            self.og_mom6.hgrid = self.og_mom6._make_hgrid()
+        if self.og_mom6.layer_thickness_ratio is not None and self.og_mom6.depth is not None and self.og_mom6.number_vertical_layers is not None:
+            self.og_mom6.vgrid = self.og_mom6._make_vgrid()
         self.expt_name = name
         self.tidal_constituents = tidal_constituents
         self.repeat_year_forcing = repeat_year_forcing
@@ -60,10 +87,17 @@ class crr_driver:
                     dt.datetime.strptime(date_range[1], "%Y-%m-%d %H:%M:%S"),
                 ]
             except:
-                driver_logger.warning("Date range not formatted correctly. Please use 'YYYY-MM-DD HH:MM:SS' format in a list or tuple of two.")
-        
+                driver_logger.warning(
+                    "Date range not formatted correctly. Please use 'YYYY-MM-DD HH:MM:SS' format in a list or tuple of two."
+                )
+
+    def check_grid_generation(self):
+        """
+        This function should call grid_gen check_grid function and return some information about the grid.
+        """
+        raise ValueError("Not implemented yet")
     @classmethod
-    def load_experiment(self,config_file_path):
+    def load_experiment(self, config_file_path):
         print("Reading from config file....")
         with open(config_file_path, "r") as f:
             config_dict = json.load(f)
@@ -165,7 +199,7 @@ class crr_driver:
         self.mom_run_dir = Path(mom_run_dir)
         self.mom_input_dir = Path(mom_input_dir)
         self.mom_run_dir.mkdir(exist_ok=True)
-        self.mom_input_dir.mkdir(exist_ok=True)        
+        self.mom_input_dir.mkdir(exist_ok=True)
         (self.mom_input_dir / "weights").mkdir(exist_ok=True)
         (self.mom_input_dir / "forcing").mkdir(exist_ok=True)
 
@@ -178,7 +212,7 @@ class crr_driver:
 
     def __str__(self) -> str:
         return json.dumps(self.write_config_file(export=False, quiet=True), indent=4)
-    
+
     def write_config_file(self, path=None, export=True, quiet=False):
         """
         Write a configuration file for the experiment. This is a simple json file
@@ -244,19 +278,65 @@ class crr_driver:
 
     def generate_grids(self):
         self.grid_gen.create_hgrid()
+
     def generate_boundary_conditions(self):
         # Set h and v grid
         # Call rectangular boundaries
-        # Call tides 
+        # Call tides
         return
+
     def setup_MOM_files(self):
         self.boundary_conditions.setup_MOM_files()
         return
-    
-    def setup_CESM_case(self, sandbox_dir,case_dir):
+
+    def setup_CESM_case(self, sandbox_dir, case_dir):
         """-compset  --res TL319_t232 --case /glade/u/home/manishrv/cases/hawaii_clean_demo_tides_v2 --machine derecho --run-unsupported --project p93300612 --non-local"""
-        subprocess.run(["./create_newcase", "--case", case_dir, "--compset", "1850_DATM%JRA_SLND_SICE_MOM6_SROF_SGLC_SWAV", "--res", "TL319_t232", "--machine", "derecho","--run-unsupported","--project","p93300612","--non-local"], cwd=sandbox_dir)
-        self.rcg.setup_cesm(CESMPath=case_dir, hgrid = self.hgrid, mom_input_dir=self.mom_input_dir, mom_run_dir=self.mom_run_dir,date_range = self.date_range)
+        subprocess.run(
+            [
+                "./create_newcase",
+                "--case",
+                case_dir,
+                "--compset",
+                "1850_DATM%JRA_SLND_SICE_MOM6_SROF_SGLC_SWAV",
+                "--res",
+                "TL319_t232",
+                "--machine",
+                "derecho",
+                "--run-unsupported",
+                "--project",
+                "p93300612",
+                "--non-local",
+            ],
+            cwd=sandbox_dir,
+        )
+        self.rcg.setup_cesm(
+            CESMPath=case_dir,
+            hgrid=self.hgrid,
+            mom_input_dir=self.mom_input_dir,
+            mom_run_dir=self.mom_run_dir,
+            date_range=self.date_range,
+        )
 
         return
 
+    def wrap_rm6_setup_bathymetry(self, bathymetry_path, longitude_coordinate_name, latitude_coordinate_name, vertical_coordinate_name):
+        return self.og_mom6.setup_bathymetry(bathymetry_path = bathymetry_path, longitude_coordinate_name = longitude_coordinate_name, latitude_coordinate_name = latitude_coordinate_name, vertical_coordinate_name = vertical_coordinate_name)
+
+    def wrap_rm6_setup_initial_condition(self,  gp,
+            varnames,
+            arakawa_grid
+        ):
+        return self.og_mom6.setup_initial_condition(gp, varnames, arakawa_grid = arakawa_grid)
+    
+    def wrap_rm6_setup_ocean_state_boundaries(self, gp,
+            varnames,
+            boundaries,
+            arakawa_grid
+        ):
+        return self.og_mom6.setup_ocean_state_boundaries(gp, varnames, boundaries=boundaries, arakawa_grid = arakawa_grid)
+    
+    def wrap_rm6_setup_tides(self, dump_files_dir, tidal_data):
+        return self.og_mom6.setup_boundary_tides(dump_files_dir, tidal_data)
+    
+    def wrap_rm6_setup_run_directory(self, surface_forcing, with_tides_rectangular, overwrite,premade_rundir_path_arg = None):
+        return self.og_mom6.setup_run_directory(surface_forcing= surface_forcing,with_tides_rectangular = with_tides_rectangular,overwrite = overwrite, premade_rundir_path_arg = premade_rundir_path_arg)

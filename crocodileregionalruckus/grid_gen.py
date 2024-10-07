@@ -3,13 +3,14 @@ import numpy as np
 from .utils import *
 from scipy.ndimage import binary_fill_holes
 import xesmf as xe
-class GridGen:
 
+
+class GridGen:
     """
     Create a regional grids for MOM6, designed to work for the CROCODILE regional MOM6 workflow w/ regional_mom6
     """
 
-    def __init__(self,latitude_extent = None, longitude_extent = None, resolution = None):
+    def __init__(self, latitude_extent=None, longitude_extent=None, resolution=None):
         self.latitude_extent = latitude_extent
         self.longitude_extent = longitude_extent
         self.resolution = resolution
@@ -18,7 +19,7 @@ class GridGen:
 
     def subset_global_hgrid(self):
         return
-    
+
     def subset_global_topo(self):
         return
 
@@ -65,9 +66,7 @@ class GridGen:
 
         # Latitudes evenly spaced by dx * cos(central_latitude)
         central_latitude = np.mean(self.latitude_extent)  # degrees
-        latitudinal_resolution = self.resolution * np.cos(
-            np.deg2rad(central_latitude)
-        )
+        latitudinal_resolution = self.resolution * np.cos(np.deg2rad(central_latitude))
 
         ny = (
             int(
@@ -114,7 +113,7 @@ class GridGen:
         vcoord.to_netcdf(self.mom_input_dir / "vcoord.nc")
 
         return vcoord
-    
+
     def setup_gebco_bathymetry(
         self,
         *,
