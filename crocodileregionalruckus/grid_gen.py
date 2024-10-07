@@ -3,12 +3,29 @@ import numpy as np
 from .utils import *
 from scipy.ndimage import binary_fill_holes
 import xesmf as xe
+from scipy.spatial import cKDTree
 
 
 class GridGen:
     """
     Create a regional grids for MOM6, designed to work for the CROCODILE regional MOM6 workflow w/ regional_mom6
     """
+
+    @property
+    def hgrid(self):
+        return self.hgrid_ds
+    
+    @property
+    def vgrid(self):
+        return self.vgrid_ds
+    
+    @property
+    def hgrid_path(self):
+        return ("Not implemented yet")
+
+    @property
+    def vgrid_path(self):
+        return ("Not implemented yet")
 
     def __init__(self, latitude_extent=None, longitude_extent=None, resolution=None):
         self.latitude_extent = latitude_extent
@@ -17,13 +34,24 @@ class GridGen:
         self.hgrid_ds = None
         self.vgrid_ds = None
 
-    def subset_global_hgrid(self):
-        return
+    def subset_global_hgrid(self, longitude_extent, latitude_extent, path = '/glade/work/fredc/cesm/grid/MOM6/tx1_12v1/gridgen/ocean_hgrid_trimmed.nc'):
+        # Read in Global Supergrid
+
+
+        try:
+            dsg = xr.open_dataset('/glade/work/fredc/cesm/grid/MOM6/tx1_12v1/gridgen/ocean_hgrid_trimmed.nc')
+        except:
+            raise FileNotFoundError("Global Supergrid not found. We looked here {}. I would instead use the create_rectangular_hgrid method to create a new grid, or pass in a path with 'path='".format(path))
+        I_llc, J_llc = find_nearest(dsg.x, dsg.y, min(longitude_extent), min(latitude_extent))
+        I_urc, J_urc =  find_nearest(dsg.x, dsg.y, max(longitude_extent), max(latitude_extent))
+        ds_nwa = dsg.isel(nx=slice(I_llc[0],I_urc[0])).isel(ny=slice(J_llc[0],J_urc[0]))
+        self.hgrid_ds = ds_nwa
+        return ds_nwa
 
     def subset_global_topo(self):
         return
 
-    def create_hgrid(self, longitude_extent, latitude_extent, resolution):
+    def create_rectangular_hgrid(self, longitude_extent, latitude_extent, resolution):
         """
         Set up a horizontal grid based on user's specification of the domain.
         The default behaviour generates a grid evenly spaced both in longitude
@@ -84,11 +112,10 @@ class GridGen:
         )  # latitudes in degrees
 
         hgrid = generate_rectangular_hgrid(lons, lats)
-        hgrid.to_netcdf(self.mom_input_dir / "hgrid.nc")
-
+        self.hgrid_ds = hgrid
         return hgrid
 
-    def create_vgrid(self):
+    def create_vgrid(self, number_vertical_layers, layer_thickness_ratio, depth):
         """
         Generates a vertical grid based on the ``number_vertical_layers``, the ratio
         of largest to smallest layer thickness (``layer_thickness_ratio``) and the
@@ -97,7 +124,7 @@ class GridGen:
         """
 
         thicknesses = hyperbolictan_thickness_profile(
-            self.number_vertical_layers, self.layer_thickness_ratio, self.depth
+            number_vertical_layers, layer_thickness_ratio, depth
         )
 
         zi = np.cumsum(thicknesses)
@@ -110,8 +137,7 @@ class GridGen:
         vcoord["zi"].attrs = {"units": "meters"}
         vcoord["zl"].attrs = {"units": "meters"}
 
-        vcoord.to_netcdf(self.mom_input_dir / "vcoord.nc")
-
+        self.vgrid_ds = vcoord
         return vcoord
 
     def setup_gebco_bathymetry(
@@ -840,3 +866,54 @@ def longitude_slicer(data, longitude_extent, longitude_coords):
         )
 
     return data
+
+def spherical2cartesian(lon, lat):
+    '''
+    Convert spherical coordinates to cartesian coordinates 
+    '''
+    R_earth=6378136 # meters
+    lonr = np.deg2rad(lon)
+    latr = np.deg2rad(lat)
+    x = R_earth * np.cos(latr) * np.cos(lonr)
+    y = R_earth * np.cos(latr) * np.sin(lonr)
+    z = R_earth * np.sin(latr)
+    return x, y, z
+
+def create_tree(lon, lat):
+    '''
+    Create a K-d tree from the spherical coordinates, which is good for spatial queries, like nearest neighbor search
+    '''
+    # Convert spherical coordinates to cartesian coordinates
+    x, y, z = spherical2cartesian(lon, lat)
+
+    # Stack - flatten the cartesian coordinates in 1D arrays
+    x_stack = x.stack(points=x.dims).values
+    y_stack = y.stack(points=y.dims).values
+    z_stack = z.stack(points=z.dims).values
+
+    # Construct KD-tree
+    tree = cKDTree(np.column_stack((x_stack, y_stack, z_stack)))
+
+    # Return tree
+    return tree
+
+def find_nearest(lon, lat, lon_pt, lat_pt):
+    '''
+    Find the nearest point to lon_pt, lat_pt in the grid defined by lon, lat
+    '''
+    # Create a tree from the grid
+    tree = create_tree(lon, lat)
+
+    # Get Cartesian coordinates of the point of interest
+    xp, yp, zp = spherical2cartesian(lon_pt, lat_pt)
+
+    # Find nearest index
+    _, idx = tree.query(np.column_stack((xp, yp, zp)))
+    
+    #idx = np.unique(idx) # Remove duplicates
+
+    # Format and return the index
+    idx = np.unravel_index(idx, lon.shape)
+    Iidx = idx[1]
+    Jidx = idx[0]
+    return Iidx, Jidx

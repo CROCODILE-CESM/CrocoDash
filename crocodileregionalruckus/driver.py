@@ -14,7 +14,10 @@ from .rm6_dir import regional_mom6 as rm6
 
 
 class crr_driver:
-    """Who needs documentation?"""
+    """Who needs documentation?
+    
+    The idea here is to wrap the regional mom6 workflow into one python package.
+    """
 
     def __init__(
         self,
@@ -56,13 +59,11 @@ class crr_driver:
             tidal_constituents=tidal_constituents,
             name=name,
         )
+        """
+        This init function requires no arguments. It sets up the experiment object with default values. The only reason to have these arguments is for easy storage. 
+        This is just a style change from Regional MOM6, where the experiment object takes most arguments and doesn't ask for them at function calls.
+        """
 
-
-        ## To ensure that the hgrid and vgrid are created in the original MOM6 expt, this is a hacky way to do it. Will be moved to grid gen when ready,
-        if self.og_mom6.latitude_extent is not None and self.og_mom6.longitude_extent is not None and self.og_mom6.grid_type is not None:
-            self.og_mom6.hgrid = self.og_mom6._make_hgrid()
-        if self.og_mom6.layer_thickness_ratio is not None and self.og_mom6.depth is not None and self.og_mom6.number_vertical_layers is not None:
-            self.og_mom6.vgrid = self.og_mom6._make_vgrid()
         self.expt_name = name
         self.tidal_constituents = tidal_constituents
         self.repeat_year_forcing = repeat_year_forcing
@@ -98,6 +99,7 @@ class crr_driver:
         raise ValueError("Not implemented yet")
     @classmethod
     def load_experiment(self, config_file_path):
+        raise ValueError("Not implemented yet")
         print("Reading from config file....")
         with open(config_file_path, "r") as f:
             config_dict = json.load(f)
@@ -204,10 +206,10 @@ class crr_driver:
         (self.mom_input_dir / "forcing").mkdir(exist_ok=True)
 
         run_inputdir = self.mom_run_dir / "inputdir"
-        if not run_inputdir.exists():
+        if not os.path.islink(run_inputdir):
             run_inputdir.symlink_to(self.mom_input_dir.resolve())
         input_rundir = self.mom_input_dir / "rundir"
-        if not input_rundir.exists():
+        if not os.path.islink(input_rundir):
             input_rundir.symlink_to(self.mom_run_dir.resolve())
 
     def __str__(self) -> str:
@@ -219,6 +221,7 @@ class crr_driver:
         that contains the expirment object information to allow for reproducibility, to pick up where a user left off, and
         to make information about the expirement readable.
         """
+        raise ValueError("Not implemented yet")
         if not quiet:
             print("Writing Config File.....")
         ## check if files exist
@@ -276,9 +279,6 @@ class crr_driver:
             print("Done.")
         return config_dict
 
-    def generate_grids(self):
-        self.grid_gen.create_hgrid()
-
     def generate_boundary_conditions(self):
         # Set h and v grid
         # Call rectangular boundaries
@@ -319,24 +319,31 @@ class crr_driver:
 
         return
 
-    def wrap_rm6_setup_bathymetry(self, bathymetry_path, longitude_coordinate_name, latitude_coordinate_name, vertical_coordinate_name):
+    def wrap_rm6_setup_bathymetry(self, bathymetry_path, longitude_coordinate_name, latitude_coordinate_name, vertical_coordinate_name, hgrid):
+        self.og_mom6.hgrid = hgrid
         return self.og_mom6.setup_bathymetry(bathymetry_path = bathymetry_path, longitude_coordinate_name = longitude_coordinate_name, latitude_coordinate_name = latitude_coordinate_name, vertical_coordinate_name = vertical_coordinate_name)
 
     def wrap_rm6_setup_initial_condition(self,  gp,
             varnames,
-            arakawa_grid
+            arakawa_grid, hgrid, vgrid
         ):
+        self.og_mom6.hgrid = hgrid
+        self.og_mom6.vgrid = vgrid
         return self.og_mom6.setup_initial_condition(gp, varnames, arakawa_grid = arakawa_grid)
     
     def wrap_rm6_setup_ocean_state_boundaries(self, gp,
             varnames,
             boundaries,
-            arakawa_grid
+            arakawa_grid,hgrid
         ):
+        self.og_mom6.hgrid = hgrid
         return self.og_mom6.setup_ocean_state_boundaries(gp, varnames, boundaries=boundaries, arakawa_grid = arakawa_grid)
     
-    def wrap_rm6_setup_tides(self, dump_files_dir, tidal_data):
+    def wrap_rm6_setup_tides(self, dump_files_dir, tidal_data, hgrid):
+        self.og_mom6.hgrid = hgrid
         return self.og_mom6.setup_boundary_tides(dump_files_dir, tidal_data)
     
-    def wrap_rm6_setup_run_directory(self, surface_forcing, with_tides_rectangular, overwrite,premade_rundir_path_arg = None):
+    def wrap_rm6_setup_run_directory(self, surface_forcing, with_tides_rectangular, overwrite,vgrid,hgrid,premade_rundir_path_arg = None):
+        self.og_mom6.vgrid = vgrid
+        self.og_mom6.hgrid = hgrid
         return self.og_mom6.setup_run_directory(surface_forcing= surface_forcing,with_tides_rectangular = with_tides_rectangular,overwrite = overwrite, premade_rundir_path_arg = premade_rundir_path_arg)
