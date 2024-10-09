@@ -256,21 +256,20 @@ class GridGen:
         longitude_extent,
         latitude_extent,
         input_dir,
-        min_depth,
+        minimum_depth,
         bathymetry_path,
         longitude_coordinate_name="lon",
         latitude_coordinate_name="lat",
         vertical_coordinate_name="elevation",
         fill_channels=False,
         positive_down=False,
-        chunks="auto",
     ):
         expt = rm6.experiment.create_empty()
         expt.hgrid = hgrid
         expt.longitude_extent = longitude_extent
         expt.latitude_extent = latitude_extent
         expt.mom_input_dir = input_dir
-        expt.min_depth = min_depth
+        expt.minimum_depth = minimum_depth
         expt.setup_bathymetry(
             bathymetry_path=bathymetry_path,
             longitude_coordinate_name=longitude_coordinate_name,
@@ -278,10 +277,9 @@ class GridGen:
             vertical_coordinate_name=vertical_coordinate_name,
             fill_channels=fill_channels,
             positive_down=positive_down,
-            chunks=chunks,
         )
-
-        self.topo = expt.bathymetry["depth"]  # Convert to DataArray
+        expt.bathymetry = xr.load_dataset(expt.mom_input_dir / "bathymetry.nc")
+        self.topo = expt.bathymetry["depth"][0]  # Convert to DataArray
         return self.topo
 
     def export_files(self, output_folder):

@@ -65,8 +65,9 @@ class BoundaryConditions:
         self._init_cond_paths = [expt.mom_input_dir /"forcing"/"init_vel.nc", expt.mom_input_dir /"forcing"/"init_eta.nc", expt.mom_input_dir /"forcing"/"init_tracers.nc"]
         return
 
-    def get_glorys_rectangular(self,raw_boundaries_path, boundaries):
-        expt = rm6.experiment.create_empty()
+    def get_glorys_rectangular(self,hgrid, date_range, raw_boundaries_path, boundaries):
+        expt = rm6.experiment.create_empty(date_range = date_range)
+        expt.hgrid = hgrid
         return expt.get_glorys_rectangular(raw_boundaries_path, boundaries)
 
     
