@@ -11,11 +11,11 @@ import os
 from pathlib import Path
 import subprocess
 from .rm6_dir import regional_mom6 as rm6
-
-
+import shutil
+import importlib
 class crr_driver:
     """Who needs documentation?
-    
+
     The idea here is to wrap the regional mom6 workflow into one python package.
     """
 
@@ -35,36 +35,40 @@ class crr_driver:
         repeat_year_forcing=False,
         minimum_depth=4,
         tidal_constituents=["M2"],
-        name=None,
+        expt_name=None,
     ):
         # ## Set up the experiment with no config file
         ## in case list was given, convert to tuples
-        self.grid_gen = grid_gen.GridGen()
-        self.boundary_conditions = boundary_conditions.BoundaryConditions()
-        self.rcg = rcg_ct.RegionalCaseGen()
-        self.og_mom6 = rm6.experiment.create_empty(
-            latitude_extent=latitude_extent,
-            longitude_extent=longitude_extent,
-            depth=depth,
-            resolution=resolution,
-            number_vertical_layers=number_vertical_layers,
-            layer_thickness_ratio=layer_thickness_ratio,
-            date_range=date_range,
-            mom_run_dir=mom_run_dir,
-            mom_input_dir=mom_input_dir,
-            toolpath_dir="",
-            grid_type=grid_type,
-            repeat_year_forcing=repeat_year_forcing,
-            minimum_depth=minimum_depth,
-            tidal_constituents=tidal_constituents,
-            name=name,
+        self.grid_gen_obj = grid_gen.GridGen()
+        self.boundary_conditions_obj = (
+            boundary_conditions.BoundaryConditions()
+        )  # Not Implemented Yet
+        self.rcg_obj = rcg_ct.RegionalCaseGen()
+        self.og_mom6 = (
+            rm6.experiment.create_empty(  # Takes the place of boundary_conditions
+                latitude_extent=latitude_extent,
+                longitude_extent=longitude_extent,
+                depth=depth,
+                resolution=resolution,
+                number_vertical_layers=number_vertical_layers,
+                layer_thickness_ratio=layer_thickness_ratio,
+                date_range=date_range,
+                mom_run_dir=mom_run_dir,
+                mom_input_dir=mom_input_dir,
+                toolpath_dir="",
+                grid_type=grid_type,
+                repeat_year_forcing=repeat_year_forcing,
+                minimum_depth=minimum_depth,
+                tidal_constituents=tidal_constituents,
+                name=expt_name,
+            )
         )
         """
         This init function requires no arguments. It sets up the experiment object with default values. The only reason to have these arguments is for easy storage. 
         This is just a style change from Regional MOM6, where the experiment object takes most arguments and doesn't ask for them at function calls.
         """
 
-        self.expt_name = name
+        self.expt_name = expt_name
         self.tidal_constituents = tidal_constituents
         self.repeat_year_forcing = repeat_year_forcing
         self.grid_type = grid_type
@@ -97,6 +101,7 @@ class crr_driver:
         This function should call grid_gen check_grid function and return some information about the grid.
         """
         raise ValueError("Not implemented yet")
+
     @classmethod
     def load_experiment(self, config_file_path):
         raise ValueError("Not implemented yet")
@@ -279,71 +284,40 @@ class crr_driver:
             print("Done.")
         return config_dict
 
-    def generate_boundary_conditions(self):
-        # Set h and v grid
-        # Call rectangular boundaries
-        # Call tides
-        return
-
-    def setup_MOM_files(self):
-        self.boundary_conditions.setup_MOM_files()
-        return
-
-    def setup_CESM_case(self, sandbox_dir, case_dir):
-        """-compset  --res TL319_t232 --case /glade/u/home/manishrv/cases/hawaii_clean_demo_tides_v2 --machine derecho --run-unsupported --project p93300612 --non-local"""
-        subprocess.run(
-            [
-                "./create_newcase",
-                "--case",
-                case_dir,
-                "--compset",
-                "1850_DATM%JRA_SLND_SICE_MOM6_SROF_SGLC_SWAV",
-                "--res",
-                "TL319_t232",
-                "--machine",
-                "derecho",
-                "--run-unsupported",
-                "--project",
-                "p93300612",
-                "--non-local",
-            ],
-            cwd=sandbox_dir,
-        )
-        self.rcg.setup_cesm(
-            CESMPath=case_dir,
-            hgrid=self.hgrid,
-            mom_input_dir=self.mom_input_dir,
-            mom_run_dir=self.mom_run_dir,
-            date_range=self.date_range,
-        )
-
-        return
-
-    def wrap_rm6_setup_bathymetry(self, bathymetry_path, longitude_coordinate_name, latitude_coordinate_name, vertical_coordinate_name, hgrid):
-        self.og_mom6.hgrid = hgrid
-        return self.og_mom6.setup_bathymetry(bathymetry_path = bathymetry_path, longitude_coordinate_name = longitude_coordinate_name, latitude_coordinate_name = latitude_coordinate_name, vertical_coordinate_name = vertical_coordinate_name)
-
-    def wrap_rm6_setup_initial_condition(self,  gp,
-            varnames,
-            arakawa_grid, hgrid, vgrid
-        ):
-        self.og_mom6.hgrid = hgrid
-        self.og_mom6.vgrid = vgrid
-        return self.og_mom6.setup_initial_condition(gp, varnames, arakawa_grid = arakawa_grid)
+    def setup_run_directory(self, mom_input_dir, mom_run_dir,date_range, hgrid, vgrid, tidal_constituents, 
+        surface_forcing=None,
+        overwrite=False,
+        with_tides_rectangular=False,
+        boundaries=["south", "north", "west", "east"],
+        premade_rundir_path_arg=None):
+        """
+        This function should set up the run directory for the experiment. 
+        """
+        expt = rm6.experiment.create_empty(mom_input_dir=mom_input_dir, mom_run_dir=mom_run_dir,date_range=date_range, tidal_constituents=tidal_constituents)
+        expt.hgrid = hgrid
+        expt.vgrid = vgrid
+        os.makedirs(mom_input_dir, exist_ok=True)
+        os.makedirs(mom_run_dir, exist_ok=True)
+        premade_rundir_path_arg=Path(os.path.join(importlib.resources.files("crocodileregionalruckus"),"rm6_dir","demos","premade_run_directories"))
+        return expt.setup_run_directory(surface_forcing=surface_forcing, overwrite=overwrite, with_tides_rectangular=with_tides_rectangular, boundaries=boundaries, premade_rundir_path_arg=premade_rundir_path_arg)
     
-    def wrap_rm6_setup_ocean_state_boundaries(self, gp,
-            varnames,
-            boundaries,
-            arakawa_grid,hgrid
-        ):
-        self.og_mom6.hgrid = hgrid
-        return self.og_mom6.setup_ocean_state_boundaries(gp, varnames, boundaries=boundaries, arakawa_grid = arakawa_grid)
-    
-    def wrap_rm6_setup_tides(self, dump_files_dir, tidal_data, hgrid):
-        self.og_mom6.hgrid = hgrid
-        return self.og_mom6.setup_boundary_tides(dump_files_dir, tidal_data)
-    
-    def wrap_rm6_setup_run_directory(self, surface_forcing, with_tides_rectangular, overwrite,vgrid,hgrid,premade_rundir_path_arg = None):
-        self.og_mom6.vgrid = vgrid
-        self.og_mom6.hgrid = hgrid
-        return self.og_mom6.setup_run_directory(surface_forcing= surface_forcing,with_tides_rectangular = with_tides_rectangular,overwrite = overwrite, premade_rundir_path_arg = premade_rundir_path_arg)
+    def export_files(self, output_folder):
+        """
+        Export all files from the temp_storage directory to the output_folder.
+
+        Parameters:
+        output_folder (str): Path to the output directory where files will be copied.
+        """
+        input_dir = Path(self.temp_storage)
+        output_dir = Path(output_folder)
+
+        if not output_dir.exists():
+            os.makedirs(output_dir)
+
+        for item in input_dir.iterdir():
+            if item.is_file():
+                shutil.copy(item, output_dir / item.name)
+            elif item.is_dir():
+                shutil.copytree(item, output_dir / item.name)
+
+        print(f"All files have been exported to {output_folder}")

@@ -7,6 +7,7 @@ import numpy as np
 import xarray as xr
 import matplotlib.pyplot as plt
 
+
 @pytest.fixture(scope="module")
 def dummy_tidal_data():
     nx = 2160
@@ -129,9 +130,12 @@ def test_rm6_gen_hgrid():
     latitude_extent = [16.0, 27]
     longitude_extent = [192, 209]
     resolution = 0.05
-    grid = grid_obj.create_rectangular_hgrid(longitude_extent, latitude_extent, resolution)
+    grid = grid_obj.create_rectangular_hgrid(
+        longitude_extent, latitude_extent, resolution
+    )
     assert grid is not None
     assert grid_obj.hgrid is not None
+
 
 def test_fred_subset_hgrid():
     # Define the grid
@@ -141,6 +145,14 @@ def test_fred_subset_hgrid():
     grid = grid_obj.subset_global_hgrid(longitude_extent, latitude_extent)
     assert grid is not None
     assert grid_obj.hgrid is not None
+def test_export_hgrid():
+    # Define the grid
+    grid_obj = grid_gen.GridGen()
+    latitude_extent = [16.0, 27]
+    longitude_extent = [192, 209]
+    grid = grid_obj.subset_global_hgrid(longitude_extent, latitude_extent)
+    grid_obj.hgrid.export("test_export.nc")
+
 
 def test_fred_subset_topo():
     # Define the grid
@@ -149,8 +161,9 @@ def test_fred_subset_topo():
     longitude_extent = [-88, -75]
     topo = grid_obj.subset_global_topo(longitude_extent, latitude_extent)
     plt.figure(dpi=250)
-    plt.imshow(topo, origin='lower', interpolation='nearest')
+    plt.imshow(topo, origin="lower", interpolation="nearest")
     plt.savefig("topo_before_masking.png")
+
 
 def test_fred_mask_unwanted_ocean():
     # Define the grid
@@ -161,10 +174,13 @@ def test_fred_mask_unwanted_ocean():
     # topo = xr.open_dataset("/glade/u/home/manishrv/documents/nwa12_0.1/.crr_temp/topo.nc")
     hgrid = grid_obj.subset_global_hgrid(longitude_extent, latitude_extent)
     topo = grid_obj.subset_global_topo(longitude_extent, latitude_extent)
-    topo = grid_obj.mask_disconnected_ocean_areas(hgrid = hgrid, topo = topo, name_x_dim = "x", name_y_dim = "y", lat_pt = 10, lon_pt = -78)
+    topo = grid_obj.mask_disconnected_ocean_areas(
+        hgrid=hgrid, topo=topo, name_x_dim="x", name_y_dim="y", lat_pt=10, lon_pt=-78
+    )
     plt.figure(dpi=250)
-    plt.imshow(topo, origin='lower', interpolation='nearest')
+    plt.imshow(topo, origin="lower", interpolation="nearest")
     plt.savefig("topo_after_masking.png")
+
 
 def test_rm6_subset_topo():
     # Define the grid
@@ -172,16 +188,30 @@ def test_rm6_subset_topo():
     latitude_extent = [6, 12]
     longitude_extent = [-86, -77]
     for i in range(2):
-        longitude_extent[i] = (longitude_extent[i] + 360) %360
+        longitude_extent[i] = (longitude_extent[i] + 360) % 360
     # hgrid = xr.open_dataset("/glade/u/home/manishrv/documents/nwa12_0.1/.crr_temp/hgrid.nc")
     # topo = xr.open_dataset("/glade/u/home/manishrv/documents/nwa12_0.1/.crr_temp/topo.nc")
     resolution = 0.05
-    hgrid = grid_obj.create_rectangular_hgrid(longitude_extent, latitude_extent, resolution)
-    bathymetry_path = "/glade/u/home/manishrv/manish_scratch_symlink/inputs_rm6/gebco/GEBCO_2024.nc"
-    topo = grid_obj.wrap_rm6_setup_bathymetry(input_dir = Path(""),longitude_extent=longitude_extent, latitude_extent = latitude_extent, min_depth = 5,  bathymetry_path = bathymetry_path, longitude_coordinate_name="lon", latitude_coordinate_name="lat", vertical_coordinate_name="elevation", hgrid = hgrid)
-    
+    hgrid = grid_obj.create_rectangular_hgrid(
+        longitude_extent, latitude_extent, resolution
+    )
+    bathymetry_path = (
+        "/glade/u/home/manishrv/manish_scratch_symlink/inputs_rm6/gebco/GEBCO_2024.nc"
+    )
+    topo = grid_obj.setup_bathymetry(
+        input_dir=Path(""),
+        longitude_extent=longitude_extent,
+        latitude_extent=latitude_extent,
+        min_depth=5,
+        bathymetry_path=bathymetry_path,
+        longitude_coordinate_name="lon",
+        latitude_coordinate_name="lat",
+        vertical_coordinate_name="elevation",
+        hgrid=hgrid,
+    )
+
     plt.figure(dpi=250)
-    plt.imshow(topo, origin='lower', interpolation='nearest')
+    plt.imshow(topo, origin="lower", interpolation="nearest")
     plt.savefig("topo_before_masking.png")
 
 
@@ -191,17 +221,39 @@ def test_rm6_mask_unwanted_ocean():
     latitude_extent = [6, 12]
     longitude_extent = [-86, -77]
     for i in range(2):
-        longitude_extent[i] = (longitude_extent[i] + 360) %360
+        longitude_extent[i] = (longitude_extent[i] + 360) % 360
     # hgrid = xr.open_dataset("/glade/u/home/manishrv/documents/nwa12_0.1/.crr_temp/hgrid.nc")
     # topo = xr.open_dataset("/glade/u/home/manishrv/documents/nwa12_0.1/.crr_temp/topo.nc")
     resolution = 0.05
-    hgrid = grid_obj.create_rectangular_hgrid(longitude_extent, latitude_extent, resolution)
-    bathymetry_path = "/glade/u/home/manishrv/manish_scratch_symlink/inputs_rm6/gebco/GEBCO_2024.nc"
-    topo = grid_obj.wrap_rm6_setup_bathymetry(input_dir = Path(""),longitude_extent=longitude_extent, latitude_extent = latitude_extent, min_depth = 5,  bathymetry_path = bathymetry_path, longitude_coordinate_name="lon", latitude_coordinate_name="lat", vertical_coordinate_name="elevation", hgrid = hgrid)
-    topo = grid_obj.mask_disconnected_ocean_areas(hgrid = hgrid, topo = grid_obj.topo, name_x_dim = "x", name_y_dim = "y", lat_pt = 10, lon_pt = -78)
+    hgrid = grid_obj.create_rectangular_hgrid(
+        longitude_extent, latitude_extent, resolution
+    )
+    bathymetry_path = (
+        "/glade/u/home/manishrv/manish_scratch_symlink/inputs_rm6/gebco/GEBCO_2024.nc"
+    )
+    topo = grid_obj.setup_bathymetry(
+        input_dir=Path(""),
+        longitude_extent=longitude_extent,
+        latitude_extent=latitude_extent,
+        min_depth=5,
+        bathymetry_path=bathymetry_path,
+        longitude_coordinate_name="lon",
+        latitude_coordinate_name="lat",
+        vertical_coordinate_name="elevation",
+        hgrid=hgrid,
+    )
+    topo = grid_obj.mask_disconnected_ocean_areas(
+        hgrid=hgrid,
+        topo=grid_obj.topo,
+        name_x_dim="x",
+        name_y_dim="y",
+        lat_pt=10,
+        lon_pt=-78,
+    )
     plt.figure(dpi=250)
-    plt.imshow(topo, origin='lower', interpolation='nearest')
+    plt.imshow(topo, origin="lower", interpolation="nearest")
     plt.savefig("topo_after_masking.png")
+
 
 def test_wrap_rm6_setup_bathymetry_in_gridgen():
     # Define the grid
@@ -209,9 +261,23 @@ def test_wrap_rm6_setup_bathymetry_in_gridgen():
     latitude_extent = [25, 27]
     longitude_extent = [200, 209]
     resolution = 0.05
-    hgrid = grid_obj.create_rectangular_hgrid(longitude_extent, latitude_extent, resolution)
-    bathymetry_path = "/glade/u/home/manishrv/manish_scratch_symlink/inputs_rm6/gebco/GEBCO_2024.nc"
-    grid_obj.wrap_rm6_setup_bathymetry(input_dir = Path(""),longitude_extent=longitude_extent, latitude_extent = latitude_extent, min_depth = 5,     bathymetry_path = bathymetry_path, longitude_coordinate_name="lon", latitude_coordinate_name="lat", vertical_coordinate_name="elevation", hgrid = hgrid)
+    hgrid = grid_obj.create_rectangular_hgrid(
+        longitude_extent, latitude_extent, resolution
+    )
+    bathymetry_path = (
+        "/glade/u/home/manishrv/manish_scratch_symlink/inputs_rm6/gebco/GEBCO_2024.nc"
+    )
+    grid_obj.setup_bathymetry(
+        input_dir=Path(""),
+        longitude_extent=longitude_extent,
+        latitude_extent=latitude_extent,
+        min_depth=5,
+        bathymetry_path=bathymetry_path,
+        longitude_coordinate_name="lon",
+        latitude_coordinate_name="lat",
+        vertical_coordinate_name="elevation",
+        hgrid=hgrid,
+    )
 
 
 def test_all_funcs_with_rectangle_grid(dummy_tidal_data):
@@ -255,39 +321,54 @@ def test_all_funcs_with_rectangle_grid(dummy_tidal_data):
     )
     crr_driver_obj.setup_directories(run_dir, input_dir)
 
+    hgrid = crr_driver_obj.grid_gen.create_rectangular_hgrid(
+        crr_driver_obj.og_mom6.longitude_extent,
+        crr_driver_obj.og_mom6.latitude_extent,
+        crr_driver_obj.og_mom6.resolution,
+    )
+    vgrid = crr_driver_obj.grid_gen.create_vgrid(
+        crr_driver_obj.og_mom6.number_vertical_layers,
+        crr_driver_obj.og_mom6.layer_thickness_ratio,
+        crr_driver_obj.og_mom6.depth,
+    )
 
-
-    hgrid = crr_driver_obj.grid_gen.create_rectangular_hgrid(crr_driver_obj.og_mom6.longitude_extent, crr_driver_obj.og_mom6.latitude_extent, crr_driver_obj.og_mom6.resolution)
-    vgrid = crr_driver_obj.grid_gen.create_vgrid(crr_driver_obj.og_mom6.number_vertical_layers, crr_driver_obj.og_mom6.layer_thickness_ratio, crr_driver_obj.og_mom6.depth)
-
-    
-    crr_driver_obj.wrap_rm6_setup_bathymetry(
-        "/glade/u/home/manishrv/manish_scratch_symlink/inputs_rm6/gebco/GEBCO_2024.nc",
+    grid_obj = grid_gen.GridGen()
+    bathymetry_path = (
+        "/glade/u/home/manishrv/manish_scratch_symlink/inputs_rm6/gebco/GEBCO_2024.nc"
+    )
+    crr_driver_obj.og_mom6.bathymetry = grid_obj.setup_bathymetry(
+        input_dir=crr_driver_obj.og_mom6.mom_input_dir,
+        longitude_extent=longitude_extent,
+        latitude_extent=latitude_extent,
+        min_depth=5,
+        bathymetry_path=bathymetry_path,
         longitude_coordinate_name="lon",
         latitude_coordinate_name="lat",
         vertical_coordinate_name="elevation",
-        hgrid = hgrid
+        hgrid=hgrid,
     )
 
     ocean_varnames = {
-            "time": "time",
-            "yh": "latitude",
-            "xh": "longitude",
-            "zl": "depth",
-            "eta": "zos",
-            "u": "uo",
-            "v": "vo",
-            "tracers": {"salt": "so", "temp": "thetao"},
-        }
-    glorys_path = os.path.join("/","glade","derecho","scratch","manishrv","inputs_rm6_hawaii","glorys" )
+        "time": "time",
+        "yh": "latitude",
+        "xh": "longitude",
+        "zl": "depth",
+        "eta": "zos",
+        "u": "uo",
+        "v": "vo",
+        "tracers": {"salt": "so", "temp": "thetao"},
+    }
+    glorys_path = os.path.join(
+        "/", "glade", "derecho", "scratch", "manishrv", "inputs_rm6_hawaii", "glorys"
+    )
     # Set up the initial condition
     crr_driver_obj.wrap_rm6_setup_initial_condition(
         Path(glorys_path)
         / "ic_unprocessed.nc",  # directory where the unprocessed initial condition is stored, as defined earlier
         ocean_varnames,
         arakawa_grid="A",
-        hgrid = hgrid,
-        vgrid = vgrid
+        hgrid=hgrid,
+        vgrid=vgrid,
     )
 
     # Set up the four boundary conditions. Remember that in the glorys_path, we have four boundary files names north_unprocessed.nc etc.
@@ -296,14 +377,23 @@ def test_all_funcs_with_rectangle_grid(dummy_tidal_data):
         ocean_varnames,
         boundaries=["south", "north", "west", "east"],
         arakawa_grid="A",
-        hgrid = hgrid
+        hgrid=hgrid,
     )
     ds_h, ds_u = dummy_tidal_data
     dump_files_dir = Path(crr_driver_obj.mom_input_dir / "tides")
     os.makedirs(dump_files_dir, exist_ok=True)
     ds_h.to_netcdf(dump_files_dir / "h_fake_tidal_data.nc")
     ds_u.to_netcdf(dump_files_dir / "u_fake_tidal_data.nc")
-    crr_driver_obj.wrap_rm6_setup_tides(dump_files_dir, "fake_tidal_data.nc", hgrid = hgrid)
+    crr_driver_obj.wrap_rm6_setup_tides(
+        dump_files_dir, "fake_tidal_data.nc", hgrid=hgrid
+    )
     crr_driver_obj.wrap_rm6_setup_run_directory(
-    surface_forcing="jra", with_tides_rectangular=True, overwrite=True,hgrid = hgrid,vgrid = vgrid, premade_rundir_path_arg=Path("/glade/u/home/manishrv/documents/nwa12_0.1/regional_mom_workflows/crr/crocodileregionalruckus/rm6_dir/demos/premade_run_directories")
+        surface_forcing="jra",
+        with_tides_rectangular=True,
+        overwrite=True,
+        hgrid=hgrid,
+        vgrid=vgrid,
+        premade_rundir_path_arg=Path(
+            "/glade/u/home/manishrv/documents/nwa12_0.1/regional_mom_workflows/crr/crocodileregionalruckus/rm6_dir/demos/premade_run_directories"
+        ),
     )

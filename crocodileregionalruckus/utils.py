@@ -1,5 +1,5 @@
 import numpy as np
-
+import os
 
 def vecdot(v1, v2):
     """Return the dot product of vectors ``v1`` and ``v2``.
@@ -294,3 +294,9 @@ def ep2ap(SEMA, ECC, INC, PHA):
     vp = -np.angle(cv)
 
     return ua, va, up, vp
+
+def export_dataset(ds, path):
+    if os.path.exists(path):
+        os.remove(path)
+    ds.to_netcdf(path)
+    ds.close()
