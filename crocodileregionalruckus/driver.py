@@ -31,7 +31,8 @@ class crr_driver:
         mom_run_dir=None,
         mom_input_dir=None,
         toolpath_dir=None,
-        grid_type="even_spacing",
+        hgrid_type="from_file", # Don't do anything with this
+        vgrid_type="from_file", # Don't do anything with this
         repeat_year_forcing=False,
         minimum_depth=4,
         tidal_constituents=["M2"],
@@ -56,11 +57,11 @@ class crr_driver:
                 mom_run_dir=mom_run_dir,
                 mom_input_dir=mom_input_dir,
                 toolpath_dir="",
-                grid_type=grid_type,
                 repeat_year_forcing=repeat_year_forcing,
                 minimum_depth=minimum_depth,
                 tidal_constituents=tidal_constituents,
                 name=expt_name,
+                hgrid_type = hgrid_type,
             )
         )
         """
@@ -71,7 +72,8 @@ class crr_driver:
         self.expt_name = expt_name
         self.tidal_constituents = tidal_constituents
         self.repeat_year_forcing = repeat_year_forcing
-        self.grid_type = grid_type
+        self.hgrid_type = hgrid_type
+        self.vgrid_type = vgrid_type
         self.toolpath_dir = toolpath_dir
         self.mom_run_dir = mom_run_dir
         self.mom_input_dir = mom_input_dir
@@ -287,7 +289,7 @@ class crr_driver:
     def setup_run_directory(self, mom_input_dir, mom_run_dir,date_range, hgrid, vgrid, tidal_constituents, 
         surface_forcing=None,
         overwrite=False,
-        with_tides_rectangular=False,
+        with_tides=False,
         boundaries=["south", "north", "west", "east"],
         premade_rundir_path_arg=None):
         """
@@ -299,7 +301,7 @@ class crr_driver:
         os.makedirs(mom_input_dir, exist_ok=True)
         os.makedirs(mom_run_dir, exist_ok=True)
         premade_rundir_path_arg=Path(os.path.join(importlib.resources.files("crocodileregionalruckus"),"rm6_dir","demos","premade_run_directories"))
-        return expt.setup_run_directory(surface_forcing=surface_forcing, overwrite=overwrite, with_tides_rectangular=with_tides_rectangular, boundaries=boundaries, premade_rundir_path_arg=premade_rundir_path_arg)
+        return expt.setup_run_directory(surface_forcing=surface_forcing, overwrite=overwrite, with_tides=with_tides, boundaries=boundaries, premade_rundir_path_arg=premade_rundir_path_arg)
     
     def export_files(self, output_folder):
         """

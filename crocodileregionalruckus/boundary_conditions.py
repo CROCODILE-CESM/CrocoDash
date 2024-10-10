@@ -100,7 +100,7 @@ class BoundaryConditions:
         expt.repeat_year_forcing = repeat_year_forcing
         expt.mom_input_dir = Path(self.temp_storage)
         os.makedirs(expt.mom_input_dir /"forcing", exist_ok=True)
-        expt.setup_boundary_tides(path_to_td=path_td, tidal_filename=tidal_filename, tidal_constituents=tidal_consituents)
+        expt.setup_boundary_tides(path_to_td=Path(path_td), tidal_filename=tidal_filename, tidal_constituents=tidal_consituents)
         return
     
     def export_files(self, output_folder):
@@ -120,7 +120,7 @@ class BoundaryConditions:
             if item.is_file():
                 shutil.copy(item, output_dir / item.name)
             elif item.is_dir():
-                shutil.copytree(item, output_dir / item.name)
+                shutil.copytree(item, output_dir / item.name,dirs_exist_ok=True)
 
         print(f"All files have been exported to {output_folder}")
 

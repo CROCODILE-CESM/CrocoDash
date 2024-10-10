@@ -30,7 +30,7 @@ class GridGen:
     @property
     def topo(self):
         try:
-            return xr.open_dataarray(self._topo_path)
+            return xr.open_dataset(self._topo_path)
         except:
             return "Unable to find topo file"
 
@@ -88,18 +88,19 @@ class GridGen:
         # Read in Global Supergrid
 
         try:
-            dsg = xr.open_dataset(path)
+            dsg = xr.open_mfdataset(path)
         except:
             raise FileNotFoundError(
                 "Global Supergrid not found. We looked here {}. I would instead use the create_rectangular_hgrid method to create a new grid, or pass in a path with 'path='".format(
                     path
                 )
             )
+        kdtree = create_tree(dsg.x, dsg.y)
         I_llc, J_llc = find_nearest(
-            dsg.x, dsg.y, min(longitude_extent), min(latitude_extent)
+            dsg.x, dsg.y, min(longitude_extent), min(latitude_extent), tree= kdtree
         )
         I_urc, J_urc = find_nearest(
-            dsg.x, dsg.y, max(longitude_extent), max(latitude_extent)
+            dsg.x, dsg.y, max(longitude_extent), max(latitude_extent), tree= kdtree
         )
         ds_nwa = dsg.isel(nx=slice(I_llc[0], I_urc[0])).isel(
             ny=slice(J_llc[0], J_urc[0])
@@ -108,7 +109,6 @@ class GridGen:
             nyp=slice(J_llc[0], J_urc[0] + 1)
         )
         dsg.close()
-        self.hgrid = ds_nwa
         return ds_nwa
 
     def subset_global_topo(
@@ -247,8 +247,8 @@ class GridGen:
 
         # Make all the newly masked ocean points into land points in the topo file
         topo = xr.where(xr_ocean_mask_changed == 0, 0, topo)
-        self.topo = topo
-        return topo
+        self.topo = topo.to_dataset(name = "depth")
+        return self.topo
 
     def setup_bathymetry(
         self,
@@ -279,7 +279,7 @@ class GridGen:
             positive_down=positive_down,
         )
         expt.bathymetry = xr.load_dataset(expt.mom_input_dir / "bathymetry.nc")
-        self.topo = expt.bathymetry["depth"][0]  # Convert to DataArray
+        self.topo = expt.bathymetry
         return self.topo
 
     def export_files(self, output_folder):
@@ -299,7 +299,7 @@ class GridGen:
             if item.is_file():
                 shutil.copy(item, output_dir / item.name)
             elif item.is_dir():
-                shutil.copytree(item, output_dir / item.name)
+                shutil.copytree(item, output_dir / item.name,dirs_exist_ok=True)
 
         print(f"All files have been exported to {output_folder}")
 
@@ -335,12 +335,13 @@ def create_tree(lon, lat):
     return tree
 
 
-def find_nearest(lon, lat, lon_pt, lat_pt):
+def find_nearest(lon, lat, lon_pt, lat_pt, tree = None):
     """
     Find the nearest point to lon_pt, lat_pt in the grid defined by lon, lat
     """
     # Create a tree from the grid
-    tree = create_tree(lon, lat)
+    if tree is None:
+        tree = create_tree(lon, lat)
 
     # Get Cartesian coordinates of the point of interest
     xp, yp, zp = spherical2cartesian(lon_pt, lat_pt)
