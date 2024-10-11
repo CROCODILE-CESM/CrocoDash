@@ -10,6 +10,10 @@ import os
 from crocodileregionalruckus.utils import export_dataset
 from pathlib import Path
 
+
+
+
+
 class GridGen:
     """
     Create a regional grids for MOM6, designed to work for the CROCODILE regional MOM6 workflow w/ regional_mom6
@@ -78,38 +82,49 @@ class GridGen:
 
     def subset_global_hgrid(
         self,
-        longitude_extent,
-        latitude_extent,
+        use_pre_generated_topo = None,
+        longitude_extent = None,
+        latitude_extent = None,
         path="/glade/work/fredc/cesm/grid/MOM6/tx1_12v1/gridgen/ocean_hgrid_trimmed.nc",
     ):
-        """
-        Read in global supergrid, find closest points to the extent, and subset the supergrid to the extent.
-        """
-        # Read in Global Supergrid
+            """
+            Read in global supergrid, find closest points to the extent, and subset the supergrid to the extent.
+            """
 
-        try:
-            dsg = xr.open_mfdataset(path)
-        except:
-            raise FileNotFoundError(
-                "Global Supergrid not found. We looked here {}. I would instead use the create_rectangular_hgrid method to create a new grid, or pass in a path with 'path='".format(
-                    path
+            try:
+                with xr.open_dataset(path, chunks={'nx': 1000, 'ny': 1000}) as dsg:
+                    kdtree = create_tree(dsg.x, dsg.y)
+                    I_llc, J_llc = find_nearest(
+                        dsg.x, dsg.y, min(longitude_extent), min(latitude_extent), tree= kdtree
+                    )
+                    I_urc, J_urc = find_nearest(
+                        dsg.x, dsg.y, max(longitude_extent), max(latitude_extent), tree= kdtree
+                    )
+                                        # Ensure I_llc and J_llc are even
+                    if I_llc[0] % 2 != 0:
+                        I_llc[0] += 1
+                    if J_llc[0] % 2 != 0:
+                        J_llc[0] += 1
+
+                    # Ensure I_urc and J_urc are even
+                    if I_urc[0] % 2 != 0:
+                        I_urc[0] += 1
+                    if J_urc[0] % 2 != 0:
+                        J_urc[0] += 1
+                    ds_nwa = dsg.isel(nx=slice(I_llc[0], I_urc[0])).isel(
+                        ny=slice(J_llc[0], J_urc[0])
+                    )
+                    ds_nwa = ds_nwa.isel(nxp=slice(I_llc[0], I_urc[0] + 1)).isel(
+                        nyp=slice(J_llc[0], J_urc[0] + 1)
+                    )
+                    ds_nwa.load()
+                    return ds_nwa
+            except:
+                raise FileNotFoundError(
+                    "Global Supergrid not found. We looked here {}. I would instead use the create_rectangular_hgrid method to create a new grid, or pass in a path with 'path='".format(
+                        path
+                    )
                 )
-            )
-        kdtree = create_tree(dsg.x, dsg.y)
-        I_llc, J_llc = find_nearest(
-            dsg.x, dsg.y, min(longitude_extent), min(latitude_extent), tree= kdtree
-        )
-        I_urc, J_urc = find_nearest(
-            dsg.x, dsg.y, max(longitude_extent), max(latitude_extent), tree= kdtree
-        )
-        ds_nwa = dsg.isel(nx=slice(I_llc[0], I_urc[0])).isel(
-            ny=slice(J_llc[0], J_urc[0])
-        )
-        ds_nwa = ds_nwa.isel(nxp=slice(I_llc[0], I_urc[0] + 1)).isel(
-            nyp=slice(J_llc[0], J_urc[0] + 1)
-        )
-        dsg.close()
-        return ds_nwa
 
     def subset_global_topo(
         self,
@@ -120,20 +135,31 @@ class GridGen:
     ):
 
         try:
-            dsg = xr.open_dataset(hgrid_path)
+            with xr.open_dataset(hgrid_path, chunks={'nx': 1000, 'ny': 1000}) as dsg:
+                tree = create_tree(dsg.x, dsg.y)
+                I_llc, J_llc = find_nearest(
+                    dsg.x, dsg.y, min(longitude_extent), min(latitude_extent), tree= tree
+                )
+                I_urc, J_urc = find_nearest(
+                    dsg.x, dsg.y, max(longitude_extent), max(latitude_extent), tree=tree
+                )
+                # Ensure I_llc and J_llc are even
+                if I_llc[0] % 2 != 0:
+                    I_llc[0] += 1
+                if J_llc[0] % 2 != 0:
+                    J_llc[0] += 1
+
+                # Ensure I_urc and J_urc are even
+                if I_urc[0] % 2 != 0:
+                    I_urc[0] += 1
+                if J_urc[0] % 2 != 0:
+                    J_urc[0] += 1
         except:
             raise FileNotFoundError(
                 "Global Supergrid not found. We looked here {}. I would instead use the create_rectangular_hgrid method to create a new grid, or pass in a path with 'path='".format(
                     hgrid_path
                 )
             )
-        I_llc, J_llc = find_nearest(
-            dsg.x, dsg.y, min(longitude_extent), min(latitude_extent)
-        )
-        I_urc, J_urc = find_nearest(
-            dsg.x, dsg.y, max(longitude_extent), max(latitude_extent)
-        )
-        dsg.close()
         try:
             dsg_topo = xr.open_dataset(topo_path)
         except:
@@ -158,8 +184,8 @@ class GridGen:
             .isel(lath=slice(j1, j2))
         )
         dsg_topo.close()
-        self.topo = topo
-        return topo
+        self.topo = topo.to_dataset(name = "depth")
+        return self.topo
 
     def create_rectangular_hgrid(self, longitude_extent, latitude_extent, resolution):
         """
@@ -224,6 +250,12 @@ class GridGen:
             Coordinates of the point to use as the starting point for the mask.
         """
 
+        extra_dim_name = 'ntiles'
+        has_extra_dim = 'ntiles' in topo.dims
+
+        # Squeeze out the 'extra' dimension if it exists and has size 1
+        if has_extra_dim and topo.sizes[extra_dim_name] == 1:
+            topo = topo.squeeze(extra_dim_name)
         # Get Ocean Mask
         ocean_mask = xr.where((topo != 0) & (~np.isnan(topo)), 1, 0)
 
@@ -247,6 +279,8 @@ class GridGen:
 
         # Make all the newly masked ocean points into land points in the topo file
         topo = xr.where(xr_ocean_mask_changed == 0, 0, topo)
+        if has_extra_dim:
+            topo = topo.expand_dims(extra_dim_name)
         self.topo = topo.to_dataset(name = "depth")
         return self.topo
 
@@ -281,6 +315,13 @@ class GridGen:
         expt.bathymetry = xr.load_dataset(expt.mom_input_dir / "bathymetry.nc")
         self.topo = expt.bathymetry
         return self.topo
+
+    def tidy_bathymetry(self,input_dir, minimum_depth, fill_channels = False, positive_down = False):
+        """
+       
+        """
+        expt = rm6.experiment.create_empty(mom_input_dir=input_dir, minimum_depth=minimum_depth)
+        expt.tidy_bathymetry(fill_channels=fill_channels, positive_down=positive_down)
 
     def export_files(self, output_folder):
         """
