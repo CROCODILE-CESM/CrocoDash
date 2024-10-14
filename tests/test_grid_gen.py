@@ -145,6 +145,8 @@ def test_fred_subset_hgrid():
     grid = grid_obj.subset_global_hgrid(longitude_extent, latitude_extent)
     assert grid is not None
     assert grid_obj.hgrid is not None
+
+
 def test_export_hgrid():
     # Define the grid
     grid_obj = grid_gen.GridGen()

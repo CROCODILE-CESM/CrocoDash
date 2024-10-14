@@ -11,9 +11,6 @@ from crocodileregionalruckus.utils import export_dataset
 from pathlib import Path
 
 
-
-
-
 class GridGen:
     """
     Create a regional grids for MOM6, designed to work for the CROCODILE regional MOM6 workflow w/ regional_mom6
@@ -82,47 +79,55 @@ class GridGen:
 
     def subset_global_hgrid(
         self,
-        longitude_extent = None,
-        latitude_extent = None,
+        longitude_extent=None,
+        latitude_extent=None,
         path="/glade/work/fredc/cesm/grid/MOM6/tx1_12v1/gridgen/ocean_hgrid_trimmed.nc",
     ):
-            """
-            Read in global supergrid, find closest points to the extent, and subset the supergrid to the extent.
-            """
+        """
+        Read in global supergrid, find closest points to the extent, and subset the supergrid to the extent.
+        """
 
-            try:
-                with xr.open_dataset(path, chunks={'nx': 1000, 'ny': 1000}) as dsg:
-                    kdtree = create_tree(dsg.x, dsg.y)
-                    I_llc, J_llc = find_nearest(
-                        dsg.x, dsg.y, min(longitude_extent), min(latitude_extent), tree= kdtree
-                    )
-                    I_urc, J_urc = find_nearest(
-                        dsg.x, dsg.y, max(longitude_extent), max(latitude_extent), tree= kdtree
-                    )
-                                        # Ensure I_llc and J_llc are even
-                    if I_llc[0] % 2 != 0:
-                        I_llc[0] += 1
-                    if J_llc[0] % 2 != 0:
-                        J_llc[0] += 1
-
-                    # Ensure I_urc and J_urc are even
-                    if I_urc[0] % 2 != 0:
-                        I_urc[0] += 1
-                    if J_urc[0] % 2 != 0:
-                        J_urc[0] += 1
-                    ds_nwa = dsg.isel(nx=slice(I_llc[0], I_urc[0])).isel(
-                        ny=slice(J_llc[0], J_urc[0])
-                    )
-                    ds_nwa = ds_nwa.isel(nxp=slice(I_llc[0], I_urc[0] + 1)).isel(
-                        nyp=slice(J_llc[0], J_urc[0] + 1)
-                    )
-                    return ds_nwa
-            except:
-                raise FileNotFoundError(
-                    "Global Supergrid not found. We looked here {}. I would instead use the create_rectangular_hgrid method to create a new grid, or pass in a path with 'path='".format(
-                        path
-                    )
+        try:
+            with xr.open_dataset(path, chunks={"nx": 1000, "ny": 1000}) as dsg:
+                kdtree = create_tree(dsg.x, dsg.y)
+                I_llc, J_llc = find_nearest(
+                    dsg.x,
+                    dsg.y,
+                    min(longitude_extent),
+                    min(latitude_extent),
+                    tree=kdtree,
                 )
+                I_urc, J_urc = find_nearest(
+                    dsg.x,
+                    dsg.y,
+                    max(longitude_extent),
+                    max(latitude_extent),
+                    tree=kdtree,
+                )
+                # Ensure I_llc and J_llc are even
+                if I_llc[0] % 2 != 0:
+                    I_llc[0] += 1
+                if J_llc[0] % 2 != 0:
+                    J_llc[0] += 1
+
+                # Ensure I_urc and J_urc are even
+                if I_urc[0] % 2 != 0:
+                    I_urc[0] += 1
+                if J_urc[0] % 2 != 0:
+                    J_urc[0] += 1
+                ds_nwa = dsg.isel(nx=slice(I_llc[0], I_urc[0])).isel(
+                    ny=slice(J_llc[0], J_urc[0])
+                )
+                ds_nwa = ds_nwa.isel(nxp=slice(I_llc[0], I_urc[0] + 1)).isel(
+                    nyp=slice(J_llc[0], J_urc[0] + 1)
+                )
+                return ds_nwa
+        except:
+            raise FileNotFoundError(
+                "Global Supergrid not found. We looked here {}. I would instead use the create_rectangular_hgrid method to create a new grid, or pass in a path with 'path='".format(
+                    path
+                )
+            )
 
     def subset_global_topo(
         self,
@@ -133,10 +138,10 @@ class GridGen:
     ):
 
         try:
-            with xr.open_dataset(hgrid_path, chunks={'nx': 1000, 'ny': 1000}) as dsg:
+            with xr.open_dataset(hgrid_path, chunks={"nx": 1000, "ny": 1000}) as dsg:
                 tree = create_tree(dsg.x, dsg.y)
                 I_llc, J_llc = find_nearest(
-                    dsg.x, dsg.y, min(longitude_extent), min(latitude_extent), tree= tree
+                    dsg.x, dsg.y, min(longitude_extent), min(latitude_extent), tree=tree
                 )
                 I_urc, J_urc = find_nearest(
                     dsg.x, dsg.y, max(longitude_extent), max(latitude_extent), tree=tree
@@ -159,7 +164,9 @@ class GridGen:
                 )
             )
         try:
-            with xr.open_dataset(topo_path, chunks={'nx': 1000, 'ny': 1000}) as dsg_topo:
+            with xr.open_dataset(
+                topo_path, chunks={"nx": 1000, "ny": 1000}
+            ) as dsg_topo:
                 I_llc, J_llc = I_llc[0], J_llc[0]
                 I_urc, J_urc = I_urc[0], J_urc[0]
                 i1 = I_llc // 2
@@ -173,7 +180,7 @@ class GridGen:
                     .isel(lonh=slice(i1, i2))
                     .isel(lath=slice(j1, j2))
                 )
-                self.topo = topo.to_dataset(name = "depth")
+                self.topo = topo.to_dataset(name="depth")
         except:
             raise FileNotFoundError(
                 "Global Topo not found. We looked here {}. I would instead use the create_rectangular_hgrid method to create a new grid, or pass in a path with 'path='".format(
@@ -183,7 +190,6 @@ class GridGen:
 
         # Mask and Topo files are on the model grid, which is a division of 2 of the supergrid in each dimension
 
-        
         return self.topo
 
     def create_rectangular_hgrid(self, longitude_extent, latitude_extent, resolution):
@@ -211,20 +217,33 @@ class GridGen:
             metadata, it might be easiest to read the file in, then modify the fields before
             re-saving.
         """
-        expt = rm6.experiment.create_empty(longitude_extent=longitude_extent, latitude_extent=latitude_extent, resolution = resolution, mom_input_dir=Path(self.temp_storage))
+        expt = rm6.experiment.create_empty(
+            longitude_extent=longitude_extent,
+            latitude_extent=latitude_extent,
+            resolution=resolution,
+            mom_input_dir=Path(self.temp_storage),
+        )
 
         hgrid = expt._make_hgrid()
         self.hgrid = hgrid
         return hgrid
 
-    def create_vgrid(self, number_vertical_layers, layer_thickness_ratio, depth, minimum_depth):
+    def create_vgrid(
+        self, number_vertical_layers, layer_thickness_ratio, depth, minimum_depth
+    ):
         """
         Generates a vertical grid based on the ``number_vertical_layers``, the ratio
         of largest to smallest layer thickness (``layer_thickness_ratio``) and the
         total ``depth`` parameters.
         (All these parameters are specified at the class level.)
         """
-        expt = rm6.experiment.create_empty(number_vertical_layers=number_vertical_layers, layer_thickness_ratio=layer_thickness_ratio, depth=depth, minimum_depth=minimum_depth, mom_input_dir=Path(self.temp_storage))
+        expt = rm6.experiment.create_empty(
+            number_vertical_layers=number_vertical_layers,
+            layer_thickness_ratio=layer_thickness_ratio,
+            depth=depth,
+            minimum_depth=minimum_depth,
+            mom_input_dir=Path(self.temp_storage),
+        )
         vcoord = expt._make_vgrid()
 
         self.vgrid = vcoord
@@ -249,8 +268,8 @@ class GridGen:
             Coordinates of the point to use as the starting point for the mask.
         """
 
-        extra_dim_name = 'ntiles'
-        has_extra_dim = 'ntiles' in topo.dims
+        extra_dim_name = "ntiles"
+        has_extra_dim = "ntiles" in topo.dims
 
         # Squeeze out the 'extra' dimension if it exists and has size 1
         if has_extra_dim and topo.sizes[extra_dim_name] == 1:
@@ -280,7 +299,7 @@ class GridGen:
         topo = xr.where(xr_ocean_mask_changed == 0, 0, topo)
         if has_extra_dim:
             topo = topo.expand_dims(extra_dim_name)
-        self.topo = topo.to_dataset(name = "depth")
+        self.topo = topo.to_dataset(name="depth")
         return self.topo
 
     def setup_bathymetry(
@@ -315,11 +334,13 @@ class GridGen:
         self.topo = expt.bathymetry
         return self.topo
 
-    def tidy_bathymetry(self,input_dir, minimum_depth, fill_channels = False, positive_down = False):
-        """
-       
-        """
-        expt = rm6.experiment.create_empty(mom_input_dir=input_dir, minimum_depth=minimum_depth)
+    def tidy_bathymetry(
+        self, input_dir, minimum_depth, fill_channels=False, positive_down=False
+    ):
+        """ """
+        expt = rm6.experiment.create_empty(
+            mom_input_dir=input_dir, minimum_depth=minimum_depth
+        )
         expt.tidy_bathymetry(fill_channels=fill_channels, positive_down=positive_down)
 
     def export_files(self, output_folder):
@@ -339,9 +360,10 @@ class GridGen:
             if item.is_file():
                 shutil.copy(item, output_dir / item.name)
             elif item.is_dir():
-                shutil.copytree(item, output_dir / item.name,dirs_exist_ok=True)
+                shutil.copytree(item, output_dir / item.name, dirs_exist_ok=True)
 
         print(f"All files have been exported to {output_folder}")
+
 
 def spherical2cartesian(lon, lat):
     """
@@ -375,7 +397,7 @@ def create_tree(lon, lat):
     return tree
 
 
-def find_nearest(lon, lat, lon_pt, lat_pt, tree = None):
+def find_nearest(lon, lat, lon_pt, lat_pt, tree=None):
     """
     Find the nearest point to lon_pt, lat_pt in the grid defined by lon, lat
     """

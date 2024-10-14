@@ -13,6 +13,8 @@ import subprocess
 from .rm6_dir import regional_mom6 as rm6
 import shutil
 import importlib
+
+
 class crr_driver:
     """Who needs documentation?
 
@@ -31,8 +33,8 @@ class crr_driver:
         mom_run_dir=None,
         mom_input_dir=None,
         toolpath_dir=None,
-        hgrid_type="from_file", # Don't do anything with this
-        vgrid_type="from_file", # Don't do anything with this
+        hgrid_type="from_file",  # Don't do anything with this
+        vgrid_type="from_file",  # Don't do anything with this
         repeat_year_forcing=False,
         minimum_depth=4,
         tidal_constituents=["M2"],
@@ -61,7 +63,7 @@ class crr_driver:
                 minimum_depth=minimum_depth,
                 tidal_constituents=tidal_constituents,
                 name=expt_name,
-                hgrid_type = hgrid_type,
+                hgrid_type=hgrid_type,
             )
         )
         """
@@ -286,23 +288,49 @@ class crr_driver:
             print("Done.")
         return config_dict
 
-    def setup_run_directory(self, mom_input_dir, mom_run_dir,date_range, hgrid, vgrid, tidal_constituents, 
+    def setup_run_directory(
+        self,
+        mom_input_dir,
+        mom_run_dir,
+        date_range,
+        hgrid,
+        vgrid,
+        tidal_constituents,
         surface_forcing=None,
         overwrite=False,
         with_tides=False,
         boundaries=["south", "north", "west", "east"],
-        premade_rundir_path_arg=None):
+        premade_rundir_path_arg=None,
+    ):
         """
-        This function should set up the run directory for the experiment. 
+        This function should set up the run directory for the experiment.
         """
-        expt = rm6.experiment.create_empty(mom_input_dir=mom_input_dir, mom_run_dir=mom_run_dir,date_range=date_range, tidal_constituents=tidal_constituents)
+        expt = rm6.experiment.create_empty(
+            mom_input_dir=mom_input_dir,
+            mom_run_dir=mom_run_dir,
+            date_range=date_range,
+            tidal_constituents=tidal_constituents,
+        )
         expt.hgrid = hgrid
         expt.vgrid = vgrid
         os.makedirs(mom_input_dir, exist_ok=True)
         os.makedirs(mom_run_dir, exist_ok=True)
-        premade_rundir_path_arg=Path(os.path.join(importlib.resources.files("crocodileregionalruckus"),"rm6_dir","demos","premade_run_directories"))
-        return expt.setup_run_directory(surface_forcing=surface_forcing, overwrite=overwrite, with_tides=with_tides, boundaries=boundaries, premade_rundir_path_arg=premade_rundir_path_arg)
-    
+        premade_rundir_path_arg = Path(
+            os.path.join(
+                importlib.resources.files("crocodileregionalruckus"),
+                "rm6_dir",
+                "demos",
+                "premade_run_directories",
+            )
+        )
+        return expt.setup_run_directory(
+            surface_forcing=surface_forcing,
+            overwrite=overwrite,
+            with_tides=with_tides,
+            boundaries=boundaries,
+            premade_rundir_path_arg=premade_rundir_path_arg,
+        )
+
     def export_files(self, output_folder):
         """
         Export all files from the temp_storage directory to the output_folder.
