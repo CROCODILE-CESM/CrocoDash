@@ -82,7 +82,6 @@ class GridGen:
 
     def subset_global_hgrid(
         self,
-        use_pre_generated_topo = None,
         longitude_extent = None,
         latitude_extent = None,
         path="/glade/work/fredc/cesm/grid/MOM6/tx1_12v1/gridgen/ocean_hgrid_trimmed.nc",
@@ -117,7 +116,6 @@ class GridGen:
                     ds_nwa = ds_nwa.isel(nxp=slice(I_llc[0], I_urc[0] + 1)).isel(
                         nyp=slice(J_llc[0], J_urc[0] + 1)
                     )
-                    ds_nwa.load()
                     return ds_nwa
             except:
                 raise FileNotFoundError(
@@ -161,7 +159,21 @@ class GridGen:
                 )
             )
         try:
-            dsg_topo = xr.open_dataset(topo_path)
+            with xr.open_dataset(topo_path, chunks={'nx': 1000, 'ny': 1000}) as dsg_topo:
+                I_llc, J_llc = I_llc[0], J_llc[0]
+                I_urc, J_urc = I_urc[0], J_urc[0]
+                i1 = I_llc // 2
+                j1 = J_llc // 2
+                nx = (I_urc - I_llc) // 2
+                ny = (J_urc - J_llc) // 2
+                i2 = i1 + nx
+                j2 = j1 + ny
+                topo = (
+                    dsg_topo["D_interp_L1.0_C1.0"]
+                    .isel(lonh=slice(i1, i2))
+                    .isel(lath=slice(j1, j2))
+                )
+                self.topo = topo.to_dataset(name = "depth")
         except:
             raise FileNotFoundError(
                 "Global Topo not found. We looked here {}. I would instead use the create_rectangular_hgrid method to create a new grid, or pass in a path with 'path='".format(
@@ -170,21 +182,8 @@ class GridGen:
             )
 
         # Mask and Topo files are on the model grid, which is a division of 2 of the supergrid in each dimension
-        I_llc, J_llc = I_llc[0], J_llc[0]
-        I_urc, J_urc = I_urc[0], J_urc[0]
-        i1 = I_llc // 2
-        j1 = J_llc // 2
-        nx = (I_urc - I_llc) // 2
-        ny = (J_urc - J_llc) // 2
-        i2 = i1 + nx
-        j2 = j1 + ny
-        topo = (
-            dsg_topo["D_interp_L1.0_C1.0"]
-            .isel(lonh=slice(i1, i2))
-            .isel(lath=slice(j1, j2))
-        )
-        dsg_topo.close()
-        self.topo = topo.to_dataset(name = "depth")
+
+        
         return self.topo
 
     def create_rectangular_hgrid(self, longitude_extent, latitude_extent, resolution):
@@ -218,14 +217,14 @@ class GridGen:
         self.hgrid = hgrid
         return hgrid
 
-    def create_vgrid(self, number_vertical_layers, layer_thickness_ratio, depth):
+    def create_vgrid(self, number_vertical_layers, layer_thickness_ratio, depth, minimum_depth):
         """
         Generates a vertical grid based on the ``number_vertical_layers``, the ratio
         of largest to smallest layer thickness (``layer_thickness_ratio``) and the
         total ``depth`` parameters.
         (All these parameters are specified at the class level.)
         """
-        expt = rm6.experiment.create_empty(number_vertical_layers=number_vertical_layers, layer_thickness_ratio=layer_thickness_ratio, depth=depth, mom_input_dir=Path(self.temp_storage))
+        expt = rm6.experiment.create_empty(number_vertical_layers=number_vertical_layers, layer_thickness_ratio=layer_thickness_ratio, depth=depth, minimum_depth=minimum_depth, mom_input_dir=Path(self.temp_storage))
         vcoord = expt._make_vgrid()
 
         self.vgrid = vcoord

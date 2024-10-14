@@ -7,13 +7,22 @@
 There's a few different motivations. Since we have some, almost, "NCAR-specific" things, we don't want to put those into the *independent* package, RM6. In the spirit of that, Ashley developed an additional module/package called regional-casegen to setup the CESM side of things that takes in input from the RM6 workflow. Then, we needed to incorporate the new way of gathering grids. This resulted in the idea of a framework to use all the modules in this workflow. Having an overall umbrella that can work with multiple packages without fiddling with RM6 is an attractive proposition.
 
 ## Description: 
-The framework here is called Crocodile Regional Ruckus (CRR). It, currently, holds four modules grid_gen, boundary_conditions, RM6, and regional-casegen. It's a lightweight package that ties together each part of the process into one package. One feature is the idea of wrapping RM6: A large part of the code is wrapping RM6. The major difference between RM6 and CRR is that CRR brings in the NCAR and derecho specific dependencies. CRR also uses explicit function definitions, so every function is completely standalone. This is a style change from regional mom6, which relies heavily on variables defined in the class object. The other feature is they can use just CRR to explicity call a function or two they require. See a visualization: https://drive.google.com/file/d/1Y1FQnT741pcLVVOOl5qS1JphsuiXnVLv/view?usp=sharing
+The framework here is called Crocodile Regional Ruckus (CRR). The major difference between RM6 and CRR is that CRR brings in the NCAR and derecho specific dependencies. It, currently, holds four modules grid_gen, boundary_conditions (not developed), RM6, and regional-casegen. 
 
-Based on what style the user prefers, they can use RM6 to work through a workflow of setting up a regional case with CRR function calls at either end for grid generation and cesm setup
+It's a lightweight package that ties together each part of the NCAR/Derecho process into one package. There's two avenues of development:
+
+1. (Decided to table for now) One avenue is the idea of wrapping RM6. A large part of the code is wrapping RM6. Two reasons to do that, CRR uses explicit function definitions, so every function is completely standalone. This is a style change from regional mom6, which relies heavily on variables defined in the class object. The other part of that is users can use just CRR to explicity call a function or two they require. See a visualization: https://drive.google.com/file/d/1Y1FQnT741pcLVVOOl5qS1JphsuiXnVLv/view?usp=sharing
+
+2. (Current development) The second avenue is instead of having CRR wrap RM6, have it be *adjacent* to RM6. Users would call CRR grid_gen and regional_casegen functions as well as RM6 functions directly. This requires the least additional code and keeps up development in a sane space. 
 
 
 
 ## Getting Familiar (Installation): 
-Going with this flow, there are two demos to get used to the CRR. One is a "minimal_demo" that uses CRR for grid generation and regional casegen, but still majority uses RM6 experiment. It copies almost directly from the RM6 demo to show how little of a change it can be. The other demo is the other extreme and is a "with_CRR" demo that uses CRR for everything. That still means a majority use of RM6, but just under the hood. The idea with this demo is to show that any of the functions in RM6 can be swapped out incase that's all we need. 
+Going with this flow, there are two demos (one for each avenue) to get used to the CRR. 
 
-Since CRR is derecho specific, we can add it to the python module search path from my dir and just use it. It's shown in the demo. OR you can clone it with git clone --recurse-submodules [link]. For the environment, on derecho, this path can work: /glade/work/manishrv/conda-envs/vroom_clean_env
+1. One is a "minimal_demo" that uses CRR for grid generation and regional casegen, but still majority uses RM6 experiment. It copies almost directly from the RM6 demo to show how little of a change it can be. This is the one that is most strongly supported.
+
+2. The other demo is the other extreme and is a "with_CRR" demo that uses CRR for everything. That still means a majority use of RM6, but just under the hood. The idea with this demo is to show that any of the functions in RM6 can be swapped out incase that's all we need. 
+
+Installation: 
+Since CRR is derecho specific, we can add it to the python module search path from my dir and just use it. It's shown in the demo. OR you can clone it with git clone --recurse-submodules [link]. For the environment, on derecho, this path can work: /glade/work/manishrv/conda-envs/vroom_clean_env. Otherwise, stay tuned on how to install the package.
