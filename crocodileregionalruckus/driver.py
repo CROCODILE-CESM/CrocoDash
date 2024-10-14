@@ -13,6 +13,7 @@ import subprocess
 from .rm6_dir import regional_mom6 as rm6
 import shutil
 import importlib
+import sys
 
 
 class crr_driver:
@@ -323,12 +324,12 @@ class crr_driver:
                 "premade_run_directories",
             )
         )
+        sys.modules["regional_mom6"] = rm6
         return expt.setup_run_directory(
             surface_forcing=surface_forcing,
             overwrite=overwrite,
             with_tides=with_tides,
             boundaries=boundaries,
-            premade_rundir_path_arg=premade_rundir_path_arg,
         )
 
     def export_files(self, output_folder):

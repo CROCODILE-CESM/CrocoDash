@@ -13,7 +13,7 @@ def test_setup_run_dir():
     hgrid = grid_obj.create_rectangular_hgrid(
         longitude_extent, latitude_extent, resolution
     )
-    vgrid = grid_obj.create_vgrid(75, 10, 5)
+    vgrid = grid_obj.create_vgrid(75, 10, 4500, minimum_depth=5)
     date_range = ["2020-01-01 00:00:00", "2020-01-02 00:00:00"]
     mom_input_dir = Path("mom_input")
     mom_run_dir = Path("mom_run")
