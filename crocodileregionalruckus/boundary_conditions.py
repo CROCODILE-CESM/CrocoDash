@@ -2,7 +2,7 @@ import logging
 
 bc_logger = logging.getLogger(__name__)
 from pathlib import Path
-from .rm6_dir import regional_mom6 as rm6
+from .rm6 import regional_mom6 as rm6
 import os
 import shutil
 import xarray as xr

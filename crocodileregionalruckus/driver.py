@@ -10,7 +10,7 @@ from .regional_casegen import cesm_tools as rcg_ct
 import os
 from pathlib import Path
 import subprocess
-from .rm6_dir import regional_mom6 as rm6
+from .rm6 import regional_mom6 as rm6
 import shutil
 import importlib
 import sys

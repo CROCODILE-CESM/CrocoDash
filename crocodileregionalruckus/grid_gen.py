@@ -5,7 +5,7 @@ import xesmf as xe
 from scipy.spatial import cKDTree
 from scipy.ndimage import label
 import shutil
-from .rm6_dir import regional_mom6 as rm6
+from .rm6 import regional_mom6 as rm6
 import os
 from crocodileregionalruckus.utils import export_dataset
 from pathlib import Path

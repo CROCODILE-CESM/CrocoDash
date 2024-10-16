@@ -1,0 +1,14 @@
+name: crr
+
+channels:
+  - conda-forge
+  - anaconda
+  
+dependencies:
+  - esmpy
+  - numpy<2.0.0
+  - ipykernel
+  - matplotlib
+  - pip
+  - pip:
+    - -e ./crocodileregionalruckus/rm6/
