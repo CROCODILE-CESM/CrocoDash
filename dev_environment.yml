@@ -1,4 +1,4 @@
-name: crr
+name: crr_dev
 
 channels:
   - conda-forge
@@ -11,8 +11,8 @@ dependencies:
   - matplotlib
   - pytest
   - sphinx
-  - myst_parser # RM6 Sphinx Extension
-  - nbsphinx # RM6 Sphinx Extension
   - pip
   - pip:
     - -e ./crocodileregionalruckus/rm6/
+    - myst_parser
+    - nbsphinx
