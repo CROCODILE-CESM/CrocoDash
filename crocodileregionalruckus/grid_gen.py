@@ -9,7 +9,10 @@ from .rm6 import regional_mom6 as rm6
 import os
 from crocodileregionalruckus.utils import export_dataset
 from pathlib import Path
-
+import logging
+import sys
+from .utils import setup_logger
+gridgen_logger = setup_logger(__name__)
 
 class GridGen:
     """
@@ -75,7 +78,7 @@ class GridGen:
             try:
                 shutil.rmtree(self.temp_storage)
             except:
-                print("Error cleaning up CRR grid_gen temp storage directory.")
+                gridgen_logger.warning("Error cleaning up CRR grid_gen temp storage directory.")
 
     def subset_global_hgrid(
         self,
@@ -192,6 +195,42 @@ class GridGen:
 
         return self.topo
 
+    def verify_and_modify_read_vgrid(self,path_to_ds):
+        """
+        Verify the vertical grid of the dataset (Check if we have zl). We need the midpoint of the thickness to regrid the initial condition
+        
+        Parameters
+        ----------
+        path_to_ds : str
+            Path to the dataset.
+        Returns
+        -------
+        dataset: str
+            The dataset with the adjusted or not vertical grid.
+        """
+        need_to_add_zl = False
+        vgrid = xr.open_dataset(path_to_ds)
+        if 'zl' not in vgrid:
+            gridgen_logger.info(f"Dataset {path_to_ds} does not contain zl. We need it to regrid the initial condition! I can add it based on dz!")
+            need_to_add_zl = True
+        else:
+            gridgen_logger.info(f"Dataset {path_to_ds} contains zl.")
+        if 'zi' not in vgrid:
+            gridgen_logger.warning(f"Dataset {path_to_ds} does not contain zi. Make sure to change ALE_COORDINATE_CONFIG to what your vertical coordinate is called...")
+        
+        
+        if need_to_add_zl:
+            if 'dz' in vgrid:
+                dz = vgrid['dz'].values
+                zl = (dz.cumsum() - dz / 2)
+                vgrid['zl'] = xr.DataArray(zl, dims=['z'], attrs={'long_name': 'Layer midpoints', 'units': 'm'})
+                gridgen_logger.info(f"Added zl to vgrid. Make sure to save this before reading into regional mom!")
+            else:
+                gridgen_logger.warning("Dataset does not contain dz. Cannot add zl without dz in this code,which means regional mom6 won't be able to regrid the initial condition. Try adding it yourself")
+        return vgrid
+
+
+
     def create_rectangular_hgrid(self, longitude_extent, latitude_extent, resolution):
         """
         Set up a horizontal grid based on user's specification of the domain.
@@ -248,6 +287,7 @@ class GridGen:
 
         self.vgrid = vcoord
         return vcoord
+
 
     def mask_disconnected_ocean_areas(
         self, hgrid, name_x_dim, name_y_dim, topo, lat_pt, lon_pt
@@ -362,7 +402,7 @@ class GridGen:
             elif item.is_dir():
                 shutil.copytree(item, output_dir / item.name, dirs_exist_ok=True)
 
-        print(f"All files have been exported to {output_folder}")
+        gridgen_logger.info(f"All files have been exported to {output_folder}")
 
 
 def spherical2cartesian(lon, lat):
