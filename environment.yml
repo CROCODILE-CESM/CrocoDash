@@ -1,4 +1,4 @@
-name: crr_dev
+name: crr
 
 channels:
   - conda-forge
