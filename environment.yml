@@ -5,10 +5,11 @@ channels:
   - anaconda
   
 dependencies:
-  - esmpy
-  - numpy<2.0.0
-  - ipykernel
-  - matplotlib
-  - pip
+  - python>=3.12.7,<3.13.0
+  - esmpy>=8.6.1,<8.7.0
+  - numpy>=1.2.6.4,<1.27
+  - ipykernel>=6.29.5,<6.30.0
+  - matplotlib>=3.9.2,<3.10
+  - pip>=24.2,<24.3
   - pip:
     - -e ./crocodileregionalruckus/rm6/
