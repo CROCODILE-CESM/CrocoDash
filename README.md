@@ -18,11 +18,17 @@ It's a lightweight package that ties together each part of the NCAR/Derecho proc
 
 
 ## Getting Familiar (Installation): 
+
+Installation:
+1. The first step is cloning *WITH* the submodules:
+`git clone --recurse-submodules git@github.com:CROCODILE-CESM/crocodile-regional-ruckus.git`
+2. Install the environment (which we fail if the submodules aren't installed):
+`mamba env create -f environment.yml`
+3. Activate the environment:
+`mamba activate crr`
+
 Going with this flow, there are two demos (one for each avenue) to get used to the CRR. 
 
 1. One is a "minimal_demo" that uses CRR for grid generation and regional casegen, but still majority uses RM6 experiment. It copies almost directly from the RM6 demo to show how little of a change it can be. This is the one that is most strongly supported.
 
 2. The other demo is the other extreme and is a "with_CRR" demo that uses CRR for everything. That still means a majority use of RM6, but just under the hood. The idea with this demo is to show that any of the functions in RM6 can be swapped out incase that's all we need. 
-
-Installation: 
-Since CRR is derecho specific, we can add it to the python module search path from my dir and just use it. It's shown in the demo. OR you can clone it with git clone --recurse-submodules [link]. For the environment, on derecho, this path can work: /glade/work/manishrv/conda-envs/vroom_clean_env. Otherwise, stay tuned on how to install the package.
