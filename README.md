@@ -21,8 +21,8 @@ It's a lightweight package that ties together each part of the NCAR/Derecho proc
 
 Installation:
 1. The first step is cloning *WITH* the submodules:
-`git clone --recurse-submodules [link]`
-2. Install the environment (which we fail in the submodules aren't installed):
+`git clone --recurse-submodules git@github.com:CROCODILE-CESM/crocodile-regional-ruckus.git`
+2. Install the environment (which we fail if the submodules aren't installed):
 `mamba env create -f environment.yml`
 3. Activate the environment:
 `mamba activate crr`
