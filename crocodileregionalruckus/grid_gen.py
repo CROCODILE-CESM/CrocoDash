@@ -229,9 +229,17 @@ class GridGen:
         if need_to_add_zl:
             if "dz" in vgrid:
                 dz = vgrid["dz"].values
+                zi = dz.cumsum()
+                zi = np.insert(zi, 0, 0.0)
+                vgrid["zi"] = xr.DataArray(
+                    zi, dims=["zi"], attrs={"long_name": "Layer interfaces", "units": "m"}
+                )
+                gridgen_logger.info(
+                    f"Added zi to vgrid. Make sure to save this before reading into regional mom!"
+                )
                 zl = dz.cumsum() - dz / 2
                 vgrid["zl"] = xr.DataArray(
-                    zl, dims=["z"], attrs={"long_name": "Layer midpoints", "units": "m"}
+                    zl, dims=["zl"], attrs={"long_name": "Layer midpoints", "units": "m"}
                 )
                 gridgen_logger.info(
                     f"Added zl to vgrid. Make sure to save this before reading into regional mom!"
