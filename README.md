@@ -32,3 +32,8 @@ Going with this flow, there are two demos (one for each avenue) to get used to t
 1. One is a "minimal_demo" that uses CRR for grid generation and regional casegen, but still majority uses RM6 experiment. It copies almost directly from the RM6 demo to show how little of a change it can be. This is the one that is most strongly supported.
 
 2. The other demo is the other extreme and is a "with_CRR" demo that uses CRR for everything. That still means a majority use of RM6, but just under the hood. The idea with this demo is to show that any of the functions in RM6 can be swapped out incase that's all we need. 
+
+## Documentation: 
+
+Check out our documentation in the docs/ folder. When it is published, we'll add a link here!
+
