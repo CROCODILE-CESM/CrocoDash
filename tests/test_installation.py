@@ -11,7 +11,7 @@ def test_crr_import(tmp_path):
 
     crr_driver_obj = crr.driver.crr_driver()
     crr_driver_obj.setup_directories(mom_input_dir=tmp_path/"mom_input", mom_run_dir=tmp_path/"mom_run")
-    assert True
+    assert crr_driver_obj is not None
 
 def test_rm6_import():
     """
