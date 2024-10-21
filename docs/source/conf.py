@@ -8,7 +8,7 @@ sys.path.insert(0, os.path.abspath('../..'))
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = 'crocodile_regional_ruckus'
+project = 'Crocodile Regional Ruckus'
 copyright = '2024, CROCODILE'
 author = 'CROCODILE'
 
