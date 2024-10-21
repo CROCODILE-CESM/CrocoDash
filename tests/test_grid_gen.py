@@ -146,6 +146,7 @@ def test_fred_subset_hgrid():
     assert grid is not None
     assert grid_obj.hgrid is not None
 
+
 def test_fred_subset_topo():
     # Define the grid
     assert True
@@ -167,8 +168,17 @@ def test_rm6_subset_topo():
     bathymetry_path = (
         "/glade/u/home/manishrv/manish_scratch_symlink/inputs_rm6/gebco/GEBCO_2024.nc"
     )
-    topo = grid_obj.setup_bathymetry(input_dir = Path(""),longitude_extent=longitude_extent, latitude_extent = latitude_extent, minimum_depth = 25,  bathymetry_path = bathymetry_path, longitude_coordinate_name="lon", latitude_coordinate_name="lat", vertical_coordinate_name="elevation", hgrid = hgrid)
-
+    topo = grid_obj.setup_bathymetry(
+        input_dir=Path(""),
+        longitude_extent=longitude_extent,
+        latitude_extent=latitude_extent,
+        minimum_depth=25,
+        bathymetry_path=bathymetry_path,
+        longitude_coordinate_name="lon",
+        latitude_coordinate_name="lat",
+        vertical_coordinate_name="elevation",
+        hgrid=hgrid,
+    )
 
     plt.figure(dpi=250)
     plt.imshow(topo.depth[0], origin="lower", interpolation="nearest")
@@ -227,6 +237,14 @@ def test_wrap_rm6_setup_bathymetry_in_gridgen():
     bathymetry_path = (
         "/glade/u/home/manishrv/manish_scratch_symlink/inputs_rm6/gebco/GEBCO_2024.nc"
     )
-    grid_obj.setup_bathymetry(input_dir = Path(""),longitude_extent=longitude_extent, latitude_extent = latitude_extent, minimum_depth = 25,  bathymetry_path = bathymetry_path, longitude_coordinate_name="lon", latitude_coordinate_name="lat", vertical_coordinate_name="elevation", hgrid = hgrid)
-
-
+    grid_obj.setup_bathymetry(
+        input_dir=Path(""),
+        longitude_extent=longitude_extent,
+        latitude_extent=latitude_extent,
+        minimum_depth=25,
+        bathymetry_path=bathymetry_path,
+        longitude_coordinate_name="lon",
+        latitude_coordinate_name="lat",
+        vertical_coordinate_name="elevation",
+        hgrid=hgrid,
+    )

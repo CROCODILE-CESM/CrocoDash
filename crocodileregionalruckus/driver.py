@@ -14,6 +14,7 @@ from .rm6 import regional_mom6 as rm6
 import shutil
 import importlib
 import sys
+import glob
 
 
 class crr_driver:
@@ -41,6 +42,10 @@ class crr_driver:
         tidal_constituents=["M2"],
         expt_name=None,
     ):
+        """
+        This init function requires no arguments. It sets up the experiment object with default values. The only reason to have these arguments is for easy storage.
+        This is just a style change from Regional MOM6, where the experiment object takes most arguments and doesn't ask for them at function calls.
+        """
         # ## Set up the experiment with no config file
         ## in case list was given, convert to tuples
         self.grid_gen_obj = grid_gen.GridGen()
@@ -48,7 +53,7 @@ class crr_driver:
             unsupported_boundary_conditions.BoundaryConditions()
         )  # Not Implemented Yet
         self.rcg_obj = rcg_ct.RegionalCaseGen()
-        self.og_mom6 = (
+        self.empty_expt_obj = (
             rm6.experiment.create_empty(  # Takes the place of boundary_conditions
                 latitude_extent=latitude_extent,
                 longitude_extent=longitude_extent,
@@ -67,10 +72,6 @@ class crr_driver:
                 hgrid_type=hgrid_type,
             )
         )
-        """
-        This init function requires no arguments. It sets up the experiment object with default values. The only reason to have these arguments is for easy storage. 
-        This is just a style change from Regional MOM6, where the experiment object takes most arguments and doesn't ask for them at function calls.
-        """
 
         self.expt_name = expt_name
         self.tidal_constituents = tidal_constituents
@@ -108,52 +109,29 @@ class crr_driver:
         raise ValueError("Not implemented yet")
 
     @classmethod
-    def load_experiment(self, config_file_path):
-        raise ValueError("Not implemented yet")
+    def load_experiment_from_config(
+        self, config_file_path, rearrange_files_to_expt_format=True
+    ):
         print("Reading from config file....")
         with open(config_file_path, "r") as f:
             config_dict = json.load(f)
 
-        print("Creating Empty Driver Object....")
-        expt = self()
-
-        print("Setting Default Variables.....")
-        expt.expt_name = config_dict["name"]
-        try:
-            expt.longitude_extent = tuple(config_dict["longitude_extent"])
-            expt.latitude_extent = tuple(config_dict["latitude_extent"])
-        except:
-            expt.longitude_extent = None
-            expt.latitude_extent = None
-        try:
-            expt.date_range = config_dict["date_range"]
-            expt.date_range[0] = dt.datetime.strptime(expt.date_range[0], "%Y-%m-%d")
-            expt.date_range[1] = dt.datetime.strptime(expt.date_range[1], "%Y-%m-%d")
-        except:
-            expt.date_range = None
-        expt.mom_run_dir = Path(config_dict["run_dir"])
-        expt.mom_input_dir = Path(config_dict["input_dir"])
-        expt.toolpath_dir = Path(config_dict["toolpath_dir"])
-        expt.resolution = config_dict["resolution"]
-        expt.number_vertical_layers = config_dict["number_vertical_layers"]
-        expt.layer_thickness_ratio = config_dict["layer_thickness_ratio"]
-        expt.depth = config_dict["depth"]
-        expt.grid_type = config_dict["grid_type"]
-        expt.repeat_year_forcing = config_dict["repeat_year_forcing"]
-        expt.ocean_mask = None
-        expt.layout = None
-        expt.min_depth = config_dict["min_depth"]
-        expt.tidal_constituents = config_dict["tidal_constituents"]
-
         print("Checking for hgrid and vgrid....")
         if os.path.exists(config_dict["hgrid"]):
             print("Found")
+            # Move to mom_input_dir
+            if rearrange_files_to_expt_format:
+                shutil.copy(config_dict["hgrid"], expt.mom_input_dir / "hgrid.nc")
             expt.hgrid = xr.open_dataset(config_dict["hgrid"])
+
         else:
             print("Hgrid not found, call _make_hgrid when you're ready.")
             expt.hgrid = None
         if os.path.exists(config_dict["vgrid"]):
             print("Found")
+            # Move to mom_input_dir
+            if rearrange_files_to_expt_format:
+                shutil.copy(config_dict["vgrid"], expt.mom_input_dir / "vcoord.nc")
             expt.vgrid = xr.open_dataset(config_dict["vgrid"])
         else:
             print("Vgrid not found, call _make_vgrid when ready")
@@ -164,6 +142,11 @@ class crr_driver:
             config_dict["bathymetry"]
         ):
             print("Found")
+            # Move to mom_input_dir
+            if rearrange_files_to_expt_format:
+                shutil.copy(
+                    config_dict["bathymetry"], expt.mom_input_dir / "bathymetry.nc"
+                )
             expt.bathymetry = xr.open_dataset(config_dict["bathymetry"])
         else:
             print(
@@ -178,7 +161,10 @@ class crr_driver:
                 print(
                     "At least one ocean state file not found. Please provide ocean state files, or call setup_ocean_state_boundaries method to set up ocean state."
                 )
-                break
+            else:
+                # Move to mom_input_dir
+                if rearrange_files_to_expt_format:
+                    shutil.copy(path, os.path.basename(path))
         if found:
             print("Found")
         found = True
@@ -190,6 +176,11 @@ class crr_driver:
                     "At least one initial condition file not found. Please provide initial condition files, or call setup_initial_condition method to set up initial condition."
                 )
                 break
+            else:
+                # Move to mom_input_dir
+                if rearrange_files_to_expt_format:
+                    shutil.copy(path, os.path.basename(path))
+
         if found:
             print("Found")
         found = True
@@ -201,9 +192,16 @@ class crr_driver:
                     "At least one tides file not found. If you would like tides, call setup_tides_boundaries method to set up tides"
                 )
                 break
+            else:
+                # Move to mom_input_dir
+                if rearrange_files_to_expt_format:
+                    shutil.copy(path, os.path.basename(path))
         if found:
             print("Found")
         found = True
+
+        print("Creating Expt Object....")
+        expt = rm6.experiment.load_experiment(config_dict)
 
         return expt
 
@@ -225,69 +223,108 @@ class crr_driver:
     def __str__(self) -> str:
         return json.dumps(self.write_config_file(export=False, quiet=True), indent=4)
 
-    def write_config_file(self, path=None, export=True, quiet=False):
+    @classmethod
+    def write_config_file(self, expt, path=None, export=True, quiet=False):
         """
-        Write a configuration file for the experiment. This is a simple json file
+        Write a configuration file for the experiment. This takes in the expt variable and writes a config file. This is a simple json file
         that contains the expirment object information to allow for reproducibility, to pick up where a user left off, and
         to make information about the expirement readable.
         """
-        raise ValueError("Not implemented yet")
         if not quiet:
-            print("Writing Config File.....")
-        ## check if files exist
-        vgrid_path = None
-        hgrid_path = None
-        if os.path.exists(self.mom_input_dir / "vcoord.nc"):
-            vgrid_path = self.mom_input_dir / "vcoord.nc"
-        if os.path.exists(self.mom_input_dir / "hgrid.nc"):
-            hgrid_path = self.mom_input_dir / "hgrid.nc"
+            driver_logger.info("Writing Config File.....")
 
-        try:
-            date_range = [
-                self.date_range[0].strftime("%Y-%m-%d"),
-                self.date_range[1].strftime("%Y-%m-%d"),
-            ]
-        except:
-            date_range = None
-        config_dict = {
-            "name": self.expt_name,
-            "date_range": date_range,
-            "latitude_extent": self.latitude_extent,
-            "longitude_extent": self.longitude_extent,
-            "run_dir": str(self.mom_run_dir),
-            "input_dir": str(self.mom_input_dir),
-            "toolpath_dir": str(self.toolpath_dir),
-            "resolution": self.resolution,
-            "number_vertical_layers": self.number_vertical_layers,
-            "layer_thickness_ratio": self.layer_thickness_ratio,
-            "depth": self.depth,
-            "grid_type": self.grid_type,
-            "repeat_year_forcing": self.repeat_year_forcing,
-            "ocean_mask": self.ocean_mask,
-            "layout": self.layout,
-            "min_depth": self.min_depth,
-            "vgrid": str(vgrid_path),
-            "hgrid": str(hgrid_path),
-            "bathymetry": self.bathymetry_property,
-            "ocean_state": self.ocean_state_boundaries,
-            "tides": self.tides_boundaries,
-            "initial_conditions": self.initial_condition,
-            "tidal_constituents": self.tidal_constituents,
-        }
+        rm6_config = expt.write_config_file(export=False, quiet=True)
+
+        ## To Add Specific Path Things to the config file:
+
+        # MOM dirs
+        rm6_config["mom_input_dir"] = str(expt.mom_input_dir)
+        rm6_config["mom_run_dir"] = str(expt.mom_run_dir)
+
+        driver_logger.info(
+            "Searching {} for bathymetry, hgrid, vgrid".format(expt.mom_input_dir)
+        )
+        # Bathymetry
+        if os.path.join(expt.mom_input_dir, "bathymetry.nc"):
+            rm6_config["bathymetry"] = str(expt.mom_input_dir / "bathymetry.nc")
+        else:
+            driver_logger.info(
+                "Couldn't find bathymetry file in {}".format(expt.mom_input_dir)
+            )
+
+        # Hgrid
+        if os.path.join(expt.mom_input_dir, "hgrid.nc"):
+            rm6_config["hgrid"] = str(expt.mom_input_dir / "hgrid.nc")
+        else:
+            driver_logger.info(
+                "Couldn't find hgrid file in {}".format(expt.mom_input_dir)
+            )
+
+        # Vgrid
+        if os.path.join(expt.mom_input_dir, "vgrid.nc"):
+            rm6_config["vgrid"] = str(expt.mom_input_dir / "vcoord.nc")
+        else:
+            driver_logger.info(
+                "Couldn't find vgrid file in {}".format(expt.mom_input_dir)
+            )
+
+        # Initial Conditions
+        driver_logger.info(
+            "Searching {} for initial conditions".format(expt.mom_input_dir)
+        )
+        initial_conditions_files = self.search_for_files(
+            [expt.mom_input_dir, expt.mom_input_dir / "forcing"], ["init_*.nc"]
+        )
+        if type(initial_conditions_files) == list:
+            rm6_config["initial_conditions"] = initial_conditions_files
+        else:
+            driver_logger.info(
+                "Couldn't find initial conditions in {}".format(expt.mom_input_dir)
+            )
+
+        # Ocean State Files
+        driver_logger.info(
+            "Searching {} for ocean_state conditions".format(expt.mom_input_dir)
+        )
+        ocean_state_conditions_files = self.search_for_files(
+            [expt.mom_input_dir, expt.mom_input_dir / "forcing"],
+            [
+                "forcing_*",
+                "weights/bi*",
+            ],
+        )
+        if type(ocean_state_conditions_files) == list:
+            rm6_config["ocean_state_conditions"] = ocean_state_conditions_files
+        else:
+            driver_logger.info(
+                "Couldn't find ocean_state conditions in {}".format(expt.mom_input_dir)
+            )
+
+        # Tides Files
+        driver_logger.info("Searching {} for tides".format(expt.mom_input_dir))
+        tides_files = self.search_for_files(
+            [expt.mom_input_dir, expt.mom_input_dir / "forcing"],
+            ["regrid*", "tu_*", "tz_*"],
+        )
+        if type(tides_files) == list:
+            rm6_config["tides"] = tides_files
+        else:
+            driver_logger.info("Couldn't find tides in {}".format(expt.mom_input_dir))
+
         if export:
             if path is not None:
                 export_path = path
             else:
-                export_path = self.mom_run_dir / "rmom6_config.json"
+                export_path = self.mom_run_dir / "crr_config.json"
             with open(export_path, "w") as f:
                 json.dump(
-                    config_dict,
+                    rm6_config,
                     f,
                     indent=4,
                 )
         if not quiet:
-            print("Done.")
-        return config_dict
+            driver_logger.info("Done.")
+        return rm6_config
 
     def setup_run_directory(
         self,
@@ -352,3 +389,17 @@ class crr_driver:
                 shutil.copytree(item, output_dir / item.name)
 
         print(f"All files have been exported to {output_folder}")
+
+    def search_for_files(paths, patterns):
+        try:
+            all_files = []
+
+            for pattern in patterns:
+                for path in paths:
+                    all_files.extend(glob.glob(Path(path / pattern)))
+
+            if len(all_files) == 0:
+                return "No files found (or files misplaced from {})".format(paths)
+            return all_files
+        except:
+            return "No files found (or files misplaced from {})".format(paths)

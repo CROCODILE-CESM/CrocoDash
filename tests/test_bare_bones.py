@@ -187,5 +187,3 @@ class TestBasicWrapperFunctions:
             toolpath_dir="",
         )
         self.crr_driver_obj.setup_directories(run_dir, input_dir)
-
-   
