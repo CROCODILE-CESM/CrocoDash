@@ -120,27 +120,23 @@ class crr_driver:
         if os.path.exists(config_dict["hgrid"]):
             print("Found")
             # Move to mom_input_dir
-            if rearrange_files_to_expt_format:
-                shutil.copy(config_dict["hgrid"], Path(config_dict["mom_input_dir"]) / "hgrid.nc")
-            expt.hgrid = xr.open_dataset(config_dict["hgrid"])
+            if rearrange_files_to_expt_format and Path(config_dict["hgrid"]) != Path(config_dict["mom_input_dir"]) / "hgrid.nc":
+                shutil.copyfile(config_dict["hgrid"], Path(config_dict["mom_input_dir"]) / "hgrid.nc")
 
         else:
             print("Hgrid not found, call _make_hgrid when you're ready.")
-            expt.hgrid = None
         if os.path.exists(config_dict["vgrid"]):
             print("Found")
             # Move to mom_input_dir
-            if rearrange_files_to_expt_format:
-                shutil.copy(config_dict["vgrid"], Path(config_dict["mom_input_dir"]) / "vcoord.nc")
-            expt.vgrid = xr.open_dataset(config_dict["vgrid"])
+            if rearrange_files_to_expt_format and Path(config_dict["vgrid"]) != Path(config_dict["mom_input_dir"]) / "vcoord.nc":
+                shutil.copyfile(config_dict["vgrid"], Path(config_dict["mom_input_dir"]) / "vcoord.nc")
         else:
             print("Vgrid not found, call _make_vgrid when ready")
-            expt.vgrid = None
 
 
 
         print("Creating Expt Object....")
-        expt = rm6.experiment.load_experiment(config_dict)
+        expt = rm6.experiment.load_experiment_from_config(config_dict)
 
         print("Checking for bathymetry...")
         if config_dict["bathymetry"] is not None and os.path.exists(
@@ -148,7 +144,7 @@ class crr_driver:
         ):
             print("Found")
             # Move to mom_input_dir
-            if rearrange_files_to_expt_format:
+            if rearrange_files_to_expt_format and Path(config_dict["bathymetry"]) != Path(config_dict["mom_input_dir"]) / "bathymetry.nc":
                 shutil.copy(
                     config_dict["bathymetry"], expt.mom_input_dir / "bathymetry.nc"
                 )
@@ -168,8 +164,8 @@ class crr_driver:
                 )
             else:
                 # Move to mom_input_dir
-                if rearrange_files_to_expt_format:
-                    shutil.copy(path, os.path.basename(path))
+                if rearrange_files_to_expt_format and Path(path) != Path(config_dict["mom_input_dir"])/ os.path.basename(path):
+                    shutil.copy(path, expt.mom_input_dir / os.path.basename(path))
         if found:
             print("Found")
         found = True
@@ -183,7 +179,7 @@ class crr_driver:
                 break
             else:
                 # Move to mom_input_dir
-                if rearrange_files_to_expt_format:
+                if rearrange_files_to_expt_format and Path(path) != Path(config_dict["mom_input_dir"])/ os.path.basename(path):
                     shutil.copy(path, os.path.basename(path))
 
         if found:
@@ -199,7 +195,7 @@ class crr_driver:
                 break
             else:
                 # Move to mom_input_dir
-                if rearrange_files_to_expt_format:
+                if rearrange_files_to_expt_format and Path(path) != Path(config_dict["mom_input_dir"])/ os.path.basename(path):
                     shutil.copy(path, os.path.basename(path))
         if found:
             print("Found")
