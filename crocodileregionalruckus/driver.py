@@ -1,6 +1,6 @@
-import logging
+from .utils import setup_logger
 
-driver_logger = logging.getLogger(__name__)
+driver_logger = setup_logger(__name__)
 import datetime as dt
 import xarray as xr
 import json
@@ -351,4 +351,4 @@ class crr_driver:
             elif item.is_dir():
                 shutil.copytree(item, output_dir / item.name)
 
-        print(f"All files have been exported to {output_folder}")
+        driver_logger.info(f"All files have been exported to {output_folder}")
