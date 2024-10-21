@@ -3,12 +3,12 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-crocodile_regional_ruckus documentation
+Crocodile Regional Ruckus Documentation
 =======================================
 
-Welcome to the Crocodile Regional Ruckus Documentation! This project is a companion/wrapper package to `Regional MOM6 <https://github.com/CROCODILE-CESM/regional-mom6>`. To get started, check out the pages below and then checkout our demos! They give you an idea on how we work with RM6!
+Welcome to the Crocodile Regional Ruckus Documentation! This project is a companion/wrapper package to `Regional MOM6 <https://github.com/CROCODILE-CESM/regional-mom6>`_. To get started, check out the pages below and then checkout our demos! They give you an idea on how we work with RM6.
 
-You can also check out the Regional MOM6 documentation for more support information about those functions `here <https://regional-mom6.readthedocs.io/en/latest/>`!
+You can also check out the Regional MOM6 documentation for more support information about those functions `here <https://regional-mom6.readthedocs.io/en/latest/>`_!
 
 .. toctree::
    :maxdepth: 2
@@ -17,3 +17,5 @@ You can also check out the Regional MOM6 documentation for more support informat
    installation
    grid_gen
    rcg
+   api-docs/modules
+   docs
