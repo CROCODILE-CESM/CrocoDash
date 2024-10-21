@@ -1,5 +1,5 @@
 import crocodileregionalruckus as crr
-from crocodileregionalruckus import grid_gen
+from crocodileregionalruckus import grid_gen, regional_casegen as rcg
 from crocodileregionalruckus.rm6 import regional_mom6 as rm6
 import pytest
 
@@ -23,8 +23,16 @@ def test_rm6_import():
 
 def test_grid_gen_import():
     """
-    This test confirms we can import crr driver, and generate a crr_driver object which includes grid_gen, regional_mom6, and regional_casegen objects.
+    This test confirms we can import grid_gen, and can call the functions inside
     """
 
     grid_gen_obj = grid_gen.GridGen()
     assert grid_gen_obj is not None
+
+def test_rcg_import():
+    """
+    This test confirms we can import grid_gen, and can call the functions inside
+    """
+
+    rcg_obj = rcg.RegionalCaseGen()
+    assert rcg_obj is not None
