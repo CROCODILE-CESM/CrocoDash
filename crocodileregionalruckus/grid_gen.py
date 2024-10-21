@@ -1,3 +1,5 @@
+from .utils import setup_logger
+gridgen_logger = setup_logger(__name__)
 import xarray as xr
 import numpy as np
 from .utils import *
@@ -75,7 +77,7 @@ class GridGen:
             try:
                 shutil.rmtree(self.temp_storage)
             except:
-                print("Error cleaning up CRR grid_gen temp storage directory.")
+                gridgen_logger.info("Error cleaning up CRR grid_gen temp storage directory.")
 
     def subset_global_hgrid(
         self,
@@ -362,7 +364,7 @@ class GridGen:
             elif item.is_dir():
                 shutil.copytree(item, output_dir / item.name, dirs_exist_ok=True)
 
-        print(f"All files have been exported to {output_folder}")
+        gridgen_logger.info(f"All files have been exported to {output_folder}")
 
 
 def spherical2cartesian(lon, lat):
