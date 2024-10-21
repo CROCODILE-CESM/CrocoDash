@@ -18,4 +18,5 @@ You can also check out the Regional MOM6 documentation for more support informat
    grid_gen
    rcg
    api-docs/modules
+   diagrams
    docs
