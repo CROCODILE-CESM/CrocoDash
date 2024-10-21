@@ -34,7 +34,12 @@ def test_write_config_file():
         toolpath_dir=Path(""),
         hgrid_type="from_file",  # This is how we incorporate the grid_gen files
         vgrid_type="from_file",
-        name=expt_name,
+        expt_name=expt_name,
     )
 
-    crr.driver.write_config_file(path="tests/test_config.json")
+    crr.driver.crr_driver.write_config_file(expt,path="/glade/u/home/manishrv/documents/nwa12_0.1/regional_mom_workflows/crr/tests/crr_config.json")
+
+
+def test_read_config_file():
+
+    expt = crr.driver.crr_driver.load_experiment_from_config("/glade/u/home/manishrv/documents/nwa12_0.1/regional_mom_workflows/crr/tests/crr_config.json")

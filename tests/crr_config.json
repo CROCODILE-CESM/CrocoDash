@@ -1,0 +1,47 @@
+{
+    "expt_name": "crr-sub-glob-fresh-hawaii",
+    "date_range": [
+        "2020-01-01 00:00:00",
+        "2020-02-01 00:00:00"
+    ],
+    "latitude_extent": [
+        15.996378786776582,
+        27.0576656349839
+    ],
+    "longitude_extent": [
+        -168.0,
+        -150.9975121397879
+    ],
+    "resolution": 0.05,
+    "number_vertical_layers": 75,
+    "layer_thickness_ratio": 10,
+    "depth": 4500,
+    "hgrid_type": "from_file",
+    "repeat_year_forcing": false,
+    "ocean_mask": null,
+    "layout": null,
+    "minimum_depth": 25,
+    "tidal_constituents": [
+        "M2"
+    ],
+    "mom_input_dir": "/glade/u/home/manishrv/documents/nwa12_0.1/mom_input/crr-sub-glob-fresh-hawaii",
+    "mom_run_dir": "/glade/u/home/manishrv/documents/nwa12_0.1/mom_run/crr-sub-glob-fresh-hawaii",
+    "bathymetry": "/glade/u/home/manishrv/documents/nwa12_0.1/mom_input/crr-sub-glob-fresh-hawaii/bathymetry.nc",
+    "hgrid": "/glade/u/home/manishrv/documents/nwa12_0.1/mom_input/crr-sub-glob-fresh-hawaii/hgrid.nc",
+    "vgrid": "/glade/u/home/manishrv/documents/nwa12_0.1/mom_input/crr-sub-glob-fresh-hawaii/vcoord.nc",
+    "initial_conditions": [
+        "/glade/u/home/manishrv/documents/nwa12_0.1/mom_input/crr-sub-glob-fresh-hawaii/init_vel.nc",
+        "/glade/u/home/manishrv/documents/nwa12_0.1/mom_input/crr-sub-glob-fresh-hawaii/init_eta.nc",
+        "/glade/u/home/manishrv/documents/nwa12_0.1/mom_input/crr-sub-glob-fresh-hawaii/init_tracers.nc"
+    ],
+    "ocean_state_conditions": [
+        "/glade/u/home/manishrv/documents/nwa12_0.1/mom_input/crr-sub-glob-fresh-hawaii/forcing_obc_segment_004.nc",
+        "/glade/u/home/manishrv/documents/nwa12_0.1/mom_input/crr-sub-glob-fresh-hawaii/forcing_obc_segment_003.nc",
+        "/glade/u/home/manishrv/documents/nwa12_0.1/mom_input/crr-sub-glob-fresh-hawaii/forcing_obc_segment_001.nc",
+        "/glade/u/home/manishrv/documents/nwa12_0.1/mom_input/crr-sub-glob-fresh-hawaii/forcing_obc_segment_002.nc",
+        "/glade/u/home/manishrv/documents/nwa12_0.1/mom_input/crr-sub-glob-fresh-hawaii/weights/bilinear_velocity_weights_east.nc",
+        "/glade/u/home/manishrv/documents/nwa12_0.1/mom_input/crr-sub-glob-fresh-hawaii/weights/bilinear_velocity_weights_north.nc",
+        "/glade/u/home/manishrv/documents/nwa12_0.1/mom_input/crr-sub-glob-fresh-hawaii/weights/bilinear_velocity_weights_west.nc",
+        "/glade/u/home/manishrv/documents/nwa12_0.1/mom_input/crr-sub-glob-fresh-hawaii/weights/bilinear_velocity_weights_south.nc"
+    ]
+}

@@ -121,7 +121,7 @@ class crr_driver:
             print("Found")
             # Move to mom_input_dir
             if rearrange_files_to_expt_format:
-                shutil.copy(config_dict["hgrid"], expt.mom_input_dir / "hgrid.nc")
+                shutil.copy(config_dict["hgrid"], Path(config_dict["mom_input_dir"]) / "hgrid.nc")
             expt.hgrid = xr.open_dataset(config_dict["hgrid"])
 
         else:
@@ -131,11 +131,16 @@ class crr_driver:
             print("Found")
             # Move to mom_input_dir
             if rearrange_files_to_expt_format:
-                shutil.copy(config_dict["vgrid"], expt.mom_input_dir / "vcoord.nc")
+                shutil.copy(config_dict["vgrid"], Path(config_dict["mom_input_dir"]) / "vcoord.nc")
             expt.vgrid = xr.open_dataset(config_dict["vgrid"])
         else:
             print("Vgrid not found, call _make_vgrid when ready")
             expt.vgrid = None
+
+
+
+        print("Creating Expt Object....")
+        expt = rm6.experiment.load_experiment(config_dict)
 
         print("Checking for bathymetry...")
         if config_dict["bathymetry"] is not None and os.path.exists(
@@ -200,8 +205,6 @@ class crr_driver:
             print("Found")
         found = True
 
-        print("Creating Expt Object....")
-        expt = rm6.experiment.load_experiment(config_dict)
 
         return expt
 
@@ -396,7 +399,7 @@ class crr_driver:
 
             for pattern in patterns:
                 for path in paths:
-                    all_files.extend(glob.glob(Path(path / pattern)))
+                    all_files.extend(glob.glob(str(path / pattern)))
 
             if len(all_files) == 0:
                 return "No files found (or files misplaced from {})".format(paths)
