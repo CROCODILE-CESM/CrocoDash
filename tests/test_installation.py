@@ -31,7 +31,7 @@ def test_grid_gen_import():
 
 def test_rcg_import():
     """
-    This test confirms we can import grid_gen, and can call the functions inside
+    This test confirms we can import rcg, and can call the functions inside
     """
 
     rcg_obj = rcg.RegionalCaseGen()
