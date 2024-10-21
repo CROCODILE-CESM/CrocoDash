@@ -1,5 +1,6 @@
 import crocodileregionalruckus as crr
-from crocodileregionalruckus import grid_gen, regional_casegen as rcg
+from crocodileregionalruckus import grid_gen
+from crocodileregionalruckus.regional_casegen import cesm_tools as rcg_ct
 from crocodileregionalruckus.rm6 import regional_mom6 as rm6
 import pytest
 
@@ -34,5 +35,5 @@ def test_rcg_import():
     This test confirms we can import rcg, and can call the functions inside
     """
 
-    rcg_obj = rcg.RegionalCaseGen()
+    rcg_obj = rcg_ct.RegionalCaseGen()
     assert rcg_obj is not None
