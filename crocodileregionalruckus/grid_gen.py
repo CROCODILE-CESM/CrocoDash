@@ -199,7 +199,7 @@ class GridGen:
 
         return self.topo
 
-    def verify_and_modify_read_vgrid(self, path_to_ds):
+    def verify_and_modify_read_vgrid(self, path_to_ds, thickness_name="dz"):
         """
         Verify the vertical grid of the dataset (Check if we have zl). We need the midpoint of the thickness to regrid the initial condition
 
@@ -227,8 +227,8 @@ class GridGen:
             )
 
         if need_to_add_zl:
-            if "dz" in vgrid:
-                dz = vgrid["dz"].values
+            if thickness_name in vgrid:
+                dz = vgrid[thickness_name].values
                 zi = dz.cumsum()
                 zi = np.insert(zi, 0, 0.0)
                 vgrid["zi"] = xr.DataArray(
@@ -246,7 +246,7 @@ class GridGen:
                 )
             else:
                 gridgen_logger.warning(
-                    "Dataset does not contain dz. Cannot add zl without dz in this code,which means regional mom6 won't be able to regrid the initial condition. Try adding it yourself"
+                    f"Dataset does not contain {thickness_name}. Cannot add zl without {thickness_name} in this code,which means regional mom6 won't be able to regrid the initial condition. Try adding it yourself"
                 )
         return vgrid
 
