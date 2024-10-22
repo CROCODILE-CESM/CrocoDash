@@ -110,98 +110,189 @@ class crr_driver:
 
     @classmethod
     def load_experiment_from_config(
-        self, config_file_path, rearrange_files_to_expt_format=True
+        self,
+        config_file_path,
+        rearrange_files_to_expt_format=True,
+        create_hgrid_and_vgrid=False,
     ):
-        print("Reading from config file....")
+        """
+        This reads from the config file and sets up an experiment in mom_input_dir and mom_run_dir. If the files are not in the mom_input_dir, they are copied there by default. THIS DELETES THE CURRENT FILES
+
+        Parameters
+        ----------
+        config_file_path : str
+            Path to the config file
+        rearrange_files_to_expt_format : bool, optional
+            If True, the files are moved to the mom_input_dir, by default True
+        create_hgrid_and_vgrid : bool, optional
+            If True, the hgrid and vgrid are created from the lat, long
+
+        Returns
+        -------
+        expt : rm6.experiment
+            The experiment object
+
+        """
+        driver_logger.info("Reading from config file....")
         with open(config_file_path, "r") as f:
             config_dict = json.load(f)
 
-        print("Checking for hgrid and vgrid....")
+        driver_logger.info("Creating Input and Run Dirs if not already....")
+        os.makedirs(config_dict["mom_input_dir"], exist_ok=True)
+        os.makedirs(config_dict["mom_run_dir"], exist_ok=True)
+
+        driver_logger.info("Checking for hgrid and vgrid....")
         if os.path.exists(config_dict["hgrid"]):
-            print("Found")
+            driver_logger.info("Found")
             # Move to mom_input_dir
-            if rearrange_files_to_expt_format and Path(config_dict["hgrid"]) != Path(config_dict["mom_input_dir"]) / "hgrid.nc":
-                shutil.copyfile(config_dict["hgrid"], Path(config_dict["mom_input_dir"]) / "hgrid.nc")
-
-        else:
-            print("Hgrid not found, call _make_hgrid when you're ready.")
-        if os.path.exists(config_dict["vgrid"]):
-            print("Found")
-            # Move to mom_input_dir
-            if rearrange_files_to_expt_format and Path(config_dict["vgrid"]) != Path(config_dict["mom_input_dir"]) / "vcoord.nc":
-                shutil.copyfile(config_dict["vgrid"], Path(config_dict["mom_input_dir"]) / "vcoord.nc")
-        else:
-            print("Vgrid not found, call _make_vgrid when ready")
-
-
-
-        print("Creating Expt Object....")
-        expt = rm6.experiment.load_experiment_from_config(config_dict)
-
-        print("Checking for bathymetry...")
-        if config_dict["bathymetry"] is not None and os.path.exists(
-            config_dict["bathymetry"]
-        ):
-            print("Found")
-            # Move to mom_input_dir
-            if rearrange_files_to_expt_format and Path(config_dict["bathymetry"]) != Path(config_dict["mom_input_dir"]) / "bathymetry.nc":
-                shutil.copy(
-                    config_dict["bathymetry"], expt.mom_input_dir / "bathymetry.nc"
+            if rearrange_files_to_expt_format:
+                self.replace_files_with_warnings(
+                    Path(config_dict["hgrid"]),
+                    Path(config_dict["mom_input_dir"]) / "hgrid.nc",
                 )
-            expt.bathymetry = xr.open_dataset(config_dict["bathymetry"])
         else:
-            print(
+            driver_logger.info("Hgrid not found, call _make_hgrid when you're ready.")
+
+        if os.path.exists(config_dict["vgrid"]):
+            driver_logger.info("Found")
+            # Move to mom_input_dir
+            if rearrange_files_to_expt_format:
+                self.replace_files_with_warnings(
+                    Path(config_dict["vgrid"]),
+                    Path(config_dict["mom_input_dir"]) / "vcoord.nc",
+                )
+
+        else:
+            driver_logger.info("Vgrid not found, call _make_vgrid when ready")
+
+        driver_logger.info("Creating Expt Object....")
+        expt = rm6.create_experiment_from_config(
+            config_file_path,
+            mom_input_folder=config_dict["mom_input_dir"],
+            mom_run_folder=config_dict["mom_run_dir"],
+            create_hgrid_and_vgrid=create_hgrid_and_vgrid,
+        )
+
+        driver_logger.info("Checking for bathymetry...")
+        if (
+            "bathymetry" in config_dict
+            and config_dict["bathymetry"] is not None
+            and os.path.exists(config_dict["bathymetry"])
+        ):
+            driver_logger.info("Found")
+            # Move to mom_input_dir
+            if rearrange_files_to_expt_format:
+                self.replace_files_with_warnings(
+                    Path(config_dict["bathymetry"]),
+                    Path(config_dict["mom_input_dir"]) / "bathymetry.nc",
+                )
+        else:
+            driver_logger.info(
                 "Bathymetry not found. Please provide bathymetry, or call setup_bathymetry method to set up bathymetry."
             )
 
-        print("Checking for ocean state files....")
-        found = True
-        for path in config_dict["ocean_state"]:
-            if not os.path.exists(path):
-                found = False
-                print(
-                    "At least one ocean state file not found. Please provide ocean state files, or call setup_ocean_state_boundaries method to set up ocean state."
-                )
-            else:
-                # Move to mom_input_dir
-                if rearrange_files_to_expt_format and Path(path) != Path(config_dict["mom_input_dir"])/ os.path.basename(path):
-                    shutil.copy(path, expt.mom_input_dir / os.path.basename(path))
-        if found:
-            print("Found")
-        found = True
-        print("Checking for initial condition files....")
-        for path in config_dict["initial_conditions"]:
-            if not os.path.exists(path):
-                found = False
-                print(
-                    "At least one initial condition file not found. Please provide initial condition files, or call setup_initial_condition method to set up initial condition."
-                )
-                break
-            else:
-                # Move to mom_input_dir
-                if rearrange_files_to_expt_format and Path(path) != Path(config_dict["mom_input_dir"])/ os.path.basename(path):
-                    shutil.copy(path, os.path.basename(path))
+        driver_logger.info("Checking for ocean state files....")
+        if "ocean_state" in config_dict and config_dict["ocean_state"] is not None:
 
-        if found:
-            print("Found")
-        found = True
-        print("Checking for tides files....")
-        for path in config_dict["tides"]:
-            if not os.path.exists(path):
-                found = False
-                print(
-                    "At least one tides file not found. If you would like tides, call setup_tides_boundaries method to set up tides"
-                )
-                break
-            else:
-                # Move to mom_input_dir
-                if rearrange_files_to_expt_format and Path(path) != Path(config_dict["mom_input_dir"])/ os.path.basename(path):
-                    shutil.copy(path, os.path.basename(path))
-        if found:
-            print("Found")
-        found = True
+            for path in config_dict["ocean_state"]:
+                if not os.path.exists(path):
+                    driver_logger.info(
+                        "At least one ocean state file not found. Please provide ocean state files, or call setup_ocean_state_boundaries method to set up ocean state."
+                    )
+                else:
+                    # Move to mom_input_dir
+                    driver_logger.info("Found at least one ocean state file.")
+                    if rearrange_files_to_expt_format:
+                        self.replace_files_with_warnings(
+                            Path(path),
+                            Path(config_dict["mom_input_dir"]) / os.path.basename(path),
+                        )
+        else:
+            driver_logger.info(
+                'Ocean state files not found. Please provide ocean state files (with key "ocean_state"), or call setup_ocean_state_boundaries method to set up ocean state.'
+            )
 
+        driver_logger.info("Checking for initial condition files....")
+        if (
+            "initial_conditions" in config_dict
+            and config_dict["initial_conditions"] is not None
+        ):
+            for path in config_dict["initial_conditions"]:
+                if not os.path.exists(path):
 
+                    driver_logger.info(
+                        "At least one initial condition file not found. Please provide initial condition files, or call setup_initial_condition method to set up initial condition."
+                    )
+                    break
+                else:
+                    driver_logger.info("Found at least one initial condition file.")
+                    # Move to mom_input_dir
+                    if rearrange_files_to_expt_format:
+                        self.replace_files_with_warnings(
+                            Path(path),
+                            Path(config_dict["mom_input_dir"]) / os.path.basename(path),
+                        )
+        else:
+            driver_logger.info(
+                'Initial condition files not found. Please provide initial condition files (with key "initial_conditions"), or call setup_initial_condition method to set up initial condition.'
+            )
+
+        driver_logger.info("Checking for tides files....")
+        if "tides" in config_dict and config_dict["tides"] is not None:
+            for path in config_dict["tides"]:
+                if not os.path.exists(path):
+
+                    driver_logger.info(
+                        "At least one tides file not found. If you would like tides, call setup_tides_boundaries method to set up tides"
+                    )
+                    break
+                else:
+                    driver_logger.info("Found at least one tides file.")
+                    # Move to mom_input_dir
+                    if rearrange_files_to_expt_format:
+                        self.replace_files_with_warnings(
+                            Path(path),
+                            Path(config_dict["mom_input_dir"]) / os.path.basename(path),
+                        )
+        else:
+            driver_logger.info(
+                'Tides files not found. Please provide tides files (with key "tides"), or  call setup_tides_boundaries method to set up tides'
+            )
+
+        driver_logger.info("Checking for run files....")
+        if "run_files" in config_dict and config_dict["run_files"] is not None:
+            for path in config_dict["run_files"]:
+                if not os.path.exists(path):
+
+                    driver_logger.info(
+                        "At least one run_files file not found. If you would like run_files, call setup_run_directory method to set up run_files"
+                    )
+                    break
+                else:
+                    driver_logger.info("Found at least one run_files file.")
+                    # Move to mom_input_dir
+                    if rearrange_files_to_expt_format:
+                        self.replace_files_with_warnings(
+                            Path(path),
+                            Path(config_dict["mom_run_dir"]) / os.path.basename(path),
+                        )
+        else:
+            driver_logger.info(
+                'Tides files not found. Please provide run_files files (with key "run_files"), or  call setup_run_files_boundaries method to set up run_files'
+            )
+
+        if os.path.exists(Path(config_dict["mom_input_dir"]) / "bathymetry.nc"):
+            expt.bathymetry = xr.open_dataset(
+                Path(config_dict["mom_input_dir"]) / "bathymetry.nc"
+            )
+        if os.path.exists(Path(config_dict["mom_input_dir"]) / "hgrid.nc"):
+            expt.hgrid = xr.open_dataset(
+                Path(config_dict["mom_input_dir"]) / "hgrid.nc"
+            )
+        if os.path.exists(Path(config_dict["mom_input_dir"]) / "vcoord.nc"):
+            expt.vgrid = xr.open_dataset(
+                Path(config_dict["mom_input_dir"]) / "vcoord.nc"
+            )
         return expt
 
     def setup_directories(self, mom_run_dir, mom_input_dir):
@@ -247,6 +338,7 @@ class crr_driver:
         if os.path.join(expt.mom_input_dir, "bathymetry.nc"):
             rm6_config["bathymetry"] = str(expt.mom_input_dir / "bathymetry.nc")
         else:
+            rm6_config["bathymetry"] = None
             driver_logger.info(
                 "Couldn't find bathymetry file in {}".format(expt.mom_input_dir)
             )
@@ -255,6 +347,7 @@ class crr_driver:
         if os.path.join(expt.mom_input_dir, "hgrid.nc"):
             rm6_config["hgrid"] = str(expt.mom_input_dir / "hgrid.nc")
         else:
+            rm6_config["hgrid"] = None
             driver_logger.info(
                 "Couldn't find hgrid file in {}".format(expt.mom_input_dir)
             )
@@ -263,6 +356,7 @@ class crr_driver:
         if os.path.join(expt.mom_input_dir, "vgrid.nc"):
             rm6_config["vgrid"] = str(expt.mom_input_dir / "vcoord.nc")
         else:
+            rm6_config["vgrid"] = None
             driver_logger.info(
                 "Couldn't find vgrid file in {}".format(expt.mom_input_dir)
             )
@@ -277,6 +371,7 @@ class crr_driver:
         if type(initial_conditions_files) == list:
             rm6_config["initial_conditions"] = initial_conditions_files
         else:
+            rm6_config["initial_conditions"] = None
             driver_logger.info(
                 "Couldn't find initial conditions in {}".format(expt.mom_input_dir)
             )
@@ -285,16 +380,17 @@ class crr_driver:
         driver_logger.info(
             "Searching {} for ocean_state conditions".format(expt.mom_input_dir)
         )
-        ocean_state_conditions_files = self.search_for_files(
+        ocean_state_files = self.search_for_files(
             [expt.mom_input_dir, expt.mom_input_dir / "forcing"],
             [
                 "forcing_*",
                 "weights/bi*",
             ],
         )
-        if type(ocean_state_conditions_files) == list:
-            rm6_config["ocean_state_conditions"] = ocean_state_conditions_files
+        if type(ocean_state_files) == list:
+            rm6_config["ocean_state"] = ocean_state_files
         else:
+            rm6_config["ocean_state"] = None
             driver_logger.info(
                 "Couldn't find ocean_state conditions in {}".format(expt.mom_input_dir)
             )
@@ -308,7 +404,29 @@ class crr_driver:
         if type(tides_files) == list:
             rm6_config["tides"] = tides_files
         else:
+            rm6_config["tides"] = None
             driver_logger.info("Couldn't find tides in {}".format(expt.mom_input_dir))
+
+        # Run Files
+        driver_logger.info("Searching {} for run files".format(expt.mom_run_dir))
+        mom_files = self.search_for_files(
+            [expt.mom_run_dir],
+            [
+                "MOM_input",
+                "MOM_override",
+                "MOM_layout",
+                "SIS_input",
+                "field_table",
+                "input.nml",
+                "diag_table",
+                "data_table",
+            ],
+        )
+        if type(mom_files) == list:
+            rm6_config["run_files"] = mom_files
+        else:
+            rm6_config["run_files"] = None
+            driver_logger.info("Couldn't find run files in {}".format(expt.mom_run_dir))
 
         if export:
             if path is not None:
@@ -325,7 +443,7 @@ class crr_driver:
             driver_logger.info("Done.")
         return rm6_config
 
-    def setup_run_directory(
+    def explicit_setup_run_directory(
         self,
         mom_input_dir,
         mom_run_dir,
@@ -387,7 +505,7 @@ class crr_driver:
             elif item.is_dir():
                 shutil.copytree(item, output_dir / item.name)
 
-        print(f"All files have been exported to {output_folder}")
+        driver_logger.info(f"All files have been exported to {output_folder}")
 
     def search_for_files(paths, patterns):
         try:
@@ -402,3 +520,19 @@ class crr_driver:
             return all_files
         except:
             return "No files found (or files misplaced from {})".format(paths)
+
+    def replace_files_with_warnings(path_to_file, path_to_replace):
+        if Path(path_to_file) != Path(path_to_replace) and os.path.exists(
+            path_to_replace
+        ):
+            driver_logger.warning(
+                f"There was a {os.path.basename(path_to_replace)} already in the directory to replace. We are removing it! To disable this aggresive move, set rearrange_files_to_expt_format=False"
+            )
+            os.remove(path_to_replace)
+        if Path(path_to_file) != Path(path_to_replace):
+            driver_logger.info(
+                f"Copying {os.path.basename(path_to_file)} to {path_to_replace}"
+            )
+            shutil.copyfile(Path(path_to_file), Path(path_to_replace))
+        else:
+            driver_logger.info(f"{os.path.basename(path_to_replace)} already in dir")
