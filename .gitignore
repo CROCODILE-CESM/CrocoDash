@@ -1,6 +1,6 @@
 # CRR specific ignores
 *_temp/
-
+.DS_Store
 
 
 

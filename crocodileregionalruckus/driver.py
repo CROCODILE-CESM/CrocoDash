@@ -5,7 +5,7 @@ import datetime as dt
 import xarray as xr
 import json
 from . import grid_gen
-from . import boundary_conditions
+from . import unsupported_boundary_conditions
 from .regional_casegen import cesm_tools as rcg_ct
 import os
 from pathlib import Path
@@ -45,7 +45,7 @@ class crr_driver:
         ## in case list was given, convert to tuples
         self.grid_gen_obj = grid_gen.GridGen()
         self.boundary_conditions_obj = (
-            boundary_conditions.BoundaryConditions()
+            unsupported_boundary_conditions.BoundaryConditions()
         )  # Not Implemented Yet
         self.rcg_obj = rcg_ct.RegionalCaseGen()
         self.og_mom6 = (
