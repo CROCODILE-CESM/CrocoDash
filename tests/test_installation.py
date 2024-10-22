@@ -11,16 +11,20 @@ def test_crr_import(tmp_path):
     """
 
     crr_driver_obj = crr.driver.crr_driver()
-    crr_driver_obj.setup_directories(mom_input_dir=tmp_path/"mom_input", mom_run_dir=tmp_path/"mom_run")
+    crr_driver_obj.setup_directories(
+        mom_input_dir=tmp_path / "mom_input", mom_run_dir=tmp_path / "mom_run"
+    )
     assert crr_driver_obj is not None
+
 
 def test_rm6_import():
     """
     This test confirms we can import rm6, and can call the functions inside
     """
-    
+
     empty_expt_obj = rm6.experiment.create_empty()
     assert empty_expt_obj is not None
+
 
 def test_grid_gen_import():
     """
@@ -29,6 +33,7 @@ def test_grid_gen_import():
 
     grid_gen_obj = grid_gen.GridGen()
     assert grid_gen_obj is not None
+
 
 def test_rcg_import():
     """
