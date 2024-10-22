@@ -1,3 +1,5 @@
+from .utils import setup_logger
+gridgen_logger = setup_logger(__name__)
 import xarray as xr
 import numpy as np
 from .utils import *
@@ -80,9 +82,7 @@ class GridGen:
             try:
                 shutil.rmtree(self.temp_storage)
             except:
-                gridgen_logger.warning(
-                    "Error cleaning up CRR grid_gen temp storage directory."
-                )
+                gridgen_logger.info("Error cleaning up CRR grid_gen temp storage directory.")
 
     def subset_global_hgrid(
         self,

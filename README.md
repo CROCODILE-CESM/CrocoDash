@@ -26,6 +26,8 @@ Installation:
 `mamba env create -f environment.yml`
 3. Activate the environment:
 `mamba activate crr`
+4. Test installation with:
+`pytest tests/test_installation.py`
 
 Going with this flow, there are two demos (one for each avenue) to get used to the CRR. 
 

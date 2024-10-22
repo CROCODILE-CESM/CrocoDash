@@ -351,4 +351,4 @@ class crr_driver:
             elif item.is_dir():
                 shutil.copytree(item, output_dir / item.name)
 
-        print(f"All files have been exported to {output_folder}")
+        driver_logger.info(f"All files have been exported to {output_folder}")
