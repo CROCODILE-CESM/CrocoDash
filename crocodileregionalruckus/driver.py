@@ -1,6 +1,6 @@
-import logging
+from .utils import setup_logger
 
-driver_logger = logging.getLogger(__name__)
+driver_logger = setup_logger(__name__)
 import datetime as dt
 import xarray as xr
 import json
