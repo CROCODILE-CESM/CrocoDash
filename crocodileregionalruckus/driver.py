@@ -311,7 +311,7 @@ class crr_driver:
             input_rundir.symlink_to(self.mom_run_dir.resolve())
 
     def __str__(self) -> str:
-        return json.dumps(self.write_config_file(export=False, quiet=True), indent=4)
+        return json.dumps(self.write_config_file(self.empty_expt_obj,export=False, quiet=True), indent=4)
 
     @classmethod
     def write_config_file(self, expt, path=None, export=True, quiet=False):
