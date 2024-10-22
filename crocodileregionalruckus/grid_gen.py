@@ -11,11 +11,6 @@ from .rm6 import regional_mom6 as rm6
 import os
 from crocodileregionalruckus.utils import export_dataset
 from pathlib import Path
-import logging
-import sys
-from .utils import setup_logger
-
-gridgen_logger = setup_logger(__name__)
 
 
 class GridGen:
