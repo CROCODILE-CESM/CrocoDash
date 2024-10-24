@@ -109,7 +109,7 @@ class crr_driver:
         raise ValueError("Not implemented yet")
 
     @classmethod
-    def load_experiment_from_config(
+    def create_experiment_from_config(
         self,
         config_file_path,
         rearrange_files_to_expt_format=True,
