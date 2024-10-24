@@ -194,6 +194,57 @@ class GridGen:
 
         return self.topo
 
+    def verify_and_modify_read_vgrid(self, path_to_ds, thickness_name="dz"):
+        """
+        Verify the vertical grid of the dataset (Check if we have zl). We need the midpoint of the thickness to regrid the initial condition
+
+        Parameters
+        ----------
+        path_to_ds : str
+            Path to the dataset.
+        Returns
+        -------
+        dataset: str
+            The dataset with the adjusted or not vertical grid.
+        """
+        need_to_add_zl = False
+        vgrid = xr.open_dataset(path_to_ds)
+        if "zl" not in vgrid:
+            gridgen_logger.info(
+                f"Dataset {path_to_ds} does not contain zl. We need it to regrid the initial condition! I can add it based on dz!"
+            )
+            need_to_add_zl = True
+        else:
+            gridgen_logger.info(f"Dataset {path_to_ds} contains zl.")
+        if "zi" not in vgrid:
+            gridgen_logger.warning(
+                f"Dataset {path_to_ds} does not contain zi. Make sure to change ALE_COORDINATE_CONFIG to what your vertical coordinate is called..."
+            )
+
+        if need_to_add_zl:
+            if thickness_name in vgrid:
+                dz = vgrid[thickness_name].values
+                zi = dz.cumsum()
+                zi = np.insert(zi, 0, 0.0)
+                vgrid["zi"] = xr.DataArray(
+                    zi, dims=["zi"], attrs={"long_name": "Layer interfaces", "units": "m"}
+                )
+                gridgen_logger.info(
+                    f"Added zi to vgrid. Make sure to save this before reading into regional mom!"
+                )
+                zl = dz.cumsum() - dz / 2
+                vgrid["zl"] = xr.DataArray(
+                    zl, dims=["zl"], attrs={"long_name": "Layer midpoints", "units": "m"}
+                )
+                gridgen_logger.info(
+                    f"Added zl to vgrid. Make sure to save this before reading into regional mom!"
+                )
+            else:
+                gridgen_logger.warning(
+                    f"Dataset does not contain {thickness_name}. Cannot add zl without {thickness_name} in this code,which means regional mom6 won't be able to regrid the initial condition. Try adding it yourself"
+                )
+        return vgrid
+
     def create_rectangular_hgrid(self, longitude_extent, latitude_extent, resolution):
         """
         Set up a horizontal grid based on user's specification of the domain.
