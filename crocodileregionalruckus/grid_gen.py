@@ -79,7 +79,7 @@ class GridGen:
                 shutil.rmtree(self.temp_storage)
             except:
                 gridgen_logger.info(
-                    "Error cleaning up CRR grid_gen temp storage directory."
+                    "Couldn't clean up CRR grid_gen temp storage directory."
                 )
 
     def subset_global_hgrid(
@@ -230,14 +230,18 @@ class GridGen:
                 zi = dz.cumsum()
                 zi = np.insert(zi, 0, 0.0)
                 vgrid["zi"] = xr.DataArray(
-                    zi, dims=["zi"], attrs={"long_name": "Layer interfaces", "units": "m"}
+                    zi,
+                    dims=["zi"],
+                    attrs={"long_name": "Layer interfaces", "units": "m"},
                 )
                 gridgen_logger.info(
                     f"Added zi to vgrid. Make sure to save this before reading into regional mom!"
                 )
                 zl = dz.cumsum() - dz / 2
                 vgrid["zl"] = xr.DataArray(
-                    zl, dims=["zl"], attrs={"long_name": "Layer midpoints", "units": "m"}
+                    zl,
+                    dims=["zl"],
+                    attrs={"long_name": "Layer midpoints", "units": "m"},
                 )
                 gridgen_logger.info(
                     f"Added zl to vgrid. Make sure to save this before reading into regional mom!"

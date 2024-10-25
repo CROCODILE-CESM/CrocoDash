@@ -5,6 +5,7 @@ from pathlib import Path
 from crocodileregionalruckus.rm6 import regional_mom6 as rmom6
 import os
 
+
 def test_write_config_file(tmp_path):
 
     expt_name = "crr-sub-glob-fresh-hawaii"
@@ -15,10 +16,10 @@ def test_write_config_file(tmp_path):
     date_range = ["2020-01-01 00:00:00", "2020-02-01 00:00:00"]
 
     ## Place where all your input files go
-    input_dir = Path(os.path.join(tmp_path,f"{expt_name}_input/"))
+    input_dir = Path(os.path.join(tmp_path, f"{expt_name}_input/"))
 
     ## Directory where you'll run the experiment from
-    run_dir = Path(os.path.join(tmp_path,f"{expt_name}_run"))
+    run_dir = Path(os.path.join(tmp_path, f"{expt_name}_run"))
     expt = rmom6.experiment(
         longitude_extent=longitude_extent,
         latitude_extent=latitude_extent,
@@ -36,7 +37,7 @@ def test_write_config_file(tmp_path):
 
     crr.driver.crr_driver.write_config_file(
         expt,
-        path=os.path.join(tmp_path,"crr_config.json"),
+        path=os.path.join(tmp_path, "crr_config.json"),
     )
 
 
@@ -49,10 +50,10 @@ def test_read_config_file(tmp_path):
     date_range = ["2020-01-01 00:00:00", "2020-02-01 00:00:00"]
 
     ## Place where all your input files go
-    input_dir = Path(os.path.join(tmp_path,f"{expt_name}_input/"))
+    input_dir = Path(os.path.join(tmp_path, f"{expt_name}_input/"))
 
     ## Directory where you'll run the experiment from
-    run_dir = Path(os.path.join(tmp_path,f"{expt_name}_run"))
+    run_dir = Path(os.path.join(tmp_path, f"{expt_name}_run"))
     expt = rmom6.experiment(
         longitude_extent=longitude_extent,
         latitude_extent=latitude_extent,
@@ -70,9 +71,11 @@ def test_read_config_file(tmp_path):
 
     crr.driver.crr_driver.write_config_file(
         expt,
-        path=os.path.join(tmp_path,"crr_config.json"),
+        path=os.path.join(tmp_path, "crr_config.json"),
     )
 
-    expt = crr.driver.crr_driver.create_experiment_from_config(os.path.join(tmp_path,"crr_config.json"))
+    expt = crr.driver.crr_driver.create_experiment_from_config(
+        os.path.join(tmp_path, "crr_config.json")
+    )
 
     assert expt.expt_name == expt_name

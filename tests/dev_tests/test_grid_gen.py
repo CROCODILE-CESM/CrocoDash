@@ -136,6 +136,7 @@ def test_rm6_gen_hgrid():
     assert grid is not None
     assert grid_obj.hgrid is not None
 
+
 @pytest.mark.usefixtures("check_glade_exists")
 def test_fred_subset_hgrid():
     # Define the grid
@@ -150,6 +151,7 @@ def test_fred_subset_hgrid():
 def test_fred_subset_topo():
     # Define the grid
     assert True
+
 
 @pytest.mark.usefixtures("check_glade_exists")
 def test_rm6_mask_unwanted_ocean(tmp_path):
@@ -190,4 +192,3 @@ def test_rm6_mask_unwanted_ocean(tmp_path):
     # plt.figure(dpi=250)
     # plt.imshow(topo.depth, origin="lower", interpolation="nearest")
     # plt.savefig(os.path.join("topo_after_masking.png"))
-

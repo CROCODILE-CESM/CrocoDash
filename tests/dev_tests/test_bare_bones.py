@@ -156,7 +156,8 @@ class TestBasicWrapperFunctions:
 
         ## Place where all your input files go
         input_dir = Path(
-            os.path.join(tmp_path,
+            os.path.join(
+                tmp_path,
                 expt_name,
                 "inputs",
             )
@@ -164,7 +165,8 @@ class TestBasicWrapperFunctions:
 
         ## Directory where you'll run the experiment from
         run_dir = Path(
-            os.path.join(tmp_path,
+            os.path.join(
+                tmp_path,
                 expt_name,
                 "run_files",
             )

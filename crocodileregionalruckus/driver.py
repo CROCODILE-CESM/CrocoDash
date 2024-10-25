@@ -18,9 +18,8 @@ import glob
 
 
 class crr_driver:
-    """Who needs documentation?
-
-    The idea here is to wrap the regional mom6 workflow into one python package.
+    """
+    The idea here is to wrap the regional mom6 workflow and associated modules into one python package.
     """
 
     def __init__(
@@ -72,41 +71,6 @@ class crr_driver:
                 hgrid_type=hgrid_type,
             )
         )
-
-        self.expt_name = expt_name
-        self.tidal_constituents = tidal_constituents
-        self.repeat_year_forcing = repeat_year_forcing
-        self.hgrid_type = hgrid_type
-        self.vgrid_type = vgrid_type
-        self.toolpath_dir = toolpath_dir
-        self.mom_run_dir = mom_run_dir
-        self.mom_input_dir = mom_input_dir
-        self.min_depth = minimum_depth
-        self.depth = depth
-        self.layer_thickness_ratio = layer_thickness_ratio
-        self.number_vertical_layers = number_vertical_layers
-        self.resolution = resolution
-        self.latitude_extent = latitude_extent
-        self.longitude_extent = longitude_extent
-        self.ocean_mask = None
-        self.layout = None
-
-        if date_range is not None:
-            try:
-                self.date_range = [
-                    dt.datetime.strptime(date_range[0], "%Y-%m-%d %H:%M:%S"),
-                    dt.datetime.strptime(date_range[1], "%Y-%m-%d %H:%M:%S"),
-                ]
-            except:
-                driver_logger.warning(
-                    "Date range not formatted correctly. Please use 'YYYY-MM-DD HH:MM:SS' format in a list or tuple of two."
-                )
-
-    def check_grid_generation(self):
-        """
-        This function should call grid_gen check_grid function and return some information about the grid.
-        """
-        raise ValueError("Not implemented yet")
 
     @classmethod
     def create_experiment_from_config(
