@@ -68,7 +68,7 @@ class crr_driver:
                 repeat_year_forcing=repeat_year_forcing,
                 minimum_depth=minimum_depth,
                 tidal_constituents=tidal_constituents,
-                name=expt_name,
+                expt_name=expt_name,
                 hgrid_type=hgrid_type,
             )
         )

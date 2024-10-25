@@ -146,7 +146,7 @@ def dummy_bathymetry_data():
 
 class TestBasicWrapperFunctions:
 
-    def setup_class(self):
+    def test_class(self, tmp_path):
         expt_name = "testing"
 
         latitude_extent = [16.0, 27]
@@ -156,7 +156,7 @@ class TestBasicWrapperFunctions:
 
         ## Place where all your input files go
         input_dir = Path(
-            os.path.join(
+            os.path.join(tmp_path,
                 expt_name,
                 "inputs",
             )
@@ -164,7 +164,7 @@ class TestBasicWrapperFunctions:
 
         ## Directory where you'll run the experiment from
         run_dir = Path(
-            os.path.join(
+            os.path.join(tmp_path,
                 expt_name,
                 "run_files",
             )
