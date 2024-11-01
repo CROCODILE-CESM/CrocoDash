@@ -19,7 +19,7 @@ jobs:
           environment-file: environment.yml
       - name: Sphinx build
         run: |
-          conda activate crr
+          
           sphinx-build docs/source _build
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
