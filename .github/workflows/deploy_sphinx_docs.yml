@@ -15,15 +15,9 @@ jobs:
       - uses: actions/setup-python@v5
       - uses: conda-incubator/setup-miniconda@v3
         with:
-          auto-update-conda: true
-          python-version: ${{ matrix.python-version }} 
-      - name: Install dependencies
-        run: |
-          conda env update --file environment.yml
-      - name: Activate Conda environment
-        run: |
-          source ~/miniconda/etc/profile.d/conda.sh  # Initialize Conda for this shell
-          conda activate crr
+          activate-environment: crr
+          environment-file: environment.yml
+          auto-activate-base: false
       - name: Sphinx build
         run: |
           sphinx-build docs/source _build
