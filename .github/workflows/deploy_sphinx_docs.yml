@@ -18,8 +18,10 @@ jobs:
           activate-environment: crr
           environment-file: environment.yml
           auto-activate-base: false
-      - run: |
-            sphinx-build docs/source _build
+      - name: Sphinx build
+        run: |
+          conda activate crr
+          sphinx-build docs/source _build
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
