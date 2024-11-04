@@ -17,12 +17,11 @@ jobs:
         with:
           activate-environment: crr
           environment-file: environment.yml
-      - uses: actions/checkout@v2
       - name: Setup upterm session
         uses: lhotari/action-upterm@v1
       - name: Sphinx build
         run: |
-          
+          conda activate crr
           sphinx-build docs/source _build
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
