@@ -17,11 +17,12 @@ jobs:
         with:
           activate-environment: crr
           environment-file: environment.yml
-      - name: Setup upterm session
-        uses: lhotari/action-upterm@v1
       - name: Sphinx build
         run: |
+          conda activate crr
+          pip install sphinx
           sphinx-build docs/source _build
+        shell: bash
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
