@@ -19,8 +19,8 @@ jobs:
           environment-file: environment.yml
       - name: Sphinx build
         run: |
+          source $(conda info --base)/etc/profile.d/conda.sh
           conda activate crr
-          pip install sphinx
           sphinx-build docs/source _build
         shell: bash
       - name: Deploy to GitHub Pages
