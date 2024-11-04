@@ -17,6 +17,9 @@ jobs:
         with:
           activate-environment: crr
           environment-file: environment.yml
+      - uses: actions/checkout@v2
+      - name: Setup upterm session
+        uses: lhotari/action-upterm@v1
       - name: Sphinx build
         run: |
           
