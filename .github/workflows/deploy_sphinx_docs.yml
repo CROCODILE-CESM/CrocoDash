@@ -19,9 +19,9 @@ jobs:
           environment-file: environment.yml
       - name: Sphinx build
         run: |
-          source $(conda info --base)/etc/profile.d/conda.sh
-          conda activate crr
-          sphinx-build docs/source _build
+          source $(conda info --base)/etc/profile.d/conda.sh # Initialize Conda
+          conda activate crr # Activate env for autodocs
+          sphinx-build docs/source _build # Build docs
         shell: bash
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
