@@ -46,27 +46,27 @@ def test_grid_gen_properties(get_dummy_data_folder):
     assert np.array_equal(og_vgrid.zl, grid_gen_obj.vgrid.zl)
     assert np.array_equal(og_topo.x, grid_gen_obj.topo.x)
 
+
 @pytest.mark.usefixtures("check_glade_exists")
 def test_subset_global_hgrid(get_dummy_data_folder):
-    light_gridgen_path  = get_dummy_data_folder / "light_gridgen"
-
+    light_gridgen_path = get_dummy_data_folder / "light_gridgen"
 
     # Generate a subset of the global hgrid
     grid_gen_obj = grid_gen.GridGen()
-    panama_hgrid = grid_gen_obj.subset_global_hgrid([-82,-80],[6,10])
+    panama_hgrid = grid_gen_obj.subset_global_hgrid([-82, -80], [6, 10])
 
     # Verify the subset against a produced copy in light_gridgen_path
 
     assert panama_hgrid == xr.open_dataset(light_gridgen_path / "panama_hgrid.nc")
 
+
 @pytest.mark.usefixtures("check_glade_exists")
 def test_subset_global_topo(get_dummy_data_folder):
-    light_gridgen_path  = get_dummy_data_folder / "light_gridgen"
-
+    light_gridgen_path = get_dummy_data_folder / "light_gridgen"
 
     # Generate a subset of the global hgrid
     grid_gen_obj = grid_gen.GridGen()
-    panama_topo = grid_gen_obj.subset_global_topo([-80,-79],[8,10])
+    panama_topo = grid_gen_obj.subset_global_topo([-80, -79], [8, 10])
 
     # Verify the subset against a produced copy in light_gridgen_path
 
@@ -77,38 +77,46 @@ def test_subset_global_topo(get_dummy_data_folder):
 def test_verify_and_modify_read_vgrid(get_dummy_data_folder):
 
     # Read three vgrid files - an RM6 Produced one and a NCAR w/ only thickmness and a invalud NCAR one
-    light_gridgen_vgrid_path  = get_dummy_data_folder / "light_gridgen" / "vgrid_samples"
+    light_gridgen_vgrid_path = get_dummy_data_folder / "light_gridgen" / "vgrid_samples"
     vgrid_rm6 = xr.open_dataset(light_gridgen_vgrid_path / "vgrid_rm6.nc")
-    #vgrid_ncar = xr.open_dataset(light_gridgen_vgrid_path / "vgrid_ncar.nc")
+    # vgrid_ncar = xr.open_dataset(light_gridgen_vgrid_path / "vgrid_ncar.nc")
     vgrid_invalid = xr.open_dataset(light_gridgen_vgrid_path / "vgrid_invalid.nc")
 
     # Verify the vgrids
     grid_gen_obj = grid_gen.GridGen()
-    vgrid_rm6_adj = grid_gen_obj.verify_and_modify_read_vgrid(light_gridgen_vgrid_path / "vgrid_rm6.nc")
-    assert np.array_equal(vgrid_rm6_adj.zl, vgrid_rm6.zl) # Should be no changes
+    vgrid_rm6_adj = grid_gen_obj.verify_and_modify_read_vgrid(
+        light_gridgen_vgrid_path / "vgrid_rm6.nc"
+    )
+    assert np.array_equal(vgrid_rm6_adj.zl, vgrid_rm6.zl)  # Should be no changes
     with pytest.raises(ValueError):
-        vgrid_invalid_adj = grid_gen_obj.verify_and_modify_read_vgrid(light_gridgen_vgrid_path / "vgrid_invalid.nc")
+        vgrid_invalid_adj = grid_gen_obj.verify_and_modify_read_vgrid(
+            light_gridgen_vgrid_path / "vgrid_invalid.nc"
+        )
 
-    #vgrid_ncar_adj = grid_gen_obj.verify_and_modify_read_vgrid(light_gridgen_vgrid_path / "vgrid_ncar.nc")
+    # vgrid_ncar_adj = grid_gen_obj.verify_and_modify_read_vgrid(light_gridgen_vgrid_path / "vgrid_ncar.nc")
 
 
 def test_mask_disconnected_ocean_areas(get_dummy_data_folder):
 
     # Read an availale topo and hgrid
-    light_gridgen_path  = get_dummy_data_folder / "light_gridgen"
+    light_gridgen_path = get_dummy_data_folder / "light_gridgen"
     panama_topo = xr.open_dataset(light_gridgen_path / "panama_topo.nc")
     panama_hgrid = xr.open_dataset(light_gridgen_path / "panama_hgrid.nc")
 
     # Choose a point to mask around
     grid_gen_obj = grid_gen.GridGen()
-    masked_topo_north = grid_gen_obj.mask_disconnected_ocean_areas(panama_hgrid,"x","y",panama_topo, 9.99,-79.5)
+    masked_topo_north = grid_gen_obj.mask_disconnected_ocean_areas(
+        panama_hgrid, "x", "y", panama_topo, 9.99, -79.5
+    )
 
     # Verify the masked topo against a produced copy in light_gridgen_path
-    assert masked_topo_north == xr.open_dataset(light_gridgen_path / "masked_panama_topo_north.nc")
+    assert masked_topo_north == xr.open_dataset(
+        light_gridgen_path / "masked_panama_topo_north.nc"
+    )
 
 
 @pytest.mark.slow
 def test_rm6_functions_run():
     grid_gen_obj = grid_gen.GridGen()
-    vgrid = grid_gen_obj.create_vgrid(75,10,4500,35)
+    vgrid = grid_gen_obj.create_vgrid(75, 10, 4500, 35)
     return
