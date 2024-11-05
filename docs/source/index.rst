@@ -15,6 +15,7 @@ You can also check out the Regional MOM6 documentation for more support informat
    :caption: Contents:
 
    installation
+   driver
    grid_gen
    rcg
    api-docs/modules

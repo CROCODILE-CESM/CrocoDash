@@ -18,3 +18,8 @@ def is_glade_file_system():
 def check_glade_exists():
     if not is_glade_file_system():
         pytest.skip(reason="Skipping test: Not running on the Glade file system.")
+
+
+@pytest.fixture(scope="session")
+def get_dummy_data_folder():
+    return os.path.join(os.path.abspath(os.path.dirname(__file__)), "dummy_data")

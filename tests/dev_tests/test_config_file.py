@@ -35,7 +35,7 @@ def test_write_config_file(tmp_path):
         expt_name=expt_name,
     )
 
-    crr.driver.crr_driver.write_config_file(
+    crr.driver.CRRDriver.write_config_file(
         expt,
         path=os.path.join(tmp_path, "crr_config.json"),
     )
@@ -69,12 +69,12 @@ def test_read_config_file(tmp_path):
         expt_name=expt_name,
     )
 
-    crr.driver.crr_driver.write_config_file(
+    crr.driver.CRRDriver.write_config_file(
         expt,
         path=os.path.join(tmp_path, "crr_config.json"),
     )
 
-    expt = crr.driver.crr_driver.create_experiment_from_config(
+    expt = crr.driver.CRRDriver.create_experiment_from_config(
         os.path.join(tmp_path, "crr_config.json")
     )
 
