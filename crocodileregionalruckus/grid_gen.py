@@ -346,7 +346,7 @@ class GridGen:
                     f"Added zl to vgrid. Make sure to save this before reading into regional mom!"
                 )
             else:
-                gridgen_logger.error(
+                raise ValueError(
                     f"Dataset does not contain {thickness_name}. Cannot add zl without {thickness_name} in this code, which means regional mom6 won't be able to regrid the initial condition. Try adding it yourself"
                 )
         return vgrid
