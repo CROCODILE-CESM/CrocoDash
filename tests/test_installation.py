@@ -11,9 +11,6 @@ def test_crr_import(tmp_path):
     """
 
     crr_driver_obj = crr.driver.CRRDriver()
-    crr_driver_obj.setup_directories(
-        mom_input_dir=tmp_path / "mom_input", mom_run_dir=tmp_path / "mom_run"
-    )
     assert crr_driver_obj is not None
 
 

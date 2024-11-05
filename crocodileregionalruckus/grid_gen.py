@@ -1,3 +1,7 @@
+"""
+This module (grid_gen) implements the GridGen class, three helper functions (spherical2cartesian, create_tree, find_nearest) useful in subsetting a grid, and contains a logger called "grid_gen_logger"
+"""
+
 from .utils import setup_logger
 
 gridgen_logger = setup_logger(__name__)
@@ -16,11 +20,41 @@ from pathlib import Path
 
 class GridGen:
     """
-    Create a regional grids for MOM6, designed to work for the CROCODILE regional MOM6 workflow w/ regional_mom6
+    This class is the grid generation class for the Crocodile Regional Ruckus. It stores all variables and functions used to generate hgrids, vgrids, and topography files for regional MOM6 experiments.
+    Apart from native grid generation, it wraps a couple of regional-mom6 functions to keep all the grid generation code in one place.
+
+    This class currently only generates rectanglular-ish grids.
+
+    Variables:
+
+    1. ``hgrid`` : A property variable that stores the hgrid dataset
+    2. ``topo`` : A property variable that stores the topography dataset
+    3. ``vgrid`` : A property variable that stores the vgrid dataset
+    4. ``latitude_extent`` : Extents of the rectangular grid in latitude
+    5. ``longitude_extent`` : Extents of the rectangular grid in longitude
+    6. ``resolution`` : Resolution of the rectangular grid (for use in regional-mom6 _create_hgrid)
+    7. ``temp_storage`` : Temporary storage directory on all the datasets to offload heavy memory items
+
+    Functions:
+
+    1. ``__init__`` : Initializes the GridGen object with no required parameters
+    2. ``__del__`` : Deletes the temp_storage directory to save memory
+    3. ``subset_global_hgrid`` : Subsets a global hgrid (default on glade) to the extents specified (rectangular)
+    4. ``subset_global_topo`` : Subsets a global topo (default on glade) to the extents specified (rectangular)
+    5. ``verify_and_modify_read_vgrid`` : Verifies the vertical grid of the dataset. If only a thickness is given, it generates the midpoint and interface levels for regridding of the boundary conditions
+    6. ``create_rectangular_hgrid`` : Wraps regional-mom6 _make_hgrid to create a rectangular hgrid
+    7. ``create_vgrid``: Wraps regional-mom6 _make_vgrid to create a vertical grid
+    8. ``mask_disconnected_ocean_areas``: Masks out disconnected ocean areas in the topography file. For example, if we have a rectangle over Central America for Gulf Stream research, we likely only want the Gulf of Mexico, so we mask out the Pacific.
+    9. ``setup_bathymetry``: Sets up the bathymetry file for the regional mom6 experiment. Wraps regional-mom6 setup_bathymetry
+    10. ``tidy_bathymetry``: Tidies up the bathymetry file from setup_bathymetry for the regional mom6 experiment. Wraps regional-mom6 tidy_bathymetry
+    11. ``export_files``: Exports all files from the temp_storage directory to the output_folder
     """
 
     @property
     def hgrid(self):
+        """
+        Gets the Hgrid as a xr.Dataset
+        """
         try:
             return xr.open_dataset(self._hgrid_path)
         except:
@@ -28,11 +62,17 @@ class GridGen:
 
     @hgrid.setter
     def hgrid(self, value):
+        """
+        Sets the Hgrid given a xr.Dataset
+        """
         self._hgrid_path = os.path.join(self.temp_storage, "hgrid.nc")
         export_dataset(value, self._hgrid_path)
 
     @property
     def topo(self):
+        """
+        Gets the Topo as a xr.Dataset
+        """
         try:
             return xr.open_dataset(self._topo_path)
         except:
@@ -40,11 +80,16 @@ class GridGen:
 
     @topo.setter
     def topo(self, value):
+        """
+        Sets the Topo given a xr.Dataset"""
         self._topo_path = os.path.join(self.temp_storage, "topo.nc")
         export_dataset(value, self._topo_path)
 
     @property
     def vgrid(self):
+        """
+        Gets the Vgrid as a xr.Dataset
+        """
         try:
             return xr.open_dataset(self._vgrid_path)
         except:
@@ -52,6 +97,8 @@ class GridGen:
 
     @vgrid.setter
     def vgrid(self, value):
+        """
+        Sets the Vgrid given a xr.Dataset"""
         self._vgrid_path = os.path.join(self.temp_storage, "vgrid.nc")
         export_dataset(value, self._vgrid_path)
 
@@ -62,6 +109,21 @@ class GridGen:
         resolution=None,
         delete_temp_storage=True,
     ):
+        """
+        This init function takes in any arguments we might need for grid generation for easy storage. They aren't used in any of the functions as they much be decalred in the function arguments explicitly.
+        We can also declare if we want the temp_storage directory deleted after the object is deleted.
+
+        Parameters
+        ----------
+        latitude_extent : list
+            Latitude extent of the grid
+        longitude_extent : list
+            Longitude extent of the grid
+        resolution : float
+            Resolution of the grid
+        delete_temp_storage : bool
+            Whether to delete the temporary storage directory after the object is deleted
+        """
         self.latitude_extent = latitude_extent
         self.longitude_extent = longitude_extent
         self.resolution = resolution
@@ -74,6 +136,9 @@ class GridGen:
         os.makedirs(self.temp_storage, exist_ok=True)
 
     def __del__(self):
+        """
+        This function cleans up our object. If we declare delete_temp_storage as True in the __init__ (which is default), we delete the temp_storage directory after the object is deleted.
+        """
         if self.delete_temp_storage:
             try:
                 shutil.rmtree(self.temp_storage)
@@ -89,7 +154,20 @@ class GridGen:
         path="/glade/work/fredc/cesm/grid/MOM6/tx1_12v1/gridgen/ocean_hgrid_trimmed.nc",
     ):
         """
-        Read in global supergrid, find closest points to the extent, and subset the supergrid to the extent.
+        This function reads in a global supergrid (path), finds the closest points to the extents, and subsets the supergrid to that extent.
+
+        Parameters
+        ----------
+        longitude_extent : list
+            Longitude extent of the grid
+        latitude_extent : list
+            Latitude extent of the grid
+        path : str
+            Path to the global supergrid file
+        Returns
+        -------
+        ds_nwa : xarray.Dataset
+            The subsetted supergrid dataset
         """
 
         try:
@@ -141,6 +219,24 @@ class GridGen:
         hgrid_path="/glade/work/fredc/cesm/grid/MOM6/tx1_12v1/gridgen/ocean_hgrid_trimmed.nc",
         topo_path="/glade/work/bryan/MOM6-data-files/Topography/tx1_12v1/topo.sub25.tx1_12v1.srtm.edit1.SmL1.0_C1.0.nc",
     ):
+        """
+        This function reads in a global supergrid and companion topo file (hgrid_path, topo), finds the closest points to the extents in the hgrid, and subsets the topo file to that extent.
+
+        Parameters
+        ----------
+        longitude_extent : list
+            Longitude extent of the grid
+        latitude_extent : list
+            Latitude extent of the grid
+        hgrid_path : str
+            Path to the global supergrid file
+        topo_path : str
+            Path to the global topo file
+        Returns
+        -------
+        topo : xarray.Dataset
+            The subsetted topo dataset
+        """
 
         try:
             with xr.open_dataset(hgrid_path, chunks={"nx": 1000, "ny": 1000}) as dsg:
@@ -199,16 +295,19 @@ class GridGen:
 
     def verify_and_modify_read_vgrid(self, path_to_ds, thickness_name="dz"):
         """
-        Verify the vertical grid of the dataset (Check if we have zl). We need the midpoint of the thickness to regrid the initial condition
+        This function verifies the vertical grid of the dataset. We need a midpoint (zl) and interface level (zi). We need the midpoint of the thickness to regrid the initial condition, and zi is just so we don't have to change MOM_input.
+        This function is able to check if we have those things, and if not, add them based on a thickness variable. If no thickness variable is given, and we don'thave zl and zi, this function fails.
 
         Parameters
         ----------
         path_to_ds : str
             Path to the dataset.
+        thickness_name : str
+            Name of the thickness variable in the dataset. Default is dz.
         Returns
         -------
         dataset: str
-            The dataset with the adjusted or not vertical grid.
+            The dataset with the adjusted (or not) vertical grid.
         """
         need_to_add_zl = False
         vgrid = xr.open_dataset(path_to_ds)
@@ -247,35 +346,27 @@ class GridGen:
                     f"Added zl to vgrid. Make sure to save this before reading into regional mom!"
                 )
             else:
-                gridgen_logger.warning(
-                    f"Dataset does not contain {thickness_name}. Cannot add zl without {thickness_name} in this code,which means regional mom6 won't be able to regrid the initial condition. Try adding it yourself"
+                gridgen_logger.error(
+                    f"Dataset does not contain {thickness_name}. Cannot add zl without {thickness_name} in this code, which means regional mom6 won't be able to regrid the initial condition. Try adding it yourself"
                 )
         return vgrid
 
     def create_rectangular_hgrid(self, longitude_extent, latitude_extent, resolution):
         """
-        Set up a horizontal grid based on user's specification of the domain.
-        The default behaviour generates a grid evenly spaced both in longitude
-        and in latitude.
+        This function wraps regional-mom6 _make_hgrid to create a rectangular hgrid
 
-        The latitudinal resolution is scaled with the cosine of the central
-        latitude of the domain, i.e., ``Δlats = cos(lats_central) * Δlons``, where ``Δlons``
-        is the longitudinal spacing. This way, for a sufficiently small domain,
-        the linear distances between grid points are nearly identical:
-        ``Δx = R * cos(lats) * Δlons`` and ``Δy = R * Δlats = R * cos(lats_central) * Δlons``
-        (here ``R`` is Earth's radius and ``lats``, ``lats_central``, ``Δlons``, and ``Δlats``
-        are all expressed in radians).
-        That is, if the domain is small enough that so that ``cos(lats_North_Side)``
-        is not much different from ``cos(lats_South_Side)``, then ``Δx`` and ``Δy``
-        are similar.
-
-        Note:
-            The intention is for the horizontal grid (``hgrid``) generation to be flexible.
-            For now, there is only one implemented horizontal grid included in the package,
-            but you can customise it by simply overwriting the ``hgrid.nc`` file in the
-            ``mom_run_dir`` directory after initialising an ``experiment``. To preserve the
-            metadata, it might be easiest to read the file in, then modify the fields before
-            re-saving.
+        Parameters
+        ----------
+        longitude_extent : list
+            Longitude extent of the grid
+        latitude_extent : list
+            Latitude extent of the grid
+        resolution : float
+            Resolution of the grid
+        Returns
+        -------
+        hgrid : xarray.Dataset
+            The hgrid dataset
         """
         expt = rm6.experiment.create_empty(
             longitude_extent=longitude_extent,
@@ -292,10 +383,22 @@ class GridGen:
         self, number_vertical_layers, layer_thickness_ratio, depth, minimum_depth
     ):
         """
-        Generates a vertical grid based on the ``number_vertical_layers``, the ratio
-        of largest to smallest layer thickness (``layer_thickness_ratio``) and the
-        total ``depth`` parameters.
-        (All these parameters are specified at the class level.)
+        Wraps regional-mom6 _make_vgrid to create a vertical grid.
+
+        Parameters
+        ----------
+        number_vertical_layers : int
+            Number of vertical layers
+        layer_thickness_ratio : float
+            Ratio of the thickness of the layers
+        depth : float
+            Depth of the ocean
+        minimum_depth : float
+            Minimum depth of the ocean
+        Returns
+        -------
+        vcoord : xarray.Dataset
+            The vgrid dataset
         """
         expt = rm6.experiment.create_empty(
             number_vertical_layers=number_vertical_layers,
@@ -313,6 +416,9 @@ class GridGen:
         self, hgrid, name_x_dim, name_y_dim, topo, lat_pt, lon_pt
     ):
         """
+        This function masks areas of the topo that are not connected to lat_pt, lon_pt. This is useful for regional studies where we only want to study a specific area of the ocean, like the Atlantic, and not the Pacific Ocean.
+
+        You use it by specifying a point in the ocean that you want to study, and it will mask out all the ocean areas that are not connected to that point. This is done by finding the connected ocean segments and isolating the segment that contains the chosen point.
 
         Parameters
         ----------
@@ -326,6 +432,11 @@ class GridGen:
             Topography data array. The item we mask, used to mask out disconnected ocean areas, where 0 indicates Land
         lat_pt, lon_pt
             Coordinates of the point to use as the starting point for the mask.
+
+        Returns
+        -------
+        topo : xarray.Dataset
+            The masked topography dataset
         """
 
         extra_dim_name = "ntiles"
@@ -376,6 +487,40 @@ class GridGen:
         fill_channels=False,
         positive_down=False,
     ):
+        """
+        This function wraps regional-mom6 setup_bathymetry to set up the bathymetry file for the regional mom6 experiment.
+
+        Parameters
+        ----------
+        hgrid : xarray.Dataset
+            Horizontal grid dataset
+        longitude_extent : list
+            Longitude extent of the grid
+        latitude_extent : list
+            Latitude extent of the grid
+        input_dir : str
+            Path to the input directory (where to put the bathymetry file)
+        minimum_depth : float
+            Minimum depth of the ocean
+        bathymetry_path : str
+            Path to the global/gebco bathymetry file
+        longitude_coordinate_name: str
+            Name of the longitude coordinate in the bathymetry file, default is lon
+        latitude_coordinate_name: str
+            Name of the latitude coordinate in the bathymetry file, default is lat
+        vertical_coordinate_name: str
+            Name of the vertical coordinate in the bathymetry file, default is elevation
+        fill_channels : bool
+            Whether to fill channels in the bathymetry file, default is False
+        positive_down : bool
+            Whether the vertical coordinate is positive down, default is False
+
+        Returns
+        -------
+        topo : xarray.Dataset
+            The bathymetry dataset
+
+        """
         expt = rm6.experiment.create_empty()
         expt.hgrid = hgrid
         expt.longitude_extent = longitude_extent
@@ -397,7 +542,25 @@ class GridGen:
     def tidy_bathymetry(
         self, input_dir, minimum_depth, fill_channels=False, positive_down=False
     ):
-        """ """
+        """
+        This function wraps regional-mom6 tidy_bathymetry to tidy up the bathymetry file from setup_bathymetry for the regional mom6 experiment.
+
+        Parameters
+        ----------
+        input_dir : str
+            Path to the input directory (where the bathymetry file is)
+        minimum_depth : float
+            Minimum depth of the ocean
+        fill_channels : bool
+            Whether to fill channels in the bathymetry file, default is False
+        positive_down : bool
+            Whether the vertical coordinate is positive down, default is False
+
+        Returns
+        -------
+        None
+            See your input_dir for the correct file (bathymetry.nc) from bathymetry_unfinished.nc
+        """
         expt = rm6.experiment.create_empty(
             mom_input_dir=input_dir, minimum_depth=minimum_depth
         )
@@ -407,8 +570,13 @@ class GridGen:
         """
         Export all files from the temp_storage directory to the output_folder.
 
-        Parameters:
+        Parameters
+        ----------
         output_folder (str): Path to the output directory where files will be copied.
+        Returns
+        -------
+        None
+            All files have been exported to output_folder
         """
         input_dir = Path(self.temp_storage)
         output_dir = Path(output_folder)

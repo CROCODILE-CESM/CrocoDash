@@ -57,8 +57,8 @@ def test_driver_write_config_file_basic(get_dummy_data_folder, tmp_path):
         layer_thickness_ratio=10,
         depth=4500,
         minimum_depth=25,
-        mom_run_dir=dummy_data_folder + "/light_rm6_run",
-        mom_input_dir=dummy_data_folder + "/light_rm6_input",
+        mom_run_dir=dummy_data_folder / "light_rm6_run",
+        mom_input_dir=dummy_data_folder / "light_rm6_input",
         toolpath_dir=Path(""),
         hgrid_type="from_file",  # This is how we incorporate the grid_gen files
         vgrid_type="from_file",
@@ -71,9 +71,7 @@ def test_driver_write_config_file_basic(get_dummy_data_folder, tmp_path):
     )
     with open(tmp_path / "test_light_config_file.json", "r") as written_config:
         written_config_dict = json.load(written_config)
-    with open(
-        dummy_data_folder + "/test_light_config_file.json", "r"
-    ) as correct_config:
+    with open(dummy_data_folder / "test_light_config_file.json", "r") as correct_config:
         correct_config_dict = json.load(correct_config)
     assert written_config_dict == correct_config_dict
 
@@ -95,8 +93,8 @@ def test_driver_read_config_file_basic(get_dummy_data_folder):
         layer_thickness_ratio=10,
         depth=4500,
         minimum_depth=25,
-        mom_run_dir=dummy_data_folder + "/light_rm6_run",
-        mom_input_dir=dummy_data_folder + "/light_rm6_input",
+        mom_run_dir=dummy_data_folder / "light_rm6_run",
+        mom_input_dir=dummy_data_folder / "light_rm6_input",
         toolpath_dir=Path(""),
         hgrid_type="from_file",  # This is how we incorporate the grid_gen files
         vgrid_type="from_file",
@@ -105,7 +103,7 @@ def test_driver_read_config_file_basic(get_dummy_data_folder):
 
     # Write the configuration file
     config_expt = driver.CRRDriver.create_experiment_from_config(
-        dummy_data_folder + "/test_light_config_file.json"
+        dummy_data_folder / "test_light_config_file.json"
     )
     assert str(config_expt) == str(expt)
 
@@ -119,7 +117,7 @@ def test_driver_read_config_file_copy(get_dummy_data_folder, tmp_path_factory):
     fake_run_folder = tmp_path_factory.mktemp("fake_run_folder")
     fake_json_folder = tmp_path_factory.mktemp("fake_json_folder")
     fake_json_path = fake_json_folder / "test_light_config_file.json"
-    shutil.copy(dummy_data_folder + "/test_light_config_file.json", fake_json_path)
+    shutil.copy(dummy_data_folder / "test_light_config_file.json", fake_json_path)
 
     # Step 2: Read the copied JSON file as a dictionary
     with open(fake_json_path, "r") as file:
