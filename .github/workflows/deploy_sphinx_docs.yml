@@ -1,0 +1,33 @@
+name: Deploy Sphinx Documentation
+
+on: [push, pull_request, workflow_dispatch]
+
+permissions:
+  contents: write
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+            submodules: recursive
+      - uses: actions/setup-python@v5
+      - uses: conda-incubator/setup-miniconda@v3
+        with:
+          activate-environment: crr
+          environment-file: environment.yml
+      - name: Sphinx build
+        run: |
+          source $(conda info --base)/etc/profile.d/conda.sh # Initialize Conda
+          conda activate crr # Activate env for autodocs
+          sphinx-build docs/source _build # Build docs
+        shell: bash
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        with:
+          publish_branch: gh-pages
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: _build/
+          force_orphan: true
