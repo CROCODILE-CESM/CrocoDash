@@ -175,7 +175,7 @@ class TestBasicWrapperFunctions:
             os.makedirs(str(path), exist_ok=True)
 
         ## User-1st, test if we can even read the angled nc files.
-        self.crr_driver_obj = crr.driver.crr_driver(
+        self.crr_driver_obj = crr.driver.CRRDriver(
             longitude_extent=longitude_extent,
             latitude_extent=latitude_extent,
             date_range=date_range,
@@ -188,4 +188,3 @@ class TestBasicWrapperFunctions:
             mom_input_dir=input_dir,
             toolpath_dir="",
         )
-        self.crr_driver_obj.setup_directories(run_dir, input_dir)

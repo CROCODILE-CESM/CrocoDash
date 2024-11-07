@@ -1,6 +1,9 @@
 Write Documentation
 ====================
 
+We are using Sphinx to write and compile documentation. The documentation is written in reStructuredText (reST) format. The documentation is located in the `docs` folder. The documentation is hosted on github-pages. Please follow the below steps to compile documentation.
+
+
 Steps:
 
 #. Activate the environment
@@ -14,4 +17,6 @@ Steps:
 
     .. code-block:: bash
     
-        sphinx-apidoc -o source/api-docs ../crocodileregionalruckus # Then rename api-docs/modules.rst title to Auto Generated Docs
+        sphinx-apidoc -o source/api-docs ../crocodileregionalruckus 
+        
+#. Then rename api-docs/modules.rst title to "Auto Generated Docs"

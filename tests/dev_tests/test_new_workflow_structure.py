@@ -6,5 +6,5 @@ def test_import():
 
 
 def test_driver_class_init():
-    driver = crr.driver.crr_driver()
+    driver = crr.driver.CRRDriver()
     assert driver is not None
