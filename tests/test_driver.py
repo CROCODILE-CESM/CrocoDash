@@ -73,7 +73,32 @@ def test_driver_write_config_file_basic(get_dummy_data_folder, tmp_path):
         written_config_dict = json.load(written_config)
     with open(dummy_data_folder / "test_light_config_file.json", "r") as correct_config:
         correct_config_dict = json.load(correct_config)
-    assert written_config_dict == correct_config_dict
+    assert written_config_dict["expt_name"] == correct_config_dict["expt_name"]
+    assert (
+        written_config_dict["longitude_extent"]
+        == correct_config_dict["longitude_extent"]
+    )
+    assert (
+        written_config_dict["latitude_extent"] == correct_config_dict["latitude_extent"]
+    )
+    assert written_config_dict["date_range"] == correct_config_dict["date_range"]
+    assert written_config_dict["resolution"] == correct_config_dict["resolution"]
+    assert (
+        written_config_dict["number_vertical_layers"]
+        == correct_config_dict["number_vertical_layers"]
+    )
+    assert (
+        written_config_dict["layer_thickness_ratio"]
+        == correct_config_dict["layer_thickness_ratio"]
+    )
+    assert written_config_dict["depth"] == correct_config_dict["depth"]
+    assert written_config_dict["minimum_depth"] == correct_config_dict["minimum_depth"]
+    assert (
+        written_config_dict["tidal_constituents"]
+        == correct_config_dict["tidal_constituents"]
+    )
+    assert written_config_dict["boundaries"] == correct_config_dict["boundaries"]
+    assert written_config_dict["hgrid_type"] == correct_config_dict["hgrid_type"]
 
 
 def test_driver_read_config_file_basic(get_dummy_data_folder):

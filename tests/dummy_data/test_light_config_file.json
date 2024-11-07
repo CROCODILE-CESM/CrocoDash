@@ -30,40 +30,40 @@
         "west",
         "east"
     ],
-    "mom_input_dir": "/Users/manishrv/crr/tests/dummy_data/light_rm6_input",
-    "mom_run_dir": "/Users/manishrv/crr/tests/dummy_data/light_rm6_run",
-    "bathymetry": "/Users/manishrv/crr/tests/dummy_data/light_rm6_input/bathymetry.nc",
-    "hgrid": "/Users/manishrv/crr/tests/dummy_data/light_rm6_input/hgrid.nc",
-    "vgrid": "/Users/manishrv/crr/tests/dummy_data/light_rm6_input/vcoord.nc",
+    "mom_input_dir": "tests/dummy_data/light_rm6_input",
+    "mom_run_dir": "tests/dummy_data/light_rm6_run",
+    "bathymetry": "tests/dummy_data/light_rm6_input/bathymetry.nc",
+    "hgrid": "tests/dummy_data/light_rm6_input/hgrid.nc",
+    "vgrid": "tests/dummy_data/light_rm6_input/vcoord.nc",
     "initial_conditions": [
-        "/Users/manishrv/crr/tests/dummy_data/light_rm6_input/init_eta.nc",
-        "/Users/manishrv/crr/tests/dummy_data/light_rm6_input/init_tracers.nc",
-        "/Users/manishrv/crr/tests/dummy_data/light_rm6_input/init_vel.nc"
+        "tests/dummy_data/light_rm6_input/init_eta.nc",
+        "tests/dummy_data/light_rm6_input/init_tracers.nc",
+        "tests/dummy_data/light_rm6_input/init_vel.nc"
     ],
     "ocean_state": [
-        "/Users/manishrv/crr/tests/dummy_data/light_rm6_input/forcing_obc_segment_002.nc",
-        "/Users/manishrv/crr/tests/dummy_data/light_rm6_input/forcing_obc_segment_003.nc",
-        "/Users/manishrv/crr/tests/dummy_data/light_rm6_input/forcing_obc_segment_004.nc",
-        "/Users/manishrv/crr/tests/dummy_data/light_rm6_input/forcing_obc_segment_001.nc"
+        "tests/dummy_data/light_rm6_input/forcing_obc_segment_002.nc",
+        "tests/dummy_data/light_rm6_input/forcing_obc_segment_003.nc",
+        "tests/dummy_data/light_rm6_input/forcing_obc_segment_004.nc",
+        "tests/dummy_data/light_rm6_input/forcing_obc_segment_001.nc"
     ],
     "tides": [
-        "/Users/manishrv/crr/tests/dummy_data/light_rm6_input/tu_segment_001.nc",
-        "/Users/manishrv/crr/tests/dummy_data/light_rm6_input/tu_segment_004.nc",
-        "/Users/manishrv/crr/tests/dummy_data/light_rm6_input/tu_segment_003.nc",
-        "/Users/manishrv/crr/tests/dummy_data/light_rm6_input/tu_segment_002.nc",
-        "/Users/manishrv/crr/tests/dummy_data/light_rm6_input/tz_segment_001.nc",
-        "/Users/manishrv/crr/tests/dummy_data/light_rm6_input/tz_segment_004.nc",
-        "/Users/manishrv/crr/tests/dummy_data/light_rm6_input/tz_segment_003.nc",
-        "/Users/manishrv/crr/tests/dummy_data/light_rm6_input/tz_segment_002.nc"
+        "tests/dummy_data/light_rm6_input/tu_segment_001.nc",
+        "tests/dummy_data/light_rm6_input/tu_segment_004.nc",
+        "tests/dummy_data/light_rm6_input/tu_segment_003.nc",
+        "tests/dummy_data/light_rm6_input/tu_segment_002.nc",
+        "tests/dummy_data/light_rm6_input/tz_segment_001.nc",
+        "tests/dummy_data/light_rm6_input/tz_segment_004.nc",
+        "tests/dummy_data/light_rm6_input/tz_segment_003.nc",
+        "tests/dummy_data/light_rm6_input/tz_segment_002.nc"
     ],
     "run_files": [
-        "/Users/manishrv/crr/tests/dummy_data/light_rm6_run/MOM_input",
-        "/Users/manishrv/crr/tests/dummy_data/light_rm6_run/MOM_override",
-        "/Users/manishrv/crr/tests/dummy_data/light_rm6_run/MOM_layout",
-        "/Users/manishrv/crr/tests/dummy_data/light_rm6_run/SIS_input",
-        "/Users/manishrv/crr/tests/dummy_data/light_rm6_run/field_table",
-        "/Users/manishrv/crr/tests/dummy_data/light_rm6_run/input.nml",
-        "/Users/manishrv/crr/tests/dummy_data/light_rm6_run/diag_table",
-        "/Users/manishrv/crr/tests/dummy_data/light_rm6_run/data_table"
+        "tests/dummy_data/light_rm6_run/MOM_input",
+        "tests/dummy_data/light_rm6_run/MOM_override",
+        "tests/dummy_data/light_rm6_run/MOM_layout",
+        "tests/dummy_data/light_rm6_run/SIS_input",
+        "tests/dummy_data/light_rm6_run/field_table",
+        "tests/dummy_data/light_rm6_run/input.nml",
+        "tests/dummy_data/light_rm6_run/diag_table",
+        "tests/dummy_data/light_rm6_run/data_table"
     ]
 }
