@@ -93,11 +93,14 @@ def test_verify_and_modify_read_vgrid(get_dummy_data_folder):
             light_gridgen_vgrid_path / "vgrid_invalid.nc"
         )
 
-    vgrid_ncar_adj = grid_gen_obj.verify_and_modify_read_vgrid(light_gridgen_vgrid_path / "vgrid_ncar.nc")
+    vgrid_ncar_adj = grid_gen_obj.verify_and_modify_read_vgrid(
+        light_gridgen_vgrid_path / "vgrid_ncar.nc"
+    )
     correct_ncar_adj = xr.open_dataset(light_gridgen_vgrid_path / "vgrid_ncar_adj.nc")
     assert np.array_equal(vgrid_ncar_adj.dz, vgrid_ncar.dz)  # Should be no changes
-    assert np.array_equal(vgrid_ncar_adj.zl, correct_ncar_adj.zl)  # Should be no changes
-
+    assert np.array_equal(
+        vgrid_ncar_adj.zl, correct_ncar_adj.zl
+    )  # Should be no changes
 
 
 def test_mask_disconnected_ocean_areas(get_dummy_data_folder):
@@ -124,6 +127,13 @@ def test_mask_disconnected_ocean_areas(get_dummy_data_folder):
 def test_rm6_functions_smoke(tmp_path):
     grid_gen_obj = grid_gen.GridGen()
     vgrid = grid_gen_obj.create_vgrid(75, 10, 4500, 35)
-    hgrid = grid_gen_obj.create_rectangular_hgrid([-80, -79], [8, 10],0.05)
-    topo = grid_gen_obj.setup_bathymetry(hgrid,[-80, -79], [8, 10],tmp_path,45,"/glade/u/home/manishrv/manish_scratch_symlink/inputs_rm6/gebco/GEBCO_2024.nc")
+    hgrid = grid_gen_obj.create_rectangular_hgrid([-80, -79], [8, 10], 0.05)
+    topo = grid_gen_obj.setup_bathymetry(
+        hgrid,
+        [-80, -79],
+        [8, 10],
+        tmp_path,
+        45,
+        "/glade/u/home/manishrv/manish_scratch_symlink/inputs_rm6/gebco/GEBCO_2024.nc",
+    )
     return

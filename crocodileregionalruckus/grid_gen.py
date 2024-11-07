@@ -451,8 +451,8 @@ class GridGen:
         # Find index of the chosen point
         I, J = find_nearest(hgrid[name_x_dim], hgrid[name_y_dim], lon_pt, lat_pt)
         nx, ny = (
-            (I[0] // 2) -1, # -1 so we don't hit a boundary
-            (J[0] // 2) -1,
+            (I[0] // 2) - 1,  # -1 so we don't hit a boundary
+            (J[0] // 2) - 1,
         )  # Divide by 2 to get the index on the topo grid, not the supergrid
 
         # Get connected ocean segments
