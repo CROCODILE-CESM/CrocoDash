@@ -1,5 +1,5 @@
 import pytest
-import crocodileregionalruckus as crr
+import crocodile_dashboard as crr
 import os
 import numpy as np
 import xarray as xr

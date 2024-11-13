@@ -1,7 +1,7 @@
-import crocodileregionalruckus as crr
-from crocodileregionalruckus import grid_gen
-from crocodileregionalruckus.regional_casegen import cesm_tools as rcg_ct
-from crocodileregionalruckus.rm6 import regional_mom6 as rm6
+import crocodile_dashboard as crr
+from crocodile_dashboard import grid_gen
+from crocodile_dashboard.regional_casegen import cesm_tools as rcg_ct
+from crocodile_dashboard.rm6 import regional_mom6 as rm6
 import pytest
 
 

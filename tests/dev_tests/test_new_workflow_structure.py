@@ -1,4 +1,4 @@
-import crocodileregionalruckus as crr
+import crocodile_dashboard as crr
 
 
 def test_import():

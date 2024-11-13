@@ -1,8 +1,8 @@
 import pytest
-import crocodileregionalruckus as crr
-from crocodileregionalruckus import regional_casegen as rcg
+import crocodile_dashboard as crr
+from crocodile_dashboard import regional_casegen as rcg
 from pathlib import Path
-from crocodileregionalruckus.rm6 import regional_mom6 as rmom6
+from crocodile_dashboard.rm6 import regional_mom6 as rmom6
 import os
 
 

@@ -1,5 +1,5 @@
-import crocodileregionalruckus as crr
-from crocodileregionalruckus import grid_gen
+import crocodile_dashboard as crr
+from crocodile_dashboard import grid_gen
 import pytest
 import os
 from pathlib import Path
