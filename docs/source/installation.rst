@@ -17,7 +17,7 @@ Installation
 
    .. code-block:: bash
 
-      conda activate croco_dash
+      conda activate crocodash
       pytest   # If you'd like, run this to see if everything is working as expected. These are not comprehensive tests.
 
 #. Check out the demos!
