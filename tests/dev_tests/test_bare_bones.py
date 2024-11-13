@@ -1,5 +1,5 @@
 import pytest
-import crocodile_dashboard as cd
+import CrocoDash as cd
 import os
 import numpy as np
 import xarray as xr

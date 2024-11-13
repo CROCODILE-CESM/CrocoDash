@@ -1,5 +1,5 @@
-import crocodile_dashboard as cd
-from crocodile_dashboard import grid_gen
+import CrocoDash as cd
+from CrocoDash import grid_gen
 import pytest
 import os
 from pathlib import Path

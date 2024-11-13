@@ -1,4 +1,4 @@
-# Crocodile Dashboard
+# CrocoDash
 
 ## Background
  The independent, strong, package that sets up a regional MOM run is the regional-mom6 (RM6) package. There's a few things we wanted to add that are specific to the CESM, because we are running MOM inside the CESM. There's also new ways we want to gather grids that uses files on the NCAR glade file system.
@@ -7,7 +7,7 @@
 There's a few different motivations. Since we have some, almost, "NCAR-specific" things, we don't want to put those into the *independent* package, RM6. In the spirit of that, Ashley developed an additional module/package called regional-casegen to setup the CESM side of things that takes in input from the RM6 workflow. Then, we needed to incorporate the new way of gathering grids. This resulted in the idea of a framework to use all the modules in this workflow. Having an overall umbrella that can work with multiple packages without fiddling with RM6 is an attractive proposition.
 
 ## Description: 
-The framework here is called Crocodile Dashboard (CrocoDash). The major difference between RM6 and CrocoDash is that CrocoDash brings in the NCAR and derecho specific dependencies. It, currently, holds four modules grid_gen, boundary_conditions (not developed), RM6, and regional-casegen. 
+The framework here is called CrocoDash (CrocoDash). The major difference between RM6 and CrocoDash is that CrocoDash brings in the NCAR and derecho specific dependencies. It, currently, holds four modules grid_gen, boundary_conditions (not developed), RM6, and regional-casegen. 
 
 It's a lightweight package that ties together each part of the NCAR/Derecho process into one package. There's two avenues of development:
 

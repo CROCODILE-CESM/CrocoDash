@@ -10,7 +10,7 @@ from scipy.ndimage import label
 import shutil
 from .rm6 import regional_mom6 as rm6
 import os
-from crocodile_dashboard.utils import export_dataset
+from CrocoDash.utils import export_dataset
 from pathlib import Path
 
 

@@ -1,4 +1,4 @@
-import crocodile_dashboard as cd
+import CrocoDash as cd
 
 
 def test_import():

@@ -1,7 +1,7 @@
 import pytest
-import crocodile_dashboard as cd
+import CrocoDash as cd
 from pathlib import Path
-from crocodile_dashboard.rm6 import regional_mom6 as rmom6
+from CrocoDash.rm6 import regional_mom6 as rmom6
 import os
 
 

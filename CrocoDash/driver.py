@@ -439,7 +439,7 @@ class CrocoDashDriver:
         os.makedirs(mom_run_dir, exist_ok=True)
         premade_rundir_path_arg = Path(
             os.path.join(
-                importlib.resources.files("crocodile_dashboard"),
+                importlib.resources.files("CrocoDash"),
                 "rm6_dir",
                 "demos",
                 "premade_run_directories",

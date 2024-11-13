@@ -1,7 +1,7 @@
-import crocodile_dashboard as cd
-from crocodile_dashboard import grid_gen
-from crocodile_dashboard.regional_casegen import cesm_tools as rcg_ct
-from crocodile_dashboard.rm6 import regional_mom6 as rm6
+import CrocoDash as cd
+from CrocoDash import grid_gen
+from CrocoDash.regional_casegen import cesm_tools as rcg_ct
+from CrocoDash.rm6 import regional_mom6 as rm6
 import pytest
 
 
