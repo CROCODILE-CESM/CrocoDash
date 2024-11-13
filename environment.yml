@@ -1,4 +1,4 @@
-name: croco_dash
+name: crocodash
 
 channels:
   - conda-forge
