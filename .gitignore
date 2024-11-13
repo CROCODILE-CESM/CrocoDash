@@ -1,4 +1,4 @@
-# CRR specific ignores
+# CrocoDash specific ignores
 *_temp/
 .DS_Store
 

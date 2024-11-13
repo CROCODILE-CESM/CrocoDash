@@ -1,4 +1,4 @@
-import crocodile_dashboard as crr
+import crocodile_dashboard as cd
 from crocodile_dashboard import grid_gen
 import pytest
 import os
@@ -161,8 +161,8 @@ def test_rm6_mask_unwanted_ocean(tmp_path):
     longitude_extent = [-79, -77]
     for i in range(2):
         longitude_extent[i] = (longitude_extent[i] + 360) % 360
-    # hgrid = xr.open_dataset("/glade/u/home/manishrv/documents/nwa12_0.1/.crr_temp/hgrid.nc")
-    # topo = xr.open_dataset("/glade/u/home/manishrv/documents/nwa12_0.1/.crr_temp/topo.nc")
+    # hgrid = xr.open_dataset("/glade/u/home/manishrv/documents/nwa12_0.1/.cd_temp/hgrid.nc")
+    # topo = xr.open_dataset("/glade/u/home/manishrv/documents/nwa12_0.1/.cd_temp/topo.nc")
     resolution = 0.05
     hgrid = grid_obj.create_rectangular_hgrid(
         longitude_extent, latitude_extent, resolution

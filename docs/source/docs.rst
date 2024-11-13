@@ -14,4 +14,4 @@ Steps:
 
     .. code-block:: bash
     
-        sphinx-apidoc -o source/api-docs ../crocodileregionalruckus # Then rename api-docs/modules.rst title to Auto Generated Docs
+        sphinx-apidoc -o source/api-docs ../crocodile_dashboard # Then rename api-docs/modules.rst title to Auto Generated Docs

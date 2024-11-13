@@ -17,7 +17,7 @@ import sys
 import glob
 
 
-class crr_driver:
+class CrocoDashDriver:
     """
     The idea here is to wrap the regional mom6 workflow and associated modules into one python package.
     """
@@ -399,7 +399,7 @@ class crr_driver:
             if path is not None:
                 export_path = path
             else:
-                export_path = self.mom_run_dir / "crr_config.json"
+                export_path = self.mom_run_dir / "CrocoDash_config.json"
             with open(export_path, "w") as f:
                 json.dump(
                     rm6_config,
@@ -439,7 +439,7 @@ class crr_driver:
         os.makedirs(mom_run_dir, exist_ok=True)
         premade_rundir_path_arg = Path(
             os.path.join(
-                importlib.resources.files("crocodileregionalruckus"),
+                importlib.resources.files("crocodile_dashboard"),
                 "rm6_dir",
                 "demos",
                 "premade_run_directories",

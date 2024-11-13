@@ -1,4 +1,4 @@
-crocodileregionalruckus.rm6 package
+crocodile_dashboard.rm6 package
 ===================================
 
 Subpackages
@@ -7,13 +7,13 @@ Subpackages
 .. toctree::
    :maxdepth: 4
 
-   crocodileregionalruckus.rm6.regional_mom6
-   crocodileregionalruckus.rm6.tests
+   crocodile_dashboard.rm6.regional_mom6
+   crocodile_dashboard.rm6.tests
 
 Module contents
 ---------------
 
-.. automodule:: crocodileregionalruckus.rm6
+.. automodule:: crocodile_dashboard.rm6
    :members:
    :undoc-members:
    :show-inheritance:

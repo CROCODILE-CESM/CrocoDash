@@ -15,12 +15,12 @@ jobs:
       - uses: actions/setup-python@v5
       - uses: conda-incubator/setup-miniconda@v3
         with:
-          activate-environment: crr
+          activate-environment: CrocoDash
           environment-file: environment.yml
       - name: Sphinx build
         run: |
           source $(conda info --base)/etc/profile.d/conda.sh # Initialize Conda
-          conda activate crr # Activate env for autodocs
+          conda activate CrocoDash # Activate env for autodocs
           sphinx-build docs/source _build # Build docs
         shell: bash
       - name: Deploy to GitHub Pages

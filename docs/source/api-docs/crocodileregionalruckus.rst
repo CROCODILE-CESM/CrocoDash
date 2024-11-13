@@ -1,4 +1,4 @@
-crocodileregionalruckus package
+crocodile_dashboard package
 ===============================
 
 Subpackages
@@ -7,40 +7,40 @@ Subpackages
 .. toctree::
    :maxdepth: 4
 
-   crocodileregionalruckus.regional_casegen
-   crocodileregionalruckus.rm6
+   crocodile_dashboard.regional_casegen
+   crocodile_dashboard.rm6
 
 Submodules
 ----------
 
-crocodileregionalruckus.driver module
+crocodile_dashboard.driver module
 -------------------------------------
 
-.. automodule:: crocodileregionalruckus.driver
+.. automodule:: crocodile_dashboard.driver
    :members:
    :undoc-members:
    :show-inheritance:
 
-crocodileregionalruckus.grid\_gen module
+crocodile_dashboard.grid\_gen module
 ----------------------------------------
 
-.. automodule:: crocodileregionalruckus.grid_gen
+.. automodule:: crocodile_dashboard.grid_gen
    :members:
    :undoc-members:
    :show-inheritance:
 
-crocodileregionalruckus.unsupported\_boundary\_conditions module
+crocodile_dashboard.unsupported\_boundary\_conditions module
 ----------------------------------------------------------------
 
-.. automodule:: crocodileregionalruckus.unsupported_boundary_conditions
+.. automodule:: crocodile_dashboard.unsupported_boundary_conditions
    :members:
    :undoc-members:
    :show-inheritance:
 
-crocodileregionalruckus.utils module
+crocodile_dashboard.utils module
 ------------------------------------
 
-.. automodule:: crocodileregionalruckus.utils
+.. automodule:: crocodile_dashboard.utils
    :members:
    :undoc-members:
    :show-inheritance:
@@ -48,7 +48,7 @@ crocodileregionalruckus.utils module
 Module contents
 ---------------
 
-.. automodule:: crocodileregionalruckus
+.. automodule:: crocodile_dashboard
    :members:
    :undoc-members:
    :show-inheritance:

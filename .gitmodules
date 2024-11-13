@@ -1,6 +1,6 @@
-[submodule "crocodileregionalruckus/regional_casegen"]
-	path = crocodileregionalruckus/regional_casegen
+[submodule "crocodile_dashboard/regional_casegen"]
+	path = crocodile_dashboard/regional_casegen
 	url = https://github.com/CROCODILE-CESM/regional-casegen
-[submodule "crocodileregionalruckus/rm6"]
-	path = crocodileregionalruckus/rm6
+[submodule "crocodile_dashboard/rm6"]
+	path = crocodile_dashboard/rm6
 	url = https://github.com/CROCODILE-CESM/regional-mom6

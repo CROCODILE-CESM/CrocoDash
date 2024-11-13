@@ -1,13 +1,13 @@
-crocodileregionalruckus.regional\_casegen package
+crocodile_dashboard.regional\_casegen package
 =================================================
 
 Submodules
 ----------
 
-crocodileregionalruckus.regional\_casegen.cesm\_tools module
+crocodile_dashboard.regional\_casegen.cesm\_tools module
 ------------------------------------------------------------
 
-.. automodule:: crocodileregionalruckus.regional_casegen.cesm_tools
+.. automodule:: crocodile_dashboard.regional_casegen.cesm_tools
    :members:
    :undoc-members:
    :show-inheritance:
@@ -15,7 +15,7 @@ crocodileregionalruckus.regional\_casegen.cesm\_tools module
 Module contents
 ---------------
 
-.. automodule:: crocodileregionalruckus.regional_casegen
+.. automodule:: crocodile_dashboard.regional_casegen
    :members:
    :undoc-members:
    :show-inheritance:
