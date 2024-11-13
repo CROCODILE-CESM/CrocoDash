@@ -1,4 +1,4 @@
-import crocodileregionalruckus as crr
+import CrocoDash as cd
 
 
 def test_import():
@@ -6,5 +6,5 @@ def test_import():
 
 
 def test_driver_class_init():
-    driver = crr.driver.crr_driver()
+    driver = cd.driver.CrocoDashDriver()
     assert driver is not None

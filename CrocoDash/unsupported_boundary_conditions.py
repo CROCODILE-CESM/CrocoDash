@@ -41,7 +41,7 @@ class BoundaryConditions:
     def __init__(self, delete_temp_storage=True):
         self.delete_temp_storage = delete_temp_storage
         # Create a temporary storage directory to offload heavy memory items.
-        self.temp_storage = ".crr_bcc_temp"
+        self.temp_storage = ".crocodash_bcc_temp"
         os.makedirs(self.temp_storage, exist_ok=True)
         self._init_cond_paths = [
             Path(self.temp_storage) / "forcing" / "init_vel.nc",
@@ -55,7 +55,7 @@ class BoundaryConditions:
             try:
                 shutil.rmtree(self.temp_storage)
             except:
-                print("Error cleaning up CRR grid_gen temp storage directory.")
+                print("Error cleaning up CrocoDash grid_gen temp storage directory.")
 
     def setup_initial_condition(
         self, hgrid, vgrid, glorys_path, ocean_varnames, arakawa_grid="A"

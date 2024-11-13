@@ -1,14 +1,13 @@
 import pytest
-import crocodileregionalruckus as crr
-from crocodileregionalruckus import regional_casegen as rcg
+import CrocoDash as cd
 from pathlib import Path
-from crocodileregionalruckus.rm6 import regional_mom6 as rmom6
+from CrocoDash.rm6 import regional_mom6 as rmom6
 import os
 
 
 def test_write_config_file(tmp_path):
 
-    expt_name = "crr-sub-glob-fresh-hawaii"
+    expt_name = "cd-sub-glob-fresh-hawaii"
 
     latitude_extent = [16.0, 27]
     longitude_extent = [192, 209]
@@ -35,14 +34,14 @@ def test_write_config_file(tmp_path):
         expt_name=expt_name,
     )
 
-    crr.driver.crr_driver.write_config_file(
+    cd.driver.CrocoDashDriver.write_config_file(
         expt,
-        path=os.path.join(tmp_path, "crr_config.json"),
+        path=os.path.join(tmp_path, "cd_config.json"),
     )
 
 
 def test_read_config_file(tmp_path):
-    expt_name = "crr-sub-glob-fresh-hawaii"
+    expt_name = "cd-sub-glob-fresh-hawaii"
 
     latitude_extent = [16.0, 27]
     longitude_extent = [192, 209]
@@ -69,13 +68,13 @@ def test_read_config_file(tmp_path):
         expt_name=expt_name,
     )
 
-    crr.driver.crr_driver.write_config_file(
+    cd.driver.CrocoDashDriver.write_config_file(
         expt,
-        path=os.path.join(tmp_path, "crr_config.json"),
+        path=os.path.join(tmp_path, "cd_config.json"),
     )
 
-    expt = crr.driver.crr_driver.create_experiment_from_config(
-        os.path.join(tmp_path, "crr_config.json")
+    expt = cd.driver.CrocoDashDriver.create_experiment_from_config(
+        os.path.join(tmp_path, "cd_config.json")
     )
 
     assert expt.expt_name == expt_name
