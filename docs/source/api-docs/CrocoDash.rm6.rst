@@ -1,5 +1,5 @@
-crocodile\_dashboard.rm6 package
-================================
+CrocoDash.rm6 package
+=====================
 
 Subpackages
 -----------

@@ -1,19 +1,19 @@
-crocodile\_dashboard.rm6.regional\_mom6 package
-===============================================
+CrocoDash.rm6.regional\_mom6 package
+====================================
 
 Submodules
 ----------
 
-crocodile\_dashboard.rm6.regional\_mom6.regional\_mom6 module
--------------------------------------------------------------
+CrocoDash.rm6.regional\_mom6.regional\_mom6 module
+--------------------------------------------------
 
 .. automodule:: CrocoDash.rm6.regional_mom6.regional_mom6
    :members:
    :undoc-members:
    :show-inheritance:
 
-crocodile\_dashboard.rm6.regional\_mom6.utils module
-----------------------------------------------------
+CrocoDash.rm6.regional\_mom6.utils module
+-----------------------------------------
 
 .. automodule:: CrocoDash.rm6.regional_mom6.utils
    :members:

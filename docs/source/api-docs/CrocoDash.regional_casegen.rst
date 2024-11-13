@@ -1,19 +1,19 @@
-crocodile\_dashboard.regional\_casegen package
-==============================================
+CrocoDash.regional\_casegen package
+===================================
 
 Submodules
 ----------
 
-crocodile\_dashboard.regional\_casegen.cesm\_tools module
----------------------------------------------------------
+CrocoDash.regional\_casegen.cesm\_tools module
+----------------------------------------------
 
 .. automodule:: CrocoDash.regional_casegen.cesm_tools
    :members:
    :undoc-members:
    :show-inheritance:
 
-crocodile\_dashboard.regional\_casegen.utils module
----------------------------------------------------
+CrocoDash.regional\_casegen.utils module
+----------------------------------------
 
 .. automodule:: CrocoDash.regional_casegen.utils
    :members:

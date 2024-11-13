@@ -1,5 +1,5 @@
-crocodile\_dashboard package
-============================
+CrocoDash package
+=================
 
 Subpackages
 -----------
@@ -13,32 +13,32 @@ Subpackages
 Submodules
 ----------
 
-crocodile\_dashboard.driver module
-----------------------------------
+CrocoDash.driver module
+-----------------------
 
 .. automodule:: CrocoDash.driver
    :members:
    :undoc-members:
    :show-inheritance:
 
-crocodile\_dashboard.grid\_gen module
--------------------------------------
+CrocoDash.grid\_gen module
+--------------------------
 
 .. automodule:: CrocoDash.grid_gen
    :members:
    :undoc-members:
    :show-inheritance:
 
-crocodile\_dashboard.unsupported\_boundary\_conditions module
--------------------------------------------------------------
+CrocoDash.unsupported\_boundary\_conditions module
+--------------------------------------------------
 
 .. automodule:: CrocoDash.unsupported_boundary_conditions
    :members:
    :undoc-members:
    :show-inheritance:
 
-crocodile\_dashboard.utils module
----------------------------------
+CrocoDash.utils module
+----------------------
 
 .. automodule:: CrocoDash.utils
    :members:
