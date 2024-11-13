@@ -1,6 +1,5 @@
 import pytest
 import crocodile_dashboard as cd
-from crocodile_dashboard import regional_casegen as rcg
 from pathlib import Path
 from crocodile_dashboard.rm6 import regional_mom6 as rmom6
 import os

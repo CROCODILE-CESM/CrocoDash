@@ -1,4 +1,4 @@
-name: crr
+name: croco_dash
 
 channels:
   - conda-forge
