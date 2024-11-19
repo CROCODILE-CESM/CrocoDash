@@ -3,10 +3,10 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Crocodile Regional Ruckus Documentation
+CrocoDash Documentation
 =======================================
 
-Welcome to the Crocodile Regional Ruckus Documentation! This project is a companion/wrapper package to `Regional MOM6 <https://github.com/CROCODILE-CESM/regional-mom6>`_. To get started, check out the pages below and then checkout our demos! They give you an idea on how we work with RM6.
+Welcome to the CrocoDash Documentation! This project is a companion/wrapper package to `Regional MOM6 <https://github.com/CROCODILE-CESM/regional-mom6>`_. To get started, check out the pages below and then checkout our demos! They give you an idea on how we work with RM6.
 
 You can also check out the Regional MOM6 documentation for more support information about those functions `here <https://regional-mom6.readthedocs.io/en/latest/>`_!
 

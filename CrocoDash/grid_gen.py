@@ -14,7 +14,7 @@ from scipy.ndimage import label
 import shutil
 from .rm6 import regional_mom6 as rm6
 import os
-from crocodileregionalruckus.utils import export_dataset
+from .utils import export_dataset
 from pathlib import Path
 
 
@@ -132,7 +132,7 @@ class GridGen:
         self._topo_path = None
         self.delete_temp_storage = delete_temp_storage
         # Create a temporary storage directory to offload heavy memory items.
-        self.temp_storage = ".crr_gg_temp"
+        self.temp_storage = ".crocodash_gg_temp"
         os.makedirs(self.temp_storage, exist_ok=True)
 
     def __del__(self):
@@ -144,7 +144,7 @@ class GridGen:
                 shutil.rmtree(self.temp_storage)
             except:
                 gridgen_logger.info(
-                    "Couldn't clean up CRR grid_gen temp storage directory."
+                    "Couldn't clean up CrocoDash grid_gen temp storage directory."
                 )
 
     def subset_global_hgrid(

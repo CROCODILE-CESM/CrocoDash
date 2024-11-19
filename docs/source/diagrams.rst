@@ -7,7 +7,7 @@ Any representative figures to better explain the package. These are currently fi
 .. figure:: images/Workflow.png
   :width: 400
   :alt: Diagram from the ones we made in Crocodile Tools presentation
-    Workflow of the CRR/RM6 to a regional model.
+    Workflow of the CrocoDash/RM6 to a regional model.
 
 .. figure:: images/Organization.png
     :width: 400
