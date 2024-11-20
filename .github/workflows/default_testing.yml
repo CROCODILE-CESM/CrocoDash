@@ -1,4 +1,4 @@
-name: Regression Testing
+name: Default Testing
 
 on: [push, pull_request, workflow_dispatch]
 
@@ -6,7 +6,7 @@ permissions:
   contents: write
 
 jobs:
-  docs:
+  pytest:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
