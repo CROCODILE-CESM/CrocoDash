@@ -4,13 +4,6 @@ import os
 from pathlib import Path
 from CrocoDash.rm6 import regional_mom6 as rm6
 
-# Path to the temp directory
-TEMP_DIR = os.path.join(os.path.dirname(__file__), "temp")
-
-# Ensure the temp directory exists
-if not os.path.exists(TEMP_DIR):
-    os.makedirs(TEMP_DIR)
-
 
 # Fixture to provide the temp folder and a parameter name
 @pytest.fixture
