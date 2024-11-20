@@ -1,6 +1,6 @@
-import crocodileregionalruckus as crr
-from crocodileregionalruckus import driver
-from crocodileregionalruckus.rm6 import regional_mom6 as rm6
+import CrocoDash as crr
+from CrocoDash import driver
+from CrocoDash.rm6 import regional_mom6 as rm6
 import pytest
 from pathlib import Path
 import json
@@ -10,10 +10,10 @@ import os
 
 def test_driver_init_basic():
     """
-    This test confirms we can import crr driver, and generate a CRRDriver object which includes grid_gen, regional_mom6, and regional_casegen objects.
+    This test confirms we can import crr driver, and generate a CrocoDashDriver object which includes grid_gen, regional_mom6, and regional_casegen objects.
     """
 
-    crr_driver_obj = driver.CRRDriver()
+    crr_driver_obj = driver.CrocoDashDriver()
     assert crr_driver_obj is not None
     assert crr_driver_obj.empty_expt_obj is not None
     assert crr_driver_obj.grid_gen_obj is not None
@@ -25,7 +25,7 @@ def test_driver_init_rm6_args():
     This test confirms we can pass Regional-MOM6 arguments into the Regional MOM6 empty_expt_obj
     """
 
-    crr_driver_obj = driver.CRRDriver(
+    crr_driver_obj = driver.CrocoDashDriver(
         expt_name="test_args", hgrid_type="test_hgrid_type"
     )
     assert crr_driver_obj.empty_expt_obj.expt_name == "test_args"
@@ -37,112 +37,86 @@ def test_driver_init_rm6_args_fails():
     This test confirms that we can't pass bogus arguments into the Regional MOM6 empty_expt_obj
     """
     with pytest.raises(TypeError):
-        driver.CRRDriver(expt_name_bogus_args="test_args")
+        driver.CrocoDashDriver(expt_name_bogus_args="test_args")
 
 
-def test_driver_write_config_file_basic(get_dummy_data_folder, tmp_path):
+def test_driver_write_config_file_basic(tmp_path,setup_sample_rm6_expt):
     """
     This test confirms we can write a Regional MOM6 experiment configuration file. There is a lot of overhead to creating ane experiment object, so we'll use our given dummy data.
     """
-    dummy_data_folder = get_dummy_data_folder
-
     # Create a dummy expt object
 
-    expt = rm6.experiment(
-        longitude_extent=[10, 12],
-        latitude_extent=[10, 12],
-        date_range=["2000-01-01 00:00:00", "2000-01-01 00:00:00"],
-        resolution=0.05,
-        number_vertical_layers=75,
-        layer_thickness_ratio=10,
-        depth=4500,
-        minimum_depth=25,
-        mom_run_dir=dummy_data_folder / "light_rm6_run",
-        mom_input_dir=dummy_data_folder / "light_rm6_input",
-        toolpath_dir=Path(""),
-        hgrid_type="from_file",  # This is how we incorporate the grid_gen files
-        vgrid_type="from_file",
-        expt_name="test",
-    )
+    expt = setup_sample_rm6_expt
 
     # Write the configuration file
-    config_file = driver.CRRDriver.write_config_file(
+    config_file = driver.CrocoDashDriver.write_config_file(
         expt, tmp_path / "test_light_config_file.json"
     )
+
+
     with open(tmp_path / "test_light_config_file.json", "r") as written_config:
         written_config_dict = json.load(written_config)
-    with open(dummy_data_folder / "test_light_config_file.json", "r") as correct_config:
-        correct_config_dict = json.load(correct_config)
-    assert written_config_dict["expt_name"] == correct_config_dict["expt_name"]
+
+    assert written_config_dict["expt_name"] == expt.expt_name
     assert (
         written_config_dict["longitude_extent"]
-        == correct_config_dict["longitude_extent"]
+        == list(expt.longitude_extent)
     )
     assert (
-        written_config_dict["latitude_extent"] == correct_config_dict["latitude_extent"]
+        written_config_dict["latitude_extent"] == list(expt.latitude_extent)
     )
-    assert written_config_dict["date_range"] == correct_config_dict["date_range"]
-    assert written_config_dict["resolution"] == correct_config_dict["resolution"]
+    assert written_config_dict["date_range"] == [str(expt.date_range[0]),str(expt.date_range[1])]
+    assert written_config_dict["resolution"] == expt.resolution
     assert (
         written_config_dict["number_vertical_layers"]
-        == correct_config_dict["number_vertical_layers"]
+        == expt.number_vertical_layers
     )
     assert (
         written_config_dict["layer_thickness_ratio"]
-        == correct_config_dict["layer_thickness_ratio"]
+        == expt.layer_thickness_ratio
     )
-    assert written_config_dict["depth"] == correct_config_dict["depth"]
-    assert written_config_dict["minimum_depth"] == correct_config_dict["minimum_depth"]
+    assert written_config_dict["depth"] == expt.depth
+    assert written_config_dict["minimum_depth"] == expt.minimum_depth
     assert (
         written_config_dict["tidal_constituents"]
-        == correct_config_dict["tidal_constituents"]
+        == expt.tidal_constituents
     )
-    assert written_config_dict["boundaries"] == correct_config_dict["boundaries"]
-    assert written_config_dict["hgrid_type"] == correct_config_dict["hgrid_type"]
+    assert written_config_dict["boundaries"] == expt.boundaries
+    assert written_config_dict["hgrid_type"] == expt.hgrid_type
 
-
-def test_driver_read_config_file_basic(get_dummy_data_folder):
+def test_driver_read_config_file_basic(tmp_path,setup_sample_rm6_expt):
     """
     This test confirms we can write a Regional MOM6 experiment configuration file. There is a lot of overhead to creating ane experiment object, so we'll use our given dummy data.
     """
-    dummy_data_folder = get_dummy_data_folder
 
     # Create a dummy expt object
 
-    expt = rm6.experiment(
-        longitude_extent=[10, 12],
-        latitude_extent=[10, 12],
-        date_range=["2000-01-01 00:00:00", "2000-01-01 00:00:00"],
-        resolution=0.05,
-        number_vertical_layers=75,
-        layer_thickness_ratio=10,
-        depth=4500,
-        minimum_depth=25,
-        mom_run_dir=dummy_data_folder / "light_rm6_run",
-        mom_input_dir=dummy_data_folder / "light_rm6_input",
-        toolpath_dir=Path(""),
-        hgrid_type="from_file",  # This is how we incorporate the grid_gen files
-        vgrid_type="from_file",
-        expt_name="test",
-    )
-
+    expt = setup_sample_rm6_expt
     # Write the configuration file
-    config_expt = driver.CRRDriver.create_experiment_from_config(
-        dummy_data_folder / "test_light_config_file.json"
+    config_file = driver.CrocoDashDriver.write_config_file(
+        expt, tmp_path / "test_light_config_file.json"
+    )
+    # Read the configuration file
+    config_expt = driver.CrocoDashDriver.create_experiment_from_config(
+        tmp_path / "test_light_config_file.json"
     )
     assert str(config_expt) == str(expt)
 
-
-def test_driver_read_config_file_copy(get_dummy_data_folder, tmp_path_factory):
+def test_driver_read_config_file_copy( setup_sample_rm6_expt, tmp_path_factory):
     """
     This test confirms we can write a Regional MOM6 experiment configuration file. There is a lot of overhead to creating ane experiment object, so we'll use our given dummy data.
     """
-    dummy_data_folder = get_dummy_data_folder
+    expt = setup_sample_rm6_expt
     fake_input_folder = tmp_path_factory.mktemp("fake_input_folder")
     fake_run_folder = tmp_path_factory.mktemp("fake_run_folder")
     fake_json_folder = tmp_path_factory.mktemp("fake_json_folder")
     fake_json_path = fake_json_folder / "test_light_config_file.json"
-    shutil.copy(dummy_data_folder / "test_light_config_file.json", fake_json_path)
+    tmp_path = tmp_path_factory.mktemp("tmp_path")
+    # Write the configuration file
+    config_file = driver.CrocoDashDriver.write_config_file(
+        expt, tmp_path / "test_light_config_file.json"
+    )
+    shutil.copy(tmp_path / "test_light_config_file.json", fake_json_path)
 
     # Step 2: Read the copied JSON file as a dictionary
     with open(fake_json_path, "r") as file:
@@ -157,7 +131,7 @@ def test_driver_read_config_file_copy(get_dummy_data_folder, tmp_path_factory):
         json.dump(config, file)
 
     # Write the configuration file
-    config_expt = driver.CRRDriver.create_experiment_from_config(fake_json_path)
+    config_expt = driver.CrocoDashDriver.create_experiment_from_config(fake_json_path)
     assert_directories_equal(old_mom_input_dir, fake_input_folder)
     assert_directories_equal(old_mom_run_dir, fake_run_folder)
 

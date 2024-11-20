@@ -1,5 +1,5 @@
 """
-This module (utils) contains utility functions that are used across the crocodileregionalruckus package.
+This module (utils) contains utility functions that are used across the CrocoDash package.
 """
 
 import os

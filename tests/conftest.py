@@ -2,7 +2,35 @@ import pytest
 import socket
 import os
 from pathlib import Path
+from CrocoDash.rm6 import regional_mom6 as rm6
 
+# Path to the temp directory
+TEMP_DIR = os.path.join(os.path.dirname(__file__), "temp")
+
+# Ensure the temp directory exists
+if not os.path.exists(TEMP_DIR):
+    os.makedirs(TEMP_DIR)
+
+# Fixture to provide the temp folder and a parameter name
+@pytest.fixture
+def setup_sample_rm6_expt(tmp_path):
+    expt = rm6.experiment(
+        longitude_extent=[10, 12],
+        latitude_extent=[10, 12],
+        date_range=["2000-01-01 00:00:00", "2000-01-01 00:00:00"],
+        resolution=0.05,
+        number_vertical_layers=75,
+        layer_thickness_ratio=10,
+        depth=4500,
+        minimum_depth=25,
+        mom_run_dir=tmp_path / "light_rm6_run",
+        mom_input_dir=tmp_path / "light_rm6_input",
+        toolpath_dir=Path(""),
+        hgrid_type="even_spacing", 
+        vgrid_type="hyperbolic_tangent",
+        expt_name="test",
+    )
+    return expt
 
 def pytest_addoption(parser):
     parser.addoption(
@@ -36,6 +64,27 @@ def check_glade_exists():
         pytest.skip(reason="Skipping test: Not running on the Glade file system.")
 
 
+import xarray as xr
+import numpy as np
+
 @pytest.fixture(scope="session")
-def get_dummy_data_folder():
-    return Path(os.path.join(os.path.abspath(os.path.dirname(__file__)), "dummy_data"))
+def dummy_netcdf_data():
+# Create dummy data
+    time = np.arange(10)  # 10 time steps
+    lat = np.linspace(-90, 90, 5)  # 5 latitude points
+    lon = np.linspace(-180, 180, 5)  # 5 longitude points
+    data = np.random.rand(len(time), len(lat), len(lon))  # Random 3D data
+
+    # Create an xarray Dataset
+    ds = xr.Dataset(
+        {
+            "temperature": (["time", "lat", "lon"], data),  # Data variable
+        },
+        coords={
+            "time": time,
+            "lat": lat,
+            "lon": lon,
+        },
+        attrs={"description": "Dummy dataset for temperature"},
+    )
+    return ds

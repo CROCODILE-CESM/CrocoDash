@@ -1,0 +1,25 @@
+name: Regression Testing
+
+on: [push, pull_request, workflow_dispatch]
+
+permissions:
+  contents: write
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+            submodules: recursive
+      - uses: actions/setup-python@v5
+      - uses: conda-incubator/setup-miniconda@v3
+        with:
+          activate-environment: CrocoDash
+          environment-file: environment.yml
+      - name: Run new version
+        run: |
+          source $(conda info --base)/etc/profile.d/conda.sh # Initialize Conda
+          conda activate CrocoDash # Activate env for autodocs
+          pytest -m regression
+        shell: bash

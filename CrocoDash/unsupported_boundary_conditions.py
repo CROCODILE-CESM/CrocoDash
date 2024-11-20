@@ -165,7 +165,7 @@ class BoundaryConditions:
         os.makedirs(mom_run_dir, exist_ok=True)
         premade_rundir_path_arg = Path(
             os.path.join(
-                importlib.resources.files("crocodileregionalruckus"),
+                importlib.resources.files("CrocoDash"),
                 "rm6_dir",
                 "demos",
                 "premade_run_directories",
