@@ -11,6 +11,7 @@ TEMP_DIR = os.path.join(os.path.dirname(__file__), "temp")
 if not os.path.exists(TEMP_DIR):
     os.makedirs(TEMP_DIR)
 
+
 # Fixture to provide the temp folder and a parameter name
 @pytest.fixture
 def setup_sample_rm6_expt(tmp_path):
@@ -26,11 +27,12 @@ def setup_sample_rm6_expt(tmp_path):
         mom_run_dir=tmp_path / "light_rm6_run",
         mom_input_dir=tmp_path / "light_rm6_input",
         toolpath_dir=Path(""),
-        hgrid_type="even_spacing", 
+        hgrid_type="even_spacing",
         vgrid_type="hyperbolic_tangent",
         expt_name="test",
     )
     return expt
+
 
 def pytest_addoption(parser):
     parser.addoption(
@@ -67,9 +69,10 @@ def check_glade_exists():
 import xarray as xr
 import numpy as np
 
+
 @pytest.fixture(scope="session")
 def dummy_netcdf_data():
-# Create dummy data
+    # Create dummy data
     time = np.arange(10)  # 10 time steps
     lat = np.linspace(-90, 90, 5)  # 5 latitude points
     lon = np.linspace(-180, 180, 5)  # 5 longitude points

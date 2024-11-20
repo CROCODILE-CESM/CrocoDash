@@ -15,5 +15,3 @@ def test_utils_smoke(dummy_netcdf_data, tmp_path):
 
     # Test export_dataset
     utils.export_dataset(dummy_netcdf_data, tmp_path / "hgrid_test.nc")
-
-

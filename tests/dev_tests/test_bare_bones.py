@@ -5,6 +5,7 @@ import numpy as np
 import xarray as xr
 from pathlib import Path
 
+
 class TestBasicWrapperFunctions:
 
     def test_class(self, tmp_path):
@@ -50,8 +51,6 @@ class TestBasicWrapperFunctions:
             toolpath_dir="",
         )
         self.cd_driver_obj.setup_directories(run_dir, input_dir)
-
-
 
 
 @pytest.fixture(scope="module")
@@ -190,4 +189,3 @@ def dummy_bathymetry_data():
     )
     bathymetry.name = "silly_depth"
     return bathymetry
-

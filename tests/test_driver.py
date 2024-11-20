@@ -40,7 +40,7 @@ def test_driver_init_rm6_args_fails():
         driver.CrocoDashDriver(expt_name_bogus_args="test_args")
 
 
-def test_driver_write_config_file_basic(tmp_path,setup_sample_rm6_expt):
+def test_driver_write_config_file_basic(tmp_path, setup_sample_rm6_expt):
     """
     This test confirms we can write a Regional MOM6 experiment configuration file. There is a lot of overhead to creating ane experiment object, so we'll use our given dummy data.
     """
@@ -53,38 +53,27 @@ def test_driver_write_config_file_basic(tmp_path,setup_sample_rm6_expt):
         expt, tmp_path / "test_light_config_file.json"
     )
 
-
     with open(tmp_path / "test_light_config_file.json", "r") as written_config:
         written_config_dict = json.load(written_config)
 
     assert written_config_dict["expt_name"] == expt.expt_name
-    assert (
-        written_config_dict["longitude_extent"]
-        == list(expt.longitude_extent)
-    )
-    assert (
-        written_config_dict["latitude_extent"] == list(expt.latitude_extent)
-    )
-    assert written_config_dict["date_range"] == [str(expt.date_range[0]),str(expt.date_range[1])]
+    assert written_config_dict["longitude_extent"] == list(expt.longitude_extent)
+    assert written_config_dict["latitude_extent"] == list(expt.latitude_extent)
+    assert written_config_dict["date_range"] == [
+        str(expt.date_range[0]),
+        str(expt.date_range[1]),
+    ]
     assert written_config_dict["resolution"] == expt.resolution
-    assert (
-        written_config_dict["number_vertical_layers"]
-        == expt.number_vertical_layers
-    )
-    assert (
-        written_config_dict["layer_thickness_ratio"]
-        == expt.layer_thickness_ratio
-    )
+    assert written_config_dict["number_vertical_layers"] == expt.number_vertical_layers
+    assert written_config_dict["layer_thickness_ratio"] == expt.layer_thickness_ratio
     assert written_config_dict["depth"] == expt.depth
     assert written_config_dict["minimum_depth"] == expt.minimum_depth
-    assert (
-        written_config_dict["tidal_constituents"]
-        == expt.tidal_constituents
-    )
+    assert written_config_dict["tidal_constituents"] == expt.tidal_constituents
     assert written_config_dict["boundaries"] == expt.boundaries
     assert written_config_dict["hgrid_type"] == expt.hgrid_type
 
-def test_driver_read_config_file_basic(tmp_path,setup_sample_rm6_expt):
+
+def test_driver_read_config_file_basic(tmp_path, setup_sample_rm6_expt):
     """
     This test confirms we can write a Regional MOM6 experiment configuration file. There is a lot of overhead to creating ane experiment object, so we'll use our given dummy data.
     """
@@ -102,7 +91,8 @@ def test_driver_read_config_file_basic(tmp_path,setup_sample_rm6_expt):
     )
     assert str(config_expt) == str(expt)
 
-def test_driver_read_config_file_copy( setup_sample_rm6_expt, tmp_path_factory):
+
+def test_driver_read_config_file_copy(setup_sample_rm6_expt, tmp_path_factory):
     """
     This test confirms we can write a Regional MOM6 experiment configuration file. There is a lot of overhead to creating ane experiment object, so we'll use our given dummy data.
     """
