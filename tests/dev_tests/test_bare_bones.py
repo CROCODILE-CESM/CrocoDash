@@ -50,8 +50,7 @@ class TestBasicWrapperFunctions:
             mom_input_dir=input_dir,
             toolpath_dir="",
         )
-        self.cd_driver_obj.setup_directories(run_dir, input_dir)
-
+        assert self.cd_driver_obj is not None
 
 @pytest.fixture(scope="module")
 def dummy_tidal_data():

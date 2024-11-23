@@ -126,12 +126,8 @@ class GridGen:
     def __del__(self):
         """This function cleans up our object. If we declare delete_temp_storage as True in the __init__ (which is default), we delete the temp_storage directory after the object is deleted."""
         if self.delete_temp_storage:
-            try:
+            if os.path.exists(self.temp_storage):
                 shutil.rmtree(self.temp_storage)
-            except:
-                gridgen_logger.info(
-                    "Couldn't clean up CrocoDash grid_gen temp storage directory."
-                )
 
     def subset_global_hgrid(
         self,

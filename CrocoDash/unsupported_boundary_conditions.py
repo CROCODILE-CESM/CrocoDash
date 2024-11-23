@@ -54,10 +54,8 @@ class BoundaryConditions:
 
     def __del__(self):
         if self.delete_temp_storage:
-            try:
+            if os.path.exists(self.temp_storage):
                 shutil.rmtree(self.temp_storage)
-            except:
-                print("Error cleaning up CrocoDash grid_gen temp storage directory.")
 
     def setup_initial_condition(
         self, hgrid, vgrid, glorys_path, ocean_varnames, arakawa_grid="A"
