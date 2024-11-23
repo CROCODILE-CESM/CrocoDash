@@ -22,5 +22,5 @@ jobs:
         run: |
           source $(conda info --base)/etc/profile.d/conda.sh # Initialize Conda
           conda activate CrocoDash # Activate env for autodocs
-          pytest tests
+          pytest
         shell: bash
