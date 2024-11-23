@@ -1,6 +1,4 @@
-"""
-This module (grid_gen) implements the GridGen class, three helper functions (spherical2cartesian, create_tree, find_nearest) useful in subsetting a grid, and contains a logger called "grid_gen_logger"
-"""
+"""This module (grid_gen) implements the GridGen class, three helper functions (spherical2cartesian, create_tree, find_nearest) useful in subsetting a grid, and contains a logger called "grid_gen_logger" """
 
 from .utils import setup_logger
 
@@ -52,9 +50,7 @@ class GridGen:
 
     @property
     def hgrid(self):
-        """
-        Gets the Hgrid as a xr.Dataset
-        """
+        """Gets the Hgrid as a xr.Dataset"""
         try:
             return xr.open_dataset(self._hgrid_path)
         except:
@@ -62,17 +58,13 @@ class GridGen:
 
     @hgrid.setter
     def hgrid(self, value):
-        """
-        Sets the Hgrid given a xr.Dataset
-        """
+        """Sets the Hgrid given a xr.Dataset"""
         self._hgrid_path = os.path.join(self.temp_storage, "hgrid.nc")
         export_dataset(value, self._hgrid_path)
 
     @property
     def topo(self):
-        """
-        Gets the Topo as a xr.Dataset
-        """
+        """Gets the Topo as a xr.Dataset"""
         try:
             return xr.open_dataset(self._topo_path)
         except:
@@ -80,16 +72,13 @@ class GridGen:
 
     @topo.setter
     def topo(self, value):
-        """
-        Sets the Topo given a xr.Dataset"""
+        """Sets the Topo given a xr.Dataset"""
         self._topo_path = os.path.join(self.temp_storage, "topo.nc")
         export_dataset(value, self._topo_path)
 
     @property
     def vgrid(self):
-        """
-        Gets the Vgrid as a xr.Dataset
-        """
+        """Gets the Vgrid as a xr.Dataset"""
         try:
             return xr.open_dataset(self._vgrid_path)
         except:
@@ -97,8 +86,7 @@ class GridGen:
 
     @vgrid.setter
     def vgrid(self, value):
-        """
-        Sets the Vgrid given a xr.Dataset"""
+        """Sets the Vgrid given a xr.Dataset"""
         self._vgrid_path = os.path.join(self.temp_storage, "vgrid.nc")
         export_dataset(value, self._vgrid_path)
 
@@ -136,9 +124,7 @@ class GridGen:
         os.makedirs(self.temp_storage, exist_ok=True)
 
     def __del__(self):
-        """
-        This function cleans up our object. If we declare delete_temp_storage as True in the __init__ (which is default), we delete the temp_storage directory after the object is deleted.
-        """
+        """This function cleans up our object. If we declare delete_temp_storage as True in the __init__ (which is default), we delete the temp_storage directory after the object is deleted."""
         if self.delete_temp_storage:
             try:
                 shutil.rmtree(self.temp_storage)
@@ -594,9 +580,7 @@ class GridGen:
 
 
 def spherical2cartesian(lon, lat):
-    """
-    Convert spherical coordinates to cartesian coordinates
-    """
+    """Convert spherical coordinates to cartesian coordinates"""
     R_earth = 6378136  # meters
     lonr = np.deg2rad(lon)
     latr = np.deg2rad(lat)
@@ -607,9 +591,7 @@ def spherical2cartesian(lon, lat):
 
 
 def create_tree(lon, lat):
-    """
-    Create a K-d tree from the spherical coordinates, which is good for spatial queries, like nearest neighbor search
-    """
+    """Create a K-d tree from the spherical coordinates, which is good for spatial queries, like nearest neighbor search"""
     # Convert spherical coordinates to cartesian coordinates
     x, y, z = spherical2cartesian(lon, lat)
 
@@ -626,9 +608,7 @@ def create_tree(lon, lat):
 
 
 def find_nearest(lon, lat, lon_pt, lat_pt, tree=None):
-    """
-    Find the nearest point to lon_pt, lat_pt in the grid defined by lon, lat
-    """
+    """Find the nearest point to lon_pt, lat_pt in the grid defined by lon, lat"""
     # Create a tree from the grid
     if tree is None:
         tree = create_tree(lon, lat)
