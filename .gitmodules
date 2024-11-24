@@ -4,3 +4,15 @@
 [submodule "CrocoDash/rm6"]
 	path = CrocoDash/rm6
 	url = https://github.com/CROCODILE-CESM/regional-mom6/
+[submodule "cime"]
+	path = cime
+	url = https://github.com/ESMCI/cime.git
+[submodule "visualCaseGen"]
+	path = visualCaseGen
+	url = https://github.com/CROCODILE-CESM/visualCaseGen.git
+[submodule "CrocoDash/cime"]
+	path = CrocoDash/cime
+	url = https://github.com/ESMCI/cime.git
+[submodule "CrocoDash/visualCaseGen"]
+	path = CrocoDash/visualCaseGen
+	url = https://github.com/CROCODILE-CESM/visualCaseGen.git
