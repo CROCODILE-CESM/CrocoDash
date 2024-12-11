@@ -6,6 +6,8 @@ from .rm6 import regional_mom6 as rm6
 import os
 import shutil
 import xarray as xr
+import importlib
+import sys
 
 
 class BoundaryConditions:
@@ -52,10 +54,8 @@ class BoundaryConditions:
 
     def __del__(self):
         if self.delete_temp_storage:
-            try:
+            if os.path.exists(self.temp_storage):
                 shutil.rmtree(self.temp_storage)
-            except:
-                print("Error cleaning up CrocoDash grid_gen temp storage directory.")
 
     def setup_initial_condition(
         self, hgrid, vgrid, glorys_path, ocean_varnames, arakawa_grid="A"
@@ -133,6 +133,49 @@ class BoundaryConditions:
             tidal_constituents=tidal_consituents,
         )
         return
+
+    def explicit_setup_run_directory(
+        self,
+        mom_input_dir,
+        mom_run_dir,
+        date_range,
+        hgrid,
+        vgrid,
+        tidal_constituents,
+        surface_forcing=None,
+        overwrite=False,
+        with_tides=False,
+        boundaries=["south", "north", "west", "east"],
+        premade_rundir_path_arg=None,
+    ):
+        """
+        This function should set up the run directory for the experiment.
+        """
+        expt = rm6.experiment.create_empty(
+            mom_input_dir=mom_input_dir,
+            mom_run_dir=mom_run_dir,
+            date_range=date_range,
+            tidal_constituents=tidal_constituents,
+        )
+        expt.hgrid = hgrid
+        expt.vgrid = vgrid
+        os.makedirs(mom_input_dir, exist_ok=True)
+        os.makedirs(mom_run_dir, exist_ok=True)
+        premade_rundir_path_arg = Path(
+            os.path.join(
+                importlib.resources.files("CrocoDash"),
+                "rm6_dir",
+                "demos",
+                "premade_run_directories",
+            )
+        )
+        sys.modules["regional_mom6"] = rm6
+        return expt.setup_run_directory(
+            surface_forcing=surface_forcing,
+            overwrite=overwrite,
+            with_tides=with_tides,
+            boundaries=boundaries,
+        )
 
     def export_files(self, output_folder):
         """
