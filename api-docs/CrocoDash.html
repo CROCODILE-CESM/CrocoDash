@@ -1,0 +1,681 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CrocoDash package &mdash; CrocoDash  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="CrocoDash.regional_casegen package" href="CrocoDash.regional_casegen.html" />
+    <link rel="prev" title="Auto-Generated Docs" href="modules.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            CrocoDash
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../driver.html">Driver Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../grid_gen.html">Grid Gen Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rcg.html">Regional Case Gen</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">Auto-Generated Docs</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">CrocoDash package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.regional_casegen.html">CrocoDash.regional_casegen package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.rm6.html">CrocoDash.rm6 package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-CrocoDash.driver">CrocoDash.driver module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#CrocoDash.driver.CrocoDashDriver"><code class="docutils literal notranslate"><span class="pre">CrocoDashDriver</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-CrocoDash.grid_gen">CrocoDash.grid_gen module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#CrocoDash.grid_gen.GridGen"><code class="docutils literal notranslate"><span class="pre">GridGen</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#CrocoDash.grid_gen.create_tree"><code class="docutils literal notranslate"><span class="pre">create_tree()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#CrocoDash.grid_gen.find_nearest"><code class="docutils literal notranslate"><span class="pre">find_nearest()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#CrocoDash.grid_gen.spherical2cartesian"><code class="docutils literal notranslate"><span class="pre">spherical2cartesian()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-CrocoDash.unsupported_boundary_conditions">CrocoDash.unsupported_boundary_conditions module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#CrocoDash.unsupported_boundary_conditions.BoundaryConditions"><code class="docutils literal notranslate"><span class="pre">BoundaryConditions</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-CrocoDash.utils">CrocoDash.utils module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#CrocoDash.utils.export_dataset"><code class="docutils literal notranslate"><span class="pre">export_dataset()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#CrocoDash.utils.setup_logger"><code class="docutils literal notranslate"><span class="pre">setup_logger()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-CrocoDash">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../diagrams.html">Diagrams</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../docs.html">Write Documentation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">CrocoDash</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">Auto-Generated Docs</a></li>
+      <li class="breadcrumb-item active">CrocoDash package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/api-docs/CrocoDash.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="crocodash-package">
+<h1>CrocoDash package<a class="headerlink" href="#crocodash-package" title="Link to this heading"></a></h1>
+<section id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Link to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="CrocoDash.regional_casegen.html">CrocoDash.regional_casegen package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="CrocoDash.regional_casegen.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="CrocoDash.regional_casegen.html#module-CrocoDash.regional_casegen.cesm_tools">CrocoDash.regional_casegen.cesm_tools module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.regional_casegen.html#CrocoDash.regional_casegen.cesm_tools.RegionalCaseGen"><code class="docutils literal notranslate"><span class="pre">RegionalCaseGen</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.regional_casegen.html#CrocoDash.regional_casegen.cesm_tools.RegionalCaseGen.edit_input_nml_for_CESM"><code class="docutils literal notranslate"><span class="pre">RegionalCaseGen.edit_input_nml_for_CESM()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.regional_casegen.html#CrocoDash.regional_casegen.cesm_tools.RegionalCaseGen.setup_cesm"><code class="docutils literal notranslate"><span class="pre">RegionalCaseGen.setup_cesm()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.regional_casegen.html#CrocoDash.regional_casegen.cesm_tools.RegionalCaseGen.setup_cesm_explicit"><code class="docutils literal notranslate"><span class="pre">RegionalCaseGen.setup_cesm_explicit()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.regional_casegen.html#CrocoDash.regional_casegen.cesm_tools.RegionalCaseGen.write_esmf_mesh"><code class="docutils literal notranslate"><span class="pre">RegionalCaseGen.write_esmf_mesh()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.regional_casegen.html#CrocoDash.regional_casegen.cesm_tools.RegionalCaseGen.xmlchange"><code class="docutils literal notranslate"><span class="pre">RegionalCaseGen.xmlchange()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="CrocoDash.regional_casegen.html#module-CrocoDash.regional_casegen.utils">CrocoDash.regional_casegen.utils module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.regional_casegen.html#CrocoDash.regional_casegen.utils.setup_logger"><code class="docutils literal notranslate"><span class="pre">setup_logger()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="CrocoDash.regional_casegen.html#module-CrocoDash.regional_casegen">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="CrocoDash.rm6.html">CrocoDash.rm6 package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="CrocoDash.rm6.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html">CrocoDash.rm6.regional_mom6 package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#module-CrocoDash.rm6.regional_mom6.regional_mom6">CrocoDash.rm6.regional_mom6.regional_mom6 module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#module-CrocoDash.rm6.regional_mom6.utils">CrocoDash.rm6.regional_mom6.utils module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#module-CrocoDash.rm6.regional_mom6">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.rm6.tests.html">CrocoDash.rm6.tests package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.rm6.tests.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.rm6.tests.html#module-CrocoDash.rm6.tests.test_config">CrocoDash.rm6.tests.test_config module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.rm6.tests.html#module-CrocoDash.rm6.tests.test_expt_class">CrocoDash.rm6.tests.test_expt_class module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.rm6.tests.html#module-CrocoDash.rm6.tests.test_grid_generation">CrocoDash.rm6.tests.test_grid_generation module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.rm6.tests.html#module-CrocoDash.rm6.tests.test_manish_branch">CrocoDash.rm6.tests.test_manish_branch module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.rm6.tests.html#module-CrocoDash.rm6.tests.test_utils">CrocoDash.rm6.tests.test_utils module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.rm6.tests.html#module-CrocoDash.rm6.tests">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="CrocoDash.rm6.html#module-CrocoDash.rm6">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-CrocoDash.driver">
+<span id="crocodash-driver-module"></span><h2>CrocoDash.driver module<a class="headerlink" href="#module-CrocoDash.driver" title="Link to this heading"></a></h2>
+<p>This module (driver) implements the CRRDriver class and contains a logger called “driver_logger”</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="CrocoDash.driver.CrocoDashDriver">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.driver.</span></span><span class="sig-name descname"><span class="pre">CrocoDashDriver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">longitude_extent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">latitude_extent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolution</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">number_vertical_layers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_thickness_ratio</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mom_run_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mom_input_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">toolpath_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hgrid_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'from_file'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vgrid_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'from_file'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">repeat_year_forcing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">minimum_depth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tidal_constituents</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['M2']</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">expt_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.driver.CrocoDashDriver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>This class is the main class for the Crocodile Regional Ruckus. It stores all classes/objects that are used to generate a regional MOM6 workflow.
+You can find objects for the GridGen class, the RegionalCaseGen class, and the Regional-MOM6 experiment class. It also implements a config file wrapper on top
+of the regional-mom6 config read/write functions for easy regional mom6 development.
+Variables:
+1. <code class="docutils literal notranslate"><span class="pre">grid_gen_obj</span></code> : GridGen Class Object from the grid_gen module
+2. <code class="docutils literal notranslate"><span class="pre">boundary_conditions_obj</span></code> : BoundaryConditions Class Object from the unsupported_boundary_conditions module
+3. <code class="docutils literal notranslate"><span class="pre">rcg_obj</span></code> : RegionalCaseGen Class Object from the regional_casegen module
+4. <code class="docutils literal notranslate"><span class="pre">empty_expt_obj</span></code> : An Empty Regional-MOM6 Experiment Class Object from the regional_mom6 module for whatever use you could need…
+Functions:
+1. <code class="docutils literal notranslate"><span class="pre">__init__</span></code> : Initializes the CRRDriver object with options to pass regional-mom6 experiment arguments to empty_expt_obj
+2. <code class="docutils literal notranslate"><span class="pre">__str__</span></code> : Returns the config file of the empty_expt_obj as a string
+3. <code class="docutils literal notranslate"><span class="pre">create_experiment_from_config</span></code> : Creates a regional-mom6 experiment object from a config file
+4. <code class="docutils literal notranslate"><span class="pre">write_config_file</span></code> : Writes a config file from a regional-mom6 experiment object</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.driver.CrocoDashDriver.create_experiment_from_config">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">create_experiment_from_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_file_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite_files_to_expt_format</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">create_hgrid_and_vgrid</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regional_mom6.experiment" title="CrocoDash.rm6.regional_mom6.regional_mom6.experiment"><span class="pre">experiment</span></a></span></span><a class="headerlink" href="#CrocoDash.driver.CrocoDashDriver.create_experiment_from_config" title="Link to this definition"></a></dt>
+<dd><p>This agressive function is a experiment setup and copier. It reads from a config file and sets up an experiment in config[“mom_input_dir”] and config[“mom_run_dir”].
+If the files are not in the config[“mom_input_dir”], they are copied there by default from the specified file paths.
+Warning: This overwrite any files in the specified directories, and will always do that unless overwrite_files_to_expt_format is set to False.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>config_file_path</strong> (<em>str</em>) – Path to the config file</p></li>
+<li><p><strong>overwrite_files_to_expt_format</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, the files are copied to the mom_input_dir, by default True</p></li>
+<li><p><strong>create_hgrid_and_vgrid</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, the hgrid and vgrid are created from the lat, long</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>expt</strong> – The experiment object</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>rm6.experiment</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.driver.CrocoDashDriver.replace_files_with_warnings">
+<span class="sig-name descname"><span class="pre">replace_files_with_warnings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path_to_replace</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#CrocoDash.driver.CrocoDashDriver.replace_files_with_warnings" title="Link to this definition"></a></dt>
+<dd><p>This function is a helper function for create_experiment_from_config and replaces an original file with a copy of the given filepath.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path_to_file</strong> (<em>str</em>) – Path to the file to copy from</p></li>
+<li><p><strong>path_to_replace</strong> (<em>str</em>) – Path to the file to replace</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.driver.CrocoDashDriver.search_for_files">
+<span class="sig-name descname"><span class="pre">search_for_files</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">patterns</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#CrocoDash.driver.CrocoDashDriver.search_for_files" title="Link to this definition"></a></dt>
+<dd><p>This function is a helper for write_config_file and searchs for given patterns at given folder paths.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>paths</strong> (<em>list</em>) – List of paths to search for files</p></li>
+<li><p><strong>patterns</strong> (<em>list</em>) – List of patterns to search for</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>List of files found or a string saying no files found</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list or str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.driver.CrocoDashDriver.write_config_file">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">write_config_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">expt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regional_mom6.experiment" title="CrocoDash.rm6.regional_mom6.regional_mom6.experiment"><span class="pre">experiment</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">export</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quiet</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#CrocoDash.driver.CrocoDashDriver.write_config_file" title="Link to this definition"></a></dt>
+<dd><p>This function writes a configuration file for the experiment. It contains all the filepaths used in the experiment (ocean_state, tidal, inital_condition, run_files, etc..).
+This takes in the expt variable and writes a simple json file. This allows for reproducibility, to pick up where a user left off, and to make information about the expirement readable.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>expt</strong> (<em>rm6.experiment</em>) – The experiment object</p></li>
+<li><p><strong>path</strong> (<em>str</em><em>, </em><em>optional</em>) – The path to write the config file, by default set to expt.mom_input_dir/”crr_config.json”</p></li>
+<li><p><strong>export</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, the config file is exported to path, by default True</p></li>
+<li><p><strong>quiet</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, the function is quiet and doesn’t print information, by default False</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The configuration dictionary</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-CrocoDash.grid_gen">
+<span id="crocodash-grid-gen-module"></span><h2>CrocoDash.grid_gen module<a class="headerlink" href="#module-CrocoDash.grid_gen" title="Link to this heading"></a></h2>
+<p>This module (grid_gen) implements the GridGen class, three helper functions (spherical2cartesian, create_tree, find_nearest) useful in subsetting a grid, and contains a logger called “grid_gen_logger”</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="CrocoDash.grid_gen.GridGen">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.grid_gen.</span></span><span class="sig-name descname"><span class="pre">GridGen</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">latitude_extent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">longitude_extent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolution</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delete_temp_storage</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.grid_gen.GridGen" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>This class is the grid generation class for the Crocodile Regional Ruckus. It stores all variables and functions used to generate hgrids, vgrids, and topography files for regional MOM6 experiments.
+Apart from native grid generation, it wraps a couple of regional-mom6 functions to keep all the grid generation code in one place.</p>
+<p>This class currently only generates rectanglular-ish grids.</p>
+<p>Variables:</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">hgrid</span></code> : A property variable that stores the hgrid dataset</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">topo</span></code> : A property variable that stores the topography dataset</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">vgrid</span></code> : A property variable that stores the vgrid dataset</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">latitude_extent</span></code> : Extents of the rectangular grid in latitude</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">longitude_extent</span></code> : Extents of the rectangular grid in longitude</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">resolution</span></code> : Resolution of the rectangular grid (for use in regional-mom6 _create_hgrid)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">temp_storage</span></code> : Temporary storage directory on all the datasets to offload heavy memory items</p></li>
+</ol>
+<p>Functions:</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">__init__</span></code> : Initializes the GridGen object with no required parameters</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">__del__</span></code> : Deletes the temp_storage directory to save memory</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">subset_global_hgrid</span></code> : Subsets a global hgrid (default on glade) to the extents specified (rectangular)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">subset_global_topo</span></code> : Subsets a global topo (default on glade) to the extents specified (rectangular)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">verify_and_modify_read_vgrid</span></code> : Verifies the vertical grid of the dataset. If only a thickness is given, it generates the midpoint and interface levels for regridding of the boundary conditions</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">create_rectangular_hgrid</span></code> : Wraps regional-mom6 _make_hgrid to create a rectangular hgrid</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">create_vgrid</span></code>: Wraps regional-mom6 _make_vgrid to create a vertical grid</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mask_disconnected_ocean_areas</span></code>: Masks out disconnected ocean areas in the topography file. For example, if we have a rectangle over Central America for Gulf Stream research, we likely only want the Gulf of Mexico, so we mask out the Pacific.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">setup_bathymetry</span></code>: Sets up the bathymetry file for the regional mom6 experiment. Wraps regional-mom6 setup_bathymetry</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">tidy_bathymetry</span></code>: Tidies up the bathymetry file from setup_bathymetry for the regional mom6 experiment. Wraps regional-mom6 tidy_bathymetry</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">export_files</span></code>: Exports all files from the temp_storage directory to the output_folder</p></li>
+</ol>
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.grid_gen.GridGen.create_rectangular_hgrid">
+<span class="sig-name descname"><span class="pre">create_rectangular_hgrid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">longitude_extent</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">latitude_extent</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolution</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.grid_gen.GridGen.create_rectangular_hgrid" title="Link to this definition"></a></dt>
+<dd><p>This function wraps regional-mom6 _make_hgrid to create a rectangular hgrid</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>longitude_extent</strong> (<em>list</em>) – Longitude extent of the grid</p></li>
+<li><p><strong>latitude_extent</strong> (<em>list</em>) – Latitude extent of the grid</p></li>
+<li><p><strong>resolution</strong> (<em>float</em>) – Resolution of the grid</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>hgrid</strong> – The hgrid dataset</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>xarray.Dataset</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.grid_gen.GridGen.create_vgrid">
+<span class="sig-name descname"><span class="pre">create_vgrid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">number_vertical_layers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_thickness_ratio</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">minimum_depth</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.grid_gen.GridGen.create_vgrid" title="Link to this definition"></a></dt>
+<dd><p>Wraps regional-mom6 _make_vgrid to create a vertical grid.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>number_vertical_layers</strong> (<em>int</em>) – Number of vertical layers</p></li>
+<li><p><strong>layer_thickness_ratio</strong> (<em>float</em>) – Ratio of the thickness of the layers</p></li>
+<li><p><strong>depth</strong> (<em>float</em>) – Depth of the ocean</p></li>
+<li><p><strong>minimum_depth</strong> (<em>float</em>) – Minimum depth of the ocean</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>vcoord</strong> – The vgrid dataset</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>xarray.Dataset</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.grid_gen.GridGen.export_files">
+<span class="sig-name descname"><span class="pre">export_files</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_folder</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.grid_gen.GridGen.export_files" title="Link to this definition"></a></dt>
+<dd><p>Export all files from the temp_storage directory to the output_folder.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>(</strong><strong>str</strong><strong>)</strong> (<em>output_folder</em>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>All files have been exported to output_folder</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="CrocoDash.grid_gen.GridGen.hgrid">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">hgrid</span></span><a class="headerlink" href="#CrocoDash.grid_gen.GridGen.hgrid" title="Link to this definition"></a></dt>
+<dd><p>Gets the Hgrid as a xr.Dataset</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.grid_gen.GridGen.mask_disconnected_ocean_areas">
+<span class="sig-name descname"><span class="pre">mask_disconnected_ocean_areas</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hgrid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name_x_dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name_y_dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">topo</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat_pt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon_pt</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.grid_gen.GridGen.mask_disconnected_ocean_areas" title="Link to this definition"></a></dt>
+<dd><p>This function masks areas of the topo that are not connected to lat_pt, lon_pt. This is useful for regional studies where we only want to study a specific area of the ocean, like the Atlantic, and not the Pacific Ocean.</p>
+<p>You use it by specifying a point in the ocean that you want to study, and it will mask out all the ocean areas that are not connected to that point. This is done by finding the connected ocean segments and isolating the segment that contains the chosen point.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>hgrid</strong> (<em>xarray.Dataset</em>) – Horizontal grid dataset. Used to convert from lat/lon to i/j.</p></li>
+<li><p><strong>name_x_dim</strong> (<em>str</em>) – Name of the x dimension in the horizontal grid dataset.</p></li>
+<li><p><strong>name_y_dim</strong> (<em>str</em>) – Name of the y dimension in the horizontal grid dataset.</p></li>
+<li><p><strong>topo</strong> (<em>xarray.DataArray</em>) – Topography data array. The item we mask, used to mask out disconnected ocean areas, where 0 indicates Land</p></li>
+<li><p><strong>lat_pt</strong> – Coordinates of the point to use as the starting point for the mask.</p></li>
+<li><p><strong>lon_pt</strong> – Coordinates of the point to use as the starting point for the mask.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>topo</strong> – The masked topography dataset</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>xarray.Dataset</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.grid_gen.GridGen.setup_bathymetry">
+<span class="sig-name descname"><span class="pre">setup_bathymetry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hgrid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">longitude_extent</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">latitude_extent</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">minimum_depth</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bathymetry_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">longitude_coordinate_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'lon'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">latitude_coordinate_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'lat'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vertical_coordinate_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'elevation'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fill_channels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">positive_down</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.grid_gen.GridGen.setup_bathymetry" title="Link to this definition"></a></dt>
+<dd><p>This function wraps regional-mom6 setup_bathymetry to set up the bathymetry file for the regional mom6 experiment.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>hgrid</strong> (<em>xarray.Dataset</em>) – Horizontal grid dataset</p></li>
+<li><p><strong>longitude_extent</strong> (<em>list</em>) – Longitude extent of the grid</p></li>
+<li><p><strong>latitude_extent</strong> (<em>list</em>) – Latitude extent of the grid</p></li>
+<li><p><strong>input_dir</strong> (<em>str</em>) – Path to the input directory (where to put the bathymetry file)</p></li>
+<li><p><strong>minimum_depth</strong> (<em>float</em>) – Minimum depth of the ocean</p></li>
+<li><p><strong>bathymetry_path</strong> (<em>str</em>) – Path to the global/gebco bathymetry file</p></li>
+<li><p><strong>longitude_coordinate_name</strong> (<em>str</em>) – Name of the longitude coordinate in the bathymetry file, default is lon</p></li>
+<li><p><strong>latitude_coordinate_name</strong> (<em>str</em>) – Name of the latitude coordinate in the bathymetry file, default is lat</p></li>
+<li><p><strong>vertical_coordinate_name</strong> (<em>str</em>) – Name of the vertical coordinate in the bathymetry file, default is elevation</p></li>
+<li><p><strong>fill_channels</strong> (<em>bool</em>) – Whether to fill channels in the bathymetry file, default is False</p></li>
+<li><p><strong>positive_down</strong> (<em>bool</em>) – Whether the vertical coordinate is positive down, default is False</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>topo</strong> – The bathymetry dataset</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>xarray.Dataset</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.grid_gen.GridGen.subset_global_hgrid">
+<span class="sig-name descname"><span class="pre">subset_global_hgrid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">longitude_extent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">latitude_extent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'/glade/work/fredc/cesm/grid/MOM6/tx1_12v1/gridgen/ocean_hgrid_trimmed.nc'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.grid_gen.GridGen.subset_global_hgrid" title="Link to this definition"></a></dt>
+<dd><p>This function reads in a global supergrid (path), finds the closest points to the extents, and subsets the supergrid to that extent.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>longitude_extent</strong> (<em>list</em>) – Longitude extent of the grid</p></li>
+<li><p><strong>latitude_extent</strong> (<em>list</em>) – Latitude extent of the grid</p></li>
+<li><p><strong>path</strong> (<em>str</em>) – Path to the global supergrid file</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ds_nwa</strong> – The subsetted supergrid dataset</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>xarray.Dataset</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.grid_gen.GridGen.subset_global_topo">
+<span class="sig-name descname"><span class="pre">subset_global_topo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">longitude_extent</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">latitude_extent</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hgrid_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'/glade/work/fredc/cesm/grid/MOM6/tx1_12v1/gridgen/ocean_hgrid_trimmed.nc'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">topo_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'/glade/work/bryan/MOM6-data-files/Topography/tx1_12v1/topo.sub25.tx1_12v1.srtm.edit1.SmL1.0_C1.0.nc'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.grid_gen.GridGen.subset_global_topo" title="Link to this definition"></a></dt>
+<dd><p>This function reads in a global supergrid and companion topo file (hgrid_path, topo), finds the closest points to the extents in the hgrid, and subsets the topo file to that extent.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>longitude_extent</strong> (<em>list</em>) – Longitude extent of the grid</p></li>
+<li><p><strong>latitude_extent</strong> (<em>list</em>) – Latitude extent of the grid</p></li>
+<li><p><strong>hgrid_path</strong> (<em>str</em>) – Path to the global supergrid file</p></li>
+<li><p><strong>topo_path</strong> (<em>str</em>) – Path to the global topo file</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>topo</strong> – The subsetted topo dataset</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>xarray.Dataset</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.grid_gen.GridGen.tidy_bathymetry">
+<span class="sig-name descname"><span class="pre">tidy_bathymetry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">minimum_depth</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fill_channels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">positive_down</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.grid_gen.GridGen.tidy_bathymetry" title="Link to this definition"></a></dt>
+<dd><p>This function wraps regional-mom6 tidy_bathymetry to tidy up the bathymetry file from setup_bathymetry for the regional mom6 experiment.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>input_dir</strong> (<em>str</em>) – Path to the input directory (where the bathymetry file is)</p></li>
+<li><p><strong>minimum_depth</strong> (<em>float</em>) – Minimum depth of the ocean</p></li>
+<li><p><strong>fill_channels</strong> (<em>bool</em>) – Whether to fill channels in the bathymetry file, default is False</p></li>
+<li><p><strong>positive_down</strong> (<em>bool</em>) – Whether the vertical coordinate is positive down, default is False</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>See your input_dir for the correct file (bathymetry.nc) from bathymetry_unfinished.nc</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="CrocoDash.grid_gen.GridGen.topo">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">topo</span></span><a class="headerlink" href="#CrocoDash.grid_gen.GridGen.topo" title="Link to this definition"></a></dt>
+<dd><p>Gets the Topo as a xr.Dataset</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.grid_gen.GridGen.verify_and_modify_read_vgrid">
+<span class="sig-name descname"><span class="pre">verify_and_modify_read_vgrid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path_to_ds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thickness_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'dz'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.grid_gen.GridGen.verify_and_modify_read_vgrid" title="Link to this definition"></a></dt>
+<dd><p>This function verifies the vertical grid of the dataset. We need a midpoint (zl) and interface level (zi). We need the midpoint of the thickness to regrid the initial condition, and zi is just so we don’t have to change MOM_input.
+This function is able to check if we have those things, and if not, add them based on a thickness variable. If no thickness variable is given, and we don’thave zl and zi, this function fails.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path_to_ds</strong> (<em>str</em>) – Path to the dataset.</p></li>
+<li><p><strong>thickness_name</strong> (<em>str</em>) – Name of the thickness variable in the dataset. Default is dz.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>dataset</strong> – The dataset with the adjusted (or not) vertical grid.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="CrocoDash.grid_gen.GridGen.vgrid">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">vgrid</span></span><a class="headerlink" href="#CrocoDash.grid_gen.GridGen.vgrid" title="Link to this definition"></a></dt>
+<dd><p>Gets the Vgrid as a xr.Dataset</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.grid_gen.create_tree">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.grid_gen.</span></span><span class="sig-name descname"><span class="pre">create_tree</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lon</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.grid_gen.create_tree" title="Link to this definition"></a></dt>
+<dd><p>Create a K-d tree from the spherical coordinates, which is good for spatial queries, like nearest neighbor search</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.grid_gen.find_nearest">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.grid_gen.</span></span><span class="sig-name descname"><span class="pre">find_nearest</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lon</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon_pt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat_pt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tree</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.grid_gen.find_nearest" title="Link to this definition"></a></dt>
+<dd><p>Find the nearest point to lon_pt, lat_pt in the grid defined by lon, lat</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.grid_gen.spherical2cartesian">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.grid_gen.</span></span><span class="sig-name descname"><span class="pre">spherical2cartesian</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lon</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.grid_gen.spherical2cartesian" title="Link to this definition"></a></dt>
+<dd><p>Convert spherical coordinates to cartesian coordinates</p>
+</dd></dl>
+
+</section>
+<section id="module-CrocoDash.unsupported_boundary_conditions">
+<span id="crocodash-unsupported-boundary-conditions-module"></span><h2>CrocoDash.unsupported_boundary_conditions module<a class="headerlink" href="#module-CrocoDash.unsupported_boundary_conditions" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="CrocoDash.unsupported_boundary_conditions.BoundaryConditions">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.unsupported_boundary_conditions.</span></span><span class="sig-name descname"><span class="pre">BoundaryConditions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">delete_temp_storage</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.unsupported_boundary_conditions.BoundaryConditions" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py property">
+<dt class="sig sig-object py" id="CrocoDash.unsupported_boundary_conditions.BoundaryConditions.boundary_tides">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">boundary_tides</span></span><a class="headerlink" href="#CrocoDash.unsupported_boundary_conditions.BoundaryConditions.boundary_tides" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.unsupported_boundary_conditions.BoundaryConditions.explicit_setup_run_directory">
+<span class="sig-name descname"><span class="pre">explicit_setup_run_directory</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mom_input_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mom_run_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date_range</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hgrid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vgrid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tidal_constituents</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">surface_forcing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">with_tides</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundaries</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['south',</span> <span class="pre">'north',</span> <span class="pre">'west',</span> <span class="pre">'east']</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">premade_rundir_path_arg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.unsupported_boundary_conditions.BoundaryConditions.explicit_setup_run_directory" title="Link to this definition"></a></dt>
+<dd><p>This function should set up the run directory for the experiment.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.unsupported_boundary_conditions.BoundaryConditions.export_files">
+<span class="sig-name descname"><span class="pre">export_files</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_folder</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.unsupported_boundary_conditions.BoundaryConditions.export_files" title="Link to this definition"></a></dt>
+<dd><p>Export all files from the temp_storage directory to the output_folder.</p>
+<p>Parameters:
+output_folder (str): Path to the output directory where files will be copied.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.unsupported_boundary_conditions.BoundaryConditions.get_glorys_rectangular">
+<span class="sig-name descname"><span class="pre">get_glorys_rectangular</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hgrid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date_range</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw_boundaries_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundaries</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.unsupported_boundary_conditions.BoundaryConditions.get_glorys_rectangular" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="CrocoDash.unsupported_boundary_conditions.BoundaryConditions.initial_condition">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">initial_condition</span></span><a class="headerlink" href="#CrocoDash.unsupported_boundary_conditions.BoundaryConditions.initial_condition" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="CrocoDash.unsupported_boundary_conditions.BoundaryConditions.ocean_state_boundaries">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ocean_state_boundaries</span></span><a class="headerlink" href="#CrocoDash.unsupported_boundary_conditions.BoundaryConditions.ocean_state_boundaries" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.unsupported_boundary_conditions.BoundaryConditions.setup_boundary_tides">
+<span class="sig-name descname"><span class="pre">setup_boundary_tides</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hgrid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_date</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tidal_consituents</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path_td</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tidal_filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">repeat_year_forcing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.unsupported_boundary_conditions.BoundaryConditions.setup_boundary_tides" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.unsupported_boundary_conditions.BoundaryConditions.setup_initial_condition">
+<span class="sig-name descname"><span class="pre">setup_initial_condition</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hgrid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vgrid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">glorys_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ocean_varnames</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">arakawa_grid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'A'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.unsupported_boundary_conditions.BoundaryConditions.setup_initial_condition" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.unsupported_boundary_conditions.BoundaryConditions.setup_ocean_state_boundaries">
+<span class="sig-name descname"><span class="pre">setup_ocean_state_boundaries</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hgrid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vgrid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_date</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">glorys_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ocean_varnames</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundaries</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">arakawa_grid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'A'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">repeat_year_forcing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.unsupported_boundary_conditions.BoundaryConditions.setup_ocean_state_boundaries" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-CrocoDash.utils">
+<span id="crocodash-utils-module"></span><h2>CrocoDash.utils module<a class="headerlink" href="#module-CrocoDash.utils" title="Link to this heading"></a></h2>
+<p>This module (utils) contains utility functions that are used across the CrocoDash package.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.utils.export_dataset">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.utils.</span></span><span class="sig-name descname"><span class="pre">export_dataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.utils.export_dataset" title="Link to this definition"></a></dt>
+<dd><p>This function exports an xarray dataset to a netcdf file at the specified path, but deletes the previous netcdf beforehand for safety.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ds</strong> (<em>xarray.Dataset</em>) – The dataset to export.</p></li>
+<li><p><strong>path</strong> (<em>str</em>) – The path to the netcdf file to export</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.utils.setup_logger">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.utils.</span></span><span class="sig-name descname"><span class="pre">setup_logger</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.utils.setup_logger" title="Link to this definition"></a></dt>
+<dd><p>This function sets up a logger format for the package. It attaches logger output to stdout (if a handler doesn’t already exist) and formats it in a pretty way!</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>name</strong> (<em>str</em>) – The name of the logger.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The logger</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>logging.Logger</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-CrocoDash">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-CrocoDash" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="modules.html" class="btn btn-neutral float-left" title="Auto-Generated Docs" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="CrocoDash.regional_casegen.html" class="btn btn-neutral float-right" title="CrocoDash.regional_casegen package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, CROCODILE.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
