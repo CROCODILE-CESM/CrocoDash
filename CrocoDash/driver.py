@@ -15,6 +15,7 @@ import shutil
 import importlib
 import sys
 import glob
+import tempfile
 
 
 class CrocoDashDriver:
@@ -242,7 +243,30 @@ class CrocoDashDriver:
                         )
         else:
             driver_logger.info(
-                'Tides files not found. Please provide run_files files (with key "run_files"), or  call setup_run_files_boundaries method to set up run_files'
+                'Run files not found. Please provide run_files files (with key "run_files"), or  call setup_run_files_boundaries method to set up run_files'
+            )
+        if (
+            "additional_files" in config_dict
+            and config_dict["additional_files"] is not None
+        ):
+            for path in config_dict["additional_files"]:
+                if not os.path.exists(path):
+
+                    driver_logger.info(
+                        "At least one additional_files file not found. Pleae adjust config file and check directories to find them"
+                    )
+                    break
+                else:
+                    driver_logger.info("Found at least one additional_files file.")
+                    # Move to mom_input_dir
+                    if rearrange_files_to_expt_format:
+                        self.replace_files_with_warnings(
+                            Path(path),
+                            Path(config_dict["mom_run_dir"]) / os.path.basename(path),
+                        )
+        else:
+            driver_logger.info(
+                'Additional files not listed. If needed, please provide additional_files file paths (with key "additional_files")'
             )
 
         if os.path.exists(Path(config_dict["mom_input_dir"]) / "bathymetry.nc"):
@@ -258,6 +282,51 @@ class CrocoDashDriver:
                 Path(config_dict["mom_input_dir"]) / "vcoord.nc"
             )
         return expt
+
+    @classmethod
+    def clone_experiment(
+        self,
+        expt_or_file_path,
+        new_expt_name,
+        new_mom_run_dir=None,
+        new_mom_input_dir=None,
+    ):
+        """
+        This function clones an experiment object. It takes in the experiment object and the new trial name, and by default saves to the same directories but can take a new mom_run_dir, and mom_input_dir.
+
+        """
+        if type(expt_or_file_path) is rm6.regional_mom6.experiment:
+            config_dict = CrocoDashDriver.write_config_file(
+                expt_or_file_path, export=False, quiet=True
+            )
+        elif type(expt_or_file_path) is str:
+            with open(expt_or_file_path, "r") as f:
+                config_dict = json.load(f)
+
+        config_dict["expt_name"] = new_expt_name
+        if new_mom_run_dir is not None:
+            config_dict["mom_run_dir"] = str(new_mom_run_dir)
+        else:
+            config_dict["mom_run_dir"] = str(
+                Path(config_dict["mom_run_dir"]).with_name(new_expt_name)
+            )
+
+        if new_mom_input_dir is not None:
+            config_dict["mom_input_dir"] = str(new_mom_input_dir)
+        else:
+            config_dict["mom_input_dir"] = str(
+                Path(config_dict["mom_input_dir"]).with_name(new_expt_name)
+            )
+
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".json", delete=False
+        ) as temp_file:
+            temp_file_path = temp_file.name
+            # Write the dictionary to the file as JSON
+            json.dump(config_dict, temp_file, indent=4)
+        new_expt = CrocoDashDriver.create_experiment_from_config(temp_file_path)
+        os.remove(temp_file_path)
+        return new_expt
 
     def setup_directories(self, mom_run_dir, mom_input_dir):
         self.mom_run_dir = Path(mom_run_dir)
@@ -281,11 +350,29 @@ class CrocoDashDriver:
         )
 
     @classmethod
-    def write_config_file(self, expt, path=None, export=True, quiet=False):
+    def write_config_file(
+        self, expt, additional_files=[], path=None, export=True, quiet=False
+    ):
         """
         Write a configuration file for the experiment. This takes in the expt variable and writes a config file. This is a simple json file
         that contains the expirment object information to allow for reproducibility, to pick up where a user left off, and
         to make information about the expirement readable.
+        Parameters
+        ----------
+        expt : rm6.experiment
+            The RM6 experiment object
+        additional_files : list, optional
+            List of additional files paths to include in the config file, by default []
+        path : str, optional
+            The path to write the config file to, by default None
+        export : bool, optional
+            If True, the config file is written, by default True
+        quiet : bool, optional
+            If True, no logging is done, by default False
+        Returns
+        -------
+        dict
+            The dictionary that was written to the config file
         """
         if not quiet:
             driver_logger.info("Writing Config File.....")
@@ -394,6 +481,13 @@ class CrocoDashDriver:
         else:
             rm6_config["run_files"] = None
             driver_logger.info("Couldn't find run files in {}".format(expt.mom_run_dir))
+
+        # Additional Files
+        if len(additional_files) > 0:
+            driver_logger.info("Adding additional files to config file")
+            rm6_config["additional_files"] = additional_files
+        else:
+            rm6_config["additional_files"] = None
 
         if export:
             if path is not None:
