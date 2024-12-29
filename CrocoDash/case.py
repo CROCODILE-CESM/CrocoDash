@@ -1,0 +1,292 @@
+from pathlib import Path
+import uuid
+import shutil
+
+import regional_mom6 as rmom6
+from CrocoDash.grid import Grid
+from CrocoDash.topo import Topo
+from CrocoDash.vgrid import VGrid
+
+from ProConPy.config_var import ConfigVar, cvars
+from ProConPy.stage import Stage
+from ProConPy.csp_solver import csp
+from visualCaseGen.cime_interface import CIME_interface
+from visualCaseGen.initialize_configvars import initialize_configvars
+from visualCaseGen.initialize_widgets import initialize_widgets
+from visualCaseGen.initialize_stages import initialize_stages
+from visualCaseGen.specs.options import set_options
+from visualCaseGen.specs.relational_constraints import get_relational_constraints
+from visualCaseGen.custom_widget_types.case_creator import CaseCreator, ERROR, RESET
+
+
+class Case():
+    """This class represents a regional MOM6 case within the CESM framework. It is similar to the
+    Experiment class in the regional_mom6 package, but with modifications to work within the CESM framework."""
+
+    def __init__(
+        self,
+        *,
+        cesmroot: str | Path,
+        caseroot: str | Path,
+        inputdir: str | Path,
+        ocn_grid: Grid,
+        ocn_topo: Topo,
+        ocn_vgrid: VGrid,
+        date_range: list[str],
+        inittime: str = "1850",
+        datm_mode: str = "JRA",
+        datm_grid_name: str = "TL319",
+        tidal_constituents: list[str] = ["M2"],
+        boundaries: list[str] = ["south", "north", "west", "east"],
+        ninst_ocn: int = 1,
+        machine: str | None = None,
+        project: str | None = None,
+        override: bool = False,
+    ):
+
+        # Initialize the CIME interface object
+        self.cime = CIME_interface(cesmroot)
+
+        if machine is None:
+            machine = self.cime.machine
+
+        # Sanity checks on the input arguments
+        self._init_args_check(
+            caseroot,
+            inputdir,
+            ocn_grid,
+            ocn_topo,
+            ocn_vgrid,
+            date_range,
+            inittime,
+            datm_mode,
+            datm_grid_name,
+            tidal_constituents,
+            boundaries,
+            ninst_ocn,
+            machine,
+            project,
+            override,
+        )
+
+        self.caseroot = Path(caseroot)
+        self.inputdir = Path(inputdir)
+        self.ocn_grid = ocn_grid
+        self.override = override
+
+        # Construct the compset long name
+        self.compset = f"{inittime}_DATM%{datm_mode}_SLND_SICE_MOM6_SROF_SGLC_SWAV_SESP"
+        
+        # Resolution name:
+        self.resolution = f"{datm_grid_name}_{ocn_grid.name}"
+
+        self._initialize_visualCaseGen()
+
+        self.set_configvars(inittime, datm_mode, machine, project)
+
+        self.create_grid_input_files(inputdir, ocn_grid, ocn_topo, ocn_vgrid)
+        
+        self.create_newcase()
+
+        #self.expt = rmom6.experiment(
+        #    date_range = date_range,
+        #    resolution = None,
+        #    number_vertical_layers = None,
+        #    layer_thickness_ratio = None,
+        #    depth = None,
+        #    mom_run_dir = None,
+        #    mom_input_dir = None,
+        #    minimum_depth = ocn_topo.min_depth,
+        #    tidal_constituents = tidal_constituents,
+        #    expt_name = self.caseroot.name,
+        #    boundaries = boundaries,
+        #)
+    
+    def _init_args_check(
+        self,
+        caseroot: str | Path,
+        inputdir: str | Path,
+        ocn_grid: Grid,
+        ocn_topo: Topo,
+        ocn_vgrid: VGrid,
+        date_range: list[str],
+        inittime: str,
+        datm_mode: str,
+        datm_grid_name: str,
+        tidal_constituents: list[str],
+        boundaries: list[str],
+        ninst_ocn: int,
+        machine: str | None,
+        project: str | None,
+        override: bool,
+    ):
+        
+        if Path(caseroot).exists() and not override:
+            raise ValueError(f"Given caseroot {caseroot} already exists!")
+        if Path(inputdir).exists() and not override:
+            raise ValueError(f"Given inputdir {inputdir} already exists!")
+        if not isinstance(ocn_grid, Grid):
+            raise TypeError("ocn_grid must be a Grid object.")
+        if not isinstance(ocn_vgrid, VGrid):
+            raise TypeError("ocn_vgrid must be a VGrid object.")
+        if not isinstance(ocn_topo, Topo):
+            raise TypeError("ocn_topo must be a Topo object.")
+        if not isinstance(date_range, list):
+            raise TypeError("date_range must be a list of two strings.")
+        if len(date_range) != 2:
+            raise ValueError("date_range must have exactly two elements.")
+        if not all(isinstance(date, str) for date in date_range):
+            raise TypeError("date_range must be a list of strings.")
+        if inittime not in ['1850', '2000', 'HIST']:
+            raise ValueError("inittime must be one of ['1850', '2000', 'HIST'].")
+        if datm_mode not in (available_datm_modes := self.cime.comp_options['DATM']):
+            raise ValueError(f"datm_mode must be one of {available_datm_modes}.")
+        if datm_grid_name not in (available_atm_grids := self.cime.domains['atm'].keys()):
+            raise ValueError(f"datm_grid_name must be one of {available_atm_grids}.")
+        if ocn_grid.name is None:
+            raise ValueError("ocn_grid must have a name. Please set it using the 'name' attribute.")
+        if ocn_grid.name in self.cime.domains['ocnice'] and not override:
+            raise ValueError(f"ocn_grid name {ocn_grid.name} is already in use.")
+        if not isinstance(boundaries, list):
+            raise TypeError("boundaries must be a list of strings.")
+        if not all(isinstance(boundary, str) for boundary in boundaries):
+            raise TypeError("boundaries must be a list of strings.")
+        if not isinstance(tidal_constituents, list):
+            raise TypeError("tidal_constituents must be a list of strings.")
+        if not all(isinstance(constituent, str) for constituent in tidal_constituents):
+            raise TypeError("tidal_constituents must be a list of strings.")
+        if not isinstance(ninst_ocn, int):
+            raise TypeError("ninst_ocn must be an integer.")
+        if machine is None:
+            raise ValueError("Couldn't determine machine. Please provide the machine argument.")
+        if not isinstance(machine, str):
+            raise TypeError("machine must be a string.")
+        if not machine in self.cime.machines:
+            raise ValueError(f"machine must be one of {self.cime.machines}.")
+        if self.cime.project_required[machine] is True:
+            if project is None:
+                raise ValueError(f"project is required for machine {machine}.")
+            if not isinstance(project, str):
+                raise TypeError("project must be a string.")
+
+    def create_grid_input_files(self, inputdir, ocn_grid, ocn_topo, ocn_vgrid):
+
+        if self.override is True:
+            if self.inputdir.exists():
+                shutil.rmtree(self.inputdir)
+
+        inputdir.mkdir(parents=True, exist_ok=False)
+        (inputdir / "ocnice").mkdir()
+
+        # suffix hash for the MOM6 grid files
+        hash = cvars["MB_ATTEMPT_ID"].value
+
+        # MOM6 supergrid file
+        ocn_grid.write_supergrid(inputdir / "ocnice" / f"ocean_hgrid_{ocn_grid.name}_{hash}.nc")
+
+        # MOM6 topography file
+        ocn_topo.write_topo(inputdir / "ocnice" / f"ocean_topog_{ocn_grid.name}_{hash}.nc")
+
+        # MOM6 vertical grid file
+        ocn_vgrid.write(inputdir / "ocnice" / f"ocean_vgrid_{ocn_grid.name}_{hash}.nc")
+
+        # CICE grid file (if needed)
+        if 'CICE' in self.compset:
+            ocn_topo.write_cice_grid(inputdir / "ocnice" / f"cice_grid_{ocn_grid.name}_{hash}.nc")
+
+        # SCRIP grid file (needed for runoff remapping)
+        ocn_topo.write_scrip_grid(inputdir / "ocnice" / f"scrip_{ocn_grid.name}_{hash}.nc")
+
+        # ESMF mesh file:
+        ocn_topo.write_esmf_mesh(inputdir / "ocnice" / f"ESMF_mesh_{ocn_grid.name}_{hash}.nc")
+
+
+    def create_newcase(self):
+        """Create the case instance."""
+
+        if self.override is True:
+            if self.caseroot.exists():
+                shutil.rmtree(self.caseroot)
+            if (Path(self.cime.cime_output_root) / self.caseroot.name).exists():
+                shutil.rmtree(Path(self.cime.cime_output_root) / self.caseroot.name)
+        
+        cc = CaseCreator(self.cime, allow_xml_override=self.override)
+
+        try:
+            cc.create_case(do_exec=True)
+        except Exception as e:
+            print(f"{ERROR}{str(e)}{RESET}")
+            cc.revert_launch(do_exec=True)
+        
+
+
+    @property
+    def name(self) -> str:
+        return self.caseroot.name
+
+    def _initialize_visualCaseGen(self):
+
+        ConfigVar.reboot()
+        Stage.reboot()
+        initialize_configvars(self.cime)
+        initialize_widgets(self.cime)
+        initialize_stages(self.cime)
+        set_options(self.cime)
+        csp.initialize(cvars, get_relational_constraints(cvars), Stage.first())
+
+    def set_configvars(self, inittime, datm_mode, machine, project):
+
+        assert Stage.active().title == '1. Component Set'
+        cvars["COMPSET_MODE"].value = "Custom" 
+
+        assert Stage.active().title == 'Time Period'
+        cvars["INITTIME"].value = inittime
+
+        assert Stage.active().title == 'Components'
+        cvars["COMP_ATM"].value = "datm"
+        cvars["COMP_LND"].value = "slnd"
+        cvars["COMP_ICE"].value = "sice"
+        cvars["COMP_OCN"].value = "mom"
+        cvars["COMP_ROF"].value = "srof"
+        cvars["COMP_GLC"].value = "sglc"
+        cvars["COMP_WAV"].value = "swav"
+
+        # Set model physics:
+        assert Stage.active().title == 'Component Options'
+        cvars["COMP_ATM_OPTION"].value = datm_mode
+        cvars["COMP_OCN_OPTION"].value = "(none)" # todo: in the future, we'll support MARBL too.
+
+        # Grid
+        assert Stage.active().title == '2. Grid'
+        cvars["GRID_MODE"].value = "Custom"
+
+        assert Stage.active().title == 'Custom Grid'
+        cvars["CUSTOM_GRID_PATH"].value = self.inputdir.as_posix()
+
+        assert Stage.active().title == 'Ocean Grid Mode'
+        cvars["OCN_GRID_MODE"].value = "Create New"
+
+        assert Stage.active().title == 'Custom Ocean Grid'
+        cvars["OCN_GRID_EXTENT"].value = "Regional"
+        cvars["OCN_CYCLIC_X"].value = "False"
+        cvars["OCN_NX"].value = self.ocn_grid.nx 
+        cvars["OCN_NY"].value = self.ocn_grid.ny
+        cvars["OCN_LENX"].value = self.ocn_grid.tlon.max().item() - self.ocn_grid.tlon.min().item()
+        cvars["OCN_LENY"].value = self.ocn_grid.tlat.max().item() - self.ocn_grid.tlat.min().item()
+        cvars["CUSTOM_OCN_GRID_NAME"].value = self.ocn_grid.name
+        cvars["MB_ATTEMPT_ID"].value = str(uuid.uuid1())[:6]
+        cvars["MOM6_BATHY_STATUS"].value = "Complete"
+        if Stage.active().title == 'Custom Ocean Grid':
+            Stage.active().proceed()
+
+        assert Stage.active().title == '3. Launch'
+        cvars["CASEROOT"].value = self.caseroot.as_posix()
+        cvars["MACHINE"].value = machine
+        if project is not None:
+            cvars["PROJECT"].value = project
+        
+        
+
+
+
+
