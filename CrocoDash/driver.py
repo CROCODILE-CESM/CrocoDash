@@ -295,7 +295,7 @@ class CrocoDashDriver:
         This function clones an experiment object. It takes in the experiment object and the new trial name, and by default saves to the same directories but can take a new mom_run_dir, and mom_input_dir.
 
         """
-        if type(expt_or_file_path) is rm6.regional_mom6.experiment:
+        if type(expt_or_file_path) is not str:
             config_dict = CrocoDashDriver.write_config_file(
                 expt_or_file_path, export=False, quiet=True
             )
