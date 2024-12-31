@@ -32,12 +32,9 @@ class Case():
         ocn_grid: Grid,
         ocn_topo: Topo,
         ocn_vgrid: VGrid,
-        date_range: list[str],
         inittime: str = "1850",
         datm_mode: str = "JRA",
         datm_grid_name: str = "TL319",
-        tidal_constituents: list[str] = ["M2"],
-        boundaries: list[str] = ["south", "north", "west", "east"],
         ninst_ocn: int = 1,
         machine: str | None = None,
         project: str | None = None,
@@ -57,12 +54,9 @@ class Case():
             ocn_grid,
             ocn_topo,
             ocn_vgrid,
-            date_range,
             inittime,
             datm_mode,
             datm_grid_name,
-            tidal_constituents,
-            boundaries,
             ninst_ocn,
             machine,
             project,
@@ -72,7 +66,12 @@ class Case():
         self.caseroot = Path(caseroot)
         self.inputdir = Path(inputdir)
         self.ocn_grid = ocn_grid
+        self.ocn_topo = ocn_topo
+        self.ocn_vgrid = ocn_vgrid
+        self.ninst_ocn = ninst_ocn
         self.override = override
+
+        self._configure_forcings_called = False
 
         # Construct the compset long name
         self.compset = f"{inittime}_DATM%{datm_mode}_SLND_SICE_MOM6_SROF_SGLC_SWAV_SESP"
@@ -84,23 +83,11 @@ class Case():
 
         self.set_configvars(inittime, datm_mode, machine, project)
 
-        self.create_grid_input_files(inputdir, ocn_grid, ocn_topo, ocn_vgrid)
+        self.create_grid_input_files()
         
         self.create_newcase()
-
-        #self.expt = rmom6.experiment(
-        #    date_range = date_range,
-        #    resolution = None,
-        #    number_vertical_layers = None,
-        #    layer_thickness_ratio = None,
-        #    depth = None,
-        #    mom_run_dir = None,
-        #    mom_input_dir = None,
-        #    minimum_depth = ocn_topo.min_depth,
-        #    tidal_constituents = tidal_constituents,
-        #    expt_name = self.caseroot.name,
-        #    boundaries = boundaries,
-        #)
+        
+        self.cime_case = self.cime.get_case(self.caseroot)  
     
     def _init_args_check(
         self,
@@ -109,12 +96,9 @@ class Case():
         ocn_grid: Grid,
         ocn_topo: Topo,
         ocn_vgrid: VGrid,
-        date_range: list[str],
         inittime: str,
         datm_mode: str,
         datm_grid_name: str,
-        tidal_constituents: list[str],
-        boundaries: list[str],
         ninst_ocn: int,
         machine: str | None,
         project: str | None,
@@ -131,12 +115,6 @@ class Case():
             raise TypeError("ocn_vgrid must be a VGrid object.")
         if not isinstance(ocn_topo, Topo):
             raise TypeError("ocn_topo must be a Topo object.")
-        if not isinstance(date_range, list):
-            raise TypeError("date_range must be a list of two strings.")
-        if len(date_range) != 2:
-            raise ValueError("date_range must have exactly two elements.")
-        if not all(isinstance(date, str) for date in date_range):
-            raise TypeError("date_range must be a list of strings.")
         if inittime not in ['1850', '2000', 'HIST']:
             raise ValueError("inittime must be one of ['1850', '2000', 'HIST'].")
         if datm_mode not in (available_datm_modes := self.cime.comp_options['DATM']):
@@ -147,14 +125,6 @@ class Case():
             raise ValueError("ocn_grid must have a name. Please set it using the 'name' attribute.")
         if ocn_grid.name in self.cime.domains['ocnice'] and not override:
             raise ValueError(f"ocn_grid name {ocn_grid.name} is already in use.")
-        if not isinstance(boundaries, list):
-            raise TypeError("boundaries must be a list of strings.")
-        if not all(isinstance(boundary, str) for boundary in boundaries):
-            raise TypeError("boundaries must be a list of strings.")
-        if not isinstance(tidal_constituents, list):
-            raise TypeError("tidal_constituents must be a list of strings.")
-        if not all(isinstance(constituent, str) for constituent in tidal_constituents):
-            raise TypeError("tidal_constituents must be a list of strings.")
         if not isinstance(ninst_ocn, int):
             raise TypeError("ninst_ocn must be an integer.")
         if machine is None:
@@ -169,36 +139,41 @@ class Case():
             if not isinstance(project, str):
                 raise TypeError("project must be a string.")
 
-    def create_grid_input_files(self, inputdir, ocn_grid, ocn_topo, ocn_vgrid):
+    def create_grid_input_files(self):
+
+        inputdir = self.inputdir
+        ocn_grid = self.ocn_grid
+        ocn_topo = self.ocn_topo
+        ocn_vgrid = self.ocn_vgrid
 
         if self.override is True:
-            if self.inputdir.exists():
-                shutil.rmtree(self.inputdir)
+            if inputdir.exists():
+                shutil.rmtree(inputdir)
 
         inputdir.mkdir(parents=True, exist_ok=False)
         (inputdir / "ocnice").mkdir()
 
-        # suffix hash for the MOM6 grid files
-        hash = cvars["MB_ATTEMPT_ID"].value
+        # suffix for the MOM6 grid files
+        session_id = cvars["MB_ATTEMPT_ID"].value
 
         # MOM6 supergrid file
-        ocn_grid.write_supergrid(inputdir / "ocnice" / f"ocean_hgrid_{ocn_grid.name}_{hash}.nc")
+        ocn_grid.write_supergrid(inputdir / "ocnice" / f"ocean_hgrid_{ocn_grid.name}_{session_id}.nc")
 
         # MOM6 topography file
-        ocn_topo.write_topo(inputdir / "ocnice" / f"ocean_topog_{ocn_grid.name}_{hash}.nc")
+        ocn_topo.write_topo(inputdir / "ocnice" / f"ocean_topog_{ocn_grid.name}_{session_id}.nc")
 
         # MOM6 vertical grid file
-        ocn_vgrid.write(inputdir / "ocnice" / f"ocean_vgrid_{ocn_grid.name}_{hash}.nc")
+        ocn_vgrid.write(inputdir / "ocnice" / f"ocean_vgrid_{ocn_grid.name}_{session_id}.nc")
 
         # CICE grid file (if needed)
         if 'CICE' in self.compset:
-            ocn_topo.write_cice_grid(inputdir / "ocnice" / f"cice_grid_{ocn_grid.name}_{hash}.nc")
+            ocn_topo.write_cice_grid(inputdir / "ocnice" / f"cice_grid_{ocn_grid.name}_{session_id}.nc")
 
         # SCRIP grid file (needed for runoff remapping)
-        ocn_topo.write_scrip_grid(inputdir / "ocnice" / f"scrip_{ocn_grid.name}_{hash}.nc")
+        ocn_topo.write_scrip_grid(inputdir / "ocnice" / f"scrip_{ocn_grid.name}_{session_id}.nc")
 
         # ESMF mesh file:
-        ocn_topo.write_esmf_mesh(inputdir / "ocnice" / f"ESMF_mesh_{ocn_grid.name}_{hash}.nc")
+        ocn_topo.write_esmf_mesh(inputdir / "ocnice" / f"ESMF_mesh_{ocn_grid.name}_{session_id}.nc")
 
 
     def create_newcase(self):
@@ -218,7 +193,138 @@ class Case():
             print(f"{ERROR}{str(e)}{RESET}")
             cc.revert_launch(do_exec=True)
         
+    def configure_forcings(
+        self,
+        date_range: list[str],
+        boundaries: list[str] = ["south", "north", "west", "east"],
+        tidal_constituents: list[str] | None = None,
+        tidal_data_dir: str | Path | None = None,
+        tidal_data_suffix: str | None = None,
+    ):
+        """Configure the boundary conditions and tides for the MOM6 case."""
 
+        if not (isinstance(date_range, list) and all(isinstance(date, str) for date in date_range)):
+            raise TypeError("date_range must be a list of strings.")
+        if len(date_range) != 2:
+            raise ValueError("date_range must have exactly two elements.")
+        self.date_range = date_range
+
+        if not isinstance(boundaries, list):
+            raise TypeError("boundaries must be a list of strings.")
+        if not all(isinstance(boundary, str) for boundary in boundaries):
+            raise TypeError("boundaries must be a list of strings.")
+        self.boundaries = boundaries
+
+        if tidal_constituents:
+            if not isinstance(tidal_constituents, list):
+                raise TypeError("tidal_constituents must be a list of strings.")
+            if not all(isinstance(constituent, str) for constituent in tidal_constituents):
+                raise TypeError("tidal_constituents must be a list of strings.")
+        self.tidal_constituents = tidal_constituents
+
+        # all tidal arguments must be provided if any are provided
+        if any([tidal_constituents, tidal_data_dir, tidal_data_suffix]):
+            if not all([tidal_constituents, tidal_data_dir, tidal_data_suffix]):
+                raise ValueError("If any tidal arguments are provided, all must be provided.")
+        self.tidal_constituents = tidal_constituents
+        self.tidal_data_dir = Path(tidal_data_dir)
+        self.tidal_data_suffix = tidal_data_suffix
+
+        session_id = cvars["MB_ATTEMPT_ID"].value
+
+        # Instantiate the regional_mom6 experiment object
+        self.expt = rmom6.experiment(
+            date_range = self.date_range,
+            resolution = None,
+            number_vertical_layers = None,
+            layer_thickness_ratio = None,
+            depth = self.ocn_topo.max_depth,
+            mom_run_dir = self.cime_case.get_value("RUNDIR"),
+            mom_input_dir = self.inputdir / "ocnice",
+            hgrid_type="from_file",
+            hgrid_path = self.inputdir / "ocnice" / f"ocean_hgrid_{self.ocn_grid.name}_{session_id}.nc",
+            vgrid_type="from_file",
+            vgrid_path = self.inputdir / "ocnice" / f"ocean_vgrid_{self.ocn_grid.name}_{session_id}.nc",
+            minimum_depth = self.ocn_topo.min_depth,
+            tidal_constituents = self.tidal_constituents,
+            expt_name = self.caseroot.name,
+            boundaries = self.boundaries,
+        )
+
+        # Create the glorys directory
+        if self.override is True:
+            glorys_path = self.inputdir / 'glorys'
+            if glorys_path.exists():
+                shutil.rmtree(glorys_path)
+        glorys_path.mkdir(exist_ok=False)
+
+        if self.ocn_grid.is_rectangular():
+            self.expt.get_glorys_rectangular(
+                raw_boundaries_path = self.inputdir / "glorys",
+            )
+        else:
+            raise NotImplementedError("Only rectangular grids are supported at this time.")
+
+        self._configure_forcings_called = True
+
+
+    def process_forcings(self):
+        """Process the boundary conditions and tides for the MOM6 case."""
+
+        if not self._configure_forcings_called:
+            raise RuntimeError("configure_forcings() must be called before process_forcings().")
+        
+        glorys_path = self.inputdir / 'glorys'
+
+        # check all the boundary files are present:
+        if not (glorys_path / "ic_unprocessed.nc").exists():
+            raise FileNotFoundError(f"Initial condition file ic_unprocessed.nc not found in {glorys_path}."
+                                    "Please run configure_forcings() first.")
+        for boundary in self.boundaries:
+            if not (glorys_path / f"{boundary}_unprocessed.nc").exists():
+                raise FileNotFoundError(f"Boundary file {boundary}_unprocessed.nc not found in {glorys_path}."
+                                        "Please run configure_forcings() first.")
+        
+        # Define a mapping from the GLORYS variables and dimensions to the MOM6 ones
+        ocean_varnames = {"time": "time",
+                          "yh": "latitude",
+                          "xh": "longitude",
+                          "zl": "depth",
+                          "eta": "zos",
+                          "u": "uo",
+                          "v": "vo",
+                          "tracers": {"salt": "so", "temp": "thetao"}
+                          }
+
+        # Set up the initial condition
+        self.expt.setup_initial_condition(
+            self.inputdir / "glorys" / "ic_unprocessed.nc", # directory where the unprocessed initial condition is stored, as defined earlier
+            ocean_varnames,
+            arakawa_grid="A"
+        )    
+
+        # Set up the four boundary conditions. Remember that in the glorys_path, we have four boundary files names north_unprocessed.nc etc. 
+        self.expt.setup_ocean_state_boundaries(
+            self.inputdir / "glorys",
+            ocean_varnames,
+            arakawa_grid = "A"
+        )
+
+        # Process the tides
+        if self.tidal_constituents:
+
+            if self.ocn_grid.is_rectangular():
+                boundary_type = "rectangle"
+            else:
+                raise NotImplementedError("Only rectangular grids are supported at this time.")
+
+            # Process the tides
+            self.expt.setup_boundary_tides(
+                path_to_td = self.tidal_data_dir,
+                tidal_filename = self.tidal_data_suffix,
+                tidal_constituents = self.tidal_constituents,
+                boundary_type = boundary_type,
+            )
 
     @property
     def name(self) -> str:
@@ -287,6 +393,23 @@ class Case():
         
         
 
+    def update_runtime_parameters(self, **kwargs):
+        """Update the runtime parameters of the case."""
+
+        if not self._configure_forcings_called:
+            raise RuntimeError("configure_forcings() must be called before update_runtime_parameters().")
+
+        self.expt.update_runtime_parameters(**kwargs)
+
+        mom6_params = {'Global' : {}}
+
+        # Set the MOM6 runtime parameters
+        
+
+
+
+
+        # Tides parameters
 
 
 
