@@ -179,12 +179,16 @@ class Case():
     def create_newcase(self):
         """Create the case instance."""
 
+        # If override is True, clean up the existing caseroot and output directories
         if self.override is True:
             if self.caseroot.exists():
                 shutil.rmtree(self.caseroot)
             if (Path(self.cime.cime_output_root) / self.caseroot.name).exists():
                 shutil.rmtree(Path(self.cime.cime_output_root) / self.caseroot.name)
         
+        if not self.caseroot.parent.exists():
+            self.caseroot.parent.mkdir(parents=True, exist_ok=False)
+
         cc = CaseCreator(self.cime, allow_xml_override=self.override)
 
         try:
@@ -278,12 +282,15 @@ class Case():
 
         # check all the boundary files are present:
         if not (glorys_path / "ic_unprocessed.nc").exists():
-            raise FileNotFoundError(f"Initial condition file ic_unprocessed.nc not found in {glorys_path}."
-                                    "Please run configure_forcings() first.")
+            raise FileNotFoundError(f"Initial condition file ic_unprocessed.nc not found in {glorys_path}. "
+                                    "Please make sure to execute get_glorys_data.sh script as described in "
+                                    "the message printed by configure_forcings().")
+
         for boundary in self.boundaries:
             if not (glorys_path / f"{boundary}_unprocessed.nc").exists():
-                raise FileNotFoundError(f"Boundary file {boundary}_unprocessed.nc not found in {glorys_path}."
-                                        "Please run configure_forcings() first.")
+                raise FileNotFoundError(f"Boundary file {boundary}_unprocessed.nc not found in {glorys_path}. "
+                                        "Please make sure to execute get_glorys_data.sh script as described in "
+                                        "the message printed by configure_forcings().")
         
         # Define a mapping from the GLORYS variables and dimensions to the MOM6 ones
         ocean_varnames = {"time": "time",
@@ -384,6 +391,14 @@ class Case():
         cvars["MOM6_BATHY_STATUS"].value = "Complete"
         if Stage.active().title == 'Custom Ocean Grid':
             Stage.active().proceed()
+        
+        assert Stage.active().title == 'New Ocean Grid Initial Conditions'
+        cvars["OCN_IC_MODE"].value = 'From File'
+
+        assert Stage.active().title == 'Initial Conditions from File'
+        cvars["TEMP_SALT_Z_INIT_FILE"].value = "TBD"
+        cvars["IC_PTEMP_NAME"].value = "TBD"
+        cvars["IC_SALT_NAME"].value = "TBD"
 
         assert Stage.active().title == '3. Launch'
         cvars["CASEROOT"].value = self.caseroot.as_posix()
@@ -393,23 +408,21 @@ class Case():
         
         
 
-    def update_runtime_parameters(self, **kwargs):
+    def _specify_forcings_parameters(self, **kwargs):
         """Update the runtime parameters of the case."""
 
-        if not self._configure_forcings_called:
-            raise RuntimeError("configure_forcings() must be called before update_runtime_parameters().")
-
-        self.expt.update_runtime_parameters(**kwargs)
-
-        mom6_params = {'Global' : {}}
-
-        # Set the MOM6 runtime parameters
-        
-
-
-
-
-        # Tides parameters
+        # OBC
+        obc_params = [
+            ("OBC_NUMBER_OF_SEGMENTS", len(self.boundaries)),
+            ("OBC_FREESLIP_VORTICITY", "False"),
+            ("OBC_FREESLIP_STRAIN", "False"),
+            ("OBC_COMPUTED_VORTICITY", "True"),
+            ("OBC_COMPUTED_STRAIN", "True"),
+            ("OBC_ZERO_BIHARMONIC", "True"),
+            ("OBC_TRACER_RESERVOIR_LENGTH_SCALE_OUT", "3.0E+04"),
+            ("OBC_TRACER_RESERVOIR_LENGTH_SCALE_IN", "3000.0"),
+            ("BRUSHCUTTER_MODE", "True"),
+        ]
 
 
 
