@@ -1,6 +1,7 @@
 from pathlib import Path
 import uuid
 import shutil
+from datetime import datetime
 
 import regional_mom6 as rmom6
 from CrocoDash.grid import Grid
@@ -17,6 +18,7 @@ from visualCaseGen.initialize_stages import initialize_stages
 from visualCaseGen.specs.options import set_options
 from visualCaseGen.specs.relational_constraints import get_relational_constraints
 from visualCaseGen.custom_widget_types.case_creator import CaseCreator, ERROR, RESET
+from visualCaseGen.custom_widget_types.case_tools import xmlchange, run_case_setup, append_user_nl
 
 
 class Case():
@@ -75,7 +77,7 @@ class Case():
 
         # Construct the compset long name
         self.compset = f"{inittime}_DATM%{datm_mode}_SLND_SICE_MOM6_SROF_SGLC_SWAV_SESP"
-        
+
         # Resolution name:
         self.resolution = f"{datm_grid_name}_{ocn_grid.name}"
 
@@ -84,11 +86,11 @@ class Case():
         self.set_configvars(inittime, datm_mode, machine, project)
 
         self.create_grid_input_files()
-        
+
         self.create_newcase()
-        
-        self.cime_case = self.cime.get_case(self.caseroot)  
-    
+
+        self.cime_case = self.cime.get_case(self.caseroot)
+
     def _init_args_check(
         self,
         caseroot: str | Path,
@@ -104,7 +106,7 @@ class Case():
         project: str | None,
         override: bool,
     ):
-        
+
         if Path(caseroot).exists() and not override:
             raise ValueError(f"Given caseroot {caseroot} already exists!")
         if Path(inputdir).exists() and not override:
@@ -185,7 +187,7 @@ class Case():
                 shutil.rmtree(self.caseroot)
             if (Path(self.cime.cime_output_root) / self.caseroot.name).exists():
                 shutil.rmtree(Path(self.cime.cime_output_root) / self.caseroot.name)
-        
+
         if not self.caseroot.parent.exists():
             self.caseroot.parent.mkdir(parents=True, exist_ok=False)
 
@@ -196,7 +198,7 @@ class Case():
         except Exception as e:
             print(f"{ERROR}{str(e)}{RESET}")
             cc.revert_launch(do_exec=True)
-        
+
     def configure_forcings(
         self,
         date_range: list[str],
@@ -211,7 +213,6 @@ class Case():
             raise TypeError("date_range must be a list of strings.")
         if len(date_range) != 2:
             raise ValueError("date_range must have exactly two elements.")
-        self.date_range = date_range
 
         if not isinstance(boundaries, list):
             raise TypeError("boundaries must be a list of strings.")
@@ -238,7 +239,7 @@ class Case():
 
         # Instantiate the regional_mom6 experiment object
         self.expt = rmom6.experiment(
-            date_range = self.date_range,
+            date_range = date_range,
             resolution = None,
             number_vertical_layers = None,
             layer_thickness_ratio = None,
@@ -277,7 +278,7 @@ class Case():
 
         if not self._configure_forcings_called:
             raise RuntimeError("configure_forcings() must be called before process_forcings().")
-        
+
         glorys_path = self.inputdir / 'glorys'
 
         # check all the boundary files are present:
@@ -291,7 +292,7 @@ class Case():
                 raise FileNotFoundError(f"Boundary file {boundary}_unprocessed.nc not found in {glorys_path}. "
                                         "Please make sure to execute get_glorys_data.sh script as described in "
                                         "the message printed by configure_forcings().")
-        
+
         # Define a mapping from the GLORYS variables and dimensions to the MOM6 ones
         ocean_varnames = {"time": "time",
                           "yh": "latitude",
@@ -308,9 +309,9 @@ class Case():
             self.inputdir / "glorys" / "ic_unprocessed.nc", # directory where the unprocessed initial condition is stored, as defined earlier
             ocean_varnames,
             arakawa_grid="A"
-        )    
+        )
 
-        # Set up the four boundary conditions. Remember that in the glorys_path, we have four boundary files names north_unprocessed.nc etc. 
+        # Set up the four boundary conditions. Remember that in the glorys_path, we have four boundary files names north_unprocessed.nc etc.
         self.expt.setup_ocean_state_boundaries(
             self.inputdir / "glorys",
             ocean_varnames,
@@ -333,9 +334,25 @@ class Case():
                 boundary_type = boundary_type,
             )
 
+        # regional_mom6 places OBC files under inputdir/forcing. Move them to inputdir:
+        if (forcing_dir := self.inputdir / 'ocnice' / 'forcing').exists():
+            for file in forcing_dir.iterdir():
+                shutil.move(file, self.inputdir / 'ocnice')
+            forcing_dir.rmdir()
+        
+        # Apply forcing-related namelist and xml changes
+        self._update_forcing_variables()
+
     @property
     def name(self) -> str:
         return self.caseroot.name
+    
+    @property
+    def date_range(self) -> list[datetime]:
+        # check if self.expt is defined
+        if not hasattr(self, 'expt'):
+            raise AttributeError("date_range is not available until configure_forcings() is called.")
+        return self.expt.date_range
 
     def _initialize_visualCaseGen(self):
 
@@ -350,7 +367,7 @@ class Case():
     def set_configvars(self, inittime, datm_mode, machine, project):
 
         assert Stage.active().title == '1. Component Set'
-        cvars["COMPSET_MODE"].value = "Custom" 
+        cvars["COMPSET_MODE"].value = "Custom"
 
         assert Stage.active().title == 'Time Period'
         cvars["INITTIME"].value = inittime
@@ -382,7 +399,7 @@ class Case():
         assert Stage.active().title == 'Custom Ocean Grid'
         cvars["OCN_GRID_EXTENT"].value = "Regional"
         cvars["OCN_CYCLIC_X"].value = "False"
-        cvars["OCN_NX"].value = self.ocn_grid.nx 
+        cvars["OCN_NX"].value = self.ocn_grid.nx
         cvars["OCN_NY"].value = self.ocn_grid.ny
         cvars["OCN_LENX"].value = self.ocn_grid.tlon.max().item() - self.ocn_grid.tlon.min().item()
         cvars["OCN_LENY"].value = self.ocn_grid.tlat.max().item() - self.ocn_grid.tlat.min().item()
@@ -391,7 +408,7 @@ class Case():
         cvars["MOM6_BATHY_STATUS"].value = "Complete"
         if Stage.active().title == 'Custom Ocean Grid':
             Stage.active().proceed()
-        
+
         assert Stage.active().title == 'New Ocean Grid Initial Conditions'
         cvars["OCN_IC_MODE"].value = 'From File'
 
@@ -405,13 +422,43 @@ class Case():
         cvars["MACHINE"].value = machine
         if project is not None:
             cvars["PROJECT"].value = project
-        
-        
 
-    def _specify_forcings_parameters(self, **kwargs):
+    def _update_forcing_variables(self):
         """Update the runtime parameters of the case."""
 
-        # OBC
+        caseroot = self.caseroot
+
+        # Initial conditions:
+        ic_params = [
+            ("INIT_LAYERS_FROM_Z_FILE", "True"),
+            ("TEMP_SALT_Z_INIT_FILE", "init_tracers.nc"),
+            ("Z_INIT_FILE_PTEMP_VAR", "temp"),
+            ("Z_INIT_ALE_REMAPPING", True),
+            ("TEMP_SALT_INIT_VERTICAL_REMAP_ONLY", True),
+            ("DEPRESS_INITIAL_SURFACE", True),
+            ("SURFACE_HEIGHT_IC_FILE", "init_eta.nc"),
+            ("SURFACE_HEIGHT_IC_VAR", "eta_t"),
+            ("VELOCITY_CONFIG", "file"),
+            ("VELOCITY_FILE", "init_vel.nc"),
+        ]
+        append_user_nl("user_nl_mom", ic_params, caseroot, do_exec=True, comment="Initial conditions")
+
+        # Tides
+        if self.tidal_constituents:
+            tidal_params = [
+                ("TIDES", "True"),
+                ("TIDE_M2", "True"),
+                ("CD_TIDES", 0.0018),
+                ("TIDE_USE_EQ_PHASE", "True"),
+                ("TIDE_REF_DATE", f"{self.date_range[0].year}, {self.date_range[0].month}, {self.date_range[0].day}"),
+                ("OBC_TIDE_ADD_EQ_PHASE", "True"),
+                ("OBC_TIDE_N_CONSTITUENTS", len(self.tidal_constituents)),
+                ("OBC_TIDE_CONSTITUENTS", '"' + ", ".join(self.tidal_constituents) + '"' ),
+                ("OBC_TIDE_REF_DATE", f"{self.date_range[0].year}, {self.date_range[0].month}, {self.date_range[0].day}"),
+            ]
+            append_user_nl("user_nl_mom", tidal_params, caseroot, do_exec=True, comment="Tides", log_title=False)
+
+        # Open boundary conditions (OBC):
         obc_params = [
             ("OBC_NUMBER_OF_SEGMENTS", len(self.boundaries)),
             ("OBC_FREESLIP_VORTICITY", "False"),
@@ -424,5 +471,49 @@ class Case():
             ("BRUSHCUTTER_MODE", "True"),
         ]
 
+        # More OBC parameters:
+        for seg in self.expt.boundaries:
+            seg_ix = str(self.expt.find_MOM6_rectangular_orientation(seg)).zfill(3) # "001", "002", etc.
+            seg_id = "OBC_SEGMENT_" + seg_ix
 
+            # Position and config
+            if seg == "south":
+                index_str = '"J=0,I=0:N'
+            elif seg == "north":
+                index_str = '"J=N,I=N:0'
+            elif seg == "west":
+                index_str = '"I=0,J=N:0'
+            elif seg == "east":
+                index_str = '"I=N,J=0:N'
+            else:
+                raise ValueError(f"Unknown segment {seg_id}")
+            obc_params.append((seg_id, index_str + ',FLATHER,ORLANSKI,NUDGED,ORLANSKI_TAN,NUDGED_TAN"'))
 
+            # Nudging
+            obc_params.append((seg_id + '_VELOCITY_NUDGING_TIMESCALES', '0.3, 360.0'))
+
+            standard_data_str = lambda : (
+                f'"U=file:forcing_obc_segment_{seg_ix}.nc(u),'
+                f'V=file:forcing_obc_segment_{seg_ix}.nc(v),'
+                f'SSH=file:forcing_obc_segment_{seg_ix}.nc(eta),'
+                f'TEMP=file:forcing_obc_segment_{seg_ix}.nc(temp),'
+                f'SALT=file:forcing_obc_segment_{seg_ix}.nc(salt)'
+            )
+            tidal_data_str = lambda : (
+                f',Uamp=file:tu_segment_{seg_ix}.nc(uamp),'
+                f'Uphase=file:tu_segment_{seg_ix}.nc(uphase),'
+                f'Vamp=file:tu_segment_{seg_ix}.nc(vamp),'
+                f'Vphase=file:tu_segment_{seg_ix}.nc(vphase),'
+                f'SSHamp=file:tz_segment_{seg_ix}.nc(zamp),'
+                f'SSHphase=file:tz_segment_{seg_ix}.nc(zphase)'
+            )
+            if self.tidal_constituents:
+                obc_params.append((seg_id + '_DATA', standard_data_str() + tidal_data_str() + '"'))
+            else:
+                obc_params.append((seg_id + '_DATA', standard_data_str() + '"'))
+
+        append_user_nl("user_nl_mom", obc_params, caseroot, do_exec=True, comment="Open boundary conditions", log_title=False)
+
+        # Update Model Date
+        xmlchange('RUN_STARTDATE', str(self.date_range[0])[:10], self.caseroot)
+        xmlchange('MOM6_MEMORY_MODE', 'dynamic_symmetric', self.caseroot)
