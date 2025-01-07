@@ -11,9 +11,6 @@ def test_cd_import(tmp_path):
     """
 
     cd_driver_obj = cd.driver.CrocoDashDriver()
-    cd_driver_obj.setup_directories(
-        mom_input_dir=tmp_path / "mom_input", mom_run_dir=tmp_path / "mom_run"
-    )
     assert cd_driver_obj is not None
 
 

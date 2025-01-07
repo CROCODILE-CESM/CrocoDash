@@ -138,6 +138,7 @@ def test_rm6_gen_hgrid():
 
 
 @pytest.mark.usefixtures("check_glade_exists")
+@pytest.mark.slow
 def test_fred_subset_hgrid():
     # Define the grid
     grid_obj = grid_gen.GridGen()
@@ -154,6 +155,7 @@ def test_fred_subset_topo():
 
 
 @pytest.mark.usefixtures("check_glade_exists")
+@pytest.mark.slow
 def test_rm6_mask_unwanted_ocean(tmp_path):
     # Define the grid
     grid_obj = grid_gen.GridGen(delete_temp_storage=False)

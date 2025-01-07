@@ -1,7 +1,7 @@
 # CrocoDash specific ignores
 *_temp/
 .DS_Store
-
+.vscode/
 
 
 # Byte-compiled / optimized / DLL files
