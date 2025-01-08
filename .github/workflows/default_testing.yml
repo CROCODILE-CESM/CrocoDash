@@ -4,11 +4,25 @@ on: [push, pull_request, workflow_dispatch]
 
 permissions:
   contents: write
-
+env:
+  CESMROOT: ${{ github.workspace }}/CESM
 jobs:
   pytest:
     runs-on: ubuntu-latest
     steps:
+      # Check out the CESM
+      - uses: actions/checkout@v4
+        with:
+          repository: ESCOMP/CESM
+          ref: cesm3_0_beta03_gui
+
+      # Run git-fleximod
+      - name: checkout CESM
+        env:
+          GIT_CLONE_PROTECTION_ACTIVE: false
+        run: |
+          ./bin/git-fleximod update
+
       - uses: actions/checkout@v4
         with:
             submodules: recursive
