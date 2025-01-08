@@ -1,17 +1,21 @@
-import CrocoDash as cd
-from CrocoDash import grid_gen
-from CrocoDash.regional_casegen import cesm_tools as rcg_ct
+from CrocoDash.case import Case
 from CrocoDash.rm6 import regional_mom6 as rm6
-import pytest
+from CrocoDash.grid import Grid
+from CrocoDash.topo import Topo
+from CrocoDash.vgrid import VGrid
+from CrocoDash import utils
 
 
-def test_cd_import(tmp_path):
+def test_import():
     """
-    This test confirms we can import cd driver, and generate a cd_driver object which includes grid_gen, regional_mom6, and regional_casegen objects.
+    This test confirms we can import cd submodules
     """
 
-    cd_driver_obj = cd.driver.CrocoDashDriver()
-    assert cd_driver_obj is not None
+    assert Case is not None
+    assert Grid is not None
+    assert Topo is not None
+    assert VGrid is not None
+
 
 
 def test_rm6_import():
@@ -21,21 +25,3 @@ def test_rm6_import():
 
     empty_expt_obj = rm6.experiment.create_empty()
     assert empty_expt_obj is not None
-
-
-def test_grid_gen_import():
-    """
-    This test confirms we can import grid_gen, and can call the functions inside
-    """
-
-    grid_gen_obj = grid_gen.GridGen()
-    assert grid_gen_obj is not None
-
-
-def test_rcg_import():
-    """
-    This test confirms we can import rcg, and can call the functions inside
-    """
-
-    rcg_obj = rcg_ct.RegionalCaseGen()
-    assert rcg_obj is not None

@@ -394,14 +394,12 @@ class Case:
             if self.ocn_grid.is_rectangular():
                 boundary_type = "rectangle"
             else:
-                raise NotImplementedError(
-                    "Only rectangular grids are supported at this time."
-                )
+                boundary_type = "curvilinear"
 
             # Process the tides
             self.expt.setup_boundary_tides(
-                path_to_td=self.tidal_data_dir,
-                tidal_filename=self.tidal_data_suffix,
+                tpxo_elevation_filepath=self.tidal_data_dir / "h_"+self.tidal_data_suffix,
+                tpxo_velocity_filepath=self.tidal_data_dir / "u_"+self.tidal_data_suffix,
                 tidal_constituents=self.tidal_constituents,
                 boundary_type=boundary_type,
             )
