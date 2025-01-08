@@ -18,11 +18,7 @@ from visualCaseGen.initialize_stages import initialize_stages
 from visualCaseGen.specs.options import set_options
 from visualCaseGen.specs.relational_constraints import get_relational_constraints
 from visualCaseGen.custom_widget_types.case_creator import CaseCreator, ERROR, RESET
-from visualCaseGen.custom_widget_types.case_tools import (
-    xmlchange,
-    run_case_setup,
-    append_user_nl,
-)
+from visualCaseGen.custom_widget_types.case_tools import xmlchange, append_user_nl
 
 
 class Case:
@@ -42,11 +38,44 @@ class Case:
         inittime: str = "1850",
         datm_mode: str = "JRA",
         datm_grid_name: str = "TL319",
-        ninst_ocn: int = 1,
+        ninst: int = 1,
         machine: str | None = None,
         project: str | None = None,
         override: bool = False,
     ):
+        """
+        Initialize a new regional MOM6 case within the CESM framework.
+
+        Parameters
+        ----------
+        cesmroot : str | Path
+            Path to the existing CESM root directory.
+        caseroot : str | Path
+            Path to the case root directory to be created.
+        inputdir : str | Path
+            Path to the input directory to be created.
+        ocn_grid : Grid
+            The ocean grid object to be used in the case.
+        ocn_topo : Topo
+            The ocean topography object to be used in the case.
+        ocn_vgrid : VGrid
+            The ocean vertical grid object to be used in the case.
+        inittime : str, optional
+            The initialization time of the case. Default is "1850".
+        datm_mode : str, optional
+            The data atmosphere mode of the case. Default is "JRA".
+        datm_grid_name : str, optional
+            The data atmosphere grid name of the case. Default is "TL319".
+        ninst : int, optional
+            The number of model instances. Default is 1.
+        machine : str, optional
+            The machine name to be used in the case. Default is None.
+        project : str, optional
+            The project name to be used in the case. Default is None.
+            If the machine requires a project, this argument must be provided.
+        override : bool, optional
+            Whether to override existing caseroot and inputdir directories. Default is False.
+        """
 
         # Initialize the CIME interface object
         self.cime = CIME_interface(cesmroot)
@@ -64,7 +93,7 @@ class Case:
             inittime,
             datm_mode,
             datm_grid_name,
-            ninst_ocn,
+            ninst,
             machine,
             project,
             override,
@@ -75,7 +104,7 @@ class Case:
         self.ocn_grid = ocn_grid
         self.ocn_topo = ocn_topo
         self.ocn_vgrid = ocn_vgrid
-        self.ninst_ocn = ninst_ocn
+        self.ninst = ninst
         self.override = override
 
         self._configure_forcings_called = False
@@ -88,7 +117,7 @@ class Case:
 
         self._initialize_visualCaseGen()
 
-        self._set_configvars(inittime, datm_mode, machine, project)
+        self._assign_configvar_values(inittime, datm_mode, machine, project)
 
         self._create_grid_input_files()
 
@@ -106,7 +135,7 @@ class Case:
         inittime: str,
         datm_mode: str,
         datm_grid_name: str,
-        ninst_ocn: int,
+        ninst: int,
         machine: str | None,
         project: str | None,
         override: bool,
@@ -136,8 +165,8 @@ class Case:
             )
         if ocn_grid.name in self.cime.domains["ocnice"] and not override:
             raise ValueError(f"ocn_grid name {ocn_grid.name} is already in use.")
-        if not isinstance(ninst_ocn, int):
-            raise TypeError("ninst_ocn must be an integer.")
+        if not isinstance(ninst, int):
+            raise TypeError("ninst must be an integer.")
         if machine is None:
             raise ValueError(
                 "Couldn't determine machine. Please provide the machine argument."
@@ -409,7 +438,7 @@ class Case:
         set_options(self.cime)
         csp.initialize(cvars, get_relational_constraints(cvars), Stage.first())
 
-    def _set_configvars(self, inittime, datm_mode, machine, project):
+    def _assign_configvar_values(self, inittime, datm_mode, machine, project):
 
         assert Stage.active().title == "1. Component Set"
         cvars["COMPSET_MODE"].value = "Custom"
@@ -474,10 +503,11 @@ class Case:
         if project is not None:
             cvars["PROJECT"].value = project
 
+        # Variables that are not included in a stage:
+        cvars["NINST"].value = self.ninst
+
     def _update_forcing_variables(self):
         """Update the runtime parameters of the case."""
-
-        caseroot = self.caseroot
 
         # Initial conditions:
         ic_params = [
@@ -493,9 +523,8 @@ class Case:
             ("VELOCITY_FILE", "init_vel.nc"),
         ]
         append_user_nl(
-            "user_nl_mom",
+            "mom",
             ic_params,
-            caseroot,
             do_exec=True,
             comment="Initial conditions",
         )
@@ -523,9 +552,8 @@ class Case:
                 ),
             ]
             append_user_nl(
-                "user_nl_mom",
+                "mom",
                 tidal_params,
-                caseroot,
                 do_exec=True,
                 comment="Tides",
                 log_title=False,
@@ -595,14 +623,14 @@ class Case:
                 obc_params.append((seg_id + "_DATA", standard_data_str() + '"'))
 
         append_user_nl(
-            "user_nl_mom",
+            "mom",
             obc_params,
-            caseroot,
             do_exec=True,
             comment="Open boundary conditions",
             log_title=False,
         )
 
-        # Update Model Date
-        xmlchange("RUN_STARTDATE", str(self.date_range[0])[:10], self.caseroot)
-        xmlchange("MOM6_MEMORY_MODE", "dynamic_symmetric", self.caseroot)
+        xmlchange("RUN_STARTDATE", str(self.date_range[0])[:10])
+        xmlchange("MOM6_MEMORY_MODE", "dynamic_symmetric")
+
+        print(f"Case is ready to be built: {self.caseroot}")
