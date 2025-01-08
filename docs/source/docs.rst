@@ -1,6 +1,9 @@
 Write Documentation
 ====================
 
+We are using Sphinx to write and compile documentation. The documentation is written in reStructuredText (reST) format. The documentation is located in the `docs` folder. The documentation is hosted on github-pages. Please follow the below steps to compile documentation.
+
+
 Steps:
 
 #. Activate the environment
