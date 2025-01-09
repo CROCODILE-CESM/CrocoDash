@@ -5,7 +5,7 @@ on: [push, pull_request, workflow_dispatch]
 permissions:
   contents: write
 env:
-  CESMROOT: CESM # See the checkout step below for the path
+  CESMROOT: ${{ github.workspace }}/CESM # See the checkout step below for the path
 jobs:
   pytest:
     runs-on: ubuntu-latest
@@ -20,7 +20,7 @@ jobs:
         env:
           GIT_CLONE_PROTECTION_ACTIVE: false
         run: |
-          cd $GITHUB_WORKSPACE/$CESMROOT
+          cd $CESMROOT
           ./bin/git-fleximod update
 
       - uses: actions/checkout@v4
