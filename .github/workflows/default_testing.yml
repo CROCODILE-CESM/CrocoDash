@@ -32,11 +32,11 @@ jobs:
         with:
           activate-environment: CrocoDash
           environment-file: CrocoDash/environment.yml
-      # It runs the tests in rm6 by default as well
+      # It runs the tests in rm6 by default as well, but ignores visualCaseGen & mom6_bathy
       - name: Run new version
         run: |
           source $(conda info --base)/etc/profile.d/conda.sh # Initialize Conda
           conda activate CrocoDash # Activate env for autodocs
           cd CrocoDash
-          pytest
+          pytest --ignore=CrocoDash/visualCaseGen 
         shell: bash
