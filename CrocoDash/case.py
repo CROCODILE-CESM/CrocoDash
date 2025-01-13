@@ -255,8 +255,8 @@ class Case:
         date_range: list[str],
         boundaries: list[str] = ["south", "north", "west", "east"],
         tidal_constituents: list[str] | None = None,
-        tidal_data_dir: str | Path | None = None,
-        tidal_data_suffix: str | None = None,
+        tpxo_elevation_filepath: str | Path | None = None,
+        tpxo_velocity_filepath: str | Path | None = None,
     ):
         """Configure the boundary conditions and tides for the MOM6 case."""
 
@@ -284,14 +284,14 @@ class Case:
         self.tidal_constituents = tidal_constituents
 
         # all tidal arguments must be provided if any are provided
-        if any([tidal_constituents, tidal_data_dir, tidal_data_suffix]):
-            if not all([tidal_constituents, tidal_data_dir, tidal_data_suffix]):
+        if any([tidal_constituents, tpxo_elevation_filepath, tpxo_velocity_filepath]):
+            if not all([tidal_constituents, tpxo_elevation_filepath, tpxo_velocity_filepath]):
                 raise ValueError(
                     "If any tidal arguments are provided, all must be provided."
                 )
         self.tidal_constituents = tidal_constituents
-        self.tidal_data_dir = Path(tidal_data_dir) if tidal_data_dir else None
-        self.tidal_data_suffix = tidal_data_suffix
+        self.tpxo_elevation_filepath = Path(tpxo_elevation_filepath) if tpxo_elevation_filepath else None
+        self.tpxo_velocity_filepath = Path(tpxo_velocity_filepath) if tpxo_velocity_filepath else None
 
         session_id = cvars["MB_ATTEMPT_ID"].value
 
@@ -394,8 +394,8 @@ class Case:
 
             # Process the tides
             self.expt.setup_boundary_tides(
-                tpxo_elevation_filepath=self.tidal_data_dir / ("h_"+str(self.tidal_data_suffix)),
-                tpxo_velocity_filepath=self.tidal_data_dir / ("u_"+str(self.tidal_data_suffix)),
+                tpxo_elevation_filepath=self.tpxo_elevation_filepath,
+                tpxo_velocity_filepath=self.tpxo_velocity_filepath,
                 tidal_constituents=self.tidal_constituents,
                 boundary_type=boundary_type,
             )
