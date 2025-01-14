@@ -7,32 +7,39 @@ Subpackages
 .. toctree::
    :maxdepth: 4
 
-   CrocoDash.regional_casegen
    CrocoDash.rm6
 
 Submodules
 ----------
 
-CrocoDash.driver module
------------------------
+CrocoDash.case module
+---------------------
 
-.. automodule:: CrocoDash.driver
+.. automodule:: CrocoDash.case
    :members:
    :undoc-members:
    :show-inheritance:
 
-CrocoDash.grid\_gen module
---------------------------
+CrocoDash.grid module
+---------------------
 
-.. automodule:: CrocoDash.grid_gen
+.. automodule:: CrocoDash.grid
    :members:
    :undoc-members:
    :show-inheritance:
 
-CrocoDash.unsupported\_boundary\_conditions module
---------------------------------------------------
+CrocoDash.topo module
+---------------------
 
-.. automodule:: CrocoDash.unsupported_boundary_conditions
+.. automodule:: CrocoDash.topo
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+CrocoDash.topo\_editor module
+-----------------------------
+
+.. automodule:: CrocoDash.topo_editor
    :members:
    :undoc-members:
    :show-inheritance:
@@ -41,6 +48,14 @@ CrocoDash.utils module
 ----------------------
 
 .. automodule:: CrocoDash.utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+CrocoDash.vgrid module
+----------------------
+
+.. automodule:: CrocoDash.vgrid
    :members:
    :undoc-members:
    :show-inheritance:

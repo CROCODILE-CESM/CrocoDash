@@ -4,23 +4,39 @@ on: [push, pull_request, workflow_dispatch]
 
 permissions:
   contents: write
-
+env:
+  CESMROOT: ${{ github.workspace }}/CESM # See the checkout step below for the path
 jobs:
   pytest:
     runs-on: ubuntu-latest
     steps:
+      # Check out the CESM
+      - uses: actions/checkout@v4
+        with:
+          repository: ESCOMP/CESM
+          path: CESM
+      # Run git-fleximod
+      - name: checkout CESM
+        env:
+          GIT_CLONE_PROTECTION_ACTIVE: false
+        run: |
+          cd $CESMROOT
+          ./bin/git-fleximod update
+
       - uses: actions/checkout@v4
         with:
             submodules: recursive
+            path: CrocoDash
       - uses: actions/setup-python@v5
       - uses: conda-incubator/setup-miniconda@v3
         with:
           activate-environment: CrocoDash
-          environment-file: environment.yml
-      # It runs the tests in rm6 by default as well
+          environment-file: CrocoDash/environment.yml
+      # It runs the tests in rm6 by default as well, but ignores visualCaseGen & mom6_bathy
       - name: Run new version
         run: |
           source $(conda info --base)/etc/profile.d/conda.sh # Initialize Conda
           conda activate CrocoDash # Activate env for autodocs
-          pytest
+          cd CrocoDash
+          pytest --ignore=CrocoDash/visualCaseGen 
         shell: bash
