@@ -5,7 +5,7 @@ Installation
 
    .. code-block:: bash
 
-      git clone git@github.com:CROCODILE-CESM/CrocoDash.git
+      git clone git@github.com:CROCODILE-CESM/CrocoDash.git --recurse-submodules
 
 #. Create the environment (called crocodash) using the provided environment.yml file
 
@@ -17,7 +17,7 @@ Installation
 
    .. code-block:: bash
 
-      conda activate crocodash
+      conda activate CrocoDash
       pytest   # If you'd like, run this to see if everything is working as expected. These are not comprehensive tests.
 
 #. Check out the demos!

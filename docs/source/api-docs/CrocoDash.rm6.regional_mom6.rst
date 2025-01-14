@@ -12,6 +12,22 @@ CrocoDash.rm6.regional\_mom6.regional\_mom6 module
    :undoc-members:
    :show-inheritance:
 
+CrocoDash.rm6.regional\_mom6.regridding module
+----------------------------------------------
+
+.. automodule:: CrocoDash.rm6.regional_mom6.regridding
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+CrocoDash.rm6.regional\_mom6.rotation module
+--------------------------------------------
+
+.. automodule:: CrocoDash.rm6.regional_mom6.rotation
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 CrocoDash.rm6.regional\_mom6.utils module
 -----------------------------------------
 
