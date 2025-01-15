@@ -3,9 +3,31 @@ import socket
 import os
 from pathlib import Path
 from CrocoDash.rm6 import regional_mom6 as rm6
+from CrocoDash.grid import Grid
+from CrocoDash.topo import Topo
 
 
 # Fixture to provide the temp folder and a parameter name
+@pytest.fixture
+def get_rect_grid():
+    grid = Grid(
+    resolution = 0.1,
+    xstart = 278.0,
+    lenx = 4.0,
+    ystart = 7.0,
+    leny = 3.0,
+    name = "panama1",
+    )
+    return grid
+
+@pytest.fixture
+def get_rect_grid_and_topo(get_rect_grid):
+    topo = Topo(
+        grid = get_rect_grid,
+        min_depth = 9.5,
+    )
+    return get_rect_grid, topo
+
 @pytest.fixture
 def setup_sample_rm6_expt(tmp_path):
     expt = rm6.experiment(
