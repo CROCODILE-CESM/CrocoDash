@@ -5,7 +5,9 @@ from pathlib import Path
 from CrocoDash.rm6 import regional_mom6 as rm6
 from CrocoDash.grid import Grid
 from CrocoDash.topo import Topo
-
+from CrocoDash.vgrid import VGrid
+import xarray as xr
+import numpy as np
 
 # Fixture to provide the temp folder and a parameter name
 @pytest.fixture
@@ -21,12 +23,51 @@ def get_rect_grid():
     return grid
 
 @pytest.fixture
-def get_rect_grid_and_topo(get_rect_grid):
+def get_rect_grid_and_empty_topo(get_rect_grid):
     topo = Topo(
         grid = get_rect_grid,
         min_depth = 9.5,
     )
     return get_rect_grid, topo
+
+@pytest.fixture
+def get_rect_grid_and_topo(get_rect_grid):
+    topo = Topo(
+        grid = get_rect_grid,
+        min_depth = 9.5,
+    )
+    topo.depth = 10
+    return get_rect_grid, topo
+
+@pytest.fixture
+def gen_grid_topo_vgrid(get_rect_grid_and_topo):
+    grid, topo = get_rect_grid_and_topo
+    vgrid  = VGrid.hyperbolic(
+        nk = 75,
+        depth = topo.max_depth,
+        ratio=20.0
+    )
+    return grid, topo, vgrid
+@pytest.fixture
+def get_dummy_bathymetry_data():
+    latitude_extent = [2, 10]
+    longitude_extent = [260, 280]
+    bathymetry = np.random.random((100, 100)) * (-100)
+    bathymetry = xr.DataArray(
+        bathymetry,
+        dims=["lat", "lon"],
+        coords={
+            "lat": np.linspace(
+                latitude_extent[0] - 5, latitude_extent[1] + 5, 100
+            ),
+            "lon": np.linspace(
+                longitude_extent[0] - 5, longitude_extent[1] + 5, 100
+            ),
+        },
+    )
+    bathymetry.name = "elevation"
+    return bathymetry
+
 
 @pytest.fixture
 def setup_sample_rm6_expt(tmp_path):
@@ -76,17 +117,22 @@ def is_glade_file_system():
 
 
 @pytest.fixture(scope="session")
-def check_glade_exists():
+def is_glade():
     if not is_glade_file_system():
         pytest.skip(reason="Skipping test: Not running on the Glade file system.")
 
-
-import xarray as xr
-import numpy as np
-
+@pytest.fixture()
+def is_github_actions():
+    return os.getenv("GITHUB_ACTIONS") == "true"
 
 @pytest.fixture(scope="session")
-def dummy_netcdf_data():
+def get_cesm_root_path(is_glade):
+    cesmroot = os.getenv("CESMROOT")
+    if cesmroot is None and is_glade:
+        cesmroot = "/glade/u/home/manishrv/work/installs/CROCESM_beta04"
+    return cesmroot    
+@pytest.fixture(scope="session")
+def dummy_temp_data():
     # Create dummy data
     time = np.arange(10)  # 10 time steps
     lat = np.linspace(-90, 90, 5)  # 5 latitude points

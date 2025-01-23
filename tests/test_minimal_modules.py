@@ -26,12 +26,13 @@ def test_vgrid_connection():
     from CrocoDash.vgrid import VGrid
     assert VGrid is not None
 
-def test_topo_interpolate_from_file( get_rect_grid_and_topo):
+def test_topo_interpolate_from_file( get_rect_grid_and_empty_topo, get_dummy_bathymetry_data, tmp_path):
 
     # Basically test that the function is able to connect to the RM6 function it wraps, with a simple smoke test, with a check that the depth was filled
-
-    bathymetry_path='/glade/work/altuntas/croc/input/GEBCO_2024_coarse_x4.nc'
-    rect_grid,topo = get_rect_grid_and_topo
+    bathymetry_data = get_dummy_bathymetry_data
+    bathymetry_path = tmp_path / "bathymetry.nc"
+    bathymetry_data.to_netcdf(bathymetry_path)
+    rect_grid,topo = get_rect_grid_and_empty_topo
     topo.interpolate_from_file(
         file_path = bathymetry_path,
         longitude_coordinate_name="lon",
