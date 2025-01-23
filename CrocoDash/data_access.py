@@ -5,10 +5,12 @@ import xarray as xr
 import glob
 import os
 import copernicusmarine
+from .rm6.regional_mom6 import regional_mom6 as rm6
 
 def get_glorys_data_from_rda(dates: list,lat_min, lat_max, lon_min,lon_max) -> xr.Dataset:
     """
     Gather GLORYS Data on Derecho Computers from the campaign storage and return the dataset sliced to the llc and urc coordinates at the specific dates 
+    2005 Only
     """
 
     # Set 
@@ -26,7 +28,7 @@ def get_glorys_data_from_rda(dates: list,lat_min, lat_max, lon_min,lon_max) -> x
 
 def get_glorys_data_from_cds_api(dates: tuple, lat_min, lat_max, lon_min, lon_max) -> xr.Dataset:
     """
-    Using the copernucismarine api, query GLORYS data
+    Using the copernucismarine api, query GLORYS data (any dates)
     """
     ds = copernicusmarine.open_dataset(
         dataset_id = 'cmems_mod_glo_phy_my_0.083deg_P1D-m',
@@ -39,3 +41,14 @@ def get_glorys_data_from_cds_api(dates: tuple, lat_min, lat_max, lon_min, lon_ma
     variables=["uo","vo","thetao","so","zos"],
     )
     return ds
+
+def get_glorys_data_script_for_cli(dates: tuple, lat_min, lat_max, lon_min, lon_max, filename, download_path) -> None:
+    """
+    Script to run the GLORYS data query for the CLI
+    """
+    return rm6.get_glorys_data([lon_min, lon_max],
+    [lat_min,lat_max],
+    [dates[0],dates[-1]],
+    filename,
+    download_path)
+
