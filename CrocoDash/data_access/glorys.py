@@ -1,14 +1,36 @@
 """
-Data Access Module -> Query Data Sources like GLORYS & GEBCO
-import cdsapi
-
+Data Access Module -> Glorys
 """
 
 import xarray as xr
 import glob
 import os
 import copernicusmarine
+from CrocoDash.rm6 import regional_mom6 as rm6
+from pathlib import Path
+from CrocoDash.data_access.utils import fill_template
 
+
+def get_glorys_data_with_pbs(output_template_path,start_date, end_date, lat_min, lat_max, lon_min, lon_max, output_dir, boundary_name, job_name = "glorys",walltime = "12:00:00", ncpus=1,mem=10,queue="main",project="ncgd0011"):
+    # Arguments to substitute into the template
+    params = {
+        "job_name": job_name,
+        "walltime": walltime,
+        "ncpus": ncpus,
+        "mem": mem,
+        "queue": queue,
+
+        "oundary_name": boundary_name,
+        "start_date": start_date,
+        "end_date": end_date,
+        "lon_min": lon_min,
+        "lon_max": lon_min,
+        "lat_min": lat_min,
+        "lat_max": lat_max,
+        "output_dir": output_dir
+    }
+    template_path = Path("templates/template_glorys_pbs.sh")
+    fill_template(template_path, output_template_path, **params)
 
 def get_glorys_data_from_rda(
     dates: list, lat_min, lat_max, lon_min, lon_max
@@ -72,77 +94,13 @@ def get_glorys_data_script_for_cli(
     """
     Script to run the GLORYS data query for the CLI
     """
-    return
-    # return rm6.get_glorys_data(
-    #     [lon_min, lon_max],
-    #     [lat_min, lat_max],
-    #     [dates[0], dates[-1]],
-    #     filename,
-    #     download_path,
-    # )
+    return rm6.get_glorys_data(
+        [lon_min, lon_max],
+        [lat_min, lat_max],
+        [dates[0], dates[-1]],
+        filename,
+        download_path,
+    )
 
 
-def get_global_GloFAS_data(years: list) -> xr.Dataset:
-    """
-    Gather GloFAS Data
-    """
-    dataset = "cems-glofas-historical"
-    request = {
-        "system_version": ["version_4_0"],
-        "hydrological_model": ["lisflood"],
-        "product_type": ["consolidated"],
-        "variable": ["river_discharge_in_the_last_24_hours"],
-        "hyear": years,
-        "hmonth": [
-            "01",
-            "02",
-            "03",
-            "04",
-            "05",
-            "06",
-            "07",
-            "08",
-            "09",
-            "10",
-            "11",
-            "12",
-        ],
-        "hday": [
-            "01",
-            "02",
-            "03",
-            "04",
-            "05",
-            "06",
-            "07",
-            "08",
-            "09",
-            "10",
-            "11",
-            "12",
-            "13",
-            "14",
-            "15",
-            "16",
-            "17",
-            "18",
-            "19",
-            "20",
-            "21",
-            "22",
-            "23",
-            "24",
-            "25",
-            "26",
-            "27",
-            "28",
-            "29",
-            "30",
-            "31",
-        ],
-        "data_format": "grib2",
-        "download_format": "zip",
-    }
 
-    client = cdsapi.Client()
-    client.retrieve(dataset, request).download()
