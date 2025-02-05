@@ -19,13 +19,13 @@ OUTPUT_DIR={output_dir}
 mamba activate {env_name}
 
 python {script_path}   \
-    --state_file_boundary_name $BOUNDARY_NAME \
+    --boundary_name $BOUNDARY_NAME \
     --start_date $START_DATE \
     --end_date $END_DATE \
     --lon_min $LON_MIN \
     --lon_max $LON_MAX \
     --lat_min $LAT_MIN \
     --lat_max $LAT_MAX \
-    --output_dir $OUTPUT_DIR
+    --output_dir $OUTPUT_DIR > {output_dir}/log_{boundary_name}.txt
 
 

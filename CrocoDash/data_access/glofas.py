@@ -1,6 +1,7 @@
 import xarray as xr
 import cdsapi
 
+
 def get_global_GloFAS_data(years: list) -> xr.Dataset:
     """
     Gather GloFAS Data

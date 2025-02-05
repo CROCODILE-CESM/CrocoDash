@@ -11,7 +11,24 @@ from pathlib import Path
 from CrocoDash.data_access.utils import fill_template
 
 
-def get_glorys_data_with_pbs(output_template_path,start_date, end_date, lat_min, lat_max, lon_min, lon_max, output_dir, boundary_name, job_name = "glorys",walltime = "12:00:00", ncpus=1,mem=10,queue="main",project="ncgd0011"):
+def get_glorys_data_with_pbs(
+    output_template_path,
+    start_date,
+    end_date,
+    lat_min,
+    lat_max,
+    lon_min,
+    lon_max,
+    output_dir,
+    boundary_name,
+    job_name="glorys",
+    walltime="12:00:00",
+    ncpus=1,
+    mem=10,
+    queue="main",
+    project="ncgd0011",
+    env_name = "CrocoDash"
+):
     # Arguments to substitute into the template
     params = {
         "job_name": job_name,
@@ -19,18 +36,21 @@ def get_glorys_data_with_pbs(output_template_path,start_date, end_date, lat_min,
         "ncpus": ncpus,
         "mem": mem,
         "queue": queue,
-
-        "oundary_name": boundary_name,
+        "boundary_name": boundary_name,
         "start_date": start_date,
         "end_date": end_date,
         "lon_min": lon_min,
-        "lon_max": lon_min,
+        "lon_max": lon_max,
         "lat_min": lat_min,
         "lat_max": lat_max,
-        "output_dir": output_dir
+        "output_dir": output_dir,
+        "project": project,
+        "env_name": env_name,
+        "script_path": Path(__file__).resolve().parent / Path("glorys_data_api_request.py"),
     }
-    template_path = Path("templates/template_glorys_pbs.sh")
+    template_path = Path(__file__).resolve().parent / Path("templates/template_glory_pbs.sh")
     fill_template(template_path, output_template_path, **params)
+
 
 def get_glorys_data_from_rda(
     dates: list, lat_min, lat_max, lon_min, lon_max
@@ -82,8 +102,8 @@ def get_glorys_data_from_cds_api(
         start_datetime=start_datetime,
         end_datetime=end_datetime,
         variables=variables,
-        output_directory = output_dir,
-        output_filename = output_file
+        output_directory=output_dir,
+        output_filename=output_file,
     )
     return ds
 
@@ -101,6 +121,3 @@ def get_glorys_data_script_for_cli(
         filename,
         download_path,
     )
-
-
-

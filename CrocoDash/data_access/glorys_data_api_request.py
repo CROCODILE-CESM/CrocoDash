@@ -9,7 +9,7 @@ def process_glorys_data(args):
     # Convert dates to datetime objects
     start_date = datetime.strptime(args.start_date, "%Y-%m-%d")
     end_date = datetime.strptime(args.end_date, "%Y-%m-%d")
-    boundary_name = args.state_file_boundary_name
+    boundary_name = args.boundary_name
     lon_min = args.lon_min
     lon_max =args.lon_max
     lat_min = args.lat_min
@@ -43,7 +43,7 @@ def process_glorys_data(args):
     # Loop through each month
     current_date = last_successful_date
     while current_date <= end_date:
-        next_date = current_date + relativedelta(months=1)
+        next_date = current_date + relativedelta(months=12)
         next_date = next_date.replace(day=1)
 
         # Define the parameters for the data download
@@ -57,7 +57,7 @@ def process_glorys_data(args):
             "lat_min": lat_min,
             "lat_max": lat_max,
             "output_dir": output_dir,
-            "output_file": f"east_unprocessed_{current_date.strftime('%Y%m')}.nc",
+            "output_file": f"{boundary_name}_unprocessed_{current_date.strftime('%Y%m')}.nc",
         }
         print("Processing data for", current_date.strftime("%Y-%m-%d"))
         # Execute the data download
