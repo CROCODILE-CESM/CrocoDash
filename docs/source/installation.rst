@@ -1,3 +1,5 @@
+.. _my-reference-label:installation
+
 Installation
 =============
 

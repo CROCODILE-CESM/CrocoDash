@@ -10,6 +10,8 @@ Welcome to the CrocoDash Documentation! CrocoDash is a Python package designed t
 
 You can also check out the Regional MOM6 documentation for more support information about those functions `here <https://regional-mom6.readthedocs.io/en/latest/>`_!
 
+Get started by heading over to :ref:`installation`.! 
+
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
