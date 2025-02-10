@@ -332,7 +332,7 @@ class Case:
 
         self._configure_forcings_called = True
 
-    def process_forcings(self):
+    def process_forcings(self, process_initial_condition = True, process_tides = True, process_velocity_tracers = True):
         """Process the boundary conditions and tides for the MOM6 case."""
 
         if not self._configure_forcings_called:
@@ -343,7 +343,7 @@ class Case:
         glorys_path = self.inputdir / "glorys"
 
         # check all the boundary files are present:
-        if not (glorys_path / "ic_unprocessed.nc").exists():
+        if process_initial_condition and not (glorys_path / "ic_unprocessed.nc").exists():
             raise FileNotFoundError(
                 f"Initial condition file ic_unprocessed.nc not found in {glorys_path}. "
                 "Please make sure to execute get_glorys_data.sh script as described in "
@@ -351,7 +351,7 @@ class Case:
             )
 
         for boundary in self.boundaries:
-            if not (glorys_path / f"{boundary}_unprocessed.nc").exists():
+            if process_velocity_tracers and not (glorys_path / f"{boundary}_unprocessed.nc").exists():
                 raise FileNotFoundError(
                     f"Boundary file {boundary}_unprocessed.nc not found in {glorys_path}. "
                     "Please make sure to execute get_glorys_data.sh script as described in "
@@ -371,21 +371,23 @@ class Case:
         }
 
         # Set up the initial condition
-        self.expt.setup_initial_condition(
-            self.inputdir
-            / "glorys"
-            / "ic_unprocessed.nc",  # directory where the unprocessed initial condition is stored, as defined earlier
-            ocean_varnames,
-            arakawa_grid="A",
-        )
+        if process_initial_condition:
+            self.expt.setup_initial_condition(
+                self.inputdir
+                / "glorys"
+                / "ic_unprocessed.nc",  # directory where the unprocessed initial condition is stored, as defined earlier
+                ocean_varnames,
+                arakawa_grid="A",
+            )
 
         # Set up the four boundary conditions. Remember that in the glorys_path, we have four boundary files names north_unprocessed.nc etc.
-        self.expt.setup_ocean_state_boundaries(
-            self.inputdir / "glorys", ocean_varnames, arakawa_grid="A"
-        )
+        if process_velocity_tracers:
+            self.expt.setup_ocean_state_boundaries(
+                self.inputdir / "glorys", ocean_varnames, arakawa_grid="A"
+            )
 
         # Process the tides
-        if self.tidal_constituents:
+        if process_tides and self.tidal_constituents:
 
             if self.ocn_grid.is_rectangular():
                 boundary_type = "rectangle"
