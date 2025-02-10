@@ -1,7 +1,11 @@
 CrocoDash Structure
 =====================
 
-CrocoDash is designed to be one tool that manages the workflow from input data sources into a regional MOM6 in CESM run. It can be structured into three sections
+CrocoDash is designed to be one tool that manages the workflow from input data sources into a regional MOM6 in CESM run. It can be structured into three sections: 
+
+1. Grid Generation 
+2. CESM Interface / Case Creation
+3. Forcing File Generation
 
 Grid Generation
 ----------------
@@ -9,8 +13,8 @@ CrocoDash wraps the mom6_bathy module for supergrid, vertical grid, and topo gen
 
 Case Creation
 ---------------
-CrocoDash wraps the VCG module for case creation with some light argument passing.
+CrocoDash wraps the VisualCaseGen module for case creation with some light argument passing.
 
-Boundary Condition & Initial Condition Creation
+Forcing File Generation
 ------------------------------------------------
-CrocoDash wraps RM6 to provide Boundary Conditions
+CrocoDash wraps RM6 to provide Initial & Boundary Conditions

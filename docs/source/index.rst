@@ -1,4 +1,4 @@
-.. crocodile_regional_ruckus documentation master file, created by
+.. CrocoDash documentation master file, created by
    sphinx-quickstart on Fri Oct 18 11:22:10 2024.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
