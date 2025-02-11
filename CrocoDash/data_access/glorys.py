@@ -46,7 +46,7 @@ def get_glorys_data_from_cds_api(
     lat_max,
     output_dir = None ,
     output_file = None,
-) -> xr.Dataset:
+):
     """
     Using the copernucismarine api, query GLORYS data (any dates)
     """
@@ -54,7 +54,7 @@ def get_glorys_data_from_cds_api(
     end_datetime = dates[-1]
     variables = ["so", "uo", "vo","zos", "thetao"]
     dataset_id = "cmems_mod_glo_phy_my_0.083deg_P1D-m"
-    ds = copernicusmarine.subset(
+    response = copernicusmarine.subset(
         dataset_id=dataset_id,
         minimum_longitude=lon_min,
         maximum_longitude=lon_max,
@@ -66,7 +66,7 @@ def get_glorys_data_from_cds_api(
         output_directory=output_dir,
         output_filename=output_file,
     )
-    return ds
+    return response
 
 
 def get_glorys_data_script_for_cli(

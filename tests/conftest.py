@@ -3,6 +3,23 @@ import socket
 import os
 from pathlib import Path
 from CrocoDash.rm6 import regional_mom6 as rm6
+import xarray as xr
+import numpy as np
+
+
+def pytest_addoption(parser):
+    parser.addoption(
+        "--runslow", action="store_true", default=False, help="Run slow tests"
+    )
+
+
+def pytest_collection_modifyitems(config, items):
+    if not config.option.runslow:
+        # Skip slow tests if --runslow is not provided
+        skip_slow = pytest.mark.skip(reason="Skipping slow tests by default")
+        for item in items:
+            if "slow" in item.keywords:
+                item.add_marker(skip_slow)
 
 
 # Fixture to provide the temp folder and a parameter name
@@ -27,21 +44,6 @@ def setup_sample_rm6_expt(tmp_path):
     return expt
 
 
-def pytest_addoption(parser):
-    parser.addoption(
-        "--runslow", action="store_true", default=False, help="Run slow tests"
-    )
-
-
-def pytest_collection_modifyitems(config, items):
-    if not config.option.runslow:
-        # Skip slow tests if --runslow is not provided
-        skip_slow = pytest.mark.skip(reason="Skipping slow tests by default")
-        for item in items:
-            if "slow" in item.keywords:
-                item.add_marker(skip_slow)
-
-
 def is_glade_file_system():
     # Get the hostname
     hostname = socket.gethostname()
@@ -57,10 +59,6 @@ def is_glade_file_system():
 def check_glade_exists():
     if not is_glade_file_system():
         pytest.skip(reason="Skipping test: Not running on the Glade file system.")
-
-
-import xarray as xr
-import numpy as np
 
 
 @pytest.fixture(scope="session")
