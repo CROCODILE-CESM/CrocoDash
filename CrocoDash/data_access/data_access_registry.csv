@@ -1,5 +1,4 @@
 Product Name, Access_Type, Function_Name, Description
-GLORYS,PBS,get_glorys_data_with_pbs,Generates PBS script for submission to DERECHO Systems using template pbs script & python glorys requestor
-GLORYS,RDA,get_glorys_data_from_rda,"Gathers GLORYS data from Campaign Storage, only 2005 accessible"
+GLORYS,PYTHON,get_glorys_data_from_cds_api, Python request with copernicusmarine api
+GLORYS,RDA,get_glorys_data_from_rda,"Gathers GLORYS data from RDA on computers with access to glade/rda"
 GLORYS,CLI,get_glorys_data_script_for_cli,Generates bash script for direct CLI run with the copernicusmarine package
-GLOFAS,PYTHON,get_global_GloFAS_data,Call this function with params to directly call the CDSAPI for GLOFAS data.

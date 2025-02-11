@@ -11,47 +11,6 @@ from pathlib import Path
 from CrocoDash.data_access.utils import fill_template
 
 
-def get_glorys_data_with_pbs(
-    output_template_path,
-    start_date,
-    end_date,
-    lat_min,
-    lat_max,
-    lon_min,
-    lon_max,
-    output_dir,
-    boundary_name,
-    job_name="glorys",
-    walltime="12:00:00",
-    ncpus=1,
-    mem=10,
-    queue="main",
-    project="ncgd0011",
-    env_name = "CrocoDash"
-):
-    # Arguments to substitute into the template
-    params = {
-        "job_name": job_name,
-        "walltime": walltime,
-        "ncpus": ncpus,
-        "mem": mem,
-        "queue": queue,
-        "boundary_name": boundary_name,
-        "start_date": start_date,
-        "end_date": end_date,
-        "lon_min": lon_min,
-        "lon_max": lon_max,
-        "lat_min": lat_min,
-        "lat_max": lat_max,
-        "output_dir": output_dir,
-        "project": project,
-        "env_name": env_name,
-        "script_path": Path(__file__).resolve().parent / Path("glorys_data_api_request.py"),
-    }
-    template_path = Path(__file__).resolve().parent / Path("templates/template_glory_pbs.sh")
-    fill_template(template_path, output_template_path, **params)
-
-
 def get_glorys_data_from_rda(
     dates: list, lat_min, lat_max, lon_min, lon_max
 ) -> xr.Dataset:
@@ -62,7 +21,7 @@ def get_glorys_data_from_rda(
 
     # Set
     drop_var_lst = ["mlotst", "bottomT", "sithick", "siconc", "usi", "vsi"]
-    ds_in_path = "/glade/campaign/cgd/oce/projects/CROCODILE/glorys012/GLOBAL/"
+    ds_in_path = "/glade/campaign/collections/rda/data/d010049/2021"
     ds_in_files = []
     date_strings = [date.strftime("%Y%m%d") for date in dates]
     for date in date_strings:
