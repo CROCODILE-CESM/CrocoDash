@@ -70,7 +70,7 @@ def get_glorys_data_from_cds_api(
 
 
 def get_glorys_data_script_for_cli(
-    dates: tuple, lat_min, lat_max, lon_min, lon_max, filename = "glorys.nc", download_path = ""
+    dates: tuple, lat_min, lat_max, lon_min, lon_max, segment_name = "north", download_path = ""
 ) -> None:
     """
     Script to run the GLORYS data query for the CLI
@@ -79,6 +79,7 @@ def get_glorys_data_script_for_cli(
         [lon_min, lon_max],
         [lat_min, lat_max],
         [dates[0], dates[-1]],
-        filename,
+        segment_name,
         download_path,
+        modify_existing=False
     )
