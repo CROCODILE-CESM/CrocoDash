@@ -1,4 +1,4 @@
-Product Name, Access_Type, Function_Name, Description
-GLORYS,PYTHON,get_glorys_data_from_cds_api, Python request with copernicusmarine api
-GLORYS,RDA,get_glorys_data_from_rda,"Gathers GLORYS data from RDA on computers with access to glade/rda"
-GLORYS,CLI,get_glorys_data_script_for_cli,Generates bash script for direct CLI run with the copernicusmarine package
+Product Name, Access_Type,Submodule, Function_Name, Description
+GLORYS,PYTHON,glorys,get_glorys_data_from_cds_api, Python request with copernicusmarine api
+GLORYS,RDA,glorys,get_glorys_data_from_rda,Gathers GLORYS data from RDA on computers with access to glade/rda
+GLORYS,CLI,glorys,get_glorys_data_script_for_cli,Generates bash script for direct CLI run with the copernicusmarine package

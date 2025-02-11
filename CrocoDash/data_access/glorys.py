@@ -16,16 +16,17 @@ def get_glorys_data_from_rda(
 ) -> xr.Dataset:
     """
     Gather GLORYS Data on Derecho Computers from the campaign storage and return the dataset sliced to the llc and urc coordinates at the specific dates
-    2005 Only
     """
 
-    # Set
+    # Set Variables That Can Be Dropped 
     drop_var_lst = ["mlotst", "bottomT", "sithick", "siconc", "usi", "vsi"]
-    ds_in_path = "/glade/campaign/collections/rda/data/d010049/2021"
+
+    # Access RDA Path
+    ds_in_path = "/glade/campaign/collections/rda/data/d010049/"
     ds_in_files = []
     date_strings = [date.strftime("%Y%m%d") for date in dates]
     for date in date_strings:
-        pattern = os.path.join(ds_in_path, "**", f"*{date}*.nc")
+        pattern = os.path.join(ds_in_path, "**", f"*_{date}_*.nc")
         ds_in_files.extend(glob.glob(pattern, recursive=True))
     ds_in_files = sorted(ds_in_files)
     dataset = (
@@ -38,20 +39,21 @@ def get_glorys_data_from_rda(
 
 
 def get_glorys_data_from_cds_api(
-    dataset_id: str,
-    variables: list,
-    start_datetime: tuple,
-    end_datetime,
+    dates,
     lon_min,
     lon_max,
     lat_min,
     lat_max,
-    output_dir,
-    output_file,
+    output_dir = None ,
+    output_file = None,
 ) -> xr.Dataset:
     """
     Using the copernucismarine api, query GLORYS data (any dates)
     """
+    start_datetime = dates[0]
+    end_datetime = dates[-1]
+    variables = ["so", "uo", "vo","zos", "thetao"]
+    dataset_id = "cmems_mod_glo_phy_my_0.083deg_P1D-m"
     ds = copernicusmarine.subset(
         dataset_id=dataset_id,
         minimum_longitude=lon_min,
@@ -68,7 +70,7 @@ def get_glorys_data_from_cds_api(
 
 
 def get_glorys_data_script_for_cli(
-    dates: tuple, lat_min, lat_max, lon_min, lon_max, filename, download_path
+    dates: tuple, lat_min, lat_max, lon_min, lon_max, filename = "glorys.nc", download_path = ""
 ) -> None:
     """
     Script to run the GLORYS data query for the CLI
