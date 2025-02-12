@@ -18,7 +18,7 @@ def get_glorys_data_from_rda(
     Gather GLORYS Data on Derecho Computers from the campaign storage and return the dataset sliced to the llc and urc coordinates at the specific dates
     """
 
-    # Set Variables That Can Be Dropped 
+    # Set Variables That Can Be Dropped
     drop_var_lst = ["mlotst", "bottomT", "sithick", "siconc", "usi", "vsi"]
 
     # Access RDA Path
@@ -44,15 +44,15 @@ def get_glorys_data_from_cds_api(
     lon_max,
     lat_min,
     lat_max,
-    output_dir = None ,
-    output_file = None,
+    output_dir=None,
+    output_file=None,
 ):
     """
     Using the copernucismarine api, query GLORYS data (any dates)
     """
     start_datetime = dates[0]
     end_datetime = dates[-1]
-    variables = ["so", "uo", "vo","zos", "thetao"]
+    variables = ["so", "uo", "vo", "zos", "thetao"]
     dataset_id = "cmems_mod_glo_phy_my_0.083deg_P1D-m"
     response = copernicusmarine.subset(
         dataset_id=dataset_id,
@@ -70,7 +70,13 @@ def get_glorys_data_from_cds_api(
 
 
 def get_glorys_data_script_for_cli(
-    dates: tuple, lat_min, lat_max, lon_min, lon_max, segment_name = "north", download_path = ""
+    dates: tuple,
+    lat_min,
+    lat_max,
+    lon_min,
+    lon_max,
+    segment_name="north",
+    download_path="",
 ) -> None:
     """
     Script to run the GLORYS data query for the CLI
@@ -81,5 +87,5 @@ def get_glorys_data_script_for_cli(
         [dates[0], dates[-1]],
         segment_name,
         download_path,
-        modify_existing=False
+        modify_existing=False,
     )
