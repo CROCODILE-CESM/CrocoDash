@@ -388,18 +388,12 @@ class Case:
 
         # Process the tides
         if process_tides and self.tidal_constituents:
-
-            if self.ocn_grid.is_rectangular():
-                boundary_type = "rectangle"
-            else:
-                boundary_type = "curvilinear"
-
+            
             # Process the tides
             self.expt.setup_boundary_tides(
                 tpxo_elevation_filepath=self.tpxo_elevation_filepath,
                 tpxo_velocity_filepath=self.tpxo_velocity_filepath,
                 tidal_constituents=self.tidal_constituents,
-                boundary_type=boundary_type,
             )
 
         # regional_mom6 places OBC files under inputdir/forcing. Move them to inputdir:
