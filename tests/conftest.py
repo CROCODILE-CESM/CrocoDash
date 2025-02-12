@@ -142,6 +142,7 @@ def pytest_collection_modifyitems(config, items):
     if not config.option.runslow:
         # Skip slow tests if --runslow is not provided
         skip_slow = pytest.mark.skip(reason="Skipping slow tests by default")
+        skip_slow = pytest.mark.skip(reason="Skipping slow tests by default")
         for item in items:
             if "slow" in item.keywords:
                 item.add_marker(skip_slow)
@@ -198,7 +199,6 @@ def dummy_temp_data():
         attrs={"description": "Dummy dataset for temperature"},
     )
     return ds
-
 
 
 @pytest.fixture(scope="session")
