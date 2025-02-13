@@ -6,16 +6,18 @@ from pathlib import Path
 from CrocoDash.case import Case
 import os
 import numpy as np
-from conftest import is_github_actions
 #     os.environ["CESMROOT"] = "/Users/manishrv/Documents/CESM/"
 #    os.environ["CIME_MACHINE"] = "ubuntu-latest"
 
 @pytest.mark.workflow
-@pytest.mark.skipif(not is_github_actions(), reason="Not Github Action, which sets the correct CESM vars")
-def test_full_workflow(tmp_path, dummy_tidal_data):
+def test_full_workflow(tmp_path, is_github_action, dummy_tidal_data):
 
     """Tests if the full CrocoDash workflow runs successfully."""
 
+    if not is_github_action:
+        if os.getenv("CIME_MACHINE") == None and os.getenv("CESMROOT") == None:
+            pytest.skip("The test is only to be run if CIME_MACHINE and CESMROOT env vars are set")
+        
     # 2. Run the full workflow
     result = run_full_workflow(tmp_path, dummy_tidal_data)
     
