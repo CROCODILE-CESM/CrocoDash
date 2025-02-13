@@ -10,11 +10,11 @@ import numpy as np
 #    os.environ["CIME_MACHINE"] = "ubuntu-latest"
 
 @pytest.mark.workflow
-def test_full_workflow(tmp_path, is_github_action, dummy_tidal_data):
+def test_full_workflow(tmp_path, is_github_actions, dummy_tidal_data):
 
     """Tests if the full CrocoDash workflow runs successfully."""
 
-    if not is_github_action:
+    if not is_github_actions:
         if os.getenv("CIME_MACHINE") == None and os.getenv("CESMROOT") == None:
             pytest.skip("The test is only to be run if CIME_MACHINE and CESMROOT env vars are set")
         
