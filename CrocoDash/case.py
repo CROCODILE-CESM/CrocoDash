@@ -387,7 +387,7 @@ class Case:
         if self.tidal_constituents:
 
             if self.ocn_grid.is_rectangular():
-                boundary_type = "rectangle"
+                boundary_type = "rectangular"
             else:
                 boundary_type = "curvilinear"
 
