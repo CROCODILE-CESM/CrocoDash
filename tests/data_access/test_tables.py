@@ -26,3 +26,8 @@ def test_type_of_function():
     assert tb.type_of_function("GLORYS","get_glorys_data_from_rda") == "PYTHON"
     with pytest.raises(ValueError):
         assert tb.type_of_function("GLORYS","get_sdfsdfsdfglorys_data")
+
+def test_category_of_product():
+    assert tb.category_of_product("GLORYS") == "forcing"
+    with pytest.raises(ValueError):
+        assert tb.category_of_product("sdgfsdfsdgsdfgsgsd")

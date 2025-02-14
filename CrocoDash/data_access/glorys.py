@@ -19,7 +19,8 @@ def get_glorys_data_from_rda(
     """
     Gather GLORYS Data on Derecho Computers from the campaign storage and return the dataset sliced to the llc and urc coordinates at the specific dates
     """
-
+    path = Path(output_dir)/output_file
+    logger.info(f"Downloading Glorys data from RDA to {path}")
     # Set Variables That Can Be Dropped
     drop_var_lst = ["mlotst", "bottomT", "sithick", "siconc", "usi", "vsi"]
     dates = pd.date_range(start=dates[0], end=dates[1]).to_pydatetime().tolist()
@@ -36,17 +37,17 @@ def get_glorys_data_from_rda(
         .drop_vars(drop_var_lst)
         .sel(latitude=slice(lat_min, lat_max), longitude=slice(lon_min, lon_max))
     )
-    path = Path(output_dir)/output_file
+    
     dataset.to_netcdf(path)
     return path
 
 
 def get_glorys_data_from_cds_api(
     dates,
-    lon_min,
-    lon_max,
     lat_min,
     lat_max,
+    lon_min,
+    lon_max,
     output_dir=None,
     output_file=None,
 ):
@@ -91,7 +92,7 @@ def get_glorys_data_script_for_cli(
         [lon_min, lon_max],
         [lat_min, lat_max],
         [dates[0], dates[-1]],
-        output_file,
+        os.path.splitext(output_file)[0],
         output_dir,
         modify_existing=modify_existing,
     )

@@ -57,3 +57,13 @@ def type_of_function(product_name, function_name):
         
     else:
         raise ValueError("Invalid product & function name combination")
+    
+def category_of_product(product_name):
+    """ Returns the type of function, python or script, the function is"""
+    products_df,_ = load_tables()
+    if product_exists(product_name):
+        return products_df[
+        (products_df["Product_Name"] == product_name)]["Data_Category"].values[0]
+        
+    else:
+        raise ValueError("Invalid product name combination")

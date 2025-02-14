@@ -1,4 +1,5 @@
 import logging 
+import sys
 
 def fill_template(template_path, output_path, **kwargs):
     """

@@ -8,7 +8,7 @@ from CrocoDash.grid import Grid
 from CrocoDash.topo import Topo
 from CrocoDash.vgrid import VGrid
 from CrocoDash.data_access import driver as dv
-
+from CrocoDash.data_access import tables as tb
 from ProConPy.config_var import ConfigVar, cvars
 from ProConPy.stage import Stage
 from ProConPy.csp_solver import csp
@@ -263,6 +263,8 @@ class Case:
     ):
         """Configure the boundary conditions and tides for the MOM6 case."""
         self.ProductFunctionRegistry.load_functions()
+        assert tb.category_of_product(product_name) == "forcing", "Data product must be a forcing product"
+        self.ProductFunctionRegistry.validate_function(product_name, function_name)
 
         if not (
             isinstance(date_range, list)
@@ -331,7 +333,7 @@ class Case:
 
         boundary_info = dv.get_rectangular_segment_info(self.ocn_grid)
         for key in boundary_info.keys():
-            self.ProductFunctionRegistry[product_name][function_name](date_range,boundary_info[key]["lat_min"],boundary_info[key]["lat_max"],boundary_info[key]["lon_min"],boundary_info[key]["lon_max"],forcing_dir_path,key+"_unprocessed.nc" )
+            self.ProductFunctionRegistry.functions[product_name][function_name](date_range,boundary_info[key]["lat_min"],boundary_info[key]["lat_max"],boundary_info[key]["lon_min"],boundary_info[key]["lon_max"],forcing_dir_path,key+"_unprocessed.nc" )
         # self.expt.get_glorys(
         # raw_boundaries_path=forcing_dir_path,
         # )

@@ -21,6 +21,8 @@ CrocoDash has a data_access module for accessing various datasets. Please see be
    :header-rows: 1
 
 
+Specific datasets can be chosen by adding arguments to the case.configure_forcings function. Please see the demo: demo_search_data_products.ipynb
+
 Public (Raw) Data Access
 #########################
 

@@ -17,48 +17,7 @@ from CrocoDash.grid import Grid
 logger = setup_logger(__name__)
 
 
-def get_rectangular_segment_info(hgrid: xr.Dataset | Grid):
-    """
-    This function finds the required segment queries from the hgrid and calls the functions
-    """
-    temp_dir = None
-    if (type(hgrid) == Grid):
-        temp_dir = tempfile.mkdtemp()
-        hgrid.write_supergrid(path = Path(temp_dir)/"temp.nc")
-        hgrid = xr.open_dataset(Path(temp_dir)/"temp.nc")
 
-    east_result = {
-        "lon_min":float(hgrid.x.isel(nxp=-1).min()),
-        "lon_max":   float(hgrid.x.isel(nxp=-1).max()),
-        "lat_min":float(hgrid.y.isel(nxp=-1).min()),
-        "lat_max":float(hgrid.y.isel(nxp=-1).max()),
-    }
-    west_result = {
-        "lon_min":float(hgrid.x.isel(nxp=0).min()),
-        "lon_max":   float(hgrid.x.isel(nxp=0).max()),
-        "lat_min":float(hgrid.y.isel(nxp=0).min()),
-        "lat_max":float(hgrid.y.isel(nxp=0).max()),
-    }
-    south_result = {
-        "lon_min":float(hgrid.x.isel(nyp=0).min()),
-        "lon_max":   float(hgrid.x.isel(nyp=0).max()),
-        "lat_min":float(hgrid.y.isel(nyp=0).min()),
-        "lat_max":float(hgrid.y.isel(nyp=0).max()),
-    }
-    north_result = {
-        "lon_min":float(hgrid.x.isel(nyp=-1).min()),
-        "lon_max":   float(hgrid.x.isel(nyp=-1).max()),
-        "lat_min":float(hgrid.y.isel(nyp=-1).min()),
-        "lat_max":float(hgrid.y.isel(nyp=-1).max()),
-    }
-    if temp_dir is not None:
-        shutil.rmtree(temp_dir)
-    return {
-        "east":east_result,
-        "west":west_result,
-        "north":north_result,
-        "south":south_result
-    }
 
 class ProductFunctionRegistry:
     """Singleton Class Dynamically loads product functions, validates them, and allows easy execution."""
@@ -74,7 +33,7 @@ class ProductFunctionRegistry:
     def load_functions(self):
         """Reads the registry tables, dynamically imports functions, and verifies them."""
         if self._loaded_functions:
-            logger.error("Functions have already been loaded. To reload, set self._loaded_functions to False")
+            logger.info("Functions have already been loaded. To reload, set self._loaded_functions to False")
             return
         for _, row in self.functions_df.iterrows():
             product, submodule, func_name = row.Product_Name.upper(), row.Submodule, row.Function_Name
@@ -148,3 +107,46 @@ class ProductFunctionRegistry:
         if missing_categories:
             return False, missing_categories
         return True, []         
+
+def get_rectangular_segment_info(hgrid: xr.Dataset | Grid):
+    """
+    This function finds the required segment queries from the hgrid and calls the functions
+    """
+    temp_dir = None
+    if (type(hgrid) == Grid):
+        temp_dir = tempfile.mkdtemp()
+        hgrid.write_supergrid(path = Path(temp_dir)/"temp.nc")
+        hgrid = xr.open_dataset(Path(temp_dir)/"temp.nc")
+
+    east_result = {
+        "lon_min":float(hgrid.x.isel(nxp=-1).min()),
+        "lon_max":   float(hgrid.x.isel(nxp=-1).max()),
+        "lat_min":float(hgrid.y.isel(nxp=-1).min()),
+        "lat_max":float(hgrid.y.isel(nxp=-1).max()),
+    }
+    west_result = {
+        "lon_min":float(hgrid.x.isel(nxp=0).min()),
+        "lon_max":   float(hgrid.x.isel(nxp=0).max()),
+        "lat_min":float(hgrid.y.isel(nxp=0).min()),
+        "lat_max":float(hgrid.y.isel(nxp=0).max()),
+    }
+    south_result = {
+        "lon_min":float(hgrid.x.isel(nyp=0).min()),
+        "lon_max":   float(hgrid.x.isel(nyp=0).max()),
+        "lat_min":float(hgrid.y.isel(nyp=0).min()),
+        "lat_max":float(hgrid.y.isel(nyp=0).max()),
+    }
+    north_result = {
+        "lon_min":float(hgrid.x.isel(nyp=-1).min()),
+        "lon_max":   float(hgrid.x.isel(nyp=-1).max()),
+        "lat_min":float(hgrid.y.isel(nyp=-1).min()),
+        "lat_max":float(hgrid.y.isel(nyp=-1).max()),
+    }
+    if temp_dir is not None:
+        shutil.rmtree(temp_dir)
+    return {
+        "east":east_result,
+        "west":west_result,
+        "north":north_result,
+        "south":south_result
+    }
