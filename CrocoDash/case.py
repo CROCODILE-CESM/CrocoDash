@@ -112,7 +112,7 @@ class Case:
         self._configure_forcings_called = False
 
         # Construct the compset long name
-        self.compset = f"{inittime}_DATM%{datm_mode}_SLND_SICE_MOM6_DROF%GLOFAS_SGLC_SWAV_SESP"
+        self.compset = f"{inittime}_DATM%{datm_mode}_SLND_SICE_MOM6_SROF_SGLC_SWAV_SESP"
         # Resolution name:
         self.resolution = f"{datm_grid_name}_{ocn_grid.name}"
 
