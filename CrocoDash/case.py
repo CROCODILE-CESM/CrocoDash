@@ -7,6 +7,7 @@ import regional_mom6 as rmom6
 from CrocoDash.grid import Grid
 from CrocoDash.topo import Topo
 from CrocoDash.vgrid import VGrid
+from CrocoDash.data_access import driver as dv
 
 from ProConPy.config_var import ConfigVar, cvars
 from ProConPy.stage import Stage
@@ -106,6 +107,7 @@ class Case:
         self.ocn_vgrid = ocn_vgrid
         self.ninst = ninst
         self.override = override
+        self.ProductFunctionRegistry = dv.ProductFunctionRegistry()
 
         self._configure_forcings_called = False
 
@@ -256,8 +258,11 @@ class Case:
         tidal_constituents: list[str] | None = None,
         tpxo_elevation_filepath: str | Path | None = None,
         tpxo_velocity_filepath: str | Path | None = None,
+        product_name: str = "GLORYS",
+        function_name: str = "get_glorys_data_script_for_cli"
     ):
         """Configure the boundary conditions and tides for the MOM6 case."""
+        self.ProductFunctionRegistry.load_functions()
 
         if not (
             isinstance(date_range, list)
@@ -317,16 +322,19 @@ class Case:
             boundaries=self.boundaries,
         )
 
-        # Create the glorys directory
+        # Create the forcing directory
         if self.override is True:
-            glorys_path = self.inputdir / "glorys"
-            if glorys_path.exists():
-                shutil.rmtree(glorys_path)
-        glorys_path.mkdir(exist_ok=False)
+            forcing_dir_path = self.inputdir / "glorys"
+            if forcing_dir_path.exists():
+                shutil.rmtree(forcing_dir_path)
+        forcing_dir_path.mkdir(exist_ok=False)
 
-        self.expt.get_glorys(
-        raw_boundaries_path=self.inputdir / "glorys",
-    )
+        boundary_info = dv.get_rectangular_segment_info(self.ocn_grid)
+        for key in boundary_info.keys():
+            self.ProductFunctionRegistry[product_name][function_name](date_range,boundary_info[key]["lat_min"],boundary_info[key]["lat_max"],boundary_info[key]["lon_min"],boundary_info[key]["lon_max"],forcing_dir_path,key+"_unprocessed.nc" )
+        # self.expt.get_glorys(
+        # raw_boundaries_path=forcing_dir_path,
+        # )
 
 
         self._configure_forcings_called = True

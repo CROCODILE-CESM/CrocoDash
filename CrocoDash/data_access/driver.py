@@ -3,15 +3,30 @@ Functions to query the data access tables and validate data, as well as request 
 """
 
 from enum import Enum
-from .tables import list_products
+from . import tables as tb
+from typing import Callable, Dict
+import importlib
+import inspect
+import os
+import shutil
+from pathlib import Path
+import tempfile
+from .utils import setup_logger
+import xarray as xr
+from CrocoDash.grid import Grid
+logger = setup_logger(__name__)
 
 
-DataProductsEnum = Enum("DataProducts",list_products())
-
-def get_rectangular_segment_info(hgrid):
+def get_rectangular_segment_info(hgrid: xr.Dataset | Grid):
     """
     This function finds the required segment queries from the hgrid and calls the functions
     """
+    temp_dir = None
+    if (type(hgrid) == Grid):
+        temp_dir = tempfile.mkdtemp()
+        hgrid.write_supergrid(path = Path(temp_dir)/"temp.nc")
+        hgrid = xr.open_dataset(Path(temp_dir)/"temp.nc")
+
     east_result = {
         "lon_min":float(hgrid.x.isel(nxp=-1).min()),
         "lon_max":   float(hgrid.x.isel(nxp=-1).max()),
@@ -36,30 +51,100 @@ def get_rectangular_segment_info(hgrid):
         "lat_min":float(hgrid.y.isel(nyp=-1).min()),
         "lat_max":float(hgrid.y.isel(nyp=-1).max()),
     }
+    if temp_dir is not None:
+        shutil.rmtree(temp_dir)
     return {
-        "east_result":east_result,
-        "west_result":west_result,
-        "north_result":north_result,
-        "south_result":south_result
+        "east":east_result,
+        "west":west_result,
+        "north":north_result,
+        "south":south_result
     }
 
-def get_rectangular_boundary_conditions(dates, hgrid, data_access_function, other_function_params = {}):
-    """
-    This function finds the required segment queries from the hgrid and calls the functions
-    """
-    results = {}
-    results_info = get_rectangular_segment_info(hgrid)
-    for key in results_info.keys():
-        results[key] = data_access_function(
-        dates = dates,
-        lon_min = results_info["lon_min"],
-        lon_max =    results_info["lon_max"],
-        lat_min = results_info["lat_min"],
-        lat_max = results_info["lat_max"],
-        **other_function_params
-    )
+class ProductFunctionRegistry:
+    """Singleton Class Dynamically loads product functions, validates them, and allows easy execution."""
+    def __new__(cls):
+        if not hasattr(cls, 'instance'):
+            cls.instance = super(ProductFunctionRegistry, cls).__new__(cls)
+        return cls.instance
+    def __init__(self):
+        self.functions: Dict[str, Dict[str, Callable]] = {}  # {product: {function_name: function}}
+        self._loaded_functions = False
+        self.products_df, self.functions_df = tb.load_tables()
+    
+    def load_functions(self):
+        """Reads the registry tables, dynamically imports functions, and verifies them."""
+        if self._loaded_functions:
+            logger.error("Functions have already been loaded. To reload, set self._loaded_functions to False")
+            return
+        for _, row in self.functions_df.iterrows():
+            product, submodule, func_name = row.Product_Name.upper(), row.Submodule, row.Function_Name
+            try:
+                module = importlib.import_module("."+submodule, package = "CrocoDash.data_access")
+                func = getattr(module, func_name)
+                
+                # Store function reference
+                if product not in self.functions:
+                    self.functions[product] = {}
+                self.functions[product][func_name] = func
 
-    return results
+            except (ModuleNotFoundError, AttributeError) as e:
+                logger.debug(f"Skipping {product}.{func_name}: {e}") 
+        self._loaded_functions = True
 
+    def list_importable_functions(self, product: str):
+        """Lists available functions for a given product."""
+        product = product.upper()
+        if product in self.functions:
+            logger.info(f"\nAvailable functions for {product}:")
+            for func_name in self.functions[product]:
+                logger.info(f"  - {func_name}")
+        else:
+            logger.info(f"No functions found for {product}.")  
 
+    def validate_function(self, product: str, func_name: str):
+        """Runs a quick validation of the function (ensures it runs and returns expected output)."""
+        try:
+            func = self.functions[product][func_name]
+        except:
+            logger.error("Function not found for product")
+            return False
+        sig = inspect.signature(func)
+        temp_dir = tempfile.mkdtemp()
+        test_file_name = "test_file.nc"
+        test_args = [["2000-01-01", "2000-01-02"],30,30.1,-70.1,-70, temp_dir,test_file_name]
+        if len(sig.parameters) < len(test_args):
+            logger.error(f"Error: {func_name}: Requires at least {len(test_args)} parameters for dates, corners, and file paths.")
+            return False
+        try:
+            res = func(*test_args)
+        except Exception as e:
+            logger.error(f"Error running function: {e}")
+            return False
+        try:
+            if tb.type_of_function(product, func_name) != "SCRIPT":
+                assert os.path.exists(Path(temp_dir)/test_file_name)
+            else:
+                assert os.path.exists(Path(temp_dir)/os.path.basename(res))
+        except AssertionError:
+            logger.error("Expected return result, file with specified path does not exist")
+            return False
+        shutil.rmtree(temp_dir)
+        return True
+         
+    def verify_data_sufficiency(self,collected_products: list):
+        """
+        Check if collected_products are sufficient to run the regional model.
+        `collected_products` should be a list of products.
+        """
+        required_categories = set(["bathymetry", "forcing"])
 
+        collected_categories = set(
+            self.products_df[self.products_df["Product_Name"].isin(collected_products)][
+                "Data_Category"
+            ]
+        )
+
+        missing_categories = required_categories - collected_categories
+        if missing_categories:
+            return False, missing_categories
+        return True, []         

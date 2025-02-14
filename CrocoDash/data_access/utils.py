@@ -1,3 +1,5 @@
+import logging 
+
 def fill_template(template_path, output_path, **kwargs):
     """
     Reads a template file, fills it with the provided arguments,
@@ -20,3 +22,35 @@ def fill_template(template_path, output_path, **kwargs):
         output_file.write(filled_content)
 
     print(f"Filled PBS script written to: {output_path}")
+
+def setup_logger(name):
+    """
+    This function sets up a logger format for the package. It attaches logger output to stdout (if a handler doesn't already exist) and formats it in a pretty way!
+
+    Parameters
+    ----------
+    name : str
+        The name of the logger.
+
+    Returns
+    -------
+    logging.Logger
+        The logger
+
+    """
+    logger = logging.getLogger(name)
+    logger.setLevel(logging.INFO)
+    if not logger.hasHandlers():
+        # Create a handler to print to stdout (Jupyter captures stdout)
+        handler = logging.StreamHandler(sys.stdout)
+        handler.setLevel(logging.INFO)
+
+        # Create a formatter (optional)
+        formatter = logging.Formatter(
+            "%(asctime)s - %(name)s.%(funcName)s - %(levelname)s - %(message)s"
+        )
+        handler.setFormatter(formatter)
+
+        # Add the handler to the logger
+        logger.addHandler(handler)
+    return logger

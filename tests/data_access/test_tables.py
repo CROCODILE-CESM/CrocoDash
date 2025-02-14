@@ -1,5 +1,5 @@
 from CrocoDash.data_access import tables as tb
-
+import pytest
 
 def test_load_tables():
     products, functions = tb.load_tables()
@@ -22,10 +22,7 @@ def test_function_exists():
     assert tb.function_exists("GLORYS","get_glorys_data_from_rda") == True
     assert tb.function_exists("GLORYS","BLOOP") == False
 
-def test_verify_data_sufficiency():
-    sufficient, missing = tb.verify_data_sufficiency(["GLORYS","GEBCO"])
-    assert sufficient == True
-    sufficient, missing = tb.verify_data_sufficiency(["GLORYS","TPXO"])
-    assert sufficient == False
-    assert len(missing) == 1
-    assert list(missing)[0] == "bathymetry"
+def test_type_of_function():
+    assert tb.type_of_function("GLORYS","get_glorys_data_from_rda") == "PYTHON"
+    with pytest.raises(ValueError):
+        assert tb.type_of_function("GLORYS","get_sdfsdfsdfglorys_data")

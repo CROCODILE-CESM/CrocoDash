@@ -1,4 +1,4 @@
-name: CrocoDashDev # Remember conda environments are not case sensitive
+name: CrocoDash # Remember conda environments are not case sensitive
 
 channels:
   - conda-forge

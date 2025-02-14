@@ -10,9 +10,11 @@ from CrocoDash.rm6 import regional_mom6 as rm6
 from pathlib import Path
 from CrocoDash.data_access.utils import fill_template
 import pandas as pd
+from .utils import setup_logger
+logger = setup_logger(__name__)
 
 def get_glorys_data_from_rda(
-    dates: list, lat_min, lat_max, lon_min, lon_max
+    dates: list, lat_min, lat_max, lon_min, lon_max, output_dir = Path(""), output_file = "raw_glorys.nc"
 ) -> xr.Dataset:
     """
     Gather GLORYS Data on Derecho Computers from the campaign storage and return the dataset sliced to the llc and urc coordinates at the specific dates
@@ -34,8 +36,9 @@ def get_glorys_data_from_rda(
         .drop_vars(drop_var_lst)
         .sel(latitude=slice(lat_min, lat_max), longitude=slice(lon_min, lon_max))
     )
-
-    return dataset
+    path = Path(output_dir)/output_file
+    dataset.to_netcdf(path)
+    return path
 
 
 def get_glorys_data_from_cds_api(
@@ -75,17 +78,22 @@ def get_glorys_data_script_for_cli(
     lat_max,
     lon_min,
     lon_max,
-    segment_name="north",
-    download_path="",
+    output_dir,
+    output_file,
 ) -> None:
     """
     Script to run the GLORYS data query for the CLI
     """
-    return rm6.get_glorys_data(
+    modify_existing = False
+    if os.path.exists(output_dir/Path("get_glorys_data.sh")):
+        modify_existing = True
+    path = rm6.get_glorys_data(
         [lon_min, lon_max],
         [lat_min, lat_max],
         [dates[0], dates[-1]],
-        segment_name,
-        download_path,
-        modify_existing=False,
+        output_file,
+        output_dir,
+        modify_existing=modify_existing,
     )
+    logger.info(f"This data access method retuns a script at path {path} to run to get access data ")
+    return path

@@ -46,22 +46,14 @@ def function_exists(product_name, function_name):
         & (functions_df["Function_Name"] == function_name)
     ).any()
 
-
-def verify_data_sufficiency(collected_products: list):
-    """
-    Check if collected_products are sufficient to run the regional model.
-    `collected_products` should be a list of products.
-    """
-    products_df, _ = load_tables()
-    required_categories = set(["bathymetry", "forcing"])
-
-    collected_categories = set(
-        products_df[products_df["Product_Name"].isin(collected_products)][
-            "Data_Category"
-        ]
-    )
-
-    missing_categories = required_categories - collected_categories
-    if missing_categories:
-        return False, missing_categories
-    return True, []
+def type_of_function(product_name, function_name):
+    """ Returns the type of function, python or script, the function is"""
+    _, functions_df = load_tables()
+    if function_exists(product_name, function_name):
+        return functions_df[
+        (functions_df["Product_Name"] == product_name) & 
+        (functions_df["Function_Name"] == function_name)
+            ]["Access_Type"].values[0]
+        
+    else:
+        raise ValueError("Invalid product & function name combination")
