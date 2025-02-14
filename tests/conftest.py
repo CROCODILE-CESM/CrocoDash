@@ -5,6 +5,7 @@ from pathlib import Path
 from CrocoDash.rm6 import regional_mom6 as rm6
 import xarray as xr
 import numpy as np
+from CrocoDash.grid import Grid
 
 
 def pytest_addoption(parser):
@@ -21,6 +22,18 @@ def pytest_collection_modifyitems(config, items):
             if "slow" in item.keywords:
                 item.add_marker(skip_slow)
 
+# Fixture to provide the temp folder and a parameter name
+@pytest.fixture
+def get_rect_grid():
+    grid = Grid(
+        resolution=0.1,
+        xstart=278.0,
+        lenx=4.0,
+        ystart=7.0,
+        leny=3.0,
+        name="panama1",
+    )
+    return grid
 
 # Fixture to provide the temp folder and a parameter name
 @pytest.fixture

@@ -1,10 +1,5 @@
-"""
-Functions to query the data access tables and validate data 
-"""
-
-import pandas as pd
 from pathlib import Path
-
+from pandas import pd
 
 TABLES_DIR = (
     Path(__file__).parent / "tables"

@@ -13,14 +13,14 @@ def test_get_glorys_data_from_rda(check_glade_exists):
     lon_min = -71
     lon_max = -70
     dataset = gl.get_glorys_data_from_rda(
-        pd.date_range(start=dates[0], end=dates[1]).to_pydatetime().tolist(),
+        dates,
         lat_min,
         lat_max,
         lon_min,
         lon_max,
     )
-    assert dataset.time.values[0] == np.datetime64("2000-01-01T00:00:00.000000000")
-    assert dataset.time.values[-1] == np.datetime64("2000-01-05T00:00:00.000000000")
+    assert dataset.time.values[0] == 438300.0
+    assert dataset.time.values[-1] == 438396.0
     assert dataset.latitude.values[-1] == lat_max
     assert dataset.latitude.values[0] == lat_min
     assert dataset.longitude.values[-1] == lon_max
@@ -34,7 +34,7 @@ def test_get_glorys_data_from_cds_api(tmp_path):
     lat_max = 61
     lon_min = -35
     lon_max = -34
-    gl.get_glorys_data_from_cds_api(
+    res = gl.get_glorys_data_from_cds_api(
         dates,
         lon_min,
         lon_max,
@@ -43,6 +43,7 @@ def test_get_glorys_data_from_cds_api(tmp_path):
         output_dir=tmp_path,
         output_file="temp.nc",
     )
+    breakpoint()
     dataset = xr.open_dataset(tmp_path / "temp.nc")
     assert dataset.time.values[0] == np.datetime64("2000-01-01T00:00:00.000000000")
     assert dataset.time.values[-1] == np.datetime64("2000-01-05T00:00:00.000000000")

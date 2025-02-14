@@ -9,7 +9,7 @@ import copernicusmarine
 from CrocoDash.rm6 import regional_mom6 as rm6
 from pathlib import Path
 from CrocoDash.data_access.utils import fill_template
-
+import pandas as pd
 
 def get_glorys_data_from_rda(
     dates: list, lat_min, lat_max, lon_min, lon_max
@@ -20,7 +20,7 @@ def get_glorys_data_from_rda(
 
     # Set Variables That Can Be Dropped
     drop_var_lst = ["mlotst", "bottomT", "sithick", "siconc", "usi", "vsi"]
-
+    dates = pd.date_range(start=dates[0], end=dates[1]).to_pydatetime().tolist()
     # Access RDA Path
     ds_in_path = "/glade/campaign/collections/rda/data/d010049/"
     ds_in_files = []

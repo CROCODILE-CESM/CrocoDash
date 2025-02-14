@@ -13,7 +13,7 @@ Please see below for available datasets.
 
 
 CrocoDash Data Access Module
-####################
+#############################
 CrocoDash has a data_access module for accessing various datasets. Please see below for a table of available methods.
 
 .. csv-table:: Data Access Registry
@@ -22,12 +22,12 @@ CrocoDash has a data_access module for accessing various datasets. Please see be
 
 
 Public (Raw) Data Access
-####################
+#########################
 
 Users can directly download data from the following public sources.
 
 CESM Input Data Global Grid & Bathymetry
-------------------------
+-------------------------------------------
 
 If users would prefer to subset a global grid, they can find one set of bathymetry and grid at the svn repo under the sub heading 'tx1_12v1'
 

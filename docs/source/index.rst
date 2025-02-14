@@ -18,4 +18,5 @@ You can also check out the Regional MOM6 documentation for more support informat
    api-docs/modules
    data_access
    diagrams
-   docs
+   developers/docs
+   developers/adding_data_access
