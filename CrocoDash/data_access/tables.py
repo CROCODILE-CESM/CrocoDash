@@ -1,5 +1,5 @@
 from pathlib import Path
-from pandas import pd
+import pandas as pd
 
 TABLES_DIR = (
     Path(__file__).parent / "tables"
