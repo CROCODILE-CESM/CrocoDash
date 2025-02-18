@@ -21,7 +21,6 @@ def pytest_collection_modifyitems(config, items):
     if not config.option.runslow:
         # Skip slow tests if --runslow is not provided
         skip_slow = pytest.mark.skip(reason="Skipping slow tests by default")
-        skip_slow = pytest.mark.skip(reason="Skipping slow tests by default")
         for item in items:
             if "slow" in item.keywords:
                 item.add_marker(skip_slow)
@@ -171,9 +170,9 @@ def is_github_actions():
 
 
 @pytest.fixture(scope="session")
-def get_cesm_root_path(is_glade):
+def get_cesm_root_path():
     cesmroot = os.getenv("CESMROOT")
-    if cesmroot is None and is_glade:
+    if cesmroot is None and is_glade_file_system():
         cesmroot = "/glade/u/home/manishrv/work/installs/CROCESM_beta04"
     return cesmroot
 
@@ -324,29 +323,29 @@ def dummy_forcing_factory():
     def _create_dummy_forcing_dataset(lat_min=30, lat_max=35, lon_min=30, lon_max=35):
         latitude = np.linspace(lat_min, lat_max, 114)
         longitude = np.linspace(lon_min, lon_max, 89)
-        depth = np.arange(50)
+        depth = np.arange(50, dtype=np.float64)
         time = np.arange(32)
 
         data = {
             "so": (
                 ("time", "depth", "latitude", "longitude"),
-                np.random.randint(1, 28249, (32, 50, 114, 89)),
+                np.random.rand(32, 50, 114, 89).astype(np.float64),
             ),
             "thetao": (
                 ("time", "depth", "latitude", "longitude"),
-                np.random.randint(-32766, 21306, (32, 50, 114, 89)),
+                np.random.rand(32, 50, 114, 89).astype(np.float64),
             ),
             "uo": (
                 ("time", "depth", "latitude", "longitude"),
-                np.random.randint(-3123, 4314, (32, 50, 114, 89)),
+                np.random.rand(32, 50, 114, 89).astype(np.float64),
             ),
             "vo": (
                 ("time", "depth", "latitude", "longitude"),
-                np.random.randint(-3680, 3639, (32, 50, 114, 89)),
+                np.random.rand(32, 50, 114, 89).astype(np.float64),
             ),
             "zos": (
                 ("time", "latitude", "longitude"),
-                np.random.randint(-6228, 5684, (32, 114, 89)),
+                np.random.rand(32, 114, 89).astype(np.float64),
             ),
         }
 

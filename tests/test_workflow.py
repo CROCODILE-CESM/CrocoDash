@@ -4,9 +4,10 @@ from CrocoDash.topo import Topo
 from CrocoDash.vgrid import VGrid
 from pathlib import Path
 from CrocoDash.case import Case
-from CrocoDash.data_access import driver as dv
 import os
+#from Crocodash.data_access import driver as dv
 import numpy as np
+import xarray as xr
 os.environ["CESMROOT"] = "/glade/u/home/manishrv/work/installs/CROCESM_beta04_clean"
 os.environ["CIME_MACHINE"] = "derecho"
 
@@ -88,18 +89,21 @@ def run_full_workflow(tmp_path, dummy_tidal_data, cesmroot, dummy_forcing_factor
     )
 
     # Create dummy forcings
-    bounds = dv.get_rectangular_segment_info(grid)
-    ic = dummy_forcing_factory(bounds["ic"]["lat_min"],bounds["ic"]["lat_max"],bounds["ic"]["lon_min"],bounds["ic"]["lon_max"])
-    east = dummy_forcing_factory(bounds["east"]["lat_min"],bounds["east"]["lat_max"],bounds["east"]["lon_min"],bounds["east"]["lon_max"])
-    west = dummy_forcing_factory(bounds["west"]["lat_min"],bounds["west"]["lat_max"],bounds["west"]["lon_min"],bounds["west"]["lon_max"])
-    north = dummy_forcing_factory(bounds["north"]["lat_min"],bounds["north"]["lat_max"],bounds["north"]["lon_min"],bounds["north"]["lon_max"])
-    south = dummy_forcing_factory(bounds["south"]["lat_min"],bounds["south"]["lat_max"],bounds["south"]["lon_min"],bounds["south"]["lon_max"])
+    grid.write_supergrid(tmp_path/"temphgrid.nc")
+    hgrid = xr.open_dataset(tmp_path/"temphgrid.nc")
+    ds = dummy_forcing_factory(hgrid.y.min(),hgrid.y.max(),hgrid.x.min(),hgrid.x.max())
+    # bounds = dv.get_rectangular_boundary_info(grid)
+    # ic = dummy_forcing_factory(bounds["ic"]["lat_min"],bounds["ic"]["lat_max"],bounds["ic"]["lon_min"],bounds["ic"]["lon_max"])
+    # east = dummy_forcing_factory(bounds["east"]["lat_min"],bounds["east"]["lat_max"],bounds["east"]["lon_min"],bounds["east"]["lon_max"])
+    # west = dummy_forcing_factory(bounds["west"]["lat_min"],bounds["west"]["lat_max"],bounds["west"]["lon_min"],bounds["west"]["lon_max"])
+    # north = dummy_forcing_factory(bounds["north"]["lat_min"],bounds["north"]["lat_max"],bounds["north"]["lon_min"],bounds["north"]["lon_max"])
+    # south = dummy_forcing_factory(bounds["south"]["lat_min"],bounds["south"]["lat_max"],bounds["south"]["lon_min"],bounds["south"]["lon_max"])
 
-    ic.to_netcdf(case.inputdir / "glorys"/"ic_unprocessed.nc")
-    east.to_netcdf(case.inputdir / "glorys"/"east_unprocessed.nc")
-    west.to_netcdf(case.inputdir / "glorys"/"west_unprocessed.nc")
-    north.to_netcdf(case.inputdir / "glorys"/"north_unprocessed.nc")
-    south.to_netcdf(case.inputdir / "glorys"/"south_unprocessed.nc")
+    ds.to_netcdf(case.inputdir / "glorys"/"ic_unprocessed.nc")
+    ds.to_netcdf(case.inputdir / "glorys"/"east_unprocessed.nc")
+    ds.to_netcdf(case.inputdir / "glorys"/"west_unprocessed.nc")
+    ds.to_netcdf(case.inputdir / "glorys"/"north_unprocessed.nc")
+    ds.to_netcdf(case.inputdir / "glorys"/"south_unprocessed.nc")
     # Process Forcings   
     case.process_forcings()
 
