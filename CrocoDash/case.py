@@ -232,7 +232,7 @@ class Case:
 
     def _create_newcase(self):
         """Create the case instance."""
-        cvars["COMPSET_LNAME"].value = self.compset
+        # cvars["COMPSET_LNAME"].value = self.compset
         # If override is True, clean up the existing caseroot and output directories
         if self.override is True:
             if self.caseroot.exists():
@@ -440,7 +440,7 @@ class Case:
 
         assert Stage.active().title == "1. Component Set"
         cvars["COMPSET_MODE"].value = "Custom"
-        cvars["COMPSET_LNAME"].value = self.compset
+        # cvars["COMPSET_LNAME"].value = self.compset
         
         assert Stage.active().title == "Time Period"
         cvars["INITTIME"].value = inittime
