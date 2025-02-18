@@ -108,7 +108,7 @@ class Case:
         self.ninst = ninst
         self.override = override
         self.ProductFunctionRegistry = dv.ProductFunctionRegistry()
-
+        self.forcing_product_name = None
         self._configure_forcings_called = False
 
         # Construct the compset long name
@@ -264,8 +264,9 @@ class Case:
         """Configure the boundary conditions and tides for the MOM6 case."""
         self.ProductFunctionRegistry.load_functions()
         assert tb.category_of_product(product_name) == "forcing", "Data product must be a forcing product"
-        self.ProductFunctionRegistry.validate_function(product_name, function_name)
-
+        if not self.ProductFunctionRegistry.validate_function(product_name, function_name):
+            raise ValueError("Selected Product or Function was not valid")
+        self.forcing_product_name = product_name
         if not (
             isinstance(date_range, list)
             and all(isinstance(date, str) for date in date_range)
@@ -326,7 +327,7 @@ class Case:
 
         # Create the forcing directory
         if self.override is True:
-            forcing_dir_path = self.inputdir / "glorys"
+            forcing_dir_path = self.inputdir / product_name
             if forcing_dir_path.exists():
                 shutil.rmtree(forcing_dir_path)
         forcing_dir_path.mkdir(exist_ok=False)
@@ -334,9 +335,6 @@ class Case:
         boundary_info = dv.get_rectangular_segment_info(self.ocn_grid)
         for key in boundary_info.keys():
             self.ProductFunctionRegistry.functions[product_name][function_name](date_range,boundary_info[key]["lat_min"],boundary_info[key]["lat_max"],boundary_info[key]["lon_min"],boundary_info[key]["lon_max"],forcing_dir_path,key+"_unprocessed.nc" )
-        # self.expt.get_glorys(
-        # raw_boundaries_path=forcing_dir_path,
-        # )
 
 
         self._configure_forcings_called = True
@@ -349,20 +347,20 @@ class Case:
                 "configure_forcings() must be called before process_forcings()."
             )
 
-        glorys_path = self.inputdir / "glorys"
+        forcing_path = self.inputdir / self.forcing_product_name
 
         # check all the boundary files are present:
-        if not (glorys_path / "ic_unprocessed.nc").exists():
+        if not (forcing_path / "ic_unprocessed.nc").exists():
             raise FileNotFoundError(
-                f"Initial condition file ic_unprocessed.nc not found in {glorys_path}. "
+                f"Initial condition file ic_unprocessed.nc not found in {forcing_path}. "
                 "Please make sure to execute get_glorys_data.sh script as described in "
                 "the message printed by configure_forcings()."
             )
 
         for boundary in self.boundaries:
-            if not (glorys_path / f"{boundary}_unprocessed.nc").exists():
+            if not (forcing_path / f"{boundary}_unprocessed.nc").exists():
                 raise FileNotFoundError(
-                    f"Boundary file {boundary}_unprocessed.nc not found in {glorys_path}. "
+                    f"Boundary file {boundary}_unprocessed.nc not found in {forcing_path}. "
                     "Please make sure to execute get_glorys_data.sh script as described in "
                     "the message printed by configure_forcings()."
                 )
@@ -382,7 +380,7 @@ class Case:
         # Set up the initial condition
         self.expt.setup_initial_condition(
             self.inputdir
-            / "glorys"
+            / self.forcing_product_name
             / "ic_unprocessed.nc",  # directory where the unprocessed initial condition is stored, as defined earlier
             ocean_varnames,
             arakawa_grid="A",
@@ -390,23 +388,17 @@ class Case:
 
         # Set up the four boundary conditions. Remember that in the glorys_path, we have four boundary files names north_unprocessed.nc etc.
         self.expt.setup_ocean_state_boundaries(
-            self.inputdir / "glorys", ocean_varnames, arakawa_grid="A"
+            self.inputdir / self.forcing_product_name, ocean_varnames, arakawa_grid="A"
         )
 
         # Process the tides
         if self.tidal_constituents:
-
-            if self.ocn_grid.is_rectangular():
-                boundary_type = "rectangular"
-            else:
-                boundary_type = "curvilinear"
 
             # Process the tides
             self.expt.setup_boundary_tides(
                 tpxo_elevation_filepath=self.tpxo_elevation_filepath,
                 tpxo_velocity_filepath=self.tpxo_velocity_filepath,
                 tidal_constituents=self.tidal_constituents,
-                boundary_type=boundary_type,
             )
 
         # regional_mom6 places OBC files under inputdir/forcing. Move them to inputdir:
