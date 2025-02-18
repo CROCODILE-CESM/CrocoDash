@@ -20,7 +20,7 @@ dask.config.set(num_workers=4)
 #os.environ["CIME_MACHINE"] = "ubuntu-latest"
 
 @pytest.mark.workflow
-def test_full_workflow(tmp_path, is_github_actions, get_cesm_root_path, dummy_tidal_data, dummy_forcing_factory):
+def test_full_workflow(is_glade,tmp_path, is_github_actions, get_cesm_root_path, dummy_tidal_data, dummy_forcing_factory):
 
     """Tests if the full CrocoDash workflow runs successfully."""
 
