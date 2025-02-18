@@ -321,31 +321,31 @@ def dummy_forcing_factory():
     """Factory fixture to create dummy forcing NetCDF datasets with configurable latitudes."""
 
     def _create_dummy_forcing_dataset(lat_min=30, lat_max=35, lon_min=30, lon_max=35):
-        latitude = np.linspace(lat_min, lat_max, 114)
-        longitude = np.linspace(lon_min, lon_max, 89)
-        depth = np.arange(50, dtype=np.float64)
+        latitude = np.linspace(lat_min, lat_max, 20)
+        longitude = np.linspace(lon_min, lon_max, 20)
+        depth =np.array([0,1000,2000,3000,4000,5000,6000,7000,8000,9000],dtype=np.float64)
         time = np.arange(32)
 
         data = {
             "so": (
                 ("time", "depth", "latitude", "longitude"),
-                np.random.rand(32, 50, 114, 89).astype(np.float64),
+                np.random.rand(32, 10, 20, 20).astype(np.float64),
             ),
             "thetao": (
                 ("time", "depth", "latitude", "longitude"),
-                np.random.rand(32, 50, 114, 89).astype(np.float64),
+                np.random.rand(32, 10, 20, 20).astype(np.float64),
             ),
             "uo": (
                 ("time", "depth", "latitude", "longitude"),
-                np.random.rand(32, 50, 114, 89).astype(np.float64),
+                np.random.rand(32, 10, 20, 20).astype(np.float64),
             ),
             "vo": (
                 ("time", "depth", "latitude", "longitude"),
-                np.random.rand(32, 50, 114, 89).astype(np.float64),
+                np.random.rand(32, 10, 20, 20).astype(np.float64),
             ),
             "zos": (
                 ("time", "latitude", "longitude"),
-                np.random.rand(32, 114, 89).astype(np.float64),
+                np.random.rand(32, 20, 20).astype(np.float64),
             ),
         }
 
