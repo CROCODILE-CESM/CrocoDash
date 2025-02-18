@@ -118,11 +118,9 @@ def run_full_workflow(tmp_path, cesmroot,dummy_tidal_data, dummy_forcing_factory
     logger.info("Building Case")
     command = "./case.build"
     result = subprocess.run(command, shell=True, cwd=case.caseroot, text=True)
-    logs += "Output:" + result.stdout + "Error: " + result.stderr
     logger.info("Submitting Case")
     command = "./case.submit"
     result = subprocess.run(command, shell=True, cwd=case.caseroot, text=True)
-    logs += "Output:" + result.stdout + "Error: " + result.stderr
     return {
         "success": True,
         "logs":logs
