@@ -80,7 +80,7 @@ class ProductFunctionRegistry:
             logger.error(f"Error running function: {e}")
             return False
         try:
-            if tb.category_of_product == "forcing":
+            if tb.category_of_product(product) == "forcing":
                 if tb.type_of_function(product, func_name) != "SCRIPT":
                     assert os.path.exists(Path(temp_dir)/test_file_name)
                 else:
