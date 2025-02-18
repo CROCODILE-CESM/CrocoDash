@@ -65,7 +65,7 @@ class ProductFunctionRegistry:
         try:
             func = self.functions[product][func_name]
         except:
-            logger.error("Function not found for product")
+            logger.error(f"Function {func_name} not found for product {product}")
             return False
         sig = inspect.signature(func)
         temp_dir = tempfile.mkdtemp()
@@ -80,12 +80,16 @@ class ProductFunctionRegistry:
             logger.error(f"Error running function: {e}")
             return False
         try:
-            if tb.type_of_function(product, func_name) != "SCRIPT":
-                assert os.path.exists(Path(temp_dir)/test_file_name)
+            if tb.category_of_product == "forcing":
+                if tb.type_of_function(product, func_name) != "SCRIPT":
+                    assert os.path.exists(Path(temp_dir)/test_file_name)
+                else:
+                    assert os.path.exists(Path(temp_dir)/os.path.basename(res))
             else:
-                assert os.path.exists(Path(temp_dir)/os.path.basename(res))
+                logger.error("Category of product is not supported by the validation function")
+                return False
         except AssertionError:
-            logger.error("Expected return result, file with specified path does not exist")
+            logger.error("Checked return result failed!")
             return False
         shutil.rmtree(temp_dir)
         return True
@@ -117,7 +121,12 @@ def get_rectangular_segment_info(hgrid: xr.Dataset | Grid):
         temp_dir = tempfile.mkdtemp()
         hgrid.write_supergrid(path = Path(temp_dir)/"temp.nc")
         hgrid = xr.open_dataset(Path(temp_dir)/"temp.nc")
-
+    init_result = {
+        "lon_min":float(hgrid.x.min()),
+        "lon_max":   float(hgrid.x.max()),
+        "lat_min":float(hgrid.y.min()),
+        "lat_max":float(hgrid.y.max()),
+    }
     east_result = {
         "lon_min":float(hgrid.x.isel(nxp=-1).min()),
         "lon_max":   float(hgrid.x.isel(nxp=-1).max()),
@@ -148,5 +157,6 @@ def get_rectangular_segment_info(hgrid: xr.Dataset | Grid):
         "east":east_result,
         "west":west_result,
         "north":north_result,
-        "south":south_result
+        "south":south_result,
+        "ic": init_result,
     }

@@ -266,7 +266,7 @@ class Case:
         assert tb.category_of_product(product_name) == "forcing", "Data product must be a forcing product"
         if not self.ProductFunctionRegistry.validate_function(product_name, function_name):
             raise ValueError("Selected Product or Function was not valid")
-        self.forcing_product_name = product_name
+        self.forcing_product_name = product_name.lower()
         if not (
             isinstance(date_range, list)
             and all(isinstance(date, str) for date in date_range)
@@ -327,14 +327,17 @@ class Case:
 
         # Create the forcing directory
         if self.override is True:
-            forcing_dir_path = self.inputdir / product_name
+            forcing_dir_path = self.inputdir / self.forcing_product_name
             if forcing_dir_path.exists():
                 shutil.rmtree(forcing_dir_path)
         forcing_dir_path.mkdir(exist_ok=False)
 
         boundary_info = dv.get_rectangular_segment_info(self.ocn_grid)
         for key in boundary_info.keys():
-            self.ProductFunctionRegistry.functions[product_name][function_name](date_range,boundary_info[key]["lat_min"],boundary_info[key]["lat_max"],boundary_info[key]["lon_min"],boundary_info[key]["lon_max"],forcing_dir_path,key+"_unprocessed.nc" )
+            if key in self.boundaries:
+                self.ProductFunctionRegistry.functions[product_name][function_name](date_range,boundary_info[key]["lat_min"],boundary_info[key]["lat_max"],boundary_info[key]["lon_min"],boundary_info[key]["lon_max"],forcing_dir_path,key+"_unprocessed.nc" )
+            elif key == "ic":
+                self.ProductFunctionRegistry.functions[product_name][function_name]([date_range[0],date_range[0]],boundary_info[key]["lat_min"],boundary_info[key]["lat_max"],boundary_info[key]["lon_min"],boundary_info[key]["lon_max"],forcing_dir_path,key+"_unprocessed.nc" )
 
 
         self._configure_forcings_called = True
