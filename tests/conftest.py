@@ -17,6 +17,16 @@ def pytest_addoption(parser):
     )
 
 
+def pytest_collection_modifyitems(config, items):
+    if not config.option.runslow:
+        # Skip slow tests if --runslow is not provided
+        skip_slow = pytest.mark.skip(reason="Skipping slow tests by default")
+        skip_slow = pytest.mark.skip(reason="Skipping slow tests by default")
+        for item in items:
+            if "slow" in item.keywords:
+                item.add_marker(skip_slow)
+
+
 # Fixture to provide the temp folder and a parameter name
 @pytest.fixture
 def get_rect_grid():
@@ -136,16 +146,6 @@ def get_CrocoDash_case(tmp_path, gen_grid_topo_vgrid, is_github_actions, is_glad
         ninst=ninst,
     )
     return case
-
-
-def pytest_collection_modifyitems(config, items):
-    if not config.option.runslow:
-        # Skip slow tests if --runslow is not provided
-        skip_slow = pytest.mark.skip(reason="Skipping slow tests by default")
-        skip_slow = pytest.mark.skip(reason="Skipping slow tests by default")
-        for item in items:
-            if "slow" in item.keywords:
-                item.add_marker(skip_slow)
 
 
 def is_glade_file_system():
@@ -315,3 +315,50 @@ def dummy_tidal_data():
     )
 
     return ds_h, ds_u
+
+
+@pytest.fixture
+def dummy_forcing_factory():
+    """Factory fixture to create dummy forcing NetCDF datasets with configurable latitudes."""
+
+    def _create_dummy_forcing_dataset(lat_min=30, lat_max=35, lon_min=30, lon_max=35):
+        latitude = np.linspace(lat_min, lat_max, 114)
+        longitude = np.linspace(lon_min, lon_max, 89)
+        depth = np.arange(50)
+        time = np.arange(32)
+
+        data = {
+            "so": (
+                ("time", "depth", "latitude", "longitude"),
+                np.random.randint(1, 28249, (32, 50, 114, 89)),
+            ),
+            "thetao": (
+                ("time", "depth", "latitude", "longitude"),
+                np.random.randint(-32766, 21306, (32, 50, 114, 89)),
+            ),
+            "uo": (
+                ("time", "depth", "latitude", "longitude"),
+                np.random.randint(-3123, 4314, (32, 50, 114, 89)),
+            ),
+            "vo": (
+                ("time", "depth", "latitude", "longitude"),
+                np.random.randint(-3680, 3639, (32, 50, 114, 89)),
+            ),
+            "zos": (
+                ("time", "latitude", "longitude"),
+                np.random.randint(-6228, 5684, (32, 114, 89)),
+            ),
+        }
+
+        ds = xr.Dataset(
+            data,
+            coords={
+                "depth": depth,
+                "latitude": latitude,
+                "longitude": longitude,
+                "time": time,
+            },
+        )
+        return ds
+
+    return _create_dummy_forcing_dataset

@@ -4,13 +4,14 @@ from CrocoDash.topo import Topo
 from CrocoDash.vgrid import VGrid
 from pathlib import Path
 from CrocoDash.case import Case
+from CrocoDash.data_access import driver as dv
 import os
 import numpy as np
-#     os.environ["CESMROOT"] = "/Users/manishrv/Documents/CESM/"
-#    os.environ["CIME_MACHINE"] = "ubuntu-latest"
+os.environ["CESMROOT"] = "/glade/u/home/manishrv/work/installs/CROCESM_beta04_clean"
+os.environ["CIME_MACHINE"] = "derecho"
 
 @pytest.mark.workflow
-def test_full_workflow(tmp_path, is_github_actions, dummy_tidal_data):
+def test_full_workflow(tmp_path, is_github_actions, dummy_tidal_data, get_cesm_root_path, dummy_forcing_factory):
 
     """Tests if the full CrocoDash workflow runs successfully."""
 
@@ -19,12 +20,13 @@ def test_full_workflow(tmp_path, is_github_actions, dummy_tidal_data):
             pytest.skip("The test is only to be run if CIME_MACHINE and CESMROOT env vars are set")
         
     # 2. Run the full workflow
-    result = run_full_workflow(tmp_path, dummy_tidal_data)
+    cesmroot = get_cesm_root_path
+    result = run_full_workflow(tmp_path, dummy_tidal_data,cesmroot,dummy_forcing_factory)
     
     # 3. Verify workflow completion
     assert result["success"], f"Workflow failed: {result["logs"]}"
     
-def run_full_workflow(tmp_path, dummy_tidal_data):
+def run_full_workflow(tmp_path, dummy_tidal_data, cesmroot, dummy_forcing_factory):
     """Run the entire CrocoDash workflow (lightly)"""
 
     logs = ""
@@ -63,9 +65,6 @@ def run_full_workflow(tmp_path, dummy_tidal_data):
     
     # CESM case setup
     casename = "panama-1"
-
-
-    cesmroot = os.getenv("CESMROOT")
     inputdir = tmp_path / "croc_input" / casename
     caseroot = tmp_path / "croc_cases" / casename
 
@@ -78,7 +77,6 @@ def run_full_workflow(tmp_path, dummy_tidal_data):
     ocn_topo = topo,
     project = 'NCGD0011',
     override = True,
-    machine = "ubuntu-latest"
 )
 
     # Forcing setup
@@ -88,9 +86,29 @@ def run_full_workflow(tmp_path, dummy_tidal_data):
     tpxo_elevation_filepath = tmp_path/"h.nc",
     tpxo_velocity_filepath = tmp_path/"u.nc"
     )
-    case.process_forcings(process_initial_condition = False, process_velocity_tracers=False)
+
+    # Create dummy forcings
+    bounds = dv.get_rectangular_segment_info(grid)
+    ic = dummy_forcing_factory(bounds["ic"]["lat_min"],bounds["ic"]["lat_max"],bounds["ic"]["lon_min"],bounds["ic"]["lon_max"])
+    east = dummy_forcing_factory(bounds["east"]["lat_min"],bounds["east"]["lat_max"],bounds["east"]["lon_min"],bounds["east"]["lon_max"])
+    west = dummy_forcing_factory(bounds["west"]["lat_min"],bounds["west"]["lat_max"],bounds["west"]["lon_min"],bounds["west"]["lon_max"])
+    north = dummy_forcing_factory(bounds["north"]["lat_min"],bounds["north"]["lat_max"],bounds["north"]["lon_min"],bounds["north"]["lon_max"])
+    south = dummy_forcing_factory(bounds["south"]["lat_min"],bounds["south"]["lat_max"],bounds["south"]["lon_min"],bounds["south"]["lon_max"])
+
+    ic.to_netcdf(case.inputdir / "glorys"/"ic_unprocessed.nc")
+    east.to_netcdf(case.inputdir / "glorys"/"east_unprocessed.nc")
+    west.to_netcdf(case.inputdir / "glorys"/"west_unprocessed.nc")
+    north.to_netcdf(case.inputdir / "glorys"/"north_unprocessed.nc")
+    south.to_netcdf(case.inputdir / "glorys"/"south_unprocessed.nc")
+    # Process Forcings   
+    case.process_forcings()
 
     return {
         "success": True,
         "logs":logs
     }
+
+def test_dummy_forcing_data_fixture(dummy_forcing_factory,tmp_path):
+    ic = dummy_forcing_factory()
+    ic.to_netcdf(tmp_path/"ic_unprocessed.nc")
+    assert os.path.exists(tmp_path/"ic_unprocessed.nc")
