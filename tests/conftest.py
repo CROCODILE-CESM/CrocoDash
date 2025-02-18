@@ -105,7 +105,7 @@ def setup_sample_rm6_expt(tmp_path):
 
 
 @pytest.fixture
-def get_CrocoDash_case(tmp_path, gen_grid_topo_vgrid, is_github_actions, is_glade):
+def get_CrocoDash_case(tmp_path, gen_grid_topo_vgrid, is_github_actions):
     # Set Grid Info
     grid, topo, vgrid = gen_grid_topo_vgrid
 
@@ -123,7 +123,7 @@ def get_CrocoDash_case(tmp_path, gen_grid_topo_vgrid, is_github_actions, is_glad
     ninst = 2
     if is_github_actions:
         machine = "ubuntu-latest"
-    elif is_glade:
+    elif is_glade_file_system():
         machine = "derecho"
     else:
         machine = None

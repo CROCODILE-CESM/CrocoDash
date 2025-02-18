@@ -16,8 +16,8 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 dask.config.set(num_workers=4)
 
-# os.environ["CESMROOT"] = "/glade/u/home/manishrv/work/installs/CROCESM_beta04_clean"
-# os.environ["CIME_MACHINE"] = "derecho"
+#os.environ["CESMROOT"] = "/glade/u/home/manishrv/work/installs/CROCESM_beta04_clean"
+#os.environ["CIME_MACHINE"] = "ubuntu-latest"
 
 @pytest.mark.workflow
 def test_full_workflow(tmp_path, is_github_actions, get_cesm_root_path, dummy_tidal_data, dummy_forcing_factory):

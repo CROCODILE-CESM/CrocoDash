@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 import regional_mom6 as rmom6
 import datetime as dt
-
+from conftest import is_glade_file_system
 
 def file_with_prefix_exists(directory, prefix):
     for filename in os.listdir(directory):
@@ -15,7 +15,7 @@ def file_with_prefix_exists(directory, prefix):
 
 
 def test_case_init(
-    gen_grid_topo_vgrid, tmp_path, is_github_actions, get_cesm_root_path, is_glade
+    gen_grid_topo_vgrid, tmp_path, is_github_actions, get_cesm_root_path
 ):
 
     # Set Grid Info
@@ -35,7 +35,7 @@ def test_case_init(
     ninst = 2
     if is_github_actions:
         machine = "ubuntu-latest"
-    elif is_glade:
+    elif is_glade_file_system():
         machine = "derecho"
     else:
         machine = None
