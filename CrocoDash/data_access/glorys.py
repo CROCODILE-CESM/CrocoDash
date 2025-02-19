@@ -35,7 +35,7 @@ def get_glorys_data_from_rda(
     dataset = (
         xr.open_mfdataset(ds_in_files, decode_times=False)
         .drop_vars(drop_var_lst)
-        .sel(latitude=slice(lat_min, lat_max+0.5), longitude=slice(lon_min, lon_max+0.5))
+        .sel(latitude=slice(lat_min-0.5, lat_max+0.5), longitude=slice(lon_min-0.5, lon_max+0.5))
     )
     
     dataset.to_netcdf(path)
