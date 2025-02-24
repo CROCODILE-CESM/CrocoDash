@@ -105,12 +105,12 @@ def setup_sample_rm6_expt(tmp_path):
 
 
 @pytest.fixture
-def get_CrocoDash_case(tmp_path, gen_grid_topo_vgrid, is_github_actions, get_cesm_root_path, is_glade):
+def get_CrocoDash_case(tmp_path, gen_grid_topo_vgrid, is_github_actions, is_glade):
     # Set Grid Info
     grid, topo, vgrid = gen_grid_topo_vgrid
 
     # Find CESM Root
-    cesmroot = get_cesm_root_path
+    cesmroot = os.environ.get("CESMROOT")
 
     # Set some defaults
     caseroot, inputdir = tmp_path / "case", tmp_path / "inputdir"
@@ -172,13 +172,13 @@ def is_github_actions():
     return os.getenv("GITHUB_ACTIONS") == "true"
 
 
-@pytest.fixture(scope="session")
-def get_cesm_root_path():
-    cesmroot = os.getenv("CESMROOT")
+# @pytest.fixture(scope="session")
+# def get_cesm_root_path():
+#     cesmroot = os.getenv("CESMROOT")
 
-    if is_glade_file_system():
-        cesmroot = "/glade/u/home/manishrv/work/installs/CROCESM_beta04"
-    return cesmroot
+#     if is_glade_file_system():
+#         cesmroot = "/glade/u/home/manishrv/work/installs/CROCESM_beta04"
+#     return cesmroot
 
 
 @pytest.fixture(scope="session")

@@ -16,14 +16,14 @@ def file_with_prefix_exists(directory, prefix):
 
 
 def test_case_init(
-    gen_grid_topo_vgrid, tmp_path, is_github_actions, get_cesm_root_path
+    gen_grid_topo_vgrid, tmp_path, is_github_actions
 ):
 
     # Set Grid Info
     grid, topo, vgrid = gen_grid_topo_vgrid
 
     # Find CESM Root
-    cesmroot = get_cesm_root_path
+    cesmroot = os.environ.get("CESMROOT")
     assert cesmroot is not None, "CESMROOT environment variable is not set"
 
     # Set some defaults
