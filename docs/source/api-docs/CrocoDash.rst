@@ -7,6 +7,7 @@ Subpackages
 .. toctree::
    :maxdepth: 4
 
+   CrocoDash.data_access
    CrocoDash.rm6
 
 Submodules

@@ -8,7 +8,6 @@ Subpackages
    :maxdepth: 4
 
    CrocoDash.rm6.regional_mom6
-   CrocoDash.rm6.tests
 
 Module contents
 ---------------

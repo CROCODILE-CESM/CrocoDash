@@ -16,6 +16,7 @@ You can also check out the Regional MOM6 documentation for more support informat
 
    installation
    api-docs/modules
-   available_datasets
+   data_access
    diagrams
-   docs
+   developers/docs
+   developers/adding_data_access

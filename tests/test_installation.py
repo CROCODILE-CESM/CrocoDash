@@ -17,7 +17,6 @@ def test_import():
     assert VGrid is not None
 
 
-
 def test_rm6_import():
     """
     This test confirms we can import rm6, and can call the functions inside
