@@ -15,7 +15,7 @@ def file_with_prefix_exists(directory, prefix):
 
 
 def test_case_init(
-    gen_grid_topo_vgrid, tmp_path, is_github_actions, get_cesm_root_path, is_glade
+    gen_grid_topo_vgrid, tmp_path, is_github_actions, get_cesm_root_path
 ):
 
     # Set Grid Info
