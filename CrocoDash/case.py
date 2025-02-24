@@ -7,7 +7,8 @@ import regional_mom6 as rmom6
 from CrocoDash.grid import Grid
 from CrocoDash.topo import Topo
 from CrocoDash.vgrid import VGrid
-
+from CrocoDash.data_access import driver as dv
+from CrocoDash.data_access import tables as tb
 from ProConPy.config_var import ConfigVar, cvars
 from ProConPy.stage import Stage
 from ProConPy.csp_solver import csp
@@ -106,12 +107,12 @@ class Case:
         self.ocn_vgrid = ocn_vgrid
         self.ninst = ninst
         self.override = override
-
+        self.ProductFunctionRegistry = dv.ProductFunctionRegistry()
+        self.forcing_product_name = None
         self._configure_forcings_called = False
 
         # Construct the compset long name
         self.compset = f"{inittime}_DATM%{datm_mode}_SLND_SICE_MOM6_SROF_SGLC_SWAV_SESP"
-
         # Resolution name:
         self.resolution = f"{datm_grid_name}_{ocn_grid.name}"
 
@@ -231,7 +232,7 @@ class Case:
 
     def _create_newcase(self):
         """Create the case instance."""
-
+        # cvars["COMPSET_LNAME"].value = self.compset
         # If override is True, clean up the existing caseroot and output directories
         if self.override is True:
             if self.caseroot.exists():
@@ -257,9 +258,15 @@ class Case:
         tidal_constituents: list[str] | None = None,
         tpxo_elevation_filepath: str | Path | None = None,
         tpxo_velocity_filepath: str | Path | None = None,
+        product_name: str = "GLORYS",
+        function_name: str = "get_glorys_data_script_for_cli"
     ):
         """Configure the boundary conditions and tides for the MOM6 case."""
-
+        self.ProductFunctionRegistry.load_functions()
+        assert tb.category_of_product(product_name) == "forcing", "Data product must be a forcing product"
+        if not self.ProductFunctionRegistry.validate_function(product_name, function_name):
+            raise ValueError("Selected Product or Function was not valid")
+        self.forcing_product_name = product_name.lower()
         if not (
             isinstance(date_range, list)
             and all(isinstance(date, str) for date in date_range)
@@ -318,16 +325,19 @@ class Case:
             boundaries=self.boundaries,
         )
 
-        # Create the glorys directory
+        # Create the forcing directory
         if self.override is True:
-            glorys_path = self.inputdir / "glorys"
-            if glorys_path.exists():
-                shutil.rmtree(glorys_path)
-        glorys_path.mkdir(exist_ok=False)
+            forcing_dir_path = self.inputdir / self.forcing_product_name
+            if forcing_dir_path.exists():
+                shutil.rmtree(forcing_dir_path)
+        forcing_dir_path.mkdir(exist_ok=False)
 
-        self.expt.get_glorys(
-        raw_boundaries_path=self.inputdir / "glorys",
-    )
+        boundary_info = dv.get_rectangular_segment_info(self.ocn_grid)
+        for key in boundary_info.keys():
+            if key in self.boundaries:
+                self.ProductFunctionRegistry.functions[product_name][function_name](date_range,boundary_info[key]["lat_min"],boundary_info[key]["lat_max"],boundary_info[key]["lon_min"],boundary_info[key]["lon_max"],forcing_dir_path,key+"_unprocessed.nc" )
+            elif key == "ic":
+                self.ProductFunctionRegistry.functions[product_name][function_name]([date_range[0],date_range[0]],boundary_info[key]["lat_min"],boundary_info[key]["lat_max"],boundary_info[key]["lon_min"],boundary_info[key]["lon_max"],forcing_dir_path,key+"_unprocessed.nc" )
 
 
         self._configure_forcings_called = True
@@ -340,41 +350,44 @@ class Case:
                 "configure_forcings() must be called before process_forcings()."
             )
 
-        glorys_path = self.inputdir / "glorys"
+        forcing_path = self.inputdir / self.forcing_product_name
 
         # check all the boundary files are present:
-        if process_initial_condition and not (glorys_path / "ic_unprocessed.nc").exists():
+        if process_initial_condition and not (forcing_path / "ic_unprocessed.nc").exists():
             raise FileNotFoundError(
-                f"Initial condition file ic_unprocessed.nc not found in {glorys_path}. "
+                f"Initial condition file ic_unprocessed.nc not found in {forcing_path}. "
                 "Please make sure to execute get_glorys_data.sh script as described in "
                 "the message printed by configure_forcings()."
             )
 
         for boundary in self.boundaries:
-            if process_velocity_tracers and not (glorys_path / f"{boundary}_unprocessed.nc").exists():
+            if process_velocity_tracers and not (forcing_path / f"{boundary}_unprocessed.nc").exists():
                 raise FileNotFoundError(
-                    f"Boundary file {boundary}_unprocessed.nc not found in {glorys_path}. "
+                    f"Boundary file {boundary}_unprocessed.nc not found in {forcing_path}. "
                     "Please make sure to execute get_glorys_data.sh script as described in "
                     "the message printed by configure_forcings()."
                 )
 
         # Define a mapping from the GLORYS variables and dimensions to the MOM6 ones
-        ocean_varnames = {
-            "time": "time",
-            "yh": "latitude",
-            "xh": "longitude",
-            "zl": "depth",
-            "eta": "zos",
-            "u": "uo",
-            "v": "vo",
-            "tracers": {"salt": "so", "temp": "thetao"},
-        }
+        if self.forcing_product_name == ("GLORYS").lower():
+            ocean_varnames = {
+                "time": "time",
+                "yh": "latitude",
+                "xh": "longitude",
+                "zl": "depth",
+                "eta": "zos",
+                "u": "uo",
+                "v": "vo",
+                "tracers": {"salt": "so", "temp": "thetao"},
+            }
+        else:
+            raise ValueError(f"forcing product {self.forcing_product_name} ocean varnames not yet supported")
 
         # Set up the initial condition
         if process_initial_condition:
             self.expt.setup_initial_condition(
                 self.inputdir
-                / "glorys"
+                /self.forcing_product_name
                 / "ic_unprocessed.nc",  # directory where the unprocessed initial condition is stored, as defined earlier
                 ocean_varnames,
                 arakawa_grid="A",
@@ -383,7 +396,7 @@ class Case:
         # Set up the four boundary conditions. Remember that in the glorys_path, we have four boundary files names north_unprocessed.nc etc.
         if process_velocity_tracers:
             self.expt.setup_ocean_state_boundaries(
-                self.inputdir / "glorys", ocean_varnames, arakawa_grid="A"
+                self.inputdir / self.forcing_product_name, ocean_varnames, arakawa_grid="A"
             )
 
         # Process the tides
@@ -432,7 +445,8 @@ class Case:
 
         assert Stage.active().title == "1. Component Set"
         cvars["COMPSET_MODE"].value = "Custom"
-
+        # cvars["COMPSET_LNAME"].value = self.compset
+        
         assert Stage.active().title == "Time Period"
         cvars["INITTIME"].value = inittime
 

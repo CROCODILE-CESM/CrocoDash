@@ -18,6 +18,7 @@ Get started by heading over to :ref:`installation`.!
 
    installation
    api-docs/modules
-   available_datasets
+   data_access
    diagrams
-   docs
+   developers/docs
+   developers/adding_data_access

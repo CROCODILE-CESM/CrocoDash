@@ -3,27 +3,6 @@ import socket
 import os
 from pathlib import Path
 from CrocoDash.rm6 import regional_mom6 as rm6
-from CrocoDash.grid import Grid
-from CrocoDash.topo import Topo
-from CrocoDash.vgrid import VGrid
-from CrocoDash.case import Case
-import xarray as xr
-import numpy as np
-
-
-def pytest_addoption(parser):
-    parser.addoption(
-        "--runslow", action="store_true", default=False, help="Run slow tests"
-    )
-
-
-def pytest_collection_modifyitems(config, items):
-    if not config.option.runslow:
-        # Skip slow tests if --runslow is not provided
-        skip_slow = pytest.mark.skip(reason="Skipping slow tests by default")
-        for item in items:
-            if "slow" in item.keywords:
-                item.add_marker(skip_slow)
 
 
 # Fixture to provide the temp folder and a parameter name
@@ -104,47 +83,19 @@ def setup_sample_rm6_expt(tmp_path):
     return expt
 
 
-@pytest.fixture
-def get_CrocoDash_case(tmp_path, gen_grid_topo_vgrid, is_github_actions, is_glade):
-    # Set Grid Info
-    grid, topo, vgrid = gen_grid_topo_vgrid
-
-    # Find CESM Root
-    cesmroot = os.getenv("CESMROOT")
-    assert cesmroot is not None, "CESMROOT environment variable is not set"
-
-    # Set some defaults
-    caseroot, inputdir = tmp_path / "case", tmp_path / "inputdir"
-    project_num = "NCGD0011"
-    override = True
-    inittime = "1850"
-    datm_mode = "JRA"
-    datm_grid_name = "TL319"
-    ninst = 2
-    if is_github_actions:
-        machine = "ubuntu-latest"
-    elif is_glade_file_system():
-        machine = "derecho"
-    else:
-        machine = None
-
-    # Setup Case
-    case = Case(
-        cesmroot=cesmroot,
-        caseroot=caseroot,
-        inputdir=inputdir,
-        ocn_grid=grid,
-        ocn_vgrid=vgrid,
-        ocn_topo=topo,
-        project=project_num,
-        override=override,
-        machine=machine,
-        inittime=inittime,
-        datm_mode=datm_mode,
-        datm_grid_name=datm_grid_name,
-        ninst=ninst,
+def pytest_addoption(parser):
+    parser.addoption(
+        "--runslow", action="store_true", default=False, help="Run slow tests"
     )
-    return case
+
+
+def pytest_collection_modifyitems(config, items):
+    if not config.option.runslow:
+        # Skip slow tests if --runslow is not provided
+        skip_slow = pytest.mark.skip(reason="Skipping slow tests by default")
+        for item in items:
+            if "slow" in item.keywords:
+                item.add_marker(skip_slow)
 
 
 def is_glade_file_system():
@@ -164,17 +115,8 @@ def is_glade():
         pytest.skip(reason="Skipping test: Not running on the Glade file system.")
 
 
-@pytest.fixture()
-def is_github_actions():
-    return os.getenv("GITHUB_ACTIONS") == "true"
-
-
-@pytest.fixture(scope="session")
-def get_cesm_root_path():
-    cesmroot = os.getenv("CESMROOT")
-    if cesmroot is None and is_glade_file_system():
-        cesmroot = "/glade/u/home/manishrv/work/installs/CROCESM_beta04"
-    return cesmroot
+import xarray as xr
+import numpy as np
 
 
 @pytest.fixture(scope="session")
