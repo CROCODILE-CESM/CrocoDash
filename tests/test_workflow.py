@@ -113,19 +113,6 @@ def run_full_workflow(tmp_path, cesmroot,dummy_tidal_data, dummy_forcing_factory
     # Process Forcings   
     case.process_forcings()
 
-
-    # Build & Submit
-    logger.info("Building Case")
-    command = "./case.build"
-    result = subprocess.run(command, shell=True, cwd=case.caseroot, text=True)
-    logger.info("Submitting Case")
-    command = "./case.submit"
-    result = subprocess.run(command, shell=True, cwd=case.caseroot, text=True)
-    return {
-        "success": True,
-        "logs":logs
-    }
-
 def test_dummy_forcing_data_fixture(dummy_forcing_factory,tmp_path):
     ic = dummy_forcing_factory()
     ic.to_netcdf(tmp_path/"ic_unprocessed.nc")
