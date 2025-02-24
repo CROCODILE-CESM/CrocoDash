@@ -75,8 +75,8 @@ class ProductFunctionRegistry:
         """Runs a quick validation of the function (ensures it runs and returns expected output)."""
         try:
             func = self.functions[product][func_name]
-        except:
-            logger.error(f"Function {func_name} not found for product {product}")
+        except KeyError as e:
+            logger.error(f"Function {func_name} not found for product {product}. Error: {e}")
             return False
         sig = inspect.signature(func)
         temp_dir = tempfile.mkdtemp()
