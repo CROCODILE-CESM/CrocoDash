@@ -22,10 +22,6 @@ def test_case_init(
     # Set Grid Info
     grid, topo, vgrid = gen_grid_topo_vgrid
 
-    # Find CESM Root
-    cesmroot = os.environ.get("CESMROOT")
-    assert cesmroot is not None, "CESMROOT environment variable is not set"
-
     # Set some defaults
     caseroot, inputdir = tmp_path / "case", tmp_path / "inputdir"
     project_num = "NCGD0011"
@@ -43,7 +39,7 @@ def test_case_init(
 
     # Setup Case
     case = Case(
-        cesmroot=cesmroot,
+        cesmroot=None,
         caseroot=caseroot,
         inputdir=inputdir,
         ocn_grid=grid,

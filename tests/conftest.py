@@ -109,8 +109,6 @@ def get_CrocoDash_case(tmp_path, gen_grid_topo_vgrid, is_github_actions, is_glad
     # Set Grid Info
     grid, topo, vgrid = gen_grid_topo_vgrid
 
-    # Find CESM Root
-    cesmroot = os.environ.get("CESMROOT")
 
     # Set some defaults
     caseroot, inputdir = tmp_path / "case", tmp_path / "inputdir"
@@ -129,7 +127,7 @@ def get_CrocoDash_case(tmp_path, gen_grid_topo_vgrid, is_github_actions, is_glad
 
     # Setup Case
     case = Case(
-        cesmroot=cesmroot,
+        cesmroot=None,
         caseroot=caseroot,
         inputdir=inputdir,
         ocn_grid=grid,
