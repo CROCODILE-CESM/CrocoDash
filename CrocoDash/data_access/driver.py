@@ -2,8 +2,8 @@
 Functions to query the data access tables and validate data, as well as request all four segments
 """
 
-from enum import Enum
 from . import tables as tb
+from .utils import setup_logger
 from typing import Callable, Dict
 import importlib
 import inspect
@@ -11,7 +11,6 @@ import os
 import shutil
 from pathlib import Path
 import tempfile
-from .utils import setup_logger
 import xarray as xr
 from CrocoDash.grid import Grid
 
@@ -76,7 +75,9 @@ class ProductFunctionRegistry:
         try:
             func = self.functions[product][func_name]
         except KeyError as e:
-            logger.error(f"Function {func_name} not found for product {product}. Error: {e}")
+            logger.error(
+                f"Function {func_name} not found for product {product}. Error: {e}"
+            )
             return False
         sig = inspect.signature(func)
         temp_dir = tempfile.mkdtemp()
@@ -140,11 +141,10 @@ def get_rectangular_segment_info(hgrid: xr.Dataset | Grid):
     """
     This function finds the required segment queries from the hgrid and calls the functions
     """
-    temp_dir = None
     if type(hgrid) == Grid:
-        temp_dir = tempfile.mkdtemp()
-        hgrid.write_supergrid(path=Path(temp_dir) / "temp.nc")
-        hgrid = xr.open_dataset(Path(temp_dir) / "temp.nc")
+        hgrid = hgrid.supergrid
+        hgrid.x = xr.DataArray(hgrid.x, dims=["nyp", "nxp"])
+        hgrid.y = xr.DataArray(hgrid.y, dims=["nyp", "nxp"])
     init_result = {
         "lon_min": float(hgrid.x.min()),
         "lon_max": float(hgrid.x.max()),
@@ -175,8 +175,6 @@ def get_rectangular_segment_info(hgrid: xr.Dataset | Grid):
         "lat_min": float(hgrid.y.isel(nyp=-1).min()),
         "lat_max": float(hgrid.y.isel(nyp=-1).max()),
     }
-    if temp_dir is not None:
-        shutil.rmtree(temp_dir)
     return {
         "east": east_result,
         "west": west_result,
