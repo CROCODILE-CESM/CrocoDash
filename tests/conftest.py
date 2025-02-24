@@ -9,7 +9,7 @@ from CrocoDash.vgrid import VGrid
 from CrocoDash.case import Case
 import xarray as xr
 import numpy as np
-
+import os
 
 def pytest_addoption(parser):
     parser.addoption(
@@ -105,13 +105,12 @@ def setup_sample_rm6_expt(tmp_path):
 
 
 @pytest.fixture
-def get_CrocoDash_case(tmp_path, gen_grid_topo_vgrid, is_github_actions, is_glade):
+def get_CrocoDash_case(tmp_path, gen_grid_topo_vgrid, is_github_actions, get_cesm_root_path, is_glade):
     # Set Grid Info
     grid, topo, vgrid = gen_grid_topo_vgrid
 
     # Find CESM Root
-    cesmroot = os.getenv("CESMROOT")
-    assert cesmroot is not None, "CESMROOT environment variable is not set"
+    cesmroot = get_cesm_root_path
 
     # Set some defaults
     caseroot, inputdir = tmp_path / "case", tmp_path / "inputdir"
@@ -146,6 +145,10 @@ def get_CrocoDash_case(tmp_path, gen_grid_topo_vgrid, is_github_actions, is_glad
     )
     return case
 
+@pytest.fixture(scope="session")
+def check_glade_exists():
+    if not is_glade_file_system():
+        pytest.skip(reason="Skipping test: Not running on the Glade file system.")
 
 def is_glade_file_system():
     # Get the hostname
@@ -172,7 +175,8 @@ def is_github_actions():
 @pytest.fixture(scope="session")
 def get_cesm_root_path():
     cesmroot = os.getenv("CESMROOT")
-    if cesmroot is None and is_glade_file_system():
+
+    if is_glade_file_system():
         cesmroot = "/glade/u/home/manishrv/work/installs/CROCESM_beta04"
     return cesmroot
 

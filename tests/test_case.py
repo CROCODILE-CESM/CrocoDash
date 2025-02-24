@@ -6,6 +6,7 @@ from pathlib import Path
 import regional_mom6 as rmom6
 import datetime as dt
 from conftest import is_glade_file_system
+import os
 
 def file_with_prefix_exists(directory, prefix):
     for filename in os.listdir(directory):
@@ -29,7 +30,7 @@ def test_case_init(
     caseroot, inputdir = tmp_path / "case", tmp_path / "inputdir"
     project_num = "NCGD0011"
     override = True
-    inittime = "1850"
+    inittime = "1850" 
     datm_mode = "JRA"
     datm_grid_name = "TL319"
     ninst = 2
