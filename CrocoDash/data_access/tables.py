@@ -46,24 +46,27 @@ def function_exists(product_name, function_name):
         & (functions_df["Function_Name"] == function_name)
     ).any()
 
+
 def type_of_function(product_name, function_name):
-    """ Returns the type of function, python or script, the function is"""
+    """Returns the type of function, python or script, the function is"""
     _, functions_df = load_tables()
     if function_exists(product_name, function_name):
         return functions_df[
-        (functions_df["Product_Name"] == product_name) & 
-        (functions_df["Function_Name"] == function_name)
-            ]["Access_Type"].values[0]
-        
+            (functions_df["Product_Name"] == product_name)
+            & (functions_df["Function_Name"] == function_name)
+        ]["Access_Type"].values[0]
+
     else:
         raise ValueError("Invalid product & function name combination")
-    
+
+
 def category_of_product(product_name):
-    """ Returns the type of function, python or script, the function is"""
-    products_df,_ = load_tables()
+    """Returns the type of function, python or script, the function is"""
+    products_df, _ = load_tables()
     if product_exists(product_name):
-        return products_df[
-        (products_df["Product_Name"] == product_name)]["Data_Category"].values[0]
-        
+        return products_df[(products_df["Product_Name"] == product_name)][
+            "Data_Category"
+        ].values[0]
+
     else:
         raise ValueError("Invalid product name combination")

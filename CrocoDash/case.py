@@ -369,16 +369,19 @@ class Case:
                 )
 
         # Define a mapping from the GLORYS variables and dimensions to the MOM6 ones
-        ocean_varnames = {
-            "time": "time",
-            "yh": "latitude",
-            "xh": "longitude",
-            "zl": "depth",
-            "eta": "zos",
-            "u": "uo",
-            "v": "vo",
-            "tracers": {"salt": "so", "temp": "thetao"},
-        }
+        if self.forcing_product_name == ("GLORYS").lower():
+            ocean_varnames = {
+                "time": "time",
+                "yh": "latitude",
+                "xh": "longitude",
+                "zl": "depth",
+                "eta": "zos",
+                "u": "uo",
+                "v": "vo",
+                "tracers": {"salt": "so", "temp": "thetao"},
+            }
+        else:
+            raise ValueError(f"forcing product {self.forcing_product_name} ocean varnames not yet supported")
 
         # Set up the initial condition
         self.expt.setup_initial_condition(

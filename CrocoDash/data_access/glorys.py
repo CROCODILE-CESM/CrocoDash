@@ -11,15 +11,23 @@ from pathlib import Path
 from CrocoDash.data_access.utils import fill_template
 import pandas as pd
 from .utils import setup_logger
+
 logger = setup_logger(__name__)
 
+
 def get_glorys_data_from_rda(
-    dates: list, lat_min, lat_max, lon_min, lon_max, output_dir = Path(""), output_file = "raw_glorys.nc"
+    dates: list,
+    lat_min,
+    lat_max,
+    lon_min,
+    lon_max,
+    output_dir=Path(""),
+    output_file="raw_glorys.nc",
 ) -> xr.Dataset:
     """
     Gather GLORYS Data on Derecho Computers from the campaign storage and return the dataset sliced to the llc and urc coordinates at the specific dates
     """
-    path = Path(output_dir)/output_file
+    path = Path(output_dir) / output_file
     logger.info(f"Downloading Glorys data from RDA to {path}")
     # Set Variables That Can Be Dropped
     drop_var_lst = ["mlotst", "bottomT", "sithick", "siconc", "usi", "vsi"]
@@ -35,9 +43,12 @@ def get_glorys_data_from_rda(
     dataset = (
         xr.open_mfdataset(ds_in_files, decode_times=False)
         .drop_vars(drop_var_lst)
-        .sel(latitude=slice(lat_min-0.5, lat_max+0.5), longitude=slice(lon_min-0.5, lon_max+0.5))
+        .sel(
+            latitude=slice(lat_min - 0.5, lat_max + 0.5),
+            longitude=slice(lon_min - 0.5, lon_max + 0.5),
+        )
     )
-    
+
     dataset.to_netcdf(path)
     return path
 
@@ -86,7 +97,7 @@ def get_glorys_data_script_for_cli(
     Script to run the GLORYS data query for the CLI
     """
     modify_existing = False
-    if os.path.exists(output_dir/Path("get_glorys_data.sh")):
+    if os.path.exists(output_dir / Path("get_glorys_data.sh")):
         modify_existing = True
     path = rm6.get_glorys_data(
         [lon_min, lon_max],
@@ -96,5 +107,7 @@ def get_glorys_data_script_for_cli(
         output_dir,
         modify_existing=modify_existing,
     )
-    logger.info(f"This data access method retuns a script at path {path} to run to get access data ")
+    logger.info(
+        f"This data access method retuns a script at path {path} to run to get access data "
+    )
     return path

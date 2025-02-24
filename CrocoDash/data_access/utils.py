@@ -1,5 +1,6 @@
-import logging 
+import logging
 import sys
+
 
 def fill_template(template_path, output_path, **kwargs):
     """
@@ -23,6 +24,7 @@ def fill_template(template_path, output_path, **kwargs):
         output_file.write(filled_content)
 
     print(f"Filled PBS script written to: {output_path}")
+
 
 def setup_logger(name):
     """
