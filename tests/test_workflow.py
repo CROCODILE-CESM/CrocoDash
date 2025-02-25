@@ -50,7 +50,7 @@ def run_full_workflow(tmp_path, get_CrocoDash_case,dummy_tidal_data, dummy_forci
     )
 
     # Create dummy forcings
-    bounds = dv.get_rectangular_boundary_info(case.ocn_grid)
+    bounds = dv.get_rectangular_segment_info(case.ocn_grid)
     ds = dummy_forcing_factory(bounds["ic"]["lat_min"],bounds["ic"]["lat_max"],bounds["ic"]["lon_min"],bounds["ic"]["lon_max"])
     ds.to_netcdf(case.inputdir / "glorys"/"ic_unprocessed.nc")
     ds.to_netcdf(case.inputdir / "glorys"/"east_unprocessed.nc")

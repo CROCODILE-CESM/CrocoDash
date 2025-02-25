@@ -6,7 +6,7 @@ import xarray as xr
 import numpy as np
 
 
-def test_get_glorys_data_from_rda(check_glade_exists, tmp_path):
+def test_get_glorys_data_from_rda(skip_if_not_glade, tmp_path):
     dates = ["2000-01-01", "2000-01-05"]
     lat_min = 30
     lat_max = 31
