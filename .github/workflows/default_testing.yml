@@ -36,8 +36,8 @@ jobs:
           activate-environment: CrocoDash
           environment-file: CrocoDash/environment.yml
       # It runs the tests in rm6 by default as well, but ignores visualCaseGen & mom6_bathy
-      # - name: Tmate
-      #   uses: mxschmitt/action-tmate@v3
+      - name: Tmate
+        uses: mxschmitt/action-tmate@v3
       - name: Run Pytest Suite
         run: |
           export CESMROOT=${{ github.workspace }}/CESM
