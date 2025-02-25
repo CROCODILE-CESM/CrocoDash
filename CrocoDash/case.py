@@ -9,6 +9,8 @@ from CrocoDash.topo import Topo
 from CrocoDash.vgrid import VGrid
 from CrocoDash.data_access import driver as dv
 from CrocoDash.data_access import tables as tb
+from CrocoDash.data_access import driver as dv
+from CrocoDash.data_access import tables as tb
 from ProConPy.config_var import ConfigVar, cvars
 from ProConPy.stage import Stage
 from ProConPy.csp_solver import csp
@@ -259,12 +261,16 @@ class Case:
         tpxo_elevation_filepath: str | Path | None = None,
         tpxo_velocity_filepath: str | Path | None = None,
         product_name: str = "GLORYS",
-        function_name: str = "get_glorys_data_script_for_cli"
+        function_name: str = "get_glorys_data_script_for_cli",
     ):
         """Configure the boundary conditions and tides for the MOM6 case."""
         self.ProductFunctionRegistry.load_functions()
-        assert tb.category_of_product(product_name) == "forcing", "Data product must be a forcing product"
-        if not self.ProductFunctionRegistry.validate_function(product_name, function_name):
+        assert (
+            tb.category_of_product(product_name) == "forcing"
+        ), "Data product must be a forcing product"
+        if not self.ProductFunctionRegistry.validate_function(
+            product_name, function_name
+        ):
             raise ValueError("Selected Product or Function was not valid")
         self.forcing_product_name = product_name.lower()
         if not (
@@ -292,13 +298,19 @@ class Case:
 
         # all tidal arguments must be provided if any are provided
         if any([tidal_constituents, tpxo_elevation_filepath, tpxo_velocity_filepath]):
-            if not all([tidal_constituents, tpxo_elevation_filepath, tpxo_velocity_filepath]):
+            if not all(
+                [tidal_constituents, tpxo_elevation_filepath, tpxo_velocity_filepath]
+            ):
                 raise ValueError(
                     "If any tidal arguments are provided, all must be provided."
                 )
         self.tidal_constituents = tidal_constituents
-        self.tpxo_elevation_filepath = Path(tpxo_elevation_filepath) if tpxo_elevation_filepath else None
-        self.tpxo_velocity_filepath = Path(tpxo_velocity_filepath) if tpxo_velocity_filepath else None
+        self.tpxo_elevation_filepath = (
+            Path(tpxo_elevation_filepath) if tpxo_elevation_filepath else None
+        )
+        self.tpxo_velocity_filepath = (
+            Path(tpxo_velocity_filepath) if tpxo_velocity_filepath else None
+        )
 
         session_id = cvars["MB_ATTEMPT_ID"].value
 
@@ -335,14 +347,34 @@ class Case:
         boundary_info = dv.get_rectangular_segment_info(self.ocn_grid)
         for key in boundary_info.keys():
             if key in self.boundaries:
-                self.ProductFunctionRegistry.functions[product_name][function_name](date_range,boundary_info[key]["lat_min"],boundary_info[key]["lat_max"],boundary_info[key]["lon_min"],boundary_info[key]["lon_max"],forcing_dir_path,key+"_unprocessed.nc" )
+                self.ProductFunctionRegistry.functions[product_name][function_name](
+                    date_range,
+                    boundary_info[key]["lat_min"],
+                    boundary_info[key]["lat_max"],
+                    boundary_info[key]["lon_min"],
+                    boundary_info[key]["lon_max"],
+                    forcing_dir_path,
+                    key + "_unprocessed.nc",
+                )
             elif key == "ic":
-                self.ProductFunctionRegistry.functions[product_name][function_name]([date_range[0],date_range[0]],boundary_info[key]["lat_min"],boundary_info[key]["lat_max"],boundary_info[key]["lon_min"],boundary_info[key]["lon_max"],forcing_dir_path,key+"_unprocessed.nc" )
-
+                self.ProductFunctionRegistry.functions[product_name][function_name](
+                    [date_range[0], date_range[0]],
+                    boundary_info[key]["lat_min"],
+                    boundary_info[key]["lat_max"],
+                    boundary_info[key]["lon_min"],
+                    boundary_info[key]["lon_max"],
+                    forcing_dir_path,
+                    key + "_unprocessed.nc",
+                )
 
         self._configure_forcings_called = True
 
-    def process_forcings(self):
+    def process_forcings(
+        self,
+        process_initial_condition=True,
+        process_tides=True,
+        process_velocity_tracers=True,
+    ):
         """Process the boundary conditions and tides for the MOM6 case."""
 
         if not self._configure_forcings_called:
@@ -351,17 +383,25 @@ class Case:
             )
 
         forcing_path = self.inputdir / self.forcing_product_name
+        forcing_path = self.inputdir / self.forcing_product_name
 
         # check all the boundary files are present:
-        if not (forcing_path / "ic_unprocessed.nc").exists():
+        if (
+            process_initial_condition
+            and not (forcing_path / "ic_unprocessed.nc").exists()
+        ):
             raise FileNotFoundError(
+                f"Initial condition file ic_unprocessed.nc not found in {forcing_path}. "
                 f"Initial condition file ic_unprocessed.nc not found in {forcing_path}. "
                 "Please make sure to execute get_glorys_data.sh script as described in "
                 "the message printed by configure_forcings()."
             )
 
         for boundary in self.boundaries:
-            if not (forcing_path / f"{boundary}_unprocessed.nc").exists():
+            if (
+                process_velocity_tracers
+                and not (forcing_path / f"{boundary}_unprocessed.nc").exists()
+            ):
                 raise FileNotFoundError(
                     f"Boundary file {boundary}_unprocessed.nc not found in {forcing_path}. "
                     "Please make sure to execute get_glorys_data.sh script as described in "
@@ -381,24 +421,30 @@ class Case:
                 "tracers": {"salt": "so", "temp": "thetao"},
             }
         else:
-            raise ValueError(f"forcing product {self.forcing_product_name} ocean varnames not yet supported")
+            raise ValueError(
+                f"forcing product {self.forcing_product_name} ocean varnames not yet supported"
+            )
 
         # Set up the initial condition
-        self.expt.setup_initial_condition(
-            self.inputdir
-            / self.forcing_product_name
-            / "ic_unprocessed.nc",  # directory where the unprocessed initial condition is stored, as defined earlier
-            ocean_varnames,
-            arakawa_grid="A",
-        )
+        if process_initial_condition:
+            self.expt.setup_initial_condition(
+                self.inputdir
+                / self.forcing_product_name
+                / "ic_unprocessed.nc",  # directory where the unprocessed initial condition is stored, as defined earlier
+                ocean_varnames,
+                arakawa_grid="A",
+            )
 
         # Set up the four boundary conditions. Remember that in the glorys_path, we have four boundary files names north_unprocessed.nc etc.
-        self.expt.setup_ocean_state_boundaries(
-            self.inputdir / self.forcing_product_name, ocean_varnames, arakawa_grid="A"
-        )
+        if process_velocity_tracers:
+            self.expt.setup_ocean_state_boundaries(
+                self.inputdir / self.forcing_product_name,
+                ocean_varnames,
+                arakawa_grid="A",
+            )
 
         # Process the tides
-        if self.tidal_constituents:
+        if process_tides and self.tidal_constituents:
 
             # Process the tides
             self.expt.setup_boundary_tides(
@@ -444,7 +490,7 @@ class Case:
         assert Stage.active().title == "1. Component Set"
         cvars["COMPSET_MODE"].value = "Custom"
         # cvars["COMPSET_LNAME"].value = self.compset
-        
+
         assert Stage.active().title == "Time Period"
         cvars["INITTIME"].value = inittime
 

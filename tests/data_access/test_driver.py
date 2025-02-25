@@ -1,20 +1,24 @@
 from CrocoDash.data_access import driver as dv
 import pytest
 
+
 @pytest.fixture
 def get_ProductFunctionRegistry():
     pfd_obj = dv.ProductFunctionRegistry()
     return pfd_obj
 
+
 def test_init_ProductFunctionRegistry():
     pfd_obj = dv.ProductFunctionRegistry()
     assert pfd_obj
 
+
 def test_load_functions_ProductFunctionRegistry(get_ProductFunctionRegistry):
     pfd_obj = get_ProductFunctionRegistry
     pfd_obj.load_functions()
-    assert len(pfd_obj.functions.keys())>0
-    assert len(pfd_obj.functions["GLORYS"].keys())>0
+    assert len(pfd_obj.functions.keys()) > 0
+    assert len(pfd_obj.functions["GLORYS"].keys()) > 0
+
 
 def test_validate_function(get_ProductFunctionRegistry):
     pfd_obj = get_ProductFunctionRegistry
@@ -25,12 +29,13 @@ def test_validate_function(get_ProductFunctionRegistry):
 
 def test_verify_data_sufficiency(get_ProductFunctionRegistry):
     pfd_obj = get_ProductFunctionRegistry
-    sufficient, missing = pfd_obj.verify_data_sufficiency(["GLORYS","GEBCO"])
+    sufficient, missing = pfd_obj.verify_data_sufficiency(["GLORYS", "GEBCO"])
     assert sufficient == True
-    sufficient, missing = pfd_obj.verify_data_sufficiency(["GLORYS","TPXO"])
+    sufficient, missing = pfd_obj.verify_data_sufficiency(["GLORYS", "TPXO"])
     assert sufficient == False
     assert len(missing) == 1
     assert list(missing)[0] == "bathymetry"
+
 
 def test_get_rectangular_segment_info(get_rect_grid):
     grid = get_rect_grid

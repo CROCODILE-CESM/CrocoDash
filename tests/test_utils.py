@@ -2,16 +2,14 @@
 This module (test_utils) tests the utility functions in the utils module. For lowkey utils, we'll just use smoke tests.
 """
 
-import CrocoDash as crr
 from CrocoDash import utils
-import pytest
-import xarray as xr
 
 
-def test_utils_smoke(dummy_netcdf_data, tmp_path):
+def test_utils_smoke(get_dummy_bathymetry_data, tmp_path):
 
+    # Test logger
     logger = utils.setup_logger("test_utils")
     assert logger is not None
 
     # Test export_dataset
-    utils.export_dataset(dummy_netcdf_data, tmp_path / "hgrid_test.nc")
+    utils.export_dataset(get_dummy_bathymetry_data, tmp_path / "temp_test.nc")
