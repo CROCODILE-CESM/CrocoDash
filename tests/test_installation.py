@@ -3,7 +3,6 @@ from CrocoDash.rm6 import regional_mom6 as rm6
 from CrocoDash.grid import Grid
 from CrocoDash.topo import Topo
 from CrocoDash.vgrid import VGrid
-from CrocoDash import utils
 
 
 def test_import():

@@ -1,5 +1,4 @@
 from CrocoDash.data_access import glorys as gl
-import pandas as pd
 import os
 import pytest
 import xarray as xr

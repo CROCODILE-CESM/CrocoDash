@@ -2,13 +2,6 @@
 Test the modules that are minimal, and primarily just need to be checked for connection
 """
 
-import pytest
-import CrocoDash
-import os
-import random
-import xarray as xr
-import numpy as np
-
 
 def test_grid_connection():
     from CrocoDash.grid import Grid

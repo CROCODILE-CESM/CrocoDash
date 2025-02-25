@@ -2,10 +2,7 @@
 This module (test_utils) tests the utility functions in the utils module. For lowkey utils, we'll just use smoke tests.
 """
 
-import CrocoDash as crr
 from CrocoDash import utils
-import pytest
-import xarray as xr
 
 
 def test_utils_smoke(get_dummy_bathymetry_data, tmp_path):
