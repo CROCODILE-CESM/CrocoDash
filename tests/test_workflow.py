@@ -60,6 +60,8 @@ def run_full_workflow(tmp_path, get_CrocoDash_case,dummy_tidal_data, dummy_forci
 
     # Process Forcings   
     case.process_forcings()
+
+    ## Need to figure out how to test a small CESM run here.
     return True
 
 def test_dummy_forcing_data_fixture(dummy_forcing_factory,tmp_path):
