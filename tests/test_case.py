@@ -43,7 +43,7 @@ def test_case_init(
 
     # Setup Case
     case = Case(
-        cesmroot=None,
+        cesmroot=cesmroot,
         caseroot=caseroot,
         inputdir=inputdir,
         ocn_grid=grid,

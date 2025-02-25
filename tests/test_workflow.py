@@ -15,8 +15,8 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 dask.config.set(num_workers=4)
 
-os.environ["CESMROOT"] = "/glade/u/home/manishrv/work/installs/CROCESM_beta04_clean"
-os.environ["CIME_MACHINE"] = "casper"
+# os.environ["CESMROOT"] = "/glade/u/home/manishrv/work/installs/CROCESM_beta04_clean"
+# os.environ["CIME_MACHINE"] = "casper"
 
 @pytest.mark.workflow
 def test_full_workflow(tmp_path, get_CrocoDash_case,is_github_actions, dummy_tidal_data, dummy_forcing_factory):
