@@ -5,7 +5,9 @@ import pathlib
 # Dynamically discover all fixtures in fixtures directories
 fixtures_dir = pathlib.Path(__file__).parent / "fixtures"
 pytest_plugins = [
-    f"tests.fixtures.{f.stem}" for f in fixtures_dir.glob("*.py") if f.stem != "__init__"
+    f"tests.fixtures.{f.stem}"
+    for f in fixtures_dir.glob("*.py")
+    if f.stem != "__init__"
 ]
 
 
@@ -22,4 +24,3 @@ def pytest_collection_modifyitems(config, items):
         for item in items:
             if "slow" in item.keywords:
                 item.add_marker(skip_slow)
-

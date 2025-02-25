@@ -13,21 +13,15 @@ def test_get_glorys_data_from_rda(skip_if_not_glade, tmp_path):
     lon_min = -71
     lon_max = -70
     dataset_path = gl.get_glorys_data_from_rda(
-        dates,
-        lat_min,
-        lat_max,
-        lon_min,
-        lon_max,
-        tmp_path,
-        "temp.nc"
+        dates, lat_min, lat_max, lon_min, lon_max, tmp_path, "temp.nc"
     )
     dataset = xr.open_dataset(dataset_path)
-    assert dataset.time.values[0] == np.datetime64('2000-01-01T12:00:00.000000000')
-    assert dataset.time.values[-1] == np.datetime64('2000-01-05T12:00:00.000000000')
-    assert np.abs(dataset.latitude.values[-1] - lat_max) <1
-    assert np.abs(dataset.latitude.values[0] - lat_min)<1
-    assert np.abs(dataset.longitude.values[-1] - lon_max)<1
-    assert np.abs(dataset.longitude.values[0] - lon_min)<1
+    assert dataset.time.values[0] == np.datetime64("2000-01-01T12:00:00.000000000")
+    assert dataset.time.values[-1] == np.datetime64("2000-01-05T12:00:00.000000000")
+    assert np.abs(dataset.latitude.values[-1] - lat_max) < 1
+    assert np.abs(dataset.latitude.values[0] - lat_min) < 1
+    assert np.abs(dataset.longitude.values[-1] - lon_max) < 1
+    assert np.abs(dataset.longitude.values[0] - lon_min) < 1
 
 
 @pytest.mark.slow
@@ -68,8 +62,8 @@ def test_get_glorys_data_script_for_cli(tmp_path):
         lat_max,
         lon_min,
         lon_max,
-        output_dir = tmp_path,
-        output_file = "temp"
+        output_dir=tmp_path,
+        output_file="temp",
     )
 
     # Just testing if it exists, this function just calls a regional_mom6 function

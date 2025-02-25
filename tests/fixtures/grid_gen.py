@@ -3,6 +3,7 @@ from CrocoDash.grid import Grid
 from CrocoDash.topo import Topo
 from CrocoDash.vgrid import VGrid
 
+
 @pytest.fixture
 def get_rect_grid():
     grid = Grid(

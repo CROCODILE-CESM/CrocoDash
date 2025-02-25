@@ -2,6 +2,7 @@ import pytest
 from CrocoDash.rm6 import regional_mom6 as rm6
 from CrocoDash.case import Case
 
+
 @pytest.fixture(scope="session")
 def setup_sample_rm6_expt(tmp_path):
     expt = rm6.experiment(
@@ -24,7 +25,13 @@ def setup_sample_rm6_expt(tmp_path):
 
 
 @pytest.fixture
-def get_CrocoDash_case(tmp_path, gen_grid_topo_vgrid, is_github_actions, get_cesm_root_path, is_glade_file_system):
+def get_CrocoDash_case(
+    tmp_path,
+    gen_grid_topo_vgrid,
+    is_github_actions,
+    get_cesm_root_path,
+    is_glade_file_system,
+):
     # Set Grid Info
     grid, topo, vgrid = gen_grid_topo_vgrid
 
@@ -65,4 +72,3 @@ def get_CrocoDash_case(tmp_path, gen_grid_topo_vgrid, is_github_actions, get_ces
         ninst=ninst,
     )
     return case
-

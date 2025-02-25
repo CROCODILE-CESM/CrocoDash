@@ -2,6 +2,7 @@ import pytest
 import os
 import socket
 
+
 @pytest.fixture(scope="session")
 def is_glade_file_system():
     # Get the hostname
@@ -32,4 +33,3 @@ def get_cesm_root_path(is_glade_file_system):
     if is_glade_file_system:
         cesmroot = "/glade/u/home/manishrv/work/installs/CROCESM_beta04"
     return cesmroot
-

@@ -7,6 +7,7 @@ import regional_mom6 as rmom6
 import datetime as dt
 import os
 
+
 def file_with_prefix_exists(directory, prefix):
     for filename in os.listdir(directory):
         if filename.startswith(prefix):
@@ -15,7 +16,11 @@ def file_with_prefix_exists(directory, prefix):
 
 
 def test_case_init(
-    gen_grid_topo_vgrid, tmp_path, is_github_actions, get_cesm_root_path, is_glade_file_system
+    gen_grid_topo_vgrid,
+    tmp_path,
+    is_github_actions,
+    get_cesm_root_path,
+    is_glade_file_system,
 ):
 
     # Set Grid Info
@@ -29,7 +34,7 @@ def test_case_init(
     caseroot, inputdir = tmp_path / "case", tmp_path / "inputdir"
     project_num = "NCGD0011"
     override = True
-    inittime = "1850" 
+    inittime = "1850"
     datm_mode = "JRA"
     datm_grid_name = "TL319"
     ninst = 2
