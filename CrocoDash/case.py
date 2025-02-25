@@ -9,6 +9,8 @@ from CrocoDash.topo import Topo
 from CrocoDash.vgrid import VGrid
 from CrocoDash.data_access import driver as dv
 from CrocoDash.data_access import tables as tb
+from CrocoDash.data_access import driver as dv
+from CrocoDash.data_access import tables as tb
 from ProConPy.config_var import ConfigVar, cvars
 from ProConPy.stage import Stage
 from ProConPy.csp_solver import csp
@@ -351,10 +353,12 @@ class Case:
             )
 
         forcing_path = self.inputdir / self.forcing_product_name
+        forcing_path = self.inputdir / self.forcing_product_name
 
         # check all the boundary files are present:
         if process_initial_condition and not (forcing_path / "ic_unprocessed.nc").exists():
             raise FileNotFoundError(
+                f"Initial condition file ic_unprocessed.nc not found in {forcing_path}. "
                 f"Initial condition file ic_unprocessed.nc not found in {forcing_path}. "
                 "Please make sure to execute get_glorys_data.sh script as described in "
                 "the message printed by configure_forcings()."
