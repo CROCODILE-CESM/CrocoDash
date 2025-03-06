@@ -44,8 +44,8 @@ def get_glorys_data_from_rda(
         xr.open_mfdataset(ds_in_files, decode_times=False)
         .drop_vars(drop_var_lst)
         .sel(
-            latitude=slice(lat_min - 0.5, lat_max + 0.5),
-            longitude=slice(lon_min - 0.5, lon_max + 0.5),
+            latitude=slice(lat_min - 1, lat_max + 1),
+            longitude=slice(lon_min - 1, lon_max + 1),
         )
     )
 
