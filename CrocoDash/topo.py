@@ -2,6 +2,7 @@ import xarray as xr
 
 from mom6_bathy.topo import Topo as mom6_bathy_Topo
 import regional_mom6 as rmom6
+from pathlib import Path
 
 
 class Topo(mom6_bathy_Topo):
@@ -14,7 +15,8 @@ class Topo(mom6_bathy_Topo):
         latitude_coordinate_name,
         vertical_coordinate_name,
         fill_channels=False,
-        positive_down=False
+        positive_down=False,
+        write_to_file=False
     ):
 
         expt = rmom6.experiment.create_empty()
@@ -34,7 +36,11 @@ class Topo(mom6_bathy_Topo):
             self._grid._supergrid.x.min(),
             self._grid._supergrid.x.max(),
         ]
-
+        if write_to_file:
+            expt.mom_input_dir = Path("")
+        print(
+            "If bathymetry setup fails, rerun this function with write_to_file = True"
+        )
         self._depth = expt.setup_bathymetry(
             bathymetry_path=file_path,
             longitude_coordinate_name=longitude_coordinate_name,
@@ -42,5 +48,5 @@ class Topo(mom6_bathy_Topo):
             vertical_coordinate_name=vertical_coordinate_name,
             fill_channels=fill_channels,
             positive_down=positive_down,
-            write_to_file=False,
+            write_to_file=write_to_file,
         ).depth
