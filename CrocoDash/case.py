@@ -2,6 +2,7 @@ from pathlib import Path
 import uuid
 import shutil
 from datetime import datetime
+import json
 
 import regional_mom6 as rmom6
 from CrocoDash.grid import Grid
@@ -372,11 +373,32 @@ class Case:
                         key + "_unprocessed.nc",
                     )
         else:
+            # Setup folder path
+            large_data_workflow_path = self.inputdir / self.forcing_product_name/ "large_data_workflow"
+            
+            # Copy large data workflow folder there
+            shutil.copytree(Path(__file__).parent / "data_access" / "large_data_workflow", large_data_workflow_path)
+
+            # Set Vars
+            date_format = "%Y%m%d"
             # Write Config File
-            # Copy Folder of Large Data Workflow
-            # Write supergrid file there as well.
-            # Write Config File here
-            x=1
+            config = {
+                        "paths": {
+                            "raw_dataset_path": large_data_workflow_path/"raw_data",
+                            "hgrid_path": self.inputdir / "ocnice" / f"ocean_hgrid_{self.ocn_grid.name}_{self.session_id}.nc",
+                            "output_path":  large_data_workflow_path/"regridded_data"
+                        },
+                        "raw_file_regex": {
+                            "raw_dataset_pattern": "(north|east|south|west)_unprocessed\\.(\\d{8})_(\\d{8})\\.nc",
+                            "regridded_dataset_pattern": "forcing_obc_segment_(\\d{3})_(\\d{8})_(\\d{8})\\.nc"
+                        },
+                        "dates": {"start": datetime.strptime(self.expt.date_range[0], "%Y-%m-%d").strftime(date_format), "end": datetime.strptime(self.expt.date_range[1], "%Y-%m-%d").strftime(date_format), "format": "%Y%m%d"},
+                        "varnames": self.ProductFunctionRegistry.forcing_varnames_config[self.forcing_product_name.upper()],
+                        "boundary_number_conversion": {item: idx for idx, item in enumerate(self.boundaries)},
+                        "params": {"step": 5}
+                    }
+            with open(large_data_workflow_path / "config.json", "w") as f:
+                json.dump(config, f)
         self._configure_forcings_called = True
 
     def process_forcings(
@@ -386,6 +408,11 @@ class Case:
         process_velocity_tracers=True,
     ):
         """Process the boundary conditions and tides for the MOM6 case."""
+
+        if self._large_data_workflow_called and process_velocity_tracers:
+            process_velocity_tracers = False
+            print(f"Large data workflow was called, so boundary conditions will not be processed. Please make sure to execute large_data_workflow as described in {self.inputdir / self.forcing_product_name/ "large_data_workflow"}")
+
 
         if not self._configure_forcings_called:
             raise RuntimeError(
