@@ -8,9 +8,9 @@ from CrocoDash.grid import Grid
 from CrocoDash.topo import Topo
 from CrocoDash.vgrid import VGrid
 from CrocoDash.data_access import driver as dv
-from CrocoDash.data_access import tables as tb
+from CrocoDash.data_access import config as tb
 from CrocoDash.data_access import driver as dv
-from CrocoDash.data_access import tables as tb
+from CrocoDash.data_access import config as tb
 from ProConPy.config_var import ConfigVar, cvars
 from ProConPy.stage import Stage
 from ProConPy.csp_solver import csp
@@ -112,6 +112,7 @@ class Case:
         self.ProductFunctionRegistry = dv.ProductFunctionRegistry()
         self.forcing_product_name = None
         self._configure_forcings_called = False
+        self._large_data_workflow_called = False
 
         # Construct the compset long name
         self.compset = f"{inittime}_DATM%{datm_mode}_SLND_SICE_MOM6_SROF_SGLC_SWAV_SESP"
@@ -262,8 +263,12 @@ class Case:
         tpxo_velocity_filepath: str | Path | None = None,
         product_name: str = "GLORYS",
         function_name: str = "get_glorys_data_script_for_cli",
+        too_much_data: bool = False
     ):
         """Configure the boundary conditions and tides for the MOM6 case."""
+
+        if too_much_data:
+            self._large_data_workflow_called = True
         self.ProductFunctionRegistry.load_functions()
         assert (
             tb.category_of_product(product_name) == "forcing"
@@ -343,30 +348,35 @@ class Case:
             if forcing_dir_path.exists():
                 shutil.rmtree(forcing_dir_path)
         forcing_dir_path.mkdir(exist_ok=False)
-
-        boundary_info = dv.get_rectangular_segment_info(self.ocn_grid)
-        for key in boundary_info.keys():
-            if key in self.boundaries:
-                self.ProductFunctionRegistry.functions[product_name][function_name](
-                    date_range,
-                    boundary_info[key]["lat_min"],
-                    boundary_info[key]["lat_max"],
-                    boundary_info[key]["lon_min"],
-                    boundary_info[key]["lon_max"],
-                    forcing_dir_path,
-                    key + "_unprocessed.nc",
-                )
-            elif key == "ic":
-                self.ProductFunctionRegistry.functions[product_name][function_name](
-                    [date_range[0], date_range[0]],
-                    boundary_info[key]["lat_min"],
-                    boundary_info[key]["lat_max"],
-                    boundary_info[key]["lon_min"],
-                    boundary_info[key]["lon_max"],
-                    forcing_dir_path,
-                    key + "_unprocessed.nc",
-                )
-
+        if not self._large_data_workflow_called:
+            boundary_info = dv.get_rectangular_segment_info(self.ocn_grid)
+            for key in boundary_info.keys():
+                if key in self.boundaries:
+                    self.ProductFunctionRegistry.functions[product_name][function_name](
+                        date_range,
+                        boundary_info[key]["lat_min"],
+                        boundary_info[key]["lat_max"],
+                        boundary_info[key]["lon_min"],
+                        boundary_info[key]["lon_max"],
+                        forcing_dir_path,
+                        key + "_unprocessed.nc",
+                    )
+                elif key == "ic":
+                    self.ProductFunctionRegistry.functions[product_name][function_name](
+                        [date_range[0], date_range[0]],
+                        boundary_info[key]["lat_min"],
+                        boundary_info[key]["lat_max"],
+                        boundary_info[key]["lon_min"],
+                        boundary_info[key]["lon_max"],
+                        forcing_dir_path,
+                        key + "_unprocessed.nc",
+                    )
+        else:
+            # Write Config File
+            # Copy Folder of Large Data Workflow
+            # Write supergrid file there as well.
+            # Write Config File here
+            x=1
         self._configure_forcings_called = True
 
     def process_forcings(
@@ -409,21 +419,8 @@ class Case:
                 )
 
         # Define a mapping from the GLORYS variables and dimensions to the MOM6 ones
-        if self.forcing_product_name == ("GLORYS").lower():
-            ocean_varnames = {
-                "time": "time",
-                "yh": "latitude",
-                "xh": "longitude",
-                "zl": "depth",
-                "eta": "zos",
-                "u": "uo",
-                "v": "vo",
-                "tracers": {"salt": "so", "temp": "thetao"},
-            }
-        else:
-            raise ValueError(
-                f"forcing product {self.forcing_product_name} ocean varnames not yet supported"
-            )
+        ocean_varnames = self.ProductFunctionRegistry.forcing_varnames_config[self.forcing_product_name]
+
 
         # Set up the initial condition
         if process_initial_condition:

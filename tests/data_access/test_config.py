@@ -1,4 +1,4 @@
-from CrocoDash.data_access import tables as tb
+from CrocoDash.data_access import config as tb
 import pytest
 
 
@@ -7,6 +7,9 @@ def test_load_tables():
     assert "GLORYS" in products["Product_Name"].values
     assert "GLORYS" in functions["Product_Name"].values
 
+def test_load_varnames_config():
+    config = tb.load_varnames_config()
+    assert "GLORYS" in config.keys()
 
 def test_list_products():
     products = tb.list_products()
