@@ -386,33 +386,29 @@ class Case:
 
             # Set Vars
             date_format = "%Y%m%d"
+            hgrid_name = f"ocean_hgrid_{self.ocn_grid.name}_{cvars["MB_ATTEMPT_ID"].value}.nc"
+            hgrid_path = str(self.inputdir / "ocnice" / hgrid_name)
             # Write Config File
             config = {
                 "paths": {
-                    "raw_dataset_path": large_data_workflow_path / "raw_data",
-                    "hgrid_path": self.inputdir
-                    / "ocnice"
-                    / f"ocean_hgrid_{self.ocn_grid.name}_{self.session_id}.nc",
-                    "output_path": large_data_workflow_path / "regridded_data",
+                    "raw_dataset_path": str(large_data_workflow_path / "raw_data"),
+                    "hgrid_path": hgrid_path,
+                    "output_path": str(large_data_workflow_path / "regridded_data"),
                 },
                 "raw_file_regex": {
                     "raw_dataset_pattern": "(north|east|south|west)_unprocessed\\.(\\d{8})_(\\d{8})\\.nc",
                     "regridded_dataset_pattern": "forcing_obc_segment_(\\d{3})_(\\d{8})_(\\d{8})\\.nc",
                 },
                 "dates": {
-                    "start": datetime.strptime(
-                        self.expt.date_range[0], "%Y-%m-%d"
-                    ).strftime(date_format),
-                    "end": datetime.strptime(
-                        self.expt.date_range[1], "%Y-%m-%d"
-                    ).strftime(date_format),
+                    "start": self.expt.date_range[0].strftime(date_format),
+                    "end": self.expt.date_range[1].strftime(date_format),
                     "format": "%Y%m%d",
                 },
                 "varnames": self.ProductFunctionRegistry.forcing_varnames_config[
                     self.forcing_product_name.upper()
                 ],
                 "boundary_number_conversion": {
-                    item: idx for idx, item in enumerate(self.boundaries)
+                    item: idx + 1 for idx, item in enumerate(self.boundaries)
                 },
                 "params": {"step": 5},
             }
