@@ -419,7 +419,7 @@ class Case:
                 )
 
         # Define a mapping from the GLORYS variables and dimensions to the MOM6 ones
-        ocean_varnames = self.ProductFunctionRegistry.forcing_varnames_config[self.forcing_product_name]
+        ocean_varnames = self.ProductFunctionRegistry.forcing_varnames_config[self.forcing_product_name.upper()]
 
 
         # Set up the initial condition
