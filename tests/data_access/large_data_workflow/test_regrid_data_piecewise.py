@@ -2,7 +2,7 @@ from pathlib import Path
 from CrocoDash.data_access.large_data_workflow import regrid_boundaries as rb
 from CrocoDash.data_access import driver as dv
 
-
+@pytest.mark.slow
 def test_regrid_data_piecewise(
     generate_piecewise_raw_data, dummy_forcing_factory, tmp_path, get_rect_grid
 ):
