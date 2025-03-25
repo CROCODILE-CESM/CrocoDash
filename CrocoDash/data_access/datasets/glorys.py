@@ -23,26 +23,33 @@ def get_glorys_data_from_rda(
     lon_max,
     output_dir=Path(""),
     output_file="raw_glorys.nc",
+    dataset_varnames = ["time","latitude","longitude","depth","zos","uo","vo","so","thetao"]
 ) -> xr.Dataset:
     """
     Gather GLORYS Data on Derecho Computers from the campaign storage and return the dataset sliced to the llc and urc coordinates at the specific dates
     """
     path = Path(output_dir) / output_file
     logger.info(f"Downloading Glorys data from RDA to {path}")
-    # Set Variables That Can Be Dropped
-    drop_var_lst = ["mlotst", "bottomT", "sithick", "siconc", "usi", "vsi"]
+    
+    # No longer using .drop_vars in favor of dataset_varnames to keep variables
+    #drop_var_lst = ["mlotst", "bottomT", "sithick", "siconc", "usi", "vsi"]
+    
     dates = pd.date_range(start=dates[0], end=dates[1]).to_pydatetime().tolist()
     # Access RDA Path
     ds_in_path = "/glade/campaign/collections/rda/data/d010049/"
     ds_in_files = []
     date_strings = [date.strftime("%Y%m%d") for date in dates]
+    
+    # Adjust lat lon inputs to make sure they are in the correct range of -180 to 180
+    lat_lon = [lat_min, lat_max, lon_min, lon_max]
+    lat_min, lat_max, lon_min, lon_max = [(num-360) if num > 180 else num for num in lat_lon]
+    
     for date in date_strings:
         pattern = os.path.join(ds_in_path, "**", f"*_{date}_*.nc")
         ds_in_files.extend(glob.glob(pattern, recursive=True))
     ds_in_files = sorted(ds_in_files)
     dataset = (
-        xr.open_mfdataset(ds_in_files, decode_times=False)
-        .drop_vars(drop_var_lst)
+        xr.open_mfdataset(ds_in_files, decode_times=False)[dataset_varnames]
         .sel(
             latitude=slice(lat_min - 1, lat_max + 1),
             longitude=slice(lon_min - 1, lon_max + 1),
