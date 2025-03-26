@@ -11,7 +11,7 @@ from pathlib import Path
 from CrocoDash.data_access.utils import fill_template
 import pandas as pd
 from ..utils import setup_logger
-
+from .utils import convert_lons_to_180_range
 logger = setup_logger(__name__)
 
 
@@ -30,9 +30,7 @@ def get_glorys_data_from_rda(
     """
     path = Path(output_dir) / output_file
     logger.info(f"Downloading Glorys data from RDA to {path}")
-    
-    # No longer using .drop_vars in favor of dataset_varnames to keep variables
-    #drop_var_lst = ["mlotst", "bottomT", "sithick", "siconc", "usi", "vsi"]
+
     
     dates = pd.date_range(start=dates[0], end=dates[1]).to_pydatetime().tolist()
     # Access RDA Path
@@ -41,8 +39,8 @@ def get_glorys_data_from_rda(
     date_strings = [date.strftime("%Y%m%d") for date in dates]
     
     # Adjust lat lon inputs to make sure they are in the correct range of -180 to 180
-    lat_lon = [lat_min, lat_max, lon_min, lon_max]
-    lat_min, lat_max, lon_min, lon_max = [(num-360) if num > 180 else num for num in lat_lon]
+    lons = [lon_min, lon_max]
+    lon_min, lon_max = convert_lons_to_180_range(lons)
     
     for date in date_strings:
         pattern = os.path.join(ds_in_path, "**", f"*_{date}_*.nc")
@@ -68,13 +66,13 @@ def get_glorys_data_from_cds_api(
     lon_max,
     output_dir=None,
     output_file=None,
+    dataset_varnames = ["zos","uo","vo","so","thetao"]
 ):
     """
     Using the copernucismarine api, query GLORYS data (any dates)
     """
     start_datetime = dates[0]
     end_datetime = dates[-1]
-    variables = ["so", "uo", "vo", "zos", "thetao"]
     dataset_id = "cmems_mod_glo_phy_my_0.083deg_P1D-m"
     response = copernicusmarine.subset(
         dataset_id=dataset_id,
@@ -84,7 +82,7 @@ def get_glorys_data_from_cds_api(
         maximum_latitude=lat_max,
         start_datetime=start_datetime,
         end_datetime=end_datetime,
-        variables=variables,
+        variables=dataset_varnames,
         output_directory=output_dir,
         output_filename=output_file,
     )

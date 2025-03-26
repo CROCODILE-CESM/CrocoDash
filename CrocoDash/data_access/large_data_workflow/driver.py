@@ -12,6 +12,10 @@ def main():
     with open(config_path, "r") as f:
         config = json.load(f)
     print("Config:", config)
+
+    # Check step size makes sense
+    if config["params"]["step"] <= 0:
+        raise ValueError("step must be a positive integer.")
     # Call raw data getter
 
     # Call regrid data getter
