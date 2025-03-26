@@ -1,5 +1,6 @@
 import logging
 import sys
+import json
 
 
 def fill_template(template_path, output_path, **kwargs):
@@ -57,3 +58,20 @@ def setup_logger(name):
         # Add the handler to the logger
         logger.addHandler(handler)
     return logger
+
+def load_config(config_path: str = "config.json") -> dict:
+    """
+    Load a JSON config file.
+
+    Parameters
+    ----------
+    config_path : str, optional
+        Path to the JSON config file. Default is "config.json".
+
+    Returns
+    -------
+    dict
+        The loaded configuration as a dictionary.
+    """
+    with open(config_path, "r", encoding="utf-8") as f:
+        return json.load(f)
