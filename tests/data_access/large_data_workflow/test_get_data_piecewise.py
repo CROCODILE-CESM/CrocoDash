@@ -1,7 +1,8 @@
 from CrocoDash.data_access.large_data_workflow.code import get_data_piecewise as dp
 import os
+import pytest
 
-
+@pytest.mark.slow
 def test_get_data_piecewise(tmp_path, get_rect_grid, skip_if_not_glade):
     grid = get_rect_grid
     hgrid_path = tmp_path / "hgrid.nc"
@@ -21,6 +22,7 @@ def test_get_data_piecewise(tmp_path, get_rect_grid, skip_if_not_glade):
     assert os.path.exists(tmp_path / "east_unprocessed.20200101_20200106.nc")
     assert os.path.exists(tmp_path / "south_unprocessed.20200201_20200201.nc")
 
+    # This extra call takes a while to run
     dp.get_data_piecewise(
         "GLORYS",
         "get_glorys_data_from_rda",
