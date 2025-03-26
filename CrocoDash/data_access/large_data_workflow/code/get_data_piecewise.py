@@ -3,13 +3,9 @@ from CrocoDash import utils
 from CrocoDash.data_access.driver import get_rectangular_segment_info
 from CrocoDash.data_access.utils import load_config
 from CrocoDash.data_access import driver as dv
-import importlib
-import json
-import re
-import os
-from datetime import datetime
 import xarray as xr
 import pandas as pd
+from datetime import datetime, timedelta
 
 logger = utils.setup_logger(__name__)
 
@@ -40,34 +36,36 @@ def get_data_piecewise(
     dates = (
         pd.date_range(start=start_date, end=end_date, freq=f"{step_days}D")
         .to_pydatetime()
-        .tolist
+        .tolist()
     )
 
     # Add the end date manually if not included
-    if dates[-1] != pd.to_datetime(end_date):
-        dates = dates.append(pd.to_datetime([end_date]))
+    if dates[-1] != datetime.strptime(start_date, date_format):
+        dates.append(datetime.strptime(end_date, date_format))
 
-    date_strings = [date.strftime(date_format) for date in dates]
-    num_files = len(date_strings) - 1
+    num_files = len(dates) - 1
 
     logger.info(
         f"Downloading {product_name} data using {function_name} from {dates[0]} to {dates[-1]}."
     )
     logger.info(
-        f"Using step size {step_days}, this will result in {num_files} total files."
+        f"Using step size {step_days}, this will result in {num_files} per boundary total files."
     )
 
+    # Set up the first start_date starter
+    start_date = dates[0]
     # Calling File Retrieval
-    for ind in range(len(date_strings) - 1):
+    for ind in range(len(dates) - 1):
+        end_date = dates[ind + 1]
+        start_date_str = start_date.strftime(date_format)
+        end_date_str = end_date.strftime(date_format)
         for boundary in boundary_number_conversion.keys():
-            ## Ideally we do the boundary parsing in get_glorys_from_rda for memory and open/closing efficiency
-            latlon_info = boundary_info[boundary]
-            output_file = (
-                f"{boundary}_unprocessed.{date_strings[ind]}_{date_strings[ind+1]}.nc"
-            )
 
-            path = func(
-                dates=[date_strings[ind], date_strings[ind + 1]],
+            latlon_info = boundary_info[boundary]
+            output_file = f"{boundary}_unprocessed.{start_date_str}_{end_date_str}.nc"
+
+            func(
+                dates=[start_date_str, end_date_str],
                 lat_min=latlon_info["lat_min"],
                 lat_max=latlon_info["lat_max"],
                 lon_min=latlon_info["lon_min"],
@@ -75,9 +73,10 @@ def get_data_piecewise(
                 output_dir=output_dir,
                 output_file=output_file,
             )
+        start_date = end_date + timedelta(days=1)
 
     logger.info(
-        f"Successfull retrieved {product_name} data located in {output_dir} directory."
+        f"Successfully retrieved {product_name} data located in {output_dir} directory."
     )
 
 

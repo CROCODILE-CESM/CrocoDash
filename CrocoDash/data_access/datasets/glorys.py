@@ -39,8 +39,7 @@ def get_glorys_data_from_rda(
     date_strings = [date.strftime("%Y%m%d") for date in dates]
     
     # Adjust lat lon inputs to make sure they are in the correct range of -180 to 180
-    lons = [lon_min, lon_max]
-    lon_min, lon_max = convert_lons_to_180_range(lons)
+    lon_min, lon_max = convert_lons_to_180_range(lon_min, lon_max)
     
     for date in date_strings:
         pattern = os.path.join(ds_in_path, "**", f"*_{date}_*.nc")
