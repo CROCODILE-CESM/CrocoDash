@@ -45,6 +45,8 @@ def get_data_piecewise(
         The directory to save the output NetCDF files.
     boundary_number_conversion : dict
         Dictionary mapping boundaries to their numerical identifiers.
+    preview : bool
+        Whether or not to preview the run, default is false
 
     Raises
     ------
