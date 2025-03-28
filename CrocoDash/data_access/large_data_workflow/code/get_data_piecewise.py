@@ -17,10 +17,45 @@ def get_data_piecewise(
     start_date: str,
     end_date: str,
     hgrid_path: str | Path,
-    step_days: int,  # step increment for chunking data
+    step_days: int,
     output_dir: str | Path,
-    boundary_number_conversion: dict,  # doesn't need to be the full dict, but we need to know which boundaries to get
+    boundary_number_conversion: dict,
+    preview: bool = False,
 ):
+    """
+    Retrieves and saves data in piecewise chunks for each boundary over a date range.
+
+    Parameters
+    ----------
+    product_name : str
+        The name of the data product to retrieve.
+    function_name : str
+        The function to call for retrieving data.
+    date_format : str
+        The date format string (e.g., "%Y-%m-%d").
+    start_date : str
+        The start date in the specified format.
+    end_date : str
+        The end date in the specified format.
+    hgrid_path : str or Path
+        Path to the hgrid file containing the regional grid.
+    step_days : int
+        The number of days in each data chunk.
+    output_dir : str or Path
+        The directory to save the output NetCDF files.
+    boundary_number_conversion : dict
+        Dictionary mapping boundaries to their numerical identifiers.
+
+    Raises
+    ------
+    ValueError
+        If the product or function is not found in the registry.
+
+    Returns
+    -------
+    None
+        Saves the retrieved data to the specified output directory.
+    """
 
     ## Initialize PFD
     ProductFunctionRegistry = dv.ProductFunctionRegistry()
@@ -49,12 +84,13 @@ def get_data_piecewise(
         f"Downloading {product_name} data using {function_name} from {dates[0]} to {dates[-1]}."
     )
     logger.info(
-        f"Using step size {step_days}, this will result in {num_files} per boundary total files."
+        f"Using step size {step_days}, this will result in {num_files} files per boundary."
     )
 
     # Set up the first start_date starter
     start_date = dates[0]
-    # Calling File Retrieval
+    output_file_names = []
+    # Retrieve and save data piecewise
     for ind in range(len(dates) - 1):
         end_date = dates[ind + 1]
         start_date_str = start_date.strftime(date_format)
@@ -63,24 +99,46 @@ def get_data_piecewise(
 
             latlon_info = boundary_info[boundary]
             output_file = f"{boundary}_unprocessed.{start_date_str}_{end_date_str}.nc"
+            output_file_names.append(output_file)
+            # Execute the data retrieval function
+            if not preview:
+                func(
+                    dates=[start_date_str, end_date_str],
+                    lat_min=latlon_info["lat_min"],
+                    lat_max=latlon_info["lat_max"],
+                    lon_min=latlon_info["lon_min"],
+                    lon_max=latlon_info["lon_max"],
+                    output_dir=output_dir,
+                    output_file=output_file,
+                )
 
-            func(
-                dates=[start_date_str, end_date_str],
-                lat_min=latlon_info["lat_min"],
-                lat_max=latlon_info["lat_max"],
-                lon_min=latlon_info["lon_min"],
-                lon_max=latlon_info["lon_max"],
-                output_dir=output_dir,
-                output_file=output_file,
-            )
         start_date = end_date + timedelta(days=1)
 
-    logger.info(
-        f"Successfully retrieved {product_name} data located in {output_dir} directory."
-    )
+    if not preview:
+        logger.info(
+            f"Successfully retrieved {product_name} data located in {output_dir} directory."
+        )
+    if preview:
+        return {
+            "dates": dates,
+            "output_file_names": output_file_names,
+            "output_folder": output_dir 
+        }
 
 
 def main(config_file):
+    """
+    Main function to run the large dataset workflow using a configuration file.
+
+    Parameters
+    ----------
+    config_file : str or Path
+        Path to the configuration JSON file.
+
+    Returns
+    -------
+    None
+    """
     print("Starting Large Dataset Workflow")
     config = load_config(config_file)
 
@@ -92,11 +150,10 @@ def main(config_file):
         start_date=config["dates"]["start"],
         end_date=config["dates"]["end"],
         hgrid_path=config["paths"]["hgrid_path"],
-        step_days=int(config["params"]["step"]),  # step increment for chunking data
+        step_days=int(config["params"]["step"]),
         output_dir=config["paths"]["raw_dataset_path"],
-        boundary_number_conversion=config[
-            "boundary_number_conversion"
-        ],  # doesn't need to be the full dict, but we need to know which boundaries to get
+        boundary_number_conversion=config["boundary_number_conversion"],
+        preview=config["params"]["preview"],
     )
 
 
