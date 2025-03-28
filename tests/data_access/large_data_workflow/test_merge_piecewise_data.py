@@ -1,11 +1,9 @@
 from pathlib import Path
 from CrocoDash.data_access.large_data_workflow.code import merge_piecewise_dataset as md
 from CrocoDash.data_access import driver as dv
-import pytest
 import xarray as xr
-import numpy as np
 from datetime import datetime
-
+import os
 
 def test_merge_piecewise_data(
     generate_piecewise_raw_data, tmp_path, dummy_mom6_obc_data_factory, get_rect_grid
@@ -63,3 +61,23 @@ def test_merge_piecewise_data(
         assert (ds_path).exists()
         ds = xr.open_dataset(ds_path)
         assert len(ds["time"].values) == (end_date - start_date).days + 1
+        os.remove(ds_path)
+    # Regrid data
+    md.merge_piecewise_dataset(
+        regridded_data_path,
+        "forcing_obc_segment_(\\d{3})_(\\d{8})_(\\d{8})\\.nc",
+        "%Y%m%d",
+        "20200101",
+        "20200107",
+        {"east": 1, "south": 2},
+        output_folder,
+    )
+    start_date = datetime.strptime("20200101", "%Y%m%d")
+    end_date = datetime.strptime("20200107", "%Y%m%d")
+    ## Check Output by checking the existence of two files, which checks the files are saved in the right place and of the correct date format ##
+    for boundary_str in ["001", "002"]:
+        ds_path = output_folder / "forcing_obc_segment_{}.nc".format(boundary_str)
+        assert (ds_path).exists()
+        ds = xr.open_dataset(ds_path)
+        assert len(ds["time"].values) >= (end_date - start_date).days + 1
+    
