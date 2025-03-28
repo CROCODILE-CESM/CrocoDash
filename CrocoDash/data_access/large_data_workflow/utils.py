@@ -1,6 +1,9 @@
 import json
-
-
+import os
+import re
+from pathlib import Path
+from collections import defaultdict
+from datetime import datetime
 
 def load_config(config_path: str = "config.json") -> dict:
     """
@@ -38,3 +41,67 @@ def write_config(config: dict, config_path: str = "config.json") -> None:
         json.dump(config, f, indent=4, sort_keys=True)
     
 
+
+
+def parse_dataset_folder(
+    folder: str | Path, input_dataset_regex: str, date_format: str
+):
+    """
+    Parse a folder to find and extract dataset file information based on a regex pattern.
+
+    Parameters
+    ----------
+    folder : str or Path
+        Path to the folder containing the dataset files.
+    input_dataset_regex : str
+        Regular expression pattern to match dataset filenames.
+        Example: `"(north|east|south|west)_unprocessed\\.(\\d{8})_(\\d{8})\\.nc"`
+    date_format : str
+        Date format string used to parse dates in filenames (e.g., "%Y%m%d").
+
+    Returns
+    -------
+    dict
+        Dictionary mapping boundaries to a list of tuples with:
+        - Start date (`datetime`)
+        - End date (`datetime`)
+        - Full file path (`Path`)
+
+        Example:
+        {
+            "north": [(datetime(2000, 1, 1), datetime(2000, 1, 2), Path("/path/to/north_20000101_20000102.nc"))],
+            "east": [(datetime(2000, 1, 3), datetime(2000, 1, 4), Path("/path/to/east_20000103_20000104.nc"))]
+        }
+
+    """
+    # Dictionary to store boundary info
+    boundary_file_list = defaultdict(list)
+
+    # Regex Pattern for the dataset
+    pattern = re.compile(input_dataset_regex)
+
+    # Iterate through the folder provided for dataset files
+    for file in os.listdir(folder):
+
+        # Get File Path
+        file_path = os.path.join(folder, file)
+
+        # Check if file matches
+        match = pattern.match(file)
+        if match:
+
+            # Extract information
+            boundary, start_date, end_date = match.groups()
+
+            # Convert dates to datetime objects
+            start_date = datetime.strptime(start_date, date_format)
+            end_date = datetime.strptime(end_date, date_format)
+
+            # Append (file path, start date, end date)
+            boundary_file_list[boundary].append((start_date, end_date, file_path))
+
+    # Sort the date ranges for each boundary
+    for boundary in boundary_file_list:
+        boundary_file_list[boundary].sort()
+
+    return boundary_file_list
