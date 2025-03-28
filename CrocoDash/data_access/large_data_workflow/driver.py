@@ -3,20 +3,61 @@ import json
 from pathlib import Path
 
 sys.path.append("code")
+import merge_piecewise_dataset as mpd
+import get_dataset_piecewise as gdp
+import regrid_dataset_piecewise as rdp
 
 
 def main():
-    # Read in config
+    """
+    Driver file to run the large data workflow
+    """
     workflow_dir = Path(__file__).parent
+
+    # Read in config
     config_path = workflow_dir / "config.json"
     with open(config_path, "r") as f:
         config = json.load(f)
-    print("Config:", config)
-    # Call raw data getter
 
-    # Call regrid data getter
+    # Call get_dataset_piecewise
+    gdp.get_data_piecewise(
+        product_name=config["forcing"]["product_name"],
+        function_name=config["forcing"]["function_name"],
+        date_format=config["dates"]["format"],
+        start_date=config["dates"]["start"],
+        end_date=config["dates"]["end"],
+        hgrid_path=config["paths"]["hgrid_path"],
+        step_days=int(config["params"]["step"]),
+        output_dir=config["paths"]["raw_dataset_path"],
+        boundary_number_conversion=config["boundary_number_conversion"],
+        preview=config["params"]["preview"],
+    )
 
-    # Call data merger
+    # Call regrid_dataset_piecewise
+    rdp.regrid_dataset_piecewise(
+        config["paths"]["raw_dataset_path"],
+        config["raw_file_regex"]["raw_dataset_pattern"],
+        config["dates"]["format"],
+        config["dates"]["start"],
+        config["dates"]["end"],
+        config["paths"]["hgrid_path"],
+        config["varnames"],
+        config["paths"]["regridded_dataset_path"],
+        config["boundary_number_conversion"],
+        config["params"]["preview"],
+    )
+
+    # Call merge_dataset_piecewise
+    mpd.merge_piecewise_dataset(
+        config["paths"]["raw_dataset_path"],
+        config["raw_file_regex"]["regridded_dataset_pattern"],
+        config["dates"]["format"],
+        config["dates"]["start"],
+        config["dates"]["end"],
+        config["boundary_number_conversion"],
+        config["paths"]["merged_dataset_path"],
+        config["params"]["preview"],
+    )
     return
 
 
