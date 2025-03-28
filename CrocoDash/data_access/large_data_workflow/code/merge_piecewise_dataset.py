@@ -19,8 +19,40 @@ def merge_piecewise_dataset(
     end_date: str,
     boundary_number_conversion: dict,
     output_folder: str | Path,
+    preview: bool = False,
 ):
-    """ """
+    """
+    Merges piecewise datasets from a folder into consolidated NetCDF files by boundary.
+
+    Parameters
+    ----------
+    folder : str or Path
+        Path to the folder containing the regridded dataset files.
+    input_dataset_regex : str
+        Regular expression pattern to match dataset files.
+    date_format : str
+        Date format string used for parsing the dataset filenames.
+    start_date : str
+        Start date in the specified format.
+    end_date : str
+        End date in the specified format.
+    boundary_number_conversion : dict
+        Dictionary mapping boundary segment numbers to their labels.
+    output_folder : str or Path
+        Directory to save the merged NetCDF files.
+    preview : bool, optional
+        Whether to run in preview mode without saving (default is False).
+
+    Raises
+    ------
+    ValueError
+        If a segment in `boundary_number_conversion` is not found in the dataset folder.
+
+    Returns
+    -------
+    None
+        Saves the merged NetCDF files to the specified output folder.
+    """
     logger.info("Parsing Regridded Data Folder")
     # Parse data folder and find required files
     start_date = datetime.strptime(start_date, date_format)
@@ -44,17 +76,27 @@ def merge_piecewise_dataset(
 
     # Merge Files
     logger.info("Merging Files")
+    output_file_names = []
     for boundary in boundary_list:
-        ds = xr.open_mfdataset(
-            matching_files[boundary],
-            combine="nested",
-            concat_dim="time",
-            coords="minimal",
-        )
-        output_path = Path(output_folder) / f"forcing_obc_segment_{boundary}.nc"
-        ds.to_netcdf(output_path)
-        ds.close()
-        logger.info(f"Saved {boundary} boundary at {output_path}")
+        output_file_name = f"forcing_obc_segment_{boundary}.nc"
+        output_path = Path(output_folder) / output_file_name
+        output_file_names.append(output_file_name)
+        if not preview:
+            ds = xr.open_mfdataset(
+                matching_files[boundary],
+                combine="nested",
+                concat_dim="time",
+                coords="minimal",
+            )
+            ds.to_netcdf(output_path)
+            ds.close()
+            logger.info(f"Saved {boundary} boundary at {output_path}")
+    if preview:
+        return {
+            "matching_files": matching_files,
+            "output_folder": output_folder,
+            "output_file_names": output_file_names,
+        }
 
 
 def main(config_path):
