@@ -85,6 +85,7 @@ def regrid_dataset_piecewise(
     dataset_varnames: dict,
     output_folder: str | Path,
     boundary_number_conversion: dict,
+    preview: bool = False
 ):
     """
     Find the required files, set up the necessary data, and regrid the dataset.
@@ -123,6 +124,8 @@ def regrid_dataset_piecewise(
             "south": 3,
             "west": 4
         }
+    preview :  bool
+        Whether or not to preview the run of this function, defaults to false
 
     Returns
     -------
@@ -164,16 +167,18 @@ def regrid_dataset_piecewise(
     expt.date_range = [start_date, None]
 
     logger.info("Starting regridding")
+    output_file_names = []
     # Do Regridding
     for boundary in matching_files.keys():
         for file_start, file_end, file_path in matching_files[boundary]:
             file_path = Path(file_path)
-            expt.setup_single_boundary(
-                file_path,
-                dataset_varnames,
-                boundary,
-                boundary_number_conversion[boundary],
-            )
+            if not preview:
+                expt.setup_single_boundary(
+                    file_path,
+                    dataset_varnames,
+                    boundary,
+                    boundary_number_conversion[boundary],
+                )
 
             # Rename output file
             output_file_path = (
@@ -182,18 +187,28 @@ def regrid_dataset_piecewise(
                     boundary_number_conversion[boundary]
                 )
             )
+
+            # Rename file
             boundary_str = f"{boundary_number_conversion[boundary]:03d}"
             file_start_date = file_start.strftime(date_format)
             file_end_date = file_end.strftime(date_format)
             filename_with_dates = "forcing_obc_segment_{}_{}_{}.nc".format(
                 boundary_str, file_start_date, file_end_date
             )
+            output_file_names.append(filename_with_dates)
             output_file_path_with_dates = expt.mom_input_dir / filename_with_dates
-            logger.info(f"Saving regridding file as {filename_with_dates}")
+            if not preview:
+                logger.info(f"Saving regridding file as {filename_with_dates}")
             os.rename(output_file_path, output_file_path_with_dates)
-
-    logger.info("Finished regridding")
-    return
+    if not preview:
+        logger.info("Finished regridding")
+        return
+    elif preview:
+        return {
+            "matching_files": matching_files,
+            "output_folder": expt.mom_input_dir,
+            "output_file_names": output_file_names
+        }
 
 
 def main(config_path):
@@ -208,6 +223,7 @@ def main(config_path):
         config["varnames"],
         config["paths"]["output_path"],
         config["boundary_number_conversion"],
+        config["params"]["preview"]
     )
     return
 

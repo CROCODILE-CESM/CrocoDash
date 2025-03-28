@@ -1,5 +1,5 @@
 from pathlib import Path
-from CrocoDash.data_access.large_data_workflow import regrid_boundaries as rb
+from CrocoDash.data_access.large_data_workflow.code import regrid_dataset_piecewise as rb
 from CrocoDash.data_access import driver as dv
 import pytest 
 
