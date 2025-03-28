@@ -7,6 +7,17 @@ import merge_piecewise_dataset as mpd
 import get_dataset_piecewise as gdp
 import regrid_dataset_piecewise as rdp
 
+def test_driver():
+    """Test that all the imports work"""
+    print("All Imports Work!")
+    # Test Config
+    workflow_dir = Path(__file__).parent
+    config_path = workflow_dir / "config.json"
+    with open(config_path, "r") as f:
+        config = json.load(f)
+    print("Config Loads!")
+    return
+    
 
 def main():
     """
@@ -62,4 +73,8 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+
+    if len(sys.argv) > 1 and sys.argv[1] == "test":
+        test_driver()
+    else:
+        main()
