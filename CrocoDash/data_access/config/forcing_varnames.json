@@ -1,0 +1,15 @@
+{
+    "GLORYS": {
+        "time": "time",
+        "yh": "latitude",
+        "xh": "longitude",
+        "zl": "depth",
+        "eta": "zos",
+        "u": "uo",
+        "v": "vo",
+        "tracers": {
+            "salt": "so",
+            "temp": "thetao"
+        }
+    }
+}
