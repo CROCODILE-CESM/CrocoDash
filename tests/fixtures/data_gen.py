@@ -135,7 +135,78 @@ def dummy_tidal_data():
 
     return ds_h, ds_u
 
+@pytest.fixture
+def dummy_mom6_obc_data_factory():
+    """
+    Factory fixture to create dummy OBC MOM6 formatted datasets with configurable latitudes.
+    """
+    def _create_dummy_mom6_obc_data(lat_min=30, lat_max=35, lon_min=30, lon_max=35, segment_number = 1):
+        latitude = np.linspace(lat_min, lat_max, 20)
+        longitude = np.linspace(lon_min, lon_max, 20)
+        time = np.arange(32)
 
+        # Define dimensions
+        time_dim = 32
+        nz_u_dim = 50
+        nz_v_dim = 50
+        nz_salt_dim = 50
+        nz_temp_dim = 50
+        nz_depth_dim = 50
+        nx_dim = 20
+        ny_dim = 20
+
+        # Lat/Lon ranges as arguments
+        lat_range = latitude  # Adjust as needed
+        lon_range = longitude  # Adjust as needed
+
+        # Create dummy data for variables
+        time = np.arange(time_dim)
+        u_segment = np.full((time_dim, nz_u_dim, ny_dim, nx_dim), 1.e+20)
+        v_segment = np.full((time_dim, nz_v_dim, ny_dim, nx_dim), 1.e+20)
+        eta_segment = np.full((time_dim, ny_dim, nx_dim), 1.e+20)
+        salt_segment = np.full((time_dim, nz_salt_dim, ny_dim, nx_dim), 1.e+20)
+        temp_segment = np.full((time_dim, nz_temp_dim, ny_dim, nx_dim), 1.e+20)
+        dz_salt_segment = np.full((time_dim, nz_salt_dim, ny_dim, nx_dim), 1.e+20)
+        dz_temp_segment = np.full((time_dim, nz_temp_dim, ny_dim, nx_dim), 1.e+20)
+        dz_u_segment = np.full((time_dim, nz_u_dim, ny_dim, nx_dim), 1.e+20)
+        dz_v_segment = np.full((time_dim, nz_v_dim, ny_dim, nx_dim), 1.e+20)
+        depth = np.full(nz_depth_dim, np.nan)
+
+        # Create xarray Dataset with dynamic segment_number
+        ds = xr.Dataset(
+            {
+                f"u_segment_{segment_number:03}": (["time", f"nz_segment_{segment_number:03}_u", "ny_segment_002", "nx_segment_002"], u_segment),
+                f"v_segment_{segment_number:03}": (["time", f"nz_segment_{segment_number:03}_v", "ny_segment_002", "nx_segment_002"], v_segment),
+                f"eta_segment_{segment_number:03}": (["time", "ny_segment_002", "nx_segment_002"], eta_segment),
+                f"salt_segment_{segment_number:03}": (["time", f"nz_segment_{segment_number:03}_salt", "ny_segment_002", "nx_segment_002"], salt_segment),
+                f"temp_segment_{segment_number:03}": (["time", f"nz_segment_{segment_number:03}_temp", "ny_segment_002", "nx_segment_002"], temp_segment),
+                f"dz_salt_segment_{segment_number:03}": (["time", f"nz_salt_segment_{segment_number:03}", "ny_segment_002", "nx_segment_002"], dz_salt_segment),
+                f"dz_temp_segment_{segment_number:03}": (["time", f"nz_temp_segment_{segment_number:03}", "ny_segment_002", "nx_segment_002"], dz_temp_segment),
+                f"dz_u_segment_{segment_number:03}": (["time", f"nz_u_segment_{segment_number:03}", "ny_segment_002", "nx_segment_002"], dz_u_segment),
+                f"dz_v_segment_{segment_number:03}": (["time", f"nz_v_segment_{segment_number:03}", "ny_segment_002", "nx_segment_002"], dz_v_segment),
+                "depth": (["depth"], depth),
+                "time": (["time"], time),
+                "lon_segment_002": (["nx_segment_002"], lon_range),
+                "lat_segment_002": (["nx_segment_002"], lat_range),
+                f"nz_segment_{segment_number:03}_salt": (["nz_segment_{segment_number:03}_salt"], np.arange(nz_salt_dim)),
+                f"nz_segment_{segment_number:03}_temp": (["nz_segment_{segment_number:03}_temp"], np.arange(nz_temp_dim)),
+                f"nz_segment_{segment_number:03}_u": (["nz_segment_{segment_number:03}_u"], np.arange(nz_u_dim)),
+                f"nz_segment_{segment_number:03}_v": (["nz_segment_{segment_number:03}_v"], np.arange(nz_v_dim)),
+                "nx_segment_002": (["nx_segment_002"],np.arange(20)),
+                "ny_segment_002": (["ny_segment_002"], np.arange(20)),
+            },
+            attrs={
+                "title": "Dummy Forcing OBC Segment",
+                "history": "Created using pytest fixture",
+                "comment": "This is a dummy dataset for testing purposes",
+            }
+        )
+
+        # Adding the _FillValue attributes dynamically based on segment_number
+        ds.attrs["_FillValue"] = 1.e+20
+        return ds
+
+    return _create_dummy_mom6_obc_data
 @pytest.fixture
 def dummy_forcing_factory():
     """Factory fixture to create dummy forcing NetCDF datasets with configurable latitudes."""
