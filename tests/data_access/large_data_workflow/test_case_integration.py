@@ -99,7 +99,7 @@ def test_case_integration_config(get_CrocoDash_case):
     
     # Forcing
     assert config["forcing"]["product_name"] == "glorys"
-    assert config["forcing"]["function_name"] == "get_glorys_data_from_rda"
+    assert config["forcing"]["function_name"] == "get_glorys_data_script_for_cli"
     
     
     # Params
