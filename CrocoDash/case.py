@@ -402,8 +402,11 @@ class Case:
             config["paths"]["raw_dataset_path"] = str(
                 large_data_workflow_path / "raw_data"
             )
-            config["paths"]["output_path"] = str(
+            config["paths"]["regridded_dataset_path"] = str(
                 large_data_workflow_path / "regridded_data"
+            )
+            config["paths"]["merged_dataset_path"] = str(
+                self.inputdir
             )
             config["dates"]["start"] = self.expt.date_range[0].strftime(date_format)
             config["dates"]["end"] = self.expt.date_range[1].strftime(date_format)

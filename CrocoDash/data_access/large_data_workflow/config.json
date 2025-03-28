@@ -2,7 +2,8 @@
     "paths": {
         "raw_dataset_path": "",
         "hgrid_path": "",
-        "output_path": ""
+        "regridded_dataset_path": "",
+        "merged_dataset_path": "",
     },
     "raw_file_regex": {
         "raw_dataset_pattern": "(north|east|south|west)_unprocessed\\.(\\d{8})_(\\d{8})\\.nc",
