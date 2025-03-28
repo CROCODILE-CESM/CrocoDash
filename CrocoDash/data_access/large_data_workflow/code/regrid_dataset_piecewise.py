@@ -199,7 +199,7 @@ def regrid_dataset_piecewise(
             output_file_path_with_dates = expt.mom_input_dir / filename_with_dates
             if not preview:
                 logger.info(f"Saving regridding file as {filename_with_dates}")
-            os.rename(output_file_path, output_file_path_with_dates)
+                os.rename(output_file_path, output_file_path_with_dates)
     if not preview:
         logger.info("Finished regridding")
         return
