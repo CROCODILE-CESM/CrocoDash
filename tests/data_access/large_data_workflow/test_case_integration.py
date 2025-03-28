@@ -29,7 +29,7 @@ def test_case_integration_config(get_CrocoDash_case):
         boundaries=["north", "south", "east"],
         too_much_data=True,
         product_name = "GLORYS",
-        function_name = "get_glorys_data_from_rda",
+        function_name = "get_glorys_data_script_for_cli",
     )
     large_data_workflow_path = (
         case.inputdir / case.forcing_product_name / "large_data_workflow"
