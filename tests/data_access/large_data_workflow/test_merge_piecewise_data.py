@@ -5,7 +5,11 @@ import pytest
 import xarray as xr
 import numpy as np
 from datetime import datetime
-def test_merge_piecewise_data(generate_piecewise_raw_data, tmp_path,dummy_mom6_obc_data_factory, get_rect_grid):
+
+
+def test_merge_piecewise_data(
+    generate_piecewise_raw_data, tmp_path, dummy_mom6_obc_data_factory, get_rect_grid
+):
     # Generate piecewise data
 
     # Get Grids
@@ -21,22 +25,24 @@ def test_merge_piecewise_data(generate_piecewise_raw_data, tmp_path,dummy_mom6_o
         bounds["ic"]["lat_max"],
         bounds["ic"]["lon_min"],
         bounds["ic"]["lon_max"],
-        "001"
-    )   
+        "001",
+        6,
+    )
     south = dummy_mom6_obc_data_factory(
         bounds["ic"]["lat_min"],
         bounds["ic"]["lat_max"],
         bounds["ic"]["lon_min"],
         bounds["ic"]["lon_max"],
-        "002"
-    )   
-    regridded_data_path = Path(
-        piecewise_factory(east, "2020-01-01", "2020-01-31","forcing_obc_segment_001_")
+        "002",
+        6,
     )
     regridded_data_path = Path(
-        piecewise_factory(south, "2020-01-01", "2020-01-31","forcing_obc_segment_002_")
+        piecewise_factory(east, "2020-01-01", "2020-01-31", "forcing_obc_segment_001_")
     )
-    output_folder = tmp_path/"output"
+    regridded_data_path = Path(
+        piecewise_factory(south, "2020-01-01", "2020-01-31", "forcing_obc_segment_002_")
+    )
+    output_folder = tmp_path / "output"
     output_folder.mkdir()
 
     # Regrid data
@@ -49,14 +55,11 @@ def test_merge_piecewise_data(generate_piecewise_raw_data, tmp_path,dummy_mom6_o
         {"east": 1, "south": 2},
         output_folder,
     )
-    start_date = datetime.strptime("20200101","%Y%m%d")
-    end_date = datetime.strptime("20200106","%Y%m%d")
+    start_date = datetime.strptime("20200101", "%Y%m%d")
+    end_date = datetime.strptime("20200106", "%Y%m%d")
     ## Check Output by checking the existence of two files, which checks the files are saved in the right place and of the correct date format ##
     for boundary_str in ["001", "002"]:
         ds_path = output_folder / "forcing_obc_segment_{}.nc".format(boundary_str)
-        assert (
-            ds_path
-        ).exists()
+        assert (ds_path).exists()
         ds = xr.open_dataset(ds_path)
-        assert np.all((ds["time"].values >= start_date) & (ds["time"].values <= end_date))
-
+        assert len(ds["time"].values) == (end_date - start_date).days + 1
