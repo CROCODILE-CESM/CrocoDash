@@ -4,3 +4,6 @@
 [submodule "CrocoDash/visualCaseGen"]
 	path = CrocoDash/visualCaseGen
 	url = https://github.com/CROCODILE-CESM/visualCaseGen.git
+[submodule "CrocoDash/pyDARTdiags"]
+	path = CrocoDash/pyDARTdiags
+	url = https://github.com/NCAR/pyDARTdiags
