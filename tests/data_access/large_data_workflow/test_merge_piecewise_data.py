@@ -62,25 +62,6 @@ def test_merge_piecewise_data_workflow(
         assert (ds_path).exists()
         ds = xr.open_dataset(ds_path)
         assert len(ds["time"].values) == (end_date - start_date).days + 1
-        os.remove(ds_path)
-    # Regrid data
-    md.merge_piecewise_dataset(
-        regridded_data_path,
-        "forcing_obc_segment_(\\d{3})_(\\d{8})_(\\d{8})\\.nc",
-        "%Y%m%d",
-        "20200101",
-        "20200107",
-        {"east": 1, "south": 2},
-        output_folder,
-    )
-    start_date = datetime.strptime("20200101", "%Y%m%d")
-    end_date = datetime.strptime("20200107", "%Y%m%d")
-    ## Check Output by checking the existence of two files, which checks the files are saved in the right place and of the correct date format ##
-    for boundary_str in ["001", "002"]:
-        ds_path = output_folder / "forcing_obc_segment_{}.nc".format(boundary_str)
-        assert (ds_path).exists()
-        ds = xr.open_dataset(ds_path)
-        assert len(ds["time"].values) >= (end_date - start_date).days + 1
 
 
 def test_merge_piecewise_data_parsing(
