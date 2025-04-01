@@ -1,0 +1,21 @@
+name: Check Raw Dataset Access Points
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # Runs daily at midnight UTC
+  workflow_dispatch:  # Allows manual triggering
+
+jobs:
+  check-links:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - uses: conda-incubator/setup-miniconda@v3
+        with:
+          activate-environment: CrocoDash
+          environment-file: environment.yml
+
+      - name: Run link checker
+        run: python tests/check_raw_data.py
