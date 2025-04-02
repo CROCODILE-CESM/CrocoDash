@@ -7,10 +7,10 @@ import regional_mom6 as rmom6
 from CrocoDash.grid import Grid
 from CrocoDash.topo import Topo
 from CrocoDash.vgrid import VGrid
-from CrocoDash.data_access import driver as dv
-from CrocoDash.data_access import tables as tb
-from CrocoDash.data_access import driver as dv
-from CrocoDash.data_access import tables as tb
+from CrocoDash.raw_data_access import driver as dv
+from CrocoDash.raw_data_access import tables as tb
+from CrocoDash.raw_data_access import driver as dv
+from CrocoDash.raw_data_access import tables as tb
 from ProConPy.config_var import ConfigVar, cvars
 from ProConPy.stage import Stage
 from ProConPy.csp_solver import csp
