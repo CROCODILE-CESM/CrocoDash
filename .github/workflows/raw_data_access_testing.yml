@@ -13,10 +13,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - uses: conda-incubator/setup-miniconda@v3
-        with:
-          activate-environment: CrocoDash
-          environment-file: environment.yml
-
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        
       - name: Run link checker
         run: python tests/check_raw_data.py
