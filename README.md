@@ -2,19 +2,7 @@
 
 CrocoDash is a Python package designed to setup regional Modular Ocean Model 6 (MOM6) cases within the Community Earth System Model (CESM). CrocoDash takes advantage and integrates several MOM6 and CESM tools into an unified workflow for regional MOM6 case configuration.
 
-## Background
- One independent package that sets up a regional MOM run is the [regional-mom6 (RM6) package](https://github.com/CROCODILE-CESM/regional-mom6). Starting with RM6, CrocoDash wraps RM6 and spun off its workflow to setup a workflow inside the CESM.
-
-## Motivation: 
-There's a few different motivations. Please see the overall CROCODILE project for scientific motivation. This package was started because we have some  "NCAR and CESM-specific" items that don't have a place in the *independent* package, RM6. Since then, CrocoDash provides a platform  to combine many MOM6 and CESM tools to create an sum greater than the parts for regional cases.
-
-## Description: 
-The framework here is called CrocoDash (CD). The major basic difference between a package like RM6 and CrocoDash is that CrocoDash brings in MOM6 inside the CESM.
-
-CrocoDash is a lightweight package that ties together each part of the MOM6 in CESM setup process into one package.
-
-
-## Getting Familiar (Installation): 
+## Installation: 
 
 Installation:
 1. The first step is cloning *WITH* the submodules:
@@ -26,7 +14,23 @@ Installation:
 4. Test installation with:
 `pytest tests/test_installation.py`
 
-Going with this flow, there are a few demos (one for each avenue) to get used to the CrocoDash. 
+## Background
+CrocoDash is part of the [CROCODILE project](https://github.com/CROCODILE-CESM/regional-mom6), and spun off of the [regional-mom6 (RM6) package](https://github.com/CROCODILE-CESM/regional-mom6), an independent package that sets up a regional MOM run. CrocoDash wraps RM6 (for OBC construction & some grid generation) to setup a workflow inside the CESM.
+
+## Motivation: 
+Please see the overall CROCODILE project for scientific motivation. CrocoDash provides a platform  to combine many MOM6 and CESM tools to create an sum greater than the parts for regional cases.
+
+## Description: 
+The framework here is called CrocoDash.CrocoDash brings regional MOM6 inside the CESM. It is a lightweight package that ties together each part of the MOM6 in CESM setup process into one package.
+1. Grid Generation (Through [mom6_bathy](https://github.com/NCAR/mom6_bathy) and [regional-mom6](https://github.com/CROCODILE-CESM/regional-mom6))
+2. CESM Setup (Through [VisualCaseGen](https://github.com/CROCODILE-CESM/VisualCaseGen))
+3. Forcing + OBC Setup (Through CESM & [regional-mom6](https://github.com/CROCODILE-CESM/regional-mom6))
+
+CrocoDash also provides a variety of helper tools to help setup a case, for example, a tool to edit bathymetry (TopoEditor) or a tool to download public datasets simply (data_access module). 
+
+## Demos:
+
+Going with this flow, there are a few demos to get used to the CrocoDash. 
 
 1. One is called [minimal_demo_rect](demos/minimal_demo_rect.ipynb). It creates a rectangular case from grid generation to CESM case submission. 
 
