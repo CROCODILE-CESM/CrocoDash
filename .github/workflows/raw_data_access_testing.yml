@@ -1,4 +1,4 @@
-name: Check Raw Dataset Access Points
+name: Check Raw Dataset Access
 
 on:
   schedule:
