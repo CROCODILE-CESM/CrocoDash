@@ -75,7 +75,8 @@ def visualize_workflow(workflow):
 
 
 def main():
-    workflow = load_workflow('/glade/u/home/manishrv/documents/croc/regional_mom_workflows/CrocoDash/docs/source/diagrams/workflow_diagram.json')
+    script_dir = Path(__file__).parent
+    workflow = load_workflow(script_dir/'workflow_diagram.json')
     visualize_workflow(workflow)
 
 if __name__ == "__main__":

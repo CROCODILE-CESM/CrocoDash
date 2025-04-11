@@ -1,4 +1,4 @@
-name: CrocoDash_Dev # Remember conda environments are not case sensitive
+name: CrocoDash
 
 channels:
   - conda-forge
@@ -7,8 +7,8 @@ channels:
 dependencies:
   - python>=3.12.7,<3.13.0
   - esmpy>=8.6.1,<8.7.0
-  - pydeps
-  - graphviz
+  - pydeps>=3.0.01,<3.1.0
+  - graphviz>=12.2.1,<12.3.0
   - pip>=24.2,<24.3
   - pip:
     - -e ./CrocoDash/rm6/
@@ -16,4 +16,4 @@ dependencies:
     - -e ./CrocoDash/visualCaseGen/external/mom6_bathy/
     - -e ./CrocoDash/visualCaseGen/
     - myst_parser>=4.0.0,<4.1.0
-    - -e ./ # CrocoDash package itself
+    - -e ./
