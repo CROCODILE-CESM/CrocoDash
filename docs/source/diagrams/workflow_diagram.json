@@ -1,0 +1,112 @@
+{
+    "steps": [
+      {
+        "id": "generate_grid",
+        "name": "Generate Grid",
+        "function": "Grid",
+        "dependencies": [],
+        "outputs": ["grid_obj"]
+      },
+      {
+        "id": "subset_grid",
+        "name": "Subset Grid",
+        "function": "Grid.subgrid_from_supergrid",
+        "dependencies": [],
+        "outputs": ["grid_obj"]
+      },
+      {
+        "id": "grid_from_file",
+        "name": "Grid From File",
+        "function": "Grid.from_file",
+        "dependencies": [],
+        "outputs": ["grid_obj"]
+      },
+      {
+        "id": "topo_from_file",
+        "name": "Topo From File",
+        "function": "Topo.set_depth_via_topog_file",
+        "dependencies": ["grid_obj","grid_from_file"],
+        "outputs": ["topo_obj"]
+      },
+      {
+        "id": "generate_topo",
+        "name": "Generate Topo",
+        "function": "Topo",
+        "dependencies": ["grid_obj"],
+        "outputs": ["topo_obj"]
+      },
+
+      {
+        "id": "topo_editor",
+        "name": "Topo Editor",
+        "function": "TopoEditor",
+        "dependencies": ["topo_obj"],
+        "outputs": ["topo_obj"]
+      },
+      {
+        "id": "generate_vgrid_hyperbolic",
+        "name": "Generate VGrid Hyperbolic",
+        "function": "VGrid.hyperbolic",
+        "dependencies": [],
+        "outputs": ["vgrid_obj"]
+      },
+      {
+        "id": "generate_vgrid_uniform",
+        "name": "Generate VGrid Uniform",
+        "function": "VGrid.uniform",
+        "dependencies": [],
+        "outputs": ["vgrid_obj"]
+      },
+      {
+        "id": "generate_vgrid_from_file",
+        "name": "Generate VGrid from file",
+        "function": "VGrid.from_file",
+        "dependencies": [],
+        "outputs": ["vgrid_obj"]
+      },
+      {
+        "id": "make_case",
+        "name": "Make Case",
+        "function": "Case",
+        "dependencies": ["grid_obj", "topo_obj", "vgrid_obj"],
+        "outputs": ["case"]
+      },
+      {
+        "id": "configure_forcing",
+        "name": "Configure Forcing",
+        "function": "case.configure_forcings",
+        "dependencies": ["case", "data_access_function"],
+        "outputs": ["forcing_config"]
+      },
+      {
+        "id": "data_access",
+        "name": "Raw Data Access",
+        "function": "raw_data_access.driver.ProductFunctionRegistry",
+        "dependencies": [],
+        "outputs": ["data_access_function"]
+      },
+      {
+        "id": "process_forcing",
+        "name": "Process Forcing",
+        "function": "case.process_forcings",
+        "dependencies": ["case","forcing_config"],
+        "outputs": ["forcing"]
+      },
+      {
+        "id": "large_data_process_forcing",
+        "name": "Large Data Process Forcing",
+        "function": "large_data_workflow.driver.main",
+        "dependencies": ["forcing_config"],
+        "outputs": ["forcing"]
+      }
+    ],
+    "requirements": {
+  "mandatory": ["grid_obj", "topo_obj", "vgrid_obj", "case", "forcing_config", "forcing"],
+  "optional": ["bgc_forcing","data_access_function"]
+    },
+    "workflow": {
+      "name": "CrocoDash Workflow",
+      "description": "Workflow for CrocoDash"
+    }
+  }
+  
