@@ -1,6 +1,6 @@
 import json
 from graphviz import Digraph
-
+from pathlib import Path
 # Muted colors
 MANDATORY_COLOR = "#66aa88"
 OPTIONAL_COLOR = "#cc6666"
@@ -69,7 +69,9 @@ def visualize_workflow(workflow):
         # Invisible edge to keep layout tidy
         legend.edge('mandatory_legend', 'optional_legend', style='invis')
     # Render
-    dot.render('workflow_paths')
+    script_dir = Path(__file__).parent.parent  # Get the directory of the current script
+    output_path = script_dir / "images"/"workflow_paths"
+    dot.render(output_path)
 
 
 def main():

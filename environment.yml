@@ -7,6 +7,8 @@ channels:
 dependencies:
   - python>=3.12.7,<3.13.0
   - esmpy>=8.6.1,<8.7.0
+  - pydeps
+  - graphviz
   - pip>=24.2,<24.3
   - pip:
     - -e ./CrocoDash/rm6/
