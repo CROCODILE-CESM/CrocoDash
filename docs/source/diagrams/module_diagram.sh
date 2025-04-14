@@ -5,5 +5,5 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 pydeps "$SCRIPT_DIR/../../../CrocoDash/case.py" \
-  -o "$SCRIPT_DIR/../images/module_diagram.svg" \
+  -o "$SCRIPT_DIR/../_static/module_diagram.svg" \
   --config "$SCRIPT_DIR/.pydeps"

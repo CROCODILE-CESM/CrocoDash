@@ -70,7 +70,7 @@ def visualize_workflow(workflow):
         legend.edge('mandatory_legend', 'optional_legend', style='invis')
     # Render
     script_dir = Path(__file__).parent.parent  # Get the directory of the current script
-    output_path = script_dir / "images"/"workflow_paths"
+    output_path = script_dir / "_static"/"workflow_diagram"
     dot.render(output_path)
 
 
