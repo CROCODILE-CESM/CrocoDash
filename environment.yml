@@ -8,9 +8,9 @@ dependencies:
   - python>=3.12.7,<3.13.0
   - esmpy>=8.6.1,<8.7.0
   - pydeps>=3.0.01,<3.1.0
-  - graphviz>=12.2.1,<12.3.0
   - pip>=24.2,<24.3
   - pip:
+    - graphviz>=12.2.1,<12.3.0
     - -e ./CrocoDash/rm6/
     - -e ./CrocoDash/visualCaseGen/external/ipyfilechooser/
     - -e ./CrocoDash/visualCaseGen/external/mom6_bathy/

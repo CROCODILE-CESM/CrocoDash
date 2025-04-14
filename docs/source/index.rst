@@ -44,10 +44,6 @@ There are a few demos to get used to the CrocoDash. Check out the demos folder:
 
    installation
    demos
-   
-   data_access
-   diagrams/diagrams
-   structure
    features/index
    developers/index
    api-docs/modules
