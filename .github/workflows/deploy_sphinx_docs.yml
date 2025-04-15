@@ -29,7 +29,7 @@ jobs:
             sphinx-build docs/source _build
           fi
         shell: bash
-        - name: Deploy PR preview to GitHub Pages
+      - name: Deploy PR preview to GitHub Pages
         if: github.event_name == 'pull_request'
         uses: peaceiris/actions-gh-pages@v3
         with:
