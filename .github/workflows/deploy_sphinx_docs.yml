@@ -39,18 +39,13 @@ jobs:
           destination_dir: pr-${{ github.event.number }}
           keep_files: true # Prevents deletion of other previews
 
-      # - name: Comment PR with preview link
-      #   if: github.event_name == 'pull_request'
-      #   uses: marocchino/sticky-pull-request-comment@v2
-      #   with:
-      #     message: |
-      #       📄 Preview your docs here:
-      #       👉 https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/pr-${{ github.event.number }}/index.html
-
-      - name: Output preview link in summary
+      - name: Comment PR with preview link
         if: github.event_name == 'pull_request'
-        run: |
-          echo "::notice title=📄 Preview Docs::👉 https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/pr-${{ github.event.number }}/index.html"
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          message: |
+            📄 Preview your docs here:
+            👉 https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/pr-${{ github.event.number }}/index.html
 
       - name: Deploy main to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
