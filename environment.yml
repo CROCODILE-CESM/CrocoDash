@@ -10,7 +10,7 @@ dependencies:
   - pydeps>=3.0.01,<3.1.0
   - graphviz>=12.2.1,<12.3.0
   - python-graphviz>=0.20.3,<0.21.0
-  - nbsphinx>=0.9.6,0.10.0
+  - nbsphinx>=0.9.6,<0.10.0
   - pip>=24.2,<24.3
   - pip:
     - -e ./CrocoDash/rm6/
