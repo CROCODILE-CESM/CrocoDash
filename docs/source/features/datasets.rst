@@ -1,4 +1,4 @@
-Data Access
+Datasets
 ============
 
 CrocoDash uses several datasets to setup the model. Data can be gathered directly from public datasources (including the CESM inputdata svn repository) or through helper functions in the CrocoDash data_access module.
@@ -7,7 +7,7 @@ CrocoDash uses several datasets to setup the model. Data can be gathered directl
 Please see below for available datasets.
 
 .. csv-table:: Data Product Registry
-   :file: ../../CrocoDash/data_access/tables/data_product_registry.csv
+   :file: ../../../CrocoDash/raw_data_access/tables/data_product_registry.csv
    :header-rows: 1
 
 
@@ -17,7 +17,7 @@ CrocoDash Data Access Module
 CrocoDash has a data_access module for accessing various datasets. Please see below for a table of available methods.
 
 .. csv-table:: Data Access Registry
-   :file: ../../CrocoDash/data_access/tables/data_access_registry.csv
+   :file: ../../../CrocoDash/raw_data_access/tables/data_access_registry.csv
    :header-rows: 1
 
 

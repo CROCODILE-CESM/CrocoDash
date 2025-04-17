@@ -4,6 +4,8 @@ on: [push, pull_request, workflow_dispatch]
 
 permissions:
   contents: write
+  pull-requests: write
+
 
 jobs:
   docs:
@@ -21,9 +23,31 @@ jobs:
         run: |
           source $(conda info --base)/etc/profile.d/conda.sh # Initialize Conda
           conda activate CrocoDash # Activate env for autodocs
-          sphinx-build docs/source _build # Build docs
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            sphinx-build docs/source _build/pr-${{ github.event.number }}
+          else
+            sphinx-build docs/source _build
+          fi
         shell: bash
-      - name: Deploy to GitHub Pages
+      - name: Deploy PR preview to GitHub Pages
+        if: github.event_name == 'pull_request'
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: _build/pr-${{ github.event.number }}
+          destination_dir: pr-${{ github.event.number }}
+          keep_files: false 
+
+      - name: Comment PR with preview link
+        if: github.event_name == 'pull_request'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          message: |
+            📄 Preview your docs here:
+            👉 https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/pr-${{ github.event.number }}/index.html
+
+      - name: Deploy main to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         with:
