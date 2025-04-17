@@ -37,7 +37,7 @@ jobs:
           publish_branch: gh-pages
           publish_dir: _build/pr-${{ github.event.number }}
           destination_dir: pr-${{ github.event.number }}
-          keep_files: true # Prevents deletion of other previews
+          keep_files: false 
 
       - name: Comment PR with preview link
         if: github.event_name == 'pull_request'
