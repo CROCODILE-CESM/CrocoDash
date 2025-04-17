@@ -63,13 +63,13 @@ def get_data_piecewise(
     ProductFunctionRegistry = dv.ProductFunctionRegistry()
     ProductFunctionRegistry.load_functions()
     ProductFunctionRegistry.validate_function(product_name, function_name)
-    func = ProductFunctionRegistry.functions[product_name][function_name]
+    data_access_function = ProductFunctionRegistry.functions[product_name][function_name]
 
     # Get lat,lon information for each boundary
     hgrid = xr.open_dataset(hgrid_path)
     boundary_info = get_rectangular_segment_info(hgrid)
 
-    # Set up date range
+    # Set up date range, pd.date_range is exclusive of the end_date
     dates = (
         pd.date_range(start=start_date, end=end_date, freq=f"{step_days}D")
         .to_pydatetime()
@@ -77,7 +77,7 @@ def get_data_piecewise(
     )
 
     # Add the end date manually if not included
-    if dates[-1] != datetime.strptime(start_date, date_format):
+    if dates[-1] != datetime.strptime(end_date, date_format):
         dates.append(datetime.strptime(end_date, date_format))
 
     num_files = len(dates) - 1
@@ -104,7 +104,7 @@ def get_data_piecewise(
             output_file_names.append(output_file)
             # Execute the data retrieval function
             if not preview:
-                func(
+                data_access_function(
                     dates=[start_date_str, end_date_str],
                     lat_min=latlon_info["lat_min"],
                     lat_max=latlon_info["lat_max"],
