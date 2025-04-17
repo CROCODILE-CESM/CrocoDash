@@ -12,11 +12,17 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: conda-incubator/setup-miniconda@v3
         with:
-          python-version: '3.12'  # Change this to the version you need
-        
+          activate-environment: CrocoDash
+          environment-file: environment.yml  
       - name: Run link checker
         run: python tests/check_raw_data.py
+      - name: Upload report to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: docs/source/_static  # Or wherever the HTML is saved
+          destination_dir: reports  # Uploads to gh-pages/reports/
+          keep_files: true  # ✨ Important: keeps existing docs intact
