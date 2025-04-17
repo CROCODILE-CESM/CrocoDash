@@ -7,7 +7,7 @@ on:
 
 permissions:
   contents: write
-  
+
 jobs:
   check-links:
     runs-on: ubuntu-latest
@@ -25,12 +25,13 @@ jobs:
           source $(conda info --base)/etc/profile.d/conda.sh 
           conda activate CrocoDash 
           python tests/check_raw_data.py
+      - run: find docs/source/_static -name ".gitignore" -delete
       - name: Upload report to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+        uses: peaceiris/actions-gh-pages@v4
         with:
           publish_branch: gh-pages
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: docs/source/_static
-          destination_dir: reports  # Uploads to gh-pages/reports/
-          keep_files: true  # ✨ Important: keeps existing docs intact
+          destination_dir: reports 
+          keep_files: true  
           
