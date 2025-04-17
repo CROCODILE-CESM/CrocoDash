@@ -19,7 +19,10 @@ jobs:
           activate-environment: CrocoDash
           environment-file: environment.yml  
       - name: Run link checker
-        run: python tests/check_raw_data.py
+        run: |
+          source $(conda info --base)/etc/profile.d/conda.sh 
+          conda activate CrocoDash 
+          python tests/check_raw_data.py
       - name: Upload report to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:

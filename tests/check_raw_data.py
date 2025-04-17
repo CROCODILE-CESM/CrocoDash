@@ -4,6 +4,8 @@ from datetime import datetime
 import pandas as pd
 import requests
 from pathlib import Path
+
+
 def main():
     pfd_obj = driver.ProductFunctionRegistry()
     pfd_obj.load_functions()
@@ -20,15 +22,17 @@ def main():
         row = {
             "Product": product,
             "Access": link,
-            "Result": bool(product_result)}  # Ensure it's a boolean
+            "Result": bool(product_result),
+        }  # Ensure it's a boolean
         results = pd.concat([results, pd.DataFrame([row])], ignore_index=True)
-        
+
         for func in tables.list_functions(product):
             func_result = pfd_obj.validate_function(product, func)
             row = {
                 "Product": product,
                 "Access": func,
-                "Result": bool(func_result)}  # Ensure it's a boolean
+                "Result": bool(func_result),
+            }  # Ensure it's a boolean
             results = pd.concat([results, pd.DataFrame([row])], ignore_index=True)
 
     # Ensure 'Result' column is of type bool
@@ -37,7 +41,10 @@ def main():
     print(results)
     main_dir = Path(__file__).parent.parent  # Get the directory of the current script
     # Save Markdown and HTML
-    results.to_html(main_dir/"docs/source/_static/link_check_report.html", index=False)
+    results.to_html(
+        main_dir / "docs/source/_static/link_check_report.html", index=False
+    )
+
 
 def check_link(url, timeout=10):
     """Check if a single URL is reachable, avoiding full downloads."""
