@@ -24,10 +24,11 @@ jobs:
           conda activate CrocoDash 
           python tests/check_raw_data.py
       - name: Upload report to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
+        uses: peaceiris/actions-gh-pages@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
-          publish_dir: docs/source/_static  # Or wherever the HTML is saved
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: docs/source/_static
           destination_dir: reports  # Uploads to gh-pages/reports/
           keep_files: true  # ✨ Important: keeps existing docs intact
+          
