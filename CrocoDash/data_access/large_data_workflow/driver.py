@@ -7,6 +7,7 @@ import merge_piecewise_dataset as mpd
 import get_dataset_piecewise as gdp
 import regrid_dataset_piecewise as rdp
 
+
 def test_driver():
     """Test that all the imports work"""
     print("All Imports Work!")
@@ -17,7 +18,7 @@ def test_driver():
         config = json.load(f)
     print("Config Loads!")
     return
-    
+
 
 def main():
     """
