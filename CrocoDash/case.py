@@ -2,15 +2,15 @@ from pathlib import Path
 import uuid
 import shutil
 from datetime import datetime
+import json
 
 import regional_mom6 as rmom6
 from CrocoDash.grid import Grid
 from CrocoDash.topo import Topo
 from CrocoDash.vgrid import VGrid
 from CrocoDash.data_access import driver as dv
-from CrocoDash.data_access import tables as tb
 from CrocoDash.data_access import driver as dv
-from CrocoDash.data_access import tables as tb
+from CrocoDash.data_access import config as tb
 from ProConPy.config_var import ConfigVar, cvars
 from ProConPy.stage import Stage
 from ProConPy.csp_solver import csp
@@ -112,6 +112,7 @@ class Case:
         self.ProductFunctionRegistry = dv.ProductFunctionRegistry()
         self.forcing_product_name = None
         self._configure_forcings_called = False
+        self._large_data_workflow_called = False
 
         # Construct the compset long name
         self.compset = f"{inittime}_DATM%{datm_mode}_SLND_SICE_MOM6_SROF_SGLC_SWAV_SESP"
@@ -262,8 +263,12 @@ class Case:
         tpxo_velocity_filepath: str | Path | None = None,
         product_name: str = "GLORYS",
         function_name: str = "get_glorys_data_script_for_cli",
+        too_much_data: bool = False,
     ):
         """Configure the boundary conditions and tides for the MOM6 case."""
+
+        if too_much_data:
+            self._large_data_workflow_called = True
         self.ProductFunctionRegistry.load_functions()
         assert (
             tb.category_of_product(product_name) == "forcing"
@@ -343,30 +348,83 @@ class Case:
             if forcing_dir_path.exists():
                 shutil.rmtree(forcing_dir_path)
         forcing_dir_path.mkdir(exist_ok=False)
+        if not self._large_data_workflow_called:
+            boundary_info = dv.get_rectangular_segment_info(self.ocn_grid)
+            for key in boundary_info.keys():
+                if key in self.boundaries:
+                    self.ProductFunctionRegistry.functions[product_name][function_name](
+                        date_range,
+                        boundary_info[key]["lat_min"],
+                        boundary_info[key]["lat_max"],
+                        boundary_info[key]["lon_min"],
+                        boundary_info[key]["lon_max"],
+                        forcing_dir_path,
+                        key + "_unprocessed.nc",
+                    )
+                elif key == "ic":
+                    self.ProductFunctionRegistry.functions[product_name][function_name](
+                        [date_range[0], date_range[0]],
+                        boundary_info[key]["lat_min"],
+                        boundary_info[key]["lat_max"],
+                        boundary_info[key]["lon_min"],
+                        boundary_info[key]["lon_max"],
+                        forcing_dir_path,
+                        key + "_unprocessed.nc",
+                    )
+        else:
+            # Setup folder path
+            large_data_workflow_path = (
+                self.inputdir / self.forcing_product_name / "large_data_workflow"
+            )
 
-        boundary_info = dv.get_rectangular_segment_info(self.ocn_grid)
-        for key in boundary_info.keys():
-            if key in self.boundaries:
-                self.ProductFunctionRegistry.functions[product_name][function_name](
-                    date_range,
-                    boundary_info[key]["lat_min"],
-                    boundary_info[key]["lat_max"],
-                    boundary_info[key]["lon_min"],
-                    boundary_info[key]["lon_max"],
-                    forcing_dir_path,
-                    key + "_unprocessed.nc",
-                )
-            elif key == "ic":
-                self.ProductFunctionRegistry.functions[product_name][function_name](
-                    [date_range[0], date_range[0]],
-                    boundary_info[key]["lat_min"],
-                    boundary_info[key]["lat_max"],
-                    boundary_info[key]["lon_min"],
-                    boundary_info[key]["lon_max"],
-                    forcing_dir_path,
-                    key + "_unprocessed.nc",
-                )
+            # Copy large data workflow folder there
+            shutil.copytree(
+                Path(__file__).parent / "data_access" / "large_data_workflow",
+                large_data_workflow_path,
+            )
 
+            # Set Vars
+            date_format = "%Y%m%d"
+            session_id = cvars["MB_ATTEMPT_ID"].value
+            hgrid_path = str(
+                self.inputdir
+                / "ocnice"
+                / f"ocean_hgrid_{self.ocn_grid.name}_{session_id}.nc"
+            )
+
+            # Write Config File
+
+            # Read in template
+            with open(large_data_workflow_path / "config.json", "r") as f:
+                config = json.load(f)
+            config["paths"]["hgrid_path"] = hgrid_path
+            config["paths"]["raw_dataset_path"] = str(
+                large_data_workflow_path / "raw_data"
+            )
+            config["paths"]["regridded_dataset_path"] = str(
+                large_data_workflow_path / "regridded_data"
+            )
+            config["paths"]["merged_dataset_path"] = str(
+                self.inputdir
+            )
+            config["dates"]["start"] = self.expt.date_range[0].strftime(date_format)
+            config["dates"]["end"] = self.expt.date_range[1].strftime(date_format)
+            config["dates"]["format"] = date_format
+            config["forcing"]["product_name"] = self.forcing_product_name
+            config["forcing"]["function_name"] = function_name
+            config["forcing"]["varnames"] = (
+                self.ProductFunctionRegistry.forcing_varnames_config[
+                    self.forcing_product_name.upper()
+                ]
+            )
+            config["boundary_number_conversion"] = {
+                item: idx + 1 for idx, item in enumerate(self.boundaries)
+            }
+            config["params"]["step"] = 5
+
+            # Write out
+            with open(large_data_workflow_path / "config.json", "w") as f:
+                json.dump(config, f, indent=4)
         self._configure_forcings_called = True
 
     def process_forcings(
@@ -382,6 +440,17 @@ class Case:
                 "configure_forcings() must be called before process_forcings()."
             )
 
+        if self._large_data_workflow_called and process_velocity_tracers:
+            process_velocity_tracers = False
+            print(
+                f"Large data workflow was called, so boundary conditions will not be processed."
+            )
+            large_data_workflow_path = (
+                self.inputdir / self.forcing_product_name / "large_data_workflow"
+            )
+            print(
+                f"Please make sure to execute large_data_workflow as described in {large_data_workflow_path}"
+            )
         forcing_path = self.inputdir / self.forcing_product_name
         forcing_path = self.inputdir / self.forcing_product_name
 
@@ -409,21 +478,9 @@ class Case:
                 )
 
         # Define a mapping from the GLORYS variables and dimensions to the MOM6 ones
-        if self.forcing_product_name == ("GLORYS").lower():
-            ocean_varnames = {
-                "time": "time",
-                "yh": "latitude",
-                "xh": "longitude",
-                "zl": "depth",
-                "eta": "zos",
-                "u": "uo",
-                "v": "vo",
-                "tracers": {"salt": "so", "temp": "thetao"},
-            }
-        else:
-            raise ValueError(
-                f"forcing product {self.forcing_product_name} ocean varnames not yet supported"
-            )
+        ocean_varnames = self.ProductFunctionRegistry.forcing_varnames_config[
+            self.forcing_product_name.upper()
+        ]
 
         # Set up the initial condition
         if process_initial_condition:

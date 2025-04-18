@@ -1,16 +1,22 @@
 from pathlib import Path
 import pandas as pd
+import json
+CONFIG_DIR = (
+    Path(__file__).parent / "config"
+)  # Adjust this to wherever your config is stored
 
-TABLES_DIR = (
-    Path(__file__).parent / "tables"
-)  # Adjust this to wherever your tables are stored
 
+def load_varnames_config():
+    """Load configuration files."""
+    with open(f"{CONFIG_DIR}/forcing_varnames.json", "r") as f:
+        data = json.load(f)  # Use `json.load()` for files
+    return data
 
 def load_tables():
     """Load data tables from CSV files."""
 
-    products_df = pd.read_csv(f"{TABLES_DIR}/data_product_registry.csv")
-    functions_df = pd.read_csv(f"{TABLES_DIR}/data_access_registry.csv")
+    products_df = pd.read_csv(f"{CONFIG_DIR}/data_product_registry.csv")
+    functions_df = pd.read_csv(f"{CONFIG_DIR}/data_access_registry.csv")
     return products_df, functions_df
 
 

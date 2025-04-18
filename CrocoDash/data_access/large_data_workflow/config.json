@@ -21,6 +21,7 @@
     },
     "boundary_number_conversion": {},
     "params": {
-        "step": ""
+        "step": "",
+        "preview": false
     }
 }
