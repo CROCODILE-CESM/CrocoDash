@@ -348,8 +348,9 @@ class Case:
             if forcing_dir_path.exists():
                 shutil.rmtree(forcing_dir_path)
         forcing_dir_path.mkdir(exist_ok=False)
+        boundary_info = dv.get_rectangular_segment_info(self.ocn_grid)
         if not self._large_data_workflow_called:
-            boundary_info = dv.get_rectangular_segment_info(self.ocn_grid)
+
             for key in boundary_info.keys():
                 if key in self.boundaries:
                     self.ProductFunctionRegistry.functions[product_name][function_name](
@@ -372,6 +373,7 @@ class Case:
                         key + "_unprocessed.nc",
                     )
         else:
+
             # Setup folder path
             large_data_workflow_path = (
                 self.inputdir / self.forcing_product_name / "large_data_workflow"
@@ -404,13 +406,11 @@ class Case:
             config["paths"]["regridded_dataset_path"] = str(
                 large_data_workflow_path / "regridded_data"
             )
-            config["paths"]["merged_dataset_path"] = str(
-                self.inputdir
-            )
+            config["paths"]["merged_dataset_path"] = str(self.inputdir)
             config["dates"]["start"] = self.expt.date_range[0].strftime(date_format)
             config["dates"]["end"] = self.expt.date_range[1].strftime(date_format)
             config["dates"]["format"] = date_format
-            config["forcing"]["product_name"] = self.forcing_product_name
+            config["forcing"]["product_name"] = self.forcing_product_name.upper()
             config["forcing"]["function_name"] = function_name
             config["forcing"]["varnames"] = (
                 self.ProductFunctionRegistry.forcing_varnames_config[
@@ -425,6 +425,17 @@ class Case:
             # Write out
             with open(large_data_workflow_path / "config.json", "w") as f:
                 json.dump(config, f, indent=4)
+
+            # Generate Initial Condition Script
+            self.ProductFunctionRegistry.functions[product_name][function_name](
+                [date_range[0], date_range[0]],
+                boundary_info[key]["lat_min"],
+                boundary_info[key]["lat_max"],
+                boundary_info[key]["lon_min"],
+                boundary_info[key]["lon_max"],
+                forcing_dir_path,
+                key + "_unprocessed.nc",
+            )
         self._configure_forcings_called = True
 
     def process_forcings(

@@ -1,6 +1,9 @@
 import pytest
 import pathlib
+import os
 
+os.environ["CESMROOT"] = "/home/manishrv/CROCESM"
+os.environ["CIME_MACHINE"] = "ubuntu-latest"
 
 # Dynamically discover all fixtures in fixtures directories
 fixtures_dir = pathlib.Path(__file__).parent / "fixtures"

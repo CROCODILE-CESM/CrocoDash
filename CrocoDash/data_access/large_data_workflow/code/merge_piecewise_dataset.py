@@ -114,6 +114,4 @@ def main(config_path):
 
 
 if __name__ == "__main__":
-    main(
-        "/glade/u/home/manishrv/documents/croc/regional_mom_workflows/CrocoDash/CrocoDash/data_access/large_data_workflow/config.json"
-    )
+    main("<CONFIG FILEPATH>")

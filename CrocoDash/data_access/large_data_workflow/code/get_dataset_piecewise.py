@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 logger = utils.setup_logger(__name__)
 
 
-def get_data_piecewise(
+def get_dataset_piecewise(
     product_name: str,
     function_name: str,
     date_format: str,
@@ -63,7 +63,9 @@ def get_data_piecewise(
     ProductFunctionRegistry = dv.ProductFunctionRegistry()
     ProductFunctionRegistry.load_functions()
     ProductFunctionRegistry.validate_function(product_name, function_name)
-    data_access_function = ProductFunctionRegistry.functions[product_name][function_name]
+    data_access_function = ProductFunctionRegistry.functions[product_name][
+        function_name
+    ]
 
     # Get lat,lon information for each boundary
     hgrid = xr.open_dataset(hgrid_path)
@@ -124,7 +126,7 @@ def get_data_piecewise(
         return {
             "dates": dates,
             "output_file_names": output_file_names,
-            "output_folder": output_dir 
+            "output_folder": output_dir,
         }
 
 
@@ -145,7 +147,7 @@ def main(config_file):
     config = load_config(config_file)
 
     ## Check to make sure everything exists INCOMPLETE
-    get_data_piecewise(
+    get_dataset_piecewise(
         product_name=config["forcing"]["product_name"],
         function_name=config["forcing"]["function_name"],
         date_format=config["dates"]["format"],
@@ -160,7 +162,4 @@ def main(config_file):
 
 
 if __name__ == "__main__":
-    config_file = (
-        "/glade/work/ajanney/DataAccess/Large_Data_Workflow/get_data_pieces/config.json"
-    )
-    main(config_file)
+    main("<CONFIG FILEPATH>")

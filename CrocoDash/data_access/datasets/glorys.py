@@ -12,6 +12,7 @@ from CrocoDash.data_access.utils import fill_template
 import pandas as pd
 from ..utils import setup_logger
 from .utils import convert_lons_to_180_range
+
 logger = setup_logger(__name__)
 
 
@@ -23,7 +24,17 @@ def get_glorys_data_from_rda(
     lon_max,
     output_dir=Path(""),
     output_file="raw_glorys.nc",
-    dataset_varnames = ["time","latitude","longitude","depth","zos","uo","vo","so","thetao"]
+    dataset_varnames=[
+        "time",
+        "latitude",
+        "longitude",
+        "depth",
+        "zos",
+        "uo",
+        "vo",
+        "so",
+        "thetao",
+    ],
 ) -> xr.Dataset:
     """
     Gather GLORYS Data on Derecho Computers from the campaign storage and return the dataset sliced to the llc and urc coordinates at the specific dates
@@ -31,26 +42,22 @@ def get_glorys_data_from_rda(
     path = Path(output_dir) / output_file
     logger.info(f"Downloading Glorys data from RDA to {path}")
 
-    
     dates = pd.date_range(start=dates[0], end=dates[1]).to_pydatetime().tolist()
     # Access RDA Path
     ds_in_path = "/glade/campaign/collections/rda/data/d010049/"
     ds_in_files = []
     date_strings = [date.strftime("%Y%m%d") for date in dates]
-    
+
     # Adjust lat lon inputs to make sure they are in the correct range of -180 to 180
     lon_min, lon_max = convert_lons_to_180_range(lon_min, lon_max)
-    
+
     for date in date_strings:
         pattern = os.path.join(ds_in_path, "**", f"*_{date}_*.nc")
         ds_in_files.extend(glob.glob(pattern, recursive=True))
     ds_in_files = sorted(ds_in_files)
-    dataset = (
-        xr.open_mfdataset(ds_in_files, decode_times=False)[dataset_varnames]
-        .sel(
-            latitude=slice(lat_min - 1, lat_max + 1),
-            longitude=slice(lon_min - 1, lon_max + 1),
-        )
+    dataset = xr.open_mfdataset(ds_in_files, decode_times=False)[dataset_varnames].sel(
+        latitude=slice(lat_min - 1, lat_max + 1),
+        longitude=slice(lon_min - 1, lon_max + 1),
     )
 
     dataset.to_netcdf(path)
@@ -65,7 +72,7 @@ def get_glorys_data_from_cds_api(
     lon_max,
     output_dir=None,
     output_file=None,
-    dataset_varnames = ["zos","uo","vo","so","thetao"]
+    dataset_varnames=["zos", "uo", "vo", "so", "thetao"],
 ):
     """
     Using the copernucismarine api, query GLORYS data (any dates)
@@ -75,10 +82,10 @@ def get_glorys_data_from_cds_api(
     dataset_id = "cmems_mod_glo_phy_my_0.083deg_P1D-m"
     response = copernicusmarine.subset(
         dataset_id=dataset_id,
-        minimum_longitude=lon_min,
-        maximum_longitude=lon_max,
-        minimum_latitude=lat_min,
-        maximum_latitude=lat_max,
+        minimum_longitude=lon_min - 1,
+        maximum_longitude=lon_max + 1,
+        minimum_latitude=lat_min - 1,
+        maximum_latitude=lat_max + 1,
         start_datetime=start_datetime,
         end_datetime=end_datetime,
         variables=dataset_varnames,

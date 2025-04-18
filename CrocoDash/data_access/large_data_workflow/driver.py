@@ -2,7 +2,8 @@ import sys
 import json
 from pathlib import Path
 
-sys.path.append("code")
+parent_dir = Path(__file__).parent
+sys.path.append(str(parent_dir / "code"))
 import merge_piecewise_dataset as mpd
 import get_dataset_piecewise as gdp
 import regrid_dataset_piecewise as rdp
@@ -32,7 +33,7 @@ def main():
         config = json.load(f)
 
     # Call get_dataset_piecewise
-    gdp.get_data_piecewise(
+    gdp.get_dataset_piecewise(
         product_name=config["forcing"]["product_name"],
         function_name=config["forcing"]["function_name"],
         date_format=config["dates"]["format"],
@@ -48,12 +49,12 @@ def main():
     # Call regrid_dataset_piecewise
     rdp.regrid_dataset_piecewise(
         config["paths"]["raw_dataset_path"],
-        config["raw_file_regex"]["raw_dataset_pattern"],
+        config["file_regex"]["raw_dataset_pattern"],
         config["dates"]["format"],
         config["dates"]["start"],
         config["dates"]["end"],
         config["paths"]["hgrid_path"],
-        config["varnames"],
+        config["forcing"]["varnames"],
         config["paths"]["regridded_dataset_path"],
         config["boundary_number_conversion"],
         config["params"]["preview"],
@@ -62,7 +63,7 @@ def main():
     # Call merge_dataset_piecewise
     mpd.merge_piecewise_dataset(
         config["paths"]["raw_dataset_path"],
-        config["raw_file_regex"]["regridded_dataset_pattern"],
+        config["file_regex"]["regridded_dataset_pattern"],
         config["dates"]["format"],
         config["dates"]["start"],
         config["dates"]["end"],

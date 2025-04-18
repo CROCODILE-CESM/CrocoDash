@@ -1,0 +1,14 @@
+name: Quality Control
+
+on: [push, pull_request, workflow_dispatch]
+
+jobs:
+  check-glade:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Search for '/glade' in CrocoDash/, tests/, demos/
+        run: |
+          tests/check_glade_quality_control.sh

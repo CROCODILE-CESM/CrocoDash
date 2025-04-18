@@ -1,15 +1,15 @@
-from CrocoDash.data_access.large_data_workflow.code import get_data_piecewise as dp
+from CrocoDash.data_access.large_data_workflow.code import get_dataset_piecewise as dp
 import os
 import pytest
 from datetime import datetime
 
 
 @pytest.mark.slow
-def test_get_data_piecewise_workflow(tmp_path, get_rect_grid, skip_if_not_glade):
+def test_get_dataset_piecewise_workflow(tmp_path, get_rect_grid, skip_if_not_glade):
     grid = get_rect_grid
     hgrid_path = tmp_path / "hgrid.nc"
     grid.write_supergrid(hgrid_path)
-    dp.get_data_piecewise(
+    dp.get_dataset_piecewise(
         "GLORYS",
         "get_glorys_data_from_rda",
         "%Y%m%d",
@@ -25,7 +25,7 @@ def test_get_data_piecewise_workflow(tmp_path, get_rect_grid, skip_if_not_glade)
     assert os.path.exists(tmp_path / "south_unprocessed.20200201_20200201.nc")
 
     # This extra call takes a while to run
-    dp.get_data_piecewise(
+    dp.get_dataset_piecewise(
         "GLORYS",
         "get_glorys_data_from_rda",
         "%Y%m%d",
@@ -41,11 +41,11 @@ def test_get_data_piecewise_workflow(tmp_path, get_rect_grid, skip_if_not_glade)
     assert not os.path.exists(tmp_path / "east_unprocessed.20200130_20200201.nc")
 
 
-def test_get_data_piecewise_parsing(tmp_path, get_rect_grid):
+def test_get_dataset_piecewise_parsing(tmp_path, get_rect_grid):
     grid = get_rect_grid
     hgrid_path = tmp_path / "hgrid.nc"
     grid.write_supergrid(hgrid_path)
-    preview_dict = dp.get_data_piecewise(
+    preview_dict = dp.get_dataset_piecewise(
         "GLORYS",
         "get_glorys_data_script_for_cli",
         "%Y%m%d",

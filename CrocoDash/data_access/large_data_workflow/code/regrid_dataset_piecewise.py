@@ -73,6 +73,11 @@ def regrid_dataset_piecewise(
 
     """
     logger.info("Parsing Raw Data Folder")
+
+    # Create output folders if not created - temp patch until regional-mom6 creates this folders by default
+    Path(output_folder).mkdir(exist_ok=True)
+    (Path(output_folder) / "weights").mkdir(exist_ok=True)
+
     # Parse data folder and find required files
     start_date = datetime.strptime(start_date, date_format)
     end_date = datetime.strptime(end_date, date_format)
@@ -168,6 +173,4 @@ def main(config_path):
 
 
 if __name__ == "__main__":
-    main(
-        "/glade/u/home/manishrv/documents/croc/dev/large_data_access/regrid_data_piecewise/config.json"
-    )
+    main("<CONFIG FILEPATH>")
