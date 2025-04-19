@@ -58,6 +58,8 @@ def get_dataset_piecewise(
     None
         Saves the retrieved data to the specified output directory.
     """
+    # Create the output directory if it doesn't exist
+    Path(output_dir).mkdir(exist_ok=True)
 
     ## Initialize PFD
     ProductFunctionRegistry = dv.ProductFunctionRegistry()

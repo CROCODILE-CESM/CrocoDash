@@ -62,7 +62,7 @@ def merge_piecewise_dataset(
     boundary_list = boundary_file_list.keys()
 
     for seg_num in inverted_bnc:
-        if f"{seg_num:03}" not in boundary_list:
+        if any(f"{seg_num:03}" in boundary for boundary in boundary_list):
             logger.error(
                 f"Segment Number '{seg_num}' from boundary_number_conversion not found in the available boundary files. Did you correctly regrid the right boundaries? Change the boundary number conversion to match."
             )

@@ -429,12 +429,12 @@ class Case:
             # Generate Initial Condition Script
             self.ProductFunctionRegistry.functions[product_name][function_name](
                 [date_range[0], date_range[0]],
-                boundary_info[key]["lat_min"],
-                boundary_info[key]["lat_max"],
-                boundary_info[key]["lon_min"],
-                boundary_info[key]["lon_max"],
+                boundary_info["ic"]["lat_min"],
+                boundary_info["ic"]["lat_max"],
+                boundary_info["ic"]["lon_min"],
+                boundary_info["ic"]["lon_max"],
                 forcing_dir_path,
-                key + "_unprocessed.nc",
+                "ic" + "_unprocessed.nc",
             )
         self._configure_forcings_called = True
 
