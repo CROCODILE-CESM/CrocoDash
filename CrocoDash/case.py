@@ -384,7 +384,9 @@ class Case:
                 Path(__file__).parent / "data_access" / "large_data_workflow",
                 large_data_workflow_path,
             )
-
+            print(
+                f"Large data workflow was called, please go to the large data workflow path: {large_data_workflow_path} and run the driver script there."
+            )
             # Set Vars
             date_format = "%Y%m%d"
             session_id = cvars["MB_ATTEMPT_ID"].value

@@ -117,7 +117,7 @@ def test_case_integration_config(get_CrocoDash_case):
     assert config["dates"]["format"] == "%Y%m%d"
 
     # Forcing
-    assert config["forcing"]["product_name"] == "glorys"
+    assert config["forcing"]["product_name"] == "GLORYS"
     assert config["forcing"]["function_name"] == "get_glorys_data_script_for_cli"
 
     # Params
