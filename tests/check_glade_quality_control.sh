@@ -2,8 +2,8 @@
 set -euo pipefail
 
 EXEMPTIONS=(
-  "code/config/glade_path_ok.py"
-  "tests/data/test_glade_fixture.py"
+  "CrocoDash/data_access/datasets/glorys.py"
+  "tests/fixtures/state.py"
 )
 
 echo "Checking for hardcoded '/glade' paths..."
@@ -27,7 +27,7 @@ done <<< "$matches"
 if [[ -n "$violations" ]]; then
   echo "❌ Found hardcoded '/glade' paths in the following files:"
   echo "$violations"
-  echo "Please remove or parameterize them. Add exemptions to scripts/check_glade_paths.sh if necessary."
+  echo "Please remove or parameterize them. Add exemptions to tests/check_glade_quality_control.sh if necessary."
   exit 1
 else
   echo "✅ No '/glade' paths found (excluding exempted files)."

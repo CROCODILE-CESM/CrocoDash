@@ -16,9 +16,6 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 dask.config.set(num_workers=4)
 
-# os.environ["CESMROOT"] = "/glade/u/home/manishrv/work/installs/CROCESM_beta04_clean"
-# os.environ["CIME_MACHINE"] = "casper"
-
 
 @pytest.mark.workflow
 @pytest.mark.parametrize("too_much_data", [False, True])
