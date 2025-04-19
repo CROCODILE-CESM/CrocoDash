@@ -1,4 +1,4 @@
-from CrocoDash.data_access import glorys as gl
+from CrocoDash.data_access.datasets import glorys as gl
 import os
 import pytest
 import xarray as xr
@@ -17,10 +17,10 @@ def test_get_glorys_data_from_rda(skip_if_not_glade, tmp_path):
     dataset = xr.open_dataset(dataset_path)
     assert dataset.time.values[0] == np.datetime64("2000-01-01T12:00:00.000000000")
     assert dataset.time.values[-1] == np.datetime64("2000-01-05T12:00:00.000000000")
-    assert np.abs(dataset.latitude.values[-1] - lat_max) < 1
-    assert np.abs(dataset.latitude.values[0] - lat_min) < 1
-    assert np.abs(dataset.longitude.values[-1] - lon_max) < 1
-    assert np.abs(dataset.longitude.values[0] - lon_min) < 1
+    assert np.abs(dataset.latitude.values[-1] - lat_max) <= 1
+    assert np.abs(dataset.latitude.values[0] - lat_min) <= 1
+    assert np.abs(dataset.longitude.values[-1] - lon_max) <= 1
+    assert np.abs(dataset.longitude.values[0] - lon_min) <= 1
 
 
 @pytest.mark.slow

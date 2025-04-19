@@ -6,11 +6,9 @@ import socket
 @pytest.fixture(scope="session")
 def is_glade_file_system():
     # Get the hostname
-    hostname = socket.gethostname()
+    hostname = socket.getfqdn()
     # Check if "derecho" or "casper" is in the hostname and glade exists currently
-    is_on_glade_bool = (
-        "derecho" in hostname or "casper" in hostname
-    ) and os.path.exists("/glade")
+    is_on_glade_bool = ("ucar" in hostname) and os.path.exists("/glade")
 
     return is_on_glade_bool
 
