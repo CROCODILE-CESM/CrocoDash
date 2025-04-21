@@ -10,22 +10,24 @@ import numpy as np
 import xarray as xr
 import logging
 import dask
+import subprocess
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 dask.config.set(num_workers=4)
 
-# os.environ["CESMROOT"] = "/glade/u/home/manishrv/work/installs/CROCESM_beta04_clean"
-# os.environ["CIME_MACHINE"] = "casper"
-
 
 @pytest.mark.workflow
+@pytest.mark.parametrize(
+    "too_much_data", [False]
+)  # Add True once Github CI has copernicusmarine credentials
 def test_full_workflow(
     tmp_path,
     get_CrocoDash_case,
     is_github_actions,
     dummy_tidal_data,
     dummy_forcing_factory,
+    too_much_data,
 ):
     """Tests if the full CrocoDash workflow runs successfully."""
 
@@ -36,13 +38,17 @@ def test_full_workflow(
             )
 
     result = run_full_workflow(
-        tmp_path, get_CrocoDash_case, dummy_tidal_data, dummy_forcing_factory
+        tmp_path,
+        get_CrocoDash_case,
+        dummy_tidal_data,
+        dummy_forcing_factory,
+        too_much_data,
     )
     assert result
 
 
 def run_full_workflow(
-    tmp_path, get_CrocoDash_case, dummy_tidal_data, dummy_forcing_factory
+    tmp_path, get_CrocoDash_case, dummy_tidal_data, dummy_forcing_factory, too_much_data
 ):
     """Run the entire CrocoDash workflow (lightly)"""
 
@@ -54,31 +60,40 @@ def run_full_workflow(
     u.to_netcdf(tmp_path / "u.nc")
 
     # Forcing setup
-    case.configure_forcings(
-        date_range=["2020-01-01 00:00:00", "2020-02-01 00:00:00"],
-        tidal_constituents=["M2"],
-        tpxo_elevation_filepath=tmp_path / "h.nc",
-        tpxo_velocity_filepath=tmp_path / "u.nc",
-    )
 
-    # Create dummy forcings
-    bounds = dv.get_rectangular_segment_info(case.ocn_grid)
-    ds = dummy_forcing_factory(
-        bounds["ic"]["lat_min"],
-        bounds["ic"]["lat_max"],
-        bounds["ic"]["lon_min"],
-        bounds["ic"]["lon_max"],
-    )
-    ds.to_netcdf(case.inputdir / "glorys" / "ic_unprocessed.nc")
-    ds.to_netcdf(case.inputdir / "glorys" / "east_unprocessed.nc")
-    ds.to_netcdf(case.inputdir / "glorys" / "west_unprocessed.nc")
-    ds.to_netcdf(case.inputdir / "glorys" / "north_unprocessed.nc")
-    ds.to_netcdf(case.inputdir / "glorys" / "south_unprocessed.nc")
-
+    if not too_much_data:
+        case.configure_forcings(
+            date_range=["2020-01-01 00:00:00", "2020-02-01 00:00:00"],
+            tidal_constituents=["M2"],
+            tpxo_elevation_filepath=tmp_path / "h.nc",
+            tpxo_velocity_filepath=tmp_path / "u.nc",
+            too_much_data=too_much_data,
+        )
+        # Create dummy forcings
+        bounds = dv.get_rectangular_segment_info(case.ocn_grid)
+        ds = dummy_forcing_factory(
+            bounds["ic"]["lat_min"],
+            bounds["ic"]["lat_max"],
+            bounds["ic"]["lon_min"],
+            bounds["ic"]["lon_max"],
+        )
+        ds.to_netcdf(case.inputdir / "glorys" / "ic_unprocessed.nc")
+        ds.to_netcdf(case.inputdir / "glorys" / "east_unprocessed.nc")
+        ds.to_netcdf(case.inputdir / "glorys" / "west_unprocessed.nc")
+        ds.to_netcdf(case.inputdir / "glorys" / "north_unprocessed.nc")
+        ds.to_netcdf(case.inputdir / "glorys" / "south_unprocessed.nc")
+    else:
+        case.configure_forcings(
+            date_range=["2020-01-01 00:00:00", "2020-02-06 00:00:00"],
+            too_much_data=too_much_data,
+            function_name="get_glorys_data_from_cds_api",
+        )
+        subprocess.run(
+            ["python", str(case.inputdir / "glorys/large_data_workflow/driver.py")]
+        )
     # Process Forcings
     case.process_forcings()
 
-    ## Need to figure out how to test a small CESM run here.
     return True
 
 

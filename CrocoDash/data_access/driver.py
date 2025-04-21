@@ -2,7 +2,7 @@
 Functions to query the data access tables and validate data, as well as request all four segments
 """
 
-from . import tables as tb
+from . import config as tb
 from .utils import setup_logger
 from typing import Callable, Dict
 import importlib
@@ -31,6 +31,7 @@ class ProductFunctionRegistry:
         )  # {product: {function_name: function}}
         self._loaded_functions = False
         self.products_df, self.functions_df = tb.load_tables()
+        self.forcing_varnames_config = tb.load_varnames_config()
 
     def load_functions(self):
         """Reads the registry tables, dynamically imports functions, and verifies them."""
@@ -47,7 +48,7 @@ class ProductFunctionRegistry:
             )
             try:
                 module = importlib.import_module(
-                    "." + submodule, package="CrocoDash.data_access"
+                    "." + submodule, package="CrocoDash.data_access.datasets"
                 )
                 func = getattr(module, func_name)
 
