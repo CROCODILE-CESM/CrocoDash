@@ -18,7 +18,9 @@ dask.config.set(num_workers=4)
 
 
 @pytest.mark.workflow
-@pytest.mark.parametrize("too_much_data", [False, True])
+@pytest.mark.parametrize(
+    "too_much_data", [False]
+)  # Add True once Github CI has copernicusmarine credentials
 def test_full_workflow(
     tmp_path,
     get_CrocoDash_case,
