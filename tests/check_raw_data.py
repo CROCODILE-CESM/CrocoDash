@@ -41,9 +41,7 @@ def main():
     print(results)
     main_dir = Path(__file__).parent.parent  # Get the directory of the current script
     # Save Markdown and HTML
-    results.to_html(
-        main_dir / "docs/source/_static/link_check_report.html", index=False
-    )
+    results.to_html(main_dir / "docs/source/_static/raw_data_status.html", index=False)
 
 
 def check_link(url, timeout=10):
