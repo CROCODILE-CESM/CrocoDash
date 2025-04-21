@@ -1,8 +1,8 @@
 from pathlib import Path
-from CrocoDash.data_access.large_data_workflow.code import (
+from CrocoDash.raw_data_access.large_data_workflow.code import (
     regrid_dataset_piecewise as rb,
 )
-from CrocoDash.data_access import driver as dv
+from CrocoDash.raw_data_access import driver as dv
 import pytest
 from datetime import datetime
 

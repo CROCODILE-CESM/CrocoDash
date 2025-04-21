@@ -381,7 +381,7 @@ class Case:
 
             # Copy large data workflow folder there
             shutil.copytree(
-                Path(__file__).parent / "data_access" / "large_data_workflow",
+                Path(__file__).parent / "raw_data_access" / "large_data_workflow",
                 large_data_workflow_path,
             )
             print(

@@ -1,7 +1,7 @@
 import regional_mom6 as rm6
 from pathlib import Path
 from CrocoDash import utils
-from CrocoDash.data_access.large_data_workflow.utils import (
+from CrocoDash.raw_data_access.large_data_workflow.utils import (
     load_config,
     parse_dataset_folder,
 )

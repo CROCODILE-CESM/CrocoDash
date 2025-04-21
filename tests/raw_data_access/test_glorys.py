@@ -1,4 +1,4 @@
-from CrocoDash.raw_data_access import glorys as gl
+from CrocoDash.raw_data_access.datasets import glorys as gl
 import os
 import pytest
 import xarray as xr

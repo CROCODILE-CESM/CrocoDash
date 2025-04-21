@@ -1,8 +1,8 @@
 from pathlib import Path
 from CrocoDash import utils
-from CrocoDash.data_access.driver import get_rectangular_segment_info
-from CrocoDash.data_access.utils import load_config
-from CrocoDash.data_access import driver as dv
+from CrocoDash.raw_data_access.driver import get_rectangular_segment_info
+from CrocoDash.raw_data_access.utils import load_config
+from CrocoDash.raw_data_access import driver as dv
 import xarray as xr
 import pandas as pd
 from datetime import datetime, timedelta
