@@ -48,7 +48,7 @@ class ProductFunctionRegistry:
             )
             try:
                 module = importlib.import_module(
-                    "." + submodule, package="CrocoDash.data_access.datasets"
+                    "." + submodule, package="CrocoDash.raw_data_access.datasets"
                 )
                 func = getattr(module, func_name)
 

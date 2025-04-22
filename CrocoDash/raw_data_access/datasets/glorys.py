@@ -6,9 +6,9 @@ import xarray as xr
 import glob
 import os
 import copernicusmarine
-from CrocoDash.rm6 import regional_mom6 as rm6
+import regional_mom6 as rm6
 from pathlib import Path
-from CrocoDash.data_access.utils import fill_template
+from CrocoDash.raw_data_access.utils import fill_template
 import pandas as pd
 from ..utils import setup_logger
 from .utils import convert_lons_to_180_range

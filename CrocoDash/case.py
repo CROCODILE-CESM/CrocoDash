@@ -8,9 +8,9 @@ import regional_mom6 as rmom6
 from CrocoDash.grid import Grid
 from CrocoDash.topo import Topo
 from CrocoDash.vgrid import VGrid
-from CrocoDash.data_access import driver as dv
-from CrocoDash.data_access import driver as dv
-from CrocoDash.data_access import config as tb
+from CrocoDash.raw_data_access import driver as dv
+from CrocoDash.raw_data_access import tables as tb
+from CrocoDash.raw_data_access import driver as dv
 from ProConPy.config_var import ConfigVar, cvars
 from ProConPy.stage import Stage
 from ProConPy.csp_solver import csp
@@ -381,7 +381,7 @@ class Case:
 
             # Copy large data workflow folder there
             shutil.copytree(
-                Path(__file__).parent / "data_access" / "large_data_workflow",
+                Path(__file__).parent / "raw_data_access" / "large_data_workflow",
                 large_data_workflow_path,
             )
             print(
