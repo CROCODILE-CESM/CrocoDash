@@ -1,4 +1,4 @@
-from CrocoDash.raw_data_access import tables as tb
+from CrocoDash.raw_data_access import config as tb
 import pytest
 
 

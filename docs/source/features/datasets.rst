@@ -7,7 +7,7 @@ Users can check if datasets are accessible at this `link <https://crocodile-cesm
 Please see below for available datasets.
 
 .. csv-table:: Data Product Registry
-   :file: ../../../CrocoDash/raw_data_access/tables/data_product_registry.csv
+   :file: ../../../CrocoDash/raw_data_access/config/data_product_registry.csv
    :header-rows: 1
 
 
@@ -17,7 +17,7 @@ CrocoDash Data Access Module
 CrocoDash has a data_access module for accessing various datasets. Please see below for a table of available methods.
 
 .. csv-table:: Data Access Registry
-   :file: ../../../CrocoDash/raw_data_access/tables/data_access_registry.csv
+   :file: ../../../CrocoDash/raw_data_access/config/data_access_registry.csv
    :header-rows: 1
 
 

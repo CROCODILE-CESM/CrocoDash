@@ -9,7 +9,7 @@ from CrocoDash.grid import Grid
 from CrocoDash.topo import Topo
 from CrocoDash.vgrid import VGrid
 from CrocoDash.raw_data_access import driver as dv
-from CrocoDash.raw_data_access import tables as tb
+from CrocoDash.raw_data_access import config as tb
 from CrocoDash.raw_data_access import driver as dv
 from ProConPy.config_var import ConfigVar, cvars
 from ProConPy.stage import Stage
