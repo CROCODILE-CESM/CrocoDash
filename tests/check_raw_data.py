@@ -1,4 +1,4 @@
-from CrocoDash.raw_data_access import tables
+from CrocoDash.raw_data_access import config
 from CrocoDash.raw_data_access import driver
 from datetime import datetime
 import pandas as pd
@@ -11,9 +11,9 @@ def main():
     pfd_obj.load_functions()
 
     results = pd.DataFrame({"Product": [], "Access": [], "Result": []})
-    product_df, functions_df = tables.load_tables()
+    product_df, functions_df = config.load_tables()
 
-    for product in tables.list_products():
+    for product in config.list_products():
         link = (
             product_df["Links"][product_df["Product_Name"] == product].values[0].strip()
         )
@@ -26,7 +26,7 @@ def main():
         }  # Ensure it's a boolean
         results = pd.concat([results, pd.DataFrame([row])], ignore_index=True)
 
-        for func in tables.list_functions(product):
+        for func in config.list_functions(product):
             func_result = pfd_obj.validate_function(product, func)
             row = {
                 "Product": product,
