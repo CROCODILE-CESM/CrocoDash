@@ -127,7 +127,7 @@ class Case:
 
         self._create_newcase()
 
-        self._cime_case = self.cime.get_case(self.caseroot)
+        self._cime_case = self.cime.get_case(self.caseroot,non_local = self.cc._is_non_local())
 
     def _init_args_check(
         self,
@@ -246,13 +246,13 @@ class Case:
         if not self.caseroot.parent.exists():
             self.caseroot.parent.mkdir(parents=True, exist_ok=False)
 
-        cc = CaseCreator(self.cime, allow_xml_override=self.override)
+        self.cc = CaseCreator(self.cime, allow_xml_override=self.override)
 
         try:
-            cc.create_case(do_exec=True)
+            self.cc.create_case(do_exec=True)
         except Exception as e:
             print(f"{ERROR}{str(e)}{RESET}")
-            cc.revert_launch(do_exec=True)
+            self.cc.revert_launch(do_exec=True)
 
     def configure_forcings(
         self,
