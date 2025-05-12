@@ -748,7 +748,7 @@ class Case:
             log_title=False,
         )
 
-        xmlchange("RUN_STARTDATE", str(self.date_range[0])[:10])
-        xmlchange("MOM6_MEMORY_MODE", "dynamic_symmetric")
+        xmlchange("RUN_STARTDATE", str(self.date_range[0])[:10],is_non_local=self.cc._is_non_local())
+        xmlchange("MOM6_MEMORY_MODE", "dynamic_symmetric", is_non_local=self.cc._is_non_local())
 
         print(f"Case is ready to be built: {self.caseroot}")
