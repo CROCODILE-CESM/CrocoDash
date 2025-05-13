@@ -408,7 +408,7 @@ class Case:
             config["paths"]["regridded_dataset_path"] = str(
                 large_data_workflow_path / "regridded_data"
             )
-            config["paths"]["merged_dataset_path"] = str(self.inputdir)
+            config["paths"]["merged_dataset_path"] = str(self.inputdir/"ocnice")
             config["dates"]["start"] = self.expt.date_range[0].strftime(date_format)
             config["dates"]["end"] = self.expt.date_range[1].strftime(date_format)
             config["dates"]["format"] = date_format

@@ -48,7 +48,7 @@ def main():
 
     # Call regrid_dataset_piecewise
     rdp.regrid_dataset_piecewise(
-        config["paths"]["raw_dataset_path"],
+        config["paths"]["regridded_dataset_path"],
         config["file_regex"]["raw_dataset_pattern"],
         config["dates"]["format"],
         config["dates"]["start"],
