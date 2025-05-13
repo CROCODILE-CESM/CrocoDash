@@ -99,7 +99,7 @@ def test_case_integration_config(get_CrocoDash_case):
     assert config["paths"]["regridded_dataset_path"] == str(
         large_data_workflow_path / "regridded_data"
     )
-    assert config["paths"]["merged_dataset_path"] == str(case.inputdir)
+    assert config["paths"]["merged_dataset_path"] == str(case.inputdir/"ocnice")
 
     # Raw file regex
     assert (
