@@ -1,12 +1,17 @@
 import subprocess
 from pathlib import Path
-def get_global_seawifs_script_for_cli(dates="UNUSED",
+
+
+def get_global_seawifs_script_for_cli(
+    dates="UNUSED",
     lat_min="UNUSED",
     lat_max="UNUSED",
     lon_min="UNUSED",
     lon_max="UNUSED",
     output_dir=None,
-    output_file="UNUSED",username=""):
+    output_file="UNUSED",
+    username="",
+):
     """
     Downloads chlor_a data using NASA OceanData API with authentication.
 
@@ -45,5 +50,5 @@ def get_global_seawifs_script_for_cli(dates="UNUSED",
     output_dir.mkdir(exist_ok=True)
     script_path = output_dir / "get_seawifs_data.sh"
     script_path.write_text(script)
-    script_path.chmod(0o755) 
+    script_path.chmod(0o755)
     return script_path
