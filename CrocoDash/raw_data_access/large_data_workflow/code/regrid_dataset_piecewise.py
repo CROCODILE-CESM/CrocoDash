@@ -115,6 +115,7 @@ def regrid_dataset_piecewise(
     # Do Regridding
     for boundary in matching_files.keys():
         for file_start, file_end, file_path in matching_files[boundary]:
+            expt.date_range = [file_start, None]
             file_path = Path(file_path)
             if not preview:
                 expt.setup_single_boundary(
