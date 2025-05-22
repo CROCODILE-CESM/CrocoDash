@@ -3,3 +3,4 @@ GLORYS,PYTHON,glorys,get_glorys_data_from_cds_api,Python request with copernicus
 GLORYS,PYTHON,glorys,get_glorys_data_from_rda,Gathers GLORYS data from RDA on computers with access to glade/rda
 GLORYS,SCRIPT,glorys,get_glorys_data_script_for_cli,Generates bash script for direct CLI run with the copernicusmarine package
 SEAWIFS,SCRIPT,seawifs,get_global_seawifs_script_for_cli,Generates bash script for direct CLI access to chlorophyll data (No Package Required)
+SEAWIFS,SCRIPT,seawifs,get_processed_global_seawifs_script_for_cli,Generates bash script for direct CLI access to processed chlorophyll data (No Package Required)

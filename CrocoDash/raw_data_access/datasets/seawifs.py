@@ -1,5 +1,5 @@
-import subprocess
 from pathlib import Path
+import utils
 def get_global_seawifs_script_for_cli(dates="UNUSED",
     lat_min="UNUSED",
     lat_max="UNUSED",
@@ -47,3 +47,35 @@ def get_global_seawifs_script_for_cli(dates="UNUSED",
     script_path.write_text(script)
     script_path.chmod(0o755) 
     return script_path
+
+
+def get_processed_global_seawifs_script_for_cli(dates="UNUSED",
+    lat_min="UNUSED",
+    lat_max="UNUSED",
+    lon_min="UNUSED",
+    lon_max="UNUSED",
+    output_dir=Path(""),
+    output_file="processed_seawifs.nc"):
+    """
+    Downloads chlor_a data from the CESM inputdata repository by generating a script users can run in their terminal.
+    Parameters
+    ----------
+
+    date : str, optional
+        Currently unused; placeholder for future date-based filtering.
+    lat_min : float, optional
+        Currently unused; placeholder for future spatial filtering.
+    lat_max : float, optional
+        Currently unused; placeholder for future spatial filtering.
+    lon_min : float, optional
+        Currently unused; placeholder for future spatial filtering.
+    lon_max : float, optional
+        Currently unused; placeholder for future spatial filtering.
+    output_dir : str, optional
+        Directory where downloaded files will be saved.
+    output_file : str, optional
+        filename in output directory
+
+    """
+
+    return utils.write_bash_curl_script( url ="https://svn-ccsm-inputdata.cgd.ucar.edu/trunk/inputdata/ocn/mom/croc/chl/data/SeaWIFS.L3m.MC.CHL.chlor_a.0.25deg.nc",output_path = output_dir,output_filename = output_file)
