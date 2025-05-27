@@ -22,7 +22,7 @@ from visualCaseGen.specs.options import set_options
 from visualCaseGen.specs.relational_constraints import get_relational_constraints
 from visualCaseGen.custom_widget_types.case_creator import CaseCreator, ERROR, RESET
 from visualCaseGen.custom_widget_types.case_tools import xmlchange, append_user_nl
-
+from mom6_bathy import chl
 
 class Case:
     """This class represents a regional MOM6 case within the CESM framework. It is similar to the
@@ -264,6 +264,7 @@ class Case:
         product_name: str = "GLORYS",
         function_name: str = "get_glorys_data_script_for_cli",
         too_much_data: bool = False,
+        chl_processed_file_path: str | Path | None = None,
     ):
         """Configure the boundary conditions and tides for the MOM6 case."""
 
@@ -315,6 +316,10 @@ class Case:
         )
         self.tpxo_velocity_filepath = (
             Path(tpxo_velocity_filepath) if tpxo_velocity_filepath else None
+        )
+
+        self.chl_processed_file_path = (
+            Path(chl_processed_file_path) if chl_processed_file_path else None
         )
 
         session_id = cvars["MB_ATTEMPT_ID"].value
@@ -445,6 +450,7 @@ class Case:
         process_initial_condition=True,
         process_tides=True,
         process_velocity_tracers=True,
+        process_chl=True,
     ):
         """Process the boundary conditions and tides for the MOM6 case."""
 
@@ -528,6 +534,20 @@ class Case:
             for file in forcing_dir.iterdir():
                 shutil.move(file, self.inputdir / "ocnice")
             forcing_dir.rmdir()
+
+        # Process the chlorophyll file if it is provided
+        if process_chl and self.chl_processed_file_path is not None:
+            if not self.chl_processed_file_path.exists():
+                raise FileNotFoundError(
+                    f"Chlorophyll file {self.chl_processed_file_path} does not exist."
+                )
+            # Process the chlorophyll file
+            chl.interpolate_and_fill_seawifs(
+                self.ocn_grid,
+                self.ocn_topo,
+                self.chl_processed_file_path,
+                self.inputdir / "ocnice" / f"seawifs-clim-1997-2010-{self.ocn_grid.name}.nc",
+            )
 
         # Apply forcing-related namelist and xml changes
         self._update_forcing_variables()
@@ -674,6 +694,22 @@ class Case:
                 tidal_params,
                 do_exec=True,
                 comment="Tides",
+                log_title=False,
+            )
+
+        # Chlorophyll
+        if self.chl_processed_file_path is not None:
+            chl_params = [
+                ("CHL_FILE", f"seawifs-clim-1997-2010-{self.ocn_grid.name}.nc"),
+                ("CHL_FROM_FILE", "TRUE"),
+                ("VAR_PEN_SW", "TRUE"),
+                ("PEN_SW_NBANDS", 3),
+            ]
+            append_user_nl(
+                "mom",
+                chl_params,
+                do_exec=True,
+                comment="Chlorophyll Climatology",
                 log_title=False,
             )
 
