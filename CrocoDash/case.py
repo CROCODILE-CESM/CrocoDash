@@ -264,7 +264,7 @@ class Case:
         product_name: str = "GLORYS",
         function_name: str = "get_glorys_data_script_for_cli",
         too_much_data: bool = False,
-        chl_processed_file_path: str | Path | None = None,
+        chl_processed_filepath: str | Path | None = None,
     ):
         """Configure the boundary conditions and tides for the MOM6 case."""
 
@@ -318,8 +318,8 @@ class Case:
             Path(tpxo_velocity_filepath) if tpxo_velocity_filepath else None
         )
 
-        self.chl_processed_file_path = (
-            Path(chl_processed_file_path) if chl_processed_file_path else None
+        self.chl_processed_filepath = (
+            Path(chl_processed_filepath) if chl_processed_filepath else None
         )
 
         session_id = cvars["MB_ATTEMPT_ID"].value
@@ -536,16 +536,16 @@ class Case:
             forcing_dir.rmdir()
 
         # Process the chlorophyll file if it is provided
-        if process_chl and self.chl_processed_file_path is not None:
-            if not self.chl_processed_file_path.exists():
+        if process_chl and self.chl_processed_filepath is not None:
+            if not self.chl_processed_filepath.exists():
                 raise FileNotFoundError(
-                    f"Chlorophyll file {self.chl_processed_file_path} does not exist."
+                    f"Chlorophyll file {self.chl_processed_filepath} does not exist."
                 )
             # Process the chlorophyll file
             chl.interpolate_and_fill_seawifs(
                 self.ocn_grid,
                 self.ocn_topo,
-                self.chl_processed_file_path,
+                self.chl_processed_filepath,
                 self.inputdir / "ocnice" / f"seawifs-clim-1997-2010-{self.ocn_grid.name}.nc",
             )
 
@@ -698,7 +698,7 @@ class Case:
             )
 
         # Chlorophyll
-        if self.chl_processed_file_path is not None:
+        if self.chl_processed_filepath is not None:
             chl_params = [
                 ("CHL_FILE", f"seawifs-clim-1997-2010-{self.ocn_grid.name}.nc"),
                 ("CHL_FROM_FILE", "TRUE"),
