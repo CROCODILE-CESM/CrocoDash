@@ -3,7 +3,8 @@ Large Data Workflow
 
 Generating open boundary condition (OBC) data is essential for the entire model runtime but can be time-consuming and resource-intensive. The Large Data Workflow in CrocoDash helps manage this by breaking data access into smaller, more manageable components.
 
-## Workflow Overview
+Workflow Overview
+------------------
 
 The workflow is enabled by setting the `too_much_data` boolean in `case.configure_forcings`. This triggers the copying of a script folder and the generation of a configuration file to download the required boundary condition files.
 
@@ -16,7 +17,7 @@ Folder Structure
 - **Code/** – Contains all scripts used in the workflow.
 - **raw_data/**, **regridded_data/** – Intermediate storage for workflow steps, preventing the need to rerun all scripts at once.
 
-## Scripts
+Scripts
 -------------
 
 1. **get_data_piecewise** – Retrieves raw, unprocessed data in chunks (size defined by `config["params"]["step"]`) and saves it to `config["raw_data"]`.
