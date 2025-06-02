@@ -1,5 +1,5 @@
-Additional Information
-========================
+Package Structure & Features
+=============================
 
 .. toctree::
    :maxdepth: 1
@@ -7,3 +7,4 @@ Additional Information
    structure
    ../diagrams/diagrams
    datasets
+   large_data_workflow

@@ -19,8 +19,9 @@ Demos
 
 
 .. nbgallery::
-    :caption: Other Features
-    :name: Other Features
+    :caption: Showcase Features
+    :name: Showcase-Features
 
     demos/demo_add_grids.ipynb
     demos/demo_search_data_products.ipynb
+    demos/demo_too_much_data.ipynb
