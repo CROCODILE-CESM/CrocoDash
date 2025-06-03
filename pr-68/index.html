@@ -80,80 +80,34 @@
   <section id="crocodash-documentation">
 <h1>CrocoDash Documentation<a class="headerlink" href="#crocodash-documentation" title="Link to this heading"></a></h1>
 <p>Welcome to the CrocoDash Documentation! Get quick-started by heading over to <a class="reference internal" href="installation.html#installation"><span class="std std-ref">Installation</span></a>!</p>
-<section id="background">
-<h2>Background<a class="headerlink" href="#background" title="Link to this heading"></a></h2>
-<p>CrocoDash is part of the <a class="reference external" href="https://github.com/CROCODILE-CESM">CROCODILE project</a>, and spun off of the <a class="reference external" href="https://github.com/CROCODILE-CESM/regional-mom6">regional-mom6 (RM6) package</a>, an independent package that sets up a regional MOM run. CrocoDash wraps RM6 (for OBC construction &amp; some grid generation) to setup a workflow inside the CESM.</p>
-</section>
-<section id="motivation">
-<h2>Motivation<a class="headerlink" href="#motivation" title="Link to this heading"></a></h2>
-<p>Please see the overall CROCODILE project for scientific motivation. CrocoDash provides a platform to combine MOM6 and CESM tools to create a sum greater than the parts for regional cases.</p>
-</section>
-<section id="description">
-<h2>Description<a class="headerlink" href="#description" title="Link to this heading"></a></h2>
+<p>CrocoDash is a Python package designed to setup regional Modular Ocean Model 6 (MOM6) cases within the Community Earth System Model (CESM).
+CrocoDash takes advantage and integrates several MOM6 and CESM tools into an unified workflow for regional MOM6 case configuration.
+CrocoDash is part of the <a class="reference external" href="https://github.com/CROCODILE-CESM">CROCODILE project</a>.</p>
+<p>Please see the overall CROCODILE project <a class="reference external" href="https://github.com/CROCODILE-CESM">description</a>  for scientific motivation.</p>
+<section id="id1">
+<h2>Description<a class="headerlink" href="#id1" title="Link to this heading"></a></h2>
 <p>CrocoDash brings regional MOM6 inside the CESM. It is a lightweight package that ties together each part of the MOM6 in CESM setup process into one package.
 1. Grid Generation (Through <a class="reference external" href="https://github.com/NCAR/mom6_bathy">mom6_bathy</a> and <a class="reference external" href="https://github.com/CROCODILE-CESM/regional-mom6">regional-mom6</a>)
 2. CESM Setup (Through <a class="reference external" href="https://github.com/CROCODILE-CESM/VisualCaseGen">VisualCaseGen</a>)
 3. Forcing + OBC Setup (Through CESM &amp; <a class="reference external" href="https://github.com/CROCODILE-CESM/regional-mom6">regional-mom6</a>)</p>
-<p>CrocoDash also provides a variety of helper tools to help setup a case, for example, a tool to edit bathymetry (TopoEditor) or a tool to download public datasets simply (data_access module).</p>
+<p>CrocoDash also provides a variety of helper tools to help setup a case, for example, a tool to edit bathymetry (TopoEditor) or a tool to download public datasets simply (raw_data_access module).</p>
 </section>
-<section id="demos">
-<h2>Demos<a class="headerlink" href="#demos" title="Link to this heading"></a></h2>
-<p>There are a few demos to get used to the CrocoDash. Check out the demos folder:</p>
+<section id="get-started">
+<h2>Get Started<a class="headerlink" href="#get-started" title="Link to this heading"></a></h2>
 <ol class="arabic simple">
-<li><p>One is called <a class="reference internal" href="demos/minimal_demo_rect.html"><span class="doc">minimal_demo_rect</span></a>. It creates a rectangular case from grid generation to CESM case submission.</p></li>
-<li><p>Another demo is called <a class="reference internal" href="demos/minimal_demo_subset_global.html"><span class="doc">minimal_demo_subset_global</span></a>, which is similar to the previous demo but subsets a global grid instead of generating a rectangular grid.</p></li>
-<li><p>Another demo showcases the ability to have less than four boundaries in a regional domain. The demo is <a class="reference internal" href="demos/minimal_demo_three_boundary.html"><span class="doc">minimal_demo_three_boundary</span></a>.</p></li>
+<li><p>Please see the <a class="reference internal" href="installation.html#installation"><span class="std std-ref">Installation</span></a> page.</p></li>
+<li><p>Walk through our <a class="reference internal" href="tutorials/walkthrough.html#walkthrough"><span class="std std-ref">CrocoDash Walkthrough</span></a> for an easy introduction</p></li>
+<li><p>Check out our gallery of <a class="reference internal" href="demos.html#demos"><span class="std std-ref">Demos</span></a> for more use cases and cool features.</p></li>
+<li><p>Check out our additional features: <a class="reference internal" href="features/index.html#features"><span class="std std-ref">Package Structure &amp; Features</span></a></p></li>
 </ol>
 <div class="toctree-wrapper compound">
 <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="demos.html">Demos</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="demos/minimal_demo_rect.html">Set up a rectangular regional CESM-MOM6 run</a></li>
-<li class="toctree-l2"><a class="reference internal" href="demos/minimal_demo_rect.html#SECTION-1:-Generate-a-regional-MOM6-domain">SECTION 1: Generate a regional MOM6 domain</a></li>
-<li class="toctree-l2"><a class="reference internal" href="demos/minimal_demo_rect.html#SECTION-2:-Create-the-CESM-case">SECTION 2: Create the CESM case</a></li>
-<li class="toctree-l2"><a class="reference internal" href="demos/minimal_demo_rect.html#Section-3:-Prepare-ocean-forcing-data">Section 3: Prepare ocean forcing data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="demos/minimal_demo_rect.html#Section-4:-Build-and-run-the-case">Section 4: Build and run the case</a></li>
-<li class="toctree-l2"><a class="reference internal" href="demos/minimal_demo_subset_global.html">Set up a global gridded subset regional CESM-MOM6 run</a></li>
-<li class="toctree-l2"><a class="reference internal" href="demos/minimal_demo_subset_global.html#SECTION-1:-Generate-a-regional-MOM6-domain">SECTION 1: Generate a regional MOM6 domain</a></li>
-<li class="toctree-l2"><a class="reference internal" href="demos/minimal_demo_subset_global.html#SECTION-2:-Create-the-CESM-case">SECTION 2: Create the CESM case</a></li>
-<li class="toctree-l2"><a class="reference internal" href="demos/minimal_demo_subset_global.html#Section-3:-Prepare-ocean-forcing-data">Section 3: Prepare ocean forcing data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="demos/minimal_demo_subset_global.html#Section-4:-Build-and-run-the-case">Section 4: Build and run the case</a></li>
-<li class="toctree-l2"><a class="reference internal" href="demos/minimal_demo_three_boundary.html">Set up a three boundary regional CESM-MOM6 run</a></li>
-<li class="toctree-l2"><a class="reference internal" href="demos/minimal_demo_three_boundary.html#SECTION-1:-Generate-a-regional-MOM6-domain">SECTION 1: Generate a regional MOM6 domain</a></li>
-<li class="toctree-l2"><a class="reference internal" href="demos/minimal_demo_three_boundary.html#SECTION-2:-Create-the-CESM-case">SECTION 2: Create the CESM case</a></li>
-<li class="toctree-l2"><a class="reference internal" href="demos/minimal_demo_three_boundary.html#Section-3:-Prepare-ocean-forcing-data">Section 3: Prepare ocean forcing data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="demos/minimal_demo_three_boundary.html#Section-4:-Build-and-run-the-case">Section 4: Build and run the case</a></li>
-<li class="toctree-l2"><a class="reference internal" href="demos/minimal_demo_three_boundary_from_t232.html">Set up a low res three boundary regional CESM-MOM6 run</a></li>
-<li class="toctree-l2"><a class="reference internal" href="demos/minimal_demo_three_boundary_from_t232.html#SECTION-1:-Generate-a-regional-MOM6-domain">SECTION 1: Generate a regional MOM6 domain</a></li>
-<li class="toctree-l2"><a class="reference internal" href="demos/minimal_demo_three_boundary_from_t232.html#SECTION-2:-Create-the-CESM-case">SECTION 2: Create the CESM case</a></li>
-<li class="toctree-l2"><a class="reference internal" href="demos/minimal_demo_three_boundary_from_t232.html#Section-3:-Prepare-ocean-forcing-data">Section 3: Prepare ocean forcing data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="demos/minimal_demo_three_boundary_from_t232.html#Section-4:-Build-and-run-the-case">Section 4: Build and run the case</a></li>
-<li class="toctree-l2"><a class="reference internal" href="demos/demo_add_grids.html">Set up a Regional MOM6 case with your own grids!</a></li>
-<li class="toctree-l2"><a class="reference internal" href="demos/demo_search_data_products.html">The CrocoDash Data Access Module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="demos/demo_too_much_data.html">Set up a long running regional CESM-MOM6 run with iterative OBC generation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="demos/demo_too_much_data.html#SECTION-1:-Generate-a-regional-MOM6-domain">SECTION 1: Generate a regional MOM6 domain</a></li>
-<li class="toctree-l2"><a class="reference internal" href="demos/demo_too_much_data.html#SECTION-2:-Create-the-CESM-case">SECTION 2: Create the CESM case</a></li>
-<li class="toctree-l2"><a class="reference internal" href="demos/demo_too_much_data.html#Section-3:-Prepare-ocean-forcing-data">Section 3: Prepare ocean forcing data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="demos/demo_too_much_data.html#Section-4:-Build-and-run-the-case">Section 4: Build and run the case</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="features/index.html">Package Structure &amp; Features</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="features/structure.html">CrocoDash Structure</a></li>
-<li class="toctree-l2"><a class="reference internal" href="diagrams/diagrams.html">Diagrams</a></li>
-<li class="toctree-l2"><a class="reference internal" href="features/datasets.html">Datasets</a></li>
-<li class="toctree-l2"><a class="reference internal" href="features/large_data_workflow.html">Large Data Workflow</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="developers/index.html">Developer Information</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="developers/docs.html">Write Documentation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="developers/adding_data_access.html">Adding Data to the Data Access Module</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="api-docs/modules.html">API Documentation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="api-docs/CrocoDash.html">CrocoDash package</a></li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="demos.html">Demos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="features/index.html">Package Structure &amp; Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="developers/index.html">Developer Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api-docs/modules.html">API Documentation</a></li>
 </ul>
 </div>
 <p>You can also check out the Regional MOM6 documentation for more support information about those functions <a class="reference external" href="https://regional-mom6.readthedocs.io/en/latest/">here</a>!</p>

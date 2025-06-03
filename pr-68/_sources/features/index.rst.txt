@@ -1,3 +1,5 @@
+.. _features:
+
 Package Structure & Features
 =============================
 
