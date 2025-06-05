@@ -22,7 +22,7 @@ def test_get_glorys_data_from_rda(skip_if_not_glade, tmp_path):
     assert np.abs(dataset.longitude.values[-1] - lon_max) <= 1
     assert np.abs(dataset.longitude.values[0] - lon_min) <= 1
 
-
+@pytest.mark.slow
 def test_get_glorys_data_from_cds_api(tmp_path):
     dates = ["2000-01-01", "2000-01-05"]
     lat_min = 60
