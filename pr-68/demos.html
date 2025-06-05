@@ -18,12 +18,10 @@
       <script src="_static/doctools.js?v=9bcbadda"></script>
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
       <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
-      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Set up a rectangular regional CESM-MOM6 run" href="demos/minimal_demo_rect.html" />
+    <link rel="next" title="Package Structure &amp; Features" href="features/index.html" />
     <link rel="prev" title="Installation" href="installation.html" /> 
 </head>
 
@@ -49,34 +47,7 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Demos</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="demos/minimal_demo_rect.html">Set up a rectangular regional CESM-MOM6 run</a></li>
-<li class="toctree-l2"><a class="reference internal" href="demos/minimal_demo_rect.html#SECTION-1:-Generate-a-regional-MOM6-domain">SECTION 1: Generate a regional MOM6 domain</a></li>
-<li class="toctree-l2"><a class="reference internal" href="demos/minimal_demo_rect.html#SECTION-2:-Create-the-CESM-case">SECTION 2: Create the CESM case</a></li>
-<li class="toctree-l2"><a class="reference internal" href="demos/minimal_demo_rect.html#Section-3:-Prepare-ocean-forcing-data">Section 3: Prepare ocean forcing data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="demos/minimal_demo_rect.html#Section-4:-Build-and-run-the-case">Section 4: Build and run the case</a></li>
-<li class="toctree-l2"><a class="reference internal" href="demos/minimal_demo_subset_global.html">Set up a global gridded subset regional CESM-MOM6 run</a></li>
-<li class="toctree-l2"><a class="reference internal" href="demos/minimal_demo_subset_global.html#SECTION-1:-Generate-a-regional-MOM6-domain">SECTION 1: Generate a regional MOM6 domain</a></li>
-<li class="toctree-l2"><a class="reference internal" href="demos/minimal_demo_subset_global.html#SECTION-2:-Create-the-CESM-case">SECTION 2: Create the CESM case</a></li>
-<li class="toctree-l2"><a class="reference internal" href="demos/minimal_demo_subset_global.html#Section-3:-Prepare-ocean-forcing-data">Section 3: Prepare ocean forcing data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="demos/minimal_demo_subset_global.html#Section-4:-Build-and-run-the-case">Section 4: Build and run the case</a></li>
-<li class="toctree-l2"><a class="reference internal" href="demos/minimal_demo_three_boundary.html">Set up a three boundary regional CESM-MOM6 run</a></li>
-<li class="toctree-l2"><a class="reference internal" href="demos/minimal_demo_three_boundary.html#SECTION-1:-Generate-a-regional-MOM6-domain">SECTION 1: Generate a regional MOM6 domain</a></li>
-<li class="toctree-l2"><a class="reference internal" href="demos/minimal_demo_three_boundary.html#SECTION-2:-Create-the-CESM-case">SECTION 2: Create the CESM case</a></li>
-<li class="toctree-l2"><a class="reference internal" href="demos/minimal_demo_three_boundary.html#Section-3:-Prepare-ocean-forcing-data">Section 3: Prepare ocean forcing data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="demos/minimal_demo_three_boundary.html#Section-4:-Build-and-run-the-case">Section 4: Build and run the case</a></li>
-<li class="toctree-l2"><a class="reference internal" href="demos/minimal_demo_three_boundary_from_t232.html">Set up a low res three boundary regional CESM-MOM6 run</a></li>
-<li class="toctree-l2"><a class="reference internal" href="demos/minimal_demo_three_boundary_from_t232.html#SECTION-1:-Generate-a-regional-MOM6-domain">SECTION 1: Generate a regional MOM6 domain</a></li>
-<li class="toctree-l2"><a class="reference internal" href="demos/minimal_demo_three_boundary_from_t232.html#SECTION-2:-Create-the-CESM-case">SECTION 2: Create the CESM case</a></li>
-<li class="toctree-l2"><a class="reference internal" href="demos/minimal_demo_three_boundary_from_t232.html#Section-3:-Prepare-ocean-forcing-data">Section 3: Prepare ocean forcing data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="demos/minimal_demo_three_boundary_from_t232.html#Section-4:-Build-and-run-the-case">Section 4: Build and run the case</a></li>
-<li class="toctree-l2"><a class="reference internal" href="demos/demo_add_grids.html">Set up a Regional MOM6 case with your own grids!</a></li>
-<li class="toctree-l2"><a class="reference internal" href="demos/demo_search_data_products.html">The CrocoDash Data Access Module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="demos/demo_too_much_data.html">Set up a long running regional CESM-MOM6 run with iterative OBC generation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="demos/demo_too_much_data.html#SECTION-1:-Generate-a-regional-MOM6-domain">SECTION 1: Generate a regional MOM6 domain</a></li>
-<li class="toctree-l2"><a class="reference internal" href="demos/demo_too_much_data.html#SECTION-2:-Create-the-CESM-case">SECTION 2: Create the CESM case</a></li>
-<li class="toctree-l2"><a class="reference internal" href="demos/demo_too_much_data.html#Section-3:-Prepare-ocean-forcing-data">Section 3: Prepare ocean forcing data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="demos/demo_too_much_data.html#Section-4:-Build-and-run-the-case">Section 4: Build and run the case</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Demos</a><ul class="simple">
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="features/index.html">Package Structure &amp; Features</a></li>
@@ -112,51 +83,20 @@
 <span id="id1"></span><h1>Demos<a class="headerlink" href="#demos" title="Link to this heading"></a></h1>
 <p>There are a few demos to get used to the CrocoDash. Check out the demos folder. Here is a few demos to get started with:</p>
 <ol class="arabic simple">
-<li><p><a class="reference internal" href="demos/minimal_demo_rect.html"><span class="doc">minimal_demo_rect</span></a>. It creates a rectangular case from grid generation to CESM case submission.</p></li>
-<li><p><a class="reference internal" href="demos/minimal_demo_subset_global.html"><span class="doc">minimal_demo_subset_global</span></a>, which is similar to the previous demo but subsets a global grid instead of generating a rectangular grid.</p></li>
-<li><p><a class="reference internal" href="demos/minimal_demo_three_boundary.html"><span class="doc">minimal_demo_three_boundary</span></a>, showcases the ability to have less than four boundaries in a regional domain.</p></li>
+<li><p><a class="reference external" href="demos/minimal_demo_rect.ipynb">minimal_demo_rect</a>. It creates a rectangular case from grid generation to CESM case submission.</p></li>
+<li><p><a class="reference external" href="demos/minimal_demo_subset_global.ipynb">minimal_demo_subset_global</a>, which is similar to the previous demo but subsets a global grid instead of generating a rectangular grid.</p></li>
+<li><p><a class="reference external" href="demos/minimal_demo_three_boundary.ipynb">minimal_demo_three_boundary</a>, showcases the ability to have less than four boundaries in a regional domain.</p></li>
 </ol>
 <div class="toctree-wrapper compound" id="basic-demos">
-<p class="caption" role="heading"><span class="caption-text">Basic Demos</span></p>
 <div class="nbsphinx-gallery">
-<a class="reference internal" href="demos/minimal_demo_rect.html">
-  <div><img alt="" src="./_images/demos_minimal_demo_rect_8_1.png"></div>
-  <div>Set up a rectangular regional CESM-MOM6 run</div>
-</a>
-<a class="reference internal" href="demos/minimal_demo_subset_global.html">
-  <div><img alt="" src="./_images/demos_minimal_demo_subset_global_7_1.png"></div>
-  <div>Set up a global gridded subset regional CESM-MOM6 run</div>
-</a>
 </div>
 </div>
 <div class="toctree-wrapper compound" id="advanced-demos">
-<p class="caption" role="heading"><span class="caption-text">Advanced Demos</span></p>
 <div class="nbsphinx-gallery">
-<a class="reference internal" href="demos/minimal_demo_three_boundary.html">
-  <div><img alt="" src="./_images/demos_minimal_demo_three_boundary_7_1.png"></div>
-  <div>Set up a three boundary regional CESM-MOM6 run</div>
-</a>
-<a class="reference internal" href="demos/minimal_demo_three_boundary_from_t232.html">
-  <div><img alt="" src="./_images/demos_minimal_demo_three_boundary_from_t232_7_1.png"></div>
-  <div>Set up a low res three boundary regional CESM-MOM6 run</div>
-</a>
 </div>
 </div>
 <div class="toctree-wrapper compound" id="showcase-features">
-<p class="caption" role="heading"><span class="caption-text">Features Demos</span></p>
 <div class="nbsphinx-gallery">
-<a class="reference internal" href="demos/demo_add_grids.html">
-  <div><img alt="" src="./_images/demos_demo_add_grids_8_0.png"></div>
-  <div>Set up a Regional MOM6 case with your own grids!</div>
-</a>
-<a class="reference internal" href="demos/demo_search_data_products.html">
-  <div><img alt="" src="./_static/nbsphinx-no-thumbnail.svg"></div>
-  <div>The CrocoDash Data Access Module</div>
-</a>
-<a class="reference internal" href="demos/demo_too_much_data.html">
-  <div><img alt="" src="./_static/nbsphinx-no-thumbnail.svg"></div>
-  <div>Set up a long running regional CESM-MOM6 run with iterative OBC generation</div>
-</a>
 </div>
 </div>
 </section>
@@ -166,7 +106,7 @@
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="installation.html" class="btn btn-neutral float-left" title="Installation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="demos/minimal_demo_rect.html" class="btn btn-neutral float-right" title="Set up a rectangular regional CESM-MOM6 run" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="features/index.html" class="btn btn-neutral float-right" title="Package Structure &amp; Features" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

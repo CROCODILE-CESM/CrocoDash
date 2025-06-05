@@ -1,0 +1,43 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "id": "d0c31864",
+   "metadata": {},
+   "source": [
+    "# Add Chlorophyll\n",
+    "\n",
+    "Chlorophyll can be added into a CrocoDash case, using functions from mom6_bathy and called from configure_forcings. There is one parameter in configure forcings and three parameters in MOM6\n",
+    "\n",
+    "## CrocoDash Parameters \n",
+    "In case.configure_forcings(), the argument chl_processed_filepath takes in a processed global chlorophyll file\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "021a9b13",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "case.configure_forcings(\n",
+    "    date_range = [\"2020-01-01 00:00:00\", \"2020-01-09 00:00:00\"],\n",
+    "    chl_file = \"<CHL_PROCESSED>\",\n",
+    ")"
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "CrocoDash",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "name": "python",
+   "version": "3.12.11"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
+}
