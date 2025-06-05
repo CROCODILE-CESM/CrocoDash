@@ -14,7 +14,7 @@ def get_gebco_data_with_python(
     output_file=None,
 ):
 
-    filename = output_file or "gebco_2024.zip"
+    filename = output_file or "GEBCO_2024.zip"
     if output_dir is None:
         output_dir = os.getcwd()  # current directory
     os.makedirs(output_dir, exist_ok=True)
@@ -41,15 +41,16 @@ def get_gebco_data_script(
     lon_min="UNUSED",
     lon_max="UNUSED",
     output_dir=None,
-    output_file="UNUSED",
+    output_file=None,
 ):
+    filename = output_file or "GEBCO_2024.zip"
     script = f"""#!/bin/bash
 set -e
 
 # Variables
 FILE_URL="https://www.bodc.ac.uk/data/open_download/gebco/gebco_2024/zip/"
 OUTPUT_DIR="{output_dir}"
-FILENAME="gebco_2024.zip"
+FILENAME="{filename}"
 ZIP_PATH="$OUTPUT_DIR/$FILENAME"
 
 # Make sure the output directory exists
