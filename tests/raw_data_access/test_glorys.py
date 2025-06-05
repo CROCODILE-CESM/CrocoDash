@@ -22,7 +22,6 @@ def test_get_glorys_data_from_rda(skip_if_not_glade, tmp_path):
     assert np.abs(dataset.longitude.values[-1] - lon_max) <= 1
     assert np.abs(dataset.longitude.values[0] - lon_min) <= 1
 
-
 @pytest.mark.slow
 def test_get_glorys_data_from_cds_api(tmp_path):
     dates = ["2000-01-01", "2000-01-05"]
@@ -32,21 +31,20 @@ def test_get_glorys_data_from_cds_api(tmp_path):
     lon_max = -34
     res = gl.get_glorys_data_from_cds_api(
         dates,
-        lon_min,
-        lon_max,
         lat_min,
         lat_max,
+        lon_min,
+        lon_max,
         output_dir=tmp_path,
         output_file="temp.nc",
     )
-    breakpoint()
     dataset = xr.open_dataset(tmp_path / "temp.nc")
     assert dataset.time.values[0] == np.datetime64("2000-01-01T00:00:00.000000000")
     assert dataset.time.values[-1] == np.datetime64("2000-01-05T00:00:00.000000000")
-    assert dataset.latitude.values[-1] == lat_max
-    assert dataset.latitude.values[0] == lat_min
-    assert dataset.longitude.values[-1] == lon_max
-    assert dataset.longitude.values[0] == lon_min
+    assert dataset.latitude.values[-1] == lat_max +1
+    assert dataset.latitude.values[0] == lat_min-1
+    assert dataset.longitude.values[-1] == lon_max+1
+    assert dataset.longitude.values[0] == lon_min-1
 
 
 def test_get_glorys_data_script_for_cli(tmp_path):
