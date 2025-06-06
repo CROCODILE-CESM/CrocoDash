@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CrocoDash Walkthrough &mdash; CrocoDash  documentation</title>
+  <title>CrocoDash Basic Demo Walkthrough &mdash; CrocoDash  documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
 
@@ -19,7 +19,9 @@
       <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
-    <link rel="search" title="Search" href="../search.html" /> 
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Package Structure &amp; Features" href="../features/index.html" />
+    <link rel="prev" title="Tutorials" href="index.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -42,9 +44,24 @@
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
-<ul>
+<ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../demos.html">Demos</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Tutorials</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">CrocoDash Basic Demo Walkthrough</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#getting-started">Getting Started</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#basic-demo-overview">Basic Demo Overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#step-1-set-up-the-domain">Step 1: Set up the Domain</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#step-1-1-set-up-the-horizontal-grid">Step 1.1: Set up the horizontal grid</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#step-1-2-set-up-the-bathymetry">Step 1.2: Set up the bathymetry</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#step-1-3-get-the-bathymetry-and-any-other-data">Step 1.3: Get the Bathymetry (and any other) Data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#step-1-4-load-the-bathymetry-data-and-put-it-on-our-grid">Step 1.4: Load the bathymetry data and put it on our Grid</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference external" href="https://crocodile-cesm.github.io/CrocoGallery/">Demos &amp; Gallery</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../features/index.html">Package Structure &amp; Features</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../developers/index.html">Developer Information</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../api-docs/modules.html">API Documentation</a></li>
@@ -64,7 +81,8 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">CrocoDash Walkthrough</li>
+          <li class="breadcrumb-item"><a href="index.html">Tutorials</a></li>
+      <li class="breadcrumb-item active">CrocoDash Basic Demo Walkthrough</li>
       <li class="wy-breadcrumbs-aside">
             <a href="../_sources/tutorials/walkthrough.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -74,14 +92,91 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="crocodash-walkthrough">
-<span id="walkthrough"></span><h1>CrocoDash Walkthrough<a class="headerlink" href="#crocodash-walkthrough" title="Link to this heading"></a></h1>
+  <section id="crocodash-basic-demo-walkthrough">
+<span id="walkthrough"></span><h1>CrocoDash Basic Demo Walkthrough<a class="headerlink" href="#crocodash-basic-demo-walkthrough" title="Link to this heading"></a></h1>
+<p>This document provides a step-by-step walkthrough of the basic CrocoDash demo, showcasing how to use the platform effectively.</p>
+<section id="getting-started">
+<h2>Getting Started<a class="headerlink" href="#getting-started" title="Link to this heading"></a></h2>
+<dl class="simple">
+<dt>Follow the steps in _ref:<cite>installation</cite> to set up CrocoDash on your local machine. We will be working through the basic demo (demos/gallery/notebooks/tutorials/minimal_demo_rect.ipynb), which is designed to help you familiarize yourself</dt><dd><p>with the basic steps of using CrocoDash, no additional features. Please open up that demo in the CrocoDash environment to get started.</p>
+</dd>
+</dl>
+</section>
+<section id="basic-demo-overview">
+<h2>Basic Demo Overview<a class="headerlink" href="#basic-demo-overview" title="Link to this heading"></a></h2>
+<p>The basic demo sets up a small rectangular domain around Panama for a few days with GLORYS data (for initial &amp; boundary conditions) and GEBCO bathymetry. The atmospheric forcing is JRA, provided through the CESM</p>
+</section>
+<section id="step-1-set-up-the-domain">
+<h2>Step 1: Set up the Domain<a class="headerlink" href="#step-1-set-up-the-domain" title="Link to this heading"></a></h2>
+<section id="step-1-1-set-up-the-horizontal-grid">
+<h3>Step 1.1: Set up the horizontal grid<a class="headerlink" href="#step-1-1-set-up-the-horizontal-grid" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>In this step, we will set up a small rectangular domain around Panama. The domain is defined by its latitude and longitude bounds. The grid used here is defined by specifying a corner point and</dt><dd><p>the the length of the rectangle edges, as well as specifying the resolution. Please run this cell:</p>
+</dd>
+</dl>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">CrocoDash.grid</span><span class="w"> </span><span class="kn">import</span> <span class="n">Grid</span>
+
+<span class="n">grid</span> <span class="o">=</span> <span class="n">Grid</span><span class="p">(</span>
+    <span class="n">resolution</span> <span class="o">=</span> <span class="mf">0.01</span><span class="p">,</span>
+    <span class="n">xstart</span> <span class="o">=</span> <span class="mf">278.0</span><span class="p">,</span>
+    <span class="n">lenx</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+    <span class="n">ystart</span> <span class="o">=</span> <span class="mf">7.0</span><span class="p">,</span>
+    <span class="n">leny</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;panama1&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="step-1-2-set-up-the-bathymetry">
+<h3>Step 1.2: Set up the bathymetry<a class="headerlink" href="#step-1-2-set-up-the-bathymetry" title="Link to this heading"></a></h3>
+<p>In this step, we have to use the grid and tell the model what the ocean actually looks like, the bathymetry. The bathymetry is defined by a NetCDF file that contains the depth values for each grid point.
+To set up the bathymetry, we will use the GEBCO bathymetry data that we download in the next step. This step just sets up the bathymetry object, which we will pass into the model later on. Minimum depth
+is used to set the minimum depth of the ocean, any shallower becomes land.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">CrocoDash.topo</span><span class="w"> </span><span class="kn">import</span> <span class="n">Topo</span>
+
+<span class="n">topo</span> <span class="o">=</span> <span class="n">Topo</span><span class="p">(</span>
+    <span class="n">grid</span> <span class="o">=</span> <span class="n">grid</span><span class="p">,</span>
+    <span class="n">min_depth</span> <span class="o">=</span> <span class="mf">9.5</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="step-1-3-get-the-bathymetry-and-any-other-data">
+<h2>Step 1.3: Get the Bathymetry (and any other) Data<a class="headerlink" href="#step-1-3-get-the-bathymetry-and-any-other-data" title="Link to this heading"></a></h2>
+<p>In this step, we will download the necessary data for the bathymetry. GLORYS data is gathered later on in the workflow &amp; JRA data is provided through the CESM.
+The only data required to be gathered in this step is the GEBCO bathymetry data. You can download the GEBCO bathymetry data from the official website:</p>
+<blockquote>
+<div><p><a class="reference external" href="https://www.gebco.net/data_and_products/gridded_bathymetry_data/">https://www.gebco.net/data_and_products/gridded_bathymetry_data/</a></p>
+</div></blockquote>
+<p>Download the latest GEBCO gridded bathymetry dataset (NetCDF format is recommended). Once downloaded, place the file somewhere you remember the path for use in the demo.</p>
+<p>The other option is to download the data through the CrocoDash raw_data_access module. This module allows you to access and download raw data directly from the CrocoDash platform. To use this feature, checkout the data access feature demo here:
+(demos/gallery/notebooks/features/add_data_products.ipynb)</p>
+</section>
+<section id="step-1-4-load-the-bathymetry-data-and-put-it-on-our-grid">
+<h2>Step 1.4: Load the bathymetry data and put it on our Grid<a class="headerlink" href="#step-1-4-load-the-bathymetry-data-and-put-it-on-our-grid" title="Link to this heading"></a></h2>
+<p>In this step, we will load the GEBCO bathymetry data that we downloaded in the previous step and put it on our grid. This is done by using the <cite>Topo</cite> class that we created in the previous step.
+The <cite>Topo</cite> class has a method called <cite>interpolate_from_file</cite> that takes the path to the bathymetry file and loads it onto the grid.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">bathymetry_path</span><span class="o">=</span><span class="s1">&#39;&lt;PATH_TO_BATHYMETRY&gt;&#39;</span>
+
+<span class="n">topo</span><span class="o">.</span><span class="n">interpolate_from_file</span><span class="p">(</span>
+    <span class="n">file_path</span> <span class="o">=</span> <span class="n">bathymetry_path</span><span class="p">,</span>
+    <span class="n">longitude_coordinate_name</span><span class="o">=</span><span class="s2">&quot;lon&quot;</span><span class="p">,</span>
+    <span class="n">latitude_coordinate_name</span><span class="o">=</span><span class="s2">&quot;lat&quot;</span><span class="p">,</span>
+    <span class="n">vertical_coordinate_name</span><span class="o">=</span><span class="s2">&quot;elevation&quot;</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
 </section>
 
 
            </div>
           </div>
-          <footer>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="Tutorials" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../features/index.html" class="btn btn-neutral float-right" title="Package Structure &amp; Features" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
 
   <hr/>
 
