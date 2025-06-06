@@ -28,7 +28,7 @@ Get Started
 
 1. Please see the :ref:`installation` page.
 2. Walk through our :ref:`walkthrough` for an easy introduction
-3. Check out our gallery of :ref:`demos` for more use cases and cool features.
+3. Check out our gallery of `demos <https://crocodile-cesm.github.io/CrocoGallery/>` for more use cases and cool features.
 4. Check out our additional features: :ref:`features`
 
 
@@ -37,7 +37,8 @@ Get Started
    :caption: Contents:
 
    installation
-   demos
+   tutorials/index
+   Demos & Gallery <https://crocodile-cesm.github.io/CrocoGallery/>
    features/index
    developers/index
    api-docs/modules
