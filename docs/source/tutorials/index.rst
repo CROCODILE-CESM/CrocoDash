@@ -1,7 +1,13 @@
+.. _tutorial:
+
 Tutorials
 ========================
 
 .. toctree::
    :maxdepth: 2
 
-   walkthrough
+   cesm_setup
+   notebook_walkthrough
+   chl 
+   large_data_workflow
+   datasets

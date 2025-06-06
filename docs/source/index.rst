@@ -3,10 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-CrocoDash Documentation
-=======================================
-
-Welcome to the CrocoDash Documentation! Get quick-started by heading over to :ref:`installation`! 
+Welcome to the CrocoDash Documentation!
+========================================
 
 CrocoDash is a Python package designed to setup regional Modular Ocean Model 6 (MOM6) cases within the Community Earth System Model (CESM). 
 CrocoDash takes advantage and integrates several MOM6 and CESM tools into an unified workflow for regional MOM6 case configuration.
@@ -27,9 +25,8 @@ Get Started
 -------------
 
 1. Please see the :ref:`installation` page.
-2. Walk through our :ref:`walkthrough` for an easy introduction
-3. Check out our gallery of `demos <https://crocodile-cesm.github.io/CrocoGallery/>` for more use cases and cool features.
-4. Check out our additional features: :ref:`features`
+2. Walk through our :ref:`tutorial` for an easy introduction
+3. Check out our `gallery of demos <https://crocodile-cesm.github.io/CrocoGallery/>`_ for more use cases and cool features.
 
 
 .. toctree::
@@ -38,8 +35,8 @@ Get Started
 
    installation
    tutorials/index
-   Demos & Gallery <https://crocodile-cesm.github.io/CrocoGallery/>
-   features/index
+   Gallery <https://crocodile-cesm.github.io/CrocoGallery/>
+   structure
    developers/index
    api-docs/modules
 
