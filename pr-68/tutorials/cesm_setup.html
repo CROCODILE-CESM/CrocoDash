@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Package Structure &amp; Features &mdash; CrocoDash  documentation</title>
+  <title>CESM Setup &mdash; CrocoDash  documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
 
@@ -20,8 +20,8 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="CrocoDash Structure" href="structure.html" />
-    <link rel="prev" title="CrocoDash Basic Demo Walkthrough" href="../tutorials/walkthrough.html" /> 
+    <link rel="next" title="CrocoDash Basic Notebook Walkthrough" href="notebook_walkthrough.html" />
+    <link rel="prev" title="Tutorials" href="index.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -46,15 +46,21 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../tutorials/index.html">Tutorials</a></li>
-<li class="toctree-l1"><a class="reference external" href="https://crocodile-cesm.github.io/CrocoGallery/">Demos &amp; Gallery</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Package Structure &amp; Features</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="structure.html">CrocoDash Structure</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../diagrams/diagrams.html">Diagrams</a></li>
-<li class="toctree-l2"><a class="reference internal" href="datasets.html">Datasets</a></li>
-<li class="toctree-l2"><a class="reference internal" href="large_data_workflow.html">Large Data Workflow</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Tutorials</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">CESM Setup</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#step-1-clone-the-repo">Step 1: Clone the repo</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#step-2-checkout-all-the-components">Step 2: Checkout all the components</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#step-3-done">Step 3: Done!</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="notebook_walkthrough.html">CrocoDash Basic Notebook Walkthrough</a></li>
+<li class="toctree-l2"><a class="reference internal" href="chl.html">Chlorophyll</a></li>
+<li class="toctree-l2"><a class="reference internal" href="large_data_workflow.html">Large Data Workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="datasets.html">Datasets</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference external" href="https://crocodile-cesm.github.io/CrocoGallery/">Gallery</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../structure.html">Structure</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../developers/index.html">Developer Information</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../api-docs/modules.html">API Documentation</a></li>
 </ul>
@@ -73,9 +79,10 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Package Structure &amp; Features</li>
+          <li class="breadcrumb-item"><a href="index.html">Tutorials</a></li>
+      <li class="breadcrumb-item active">CESM Setup</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="../_sources/features/index.rst.txt" rel="nofollow"> View page source</a>
+            <a href="../_sources/tutorials/cesm_setup.rst.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -83,24 +90,36 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="package-structure-features">
-<span id="features"></span><h1>Package Structure &amp; Features<a class="headerlink" href="#package-structure-features" title="Link to this heading"></a></h1>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="structure.html">CrocoDash Structure</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../diagrams/diagrams.html">Diagrams</a></li>
-<li class="toctree-l1"><a class="reference internal" href="datasets.html">Datasets</a></li>
-<li class="toctree-l1"><a class="reference internal" href="large_data_workflow.html">Large Data Workflow</a></li>
-</ul>
+  <section id="cesm-setup">
+<h1>CESM Setup<a class="headerlink" href="#cesm-setup" title="Link to this heading"></a></h1>
+<p>The first step in running an ocean model inside the CESM is setting up the CESM! Here’s how to do it:</p>
+<section id="step-1-clone-the-repo">
+<h2>Step 1: Clone the repo<a class="headerlink" href="#step-1-clone-the-repo" title="Link to this heading"></a></h2>
+<p>CROCODILE has its own fork of the CESM available here: <a class="reference external" href="https://github.com/CROCODILE-CESM/CESM">https://github.com/CROCODILE-CESM/CESM</a>. Go ahead and clone it as shown below. I’m gonna call mine CROCESM.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/CROCODILE-CESM/CESM<span class="w"> </span>CROCESM
+</pre></div>
 </div>
+</section>
+<section id="step-2-checkout-all-the-components">
+<h2>Step 2: Checkout all the components<a class="headerlink" href="#step-2-checkout-all-the-components" title="Link to this heading"></a></h2>
+<p>The original clone only clones the CESM code, we need to checkout all of the components as well, like the ocean model and the sea ice model. This will take some time.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>CROCESM
+./bin/git-fleximod<span class="w"> </span>update
+</pre></div>
+</div>
+</section>
+<section id="step-3-done">
+<h2>Step 3: Done!<a class="headerlink" href="#step-3-done" title="Link to this heading"></a></h2>
+<p>We’re done! Remember this path, and continue over to the <a class="reference internal" href="notebook_walkthrough.html#notebook-walkthrough"><span class="std std-ref">CrocoDash Basic Notebook Walkthrough</span></a></p>
+</section>
 </section>
 
 
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="../tutorials/walkthrough.html" class="btn btn-neutral float-left" title="CrocoDash Basic Demo Walkthrough" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="structure.html" class="btn btn-neutral float-right" title="CrocoDash Structure" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="index.html" class="btn btn-neutral float-left" title="Tutorials" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="notebook_walkthrough.html" class="btn btn-neutral float-right" title="CrocoDash Basic Notebook Walkthrough" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

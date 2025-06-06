@@ -20,7 +20,7 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="CrocoDash Basic Demo Walkthrough" href="walkthrough.html" />
+    <link rel="next" title="CESM Setup" href="cesm_setup.html" />
     <link rel="prev" title="Installation" href="../installation.html" /> 
 </head>
 
@@ -47,11 +47,15 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Tutorials</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="walkthrough.html">CrocoDash Basic Demo Walkthrough</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cesm_setup.html">CESM Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebook_walkthrough.html">CrocoDash Basic Notebook Walkthrough</a></li>
+<li class="toctree-l2"><a class="reference internal" href="chl.html">Chlorophyll</a></li>
+<li class="toctree-l2"><a class="reference internal" href="large_data_workflow.html">Large Data Workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="datasets.html">Datasets</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference external" href="https://crocodile-cesm.github.io/CrocoGallery/">Demos &amp; Gallery</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../features/index.html">Package Structure &amp; Features</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://crocodile-cesm.github.io/CrocoGallery/">Gallery</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../structure.html">Structure</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../developers/index.html">Developer Information</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../api-docs/modules.html">API Documentation</a></li>
 </ul>
@@ -81,15 +85,35 @@
            <div itemprop="articleBody">
              
   <section id="tutorials">
-<h1>Tutorials<a class="headerlink" href="#tutorials" title="Link to this heading"></a></h1>
+<span id="tutorial"></span><h1>Tutorials<a class="headerlink" href="#tutorials" title="Link to this heading"></a></h1>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="walkthrough.html">CrocoDash Basic Demo Walkthrough</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="walkthrough.html#getting-started">Getting Started</a></li>
-<li class="toctree-l2"><a class="reference internal" href="walkthrough.html#basic-demo-overview">Basic Demo Overview</a></li>
-<li class="toctree-l2"><a class="reference internal" href="walkthrough.html#step-1-set-up-the-domain">Step 1: Set up the Domain</a></li>
-<li class="toctree-l2"><a class="reference internal" href="walkthrough.html#step-1-3-get-the-bathymetry-and-any-other-data">Step 1.3: Get the Bathymetry (and any other) Data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="walkthrough.html#step-1-4-load-the-bathymetry-data-and-put-it-on-our-grid">Step 1.4: Load the bathymetry data and put it on our Grid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cesm_setup.html">CESM Setup</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="cesm_setup.html#step-1-clone-the-repo">Step 1: Clone the repo</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cesm_setup.html#step-2-checkout-all-the-components">Step 2: Checkout all the components</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cesm_setup.html#step-3-done">Step 3: Done!</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="notebook_walkthrough.html">CrocoDash Basic Notebook Walkthrough</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="notebook_walkthrough.html#getting-started">Getting Started</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebook_walkthrough.html#basic-demo-overview">Basic Demo Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebook_walkthrough.html#section-1-set-up-the-domain">Section 1: Set up the Domain</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebook_walkthrough.html#section-2-create-the-cesm-case">Section 2: Create the CESM Case</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebook_walkthrough.html#section-3-generate-data-and-configure-case-to-specifications">Section 3: Generate data and configure case to specifications</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebook_walkthrough.html#section-3-build-run-the-model">Section 3: Build &amp; Run the Model!</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="chl.html">Chlorophyll</a></li>
+<li class="toctree-l1"><a class="reference internal" href="large_data_workflow.html">Large Data Workflow</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="large_data_workflow.html#workflow-overview">Workflow Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="large_data_workflow.html#folder-structure">Folder Structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="large_data_workflow.html#scripts">Scripts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="large_data_workflow.html#how-to-use">How to Use</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="datasets.html">Datasets</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="datasets.html#crocodash-data-access-module">CrocoDash Data Access Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="datasets.html#public-raw-data-access">Public (Raw) Data Access</a></li>
 </ul>
 </li>
 </ul>
@@ -101,7 +125,7 @@
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="../installation.html" class="btn btn-neutral float-left" title="Installation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="walkthrough.html" class="btn btn-neutral float-right" title="CrocoDash Basic Demo Walkthrough" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="cesm_setup.html" class="btn btn-neutral float-right" title="CESM Setup" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
