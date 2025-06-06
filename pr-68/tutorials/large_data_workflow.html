@@ -21,7 +21,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Datasets" href="datasets.html" />
-    <link rel="prev" title="Chlorophyll" href="chl.html" /> 
+    <link rel="prev" title="CrocoDash Basic Notebook Walkthrough" href="notebook_walkthrough.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -49,7 +49,6 @@
 <li class="toctree-l1 current"><a class="reference internal" href="index.html">Tutorials</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="cesm_setup.html">CESM Setup</a></li>
 <li class="toctree-l2"><a class="reference internal" href="notebook_walkthrough.html">CrocoDash Basic Notebook Walkthrough</a></li>
-<li class="toctree-l2"><a class="reference internal" href="chl.html">Chlorophyll</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Large Data Workflow</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#workflow-overview">Workflow Overview</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#folder-structure">Folder Structure</a></li>
@@ -58,6 +57,8 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="datasets.html">Datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tides.html">Tides</a></li>
+<li class="toctree-l2"><a class="reference internal" href="chl.html">Chlorophyll</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference external" href="https://crocodile-cesm.github.io/CrocoGallery/">Gallery</a></li>
@@ -96,7 +97,7 @@
 <p>Generating open boundary condition (OBC) data is essential for the entire model runtime but can be time-consuming and resource-intensive. The Large Data Workflow in CrocoDash helps manage this by breaking data access into smaller, more manageable components.</p>
 <section id="workflow-overview">
 <h2>Workflow Overview<a class="headerlink" href="#workflow-overview" title="Link to this heading"></a></h2>
-<p>The workflow is enabled by setting the <cite>too_much_data</cite> boolean in <cite>case.configure_forcings</cite>. This triggers the copying of a script folder and the generation of a configuration file to download the required boundary condition files.</p>
+<p>The workflow is enabled by setting the <cite>too_much_data</cite> boolean in <cite>case.configure_forcings</cite>. This triggers the copying of a script folder and the generation of a configuration file to download the required boundary condition files. An example of this is in CrocoGallery under features/add_data_products.ipynb.</p>
 </section>
 <section id="folder-structure">
 <h2>Folder Structure<a class="headerlink" href="#folder-structure" title="Link to this heading"></a></h2>
@@ -131,7 +132,7 @@
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="chl.html" class="btn btn-neutral float-left" title="Chlorophyll" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="notebook_walkthrough.html" class="btn btn-neutral float-left" title="CrocoDash Basic Notebook Walkthrough" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="datasets.html" class="btn btn-neutral float-right" title="Datasets" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 

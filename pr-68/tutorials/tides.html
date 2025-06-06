@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Chlorophyll &mdash; CrocoDash  documentation</title>
+  <title>Tides &mdash; CrocoDash  documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
 
@@ -20,8 +20,8 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Structure" href="../structure.html" />
-    <link rel="prev" title="Tides" href="tides.html" /> 
+    <link rel="next" title="Chlorophyll" href="chl.html" />
+    <link rel="prev" title="Datasets" href="datasets.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -51,8 +51,8 @@
 <li class="toctree-l2"><a class="reference internal" href="notebook_walkthrough.html">CrocoDash Basic Notebook Walkthrough</a></li>
 <li class="toctree-l2"><a class="reference internal" href="large_data_workflow.html">Large Data Workflow</a></li>
 <li class="toctree-l2"><a class="reference internal" href="datasets.html">Datasets</a></li>
-<li class="toctree-l2"><a class="reference internal" href="tides.html">Tides</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">Chlorophyll</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Tides</a></li>
+<li class="toctree-l2"><a class="reference internal" href="chl.html">Chlorophyll</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference external" href="https://crocodile-cesm.github.io/CrocoGallery/">Gallery</a></li>
@@ -76,9 +76,9 @@
   <ul class="wy-breadcrumbs">
       <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
           <li class="breadcrumb-item"><a href="index.html">Tutorials</a></li>
-      <li class="breadcrumb-item active">Chlorophyll</li>
+      <li class="breadcrumb-item active">Tides</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="../_sources/tutorials/chl.rst.txt" rel="nofollow"> View page source</a>
+            <a href="../_sources/tutorials/tides.rst.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -86,32 +86,20 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="chlorophyll">
-<h1>Chlorophyll<a class="headerlink" href="#chlorophyll" title="Link to this heading"></a></h1>
-<p>MOM6 can take chlorophyll data as a file in the regional domain. It impacts shortwave penetration. MOM6 parameters that are impacted by it CHL_FROM_FILE, CHL_FILE, VAR_PEN_SW, and PEN_SW_NBANDS.
-In our workflow, we take raw data from SeaWIFS, process it globally, and subset to our regional domain.</p>
-<div class="admonition caution">
-<p class="admonition-title">Caution</p>
-<p>This method does not do a great job of resolving chlorophyll in estuaries and similar features, if possible, the generated chlorophyll file should be replaced with a
-better product (which can be done by replacing the file in CHL_FILE)</p>
-</div>
-<p>The global processed chlorophyll file is hosted on the CESM inputdata svn server under ocn/mom/croc/chl/data and can be accessed through the CrocoDash raw_data_access module like below:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">CrocoDash.raw_data_access.datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">seawifs</span> <span class="k">as</span> <span class="n">sw</span>
-<span class="n">sw</span><span class="o">.</span><span class="n">get_processed_global_seawifs_script_for_cli</span><span class="p">(</span>
-    <span class="n">output_dir</span><span class="o">=</span><span class="s2">&quot;&lt;insert_dir&gt;&quot;</span><span class="p">,</span>
-    <span class="n">output_file</span><span class="o">=</span><span class="s2">&quot;get_seawifs_data.sh&quot;</span>
-<span class="p">)</span>
-</pre></div>
-</div>
-<p>The file path of the global file (after running the script from the code block) can be passed into configure forcings as shown in the CrocoGallery “Add CHL” demo.</p>
+  <section id="tides">
+<h1>Tides<a class="headerlink" href="#tides" title="Link to this heading"></a></h1>
+<p>MOM6 can take tides data as a boundary condition in the regional domain. Many tides parameters are impacted by this and can be seen in case.process_forcings.</p>
+<p>In our workflow, we take data from the TPXO tidal model and regrid onto our grid.</p>
+<p>TPXO model data can be requested off of the TPXO website or is available on derecho.</p>
+<p>The file paths of the tidal files can be passed into configure forcings as shown in the CrocoGallery “Add Tides” demo with all wanted tidal constituents, like M2.</p>
 </section>
 
 
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="tides.html" class="btn btn-neutral float-left" title="Tides" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="../structure.html" class="btn btn-neutral float-right" title="Structure" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="datasets.html" class="btn btn-neutral float-left" title="Datasets" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="chl.html" class="btn btn-neutral float-right" title="Chlorophyll" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

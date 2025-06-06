@@ -6,7 +6,7 @@ Generating open boundary condition (OBC) data is essential for the entire model 
 Workflow Overview
 ------------------
 
-The workflow is enabled by setting the `too_much_data` boolean in `case.configure_forcings`. This triggers the copying of a script folder and the generation of a configuration file to download the required boundary condition files.
+The workflow is enabled by setting the `too_much_data` boolean in `case.configure_forcings`. This triggers the copying of a script folder and the generation of a configuration file to download the required boundary condition files. An example of this is in CrocoGallery under features/add_data_products.ipynb.
 
 Folder Structure
 ------------------
