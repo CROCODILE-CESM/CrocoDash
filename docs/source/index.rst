@@ -3,18 +3,14 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-CrocoDash Documentation
-=======================================
+Welcome to the CrocoDash Documentation!
+========================================
 
-Welcome to the CrocoDash Documentation! Get quick-started by heading over to :ref:`installation`! 
+CrocoDash is a Python package designed to setup regional Modular Ocean Model 6 (MOM6) cases within the Community Earth System Model (CESM). 
+CrocoDash takes advantage and integrates several MOM6 and CESM tools into an unified workflow for regional MOM6 case configuration.
+CrocoDash is part of the `CROCODILE project <https://github.com/CROCODILE-CESM>`_.
 
-Background
--------------
-CrocoDash is part of the `CROCODILE project <https://github.com/CROCODILE-CESM>`_, and spun off of the `regional-mom6 (RM6) package <https://github.com/CROCODILE-CESM/regional-mom6>`_, an independent package that sets up a regional MOM run. CrocoDash wraps RM6 (for OBC construction & some grid generation) to setup a workflow inside the CESM.
-
-Motivation
--------------
-Please see the overall CROCODILE project for scientific motivation. CrocoDash provides a platform to combine MOM6 and CESM tools to create a sum greater than the parts for regional cases.
+Please see the overall CROCODILE project `description <https://github.com/CROCODILE-CESM>`_  for scientific motivation.
 
 Description
 ----------------
@@ -23,28 +19,24 @@ CrocoDash brings regional MOM6 inside the CESM. It is a lightweight package that
 2. CESM Setup (Through `VisualCaseGen <https://github.com/CROCODILE-CESM/VisualCaseGen>`_)
 3. Forcing + OBC Setup (Through CESM & `regional-mom6 <https://github.com/CROCODILE-CESM/regional-mom6>`_)
 
-CrocoDash also provides a variety of helper tools to help setup a case, for example, a tool to edit bathymetry (TopoEditor) or a tool to download public datasets simply (data_access module). 
+CrocoDash also provides a variety of helper tools to help setup a case, for example, a tool to edit bathymetry (TopoEditor) or a tool to download public datasets simply (raw_data_access module). 
 
+Get Started 
+-------------
 
-Demos
---------
-There are a few demos to get used to the CrocoDash. Check out the demos folder:
-
-1. One is called `minimal_demo_rect <demos/minimal_demo_rect.ipynb>`_. It creates a rectangular case from grid generation to CESM case submission. 
-
-2. Another demo is called `minimal_demo_subset_global <demos/minimal_demo_subset_global.ipynb>`_, which is similar to the previous demo but subsets a global grid instead of generating a rectangular grid. 
-
-3. Another demo showcases the ability to have less than four boundaries in a regional domain. The demo is `minimal_demo_three_boundary <demos/minimal_demo_three_boundary.ipynb>`_.
-
+1. Please see the :ref:`installation` page.
+2. Walk through our :ref:`tutorial` for an easy introduction
+3. Check out our `gallery of demos <https://crocodile-cesm.github.io/CrocoGallery/>`_ for more use cases and cool features.
 
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Contents:
 
    installation
-   demos
-   features/index
+   tutorials/index
+   Gallery <https://crocodile-cesm.github.io/CrocoGallery/>
+   structure
    developers/index
    api-docs/modules
 
