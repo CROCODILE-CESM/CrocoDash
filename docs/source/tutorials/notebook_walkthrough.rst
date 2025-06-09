@@ -13,7 +13,9 @@ with the basic steps of using CrocoDash, no additional features. Please open up 
 
 Basic Demo Overview
 ----------------------
-The basic demo sets up a small rectangular domain around Panama for a few days with GLORYS data (for initial & boundary conditions) and GEBCO bathymetry. The atmospheric forcing is JRA, provided through the CESM
+The basic demo sets up a small rectangular domain around Panama for a few days with GLORYS data (for initial & boundary conditions) and GEBCO bathymetry. The atmospheric forcing is JRA, provided through the CESM.
+Check out the demo 
+`here <https://crocodile-cesm.github.io/CrocoGallery/notebooks/tutorials/minimal_demo_rect.html>`_.
 
 
 Section 1: Set up the Domain

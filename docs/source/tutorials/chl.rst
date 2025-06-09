@@ -20,3 +20,5 @@ The global processed chlorophyll file is hosted on the CESM inputdata svn server
     )
 
 The file path of the global file (after running the script from the code block) can be passed into configure forcings as shown in the CrocoGallery "Add CHL" demo.
+
+Check out the demo `here <https://crocodile-cesm.github.io/CrocoGallery/notebooks/features/add_chl.html>`_.

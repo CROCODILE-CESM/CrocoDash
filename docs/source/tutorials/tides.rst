@@ -8,3 +8,5 @@ In our workflow, we take data from the TPXO tidal model and regrid onto our grid
 TPXO model data can be requested off of the TPXO website or is available on derecho.
 
 The file paths of the tidal files can be passed into configure forcings as shown in the CrocoGallery "Add Tides" demo with all wanted tidal constituents, like M2.
+
+Check out the demo `here <https://crocodile-cesm.github.io/CrocoGallery/notebooks/features/add_tides.html>`_.

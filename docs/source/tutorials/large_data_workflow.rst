@@ -31,5 +31,4 @@ How to Use
 2. Adjust the `step` parameter to match resource constraints (default: 5 days).
 3. Run each step manually or use `driver.py` as a guide.
 
-This workflow ensures efficient data handling.
-
+Check out the demo `here <https://crocodile-cesm.github.io/CrocoGallery/notebooks/features/too_much_data.html>`_.
