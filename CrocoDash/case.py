@@ -346,11 +346,11 @@ class Case:
 
         # Create the forcing directory
         forcing_dir_path = self.inputdir / self.forcing_product_name
-        forcing_dir_path.mkdir(exist_ok=False)
 
         if self.override is True:
             if forcing_dir_path.exists():
                 shutil.rmtree(forcing_dir_path)
+            forcing_dir_path.mkdir(exist_ok=False)
 
         boundary_info = dv.get_rectangular_segment_info(self.ocn_grid)
         if not self._large_data_workflow_called:
