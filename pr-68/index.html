@@ -1,0 +1,147 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Welcome to the CrocoDash Documentation! &mdash; CrocoDash  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Installation" href="installation.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="#" class="icon icon-home">
+            CrocoDash
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/index.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://crocodile-cesm.github.io/CrocoGallery/">Gallery</a></li>
+<li class="toctree-l1"><a class="reference internal" href="structure.html">Structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="developers/index.html">Developer Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api-docs/modules.html">API Documentation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="#">CrocoDash</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="#" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Welcome to the CrocoDash Documentation!</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="welcome-to-the-crocodash-documentation">
+<h1>Welcome to the CrocoDash Documentation!<a class="headerlink" href="#welcome-to-the-crocodash-documentation" title="Link to this heading"></a></h1>
+<p>CrocoDash is a Python package designed to setup regional Modular Ocean Model 6 (MOM6) cases within the Community Earth System Model (CESM).
+CrocoDash takes advantage and integrates several MOM6 and CESM tools into an unified workflow for regional MOM6 case configuration.
+CrocoDash is part of the <a class="reference external" href="https://github.com/CROCODILE-CESM">CROCODILE project</a>.</p>
+<p>Please see the overall CROCODILE project <a class="reference external" href="https://github.com/CROCODILE-CESM">description</a>  for scientific motivation.</p>
+<section id="id1">
+<h2>Description<a class="headerlink" href="#id1" title="Link to this heading"></a></h2>
+<p>CrocoDash brings regional MOM6 inside the CESM. It is a lightweight package that ties together each part of the MOM6 in CESM setup process into one package.
+1. Grid Generation (Through <a class="reference external" href="https://github.com/NCAR/mom6_bathy">mom6_bathy</a> and <a class="reference external" href="https://github.com/CROCODILE-CESM/regional-mom6">regional-mom6</a>)
+2. CESM Setup (Through <a class="reference external" href="https://github.com/CROCODILE-CESM/VisualCaseGen">VisualCaseGen</a>)
+3. Forcing + OBC Setup (Through CESM &amp; <a class="reference external" href="https://github.com/CROCODILE-CESM/regional-mom6">regional-mom6</a>)</p>
+<p>CrocoDash also provides a variety of helper tools to help setup a case, for example, a tool to edit bathymetry (TopoEditor) or a tool to download public datasets simply (raw_data_access module).</p>
+</section>
+<section id="get-started">
+<h2>Get Started<a class="headerlink" href="#get-started" title="Link to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p>Please see the <a class="reference internal" href="installation.html#installation"><span class="std std-ref">Installation</span></a> page.</p></li>
+<li><p>Walk through our <a class="reference internal" href="tutorials/index.html#tutorial"><span class="std std-ref">Tutorials</span></a> for an easy introduction</p></li>
+<li><p>Check out our <a class="reference external" href="https://crocodile-cesm.github.io/CrocoGallery/">gallery of demos</a> for more use cases and cool features.</p></li>
+</ol>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/index.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://crocodile-cesm.github.io/CrocoGallery/">Gallery</a></li>
+<li class="toctree-l1"><a class="reference internal" href="structure.html">Structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="developers/index.html">Developer Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api-docs/modules.html">API Documentation</a></li>
+</ul>
+</div>
+<p>You can also check out the Regional MOM6 documentation for more support information about those functions <a class="reference external" href="https://regional-mom6.readthedocs.io/en/latest/">here</a>!</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="installation.html" class="btn btn-neutral float-right" title="Installation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, CROCODILE.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
