@@ -81,7 +81,7 @@ class Case:
         """
 
         # Initialize the CIME interface object
-        self.cime = CIME_interface(cesmroot)
+        self.cime = CIME_interface(cesmroot, machine=machine)
 
         if machine is None:
             machine = self.cime.machine
