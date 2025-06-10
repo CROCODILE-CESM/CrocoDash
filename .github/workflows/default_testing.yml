@@ -6,7 +6,6 @@ permissions:
   contents: write
 env:
   CESMROOT: ${{ github.workspace }}/CESM/ # See the checkout step below for the path
-  CIME_MACHINE: ubuntu-latest
   DIN_LOC_ROOT: ${{ github.workspace }}
   CIME_OUTPUT_ROOT: ${{ github.workspace }}
 jobs:
