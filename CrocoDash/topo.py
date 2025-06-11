@@ -111,7 +111,7 @@ class Topo(mom6_bathy_Topo):
             
         self.expt = self._setup_rm6_experiment(write_directory)
         
-        bathymetry_output, empty_bathy = self.config_bathymetry(
+        bathymetry_output, empty_bathy = self.expt.config_bathymetry(
             bathymetry_path=file_path,
             longitude_coordinate_name=longitude_coordinate_name,
             latitude_coordinate_name=latitude_coordinate_name,
@@ -131,7 +131,7 @@ class Topo(mom6_bathy_Topo):
         write_to_file=False,
     ):
         
-        final_bathymetry = self.experiment.tidy_bathymetry(
+        final_bathymetry = self.expt.tidy_bathymetry(
             fill_channels,
             positive_down,
             bathymetry=bathymetry,
