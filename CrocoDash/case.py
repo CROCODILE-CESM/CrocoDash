@@ -621,9 +621,6 @@ class Case:
                 opt = phys.split("%")[1] if "%" in phys else None
                 if opt is not None:
                     cvars[f"COMP_{comp_class}_OPTION"].value = opt
-                    print(
-                        f"Setting {comp_class} option to {opt} for custom component set {compset}"
-                    )
                 else:
                     cvars[f"COMP_{comp_class}_OPTION"].value = "(none)"
 
