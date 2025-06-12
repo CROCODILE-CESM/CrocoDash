@@ -36,10 +36,10 @@ class Case:
         cesmroot: str | Path,
         caseroot: str | Path,
         inputdir: str | Path,
+        compset: str,
         ocn_grid: Grid,
         ocn_topo: Topo,
         ocn_vgrid: VGrid,
-        compset: str,
         datm_grid_name: str = "TL319",
         ninst: int = 1,
         machine: str | None = None,
@@ -57,15 +57,15 @@ class Case:
             Path to the case root directory to be created.
         inputdir : str | Path
             Path to the input directory to be created.
+        compset : str
+            The component set alias (e.g. "G_JRA") or long name
+            (e.g. "1850_DATM%JRA_SLND_SICE_MOM6_SROF_SGLC_SWAV_SESP") for the case.
         ocn_grid : Grid
             The ocean grid object to be used in the case.
         ocn_topo : Topo
             The ocean topography object to be used in the case.
         ocn_vgrid : VGrid
             The ocean vertical grid object to be used in the case.
-        compset : str
-            The component set alias (e.g. "G_JRA") or long name
-            (e.g. "1850_DATM%JRA_SLND_SICE_MOM6_SROF_SGLC_SWAV_SESP") for the case.
         datm_grid_name : str, optional
             The data atmosphere grid name of the case. Default is "TL319".
         ninst : int, optional
@@ -605,22 +605,27 @@ class Case:
             cvars[f"COMP_{comp_class}"].value = model
 
         # Stage: Model Physics (e.g, CAM60, MOM6, etc.)
-        assert Stage.active().title.startswith('Component Physics')
-        for comp_class, phys in components.items():
-            phys = phys.split("%")[0]  # Get the physics part
-            cvars[f"COMP_{comp_class}_PHYS"].value = phys
+        if Stage.active().title.startswith('Component Physics'):
+            for comp_class, phys in components.items():
+                phys = phys.split("%")[0]  # Get the physics part
+                cvars[f"COMP_{comp_class}_PHYS"].value = phys
+        else:
+            # Physics and/or Options stages may be auto-completed if each chosen model has
+            # exactly one physics and modifier option (though, this is unlikely).
+            assert Stage.active().title.startswith('Component Options') \
+                or Stage.active().title.startswith('2. Grid')
 
         # Stage: Component Physics Options (i.e., modifiers for the physics, e.g. %JRA, %MARBL-BIO, etc.)
-        assert Stage.active().title.startswith('Component Options')
-        for comp_class, phys in components.items():
-            opt = phys.split("%")[1] if "%" in phys else None
-            if opt is not None:
-                cvars[f"COMP_{comp_class}_OPTION"].value = opt
-                print(
-                    f"Setting {comp_class} option to {opt} for custom component set {compset}"
-                )
-            else:
-                cvars[f"COMP_{comp_class}_OPTION"].value = "(none)"
+        if Stage.active().title.startswith('Component Options'):
+            for comp_class, phys in components.items():
+                opt = phys.split("%")[1] if "%" in phys else None
+                if opt is not None:
+                    cvars[f"COMP_{comp_class}_OPTION"].value = opt
+                    print(
+                        f"Setting {comp_class} option to {opt} for custom component set {compset}"
+                    )
+                else:
+                    cvars[f"COMP_{comp_class}_OPTION"].value = "(none)"
 
         # Confirm successful configuration of custom component set
         assert Stage.active().title == "2. Grid"
