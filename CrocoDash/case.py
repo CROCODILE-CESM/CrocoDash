@@ -264,6 +264,7 @@ class Case:
         product_name: str = "GLORYS",
         function_name: str = "get_glorys_data_script_for_cli",
         too_much_data: bool = False,
+        retrieve_ic: bool = True,
     ):
         """Configure the boundary conditions and tides for the MOM6 case."""
 
@@ -429,15 +430,16 @@ class Case:
                 json.dump(config, f, indent=4)
 
             # Generate Initial Condition Script
-            self.ProductFunctionRegistry.functions[product_name][function_name](
-                [date_range[0], date_range[0]],
-                boundary_info["ic"]["lat_min"],
-                boundary_info["ic"]["lat_max"],
-                boundary_info["ic"]["lon_min"],
-                boundary_info["ic"]["lon_max"],
-                forcing_dir_path,
-                "ic" + "_unprocessed.nc",
-            )
+            if retrieve_ic:
+                self.ProductFunctionRegistry.functions[product_name][function_name](
+                    [date_range[0], date_range[0]],
+                    boundary_info["ic"]["lat_min"],
+                    boundary_info["ic"]["lat_max"],
+                    boundary_info["ic"]["lon_min"],
+                    boundary_info["ic"]["lon_max"],
+                    forcing_dir_path,
+                    "ic" + "_unprocessed.nc",
+                )
         self._configure_forcings_called = True
 
     def process_forcings(
