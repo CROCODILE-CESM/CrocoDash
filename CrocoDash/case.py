@@ -123,8 +123,7 @@ class Case:
         except ConstraintViolation as e:
             print(f"{ERROR}{str(e)}{RESET}")
             return
-        except Exception as e:
-            raise e
+# Removed redundant exception handling block.
 
         self._create_grid_input_files()
 
