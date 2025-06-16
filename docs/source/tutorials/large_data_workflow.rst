@@ -1,12 +1,15 @@
 Large Data Workflow
 ====================
 
-Generating open boundary condition (OBC) data is essential for the entire model runtime but can be time-consuming and resource-intensive. The Large Data Workflow in CrocoDash helps manage this by breaking data access into smaller, more manageable components.
+Generating open boundary condition (OBC) data is essential for the entire model runtime but can be time-consuming and resource-intensive. 
+The Large Data Workflow in CrocoDash helps manage this by breaking data access into smaller, more manageable components.
 
 Workflow Overview
 ------------------
 
-The workflow is enabled by setting the `too_much_data` boolean in `case.configure_forcings`. This triggers the copying of a script folder and the generation of a configuration file to download the required boundary condition files. An example of this is in CrocoGallery under features/add_data_products.ipynb.
+The workflow is enabled by setting the `too_much_data` boolean in `case.configure_forcings`. This triggers the copying of a script folder into the case input directory forcing folder 
+and the generation of a configuration file to download the required boundary condition files. An example of this is in CrocoGallery under features/add_data_products.ipynb.
+Users can trigger the workflow by running driver.py in the forcing folder and adjusting config options in the config file.
 
 Folder Structure
 ------------------

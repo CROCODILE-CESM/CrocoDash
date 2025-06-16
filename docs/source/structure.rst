@@ -21,10 +21,10 @@ CrocoDash wraps RM6 to provide Initial & Boundary Conditions
 
 Workflow Diagram
 ------------------
-The following diagram illustrates the workflow of CrocoDash/RM6 to set up a regional model:
+The following diagram illustrates the workflow of CrocoDash to set up a regional model:
 
 .. figure:: _static/workflow_diagram.png
-   :alt: Workflow diagram showing the steps from CrocoDash/RM6 to a regional model.
+   :alt: Workflow diagram showing the steps from CrocoDash to a regional model.
    :align: center
    :width: 80%
 
