@@ -161,7 +161,8 @@ def regrid_dataset_piecewise(
     # Run Initial Condition
     if run_initial_condition:
         matching_files["IC"] = [("None", "None", Path(folder) / "ic_unprocessed.nc")]
-        expt.vgrid = xr.open_dataset(vgrid_path)
+        vgrid_from_file = xr.open_dataset(vgrid_path)
+        expt.vgrid = expt._make_vgrid(vgrid_from_file.dz.data) # renames/changes meta data
         file_path = Path(file_path)
         if not preview:
             expt.setup_initial_condition(file_path, dataset_varnames)
