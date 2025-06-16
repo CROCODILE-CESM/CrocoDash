@@ -54,6 +54,7 @@ def test_case_integration_config(get_CrocoDash_case):
     assert set(config["paths"].keys()) == {
         "raw_dataset_path",
         "hgrid_path",
+        "vgrid_path",
         "regridded_dataset_path",
         "merged_dataset_path",
     }
@@ -88,9 +89,10 @@ def test_case_integration_config(get_CrocoDash_case):
 
     # Params
     assert isinstance(config["params"], dict)
-    assert set(config["params"].keys()) == {"step", "preview"}
+    assert set(config["params"].keys()) == {"step", "preview", "run_initial_condition"}
     assert isinstance(config["params"]["step"], int)
     assert isinstance(config["params"]["preview"], bool)
+    assert isinstance(config["params"]["run_initial_condition"], bool)
 
     # Validate every param except ocean_hgrid, boundary_number_conversion, and ocean_varnames
     assert config["paths"]["raw_dataset_path"] == str(
@@ -99,7 +101,7 @@ def test_case_integration_config(get_CrocoDash_case):
     assert config["paths"]["regridded_dataset_path"] == str(
         large_data_workflow_path / "regridded_data"
     )
-    assert config["paths"]["merged_dataset_path"] == str(case.inputdir/"ocnice")
+    assert config["paths"]["merged_dataset_path"] == str(case.inputdir / "ocnice")
 
     # Raw file regex
     assert (
@@ -123,4 +125,5 @@ def test_case_integration_config(get_CrocoDash_case):
     # Params
     assert config["params"]["step"] == 5
     assert config["params"]["preview"] == False
+    assert config["params"]["run_initial_condition"] == True
     return

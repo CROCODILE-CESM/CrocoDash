@@ -9,11 +9,15 @@ from datetime import datetime
 
 @pytest.mark.slow
 def test_regrid_data_piecewise_workflow(
-    generate_piecewise_raw_data, dummy_forcing_factory, tmp_path, get_rect_grid
+    generate_piecewise_raw_data,
+    dummy_forcing_factory,
+    tmp_path,
+    get_rect_grid,
 ):
 
     # Get Grids
     grid = get_rect_grid
+
     hgrid_path = tmp_path / "hgrid.nc"
     grid.write_supergrid(hgrid_path)
 
@@ -58,6 +62,7 @@ def test_regrid_data_piecewise_workflow(
         varnames,
         output_folder,
         {"east": 1, "south": 2},
+        run_initial_condition=False,
     )
     ## Check Output by checking the existence of two files, which checks the files are saved in the right place and of the correct date format ##
     for boundary_str in ["001", "002"]:
@@ -71,13 +76,20 @@ def test_regrid_data_piecewise_workflow(
 
 
 def test_regrid_data_piecewise_parsing(
-    generate_piecewise_raw_data, dummy_forcing_factory, tmp_path, get_rect_grid
+    generate_piecewise_raw_data,
+    dummy_forcing_factory,
+    tmp_path,
+    get_rect_grid,
+    get_vgrid,
 ):
 
     # Get Grids
     grid = get_rect_grid
+    vgrid = get_vgrid
+    vgrid_path = tmp_path / "vgrid.nc"
     hgrid_path = tmp_path / "hgrid.nc"
     grid.write_supergrid(hgrid_path)
+    vgrid.write(vgrid_path)
 
     # Generate piecewise data
     piecewise_factory = generate_piecewise_raw_data
@@ -94,6 +106,7 @@ def test_regrid_data_piecewise_parsing(
     directory_raw_data = Path(
         piecewise_factory(ds, "2020-01-01", "2020-01-31", "south_unprocessed_")
     )
+    ds.to_netcdf(directory_raw_data / "ic_unprocessed.nc")
 
     # Setup other required variables
     output_folder = tmp_path / "output"
@@ -120,6 +133,8 @@ def test_regrid_data_piecewise_parsing(
         varnames,
         output_folder,
         {"east": 1, "south": 2},
+        run_initial_condition=True,
+        vgrid_path=vgrid_path,
         preview=True,
     )
     for boundary_str, name in [("001", "east"), ("002", "south")]:
@@ -143,7 +158,11 @@ def test_regrid_data_piecewise_parsing(
         ] == "forcing_obc_segment_{}_{}_{}.nc".format(
             boundary_str, file_start_date, file_end_date
         )
-
+    assert "init_eta.nc" in preview_dict["output_file_names"]
+    assert (
+        directory_raw_data / "ic_unprocessed.nc"
+        == preview_dict["matching_files"]["IC"][0][2]
+    )
     new_output_folder = output_folder / "other_data"
     new_output_folder.mkdir()
     preview_dict = rb.regrid_dataset_piecewise(
@@ -156,7 +175,8 @@ def test_regrid_data_piecewise_parsing(
         varnames,
         new_output_folder,
         {"east": 1, "south": 2},
-        True,
+        run_initial_condition=False,
+        preview=True,
     )
     for boundary_str in ["001", "002"]:
         file_start_date = "20200131"
