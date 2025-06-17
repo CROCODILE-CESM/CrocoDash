@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-class EditHistory(ABC):
+class CommandManager(ABC):
     def __init__(self, domain_id, snapshot_dir="snapshots"):
         self._undo_history = []
         self._redo_history = []
@@ -13,17 +13,22 @@ class EditHistory(ABC):
         pass
 
     @abstractmethod
+    def execute(self, cmd):
+        """Execute a command, push it onto the undo stack, and clear the redo stack."""
+        pass
+
+    @abstractmethod
     def push(self, command):
         """Add a command to the history."""
         pass
 
     @abstractmethod
-    def undo(self, obj):
+    def undo(self):
         """Undo the last command."""
         pass
 
     @abstractmethod
-    def redo(self, obj):
+    def redo(self):
         """Redo the last undone command."""
         pass
 
@@ -33,8 +38,10 @@ class EditHistory(ABC):
         pass
 
     @abstractmethod
-    def load_histories(self, command_registry):
-        """Load the undo/redo history from disk."""
+    def load_histories(self, command_registry, *args, **kwargs):
+        """Load the undo/redo history from disk.
+        *args, **kwargs :
+            Additional context needed for deserialization (if any)."""
         pass
 
     @abstractmethod
@@ -43,11 +50,18 @@ class EditHistory(ABC):
         pass
 
     @abstractmethod
-    def load_commit(self, name, command_registry):
-        """Load a named snapshot/commit."""
+    def load_commit(self, name, command_registry, *args, **kwargs):
+        """Load a named snapshot/commit.
+        *args, **kwargs :
+            Additional context needed for deserialization (if any)."""
         pass
 
     @abstractmethod
-    def replay(self, obj):
-        """Replay all commands in the undo history to the object."""
+    def initialize(self, command_registry, *args, **kwargs):
+        """Initialize with a given registry and context."""
+        pass
+
+    @abstractmethod
+    def replay(self):
+        """Replay all commands in the undo history."""
         pass
