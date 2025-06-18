@@ -2,6 +2,7 @@
     "paths": {
         "raw_dataset_path": "",
         "hgrid_path": "",
+        "vgrid_path": "",
         "regridded_dataset_path": "",
         "merged_dataset_path": ""
     },
@@ -22,6 +23,7 @@
     "boundary_number_conversion": {},
     "params": {
         "step": "",
-        "preview": false
+        "preview": false,
+        "run_initial_condition": true
     }
 }

@@ -25,6 +25,7 @@ def test_get_dataset_piecewise_workflow(tmp_path, get_rect_grid, skip_if_not_gla
 
     assert os.path.exists(tmp_path / "east_unprocessed.20200101_20200106.nc")
     assert os.path.exists(tmp_path / "south_unprocessed.20200201_20200201.nc")
+    assert os.path.exists(tmp_path / "ic_unprocessed.nc")
 
     # This extra call takes a while to run
     dp.get_dataset_piecewise(
@@ -63,6 +64,7 @@ def test_get_dataset_piecewise_parsing(tmp_path, get_rect_grid):
     assert preview_dict["dates"][0] == datetime.strptime("20200101", "%Y%m%d")
     assert preview_dict["dates"][-1] == datetime.strptime("20200201", "%Y%m%d")
     assert (
-        preview_dict["output_file_names"][0] == "east_unprocessed.20200101_20200106.nc"
+        preview_dict["output_file_names"][1] == "east_unprocessed.20200101_20200106.nc"
     )
+    assert preview_dict["output_file_names"][0] == "ic_unprocessed.nc"
     assert preview_dict["output_folder"] == tmp_path

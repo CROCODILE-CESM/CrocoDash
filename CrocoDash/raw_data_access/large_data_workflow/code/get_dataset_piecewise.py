@@ -20,6 +20,7 @@ def get_dataset_piecewise(
     step_days: int,
     output_dir: str | Path,
     boundary_number_conversion: dict,
+    run_initial_condition: bool = True,
     preview: bool = False,
 ):
     """
@@ -45,6 +46,8 @@ def get_dataset_piecewise(
         The directory to save the output NetCDF files.
     boundary_number_conversion : dict
         Dictionary mapping boundaries to their numerical identifiers.
+    run_initial_condition : bool
+        Whether or not to run the initial condition, default is true
     preview : bool
         Whether or not to preview the run, default is false
 
@@ -101,6 +104,27 @@ def get_dataset_piecewise(
         end_date = dates[ind + 1]
         start_date_str = start_date.strftime(date_format)
         end_date_str = end_date.strftime(date_format)
+
+        # Set Initial Condition
+        if run_initial_condition and ind == 0:
+            latlon_info = boundary_info["ic"]
+            output_file = f"ic_unprocessed.nc"
+            output_file_names.append(output_file)
+            end_ic_date = start_date + timedelta(days=1)
+            end_ic_date_str = end_ic_date.strftime(date_format)
+
+            # Execute the data retrieval function
+            if not preview:
+                data_access_function(
+                    dates=[start_date_str, end_ic_date_str],
+                    lat_min=latlon_info["lat_min"],
+                    lat_max=latlon_info["lat_max"],
+                    lon_min=latlon_info["lon_min"],
+                    lon_max=latlon_info["lon_max"],
+                    output_dir=output_dir,
+                    output_file=output_file,
+                )
+
         for boundary in boundary_number_conversion.keys():
 
             latlon_info = boundary_info[boundary]
@@ -159,6 +183,7 @@ def main(config_file):
         step_days=int(config["params"]["step"]),
         output_dir=config["paths"]["raw_dataset_path"],
         boundary_number_conversion=config["boundary_number_conversion"],
+        run_initial_condition=True,
         preview=config["params"]["preview"],
     )
 

@@ -396,6 +396,7 @@ class Case:
                 / "ocnice"
                 / f"ocean_hgrid_{self.ocn_grid.name}_{session_id}.nc"
             )
+            vgrid_path = str( self.inputdir / "ocnice" / f"ocean_vgrid_{self.ocn_grid.name}_{session_id}.nc")
 
             # Write Config File
 
@@ -403,6 +404,7 @@ class Case:
             with open(large_data_workflow_path / "config.json", "r") as f:
                 config = json.load(f)
             config["paths"]["hgrid_path"] = hgrid_path
+            config["paths"]["vgrid_path"] = vgrid_path
             config["paths"]["raw_dataset_path"] = str(
                 large_data_workflow_path / "raw_data"
             )
@@ -428,18 +430,7 @@ class Case:
             # Write out
             with open(large_data_workflow_path / "config.json", "w") as f:
                 json.dump(config, f, indent=4)
-
-            # Generate Initial Condition Script
-            if retrieve_ic:
-                self.ProductFunctionRegistry.functions[product_name][function_name](
-                    [date_range[0], date_range[0]],
-                    boundary_info["ic"]["lat_min"],
-                    boundary_info["ic"]["lat_max"],
-                    boundary_info["ic"]["lon_min"],
-                    boundary_info["ic"]["lon_max"],
-                    forcing_dir_path,
-                    "ic" + "_unprocessed.nc",
-                )
+                
         self._configure_forcings_called = True
 
     def process_forcings(

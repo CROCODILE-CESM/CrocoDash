@@ -43,6 +43,7 @@ def main():
         step_days=int(config["params"]["step"]),
         output_dir=config["paths"]["raw_dataset_path"],
         boundary_number_conversion=config["boundary_number_conversion"],
+        run_initial_condition=config["params"]["run_initial_condition"],
         preview=config["params"]["preview"],
     )
 
@@ -57,6 +58,8 @@ def main():
         config["forcing"]["varnames"],
         config["paths"]["regridded_dataset_path"],
         config["boundary_number_conversion"],
+        config["params"]["run_initial_condition"],
+        config["paths"]["vgrid_path"],
         config["params"]["preview"],
     )
 
@@ -69,6 +72,7 @@ def main():
         config["dates"]["end"],
         config["boundary_number_conversion"],
         config["paths"]["merged_dataset_path"],
+        config["params"]["run_initial_condition"],
         config["params"]["preview"],
     )
     return
