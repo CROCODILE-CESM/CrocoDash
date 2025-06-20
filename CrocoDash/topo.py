@@ -88,25 +88,25 @@ class Topo(mom6_bathy_Topo):
         
         if verbose:
             print(f"""
-            *MANUAL REGRIDDING INSTRUCTIONS*
-            
-            Calling `mpi_interpolate_from_file` sets up the files necessary for regridding
-            the bathymetry using mpirun and ESMF_Regrid. See below for the step-by-step instructions:
-            
-            1. There should be two files: `bathymetry_original.nc` and `bathymetry_unfinished.nc` located at
-            {write_directory}. 
-            
-            2. Open a terminal and change to this directory (e.g. `cd {write_directory}`).
-            
-            3. Request appropriate computational resources (see example script below), and run the command:
-            
-            `mpirun -np NUMBER_OF_CPUS ESMF_Regrid -s bathymetry_original.nc -d bathymetry_unfinished.nc -m bilinear --src_var depth --dst_var depth --netcdf4 --src_regional --dst_regional`
-            
-            4. Run Topo_object.tidy_bathymetry(args) to finish processing the bathymetry. 
-            
-            Example PBS script using NCAR's Casper Machine: https://gist.github.com/AidanJanney/911290acaef62107f8e2d4ccef9d09be
-            
-            For additional details see: https://xesmf.readthedocs.io/en/latest/large_problems_on_HPC.html
+    *MANUAL REGRIDDING INSTRUCTIONS*
+    
+    Calling `mpi_interpolate_from_file` sets up the files necessary for regridding
+    the bathymetry using mpirun and ESMF_Regrid. See below for the step-by-step instructions:
+    
+    1. There should be two files: `bathymetry_original.nc` and `bathymetry_unfinished.nc` located at
+    {Path(write_directory).absolute()}. 
+    
+    2. Open a terminal and change to this directory (e.g. `cd {Path(write_directory).absolute()}`).
+    
+    3. Request appropriate computational resources (see example script below), and run the command:
+    
+    `mpirun -np NUMBER_OF_CPUS ESMF_Regrid -s bathymetry_original.nc -d bathymetry_unfinished.nc -m bilinear --src_var depth --dst_var depth --netcdf4 --src_regional --dst_regional`
+    
+    4. Run Topo_object.tidy_bathymetry(args) to finish processing the bathymetry. 
+    
+    Example PBS script using NCAR's Casper Machine: https://gist.github.com/AidanJanney/911290acaef62107f8e2d4ccef9d09be
+    
+    For additional details see: https://xesmf.readthedocs.io/en/latest/large_problems_on_HPC.html
             """)
             
         self.expt = self._setup_rm6_experiment(write_directory)
