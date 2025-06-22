@@ -42,8 +42,7 @@ def get_CrocoDash_case(
     caseroot, inputdir = tmp_path / "case", tmp_path / "inputdir"
     project_num = "NCGD0011"
     override = True
-    inittime = "1850"
-    datm_mode = "JRA"
+    compset = "1850_DATM%JRA_SLND_SICE_MOM6_SROF_SGLC_SWAV"
     datm_grid_name = "TL319"
     ninst = 2
     glade_bool = is_glade_file_system
@@ -60,14 +59,13 @@ def get_CrocoDash_case(
         cesmroot=cesmroot,
         caseroot=caseroot,
         inputdir=inputdir,
+        compset=compset,
         ocn_grid=grid,
         ocn_vgrid=vgrid,
         ocn_topo=topo,
         project=project_num,
         override=override,
         machine=machine,
-        inittime=inittime,
-        datm_mode=datm_mode,
         datm_grid_name=datm_grid_name,
         ninst=ninst,
     )
