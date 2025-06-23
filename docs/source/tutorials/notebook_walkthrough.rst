@@ -221,3 +221,8 @@ That's it! You can now go to the case directory and build and run the model! It'
     cd ~/croc_input/panama-1
     ./case.build
     ./case.submit
+
+.. note::
+
+   If you run into errors, check out our `Common Errors Page <https://github.com/CROCODILE-CESM/CrocoDash/discussions/84>`_. 
+   If you can't find a solution, post an issue on the `CrocoDash Issues Tab <https://github.com/CROCODILE-CESM/CrocoDash/issues>`_ or ask in the `Discussions <https://github.com/CROCODILE-CESM/CrocoDash/discussions>`_.

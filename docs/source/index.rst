@@ -38,6 +38,7 @@ Get Started
    structure
    developers/index
    api-docs/modules
+   Common Errors <https://github.com/CROCODILE-CESM/CrocoDash/discussions/84>
 
 
 You can also check out the Regional MOM6 documentation for more support information `here <https://regional-mom6.readthedocs.io/en/latest/>`_!
