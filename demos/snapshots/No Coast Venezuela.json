@@ -1,0 +1,1 @@
+{"domain_id": {"grid_name": "Venezuela", "shape": [300, 300], "lenx": 9.0, "leny": 9.0, "resolution": 0.03, "xstart": 283.0, "ystart": 7.0}, "undo_history": [{"type": "MinDepthEditCommand", "attr": "min_depth", "new_value": 100.0, "old_value": 9.5}], "redo_history": []}
