@@ -12,3 +12,4 @@ Tutorials
    datasets
    tides
    chl
+   input_params
