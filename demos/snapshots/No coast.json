@@ -1,0 +1,1 @@
+{"domain_id": {"grid_name": "High_South_America", "shape": [354, 498]}, "undo_history": [{"type": "MinDepthEditCommand", "attr": "min_depth", "new_value": 200.0, "old_value": 9.5}], "redo_history": []}
