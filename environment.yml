@@ -18,4 +18,5 @@ dependencies:
     - -e ./CrocoDash/visualCaseGen/external/mom6_bathy/
     - -e ./CrocoDash/visualCaseGen/
     - myst_parser>=4.0.0,<4.1.0
+    - sphinx-book-theme>=1.1.4,<1.2.0
     - -e ./

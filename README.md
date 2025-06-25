@@ -1,6 +1,6 @@
 # CrocoDash
 
-CrocoDash is a Python package designed to setup regional Modular Ocean Model 6 (MOM6) cases within the Community Earth System Model (CESM). CrocoDash takes advantage and integrates several MOM6 and CESM tools into an unified workflow for regional MOM6 case configuration.
+Please check out our documentation at the website: [https://crocodile-cesm.github.io/CrocoDash/](https://crocodile-cesm.github.io/CrocoDash/).
 
 ## Installation: 
 
@@ -14,8 +14,4 @@ Installation:
 4. Test installation with:
 `pytest tests/test_installation.py`
 
-
-## Documentation: 
-
-Check out our documentation at the website: [https://crocodile-cesm.github.io/CrocoDash/](https://crocodile-cesm.github.io/CrocoDash/).
 
