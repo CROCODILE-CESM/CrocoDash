@@ -222,6 +222,14 @@ That's it! You can now go to the case directory and build and run the model! It'
     ./case.build
     ./case.submit
 
+Section 4: Make your Changes!
+-----------------------------------
+Now that you have a basic understanding of how to use CrocoDash, you can start making your own changes! 
+You can change the domain, the bathymetry, the vertical grid, the forcing data, and any other parameters you want to change. 
+You can also add additional features like tides, chlorophyll, or any other data products you want to use in your model.
+
+For quick reference on how to change the parameters, you can check out the :ref:`input_params` documentation, which explains how to override the default parameters in CESM.
+
 .. note::
 
    If you run into errors, check out our `Common Errors Page <https://github.com/CROCODILE-CESM/CrocoDash/discussions/84>`_. 
