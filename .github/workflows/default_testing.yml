@@ -41,7 +41,7 @@ jobs:
           source $(conda info --base)/etc/profile.d/conda.sh # Initialize Conda
           conda activate CrocoDash # Activate env for autodocs
           cd CrocoDash
-          pytest -m "not workflow"
+          pytest --ignore=CrocoDash/visualCaseGen -m "not workflow"
         shell: bash
       - name: Run Full Workflow Test
         run: |
