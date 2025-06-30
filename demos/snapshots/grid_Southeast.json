@@ -1,0 +1,10 @@
+{
+  "domain_id": {
+    "name": "Southeast",
+    "resolution": 0.03,
+    "xstart": 278.0,
+    "lenx": 8.0,
+    "ystart": 30.0,
+    "leny": 8.0
+  }
+}
