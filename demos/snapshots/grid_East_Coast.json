@@ -1,0 +1,10 @@
+{
+  "domain_id": {
+    "name": "East_Coast",
+    "resolution": 0.03,
+    "xstart": 282.0,
+    "lenx": 8.0,
+    "ystart": 35.0,
+    "leny": 8.0
+  }
+}
