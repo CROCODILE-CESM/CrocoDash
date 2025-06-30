@@ -1,0 +1,695 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>CrocoDash.raw_data_access package &#8212; CrocoDash  documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=eba8b062" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'api-docs/CrocoDash.raw_data_access';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="CrocoDash.raw_data_access.datasets package" href="CrocoDash.raw_data_access.datasets.html" />
+    <link rel="prev" title="CrocoDash package" href="CrocoDash.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../_static/crocodile.png" class="logo__image only-light" alt="CrocoDash  documentation - Home"/>
+    <script>document.write(`<img src="../_static/crocodile.png" class="logo__image only-dark" alt="CrocoDash  documentation - Home"/>`);</script>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../tutorials/index.html">Tutorials</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/cesm_setup.html">CESM Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/notebook_walkthrough.html">CrocoDash Basic Notebook Walkthrough</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/large_data_workflow.html">Large Data Workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/datasets.html">Datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/tides.html">Tides</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/chl.html">Chlorophyll</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/input_params.html">Input Parameters</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference external" href="https://crocodile-cesm.github.io/CrocoGallery/">Gallery</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../structure.html">Structure</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../developers/index.html">Developer Information</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../developers/docs.html">Write Documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developers/adding_data_access.html">Adding Data to the Data Access Module</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="modules.html">API Documentation</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2 current active has-children"><a class="reference internal" href="CrocoDash.html">CrocoDash package</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l3 current active has-children"><a class="current reference internal" href="#">CrocoDash.raw_data_access package</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html">CrocoDash.raw_data_access.datasets package</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="CrocoDash.rm6.html">CrocoDash.rm6 package</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html">CrocoDash.rm6.regional_mom6 package</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/CROCODILE-CESM/CrocoDash/discussions/84">Common Errors</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/api-docs/CrocoDash.raw_data_access.rst" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.rst</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>CrocoDash.raw_data_access package</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#subpackages">Subpackages</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#submodules">Submodules</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.raw_data_access.config">CrocoDash.raw_data_access.config module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.config.category_of_product"><code class="docutils literal notranslate"><span class="pre">category_of_product()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.config.function_exists"><code class="docutils literal notranslate"><span class="pre">function_exists()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.config.list_functions"><code class="docutils literal notranslate"><span class="pre">list_functions()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.config.list_products"><code class="docutils literal notranslate"><span class="pre">list_products()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.config.load_tables"><code class="docutils literal notranslate"><span class="pre">load_tables()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.config.load_varnames_config"><code class="docutils literal notranslate"><span class="pre">load_varnames_config()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.config.product_exists"><code class="docutils literal notranslate"><span class="pre">product_exists()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.config.type_of_function"><code class="docutils literal notranslate"><span class="pre">type_of_function()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.raw_data_access.driver">CrocoDash.raw_data_access.driver module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.driver.ProductFunctionRegistry"><code class="docutils literal notranslate"><span class="pre">ProductFunctionRegistry</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.driver.ProductFunctionRegistry.list_importable_functions"><code class="docutils literal notranslate"><span class="pre">ProductFunctionRegistry.list_importable_functions()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.driver.ProductFunctionRegistry.load_functions"><code class="docutils literal notranslate"><span class="pre">ProductFunctionRegistry.load_functions()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.driver.ProductFunctionRegistry.validate_function"><code class="docutils literal notranslate"><span class="pre">ProductFunctionRegistry.validate_function()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.driver.ProductFunctionRegistry.verify_data_sufficiency"><code class="docutils literal notranslate"><span class="pre">ProductFunctionRegistry.verify_data_sufficiency()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.driver.get_rectangular_segment_info"><code class="docutils literal notranslate"><span class="pre">get_rectangular_segment_info()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.raw_data_access.utils">CrocoDash.raw_data_access.utils module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.utils.fill_template"><code class="docutils literal notranslate"><span class="pre">fill_template()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.utils.load_config"><code class="docutils literal notranslate"><span class="pre">load_config()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.utils.setup_logger"><code class="docutils literal notranslate"><span class="pre">setup_logger()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.raw_data_access">Module contents</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="crocodash-raw-data-access-package">
+<h1>CrocoDash.raw_data_access package<a class="headerlink" href="#crocodash-raw-data-access-package" title="Link to this heading">#</a></h1>
+<section id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Link to this heading">#</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html">CrocoDash.raw_data_access.datasets package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#module-CrocoDash.raw_data_access.datasets.glorys">CrocoDash.raw_data_access.datasets.glorys module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.glorys.get_glorys_data_from_cds_api"><code class="docutils literal notranslate"><span class="pre">get_glorys_data_from_cds_api()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.glorys.get_glorys_data_from_rda"><code class="docutils literal notranslate"><span class="pre">get_glorys_data_from_rda()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.glorys.get_glorys_data_script_for_cli"><code class="docutils literal notranslate"><span class="pre">get_glorys_data_script_for_cli()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#module-CrocoDash.raw_data_access.datasets.seawifs">CrocoDash.raw_data_access.datasets.seawifs module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.seawifs.get_global_seawifs_script_for_cli"><code class="docutils literal notranslate"><span class="pre">get_global_seawifs_script_for_cli()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#module-CrocoDash.raw_data_access.datasets.utils">CrocoDash.raw_data_access.datasets.utils module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.utils.convert_lons_to_180_range"><code class="docutils literal notranslate"><span class="pre">convert_lons_to_180_range()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#module-CrocoDash.raw_data_access.datasets">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading">#</a></h2>
+</section>
+<section id="module-CrocoDash.raw_data_access.config">
+<span id="crocodash-raw-data-access-config-module"></span><h2>CrocoDash.raw_data_access.config module<a class="headerlink" href="#module-CrocoDash.raw_data_access.config" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.config.category_of_product">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.config.</span></span><span class="sig-name descname"><span class="pre">category_of_product</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">product_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.config.category_of_product" title="Link to this definition">#</a></dt>
+<dd><p>Returns the type of function, python or script, the function is</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.config.function_exists">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.config.</span></span><span class="sig-name descname"><span class="pre">function_exists</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">product_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.config.function_exists" title="Link to this definition">#</a></dt>
+<dd><p>Check if a function exists for a given product.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.config.list_functions">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.config.</span></span><span class="sig-name descname"><span class="pre">list_functions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">product_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.config.list_functions" title="Link to this definition">#</a></dt>
+<dd><p>Return functions available for a given data product.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.config.list_products">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.config.</span></span><span class="sig-name descname"><span class="pre">list_products</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.config.list_products" title="Link to this definition">#</a></dt>
+<dd><p>Return a list of available data products.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.config.load_tables">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.config.</span></span><span class="sig-name descname"><span class="pre">load_tables</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.config.load_tables" title="Link to this definition">#</a></dt>
+<dd><p>Load data tables from CSV files.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.config.load_varnames_config">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.config.</span></span><span class="sig-name descname"><span class="pre">load_varnames_config</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.config.load_varnames_config" title="Link to this definition">#</a></dt>
+<dd><p>Load configuration files.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.config.product_exists">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.config.</span></span><span class="sig-name descname"><span class="pre">product_exists</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">product_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.config.product_exists" title="Link to this definition">#</a></dt>
+<dd><p>Check if a product exists.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.config.type_of_function">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.config.</span></span><span class="sig-name descname"><span class="pre">type_of_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">product_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.config.type_of_function" title="Link to this definition">#</a></dt>
+<dd><p>Returns the type of function, python or script, the function is</p>
+</dd></dl>
+
+</section>
+<section id="module-CrocoDash.raw_data_access.driver">
+<span id="crocodash-raw-data-access-driver-module"></span><h2>CrocoDash.raw_data_access.driver module<a class="headerlink" href="#module-CrocoDash.raw_data_access.driver" title="Link to this heading">#</a></h2>
+<p>Functions to query the data access tables and validate data, as well as request all four segments</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.driver.ProductFunctionRegistry">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.driver.</span></span><span class="sig-name descname"><span class="pre">ProductFunctionRegistry</span></span><a class="headerlink" href="#CrocoDash.raw_data_access.driver.ProductFunctionRegistry" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Singleton Class Dynamically loads product functions, validates them, and allows easy execution.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.driver.ProductFunctionRegistry.list_importable_functions">
+<span class="sig-name descname"><span class="pre">list_importable_functions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">product</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.driver.ProductFunctionRegistry.list_importable_functions" title="Link to this definition">#</a></dt>
+<dd><p>Lists available functions for a given product.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.driver.ProductFunctionRegistry.load_functions">
+<span class="sig-name descname"><span class="pre">load_functions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.driver.ProductFunctionRegistry.load_functions" title="Link to this definition">#</a></dt>
+<dd><p>Reads the registry tables, dynamically imports functions, and verifies them.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.driver.ProductFunctionRegistry.validate_function">
+<span class="sig-name descname"><span class="pre">validate_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">product</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">func_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.driver.ProductFunctionRegistry.validate_function" title="Link to this definition">#</a></dt>
+<dd><p>Runs a quick validation of the function (ensures it runs and returns expected output).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.driver.ProductFunctionRegistry.verify_data_sufficiency">
+<span class="sig-name descname"><span class="pre">verify_data_sufficiency</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collected_products</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.driver.ProductFunctionRegistry.verify_data_sufficiency" title="Link to this definition">#</a></dt>
+<dd><p>Check if collected_products are sufficient to run the regional model.
+<cite>collected_products</cite> should be a list of products.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.driver.get_rectangular_segment_info">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.driver.</span></span><span class="sig-name descname"><span class="pre">get_rectangular_segment_info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hgrid</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Grid</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.driver.get_rectangular_segment_info" title="Link to this definition">#</a></dt>
+<dd><p>This function finds the required segment queries from the hgrid and calls the functions</p>
+</dd></dl>
+
+</section>
+<section id="module-CrocoDash.raw_data_access.utils">
+<span id="crocodash-raw-data-access-utils-module"></span><h2>CrocoDash.raw_data_access.utils module<a class="headerlink" href="#module-CrocoDash.raw_data_access.utils" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.utils.fill_template">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.utils.</span></span><span class="sig-name descname"><span class="pre">fill_template</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">template_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_path</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.utils.fill_template" title="Link to this definition">#</a></dt>
+<dd><p>Reads a template file, fills it with the provided arguments,
+and writes the filled content to a new file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>template_path</strong> (<em>str</em>) – Path to the template file.</p></li>
+<li><p><strong>output_path</strong> (<em>str</em>) – Path to save the filled template.</p></li>
+<li><p><strong>**kwargs</strong> – Key-value pairs for substitution in the template.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.utils.load_config">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.utils.</span></span><span class="sig-name descname"><span class="pre">load_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'config.json'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#CrocoDash.raw_data_access.utils.load_config" title="Link to this definition">#</a></dt>
+<dd><p>Load a JSON config file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>config_path</strong> (<em>str</em><em>, </em><em>optional</em>) – Path to the JSON config file. Default is “config.json”.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The loaded configuration as a dictionary.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.utils.setup_logger">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.utils.</span></span><span class="sig-name descname"><span class="pre">setup_logger</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.utils.setup_logger" title="Link to this definition">#</a></dt>
+<dd><p>This function sets up a logger format for the package. It attaches logger output to stdout (if a handler doesn’t already exist) and formats it in a pretty way!</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>name</strong> (<em>str</em>) – The name of the logger.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The logger</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>logging.Logger</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-CrocoDash.raw_data_access">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-CrocoDash.raw_data_access" title="Link to this heading">#</a></h2>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="CrocoDash.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">CrocoDash package</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="CrocoDash.raw_data_access.datasets.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">CrocoDash.raw_data_access.datasets package</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#subpackages">Subpackages</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#submodules">Submodules</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.raw_data_access.config">CrocoDash.raw_data_access.config module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.config.category_of_product"><code class="docutils literal notranslate"><span class="pre">category_of_product()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.config.function_exists"><code class="docutils literal notranslate"><span class="pre">function_exists()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.config.list_functions"><code class="docutils literal notranslate"><span class="pre">list_functions()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.config.list_products"><code class="docutils literal notranslate"><span class="pre">list_products()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.config.load_tables"><code class="docutils literal notranslate"><span class="pre">load_tables()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.config.load_varnames_config"><code class="docutils literal notranslate"><span class="pre">load_varnames_config()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.config.product_exists"><code class="docutils literal notranslate"><span class="pre">product_exists()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.config.type_of_function"><code class="docutils literal notranslate"><span class="pre">type_of_function()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.raw_data_access.driver">CrocoDash.raw_data_access.driver module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.driver.ProductFunctionRegistry"><code class="docutils literal notranslate"><span class="pre">ProductFunctionRegistry</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.driver.ProductFunctionRegistry.list_importable_functions"><code class="docutils literal notranslate"><span class="pre">ProductFunctionRegistry.list_importable_functions()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.driver.ProductFunctionRegistry.load_functions"><code class="docutils literal notranslate"><span class="pre">ProductFunctionRegistry.load_functions()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.driver.ProductFunctionRegistry.validate_function"><code class="docutils literal notranslate"><span class="pre">ProductFunctionRegistry.validate_function()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.driver.ProductFunctionRegistry.verify_data_sufficiency"><code class="docutils literal notranslate"><span class="pre">ProductFunctionRegistry.verify_data_sufficiency()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.driver.get_rectangular_segment_info"><code class="docutils literal notranslate"><span class="pre">get_rectangular_segment_info()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.raw_data_access.utils">CrocoDash.raw_data_access.utils module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.utils.fill_template"><code class="docutils literal notranslate"><span class="pre">fill_template()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.utils.load_config"><code class="docutils literal notranslate"><span class="pre">load_config()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.utils.setup_logger"><code class="docutils literal notranslate"><span class="pre">setup_logger()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.raw_data_access">Module contents</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By CROCODILE
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2024, CROCODILE.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>
