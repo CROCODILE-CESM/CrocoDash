@@ -131,9 +131,6 @@ class Case:
 
         self._cime_case = self.cime.get_case(self.caseroot,non_local = self.cc._is_non_local())
 
-        # CICE options
-        self.cice_grid_dir = None
-
     def _init_args_check(
         self,
         caseroot: str | Path,
@@ -219,9 +216,8 @@ class Case:
 
         # CICE grid file (if needed)
         if "CICE" in self.compset:
-            self.cice_grid_dir = inputdir / "ocnice" / f"cice_grid_{ocn_grid.name}_{session_id}.nc"
             ocn_topo.write_cice_grid(
-                self.cice_grid_dir
+                inputdir / "ocnice" / f"cice_grid_{ocn_grid.name}_{session_id}.nc"
             )
 
         # SCRIP grid file (needed for runoff remapping)
@@ -643,7 +639,7 @@ class Case:
             self._configure_standard_compset(compset)
         else:
             self._configure_custom_compset(compset)
-        
+
         # 2. Grid
         assert Stage.active().title == "2. Grid"
         cvars["GRID_MODE"].value = "Custom"
@@ -812,37 +808,6 @@ class Case:
             comment="Open boundary conditions",
             log_title=False,
         )
-
-        if "CICE" in self.compset:
-            mom_cice_param = [
-                ("USE_CFC_CAP", False),
-                ("READ_TIDEAMP", False),
-                ("MASKING_DEPTH", -9999.0),
-            ]
-            append_user_nl(
-                "mom",
-                mom_cice_param,
-                do_exec=True,
-                comment="CICE related options in MOM6",
-                log_title=False,
-            )
-
-            cice_param = [
-                ("ice_ic", "'UNSET'"),
-                #("grid_file", self.cice_grid_dir), # Already have in case creation
-                #("kmt_file", self.cice_grid_dir),
-                #("grid_format", "nc"),
-                ("ns_boundary_type", "'open'"),
-                ("ew_boundary_type", "'cyclic'"),
-                ("close_boundaries", ".false."),
-            ]
-            append_user_nl(
-                "cice",
-                cice_param,
-                do_exec=True,
-                comment="CICE options",
-                log_title=False,
-            )
 
         xmlchange("RUN_STARTDATE", str(self.date_range[0])[:10],is_non_local=self.cc._is_non_local())
         xmlchange("MOM6_MEMORY_MODE", "dynamic_symmetric", is_non_local=self.cc._is_non_local())
