@@ -131,9 +131,6 @@ class Case:
 
         self._cime_case = self.cime.get_case(self.caseroot,non_local = self.cc._is_non_local())
 
-        # CICE options
-        self.cice_grid_dir = None
-
     def _init_args_check(
         self,
         caseroot: str | Path,
@@ -219,9 +216,8 @@ class Case:
 
         # CICE grid file (if needed)
         if "CICE" in self.compset:
-            self.cice_grid_dir = inputdir / "ocnice" / f"cice_grid_{ocn_grid.name}_{session_id}.nc"
             ocn_topo.write_cice_grid(
-                self.cice_grid_dir
+                inputdir / "ocnice" / f"cice_grid_{ocn_grid.name}_{session_id}.nc"
             )
 
         # SCRIP grid file (needed for runoff remapping)
@@ -643,7 +639,6 @@ class Case:
             self._configure_standard_compset(compset)
         else:
             self._configure_custom_compset(compset)
-        
         # 2. Grid
         assert Stage.active().title == "2. Grid"
         cvars["GRID_MODE"].value = "Custom"
@@ -829,9 +824,6 @@ class Case:
 
             cice_param = [
                 ("ice_ic", "'UNSET'"),
-                #("grid_file", self.cice_grid_dir), # Already have in case creation
-                #("kmt_file", self.cice_grid_dir),
-                #("grid_format", "nc"),
                 ("ns_boundary_type", "'open'"),
                 ("ew_boundary_type", "'cyclic'"),
                 ("close_boundaries", ".false."),
