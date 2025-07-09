@@ -1,0 +1,591 @@
+{
+   "cells": [
+      {
+         "cell_type": "markdown",
+         "metadata": {},
+         "source": [
+            "# Set up a rectangular regional CESM-MOM6 run\n",
+            "\n",
+            "A typical workflow of utilizing CrocoDash consists of four main steps:\n",
+            "\n",
+            "1. Generate a regional MOM6 domain.\n",
+            "2. Create the CESM case.\n",
+            "3. Prepare ocean forcing data.\n",
+            "4. Build and run the case."
+         ]
+      },
+      {
+         "cell_type": "markdown",
+         "metadata": {},
+         "source": [
+            "# SECTION 1: Generate a regional MOM6 domain\n",
+            "\n",
+            "We begin by defining a regional MOM6 domain using CrocoDash. To do so, we first generate a horizontal grid. We then generate the topography by remapping an existing bathymetric dataset to our horizontal grid. Finally, we define a vertical grid."
+         ]
+      },
+      {
+         "cell_type": "markdown",
+         "metadata": {},
+         "source": [
+            "## Step 1.1: Horizontal Grid"
+         ]
+      },
+      {
+         "cell_type": "code",
+         "execution_count": 7,
+         "metadata": {},
+         "outputs": [],
+         "source": [
+            "from CrocoDash.grid import Grid\n",
+            "\n",
+            "grid = Grid(\n",
+            "  resolution = 0.01,\n",
+            "  xstart = 278.0,\n",
+            "  lenx = 1.0,\n",
+            "  ystart = 7.0,\n",
+            "  leny = 1.0,\n",
+            "  name = \"panama1\",\n",
+            ")"
+         ]
+      },
+      {
+         "cell_type": "markdown",
+         "metadata": {},
+         "source": [
+            "## Step 1.2: Topography"
+         ]
+      },
+      {
+         "cell_type": "code",
+         "execution_count": 8,
+         "metadata": {},
+         "outputs": [],
+         "source": [
+            "from CrocoDash.topo import Topo\n",
+            "\n",
+            "topo = Topo(\n",
+            "    grid = grid,\n",
+            "    min_depth = 9.5,\n",
+            ")"
+         ]
+      },
+      {
+         "cell_type": "code",
+         "execution_count": 9,
+         "metadata": {},
+         "outputs": [
+            {
+               "name": "stdout",
+               "output_type": "stream",
+               "text": [
+                  "Begin regridding bathymetry...\n",
+                  "\n",
+                  "Original bathymetry size: 1.85 Mb\n",
+                  "Regridded size: 0.24 Mb\n",
+                  "Automatic regridding may fail if your domain is too big! If this process hangs or crashes,open a terminal with appropriate computational and resources try calling ESMF directly in the input directory None via\n",
+                  "\n",
+                  "`mpirun -np NUMBER_OF_CPUS ESMF_Regrid -s bathymetry_original.nc -d bathymetry_unfinished.nc -m bilinear --src_var depth --dst_var depth --netcdf4 --src_regional --dst_regional`\n",
+                  "\n",
+                  "For details see https://xesmf.readthedocs.io/en/latest/large_problems_on_HPC.html\n",
+                  "\n",
+                  "Afterwards, we run the 'expt.tidy_bathymetry' method to skip the expensive interpolation step, and finishing metadata, encoding and cleanup.\n",
+                  "\n",
+                  "\n",
+                  "\n",
+                  "Regridding successful! Now calling `tidy_bathymetry` method for some finishing touches...\n",
+                  "setup bathymetry has finished successfully.\n",
+                  "Tidy bathymetry: Reading in regridded bathymetry to fix up metadata...done. Filling in inland lakes and channels... "
+               ]
+            }
+         ],
+         "source": [
+            "bathymetry_path='/home/manishrv/inputs_rm6/gebco/GEBCO_2024.nc'\n",
+            "\n",
+            "topo.interpolate_from_file(\n",
+            "    file_path = bathymetry_path,\n",
+            "    longitude_coordinate_name=\"lon\",\n",
+            "    latitude_coordinate_name=\"lat\",\n",
+            "    vertical_coordinate_name=\"elevation\"\n",
+            ")"
+         ]
+      },
+      {
+         "cell_type": "markdown",
+         "metadata": {},
+         "source": [
+            "**TODO:** when the above topo.interpolate_from_file() method is called with the original GEBCO dataset, the interpolation fails do to large computational demand when run on login nodes. Check if there is a failsafe way, or at least, a means to precaution the user.\n",
+            "\n",
+            "**TODO:** Make required data available online (not just on glade)."
+         ]
+      },
+      {
+         "cell_type": "code",
+         "execution_count": 10,
+         "metadata": {},
+         "outputs": [
+            {
+               "data": {
+                  "text/plain": [
+                     "<matplotlib.collections.QuadMesh at 0x350834200>"
+                  ]
+               },
+               "execution_count": 10,
+               "metadata": {},
+               "output_type": "execute_result"
+            },
+            {
+               "data": {
+                  "image/png": "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dtttNzr11FPp6KOPbncfYdzcddddxfWGhgZluzB0Pv/8c1q0aBFlMhk65ZRT6IwzzqC5c+fK7c3NzTRmzBgaPXo0zZ49m9588015PWEYif3KZe3atbRs2TJas2YN5ZkX+6STTiJTYOwAAAAAAWDZXy9ejjfhsMMOk4sbwrjp379/u9veffddmj9/Pr300ku05557ytduuukmOvzww+k3v/mN9BjNmTOH0uk03XnnnZRKpWinnXai1157ja677rqyjZ3HHntMGlXCYyQ8SMLDVED8DGPHDTFZhQlzBO/i7rF8R8qqgc6iHRwaHY12wM5mij8vzNxndC3grk0Y2zjB7ASOZ8HjgHS6m9JNfN9cvrKp5GHDWMNjqGOpMMbtINzGo201EQtUb6UrAaG7vqlGyHE9A/1TFDQ7wpvCDRbukSmXp556ivr27UtbbbUVHXzwwXTFFVdQnz595LalS5dKD03B0BEID04sFqMXX3yRjjrqKLnPgQceKA2dAmPHjqWrr76avvrqK3leHT//+c+lN+jKK6+kLl26UCWAZgcAAACoYYQupmfPnsVl5syZnTrP97//fbr33ntp8eLF0jh5+umnpScot/kP9FWrVklDqJREIkG9e/eW2wr79OvXT9mnsF7YR8enn35KZ599dsUMHTnOip0JAAAAAL5rdlauXCnDPQU669U5/vjjiz/vsssutOuuu9L2228vvT2HHHII+YXwBL388sv0rW99q2LnhLEDAAAA1HAYSxg6pcZOpfjWt75FW2+9NX344YfS2BFaHiEYLiWbzcoMrYLOR/y7evVqZZ/CekdaIMGjjz5a/HncuHF03nnn0TvvvCONrmQyqez7wx/+0PheImTslGh2SsRO7eok4nw7i/ZltmhoJB61EKWaHAF0OdVjTOoE91otGp2IDq6rsWIejq923RxTdHPhUTfBn3uu07Diust7rMNTYd2HqYandH+byfqC/k5w1LUx1T+x/bV1g0yftVprC1Mj/Otf/6L//Oc/NGDAALk+atQomSW1fPlyGjFihHxtyZIlMltq5MiRxX1+9atfyUytgpEiMre++93vuup1xo8f73jtsssuc7wmBMqFsJoJeEIAAACAID07XhYDNmzYIDOjxCJYsWKF/PmTTz6R24Q35YUXXqD/+7//k7qdI488kr797W/LsJJg2LBhUtdz+umny7Tw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",
+                  "text/plain": [
+                     "<Figure size 640x480 with 2 Axes>"
+                  ]
+               },
+               "metadata": {},
+               "output_type": "display_data"
+            }
+         ],
+         "source": [
+            "topo.depth.plot()"
+         ]
+      },
+      {
+         "cell_type": "code",
+         "execution_count": 9,
+         "metadata": {},
+         "outputs": [
+            {
+               "data": {
+                  "application/vnd.jupyter.widget-view+json": {
+                     "model_id": "5c2fdb71852e457c9e899df79074870b",
+                     "version_major": 2,
+                     "version_minor": 0
+                  },
+                  "text/plain": [
+                     "TopoEditor(children=(VBox(children=(HTML(value='<h2>Topo Editor</h2>'), HTML(value='<hr><h3>Display</h3>'), To…"
+                  ]
+               },
+               "execution_count": 9,
+               "metadata": {},
+               "output_type": "execute_result"
+            }
+         ],
+         "source": [
+            "# Erase Pacific & Canada Bays\n",
+            "%matplotlib ipympl\n",
+            "from CrocoDash.topo_editor import TopoEditor\n",
+            "topo.depth[\"units\"] = \"m\"\n",
+            "TopoEditor(topo)"
+         ]
+      },
+      {
+         "cell_type": "markdown",
+         "metadata": {},
+         "source": [
+            "## Step 1.3: Vertical Grid"
+         ]
+      },
+      {
+         "cell_type": "code",
+         "execution_count": null,
+         "metadata": {},
+         "outputs": [],
+         "source": [
+            "from CrocoDash.vgrid import VGrid\n",
+            "\n",
+            "vgrid  = VGrid.hyperbolic(\n",
+            "    nk = 75,\n",
+            "    depth = topo.max_depth,\n",
+            "    ratio=20.0\n",
+            ")"
+         ]
+      },
+      {
+         "cell_type": "code",
+         "execution_count": null,
+         "metadata": {},
+         "outputs": [
+            {
+               "name": "stdout",
+               "output_type": "stream",
+               "text": [
+                  "[0.21694419 0.21831456 0.21993735 0.22185878 0.22413343 0.22682572\n",
+                  " 0.23001158 0.23378048 0.23823767 0.24350685 0.24973312 0.2570864\n",
+                  " 0.26576522 0.27600092 0.28806219 0.30225995 0.31895235 0.33854966\n",
+                  " 0.36151882 0.38838707 0.41974408 0.45624165 0.49859003 0.54754938\n",
+                  " 0.60391517 0.66849579 0.74208109 0.82540104 0.91907437 1.02354865\n",
+                  " 1.13903497 1.26544263 1.40232117 1.54881896 1.70366733 1.86519807\n",
+                  " 2.03139814 2.20000036 2.36860259 2.53480266 2.69633339 2.85118177\n",
+                  " 2.99767955 3.1345581  3.26096575 3.37645208 3.48092636 3.57459969\n",
+                  " 3.65791963 3.73150494 3.79608556 3.85245135 3.9014107  3.94375907\n",
+                  " 3.98025665 4.01161366 4.03848191 4.06145107 4.08104838 4.09774077\n",
+                  " 4.11193854 4.12399981 4.13423551 4.14291433 4.15026761 4.15649388\n",
+                  " 4.16176306 4.16622025 4.16998915 4.17317501 4.1758673  4.17814195\n",
+                  " 4.18006338 4.18168617 4.18305654]\n"
+               ]
+            }
+         ],
+         "source": [
+            "print(vgrid.dz)"
+         ]
+      },
+      {
+         "cell_type": "code",
+         "execution_count": null,
+         "metadata": {},
+         "outputs": [],
+         "source": [
+            "import matplotlib.pyplot as plt\n",
+            "plt.close()\n",
+            "# Create the plot\n",
+            "for depth in vgrid.z:\n",
+            "    plt.axhline(y=depth, linestyle='-')  # Horizontal lines\n",
+            "\n",
+            "plt.ylim(max(vgrid.z) + 10, min(vgrid.z) - 10)  # Invert y-axis so deeper values go down\n",
+            "plt.ylabel(\"Depth\")\n",
+            "plt.title(\"Vertical Grid\")\n",
+            "plt.show()"
+         ]
+      },
+      {
+         "cell_type": "markdown",
+         "metadata": {},
+         "source": [
+            "# SECTION 2: Create the CESM case\n",
+            "\n",
+            "After generating the MOM6 domain, the next step is to create a CESM case using CrocoDash. This process is straightforward and involves instantiating the CrocoDash Case object. The Case object requires the following inputs:\n",
+            "\n",
+            " - CESM Source Directory: A local path to a compatible CESM source copy.\n",
+            " - Case Name: A unique name for the CESM case.\n",
+            " - Input Directory: The directory where all necessary input files will be written.\n",
+            " - MOM6 Domain Objects: The horizontal grid, topography, and vertical grid created in the previous section.\n",
+            " - Project ID: (Optional) A project ID, if required by the machine."
+         ]
+      },
+      {
+         "cell_type": "markdown",
+         "metadata": {},
+         "source": [
+            "## Step 2.1: Specify case name and directories:\n",
+            "\n",
+            "Begin by specifying the case name and the necessary directory paths. Ensure the CESM root directory points to your own local copy of CESM. Below is an example setup:"
+         ]
+      },
+      {
+         "cell_type": "code",
+         "execution_count": 7,
+         "metadata": {},
+         "outputs": [],
+         "source": [
+            "from pathlib import Path"
+         ]
+      },
+      {
+         "cell_type": "code",
+         "execution_count": 8,
+         "metadata": {},
+         "outputs": [],
+         "source": [
+            "# CESM case (experiment) name\n",
+            "casename = \"panama-1\"\n",
+            "\n",
+            "# CESM source root (Update this path accordingly!!!)\n",
+            "cesmroot =Path.home() /\"CROCESM\"\n",
+            "\n",
+            "# Place where all your input files go \n",
+            "inputdir = Path.home() / \"croc_input\" / casename\n",
+            "    \n",
+            "# CESM case directory\n",
+            "caseroot = Path.home() / \"croc_cases\" / casename"
+         ]
+      },
+      {
+         "cell_type": "markdown",
+         "metadata": {},
+         "source": [
+            "## Step 2.2: Create the Case\n",
+            "\n",
+            "To create the CESM case, instantiate the `Case` object as shown below. This will automatically set up the CESM case based on the provided inputs: The `cesmroot` argument specifies the path to your local CESM source directory.\n",
+            "The `caseroot` argument defines the directory where the case will be created. CrocoDash will handle all necessary namelist modifications and XML changes to align with the MOM6 domain objects generated earlier."
+         ]
+      },
+      {
+         "cell_type": "code",
+         "execution_count": 9,
+         "metadata": {},
+         "outputs": [
+            {
+               "name": "stderr",
+               "output_type": "stream",
+               "text": [
+                  "INFO:  csp_solver:CspSolver initialized.\n"
+               ]
+            },
+            {
+               "name": "stdout",
+               "output_type": "stream",
+               "text": [
+                  "\u001b[01;96mCreating case...\u001b[0m\n",
+                  "\n",
+                  "• Updating ccs_config/modelgrid_aliases_nuopc.xml file to include the new resolution \"panama-1\" consisting of the following component grids.\n",
+                  " atm grid: \"TL319\", lnd grid: \"TL319\", ocn grid: \"panama1\".\n",
+                  "\n",
+                  "• Updating ccs_config/component_grids_nuopc.xml file to include newly generated ocean grid \"panama1\" with the following properties:\n",
+                  " nx: 10, ny: 10. ocean mesh: /home/manishrv/croc_input/panama-1/ocnice/ESMF_mesh_panama1_a36b81.nc.\u001b[0m\n",
+                  "\n",
+                  "\u001b[01;96mRunning the create_newcase tool with the following command:\u001b[0m\n",
+                  "\n",
+                  "/home/manishrv/CROCESM/cime/scripts/create_newcase --compset 1850_DATM%JRA_SLND_SICE_MOM6_SROF_SGLC_SWAV --res panama-1 --case /home/manishrv/croc_cases/panama-1 --machine ubuntu-latest --run-unsupported --project NCGD0011 \n",
+                  "\n",
+                  "\u001b[01;96mThe create_newcase command was successful.\u001b[0m\n",
+                  "\n",
+                  "\u001b[01;96mNavigating to the case directory:\u001b[0m\n",
+                  "\n",
+                  "cd /home/manishrv/croc_cases/panama-1\n",
+                  "\n",
+                  "\u001b[01;96mApply NTASK grid xml changes:\u001b[0m\n",
+                  "\n",
+                  "./xmlchange NTASKS_OCN=2\n",
+                  "\n",
+                  "\u001b[01;96mRunning the case.setup script with the following command:\u001b[0m\n",
+                  "\n",
+                  "./case.setup\n",
+                  "\n",
+                  "\u001b[01;96mAdding parameter changes to user_nl_mom:\u001b[0m\n",
+                  "\n",
+                  "  ! Custom Horizonal Grid, Topography, and Vertical Grid\n",
+                  "  INPUTDIR = /home/manishrv/croc_input/panama-1/ocnice\n",
+                  "  TRIPOLAR_N = False\n",
+                  "  REENTRANT_X = False\n",
+                  "  REENTRANT_Y = False\n",
+                  "  NIGLOBAL = 10\n",
+                  "  NJGLOBAL = 10\n",
+                  "  GRID_CONFIG = mosaic\n",
+                  "  GRID_FILE = ocean_hgrid_panama1_a36b81.nc\n",
+                  "  TOPO_CONFIG = file\n",
+                  "  TOPO_FILE = ocean_topog_panama1_a36b81.nc\n",
+                  "  MAXIMUM_DEPTH = 2263.7500160552345\n",
+                  "  MINIMUM_DEPTH = 9.5\n",
+                  "  NK = 75\n",
+                  "  COORD_CONFIG = none\n",
+                  "  ALE_COORDINATE_CONFIG = FILE:ocean_vgrid_panama1_a36b81.nc\n",
+                  "  REGRIDDING_COORDINATE_MODE = Z*\n",
+                  "\n",
+                  "  ! Timesteps (based on grid resolution)\n",
+                  "  DT = 50.0\n",
+                  "  DT_THERM = 200.0\n",
+                  "\n"
+               ]
+            },
+            {
+               "name": "stderr",
+               "output_type": "stream",
+               "text": [
+                  "INFO:\tstage:SUCCESS: All stages are complete.\n"
+               ]
+            },
+            {
+               "name": "stdout",
+               "output_type": "stream",
+               "text": [
+                  "\u001b[1;32mCase created successfully at /home/manishrv/croc_cases/panama-1.\u001b[0m\n",
+                  "\n",
+                  "\u001b[01;96mTo further customize, build, and run the case, navigate to the case directory in your terminal. To create another case, restart the notebook.\u001b[0m\n",
+                  "\n"
+               ]
+            }
+         ],
+         "source": [
+            "from CrocoDash.case import Case\n",
+            "import os\n",
+            "os.environ[\"CIME_MACHINE\"] = \"ubuntu-latest\"\n",
+            "case = Case(\n",
+            "    cesmroot = cesmroot,\n",
+            "    caseroot = caseroot,\n",
+            "    inputdir = inputdir,\n",
+            "    ocn_grid = grid,\n",
+            "    ocn_vgrid = vgrid,\n",
+            "    ocn_topo = topo,\n",
+            "    project = 'NCGD0011',\n",
+            "    override = True,\n",
+            "    machine = \"ubuntu-latest\"\n",
+            ")"
+         ]
+      },
+      {
+         "cell_type": "markdown",
+         "metadata": {},
+         "source": [
+            "# Section 3: Prepare ocean forcing data\n",
+            "\n",
+            "We need to cut out our ocean forcing. The package expects an initial condition and one time-dependent segment per non-land boundary. Naming convention is `\"east_unprocessed\"` for segments and `\"ic_unprocessed\"` for the initial condition.\n",
+            "\n",
+            "In this notebook, we are forcing with the Copernicus Marine \"Glorys\" reanalysis dataset. There's a function in the `CrocoDash` package, called `configure_forcings`, that generates a bash script to download the correct boundary forcing files for your experiment. First, you will need to create an account with Copernicus, and then call `copernicusmarine login` to set up your login details on your machine. Then you can run the `get_glorys_data.sh` bash script.\n",
+            "\n",
+            "## Step 3.1 Configure Initial Conditions and Forcings\n"
+         ]
+      },
+      {
+         "cell_type": "code",
+         "execution_count": 11,
+         "metadata": {},
+         "outputs": [
+            {
+               "name": "stdout",
+               "output_type": "stream",
+               "text": [
+                  "2025-04-18 20:57:11,852 - CrocoDash.data_access.driver.load_functions - INFO - Functions have already been loaded. To reload, set self._loaded_functions to False\n"
+               ]
+            },
+            {
+               "name": "stderr",
+               "output_type": "stream",
+               "text": [
+                  "INFO:CrocoDash.data_access.driver:Functions have already been loaded. To reload, set self._loaded_functions to False\n",
+                  "INFO:CrocoDash.data_access.datasets.glorys:This data access method retuns a script at path /tmp/tmprkw8warb/get_glorys_data.sh to run to get access data \n"
+               ]
+            }
+         ],
+         "source": [
+            "case.configure_forcings(\n",
+            "    date_range = [\"2020-01-01 00:00:00\", \"2020-01-09 00:00:00\"],\n",
+            "    tidal_constituents = ['M2'],\n",
+            "    tpxo_elevation_filepath = \"/glade/u/home/manishrv/manish_scratch_symlink/inputs_rm6/tidal_data/h_tpxo9.v1.nc\",\n",
+            "    tpxo_velocity_filepath = \"/glade/u/home/manishrv/manish_scratch_symlink/inputs_rm6/tidal_data/u_tpxo9.v1.nc\",\n",
+            "    too_much_data = True\n",
+            ")"
+         ]
+      },
+      {
+         "cell_type": "markdown",
+         "metadata": {},
+         "source": [
+            "## Step 3.2 Run `get_glorys_data.sh`\n",
+            "\n",
+            "In a terminal session, locate the `get_glorys_data.sh` script and execute it to download the initial conditions and boundary conditions. Follow the instructions printed by the `configure_forcings` method above.\n"
+         ]
+      },
+      {
+         "cell_type": "markdown",
+         "metadata": {},
+         "source": [
+            "**TODO:** user copernicusmarine python API within CrocoDash, instead of directing users to run it via CLI. Also, on a derecho login node, both CLI and API fails to run due to the computational demand. We also need to address that."
+         ]
+      },
+      {
+         "cell_type": "markdown",
+         "metadata": {},
+         "source": [
+            "##  Step 3.3: Process forcing data\n",
+            "\n",
+            "In this final step, we call the `process_forcings` method of CrocoDash to cut out and interpolate the initial condition as well as all boundaries. CrocoDash also updates MOM6 runtime parameters and CESM xml variables accordingly."
+         ]
+      },
+      {
+         "cell_type": "code",
+         "execution_count": 14,
+         "metadata": {},
+         "outputs": [
+            {
+               "name": "stdout",
+               "output_type": "stream",
+               "text": [
+                  "Large data workflow was called, so boundary conditions will not be processed.\n",
+                  "Please make sure to execute large_data_workflow as described in /home/manishrv/croc_input/panama-1/glorys/large_data_workflow\n",
+                  "\u001b[01;96mAdding parameter changes to user_nl_mom:\u001b[0m\n",
+                  "\n",
+                  "  ! Initial conditions\n",
+                  "  INIT_LAYERS_FROM_Z_FILE = True\n",
+                  "  TEMP_SALT_Z_INIT_FILE = init_tracers.nc\n",
+                  "  Z_INIT_FILE_PTEMP_VAR = temp\n",
+                  "  Z_INIT_ALE_REMAPPING = True\n",
+                  "  TEMP_SALT_INIT_VERTICAL_REMAP_ONLY = True\n",
+                  "  DEPRESS_INITIAL_SURFACE = True\n",
+                  "  SURFACE_HEIGHT_IC_FILE = init_eta.nc\n",
+                  "  SURFACE_HEIGHT_IC_VAR = eta_t\n",
+                  "  VELOCITY_CONFIG = file\n",
+                  "  VELOCITY_FILE = init_vel.nc\n",
+                  "\n",
+                  "  ! Tides\n",
+                  "  TIDES = True\n",
+                  "  TIDE_M2 = True\n",
+                  "  CD_TIDES = 0.0018\n",
+                  "  TIDE_USE_EQ_PHASE = True\n",
+                  "  TIDE_REF_DATE = 2020, 1, 1\n",
+                  "  OBC_TIDE_ADD_EQ_PHASE = True\n",
+                  "  OBC_TIDE_N_CONSTITUENTS = 1\n",
+                  "  OBC_TIDE_CONSTITUENTS = \"M2\"\n",
+                  "  OBC_TIDE_REF_DATE = 2020, 1, 1\n",
+                  "\n",
+                  "  ! Open boundary conditions\n",
+                  "  OBC_NUMBER_OF_SEGMENTS = 4\n",
+                  "  OBC_FREESLIP_VORTICITY = False\n",
+                  "  OBC_FREESLIP_STRAIN = False\n",
+                  "  OBC_COMPUTED_VORTICITY = True\n",
+                  "  OBC_COMPUTED_STRAIN = True\n",
+                  "  OBC_ZERO_BIHARMONIC = True\n",
+                  "  OBC_TRACER_RESERVOIR_LENGTH_SCALE_OUT = 3.0E+04\n",
+                  "  OBC_TRACER_RESERVOIR_LENGTH_SCALE_IN = 3000.0\n",
+                  "  BRUSHCUTTER_MODE = True\n",
+                  "  OBC_SEGMENT_001 = \"J=0,I=0:N,FLATHER,ORLANSKI,NUDGED,ORLANSKI_TAN,NUDGED_TAN\"\n",
+                  "  OBC_SEGMENT_001_VELOCITY_NUDGING_TIMESCALES = 0.3, 360.0\n",
+                  "  OBC_SEGMENT_001_DATA = \"U=file:forcing_obc_segment_001.nc(u),V=file:forcing_obc_segment_001.nc(v),SSH=file:forcing_obc_segment_001.nc(eta),TEMP=file:forcing_obc_segment_001.nc(temp),SALT=file:forcing_obc_segment_001.nc(salt),Uamp=file:tu_segment_001.nc(uamp),Uphase=file:tu_segment_001.nc(uphase),Vamp=file:tu_segment_001.nc(vamp),Vphase=file:tu_segment_001.nc(vphase),SSHamp=file:tz_segment_001.nc(zamp),SSHphase=file:tz_segment_001.nc(zphase)\"\n",
+                  "  OBC_SEGMENT_002 = \"J=N,I=N:0,FLATHER,ORLANSKI,NUDGED,ORLANSKI_TAN,NUDGED_TAN\"\n",
+                  "  OBC_SEGMENT_002_VELOCITY_NUDGING_TIMESCALES = 0.3, 360.0\n",
+                  "  OBC_SEGMENT_002_DATA = \"U=file:forcing_obc_segment_002.nc(u),V=file:forcing_obc_segment_002.nc(v),SSH=file:forcing_obc_segment_002.nc(eta),TEMP=file:forcing_obc_segment_002.nc(temp),SALT=file:forcing_obc_segment_002.nc(salt),Uamp=file:tu_segment_002.nc(uamp),Uphase=file:tu_segment_002.nc(uphase),Vamp=file:tu_segment_002.nc(vamp),Vphase=file:tu_segment_002.nc(vphase),SSHamp=file:tz_segment_002.nc(zamp),SSHphase=file:tz_segment_002.nc(zphase)\"\n",
+                  "  OBC_SEGMENT_003 = \"I=0,J=N:0,FLATHER,ORLANSKI,NUDGED,ORLANSKI_TAN,NUDGED_TAN\"\n",
+                  "  OBC_SEGMENT_003_VELOCITY_NUDGING_TIMESCALES = 0.3, 360.0\n",
+                  "  OBC_SEGMENT_003_DATA = \"U=file:forcing_obc_segment_003.nc(u),V=file:forcing_obc_segment_003.nc(v),SSH=file:forcing_obc_segment_003.nc(eta),TEMP=file:forcing_obc_segment_003.nc(temp),SALT=file:forcing_obc_segment_003.nc(salt),Uamp=file:tu_segment_003.nc(uamp),Uphase=file:tu_segment_003.nc(uphase),Vamp=file:tu_segment_003.nc(vamp),Vphase=file:tu_segment_003.nc(vphase),SSHamp=file:tz_segment_003.nc(zamp),SSHphase=file:tz_segment_003.nc(zphase)\"\n",
+                  "  OBC_SEGMENT_004 = \"I=N,J=0:N,FLATHER,ORLANSKI,NUDGED,ORLANSKI_TAN,NUDGED_TAN\"\n",
+                  "  OBC_SEGMENT_004_VELOCITY_NUDGING_TIMESCALES = 0.3, 360.0\n",
+                  "  OBC_SEGMENT_004_DATA = \"U=file:forcing_obc_segment_004.nc(u),V=file:forcing_obc_segment_004.nc(v),SSH=file:forcing_obc_segment_004.nc(eta),TEMP=file:forcing_obc_segment_004.nc(temp),SALT=file:forcing_obc_segment_004.nc(salt),Uamp=file:tu_segment_004.nc(uamp),Uphase=file:tu_segment_004.nc(uphase),Vamp=file:tu_segment_004.nc(vamp),Vphase=file:tu_segment_004.nc(vphase),SSHamp=file:tz_segment_004.nc(zamp),SSHphase=file:tz_segment_004.nc(zphase)\"\n",
+                  "\n",
+                  "./xmlchange RUN_STARTDATE=2020-01-01\n",
+                  "\n",
+                  "./xmlchange MOM6_MEMORY_MODE=dynamic_symmetric\n",
+                  "\n",
+                  "Case is ready to be built: /home/manishrv/croc_cases/panama-1\n"
+               ]
+            }
+         ],
+         "source": [
+            "case.process_forcings(process_initial_condition = False, process_tides = False)"
+         ]
+      },
+      {
+         "cell_type": "markdown",
+         "metadata": {},
+         "source": [
+            "# Section 4: Build and run the case\n",
+            "\n",
+            "After completing the previous steps, you are ready to build and run your CESM case. Begin by navigating to the case root directory specified during the case creation. Before proceeding, review the `user_nl_mom` file located in the case directory. This file contains MOM6 parameter settings that were automatically generated by CrocoDash. Carefully examine these parameters and make any necessary adjustments to fine-tune the model for your specific requirements. While CrocoDash aims to provide a solid starting point, further tuning and adjustments are typically necessary to improve the model for your use case.\n",
+            "\n",
+            "Once you have reviewed and modified the parameters as needed, you can build and execute the case using the following commands: \n",
+            "```\n",
+            "./case.build\n",
+            "./case.submit\n",
+            "```"
+         ]
+      }
+   ],
+   "metadata": {
+      "kernelspec": {
+         "display_name": "CrocoDash",
+         "language": "python",
+         "name": "python3"
+      },
+      "language_info": {
+         "codemirror_mode": {
+            "name": "ipython",
+            "version": 3
+         },
+         "file_extension": ".py",
+         "mimetype": "text/x-python",
+         "name": "python",
+         "nbconvert_exporter": "python",
+         "pygments_lexer": "ipython3",
+         "version": "3.12.3"
+      }
+   },
+   "nbformat": 4,
+   "nbformat_minor": 4
+}

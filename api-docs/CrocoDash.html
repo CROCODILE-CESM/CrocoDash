@@ -1,0 +1,292 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CrocoDash package &mdash; CrocoDash  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="CrocoDash.raw_data_access package" href="CrocoDash.raw_data_access.html" />
+    <link rel="prev" title="API Documentation" href="modules.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            CrocoDash
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../demos.html">Demos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../features/index.html">Additional Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers/index.html">Developer Information</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">API Documentation</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">CrocoDash package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.html">CrocoDash.raw_data_access package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.rm6.html">CrocoDash.rm6 package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-CrocoDash.case">CrocoDash.case module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#CrocoDash.case.Case"><code class="docutils literal notranslate"><span class="pre">Case</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-CrocoDash.grid">CrocoDash.grid module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-CrocoDash.topo">CrocoDash.topo module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#CrocoDash.topo.Topo"><code class="docutils literal notranslate"><span class="pre">Topo</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-CrocoDash.topo_editor">CrocoDash.topo_editor module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-CrocoDash.utils">CrocoDash.utils module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#CrocoDash.utils.export_dataset"><code class="docutils literal notranslate"><span class="pre">export_dataset()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#CrocoDash.utils.setup_logger"><code class="docutils literal notranslate"><span class="pre">setup_logger()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-CrocoDash.vgrid">CrocoDash.vgrid module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-CrocoDash">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">CrocoDash</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">API Documentation</a></li>
+      <li class="breadcrumb-item active">CrocoDash package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/api-docs/CrocoDash.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="crocodash-package">
+<h1>CrocoDash package<a class="headerlink" href="#crocodash-package" title="Link to this heading"></a></h1>
+<section id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Link to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="CrocoDash.raw_data_access.html">CrocoDash.raw_data_access package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="CrocoDash.raw_data_access.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="CrocoDash.raw_data_access.html#module-CrocoDash.raw_data_access.driver">CrocoDash.raw_data_access.driver module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.driver.ProductFunctionRegistry"><code class="docutils literal notranslate"><span class="pre">ProductFunctionRegistry</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.driver.ProductFunctionRegistry.list_importable_functions"><code class="docutils literal notranslate"><span class="pre">ProductFunctionRegistry.list_importable_functions()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.driver.ProductFunctionRegistry.load_functions"><code class="docutils literal notranslate"><span class="pre">ProductFunctionRegistry.load_functions()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.driver.ProductFunctionRegistry.validate_function"><code class="docutils literal notranslate"><span class="pre">ProductFunctionRegistry.validate_function()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.driver.ProductFunctionRegistry.verify_data_sufficiency"><code class="docutils literal notranslate"><span class="pre">ProductFunctionRegistry.verify_data_sufficiency()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.driver.get_rectangular_segment_info"><code class="docutils literal notranslate"><span class="pre">get_rectangular_segment_info()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="CrocoDash.raw_data_access.html#crocodash-raw-data-access-glorys-module">CrocoDash.raw_data_access.glorys module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="CrocoDash.raw_data_access.html#crocodash-raw-data-access-tables-module">CrocoDash.raw_data_access.tables module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="CrocoDash.raw_data_access.html#module-CrocoDash.raw_data_access.utils">CrocoDash.raw_data_access.utils module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.utils.fill_template"><code class="docutils literal notranslate"><span class="pre">fill_template()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.utils.load_config"><code class="docutils literal notranslate"><span class="pre">load_config()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.utils.setup_logger"><code class="docutils literal notranslate"><span class="pre">setup_logger()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="CrocoDash.raw_data_access.html#module-CrocoDash.raw_data_access">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="CrocoDash.rm6.html">CrocoDash.rm6 package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="CrocoDash.rm6.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html">CrocoDash.rm6.regional_mom6 package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#module-CrocoDash.rm6.regional_mom6.regional_mom6">CrocoDash.rm6.regional_mom6.regional_mom6 module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#module-CrocoDash.rm6.regional_mom6.regridding">CrocoDash.rm6.regional_mom6.regridding module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#module-CrocoDash.rm6.regional_mom6.rotation">CrocoDash.rm6.regional_mom6.rotation module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#module-CrocoDash.rm6.regional_mom6.utils">CrocoDash.rm6.regional_mom6.utils module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#module-CrocoDash.rm6.regional_mom6">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="CrocoDash.rm6.html#module-CrocoDash.rm6">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-CrocoDash.case">
+<span id="crocodash-case-module"></span><h2>CrocoDash.case module<a class="headerlink" href="#module-CrocoDash.case" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="CrocoDash.case.Case">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.case.</span></span><span class="sig-name descname"><span class="pre">Case</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cesmroot</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">caseroot</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputdir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ocn_grid</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Grid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ocn_topo</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#CrocoDash.topo.Topo" title="CrocoDash.topo.Topo"><span class="pre">Topo</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">ocn_vgrid</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">VGrid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inittime</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'1850'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">datm_mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'JRA'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">datm_grid_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'TL319'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ninst</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">machine</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">project</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">override</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.case.Case" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>This class represents a regional MOM6 case within the CESM framework. It is similar to the
+Experiment class in the regional_mom6 package, but with modifications to work within the CESM framework.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.case.Case.configure_forcings">
+<span class="sig-name descname"><span class="pre">configure_forcings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">date_range</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundaries</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">['south',</span> <span class="pre">'north',</span> <span class="pre">'west',</span> <span class="pre">'east']</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tidal_constituents</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tpxo_elevation_filepath</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tpxo_velocity_filepath</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">product_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'GLORYS'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'get_glorys_data_script_for_cli'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">too_much_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.case.Case.configure_forcings" title="Link to this definition"></a></dt>
+<dd><p>Configure the boundary conditions and tides for the MOM6 case.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="CrocoDash.case.Case.date_range">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">date_range</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">datetime</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#CrocoDash.case.Case.date_range" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="CrocoDash.case.Case.name">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#CrocoDash.case.Case.name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.case.Case.process_forcings">
+<span class="sig-name descname"><span class="pre">process_forcings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">process_initial_condition</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">process_tides</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">process_velocity_tracers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.case.Case.process_forcings" title="Link to this definition"></a></dt>
+<dd><p>Process the boundary conditions and tides for the MOM6 case.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-CrocoDash.grid">
+<span id="crocodash-grid-module"></span><h2>CrocoDash.grid module<a class="headerlink" href="#module-CrocoDash.grid" title="Link to this heading"></a></h2>
+</section>
+<section id="module-CrocoDash.topo">
+<span id="crocodash-topo-module"></span><h2>CrocoDash.topo module<a class="headerlink" href="#module-CrocoDash.topo" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="CrocoDash.topo.Topo">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.topo.</span></span><span class="sig-name descname"><span class="pre">Topo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">grid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_depth</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.topo.Topo" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Topo</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.topo.Topo.interpolate_from_file">
+<span class="sig-name descname"><span class="pre">interpolate_from_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">longitude_coordinate_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">latitude_coordinate_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vertical_coordinate_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fill_channels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">positive_down</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">write_to_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.topo.Topo.interpolate_from_file" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-CrocoDash.topo_editor">
+<span id="crocodash-topo-editor-module"></span><h2>CrocoDash.topo_editor module<a class="headerlink" href="#module-CrocoDash.topo_editor" title="Link to this heading"></a></h2>
+</section>
+<section id="module-CrocoDash.utils">
+<span id="crocodash-utils-module"></span><h2>CrocoDash.utils module<a class="headerlink" href="#module-CrocoDash.utils" title="Link to this heading"></a></h2>
+<p>This module (utils) contains utility functions that are used across the CrocoDash package.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.utils.export_dataset">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.utils.</span></span><span class="sig-name descname"><span class="pre">export_dataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.utils.export_dataset" title="Link to this definition"></a></dt>
+<dd><p>This function exports an xarray dataset to a netcdf file at the specified path, but deletes the previous netcdf beforehand for safety.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ds</strong> (<em>xarray.Dataset</em>) – The dataset to export.</p></li>
+<li><p><strong>path</strong> (<em>str</em>) – The path to the netcdf file to export</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.utils.setup_logger">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.utils.</span></span><span class="sig-name descname"><span class="pre">setup_logger</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.utils.setup_logger" title="Link to this definition"></a></dt>
+<dd><p>This function sets up a logger format for the package. It attaches logger output to stdout (if a handler doesn’t already exist) and formats it in a pretty way!</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>name</strong> (<em>str</em>) – The name of the logger.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The logger</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>logging.Logger</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-CrocoDash.vgrid">
+<span id="crocodash-vgrid-module"></span><h2>CrocoDash.vgrid module<a class="headerlink" href="#module-CrocoDash.vgrid" title="Link to this heading"></a></h2>
+</section>
+<section id="module-CrocoDash">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-CrocoDash" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="modules.html" class="btn btn-neutral float-left" title="API Documentation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="CrocoDash.raw_data_access.html" class="btn btn-neutral float-right" title="CrocoDash.raw_data_access package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, CROCODILE.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
