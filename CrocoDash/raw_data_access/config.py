@@ -1,6 +1,7 @@
 from pathlib import Path
 import pandas as pd
 import json
+
 CONFIG_DIR = (
     Path(__file__).parent / "config"
 )  # Adjust this to wherever your config is stored
@@ -11,6 +12,7 @@ def load_varnames_config():
     with open(f"{CONFIG_DIR}/forcing_varnames.json", "r") as f:
         data = json.load(f)  # Use `json.load()` for files
     return data
+
 
 def load_tables():
     """Load data tables from CSV files."""

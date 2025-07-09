@@ -41,3 +41,9 @@ def gen_grid_topo_vgrid(get_rect_grid_and_topo):
     grid, topo = get_rect_grid_and_topo
     vgrid = VGrid.hyperbolic(nk=75, depth=topo.max_depth, ratio=20.0)
     return grid, topo, vgrid
+
+
+@pytest.fixture
+def get_vgrid():
+    vgrid = VGrid.hyperbolic(nk=75, depth=6000, ratio=20.0)
+    return vgrid
