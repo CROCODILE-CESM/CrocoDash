@@ -265,7 +265,60 @@ class Case:
         function_name: str = "get_glorys_data_script_for_cli",
         too_much_data: bool = False,
     ):
-        """Configure the boundary conditions and tides for the MOM6 case."""
+        """
+    Configure the boundary conditions and tides for the MOM6 case.
+
+    Sets up initial and boundary condition forcing data for MOM6 using a specified product
+    and download function. Optionally configures tidal constituents if specified. Supports
+    a large data workflow mode that defers data download and processing to an external script.
+
+    Parameters
+    ----------
+    date_range : list of str
+        Start and end dates for the forcing data, formatted as strings.
+        Must contain exactly two elements.
+    boundaries : list of str, optional
+        List of open boundaries to process (e.g., ["south", "north"]).
+        Default is ["south", "north", "west", "east"].
+    tidal_constituents : list of str, optional
+        List of tidal constituents (e.g., ["M2", "S2"]) to be used for tidal forcing.
+        If provided, both TPXO elevation and velocity file paths must also be provided.
+    tpxo_elevation_filepath : str or Path, optional
+        File path to the TPXO tidal elevation data file.
+    tpxo_velocity_filepath : str or Path, optional
+        File path to the TPXO tidal velocity data file.
+    product_name : str, optional
+        Name of the forcing data product to use. Default is "GLORYS".
+    function_name : str, optional
+        Name of the function to call for downloading the forcing data.
+        Default is "get_glorys_data_script_for_cli".
+    too_much_data : bool, optional
+        If True, configures the large data workflow. In this case, data are not downloaded
+        immediately, but a config file and workflow directory are created 
+        for external processing in the forcing directory, inside the input directory.
+
+    Raises
+    ------
+    TypeError
+        If inputs such as `date_range`, `boundaries`, or `tidal_constituents` are not lists of strings.
+    ValueError
+        If `date_range` does not have exactly two elements, or if tidal arguments are inconsistently specified.
+        Also raised if an invalid product or function is provided.
+    AssertionError
+        If the selected data product is not categorized as a forcing product.
+
+    Notes
+    -----
+    - Creates an `regional_mom6.experiment` instance with the specified domain and inputs.
+    - Downloads forcing data (or creates a script) for each boundary and the initial condition unless the large data workflow is used.
+    - In large data workflow mode, creates a folder structure and `config.json` file for later manual processing.
+    - Tidal forcing requires all of: `tidal_constituents`, `tpxo_elevation_filepath`, and `tpxo_velocity_filepath`.
+    - This method must be called before `process_forcings()`.
+
+    See Also
+    --------
+    process_forcings : Executes the actual boundary, initial condition, and tide setup based on the configuration.
+    """
 
         if too_much_data:
             self._large_data_workflow_called = True
@@ -437,8 +490,47 @@ class Case:
         process_initial_condition=True,
         process_tides=True,
         process_velocity_tracers=True,
+        process_param_changes = True
     ):
-        """Process the boundary conditions and tides for the MOM6 case."""
+        """
+    Process boundary conditions, initial conditions, and tides for a MOM6 case.
+
+    This method configures a regional MOM6 case's ocean state boundaries and initial conditions
+    using previously downloaded data setup in configure_forcings. It also processes tidal boundary conditions
+    if tidal constituents are specified. The method expects `configure_forcings()` to be
+    called beforehand.
+
+    Parameters
+    ----------
+    process_initial_condition : bool, optional
+        Whether to process the initial condition file. Default is True.
+    process_tides : bool, optional
+        Whether to process tidal boundary conditions. Default is True.
+    process_velocity_tracers : bool, optional
+        Whether to process velocity and tracer boundary conditions. Default is True.
+        This will be overridden and set to False if the large data workflow in configure_forcings is enabled.
+    process_param_changes : bool, optional
+        Whether to process the namelist and xml changes required to run a regional MOM6 case in the CESM. 
+
+    Raises
+    ------
+    RuntimeError
+        If `configure_forcings()` was not called before this method.
+    FileNotFoundError
+        If required unprocessed files are missing in the expected directories.
+
+    Notes
+    -----
+    - This method uses variable name mappings specified in the forcing product configuration.
+    - If the large data workflow has been enabled, velocity and tracer OBCs are not processed
+      within this method and must be handled externally.
+    - If tidal constituents are configured, TPXO elevation and velocity files must be available.
+    - Applies forcing-related namelist and XML updates at the end of the method.
+
+    See Also
+    --------
+    configure_forcings : Must be called before this method to set up the environment.
+    """
 
         if not self._configure_forcings_called:
             raise RuntimeError(
@@ -522,7 +614,8 @@ class Case:
             forcing_dir.rmdir()
 
         # Apply forcing-related namelist and xml changes
-        self._update_forcing_variables()
+        if process_param_changes:
+            self._update_forcing_variables()
 
     @property
     def name(self) -> str:
