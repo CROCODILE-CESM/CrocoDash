@@ -3,6 +3,7 @@ import uuid
 import shutil
 from datetime import datetime
 import json
+import threading
 
 import regional_mom6 as rmom6
 from CrocoDash.grid import Grid
@@ -21,7 +22,7 @@ from visualCaseGen.initialize_stages import initialize_stages
 from visualCaseGen.specs.options import set_options
 from visualCaseGen.specs.relational_constraints import get_relational_constraints
 from visualCaseGen.custom_widget_types.case_creator import CaseCreator, ERROR, RESET
-from visualCaseGen.custom_widget_types.case_tools import xmlchange, append_user_nl
+from visualCaseGen.custom_widget_types.case_tools import xmlchange, append_user_nl, remove_user_nl
 
 
 class Case:
@@ -45,6 +46,11 @@ class Case:
         machine: str | None = None,
         project: str | None = None,
         override: bool = False,
+        message: str = None, 
+        object_messages: dict = None, 
+        forcing_config: dict = None,
+        forcing_scripts: list = None,
+        restored_from: int = None,
     ):
         """
         Initialize a new regional MOM6 case within the CESM framework.
@@ -78,10 +84,16 @@ class Case:
             If the machine requires a project, this argument must be provided.
         override : bool, optional
             Whether to override existing caseroot and inputdir directories. Default is False.
+        message : str, optional
+        A user-provided message describing this case instantiation. This will be saved in the case history.
+        object_messages : dict, optional
+            A dictionary of per-object messages, e.g. {'grid': "...", 'vgrid': "...", 'topo': "..."}.
+            These messages are saved in the object histories and can be used for provenance or notes about each file.
         """
 
         # Initialize the CIME interface object
         self.cime = CIME_interface(cesmroot)
+        self.cesmroot = cesmroot
 
         if machine is None:
             machine = self.cime.machine
@@ -107,12 +119,21 @@ class Case:
         self.ocn_grid = ocn_grid
         self.ocn_topo = ocn_topo
         self.ocn_vgrid = ocn_vgrid
+        self.ocn_vgrid.name = self.ocn_grid.name
+        self.project = project
+        self.machine = "derecho"
         self.ninst = ninst
         self.override = override
+        self.message = message
+        self.object_messages = object_messages
         self.ProductFunctionRegistry = dv.ProductFunctionRegistry()
         self.forcing_product_name = None
         self._configure_forcings_called = False
         self._large_data_workflow_called = False
+
+        self._history_dir = self.caseroot.parent 
+        self._object_history_path = self._history_dir / "object_histories.json"
+        self._history_path = self._history_dir / "case_history.json"
 
         # Construct the compset long name
         self.compset = f"{inittime}_DATM%{datm_mode}_SLND_SICE_MOM6_SROF_SGLC_SWAV_SESP"
@@ -128,6 +149,641 @@ class Case:
         self._create_newcase()
 
         self._cime_case = self.cime.get_case(self.caseroot,non_local = self.cc._is_non_local())
+
+        # --- Per-object history management ---
+        if self._object_history_path.exists():
+            with open(self._object_history_path, "r") as f:
+                self._object_histories = json.load(f)
+        else:
+            self._object_histories = {
+                "grid": {"history": []},
+                "vgrid": {"history": []},
+                "topo": {"history": []},
+            }
+
+        current_files = {
+            "grid": Case.get_grid_file(ocn_grid, inputdir=self.inputdir),
+            "vgrid": Case.get_vgrid_file(ocn_vgrid, inputdir=self.inputdir),
+            "topo": Case.get_topo_file(ocn_topo, inputdir=self.inputdir),
+        }
+
+        # Append current files to their respective histories if changed
+        for key in ["grid", "vgrid", "topo"]:
+            hist = self._object_histories[key]["history"]
+            file_path = current_files[key]
+            obj_msg = None
+            if object_messages and key in object_messages:
+                obj_msg = object_messages[key]
+            if not obj_msg:
+                obj_msg = f"Selected {key} file at {datetime.now().isoformat()}"
+            if not hist or hist[-1]["file"] != file_path:
+                hist.append({"file": file_path, "message": obj_msg})
+        self._save_object_histories()
+
+       # Use user-provided message if available, else default
+        current_files = {
+            "grid_file": Case.get_grid_file(ocn_grid, inputdir=self.inputdir),
+            "vgrid_file": Case.get_vgrid_file(ocn_vgrid, inputdir=self.inputdir),
+            "topo_file": Case.get_topo_file(ocn_topo, inputdir=self.inputdir),
+        }
+        state_msg = message if message else "New instantiation"
+        
+        self._record_case_state(
+            **current_files,
+            message=state_msg,
+            cesmroot=cesmroot,
+            caseroot=caseroot,
+            inputdir=inputdir,
+            inittime=inittime,
+            datm_mode=datm_mode,
+            datm_grid_name=datm_grid_name,
+            ninst=ninst,
+            machine=machine,
+            project=project,
+            override=override,
+            forcing_config=forcing_config,
+            restored_from=restored_from,
+        )
+
+        # Store on self for summary writing
+        self.forcing_config = forcing_config or {}
+        self.forcing_scripts = forcing_scripts or []
+
+        self.write_summary(
+            casename=self.caseroot.name,
+            cesmroot=cesmroot,
+            inputdir=inputdir,
+            caseroot=caseroot,
+        )
+    
+    # --- CASERECORD MANAGEMENT ---
+
+    # When creating a new record:
+    def _record_case_state(self, **kwargs):
+        record = self.make_case_record(**kwargs)
+        self.save_history(record)
+        self.append_history_to_readme()
+        return record
+    
+    @staticmethod
+    def make_case_record(**kwargs):
+        """
+        Create a case record dictionary from keyword arguments.
+        Always includes a timestamp and message.
+        """
+        record = dict(kwargs)
+        record.setdefault("date", datetime.now().isoformat())
+        record.setdefault("message", "")
+        record.setdefault("forcing_config", {})
+        return record
+
+    @staticmethod
+    def case_record_to_dict(record):
+        """
+        Convert all Path objects to strings for JSON serialization.
+        """
+        def stringify(obj):
+            from pathlib import Path
+            if isinstance(obj, Path):
+                return str(obj)
+            elif isinstance(obj, dict):
+                return {k: stringify(v) for k, v in obj.items()}
+            elif isinstance(obj, (list, tuple)):
+                return type(obj)(stringify(v) for v in obj)
+            else:
+                return obj
+        return {k: stringify(v) for k, v in record.items()}
+
+    @staticmethod
+    def case_record_from_dict(d):
+        """
+        Return a case record dictionary from a dict (no hardcoding).
+        """
+        return dict(d)
+
+    @staticmethod
+    def case_record_summary_line(record, idx=None):
+        """
+        Return a summary line for a case record.
+        """
+        idx_str = f"{idx}: " if idx is not None else ""
+        msg = f" | {record.get('message','')}" if record.get("message") else ""
+        restored = f" | restored_from: {record.get('restored_from')}" if record.get("restored_from") is not None else ""
+        grid = record.get("grid_file", "unknown")
+        vgrid = record.get("vgrid_file", "unknown")
+        topo = record.get("topo_file", "unknown")
+        date = record.get("date", "")
+        return f"{idx_str}Grid: {grid}, VGrid: {vgrid}, Topo: {topo}, Date: {date}{msg}{restored}"
+    
+    def save_history(self, new_state):
+        """Appends a new case record to the global case history."""
+        if self._history_path.exists():
+            with open(self._history_path, "r") as f:
+                existing = json.load(f)
+        else:
+            existing = []
+        new_state_dict = self.case_record_to_dict(new_state)
+        # Use JSON string for uniqueness (handles nested dicts/lists)
+        key = json.dumps(new_state_dict, sort_keys=True)
+        existing_keys = {json.dumps(d, sort_keys=True) for d in existing}
+        if key not in existing_keys:
+            existing.append(new_state_dict)
+        with open(self._history_path, "w") as f:
+            json.dump(existing, f, indent=2)
+
+    def load_history(self):
+        """Loads the entire global case history."""
+        if self._history_path.exists():
+            with open(self._history_path, "r") as f:
+                return [self.case_record_from_dict(d) for d in json.load(f)]
+        return []
+
+    def append_history_to_readme(self):
+        """Appends the global case history to the README.case file in the current case directory."""
+        readme_path = Path(self.caseroot) / "README.case"
+        if readme_path.exists():
+            with open(readme_path, "r") as f:
+                lines = f.readlines()
+        else:
+            lines = []
+        start = None
+        for i, line in enumerate(lines):
+            if line.strip() == "CaseRecord History:":
+                start = i
+                break
+        if start is not None:
+            lines = lines[:start]
+        with open(readme_path, "w") as f:
+            f.writelines(lines)
+            f.write("\nCaseRecord History:\n")
+            if self._history_path.exists():
+                with open(self._history_path, "r") as h:
+                    global_history = [self.case_record_from_dict(d) for d in json.load(h)]
+                for idx, state in enumerate(global_history):
+                    f.write(self.case_record_summary_line(state, idx) + "\n")
+
+    def select_global_case_record(self):
+        """Allows the user to select a CaseRecord from the global case history."""
+        import traceback
+        if not self._history_path.exists():
+            print("No global case history found.")
+            return None
+        with open(self._history_path, "r") as f:
+            history = json.load(f)
+        print("Global Case history:")
+        for i, state in enumerate(history):
+            casename = Path(state.get("caseroot", "")).name if state.get("caseroot") else ""
+            msg = state.get("message", "")
+            display_msg = f"{casename} ({msg})"
+            print(f"[{i}] {display_msg}")
+            print(f"     Grid : {state.get('grid_file', '')}")
+            print(f"     VGrid: {state.get('vgrid_file', '')}")
+            print(f"     Topo : {state.get('topo_file', '')}")
+            print("-" * 100)
+        idx = input(f"Enter the index of the CaseRecord to restore [0-{len(history)-1}]: ")
+        try:
+            idx = int(idx)
+            if 0 <= idx < len(history):
+                state_dict = history[idx]
+                # Helper to find a compatible file if the exact one is missing
+                def find_compatible_file(path, pattern, required_attrs=None, required_vars=None):
+                    from netCDF4 import Dataset
+                    p = Path(path)
+                    if p.exists():
+                        return str(p)
+                    parent = p.parent
+                    files = sorted(parent.glob(pattern), key=lambda f: f.stat().st_mtime, reverse=True)
+                    for f in files:
+                        try:
+                            with Dataset(f, "r") as ds:
+                                if required_attrs:
+                                    attrs = ds.ncattrs()
+                                    if all(attr in attrs for attr in required_attrs):
+                                        return str(f)
+                                if required_vars:
+                                    vars_ = ds.variables.keys()
+                                    if all(var in vars_ for var in required_vars):
+                                        return str(f)
+                        except Exception:
+                            continue
+                    return None
+
+                grid_file = find_compatible_file(
+                    state_dict.get("grid_file", ""), f"ocean_hgrid_*.nc", required_attrs=["lenx", "leny", "resolution"]
+                )
+                vgrid_file = find_compatible_file(
+                    state_dict.get("vgrid_file", ""), f"ocean_vgrid_*.nc", required_vars=["dz"]
+                )
+                topo_file = find_compatible_file(
+                    state_dict.get("topo_file", ""), f"ocean_topog_*.nc", required_vars=["depth"]
+                )
+                if not all([grid_file, vgrid_file, topo_file]):
+                    print("Could not restore case: missing required files.")
+                    return None
+
+                grid_obj = Grid.from_netcdf(grid_file)
+                grid_obj.name = Case.clean_grid_name(grid_obj.name)
+                vgrid_obj = VGrid.from_file(vgrid_file)
+                topo_obj = Topo.from_topo_file(grid_obj, topo_file)
+
+                forcing_config = state_dict.get("forcing_config", None)
+                forcing_scripts = state_dict.get("forcing_scripts", None)
+
+                restored_message = f"Restored from case index {idx}: {state_dict.get('message','')}"
+                new_case = Case(
+                    cesmroot=str(state_dict.get("cesmroot", "")),
+                    caseroot=str(state_dict.get("caseroot", "")),
+                    inputdir=str(state_dict.get("inputdir", "")),
+                    ocn_grid=grid_obj,
+                    ocn_vgrid=vgrid_obj,
+                    ocn_topo=topo_obj,
+                    inittime=state_dict.get("inittime", "1850"),
+                    datm_mode=state_dict.get("datm_mode", "JRA"),
+                    datm_grid_name=state_dict.get("datm_grid_name", "TL319"),
+                    ninst=state_dict.get("ninst", 1),
+                    machine=state_dict.get("machine", "derecho"),
+                    project=state_dict.get("project", None),
+                    override=state_dict.get("override", True),
+                    message=restored_message,
+                    object_messages=None,
+                    forcing_config=forcing_config,        
+                    forcing_scripts=forcing_scripts,     
+                    restored_from=idx,                     
+                )
+
+                print(f"Restored to global CaseRecord {idx}: {state_dict.get('message','')}")
+                return new_case
+            else:
+                print("Invalid index.")
+        except Exception as e:
+            print("Invalid input.")
+            print("Exception:", e)
+            traceback.print_exc()
+        return None
+
+     # --- Per-object helpers ---
+
+    def _save_object_histories(self):
+        """Persists the per-object history (Grid, VGrid, Topo) to object_histories.json."""
+        # Always append to the global object_histories.json
+        if self._object_history_path.exists():
+            with open(self._object_history_path, "r") as f:
+                existing = json.load(f)
+        else:
+            existing = {"grid": {"history": []},
+                        "vgrid": {"history": []},
+                        "topo": {"history": []}}
+        for key in ["grid", "vgrid", "topo"]:
+            existing_hist = existing.get(key, {"history": []})["history"]
+            new_hist = self._object_histories[key]["history"]
+            existing_files = {h["file"] for h in existing_hist}
+            for entry in new_hist:
+                if entry["file"] not in existing_files:
+                    existing_hist.append(entry)
+                    existing_files.add(entry["file"])
+            existing[key] = {"history": existing_hist}
+        with open(self._object_history_path, "w") as f:
+            json.dump(existing, f, indent=2)
+
+    @staticmethod
+    def topo_is_compatible_with_grid(topo_file, grid):
+        import xarray as xr
+        import numpy as np
+        import os
+        import re
+
+        # Clean grid name (already done outside, but safe to repeat)
+        grid_name_clean = Case.clean_grid_name(getattr(grid, "name", ""))
+
+        # Clean topo name from filename
+        topo_fname = os.path.basename(topo_file)
+        topo_name_clean = re.sub(r'^(ocean_topog_)+', '', topo_fname)
+        topo_name_clean = re.sub(r'_[0-9a-f]{6}\.nc$', '', topo_name_clean)
+        topo_name_clean = re.sub(r'\.nc$', '', topo_name_clean)
+
+        if grid_name_clean != topo_name_clean:
+            return False
+
+        try:
+            ds = xr.open_dataset(topo_file)
+            # Check shape
+            if "depth" not in ds:
+                return False
+            if ds["depth"].shape != (grid.ny, grid.nx):
+                return False
+            return True
+        except Exception as e:
+            return False
+    
+    def get_forcing_config_history(self):
+        """Return a list of unique forcing_config dicts from global case history."""
+        if not self._history_path.exists():
+            return []
+        with open(self._history_path, "r") as f:
+            history = json.load(f)
+        configs = []
+        seen = set()
+        for entry in history:
+            fc = entry.get("forcing_config", {})
+            key = json.dumps(fc, sort_keys=True)
+            if key not in seen and fc:
+                configs.append(fc)
+                seen.add(key)
+        return configs
+
+    def assemble_case(self):
+        """
+        Interactive helper to rebuild a Case from per-object history.
+        Allows selection of grid/topo/vgrid and optionally a forcing_config.
+        If a forcing_config is selected, automatically runs configure_forcings and process_forcings.
+        """
+        import ipywidgets as widgets
+        from IPython.display import display, clear_output
+        import inspect
+        from pathlib import Path
+
+        def just_filename(path):
+            return Path(path).name if path else ""
+
+        def base_grid_name(fname):
+            import re
+            return re.sub(r'_[0-9a-f]{6}\.nc$', '.nc', fname)
+
+        all_case_records = []
+        if self._history_path.exists():
+            with open(self._history_path, "r") as f:
+                all_case_records = json.load(f)
+
+        grid_hist = []
+        vgrid_hist = []
+        topo_hist = []
+
+        grid_seen = {}
+        vgrid_seen = {}
+        topo_seen = {}
+
+        # Reset warning flag ONCE when widget is created
+        self._warned_vgrid_topo_depth = False
+
+        for idx, rec in enumerate(all_case_records):
+            casename = Path(rec.get("caseroot", "")).name if rec.get("caseroot") else f"case_{idx}"
+            grid_file = rec.get("grid_file", None)
+            vgrid_file = rec.get("vgrid_file", None)
+            topo_file = rec.get("topo_file", None)
+
+            if grid_file and grid_file != "unknown":
+                fname = just_filename(grid_file)
+                base = base_grid_name(fname)
+                key = (casename, base)
+                grid_path = Path(grid_file)
+                if grid_path.exists():
+                    if key not in grid_seen or grid_path.stat().st_mtime > Path(grid_seen[key]["fullpath"]).stat().st_mtime:
+                        grid_seen[key] = {
+                            "file": fname,
+                            "fullpath": grid_file,
+                            "message": f"From case '{casename}' (history idx {idx})"
+                        }
+            if vgrid_file and vgrid_file != "unknown":
+                fname = just_filename(vgrid_file)
+                base = base_grid_name(fname)
+                key = (casename, base)
+                vgrid_path = Path(vgrid_file)
+                if vgrid_path.exists():
+                    if key not in vgrid_seen or vgrid_path.stat().st_mtime > Path(vgrid_seen[key]["fullpath"]).stat().st_mtime:
+                        vgrid_seen[key] = {
+                            "file": fname,
+                            "fullpath": vgrid_file,
+                            "message": f"From case '{casename}' (history idx {idx})"
+                        }
+            if topo_file and topo_file != "unknown":
+                fname = just_filename(topo_file)
+                base = base_grid_name(fname)
+                key = (casename, base)
+                topo_path = Path(topo_file)
+                if topo_path.exists():
+                    if key not in topo_seen or topo_path.stat().st_mtime > Path(topo_seen[key]["fullpath"]).stat().st_mtime:
+                        topo_seen[key] = {
+                            "file": fname,
+                            "fullpath": topo_file,
+                            "message": f"From case '{casename}' (history idx {idx})"
+                        }
+
+        grid_hist = list(grid_seen.values())
+        vgrid_hist = list(vgrid_seen.values())
+        topo_hist = list(topo_seen.values())
+
+        grid_options = [f"[{i}] {entry['file']} -- {entry['message']}" for i, entry in enumerate(grid_hist)]
+        vgrid_options = [f"[{i}] {entry['file']} -- {entry['message']}" for i, entry in enumerate(vgrid_hist)]
+        topo_options = [f"[{i}] {entry['file']} -- {entry['message']}" for i, entry in enumerate(topo_hist)]
+
+        grid_dropdown = widgets.Dropdown(
+            options=grid_options,
+            description="Grid file:",
+            style={'description_width': 'initial'},
+            layout=widgets.Layout(width='80%')
+        )
+        topo_dropdown = widgets.Dropdown(
+            options=topo_options,
+            description="Topo file:",
+            style={'description_width': 'initial'},
+            layout=widgets.Layout(width='80%')
+        )
+        vgrid_dropdown = widgets.Dropdown(
+            options=vgrid_options,
+            description="VGrid file:",
+            style={'description_width': 'initial'},
+            layout=widgets.Layout(width='80%')
+        )
+
+        case_forcing_map = {}
+        if self._history_path.exists():
+            with open(self._history_path, "r") as f:
+                all_case_records = json.load(f)
+            for rec in reversed(all_case_records):
+                casename = Path(rec.get("caseroot", "")).name if rec.get("caseroot") else None
+                if casename and casename not in case_forcing_map:
+                    case_forcing_map[casename] = rec.get("forcing_config", {})
+        case_names = list(case_forcing_map.keys())
+        if not case_names:
+            case_names = ["(none available)"]
+
+        forcing_case_dropdown = widgets.Dropdown(
+            options=case_names,
+            description="Select Case for Forcing Config:",
+            style={'description_width': 'initial'},
+            layout=widgets.Layout(width='80%')
+        )
+        forcing_config_output = widgets.Output(layout={'border': '1px solid gray'})
+
+        def on_forcing_case_change(change):
+            with forcing_config_output:
+                forcing_config_output.clear_output()
+                selected_case = change['new']
+                config = case_forcing_map.get(selected_case, {})
+                if config:
+                    print(f"Forcing config for case '{selected_case}':")
+                    print(json.dumps(config, indent=2))
+                else:
+                    print("No forcing config available for this case.")
+
+        forcing_case_dropdown.observe(on_forcing_case_change, names='value')
+
+        casename_widget = widgets.Text(
+            value='',
+            placeholder='Enter new casename (no spaces)',
+            description='Case name:',
+            style={'description_width': 'initial'},
+            layout=widgets.Layout(width='50%')
+        )
+        proceed_buttons = widgets.ToggleButtons(
+            options=['Generate Forcings', 'Leave Case As-Is'],
+            description='Next step:',
+            style={'description_width': 'initial'},
+            layout=widgets.Layout(width='100%')
+        )
+        build_button = widgets.Button(description="Build Case", button_style='success')
+        cancel_button = widgets.Button(description="Cancel", button_style='danger')
+        status_output = widgets.Output()
+
+        display(grid_dropdown)
+        display(topo_dropdown)
+        display(vgrid_dropdown)
+        display(forcing_case_dropdown)
+        display(forcing_config_output)
+        display(widgets.HBox([casename_widget, build_button, cancel_button]))
+        display(status_output)
+
+        self.last_built_case = None
+        self.last_selected_forcing_config = None
+
+        def on_build_clicked(b):
+            with status_output:
+                clear_output()
+                casename = casename_widget.value.strip()
+                if " " in casename or casename == "":
+                    print("Case name cannot contain spaces and cannot be blank.")
+                    return
+                # Grid
+                grid_sel = grid_dropdown.value
+                if grid_sel == "Use current in-memory object":
+                    grid_obj = self.ocn_grid
+                else:
+                    try:
+                        idx = int(grid_sel.split("]")[0][1:])
+                        file_path = grid_hist[idx]["fullpath"]
+                        grid_obj = Grid.from_netcdf(file_path)
+                        grid_obj.name = Case.clean_grid_name(grid_obj.name)
+                    except Exception:
+                        print("Invalid grid selection.")
+                        return
+                # Topo
+                topo_sel = topo_dropdown.value
+                topo_obj = None
+                if topo_sel == "Use current in-memory object":
+                    topo_obj = self.ocn_topo
+                else:
+                    try:
+                        idx = int(topo_sel.split("]")[0][1:])
+                        file_path = topo_hist[idx]["fullpath"]
+                        topo_obj = Topo.from_topo_file(grid_obj, file_path)
+                    except Exception as e:
+                        print("WARNING: Selected Topo is not compatible with selected Grid (could not load Topo). Please remake your selections.")
+                        return
+                # --- Grid/Topo compatibility check ---
+                if not Case.topo_is_compatible_with_grid(Case.get_topo_file(topo_obj, inputdir=self.inputdir), grid_obj):
+                    print("WARNING: Selected Topo is not compatible with selected Grid (shape or grid name mismatch). Please remake your selections.")
+                    return
+                # VGrid
+                vgrid_sel = vgrid_dropdown.value
+                if vgrid_sel == "Use current in-memory object":
+                    vgrid_obj = self.ocn_vgrid
+                else:
+                    try:
+                        idx = int(vgrid_sel.split("]")[0][1:])
+                        file_path = vgrid_hist[idx]["fullpath"]
+                        vgrid_obj = VGrid.from_file(file_path)
+                    except Exception:
+                        print("Invalid vgrid selection.")
+                        return
+                # --- VGrid/Topo depth check ---
+                vgrid_depth = getattr(vgrid_obj, "depth", None)
+                topo_max_depth = getattr(topo_obj, "max_depth", None)
+                # Use a persistent flag to allow user to proceed after warning
+                if not hasattr(self, "_warned_vgrid_topo_depth"):
+                    self._warned_vgrid_topo_depth = False
+                if vgrid_depth is not None and topo_max_depth is not None:
+                    if vgrid_depth < topo_max_depth - 0.5:
+                        if not self._warned_vgrid_topo_depth:
+                            print(f"WARNING: VGrid total depth ({vgrid_depth:.2f} m) is less than Topo max depth ({topo_max_depth:.2f} m)! If you click 'Build Case' again, the case will be built anyway.")
+                            self._warned_vgrid_topo_depth = True
+                            return
+                        else:
+                            print("WARNING: Proceeding with build despite VGrid/Topo depth mismatch.")
+
+                selected_case = forcing_case_dropdown.value
+                selected_forcing_config = case_forcing_map.get(selected_case, {})
+
+                caseroot = self.caseroot.parent / casename
+                inputdir = self.inputdir.parent / casename
+
+                new_case = Case(
+                    cesmroot=self.cesmroot,
+                    caseroot=caseroot,
+                    inputdir=inputdir,
+                    ocn_grid=grid_obj,
+                    ocn_vgrid=vgrid_obj,
+                    ocn_topo=topo_obj,
+                    inittime=getattr(self, "inittime", "1850"),
+                    datm_mode=getattr(self, "datm_mode", "JRA"),
+                    datm_grid_name=getattr(self, "datm_grid_name", "TL319"),
+                    ninst=self.ninst,
+                    machine="derecho",
+                    project=getattr(self, "project", None),
+                    override=True,
+                    message="Built from per-object history",
+                    forcing_config=selected_forcing_config,
+                )
+
+                self.last_built_case = new_case
+                self.last_selected_forcing_config = selected_forcing_config
+
+                display(proceed_buttons)
+                proceed_buttons.value = None
+                proceed_buttons.observe(on_proceed_change, names='value')
+
+        build_button.on_click(on_build_clicked)
+
+        def on_cancel_clicked(b):
+            with status_output:
+                clear_output()
+                print("Case build cancelled by user.")
+
+        cancel_button.on_click(on_cancel_clicked)
+
+        def on_proceed_change(change):
+            with status_output:
+                clear_output()
+                if change['new'] == 'Generate Forcings':
+                    try:
+                        new_case = self.last_built_case
+                        selected_forcing_config = self.last_selected_forcing_config
+                        if new_case is None or selected_forcing_config is None:
+                            print("No case has been built yet. Please build a case first.")
+                            return
+                        valid_args = inspect.signature(new_case.configure_forcings).parameters
+                        missing_args = [k for k in valid_args if k not in selected_forcing_config and valid_args[k].default is inspect._empty]
+                        if missing_args:
+                            print(f"Error: Forcing config is missing required arguments: {missing_args}")
+                            print("Please select a valid forcing config or run configure_forcings manually.")
+                            return
+                        filtered_config = {k: v for k, v in selected_forcing_config.items() if k in valid_args}
+                        new_case.configure_forcings(**filtered_config)
+                        new_case.process_forcings()
+                        print("Forcings configured and processed.")
+                    except Exception as e:
+                        print(f"Error during configure_forcings/process_forcings: {e}")
+                elif change['new'] == 'Leave Case As-Is':
+                    print("Case left as-is. You can manually configure forcings later using case.configure_forcings().")
 
     def _init_args_check(
         self,
@@ -185,6 +841,20 @@ class Case:
             if not isinstance(project, str):
                 raise TypeError("project must be a string.")
 
+    @staticmethod
+    def clean_grid_name(name):
+        import re
+        # Remove all leading ocean_hgrid_ prefixes (even if repeated)
+        name = re.sub(r'^(ocean_hgrid_)+', '', name)
+        # Remove all leading ocean_vgrid_ prefixes (for vgrid)
+        name = re.sub(r'^(ocean_vgrid_)+', '', name)
+        # Remove all leading ocean_topog_ prefixes (for topo)
+        name = re.sub(r'^(ocean_topog_)+', '', name)
+        # Remove all trailing _[sessionid] (6 hex digits) segments, possibly repeated
+        while re.search(r'_[0-9a-f]{6}$', name):
+            name = re.sub(r'_[0-9a-f]{6}$', '', name)
+        return name
+        
     def _create_grid_input_files(self):
 
         inputdir = self.inputdir
@@ -201,20 +871,24 @@ class Case:
 
         # suffix for the MOM6 grid files
         session_id = cvars["MB_ATTEMPT_ID"].value
+    
+        # --- Sanitize grid name before writing ---
+        sanitized_name = self.clean_grid_name(self.ocn_grid.name)
 
-        # MOM6 supergrid file
-        ocn_grid.write_supergrid(
-            inputdir / "ocnice" / f"ocean_hgrid_{ocn_grid.name}_{session_id}.nc"
+        # MOM6 grid file
+        self.ocn_grid.to_netcdf(
+            inputdir / "ocnice" / f"ocean_hgrid_{sanitized_name}_{session_id}.nc",
+            format="supergrid"
         )
 
         # MOM6 topography file
-        ocn_topo.write_topo(
-            inputdir / "ocnice" / f"ocean_topog_{ocn_grid.name}_{session_id}.nc"
+        self.ocn_topo.write_topo(
+            inputdir / "ocnice" / f"ocean_topog_{sanitized_name}_{session_id}.nc"
         )
 
         # MOM6 vertical grid file
-        ocn_vgrid.write(
-            inputdir / "ocnice" / f"ocean_vgrid_{ocn_grid.name}_{session_id}.nc"
+        self.ocn_vgrid.write(
+            inputdir / "ocnice" / f"ocean_vgrid_{sanitized_name}_{session_id}.nc"
         )
 
         # CICE grid file (if needed)
@@ -438,7 +1112,56 @@ class Case:
                 forcing_dir_path,
                 "ic" + "_unprocessed.nc",
             )
+
+        # --- BEGIN REPRODUCIBILITY BLOCK ---
+        # Save all config options for reproducibility
+        forcing_config = {
+            "date_range": date_range,
+            "boundaries": boundaries,
+            "tidal_constituents": tidal_constituents,
+            "tpxo_elevation_filepath": str(tpxo_elevation_filepath) if tpxo_elevation_filepath else None,
+            "tpxo_velocity_filepath": str(tpxo_velocity_filepath) if tpxo_velocity_filepath else None,
+            "product_name": product_name,
+            "function_name": function_name,
+            "too_much_data": too_much_data,
+            "large_data_workflow_path": str(self.inputdir / self.forcing_product_name / "large_data_workflow") if too_much_data else None,
+        }
+        # Save to CaseRecord (last entry in history)
+        if self._history_path.exists():
+            with open(self._history_path, "r") as f:
+                history = json.load(f)
+            if history:
+                history[-1]["forcing_config"] = forcing_config
+                with open(self._history_path, "w") as f:
+                    json.dump(history, f, indent=2)
+        # Also store on self for summary writing
+        self.forcing_config = forcing_config
+
+        # Optionally, record any scripts/configs generated
+        self.forcing_scripts = []
+        forcing_dir_path = self.inputdir / self.forcing_product_name
+        if not too_much_data:
+            # Look for bash scripts generated (e.g., get_glorys_data.sh)
+            for script in forcing_dir_path.glob("*.sh"):
+                self.forcing_scripts.append(str(script))
+        else:
+            # Large data workflow: record config.json, driver.py, README, etc.
+            ldw_path = forcing_dir_path / "large_data_workflow"
+            for fname in ["config.json", "driver.py", "README"]:
+                fpath = ldw_path / fname
+                if fpath.exists():
+                    self.forcing_scripts.append(str(fpath))
+        # --- END REPRODUCIBILITY BLOCK ---
+
         self._configure_forcings_called = True
+
+        # Write summary after configuring forcings
+        self.write_summary(
+            casename=self.caseroot.name,
+            cesmroot=self.cesmroot,
+            inputdir=self.inputdir,
+            caseroot=self.caseroot,
+        )
 
     def process_forcings(
         self,
@@ -532,6 +1255,14 @@ class Case:
         # Apply forcing-related namelist and xml changes
         self._update_forcing_variables()
 
+        # Write summary after processing forcings
+        self.write_summary(
+            casename=self.caseroot.name,
+            cesmroot=self.cesmroot,
+            inputdir=self.inputdir,
+            caseroot=self.caseroot,
+        )
+
     @property
     def name(self) -> str:
         return self.caseroot.name
@@ -624,10 +1355,191 @@ class Case:
         # Variables that are not included in a stage:
         cvars["NINST"].value = self.ninst
 
+    def _log_user_nl_action(self, caseroot, action, model, var_val_pairs, forcing_config_before=None, forcing_config_after=None, comment=None):
+        log_path = Path(self.caseroot) / "user_nl_history.json"
+        entry = {
+            "action": action,
+            "model": model,
+            "params": [(str(var), str(val)) for var, val in var_val_pairs],
+            "forcing_config_before": forcing_config_before,
+            "forcing_config_after": forcing_config_after,
+        }
+        if comment is not None and action == "append":
+            entry["block_comment"] = comment
+        lock = threading.Lock()
+        with lock:
+            if log_path.exists():
+                with open(log_path, "r") as f:
+                    history = json.load(f)
+            else:
+                history = []
+            history.append(entry)
+            with open(log_path, "w") as f:
+                json.dump(history, f, indent=2)
+
+    def append_user_nl_block(self, block, params, tpxo_elevation_filepath=None, tpxo_velocity_filepath=None):
+        """
+        Append a block to user_nl_mom and log the action, updating forcing_config and README.case.
+        Optionally set TPXO filepaths for Tides block.
+        """
+        import copy
+        forcing_config_before = copy.deepcopy(self.forcing_config)
+
+        # --- Update forcing_config as needed ---
+        if block == "Tides":
+            for k, v in params:
+                if k == "OBC_TIDE_CONSTITUENTS":
+                    cleaned = v.strip('"')
+                    self.forcing_config["tidal_constituents"] = [c.strip() for c in cleaned.split(",")]
+            # Use provided filepaths if given, else use attributes
+            self.forcing_config["tpxo_elevation_filepath"] = (
+                str(tpxo_elevation_filepath)
+                if tpxo_elevation_filepath is not None
+                else (str(getattr(self, "tpxo_elevation_filepath", None)) if getattr(self, "tpxo_elevation_filepath", None) else None)
+            )
+            self.forcing_config["tpxo_velocity_filepath"] = (
+                str(tpxo_velocity_filepath)
+                if tpxo_velocity_filepath is not None
+                else (str(getattr(self, "tpxo_velocity_filepath", None)) if getattr(self, "tpxo_velocity_filepath", None) else None)
+            )
+
+        # Add other block-specific updates here if needed
+
+        # Remove any existing block with the same comment before appending
+        self.remove_user_nl_block(block)
+
+        forcing_config_after = copy.deepcopy(self.forcing_config)
+
+        append_user_nl("mom", params, do_exec=True, comment=block)
+
+        self._log_user_nl_action(
+            self.caseroot,
+            "append",
+            "mom",
+            params,
+            forcing_config_before=forcing_config_before,
+            forcing_config_after=forcing_config_after,
+            comment=block,
+        )
+        
+        self.write_summary(
+            casename=self.caseroot.name,
+            cesmroot=self.cesmroot,
+            inputdir=self.inputdir,
+            caseroot=self.caseroot,
+        )
+
+    def remove_user_nl_block(self, block, clear_config=False):
+        """
+        Remove a block from user_nl_mom and log the action, updating forcing_config and README.case.
+        If clear_config is True, also set related forcing_config fields to None.
+        """
+        import copy
+        forcing_config_before = copy.deepcopy(self.forcing_config)
+
+        # --- Update forcing_config as needed ---
+        if block == "Tides" and clear_config:
+            self.forcing_config["tidal_constituents"] = None
+            self.forcing_config["tpxo_elevation_filepath"] = None
+            self.forcing_config["tpxo_velocity_filepath"] = None
+
+        # Add other block-specific updates here if needed
+
+        forcing_config_after = copy.deepcopy(self.forcing_config)
+
+        remove_user_nl(
+            "mom",
+            comment=block,
+            do_exec=True,
+            forcing_config_before=forcing_config_before,
+            forcing_config_after=forcing_config_after,
+        )
+
+        self.write_summary(
+            casename=self.caseroot.name,
+            cesmroot=self.cesmroot,
+            inputdir=self.inputdir,
+            caseroot=self.caseroot,
+        )
+
+    def configure_tides(
+        self,
+        tidal_constituents: list[str] | None = None,
+        tpxo_elevation_filepath: str | Path | None = None,
+        tpxo_velocity_filepath: str | Path | None = None,
+    ):
+        """
+        Configure tidal constituents and related files for the case.
+        """
+        if tidal_constituents:
+            if not isinstance(tidal_constituents, list) or not all(isinstance(c, str) for c in tidal_constituents):
+                raise TypeError("tidal_constituents must be a list of strings.")
+            if not (tpxo_elevation_filepath and tpxo_velocity_filepath):
+                raise ValueError("TPXO elevation and velocity filepaths must be provided if tides are enabled.")
+        self.tidal_constituents = tidal_constituents
+        self.tpxo_elevation_filepath = Path(tpxo_elevation_filepath) if tpxo_elevation_filepath else None
+        self.tpxo_velocity_filepath = Path(tpxo_velocity_filepath) if tpxo_velocity_filepath else None
+
+        # Update forcing_config for reproducibility
+        if hasattr(self, "forcing_config"):
+            self.forcing_config["tidal_constituents"] = tidal_constituents
+            self.forcing_config["tpxo_elevation_filepath"] = str(tpxo_elevation_filepath) if tpxo_elevation_filepath else None
+            self.forcing_config["tpxo_velocity_filepath"] = str(tpxo_velocity_filepath) if tpxo_velocity_filepath else None
+        if self._history_path.exists():
+            with open(self._history_path, "r") as f:
+                history = json.load(f)
+            if history:
+                history[-1]["forcing_config"] = self.forcing_config
+                with open(self._history_path, "w") as f:
+                    json.dump(history, f, indent=2)
+        self.write_summary(
+            casename=self.caseroot.name,
+            cesmroot=self.cesmroot,
+            inputdir=self.inputdir,
+            caseroot=self.caseroot,
+        )
+
+    def process_tides(self):
+        """
+        Process tides for the MOM6 case, if configured.
+        """
+        if not self.tidal_constituents:
+            print("Tides are not enabled for this case.")
+            return
+        # Ensure the forcing directory exists
+        forcing_dir = self.inputdir / "ocnice" / "forcing"
+        forcing_dir.mkdir(exist_ok=True)
+        # Call the regional_mom6 tide setup
+        self.expt.setup_boundary_tides(
+            tpxo_elevation_filepath=self.tpxo_elevation_filepath,
+            tpxo_velocity_filepath=self.tpxo_velocity_filepath,
+            tidal_constituents=self.tidal_constituents,
+        )
+        # Update user_nl_mom via _update_forcing_variables
+        self._update_forcing_variables()
+        if self._history_path.exists():
+            with open(self._history_path, "r") as f:
+                history = json.load(f)
+            if history:
+                history[-1]["forcing_config"] = self.forcing_config
+                with open(self._history_path, "w") as f:
+                    json.dump(history, f, indent=2)
+        self.write_summary(
+            casename=self.caseroot.name,
+            cesmroot=str(self.cesmroot),
+            inputdir=str(self.inputdir),
+            caseroot=str(self.caseroot),
+        )
+
     def _update_forcing_variables(self):
         """Update the runtime parameters of the case."""
 
-        # Initial conditions:
+        # Remove previous blocks to avoid duplication
+        self.remove_user_nl_block("Initial conditions")
+        self.remove_user_nl_block("Tides")
+        self.remove_user_nl_block("Open boundary conditions")
+
+        # Initial conditions
         ic_params = [
             ("INIT_LAYERS_FROM_Z_FILE", "True"),
             ("TEMP_SALT_Z_INIT_FILE", "init_tracers.nc"),
@@ -640,15 +1552,10 @@ class Case:
             ("VELOCITY_CONFIG", "file"),
             ("VELOCITY_FILE", "init_vel.nc"),
         ]
-        append_user_nl(
-            "mom",
-            ic_params,
-            do_exec=True,
-            comment="Initial conditions",
-        )
+        self.append_user_nl_block("Initial conditions", ic_params)
 
-        # Tides
-        if self.tidal_constituents:
+        # Tides (optional)
+        if getattr(self, "tidal_constituents", None):
             tidal_params = [
                 ("TIDES", "True"),
                 ("TIDE_M2", "True"),
@@ -669,15 +1576,16 @@ class Case:
                     f"{self.date_range[0].year}, {self.date_range[0].month}, {self.date_range[0].day}",
                 ),
             ]
-            append_user_nl(
-                "mom",
-                tidal_params,
-                do_exec=True,
-                comment="Tides",
-                log_title=False,
-            )
+            self.append_user_nl_block("Tides", tidal_params)
+            obc_tide_n_constituents = len(self.tidal_constituents)
+            obc_tide_constituents = '"' + ", ".join(self.tidal_constituents) + '"'
+        else:
+            obc_tide_n_constituents = 0
+            obc_tide_constituents = '""'
+            # Remove the Tides block if present
+            self.remove_user_nl_block("Tides")
 
-        # Open boundary conditions (OBC):
+        # Open boundary conditions
         obc_params = [
             ("OBC_NUMBER_OF_SEGMENTS", len(self.boundaries)),
             ("OBC_FREESLIP_VORTICITY", "False"),
@@ -688,16 +1596,13 @@ class Case:
             ("OBC_TRACER_RESERVOIR_LENGTH_SCALE_OUT", "3.0E+04"),
             ("OBC_TRACER_RESERVOIR_LENGTH_SCALE_IN", "3000.0"),
             ("BRUSHCUTTER_MODE", "True"),
+            ("OBC_TIDE_N_CONSTITUENTS", obc_tide_n_constituents),
+            ("OBC_TIDE_CONSTITUENTS", obc_tide_constituents),
         ]
 
-        # More OBC parameters:
         for seg in self.expt.boundaries:
-            seg_ix = str(self.expt.find_MOM6_rectangular_orientation(seg)).zfill(
-                3
-            )  # "001", "002", etc.
+            seg_ix = str(self.expt.find_MOM6_rectangular_orientation(seg)).zfill(3)
             seg_id = "OBC_SEGMENT_" + seg_ix
-
-            # Position and config
             if seg == "south":
                 index_str = '"J=0,I=0:N'
             elif seg == "north":
@@ -714,10 +1619,7 @@ class Case:
                     index_str + ',FLATHER,ORLANSKI,NUDGED,ORLANSKI_TAN,NUDGED_TAN"',
                 )
             )
-
-            # Nudging
             obc_params.append((seg_id + "_VELOCITY_NUDGING_TIMESCALES", "0.3, 360.0"))
-
             standard_data_str = lambda: (
                 f'"U=file:forcing_obc_segment_{seg_ix}.nc(u),'
                 f"V=file:forcing_obc_segment_{seg_ix}.nc(v),"
@@ -740,15 +1642,141 @@ class Case:
             else:
                 obc_params.append((seg_id + "_DATA", standard_data_str() + '"'))
 
-        append_user_nl(
-            "mom",
-            obc_params,
-            do_exec=True,
-            comment="Open boundary conditions",
-            log_title=False,
-        )
+        self.append_user_nl_block("Open boundary conditions", obc_params)
 
-        xmlchange("RUN_STARTDATE", str(self.date_range[0])[:10],is_non_local=self.cc._is_non_local())
+        xmlchange("RUN_STARTDATE", str(self.date_range[0])[:10], is_non_local=self.cc._is_non_local())
         xmlchange("MOM6_MEMORY_MODE", "dynamic_symmetric", is_non_local=self.cc._is_non_local())
 
         print(f"Case is ready to be built: {self.caseroot}")
+
+    # --- Get file paths for grid, vgrid, topo ---
+    @staticmethod
+    def get_grid_file(grid, inputdir=None):
+        if inputdir is not None:
+            ocd = Path(inputdir) / "ocnice"
+            sanitized_name = Case.clean_grid_name(grid.name)
+            files = sorted(ocd.glob(f"ocean_hgrid_{sanitized_name}_*.nc"), key=lambda f: f.stat().st_mtime, reverse=True)
+            if files:
+                return str(files[0])
+            # Fallback: return the most recent ocean_hgrid_*.nc file
+            files = sorted(ocd.glob("ocean_hgrid_*.nc"), key=lambda f: f.stat().st_mtime, reverse=True)
+            if files:
+                return str(files[0])
+        return "unknown"
+
+    @staticmethod
+    def get_vgrid_file(vgrid, inputdir=None):
+        if inputdir is not None:
+            ocd = Path(inputdir) / "ocnice"
+            sanitized_name = Case.clean_grid_name(vgrid.name)
+            files = sorted(ocd.glob(f"ocean_vgrid_{sanitized_name}_*.nc"), key=lambda f: f.stat().st_mtime, reverse=True)
+            if files:
+                return str(files[0])
+            # Fallback: return the most recent ocean_vgrid_*.nc file
+            files = sorted(ocd.glob("ocean_vgrid_*.nc"), key=lambda f: f.stat().st_mtime, reverse=True)
+            if files:
+                return str(files[0])
+        return "unknown"
+
+    @staticmethod
+    def get_topo_file(topo, inputdir=None):
+        if inputdir is not None:
+            ocd = Path(inputdir) / "ocnice"
+            files = sorted(ocd.glob("ocean_topog_*.nc"), key=lambda f: f.stat().st_mtime, reverse=True)
+            if files:
+                return str(files[0])
+        return "unknown"
+        
+    def write_summary(self, casename, cesmroot, inputdir, caseroot):
+        """Write README.case with the current configuration (overwrite previous summary)."""
+
+        grid_file = self.get_grid_file(self.ocn_grid, inputdir=self.inputdir)
+        vgrid_file = self.get_vgrid_file(self.ocn_vgrid, inputdir=self.inputdir)
+        topo_file = self.get_topo_file(self.ocn_topo, inputdir=self.inputdir)
+
+        readme_path = Path(caseroot) / "README.case"
+
+        # If you want to preserve the case history section, extract it
+        history_lines = []
+        if readme_path.exists():
+            with open(readme_path, "r") as f:
+                lines = f.readlines()
+            # Find the CaseRecord History section
+            for i, line in enumerate(lines):
+                if line.strip() == "CaseRecord History:":
+                    history_lines = lines[:i+1]
+                    # Add the rest of the history lines
+                    for l in lines[i+1:]:
+                        if l.strip().startswith("Case name:"):
+                            break
+                        history_lines.append(l)
+                    break
+
+        # Check if this case was restored from another CaseRecord
+        restored_note = ""
+        restored_forcing_note = ""
+        restored_from_idx = None
+        if self._history_path.exists():
+            with open(self._history_path, "r") as f:
+                history = json.load(f)
+            if history and "restored_from" in history[-1]:
+                restored_from_idx = history[-1]["restored_from"]
+                msg = history[-1].get("message", "")
+                restored_note = (
+                    f"NOTE: This case was restored from CaseRecord index {restored_from_idx}."
+                    + (f" ({msg})" if msg else "")
+                    + "\n"
+                )
+
+        # If restored and forcing_config is present, add a note
+        forcing_config = getattr(self, "forcing_config", {})
+        if restored_from_idx is not None and forcing_config:
+            restored_forcing_note = (
+                f"NOTE: The forcing configuration below was inherited from the restored case (index {restored_from_idx}).\n"
+                "      You may wish to update it by running configure_forcings().\n"
+            )
+
+        with open(readme_path, "w") as f:
+            # Write the history section if present
+            if history_lines:
+                f.writelines(history_lines)
+                f.write("\n")
+            # Write the restored note if present
+            if restored_note:
+                f.write(restored_note)
+            # Write the new summary
+            f.write(f"Case name: {casename}\n")
+            f.write(f"CESM root: {cesmroot}\n")
+            f.write(f"Input dir: {inputdir}\n")
+            f.write(f"Case dir:  {caseroot}\n")
+            f.write(f"Created:   {datetime.now().isoformat()}\n")
+            f.write("-" * 100 + "\n")
+            f.write("Grid file:  {}\n".format(grid_file))
+            f.write("VGrid file: {}\n".format(vgrid_file))
+            f.write("Topo file:  {}\n".format(topo_file))
+            f.write("-" * 100 + "\n")
+            f.write("Notebook workflow code used to create this case:\n")
+            f.write("from CrocoDash.case import Case\n")
+            f.write("case = Case(\n")
+            f.write(f"    cesmroot = '{cesmroot}',\n")
+            f.write(f"    caseroot = '{caseroot}',\n")
+            f.write(f"    inputdir = '{inputdir}',\n")
+            f.write(f"    ocn_grid = grid,      # file: {grid_file}\n")
+            f.write(f"    ocn_vgrid = vgrid,    # file: {vgrid_file}\n")
+            f.write(f"    ocn_topo = topo,      # file: {topo_file}\n")
+            f.write(f"    project = '{getattr(self, 'project', 'NCGD0011')}',\n")
+            f.write(f"    override = {self.override},\n")
+            f.write(f"    machine = '{self.cime.machine}'\n")
+            f.write(")\n")
+            f.write("-" * 100 + "\n")
+            # --- Forcing reproducibility section ---
+            if restored_forcing_note:
+                f.write(restored_forcing_note)
+            f.write("Forcing configuration used for this case:\n")
+            f.write(json.dumps(forcing_config, indent=2))
+            f.write("\n")
+            if hasattr(self, "forcing_scripts") and self.forcing_scripts:
+                f.write("Forcing scripts/configs generated:\n")
+                for script in self.forcing_scripts:
+                    f.write(f"  {script}\n")
+            f.write("-" * 100 + "\n")
