@@ -1,5 +1,8 @@
 import json
 import inspect
+import re
+import subprocess
+import sys
 from pathlib import Path
 
 import ipywidgets as widgets
@@ -21,7 +24,7 @@ class CaseAssembler:
     Decoupled from any current in-memory Case.
     """
 
-    last_built_case = None
+    last_assembled_case = None
     last_selected_forcing_config = None
     _warned_vgrid_topo_depth = False
 
@@ -38,7 +41,7 @@ class CaseAssembler:
     def assemble_case(caseroot, inputdir, cesmroot):
         """
         Launches an interactive widget to select grid/topo/vgrid/forcing config from global history,
-        and builds a new Case instance.
+        and assembles a new Case instance.
         """
         # --- Normalize Paths ---
         caseroot = Path(caseroot)
@@ -73,7 +76,7 @@ class CaseAssembler:
         widgets_dict = CaseAssembler._build_ui_layout(
             grid_dropdown, topo_dropdown, vgrid_dropdown,
             grid_preview, topo_preview, vgrid_preview,
-            forcing_case_dropdown, forcing_config_output
+            forcing_case_dropdown
         )
 
         # --- Dropdown Observers ---
@@ -114,22 +117,18 @@ class CaseAssembler:
         display(widgets_dict["forcing_box"])
         display(forcing_config_output)
         display(widgets_dict["casename_box"])
-        display(widgets.HBox([widgets_dict["build_button"], widgets_dict["cancel_button"]]))
+        display(widgets.HBox([widgets_dict["assemble_button"]]))
         display(widgets_dict["status_output"])
 
-        # --- Build Button Logic ---
-        widgets_dict["build_button"].on_click(
-            lambda b: CaseAssembler._on_build_clicked(
+        # --- Assemble Button Logic ---
+        widgets_dict["assemble_button"].on_click(
+            lambda b: CaseAssembler._on_assemble_clicked(
                 b, grid_dropdown, topo_dropdown, vgrid_dropdown,
                 grid_hist, topo_hist, vgrid_hist,
                 widgets_dict["casename_widget"], forcing_case_dropdown,
                 case_forcing_map, caseroot, inputdir, cesmroot,
                 widgets_dict["status_output"], widgets_dict["proceed_buttons"]
             )
-        )
-
-        widgets_dict["cancel_button"].on_click(
-            lambda b: CaseAssembler._on_cancel_clicked(b, widgets_dict["status_output"])
         )
 
         widgets_dict["proceed_buttons"].observe(
@@ -163,9 +162,9 @@ class CaseAssembler:
     @staticmethod
     def _build_dropdowns(grid_hist, topo_hist, vgrid_hist):
         def build_options(hist): return [f"[{i}] {e['file']} -- {e['message']}" for i, e in enumerate(hist)]
-        grid_dropdown = widgets.Dropdown(options=build_options(grid_hist), layout=widgets.Layout(width='80%'))
-        topo_dropdown = widgets.Dropdown(options=build_options(topo_hist), layout=widgets.Layout(width='80%'))
-        vgrid_dropdown = widgets.Dropdown(options=build_options(vgrid_hist), layout=widgets.Layout(width='80%'))
+        grid_dropdown = widgets.Dropdown(options=build_options(grid_hist), layout=widgets.Layout(width='95%'))
+        topo_dropdown = widgets.Dropdown(options=build_options(topo_hist), layout=widgets.Layout(width='95%'))
+        vgrid_dropdown = widgets.Dropdown(options=build_options(vgrid_hist), layout=widgets.Layout(width='95%'))
         return grid_dropdown, topo_dropdown, vgrid_dropdown, grid_hist, topo_hist, vgrid_hist
 
     @staticmethod
@@ -184,7 +183,7 @@ class CaseAssembler:
             case_names.append(f"{casename} [history idx {idx_map[casename]}]")
         forcing_dropdown = widgets.Dropdown(
             options=case_names, value="No Forcing Config [Default]",
-            layout=widgets.Layout(width='80%')
+            layout=widgets.Layout(width='30%')
         )
         forcing_output = widgets.Output(layout={'border': '1px solid gray'})
         # Map dropdown value to config
@@ -195,22 +194,21 @@ class CaseAssembler:
         return forcing_dropdown, forcing_output, config_map
 
     @staticmethod
-    def _build_ui_layout(grid_dd, topo_dd, vgrid_dd, grid_prev, topo_prev, vgrid_prev, forcing_dd, forcing_out):
+    def _build_ui_layout(grid_dd, topo_dd, vgrid_dd, grid_prev, topo_prev, vgrid_prev, forcing_dd):
         title = widgets.HTML("<h1>Case Assembler</h1>")
         grid_box = widgets.HBox([widgets.VBox([widgets.HTML("<h2>Grid File:</h2>"), grid_dd]), grid_prev])
         topo_box = widgets.HBox([widgets.VBox([widgets.HTML("<h2>Topo File:</h2>"), topo_dd]), topo_prev])
         vgrid_box = widgets.HBox([widgets.VBox([widgets.HTML("<h2>VGrid File:</h2>"), vgrid_dd]), vgrid_prev])
         forcing_box = widgets.VBox([widgets.HTML("<h2>Select Case for Forcing Config:</h2>"), forcing_dd])
-        casename_widget = widgets.Text(value='', placeholder='Enter new casename (no spaces)', layout=widgets.Layout(width='50%'))
+        casename_widget = widgets.Text(value='', placeholder='Enter new casename (no spaces)', layout=widgets.Layout(width='30%'))
         casename_box = widgets.VBox([widgets.HTML("<h2>Case Name:</h2>"), casename_widget])
-        build_button = widgets.Button(description="Build Case", button_style='success')
-        cancel_button = widgets.Button(description="Cancel", button_style='danger')
+        assemble_button = widgets.Button(description="Assemble Case", button_style='success', layout=widgets.Layout(width='30%'))
         proceed_buttons = widgets.ToggleButtons(options=['Generate Forcings', 'Leave Case As-Is'], layout=widgets.Layout(width='100%'))
         status_output = widgets.Output()
         return {
             "title": title, "grid_box": grid_box, "topo_box": topo_box, "vgrid_box": vgrid_box,
             "forcing_box": forcing_box, "casename_widget": casename_widget, "casename_box": casename_box,
-            "build_button": build_button, "cancel_button": cancel_button,
+            "assemble_button": assemble_button,
             "proceed_buttons": proceed_buttons, "status_output": status_output
         }
 
@@ -282,10 +280,10 @@ class CaseAssembler:
             if config:
                 print(json.dumps(config, indent=2))
 
-    # === Build, Cancel, and Proceed Handlers ===
+    # === Assemble and Proceed Handlers ===
 
     @staticmethod
-    def _on_build_clicked(
+    def _on_assemble_clicked(
         b, grid_dd, topo_dd, vgrid_dd,
         grid_hist, topo_hist, vgrid_hist,
         casename_widget, forcing_dropdown,
@@ -333,11 +331,11 @@ class CaseAssembler:
             if vgrid_depth is not None and topo_max_depth is not None:
                 if vgrid_depth < topo_max_depth - 0.5:
                     if not CaseAssembler._warned_vgrid_topo_depth:
-                        print(f"WARNING: VGrid total depth ({vgrid_depth:.2f} m) is less than Topo max depth ({topo_max_depth:.2f} m)! If you click 'Build Case' again, the case will be built anyway.")
+                        print(f"WARNING: VGrid total depth ({vgrid_depth:.2f} m) is less than Topo max depth ({topo_max_depth:.2f} m)! If you click 'Assemble Case' again, the case will be assembled anyway.")
                         CaseAssembler._warned_vgrid_topo_depth = True
                         return
                     else:
-                        print("WARNING: Proceeding with build despite VGrid/Topo depth mismatch.")
+                        print("WARNING: Proceeding with assembly despite VGrid/Topo depth mismatch.")
 
             # --- Forcing Config Selection ---
             selected_case = forcing_dropdown.value
@@ -360,24 +358,18 @@ class CaseAssembler:
                 machine="derecho",
                 project="NCGD0011",  # <-- CHANGE AS NEEDED
                 override=True,
-                message="Built from per-object history",
+                message="Assembled from per-object history",
                 forcing_config=selected_forcing_config,
             )
 
-            CaseAssembler.last_built_case = new_case
+            CaseAssembler.last_assembled_case = new_case
             CaseAssembler.last_selected_forcing_config = selected_forcing_config
 
             if selected_case != "No Forcing Config [Default]" and selected_forcing_config:
                 proceed_buttons.value = None
                 display(proceed_buttons)
             else:
-                print("Case built. You can manually configure forcings later using case.configure_forcings().")
-
-    @staticmethod
-    def _on_cancel_clicked(b, status_output):
-        with status_output:
-            clear_output()
-            print("Case build cancelled by user.")
+                print("Case assembled. You can manually configure forcings later using case.configure_forcings().")
 
     @staticmethod
     def _on_proceed_change(change, status_output):
@@ -385,10 +377,10 @@ class CaseAssembler:
             clear_output()
             if change['new'] == 'Generate Forcings':
                 try:
-                    new_case = CaseAssembler.last_built_case
+                    new_case = CaseAssembler.last_assembled_case
                     selected_config = CaseAssembler.last_selected_forcing_config
                     if new_case is None or selected_config is None:
-                        print("No case has been built yet. Please build a case first.")
+                        print("No case has been assembled yet. Please assemble a case first.")
                         return
                     valid_args = inspect.signature(new_case.configure_forcings).parameters
                     missing_args = [
@@ -400,7 +392,58 @@ class CaseAssembler:
                         print("Please select a valid forcing config or run configure_forcings manually.")
                         return
                     filtered_config = {k: v for k, v in selected_config.items() if k in valid_args}
+                    print("Running configure_forcings...")
                     new_case.configure_forcings(**filtered_config)
+
+                    glorys_dir = Path(new_case.inputdir) / "glorys"
+                    script_path = glorys_dir / "get_glorys_data.sh"
+                    if script_path.exists():
+                        print("Executing GLORYS data download script. Progress will be shown below:")
+                        try:
+                            process = subprocess.Popen(
+                                ["bash", str(script_path)],
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.STDOUT,
+                                text=True,
+                                bufsize=1
+                            )
+                            last_reported = -1  # Start at -1 to catch 0%
+                            for line in process.stdout:
+                                if (
+                                    "INFO" in line or
+                                    "WARNING" in line or
+                                    "ERROR" in line or
+                                    line.strip().startswith("{") or
+                                    line.strip().startswith("}")
+                                ):
+                                    print(line, end='')
+                                    sys.stdout.flush()
+                                else:
+                                    match = re.match(r"\s*(\d+)%\|", line)
+                                    if match:
+                                        percent = int(match.group(1))
+                                        if percent == 0 and last_reported < 0:
+                                            print("Download progress: 0%")
+                                            sys.stdout.flush()
+                                            last_reported = 0
+                                        elif percent >= last_reported + 25:
+                                            print(f"Download progress: {percent}%")
+                                            sys.stdout.flush()
+                                            last_reported = percent - (percent % 25)
+                                        elif percent == 100 and last_reported < 100:
+                                            print("Download progress: 100%")
+                                            sys.stdout.flush()
+                                            last_reported = 100
+                            process.wait()
+                            if process.returncode == 0:
+                                print("GLORYS data download complete.")
+                            else:
+                                print(f"ERROR: GLORYS script exited with code {process.returncode}")
+                        except Exception as sub_err:
+                            print(f"ERROR: Exception while executing {script_path}: {sub_err}")
+                    else:
+                        print("GLORYS script not found. Skipping script execution.")
+                    print("Running process_forcings...")
                     new_case.process_forcings()
                     print("Forcings configured and processed.")
                 except Exception as e:
