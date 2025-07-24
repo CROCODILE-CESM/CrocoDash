@@ -7,6 +7,7 @@ from CrocoDash.raw_data_access.large_data_workflow.utils import (
 )
 from pathlib import Path
 from collections import defaultdict
+import shutil
 
 logger = utils.setup_logger(__name__)
 
@@ -19,6 +20,7 @@ def merge_piecewise_dataset(
     end_date: str,
     boundary_number_conversion: dict,
     output_folder: str | Path,
+    run_initial_condition: bool = True,
     preview: bool = False,
 ):
     """
@@ -40,6 +42,8 @@ def merge_piecewise_dataset(
         Dictionary mapping boundary segment numbers to their labels.
     output_folder : str or Path
         Directory to save the merged NetCDF files.
+    run_initial_condition: bool
+        Whether to run initial condition, default is true.
     preview : bool, optional
         Whether to run in preview mode without saving (default is False).
 
@@ -54,6 +58,8 @@ def merge_piecewise_dataset(
         Saves the merged NetCDF files to the specified output folder.
     """
     logger.info("Parsing Regridded Data Folder")
+    folder = Path(folder)
+
     # Parse data folder and find required files
     start_date = datetime.strptime(start_date, date_format)
     end_date = datetime.strptime(end_date, date_format)
@@ -63,8 +69,9 @@ def merge_piecewise_dataset(
 
     for seg_num in inverted_bnc:
         if not any(f"{seg_num:03}" in boundary for boundary in boundary_list):
-            raise ValueError(f"Segment Number '{seg_num}' from boundary_number_conversion not found in the available boundary files. Did you correctly regrid the right boundaries? Change the boundary number conversion to match.")
-
+            raise ValueError(
+                f"Segment Number '{seg_num}' from boundary_number_conversion not found in the available boundary files. Did you correctly regrid the right boundaries? Change the boundary number conversion to match."
+            )
 
     matching_files = defaultdict(list)
     for boundary in boundary_list:
@@ -89,6 +96,19 @@ def merge_piecewise_dataset(
             ds.to_netcdf(output_path)
             ds.close()
             logger.info(f"Saved {boundary} boundary at {output_path}")
+    # Copy Initial Condition
+    if run_initial_condition:
+        ic_files_to_copy = [
+            folder / "init_eta.nc",
+            folder / "init_vel.nc",
+            folder / "init_tracers.nc",
+        ]
+        for file_path in ic_files_to_copy:
+            shutil.copy(file_path, Path(output_folder))
+            matching_files["IC"].append(str(file_path))
+        output_file_names.append("init_eta.nc")
+        output_file_names.append("init_vel.nc")
+        output_file_names.append("init_tracers.nc")
     if preview:
         return {
             "matching_files": matching_files,

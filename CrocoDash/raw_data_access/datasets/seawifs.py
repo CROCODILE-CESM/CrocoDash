@@ -87,6 +87,7 @@ def get_processed_global_seawifs_script_for_cli(
 
     return utils.write_bash_curl_script(
         url="https://svn-ccsm-inputdata.cgd.ucar.edu/trunk/inputdata/ocn/mom/croc/chl/data/SeaWIFS.L3m.MC.CHL.chlor_a.0.25deg.nc",
+        script_name="get_processed_seawifs.sh",
         output_dir=output_dir,
         output_filename=output_file,
     )

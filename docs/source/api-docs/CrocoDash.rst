@@ -1,3 +1,6 @@
+.. _CrocoDash:
+
+
 CrocoDash package
 =================
 

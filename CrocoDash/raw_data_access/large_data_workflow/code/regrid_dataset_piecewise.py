@@ -24,6 +24,8 @@ def regrid_dataset_piecewise(
     dataset_varnames: dict,
     output_folder: str | Path,
     boundary_number_conversion: dict,
+    run_initial_condition: bool = True,
+    vgrid_path: str | Path = None,
     preview: bool = False,
 ):
     """
@@ -63,6 +65,10 @@ def regrid_dataset_piecewise(
             "south": 3,
             "west": 4
         }
+    run_initial_condition :  bool
+        Whether or not to run the initial condition, defaults to true
+    vgrid_path: str or Path
+        Path to the Vertical Coordinate required for the initial condition
     preview :  bool
         Whether or not to preview the run of this function, defaults to false
 
@@ -73,6 +79,12 @@ def regrid_dataset_piecewise(
 
     """
     logger.info("Parsing Raw Data Folder")
+
+    # If run_initial_condition is True, vgrid_path must exist as well
+    if run_initial_condition and not os.path.exists(vgrid_path):
+        raise FileNotFoundError(
+            "Vgrid file must exist if run_initial_condition is set to true"
+        )
 
     # Create output folders if not created - temp patch until regional-mom6 creates this folders by default
     Path(output_folder).mkdir(exist_ok=True)
@@ -112,7 +124,7 @@ def regrid_dataset_piecewise(
 
     logger.info("Starting regridding")
     output_file_names = []
-    # Do Regridding
+    # Do Regridding (Boundaries)
     for boundary in matching_files.keys():
         for file_start, file_end, file_path in matching_files[boundary]:
             expt.date_range = [file_start, None]
@@ -145,6 +157,19 @@ def regrid_dataset_piecewise(
             if not preview:
                 logger.info(f"Saving regridding file as {filename_with_dates}")
                 os.rename(output_file_path, output_file_path_with_dates)
+
+    # Run Initial Condition
+    if run_initial_condition:
+        file_path = Path(folder) / "ic_unprocessed.nc"
+        matching_files["IC"] = [("None", "None", file_path)]
+        vgrid_from_file = xr.open_dataset(vgrid_path)
+        expt.vgrid = expt._make_vgrid(vgrid_from_file.dz.data) # renames/changes meta data
+        if not preview:
+            expt.setup_initial_condition(file_path, dataset_varnames)
+        output_file_names.append("init_eta.nc")
+        output_file_names.append("init_vel.nc")
+        output_file_names.append("init_tracers.nc")
+
     if not preview:
         logger.info("Finished regridding")
         return
@@ -168,6 +193,7 @@ def main(config_path):
         config["varnames"],
         config["paths"]["regridded_dataset_path"],
         config["boundary_number_conversion"],
+        config["run_initial_condition"],
         config["params"]["preview"],
     )
     return

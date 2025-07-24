@@ -55,6 +55,7 @@ def test_merge_piecewise_data_workflow(
         "20200106",
         {"east": 1, "south": 2},
         output_folder,
+        run_initial_condition=False,
     )
     start_date = datetime.strptime("20200101", "%Y%m%d")
     end_date = datetime.strptime("20200106", "%Y%m%d")
@@ -101,6 +102,9 @@ def test_merge_piecewise_data_parsing(
     regridded_data_path = Path(
         piecewise_factory(south, "2020-01-01", "2020-01-31", "forcing_obc_segment_002_")
     )
+    south.to_netcdf(regridded_data_path / "init_eta.nc")
+    south.to_netcdf(regridded_data_path / "init_tracers.nc")
+    south.to_netcdf(regridded_data_path / "init_vel.nc")
     output_folder = tmp_path / "output"
     output_folder.mkdir()
 
@@ -113,7 +117,8 @@ def test_merge_piecewise_data_parsing(
         "20200106",
         {"east": 1, "south": 2},
         output_folder,
-        True,
+        run_initial_condition=True,
+        preview=True,
     )
     assert str(preview_dict["output_folder"]) == str(output_folder)
     start_date = datetime.strptime("20200101", "%Y%m%d")
@@ -130,6 +135,13 @@ def test_merge_piecewise_data_parsing(
             in preview_dict["matching_files"][boundary_str]
         )
 
+    # Assert IC
+    assert "init_eta.nc" in preview_dict["output_file_names"]
+    assert (
+        str(regridded_data_path / f"init_eta.nc")
+        in preview_dict["matching_files"]["IC"]
+    )
+
     preview_dict = md.merge_piecewise_dataset(
         regridded_data_path,
         "forcing_obc_segment_(\\d{3})_(\\d{8})_(\\d{8})\\.nc",
@@ -138,7 +150,8 @@ def test_merge_piecewise_data_parsing(
         "20200107",
         {"east": 1, "south": 2},
         output_folder,
-        True,
+        run_initial_condition=False,
+        preview=True,
     )
     assert str(preview_dict["output_folder"]) == str(output_folder)
     start_date = datetime.strptime("20200101", "%Y%m%d")
