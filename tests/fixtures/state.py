@@ -27,8 +27,8 @@ def is_github_actions():
 @pytest.fixture(scope="session")
 def get_cesm_root_path(is_glade_file_system):
     cesmroot = os.getenv("CESMROOT")
-
     if is_glade_file_system:
         # TODO: this must be generalized in some way
         cesmroot = "/glade/u/home/altuntas/cesm3_0_beta04"
     return cesmroot
+
