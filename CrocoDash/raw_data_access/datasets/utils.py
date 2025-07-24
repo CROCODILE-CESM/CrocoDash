@@ -23,3 +23,4 @@ def write_bash_curl_script(url, script_name, output_dir, output_filename):
         f.write("\n".join(script_lines))
     os.chmod(full_script_path, 0o755)  # Make it executable
     return full_script_path
+

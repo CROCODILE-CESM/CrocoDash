@@ -59,6 +59,7 @@ def setup_logger(name):
         logger.addHandler(handler)
     return logger
 
+
 def load_config(config_path: str = "config.json") -> dict:
     """
     Load a JSON config file.

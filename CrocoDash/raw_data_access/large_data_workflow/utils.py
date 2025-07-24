@@ -5,6 +5,7 @@ from pathlib import Path
 from collections import defaultdict
 from datetime import datetime
 
+
 def load_config(config_path: str = "config.json") -> dict:
     """
     Load a JSON config file.
@@ -21,6 +22,7 @@ def load_config(config_path: str = "config.json") -> dict:
     """
     with open(config_path, "r", encoding="utf-8") as f:
         return json.load(f)
+
 
 def write_config(config: dict, config_path: str = "config.json") -> None:
     """
@@ -39,8 +41,6 @@ def write_config(config: dict, config_path: str = "config.json") -> None:
     """
     with open(config_path, "w", encoding="utf-8") as f:
         json.dump(config, f, indent=4, sort_keys=True)
-    
-
 
 
 def parse_dataset_folder(

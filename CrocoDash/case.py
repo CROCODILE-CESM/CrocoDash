@@ -14,6 +14,7 @@ from CrocoDash.raw_data_access import driver as dv
 from ProConPy.config_var import ConfigVar, cvars
 from ProConPy.stage import Stage
 from ProConPy.csp_solver import csp
+from ProConPy.dev_utils import ConstraintViolation
 from visualCaseGen.cime_interface import CIME_interface
 from visualCaseGen.initialize_configvars import initialize_configvars
 from visualCaseGen.initialize_widgets import initialize_widgets
@@ -35,11 +36,10 @@ class Case:
         cesmroot: str | Path,
         caseroot: str | Path,
         inputdir: str | Path,
+        compset: str,
         ocn_grid: Grid,
         ocn_topo: Topo,
         ocn_vgrid: VGrid,
-        inittime: str = "1850",
-        datm_mode: str = "JRA",
         datm_grid_name: str = "TL319",
         ninst: int = 1,
         machine: str | None = None,
@@ -57,16 +57,15 @@ class Case:
             Path to the case root directory to be created.
         inputdir : str | Path
             Path to the input directory to be created.
+        compset : str
+            The component set alias (e.g. "G_JRA") or long name
+            (e.g. "1850_DATM%JRA_SLND_SICE_MOM6_SROF_SGLC_SWAV_SESP") for the case.
         ocn_grid : Grid
             The ocean grid object to be used in the case.
         ocn_topo : Topo
             The ocean topography object to be used in the case.
         ocn_vgrid : VGrid
             The ocean vertical grid object to be used in the case.
-        inittime : str, optional
-            The initialization time of the case. Default is "1850".
-        datm_mode : str, optional
-            The data atmosphere mode of the case. Default is "JRA".
         datm_grid_name : str, optional
             The data atmosphere grid name of the case. Default is "TL319".
         ninst : int, optional
@@ -93,8 +92,7 @@ class Case:
             ocn_grid,
             ocn_topo,
             ocn_vgrid,
-            inittime,
-            datm_mode,
+            compset,
             datm_grid_name,
             ninst,
             machine,
@@ -113,15 +111,19 @@ class Case:
         self.forcing_product_name = None
         self._configure_forcings_called = False
         self._large_data_workflow_called = False
+        self.compset = compset
 
-        # Construct the compset long name
-        self.compset = f"{inittime}_DATM%{datm_mode}_SLND_SICE_MOM6_SROF_SGLC_SWAV_SESP"
         # Resolution name:
         self.resolution = f"{datm_grid_name}_{ocn_grid.name}"
 
         self._initialize_visualCaseGen()
 
-        self._assign_configvar_values(inittime, datm_mode, machine, project)
+        try:
+            self._assign_configvars(compset, machine, project)
+        except ConstraintViolation as e:
+            print(f"{ERROR}{str(e)}{RESET}")
+            return
+# Removed redundant exception handling block.
 
         self._create_grid_input_files()
 
@@ -136,8 +138,7 @@ class Case:
         ocn_grid: Grid,
         ocn_topo: Topo,
         ocn_vgrid: VGrid,
-        inittime: str,
-        datm_mode: str,
+        compset: str,
         datm_grid_name: str,
         ninst: int,
         machine: str | None,
@@ -155,10 +156,6 @@ class Case:
             raise TypeError("ocn_vgrid must be a VGrid object.")
         if not isinstance(ocn_topo, Topo):
             raise TypeError("ocn_topo must be a Topo object.")
-        if inittime not in ["1850", "2000", "HIST"]:
-            raise ValueError("inittime must be one of ['1850', '2000', 'HIST'].")
-        if datm_mode not in (available_datm_modes := self.cime.comp_options["DATM"]):
-            raise ValueError(f"datm_mode must be one of {available_datm_modes}.")
         if datm_grid_name not in (
             available_atm_grids := self.cime.domains["atm"].keys()
         ):
@@ -265,7 +262,60 @@ class Case:
         function_name: str = "get_glorys_data_script_for_cli",
         too_much_data: bool = False,
     ):
-        """Configure the boundary conditions and tides for the MOM6 case."""
+        """
+    Configure the boundary conditions and tides for the MOM6 case.
+
+    Sets up initial and boundary condition forcing data for MOM6 using a specified product
+    and download function. Optionally configures tidal constituents if specified. Supports
+    a large data workflow mode that defers data download and processing to an external script.
+
+    Parameters
+    ----------
+    date_range : list of str
+        Start and end dates for the forcing data, formatted as strings.
+        Must contain exactly two elements.
+    boundaries : list of str, optional
+        List of open boundaries to process (e.g., ["south", "north"]).
+        Default is ["south", "north", "west", "east"].
+    tidal_constituents : list of str, optional
+        List of tidal constituents (e.g., ["M2", "S2"]) to be used for tidal forcing.
+        If provided, both TPXO elevation and velocity file paths must also be provided.
+    tpxo_elevation_filepath : str or Path, optional
+        File path to the TPXO tidal elevation data file.
+    tpxo_velocity_filepath : str or Path, optional
+        File path to the TPXO tidal velocity data file.
+    product_name : str, optional
+        Name of the forcing data product to use. Default is "GLORYS".
+    function_name : str, optional
+        Name of the function to call for downloading the forcing data.
+        Default is "get_glorys_data_script_for_cli".
+    too_much_data : bool, optional
+        If True, configures the large data workflow. In this case, data are not downloaded
+        immediately, but a config file and workflow directory are created 
+        for external processing in the forcing directory, inside the input directory.
+
+    Raises
+    ------
+    TypeError
+        If inputs such as `date_range`, `boundaries`, or `tidal_constituents` are not lists of strings.
+    ValueError
+        If `date_range` does not have exactly two elements, or if tidal arguments are inconsistently specified.
+        Also raised if an invalid product or function is provided.
+    AssertionError
+        If the selected data product is not categorized as a forcing product.
+
+    Notes
+    -----
+    - Creates an `regional_mom6.experiment` instance with the specified domain and inputs.
+    - Downloads forcing data (or creates a script) for each boundary and the initial condition unless the large data workflow is used.
+    - In large data workflow mode, creates a folder structure and `config.json` file for later manual processing.
+    - Tidal forcing requires all of: `tidal_constituents`, `tpxo_elevation_filepath`, and `tpxo_velocity_filepath`.
+    - This method must be called before `process_forcings()`.
+
+    See Also
+    --------
+    process_forcings : Executes the actual boundary, initial condition, and tide setup based on the configuration.
+    """
 
         if too_much_data:
             self._large_data_workflow_called = True
@@ -395,6 +445,7 @@ class Case:
                 / "ocnice"
                 / f"ocean_hgrid_{self.ocn_grid.name}_{session_id}.nc"
             )
+            vgrid_path = str( self.inputdir / "ocnice" / f"ocean_vgrid_{self.ocn_grid.name}_{session_id}.nc")
 
             # Write Config File
 
@@ -402,6 +453,7 @@ class Case:
             with open(large_data_workflow_path / "config.json", "r") as f:
                 config = json.load(f)
             config["paths"]["hgrid_path"] = hgrid_path
+            config["paths"]["vgrid_path"] = vgrid_path
             config["paths"]["raw_dataset_path"] = str(
                 large_data_workflow_path / "raw_data"
             )
@@ -427,17 +479,7 @@ class Case:
             # Write out
             with open(large_data_workflow_path / "config.json", "w") as f:
                 json.dump(config, f, indent=4)
-
-            # Generate Initial Condition Script
-            self.ProductFunctionRegistry.functions[product_name][function_name](
-                [date_range[0], date_range[0]],
-                boundary_info["ic"]["lat_min"],
-                boundary_info["ic"]["lat_max"],
-                boundary_info["ic"]["lon_min"],
-                boundary_info["ic"]["lon_max"],
-                forcing_dir_path,
-                "ic" + "_unprocessed.nc",
-            )
+                
         self._configure_forcings_called = True
 
     def process_forcings(
@@ -445,8 +487,47 @@ class Case:
         process_initial_condition=True,
         process_tides=True,
         process_velocity_tracers=True,
+        process_param_changes = True
     ):
-        """Process the boundary conditions and tides for the MOM6 case."""
+        """
+    Process boundary conditions, initial conditions, and tides for a MOM6 case.
+
+    This method configures a regional MOM6 case's ocean state boundaries and initial conditions
+    using previously downloaded data setup in configure_forcings. It also processes tidal boundary conditions
+    if tidal constituents are specified. The method expects `configure_forcings()` to be
+    called beforehand.
+
+    Parameters
+    ----------
+    process_initial_condition : bool, optional
+        Whether to process the initial condition file. Default is True.
+    process_tides : bool, optional
+        Whether to process tidal boundary conditions. Default is True.
+    process_velocity_tracers : bool, optional
+        Whether to process velocity and tracer boundary conditions. Default is True.
+        This will be overridden and set to False if the large data workflow in configure_forcings is enabled.
+    process_param_changes : bool, optional
+        Whether to process the namelist and xml changes required to run a regional MOM6 case in the CESM. 
+
+    Raises
+    ------
+    RuntimeError
+        If `configure_forcings()` was not called before this method.
+    FileNotFoundError
+        If required unprocessed files are missing in the expected directories.
+
+    Notes
+    -----
+    - This method uses variable name mappings specified in the forcing product configuration.
+    - If the large data workflow has been enabled, velocity and tracer OBCs are not processed
+      within this method and must be handled externally.
+    - If tidal constituents are configured, TPXO elevation and velocity files must be available.
+    - Applies forcing-related namelist and XML updates at the end of the method.
+
+    See Also
+    --------
+    configure_forcings : Must be called before this method to set up the environment.
+    """
 
         if not self._configure_forcings_called:
             raise RuntimeError(
@@ -530,7 +611,8 @@ class Case:
             forcing_dir.rmdir()
 
         # Apply forcing-related namelist and xml changes
-        self._update_forcing_variables()
+        if process_param_changes:
+            self._update_forcing_variables()
 
     @property
     def name(self) -> str:
@@ -555,32 +637,95 @@ class Case:
         set_options(self.cime)
         csp.initialize(cvars, get_relational_constraints(cvars), Stage.first())
 
-    def _assign_configvar_values(self, inittime, datm_mode, machine, project):
+    def _configure_standard_compset(self, compset: str):
+        """Configure the case for a standard component set."""
 
         assert Stage.active().title == "1. Component Set"
-        cvars["COMPSET_MODE"].value = "Custom"
-        # cvars["COMPSET_LNAME"].value = self.compset
+        cvars["COMPSET_MODE"].value = "Standard"
 
-        assert Stage.active().title == "Time Period"
-        cvars["INITTIME"].value = inittime
+        assert Stage.active().title == "Support Level"
+        cvars["SUPPORT_LEVEL"].value = "All"
 
-        assert Stage.active().title == "Components"
-        cvars["COMP_ATM"].value = "datm"
-        cvars["COMP_LND"].value = "slnd"
-        cvars["COMP_ICE"].value = "sice"
-        cvars["COMP_OCN"].value = "mom"
-        cvars["COMP_ROF"].value = "srof"
-        cvars["COMP_GLC"].value = "sglc"
-        cvars["COMP_WAV"].value = "swav"
+        # Apply filters
+        for comp_class in self.cime.comp_classes:
+            cvars[f"COMP_{comp_class}_FILTER"].value = "any"
 
-        # Set model physics:
-        assert Stage.active().title == "Component Options"
-        cvars["COMP_ATM_OPTION"].value = datm_mode
-        cvars["COMP_OCN_OPTION"].value = (
-            "(none)"  # todo: in the future, we'll support MARBL too.
-        )
+        ## Pick a standard compset
+        cvars["COMPSET_ALIAS"].value = compset
 
-        # Grid
+    def _configure_custom_compset(self, compset: str):
+        """Configure the case for a custom component set by setting individual component variables,
+        which occurs in 4 stages:
+          1. Time Period
+          2. Models (e.g. cam, cice, mom6, etc.)
+          3. Model Physics (e.g. CAM60, MOM6, etc.)
+          4. Physics Options (i.e., modifiers for the physics, e.g. %JRA, %MARBL-BIO, etc.)
+        """
+
+        assert Stage.first().enabled
+        cvars['COMPSET_MODE'].value = 'Custom'
+
+        # Stage: Time Period
+        assert Stage.active().title.startswith('Time Period')
+        inittime = compset.split("_")[0]
+        cvars['INITTIME'].value = inittime
+
+        # Generate a mapping from physics to models, e.g., "CAM60" -> "cam"
+        phys_to_model = {}
+        for model, phys_list in self.cime.comp_phys.items():
+            for phys in phys_list:
+                phys_to_model[phys] = model
+
+        # Split the compset into components
+        components = self.cime.get_components_from_compset_lname(compset)
+
+        # Stage: Components (i.e., models, e.g., cam, cice, mom6, etc.)
+        assert Stage.active().title.startswith('Components')
+        for comp_class, phys in components.items():
+            phys = phys.split("%")[0]  # Get the physics part
+            if phys not in phys_to_model:
+                raise ValueError(f"Model physics {phys} not found.")
+            model = phys_to_model[phys]
+            cvars[f"COMP_{comp_class}"].value = model
+
+        # Stage: Model Physics (e.g, CAM60, MOM6, etc.)
+        if Stage.active().title.startswith('Component Physics'):
+            for comp_class, phys in components.items():
+                phys = phys.split("%")[0]  # Get the physics part
+                cvars[f"COMP_{comp_class}_PHYS"].value = phys
+        else:
+            # Physics and/or Options stages may be auto-completed if each chosen model has
+            # exactly one physics and modifier option (though, this is unlikely).
+            assert Stage.active().title.startswith('Component Options') \
+                or Stage.active().title.startswith('2. Grid')
+
+        # Stage: Component Physics Options (i.e., modifiers for the physics, e.g. %JRA, %MARBL-BIO, etc.)
+        if Stage.active().title.startswith('Component Options'):
+            for comp_class, phys in components.items():
+                opt = phys.split("%")[1] if "%" in phys else None
+                if opt is not None:
+                    cvars[f"COMP_{comp_class}_OPTION"].value = opt
+                else:
+                    cvars[f"COMP_{comp_class}_OPTION"].value = "(none)"
+
+        # Confirm successful configuration of custom component set
+        assert Stage.active().title == "2. Grid"
+
+    def _assign_configvars(self, compset, machine, project):
+        """Assign the configvars (i.e., configuration variables for the case, such as components, physics,
+        options, grids, etc.) The cvars dict is a visualCaseGen data structure that contains all the 
+        configuration variables for a case to be created. Incrementally setting configvars leads to the
+        completion of successive stages in the visualCaseGen workflow and thus enables the creation of 
+        a new case.
+        """
+
+        # 1. Compset
+        if compset in self.cime.compsets:
+            self._configure_standard_compset(compset)
+        else:
+            self._configure_custom_compset(compset)
+
+        # 2. Grid
         assert Stage.active().title == "2. Grid"
         cvars["GRID_MODE"].value = "Custom"
 
@@ -615,6 +760,7 @@ class Case:
         cvars["IC_PTEMP_NAME"].value = "TBD"
         cvars["IC_SALT_NAME"].value = "TBD"
 
+        # 3. Grid
         assert Stage.active().title == "3. Launch"
         cvars["CASEROOT"].value = self.caseroot.as_posix()
         cvars["MACHINE"].value = machine
