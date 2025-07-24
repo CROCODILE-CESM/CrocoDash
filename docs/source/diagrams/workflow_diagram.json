@@ -29,10 +29,17 @@
         "outputs": ["topo_obj"]
       },
       {
+        "id": "topo_raw",
+        "name": "Topo File Generation",
+        "function": "From GEBCO Website",
+        "dependencies": [],
+        "outputs": ["global_topo_file"]
+      },
+      {
         "id": "generate_topo",
         "name": "Generate Topo",
         "function": "Topo",
-        "dependencies": ["grid_obj"],
+        "dependencies": ["grid_obj","global_topo_file"],
         "outputs": ["topo_obj"]
       },
 
@@ -75,7 +82,7 @@
         "id": "configure_forcing",
         "name": "Configure Forcing",
         "function": "case.configure_forcings",
-        "dependencies": ["case", "data_access_function"],
+        "dependencies": ["case", "data_access_function","global_tidal_file","global_chl_file"],
         "outputs": ["forcing_config"]
       },
       {
@@ -84,6 +91,20 @@
         "function": "raw_data_access.driver.ProductFunctionRegistry",
         "dependencies": [],
         "outputs": ["data_access_function"]
+      },
+      {
+        "id": "chl",
+        "name": "Chlorophyll File Generation",
+        "function": "From CESM Inputdata",
+        "dependencies": [],
+        "outputs": ["global_chl_file"]
+      },
+            {
+        "id": "tides",
+        "name": "Tidal File Generation",
+        "function": "From TPXO Website",
+        "dependencies": [],
+        "outputs": ["global_tidal_file"]
       },
       {
         "id": "process_forcing",
@@ -102,7 +123,7 @@
     ],
     "requirements": {
   "mandatory": ["grid_obj", "topo_obj", "vgrid_obj", "case", "forcing_config", "forcing"],
-  "optional": ["bgc_forcing","data_access_function"]
+  "optional": ["bgc_forcing","data_access_function", "global_tidal_file", "global_chl_file","global_topo_file"]
     },
     "workflow": {
       "name": "CrocoDash Workflow",

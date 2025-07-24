@@ -119,6 +119,7 @@ def test_configure_forcings(get_CrocoDash_case, tmp_path):
         tidal_constituents=["M2"],
         tpxo_elevation_filepath=tmp_path,
         tpxo_velocity_filepath=tmp_path,
+        chl_processed_filepath=tmp_path,
         boundaries=["north", "south", "east"],
     )
 
@@ -139,6 +140,7 @@ def test_process_forcing(get_CrocoDash_case, tmp_path):
         tidal_constituents=["M2"],
         tpxo_elevation_filepath=tmp_path,
         tpxo_velocity_filepath=tmp_path,
+        chl_processed_filepath=tmp_path,
         boundaries=["north"],
     )
     path = case.inputdir / "glorys"
@@ -148,6 +150,10 @@ def test_process_forcing(get_CrocoDash_case, tmp_path):
             pass
     with pytest.raises(ValueError):
         case.process_forcings()
+
+    # Test CHL processing raises error in mom6_bathy.chl, so we know the connection works
+    with pytest.raises(ValueError, match="did not find a match in any of xarray's currently installed IO backends"):
+        case.process_forcings(process_tides = False, process_initial_condition = False, process_velocity_tracers = False)
 
 
 def test_update_forcing_variables(get_CrocoDash_case):
@@ -165,6 +171,7 @@ def test_update_forcing_variables(get_CrocoDash_case):
     )
     case.date_range
     case.boundaries = []
+    case.chl_processed_filepath = case.inputdir
     case._update_forcing_variables()
     with open(case.caseroot / "user_nl_mom_0001", "r", encoding="utf-8") as file:
         for line in file:
