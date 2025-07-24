@@ -28,8 +28,7 @@ def is_github_actions():
 def get_cesm_root_path(is_glade_file_system):
     cesmroot = os.getenv("CESMROOT")
     if is_glade_file_system:
-        cesmroot = "/glade/u/home/manishrv/work/installs/CROCESM_beta04"
-    elif cesmroot is None:
-        pytest.skip(reason="CESMROOT environment variable is not set.")
+        # TODO: this must be generalized in some way
+        cesmroot = "/glade/u/home/altuntas/cesm3_0_beta04"
     return cesmroot
 
