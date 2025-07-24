@@ -1,0 +1,709 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>CrocoDash Basic Notebook Walkthrough &#8212; CrocoDash  documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=eba8b062" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'tutorials/notebook_walkthrough';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Large Data Workflow" href="large_data_workflow.html" />
+    <link rel="prev" title="CESM Setup" href="cesm_setup.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../_static/crocodile.png" class="logo__image only-light" alt="CrocoDash  documentation - Home"/>
+    <script>document.write(`<img src="../_static/crocodile.png" class="logo__image only-dark" alt="CrocoDash  documentation - Home"/>`);</script>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">Tutorials</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="cesm_setup.html">CESM Setup</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">CrocoDash Basic Notebook Walkthrough</a></li>
+<li class="toctree-l2"><a class="reference internal" href="large_data_workflow.html">Large Data Workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="datasets.html">Datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tides.html">Tides</a></li>
+<li class="toctree-l2"><a class="reference internal" href="chl.html">Chlorophyll</a></li>
+<li class="toctree-l2"><a class="reference internal" href="input_params.html">Input Parameters</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference external" href="https://crocodile-cesm.github.io/CrocoGallery/">Gallery</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../structure.html">Structure</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../developers/index.html">Developer Information</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../developers/docs.html">Write Documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developers/adding_data_access.html">Adding Data to the Data Access Module</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../api-docs/modules.html">API Documentation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../api-docs/CrocoDash.html">CrocoDash package</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../api-docs/CrocoDash.raw_data_access.html">CrocoDash.raw_data_access package</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../api-docs/CrocoDash.raw_data_access.datasets.html">CrocoDash.raw_data_access.datasets package</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../api-docs/CrocoDash.rm6.html">CrocoDash.rm6 package</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../api-docs/CrocoDash.rm6.regional_mom6.html">CrocoDash.rm6.regional_mom6 package</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/CROCODILE-CESM/CrocoDash/discussions/84">Common Errors</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/tutorials/notebook_walkthrough.rst" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.rst</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>CrocoDash Basic Notebook Walkthrough</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#getting-started">Getting Started</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#basic-demo-overview">Basic Demo Overview</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#section-1-set-up-the-domain">Section 1: Set up the Domain</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-1-set-up-the-horizontal-grid">Step 1: Set up the horizontal grid</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-set-up-the-bathymetry">Step 2: Set up the bathymetry</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-3-get-the-bathymetry-and-any-other-data">Step 3: Get the Bathymetry (and any other) Data</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-4-load-the-bathymetry-data-and-put-it-on-our-grid">Step 4: Load the bathymetry data and put it on our Grid</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-5-edit-the-topography">Step 5: Edit the topography</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-6-generate-the-vgrid">Step 6: Generate the Vgrid</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#section-2-create-the-cesm-case">Section 2: Create the CESM Case</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-1-set-the-paths">Step 1: Set the paths</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-pass-all-information-in">Step 2: Pass all information in</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#section-3-generate-data-and-configure-case-to-specifications">Section 3: Generate data and configure case to specifications</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-1-configure-forcings">Step 1: Configure Forcings</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-process-forcings">Step 2: Process Forcings</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#section-3-build-run-the-model">Section 3: Build &amp; Run the Model!</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#section-4-make-your-changes">Section 4: Make your Changes!</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="crocodash-basic-notebook-walkthrough">
+<span id="notebook-walkthrough"></span><h1>CrocoDash Basic Notebook Walkthrough<a class="headerlink" href="#crocodash-basic-notebook-walkthrough" title="Link to this heading">#</a></h1>
+<p>This document provides a step-by-step walkthrough of the basic CrocoDash demo, showcasing how to use the platform effectively.</p>
+<section id="getting-started">
+<h2>Getting Started<a class="headerlink" href="#getting-started" title="Link to this heading">#</a></h2>
+<p>Follow the steps in <a class="reference internal" href="../installation.html#installation"><span class="std std-ref">Installation</span></a> to set up CrocoDash on your local machine. We will be working through the basic demo (demos/gallery/notebooks/tutorials/minimal_demo_rect.ipynb), which is designed to help you familiarize yourself
+with the basic steps of using CrocoDash, no additional features. Please open up that demo in the CrocoDash environment to get started.</p>
+</section>
+<section id="basic-demo-overview">
+<h2>Basic Demo Overview<a class="headerlink" href="#basic-demo-overview" title="Link to this heading">#</a></h2>
+<p>The basic demo sets up a small rectangular domain around Panama for a few days with GLORYS data (for initial &amp; boundary conditions) and GEBCO bathymetry. The atmospheric forcing is JRA, provided through the CESM.
+Check out the demo
+<a class="reference external" href="https://crocodile-cesm.github.io/CrocoGallery/notebooks/tutorials/minimal_demo_rect.html">here</a>.</p>
+</section>
+<section id="section-1-set-up-the-domain">
+<h2>Section 1: Set up the Domain<a class="headerlink" href="#section-1-set-up-the-domain" title="Link to this heading">#</a></h2>
+<section id="step-1-set-up-the-horizontal-grid">
+<h3>Step 1: Set up the horizontal grid<a class="headerlink" href="#step-1-set-up-the-horizontal-grid" title="Link to this heading">#</a></h3>
+<dl class="simple">
+<dt>In this step, we will set up a small rectangular domain around Panama. The domain is defined by its latitude and longitude bounds. The grid used here is defined by specifying a corner point and</dt><dd><p>the the length of the rectangle edges, as well as specifying the resolution. Please run this cell:</p>
+</dd>
+</dl>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">CrocoDash.grid</span><span class="w"> </span><span class="kn">import</span> <span class="n">Grid</span>
+
+<span class="n">grid</span> <span class="o">=</span> <span class="n">Grid</span><span class="p">(</span>
+    <span class="n">resolution</span> <span class="o">=</span> <span class="mf">0.01</span><span class="p">,</span>
+    <span class="n">xstart</span> <span class="o">=</span> <span class="mf">278.0</span><span class="p">,</span>
+    <span class="n">lenx</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+    <span class="n">ystart</span> <span class="o">=</span> <span class="mf">7.0</span><span class="p">,</span>
+    <span class="n">leny</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;panama1&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="step-2-set-up-the-bathymetry">
+<h3>Step 2: Set up the bathymetry<a class="headerlink" href="#step-2-set-up-the-bathymetry" title="Link to this heading">#</a></h3>
+<p>In this step, we have to use the grid and tell the model what the ocean actually looks like, the bathymetry. The bathymetry is defined by a NetCDF file that contains the depth values for each grid point.
+To set up the bathymetry, we will use the GEBCO bathymetry data that we download in the next step. This step just sets up the bathymetry object, which we will pass into the model later on. Minimum depth
+is used to set the minimum depth of the ocean, any shallower becomes land.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">CrocoDash.topo</span><span class="w"> </span><span class="kn">import</span> <span class="n">Topo</span>
+
+<span class="n">topo</span> <span class="o">=</span> <span class="n">Topo</span><span class="p">(</span>
+    <span class="n">grid</span> <span class="o">=</span> <span class="n">grid</span><span class="p">,</span>
+    <span class="n">min_depth</span> <span class="o">=</span> <span class="mf">9.5</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="step-3-get-the-bathymetry-and-any-other-data">
+<h3>Step 3: Get the Bathymetry (and any other) Data<a class="headerlink" href="#step-3-get-the-bathymetry-and-any-other-data" title="Link to this heading">#</a></h3>
+<p>In this step, we will download the necessary data for the bathymetry. GLORYS data is gathered later on in the workflow &amp; JRA data is provided through the CESM.
+The only data required to be gathered in this step is the GEBCO bathymetry data. You can download the GEBCO bathymetry data from the official website:</p>
+<blockquote>
+<div><p><a class="reference external" href="https://www.gebco.net/data_and_products/gridded_bathymetry_data/">https://www.gebco.net/data_and_products/gridded_bathymetry_data/</a></p>
+</div></blockquote>
+<p>Download the latest GEBCO gridded bathymetry dataset (NetCDF format is recommended). Once downloaded, place the file somewhere you remember the path for use in the demo.</p>
+<p>The other option is to download the data through the CrocoDash raw_data_access module. This module allows you to access and download raw data directly from the CrocoDash platform. To use this feature, checkout the data access feature demo here:
+(demos/gallery/notebooks/features/add_data_products.ipynb)</p>
+</section>
+<section id="step-4-load-the-bathymetry-data-and-put-it-on-our-grid">
+<h3>Step 4: Load the bathymetry data and put it on our Grid<a class="headerlink" href="#step-4-load-the-bathymetry-data-and-put-it-on-our-grid" title="Link to this heading">#</a></h3>
+<p>In this step, we will load the GEBCO bathymetry data that we downloaded in the previous step and put it on our grid. This is done by using the <cite>Topo</cite> class that we created in the previous step.
+The <cite>Topo</cite> class has a method called <cite>interpolate_from_file</cite> that takes the path to the bathymetry file and loads it onto the grid.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">bathymetry_path</span><span class="o">=</span><span class="s1">&#39;&lt;PATH_TO_BATHYMETRY&gt;&#39;</span>
+
+<span class="n">topo</span><span class="o">.</span><span class="n">interpolate_from_file</span><span class="p">(</span>
+    <span class="n">file_path</span> <span class="o">=</span> <span class="n">bathymetry_path</span><span class="p">,</span>
+    <span class="n">longitude_coordinate_name</span><span class="o">=</span><span class="s2">&quot;lon&quot;</span><span class="p">,</span>
+    <span class="n">latitude_coordinate_name</span><span class="o">=</span><span class="s2">&quot;lat&quot;</span><span class="p">,</span>
+    <span class="n">vertical_coordinate_name</span><span class="o">=</span><span class="s2">&quot;elevation&quot;</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="step-5-edit-the-topography">
+<h3>Step 5: Edit the topography<a class="headerlink" href="#step-5-edit-the-topography" title="Link to this heading">#</a></h3>
+<p>In this step, we will load the topo object into an interactive widget we can use to change the depth, erase basins, or change the minimum depth. This can be useful for a few reasons, but is not a required step.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="o">%</span><span class="n">matplotlib</span> <span class="n">ipympl</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">CrocoDash.topo_editor</span><span class="w"> </span><span class="kn">import</span> <span class="n">TopoEditor</span>
+
+<span class="n">topo</span><span class="o">.</span><span class="n">depth</span><span class="p">[</span><span class="s2">&quot;units&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;m&quot;</span>
+<span class="n">TopoEditor</span><span class="p">(</span><span class="n">topo</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="step-6-generate-the-vgrid">
+<h3>Step 6: Generate the Vgrid<a class="headerlink" href="#step-6-generate-the-vgrid" title="Link to this heading">#</a></h3>
+<p>In this step, we load the vertical grid, or how many layers of the ocean we have. This example uses some standards of 75 layers and a hyperbolic function.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">CrocoDash.vgrid</span><span class="w"> </span><span class="kn">import</span> <span class="n">VGrid</span>
+
+<span class="n">vgrid</span>  <span class="o">=</span> <span class="n">VGrid</span><span class="o">.</span><span class="n">hyperbolic</span><span class="p">(</span>
+    <span class="n">nk</span> <span class="o">=</span> <span class="mi">75</span><span class="p">,</span>
+    <span class="n">depth</span> <span class="o">=</span> <span class="n">topo</span><span class="o">.</span><span class="n">max_depth</span><span class="p">,</span>
+    <span class="n">ratio</span><span class="o">=</span><span class="mf">20.0</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="section-2-create-the-cesm-case">
+<h2>Section 2: Create the CESM Case<a class="headerlink" href="#section-2-create-the-cesm-case" title="Link to this heading">#</a></h2>
+<p>In this step, we pass in all of the information we generated in our previous steps into our CrocoDash Case module, which sets up a CESM case with all of the information we need for a regional run.
+There’s lots of parameter changes and additional information that we need to do to make a regional model.</p>
+<div class="note admonition tip">
+<p class="admonition-title">Tip</p>
+<blockquote>
+<div><p>Don’t know what a CESM case is? Go through the CESM tutorial here: <a class="reference external" href="https://ncar.github.io/CESM-Tutorial/README.html">https://ncar.github.io/CESM-Tutorial/README.html</a></p>
+</div></blockquote>
+</div>
+<section id="step-1-set-the-paths">
+<h3>Step 1: Set the paths<a class="headerlink" href="#step-1-set-the-paths" title="Link to this heading">#</a></h3>
+<p>How CrocoDash works is that we have a input directory for all the input data, as well as a case directory, which is the CESM case. So all of these grids will get written to the input directory,
+and all of the parameters get written to the case directory. In our input directory,there’s two folders. One folder (default is “glorys”) is where all the raw forcing data is generated, and the other
+folder is called “ocnice” where all of the grids go. This step here, defines all the paths for these directories, as well as where is the CESM!</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># CESM case (experiment) name</span>
+<span class="n">casename</span> <span class="o">=</span> <span class="s2">&quot;panama-1&quot;</span>
+
+<span class="c1"># CESM source root (Update this path accordingly!!!)</span>
+<span class="n">cesmroot</span> <span class="o">=</span><span class="s2">&quot;/Users/manishrv/CrocoGallery/cesm&quot;</span>
+
+<span class="c1"># Place where all your input files go</span>
+<span class="n">inputdir</span> <span class="o">=</span> <span class="n">Path</span><span class="o">.</span><span class="n">home</span><span class="p">()</span> <span class="o">/</span> <span class="s2">&quot;croc_input&quot;</span> <span class="o">/</span> <span class="n">casename</span>
+
+<span class="c1"># CESM case directory</span>
+<span class="n">caseroot</span> <span class="o">=</span> <span class="n">Path</span><span class="o">.</span><span class="n">home</span><span class="p">()</span> <span class="o">/</span> <span class="s2">&quot;croc_cases&quot;</span> <span class="o">/</span> <span class="n">casename</span>
+</pre></div>
+</div>
+</section>
+<section id="step-2-pass-all-information-in">
+<h3>Step 2: Pass all information in<a class="headerlink" href="#step-2-pass-all-information-in" title="Link to this heading">#</a></h3>
+<p>Here, we pass in all the previously generated information. Pass in your own project code to charge for the CESM, and set the machine attribute to the machine you want to run the CESM on.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">CrocoDash.case</span><span class="w"> </span><span class="kn">import</span> <span class="n">Case</span>
+
+<span class="n">case</span> <span class="o">=</span> <span class="n">Case</span><span class="p">(</span>
+    <span class="n">cesmroot</span> <span class="o">=</span> <span class="n">cesmroot</span><span class="p">,</span>
+    <span class="n">caseroot</span> <span class="o">=</span> <span class="n">caseroot</span><span class="p">,</span>
+    <span class="n">inputdir</span> <span class="o">=</span> <span class="n">inputdir</span><span class="p">,</span>
+    <span class="n">ocn_grid</span> <span class="o">=</span> <span class="n">grid</span><span class="p">,</span>
+    <span class="n">ocn_vgrid</span> <span class="o">=</span> <span class="n">vgrid</span><span class="p">,</span>
+    <span class="n">ocn_topo</span> <span class="o">=</span> <span class="n">topo</span><span class="p">,</span>
+    <span class="n">project</span> <span class="o">=</span> <span class="s1">&#39;NCGD0011&#39;</span><span class="p">,</span>
+    <span class="n">override</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">machine</span> <span class="o">=</span> <span class="s2">&quot;ubuntu-latest&quot;</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition caution">
+<p class="admonition-title">Caution</p>
+<p>Setting override to True will DELETE the previous case at the caseroot and inputdir. Don’t set this to true if you don’t want that behavior!</p>
+</div>
+</section>
+</section>
+<section id="section-3-generate-data-and-configure-case-to-specifications">
+<h2>Section 3: Generate data and configure case to specifications<a class="headerlink" href="#section-3-generate-data-and-configure-case-to-specifications" title="Link to this heading">#</a></h2>
+<p>In these last two steps, the user gets to specify all options they would like in their regional case. We then generate all the required data for the case needed, which means initial &amp; boundary conditions</p>
+<section id="step-1-configure-forcings">
+<h3>Step 1: Configure Forcings<a class="headerlink" href="#step-1-configure-forcings" title="Link to this heading">#</a></h3>
+<p>In this step, the user gets to add the time dependence, and any other options/specifications they want in their case, like chlorophyll, tides, non-default data products, etc… This is where a lot of the functionality of CrocoDash
+is, so there are several feature demos in the CrocoGallery to showcase the different parameters of this function for options in your regional case. You can check out all the parameters possible
+in the api docs: <a class="reference internal" href="../api-docs/CrocoDash.html#crocodash"><span class="std std-ref">CrocoDash package</span></a></p>
+<p>In this example, we have no
+additional specifications, and only add the time dependence and the function_name we would like to use to generate the raw data for the initial and boundary conditions. The function_name parameter is explained in further detail in the add data products notebook, so will not be covered here.
+It simply downloads the data through the notebook instead of offering a script for the user to use in their terminal, which is the default.</p>
+<p>Please run the lines below. This step lets us (and the model) know we are running the model for 9 days in 2020.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">case</span><span class="o">.</span><span class="n">configure_forcings</span><span class="p">(</span>
+<span class="n">date_range</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;2020-01-01 00:00:00&quot;</span><span class="p">,</span> <span class="s2">&quot;2020-01-09 00:00:00&quot;</span><span class="p">],</span>
+<span class="n">function_name</span><span class="o">=</span><span class="s2">&quot;get_glorys_data_from_cds_api&quot;</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>Running configure_forcings will then output information on what it did <em>and</em> any additional steps needed (based on specifications). Please follow those steps as needed. In this example, we won’t have any additional steps, but it’s important to read that or the model won’t work!</p>
+</section>
+<section id="step-2-process-forcings">
+<h3>Step 2: Process Forcings<a class="headerlink" href="#step-2-process-forcings" title="Link to this heading">#</a></h3>
+<p>In this final step, given the information passed in configure_forcings, we process all of that information to generate all the required data.</p>
+<p>Please run the lines below. This step will likely take the longest time.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">case</span><span class="o">.</span><span class="n">process_forcings</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="note admonition tip">
+<p class="admonition-title">Tip</p>
+<blockquote>
+<div><p>You can turn off steps of the process_forcings, like generating the initial condition, by setting process_initial_condition=False. This can be helpful if you have already processed     the data and just need to
+reprocess some of it! An exmaple of this would be to expand the model to run for more time. The only processing we need increased is the boundary conditions. You don’t need to run the initial condition again!</p>
+</div></blockquote>
+</div>
+</section>
+</section>
+<section id="section-3-build-run-the-model">
+<h2>Section 3: Build &amp; Run the Model!<a class="headerlink" href="#section-3-build-run-the-model" title="Link to this heading">#</a></h2>
+<p>That’s it! You can now go to the case directory and build and run the model! It’s useful to poke around and see what changes were made by CrocoDash to be able to run the model. Check out user_nl_mom for all the parameter changes.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>~/croc_input/panama-1
+./case.build
+./case.submit
+</pre></div>
+</div>
+</section>
+<section id="section-4-make-your-changes">
+<h2>Section 4: Make your Changes!<a class="headerlink" href="#section-4-make-your-changes" title="Link to this heading">#</a></h2>
+<p>Now that you have a basic understanding of how to use CrocoDash, you can start making your own changes!
+You can change the domain, the bathymetry, the vertical grid, the forcing data, and any other parameters you want to change.
+You can also add additional features like tides, chlorophyll, or any other data products you want to use in your model.</p>
+<p>For quick reference on how to change the parameters, you can check out the <a class="reference internal" href="input_params.html#input-params"><span class="std std-ref">Input Parameters</span></a> documentation, which explains how to override the default parameters in CESM.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If you run into errors, check out our <a class="reference external" href="https://github.com/CROCODILE-CESM/CrocoDash/discussions/84">Common Errors Page</a>.
+If you can’t find a solution, post an issue on the <a class="reference external" href="https://github.com/CROCODILE-CESM/CrocoDash/issues">CrocoDash Issues Tab</a> or ask in the <a class="reference external" href="https://github.com/CROCODILE-CESM/CrocoDash/discussions">Discussions</a>.</p>
+</div>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="cesm_setup.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">CESM Setup</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="large_data_workflow.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Large Data Workflow</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#getting-started">Getting Started</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#basic-demo-overview">Basic Demo Overview</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#section-1-set-up-the-domain">Section 1: Set up the Domain</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-1-set-up-the-horizontal-grid">Step 1: Set up the horizontal grid</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-set-up-the-bathymetry">Step 2: Set up the bathymetry</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-3-get-the-bathymetry-and-any-other-data">Step 3: Get the Bathymetry (and any other) Data</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-4-load-the-bathymetry-data-and-put-it-on-our-grid">Step 4: Load the bathymetry data and put it on our Grid</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-5-edit-the-topography">Step 5: Edit the topography</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-6-generate-the-vgrid">Step 6: Generate the Vgrid</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#section-2-create-the-cesm-case">Section 2: Create the CESM Case</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-1-set-the-paths">Step 1: Set the paths</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-pass-all-information-in">Step 2: Pass all information in</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#section-3-generate-data-and-configure-case-to-specifications">Section 3: Generate data and configure case to specifications</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-1-configure-forcings">Step 1: Configure Forcings</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-process-forcings">Step 2: Process Forcings</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#section-3-build-run-the-model">Section 3: Build &amp; Run the Model!</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#section-4-make-your-changes">Section 4: Make your Changes!</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By CROCODILE
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2024, CROCODILE.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>
