@@ -809,19 +809,6 @@ class Case:
         )
 
         if "CICE" in self.compset:
-            mom_cice_param = [
-                ("USE_CFC_CAP", False),
-                ("READ_TIDEAMP", False),
-                ("MASKING_DEPTH", -9999.0),
-            ]
-            append_user_nl(
-                "mom",
-                mom_cice_param,
-                do_exec=True,
-                comment="CICE related options in MOM6",
-                log_title=False,
-            )
-
             cice_param = [
                 ("ice_ic", "'UNSET'"),
                 ("ns_boundary_type", "'open'"),
