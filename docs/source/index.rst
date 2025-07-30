@@ -33,8 +33,8 @@ Get Started
    :caption: Contents:
 
    installation
-   tutorials/index
-   Gallery <https://crocodile-cesm.github.io/CrocoGallery/>
+   Tutorials & Gallery <https://crocodile-cesm.github.io/CrocoGallery/>
+   datasets
    structure
    developers/index
    api-docs/modules
