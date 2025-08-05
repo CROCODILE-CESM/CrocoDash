@@ -24,8 +24,8 @@ Get Started
 -------------
 
 1. Please see the :ref:`installation` page.
-2. Walk through our :ref:`tutorial` for an easy introduction
-3. Check out our `gallery of demos <https://crocodile-cesm.github.io/CrocoGallery/>`_ for more use cases and cool features.
+2. Walk through our `tutorials <https://crocodile-cesm.github.io/CrocoGallery/>`_ for an easy introduction
+3. Check out our `gallery of demos <hhttps://crocodile-cesm.github.io/CrocoGallery/notebooks/use_cases/index.html>`_ for more use cases and cool features.
 
 
 .. toctree::
@@ -36,6 +36,7 @@ Get Started
    Tutorials & Gallery <https://crocodile-cesm.github.io/CrocoGallery/>
    datasets
    structure
+   additional_resources
    developers/index
    api-docs/modules
    Common Errors <https://github.com/CROCODILE-CESM/CrocoDash/discussions/84>
