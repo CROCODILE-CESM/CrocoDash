@@ -1,5 +1,5 @@
-Structure
-=====================
+Understanding CrocoDash's Structure
+======================================
 
 CrocoDash is designed to be one tool that manages the workflow from input data sources into a regional MOM6 in CESM run. It can be structured into three sections: 
 

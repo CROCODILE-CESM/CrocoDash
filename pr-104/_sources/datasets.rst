@@ -1,5 +1,5 @@
-Datasets
-============
+Accessing Raw Data
+=====================
 
 CrocoDash uses several datasets to setup the model. Data can be gathered directly from public datasources (including the CESM inputdata svn repository) or through helper functions in the CrocoDash data_access module. 
 Users can check if datasets are accessible at this `link <https://crocodile-cesm.github.io/CrocoDash/reports/raw_data_status.html>`_.
