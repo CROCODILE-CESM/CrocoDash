@@ -1,0 +1,83 @@
+name: Build CrocoGallery Book
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+env:
+  CESMROOT: ${{ github.workspace }}/CESM/ # See the checkout step below for the path
+  CIME_MACHINE: ubuntu-latest
+  DIN_LOC_ROOT: ${{ github.workspace }}
+  CIME_OUTPUT_ROOT: ${{ github.workspace }}
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  GLORYS_USERNAME: ${{ secrets.GLORYS_USERNAME }}
+  GLORYS_PASSWORD: ${{ secrets.GLORYS_PASSWORD }}
+
+jobs:
+  build_book:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      # Check out the CESM
+      - uses: actions/checkout@v4
+        with:
+          repository: CROCODILE-CESM/CESM
+          path: CESM
+      # Run git-fleximod
+      - name: Run Git Fleximod
+        env:
+          GIT_CLONE_PROTECTION_ACTIVE: false
+        run: |
+          cd $CESMROOT
+          ./bin/git-fleximod update
+
+      - uses: actions/checkout@v4
+        with:
+            repository: CROCODILE-CESM/CrocoDash
+            submodules: recursive
+            path: CrocoDash
+            fetch-depth: 0
+      - name: Checkout submodule to specific branch
+        run: |
+            cd CrocoDash/CrocoDash/rm6
+            git fetch origin
+            git checkout -b s3_zarr origin/s3_zarr
+      - uses: actions/setup-python@v5
+      - uses: conda-incubator/setup-miniconda@v3
+        with:
+          activate-environment: CrocoDash
+          environment-file: CrocoDash/environment.yml
+
+      - uses: actions/checkout@v4
+        with:
+            path: CrocoGallery
+      - name: Install extra Python packages for zarr access (some conflicts with copernicusmarine)
+        run: |
+          source $(conda info --base)/etc/profile.d/conda.sh
+          conda activate CrocoDash
+          pip install -r CrocoGallery/requirements.txt
+      - name: Update CESM path in data_paths.json
+        run: |
+            python CrocoGallery/code/set_cesm_path.py
+      - name: Build book with Makefile
+        run: |
+            source $(conda info --base)/etc/profile.d/conda.sh
+            conda activate CrocoDash
+            cd CrocoGallery
+            make build
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: "CrocoGallery/gallery/_build/html"
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+    

@@ -1,0 +1,15 @@
+name: Run Quality Control
+
+on: [push, pull_request, workflow_dispatch]
+
+jobs:
+  check_paths:
+    runs-on: ubuntu-latest
+    steps:
+
+        - name: Checkout repository
+          uses: actions/checkout@v4
+
+        - name: Run Quality Control
+          run: |
+            code/quality_control.sh

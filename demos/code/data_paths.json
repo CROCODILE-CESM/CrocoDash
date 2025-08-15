@@ -1,0 +1,9 @@
+{
+  "GEBCO": "s3://crocodile-cesm/CrocoDash/data/gebco/GEBCO_2024.zarr/",
+  "TPXO_U": "s3://crocodile-cesm/CrocoDash/data/tpxo/u_tpxo9.v1.zarr/",
+  "TPXO_H": "s3://crocodile-cesm/CrocoDash/data/tpxo/h_tpxo9.v1.zarr/",
+  "CESM": "/Users/manishrv/CrocoGallery/cesm",
+  "HGRID_221123": "s3://crocodile-cesm/CrocoDash/data/grids/ocean_hgrid_221123.nc",
+  "HGRID_TRIMMED": "s3://crocodile-cesm/CrocoDash/data/grids/ocean_hgrid_trimmed.nc",
+  "BATHY_FILE": "s3://crocodile-cesm/CrocoDash/data/grids/ocean_topog_little_nwa12_5d22b5.nc"
+}

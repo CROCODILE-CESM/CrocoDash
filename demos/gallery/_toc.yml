@@ -1,0 +1,21 @@
+# Table of contents
+# Learn more at https://jupyterbook.org/customize/toc.html
+
+format: jb-book
+root: intro
+parts:
+  - caption: Tutorials
+    chapters:
+      - file: notebooks/tutorials/minimal_demo_rect
+  - caption: Use Cases
+    chapters:
+      - file: notebooks/use_cases/three_boundary_from_t232
+      - file: notebooks/use_cases/three_boundary
+  - caption: Features
+    chapters:
+      - file: notebooks/features/subset_global
+      - file: notebooks/features/too_much_data
+      - file: notebooks/features/add_grids
+      - file: notebooks/features/add_data_products
+      - file: notebooks/features/add_chl
+      - file: notebooks/features/add_tides
