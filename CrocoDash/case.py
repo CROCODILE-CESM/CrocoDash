@@ -23,7 +23,7 @@ from visualCaseGen.specs.options import set_options
 from visualCaseGen.specs.relational_constraints import get_relational_constraints
 from visualCaseGen.custom_widget_types.case_creator import CaseCreator, ERROR, RESET
 from visualCaseGen.custom_widget_types.case_tools import xmlchange, append_user_nl
-from mom6_bathy import chl
+from mom6_bathy import chl, mapping
 
 class Case:
     """This class represents a regional MOM6 case within the CESM framework. It is similar to the
@@ -131,6 +131,17 @@ class Case:
 
         self._cime_case = self.cime.get_case(self.caseroot,non_local = self.cc._is_non_local())
 
+        if "DROF%GLOFAS" in self.compset:
+            self.runoff_in_compset = True
+        else:
+            self.runoff_in_compset = False
+
+        if "CICE" in self.compset:
+            self.cice_in_compset = True
+        else:
+            self.cice_in_compset = False
+
+
     def _init_args_check(
         self,
         caseroot: str | Path,
@@ -198,6 +209,7 @@ class Case:
 
         # suffix for the MOM6 grid files
         session_id = cvars["MB_ATTEMPT_ID"].value
+        self.session_id = session_id
 
         # MOM6 supergrid file
         ocn_grid.write_supergrid(
@@ -215,7 +227,7 @@ class Case:
         )
 
         # CICE grid file (if needed)
-        if "CICE" in self.compset:
+        if self.cice_in_compset:
             ocn_topo.write_cice_grid(
                 inputdir / "ocnice" / f"cice_grid_{ocn_grid.name}_{session_id}.nc"
             )
@@ -262,6 +274,8 @@ class Case:
         function_name: str = "get_glorys_data_script_for_cli",
         too_much_data: bool = False,
         chl_processed_filepath: str | Path | None = None,
+        runoff_esmf_mesh_filepath: str | Path | None = None,
+        runoff_processed_filepath: str | Path | None = None,
     ):
         """
     Configure the boundary conditions and tides for the MOM6 case.
@@ -294,6 +308,12 @@ class Case:
         If True, configures the large data workflow. In this case, data are not downloaded
         immediately, but a config file and workflow directory are created 
         for external processing in the forcing directory, inside the input directory.
+    chl_processed_filepath : Path
+        If passed, points to the processed global chlorophyll file for regional processing through mom6_bathy.chl
+    runoff_esmf_mesh_filepath : Path
+        If passed, points to the processed global runoff file for mapping through mom6_bathy.mapping
+    runoff_processed_filepath : Path
+        The global processed glofas file for the CESM to use.
 
     Raises
     ------
@@ -317,6 +337,14 @@ class Case:
     --------
     process_forcings : Executes the actual boundary, initial condition, and tide setup based on the configuration.
     """
+
+        if self.runoff_in_compset and (runoff_esmf_mesh_filepath is None or runoff_processed_filepath is None):
+            raise ValueError("Runoff ESMF Mesh File and Global Runoff file must be provided for mapping")
+        elif (runoff_esmf_mesh_filepath is not None or runoff_processed_filepath is not None) and not self.runoff_in_compset:
+            raise ValueError("Runoff can only be turned on if it is in the compset!")
+        elif self.runoff_in_compset and (runoff_esmf_mesh_filepath is not None or runoff_processed_filepath is not None):
+            self.runoff_esmf_mesh_filepath = runoff_esmf_mesh_filepath
+            self.runoff_processed_filepath = runoff_processed_filepath
 
         if too_much_data:
             self._large_data_workflow_called = True
@@ -493,7 +521,8 @@ class Case:
         process_tides=True,
         process_velocity_tracers=True,
         process_chl=True,
-        process_param_changes = True
+        process_param_changes = True, 
+        process_runoff = True,
     ):
         """
     Process boundary conditions, initial conditions, and tides for a MOM6 case.
@@ -515,7 +544,9 @@ class Case:
         Whether to process velocity and tracer boundary conditions. Default is True.
         This will be overridden and set to False if the large data workflow in configure_forcings is enabled.
     process_param_changes : bool, optional
-        Whether to process the namelist and xml changes required to run a regional MOM6 case in the CESM. 
+        Whether to process the namelist and xml changes required to run a regional MOM6 case in the CESM.
+    process_runoff : bool, optional
+        Whether to process the runoff mapping and changes
 
     Raises
     ------
@@ -631,7 +662,16 @@ class Case:
                 self.chl_processed_filepath,
                 self.inputdir / "ocnice" / f"seawifs-clim-1997-2010-{self.ocn_grid.name}.nc",
             )
-
+        if process_runoff:
+            mapping.gen_rof_maps(
+                rof_mesh_path=self.runoff_esmf_mesh_filepath,
+                ocn_mesh_path=inputdir / "ocnice" / f"ESMF_mesh_{self.ocn_grid.name}_{self.session_id}.nc",
+                output_dir=inputdir/"ocnice",
+                mapping_file_prefix=f'glofas_{self.ocn_grid.name}_{self.session_id}',
+                rmax=100.0,
+                fold=100.0
+            )
+            self.runoff_mapping_file_nnsm = inputdir/"ocnice"/f"glofas_{self.ocn_grid.name}_{self.session_id}_nnsm.nc"
         # Apply forcing-related namelist and xml changes
         if process_param_changes:
             self._update_forcing_variables()
@@ -931,6 +971,43 @@ class Case:
             comment="Open boundary conditions",
             log_title=False,
         )
+
+        if self.runoff_esmf_mesh_filepath:
+            xmlchange("ROF2OCN_LIQ_RMAPNAME", str(self.runoff_mapping_file_nnsm),is_non_local=self.cc._is_non_local())
+            xmlchange("ROF2OCN_ICE_RMAPNAME", str(self.runoff_mapping_file_nnsm),is_non_local=self.cc._is_non_local())
+            xmlchange("ROF_DOMAIN_MESH", str(self.runoff_esmf_mesh_filepath),is_non_local=self.cc._is_non_local())
+            xmlchange("ROF_NX", 3600,is_non_local=self.cc._is_non_local())
+            xmlchange("ROF_NY", 1500,is_non_local=self.cc._is_non_local())
+            output_path = self.caseroot/"drof.streams.xml"
+            xml_content = f"""<?xml version="1.0"?>
+                    <file id="stream" version="2.0">
+
+                    <stream_info name="rof.glofas">
+                    <taxmode>cycle</taxmode>
+                    <tintalgo>upper</tintalgo>
+                    <readmode>single</readmode>
+                    <mapalgo>bilinear</mapalgo>
+                    <dtlimit>3.0</dtlimit>
+                    <year_first>2000</year_first>
+                    <year_last>2001</year_last>
+                    <year_align>2000</year_align>
+                    <vectors>null</vectors>
+                    <meshfile>{self.runoff_esmf_mesh_filepath}</meshfile>
+                    <lev_dimname>null</lev_dimname>
+                    <datafiles>
+                        <file>{self.runoff_processed_filepath}</file>
+                    </datafiles>
+                    <datavars>
+                        <var>runoff Forr_rofl</var>
+                    </datavars>
+                    <offset>0</offset>
+                    </stream_info>
+                    </file>
+                    """
+
+                        with open(output_path, "w") as f:
+                            f.write(xml_content)
+
 
         xmlchange("RUN_STARTDATE", str(self.date_range[0])[:10],is_non_local=self.cc._is_non_local())
         xmlchange("MOM6_MEMORY_MODE", "dynamic_symmetric", is_non_local=self.cc._is_non_local())
