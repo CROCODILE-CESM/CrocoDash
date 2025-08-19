@@ -3,7 +3,7 @@ import os
 import re
 from pathlib import Path
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 def load_config(config_path: str = "config.json") -> dict:
@@ -105,3 +105,26 @@ def parse_dataset_folder(
         boundary_file_list[boundary].sort()
 
     return boundary_file_list
+
+def check_date_continuity(boundary_file_list: dict):
+    """
+    Check for overlaps or missing dates between consecutive files.
+    """
+    issues = defaultdict(list)
+
+    for boundary, files in boundary_file_list.items():
+        for (prev_start, prev_end, prev_file), (next_start, next_end, next_file) in zip(files, files[1:]):
+            # Expect next_start == prev_end + 1 day
+            expected_next = prev_end + timedelta(days=1)
+            if next_start < expected_next:
+                issues[boundary].append(
+                    f"Overlap: {prev_file} ({prev_start:%Y-%m-%d} → {prev_end:%Y-%m-%d}) "
+                    f"and {next_file} ({next_start:%Y-%m-%d} → {next_end:%Y-%m-%d})"
+                )
+            elif next_start > expected_next:
+                issues[boundary].append(
+                    f"Gap: {prev_file} ends {prev_end:%Y-%m-%d}, "
+                    f"next {next_file} starts {next_start:%Y-%m-%d}"
+                )
+
+    return issues
