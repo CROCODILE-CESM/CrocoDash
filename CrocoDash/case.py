@@ -673,7 +673,7 @@ class Case:
                 self.chl_processed_filepath,
                 self.inputdir / "ocnice" / f"seawifs-clim-1997-2010-{self.ocn_grid.name}.nc",
             )
-        if process_runoff:
+        if process_runoff and self.runoff_in_compset and self.runoff_esmf_mesh_filepath and self.runoff_processed_filepath:
             mapping.gen_rof_maps(
                 rof_mesh_path=self.runoff_esmf_mesh_filepath,
                 ocn_mesh_path=inputdir / "ocnice" / f"ESMF_mesh_{self.ocn_grid.name}_{self.session_id}.nc",
