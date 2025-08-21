@@ -20,7 +20,6 @@ def format_dataset(
     lat_name: str = "lat",
     lon_name: str = "lon",
     z_dim: str = "z_t",
-    preview: bool = False,
 ) -> dict:
     """
     Format the dataset to MOM6 formats
@@ -33,7 +32,7 @@ def format_dataset(
         variable_info (dict): Dictionary containing variable names and their file paths.
         lat_name (str): Name of the latitude variable in the dataset. Default is "lat".
         lon_name (str): Name of the longitude variable in the dataset. Default is "lon".
-        preview (bool): If True, only previews the regridding without saving. Default is False.
+        z_dim (str): Name of the vertical dimension in the dataset. Default is "z_t".
 
     Returns:
         dict: Paths to the output files for each boundary.
@@ -60,6 +59,8 @@ def format_dataset(
 
                 ## Apply Unit Conversion if needed
 
+                ## Continue formatting
+
                 dim_name = ds.variables["__xarray_dataarray_variable__"].dims[-1]
                 coords = rgd.coords(hgrid, item, segment_name)
                 ds[v] = ds.__xarray_dataarray_variable__
@@ -69,6 +70,15 @@ def format_dataset(
                 )
                 item_name = f"{v}_{segment_name}"
                 ds = ds.rename({v: item_name})
+
+                if type(z_dim) is list:
+                    found_z_dim = False
+                    for z_dim_opt in z_dim:
+                        if z_dim_opt in ds[item_name].dims:
+                            z_dim = z_dim_opt
+                            break
+                    if not found_z_dim:
+                        z_dim = None
 
                 if z_dim not in ds[v].dims:
                     print(
@@ -173,6 +183,7 @@ def format_dataset(
                 )
                 print(f"....Finished {v} IC processing!")
     return output_paths
+
 
 if __name__ == "__main__":
     print(

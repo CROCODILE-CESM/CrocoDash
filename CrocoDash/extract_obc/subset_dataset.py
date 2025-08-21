@@ -12,6 +12,7 @@ def subset_dataset(
     lon_max: float,
     lat_name="lat",
     lon_name="lon",
+    preview: bool = False,
 ) -> None:
     """
     Subsets the dataset based on the provided variable names and geographical bounds into the output path
@@ -24,6 +25,7 @@ def subset_dataset(
         lon_max (float): Maximum longitude for subsetting.
         lat_name (str): Name of the latitude variable in the dataset. Default is "lat".
         lon_name (str): Name of the longitude variable in the dataset. Default is "lon".
+        preview (bool): If True, only previews the subsetting without saving. Default is False.
     """
 
     # Create the output directory if it does not exist
@@ -47,13 +49,17 @@ def subset_dataset(
         mask = mask.compute()
 
         # Subset the dataset based on the provided geographical bounds
-        subset_ds = ds.where(mask, drop=True)
+        if not preview:
+            subset_ds = ds.where(mask, drop=True)
 
-        # Save the subsetted dataset to the output path
-        output_file = output_path / f"{var_name}_subset.nc"
-        subset_ds.to_netcdf(output_file)
+            # Save the subsetted dataset to the output path
+            output_file = output_path / f"{var_name}_subset.nc"
+            subset_ds.to_netcdf(output_file)
 
-        print(f"Subsetted dataset for variable '{var_name}' saved to {output_file}")
+            print(f"Subsetted dataset for variable '{var_name}' saved to {output_file}")
+
+        return mask
+
 
 if __name__ == "__main__":
     print(
