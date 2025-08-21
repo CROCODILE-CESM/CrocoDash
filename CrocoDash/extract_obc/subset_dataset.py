@@ -3,7 +3,16 @@ This file takes in a dictionary of variable names and their corresponding file p
 """
 
 
-def subset_dataset(variable_info: dict, output_path: str | Path, lat_min: float, lat_max: float, lon_min: float, lon_max: float, lat_name = "lat", lon_name = "lon") -> None:
+def subset_dataset(
+    variable_info: dict,
+    output_path: str | Path,
+    lat_min: float,
+    lat_max: float,
+    lon_min: float,
+    lon_max: float,
+    lat_name="lat",
+    lon_name="lon",
+) -> None:
     """
     Subsets the dataset based on the provided variable names and geographical bounds into the output path
     Args:
@@ -28,15 +37,25 @@ def subset_dataset(variable_info: dict, output_path: str | Path, lat_min: float,
             continue
 
         # Load the dataset for the variable
-        ds = xr.open_mfdataset(file_paths, combine='by_coords')
-        mask = (ds[lat_name] >= lat_min-1) & (ds[lat_name] <= lat_max+1) & (ds[lon_name] >= lon_min-1) & (ds[lon_name] <= lon_max+1)
+        ds = xr.open_mfdataset(file_paths, combine="by_coords")
+        mask = (
+            (ds[lat_name] >= lat_min - 1)
+            & (ds[lat_name] <= lat_max + 1)
+            & (ds[lon_name] >= lon_min - 1)
+            & (ds[lon_name] <= lon_max + 1)
+        )
         mask = mask.compute()
 
         # Subset the dataset based on the provided geographical bounds
-        subset_ds = ds.where(mask, drop=True) 
+        subset_ds = ds.where(mask, drop=True)
 
         # Save the subsetted dataset to the output path
         output_file = output_path / f"{var_name}_subset.nc"
         subset_ds.to_netcdf(output_file)
 
         print(f"Subsetted dataset for variable '{var_name}' saved to {output_file}")
+
+if __name__ == "__main__":
+    print(
+        "This script is used to subset the large datasets based on variable names and geographical bounds."
+    )

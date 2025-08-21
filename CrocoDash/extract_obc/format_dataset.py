@@ -1,12 +1,15 @@
 """
 This script is used to load the regridded datasets on a regional supergrid and format them into the required structure for MOM6
 """
+
 from regional_mom6 import regridding as rgd
 import xarray as xr
 import json
 from pathlib import Path
 import numpy as np
+
 REGRID_ITEMS = ["IC", "west", "south", "north", "east"]
+
 
 def format_dataset(
     input_path: str | Path,
@@ -17,7 +20,7 @@ def format_dataset(
     lat_name: str = "lat",
     lon_name: str = "lon",
     z_dim: str = "z_t",
-    preview: bool = False
+    preview: bool = False,
 ) -> dict:
     """
     Format the dataset to MOM6 formats
@@ -47,14 +50,13 @@ def format_dataset(
     for v in variable_info:
         for item in REGRID_items:
             # Open Dataset
-            ds = xr.open_dataset(input_path/f"{v}_{item}_regridded.nc")
+            ds = xr.open_dataset(input_path / f"{v}_{item}_regridded.nc")
             if item is not "ic":
                 segment_name = "segment_{:03d}".format(boundary_number_conversion[item])
                 file_path = output_path / f"{v}_obc_{segment_name}.nc"
                 if file_path.exists():
                     print(f"Already processed {v} {item}, skipping!")
                     continue
-
 
                 ## Apply Unit Conversion if needed
 
@@ -67,9 +69,11 @@ def format_dataset(
                 )
                 item_name = f"{v}_{segment_name}"
                 ds = ds.rename({v: item_name})
-                
+
                 if z_dim not in ds[v].dims:
-                    print("This variable is only a surface variable, skipping z_dim conversion.")
+                    print(
+                        "This variable is only a surface variable, skipping z_dim conversion."
+                    )
                     z_dim = None
                 else:
                     ds = rgd.vertical_coordinate_encoding(
@@ -84,9 +88,7 @@ def format_dataset(
                     xdim=dim_name,
                     zdim=z_dim,
                 )
-                ds = rgd.add_secondary_dimension(
-                    ds, item_name, coords, segment_name
-                )
+                ds = rgd.add_secondary_dimension(ds, item_name, coords, segment_name)
                 # Overwrite actual lat/lon vals with grid numbers in these variables
                 ds[f"{coords.attrs['parallel']}_{segment_name}"] = np.arange(
                     ds[f"{coords.attrs['parallel']}_{segment_name}"].size
@@ -98,12 +100,12 @@ def format_dataset(
                     ds,
                     bathymetry,
                     segment,
-                    y_dim_name = "lath",
-                    x_dim_name = "lonh",
+                    y_dim_name="lath",
+                    x_dim_name="lonh",
                 )
-                        # Do Encoding
+                # Do Encoding
                 encoding_dict = {
-                    "time": {"dtype": "double","_FillValue": 1.0e2},
+                    "time": {"dtype": "double", "_FillValue": 1.0e2},
                     f"nx_{segment_name}": {
                         "dtype": "int32",
                     },
@@ -111,7 +113,7 @@ def format_dataset(
                         "dtype": "int32",
                     },
                 }
-                
+
                 encoding_dict = rgd.generate_encoding(
                     ds,
                     encoding_dict,
@@ -134,29 +136,28 @@ def format_dataset(
                 # Slice the velocites to the u and v grid.
                 u_points = rgd.get_hgrid_arakawa_c_points(hgrid, "u")
                 v_points = rgd.get_hgrid_arakawa_c_points(hgrid, "v")
-                t_points = rgd.get_hgrid_arakawa_c_points(hgrid, "t")  
-                
+                t_points = rgd.get_hgrid_arakawa_c_points(hgrid, "t")
+
                 ds[v] = ds.__xarray_dataarray_variable__
 
                 # Drop old var
                 ds = ds.drop_vars(["__xarray_dataarray_variable__"])
 
-
                 # Fill Missing Data
-                if z_dim not in ds[v].dims
+                if z_dim not in ds[v].dims:
                     z_dim = None
 
                 ds[v] = rgd.fill_missing_data(
-                            ds[v],
-                            xdim="lon",
-                            zdim=z_dim,
-                        )
+                    ds[v],
+                    xdim="lon",
+                    zdim=z_dim,
+                )
 
                 # Do Encoding
                 encoding_dict = {
-                    "time": {"dtype": "double","_FillValue": 1.0e2},
+                    "time": {"dtype": "double", "_FillValue": 1.0e2},
                 }
-                
+
                 encoding_dict = rgd.generate_encoding(
                     ds,
                     encoding_dict,
@@ -173,4 +174,7 @@ def format_dataset(
                 print(f"....Finished {v} IC processing!")
     return output_paths
 
-
+if __name__ == "__main__":
+    print(
+        "This script is used to format the dataset to MOM6 formats, including applying necessary transformations & fills"
+    )

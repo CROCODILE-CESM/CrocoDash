@@ -48,5 +48,5 @@ def parse_dataset(variable_names: list[str], dataset_path: str | Path) -> dict:
 
 if __name__ == "__main__":
     print(
-        "This script is used to load CESM datasets and extract all the necessary information for OBC generation. This dataset "
+        "This script is used to load CESM datasets and extract all the necessary information for OBC generation "
     )
