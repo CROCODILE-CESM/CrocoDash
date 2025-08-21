@@ -113,6 +113,15 @@ class Case:
         self._large_data_workflow_called = False
         self.compset = compset
 
+        if "DROF%GLOFAS" in self.compset:
+            self.runoff_in_compset = True
+        else:
+            self.runoff_in_compset = False
+
+        if "CICE" in self.compset:
+            self.cice_in_compset = True
+        else:
+            self.cice_in_compset = False
         # Resolution name:
         self.resolution = f"{datm_grid_name}_{ocn_grid.name}"
 
@@ -131,15 +140,7 @@ class Case:
 
         self._cime_case = self.cime.get_case(self.caseroot,non_local = self.cc._is_non_local())
 
-        if "DROF%GLOFAS" in self.compset:
-            self.runoff_in_compset = True
-        else:
-            self.runoff_in_compset = False
 
-        if "CICE" in self.compset:
-            self.cice_in_compset = True
-        else:
-            self.cice_in_compset = False
 
 
     def _init_args_check(
@@ -276,6 +277,8 @@ class Case:
         chl_processed_filepath: str | Path | None = None,
         runoff_esmf_mesh_filepath: str | Path | None = None,
         runoff_processed_filepath: str | Path | None = None,
+        rof_nx: int = 3600,
+        rof_ny: int = 1500
     ):
         """
     Configure the boundary conditions and tides for the MOM6 case.
@@ -314,6 +317,10 @@ class Case:
         If passed, points to the processed global runoff file for mapping through mom6_bathy.mapping
     runoff_processed_filepath : Path
         The global processed glofas file for the CESM to use.
+    rof_nx : int, optional
+        The number of x points in the runoff file. Default is 3600.
+    rof_ny : int, optional
+        The number of y points in the runoff file. Default is 1500.
 
     Raises
     ------
@@ -337,15 +344,19 @@ class Case:
     --------
     process_forcings : Executes the actual boundary, initial condition, and tide setup based on the configuration.
     """
-
         if self.runoff_in_compset and (runoff_esmf_mesh_filepath is None or runoff_processed_filepath is None):
+            self.runoff_esmf_mesh_filepath = False
+            self.runoff_processed_filepath = False
             raise ValueError("Runoff ESMF Mesh File and Global Runoff file must be provided for mapping")
         elif (runoff_esmf_mesh_filepath is not None or runoff_processed_filepath is not None) and not self.runoff_in_compset:
+            self.runoff_esmf_mesh_filepath = False
+            self.runoff_processed_filepath = False
             raise ValueError("Runoff can only be turned on if it is in the compset!")
         elif self.runoff_in_compset and (runoff_esmf_mesh_filepath is not None or runoff_processed_filepath is not None):
             self.runoff_esmf_mesh_filepath = runoff_esmf_mesh_filepath
             self.runoff_processed_filepath = runoff_processed_filepath
-
+        self.rof_nx = rof_nx
+        self.rof_ny = rof_ny
         if too_much_data:
             self._large_data_workflow_called = True
         self.ProductFunctionRegistry.load_functions()
@@ -973,40 +984,39 @@ class Case:
         )
 
         if self.runoff_esmf_mesh_filepath:
+            
             xmlchange("ROF2OCN_LIQ_RMAPNAME", str(self.runoff_mapping_file_nnsm),is_non_local=self.cc._is_non_local())
             xmlchange("ROF2OCN_ICE_RMAPNAME", str(self.runoff_mapping_file_nnsm),is_non_local=self.cc._is_non_local())
             xmlchange("ROF_DOMAIN_MESH", str(self.runoff_esmf_mesh_filepath),is_non_local=self.cc._is_non_local())
-            xmlchange("ROF_NX", 3600,is_non_local=self.cc._is_non_local())
-            xmlchange("ROF_NY", 1500,is_non_local=self.cc._is_non_local())
+            xmlchange("ROF_NX", int(self.rof_nx),is_non_local=self.cc._is_non_local())
+            xmlchange("ROF_NY", int(self.rof_ny),is_non_local=self.cc._is_non_local())
+
             output_path = self.caseroot/"drof.streams.xml"
             xml_content = f"""<?xml version="1.0"?>
-                    <file id="stream" version="2.0">
-
-                    <stream_info name="rof.glofas">
-                    <taxmode>cycle</taxmode>
-                    <tintalgo>upper</tintalgo>
-                    <readmode>single</readmode>
-                    <mapalgo>bilinear</mapalgo>
-                    <dtlimit>3.0</dtlimit>
-                    <year_first>2000</year_first>
-                    <year_last>2001</year_last>
-                    <year_align>2000</year_align>
-                    <vectors>null</vectors>
-                    <meshfile>{self.runoff_esmf_mesh_filepath}</meshfile>
-                    <lev_dimname>null</lev_dimname>
-                    <datafiles>
-                        <file>{self.runoff_processed_filepath}</file>
-                    </datafiles>
-                    <datavars>
-                        <var>runoff Forr_rofl</var>
-                    </datavars>
-                    <offset>0</offset>
-                    </stream_info>
-                    </file>
-                    """
-
-                        with open(output_path, "w") as f:
-                            f.write(xml_content)
+<file id="stream" version="2.0">
+  <stream_info name="rof.glofas">
+    <taxmode>cycle</taxmode>
+    <tintalgo>upper</tintalgo>
+    <readmode>single</readmode>
+    <mapalgo>bilinear</mapalgo>
+    <dtlimit>3.0</dtlimit>
+    <year_first>2000</year_first>
+    <year_last>2020</year_last>
+    <year_align>2000</year_align>
+    <vectors>null</vectors>
+    <meshfile>{self.runoff_esmf_mesh_filepath}</meshfile>
+    <lev_dimname>null</lev_dimname>
+    <datafiles>
+      <file>{self.runoff_processed_filepath}</file>
+    </datafiles>
+    <datavars>
+      <var>runoff Forr_rofl</var>
+    </datavars>
+    <offset>0</offset>
+  </stream_info>
+</file>"""
+            with open(output_path, "w") as f:
+                f.write(xml_content)
 
 
         xmlchange("RUN_STARTDATE", str(self.date_range[0])[:10],is_non_local=self.cc._is_non_local())
