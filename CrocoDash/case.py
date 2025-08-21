@@ -229,8 +229,9 @@ class Case:
 
         # CICE grid file (if needed)
         if self.cice_in_compset:
+            self.cice_file = inputdir / "ocnice" / f"cice_grid_{ocn_grid.name}_{session_id}.nc"
             ocn_topo.write_cice_grid(
-                inputdir / "ocnice" / f"cice_grid_{ocn_grid.name}_{session_id}.nc"
+                self.cice_file
             )
 
         # SCRIP grid file (needed for runoff remapping)
@@ -982,8 +983,24 @@ class Case:
             comment="Open boundary conditions",
             log_title=False,
         )
-
-        if self.runoff_esmf_mesh_filepath:
+        if self.cice_in_compset:
+            cice_param = [
+                ("ice_ic", "'UNSET'"),
+                ("ns_boundary_type", "'open'"),
+                ("ew_boundary_type", "'cyclic'"),
+                ("close_boundaries", ".false."),
+                ("grid_file", self.cice_file),
+                ("kmt_file", self.cice_file),
+            ]
+            append_user_nl(
+                "cice",
+                cice_param,
+                do_exec=True,
+                comment="CICE options",
+                log_title=False,
+            )
+    
+        if self.runoff_in_compset and self.runoff_esmf_mesh_filepath:
             
             xmlchange("ROF2OCN_LIQ_RMAPNAME", str(self.runoff_mapping_file_nnsm),is_non_local=self.cc._is_non_local())
             xmlchange("ROF2OCN_ICE_RMAPNAME", str(self.runoff_mapping_file_nnsm),is_non_local=self.cc._is_non_local())
