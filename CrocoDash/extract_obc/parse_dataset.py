@@ -21,7 +21,8 @@ def parse_dataset(variable_names: list[str], dataset_path: str | Path) -> dict:
     variable_info = {}
     for v in variable_names:
         variable_info[v] = []
-        dataset_path = Path(dataset_path)
+
+    dataset_path = Path(dataset_path)
     if dataset_path.is_dir():
         for file_path in dataset_path.rglob("*"):
             if file_path.is_file():
@@ -36,14 +37,7 @@ def parse_dataset(variable_names: list[str], dataset_path: str | Path) -> dict:
     else:
         raise ValueError("dataset_path must be a string, Path to existing file(s)")
 
-    result = {}
-    for var_name in variable_names:
-        if var_name in dataset.variables:
-            result[var_name] = str(
-                dataset[var_name].encoding.get("source", "Unknown source")
-            )
-
-    return result
+    return variable_info
 
 
 if __name__ == "__main__":
