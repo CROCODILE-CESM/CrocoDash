@@ -7,4 +7,4 @@ GEBCO,PYTHON,gebco,get_gebco_data_with_python,Python request for global bathymet
 GEBCO,SCRIPT,gebco,get_gebco_data_script,get script to download global bathymetry data 
 SEAWIFS,SCRIPT,seawifs,get_processed_global_seawifs_script_for_cli,Generates bash script for direct CLI access to processed chlorophyll data (No Package Required)
 GLOFAS,PYTHON,glofas,get_processed_global_glofas_script_for_cli,Generates bash script for access to CESM Inputdata processed glofas data
-GLOFAS,PYTHON,glofas,get_global_glofas_script_for_cli,Generates script for access to CESM Inputdata raw glofas data
+GLOFAS,PYTHON,glofas,get_global_data_with_python,Gets glofas raw data through the cdsapi package

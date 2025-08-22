@@ -1,26 +1,24 @@
 from pathlib import Path
 from . import utils
-
-
-def get_global_glofas_script_for_cli(
-    dates="UNUSED",
+import cdsapi
+import pandas as pd
+def get_global_data_with_python(
+    dates,
     lat_min="UNUSED",
     lat_max="UNUSED",
     lon_min="UNUSED",
     lon_max="UNUSED",
-    output_dir=None,
-    output_file="UNUSED",
-    username="",
+    output_dir=Path(""),
+    output_file="glofas_data.nc",
 ):
     """
-    Downloads chlor_a data using NASA OceanData API with authentication.
+    Downloads glofas data using cdsapi library. Note that users need to have an account with copernicus and have cdsapi installed and configured.
 
     Parameters
     ----------
-    username : str
-        NASA Earthdata username (password will be prompted at runtime).
+
     date : str, optional
-        Currently unused; placeholder for future date-based filtering.
+        What dates to download.
     lat_min : float, optional
         Currently unused; placeholder for future spatial filtering.
     lat_max : float, optional
@@ -33,8 +31,29 @@ def get_global_glofas_script_for_cli(
         Directory where downloaded files will be saved.
 
     """
+    dataset = "cems-glofas-historical"
+    start, end = pd.to_datetime(dates[0]), pd.to_datetime(dates[1])
+    dates = pd.date_range(start=start, end=end)
+    hyear  = sorted(list({d.strftime("%Y") for d in dates}))
+    hmonth = sorted(list({d.strftime("%m") for d in dates}))
+    hday   = sorted(list({d.strftime("%d") for d in dates}))
 
-    raise NotImplementedError("Needs to be done! Go to here: https://ewds.climate.copernicus.eu/datasets/cems-glofas-historical?tab=download")
+    request = {
+        "system_version": ["version_4_0"],
+        "hydrological_model": ["lisflood"],
+        "product_type": ["consolidated"],
+        "variable": ["river_discharge_in_the_last_24_hours"],
+        "hyear": hyear,
+        "hmonth": hmonth,
+        "hday": hday,
+        "data_format": "netcdf",
+        "download_format": "zip"
+    }
+
+    client = cdsapi.Client()
+    path = output_dir/output_file
+    client.retrieve(dataset, request, path)
+    return path
 
 
 def get_processed_global_glofas_script_for_cli(

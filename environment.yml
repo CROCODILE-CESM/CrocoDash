@@ -11,6 +11,7 @@ dependencies:
   - graphviz>=12.2.1,<12.3.0
   - python-graphviz>=0.20.3,<0.21.0
   - nbsphinx>=0.9.6,<0.10.0
+  - cdsapi>=0.7.6,<0.8.0
   - pip>=24.2,<24.3
   - pip:
     - -e ./CrocoDash/rm6/
