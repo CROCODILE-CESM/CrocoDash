@@ -15,7 +15,7 @@ def subset_dataset(
     preview: bool = False,
 ) -> None:
     """
-    Subsets the dataset based on the provided variable names and geographical bounds into the output path
+    Subsets (and merges) the dataset based on the provided variable names and geographical bounds into the output path
     Args:
         variable_info (dict): A dictionary with variable names as keys and their file paths as values.
         output_path (str | Path): The path where the subsetted dataset will be saved.
