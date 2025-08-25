@@ -3,7 +3,7 @@ import parse_dataset as pd
 import regrid_dataset as rd
 import subset_dataset as sd
 from pathlib import Path
-from CrocoDash.raw_data_access.diver import get_rectangular_segment_info
+from CrocoDash.raw_data_access.driver import get_rectangular_segment_info
 from CrocoDash.grid import Grid
 
 
@@ -34,10 +34,10 @@ def extract_obcs(
         sd.subset_dataset(
             variable_info=variable_info,
             output_path=params["subset_input_path"],
-            lat_min=boundary_info["lat_min"],
-            lat_max=boundary_info["lat_max"],
-            lon_min=boundary_info["lon_min"],
-            lon_max=boundary_info["lon_max"],
+            lat_min=boundary_info["ic"]["lat_min"],
+            lat_max=boundary_info["ic"]["lat_max"],
+            lon_min=boundary_info["ic"]["lon_min"],
+            lon_max=boundary_info["ic"]["lon_max"],
             lat_name=params["lat_name"],
             lon_name=params["lon_name"],
             preview=params["preview"],

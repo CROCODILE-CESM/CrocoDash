@@ -1,7 +1,8 @@
 """
 This file takes in a dictionary of variable names and their corresponding file paths, combines them all into one file, and subsets the dataset based on the provided variable names to a provided rectangle
 """
-
+from pathlib import Path
+import xarray as xr
 
 def subset_dataset(
     variable_info: dict,
@@ -40,6 +41,9 @@ def subset_dataset(
 
         # Load the dataset for the variable
         ds = xr.open_mfdataset(file_paths, combine="by_coords")
+        # convert time to datetime64
+        if "time" in ds.coords:
+            ds["time"] = ds.indexes["time"].to_datetimeindex()
         mask = (
             (ds[lat_name] >= lat_min - 1)
             & (ds[lat_name] <= lat_max + 1)
@@ -58,7 +62,7 @@ def subset_dataset(
 
             print(f"Subsetted dataset for variable '{var_name}' saved to {output_file}")
 
-        return mask
+    return mask
 
 
 if __name__ == "__main__":

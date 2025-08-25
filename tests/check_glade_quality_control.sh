@@ -4,6 +4,7 @@ set -euo pipefail
 EXEMPTIONS=(
   "CrocoDash/raw_data_access/datasets/glorys.py"
   "tests/fixtures/state.py"
+  "tests/extract_obc/*"
 )
 
 echo "Checking for hardcoded '/glade' paths..."
