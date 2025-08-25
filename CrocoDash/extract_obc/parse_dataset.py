@@ -7,13 +7,16 @@ import xarray as xr
 from pathlib import Path
 
 
-def parse_dataset(variable_names: list[str], dataset_path: str | Path) -> dict:
+def parse_dataset(
+    variable_names: list[str], dataset_path: str | Path, space_character="."
+) -> dict:
     """
     Parses the dataset to find variable names and their corresponding file paths.
 
     Args:
         variable_names (list[str]): List of variable names to search for.
         dataset_path (str | xr.Dataset | Path): Path to the dataset (or folder with dataset)
+        space_character (str): Character that separates words in variable names in the filenames. Default is ".".
 
     Returns:
         dict: A dictionary with variable names as keys and their file paths as values.
@@ -28,7 +31,9 @@ def parse_dataset(variable_names: list[str], dataset_path: str | Path) -> dict:
             if file_path.is_file():
                 # Check each variable
                 for v in variable_names:
-                    if v in str(file_path):  # check full path, not just name
+                    if (space_character + v + space_character) in str(
+                        file_path
+                    ):  # check full path, not just name
                         variable_info[v].append(str(file_path.resolve()))
 
     elif dataset_path.is_file():

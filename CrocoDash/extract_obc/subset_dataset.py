@@ -1,8 +1,11 @@
 """
 This file takes in a dictionary of variable names and their corresponding file paths, combines them all into one file, and subsets the dataset based on the provided variable names to a provided rectangle
 """
+
 from pathlib import Path
 import xarray as xr
+import cftime
+
 
 def subset_dataset(
     variable_info: dict,
@@ -40,10 +43,18 @@ def subset_dataset(
             continue
 
         # Load the dataset for the variable
-        ds = xr.open_mfdataset(file_paths, combine="by_coords")
-        # convert time to datetime64
-        if "time" in ds.coords:
-            ds["time"] = ds.indexes["time"].to_datetimeindex()
+        ds = xr.open_mfdataset(file_paths)
+
+        # Convert time. Saving to netcdf is not working with cftime objects
+        units = "days since 1850-01-01 00:00:00"
+        calendar = "noleap"
+        numeric_time = cftime.date2num(ds.time, units=units, calendar=calendar)
+        ds = ds.assign_coords(
+            time=("time", numeric_time, {"units": units, "calendar": calendar})
+        )
+
+        # Drop the time_bound variable, cftime isn't playing well, eventually this should be converted in the same way.
+        ds = ds.drop_vars("time_bound")
         mask = (
             (ds[lat_name] >= lat_min - 1)
             & (ds[lat_name] <= lat_max + 1)

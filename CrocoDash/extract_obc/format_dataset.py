@@ -20,6 +20,7 @@ def format_dataset(
     lat_name: str = "lat",
     lon_name: str = "lon",
     z_dim: str = "z_t",
+    boundary_number_conversion: dict = {"south": 1, "north": 2, "west": 3, "east": 4},
 ) -> dict:
     """
     Format the dataset to MOM6 formats
@@ -33,6 +34,7 @@ def format_dataset(
         lat_name (str): Name of the latitude variable in the dataset. Default is "lat".
         lon_name (str): Name of the longitude variable in the dataset. Default is "lon".
         z_dim (str): Name of the vertical dimension in the dataset. Default is "z_t".
+        boundary_number_conversion (dict): Mapping of boundary names to segment numbers.
 
     Returns:
         dict: Paths to the output files for each boundary.
@@ -47,10 +49,10 @@ def format_dataset(
     # Start formatting
     output_paths = []
     for v in variable_info:
-        for item in REGRID_items:
+        for item in REGRID_ITEMS:
             # Open Dataset
             ds = xr.open_dataset(input_path / f"{v}_{item}_regridded.nc")
-            if item is not "ic":
+            if item is not "IC":
                 segment_name = "segment_{:03d}".format(boundary_number_conversion[item])
                 file_path = output_path / f"{v}_obc_{segment_name}.nc"
                 if file_path.exists():
@@ -60,9 +62,15 @@ def format_dataset(
                 ## Apply Unit Conversion if needed
 
                 ## Continue formatting
-
+                # Rename improtant dim to number convention
                 dim_name = ds.variables["__xarray_dataarray_variable__"].dims[-1]
-                coords = rgd.coords(hgrid, item, segment_name)
+                parts = dim_name.split("_")
+                parts[-1] = f"{boundary_number_conversion[parts[-1]]:03d}"
+                new_dim_name = "_".join(parts)
+                ds = ds.rename({dim_name: new_dim_name})
+                dim_name = new_dim_name
+
+                coords = rgd.coords(supergrid, item, segment_name)
                 ds[v] = ds.__xarray_dataarray_variable__
                 ds = ds.drop_vars(["__xarray_dataarray_variable__"])
                 ds = ds.rename(
@@ -79,37 +87,41 @@ def format_dataset(
                             break
                     if not found_z_dim:
                         z_dim = None
-
-                if z_dim not in ds[v].dims:
-                    print(
-                        "This variable is only a surface variable, skipping z_dim conversion."
-                    )
-                    z_dim = None
-                else:
-                    ds = rgd.vertical_coordinate_encoding(
-                        ds, item_name, segment_name, z_dim
-                    )
-                    ds = rgd.generate_layer_thickness(
-                        ds, item_name, segment_name, z_dim
-                    )
-
                 ds[item_name] = rgd.fill_missing_data(
                     ds[item_name],
                     xdim=dim_name,
                     zdim=z_dim,
                 )
-                ds = rgd.add_secondary_dimension(ds, item_name, coords, segment_name)
+
+                if z_dim not in ds[item_name].dims:
+                    print(
+                        "This variable is only a surface variable, skipping z_dim conversion."
+                    )
+                    z_dim = None
+                    ds = rgd.add_secondary_dimension(
+                        ds, item_name, coords, segment_name
+                    )
+                else:
+                    ds = rgd.vertical_coordinate_encoding(
+                        ds, item_name, segment_name, z_dim
+                    )
+                    ds = rgd.add_secondary_dimension(
+                        ds, item_name, coords, segment_name
+                    )
+                    ds = rgd.generate_layer_thickness(
+                        ds, item_name, segment_name, z_dim
+                    )
+
                 # Overwrite actual lat/lon vals with grid numbers in these variables
                 ds[f"{coords.attrs['parallel']}_{segment_name}"] = np.arange(
                     ds[f"{coords.attrs['parallel']}_{segment_name}"].size
                 )
                 ds[f"{coords.attrs['perpendicular']}_{segment_name}"] = [0]
-                ds = ds.drop_vars([v])
 
                 ds = rgd.mask_dataset(
                     ds,
                     bathymetry,
-                    segment,
+                    item,
                     y_dim_name="lath",
                     x_dim_name="lonh",
                 )
@@ -137,16 +149,16 @@ def format_dataset(
                     encoding=encoding_dict,
                     unlimited_dims="time",
                 )
-                print(f"....Finished {v} {segment} processing!")
+                print(f"....Finished {v} {item} processing!")
             else:
-                file_path = out_folder / f"{v}_ic.nc"
+                file_path = output_path / f"{v}_IC.nc"
                 if file_path.exists():
-                    print(f"Already processed {v}, skipping!")
+                    print(f"Already processed {v} Initial Condition, skipping!")
                     continue
                 # Slice the velocites to the u and v grid.
-                u_points = rgd.get_hgrid_arakawa_c_points(hgrid, "u")
-                v_points = rgd.get_hgrid_arakawa_c_points(hgrid, "v")
-                t_points = rgd.get_hgrid_arakawa_c_points(hgrid, "t")
+                u_points = rgd.get_hgrid_arakawa_c_points(supergrid, "u")
+                v_points = rgd.get_hgrid_arakawa_c_points(supergrid, "v")
+                t_points = rgd.get_hgrid_arakawa_c_points(supergrid, "t")
 
                 ds[v] = ds.__xarray_dataarray_variable__
 
@@ -159,7 +171,7 @@ def format_dataset(
 
                 ds[v] = rgd.fill_missing_data(
                     ds[v],
-                    xdim="lon",
+                    xdim="nxp",
                     zdim=z_dim,
                 )
 

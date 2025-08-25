@@ -5,52 +5,9 @@ Regrid the datasets to a specified grid using regional_mom6 tools and xesmf
 from regional_mom6 import regridding as rgd
 import xarray as xr
 import json
+from pathlib import Path
 
 REGRID_ITEMS = ["IC", "west", "south", "north", "east"]
-
-
-def create_regridders(
-    input_path: str | Path,
-    output_path: str | Path,
-    supergrid: xr.Dataset,
-    variable_info: dict,
-    lat_name: str = "lat",
-    lon_name: str = "lon",
-) -> dict:
-    """
-    Return Regridders for each boundary using regional_mom6 tools.
-    """
-    hgrid = supergrid
-    # Create regridders for each boundary
-    variable_to_use = variable_info.keys()[0]
-    regridders = {}
-    ds = xr.open_dataset(input_path / f"{variable_to_use}_subset.nc")
-    ds["lon"] = ds[lon_name]
-    ds["lat"] = ds[lat_name]
-    hgrid["lon"] = hgrid["x"]
-    hgrid["lat"] = hgrid["y"]
-    for item in REGRID_ITEMS:
-        print(f"Creating regridder for {item}")
-        if item == "IC":
-            # Initial Condition must be handled seperately in 2D
-
-            regridders[item] = rgd.create_regridder(
-                ds[["lon", "lat", variable_to_use]],
-                hgrid,
-                locstream_out=False,
-                outfile=output_path / f"{item}_weights.nc",
-            )
-        else:
-            coords = rgd.coords(
-                hgrid, item, "segment_{:03d}".format(boundary_number_conversion[item])
-            )
-            regridders[item] = rgd.create_regridder(
-                ds[["lon", "lat", variable_to_use]],
-                coords,
-                locstream_out=True,
-                outfile=f"output_path/{item}_weights.nc",
-            )
-    return regridders
 
 
 def regrid_dataset_to_boundaries(
@@ -99,9 +56,9 @@ def regrid_dataset_to_boundaries(
                     if not preview:
                         regridded = regridders[item](ds[v])
 
-                    # Save regridded dataset
-                    regridded.to_netcdf(output_file)
-                    regridded.close()
+                        # Save regridded dataset
+                        regridded.to_netcdf(output_file)
+                        regridded.close()
                     output_paths.append(str(output_file.resolve()))
 
                 print(f"{v} {item} regridded")
@@ -110,6 +67,48 @@ def regrid_dataset_to_boundaries(
                 print(f"Failed to regrid {v} {item}: {e}")
 
     return output_paths
+
+
+def create_regridders(
+    input_path: str | Path,
+    output_path: str | Path,
+    supergrid: xr.Dataset,
+    variable_info: dict,
+    lat_name: str = "lat",
+    lon_name: str = "lon",
+) -> dict:
+    """
+    Return Regridders for each boundary using regional_mom6 tools.
+    """
+    hgrid = supergrid
+    # Create regridders for each boundary
+    variable_to_use = next(iter(variable_info.keys()))
+    regridders = {}
+    ds = xr.open_dataset(input_path / f"{variable_to_use}_subset.nc")
+    ds["lon"] = ds[lon_name]
+    ds["lat"] = ds[lat_name]
+    hgrid["lon"] = hgrid["x"]
+    hgrid["lat"] = hgrid["y"]
+    for item in REGRID_ITEMS:
+        print(f"Creating regridder for {item}")
+        if item == "IC":
+            # Initial Condition must be handled seperately in 2D
+
+            regridders[item] = rgd.create_regridder(
+                ds[["lon", "lat", variable_to_use]],
+                hgrid,
+                locstream_out=False,
+                outfile=output_path / f"{item}_weights.nc",
+            )
+        else:
+            coords = rgd.coords(hgrid, item, "segment_{}".format(item))
+            regridders[item] = rgd.create_regridder(
+                ds[["lon", "lat", variable_to_use]],
+                coords,
+                locstream_out=True,
+                outfile=output_path / f"{item}_weights.nc",
+            )
+    return regridders
 
 
 if __name__ == "__main__":
