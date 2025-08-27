@@ -26,6 +26,7 @@ from visualCaseGen.custom_widget_types.case_creator import CaseCreator, ERROR, R
 from visualCaseGen.custom_widget_types.case_tools import xmlchange, append_user_nl
 from mom6_bathy import chl
 
+
 class Case:
     """This class represents a regional MOM6 case within the CESM framework. It is similar to the
     Experiment class in the regional_mom6 package, but with modifications to work within the CESM framework.
@@ -124,13 +125,15 @@ class Case:
         except ConstraintViolation as e:
             print(f"{ERROR}{str(e)}{RESET}")
             return
-# Removed redundant exception handling block.
+        # Removed redundant exception handling block.
 
         self._create_grid_input_files()
 
         self._create_newcase()
 
-        self._cime_case = self.cime.get_case(self.caseroot,non_local = self.cc._is_non_local())
+        self._cime_case = self.cime.get_case(
+            self.caseroot, non_local=self.cc._is_non_local()
+        )
 
     def _init_args_check(
         self,
@@ -265,59 +268,59 @@ class Case:
         chl_processed_filepath: str | Path | None = None,
     ):
         """
-    Configure the boundary conditions and tides for the MOM6 case.
+        Configure the boundary conditions and tides for the MOM6 case.
 
-    Sets up initial and boundary condition forcing data for MOM6 using a specified product
-    and download function. Optionally configures tidal constituents if specified. Supports
-    a large data workflow mode that defers data download and processing to an external script.
+        Sets up initial and boundary condition forcing data for MOM6 using a specified product
+        and download function. Optionally configures tidal constituents if specified. Supports
+        a large data workflow mode that defers data download and processing to an external script.
 
-    Parameters
-    ----------
-    date_range : list of str
-        Start and end dates for the forcing data, formatted as strings.
-        Must contain exactly two elements.
-    boundaries : list of str, optional
-        List of open boundaries to process (e.g., ["south", "north"]).
-        Default is ["south", "north", "west", "east"].
-    tidal_constituents : list of str, optional
-        List of tidal constituents (e.g., ["M2", "S2"]) to be used for tidal forcing.
-        If provided, both TPXO elevation and velocity file paths must also be provided.
-    tpxo_elevation_filepath : str or Path, optional
-        File path to the TPXO tidal elevation data file.
-    tpxo_velocity_filepath : str or Path, optional
-        File path to the TPXO tidal velocity data file.
-    product_name : str, optional
-        Name of the forcing data product to use. Default is "GLORYS".
-    function_name : str, optional
-        Name of the function to call for downloading the forcing data.
-        Default is "get_glorys_data_script_for_cli".
-    too_much_data : bool, optional
-        If True, configures the large data workflow. In this case, data are not downloaded
-        immediately, but a config file and workflow directory are created 
-        for external processing in the forcing directory, inside the input directory.
+        Parameters
+        ----------
+        date_range : list of str
+            Start and end dates for the forcing data, formatted as strings.
+            Must contain exactly two elements.
+        boundaries : list of str, optional
+            List of open boundaries to process (e.g., ["south", "north"]).
+            Default is ["south", "north", "west", "east"].
+        tidal_constituents : list of str, optional
+            List of tidal constituents (e.g., ["M2", "S2"]) to be used for tidal forcing.
+            If provided, both TPXO elevation and velocity file paths must also be provided.
+        tpxo_elevation_filepath : str or Path, optional
+            File path to the TPXO tidal elevation data file.
+        tpxo_velocity_filepath : str or Path, optional
+            File path to the TPXO tidal velocity data file.
+        product_name : str, optional
+            Name of the forcing data product to use. Default is "GLORYS".
+        function_name : str, optional
+            Name of the function to call for downloading the forcing data.
+            Default is "get_glorys_data_script_for_cli".
+        too_much_data : bool, optional
+            If True, configures the large data workflow. In this case, data are not downloaded
+            immediately, but a config file and workflow directory are created
+            for external processing in the forcing directory, inside the input directory.
 
-    Raises
-    ------
-    TypeError
-        If inputs such as `date_range`, `boundaries`, or `tidal_constituents` are not lists of strings.
-    ValueError
-        If `date_range` does not have exactly two elements, or if tidal arguments are inconsistently specified.
-        Also raised if an invalid product or function is provided.
-    AssertionError
-        If the selected data product is not categorized as a forcing product.
+        Raises
+        ------
+        TypeError
+            If inputs such as `date_range`, `boundaries`, or `tidal_constituents` are not lists of strings.
+        ValueError
+            If `date_range` does not have exactly two elements, or if tidal arguments are inconsistently specified.
+            Also raised if an invalid product or function is provided.
+        AssertionError
+            If the selected data product is not categorized as a forcing product.
 
-    Notes
-    -----
-    - Creates an `regional_mom6.experiment` instance with the specified domain and inputs.
-    - Downloads forcing data (or creates a script) for each boundary and the initial condition unless the large data workflow is used.
-    - In large data workflow mode, creates a folder structure and `config.json` file for later manual processing.
-    - Tidal forcing requires all of: `tidal_constituents`, `tpxo_elevation_filepath`, and `tpxo_velocity_filepath`.
-    - This method must be called before `process_forcings()`.
+        Notes
+        -----
+        - Creates an `regional_mom6.experiment` instance with the specified domain and inputs.
+        - Downloads forcing data (or creates a script) for each boundary and the initial condition unless the large data workflow is used.
+        - In large data workflow mode, creates a folder structure and `config.json` file for later manual processing.
+        - Tidal forcing requires all of: `tidal_constituents`, `tpxo_elevation_filepath`, and `tpxo_velocity_filepath`.
+        - This method must be called before `process_forcings()`.
 
-    See Also
-    --------
-    process_forcings : Executes the actual boundary, initial condition, and tide setup based on the configuration.
-    """
+        See Also
+        --------
+        process_forcings : Executes the actual boundary, initial condition, and tide setup based on the configuration.
+        """
 
         if too_much_data:
             self._large_data_workflow_called = True
@@ -344,39 +347,10 @@ class Case:
             raise TypeError("boundaries must be a list of strings.")
         self.boundaries = boundaries
 
-        if tidal_constituents:
-            if not isinstance(tidal_constituents, list):
-                raise TypeError("tidal_constituents must be a list of strings.")
-            if not all(
-                isinstance(constituent, str) for constituent in tidal_constituents
-            ):
-                raise TypeError("tidal_constituents must be a list of strings.")
-        self.tidal_constituents = tidal_constituents
-
-        # all tidal arguments must be provided if any are provided
-        if any([tidal_constituents, tpxo_elevation_filepath, tpxo_velocity_filepath]):
-            if not all(
-                [tidal_constituents, tpxo_elevation_filepath, tpxo_velocity_filepath]
-            ):
-                raise ValueError(
-                    "If any tidal arguments are provided, all must be provided."
-                )
-        self.tidal_constituents = tidal_constituents
-        self.tpxo_elevation_filepath = (
-            Path(tpxo_elevation_filepath) if tpxo_elevation_filepath else None
-        )
-        self.tpxo_velocity_filepath = (
-            Path(tpxo_velocity_filepath) if tpxo_velocity_filepath else None
-        )
-
-        self.chl_processed_filepath = (
-            Path(chl_processed_filepath) if chl_processed_filepath else None
-        )
-
         session_id = cvars["MB_ATTEMPT_ID"].value
 
         # Instantiate the regional_mom6 experiment object
-       
+
         self.expt = rmom6.experiment(
             date_range=date_range,
             resolution=None,
@@ -406,6 +380,8 @@ class Case:
             if forcing_dir_path.exists():
                 shutil.rmtree(forcing_dir_path)
         forcing_dir_path.mkdir(exist_ok=False)
+
+        # Generate Boundary Info
         boundary_info = dv.get_rectangular_segment_info(self.ocn_grid)
 
         # Create the OBC generation files
@@ -418,8 +394,8 @@ class Case:
             Path(__file__).parent / "raw_data_access" / "large_data_workflow",
             self.large_data_workflow_path,
         )
-        
-        # Set Vars
+
+        # Set Vars for Config
         date_format = "%Y%m%d"
         session_id = cvars["MB_ATTEMPT_ID"].value
         hgrid_path = str(
@@ -427,7 +403,11 @@ class Case:
             / "ocnice"
             / f"ocean_hgrid_{self.ocn_grid.name}_{session_id}.nc"
         )
-        vgrid_path = str( self.inputdir / "ocnice" / f"ocean_vgrid_{self.ocn_grid.name}_{session_id}.nc")
+        vgrid_path = str(
+            self.inputdir
+            / "ocnice"
+            / f"ocean_vgrid_{self.ocn_grid.name}_{session_id}.nc"
+        )
 
         # Write Config File
 
@@ -447,7 +427,7 @@ class Case:
         config["paths"]["regridded_dataset_path"] = str(
             self.large_data_workflow_path / "regridded_data"
         )
-        config["paths"]["merged_dataset_path"] = str(self.inputdir/"ocnice")
+        config["paths"]["merged_dataset_path"] = str(self.inputdir / "ocnice")
         config["dates"]["start"] = self.expt.date_range[0].strftime(date_format)
         config["dates"]["end"] = self.expt.date_range[1].strftime(date_format)
         config["dates"]["format"] = date_format
@@ -470,12 +450,16 @@ class Case:
             # This means we start to run the driver right away, the get dataset piecewise option.
             sys.path.append(str(self.large_data_workflow_path))
             import driver
-            driver.main(regrid_dataset_piecewise = False, merge_piecewise_dataset = False)
+
+            driver.main(regrid_dataset_piecewise=False, merge_piecewise_dataset=False)
         else:
             print(
                 f"Large data workflow was called, please go to the large data workflow path: {self.large_data_workflow_path} and run the driver script there."
             )
-                
+        case.configure_tides(
+            tidal_constituents, tpxo_elevation_filepath, tpxo_velocity_filepath
+        )
+        case.configure_chl(chl_processed_filepath)
         self._configure_forcings_called = True
 
     def process_forcings(
@@ -484,56 +468,58 @@ class Case:
         process_tides=True,
         process_velocity_tracers=True,
         process_chl=True,
-        process_param_changes = True
+        process_param_changes=True,
     ):
         """
-    Process boundary conditions, initial conditions, and tides for a MOM6 case.
+        Process boundary conditions, initial conditions, and tides for a MOM6 case.
 
-    This method configures a regional MOM6 case's ocean state boundaries and initial conditions
-    using previously downloaded data setup in configure_forcings. It also processes tidal boundary conditions
-    if tidal constituents are specified. The method expects `configure_forcings()` to be
-    called beforehand.
+        This method configures a regional MOM6 case's ocean state boundaries and initial conditions
+        using previously downloaded data setup in configure_forcings. It also processes tidal boundary conditions
+        if tidal constituents are specified. The method expects `configure_forcings()` to be
+        called beforehand.
 
-    Parameters
-    ----------
-    process_initial_condition : bool, optional
-        Whether to process the initial condition file. Default is True.
-    process_tides : bool, optional
-        Whether to process tidal boundary conditions. Default is True.
-    process_chl : bool, optional
-        Whether to process chlorophyll data. Default is True.
-    process_velocity_tracers : bool, optional
-        Whether to process velocity and tracer boundary conditions. Default is True.
-        This will be overridden and set to False if the large data workflow in configure_forcings is enabled.
-    process_param_changes : bool, optional
-        Whether to process the namelist and xml changes required to run a regional MOM6 case in the CESM. 
+        Parameters
+        ----------
+        process_initial_condition : bool, optional
+            Whether to process the initial condition file. Default is True.
+        process_tides : bool, optional
+            Whether to process tidal boundary conditions. Default is True.
+        process_chl : bool, optional
+            Whether to process chlorophyll data. Default is True.
+        process_velocity_tracers : bool, optional
+            Whether to process velocity and tracer boundary conditions. Default is True.
+            This will be overridden and set to False if the large data workflow in configure_forcings is enabled.
+        process_param_changes : bool, optional
+            Whether to process the namelist and xml changes required to run a regional MOM6 case in the CESM.
 
-    Raises
-    ------
-    RuntimeError
-        If `configure_forcings()` was not called before this method.
-    FileNotFoundError
-        If required unprocessed files are missing in the expected directories.
+        Raises
+        ------
+        RuntimeError
+            If `configure_forcings()` was not called before this method.
+        FileNotFoundError
+            If required unprocessed files are missing in the expected directories.
 
-    Notes
-    -----
-    - This method uses variable name mappings specified in the forcing product configuration.
-    - If the large data workflow has been enabled, velocity and tracer OBCs are not processed
-      within this method and must be handled externally.
-    - If tidal constituents are configured, TPXO elevation and velocity files must be available.
-    - Applies forcing-related namelist and XML updates at the end of the method.
+        Notes
+        -----
+        - This method uses variable name mappings specified in the forcing product configuration.
+        - If the large data workflow has been enabled, velocity and tracer OBCs are not processed
+          within this method and must be handled externally.
+        - If tidal constituents are configured, TPXO elevation and velocity files must be available.
+        - Applies forcing-related namelist and XML updates at the end of the method.
 
-    See Also
-    --------
-    configure_forcings : Must be called before this method to set up the environment.
-    """
+        See Also
+        --------
+        configure_forcings : Must be called before this method to set up the environment.
+        """
 
         if not self._configure_forcings_called:
             raise RuntimeError(
                 "configure_forcings() must be called before process_forcings()."
             )
 
-        if self._large_data_workflow_called and (process_velocity_tracers or process_initial_condition):
+        if self._large_data_workflow_called and (
+            process_velocity_tracers or process_initial_condition
+        ):
             process_velocity_tracers = False
             process_initial_condition = False
             print(
@@ -542,13 +528,13 @@ class Case:
             print(
                 f"Please make sure to execute large_data_workflow as described in {self.large_data_workflow_path}"
             )
-        forcing_path = self.inputdir / self.forcing_product_name
-        forcing_path = self.inputdir / self.forcing_product_name
 
         # check all the boundary files are present:
         if (
             process_initial_condition
-            and not (self.large_data_workflow_path / "raw_data" / "ic_unprocessed.nc").exists()
+            and not (
+                self.large_data_workflow_path / "raw_data" / "ic_unprocessed.nc"
+            ).exists()
         ):
             raise FileNotFoundError(
                 f"Initial condition file ic_unprocessed.nc not found in {self.large_data_workflow_path/'raw_data' }. "
@@ -557,18 +543,19 @@ class Case:
             )
 
         for boundary in self.boundaries:
-            if (
-                process_velocity_tracers
-                and not any((self.large_data_workflow_path / "raw_data").glob(f"{boundary}_unprocessed*.nc"))):
+            if process_velocity_tracers and not any(
+                (self.large_data_workflow_path / "raw_data").glob(
+                    f"{boundary}_unprocessed*.nc"
+                )
+            ):
                 raise FileNotFoundError(
                     f"Boundary file {boundary}_unprocessed.nc not found in {self.large_data_workflow_path / 'raw_data'}. "
                     "Please make sure to execute get_glorys_data.sh script as described in "
                     "the message printed by configure_forcings()."
                 )
 
-
         # Set up the initial condition & boundary conditions
-        
+
         with open(self.large_data_workflow_path / "config.json", "r") as f:
             config = json.load(f)
         if process_initial_condition:
@@ -585,8 +572,51 @@ class Case:
         if process_initial_condition or process_velocity_tracers:
             sys.path.append(str(self.large_data_workflow_path))
             import driver
-            driver.main(get_dataset_piecewise = False,regrid_dataset_piecewise = True, merge_piecewise_dataset = True)
 
+            driver.main(
+                get_dataset_piecewise=False,
+                regrid_dataset_piecewise=True,
+                merge_piecewise_dataset=True,
+            )
+
+        case.process_tides(process_tides)
+        case.process_chl(process_chl)
+
+        # Apply forcing-related namelist and xml changes
+        if process_param_changes:
+            self._update_forcing_variables()
+
+    def configure_tides(
+        self,
+        tidal_constituents: list[str] | None = None,
+        tpxo_elevation_filepath: str | Path | None = None,
+        tpxo_velocity_filepath: str | Path | None = None,
+    ):
+        if tidal_constituents:
+            if not isinstance(tidal_constituents, list):
+                raise TypeError("tidal_constituents must be a list of strings.")
+            if not all(
+                isinstance(constituent, str) for constituent in tidal_constituents
+            ):
+                raise TypeError("tidal_constituents must be a list of strings.")
+        self.tidal_constituents = tidal_constituents
+        # all tidal arguments must be provided if any are provided
+        if any([tidal_constituents, tpxo_elevation_filepath, tpxo_velocity_filepath]):
+            if not all(
+                [tidal_constituents, tpxo_elevation_filepath, tpxo_velocity_filepath]
+            ):
+                raise ValueError(
+                    "If any tidal arguments are provided, all must be provided."
+                )
+        self.tidal_constituents = tidal_constituents
+        self.tpxo_elevation_filepath = (
+            Path(tpxo_elevation_filepath) if tpxo_elevation_filepath else None
+        )
+        self.tpxo_velocity_filepath = (
+            Path(tpxo_velocity_filepath) if tpxo_velocity_filepath else None
+        )
+
+    def process_tides(self, process_tides: bool):
         # Process the tides
         if process_tides and self.tidal_constituents:
 
@@ -597,12 +627,12 @@ class Case:
                 tidal_constituents=self.tidal_constituents,
             )
 
-        # regional_mom6 places OBC files under inputdir/forcing. Move them to inputdir:
-        if (forcing_dir := self.inputdir / "ocnice" / "forcing").exists():
-            for file in forcing_dir.iterdir():
-                shutil.move(file, self.inputdir / "ocnice")
-            forcing_dir.rmdir()
+    def configure_chl(self, chl_processed_filepath: str | Path):
+        self.chl_processed_filepath = (
+            Path(chl_processed_filepath) if chl_processed_filepath else None
+        )
 
+    def process_chl(process_chl: bool):
         # Process the chlorophyll file if it is provided
         if process_chl and self.chl_processed_filepath is not None:
             if not self.chl_processed_filepath.exists():
@@ -614,12 +644,10 @@ class Case:
                 self.ocn_grid,
                 self.ocn_topo,
                 self.chl_processed_filepath,
-                self.inputdir / "ocnice" / f"seawifs-clim-1997-2010-{self.ocn_grid.name}.nc",
+                self.inputdir
+                / "ocnice"
+                / f"seawifs-clim-1997-2010-{self.ocn_grid.name}.nc",
             )
-
-        # Apply forcing-related namelist and xml changes
-        if process_param_changes:
-            self._update_forcing_variables()
 
     @property
     def name(self) -> str:
@@ -670,12 +698,12 @@ class Case:
         """
 
         assert Stage.first().enabled
-        cvars['COMPSET_MODE'].value = 'Custom'
+        cvars["COMPSET_MODE"].value = "Custom"
 
         # Stage: Time Period
-        assert Stage.active().title.startswith('Time Period')
+        assert Stage.active().title.startswith("Time Period")
         inittime = compset.split("_")[0]
-        cvars['INITTIME'].value = inittime
+        cvars["INITTIME"].value = inittime
 
         # Generate a mapping from physics to models, e.g., "CAM60" -> "cam"
         phys_to_model = {}
@@ -687,7 +715,7 @@ class Case:
         components = self.cime.get_components_from_compset_lname(compset)
 
         # Stage: Components (i.e., models, e.g., cam, cice, mom6, etc.)
-        assert Stage.active().title.startswith('Components')
+        assert Stage.active().title.startswith("Components")
         for comp_class, phys in components.items():
             phys = phys.split("%")[0]  # Get the physics part
             if phys not in phys_to_model:
@@ -696,18 +724,19 @@ class Case:
             cvars[f"COMP_{comp_class}"].value = model
 
         # Stage: Model Physics (e.g, CAM60, MOM6, etc.)
-        if Stage.active().title.startswith('Component Physics'):
+        if Stage.active().title.startswith("Component Physics"):
             for comp_class, phys in components.items():
                 phys = phys.split("%")[0]  # Get the physics part
                 cvars[f"COMP_{comp_class}_PHYS"].value = phys
         else:
             # Physics and/or Options stages may be auto-completed if each chosen model has
             # exactly one physics and modifier option (though, this is unlikely).
-            assert Stage.active().title.startswith('Component Options') \
-                or Stage.active().title.startswith('2. Grid')
+            assert Stage.active().title.startswith(
+                "Component Options"
+            ) or Stage.active().title.startswith("2. Grid")
 
         # Stage: Component Physics Options (i.e., modifiers for the physics, e.g. %JRA, %MARBL-BIO, etc.)
-        if Stage.active().title.startswith('Component Options'):
+        if Stage.active().title.startswith("Component Options"):
             for comp_class, phys in components.items():
                 opt = phys.split("%")[1] if "%" in phys else None
                 if opt is not None:
@@ -720,9 +749,9 @@ class Case:
 
     def _assign_configvars(self, compset, machine, project):
         """Assign the configvars (i.e., configuration variables for the case, such as components, physics,
-        options, grids, etc.) The cvars dict is a visualCaseGen data structure that contains all the 
+        options, grids, etc.) The cvars dict is a visualCaseGen data structure that contains all the
         configuration variables for a case to be created. Incrementally setting configvars leads to the
-        completion of successive stages in the visualCaseGen workflow and thus enables the creation of 
+        completion of successive stages in the visualCaseGen workflow and thus enables the creation of
         a new case.
         """
 
@@ -917,7 +946,15 @@ class Case:
             log_title=False,
         )
 
-        xmlchange("RUN_STARTDATE", str(self.date_range[0])[:10],is_non_local=self.cc._is_non_local())
-        xmlchange("MOM6_MEMORY_MODE", "dynamic_symmetric", is_non_local=self.cc._is_non_local())
+        xmlchange(
+            "RUN_STARTDATE",
+            str(self.date_range[0])[:10],
+            is_non_local=self.cc._is_non_local(),
+        )
+        xmlchange(
+            "MOM6_MEMORY_MODE",
+            "dynamic_symmetric",
+            is_non_local=self.cc._is_non_local(),
+        )
 
         print(f"Case is ready to be built: {self.caseroot}")
