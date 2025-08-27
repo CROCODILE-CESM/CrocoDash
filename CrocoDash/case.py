@@ -202,37 +202,46 @@ class Case:
 
         # suffix for the MOM6 grid files
         session_id = cvars["MB_ATTEMPT_ID"].value
-
-        # MOM6 supergrid file
-        ocn_grid.write_supergrid(
-            inputdir / "ocnice" / f"ocean_hgrid_{ocn_grid.name}_{session_id}.nc"
+        self.supergrid_path = str(
+            self.inputdir
+            / "ocnice"
+            / f"ocean_hgrid_{self.ocn_grid.name}_{session_id}.nc"
         )
-
-        # MOM6 topography file
-        ocn_topo.write_topo(
+        self.vgrid_path = str(
+            self.inputdir
+            / "ocnice"
+            / f"ocean_vgrid_{self.ocn_grid.name}_{session_id}.nc"
+        )
+        self.topo_path = str(
             inputdir / "ocnice" / f"ocean_topog_{ocn_grid.name}_{session_id}.nc"
         )
+        self.scrip_grid_path = (
+            inputdir / "ocnice" / f"scrip_{ocn_grid.name}_{session_id}.nc"
+        )
+        self.esmf_mesh_path = (
+            inputdir / "ocnice" / f"ESMF_mesh_{ocn_grid.name}_{session_id}.nc"
+        )
+        # MOM6 supergrid file
+        ocn_grid.write_supergrid(self.supergrid_path)
+
+        # MOM6 topography file
+        ocn_topo.write_topo(self.topo_path)
 
         # MOM6 vertical grid file
-        ocn_vgrid.write(
-            inputdir / "ocnice" / f"ocean_vgrid_{ocn_grid.name}_{session_id}.nc"
-        )
+        ocn_vgrid.write(self.vgrid_path)
 
         # CICE grid file (if needed)
         if "CICE" in self.compset:
-            ocn_topo.write_cice_grid(
+            self.cice_grid_path = (
                 inputdir / "ocnice" / f"cice_grid_{ocn_grid.name}_{session_id}.nc"
             )
+            ocn_topo.write_cice_grid(self.cice_grid_path)
 
         # SCRIP grid file (needed for runoff remapping)
-        ocn_topo.write_scrip_grid(
-            inputdir / "ocnice" / f"scrip_{ocn_grid.name}_{session_id}.nc"
-        )
+        ocn_topo.write_scrip_grid(self.scrip_grid_path)
 
         # ESMF mesh file:
-        ocn_topo.write_esmf_mesh(
-            inputdir / "ocnice" / f"ESMF_mesh_{ocn_grid.name}_{session_id}.nc"
-        )
+        ocn_topo.write_esmf_mesh(self.esmf_mesh_path)
 
     def _create_newcase(self):
         """Create the case instance."""
@@ -321,13 +330,24 @@ class Case:
         --------
         process_forcings : Executes the actual boundary, initial condition, and tide setup based on the configuration.
         """
-        case.configure_initial_and_boundary_conditions(
-            date_range, boundaries, product_name, function_name, too_much_data
+        # Create the forcing directory
+        if self.override is True:
+            forcing_dir_path = self.inputdir / self.forcing_product_name
+            if forcing_dir_path.exists():
+                shutil.rmtree(forcing_dir_path)
+        forcing_dir_path.mkdir(exist_ok=False)
+
+        self.configure_initial_and_boundary_conditions(
+            date_range=date_range,
+            boundaries=boundaries,
+            product_name=product_name,
+            function_name=function_name,
+            too_much_data=too_much_data,
         )
-        case.configure_tides(
+        self.configure_tides(
             tidal_constituents, tpxo_elevation_filepath, tpxo_velocity_filepath
         )
-        case.configure_chl(chl_processed_filepath)
+        self.configure_chl(chl_processed_filepath)
         self._configure_forcings_called = True
 
     def process_forcings(
@@ -385,11 +405,11 @@ class Case:
                 "configure_forcings() must be called before process_forcings()."
             )
 
-        case.process_initial_and_boundary_conditions(
+        self.process_initial_and_boundary_conditions(
             process_initial_condition, process_velocity_tracers
         )
-        case.process_tides(process_tides)
-        case.process_chl(process_chl)
+        self.process_tides(process_tides)
+        self.process_chl(process_chl)
 
         # Apply forcing-related namelist and xml changes
         if process_param_changes:
@@ -406,6 +426,8 @@ class Case:
         assert (
             tb.category_of_product(product_name) == "forcing"
         ), "Data product must be a forcing product"
+
+        self.ProductFunctionRegistry.load_functions()
         if not self.ProductFunctionRegistry.validate_function(
             product_name, function_name
         ):
@@ -427,41 +449,8 @@ class Case:
 
         if too_much_data:
             self._large_data_workflow_called = True
-        self.ProductFunctionRegistry.load_functions()
 
-        session_id = cvars["MB_ATTEMPT_ID"].value
-
-        # Instantiate the regional_mom6 experiment object
-
-        self.expt = rmom6.experiment(
-            date_range=date_range,
-            resolution=None,
-            number_vertical_layers=None,
-            layer_thickness_ratio=None,
-            depth=self.ocn_topo.max_depth,
-            mom_run_dir=self._cime_case.get_value("RUNDIR"),
-            mom_input_dir=self.inputdir / "ocnice",
-            hgrid_type="from_file",
-            hgrid_path=self.inputdir
-            / "ocnice"
-            / f"ocean_hgrid_{self.ocn_grid.name}_{session_id}.nc",
-            vgrid_type="from_file",
-            vgrid_path=self.inputdir
-            / "ocnice"
-            / f"ocean_vgrid_{self.ocn_grid.name}_{session_id}.nc",
-            minimum_depth=self.ocn_topo.min_depth,
-            tidal_constituents=self.tidal_constituents,
-            expt_name=self.caseroot.name,
-            boundaries=self.boundaries,
-        )
         date_range = pd.to_datetime(date_range)
-
-        # Create the forcing directory
-        if self.override is True:
-            forcing_dir_path = self.inputdir / self.forcing_product_name
-            if forcing_dir_path.exists():
-                shutil.rmtree(forcing_dir_path)
-        forcing_dir_path.mkdir(exist_ok=False)
 
         # Generate Boundary Info
         boundary_info = dv.get_rectangular_segment_info(self.ocn_grid)
@@ -480,16 +469,6 @@ class Case:
         # Set Vars for Config
         date_format = "%Y%m%d"
         session_id = cvars["MB_ATTEMPT_ID"].value
-        hgrid_path = str(
-            self.inputdir
-            / "ocnice"
-            / f"ocean_hgrid_{self.ocn_grid.name}_{session_id}.nc"
-        )
-        vgrid_path = str(
-            self.inputdir
-            / "ocnice"
-            / f"ocean_vgrid_{self.ocn_grid.name}_{session_id}.nc"
-        )
 
         # Write Config File
 
@@ -501,8 +480,8 @@ class Case:
 
         with open(self.large_data_workflow_path / "config.json", "r") as f:
             config = json.load(f)
-        config["paths"]["hgrid_path"] = hgrid_path
-        config["paths"]["vgrid_path"] = vgrid_path
+        config["paths"]["hgrid_path"] = self.supergrid_path
+        config["paths"]["vgrid_path"] = self.vgrid_path
         config["paths"]["raw_dataset_path"] = str(
             self.large_data_workflow_path / "raw_data"
         )
@@ -510,8 +489,8 @@ class Case:
             self.large_data_workflow_path / "regridded_data"
         )
         config["paths"]["merged_dataset_path"] = str(self.inputdir / "ocnice")
-        config["dates"]["start"] = self.expt.date_range[0].strftime(date_format)
-        config["dates"]["end"] = self.expt.date_range[1].strftime(date_format)
+        config["dates"]["start"] = date_range[0].strftime(date_format)
+        config["dates"]["end"] = date_range[1].strftime(date_format)
         config["dates"]["format"] = date_format
         config["forcing"]["product_name"] = self.forcing_product_name.upper()
         config["forcing"]["function_name"] = function_name
@@ -544,6 +523,7 @@ class Case:
         tidal_constituents: list[str] | None = None,
         tpxo_elevation_filepath: str | Path | None = None,
         tpxo_velocity_filepath: str | Path | None = None,
+        boundaries: list[str] = ["south", "north", "west", "east"],
     ):
         if tidal_constituents:
             if not isinstance(tidal_constituents, list):
@@ -568,6 +548,30 @@ class Case:
         self.tpxo_velocity_filepath = (
             Path(tpxo_velocity_filepath) if tpxo_velocity_filepath else None
         )
+        session_id = cvars["MB_ATTEMPT_ID"].value
+
+        self.expt = rmom6.experiment(
+            date_range=("0001-01-01 00:00:00", "0001-01-01 00:00:00"),
+            resolution=None,
+            number_vertical_layers=None,
+            layer_thickness_ratio=None,
+            depth=self.ocn_topo.max_depth,
+            mom_run_dir=self._cime_case.get_value("RUNDIR"),
+            mom_input_dir=self.inputdir / "ocnice",
+            hgrid_type="from_file",
+            hgrid_path=self.supergrid_path,
+            vgrid_type="from_file",
+            vgrid_path=self.vgrid_path,
+            minimum_depth=self.ocn_topo.min_depth,
+            tidal_constituents=self.tidal_constituents,
+            expt_name=self.caseroot.name,
+            boundaries=self.boundaries,
+        )
+
+    def configure_chl(self, chl_processed_filepath: str | Path):
+        self.chl_processed_filepath = (
+            Path(chl_processed_filepath) if chl_processed_filepath else None
+        )
 
     def process_tides(self, process_tides: bool):
         # Process the tides
@@ -580,12 +584,7 @@ class Case:
                 tidal_constituents=self.tidal_constituents,
             )
 
-    def configure_chl(self, chl_processed_filepath: str | Path):
-        self.chl_processed_filepath = (
-            Path(chl_processed_filepath) if chl_processed_filepath else None
-        )
-
-    def process_chl(process_chl: bool):
+    def process_chl(self, process_chl: bool):
         # Process the chlorophyll file if it is provided
         if process_chl and self.chl_processed_filepath is not None:
             if not self.chl_processed_filepath.exists():
@@ -593,17 +592,20 @@ class Case:
                     f"Chlorophyll file {self.chl_processed_filepath} does not exist."
                 )
             # Process the chlorophyll file
+            self.regional_chl_file_path = (
+                self.inputdir
+                / "ocnice"
+                / f"seawifs-clim-1997-2010-{self.ocn_grid.name}.nc"
+            )
             chl.interpolate_and_fill_seawifs(
                 self.ocn_grid,
                 self.ocn_topo,
                 self.chl_processed_filepath,
-                self.inputdir
-                / "ocnice"
-                / f"seawifs-clim-1997-2010-{self.ocn_grid.name}.nc",
+                self.regional_chl_file_path,
             )
 
     def process_initial_and_boundary_conditions(
-        process_initial_condition, process_velocity_tracers
+        self, process_initial_condition, process_velocity_tracers
     ):
         if self._large_data_workflow_called and (
             process_velocity_tracers or process_initial_condition
