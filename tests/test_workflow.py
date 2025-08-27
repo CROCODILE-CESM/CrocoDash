@@ -77,11 +77,11 @@ def run_full_workflow(
             bounds["ic"]["lon_min"],
             bounds["ic"]["lon_max"],
         )
-        ds.to_netcdf(case.inputdir / "glorys" / "ic_unprocessed.nc")
-        ds.to_netcdf(case.inputdir / "glorys" / "east_unprocessed.nc")
-        ds.to_netcdf(case.inputdir / "glorys" / "west_unprocessed.nc")
-        ds.to_netcdf(case.inputdir / "glorys" / "north_unprocessed.nc")
-        ds.to_netcdf(case.inputdir / "glorys" / "south_unprocessed.nc")
+        ds.to_netcdf(case.inputdir / "glorys" / "large_data_workflow"/"raw_data"/ "ic_unprocessed.20200101_20200201.nc")
+        ds.to_netcdf(case.inputdir / "glorys" / "large_data_workflow"/"raw_data" / "east_unprocessed.20200101_20200201.nc")
+        ds.to_netcdf(case.inputdir / "glorys" / "large_data_workflow"/"raw_data" / "west_unprocessed.20200101_20200201.nc")
+        ds.to_netcdf(case.inputdir / "glorys" / "large_data_workflow"/"raw_data" / "north_unprocessed.20200101_20200201.nc")
+        ds.to_netcdf(case.inputdir / "glorys" / "large_data_workflow"/"raw_data" / "south_unprocessed.20200101_20200201.nc")
     else:
         case.configure_forcings(
             date_range=["2020-01-01 00:00:00", "2020-02-06 00:00:00"],
