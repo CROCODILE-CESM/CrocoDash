@@ -21,7 +21,7 @@ def test_driver():
     return
 
 
-def main():
+def main(get_dataset_piecewise= True, regrid_dataset_piecewise=True, merge_piecewise_dataset=True):
     """
     Driver file to run the large data workflow
     """
@@ -33,48 +33,54 @@ def main():
         config = json.load(f)
 
     # Call get_dataset_piecewise
-    gdp.get_dataset_piecewise(
-        product_name=config["forcing"]["product_name"],
-        function_name=config["forcing"]["function_name"],
-        date_format=config["dates"]["format"],
-        start_date=config["dates"]["start"],
-        end_date=config["dates"]["end"],
-        hgrid_path=config["paths"]["hgrid_path"],
-        step_days=int(config["params"]["step"]),
-        output_dir=config["paths"]["raw_dataset_path"],
-        boundary_number_conversion=config["boundary_number_conversion"],
-        run_initial_condition=config["params"]["run_initial_condition"],
-        preview=config["params"]["preview"],
-    )
+    if get_dataset_piecewise:
+        gdp.get_dataset_piecewise(
+            product_name=config["forcing"]["product_name"],
+            function_name=config["forcing"]["function_name"],
+            date_format=config["dates"]["format"],
+            start_date=config["dates"]["start"],
+            end_date=config["dates"]["end"],
+            hgrid_path=config["paths"]["hgrid_path"],
+            step_days=int(config["params"]["step"]),
+            output_dir=config["paths"]["raw_dataset_path"],
+            boundary_number_conversion=config["boundary_number_conversion"],
+            run_initial_condition=config["params"]["run_initial_condition"],
+            run_boundary_conditions=config["params"]["run_boundary_conditions"],
+            preview=config["params"]["preview"],
+        )
 
     # Call regrid_dataset_piecewise
-    rdp.regrid_dataset_piecewise(
-        config["paths"]["raw_dataset_path"],
-        config["file_regex"]["raw_dataset_pattern"],
-        config["dates"]["format"],
-        config["dates"]["start"],
-        config["dates"]["end"],
-        config["paths"]["hgrid_path"],
-        config["forcing"]["varnames"],
-        config["paths"]["regridded_dataset_path"],
-        config["boundary_number_conversion"],
-        config["params"]["run_initial_condition"],
-        config["paths"]["vgrid_path"],
-        config["params"]["preview"],
-    )
+    if regrid_dataset_piecewise:
+        rdp.regrid_dataset_piecewise(
+            config["paths"]["raw_dataset_path"],
+            config["file_regex"]["raw_dataset_pattern"],
+            config["dates"]["format"],
+            config["dates"]["start"],
+            config["dates"]["end"],
+            config["paths"]["hgrid_path"],
+            config["forcing"]["varnames"],
+            config["paths"]["regridded_dataset_path"],
+            config["boundary_number_conversion"],
+            config["params"]["run_initial_condition"],
+            config["params"]["run_boundary_conditions"],
+            config["paths"]["vgrid_path"],
+            config["params"]["preview"],
+        )
 
     # Call merge_dataset_piecewise
-    mpd.merge_piecewise_dataset(
-        config["paths"]["regridded_dataset_path"],
-        config["file_regex"]["regridded_dataset_pattern"],
-        config["dates"]["format"],
-        config["dates"]["start"],
-        config["dates"]["end"],
-        config["boundary_number_conversion"],
-        config["paths"]["merged_dataset_path"],
-        config["params"]["run_initial_condition"],
-        config["params"]["preview"],
-    )
+    if merge_piecewise_dataset:
+        mpd.merge_piecewise_dataset(
+            config["paths"]["regridded_dataset_path"],
+            config["file_regex"]["regridded_dataset_pattern"],
+            config["dates"]["format"],
+            config["dates"]["start"],
+            config["dates"]["end"],
+            config["boundary_number_conversion"],
+            config["paths"]["merged_dataset_path"],
+            config["params"]["run_initial_condition"],
+            config["params"]["run_boundary_conditions"],
+            config["params"]["preview"],
+        )
     return
 
 
