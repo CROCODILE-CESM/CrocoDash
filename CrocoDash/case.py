@@ -550,7 +550,7 @@ class Case:
         session_id = cvars["MB_ATTEMPT_ID"].value
 
         self.expt = rmom6.experiment(
-            date_range=("0001-01-01 00:00:00", "0001-01-01 00:00:00"),
+            date_range=("1850-01-01 00:00:00", "1851-01-01 00:00:00"), # Dummy times
             resolution=None,
             number_vertical_layers=None,
             layer_thickness_ratio=None,
