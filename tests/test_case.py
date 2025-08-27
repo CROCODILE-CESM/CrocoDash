@@ -145,9 +145,6 @@ def test_process_forcing(get_CrocoDash_case, tmp_path):
     )
     path = case.inputdir / "glorys"/"large_data_workflow"/"raw_data"
     filenames = ["ic_unprocessed.nc", "north_unprocessed.nc"]
-    for name in filenames:
-        with open(path / name, "w") as file:
-            pass
     with pytest.raises(FileNotFoundError):
         case.process_forcings()
 
