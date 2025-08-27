@@ -77,7 +77,7 @@ def run_full_workflow(
             bounds["ic"]["lon_min"],
             bounds["ic"]["lon_max"],
         )
-        ds.to_netcdf(case.inputdir / "glorys" / "large_data_workflow"/"raw_data"/ "ic_unprocessed.20200101_20200201.nc")
+        ds.to_netcdf(case.inputdir / "glorys" / "large_data_workflow"/"raw_data"/ "ic_unprocessed.nc")
         ds.to_netcdf(case.inputdir / "glorys" / "large_data_workflow"/"raw_data" / "east_unprocessed.20200101_20200201.nc")
         ds.to_netcdf(case.inputdir / "glorys" / "large_data_workflow"/"raw_data" / "west_unprocessed.20200101_20200201.nc")
         ds.to_netcdf(case.inputdir / "glorys" / "large_data_workflow"/"raw_data" / "north_unprocessed.20200101_20200201.nc")
