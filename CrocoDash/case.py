@@ -321,10 +321,88 @@ class Case:
         --------
         process_forcings : Executes the actual boundary, initial condition, and tide setup based on the configuration.
         """
+        case.configure_initial_and_boundary_conditions(
+            date_range, boundaries, product_name, function_name, too_much_data
+        )
+        case.configure_tides(
+            tidal_constituents, tpxo_elevation_filepath, tpxo_velocity_filepath
+        )
+        case.configure_chl(chl_processed_filepath)
+        self._configure_forcings_called = True
 
-        if too_much_data:
-            self._large_data_workflow_called = True
-        self.ProductFunctionRegistry.load_functions()
+    def process_forcings(
+        self,
+        process_initial_condition=True,
+        process_tides=True,
+        process_velocity_tracers=True,
+        process_chl=True,
+        process_param_changes=True,
+    ):
+        """
+        Process boundary conditions, initial conditions, and tides for a MOM6 case.
+
+        This method configures a regional MOM6 case's ocean state boundaries and initial conditions
+        using previously downloaded data setup in configure_forcings. It also processes tidal boundary conditions
+        if tidal constituents are specified. The method expects `configure_forcings()` to be
+        called beforehand.
+
+        Parameters
+        ----------
+        process_initial_condition : bool, optional
+            Whether to process the initial condition file. Default is True.
+        process_tides : bool, optional
+            Whether to process tidal boundary conditions. Default is True.
+        process_chl : bool, optional
+            Whether to process chlorophyll data. Default is True.
+        process_velocity_tracers : bool, optional
+            Whether to process velocity and tracer boundary conditions. Default is True.
+            This will be overridden and set to False if the large data workflow in configure_forcings is enabled.
+        process_param_changes : bool, optional
+            Whether to process the namelist and xml changes required to run a regional MOM6 case in the CESM.
+
+        Raises
+        ------
+        RuntimeError
+            If `configure_forcings()` was not called before this method.
+        FileNotFoundError
+            If required unprocessed files are missing in the expected directories.
+
+        Notes
+        -----
+        - This method uses variable name mappings specified in the forcing product configuration.
+        - If the large data workflow has been enabled, velocity and tracer OBCs are not processed
+          within this method and must be handled externally.
+        - If tidal constituents are configured, TPXO elevation and velocity files must be available.
+        - Applies forcing-related namelist and XML updates at the end of the method.
+
+        See Also
+        --------
+        configure_forcings : Must be called before this method to set up the environment.
+        """
+
+        if not self._configure_forcings_called:
+            raise RuntimeError(
+                "configure_forcings() must be called before process_forcings()."
+            )
+
+        case.process_initial_and_boundary_conditions(
+            process_initial_condition, process_velocity_tracers
+        )
+        case.process_tides(process_tides)
+        case.process_chl(process_chl)
+
+        # Apply forcing-related namelist and xml changes
+        if process_param_changes:
+            self._update_forcing_variables()
+
+    def configure_initial_and_boundary_conditions(
+        self,
+        date_range: list[str],
+        boundaries: list[str] = ["south", "north", "west", "east"],
+        product_name: str = "GLORYS",
+        function_name: str = "get_glorys_data_script_for_cli",
+        too_much_data: bool = False,
+    ):
         assert (
             tb.category_of_product(product_name) == "forcing"
         ), "Data product must be a forcing product"
@@ -346,6 +424,10 @@ class Case:
         if not all(isinstance(boundary, str) for boundary in boundaries):
             raise TypeError("boundaries must be a list of strings.")
         self.boundaries = boundaries
+
+        if too_much_data:
+            self._large_data_workflow_called = True
+        self.ProductFunctionRegistry.load_functions()
 
         session_id = cvars["MB_ATTEMPT_ID"].value
 
@@ -456,135 +538,6 @@ class Case:
             print(
                 f"Large data workflow was called, please go to the large data workflow path: {self.large_data_workflow_path} and run the driver script there."
             )
-        case.configure_tides(
-            tidal_constituents, tpxo_elevation_filepath, tpxo_velocity_filepath
-        )
-        case.configure_chl(chl_processed_filepath)
-        self._configure_forcings_called = True
-
-    def process_forcings(
-        self,
-        process_initial_condition=True,
-        process_tides=True,
-        process_velocity_tracers=True,
-        process_chl=True,
-        process_param_changes=True,
-    ):
-        """
-        Process boundary conditions, initial conditions, and tides for a MOM6 case.
-
-        This method configures a regional MOM6 case's ocean state boundaries and initial conditions
-        using previously downloaded data setup in configure_forcings. It also processes tidal boundary conditions
-        if tidal constituents are specified. The method expects `configure_forcings()` to be
-        called beforehand.
-
-        Parameters
-        ----------
-        process_initial_condition : bool, optional
-            Whether to process the initial condition file. Default is True.
-        process_tides : bool, optional
-            Whether to process tidal boundary conditions. Default is True.
-        process_chl : bool, optional
-            Whether to process chlorophyll data. Default is True.
-        process_velocity_tracers : bool, optional
-            Whether to process velocity and tracer boundary conditions. Default is True.
-            This will be overridden and set to False if the large data workflow in configure_forcings is enabled.
-        process_param_changes : bool, optional
-            Whether to process the namelist and xml changes required to run a regional MOM6 case in the CESM.
-
-        Raises
-        ------
-        RuntimeError
-            If `configure_forcings()` was not called before this method.
-        FileNotFoundError
-            If required unprocessed files are missing in the expected directories.
-
-        Notes
-        -----
-        - This method uses variable name mappings specified in the forcing product configuration.
-        - If the large data workflow has been enabled, velocity and tracer OBCs are not processed
-          within this method and must be handled externally.
-        - If tidal constituents are configured, TPXO elevation and velocity files must be available.
-        - Applies forcing-related namelist and XML updates at the end of the method.
-
-        See Also
-        --------
-        configure_forcings : Must be called before this method to set up the environment.
-        """
-
-        if not self._configure_forcings_called:
-            raise RuntimeError(
-                "configure_forcings() must be called before process_forcings()."
-            )
-
-        if self._large_data_workflow_called and (
-            process_velocity_tracers or process_initial_condition
-        ):
-            process_velocity_tracers = False
-            process_initial_condition = False
-            print(
-                f"Large data workflow was called, so boundary & initial conditions will not be processed."
-            )
-            print(
-                f"Please make sure to execute large_data_workflow as described in {self.large_data_workflow_path}"
-            )
-
-        # check all the boundary files are present:
-        if (
-            process_initial_condition
-            and not (
-                self.large_data_workflow_path / "raw_data" / "ic_unprocessed.nc"
-            ).exists()
-        ):
-            raise FileNotFoundError(
-                f"Initial condition file ic_unprocessed.nc not found in {self.large_data_workflow_path/'raw_data' }. "
-                "Please make sure to execute get_glorys_data.sh script as described in "
-                "the message printed by configure_forcings()."
-            )
-
-        for boundary in self.boundaries:
-            if process_velocity_tracers and not any(
-                (self.large_data_workflow_path / "raw_data").glob(
-                    f"{boundary}_unprocessed*.nc"
-                )
-            ):
-                raise FileNotFoundError(
-                    f"Boundary file {boundary}_unprocessed.nc not found in {self.large_data_workflow_path / 'raw_data'}. "
-                    "Please make sure to execute get_glorys_data.sh script as described in "
-                    "the message printed by configure_forcings()."
-                )
-
-        # Set up the initial condition & boundary conditions
-
-        with open(self.large_data_workflow_path / "config.json", "r") as f:
-            config = json.load(f)
-        if process_initial_condition:
-            config["params"]["run_initial_condition"] = True
-        else:
-            config["params"]["run_initial_condition"] = False
-        if process_velocity_tracers:
-            config["params"]["run_boundary_conditions"] = True
-        else:
-            config["params"]["run_boundary_conditions"] = False
-        with open(self.large_data_workflow_path / "config.json", "w") as f:
-            json.dump(config, f, indent=4)
-
-        if process_initial_condition or process_velocity_tracers:
-            sys.path.append(str(self.large_data_workflow_path))
-            import driver
-
-            driver.main(
-                get_dataset_piecewise=False,
-                regrid_dataset_piecewise=True,
-                merge_piecewise_dataset=True,
-            )
-
-        case.process_tides(process_tides)
-        case.process_chl(process_chl)
-
-        # Apply forcing-related namelist and xml changes
-        if process_param_changes:
-            self._update_forcing_variables()
 
     def configure_tides(
         self,
@@ -647,6 +600,71 @@ class Case:
                 self.inputdir
                 / "ocnice"
                 / f"seawifs-clim-1997-2010-{self.ocn_grid.name}.nc",
+            )
+
+    def process_initial_and_boundary_conditions(
+        process_initial_condition, process_velocity_tracers
+    ):
+        if self._large_data_workflow_called and (
+            process_velocity_tracers or process_initial_condition
+        ):
+            process_velocity_tracers = False
+            process_initial_condition = False
+            print(
+                f"Large data workflow was called, so boundary & initial conditions will not be processed."
+            )
+            print(
+                f"Please make sure to execute large_data_workflow as described in {self.large_data_workflow_path}"
+            )
+
+        # check all the boundary files are present:
+        if (
+            process_initial_condition
+            and not (
+                self.large_data_workflow_path / "raw_data" / "ic_unprocessed.nc"
+            ).exists()
+        ):
+            raise FileNotFoundError(
+                f"Initial condition file ic_unprocessed.nc not found in {self.large_data_workflow_path/'raw_data' }. "
+                "Please make sure to execute get_glorys_data.sh script as described in "
+                "the message printed by configure_forcings()."
+            )
+
+        for boundary in self.boundaries:
+            if process_velocity_tracers and not any(
+                (self.large_data_workflow_path / "raw_data").glob(
+                    f"{boundary}_unprocessed*.nc"
+                )
+            ):
+                raise FileNotFoundError(
+                    f"Boundary file {boundary}_unprocessed.nc not found in {self.large_data_workflow_path / 'raw_data'}. "
+                    "Please make sure to execute get_glorys_data.sh script as described in "
+                    "the message printed by configure_forcings()."
+                )
+
+        # Set up the initial condition & boundary conditions
+
+        with open(self.large_data_workflow_path / "config.json", "r") as f:
+            config = json.load(f)
+        if process_initial_condition:
+            config["params"]["run_initial_condition"] = True
+        else:
+            config["params"]["run_initial_condition"] = False
+        if process_velocity_tracers:
+            config["params"]["run_boundary_conditions"] = True
+        else:
+            config["params"]["run_boundary_conditions"] = False
+        with open(self.large_data_workflow_path / "config.json", "w") as f:
+            json.dump(config, f, indent=4)
+
+        if process_initial_condition or process_velocity_tracers:
+            sys.path.append(str(self.large_data_workflow_path))
+            import driver
+
+            driver.main(
+                get_dataset_piecewise=False,
+                regrid_dataset_piecewise=True,
+                merge_piecewise_dataset=True,
             )
 
     @property
