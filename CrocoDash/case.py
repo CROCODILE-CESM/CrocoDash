@@ -673,14 +673,6 @@ class Case:
     def name(self) -> str:
         return self.caseroot.name
 
-    @property
-    def date_range(self) -> list[datetime]:
-        # check if self.expt is defined
-        if not hasattr(self, "expt"):
-            raise AttributeError(
-                "date_range is not available until configure_forcings() is called."
-            )
-        return self.expt.date_range
 
     def _initialize_visualCaseGen(self):
 
