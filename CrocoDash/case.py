@@ -4,6 +4,7 @@ import shutil
 from datetime import datetime
 import json
 import sys
+import pandas as pd
 import regional_mom6 as rmom6
 from CrocoDash.grid import Grid
 from CrocoDash.topo import Topo
@@ -375,6 +376,7 @@ class Case:
         session_id = cvars["MB_ATTEMPT_ID"].value
 
         # Instantiate the regional_mom6 experiment object
+       
         self.expt = rmom6.experiment(
             date_range=date_range,
             resolution=None,
@@ -396,6 +398,7 @@ class Case:
             expt_name=self.caseroot.name,
             boundaries=self.boundaries,
         )
+        date_range = pd.to_datetime(date_range)
 
         # Create the forcing directory
         if self.override is True:
@@ -415,13 +418,9 @@ class Case:
             Path(__file__).parent / "raw_data_access" / "large_data_workflow",
             self.large_data_workflow_path,
         )
-        print(
-            f"Large data workflow was called, please go to the large data workflow path: {self.large_data_workflow_path} and run the driver script there."
-        )
+        
         # Set Vars
         date_format = "%Y%m%d"
-        d1 = datetime.strptime(date_range[0], date_format)
-        d2 = datetime.strptime(date_range[1], date_format)
         session_id = cvars["MB_ATTEMPT_ID"].value
         hgrid_path = str(
             self.inputdir
@@ -434,7 +433,7 @@ class Case:
 
         # Read in template
         if not self._large_data_workflow_called:
-            step = (d2 - d1).days + 1
+            step = (date_range[1] - date_range[0]).days + 1
         else:
             step = 5
 
@@ -469,9 +468,13 @@ class Case:
             json.dump(config, f, indent=4)
         if not self._large_data_workflow_called:
             # This means we start to run the driver right away, the get dataset piecewise option.
-            sys.path.append(self.large_data_workflow_path)
+            sys.path.append(str(self.large_data_workflow_path))
             import driver
-            driver.main(regrid_dataset_piecewise = False, merge_dataset_piecewise = False)
+            driver.main(regrid_dataset_piecewise = False, merge_piecewise_dataset = False)
+        else:
+            print(
+                f"Large data workflow was called, please go to the large data workflow path: {self.large_data_workflow_path} and run the driver script there."
+            )
                 
         self._configure_forcings_called = True
 
@@ -545,11 +548,10 @@ class Case:
         # check all the boundary files are present:
         if (
             process_initial_condition
-            and not (forcing_path / "ic_unprocessed.nc").exists()
+            and not (self.large_data_workflow_path / "raw_data" / "ic_unprocessed.nc").exists()
         ):
             raise FileNotFoundError(
-                f"Initial condition file ic_unprocessed.nc not found in {forcing_path}. "
-                f"Initial condition file ic_unprocessed.nc not found in {forcing_path}. "
+                f"Initial condition file ic_unprocessed.nc not found in {self.large_data_workflow_path/'raw_data' }. "
                 "Please make sure to execute get_glorys_data.sh script as described in "
                 "the message printed by configure_forcings()."
             )
@@ -557,9 +559,9 @@ class Case:
         for boundary in self.boundaries:
             if (
                 process_velocity_tracers
-                and not any((self.large_data_workflow_path / "raw_data").glob(f"{boundary}_*_unprocessed.nc"))):
+                and not any((self.large_data_workflow_path / "raw_data").glob(f"{boundary}_unprocessed*.nc"))):
                 raise FileNotFoundError(
-                    f"Boundary file {boundary}_unprocessed.nc not found in {forcing_path}. "
+                    f"Boundary file {boundary}_unprocessed.nc not found in {self.large_data_workflow_path / 'raw_data'}. "
                     "Please make sure to execute get_glorys_data.sh script as described in "
                     "the message printed by configure_forcings()."
                 )
@@ -580,7 +582,10 @@ class Case:
         with open(self.large_data_workflow_path / "config.json", "w") as f:
             json.dump(config, f, indent=4)
 
-        driver.main(get_dataset_piecewise = False,regrid_dataset_piecewise = True, merge_dataset_piecewise = True)
+        if process_initial_condition or process_velocity_tracers:
+            sys.path.append(str(self.large_data_workflow_path))
+            import driver
+            driver.main(get_dataset_piecewise = False,regrid_dataset_piecewise = True, merge_piecewise_dataset = True)
 
         # Process the tides
         if process_tides and self.tidal_constituents:
