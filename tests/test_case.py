@@ -123,7 +123,7 @@ def test_configure_forcings(get_CrocoDash_case, tmp_path):
         boundaries=["north", "south", "east"],
     )
 
-    assert case.expt.date_range[0].year == 2020
+    assert case.date_range[0].year == 2020
     assert case.tidal_constituents == ["M2"]
     assert case.boundaries == ["north", "south", "east"]
 

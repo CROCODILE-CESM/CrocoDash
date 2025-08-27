@@ -445,7 +445,7 @@ class Case:
         if too_much_data:
             self._large_data_workflow_called = True
 
-        date_range = pd.to_datetime(date_range)
+        self.date_range = pd.to_datetime(date_range)
         # Create the forcing directory
         if self.override is True:
             forcing_dir_path = self.inputdir / self.forcing_product_name
