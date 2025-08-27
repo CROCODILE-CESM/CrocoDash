@@ -25,6 +25,7 @@ def regrid_dataset_piecewise(
     output_folder: str | Path,
     boundary_number_conversion: dict,
     run_initial_condition: bool = True,
+    run_boundary_conditions: bool = True,
     vgrid_path: str | Path = None,
     preview: bool = False,
 ):
@@ -67,6 +68,8 @@ def regrid_dataset_piecewise(
         }
     run_initial_condition :  bool
         Whether or not to run the initial condition, defaults to true
+    run_boundary_conditions :  bool
+        Whether or not to run the boundary conditions, defaults to true
     vgrid_path: str or Path
         Path to the Vertical Coordinate required for the initial condition
     preview :  bool
@@ -125,38 +128,39 @@ def regrid_dataset_piecewise(
     logger.info("Starting regridding")
     output_file_names = []
     # Do Regridding (Boundaries)
-    for boundary in matching_files.keys():
-        for file_start, file_end, file_path in matching_files[boundary]:
-            expt.date_range = [file_start, None]
-            file_path = Path(file_path)
-            if not preview:
-                expt.setup_single_boundary(
-                    file_path,
-                    dataset_varnames,
-                    boundary,
-                    boundary_number_conversion[boundary],
+    if run_boundary_conditions:
+        for boundary in matching_files.keys():
+            for file_start, file_end, file_path in matching_files[boundary]:
+                expt.date_range = [file_start, None]
+                file_path = Path(file_path)
+                if not preview:
+                    expt.setup_single_boundary(
+                        file_path,
+                        dataset_varnames,
+                        boundary,
+                        boundary_number_conversion[boundary],
+                    )
+
+                # Rename output file
+                output_file_path = (
+                    expt.mom_input_dir
+                    / "forcing_obc_segment_{:03d}.nc".format(
+                        boundary_number_conversion[boundary]
+                    )
                 )
 
-            # Rename output file
-            output_file_path = (
-                expt.mom_input_dir
-                / "forcing_obc_segment_{:03d}.nc".format(
-                    boundary_number_conversion[boundary]
+                # Rename file
+                boundary_str = f"{boundary_number_conversion[boundary]:03d}"
+                file_start_date = file_start.strftime(date_format)
+                file_end_date = file_end.strftime(date_format)
+                filename_with_dates = "forcing_obc_segment_{}_{}_{}.nc".format(
+                    boundary_str, file_start_date, file_end_date
                 )
-            )
-
-            # Rename file
-            boundary_str = f"{boundary_number_conversion[boundary]:03d}"
-            file_start_date = file_start.strftime(date_format)
-            file_end_date = file_end.strftime(date_format)
-            filename_with_dates = "forcing_obc_segment_{}_{}_{}.nc".format(
-                boundary_str, file_start_date, file_end_date
-            )
-            output_file_names.append(filename_with_dates)
-            output_file_path_with_dates = expt.mom_input_dir / filename_with_dates
-            if not preview:
-                logger.info(f"Saving regridding file as {filename_with_dates}")
-                os.rename(output_file_path, output_file_path_with_dates)
+                output_file_names.append(filename_with_dates)
+                output_file_path_with_dates = expt.mom_input_dir / filename_with_dates
+                if not preview:
+                    logger.info(f"Saving regridding file as {filename_with_dates}")
+                    os.rename(output_file_path, output_file_path_with_dates)
 
     # Run Initial Condition
     if run_initial_condition:
@@ -193,7 +197,8 @@ def main(config_path):
         config["varnames"],
         config["paths"]["regridded_dataset_path"],
         config["boundary_number_conversion"],
-        config["run_initial_condition"],
+        config["params"]["run_initial_condition"],
+        config["params"]["run_boundary_conditions"],
         config["params"]["preview"],
     )
     return

@@ -21,6 +21,7 @@ def merge_piecewise_dataset(
     boundary_number_conversion: dict,
     output_folder: str | Path,
     run_initial_condition: bool = True,
+    run_boundary_conditions: bool = True,
     preview: bool = False,
 ):
     """
@@ -44,6 +45,8 @@ def merge_piecewise_dataset(
         Directory to save the merged NetCDF files.
     run_initial_condition: bool
         Whether to run initial condition, default is true.
+    run_boundary_conditions: bool
+        Whether to run boundary conditions, default is true.
     preview : bool, optional
         Whether to run in preview mode without saving (default is False).
 
@@ -82,20 +85,21 @@ def merge_piecewise_dataset(
     # Merge Files
     logger.info("Merging Files")
     output_file_names = []
-    for boundary in boundary_list:
-        output_file_name = f"forcing_obc_segment_{boundary}.nc"
-        output_path = Path(output_folder) / output_file_name
-        output_file_names.append(output_file_name)
-        if not preview:
-            ds = xr.open_mfdataset(
-                matching_files[boundary],
-                combine="nested",
-                concat_dim="time",
-                coords="minimal",
-            )
-            ds.to_netcdf(output_path)
-            ds.close()
-            logger.info(f"Saved {boundary} boundary at {output_path}")
+    if run_boundary_conditions:
+        for boundary in boundary_list:
+            output_file_name = f"forcing_obc_segment_{boundary}.nc"
+            output_path = Path(output_folder) / output_file_name
+            output_file_names.append(output_file_name)
+            if not preview:
+                ds = xr.open_mfdataset(
+                    matching_files[boundary],
+                    combine="nested",
+                    concat_dim="time",
+                    coords="minimal",
+                )
+                ds.to_netcdf(output_path)
+                ds.close()
+                logger.info(f"Saved {boundary} boundary at {output_path}")
     # Copy Initial Condition
     if run_initial_condition:
         ic_files_to_copy = [
