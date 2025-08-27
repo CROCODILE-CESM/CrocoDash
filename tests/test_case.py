@@ -143,12 +143,12 @@ def test_process_forcing(get_CrocoDash_case, tmp_path):
         chl_processed_filepath=tmp_path,
         boundaries=["north"],
     )
-    path = case.inputdir / "glorys"
+    path = case.inputdir / "glorys"/"large_data_workflow"/"raw_data"
     filenames = ["ic_unprocessed.nc", "north_unprocessed.nc"]
     for name in filenames:
         with open(path / name, "w") as file:
             pass
-    with pytest.raises(ValueError):
+    with pytest.raises(FileNotFoundError):
         case.process_forcings()
 
     # Test CHL processing raises error in mom6_bathy.chl, so we know the connection works
