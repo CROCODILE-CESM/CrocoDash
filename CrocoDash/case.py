@@ -330,12 +330,7 @@ class Case:
         --------
         process_forcings : Executes the actual boundary, initial condition, and tide setup based on the configuration.
         """
-        # Create the forcing directory
-        if self.override is True:
-            forcing_dir_path = self.inputdir / self.forcing_product_name
-            if forcing_dir_path.exists():
-                shutil.rmtree(forcing_dir_path)
-        forcing_dir_path.mkdir(exist_ok=False)
+       
 
         self.configure_initial_and_boundary_conditions(
             date_range=date_range,
@@ -451,7 +446,12 @@ class Case:
             self._large_data_workflow_called = True
 
         date_range = pd.to_datetime(date_range)
-
+        # Create the forcing directory
+        if self.override is True:
+            forcing_dir_path = self.inputdir / self.forcing_product_name
+            if forcing_dir_path.exists():
+                shutil.rmtree(forcing_dir_path)
+        forcing_dir_path.mkdir(exist_ok=False)
         # Generate Boundary Info
         boundary_info = dv.get_rectangular_segment_info(self.ocn_grid)
 
