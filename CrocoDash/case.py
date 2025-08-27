@@ -330,7 +330,6 @@ class Case:
         --------
         process_forcings : Executes the actual boundary, initial condition, and tide setup based on the configuration.
         """
-       
 
         self.configure_initial_and_boundary_conditions(
             date_range=date_range,
@@ -474,7 +473,7 @@ class Case:
 
         # Read in template
         if not self._large_data_workflow_called:
-            step = (date_range[1] - date_range[0]).days + 1
+            step = (self.date_range[1] - self.date_range[0]).days + 1
         else:
             step = 5
 
@@ -672,7 +671,6 @@ class Case:
     @property
     def name(self) -> str:
         return self.caseroot.name
-
 
     def _initialize_visualCaseGen(self):
 

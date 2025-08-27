@@ -166,7 +166,6 @@ def test_update_forcing_variables(get_CrocoDash_case):
             dt.datetime.strptime("2020-02-01", "%Y-%m-%d"),
         ],
     )
-    case.date_range
     case.boundaries = []
     case.chl_processed_filepath = case.inputdir
     case._update_forcing_variables()
