@@ -488,8 +488,8 @@ class Case:
             self.large_data_workflow_path / "regridded_data"
         )
         config["paths"]["merged_dataset_path"] = str(self.inputdir / "ocnice")
-        config["dates"]["start"] = date_range[0].strftime(date_format)
-        config["dates"]["end"] = date_range[1].strftime(date_format)
+        config["dates"]["start"] = self.date_range[0].strftime(date_format)
+        config["dates"]["end"] = self.date_range[1].strftime(date_format)
         config["dates"]["format"] = date_format
         config["forcing"]["product_name"] = self.forcing_product_name.upper()
         config["forcing"]["function_name"] = function_name

@@ -168,7 +168,12 @@ def test_update_forcing_variables(get_CrocoDash_case):
     )
     case.boundaries = []
     case.chl_processed_filepath = case.inputdir
+    case.date_range = [
+            dt.datetime.strptime("2020-01-01", "%Y-%m-%d"),
+            dt.datetime.strptime("2020-02-01", "%Y-%m-%d"),
+        ]
     case._update_forcing_variables()
+    
     with open(case.caseroot / "user_nl_mom_0001", "r", encoding="utf-8") as file:
         for line in file:
             if search_string in line:
