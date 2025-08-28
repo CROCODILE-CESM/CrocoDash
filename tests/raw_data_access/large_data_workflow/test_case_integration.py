@@ -89,7 +89,7 @@ def test_case_integration_config(get_CrocoDash_case):
 
     # Params
     assert isinstance(config["params"], dict)
-    assert set(config["params"].keys()) == {"step", "preview", "run_initial_condition"}
+    assert set(config["params"].keys()) == {"step", "preview", "run_initial_condition","run_boundary_conditions"}
     assert isinstance(config["params"]["step"], int)
     assert isinstance(config["params"]["preview"], bool)
     assert isinstance(config["params"]["run_initial_condition"], bool)

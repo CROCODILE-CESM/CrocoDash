@@ -124,7 +124,7 @@ def test_configure_forcings(get_CrocoDash_case, tmp_path):
         boundaries=["north", "south", "east"],
     )
 
-    assert case.expt.date_range[0].year == 2020
+    assert case.date_range[0].year == 2020
     assert case.tidal_constituents == ["M2"]
     assert case.boundaries == ["north", "south", "east"]
 
@@ -144,12 +144,9 @@ def test_process_forcing(get_CrocoDash_case, tmp_path):
         chl_processed_filepath=tmp_path,
         boundaries=["north"],
     )
-    path = case.inputdir / "glorys"
+    path = case.inputdir / "glorys"/"large_data_workflow"/"raw_data"
     filenames = ["ic_unprocessed.nc", "north_unprocessed.nc"]
-    for name in filenames:
-        with open(path / name, "w") as file:
-            pass
-    with pytest.raises(ValueError):
+    with pytest.raises(FileNotFoundError):
         case.process_forcings()
 
     # Test CHL processing raises error in mom6_bathy.chl, so we know the connection works
@@ -170,13 +167,17 @@ def test_update_forcing_variables(get_CrocoDash_case):
             dt.datetime.strptime("2020-02-01", "%Y-%m-%d"),
         ],
     )
-    case.date_range
     case.boundaries = []
     case.chl_processed_filepath = case.inputdir
+    case.date_range = [
+            dt.datetime.strptime("2020-01-01", "%Y-%m-%d"),
+            dt.datetime.strptime("2020-02-01", "%Y-%m-%d"),
+        ]
     case.runoff_esmf_mesh_filepath = True
     case.runoff_mapping_file_nnsm = "Path"
     case.cice_file = "Path"
     case._update_forcing_variables()
+    
     with open(case.caseroot / "user_nl_mom_0001", "r", encoding="utf-8") as file:
         for line in file:
             if search_string in line:
