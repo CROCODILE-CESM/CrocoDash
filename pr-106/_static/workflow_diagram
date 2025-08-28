@@ -82,15 +82,15 @@ digraph {
 	case -> process_forcing
 	forcing_config -> process_forcing
 	forcing_config -> large_data_process_forcing
-	forcing_config [label=forcing_config color="#66aa88" penwidth=2]
-	forcing [label=forcing color="#66aa88" penwidth=2]
-	case [label=case color="#66aa88" penwidth=2]
 	vgrid_obj [label=vgrid_obj color="#66aa88" penwidth=2]
-	topo_obj [label=topo_obj color="#66aa88" penwidth=2]
+	case [label=case color="#66aa88" penwidth=2]
+	forcing_config [label=forcing_config color="#66aa88" penwidth=2]
 	grid_obj [label=grid_obj color="#66aa88" penwidth=2]
-	global_topo_file [label=global_topo_file color="#cc6666" penwidth=2]
-	global_tidal_file [label=global_tidal_file color="#cc6666" penwidth=2]
+	topo_obj [label=topo_obj color="#66aa88" penwidth=2]
+	forcing [label=forcing color="#66aa88" penwidth=2]
 	data_access_function [label=data_access_function color="#cc6666" penwidth=2]
+	global_tidal_file [label=global_tidal_file color="#cc6666" penwidth=2]
+	global_topo_file [label=global_topo_file color="#cc6666" penwidth=2]
 	global_chl_file [label=global_chl_file color="#cc6666" penwidth=2]
 	subgraph cluster_legend {
 		color=gray fontsize=12 label=Legend style=rounded
