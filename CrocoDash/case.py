@@ -287,6 +287,8 @@ class Case:
         too_much_data: bool = False,
         chl_processed_filepath: str | Path | None = None,
         runoff_esmf_mesh_filepath: str | Path | None = None,
+        cesm_input_path: str | Path | None = None,
+        cesm_varnames: list[str] | None = None,
     ):
         """
         Configure the boundary conditions and tides for the MOM6 case.
@@ -319,10 +321,15 @@ class Case:
             If True, configures the large data workflow. In this case, data are not downloaded
             immediately, but a config file and workflow directory are created
             for external processing in the forcing directory, inside the input directory.
-    chl_processed_filepath : Path
-        If passed, points to the processed global chlorophyll file for regional processing through mom6_bathy.chl
-    runoff_esmf_mesh_filepath : Path
-        If passed, points to the processed global runoff file for mapping through mom6_bathy.mapping
+        chl_processed_filepath : Path
+            If passed, points to the processed global chlorophyll file for regional processing through mom6_bathy.chl
+        runoff_esmf_mesh_filepath : Path
+            If passed, points to the processed global runoff file for mapping through mom6_bathy.mapping
+        cesm_input_path : str or Path, optional
+            If passed, a path to the directory where CESM output data is stored. This is used instead to extract OBCs and ICs for the case.
+        cesm_varnames : list of str, optional
+            If passed, a list of variable names corresponding to the output data to extract OBCs and ICs for, must include all physical tracers/u/v and any BGC tracers required.
+            
 
         Raises
         ------
@@ -346,20 +353,91 @@ class Case:
         --------
         process_forcings : Executes the actual boundary, initial condition, and tide setup based on the configuration.
         """
-        
-        self.configure_initial_and_boundary_conditions(
-            date_range=date_range,
-            boundaries=boundaries,
-            product_name=product_name,
-            function_name=function_name,
-            too_much_data=too_much_data,
-        )
+
+        if cesm_input_path is not None:
+            self.configure_cesm_initial_and_boundary_conditions(input_path = cesm_input_path, cesm_varnames = cesm_varnames,date_range=date_range,
+                boundaries=boundaries,too_much_data=too_much_data,)
+
+        else:
+            self.configure_initial_and_boundary_conditions(
+                date_range=date_range,
+                boundaries=boundaries,
+                product_name=product_name,
+                function_name=function_name,
+                too_much_data=too_much_data,
+            )
         self.configure_tides(
             tidal_constituents, tpxo_elevation_filepath, tpxo_velocity_filepath
         )
         self.configure_chl(chl_processed_filepath)
         self.configure_runoff(runoff_esmf_mesh_filepath)
         self._configure_forcings_called = True
+    def configure_cesm_initial_and_boundary_conditions(self, input_path: str | path,varnames: list[str], date_range: list[str],boundaries: list[str] = ["south", "north", "west", "east"],too_much_data: bool = False,):
+        """
+        Configure CESM OBC and ICs from previous CESM output
+        """
+        self.boundaries = boundaries
+        self.forcing_product_name = "CESM_OUTPUT"
+        if too_much_data:
+            self._large_data_workflow_called = True
+
+        self.date_range = pd.to_datetime(date_range)
+        # Create the forcing directory
+        if self.override is True:
+            forcing_dir_path = self.inputdir / self.forcing_product_name
+            if forcing_dir_path.exists():
+                shutil.rmtree(forcing_dir_path)
+        forcing_dir_path.mkdir(exist_ok=False)
+
+        # Generate Boundary Info
+        boundary_info = dv.get_rectangular_segment_info(self.ocn_grid)
+
+        # Create the OBC generation files
+        self.large_data_workflow_path = (
+            self.inputdir / self.forcing_product_name / "cesm_output_extract_obc_workflow"
+        )
+
+        # Copy large data workflow folder there
+        shutil.copytree(
+            Path(__file__).parent / "extract_obc",
+            self.large_data_workflow_path,
+        )
+
+        # Set Vars for Config
+        date_format = "%Y%m%d"
+
+
+        with open(self.large_data_workflow_path / "config.json", "r") as f:
+            config = json.load(f)
+        config["paths"]["input_path"] = str(input_path)
+        config["paths"]["supergrid_path"] = self.supergrid_path
+        config["paths"]["bathymetry_path"] = self.topo_path
+        config["paths"]["subset_input_path"] = str(
+            self.large_data_workflow_path / "subsetted_data"
+        )
+        config["paths"]["regrid_path"] = str(
+            self.large_data_workflow_path / "regridded_data"
+        )
+        config["paths"]["output_path"] = str(self.inputdir / "ocnice")
+        config["dates"]["start"] = self.date_range[0].strftime(date_format)
+        config["dates"]["end"] = self.date_range[1].strftime(date_format)
+        config["dates"]["format"] = date_format
+        config["cesm_information"]["space_character"] = space_character
+        config["cesm_information"]["lat_name"] = lat_name
+        config["cesm_information"]["lon_name"] = lon_name
+        config["cesm_information"]["variable_names"] = varnames
+        config["cesm_information"]["z_dim"] = z_dim
+        config["general"]["boundary_number_conversion"] = {
+            item: idx + 1 for idx, item in enumerate(self.boundaries)
+        }
+
+        # Write out
+        with open(self.large_data_workflow_path / "config.json", "w") as f:
+            json.dump(config, f, indent=4)
+        if self._large_data_workflow_called:
+            print(
+                f"Large data workflow was called, please go to the large data workflow path: {self.large_data_workflow_path} and run the driver script there."
+            )
 
     def process_forcings(
         self,
@@ -418,10 +496,14 @@ class Case:
             raise RuntimeError(
                 "configure_forcings() must be called before process_forcings()."
             )
-
-        self.process_initial_and_boundary_conditions(
-            process_initial_condition, process_velocity_tracers
-        )
+        if self.forcing_product_name == "CESM_OUTPUT":
+            self.process_cesm_initial_and_boundary_conditions(
+                process_initial_condition, process_velocity_tracers
+            )
+        else:
+            self.process_initial_and_boundary_conditions(
+                process_initial_condition, process_velocity_tracers
+            )
         self.process_tides(process_tides)
         self.process_chl(process_chl)
         self.process_runoff(process_runoff)
@@ -429,6 +511,39 @@ class Case:
         # Apply forcing-related namelist and xml changes
         if process_param_changes:
             self._update_forcing_variables()
+
+    def process_cesm_initial_and_boundary_conditions(self, process_initial_condition=True, process_velocity_tracers=True,):
+        if self._large_data_workflow_called and (process_velocity_tracers or process_initial_condition):
+            process_velocity_tracers = False
+            process_initial_condition = False
+            print(
+                f"Large data workflow was called, so boundary & initial conditions will not be processed."
+            )
+            print(
+                f"Please make sure to execute large_data_workflow as described in {self.large_data_workflow_path}"
+            )
+
+
+        # Set up the initial condition & boundary conditions
+
+        with open(self.large_data_workflow_path / "config.json", "r") as f:
+            config = json.load(f)
+        if process_initial_condition:
+            config["general"]["run_initial_condition"] = True
+        else:
+            config["general"]["run_initial_condition"] = False
+        if process_velocity_tracers:
+            config["general"]["run_boundary_conditions"] = True
+        else:
+            config["general"]["run_boundary_conditions"] = False
+        with open(self.large_data_workflow_path / "config.json", "w") as f:
+            json.dump(config, f, indent=4)
+
+        if process_initial_condition or process_velocity_tracers:
+            sys.path.append(str(self.large_data_workflow_path))
+            import driver
+            driver.extract_obcs()
+
 
     def configure_initial_and_boundary_conditions(
         self,

@@ -14,6 +14,11 @@
     "lon_name": "",
     "z_dim": []
   },
+    "dates": {
+        "start": "",
+        "end": "",
+        "format": ""
+    },
   "general": {
     "preview": false,
     "boundary_number_conversion": {
@@ -21,6 +26,8 @@
       "north": 2,
       "west": 3,
       "east": 4
-    }
+    },
+    "process_initial_condition": true,
+    "process_boundary_conditions": true
   }
 }
