@@ -7,6 +7,10 @@ from CrocoDash.raw_data_access.driver import get_rectangular_segment_info
 from CrocoDash.grid import Grid
 
 
+def test_driver():
+    print("All Imports Work!")
+    return
+
 def extract_obcs(
     params: dict,
     parse_dataset=True,
@@ -25,49 +29,63 @@ def extract_obcs(
 
     # Parse the raw dataset
     if parse_dataset:
-        variable_info = pd.parse_dataset(params["variable_names"], Path(input_path))
+        variable_info = pd.parse_dataset(params["cesm_information"]["variable_names"], Path(params["paths"]["input_path"]))
 
     # Subset the dataset based on geographical bounds
     if subset_dataset:
-        grid = Grid.from_supergrid(params["supergrid_path"])
+        grid = Grid.from_supergrid(params["paths"]["supergrid_path"])
         boundary_info = get_rectangular_segment_info(grid)
         sd.subset_dataset(
             variable_info=variable_info,
-            output_path=params["subset_input_path"],
+            output_path=params["paths"]["subset_input_path"],
             lat_min=boundary_info["ic"]["lat_min"],
             lat_max=boundary_info["ic"]["lat_max"],
             lon_min=boundary_info["ic"]["lon_min"],
             lon_max=boundary_info["ic"]["lon_max"],
-            lat_name=params["lat_name"],
-            lon_name=params["lon_name"],
-            preview=params["preview"],
+            lat_name=params["cesm_information"]["lat_name"],
+            lon_name=params["cesm_information"]["lon_name"],
+            preview=params["general"]["preview"],
         )
 
     # Regrid the dataset to the boundaries
     if regrid_dataset:
-        supergrid = xr.open_dataset(params["supergrid_path"])
+        supergrid = xr.open_dataset(params["paths"]["supergrid_path"])
         rd.regrid_dataset_to_boundaries(
-            params["subset_input_path"],
-            params["regrid_path"],
+            params["paths"]["subset_input_path"],
+            params["paths"]["regrid_path"],
             supergrid,
             variable_info,
-            params["lat_name"],
-            params["lon_name"],
-            params["preview"],
+            params["cesm_information"]["lat_name"],
+            params["cesm_information"]["lon_name"],
+            params["general"]["preview"],
         )
 
     # Format the dataset to MOM6 formats
     if format_dataset:
-        supergrid = xr.open_dataset(params["supergrid_path"])
-        bathymetry = xr.open_dataset(params["bathymetry_path"])
+        supergrid = xr.open_dataset(params["paths"]["supergrid_path"])
+        bathymetry = xr.open_dataset(params["paths"]["bathymetry_path"])
         output_paths = fd.format_dataset(
-            params["regrid_path"],
-            params["output_path"],
+            params["paths"]["regrid_path"],
+            params["paths"]["output_path"],
             supergrid,
             bathymetry,
             variable_info,
-            params["lat_name"],
-            params["lon_name"],
-            params["z_dim"],
+            params["cesm_information"]["lat_name"],
+            params["cesm_information"]["lon_name"],
+            params["cesm_information"]["z_dim"],
+            params["general"]["boundary_number_conversion"],
         )
         return output_paths
+
+if __name__ == "__main__":
+
+    if len(sys.argv) > 1 and sys.argv[1] == "test":
+        test_driver()
+    else:
+        workflow_dir = Path(__file__).parent
+
+        # Read in config
+        config_path = workflow_dir / "config.json"
+        with open(config_path, "r") as f:
+            config = json.load(f)
+        extract_obcs(config)
