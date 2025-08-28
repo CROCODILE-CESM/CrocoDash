@@ -24,8 +24,7 @@ from visualCaseGen.specs.options import set_options
 from visualCaseGen.specs.relational_constraints import get_relational_constraints
 from visualCaseGen.custom_widget_types.case_creator import CaseCreator, ERROR, RESET
 from visualCaseGen.custom_widget_types.case_tools import xmlchange, append_user_nl
-from mom6_bathy import chl
-
+from mom6_bathy import chl, mapping
 
 class Case:
     """This class represents a regional MOM6 case within the CESM framework. It is similar to the
@@ -115,6 +114,15 @@ class Case:
         self._large_data_workflow_called = False
         self.compset = compset
 
+        if "DROF%GLOFAS" in self.compset:
+            self.runoff_in_compset = True
+        else:
+            self.runoff_in_compset = False
+
+        if "CICE" in self.compset:
+            self.cice_in_compset = True
+        else:
+            self.cice_in_compset = False
         # Resolution name:
         self.resolution = f"{datm_grid_name}_{ocn_grid.name}"
 
@@ -131,9 +139,12 @@ class Case:
 
         self._create_newcase()
 
-        self._cime_case = self.cime.get_case(
+        self._cime_case = self.cime.get_case( 
             self.caseroot, non_local=self.cc._is_non_local()
         )
+
+
+
 
     def _init_args_check(
         self,
@@ -231,7 +242,7 @@ class Case:
         ocn_vgrid.write(self.vgrid_path)
 
         # CICE grid file (if needed)
-        if "CICE" in self.compset:
+        if self.cice_in_compset:
             self.cice_grid_path = (
                 inputdir / "ocnice" / f"cice_grid_{ocn_grid.name}_{session_id}.nc"
             )
@@ -275,6 +286,7 @@ class Case:
         function_name: str = "get_glorys_data_script_for_cli",
         too_much_data: bool = False,
         chl_processed_filepath: str | Path | None = None,
+        runoff_esmf_mesh_filepath: str | Path | None = None,
     ):
         """
         Configure the boundary conditions and tides for the MOM6 case.
@@ -307,6 +319,10 @@ class Case:
             If True, configures the large data workflow. In this case, data are not downloaded
             immediately, but a config file and workflow directory are created
             for external processing in the forcing directory, inside the input directory.
+    chl_processed_filepath : Path
+        If passed, points to the processed global chlorophyll file for regional processing through mom6_bathy.chl
+    runoff_esmf_mesh_filepath : Path
+        If passed, points to the processed global runoff file for mapping through mom6_bathy.mapping
 
         Raises
         ------
@@ -330,7 +346,7 @@ class Case:
         --------
         process_forcings : Executes the actual boundary, initial condition, and tide setup based on the configuration.
         """
-
+        
         self.configure_initial_and_boundary_conditions(
             date_range=date_range,
             boundaries=boundaries,
@@ -342,6 +358,7 @@ class Case:
             tidal_constituents, tpxo_elevation_filepath, tpxo_velocity_filepath
         )
         self.configure_chl(chl_processed_filepath)
+        self.configure_runoff(runoff_esmf_mesh_filepath)
         self._configure_forcings_called = True
 
     def process_forcings(
@@ -350,6 +367,7 @@ class Case:
         process_tides=True,
         process_velocity_tracers=True,
         process_chl=True,
+        process_runoff = True,
         process_param_changes=True,
     ):
         """
@@ -371,6 +389,8 @@ class Case:
         process_velocity_tracers : bool, optional
             Whether to process velocity and tracer boundary conditions. Default is True.
             This will be overridden and set to False if the large data workflow in configure_forcings is enabled.
+        process_runoff : bool, optional
+            Whether to process runoff data. Default is True.
         process_param_changes : bool, optional
             Whether to process the namelist and xml changes required to run a regional MOM6 case in the CESM.
 
@@ -404,6 +424,7 @@ class Case:
         )
         self.process_tides(process_tides)
         self.process_chl(process_chl)
+        self.process_runoff(process_runoff)
 
         # Apply forcing-related namelist and xml changes
         if process_param_changes:
@@ -517,6 +538,19 @@ class Case:
                 f"Large data workflow was called, please go to the large data workflow path: {self.large_data_workflow_path} and run the driver script there."
             )
 
+    def configure_runoff(self,
+        runoff_esmf_mesh_filepath: str | Path | None = None
+
+    ):
+        if self.runoff_in_compset and (runoff_esmf_mesh_filepath is None):
+            self.runoff_esmf_mesh_filepath = False
+            raise ValueError("Runoff ESMF Mesh File and Global Runoff file must be provided for mapping")
+        elif (runoff_esmf_mesh_filepath is not None) and not self.runoff_in_compset:
+            self.runoff_esmf_mesh_filepath = False
+            raise ValueError("Runoff can only be turned on if it is in the compset!")
+        elif self.runoff_in_compset and (runoff_esmf_mesh_filepath is not None):
+            self.runoff_esmf_mesh_filepath = runoff_esmf_mesh_filepath
+
     def configure_tides(
         self,
         tidal_constituents: list[str] | None = None,
@@ -602,13 +636,24 @@ class Case:
                 self.chl_processed_filepath,
                 self.regional_chl_file_path,
             )
+    
+    def process_runoff(self, process_runoff: bool):
+        if process_runoff and self.runoff_in_compset and self.runoff_esmf_mesh_filepath:
+            mapping.gen_rof_maps(
+                rof_mesh_path=self.runoff_esmf_mesh_filepath,
+                ocn_mesh_path=self.esmf_mesh_path,
+                output_dir=inputdir/"ocnice",
+                mapping_file_prefix=f'glofas_{self.ocn_grid.name}_{self.session_id}',
+                rmax=100.0,
+                fold=100.0
+            )
+            self.runoff_mapping_file_nnsm = inputdir/"ocnice"/f"glofas_{self.ocn_grid.name}_{self.session_id}_nnsm.nc"
 
     def process_initial_and_boundary_conditions(
         self, process_initial_condition, process_velocity_tracers
     ):
-        if self._large_data_workflow_called and (
-            process_velocity_tracers or process_initial_condition
-        ):
+
+        if self._large_data_workflow_called and (process_velocity_tracers or process_initial_condition):
             process_velocity_tracers = False
             process_initial_condition = False
             print(
@@ -955,6 +1000,28 @@ class Case:
             comment="Open boundary conditions",
             log_title=False,
         )
+        if self.cice_in_compset:
+            cice_param = [
+                ("ice_ic", "'UNSET'"),
+                ("ns_boundary_type", "'open'"),
+                ("ew_boundary_type", "'cyclic'"),
+                ("close_boundaries", ".false."),
+                ("grid_file", self.cice_file),
+                ("kmt_file", self.cice_file),
+            ]
+            append_user_nl(
+                "cice",
+                cice_param,
+                do_exec=True,
+                comment="CICE options",
+                log_title=False,
+            )
+    
+        if self.runoff_in_compset and self.runoff_esmf_mesh_filepath:
+            
+            xmlchange("ROF2OCN_LIQ_RMAPNAME", str(self.runoff_mapping_file_nnsm),is_non_local=self.cc._is_non_local())
+            xmlchange("ROF2OCN_ICE_RMAPNAME", str(self.runoff_mapping_file_nnsm),is_non_local=self.cc._is_non_local())
+
 
         xmlchange(
             "RUN_STARTDATE",

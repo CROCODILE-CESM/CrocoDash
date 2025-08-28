@@ -6,8 +6,9 @@ from CrocoDash.raw_data_access import driver as dv
 import xarray as xr
 from datetime import datetime
 import os
+import pytest
 
-
+@pytest.mark.slow
 def test_merge_piecewise_data_workflow(
     generate_piecewise_raw_data, tmp_path, dummy_mom6_obc_data_factory, get_rect_grid
 ):
