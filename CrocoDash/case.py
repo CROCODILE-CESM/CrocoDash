@@ -372,7 +372,7 @@ class Case:
         self.configure_chl(chl_processed_filepath)
         self.configure_runoff(runoff_esmf_mesh_filepath)
         self._configure_forcings_called = True
-    def configure_cesm_initial_and_boundary_conditions(self, input_path: str | path,varnames: list[str], date_range: list[str],boundaries: list[str] = ["south", "north", "west", "east"],too_much_data: bool = False,):
+    def configure_cesm_initial_and_boundary_conditions(self, input_path: str | Path,varnames: list[str], date_range: list[str],boundaries: list[str] = ["south", "north", "west", "east"],too_much_data: bool = False,):
         """
         Configure CESM OBC and ICs from previous CESM output
         """

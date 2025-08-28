@@ -5,10 +5,13 @@ It then outputs a dictionary with the variable name(s) and their corresponding f
 
 import xarray as xr
 from pathlib import Path
-
+from dateutil import parser
+import os
+import re
+from datetime import datetime
 
 def parse_dataset(
-    variable_names: list[str], dataset_path: str | Path, space_character="."
+    variable_names: list[str], dataset_path: str | Path,start_date: str, end_date: str,date_format: str = "%Y%m%d",regex =r"(\d{6,8})-(\d{6,8})", space_character=".", 
 ) -> dict:
     """
     Parses the dataset to find variable names and their corresponding file paths.
@@ -21,6 +24,9 @@ def parse_dataset(
     Returns:
         dict: A dictionary with variable names as keys and their file paths as values.
     """
+    start_date = parser.parse(start_date)
+    end_date = parser.parse(end_date)
+    # Create a dictionary to hold variable names and their file paths
     variable_info = {}
     for v in variable_names:
         variable_info[v] = []
@@ -34,7 +40,10 @@ def parse_dataset(
                     if (space_character + v + space_character) in str(
                         file_path
                     ):  # check full path, not just name
-                        variable_info[v].append(str(file_path.resolve()))
+                        s = str(file_path.resolve())
+                        dt1,dt2 =get_date_range_from_filename(s,regex)
+                        if (dt1 >= start_date and dt1 <= end_date) or (dt2 >= start_date and dt2 <= end_date):
+                            variable_info[v].append(s)
 
     elif dataset_path.is_file():
         for v in variable_names:
@@ -44,7 +53,23 @@ def parse_dataset(
 
     return variable_info
 
+def get_date_range_from_filename(path, regex):
+    fname = os.path.basename(path)
+    m = re.search(regex, fname)
+    if not m:
+        return None
 
+    def parse_date(datestr):
+        if len(datestr) == 6:   # YYYYMM
+            return datetime.strptime(datestr, "%Y%m")
+        elif len(datestr) == 8: # YYYYMMDD
+            return datetime.strptime(datestr, "%Y%m%d")
+        else:
+            raise ValueError(f"Unexpected date format: {datestr}")
+
+    start = parse_date(m.group(1))
+    end   = parse_date(m.group(2))
+    return start, end
 if __name__ == "__main__":
     print(
         "This script is used to load CESM datasets and extract all the necessary information for OBC generation "

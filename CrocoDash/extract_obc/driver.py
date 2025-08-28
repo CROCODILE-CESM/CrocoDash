@@ -11,6 +11,7 @@ def test_driver():
     print("All Imports Work!")
     return
 
+
 def extract_obcs(
     params: dict,
     parse_dataset=True,
@@ -29,7 +30,14 @@ def extract_obcs(
 
     # Parse the raw dataset
     if parse_dataset:
-        variable_info = pd.parse_dataset(params["cesm_information"]["variable_names"], Path(params["paths"]["input_path"]))
+        variable_info = pd.parse_dataset(
+            params["cesm_information"]["variable_names"],
+            Path(params["paths"]["input_path"]),
+            params["dates"]["start"],
+            params["dates"]["end"],
+            params["cesm_information"]["space_character"],
+
+        )
 
     # Subset the dataset based on geographical bounds
     if subset_dataset:
@@ -76,6 +84,7 @@ def extract_obcs(
             params["general"]["boundary_number_conversion"],
         )
         return output_paths
+
 
 if __name__ == "__main__":
 
