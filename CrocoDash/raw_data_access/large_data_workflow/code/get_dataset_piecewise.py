@@ -21,6 +21,7 @@ def get_dataset_piecewise(
     output_dir: str | Path,
     boundary_number_conversion: dict,
     run_initial_condition: bool = True,
+    run_boundary_conditions: bool = True,
     preview: bool = False,
 ):
     """
@@ -48,6 +49,8 @@ def get_dataset_piecewise(
         Dictionary mapping boundaries to their numerical identifiers.
     run_initial_condition : bool
         Whether or not to run the initial condition, default is true
+    run_boundary_conditions : bool
+        Whether or not to run the boundary conditions, default is true
     preview : bool
         Whether or not to preview the run, default is false
 
@@ -124,23 +127,23 @@ def get_dataset_piecewise(
                     output_dir=output_dir,
                     output_file=output_file,
                 )
+        if run_boundary_conditions:
+            for boundary in boundary_number_conversion.keys():
 
-        for boundary in boundary_number_conversion.keys():
-
-            latlon_info = boundary_info[boundary]
-            output_file = f"{boundary}_unprocessed.{start_date_str}_{end_date_str}.nc"
-            output_file_names.append(output_file)
-            # Execute the data retrieval function
-            if not preview:
-                data_access_function(
-                    dates=[start_date_str, end_date_str],
-                    lat_min=latlon_info["lat_min"],
-                    lat_max=latlon_info["lat_max"],
-                    lon_min=latlon_info["lon_min"],
-                    lon_max=latlon_info["lon_max"],
-                    output_dir=output_dir,
-                    output_file=output_file,
-                )
+                latlon_info = boundary_info[boundary]
+                output_file = f"{boundary}_unprocessed.{start_date_str}_{end_date_str}.nc"
+                output_file_names.append(output_file)
+                # Execute the data retrieval function
+                if not preview:
+                    data_access_function(
+                        dates=[start_date_str, end_date_str],
+                        lat_min=latlon_info["lat_min"],
+                        lat_max=latlon_info["lat_max"],
+                        lon_min=latlon_info["lon_min"],
+                        lon_max=latlon_info["lon_max"],
+                        output_dir=output_dir,
+                        output_file=output_file,
+                    )
 
         start_date = end_date + timedelta(days=1)
 
@@ -184,6 +187,7 @@ def main(config_file):
         output_dir=config["paths"]["raw_dataset_path"],
         boundary_number_conversion=config["boundary_number_conversion"],
         run_initial_condition=True,
+        run_boundary_conditions=True,
         preview=config["params"]["preview"],
     )
 

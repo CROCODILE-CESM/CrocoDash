@@ -24,6 +24,7 @@
     "params": {
         "step": "",
         "preview": false,
-        "run_initial_condition": true
+        "run_initial_condition": true,
+        "run_boundary_conditions": true
     }
 }

@@ -32,7 +32,7 @@ def test_case_init(
     caseroot, inputdir = tmp_path / "case", tmp_path / "inputdir"
     project_num = "NCGD0011"
     override = True
-    compset = "1850_DATM%JRA_SLND_SICE_MOM6_SROF_SGLC_SWAV"
+    compsets = ["1850_DATM%JRA_SLND_SICE_MOM6_SROF_SGLC_SWAV","1850_DATM%JRA_SLND_SICE_MOM6_DROF%GLOFAS_SGLC_SWAV","1850_DATM%JRA_SLND_CICE_MOM6_SROF_SGLC_SWAV"]
     datm_grid_name = "TL319"
     ninst = 2
     glade_bool = is_glade_file_system
@@ -44,19 +44,20 @@ def test_case_init(
         machine = None
 
     # Setup Case
-    case = Case(
-        cesmroot=cesmroot,
-        caseroot=caseroot,
-        inputdir=inputdir,
-        compset=compset,
-        ocn_grid=grid,
-        ocn_vgrid=vgrid,
-        ocn_topo=topo,
-        project=project_num,
-        override=override,
-        machine=machine,
-        datm_grid_name=datm_grid_name,
-        ninst=ninst,
+    for c in compsets:
+        case = Case(
+            cesmroot=cesmroot,
+            caseroot=caseroot,
+            inputdir=inputdir,
+            compset=c,
+            ocn_grid=grid,
+            ocn_vgrid=vgrid,
+            ocn_topo=topo,
+            project=project_num,
+            override=override,
+            machine=machine,
+            datm_grid_name=datm_grid_name,
+            ninst=ninst,
     )
 
     # Check some basics
@@ -123,7 +124,7 @@ def test_configure_forcings(get_CrocoDash_case, tmp_path):
         boundaries=["north", "south", "east"],
     )
 
-    assert case.expt.date_range[0].year == 2020
+    assert case.date_range[0].year == 2020
     assert case.tidal_constituents == ["M2"]
     assert case.boundaries == ["north", "south", "east"]
 
@@ -143,12 +144,9 @@ def test_process_forcing(get_CrocoDash_case, tmp_path):
         chl_processed_filepath=tmp_path,
         boundaries=["north"],
     )
-    path = case.inputdir / "glorys"
+    path = case.inputdir / "glorys"/"large_data_workflow"/"raw_data"
     filenames = ["ic_unprocessed.nc", "north_unprocessed.nc"]
-    for name in filenames:
-        with open(path / name, "w") as file:
-            pass
-    with pytest.raises(ValueError):
+    with pytest.raises(FileNotFoundError):
         case.process_forcings()
 
     # Test CHL processing raises error in mom6_bathy.chl, so we know the connection works
@@ -169,10 +167,17 @@ def test_update_forcing_variables(get_CrocoDash_case):
             dt.datetime.strptime("2020-02-01", "%Y-%m-%d"),
         ],
     )
-    case.date_range
     case.boundaries = []
     case.chl_processed_filepath = case.inputdir
+    case.date_range = [
+            dt.datetime.strptime("2020-01-01", "%Y-%m-%d"),
+            dt.datetime.strptime("2020-02-01", "%Y-%m-%d"),
+        ]
+    case.runoff_esmf_mesh_filepath = True
+    case.runoff_mapping_file_nnsm = "Path"
+    case.cice_file = "Path"
     case._update_forcing_variables()
+    
     with open(case.caseroot / "user_nl_mom_0001", "r", encoding="utf-8") as file:
         for line in file:
             if search_string in line:
