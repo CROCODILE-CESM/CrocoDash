@@ -1,0 +1,33 @@
+{
+  "paths": {
+    "input_path": "",
+    "supergrid_path": "",
+    "bathymetry_path": "",
+    "subset_input_path": "",
+    "regrid_path": "",
+    "output_path": ""
+  },
+  "cesm_information": {
+    "variable_names": [],
+    "space_character": ".",
+    "lat_name": "",
+    "lon_name": "",
+    "z_dim": []
+  },
+    "dates": {
+        "start": "",
+        "end": "",
+        "format": ""
+    },
+  "general": {
+    "preview": false,
+    "boundary_number_conversion": {
+      "south": 1,
+      "north": 2,
+      "west": 3,
+      "east": 4
+    },
+    "process_initial_condition": true,
+    "process_boundary_conditions": true
+  }
+}

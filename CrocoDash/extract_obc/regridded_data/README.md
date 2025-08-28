@@ -1,0 +1,1 @@
+A mid-step folder to store regridded CESM data.
