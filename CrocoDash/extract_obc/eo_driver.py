@@ -2,10 +2,12 @@ import format_dataset as fd
 import parse_dataset as pd
 import regrid_dataset as rd
 import subset_dataset as sd
+import xarray as xr
 from pathlib import Path
 from CrocoDash.raw_data_access.driver import get_rectangular_segment_info
 from CrocoDash.grid import Grid
-
+import sys
+import json 
 
 def test_driver():
     print("All Imports Work!")

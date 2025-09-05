@@ -38,6 +38,10 @@ def subset_dataset(
 
     # Iterate through each variable and its corresponding file paths
     for var_name, file_paths in variable_info.items():
+        output_file = output_path / f"{var_name}_subset.nc"
+        if output_file.exists():
+            print(f"Subset already exists for {var_name}, skipping")
+            continue
         if not file_paths:
             print(f"No files found for variable: {var_name}")
             continue
@@ -68,12 +72,12 @@ def subset_dataset(
             subset_ds = ds.where(mask, drop=True)
 
             # Save the subsetted dataset to the output path
-            output_file = output_path / f"{var_name}_subset.nc"
+           
             subset_ds.to_netcdf(output_file)
 
             print(f"Subsetted dataset for variable '{var_name}' saved to {output_file}")
 
-    return mask
+    return
 
 
 if __name__ == "__main__":

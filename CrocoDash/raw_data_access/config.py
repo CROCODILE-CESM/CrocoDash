@@ -7,9 +7,9 @@ CONFIG_DIR = (
 )  # Adjust this to wherever your config is stored
 
 
-def load_varnames_config():
+def load_product_config(product_name: str):
     """Load configuration files."""
-    with open(f"{CONFIG_DIR}/forcing_varnames.json", "r") as f:
+    with open(f"{CONFIG_DIR}/{product_name}.json", "r") as f:
         data = json.load(f)  # Use `json.load()` for files
     return data
 

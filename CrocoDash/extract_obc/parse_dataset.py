@@ -24,6 +24,7 @@ def parse_dataset(
     Returns:
         dict: A dictionary with variable names as keys and their file paths as values.
     """
+    print("Parsing dataset...")
     start_date = parser.parse(start_date)
     end_date = parser.parse(end_date)
     # Create a dictionary to hold variable names and their file paths
@@ -50,6 +51,11 @@ def parse_dataset(
             variable_info[v] = [str(dataset_path.resolve())]
     else:
         raise ValueError("dataset_path must be a string, Path to existing file(s)")
+
+    # Print the found file paths
+    for v in variable_info:
+        print(f"{len(variable_info[v])} file(s) found for variable '{v}':")
+        
 
     return variable_info
 

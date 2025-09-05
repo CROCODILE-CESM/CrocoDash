@@ -49,7 +49,11 @@ def regrid_dataset_to_boundaries(
                 print(f"Regridding {v} {item}")
                 input_file = input_path / f"{v}_subset.nc"
                 output_file = output_path / f"{v}_{item}_regridded.nc"
-                with xr.open_dataset(input_file, chunks="auto") as ds:
+                if output_file.exists():
+                    print(f"{output_file} already exists, skipping.")
+                    output_paths.append(str(output_file.resolve()))
+                    continue
+                with xr.open_dataset(input_file,decode_times = False, chunks="auto") as ds:
                     ds = ds.rename({lon_name: "lon", lat_name: "lat"})
 
                     # Perform regridding
@@ -84,7 +88,7 @@ def create_regridders(
     # Create regridders for each boundary
     variable_to_use = next(iter(variable_info.keys()))
     regridders = {}
-    ds = xr.open_dataset(input_path / f"{variable_to_use}_subset.nc")
+    ds = xr.open_dataset(input_path / f"{variable_to_use}_subset.nc", decode_times = False)
     ds["lon"] = ds[lon_name]
     ds["lat"] = ds[lat_name]
     hgrid["lon"] = hgrid["x"]

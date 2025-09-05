@@ -52,7 +52,19 @@ def format_dataset(
         for item in REGRID_ITEMS:
             # Open Dataset
             ds = xr.open_dataset(input_path / f"{v}_{item}_regridded.nc")
-            if item is not "IC":
+
+            # Ensure the correct z_dim if it is a list of potential z_dims
+            if type(z_dim) is list:
+                    found_z_dim = False
+                    for z_dim_opt in z_dim:
+                        if z_dim_opt in ds["__xarray_dataarray_variable__"].dims:
+                            z_dim_act = z_dim_opt
+                            found_z_dim = True
+                            break
+                    if not found_z_dim:
+                        print(f"Did not find any of the provided z_dims in the dataset for {v} {item}, assuming surface variable")
+                        z_dim_act = None
+            if item != "IC":
                 segment_name = "segment_{:03d}".format(boundary_number_conversion[item])
                 file_path = output_path / f"{v}_obc_{segment_name}.nc"
                 if file_path.exists():
@@ -79,37 +91,30 @@ def format_dataset(
                 item_name = f"{v}_{segment_name}"
                 ds = ds.rename({v: item_name})
 
-                if type(z_dim) is list:
-                    found_z_dim = False
-                    for z_dim_opt in z_dim:
-                        if z_dim_opt in ds[item_name].dims:
-                            z_dim = z_dim_opt
-                            break
-                    if not found_z_dim:
-                        z_dim = None
+                
                 ds[item_name] = rgd.fill_missing_data(
                     ds[item_name],
                     xdim=dim_name,
-                    zdim=z_dim,
+                    zdim=z_dim_act,
                 )
 
-                if z_dim not in ds[item_name].dims:
+                if z_dim_act not in ds[item_name].dims:
                     print(
-                        "This variable is only a surface variable, skipping z_dim conversion."
+                        "This variable is only a surface variable, skipping z_dim_act conversion."
                     )
-                    z_dim = None
+                    z_dim_act = None
                     ds = rgd.add_secondary_dimension(
                         ds, item_name, coords, segment_name
                     )
                 else:
                     ds = rgd.vertical_coordinate_encoding(
-                        ds, item_name, segment_name, z_dim
+                        ds, item_name, segment_name, z_dim_act
                     )
                     ds = rgd.add_secondary_dimension(
                         ds, item_name, coords, segment_name
                     )
                     ds = rgd.generate_layer_thickness(
-                        ds, item_name, segment_name, z_dim
+                        ds, item_name, segment_name, z_dim_act
                     )
 
                 # Overwrite actual lat/lon vals with grid numbers in these variables
@@ -122,8 +127,6 @@ def format_dataset(
                     ds,
                     bathymetry,
                     item,
-                    y_dim_name="lath",
-                    x_dim_name="lonh",
                 )
                 # Do Encoding
                 encoding_dict = {
@@ -166,13 +169,13 @@ def format_dataset(
                 ds = ds.drop_vars(["__xarray_dataarray_variable__"])
 
                 # Fill Missing Data
-                if z_dim not in ds[v].dims:
-                    z_dim = None
+                if z_dim_act not in ds[v].dims:
+                    z_dim_act = None
 
                 ds[v] = rgd.fill_missing_data(
                     ds[v],
                     xdim="nxp",
-                    zdim=z_dim,
+                    zdim=z_dim_act,
                 )
 
                 # Do Encoding

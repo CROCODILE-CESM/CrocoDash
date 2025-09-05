@@ -289,6 +289,10 @@ class Case:
         runoff_esmf_mesh_filepath: str | Path | None = None,
         cesm_input_path: str | Path | None = None,
         cesm_varnames: list[str] | None = None,
+        cesm_space_character: str = ".",
+        cesm_lat_name: str = "LAT",
+        cesm_lon_name: str = "LON",
+        cesm_z_dim: str = "z",
     ):
         """
         Configure the boundary conditions and tides for the MOM6 case.
@@ -329,6 +333,8 @@ class Case:
             If passed, a path to the directory where CESM output data is stored. This is used instead to extract OBCs and ICs for the case.
         cesm_varnames : list of str, optional
             If passed, a list of variable names corresponding to the output data to extract OBCs and ICs for, must include all physical tracers/u/v and any BGC tracers required.
+        cesm_space_character, cesm_lat_name, cesm_lon_name: str, optional
+            If passed, the file parser character that seperates the variable name in the filename itself, the lat name, and the lon name
             
 
         Raises
@@ -355,8 +361,8 @@ class Case:
         """
 
         if cesm_input_path is not None:
-            self.configure_cesm_initial_and_boundary_conditions(input_path = cesm_input_path, cesm_varnames = cesm_varnames,date_range=date_range,
-                boundaries=boundaries,too_much_data=too_much_data,)
+            self.configure_cesm_initial_and_boundary_conditions(input_path = cesm_input_path, varnames = cesm_varnames,date_range=date_range,
+                boundaries=boundaries,too_much_data=too_much_data,space_character = cesm_space_character, lat_name = cesm_lat_name, lon_name = cesm_lon_name, z_dim = cesm_z_dim)
 
         else:
             self.configure_initial_and_boundary_conditions(
@@ -372,7 +378,7 @@ class Case:
         self.configure_chl(chl_processed_filepath)
         self.configure_runoff(runoff_esmf_mesh_filepath)
         self._configure_forcings_called = True
-    def configure_cesm_initial_and_boundary_conditions(self, input_path: str | Path,varnames: list[str], date_range: list[str],boundaries: list[str] = ["south", "north", "west", "east"],too_much_data: bool = False,):
+    def configure_cesm_initial_and_boundary_conditions(self, input_path: str | Path,varnames: list[str], date_range: list[str],boundaries: list[str] = ["south", "north", "west", "east"],too_much_data: bool = False,space_character: str = ".", lat_name: str = "LAT", lon_name: str = "LON", z_dim: str = "z"):
         """
         Configure CESM OBC and ICs from previous CESM output
         """
@@ -541,8 +547,8 @@ class Case:
 
         if process_initial_condition or process_velocity_tracers:
             sys.path.append(str(self.large_data_workflow_path))
-            import driver
-            driver.extract_obcs()
+            import eo_driver
+            eo_driver.extract_obcs(config)
 
 
     def configure_initial_and_boundary_conditions(
@@ -630,9 +636,9 @@ class Case:
         config["forcing"]["product_name"] = self.forcing_product_name.upper()
         config["forcing"]["function_name"] = function_name
         config["forcing"]["varnames"] = (
-            self.ProductFunctionRegistry.forcing_varnames_config[
-                self.forcing_product_name.upper()
-            ]
+            self.ProductFunctionRegistry.load_product_config(
+                self.forcing_product_name.lower()
+        )
         )
         config["boundary_number_conversion"] = {
             item: idx + 1 for idx, item in enumerate(self.boundaries)
@@ -754,15 +760,16 @@ class Case:
     
     def process_runoff(self, process_runoff: bool):
         if process_runoff and self.runoff_in_compset and self.runoff_esmf_mesh_filepath:
+            self.session_id = cvars["MB_ATTEMPT_ID"].value
             mapping.gen_rof_maps(
                 rof_mesh_path=self.runoff_esmf_mesh_filepath,
                 ocn_mesh_path=self.esmf_mesh_path,
-                output_dir=inputdir/"ocnice",
+                output_dir=self.inputdir/"ocnice",
                 mapping_file_prefix=f'glofas_{self.ocn_grid.name}_{self.session_id}',
                 rmax=100.0,
                 fold=100.0
             )
-            self.runoff_mapping_file_nnsm = inputdir/"ocnice"/f"glofas_{self.ocn_grid.name}_{self.session_id}_nnsm.nc"
+            self.runoff_mapping_file_nnsm = self.inputdir/"ocnice"/f"glofas_{self.ocn_grid.name}_{self.session_id}_nnsm.nc"
 
     def process_initial_and_boundary_conditions(
         self, process_initial_condition, process_velocity_tracers
