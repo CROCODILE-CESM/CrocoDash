@@ -376,13 +376,13 @@ class Case:
                 too_much_data=too_much_data,
             )
         if tidal_constituents:
-            self.configure_tides(
+            self.configured_tides = self.configure_tides(
                 tidal_constituents, tpxo_elevation_filepath, tpxo_velocity_filepath
             )
         if chl_processed_filepath:
-            self.configure_chl(chl_processed_filepath)
+            self.configured_chl = self.configure_chl(chl_processed_filepath)
         if runoff_esmf_mesh_filepath:
-            self.configure_runoff(runoff_esmf_mesh_filepath)
+            self.configured_runoff = self.configure_runoff(runoff_esmf_mesh_filepath)
         self._configure_forcings_called = True
     def configure_cesm_initial_and_boundary_conditions(self, input_path: str | Path, date_range: list[str],boundaries: list[str] = ["south", "north", "west", "east"],too_much_data: bool = False,space_character: str = ".", lat_name: str = "LAT", lon_name: str = "LON", z_dim: str = "z"):
         """
@@ -499,7 +499,6 @@ class Case:
         --------
         configure_forcings : Must be called before this method to set up the environment.
         """
-
         if not self._configure_forcings_called:
             raise RuntimeError(
                 "configure_forcings() must be called before process_forcings()."
@@ -512,9 +511,13 @@ class Case:
             self.process_initial_and_boundary_conditions(
                 process_initial_condition, process_velocity_tracers
             )
-        self.process_tides(process_tides)
-        self.process_chl(process_chl)
-        self.process_runoff(process_runoff)
+        if process_tides:
+            
+            self.process_tides()
+        if process_chl:
+            self.process_chl()
+        if process_runoff:
+            self.process_runoff()
 
         # Apply forcing-related namelist and xml changes
         if process_param_changes:
@@ -673,6 +676,7 @@ class Case:
             raise ValueError("Runoff can only be turned on if it is in the compset!")
         elif self.runoff_in_compset and (runoff_esmf_mesh_filepath is not None):
             self.runoff_esmf_mesh_filepath = runoff_esmf_mesh_filepath
+        return True
 
     def configure_tides(
         self,
@@ -724,15 +728,17 @@ class Case:
             expt_name=self.caseroot.name,
             boundaries=boundaries,
         )
+        return True
 
     def configure_chl(self, chl_processed_filepath: str | Path):
         self.chl_processed_filepath = (
             Path(chl_processed_filepath) if chl_processed_filepath else None
         )
+        return True
 
-    def process_tides(self, process_tides: bool):
+    def process_tides(self):
         # Process the tides
-        if process_tides and self.tidal_constituents:
+        if self.tidal_constituents:
 
             # Process the tides
             self.expt.setup_boundary_tides(
@@ -741,9 +747,9 @@ class Case:
                 tidal_constituents=self.tidal_constituents,
             )
 
-    def process_chl(self, process_chl: bool):
+    def process_chl(self):
         # Process the chlorophyll file if it is provided
-        if process_chl and self.chl_processed_filepath is not None:
+        if  self.chl_processed_filepath is not None:
             if not self.chl_processed_filepath.exists():
                 raise FileNotFoundError(
                     f"Chlorophyll file {self.chl_processed_filepath} does not exist."
@@ -761,8 +767,8 @@ class Case:
                 self.regional_chl_file_path,
             )
     
-    def process_runoff(self, process_runoff: bool):
-        if process_runoff and self.runoff_in_compset and self.runoff_esmf_mesh_filepath:
+    def process_runoff(self):
+        if self.runoff_in_compset and self.runoff_esmf_mesh_filepath:
             self.session_id = cvars["MB_ATTEMPT_ID"].value
             mapping.gen_rof_maps(
                 rof_mesh_path=self.runoff_esmf_mesh_filepath,
@@ -1010,7 +1016,7 @@ class Case:
         )
 
         # Tides
-        if self.tidal_constituents:
+        if self.configured_tides:
             tidal_params = [
                 ("TIDES", "True"),
                 ("TIDE_M2", "True"),
@@ -1040,7 +1046,7 @@ class Case:
             )
 
         # Chlorophyll
-        if self.chl_processed_filepath is not None:
+        if self.configured_chl:
             chl_params = [
                 ("CHL_FILE", f"seawifs-clim-1997-2010-{self.ocn_grid.name}.nc"),
                 ("CHL_FROM_FILE", "TRUE"),
@@ -1069,8 +1075,8 @@ class Case:
         ]
 
         # More OBC parameters:
-        for seg in self.expt.boundaries:
-            seg_ix = str(self.expt.find_MOM6_rectangular_orientation(seg)).zfill(
+        for seg in self.boundaries:
+            seg_ix = str(self.find_MOM6_rectangular_orientation(seg)).zfill(
                 3
             )  # "001", "002", etc.
             seg_id = "OBC_SEGMENT_" + seg_ix
@@ -1096,13 +1102,29 @@ class Case:
             # Nudging
             obc_params.append((seg_id + "_VELOCITY_NUDGING_TIMESCALES", "0.3, 360.0"))
 
-            standard_data_str = lambda: (
-                f'"U=file:forcing_obc_segment_{seg_ix}.nc(u),'
-                f"V=file:forcing_obc_segment_{seg_ix}.nc(v),"
-                f"SSH=file:forcing_obc_segment_{seg_ix}.nc(eta),"
-                f"TEMP=file:forcing_obc_segment_{seg_ix}.nc(temp),"
-                f"SALT=file:forcing_obc_segment_{seg_ix}.nc(salt)"
-            )
+            if self.forcing_product_name.upper() != "CESM_OUTPUT":
+                standard_data_str = lambda: (
+                    f'"U=file:forcing_obc_segment_{seg_ix}.nc(u),'
+                    f"V=file:forcing_obc_segment_{seg_ix}.nc(v),"
+                    f"SSH=file:forcing_obc_segment_{seg_ix}.nc(eta),"
+                    f"TEMP=file:forcing_obc_segment_{seg_ix}.nc(temp),"
+                    f"SALT=file:forcing_obc_segment_{seg_ix}.nc(salt)"
+                )
+            else:
+
+                product_info = self.ProductFunctionRegistry.load_product_config(self.forcing_product_name)
+                
+                standard_data_str = lambda: (
+                    f'"U=file:{product_info["u"]}_obc_segment_{seg_ix}.nc({product_info["u"]}),'
+                    f"V=file:{product_info["v"]}_obc_segment_{seg_ix}.nc({product_info["v"]}),"
+                    f"SSH=file:{product_info["eta"]}_obc_segment_{seg_ix}.nc({product_info["eta"]}),"
+                    f"TEMP=file:{product_info["tracers"]["temp"]}_obc_segment_{seg_ix}.nc({product_info["tracers"]["temp"]}),"
+                    f"SALT=file:{product_info["tracers"]["salt"]}_obc_segment_{seg_ix}.nc({product_info["tracers"]["salt"]})"
+                )
+                bgc_tracers = ""
+                for tracer_mom6_name in product_info["tracers"]:
+                    if tracer_mom6_name != "temp" and tracer_mom6_name != "salt":
+                        bgc_tracers += f",{tracer_mom6_name}=file:{product_info["tracers"][tracer_mom6_name]}_obc_segment_{seg_ix}.nc({product_info["tracers"][tracer_mom6_name]})"
             tidal_data_str = lambda: (
                 f",Uamp=file:tu_segment_{seg_ix}.nc(uamp),"
                 f"Uphase=file:tu_segment_{seg_ix}.nc(uphase),"
@@ -1111,12 +1133,12 @@ class Case:
                 f"SSHamp=file:tz_segment_{seg_ix}.nc(zamp),"
                 f"SSHphase=file:tz_segment_{seg_ix}.nc(zphase)"
             )
-            if self.tidal_constituents:
+            if self.configured_tides:
                 obc_params.append(
-                    (seg_id + "_DATA", standard_data_str() + tidal_data_str() + '"')
+                    (seg_id + "_DATA", standard_data_str() + tidal_data_str() + bgc_tracers +'"')
                 )
             else:
-                obc_params.append((seg_id + "_DATA", standard_data_str() + '"'))
+                obc_params.append((seg_id + "_DATA", standard_data_str()+ bgc_tracers + '"'))
 
         append_user_nl(
             "mom",
@@ -1142,7 +1164,7 @@ class Case:
                 log_title=False,
             )
     
-        if self.runoff_in_compset and self.runoff_esmf_mesh_filepath:
+        if self.runoff_in_compset and self.configured_runoff:
             
             xmlchange("ROF2OCN_LIQ_RMAPNAME", str(self.runoff_mapping_file_nnsm),is_non_local=self.cc._is_non_local())
             xmlchange("ROF2OCN_ICE_RMAPNAME", str(self.runoff_mapping_file_nnsm),is_non_local=self.cc._is_non_local())
@@ -1160,3 +1182,22 @@ class Case:
         )
 
         print(f"Case is ready to be built: {self.caseroot}")
+    def find_MOM6_rectangular_orientation(self, input):
+        """
+        Convert between MOM6 boundary and the specific segment number needed, or the inverse.
+        """
+
+        direction_dir = {}
+        counter = 1
+        for b in self.boundaries:
+            direction_dir[b] = counter
+            counter += 1
+        direction_dir_inv = {v: k for k, v in direction_dir.items()}
+        merged_dict = {**direction_dir, **direction_dir_inv}
+        try:
+            val = merged_dict[input]
+        except KeyError:
+            raise ValueError(
+                "Invalid direction or segment number for MOM6 rectangular orientation"
+            )
+        return val
