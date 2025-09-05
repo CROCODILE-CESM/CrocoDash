@@ -32,6 +32,8 @@ class ProductFunctionRegistry:
         self._loaded_functions = False
         self.products_df, self.functions_df = tb.load_tables()
 
+    def add_product_config(self, product_name: str, product_info: str | Path | dict):
+        return tb.add_product_config(product_name, product_info)
     def load_product_config(self, product_name: str):
         """Load configuration files."""
         return tb.load_product_config(product_name)

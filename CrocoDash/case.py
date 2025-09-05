@@ -285,6 +285,7 @@ class Case:
         tpxo_velocity_filepath: str | Path | None = None,
         product_name: str = "GLORYS",
         function_name: str = "get_glorys_data_script_for_cli",
+        product_info: str | Path | dict = "None",
         too_much_data: bool = False,
         chl_processed_filepath: str | Path | None = None,
         runoff_esmf_mesh_filepath: str | Path | None = None,
@@ -322,6 +323,9 @@ class Case:
         function_name : str, optional
             Name of the function to call for downloading the forcing data.
             Default is "get_glorys_data_script_for_cli".
+        product_info: str | Path | dict, optional
+            The equivalent MOM6 names to Product Names. Example:  xh -> lat time -> valid_time salinity -> salt, as well as any other information required for product parsing
+            The `None` option assumes the information is in raw_data_access/config under {product_name}.json. Every other option is copied there.
         too_much_data : bool, optional
             If True, configures the large data workflow. In this case, data are not downloaded
             immediately, but a config file and workflow directory are created
@@ -332,11 +336,6 @@ class Case:
             If passed, points to the processed global runoff file for mapping through mom6_bathy.mapping
         cesm_input_path : str or Path, optional
             If passed, a path to the directory where CESM output data is stored. This is used instead to extract OBCs and ICs for the case.
-        cesm_varnames : list of str, optional
-            If passed, a list of variable names corresponding to the output data to extract OBCs and ICs for, must include all physical tracers/u/v and any BGC tracers required.
-        cesm_space_character, cesm_lat_name, cesm_lon_name: str, optional
-            If passed, the file parser character that seperates the variable name in the filename itself, the lat name, and the lon name
-            
 
         Raises
         ------
@@ -360,12 +359,20 @@ class Case:
         --------
         process_forcings : Executes the actual boundary, initial condition, and tide setup based on the configuration.
         """
+        
 
         if cesm_input_path is not None:
-            self.configure_cesm_initial_and_boundary_conditions(input_path = cesm_input_path, varnames = cesm_varnames,date_range=date_range,
-                boundaries=boundaries,too_much_data=too_much_data,space_character = cesm_space_character, lat_name = cesm_lat_name, lon_name = cesm_lon_name, z_dim = cesm_z_dim)
+            product_name = "CESM_OUTPUT"
+            self.forcing_product_name =  product_name.lower()
+            self.ProductFunctionRegistry.add_product_config(product_name, product_info = product_info)
+
+            self.configure_cesm_initial_and_boundary_conditions(input_path = cesm_input_path, product_info = product_info,date_range=date_range,
+                boundaries=boundaries,too_much_data=too_much_data)
 
         else:
+            self.forcing_product_name =  product_name.lower()
+            self.ProductFunctionRegistry.add_product_config(product_name, product_info = product_info)
+
             self.configure_initial_and_boundary_conditions(
                 date_range=date_range,
                 boundaries=boundaries,
@@ -384,7 +391,7 @@ class Case:
         Configure CESM OBC and ICs from previous CESM output
         """
         self.boundaries = boundaries
-        self.forcing_product_name = "CESM_OUTPUT"
+        
         if too_much_data:
             self._large_data_workflow_called = True
 
@@ -429,11 +436,7 @@ class Case:
         config["dates"]["start"] = self.date_range[0].strftime(date_format)
         config["dates"]["end"] = self.date_range[1].strftime(date_format)
         config["dates"]["format"] = date_format
-        config["cesm_information"]["space_character"] = space_character
-        config["cesm_information"]["lat_name"] = lat_name
-        config["cesm_information"]["lon_name"] = lon_name
-        config["cesm_information"]["variable_names"] = varnames
-        config["cesm_information"]["z_dim"] = z_dim
+        config["cesm_information"] = self.ProductFunctionRegistry.load_product_config(self.forcing_product_name.lower())
         config["general"]["boundary_number_conversion"] = {
             item: idx + 1 for idx, item in enumerate(self.boundaries)
         }
@@ -503,7 +506,7 @@ class Case:
             raise RuntimeError(
                 "configure_forcings() must be called before process_forcings()."
             )
-        if self.forcing_product_name == "CESM_OUTPUT":
+        if (self.forcing_product_name).upper() == "CESM_OUTPUT":
             self.process_cesm_initial_and_boundary_conditions(
                 process_initial_condition, process_velocity_tracers
             )

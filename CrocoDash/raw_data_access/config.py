@@ -7,11 +7,52 @@ CONFIG_DIR = (
 )  # Adjust this to wherever your config is stored
 
 
+def add_product_config(product_name: str, product_info: str | Path | dict):
+    """Add Product Config file if not already created"""
+    product_name = product_name.lower()
+    output_path = CONFIG_DIR / (product_name + ".json")
+    if output_path.exists():
+        raise ValueError(f"Product config already exists in {output_path}. Please delete this to replace it.")
+    else:
+        if type(product_info) == str or type(product_info) == Path:
+            with open(product_info, "r") as f:
+                product_info = json.load(f) 
+        
+        # Validate, must have the keys time, xh, yh, u, v, eta, z_dim or zl, and a subdict called tracers with the fields salt, temp
+        required_keys = {"time", "xh", "yh", "u", "v", "eta", "zl"}
+        tracer_keys = {"salt", "temp"}
+
+        missing = []
+
+        # Check top-level keys
+        for key in required_keys:
+            if key not in product_info:
+                missing.append(key)
+
+        # Check tracers subdict
+        if "tracers" not in product_info or not isinstance(product_info["tracers"], dict):
+            missing.append("tracers (dict with at least salt, temp)")
+        else:
+            for key in tracer_keys:
+                if key not in product_info["tracers"]:
+                    missing.append(f"tracers.{key}")
+
+        if missing:
+            raise ValueError(f"Product dict is missing required keys: {', '.join(missing)}")      
+
+        # Write out
+        with open(output_path, "w") as f:
+            json.dump(product_info, f, indent=4)
+
 def load_product_config(product_name: str):
     """Load configuration files."""
-    with open(f"{CONFIG_DIR}/{product_name}.json", "r") as f:
-        data = json.load(f)  # Use `json.load()` for files
-    return data
+    product_name = product_name.lower()
+    try:
+        with open(f"{CONFIG_DIR}/{product_name}.json", "r") as f:
+            data = json.load(f)  # Use `json.load()` for files
+            return data
+    except:
+        raise ValueError(f"Product Information not found in {CONFIG_DIR}/{product_name}")
 
 
 def load_tables():
