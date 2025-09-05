@@ -109,6 +109,7 @@ class Case:
         self.ninst = ninst
         self.override = override
         self.ProductFunctionRegistry = dv.ProductFunctionRegistry()
+        self.ProductFunctionRegistry.load_functions()
         self.forcing_product_name = None
         self._configure_forcings_called = False
         self._large_data_workflow_called = False
@@ -563,7 +564,7 @@ class Case:
             tb.category_of_product(product_name) == "forcing"
         ), "Data product must be a forcing product"
 
-        self.ProductFunctionRegistry.load_functions()
+        
         if not self.ProductFunctionRegistry.validate_function(
             product_name, function_name
         ):
