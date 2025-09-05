@@ -333,6 +333,7 @@ document.write(`
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#subpackages">Subpackages</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#submodules">Submodules</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.raw_data_access.config">CrocoDash.raw_data_access.config module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.config.add_product_config"><code class="docutils literal notranslate"><span class="pre">add_product_config()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.config.category_of_product"><code class="docutils literal notranslate"><span class="pre">category_of_product()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.config.function_exists"><code class="docutils literal notranslate"><span class="pre">function_exists()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.config.list_functions"><code class="docutils literal notranslate"><span class="pre">list_functions()</span></code></a></li>
@@ -345,6 +346,7 @@ document.write(`
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.raw_data_access.driver">CrocoDash.raw_data_access.driver module</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.driver.ProductFunctionRegistry"><code class="docutils literal notranslate"><span class="pre">ProductFunctionRegistry</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.driver.ProductFunctionRegistry.add_product_config"><code class="docutils literal notranslate"><span class="pre">ProductFunctionRegistry.add_product_config()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.driver.ProductFunctionRegistry.list_importable_functions"><code class="docutils literal notranslate"><span class="pre">ProductFunctionRegistry.list_importable_functions()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.driver.ProductFunctionRegistry.load_functions"><code class="docutils literal notranslate"><span class="pre">ProductFunctionRegistry.load_functions()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.driver.ProductFunctionRegistry.load_product_config"><code class="docutils literal notranslate"><span class="pre">ProductFunctionRegistry.load_product_config()</span></code></a></li>
@@ -409,6 +411,12 @@ document.write(`
 <section id="module-CrocoDash.raw_data_access.config">
 <span id="crocodash-raw-data-access-config-module"></span><h2>CrocoDash.raw_data_access.config module<a class="headerlink" href="#module-CrocoDash.raw_data_access.config" title="Link to this heading">#</a></h2>
 <dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.config.add_product_config">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.config.</span></span><span class="sig-name descname"><span class="pre">add_product_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">product_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">product_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.config.add_product_config" title="Link to this definition">#</a></dt>
+<dd><p>Add Product Config file if not already created</p>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.config.category_of_product">
 <span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.config.</span></span><span class="sig-name descname"><span class="pre">category_of_product</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">product_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.config.category_of_product" title="Link to this definition">#</a></dt>
 <dd><p>Returns the type of function, python or script, the function is</p>
@@ -465,6 +473,11 @@ document.write(`
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.driver.</span></span><span class="sig-name descname"><span class="pre">ProductFunctionRegistry</span></span><a class="headerlink" href="#CrocoDash.raw_data_access.driver.ProductFunctionRegistry" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Singleton Class Dynamically loads product functions, validates them, and allows easy execution.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.driver.ProductFunctionRegistry.add_product_config">
+<span class="sig-name descname"><span class="pre">add_product_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">product_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">product_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.driver.ProductFunctionRegistry.add_product_config" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.driver.ProductFunctionRegistry.list_importable_functions">
 <span class="sig-name descname"><span class="pre">list_importable_functions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">product</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.driver.ProductFunctionRegistry.list_importable_functions" title="Link to this definition">#</a></dt>
@@ -611,6 +624,7 @@ and writes the filled content to a new file.</p>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#subpackages">Subpackages</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#submodules">Submodules</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.raw_data_access.config">CrocoDash.raw_data_access.config module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.config.add_product_config"><code class="docutils literal notranslate"><span class="pre">add_product_config()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.config.category_of_product"><code class="docutils literal notranslate"><span class="pre">category_of_product()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.config.function_exists"><code class="docutils literal notranslate"><span class="pre">function_exists()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.config.list_functions"><code class="docutils literal notranslate"><span class="pre">list_functions()</span></code></a></li>
@@ -623,6 +637,7 @@ and writes the filled content to a new file.</p>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.raw_data_access.driver">CrocoDash.raw_data_access.driver module</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.driver.ProductFunctionRegistry"><code class="docutils literal notranslate"><span class="pre">ProductFunctionRegistry</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.driver.ProductFunctionRegistry.add_product_config"><code class="docutils literal notranslate"><span class="pre">ProductFunctionRegistry.add_product_config()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.driver.ProductFunctionRegistry.list_importable_functions"><code class="docutils literal notranslate"><span class="pre">ProductFunctionRegistry.list_importable_functions()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.driver.ProductFunctionRegistry.load_functions"><code class="docutils literal notranslate"><span class="pre">ProductFunctionRegistry.load_functions()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.driver.ProductFunctionRegistry.load_product_config"><code class="docutils literal notranslate"><span class="pre">ProductFunctionRegistry.load_product_config()</span></code></a></li>
