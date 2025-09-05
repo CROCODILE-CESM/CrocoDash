@@ -30,10 +30,19 @@ def extract_obcs(
         dict: Paths to the output files for each boundary.
     """
 
+    # Get the variable_names from the setup
+    variable_names = []
+    variable_names.append(params["cesm_information"]["u"])
+    variable_names.append(params["cesm_information"]["v"])
+    variable_names.append(params["cesm_information"]["eta"])
+    for key in params["cesm_information"]["tracers"]:
+        variable_names.append(params["cesm_information"]["tracers"][key])
+
+
     # Parse the raw dataset
     if parse_dataset:
         variable_info = pd.parse_dataset(
-            params["cesm_information"]["variable_names"],
+            variable_names,
             Path(params["paths"]["input_path"]),
             params["dates"]["start"],
             params["dates"]["end"],
@@ -52,8 +61,8 @@ def extract_obcs(
             lat_max=boundary_info["ic"]["lat_max"],
             lon_min=boundary_info["ic"]["lon_min"],
             lon_max=boundary_info["ic"]["lon_max"],
-            lat_name=params["cesm_information"]["lat_name"],
-            lon_name=params["cesm_information"]["lon_name"],
+            lat_name=params["cesm_information"]["yh"],
+            lon_name=params["cesm_information"]["xh"],
             preview=params["general"]["preview"],
         )
 
@@ -65,8 +74,8 @@ def extract_obcs(
             params["paths"]["regrid_path"],
             supergrid,
             variable_info,
-            params["cesm_information"]["lat_name"],
-            params["cesm_information"]["lon_name"],
+            params["cesm_information"]["yh"],
+            params["cesm_information"]["xh"],
             params["general"]["preview"],
         )
 
@@ -80,9 +89,9 @@ def extract_obcs(
             supergrid,
             bathymetry,
             variable_info,
-            params["cesm_information"]["lat_name"],
-            params["cesm_information"]["lon_name"],
-            params["cesm_information"]["z_dim"],
+            params["cesm_information"]["yh"],
+            params["cesm_information"]["xh"],
+            params["cesm_information"]["zl"],
             params["general"]["boundary_number_conversion"],
         )
         return output_paths

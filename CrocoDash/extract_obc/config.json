@@ -8,17 +8,23 @@
     "output_path": ""
   },
   "cesm_information": {
-    "variable_names": [],
-    "space_character": ".",
-    "lat_name": "",
-    "lon_name": "",
-    "z_dim": []
+    "time": "",
+    "xh": "",
+    "yh": "",
+    "u": "",
+    "v": "",
+    "eta": "",
+    "zl": [],
+    "tracers": {
+      "temp": "",
+      "salt": ""
+    }
   },
-    "dates": {
-        "start": "",
-        "end": "",
-        "format": ""
-    },
+  "dates": {
+    "start": "",
+    "end": "",
+    "format": ""
+  },
   "general": {
     "preview": false,
     "boundary_number_conversion": {

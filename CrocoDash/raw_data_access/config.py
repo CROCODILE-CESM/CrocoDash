@@ -14,10 +14,13 @@ def add_product_config(product_name: str, product_info: str | Path | dict):
     if output_path.exists():
         raise ValueError(f"Product config already exists in {output_path}. Please delete this to replace it.")
     else:
+
         if type(product_info) == str or type(product_info) == Path:
             with open(product_info, "r") as f:
                 product_info = json.load(f) 
-        
+        elif product_info == None:
+            raise ValueError(f"No product info provided but product information does not exist in {output_path}")
+            return
         # Validate, must have the keys time, xh, yh, u, v, eta, z_dim or zl, and a subdict called tracers with the fields salt, temp
         required_keys = {"time", "xh", "yh", "u", "v", "eta", "zl"}
         tracer_keys = {"salt", "temp"}

@@ -285,16 +285,11 @@ class Case:
         tpxo_velocity_filepath: str | Path | None = None,
         product_name: str = "GLORYS",
         function_name: str = "get_glorys_data_script_for_cli",
-        product_info: str | Path | dict = "None",
+        product_info: str | Path | dict = None,
         too_much_data: bool = False,
         chl_processed_filepath: str | Path | None = None,
         runoff_esmf_mesh_filepath: str | Path | None = None,
         cesm_input_path: str | Path | None = None,
-        cesm_varnames: list[str] | None = None,
-        cesm_space_character: str = ".",
-        cesm_lat_name: str = "LAT",
-        cesm_lon_name: str = "LON",
-        cesm_z_dim: str = "z",
     ):
         """
         Configure the boundary conditions and tides for the MOM6 case.
@@ -366,7 +361,7 @@ class Case:
             self.forcing_product_name =  product_name.lower()
             self.ProductFunctionRegistry.add_product_config(product_name, product_info = product_info)
 
-            self.configure_cesm_initial_and_boundary_conditions(input_path = cesm_input_path, product_info = product_info,date_range=date_range,
+            self.configure_cesm_initial_and_boundary_conditions(input_path = cesm_input_path, date_range=date_range,
                 boundaries=boundaries,too_much_data=too_much_data)
 
         else:
@@ -380,13 +375,16 @@ class Case:
                 function_name=function_name,
                 too_much_data=too_much_data,
             )
-        self.configure_tides(
-            tidal_constituents, tpxo_elevation_filepath, tpxo_velocity_filepath
-        )
-        self.configure_chl(chl_processed_filepath)
-        self.configure_runoff(runoff_esmf_mesh_filepath)
+        if tidal_constituents:
+            self.configure_tides(
+                tidal_constituents, tpxo_elevation_filepath, tpxo_velocity_filepath
+            )
+        if chl_processed_filepath:
+            self.configure_chl(chl_processed_filepath)
+        if runoff_esmf_mesh_filepath:
+            self.configure_runoff(runoff_esmf_mesh_filepath)
         self._configure_forcings_called = True
-    def configure_cesm_initial_and_boundary_conditions(self, input_path: str | Path,varnames: list[str], date_range: list[str],boundaries: list[str] = ["south", "north", "west", "east"],too_much_data: bool = False,space_character: str = ".", lat_name: str = "LAT", lon_name: str = "LON", z_dim: str = "z"):
+    def configure_cesm_initial_and_boundary_conditions(self, input_path: str | Path, date_range: list[str],boundaries: list[str] = ["south", "north", "west", "east"],too_much_data: bool = False,space_character: str = ".", lat_name: str = "LAT", lon_name: str = "LON", z_dim: str = "z"):
         """
         Configure CESM OBC and ICs from previous CESM output
         """
@@ -690,6 +688,7 @@ class Case:
                 isinstance(constituent, str) for constituent in tidal_constituents
             ):
                 raise TypeError("tidal_constituents must be a list of strings.")
+
         self.tidal_constituents = tidal_constituents
         # all tidal arguments must be provided if any are provided
         if any([tidal_constituents, tpxo_elevation_filepath, tpxo_velocity_filepath]):
@@ -723,7 +722,7 @@ class Case:
             minimum_depth=self.ocn_topo.min_depth,
             tidal_constituents=self.tidal_constituents,
             expt_name=self.caseroot.name,
-            boundaries=self.boundaries,
+            boundaries=boundaries,
         )
 
     def configure_chl(self, chl_processed_filepath: str | Path):
