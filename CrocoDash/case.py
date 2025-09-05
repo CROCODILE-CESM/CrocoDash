@@ -359,14 +359,16 @@ class Case:
         if cesm_input_path is not None:
             product_name = "CESM_OUTPUT"
             self.forcing_product_name =  product_name.lower()
-            self.ProductFunctionRegistry.add_product_config(product_name, product_info = product_info)
+            if product_info != None:
+                self.ProductFunctionRegistry.add_product_config(product_name, product_info = product_info)
 
             self.configure_cesm_initial_and_boundary_conditions(input_path = cesm_input_path, date_range=date_range,
                 boundaries=boundaries,too_much_data=too_much_data)
 
         else:
             self.forcing_product_name =  product_name.lower()
-            self.ProductFunctionRegistry.add_product_config(product_name, product_info = product_info)
+            if product_info != None:
+                self.ProductFunctionRegistry.add_product_config(product_name, product_info = product_info)
 
             self.configure_initial_and_boundary_conditions(
                 date_range=date_range,
