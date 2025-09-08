@@ -381,10 +381,16 @@ class Case:
             self.configured_tides = self.configure_tides(
                 tidal_constituents, tpxo_elevation_filepath, tpxo_velocity_filepath
             )
+        else:
+            self.configured_tides = False
         if chl_processed_filepath:
             self.configured_chl = self.configure_chl(chl_processed_filepath)
+        else:
+            self.configured_chl = False
         if runoff_esmf_mesh_filepath:
             self.configured_runoff = self.configure_runoff(runoff_esmf_mesh_filepath)
+        else:
+            self.configured_runoff = False
         self._configure_forcings_called = True
     def configure_cesm_initial_and_boundary_conditions(self, input_path: str | Path, date_range: list[str],boundaries: list[str] = ["south", "north", "west", "east"],too_much_data: bool = False,space_character: str = ".", lat_name: str = "LAT", lon_name: str = "LON", z_dim: str = "z"):
         """
@@ -678,6 +684,9 @@ class Case:
             raise ValueError("Runoff can only be turned on if it is in the compset!")
         elif self.runoff_in_compset and (runoff_esmf_mesh_filepath is not None):
             self.runoff_esmf_mesh_filepath = runoff_esmf_mesh_filepath
+
+        # Set runoff mapping file path
+        self.runoff_mapping_file_nnsm = self.inputdir/"ocnice"/f"glofas_{self.ocn_grid.name}_{cvars['MB_ATTEMPT_ID'].value}_nnsm.nc"
         return True
 
     def configure_tides(
@@ -771,17 +780,16 @@ class Case:
     
     def process_runoff(self):
         if self.runoff_in_compset and self.runoff_esmf_mesh_filepath:
-            self.session_id = cvars["MB_ATTEMPT_ID"].value
+            
             mapping.gen_rof_maps(
                 rof_mesh_path=self.runoff_esmf_mesh_filepath,
                 ocn_mesh_path=self.esmf_mesh_path,
                 output_dir=self.inputdir/"ocnice",
-                mapping_file_prefix=f'glofas_{self.ocn_grid.name}_{self.session_id}',
+                mapping_file_prefix=f'glofas_{self.ocn_grid.name}_{cvars["MB_ATTEMPT_ID"].value}',
                 rmax=100.0,
                 fold=100.0
             )
-            self.runoff_mapping_file_nnsm = self.inputdir/"ocnice"/f"glofas_{self.ocn_grid.name}_{self.session_id}_nnsm.nc"
-
+           
     def process_initial_and_boundary_conditions(
         self, process_initial_condition, process_velocity_tracers
     ):
@@ -1117,16 +1125,16 @@ class Case:
                 product_info = self.ProductFunctionRegistry.load_product_config(self.forcing_product_name)
                 
                 standard_data_str = lambda: (
-                    f'"U=file:{product_info["u"]}_obc_segment_{seg_ix}.nc({product_info["u"]}),'
-                    f"V=file:{product_info["v"]}_obc_segment_{seg_ix}.nc({product_info["v"]}),"
-                    f"SSH=file:{product_info["eta"]}_obc_segment_{seg_ix}.nc({product_info["eta"]}),"
-                    f"TEMP=file:{product_info["tracers"]["temp"]}_obc_segment_{seg_ix}.nc({product_info["tracers"]["temp"]}),"
-                    f"SALT=file:{product_info["tracers"]["salt"]}_obc_segment_{seg_ix}.nc({product_info["tracers"]["salt"]})"
-                )
+                        f"\"U=file:{product_info['u']}_obc_segment_{seg_ix}.nc({product_info['u']}),"
+                        f"V=file:{product_info['v']}_obc_segment_{seg_ix}.nc({product_info['v']}),"
+                        f"SSH=file:{product_info['eta']}_obc_segment_{seg_ix}.nc({product_info['eta']}),"
+                        f"TEMP=file:{product_info['tracers']['temp']}_obc_segment_{seg_ix}.nc({product_info['tracers']['temp']}),"
+                        f"SALT=file:{product_info['tracers']['salt']}_obc_segment_{seg_ix}.nc({product_info['tracers']['salt']})"
+                    )
                 bgc_tracers = ""
                 for tracer_mom6_name in product_info["tracers"]:
                     if tracer_mom6_name != "temp" and tracer_mom6_name != "salt":
-                        bgc_tracers += f",{tracer_mom6_name}=file:{product_info["tracers"][tracer_mom6_name]}_obc_segment_{seg_ix}.nc({product_info["tracers"][tracer_mom6_name]})"
+                        bgc_tracers += f',{tracer_mom6_name}=file:{product_info["tracers"][tracer_mom6_name]}_obc_segment_{seg_ix}.nc({product_info["tracers"][tracer_mom6_name]})'
             tidal_data_str = lambda: (
                 f",Uamp=file:tu_segment_{seg_ix}.nc(uamp),"
                 f"Uphase=file:tu_segment_{seg_ix}.nc(uphase),"

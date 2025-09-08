@@ -1,10 +1,10 @@
 {
     "time": "time",
-    "xh": "TLAT",
-    "yh": "TLONG",
-    "u": "U",
-    "v": "V",
-    "eta": "eta",
+    "xh": "TLONG",
+    "yh": "TLAT",
+    "u": "UVEL",
+    "v": "VVEL",
+    "eta": "SSH",
     "zl": [
         "z_t",
         "z_t_150m"
