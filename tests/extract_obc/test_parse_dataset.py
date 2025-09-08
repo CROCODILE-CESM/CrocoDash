@@ -2,19 +2,26 @@ from pathlib import Path
 from CrocoDash.extract_obc.parse_dataset import parse_dataset
 
 
-def test_parse_dataset(skip_if_not_glade):
+def test_parse_dataset(skip_if_not_glade, tmp_path, dummy_forcing_factory):
 
-    sample_ds_path = Path(
-        "/glade/campaign/collections/cmip/CMIP6/CESM-HR/FOSI_BGC/HR/g.e22.TL319_t13.G1850ECOIAF_JRA_HR.4p2z.001/ocn/proc/tseries/month_1"
-    )
+    ds = dummy_forcing_factory(
+            36,
+            56,
+            36,
+            56,
+        )
+    ds.to_netcdf(tmp_path  / "east.DOC.20200101.20200102.nc")
+    ds.to_netcdf(tmp_path  / "west.DOC.20200101.20200102.nc")
+    ds.to_netcdf(tmp_path  / "north.DIC.20200101.20200102.nc")
+    ds.to_netcdf(tmp_path  / "south.DIC.20200101.20200102.nc")
+
+    # Generate datasets
+
     vars = ["DIC", "DOC"]
-    variable_info = parse_dataset(vars, sample_ds_path, "20000101", "20131231")
+    variable_info = parse_dataset(vars, tmp_path, "20200101", "20200131", regex = r"(\d{6,8}).(\d{6,8})")
 
+    assert (str(tmp_path  / "north.DIC.20200101.20200102.nc") in variable_info["DIC"])
     assert (
-        "/glade/campaign/collections/cmip/CMIP6/CESM-HR/FOSI_BGC/HR/g.e22.TL319_t13.G1850ECOIAF_JRA_HR.4p2z.001/ocn/proc/tseries/month_1/g.e22.TL319_t13.G1850ECOIAF_JRA_HR.4p2z.001.pop.h.DIC.201301-201312.nc"
-        in variable_info["DIC"]
-    )
-    assert (
-        "/glade/campaign/collections/cmip/CMIP6/CESM-HR/FOSI_BGC/HR/g.e22.TL319_t13.G1850ECOIAF_JRA_HR.4p2z.001/ocn/proc/tseries/month_1/g.e22.TL319_t13.G1850ECOIAF_JRA_HR.4p2z.001.pop.h.DOC.200001-200012.nc"
+        str(tmp_path  / "west.DOC.20200101.20200102.nc")
         in variable_info["DOC"]
     )

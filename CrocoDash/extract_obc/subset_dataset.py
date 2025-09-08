@@ -73,7 +73,7 @@ def subset_dataset(
 
             # Save the subsetted dataset to the output path
            
-            subset_ds.to_netcdf(output_file)
+            subset_ds.load().to_netcdf(output_file)
 
             print(f"Subsetted dataset for variable '{var_name}' saved to {output_file}")
 
