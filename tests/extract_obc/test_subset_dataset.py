@@ -5,15 +5,27 @@ from CrocoDash.raw_data_access.driver import get_rectangular_segment_info
 import xarray as xr
 
 
-def test_subset_dataset(skip_if_not_glade, get_rect_grid, tmp_path):
+def test_subset_dataset(dummy_forcing_factory, get_rect_grid, tmp_path):
 
-    sample_ds_path = Path(
-        "/glade/campaign/collections/cmip/CMIP6/CESM-HR/FOSI_BGC/HR/g.e22.TL319_t13.G1850ECOIAF_JRA_HR.4p2z.001/ocn/proc/tseries/month_1"
-    )
-    vars = ["DIC", "DOC"]
-    variable_info = parse_dataset(vars, sample_ds_path)
-    variable_info["DIC"] = variable_info["DIC"][:2]
-    variable_info["DOC"] = variable_info["DOC"][:2]
+    ds = dummy_forcing_factory(
+            0,
+            15,
+            270,
+            300,
+        )
+    ds.to_netcdf(tmp_path  / "east.thetao.20200101.20200102.nc")
+    ds["time"] = ds.time + 32
+    ds.to_netcdf(tmp_path  / "west.thetao.20200101.20200102.nc")
+    ds["time"] = ds.time + 32
+    ds.to_netcdf(tmp_path  / "north.so.20200101.20200102.nc")
+    ds["time"] = ds.time + 32
+    ds.to_netcdf(tmp_path  / "south.so.20200101.20200102.nc")
+
+    # Generate datasets
+
+    vars = ["so", "thetao"]
+    variable_info = parse_dataset(vars, tmp_path, "20200101", "20200131", regex = r"(\d{6,8}).(\d{6,8})")
+
     grid = get_rect_grid
     boundary_info = get_rectangular_segment_info(grid)
     subset_dataset(
@@ -23,13 +35,13 @@ def test_subset_dataset(skip_if_not_glade, get_rect_grid, tmp_path):
         lat_max=boundary_info["ic"]["lat_max"] + 1,
         lon_min=boundary_info["ic"]["lon_min"] - 1,
         lon_max=boundary_info["ic"]["lon_max"] + 1,
-        lat_name="TLAT",
-        lon_name="TLONG",
+        lat_name="latitude",
+        lon_name="longitude",
         preview=False,
     )
-    assert (tmp_path / "DIC_subset.nc").exists()
-    assert (tmp_path / "DOC_subset.nc").exists()
-    ds = xr.open_dataset(tmp_path / "DIC_subset.nc")
-    assert ds["TLAT"].max() < boundary_info["ic"]["lat_max"] + 2
-    assert ds["TLAT"].min() > boundary_info["ic"]["lat_min"] - 2
-    assert len(ds.time) == 24
+    assert (tmp_path / "salt_subset.nc").exists()
+    assert (tmp_path / "temp_subset.nc").exists()
+    ds = xr.open_dataset(tmp_path / "salt_subset.nc")
+    assert ds["latitude"].max() < boundary_info["ic"]["lat_max"] + 2
+    assert ds["latitude"].min() > boundary_info["ic"]["lat_min"] - 2
+    assert len(ds.time) == 64

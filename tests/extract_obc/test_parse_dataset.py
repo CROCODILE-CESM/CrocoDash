@@ -2,7 +2,7 @@ from pathlib import Path
 from CrocoDash.extract_obc.parse_dataset import parse_dataset
 
 
-def test_parse_dataset(skip_if_not_glade, tmp_path, dummy_forcing_factory):
+def test_parse_dataset(tmp_path, dummy_forcing_factory):
 
     ds = dummy_forcing_factory(
             36,

@@ -64,6 +64,8 @@ def format_dataset(
                     if not found_z_dim:
                         print(f"Did not find any of the provided z_dims in the dataset for {v} {item}, assuming surface variable")
                         z_dim_act = None
+            else:
+                z_dim_act = z_dim
             if item != "IC":
                 segment_name = "segment_{:03d}".format(boundary_number_conversion[item])
                 file_path = output_path / f"{v}_obc_{segment_name}.nc"
