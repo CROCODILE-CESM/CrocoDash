@@ -7,7 +7,7 @@ from CrocoDash.extract_obc.format_dataset import format_dataset
 import xarray as xr
 
 
-def test_format_dataset(dummy_forcing_factory,skip_if_not_glade, get_rect_grid, tmp_path):
+def test_format_dataset(dummy_forcing_factory, get_rect_grid, tmp_path):
     ds = dummy_forcing_factory(
             0,
             15,
