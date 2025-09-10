@@ -513,12 +513,11 @@ class Case:
             self.process_initial_and_boundary_conditions(
                 process_initial_condition, process_velocity_tracers
             )
-        if process_tides:
-            
+        if self.configured_tides and process_tides:
             self.process_tides()
-        if process_chl:
+        if self.configured_chl and process_chl:
             self.process_chl()
-        if process_runoff:
+        if self.configured_runoff and process_runoff:
             self.process_runoff()
 
         # Apply forcing-related namelist and xml changes
