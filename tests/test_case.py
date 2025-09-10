@@ -176,6 +176,9 @@ def test_update_forcing_variables(get_CrocoDash_case):
     case.runoff_esmf_mesh_filepath = True
     case.runoff_mapping_file_nnsm = "Path"
     case.cice_file = "Path"
+    case.configured_tides = True
+    case.configured_chl = True
+    case.configured_runoff = True
     case._update_forcing_variables()
     
     with open(case.caseroot / "user_nl_mom_0001", "r", encoding="utf-8") as file:

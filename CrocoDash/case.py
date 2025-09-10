@@ -289,7 +289,7 @@ class Case:
         too_much_data: bool = False,
         chl_processed_filepath: str | Path | None = None,
         runoff_esmf_mesh_filepath: str | Path | None = None,
-        cesm_input_path: str | Path | None = None,
+        data_input_path: str | Path | None = None,
     ):
         """
         Configure the boundary conditions and tides for the MOM6 case.
@@ -329,8 +329,8 @@ class Case:
             If passed, points to the processed global chlorophyll file for regional processing through mom6_bathy.chl
         runoff_esmf_mesh_filepath : Path
             If passed, points to the processed global runoff file for mapping through mom6_bathy.mapping
-        cesm_input_path : str or Path, optional
-            If passed, a path to the directory where CESM output data is stored. This is used instead to extract OBCs and ICs for the case.
+        data_input_path : str or Path, optional
+            If passed, a path to the directory where raw output data is stored. This is used instead to extract OBCs and ICs for the case.
 
         Raises
         ------
@@ -355,21 +355,13 @@ class Case:
         process_forcings : Executes the actual boundary, initial condition, and tide setup based on the configuration.
         """
         
-
-        if cesm_input_path is not None:
-            product_name = "CESM_OUTPUT"
-            self.forcing_product_name =  product_name.lower()
-            if product_info != None:
-                self.ProductFunctionRegistry.add_product_config(product_name, product_info = product_info)
-
+        self.forcing_product_name =  product_name.lower()
+        if product_info != None:
+            self.ProductFunctionRegistry.add_product_config(product_name, product_info = product_info)
+        if data_input_path is not None and product_name.upper() == "CESM_OUTPUT":
             self.configure_cesm_initial_and_boundary_conditions(input_path = cesm_input_path, date_range=date_range,
                 boundaries=boundaries,too_much_data=too_much_data)
-
-        else:
-            self.forcing_product_name =  product_name.lower()
-            if product_info != None:
-                self.ProductFunctionRegistry.add_product_config(product_name, product_info = product_info)
-
+        elif product_name.upper() == "GLORYS":
             self.configure_initial_and_boundary_conditions(
                 date_range=date_range,
                 boundaries=boundaries,
@@ -377,6 +369,8 @@ class Case:
                 function_name=function_name,
                 too_much_data=too_much_data,
             )
+        else:
+            raise ValueError("Product / Data Path is not supported quite yet")
         if tidal_constituents:
             self.configured_tides = self.configure_tides(
                 tidal_constituents, tpxo_elevation_filepath, tpxo_velocity_filepath

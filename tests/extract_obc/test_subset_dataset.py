@@ -39,9 +39,9 @@ def test_subset_dataset(dummy_forcing_factory, get_rect_grid, tmp_path):
         lon_name="longitude",
         preview=False,
     )
-    assert (tmp_path / "salt_subset.nc").exists()
-    assert (tmp_path / "temp_subset.nc").exists()
-    ds = xr.open_dataset(tmp_path / "salt_subset.nc")
+    assert (tmp_path / "so_subset.nc").exists()
+    assert (tmp_path / "thetao_subset.nc").exists()
+    ds = xr.open_dataset(tmp_path / "so_subset.nc")
     assert ds["latitude"].max() < boundary_info["ic"]["lat_max"] + 2
     assert ds["latitude"].min() > boundary_info["ic"]["lat_min"] - 2
     assert len(ds.time) == 64
