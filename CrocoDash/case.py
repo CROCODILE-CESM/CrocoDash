@@ -1104,7 +1104,7 @@ class Case:
 
             # Nudging
             obc_params.append((seg_id + "_VELOCITY_NUDGING_TIMESCALES", "0.3, 360.0"))
-
+            bgc_tracers = ""
             if self.forcing_product_name.upper() != "CESM_OUTPUT":
                 standard_data_str = lambda: (
                     f'"U=file:forcing_obc_segment_{seg_ix}.nc(u),'
@@ -1124,7 +1124,7 @@ class Case:
                         f"TEMP=file:{product_info['tracers']['temp']}_obc_segment_{seg_ix}.nc({product_info['tracers']['temp']}),"
                         f"SALT=file:{product_info['tracers']['salt']}_obc_segment_{seg_ix}.nc({product_info['tracers']['salt']})"
                     )
-                bgc_tracers = ""
+                
                 for tracer_mom6_name in product_info["tracers"]:
                     if tracer_mom6_name != "temp" and tracer_mom6_name != "salt":
                         bgc_tracers += f',{tracer_mom6_name}=file:{product_info["tracers"][tracer_mom6_name]}_obc_segment_{seg_ix}.nc({product_info["tracers"][tracer_mom6_name]})'
