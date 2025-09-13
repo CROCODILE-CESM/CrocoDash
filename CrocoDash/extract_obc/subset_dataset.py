@@ -5,7 +5,7 @@ This file takes in a dictionary of variable names and their corresponding file p
 from pathlib import Path
 import xarray as xr
 import cftime
-import dask.base
+
 
 def subset_dataset(
     variable_info: dict,
@@ -50,16 +50,15 @@ def subset_dataset(
         ds = xr.open_mfdataset(file_paths)
 
         # Convert time. Saving to netcdf is not working with cftime objects
-        if isinstance(ds.time.values[0], cftime.datetime):
-            units = "days since 1850-01-01 00:00:00"
-            calendar = "noleap"
-            numeric_time = cftime.date2num(ds.time, units=units, calendar=calendar)
-            ds = ds.assign_coords(
-                time=("time", numeric_time, {"units": units, "calendar": calendar})
-            )
+        units = "days since 1850-01-01 00:00:00"
+        calendar = "noleap"
+        numeric_time = cftime.date2num(ds.time, units=units, calendar=calendar)
+        ds = ds.assign_coords(
+            time=("time", numeric_time, {"units": units, "calendar": calendar})
+        )
 
-        # Drop the time_bound variable for the cesm if it exists, cftime isn't playing well, eventually this should be converted in the same way.
-        ds = drop_extra_cftime_vars(ds)
+        # Drop the time_bound variable, cftime isn't playing well, eventually this should be converted in the same way.
+        ds = ds.drop_vars("time_bound")
         mask = (
             (ds[lat_name] >= lat_min - 1)
             & (ds[lat_name] <= lat_max + 1)
@@ -80,22 +79,7 @@ def subset_dataset(
 
     return
 
-def drop_extra_cftime_vars(ds):
-    drop_vars = []
-    for name, var in ds.variables.items():
-        if name != "time":
-            # make sure the array isn’t empty
-            if var.size > 0 and isinstance(first_value(var), cftime.datetime):
-                drop_vars.append(name)
-    return ds.drop_vars(drop_vars)
 
-def first_value(da_var):
-    arr = da_var.data
-    if dask.base.is_dask_collection(arr):
-        # only pull the first element, not the whole array
-        return arr[0].compute()
-    else:
-        return arr.flat[0]
 if __name__ == "__main__":
     print(
         "This script is used to subset the large datasets based on variable names and geographical bounds."

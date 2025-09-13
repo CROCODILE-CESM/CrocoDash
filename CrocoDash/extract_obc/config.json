@@ -3,6 +3,7 @@
     "input_path": "",
     "supergrid_path": "",
     "bathymetry_path": "",
+    "vgrid_path": "",
     "subset_input_path": "",
     "regrid_path": "",
     "output_path": ""

@@ -15,8 +15,14 @@ def regrid_dataset_to_boundaries(
     output_path: str | Path,
     supergrid: xr.Dataset,
     variable_info: dict,
+    u_name: str,
+    v_name: str,
     lat_name: str = "lat",
     lon_name: str = "lon",
+    u_lat_name: str = "lat",
+    u_lon_name: str = "lon",
+    v_lat_name: str = "lat",
+    v_lon_name: str = "lon",
     preview=False,
 ):
     """
@@ -37,7 +43,18 @@ def regrid_dataset_to_boundaries(
         raise ValueError(f"Input path {input_path} does not exist.")
 
     regridders = create_regridders(
-        input_path, output_path, supergrid, variable_info, lat_name, lon_name
+        input_path,
+        output_path,
+        supergrid,
+        variable_info,
+        u_name,
+        v_name,
+        lat_name,
+        lon_name,
+        u_lat_name,
+        u_lon_name,
+        v_lat_name,
+        v_lon_name,
     )
 
     output_paths = []
@@ -53,12 +70,17 @@ def regrid_dataset_to_boundaries(
                     print(f"{output_file} already exists, skipping.")
                     output_paths.append(str(output_file.resolve()))
                     continue
-                with xr.open_dataset(input_file,decode_times = False, chunks="auto") as ds:
+                with xr.open_dataset(
+                    input_file, decode_times=False, chunks="auto"
+                ) as ds:
                     ds = ds.rename({lon_name: "lon", lat_name: "lat"})
 
                     # Perform regridding
                     if not preview:
-                        regridded = regridders[item](ds[v])
+                        if v in (u_name, v_name) and item == "IC":
+                            regridded = regridders[item + v](ds[v])
+                        else:
+                            regridded = regridders[item](ds[v])
 
                         # Save regridded dataset
                         regridded.to_netcdf(output_file)
@@ -78,21 +100,69 @@ def create_regridders(
     output_path: str | Path,
     supergrid: xr.Dataset,
     variable_info: dict,
+    u_name: str,
+    v_name: str,
     lat_name: str = "lat",
     lon_name: str = "lon",
+    u_lat_name: str = "lat",
+    u_lon_name: str = "lon",
+    v_lat_name: str = "lat",
+    v_lon_name: str = "lon",
 ) -> dict:
     """
     Return Regridders for each boundary using regional_mom6 tools.
     """
     hgrid = supergrid
+    tgrid = (
+            rgd.get_hgrid_arakawa_c_points(hgrid, "t")
+            .rename({"tlon": "lon", "tlat": "lat", "nxp": "nx", "nyp": "ny"})
+            .set_coords(["lat", "lon"])
+        )
+    vgrid = (
+            rgd.get_hgrid_arakawa_c_points(hgrid, "v")
+            .rename({"vlon": "lon", "vlat": "lat", "nxp": "nx"})
+            .set_coords(["lat", "lon"])
+        )
+    ugrid = (
+            rgd.get_hgrid_arakawa_c_points(hgrid, "u")
+            .rename({"ulon": "lon", "ulat": "lat", "nyp": "ny"})
+            .set_coords(["lat", "lon"])
+        )
     # Create regridders for each boundary
     variable_to_use = next(iter(variable_info.keys()))
     regridders = {}
-    ds = xr.open_dataset(input_path / f"{variable_to_use}_subset.nc", decode_times = False)
+    ds = xr.open_dataset(
+        input_path / f"{variable_to_use}_subset.nc", decode_times=False
+    )
     ds["lon"] = ds[lon_name]
     ds["lat"] = ds[lat_name]
-    hgrid["lon"] = hgrid["x"]
-    hgrid["lat"] = hgrid["y"]
+    
+    ds_u = xr.open_dataset(
+        input_path / f"{u_name}_subset.nc", decode_times=False
+    )
+    ds_u["lon"] = ds_u[lon_name]
+    ds_u["lat"] = ds_u[lat_name]
+
+    ds_v = xr.open_dataset(
+        input_path / f"{v_name}_subset.nc", decode_times=False
+    )
+    ds_v["lon"] = ds_v[lon_name]
+    ds_v["lat"] = ds_v[lat_name]
+
+    # Create Velocity Regridders
+
+    regridders["IC"+u_name] = rgd.create_regridder(
+                ds_u[["lon", "lat", u_name]],
+                ugrid,
+                locstream_out=False,
+                outfile=output_path / f"{'IC'+u_name}_weights.nc",
+            )
+    regridders["IC"+v_name] = rgd.create_regridder(
+                ds_v[["lon", "lat", v_name]],
+                vgrid,
+                locstream_out=False,
+                outfile=output_path / f"{'IC'+v_name}_weights.nc",
+            )
     for item in REGRID_ITEMS:
         print(f"Creating regridder for {item}")
         if item == "IC":
@@ -100,7 +170,7 @@ def create_regridders(
 
             regridders[item] = rgd.create_regridder(
                 ds[["lon", "lat", variable_to_use]],
-                hgrid,
+                tgrid,
                 locstream_out=False,
                 outfile=output_path / f"{item}_weights.nc",
             )

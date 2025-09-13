@@ -74,8 +74,14 @@ def extract_obcs(
             params["paths"]["regrid_path"],
             supergrid,
             variable_info,
+            params["cesm_information"]["u"],
+            params["cesm_information"]["v"],
             params["cesm_information"]["yh"],
             params["cesm_information"]["xh"],
+            params["cesm_information"]["u_lat_name"],
+            params["cesm_information"]["u_lon_name"],
+            params["cesm_information"]["v_lat_name"],
+            params["cesm_information"]["v_lon_name"],
             params["general"]["preview"],
         )
 
@@ -83,12 +89,16 @@ def extract_obcs(
     if format_dataset:
         supergrid = xr.open_dataset(params["paths"]["supergrid_path"])
         bathymetry = xr.open_dataset(params["paths"]["bathymetry_path"])
+        vgrid = xr.open_dataset(params["paths"]["vgrid_path"])
         output_paths = fd.format_dataset(
             params["paths"]["regrid_path"],
             params["paths"]["output_path"],
             supergrid,
             bathymetry,
+            vgrid,
             variable_info,
+            params["cesm_information"]["u"],
+            params["cesm_information"]["v"],
             params["cesm_information"]["yh"],
             params["cesm_information"]["xh"],
             params["cesm_information"]["zl"],
@@ -108,4 +118,4 @@ if __name__ == "__main__":
         config_path = workflow_dir / "config.json"
         with open(config_path, "r") as f:
             config = json.load(f)
-        extract_obcs(config)
+        extract_obcs(config, subset_dataset = False, regrid_dataset = False, format_dataset= True)

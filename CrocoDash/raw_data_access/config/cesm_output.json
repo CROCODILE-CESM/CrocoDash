@@ -4,6 +4,10 @@
     "yh": "TLAT",
     "u": "UVEL",
     "v": "VVEL",
+    "u_lat":"TLAT",
+    "u_lon":"TLONG",
+    "v_lon":"TLONG",
+    "v_lat":"VLAT",
     "eta": "SSH",
     "zl": [
         "z_t",

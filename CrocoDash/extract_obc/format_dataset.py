@@ -7,7 +7,7 @@ import xarray as xr
 import json
 from pathlib import Path
 import numpy as np
-
+from mom6_bathy.vgrid import *
 REGRID_ITEMS = ["IC", "west", "south", "north", "east"]
 
 
@@ -16,7 +16,10 @@ def format_dataset(
     output_path: str | Path,
     supergrid: xr.Dataset,
     bathymetry: xr.Dataset,
+    vgrid: xr.Dataset,
     variable_info: dict,
+    u_name: str,
+    v_name: str,
     lat_name: str = "lat",
     lon_name: str = "lon",
     z_dim: str = "z_t",
@@ -64,8 +67,6 @@ def format_dataset(
                     if not found_z_dim:
                         print(f"Did not find any of the provided z_dims in the dataset for {v} {item}, assuming surface variable")
                         z_dim_act = None
-            else:
-                z_dim_act = z_dim
             if item != "IC":
                 segment_name = "segment_{:03d}".format(boundary_number_conversion[item])
                 file_path = output_path / f"{v}_obc_{segment_name}.nc"
@@ -173,12 +174,30 @@ def format_dataset(
                 # Fill Missing Data
                 if z_dim_act not in ds[v].dims:
                     z_dim_act = None
-
+                if "nxp" in ds[v].dims:
+                    x_dim = "nxp"
+                else:
+                    x_dim = "nx"
+                if "nyp" in  ds[v].dims:
+                    y_dim = "nyp"
+                else:
+                    y_dim = "ny"
                 ds[v] = rgd.fill_missing_data(
                     ds[v],
-                    xdim="nxp",
+                    xdim=x_dim,
                     zdim=z_dim_act,
                 )
+
+                ds[v] = ds[v].isel(time=0, drop=True)
+                
+
+                ds[x_dim] = ds[x_dim]
+                ds[y_dim] = ds[y_dim]
+
+                # Interpolate the vertical levels
+                if z_dim_act != None:
+                    zl = np.cumsum(vgrid.dz) - 0.5 * vgrid.dz
+                    ds = ds.interp({z_dim_act:zl.values})
 
                 # Do Encoding
                 encoding_dict = {
@@ -199,6 +218,29 @@ def format_dataset(
                     unlimited_dims="time",
                 )
                 print(f"....Finished {v} IC processing!")
+
+    # Merge U & V Files
+    file_path = output_path / f"VEL_IC.nc"
+    if not file_path.exists():
+        print("Merging U & V velocity files")
+        vvel = xr.open_dataset(output_path / f"{v_name}_IC.nc")
+        uvel = xr.open_dataset(output_path / f"{u_name}_IC.nc")
+        vvel[u_name] = uvel[u_name]
+        encoding_dict = {
+                    "time": {"dtype": "double", "_FillValue": 1.0e2},
+                }
+
+        encoding_dict = rgd.generate_encoding(
+            vvel,
+            encoding_dict,
+            default_fill_value=1.0e2,
+        )
+        vvel.load().to_netcdf(
+                    file_path,
+                    encoding=encoding_dict,
+                    unlimited_dims="time",
+                )
+        
     return output_paths
 
 

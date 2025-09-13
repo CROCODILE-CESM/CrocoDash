@@ -426,6 +426,7 @@ class Case:
         config["paths"]["input_path"] = str(input_path)
         config["paths"]["supergrid_path"] = self.supergrid_path
         config["paths"]["bathymetry_path"] = self.topo_path
+        config["paths"]["vgrid_path"] = self.vgrid_path
         config["paths"]["subset_input_path"] = str(
             self.large_data_workflow_path / "subsetted_data"
         )

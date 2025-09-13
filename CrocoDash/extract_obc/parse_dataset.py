@@ -54,7 +54,7 @@ def parse_dataset(
 
     # Print the found file paths
     for v in variable_info:
-        print(f"{len(variable_info[v])} file(s) found for variable '{v}':")
+        print(f"{len(variable_info[v])} file(s) found for variable '{v}'")
         
 
     return variable_info
