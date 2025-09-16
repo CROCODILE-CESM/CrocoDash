@@ -209,7 +209,8 @@ def format_dataset(
                 # Interpolate the vertical levels
                 if z_dim_act != None:
                     zl = np.cumsum(vgrid.dz) - 0.5 * vgrid.dz
-                    ds = ds.interp({z_dim_act:zl.values})
+                    ds = ds.interp({z_dim_act:zl.values},
+                        kwargs={"fill_value": "extrapolate"})
 
                 # Do Encoding
                 encoding_dict = {
