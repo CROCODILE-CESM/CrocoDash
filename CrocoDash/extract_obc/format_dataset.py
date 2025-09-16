@@ -23,6 +23,7 @@ def format_dataset(
     lat_name: str = "lat",
     lon_name: str = "lon",
     z_dim: str = "z_t",
+    z_unit_conversion: float = "1",
     boundary_number_conversion: dict = {"south": 1, "north": 2, "west": 3, "east": 4},
 ) -> dict:
     """
@@ -67,6 +68,12 @@ def format_dataset(
                     if not found_z_dim:
                         print(f"Did not find any of the provided z_dims in the dataset for {v} {item}, assuming surface variable")
                         z_dim_act = None
+
+            # Do unit conversion
+            if z_dim_act != None:
+                ds[z_dim_act] = ds[z_dim_act] * z_unit_conversion
+                
+            # Convert the z dimension variable with the unit conversion factor if provided
             if item != "IC":
                 segment_name = "segment_{:03d}".format(boundary_number_conversion[item])
                 file_path = output_path / f"{v}_obc_{segment_name}.nc"
@@ -131,6 +138,11 @@ def format_dataset(
                     bathymetry,
                     item,
                 )
+                # Add Time units
+                ds.time.attrs = {
+                    "calendar": "julian",
+                    "units": f"days since 1850-01-01 00:00:00",
+                }
                 # Do Encoding
                 encoding_dict = {
                     "time": {"dtype": "double", "_FillValue": 1.0e2},

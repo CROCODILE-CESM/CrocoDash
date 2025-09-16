@@ -3,6 +3,7 @@
     "xh": "TLONG",
     "yh": "TLAT",
     "u": "UVEL",
+    "z_unit_conversion": 0.01,
     "v": "VVEL",
     "u_lat":"TLAT",
     "u_lon":"TLONG",

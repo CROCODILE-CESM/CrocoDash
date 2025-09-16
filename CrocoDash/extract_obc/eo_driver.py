@@ -34,7 +34,7 @@ def extract_obcs(
     variable_names = []
     variable_names.append(params["cesm_information"]["u"])
     variable_names.append(params["cesm_information"]["v"])
-    variable_names.append(params["cesm_information"]["eta"])
+    variable_names.append(params["cesm_information"]["ssh"])
     for key in params["cesm_information"]["tracers"]:
         variable_names.append(params["cesm_information"]["tracers"][key])
 
@@ -102,6 +102,7 @@ def extract_obcs(
             params["cesm_information"]["yh"],
             params["cesm_information"]["xh"],
             params["cesm_information"]["zl"],
+            params["cesm_information"]["z_unit_conversion"],
             params["general"]["boundary_number_conversion"],
         )
         return output_paths

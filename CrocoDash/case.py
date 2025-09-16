@@ -359,7 +359,7 @@ class Case:
         if product_info != None:
             self.ProductFunctionRegistry.add_product_config(product_name, product_info = product_info)
         if data_input_path is not None and product_name.upper() == "CESM_OUTPUT":
-            self.configure_cesm_initial_and_boundary_conditions(input_path = cesm_input_path, date_range=date_range,
+            self.configure_cesm_initial_and_boundary_conditions(input_path = data_input_path, date_range=date_range,
                 boundaries=boundaries,too_much_data=too_much_data)
         elif product_name.upper() == "GLORYS":
             self.configure_initial_and_boundary_conditions(
