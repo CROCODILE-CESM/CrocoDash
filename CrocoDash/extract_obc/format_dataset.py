@@ -69,9 +69,14 @@ def format_dataset(
                         print(f"Did not find any of the provided z_dims in the dataset for {v} {item}, assuming surface variable")
                         z_dim_act = None
 
-            # Do unit conversion
+            # Do unit conversion for distance units
             if z_dim_act != None:
+                
                 ds[z_dim_act] = ds[z_dim_act] * z_unit_conversion
+            if v == u_name or v == v_name or z_dim_act == None: # A check if this is a velocity/surface height variable (only one with no z dim)
+                print(f"Converting the {v} variable because it is distance based with factor {z_unit_conversion}")
+                ds["__xarray_dataarray_variable__"] = ds["__xarray_dataarray_variable__"] * z_unit_conversion
+
                 
             # Convert the z dimension variable with the unit conversion factor if provided
             if item != "IC":
@@ -215,13 +220,8 @@ def format_dataset(
                 # Do Encoding
                 encoding_dict = {
                     "time": {"dtype": "double", "_FillValue": 1.0e2},
+                    v:{  "_FillValue": 1.0e2}
                 }
-
-                encoding_dict = rgd.generate_encoding(
-                    ds,
-                    encoding_dict,
-                    default_fill_value=1.0e2,
-                )
 
                 # Save File Out
                 output_paths.append(file_path)

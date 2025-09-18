@@ -5,11 +5,11 @@
     "u": "UVEL",
     "z_unit_conversion": 0.01,
     "v": "VVEL",
-    "u_lat":"TLAT",
-    "u_lon":"TLONG",
-    "v_lon":"TLONG",
-    "v_lat":"VLAT",
-    "eta": "SSH",
+    "u_lat_name":"TLAT",
+    "u_lon_name":"TLONG",
+    "v_lon_name":"TLONG",
+    "v_lat_name":"VLAT",
+    "ssh": "SSH",
     "zl": [
         "z_t",
         "z_t_150m"
