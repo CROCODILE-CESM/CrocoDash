@@ -7,23 +7,28 @@ from CrocoDash.extract_obc.format_dataset import format_dataset
 import xarray as xr
 
 
-def test_format_dataset(dummy_forcing_factory, get_rect_grid, tmp_path):
+def test_format_dataset(dummy_forcing_factory, get_rect_grid, tmp_path, get_vgrid):
+    vgrid = get_vgrid
+    vgrid.write(tmp_path / "vgrid.nc")
+    vgrid = xr.open_dataset(tmp_path / "vgrid.nc")
     ds = dummy_forcing_factory(
-            0,
-            15,
-            270,
-            300,
-        )
-    ds.to_netcdf(tmp_path  / "east.thetao.20200101.20200102.nc")
+        0,
+        15,
+        270,
+        300,
+    )
+    ds.to_netcdf(tmp_path / "east.thetao.20200101.20200102.nc")
     ds["time"] = ds.time + 32
-    ds.to_netcdf(tmp_path  / "west.thetao.20200101.20200102.nc")
+    ds.to_netcdf(tmp_path / "west.thetao.20200101.20200102.nc")
     ds["time"] = ds.time + 32
-    ds.to_netcdf(tmp_path  / "north.so.20200101.20200102.nc")
+    ds.to_netcdf(tmp_path / "north.so.20200101.20200102.nc")
     ds["time"] = ds.time + 32
-    ds.to_netcdf(tmp_path  / "south.so.20200101.20200102.nc")
+    ds.to_netcdf(tmp_path / "south.so.20200101.20200102.nc")
 
     vars = ["so", "thetao"]
-    variable_info = parse_dataset(vars, tmp_path, "20200101", "20200131", regex = r"(\d{6,8}).(\d{6,8})")
+    variable_info = parse_dataset(
+        vars, tmp_path, "20200101", "20200131", regex=r"(\d{6,8}).(\d{6,8})"
+    )
 
     grid = get_rect_grid
     boundary_info = get_rectangular_segment_info(grid)
@@ -54,6 +59,7 @@ def test_format_dataset(dummy_forcing_factory, get_rect_grid, tmp_path):
         input_path=tmp_path,
         output_path=tmp_path,
         supergrid=supergrid,
+        vgrid=vgrid,
         bathymetry=None,
         variable_info=variable_info,
         lat_name="lat",

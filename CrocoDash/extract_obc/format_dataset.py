@@ -7,7 +7,7 @@ import xarray as xr
 import json
 from pathlib import Path
 import numpy as np
-from mom6_bathy.vgrid import *
+
 REGRID_ITEMS = ["IC", "west", "south", "north", "east"]
 
 
@@ -18,12 +18,12 @@ def format_dataset(
     bathymetry: xr.Dataset,
     vgrid: xr.Dataset,
     variable_info: dict,
-    u_name: str,
-    v_name: str,
+    u_name: str = None,
+    v_name: str = None,
     lat_name: str = "lat",
     lon_name: str = "lon",
     z_dim: str = "z_t",
-    z_unit_conversion: float = "1",
+    z_unit_conversion: float = 1,
     boundary_number_conversion: dict = {"south": 1, "north": 2, "west": 3, "east": 4},
 ) -> dict:
     """
@@ -54,30 +54,41 @@ def format_dataset(
     output_paths = []
     for v in variable_info:
         for item in REGRID_ITEMS:
+            if item != "IC" and item not in boundary_number_conversion.keys():
+                continue
             # Open Dataset
             ds = xr.open_dataset(input_path / f"{v}_{item}_regridded.nc")
 
             # Ensure the correct z_dim if it is a list of potential z_dims
             if type(z_dim) is list:
-                    found_z_dim = False
-                    for z_dim_opt in z_dim:
-                        if z_dim_opt in ds["__xarray_dataarray_variable__"].dims:
-                            z_dim_act = z_dim_opt
-                            found_z_dim = True
-                            break
-                    if not found_z_dim:
-                        print(f"Did not find any of the provided z_dims in the dataset for {v} {item}, assuming surface variable")
-                        z_dim_act = None
+                found_z_dim = False
+                for z_dim_opt in z_dim:
+                    if z_dim_opt in ds["__xarray_dataarray_variable__"].dims:
+                        z_dim_act = z_dim_opt
+                        found_z_dim = True
+                        break
+                if not found_z_dim:
+                    print(
+                        f"Did not find any of the provided z_dims in the dataset for {v} {item}, assuming surface variable"
+                    )
+                    z_dim_act = None
+            else:
+                z_dim_act = z_dim
 
             # Do unit conversion for distance units
             if z_dim_act != None:
-                
-                ds[z_dim_act] = ds[z_dim_act] * z_unit_conversion
-            if v == u_name or v == v_name or z_dim_act == None: # A check if this is a velocity/surface height variable (only one with no z dim)
-                print(f"Converting the {v} variable because it is distance based with factor {z_unit_conversion}")
-                ds["__xarray_dataarray_variable__"] = ds["__xarray_dataarray_variable__"] * z_unit_conversion
 
-                
+                ds[z_dim_act] = ds[z_dim_act] * z_unit_conversion
+            if (
+                v == u_name or v == v_name or z_dim_act == None
+            ):  # A check if this is a velocity/surface height variable (only one with no z dim)
+                print(
+                    f"Converting the {v} variable because it is distance based with factor {z_unit_conversion}"
+                )
+                ds["__xarray_dataarray_variable__"] = (
+                    ds["__xarray_dataarray_variable__"] * z_unit_conversion
+                )
+
             # Convert the z dimension variable with the unit conversion factor if provided
             if item != "IC":
                 segment_name = "segment_{:03d}".format(boundary_number_conversion[item])
@@ -106,7 +117,6 @@ def format_dataset(
                 item_name = f"{v}_{segment_name}"
                 ds = ds.rename({v: item_name})
 
-                
                 ds[item_name] = rgd.fill_missing_data(
                     ds[item_name],
                     xdim=dim_name,
@@ -195,7 +205,7 @@ def format_dataset(
                     x_dim = "nxp"
                 else:
                     x_dim = "nx"
-                if "nyp" in  ds[v].dims:
+                if "nyp" in ds[v].dims:
                     y_dim = "nyp"
                 else:
                     y_dim = "ny"
@@ -206,7 +216,6 @@ def format_dataset(
                 )
 
                 ds[v] = ds[v].isel(time=0, drop=True)
-                
 
                 ds[x_dim] = ds[x_dim]
                 ds[y_dim] = ds[y_dim]
@@ -214,13 +223,14 @@ def format_dataset(
                 # Interpolate the vertical levels
                 if z_dim_act != None:
                     zl = np.cumsum(vgrid.dz) - 0.5 * vgrid.dz
-                    ds = ds.interp({z_dim_act:zl.values},
-                        kwargs={"fill_value": "extrapolate"})
+                    ds = ds.interp(
+                        {z_dim_act: zl.values}, kwargs={"fill_value": "extrapolate"}
+                    )
 
                 # Do Encoding
                 encoding_dict = {
                     "time": {"dtype": "double", "_FillValue": 1.0e2},
-                    v:{  "_FillValue": 1.0e2}
+                    v: {"_FillValue": 1.0e2},
                 }
 
                 # Save File Out
@@ -234,14 +244,15 @@ def format_dataset(
 
     # Merge U & V Files
     file_path = output_path / f"VEL_IC.nc"
-    if not file_path.exists():
+    if not file_path.exists() and v_name != None and u_name != None:
         print("Merging U & V velocity files")
+
         vvel = xr.open_dataset(output_path / f"{v_name}_IC.nc")
         uvel = xr.open_dataset(output_path / f"{u_name}_IC.nc")
         vvel[u_name] = uvel[u_name]
         encoding_dict = {
-                    "time": {"dtype": "double", "_FillValue": 1.0e2},
-                }
+            "time": {"dtype": "double", "_FillValue": 1.0e2},
+        }
 
         encoding_dict = rgd.generate_encoding(
             vvel,
@@ -249,11 +260,11 @@ def format_dataset(
             default_fill_value=1.0e2,
         )
         vvel.load().to_netcdf(
-                    file_path,
-                    encoding=encoding_dict,
-                    unlimited_dims="time",
-                )
-        
+            file_path,
+            encoding=encoding_dict,
+            unlimited_dims="time",
+        )
+
     return output_paths
 
 

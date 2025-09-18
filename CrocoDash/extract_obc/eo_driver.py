@@ -7,7 +7,8 @@ from pathlib import Path
 from CrocoDash.raw_data_access.driver import get_rectangular_segment_info
 from CrocoDash.grid import Grid
 import sys
-import json 
+import json
+
 
 def test_driver():
     print("All Imports Work!")
@@ -38,7 +39,6 @@ def extract_obcs(
     for key in params["cesm_information"]["tracers"]:
         variable_names.append(params["cesm_information"]["tracers"][key])
 
-
     # Parse the raw dataset
     if parse_dataset:
         variable_info = pd.parse_dataset(
@@ -47,7 +47,6 @@ def extract_obcs(
             params["dates"]["start"],
             params["dates"]["end"],
             params["cesm_information"]["space_character"],
-
         )
 
     # Subset the dataset based on geographical bounds
@@ -82,6 +81,7 @@ def extract_obcs(
             params["cesm_information"]["u_lon_name"],
             params["cesm_information"]["v_lat_name"],
             params["cesm_information"]["v_lon_name"],
+            params["general"]["boundary_number_conversion"].keys(),
             params["general"]["preview"],
         )
 
@@ -119,4 +119,6 @@ if __name__ == "__main__":
         config_path = workflow_dir / "config.json"
         with open(config_path, "r") as f:
             config = json.load(f)
-        extract_obcs(config, subset_dataset = False, regrid_dataset = False, format_dataset= True)
+        extract_obcs(
+            config, subset_dataset=True, regrid_dataset=True, format_dataset=True
+        )

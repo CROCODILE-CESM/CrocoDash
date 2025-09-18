@@ -7,6 +7,7 @@ import xarray as xr
 import cftime
 import dask.base
 
+
 def subset_dataset(
     variable_info: dict,
     output_path: str | Path,
@@ -73,12 +74,13 @@ def subset_dataset(
             subset_ds = ds.where(mask, drop=True)
 
             # Save the subsetted dataset to the output path
-           
+
             subset_ds.load().to_netcdf(output_file)
 
             print(f"Subsetted dataset for variable '{var_name}' saved to {output_file}")
 
     return
+
 
 def drop_extra_cftime_vars(ds):
     drop_vars = []
@@ -89,6 +91,7 @@ def drop_extra_cftime_vars(ds):
                 drop_vars.append(name)
     return ds.drop_vars(drop_vars)
 
+
 def first_value(da_var):
     arr = da_var.data
     if dask.base.is_dask_collection(arr):
@@ -96,6 +99,8 @@ def first_value(da_var):
         return arr[0].compute()
     else:
         return arr.flat[0]
+
+
 if __name__ == "__main__":
     print(
         "This script is used to subset the large datasets based on variable names and geographical bounds."
