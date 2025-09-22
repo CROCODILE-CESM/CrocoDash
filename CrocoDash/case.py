@@ -391,13 +391,13 @@ class Case:
         else:
             self.configured_river_nutrients = False
         
-        if bgc_in_compset:
-            self.configured_bgc = self.configure_bgc()
+        if self.bgc_in_compset:
+            self.configured_bgc = self.configure_bgc_iron_forcing()
         else:
             self.configured_bgc = False
         self._configure_forcings_called = True
 
-    def configure_bgc(self):
+    def configure_bgc_iron_forcing(self):
         self.feventflux_filepath = self.inputdir / "ocnice" / f"feventflux_5gmol_{self.grid.name}_{cvars['MB_ATTEMPT_ID'].value}.nc"
         self.fesedflux_filepath = self.inputdir / "ocnice" / f"fesedflux_total_reduce_oxic_{self.grid.name}_{cvars['MB_ATTEMPT_ID'].value}.nc"
         return True
@@ -534,7 +534,7 @@ class Case:
                 process_initial_condition, process_velocity_tracers
             )
         if self.configured_bgc and process_bgc:
-            self.process_bgc()
+            self.process_bgc_iron_forcing()
         if self.configured_tides and process_tides:
             self.process_tides()
         if self.configured_chl and process_chl:
@@ -548,7 +548,7 @@ class Case:
         if process_param_changes:
             self._update_forcing_variables()
 
-    def process_bgc(self):
+    def process_bgc_iron_forcing(self):
         # Create coordinate variables
         nx = self.grid.nx 
         ny = self.grid.ny
