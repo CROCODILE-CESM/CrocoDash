@@ -388,7 +388,17 @@ class Case:
             self.configured_river_nutrients = self.configure_river_nutrients(global_river_nutrients_filepath)
         else:
             self.configured_river_nutrients = False
+        
+        if bgc_in_compset:
+            self.configured_bgc = self.configure_bgc()
+        else:
+            self.configured_bgc = False
         self._configure_forcings_called = True
+
+    def configure_bgc(self):
+        self.feventflux_filepath = self.inputdir / "ocnice" / f"feventflux_5gmol_{self.grid.name}_{cvars['MB_ATTEMPT_ID'].value}.nc"
+        self.fesedflux_filepath = self.inputdir / "ocnice" / f"fesedflux_total_reduce_oxic_{self.grid.name}_{cvars['MB_ATTEMPT_ID'].value}.nc"
+        return True
     def configure_cesm_initial_and_boundary_conditions(self, input_path: str | Path, date_range: list[str],boundaries: list[str] = ["south", "north", "west", "east"],too_much_data: bool = False,space_character: str = ".", lat_name: str = "LAT", lon_name: str = "LON", z_dim: str = "z"):
         """
         Configure CESM OBC and ICs from previous CESM output
@@ -458,6 +468,7 @@ class Case:
         process_initial_condition=True,
         process_tides=True,
         process_velocity_tracers=True,
+        process_bgc=True,
         process_chl=True,
         process_runoff = True,
         process_river_nutrients = True,
@@ -486,6 +497,8 @@ class Case:
             Whether to process runoff data. Default is True.
         process_param_changes : bool, optional
             Whether to process the namelist and xml changes required to run a regional MOM6 case in the CESM.
+        process_bgc : bool, optional
+            Whether to process BGC data. Default is True.
 
         Raises
         ------
@@ -518,6 +531,8 @@ class Case:
             self.process_initial_and_boundary_conditions(
                 process_initial_condition, process_velocity_tracers
             )
+        if self.configured_bgc and process_bgc:
+            self.process_bgc()
         if self.configured_tides and process_tides:
             self.process_tides()
         if self.configured_chl and process_chl:
@@ -530,6 +545,51 @@ class Case:
         # Apply forcing-related namelist and xml changes
         if process_param_changes:
             self._update_forcing_variables()
+
+    def process_bgc(self):
+        # Create coordinate variables
+        nx = self.grid.nx 
+        ny = self.grid.ny
+        depth = 103
+        depth_edges = depth + 1
+        ds = xr.Dataset(
+            {
+                "DEPTH": (["DEPTH"], np.linspace(0, 6000, depth)),
+                "DEPTH_EDGES": (["DEPTH_EDGES"], np.linspace(0, 6000, depth_edges)),
+                "FESEDFLUXIN": (["DEPTH", "ny", "nx"], np.zeros((depth, ny, nx), dtype=np.float32)),
+                "FESEDFLUXIN_oxic": (["DEPTH", "ny", "nx"], np.zeros((depth, ny, nx), dtype=np.float32)),
+                "FESEDFLUXIN_reduce": (["DEPTH", "ny", "nx"], np.zeros((depth, ny, nx), dtype=np.float32)),
+                "KMT": (["ny", "nx"], np.zeros((ny, nx), dtype=np.int32)),
+                "TAREA": (["ny", "nx"], np.zeros((ny, nx), dtype=np.float64)),
+            }
+        )
+        # Assign attributes
+        ds["DEPTH"].attrs = {"units": "m", "edges": "DEPTH_EDGES"}
+        ds["DEPTH_EDGES"].attrs = {"units": "m"}
+        ds["FESEDFLUXIN"].attrs = {
+            "_FillValue": 1.e+20,
+            "units": "micromol/m^2/d",
+            "long_name": "Fe sediment flux (total)"
+        }
+        ds["FESEDFLUXIN_oxic"].attrs = {
+            "_FillValue": 1.e+20,
+            "units": "micromol m$^{-2}$ d$^{-1}$",
+            "long_name": "Fe sediment flux (oxic)"
+        }
+        ds["FESEDFLUXIN_reduce"].attrs = {
+            "long_name": "Longitude of tracer (T) points",
+            "units": "micromol m$^{-2}$ d$^{-1}$",
+            "cell_methods": "time: point"
+        }
+        ds["TAREA"].attrs = {"units": "m^2"}
+
+        # Add global attributes
+        ds.attrs = {
+            "history": "Created with xarray (this file is empty)",
+            "NCO": "netCDF Operators version 4.9.5"
+        }
+        ds.to_netcdf(self.fesedflux_filepath)
+        ds.to_netcdf(self.feventflux_filepath)
 
     def process_cesm_initial_and_boundary_conditions(self, process_initial_condition=True, process_velocity_tracers=True,):
         if self._large_data_workflow_called and (process_velocity_tracers or process_initial_condition):
