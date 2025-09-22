@@ -115,15 +115,10 @@ class Case:
         self._large_data_workflow_called = False
         self.compset = compset
 
-        if "DROF%GLOFAS" in self.compset:
-            self.runoff_in_compset = True
-        else:
-            self.runoff_in_compset = False
+        self.runoff_in_compset = "DROF%GLOFAS" in self.compset
+        self.bgc_in_compset = "%MARBL-BIO" in self.compset
+        self.cice_in_compset = "CICE" in self.compset
 
-        if "CICE" in self.compset:
-            self.cice_in_compset = True
-        else:
-            self.cice_in_compset = False
         # Resolution name:
         self.resolution = f"{datm_grid_name}_{ocn_grid.name}"
 
@@ -1001,23 +996,54 @@ class Case:
 
         # Initial conditions:
         ic_params = [
-            ("INIT_LAYERS_FROM_Z_FILE", "True"),
-            ("TEMP_SALT_Z_INIT_FILE", "init_tracers.nc"),
-            ("Z_INIT_FILE_PTEMP_VAR", "temp"),
-            ("Z_INIT_ALE_REMAPPING", True),
-            ("TEMP_SALT_INIT_VERTICAL_REMAP_ONLY", True),
-            ("DEPRESS_INITIAL_SURFACE", True),
-            ("SURFACE_HEIGHT_IC_FILE", "init_eta.nc"),
-            ("SURFACE_HEIGHT_IC_VAR", "eta_t"),
-            ("VELOCITY_CONFIG", "file"),
-            ("VELOCITY_FILE", "init_vel.nc"),
-        ]
+                ("INIT_LAYERS_FROM_Z_FILE", "True"),
+                ("Z_INIT_ALE_REMAPPING", True),
+                ("TEMP_SALT_INIT_VERTICAL_REMAP_ONLY", True),
+                ("DEPRESS_INITIAL_SURFACE", True),
+                ("VELOCITY_CONFIG", "file"),
+            ]
+        if self.forcing_product_name.upper() != "CESM_OUTPUT":
+            ic_params.extend([
+                ("TEMP_SALT_Z_INIT_FILE", "init_tracers.nc"),
+                ("SURFACE_HEIGHT_IC_FILE", "init_eta.nc"),
+                ("SURFACE_HEIGHT_IC_VAR", "eta_t"),
+                ("VELOCITY_FILE", "init_vel.nc"),
+            ])
+
+        else:
+            ic_params.extend([
+                ("TEMP_Z_INIT_FILE", "TEMP_IC.nc"),
+                ("SALT_Z_INIT_FILE", "SALT_IC.nc"),
+                ("Z_INIT_FILE_PTEMP_VAR", "TEMP"),
+                ("Z_INIT_FILE_SALT_VAR", "SALT"),
+                ("SURFACE_HEIGHT_IC_FILE", "SSH_IC.nc"),
+                ("SURFACE_HEIGHT_IC_VAR", "SSH"),
+                ("VELOCITY_FILE", "VEL_IC.nc"),
+                ("U_IC_VAR", "UVEL"),
+                ("V_IC_VAR", "VVEL"),
+            ])
+
+
         append_user_nl(
             "mom",
             ic_params,
             do_exec=True,
             comment="Initial conditions",
         )
+
+        # BGC
+        if self.bgc_in_compset:
+            bgc_params = [
+                ("MAX_FIELDS", "200"),
+            ]
+            append_user_nl(
+                "mom",
+                bgc_params,
+                do_exec=True,
+                comment="BGC Params",
+                log_title=False,
+            )
+
 
         # Tides
         if self.configured_tides:
@@ -1121,7 +1147,7 @@ class Case:
                 standard_data_str = lambda: (
                         f"\"U=file:{product_info['u']}_obc_segment_{seg_ix}.nc({product_info['u']}),"
                         f"V=file:{product_info['v']}_obc_segment_{seg_ix}.nc({product_info['v']}),"
-                        f"SSH=file:{product_info['eta']}_obc_segment_{seg_ix}.nc({product_info['eta']}),"
+                        f"SSH=file:{product_info['ssh']}_obc_segment_{seg_ix}.nc({product_info['ssh']}),"
                         f"TEMP=file:{product_info['tracers']['temp']}_obc_segment_{seg_ix}.nc({product_info['tracers']['temp']}),"
                         f"SALT=file:{product_info['tracers']['salt']}_obc_segment_{seg_ix}.nc({product_info['tracers']['salt']})"
                     )
