@@ -26,6 +26,8 @@ from visualCaseGen.custom_widget_types.case_creator import CaseCreator, ERROR, R
 from visualCaseGen.custom_widget_types.case_tools import xmlchange, append_user_nl
 from mom6_bathy import chl, mapping, grid
 import xesmf as xe
+import xarray as xr 
+import numpy as np
 
 class Case:
     """This class represents a regional MOM6 case within the CESM framework. It is similar to the
@@ -1227,6 +1229,8 @@ class Case:
         if self.bgc_in_compset:
             bgc_params = [
                 ("MAX_FIELDS", "200"),
+                ("MARBL_FESEDFLUX_FILE",self.fesedflux_filepath),
+                ("MARBL_FEVENTFLUX_FILE",self.feventflux_filepath)
             ]
 
 
