@@ -289,7 +289,8 @@ class Case:
         chl_processed_filepath: str | Path | None = None,
         runoff_esmf_mesh_filepath: str | Path | None = None,
         data_input_path: str | Path | None = None,
-        global_river_nutrients_filepath: str | Path | None = None
+        global_river_nutrients_filepath: str | Path | None = None,
+        marbl_ic_filepath: str | Path | None = None
     ):
         """
         Configure the boundary conditions and tides for the MOM6 case.
@@ -333,6 +334,8 @@ class Case:
             If passed, a path to the directory where raw output data is stored. This is used instead to extract OBCs and ICs for the case.
         global_river_nutrients_filepath: str or Path, optional
             If passed, points to the processed global river nutrients file for regional processing through mom6_bathy.mapping
+        marbl_ic_filepath: str or Path, optional
+            If passed, points to the processed MARBL initial condition file to be copied into the case input directory
         Raises
         ------
         TypeError
@@ -393,11 +396,19 @@ class Case:
             self.configured_river_nutrients = False
 
         if self.bgc_in_compset:
+            self.configure_bgc_ic(marbl_ic_filepath)
             self.configured_bgc = self.configure_bgc_iron_forcing()
         else:
             self.configured_bgc = False
         self._configure_forcings_called = True
 
+    def configure_bgc_ic(self, marbl_ic_filepath: str | Path | None = None):
+        if marbl_ic_filepath is None:
+            raise ValueError("MARBL initial condition file path must be provided.")
+        if Path(marbl_ic_filepath).exists() is False:
+            raise FileNotFoundError(f"MARBL initial condition file {marbl_ic_filepath} does not exist.")
+        self.marbl_ic_filepath = marbl_ic_filepath
+        return True
     def configure_bgc_iron_forcing(self):
         self.feventflux_filepath = self.inputdir / "ocnice" / f"feventflux_5gmol_{self.ocn_grid.name}_{cvars['MB_ATTEMPT_ID'].value}.nc"
         self.fesedflux_filepath = self.inputdir / "ocnice" / f"fesedflux_total_reduce_oxic_{self.ocn_grid.name}_{cvars['MB_ATTEMPT_ID'].value}.nc"
@@ -1233,7 +1244,8 @@ class Case:
             bgc_params = [
                 ("MAX_FIELDS", "200"),
                 ("MARBL_FESEDFLUX_FILE",self.fesedflux_filepath),
-                ("MARBL_FEVENTFLUX_FILE",self.feventflux_filepath)
+                ("MARBL_FEVENTFLUX_FILE",self.feventflux_filepath),
+                ("MARBL_TRACERS_IC_FILE",self.marbl_ic_filepath)
             ]
 
 

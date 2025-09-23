@@ -176,6 +176,7 @@ def test_update_forcing_variables(get_CrocoDash_case):
     case.forcing_product_name = "glorys"
     case.runoff_esmf_mesh_filepath = True
     case.bgc_in_compset = False
+    case.marbl_ic_filepath = "PATH"
     case.regional_chl_file_path  = "Path"
     case.runoff_mapping_file_nnsm = "Path"
     case.cice_file = "Path"
