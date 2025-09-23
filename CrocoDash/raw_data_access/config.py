@@ -17,7 +17,7 @@ def add_product_config(product_name: str, product_info: str | Path | dict):
 
         if type(product_info) == str or type(product_info) == Path:
             with open(product_info, "r") as f:
-                product_info = json.load(f) 
+                product_info = json.load(f)
         elif product_info == None:
             raise ValueError(f"No product info provided but product information does not exist in {output_path}")
             return
@@ -41,7 +41,7 @@ def add_product_config(product_name: str, product_info: str | Path | dict):
                     missing.append(f"tracers.{key}")
 
         if missing:
-            raise ValueError(f"Product dict is missing required keys: {', '.join(missing)}")      
+            raise ValueError(f"Product dict is missing required keys: {', '.join(missing)}")
 
         # Write out
         with open(output_path, "w") as f:

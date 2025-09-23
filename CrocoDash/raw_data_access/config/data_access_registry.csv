@@ -4,7 +4,7 @@ GLORYS,PYTHON,glorys,get_glorys_data_from_rda,Gathers GLORYS data from RDA on co
 GLORYS,SCRIPT,glorys,get_glorys_data_script_for_cli,Generates bash script for direct CLI run with the copernicusmarine package
 SEAWIFS,SCRIPT,seawifs,get_global_seawifs_script_for_cli,Generates bash script for direct CLI access to chlorophyll data (No Package Required)
 GEBCO,PYTHON,gebco,get_gebco_data_with_python,Python request for global bathymetry data
-GEBCO,SCRIPT,gebco,get_gebco_data_script,get script to download global bathymetry data 
+GEBCO,SCRIPT,gebco,get_gebco_data_script,get script to download global bathymetry data
 SEAWIFS,SCRIPT,seawifs,get_processed_global_seawifs_script_for_cli,Generates bash script for direct CLI access to processed chlorophyll data (No Package Required)
 GLOFAS,PYTHON,glofas,get_processed_global_glofas_script_for_cli,Generates bash script for access to CESM Inputdata processed glofas data
 GLOFAS,PYTHON,glofas,get_global_data_with_python,Gets glofas raw data through the cdsapi package
