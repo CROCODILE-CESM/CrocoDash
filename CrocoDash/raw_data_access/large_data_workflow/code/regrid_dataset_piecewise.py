@@ -4,6 +4,7 @@ from CrocoDash import utils
 from CrocoDash.raw_data_access.large_data_workflow.utils import (
     load_config,
     parse_dataset_folder,
+    check_date_continuity
 )
 import re
 import os
@@ -97,6 +98,13 @@ def regrid_dataset_piecewise(
     start_date = datetime.strptime(start_date, date_format)
     end_date = datetime.strptime(end_date, date_format)
     boundary_file_list = parse_dataset_folder(folder, input_dataset_regex, date_format)
+    issues = check_date_continuity(boundary_file_list)
+    if issues:
+        for boundary, msgs in issues.items():
+            for m in msgs:
+                logger.warning("[%s] %s", boundary, m)
+    else:
+        logger.info("All boundaries continuous and non-overlapping.")
 
     boundary_list = boundary_file_list.keys()
 
