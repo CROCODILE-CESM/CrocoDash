@@ -26,7 +26,7 @@ from visualCaseGen.custom_widget_types.case_creator import CaseCreator, ERROR, R
 from visualCaseGen.custom_widget_types.case_tools import xmlchange, append_user_nl
 from mom6_bathy import chl, mapping, grid
 import xesmf as xe
-import xarray as xr 
+import xarray as xr
 import numpy as np
 import cftime
 
@@ -139,7 +139,7 @@ class Case:
 
         self._create_newcase()
 
-        self._cime_case = self.cime.get_case( 
+        self._cime_case = self.cime.get_case(
             self.caseroot, non_local=self.cc._is_non_local()
         )
 
@@ -355,7 +355,7 @@ class Case:
         --------
         process_forcings : Executes the actual boundary, initial condition, and tide setup based on the configuration.
         """
-        
+
         self.forcing_product_name =  product_name.lower()
         if product_info != None:
             self.ProductFunctionRegistry.add_product_config(product_name, product_info = product_info)
@@ -386,12 +386,12 @@ class Case:
             self.configured_runoff = self.configure_runoff(runoff_esmf_mesh_filepath)
         else:
             self.configured_runoff = False
-        
+
         if global_river_nutrients_filepath:
             self.configured_river_nutrients = self.configure_river_nutrients(global_river_nutrients_filepath)
         else:
             self.configured_river_nutrients = False
-        
+
         if self.bgc_in_compset:
             self.configured_bgc = self.configure_bgc_iron_forcing()
         else:
@@ -407,7 +407,7 @@ class Case:
         Configure CESM OBC and ICs from previous CESM output
         """
         self.boundaries = boundaries
-        
+
         if too_much_data:
             self._large_data_workflow_called = True
 
@@ -639,7 +639,7 @@ class Case:
             tb.category_of_product(product_name) == "forcing"
         ), "Data product must be a forcing product"
 
-        
+
         if not self.ProductFunctionRegistry.validate_function(
             product_name, function_name
         ):
@@ -846,7 +846,7 @@ class Case:
                 self.chl_processed_filepath,
                 self.regional_chl_file_path,
             )
-    
+
     def process_river_nutrients(self):
         if self.bgc_in_compset and self.runoff_in_compset and self.global_river_nutrients_filepath is not None:
             if not self.global_river_nutrients_filepath.exists():
@@ -916,7 +916,7 @@ class Case:
             vars_without_time = [v for v in river_nutrients_remapped.data_vars if "time" not in river_nutrients_remapped[v].dims]
             for v in vars_without_time:
                 river_nutrients_remapped_time_added[v] = river_nutrients_remapped[v]
-            
+
             # add units to all data vars
             for var in vars:
                 river_nutrients_remapped_time_added[var].attrs["units"] = "mmol/cm^2/s"
@@ -950,7 +950,7 @@ class Case:
 
             # encoding only for data vars
             encoding = {
-                var: {"_FillValue": np.NaN} 
+                var: {"_FillValue": np.NaN}
                 for var in river_nutrients_remapped_cleaned.data_vars
             }
 
@@ -961,7 +961,7 @@ class Case:
 
 
 
-            
+
     def process_runoff(self):
         if self.runoff_in_compset and self.runoff_esmf_mesh_filepath:
             if not self.runoff_mapping_file_nnsm.exists():
@@ -1242,7 +1242,7 @@ class Case:
                 bgc_params.extend([
                     ("READ_RIV_FLUXES", "True"),
                     ("RIV_FLUX_FILE", self.river_nutrients_nnsm_filepath)
-                ])  
+                ])
             else:
                 bgc_params.extend([
                     ("READ_RIV_FLUXES", "False")
@@ -1355,7 +1355,7 @@ class Case:
             else:
 
                 product_info = self.ProductFunctionRegistry.load_product_config(self.forcing_product_name)
-                
+
                 standard_data_str = lambda: (
                         f"\"U=file:{product_info['u']}_obc_segment_{seg_ix}.nc({product_info['u']}),"
                         f"V=file:{product_info['v']}_obc_segment_{seg_ix}.nc({product_info['v']}),"
@@ -1363,7 +1363,7 @@ class Case:
                         f"TEMP=file:{product_info['tracers']['temp']}_obc_segment_{seg_ix}.nc({product_info['tracers']['temp']}),"
                         f"SALT=file:{product_info['tracers']['salt']}_obc_segment_{seg_ix}.nc({product_info['tracers']['salt']})"
                     )
-                
+
                 for tracer_mom6_name in product_info["tracers"]:
                     if tracer_mom6_name != "temp" and tracer_mom6_name != "salt":
                         bgc_tracers += f',{tracer_mom6_name}=file:{product_info["tracers"][tracer_mom6_name]}_obc_segment_{seg_ix}.nc({product_info["tracers"][tracer_mom6_name]})'
@@ -1405,9 +1405,9 @@ class Case:
                 comment="CICE options",
                 log_title=False,
             )
-    
+
         if self.runoff_in_compset and self.configured_runoff:
-            
+
             xmlchange("ROF2OCN_LIQ_RMAPNAME", str(self.runoff_mapping_file_nnsm),is_non_local=self.cc._is_non_local())
             xmlchange("ROF2OCN_ICE_RMAPNAME", str(self.runoff_mapping_file_nnsm),is_non_local=self.cc._is_non_local())
 
