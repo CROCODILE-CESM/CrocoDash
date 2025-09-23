@@ -142,6 +142,12 @@ class Case:
         self._cime_case = self.cime.get_case(
             self.caseroot, non_local=self.cc._is_non_local()
         )
+        
+        xmlchange(
+            "MOM6_MEMORY_MODE",
+            "dynamic_symmetric",
+            is_non_local=self.cc._is_non_local(),
+        )
 
 
 
@@ -1429,11 +1435,7 @@ class Case:
             str(self.date_range[0])[:10],
             is_non_local=self.cc._is_non_local(),
         )
-        xmlchange(
-            "MOM6_MEMORY_MODE",
-            "dynamic_symmetric",
-            is_non_local=self.cc._is_non_local(),
-        )
+
 
         print(f"Case is ready to be built: {self.caseroot}")
     def find_MOM6_rectangular_orientation(self, input):
