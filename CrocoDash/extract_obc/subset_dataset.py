@@ -93,12 +93,13 @@ def drop_extra_cftime_vars(ds):
 
 
 def first_value(da_var):
-    arr = da_var.data
-    if dask.base.is_dask_collection(arr):
-        # only pull the first element, not the whole array
-        return arr[0].compute()
+    arr = da_var.data  # could be numpy or dask
+    
+    if dask.is_dask_collection(arr):
+        # only compute the first element, not the whole array
+        return arr.ravel()[0].compute()
     else:
-        return arr.flat[0]
+        return arr.ravel()[0]
 
 
 if __name__ == "__main__":
