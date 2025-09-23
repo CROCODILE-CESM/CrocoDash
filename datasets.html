@@ -354,9 +354,125 @@ document.write(`
 <p>CrocoDash uses several datasets to setup the model. Data can be gathered directly from public datasources (including the CESM inputdata svn repository) or through helper functions in the CrocoDash data_access module.
 Users can check if datasets are accessible at this <a class="reference external" href="https://crocodile-cesm.github.io/CrocoDash/reports/raw_data_status.html">link</a>.</p>
 <p>Please see below for available datasets.</p>
+<div class="pst-scrollable-table-container"><table class="table" id="id1">
+<caption><span class="caption-text">Data Product Registry</span><a class="headerlink" href="#id1" title="Link to this table">#</a></caption>
+<thead>
+<tr class="row-odd"><th class="head"><p>Product_Name</p></th>
+<th class="head"><p>Data_Category</p></th>
+<th class="head"><p>Description</p></th>
+<th class="head"><p>Links</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>GLORYS</p></td>
+<td><p>forcing</p></td>
+<td><p>GLORYS (Global Ocean Physics Reanalysis) is a public dataset provided through the copernicus marine service.</p></td>
+<td><p><a class="reference external" href="https://data.marine.copernicus.eu/product/GLOBAL_MULTIYEAR_PHY_001_030/description">https://data.marine.copernicus.eu/product/GLOBAL_MULTIYEAR_PHY_001_030/description</a></p></td>
+</tr>
+<tr class="row-odd"><td><p>GEBCO</p></td>
+<td><p>bathymetry</p></td>
+<td><p>GEBCO (General Bathymetric Chart of the Ocean) is a public dataset of global ocean bathymetry</p></td>
+<td><p><a class="reference external" href="https://www.gebco.net/data_and_products/gridded_bathymetry_data/#global">https://www.gebco.net/data_and_products/gridded_bathymetry_data/#global</a></p></td>
+</tr>
+<tr class="row-even"><td><p>TPXO</p></td>
+<td><p>tides</p></td>
+<td><p>TPXO (TOPEX/POSEIDON Global Tidal Ocean I think) is a public tidal model dataset</p></td>
+<td><p><a class="reference external" href="https://www.tpxo.net/global">https://www.tpxo.net/global</a></p></td>
+</tr>
+<tr class="row-odd"><td><p>GLOFAS</p></td>
+<td><p>runoff</p></td>
+<td><p>GLOFAS (Global Flood Awareness System) is a public river discharge/runoff Product</p></td>
+<td><p><a class="reference external" href="https://ewds.climate.copernicus.eu/datasets/cems-glofas-historical?tab=download">https://ewds.climate.copernicus.eu/datasets/cems-glofas-historical?tab=download</a></p></td>
+</tr>
+<tr class="row-even"><td><p>CESM Inputdata Repo (Bathymetry)</p></td>
+<td><p>bathymetry</p></td>
+<td><p>The CESM Input SVN repo holds all files CrocoDash exposes publicly themselves at the following repo link</p></td>
+<td><p><a class="reference external" href="https://svn-ccsm-inputdata.cgd.ucar.edu/trunk/inputdata/ocn/mom/croc">https://svn-ccsm-inputdata.cgd.ucar.edu/trunk/inputdata/ocn/mom/croc</a></p></td>
+</tr>
+<tr class="row-odd"><td><p>CESM Inputdata Repo (Grids)</p></td>
+<td><p>grid</p></td>
+<td><p>The CESM Input SVN repo holds all files CrocoDash exposes publicly themselves at the following repo link</p></td>
+<td><p><a class="reference external" href="https://svn-ccsm-inputdata.cgd.ucar.edu/trunk/inputdata/ocn/mom/croc">https://svn-ccsm-inputdata.cgd.ucar.edu/trunk/inputdata/ocn/mom/croc</a></p></td>
+</tr>
+<tr class="row-even"><td><p>SEAWIFS</p></td>
+<td><p>forcing</p></td>
+<td><p>SEAWIFS is a Chlorophyll Dataset for MOM6</p></td>
+<td><p><a class="reference external" href="https://oceandata.sci.gsfc.nasa.gov/getfile/SEASTAR_SEAWIFS_GAC.19980201_20100228.L3m.MC.CHL.chlor_a.9km.nc">https://oceandata.sci.gsfc.nasa.gov/getfile/SEASTAR_SEAWIFS_GAC.19980201_20100228.L3m.MC.CHL.chlor_a.9km.nc</a></p></td>
+</tr>
+</tbody>
+</table>
+</div>
 <section id="crocodash-data-access-module">
 <h2>CrocoDash Data Access Module<a class="headerlink" href="#crocodash-data-access-module" title="Link to this heading">#</a></h2>
 <p>CrocoDash has a data_access module for accessing various datasets. Please see below for a table of available methods.</p>
+<div class="pst-scrollable-table-container"><table class="table" id="id2">
+<caption><span class="caption-text">Data Access Registry</span><a class="headerlink" href="#id2" title="Link to this table">#</a></caption>
+<thead>
+<tr class="row-odd"><th class="head"><p>Product_Name</p></th>
+<th class="head"><p>Access_Type</p></th>
+<th class="head"><p>Submodule</p></th>
+<th class="head"><p>Function_Name</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>GLORYS</p></td>
+<td><p>PYTHON</p></td>
+<td><p>glorys</p></td>
+<td><p>get_glorys_data_from_cds_api</p></td>
+<td><p>Python request with copernicusmarine api</p></td>
+</tr>
+<tr class="row-odd"><td><p>GLORYS</p></td>
+<td><p>PYTHON</p></td>
+<td><p>glorys</p></td>
+<td><p>get_glorys_data_from_rda</p></td>
+<td><p>Gathers GLORYS data from RDA on computers with access to glade/rda</p></td>
+</tr>
+<tr class="row-even"><td><p>GLORYS</p></td>
+<td><p>SCRIPT</p></td>
+<td><p>glorys</p></td>
+<td><p>get_glorys_data_script_for_cli</p></td>
+<td><p>Generates bash script for direct CLI run with the copernicusmarine package</p></td>
+</tr>
+<tr class="row-odd"><td><p>SEAWIFS</p></td>
+<td><p>SCRIPT</p></td>
+<td><p>seawifs</p></td>
+<td><p>get_global_seawifs_script_for_cli</p></td>
+<td><p>Generates bash script for direct CLI access to chlorophyll data (No Package Required)</p></td>
+</tr>
+<tr class="row-even"><td><p>GEBCO</p></td>
+<td><p>PYTHON</p></td>
+<td><p>gebco</p></td>
+<td><p>get_gebco_data_with_python</p></td>
+<td><p>Python request for global bathymetry data</p></td>
+</tr>
+<tr class="row-odd"><td><p>GEBCO</p></td>
+<td><p>SCRIPT</p></td>
+<td><p>gebco</p></td>
+<td><p>get_gebco_data_script</p></td>
+<td><p>get script to download global bathymetry data</p></td>
+</tr>
+<tr class="row-even"><td><p>SEAWIFS</p></td>
+<td><p>SCRIPT</p></td>
+<td><p>seawifs</p></td>
+<td><p>get_processed_global_seawifs_script_for_cli</p></td>
+<td><p>Generates bash script for direct CLI access to processed chlorophyll data (No Package Required)</p></td>
+</tr>
+<tr class="row-odd"><td><p>GLOFAS</p></td>
+<td><p>PYTHON</p></td>
+<td><p>glofas</p></td>
+<td><p>get_processed_global_glofas_script_for_cli</p></td>
+<td><p>Generates bash script for access to CESM Inputdata processed glofas data</p></td>
+</tr>
+<tr class="row-even"><td><p>GLOFAS</p></td>
+<td><p>PYTHON</p></td>
+<td><p>glofas</p></td>
+<td><p>get_global_data_with_python</p></td>
+<td><p>Gets glofas raw data through the cdsapi package</p></td>
+</tr>
+</tbody>
+</table>
+</div>
 <p>Specific datasets can be chosen by adding arguments to the case.configure_forcings function. Check out the demo
 <a class="reference external" href="https://crocodile-cesm.github.io/CrocoGallery/notebooks/features/add_data_products.html">here</a>.</p>
 </section>
