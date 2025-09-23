@@ -28,6 +28,7 @@ from mom6_bathy import chl, mapping, grid
 import xesmf as xe
 import xarray as xr 
 import numpy as np
+import cftime
 
 class Case:
     """This class represents a regional MOM6 case within the CESM framework. It is similar to the
@@ -381,7 +382,7 @@ class Case:
             self.configured_chl = self.configure_chl(chl_processed_filepath)
         else:
             self.configured_chl = False
-        if runoff_esmf_mesh_filepath:
+        if self.runoff_in_compset:
             self.configured_runoff = self.configure_runoff(runoff_esmf_mesh_filepath)
         else:
             self.configured_runoff = False
@@ -398,8 +399,8 @@ class Case:
         self._configure_forcings_called = True
 
     def configure_bgc_iron_forcing(self):
-        self.feventflux_filepath = self.inputdir / "ocnice" / f"feventflux_5gmol_{self.grid.name}_{cvars['MB_ATTEMPT_ID'].value}.nc"
-        self.fesedflux_filepath = self.inputdir / "ocnice" / f"fesedflux_total_reduce_oxic_{self.grid.name}_{cvars['MB_ATTEMPT_ID'].value}.nc"
+        self.feventflux_filepath = self.inputdir / "ocnice" / f"feventflux_5gmol_{self.ocn_grid.name}_{cvars['MB_ATTEMPT_ID'].value}.nc"
+        self.fesedflux_filepath = self.inputdir / "ocnice" / f"fesedflux_total_reduce_oxic_{self.ocn_grid.name}_{cvars['MB_ATTEMPT_ID'].value}.nc"
         return True
     def configure_cesm_initial_and_boundary_conditions(self, input_path: str | Path, date_range: list[str],boundaries: list[str] = ["south", "north", "west", "east"],too_much_data: bool = False,space_character: str = ".", lat_name: str = "LAT", lon_name: str = "LON", z_dim: str = "z"):
         """
@@ -550,8 +551,8 @@ class Case:
 
     def process_bgc_iron_forcing(self):
         # Create coordinate variables
-        nx = self.grid.nx 
-        ny = self.grid.ny
+        nx = self.ocn_grid.nx 
+        ny = self.ocn_grid.ny
         depth = 103
         depth_edges = depth + 1
         ds = xr.Dataset(
@@ -737,7 +738,7 @@ class Case:
     def configure_river_nutrients(self, global_river_nutrients_filepath: str | Path):
         if not(self.bgc_in_compset and self.runoff_in_compset):
             raise ValueError("River Nutrients can only be turned on if both BGC and Runoff are in the compset!")
-        self.global_river_nutrients_filepath = global_river_nutrients_filepath
+        self.global_river_nutrients_filepath = Path(global_river_nutrients_filepath)
         self.river_nutrients_nnsm_filepath = self.inputdir/"ocnice"/f"river_nutrients_{self.ocn_grid.name}_{cvars['MB_ATTEMPT_ID'].value}_nnsm.nc"
         return True
     def configure_runoff(self,
@@ -813,6 +814,11 @@ class Case:
         self.chl_processed_filepath = (
             Path(chl_processed_filepath) if chl_processed_filepath else None
         )
+        self.regional_chl_file_path = (
+                self.inputdir
+                / "ocnice"
+                / f"seawifs-clim-1997-2010-{self.ocn_grid.name}.nc"
+            )
         return True
 
     def process_tides(self):
@@ -833,12 +839,7 @@ class Case:
                 raise FileNotFoundError(
                     f"Chlorophyll file {self.chl_processed_filepath} does not exist."
                 )
-            # Process the chlorophyll file
-            self.regional_chl_file_path = (
-                self.inputdir
-                / "ocnice"
-                / f"seawifs-clim-1997-2010-{self.ocn_grid.name}.nc"
-            )
+
             chl.interpolate_and_fill_seawifs(
                 self.ocn_grid,
                 self.ocn_topo,
@@ -865,8 +866,6 @@ class Case:
                 lon=((global_river_nutrients.lon + 360) % 360)
             )
             global_river_nutrients = global_river_nutrients.sortby("lon")
-            
-            glofas_grid = topo.Topo.from_esmf_mesh(self.runoff_esmf_mesh_filepath)
             grid_t_points = xr.Dataset()
             grid_t_points["lon"] = self.ocn_grid.tlon
             grid_t_points["lat"] = self.ocn_grid.tlat
@@ -875,7 +874,8 @@ class Case:
             glofas_grid_t_points["lon"].attrs["units"] = "degrees"
             glofas_grid_t_points["lat"] = global_river_nutrients.lat
             glofas_grid_t_points["lat"].attrs["units"] = "degrees"
-            regridder = xe.Regridder(glofas_grid_t_points, tasman_grid_t_points,method = "bilinear", reuse_weights=True, filename = self.runoff_mapping_file_nnsm)
+            print("Creating regridder for river nutrients...")
+            regridder = xe.Regridder(glofas_grid_t_points, grid_t_points,method = "bilinear", reuse_weights=True, filename = self.runoff_mapping_file_nnsm)
             
             # Open Dataset & Unit Convert
 
@@ -886,10 +886,11 @@ class Case:
                 global_river_nutrients[v] = global_river_nutrients[v] * conversion_factor
                 global_river_nutrients[v].attrs["units"] = "mmol/cm^2/s"
             
+            print("Regridding river nutrients...")
             river_nutrients_remapped = regridder(global_river_nutrients)
 
             # Write out
-
+            print("Writing out river nutrients...")
             # new time value as cftime
             new_time_val = cftime.DatetimeNoLeap(1900, 1, 1, 0, 0, 0)
 
@@ -963,15 +964,17 @@ class Case:
             
     def process_runoff(self):
         if self.runoff_in_compset and self.runoff_esmf_mesh_filepath:
-            
-            mapping.gen_rof_maps(
-                rof_mesh_path=self.runoff_esmf_mesh_filepath,
-                ocn_mesh_path=self.esmf_mesh_path,
-                output_dir=self.inputdir/"ocnice",
-                mapping_file_prefix=f'glofas_{self.ocn_grid.name}_{cvars["MB_ATTEMPT_ID"].value}',
-                rmax=100.0,
-                fold=100.0
-            )
+            if not self.runoff_mapping_file_nnsm.exists():
+                mapping.gen_rof_maps(
+                    rof_mesh_path=self.runoff_esmf_mesh_filepath,
+                    ocn_mesh_path=self.esmf_mesh_path,
+                    output_dir=self.inputdir/"ocnice",
+                    mapping_file_prefix=f'glofas_{self.ocn_grid.name}_{cvars["MB_ATTEMPT_ID"].value}',
+                    rmax=100.0,
+                    fold=100.0
+                )
+            else:
+                print(f"Runoff mapping file {self.runoff_mapping_file_nnsm} already exists, reusing it.")
            
     def process_initial_and_boundary_conditions(
         self, process_initial_condition, process_velocity_tracers
@@ -1287,7 +1290,7 @@ class Case:
         # Chlorophyll
         if self.configured_chl:
             chl_params = [
-                ("CHL_FILE", f"seawifs-clim-1997-2010-{self.ocn_grid.name}.nc"),
+                ("CHL_FILE", self.regional_chl_file_path),
                 ("CHL_FROM_FILE", "TRUE"),
                 ("VAR_PEN_SW", "TRUE"),
                 ("PEN_SW_NBANDS", 3),
