@@ -26,6 +26,7 @@ from visualCaseGen.custom_widget_types.case_creator import CaseCreator, ERROR, R
 from visualCaseGen.custom_widget_types.case_tools import xmlchange, append_user_nl
 from mom6_bathy import chl, mapping
 
+
 class Case:
     """This class represents a regional MOM6 case within the CESM framework. It is similar to the
     Experiment class in the regional_mom6 package, but with modifications to work within the CESM framework.
@@ -135,12 +136,9 @@ class Case:
 
         self._create_newcase()
 
-        self._cime_case = self.cime.get_case( 
+        self._cime_case = self.cime.get_case(
             self.caseroot, non_local=self.cc._is_non_local()
         )
-
-
-
 
     def _init_args_check(
         self,
@@ -349,13 +347,19 @@ class Case:
         --------
         process_forcings : Executes the actual boundary, initial condition, and tide setup based on the configuration.
         """
-        
-        self.forcing_product_name =  product_name.lower()
+
+        self.forcing_product_name = product_name.lower()
         if product_info != None:
-            self.ProductFunctionRegistry.add_product_config(product_name, product_info = product_info)
+            self.ProductFunctionRegistry.add_product_config(
+                product_name, product_info=product_info
+            )
         if data_input_path is not None and product_name.upper() == "CESM_OUTPUT":
-            self.configure_cesm_initial_and_boundary_conditions(input_path = data_input_path, date_range=date_range,
-                boundaries=boundaries,too_much_data=too_much_data)
+            self.configure_cesm_initial_and_boundary_conditions(
+                input_path=data_input_path,
+                date_range=date_range,
+                boundaries=boundaries,
+                too_much_data=too_much_data,
+            )
         elif product_name.upper() == "GLORYS":
             self.configure_initial_and_boundary_conditions(
                 date_range=date_range,
@@ -381,12 +385,19 @@ class Case:
         else:
             self.configured_runoff = False
         self._configure_forcings_called = True
-    def configure_cesm_initial_and_boundary_conditions(self, input_path: str | Path, date_range: list[str],boundaries: list[str] = ["south", "north", "west", "east"],too_much_data: bool = False):
+
+    def configure_cesm_initial_and_boundary_conditions(
+        self,
+        input_path: str | Path,
+        date_range: list[str],
+        boundaries: list[str] = ["south", "north", "west", "east"],
+        too_much_data: bool = False,
+    ):
         """
         Configure CESM OBC and ICs from previous CESM output
         """
         self.boundaries = boundaries
-        
+
         if too_much_data:
             self._large_data_workflow_called = True
 
@@ -403,7 +414,9 @@ class Case:
 
         # Create the OBC generation files
         self.large_data_workflow_path = (
-            self.inputdir / self.forcing_product_name / "cesm_output_extract_obc_workflow"
+            self.inputdir
+            / self.forcing_product_name
+            / "cesm_output_extract_obc_workflow"
         )
 
         # Copy large data workflow folder there
@@ -414,7 +427,6 @@ class Case:
 
         # Set Vars for Config
         date_format = "%Y%m%d"
-
 
         with open(self.large_data_workflow_path / "config.json", "r") as f:
             config = json.load(f)
@@ -432,7 +444,9 @@ class Case:
         config["dates"]["start"] = self.date_range[0].strftime(date_format)
         config["dates"]["end"] = self.date_range[1].strftime(date_format)
         config["dates"]["format"] = date_format
-        config["cesm_information"] = self.ProductFunctionRegistry.load_product_config(self.forcing_product_name.lower())
+        config["cesm_information"] = self.ProductFunctionRegistry.load_product_config(
+            self.forcing_product_name.lower()
+        )
         config["general"]["boundary_number_conversion"] = {
             item: idx + 1 for idx, item in enumerate(self.boundaries)
         }
@@ -451,7 +465,7 @@ class Case:
         process_tides=True,
         process_velocity_tracers=True,
         process_chl=True,
-        process_runoff = True,
+        process_runoff=True,
         process_param_changes=True,
     ):
         """
@@ -520,8 +534,14 @@ class Case:
         if process_param_changes:
             self._update_forcing_variables()
 
-    def process_cesm_initial_and_boundary_conditions(self, process_initial_condition=True, process_velocity_tracers=True,):
-        if self._large_data_workflow_called and (process_velocity_tracers or process_initial_condition):
+    def process_cesm_initial_and_boundary_conditions(
+        self,
+        process_initial_condition=True,
+        process_velocity_tracers=True,
+    ):
+        if self._large_data_workflow_called and (
+            process_velocity_tracers or process_initial_condition
+        ):
             process_velocity_tracers = False
             process_initial_condition = False
             print(
@@ -530,7 +550,6 @@ class Case:
             print(
                 f"Please make sure to execute large_data_workflow as described in {self.large_data_workflow_path}"
             )
-
 
         # Set up the initial condition & boundary conditions
 
@@ -550,8 +569,8 @@ class Case:
         if process_initial_condition or process_velocity_tracers:
             sys.path.append(str(self.large_data_workflow_path))
             import eo_driver
-            eo_driver.extract_obcs(config)
 
+            eo_driver.extract_obcs(config)
 
     def configure_initial_and_boundary_conditions(
         self,
@@ -565,7 +584,6 @@ class Case:
             tb.category_of_product(product_name) == "forcing"
         ), "Data product must be a forcing product"
 
-        
         if not self.ProductFunctionRegistry.validate_function(
             product_name, function_name
         ):
@@ -640,7 +658,7 @@ class Case:
         config["forcing"]["varnames"] = (
             self.ProductFunctionRegistry.load_product_config(
                 self.forcing_product_name.lower()
-        )
+            )
         )
         config["boundary_number_conversion"] = {
             item: idx + 1 for idx, item in enumerate(self.boundaries)
@@ -661,13 +679,12 @@ class Case:
                 f"Large data workflow was called, please go to the large data workflow path: {self.large_data_workflow_path} and run the driver script there."
             )
 
-    def configure_runoff(self,
-        runoff_esmf_mesh_filepath: str | Path | None = None
-
-    ):
+    def configure_runoff(self, runoff_esmf_mesh_filepath: str | Path | None = None):
         if self.runoff_in_compset and (runoff_esmf_mesh_filepath is None):
             self.runoff_esmf_mesh_filepath = False
-            raise ValueError("Runoff ESMF Mesh File and Global Runoff file must be provided for mapping")
+            raise ValueError(
+                "Runoff ESMF Mesh File and Global Runoff file must be provided for mapping"
+            )
         elif (runoff_esmf_mesh_filepath is not None) and not self.runoff_in_compset:
             self.runoff_esmf_mesh_filepath = False
             raise ValueError("Runoff can only be turned on if it is in the compset!")
@@ -675,7 +692,11 @@ class Case:
             self.runoff_esmf_mesh_filepath = runoff_esmf_mesh_filepath
 
         # Set runoff mapping file path
-        self.runoff_mapping_file_nnsm = self.inputdir/"ocnice"/f"glofas_{self.ocn_grid.name}_{cvars['MB_ATTEMPT_ID'].value}_nnsm.nc"
+        self.runoff_mapping_file_nnsm = (
+            self.inputdir
+            / "ocnice"
+            / f"glofas_{self.ocn_grid.name}_{cvars['MB_ATTEMPT_ID'].value}_nnsm.nc"
+        )
         return True
 
     def configure_tides(
@@ -712,7 +733,7 @@ class Case:
         session_id = cvars["MB_ATTEMPT_ID"].value
 
         self.expt = rmom6.experiment(
-            date_range=("1850-01-01 00:00:00", "1851-01-01 00:00:00"), # Dummy times
+            date_range=("1850-01-01 00:00:00", "1851-01-01 00:00:00"),  # Dummy times
             resolution=None,
             number_vertical_layers=None,
             layer_thickness_ratio=None,
@@ -749,7 +770,7 @@ class Case:
 
     def process_chl(self):
         # Process the chlorophyll file if it is provided
-        if  self.chl_processed_filepath is not None:
+        if self.chl_processed_filepath is not None:
             if not self.chl_processed_filepath.exists():
                 raise FileNotFoundError(
                     f"Chlorophyll file {self.chl_processed_filepath} does not exist."
@@ -766,24 +787,26 @@ class Case:
                 self.chl_processed_filepath,
                 self.regional_chl_file_path,
             )
-    
+
     def process_runoff(self):
         if self.runoff_in_compset and self.runoff_esmf_mesh_filepath:
-            
+
             mapping.gen_rof_maps(
                 rof_mesh_path=self.runoff_esmf_mesh_filepath,
                 ocn_mesh_path=self.esmf_mesh_path,
-                output_dir=self.inputdir/"ocnice",
+                output_dir=self.inputdir / "ocnice",
                 mapping_file_prefix=f'glofas_{self.ocn_grid.name}_{cvars["MB_ATTEMPT_ID"].value}',
                 rmax=100.0,
-                fold=100.0
+                fold=100.0,
             )
-           
+
     def process_initial_and_boundary_conditions(
         self, process_initial_condition, process_velocity_tracers
     ):
 
-        if self._large_data_workflow_called and (process_velocity_tracers or process_initial_condition):
+        if self._large_data_workflow_called and (
+            process_velocity_tracers or process_initial_condition
+        ):
             process_velocity_tracers = False
             process_initial_condition = False
             print(
@@ -996,33 +1019,36 @@ class Case:
 
         # Initial conditions:
         ic_params = [
-                ("INIT_LAYERS_FROM_Z_FILE", "True"),
-                ("Z_INIT_ALE_REMAPPING", True),
-                ("TEMP_SALT_INIT_VERTICAL_REMAP_ONLY", True),
-                ("DEPRESS_INITIAL_SURFACE", True),
-                ("VELOCITY_CONFIG", "file"),
-            ]
+            ("INIT_LAYERS_FROM_Z_FILE", "True"),
+            ("Z_INIT_ALE_REMAPPING", True),
+            ("TEMP_SALT_INIT_VERTICAL_REMAP_ONLY", True),
+            ("DEPRESS_INITIAL_SURFACE", True),
+            ("VELOCITY_CONFIG", "file"),
+        ]
         if self.forcing_product_name.upper() != "CESM_OUTPUT":
-            ic_params.extend([
-                ("TEMP_SALT_Z_INIT_FILE", "init_tracers.nc"),
-                ("SURFACE_HEIGHT_IC_FILE", "init_eta.nc"),
-                ("SURFACE_HEIGHT_IC_VAR", "eta_t"),
-                ("VELOCITY_FILE", "init_vel.nc"),
-            ])
+            ic_params.extend(
+                [
+                    ("TEMP_SALT_Z_INIT_FILE", "init_tracers.nc"),
+                    ("SURFACE_HEIGHT_IC_FILE", "init_eta.nc"),
+                    ("SURFACE_HEIGHT_IC_VAR", "eta_t"),
+                    ("VELOCITY_FILE", "init_vel.nc"),
+                ]
+            )
 
         else:
-            ic_params.extend([
-                ("TEMP_Z_INIT_FILE", "TEMP_IC.nc"),
-                ("SALT_Z_INIT_FILE", "SALT_IC.nc"),
-                ("Z_INIT_FILE_PTEMP_VAR", "TEMP"),
-                ("Z_INIT_FILE_SALT_VAR", "SALT"),
-                ("SURFACE_HEIGHT_IC_FILE", "SSH_IC.nc"),
-                ("SURFACE_HEIGHT_IC_VAR", "SSH"),
-                ("VELOCITY_FILE", "VEL_IC.nc"),
-                ("U_IC_VAR", "UVEL"),
-                ("V_IC_VAR", "VVEL"),
-            ])
-
+            ic_params.extend(
+                [
+                    ("TEMP_Z_INIT_FILE", "TEMP_IC.nc"),
+                    ("SALT_Z_INIT_FILE", "SALT_IC.nc"),
+                    ("Z_INIT_FILE_PTEMP_VAR", "TEMP"),
+                    ("Z_INIT_FILE_SALT_VAR", "SALT"),
+                    ("SURFACE_HEIGHT_IC_FILE", "SSH_IC.nc"),
+                    ("SURFACE_HEIGHT_IC_VAR", "SSH"),
+                    ("VELOCITY_FILE", "VEL_IC.nc"),
+                    ("U_IC_VAR", "UVEL"),
+                    ("V_IC_VAR", "VVEL"),
+                ]
+            )
 
         append_user_nl(
             "mom",
@@ -1043,7 +1069,6 @@ class Case:
                 comment="BGC Params",
                 log_title=False,
             )
-
 
         # Tides
         if self.configured_tides:
@@ -1142,16 +1167,18 @@ class Case:
                 )
             else:
 
-                product_info = self.ProductFunctionRegistry.load_product_config(self.forcing_product_name)
-                
+                product_info = self.ProductFunctionRegistry.load_product_config(
+                    self.forcing_product_name
+                )
+
                 standard_data_str = lambda: (
-                        f"\"U=file:{product_info['u']}_obc_segment_{seg_ix}.nc({product_info['u']}),"
-                        f"V=file:{product_info['v']}_obc_segment_{seg_ix}.nc({product_info['v']}),"
-                        f"SSH=file:{product_info['ssh']}_obc_segment_{seg_ix}.nc({product_info['ssh']}),"
-                        f"TEMP=file:{product_info['tracers']['temp']}_obc_segment_{seg_ix}.nc({product_info['tracers']['temp']}),"
-                        f"SALT=file:{product_info['tracers']['salt']}_obc_segment_{seg_ix}.nc({product_info['tracers']['salt']})"
-                    )
-                
+                    f"\"U=file:{product_info['u']}_obc_segment_{seg_ix}.nc({product_info['u']}),"
+                    f"V=file:{product_info['v']}_obc_segment_{seg_ix}.nc({product_info['v']}),"
+                    f"SSH=file:{product_info['ssh']}_obc_segment_{seg_ix}.nc({product_info['ssh']}),"
+                    f"TEMP=file:{product_info['tracers']['temp']}_obc_segment_{seg_ix}.nc({product_info['tracers']['temp']}),"
+                    f"SALT=file:{product_info['tracers']['salt']}_obc_segment_{seg_ix}.nc({product_info['tracers']['salt']})"
+                )
+
                 for tracer_mom6_name in product_info["tracers"]:
                     if tracer_mom6_name != "temp" and tracer_mom6_name != "salt":
                         bgc_tracers += f',{tracer_mom6_name}=file:{product_info["tracers"][tracer_mom6_name]}_obc_segment_{seg_ix}.nc({product_info["tracers"][tracer_mom6_name]})'
@@ -1165,10 +1192,15 @@ class Case:
             )
             if self.configured_tides:
                 obc_params.append(
-                    (seg_id + "_DATA", standard_data_str() + tidal_data_str() + bgc_tracers +'"')
+                    (
+                        seg_id + "_DATA",
+                        standard_data_str() + tidal_data_str() + bgc_tracers + '"',
+                    )
                 )
             else:
-                obc_params.append((seg_id + "_DATA", standard_data_str()+ bgc_tracers + '"'))
+                obc_params.append(
+                    (seg_id + "_DATA", standard_data_str() + bgc_tracers + '"')
+                )
 
         append_user_nl(
             "mom",
@@ -1193,12 +1225,19 @@ class Case:
                 comment="CICE options",
                 log_title=False,
             )
-    
-        if self.runoff_in_compset and self.configured_runoff:
-            
-            xmlchange("ROF2OCN_LIQ_RMAPNAME", str(self.runoff_mapping_file_nnsm),is_non_local=self.cc._is_non_local())
-            xmlchange("ROF2OCN_ICE_RMAPNAME", str(self.runoff_mapping_file_nnsm),is_non_local=self.cc._is_non_local())
 
+        if self.runoff_in_compset and self.configured_runoff:
+
+            xmlchange(
+                "ROF2OCN_LIQ_RMAPNAME",
+                str(self.runoff_mapping_file_nnsm),
+                is_non_local=self.cc._is_non_local(),
+            )
+            xmlchange(
+                "ROF2OCN_ICE_RMAPNAME",
+                str(self.runoff_mapping_file_nnsm),
+                is_non_local=self.cc._is_non_local(),
+            )
 
         xmlchange(
             "RUN_STARTDATE",
@@ -1212,6 +1251,7 @@ class Case:
         )
 
         print(f"Case is ready to be built: {self.caseroot}")
+
     def find_MOM6_rectangular_orientation(self, input):
         """
         Convert between MOM6 boundary and the specific segment number needed, or the inverse.
