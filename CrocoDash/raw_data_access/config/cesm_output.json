@@ -14,7 +14,7 @@
         "z_t",
         "z_t_150m"
     ],
-    "space_character": ".",
+    "delimiter": ".",
     "tracers": {
         "temp": "TEMP",
         "salt": "SALT",

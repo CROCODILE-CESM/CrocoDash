@@ -115,8 +115,8 @@ class Case:
         self._large_data_workflow_called = False
         self.compset = compset
 
-        self.runoff_in_compset = "DROF%GLOFAS" in self.compset
-        self.bgc_in_compset = "%MARBL-BIO" in self.compset
+        self.runoff_in_compset = "DROF" in self.compset
+        self.bgc_in_compset = "%MARBL" in self.compset
         self.cice_in_compset = "CICE" in self.compset
 
         # Resolution name:
@@ -381,7 +381,7 @@ class Case:
         else:
             self.configured_runoff = False
         self._configure_forcings_called = True
-    def configure_cesm_initial_and_boundary_conditions(self, input_path: str | Path, date_range: list[str],boundaries: list[str] = ["south", "north", "west", "east"],too_much_data: bool = False,space_character: str = ".", lat_name: str = "LAT", lon_name: str = "LON", z_dim: str = "z"):
+    def configure_cesm_initial_and_boundary_conditions(self, input_path: str | Path, date_range: list[str],boundaries: list[str] = ["south", "north", "west", "east"],too_much_data: bool = False):
         """
         Configure CESM OBC and ICs from previous CESM output
         """
