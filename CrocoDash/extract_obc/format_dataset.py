@@ -60,7 +60,7 @@ def format_dataset(
             ds = xr.open_dataset(input_path / f"{v}_{item}_regridded.nc")
 
             # Ensure the correct z_dim if it is a list of potential z_dims
-            if type(z_dim) is list:
+            if isinstance(z_dim, list):
                 found_z_dim = False
                 for z_dim_opt in z_dim:
                     if z_dim_opt in ds["__xarray_dataarray_variable__"].dims:
