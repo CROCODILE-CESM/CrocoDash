@@ -18,7 +18,7 @@ def add_product_config(product_name: str, product_info: str | Path | dict):
         if isinstance(product_info, (str, Path)):
             with open(product_info, "r") as f:
                 product_info = json.load(f) 
-        elif product_info == None:
+        elif product_info is None:
             raise ValueError(f"No product info provided but product information does not exist in {output_path}")
             return
         # Validate, must have the keys time, xh, yh, u, v, ssh, z_dim or zl, and a subdict called tracers with the fields salt, temp
