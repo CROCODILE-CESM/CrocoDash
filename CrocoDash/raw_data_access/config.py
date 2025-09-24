@@ -15,7 +15,7 @@ def add_product_config(product_name: str, product_info: str | Path | dict):
         raise ValueError(f"Product config already exists in {output_path}. Please delete this to replace it.")
     else:
 
-        if type(product_info) == str or type(product_info) == Path:
+        if isinstance(product_info, (str, Path)):
             with open(product_info, "r") as f:
                 product_info = json.load(f) 
         elif product_info == None:
