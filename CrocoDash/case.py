@@ -85,7 +85,7 @@ class Case:
         override : bool, optional
             Whether to override existing caseroot and inputdir directories. Default is False.
         message : str, optional
-        A user-provided message describing this case instantiation. This will be saved in the case history.
+        A user-provided message describing this case instantiation. This will be saved in the case information.
         object_messages : dict, optional
             A dictionary of per-object messages, e.g. {'grid': "...", 'vgrid': "...", 'topo': "..."}.
             These messages are saved in the object histories and can be used for provenance or notes about each file.
@@ -133,7 +133,7 @@ class Case:
 
         self._history_dir = self.caseroot.parent 
         self._object_history_path = self._history_dir / "object_histories.json"
-        self._history_path = self._history_dir / "case_history.json"
+        self._history_path = self._history_dir / "case_information.json"
 
         # Construct the compset long name
         self.compset = f"{inittime}_DATM%{datm_mode}_SLND_SICE_MOM6_SROF_SGLC_SWAV_SESP"
@@ -276,7 +276,7 @@ class Case:
         return f"{idx_str}Grid: {grid}, VGrid: {vgrid}, Topo: {topo}, Date: {date}{msg}{restored}"
     
     def save_history(self, new_state):
-        """Appends a new case record to the global case history."""
+        """Appends a new case record to the global case information."""
         if self._history_path.exists():
             with open(self._history_path, "r") as f:
                 existing = json.load(f)
@@ -292,14 +292,14 @@ class Case:
             json.dump(existing, f, indent=2)
 
     def load_history(self):
-        """Loads the entire global case history."""
+        """Loads the entire global case information."""
         if self._history_path.exists():
             with open(self._history_path, "r") as f:
                 return [self.case_record_from_dict(d) for d in json.load(f)]
         return []
 
     def append_history_to_readme(self):
-        """Appends the global case history to the README.case file in the current case directory."""
+        """Appends the global case information to the README.case file in the current case directory."""
         readme_path = Path(self.caseroot) / "README.case"
         if readme_path.exists():
             with open(readme_path, "r") as f:
@@ -377,7 +377,7 @@ class Case:
             return False
     
     def get_forcing_config_history(self):
-        """Return a list of unique forcing_config dicts from global case history."""
+        """Return a list of unique forcing_config dicts from global case information."""
         if not self._history_path.exists():
             return []
         with open(self._history_path, "r") as f:
@@ -1303,7 +1303,7 @@ class Case:
 
         readme_path = Path(caseroot) / "README.case"
 
-        # If you want to preserve the case history section, extract it
+        # If you want to preserve the case information section, extract it
         history_lines = []
         if readme_path.exists():
             with open(readme_path, "r") as f:

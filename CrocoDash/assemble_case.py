@@ -20,7 +20,7 @@ import numpy as np
 
 class CaseAssembler:
     """
-    Interactive widget for assembling a new Case from global case history.
+    Interactive widget for assembling a new Case from global Case Information.
     Decoupled from any current in-memory Case.
     """
 
@@ -47,13 +47,13 @@ class CaseAssembler:
         caseroot = Path(caseroot)
         inputdir = Path(inputdir)
         cesmroot = Path(cesmroot)
-        history_path = caseroot / "case_history.json"
+        history_path = caseroot / "case_information.json"
 
         if not history_path.exists():
-            print("No global case history found.")
+            print("No global Case Information found.")
             return
 
-        # --- Load Case History ---
+        # --- Load Case Information ---
         with open(history_path, "r") as f:
             all_case_records = json.load(f)
 
