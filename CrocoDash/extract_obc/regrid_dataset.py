@@ -44,6 +44,18 @@ def regrid_dataset_to_boundaries(
     if not input_path.exists():
         raise ValueError(f"Input path {input_path} does not exist.")
 
+    # Calculate the correct lon/lat units
+    ds = xr.open_dataset(input_path / f"{u_name}_subset.nc", decode_times=False)
+    dataset_is_degrees_east_longitude = False
+    if ds[u_lon_name].max()>180:
+        dataset_is_degrees_east_longitude = True
+    
+    if dataset_is_degrees_east_longitude:
+        supergrid["x"] = supergrid.x % 360
+        
+    else:
+        supergrid["x"] = ((supergrid.x + 180) % 360) - 180
+
     regridders = create_regridders(
         input_path,
         output_path,
