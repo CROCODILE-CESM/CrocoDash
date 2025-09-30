@@ -45,9 +45,10 @@ def regrid_dataset_to_boundaries(
         raise ValueError(f"Input path {input_path} does not exist.")
 
     # Calculate the correct lon/lat units
-    ds = xr.open_dataset(input_path / f"{u_name}_subset.nc", decode_times=False)
+    variable_to_use = next(iter(variable_info.keys()))
+    ds = xr.open_dataset(input_path / f"{variable_to_use}_subset.nc", decode_times=False)
     dataset_is_degrees_east_longitude = False
-    if ds[u_lon_name].max()>180:
+    if ds[lon_name].max()>180:
         dataset_is_degrees_east_longitude = True
     
     if dataset_is_degrees_east_longitude:
