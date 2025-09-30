@@ -566,6 +566,7 @@ class Case:
             )
         if self.configured_bgc and process_bgc:
             self.process_bgc_iron_forcing()
+            self.process_bgc_ic()
         if self.configured_tides and process_tides:
             self.process_tides()
         if self.configured_chl and process_chl:
@@ -579,6 +580,10 @@ class Case:
         if process_param_changes:
             self._update_forcing_variables()
 
+    def process_bgc_ic(self):
+        dest_path = self.inputdir / "ocnice" / Path(self.marbl_ic_filepath).name
+        shutil.copy(self.marbl_ic_filepath, dest_path)
+        self.marbl_ic_filename = Path(self.marbl_ic_filepath).name
     def process_bgc_iron_forcing(self):
         # Create coordinate variables
         nx = self.ocn_grid.nx 
@@ -1278,7 +1283,7 @@ class Case:
                 ("MAX_FIELDS", "200"),
                 ("MARBL_FESEDFLUX_FILE",self.fesedflux_filepath),
                 ("MARBL_FEVENTFLUX_FILE",self.feventflux_filepath),
-                ("MARBL_TRACERS_IC_FILE",self.marbl_ic_filepath)
+                ("MARBL_TRACERS_IC_FILE",self.marbl_ic_filename)
             ]
 
 
