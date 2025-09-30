@@ -982,6 +982,7 @@ class Case:
     def process_runoff(self):
         if self.runoff_in_compset and self.runoff_esmf_mesh_filepath:
             if not self.runoff_mapping_file_nnsm.exists():
+                print("Creating runoff mapping file(s)...")
                 mapping.gen_rof_maps(
                     rof_mesh_path=self.runoff_esmf_mesh_filepath,
                     ocn_mesh_path=self.esmf_mesh_path,
