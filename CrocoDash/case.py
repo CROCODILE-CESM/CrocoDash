@@ -30,6 +30,7 @@ import xarray as xr
 import numpy as np
 import cftime
 
+
 class Case:
     """This class represents a regional MOM6 case within the CESM framework. It is similar to the
     Experiment class in the regional_mom6 package, but with modifications to work within the CESM framework.
@@ -142,7 +143,7 @@ class Case:
         self._cime_case = self.cime.get_case(
             self.caseroot, non_local=self.cc._is_non_local()
         )
-        
+
         xmlchange(
             "MOM6_MEMORY_MODE",
             "dynamic_symmetric",
@@ -293,7 +294,7 @@ class Case:
         runoff_esmf_mesh_filepath: str | Path | None = None,
         data_input_path: str | Path | None = None,
         global_river_nutrients_filepath: str | Path | None = None,
-        marbl_ic_filepath: str | Path | None = None
+        marbl_ic_filepath: str | Path | None = None,
     ):
         """
         Configure the boundary conditions and tides for the MOM6 case.
@@ -400,7 +401,9 @@ class Case:
             self.configured_runoff = False
 
         if global_river_nutrients_filepath:
-            self.configured_river_nutrients = self.configure_river_nutrients(global_river_nutrients_filepath)
+            self.configured_river_nutrients = self.configure_river_nutrients(
+                global_river_nutrients_filepath
+            )
         else:
             self.configured_river_nutrients = False
 
@@ -415,12 +418,23 @@ class Case:
         if marbl_ic_filepath is None:
             raise ValueError("MARBL initial condition file path must be provided.")
         if Path(marbl_ic_filepath).exists() is False:
-            raise FileNotFoundError(f"MARBL initial condition file {marbl_ic_filepath} does not exist.")
+            raise FileNotFoundError(
+                f"MARBL initial condition file {marbl_ic_filepath} does not exist."
+            )
         self.marbl_ic_filepath = marbl_ic_filepath
         return True
+
     def configure_bgc_iron_forcing(self):
-        self.feventflux_filepath = self.inputdir / "ocnice" / f"feventflux_5gmol_{self.ocn_grid.name}_{cvars['MB_ATTEMPT_ID'].value}.nc"
-        self.fesedflux_filepath = self.inputdir / "ocnice" / f"fesedflux_total_reduce_oxic_{self.ocn_grid.name}_{cvars['MB_ATTEMPT_ID'].value}.nc"
+        self.feventflux_filepath = (
+            self.inputdir
+            / "ocnice"
+            / f"feventflux_5gmol_{self.ocn_grid.name}_{cvars['MB_ATTEMPT_ID'].value}.nc"
+        )
+        self.fesedflux_filepath = (
+            self.inputdir
+            / "ocnice"
+            / f"fesedflux_total_reduce_oxic_{self.ocn_grid.name}_{cvars['MB_ATTEMPT_ID'].value}.nc"
+        )
         return True
 
     def configure_cesm_initial_and_boundary_conditions(
@@ -504,7 +518,7 @@ class Case:
         process_bgc=True,
         process_chl=True,
         process_runoff=True,
-        process_river_nutrients = True,
+        process_river_nutrients=True,
         process_param_changes=True,
     ):
         """
@@ -584,19 +598,32 @@ class Case:
         dest_path = self.inputdir / "ocnice" / Path(self.marbl_ic_filepath).name
         shutil.copy(self.marbl_ic_filepath, dest_path)
         self.marbl_ic_filename = Path(self.marbl_ic_filepath).name
+
     def process_bgc_iron_forcing(self):
         # Create coordinate variables
-        nx = self.ocn_grid.nx 
+        nx = self.ocn_grid.nx
         ny = self.ocn_grid.ny
         depth = 103
         depth_edges = depth + 1
+        dz = 6000.0 / depth
+        DEPTH = np.linspace(dz / 2, 6000.0 - dz / 2, depth)
+        DEPTH_EDGES = np.linspace(0, 6000, depth_edges)
         ds = xr.Dataset(
             {
-                "DEPTH": (["DEPTH"], np.linspace(0, 6000, depth)),
-                "DEPTH_EDGES": (["DEPTH_EDGES"], np.linspace(0, 6000, depth_edges)),
-                "FESEDFLUXIN": (["DEPTH", "ny", "nx"], np.zeros((depth, ny, nx), dtype=np.float32)),
-                "FESEDFLUXIN_oxic": (["DEPTH", "ny", "nx"], np.zeros((depth, ny, nx), dtype=np.float32)),
-                "FESEDFLUXIN_reduce": (["DEPTH", "ny", "nx"], np.zeros((depth, ny, nx), dtype=np.float32)),
+                "DEPTH": (["DEPTH"], DEPTH),
+                "DEPTH_EDGES": (["DEPTH_EDGES"], DEPTH_EDGES),
+                "FESEDFLUXIN": (
+                    ["DEPTH", "ny", "nx"],
+                    np.zeros((depth, ny, nx), dtype=np.float32),
+                ),
+                "FESEDFLUXIN_oxic": (
+                    ["DEPTH", "ny", "nx"],
+                    np.zeros((depth, ny, nx), dtype=np.float32),
+                ),
+                "FESEDFLUXIN_reduce": (
+                    ["DEPTH", "ny", "nx"],
+                    np.zeros((depth, ny, nx), dtype=np.float32),
+                ),
                 "KMT": (["ny", "nx"], np.zeros((ny, nx), dtype=np.int32)),
                 "TAREA": (["ny", "nx"], np.zeros((ny, nx), dtype=np.float64)),
             }
@@ -604,27 +631,28 @@ class Case:
         # Assign attributes
         ds["DEPTH"].attrs = {"units": "m", "edges": "DEPTH_EDGES"}
         ds["DEPTH_EDGES"].attrs = {"units": "m"}
+
         ds["FESEDFLUXIN"].attrs = {
-            "_FillValue": 1.e+20,
+            "_FillValue": 1.0e20,
             "units": "micromol/m^2/d",
-            "long_name": "Fe sediment flux (total)"
+            "long_name": "Fe sediment flux (total)",
         }
+        # The two fields below are provided to show provenance of the field read in by MOM6, but aren't needed for the all-zero files we're creating.
         ds["FESEDFLUXIN_oxic"].attrs = {
-            "_FillValue": 1.e+20,
+            "_FillValue": 1.0e20,
             "units": "micromol m$^{-2}$ d$^{-1}$",
-            "long_name": "Fe sediment flux (oxic)"
+            "long_name": "Fe sediment flux (oxic)",
         }
         ds["FESEDFLUXIN_reduce"].attrs = {
             "long_name": "Longitude of tracer (T) points",
             "units": "micromol m$^{-2}$ d$^{-1}$",
-            "cell_methods": "time: point"
+            "cell_methods": "time: point",
         }
         ds["TAREA"].attrs = {"units": "m^2"}
 
         # Add global attributes
         ds.attrs = {
             "history": "Created with xarray (this file is empty)",
-            "NCO": "netCDF Operators version 4.9.5"
         }
         ds.to_netcdf(self.fesedflux_filepath)
         ds.to_netcdf(self.feventflux_filepath)
@@ -678,7 +706,6 @@ class Case:
         assert (
             tb.category_of_product(product_name) == "forcing"
         ), "Data product must be a forcing product"
-
 
         if not self.ProductFunctionRegistry.validate_function(
             product_name, function_name
@@ -776,11 +803,18 @@ class Case:
             )
 
     def configure_river_nutrients(self, global_river_nutrients_filepath: str | Path):
-        if not(self.bgc_in_compset and self.runoff_in_compset):
-            raise ValueError("River Nutrients can only be turned on if both BGC and Runoff are in the compset!")
+        if not (self.bgc_in_compset and self.runoff_in_compset):
+            raise ValueError(
+                "River Nutrients can only be turned on if both BGC and Runoff are in the compset!"
+            )
         self.global_river_nutrients_filepath = Path(global_river_nutrients_filepath)
-        self.river_nutrients_nnsm_filepath = self.inputdir/"ocnice"/f"river_nutrients_{self.ocn_grid.name}_{cvars['MB_ATTEMPT_ID'].value}_nnsm.nc"
+        self.river_nutrients_nnsm_filepath = (
+            self.inputdir
+            / "ocnice"
+            / f"river_nutrients_{self.ocn_grid.name}_{cvars['MB_ATTEMPT_ID'].value}_nnsm.nc"
+        )
         return True
+
     def configure_runoff(self, runoff_esmf_mesh_filepath: str | Path | None = None):
         if self.runoff_in_compset and (runoff_esmf_mesh_filepath is None):
             self.runoff_esmf_mesh_filepath = False
@@ -858,10 +892,8 @@ class Case:
             Path(chl_processed_filepath) if chl_processed_filepath else None
         )
         self.regional_chl_file_path = (
-                self.inputdir
-                / "ocnice"
-                / f"seawifs-clim-1997-2010-{self.ocn_grid.name}.nc"
-            )
+            self.inputdir / "ocnice" / f"seawifs-clim-1997-2010-{self.ocn_grid.name}.nc"
+        )
         return True
 
     def process_tides(self):
@@ -891,20 +923,24 @@ class Case:
             )
 
     def process_river_nutrients(self):
-        if self.bgc_in_compset and self.runoff_in_compset and self.global_river_nutrients_filepath is not None:
+        if (
+            self.bgc_in_compset
+            and self.runoff_in_compset
+            and self.global_river_nutrients_filepath is not None
+        ):
             if not self.global_river_nutrients_filepath.exists():
                 raise FileNotFoundError(
                     f"River Nutrients file {self.global_river_nutrients_filepath} does not exist."
                 )
             # Process the river nutrients file
             self.river_nutrients_filepath = (
-                self.inputdir
-                / "ocnice"
-                / f"river-nutrients-{self.ocn_grid.name}.nc"
+                self.inputdir / "ocnice" / f"river-nutrients-{self.ocn_grid.name}.nc"
             )
 
             # Open Dataset & Create Regridder
-            global_river_nutrients = xr.open_dataset(self.global_river_nutrients_filepath)
+            global_river_nutrients = xr.open_dataset(
+                self.global_river_nutrients_filepath
+            )
             global_river_nutrients = global_river_nutrients.assign_coords(
                 lon=((global_river_nutrients.lon + 360) % 360)
             )
@@ -918,17 +954,34 @@ class Case:
             glofas_grid_t_points["lat"] = global_river_nutrients.lat
             glofas_grid_t_points["lat"].attrs["units"] = "degrees"
             print("Creating regridder for river nutrients...")
-            regridder = xe.Regridder(glofas_grid_t_points, grid_t_points,method = "bilinear", reuse_weights=True, filename = self.runoff_mapping_file_nnsm)
-            
+            regridder = xe.Regridder(
+                glofas_grid_t_points,
+                grid_t_points,
+                method="bilinear",
+                reuse_weights=True,
+                filename=self.runoff_mapping_file_nnsm,
+            )
+
             # Open Dataset & Unit Convert
 
-
-            vars = ["din_riv_flux","dip_riv_flux","don_riv_flux","don_riv_flux","dsi_riv_flux","dsi_riv_flux","dic_riv_flux","alk_riv_flux","doc_riv_flux"]
-            conversion_factor = 0.01 # nmol -> mmol
+            vars = [
+                "din_riv_flux",
+                "dip_riv_flux",
+                "don_riv_flux",
+                "don_riv_flux",
+                "dsi_riv_flux",
+                "dsi_riv_flux",
+                "dic_riv_flux",
+                "alk_riv_flux",
+                "doc_riv_flux",
+            ]
+            conversion_factor = 0.01  # nmol/cm^2/s -> mmol/m^2/s
             for v in vars:
-                global_river_nutrients[v] = global_river_nutrients[v] * conversion_factor
+                global_river_nutrients[v] = (
+                    global_river_nutrients[v] * conversion_factor
+                )
                 global_river_nutrients[v].attrs["units"] = "mmol/cm^2/s"
-            
+
             print("Regridding river nutrients...")
             river_nutrients_remapped = regridder(global_river_nutrients)
 
@@ -938,25 +991,41 @@ class Case:
             new_time_val = cftime.DatetimeNoLeap(1900, 1, 1, 0, 0, 0)
 
             # select only variables that have 'time' as a dimension
-            vars_with_time = [v for v in river_nutrients_remapped.data_vars if "time" in river_nutrients_remapped[v].dims]
+            vars_with_time = [
+                v
+                for v in river_nutrients_remapped.data_vars
+                if "time" in river_nutrients_remapped[v].dims
+            ]
 
             # create new slice only for these
-            ref_slice_new = river_nutrients_remapped[vars_with_time].isel(time=0).expand_dims("time").copy()
+            ref_slice_new = (
+                river_nutrients_remapped[vars_with_time]
+                .isel(time=0)
+                .expand_dims("time")
+                .copy()
+            )
             ref_slice_new = ref_slice_new.assign_coords(time=[new_time_val])
 
             # concatenate along time
             river_nutrients_remapped_time_added = xr.concat(
-                [ref_slice_new, river_nutrients_remapped[vars_with_time]],
-                dim="time"
+                [ref_slice_new, river_nutrients_remapped[vars_with_time]], dim="time"
             )
 
             # assign the new time coordinate
-            river_nutrients_remapped_time_added = river_nutrients_remapped_time_added.assign_coords(
-                time=np.concatenate([[new_time_val], river_nutrients_remapped["time"].values])
+            river_nutrients_remapped_time_added = (
+                river_nutrients_remapped_time_added.assign_coords(
+                    time=np.concatenate(
+                        [[new_time_val], river_nutrients_remapped["time"].values]
+                    )
+                )
             )
 
             # combine back with variables that don’t have time
-            vars_without_time = [v for v in river_nutrients_remapped.data_vars if "time" not in river_nutrients_remapped[v].dims]
+            vars_without_time = [
+                v
+                for v in river_nutrients_remapped.data_vars
+                if "time" not in river_nutrients_remapped[v].dims
+            ]
             for v in vars_without_time:
                 river_nutrients_remapped_time_added[v] = river_nutrients_remapped[v]
 
@@ -968,28 +1037,29 @@ class Case:
             time_num = cftime.date2num(
                 river_nutrients_remapped_time_added["time"].values,
                 units=time_units,
-                calendar=time_calendar
+                calendar=time_calendar,
             )
 
-
             # replace time coordinate with float64 numeric values
-            river_nutrients_remapped_cleaned = river_nutrients_remapped_time_added.assign_coords(
-                time=("time", np.array(time_num, dtype="float64"))
+            river_nutrients_remapped_cleaned = (
+                river_nutrients_remapped_time_added.assign_coords(
+                    time=("time", np.array(time_num, dtype="float64"))
+                )
             )
 
             # Change nx,ny to lon,lat
-            river_nutrients_remapped_cleaned = river_nutrients_remapped_cleaned.rename_dims({
-                "nx": "lon",
-                "ny": "lat"
-            })
-
+            river_nutrients_remapped_cleaned = (
+                river_nutrients_remapped_cleaned.rename_dims({"nx": "lon", "ny": "lat"})
+            )
 
             # set CF-compliant attrs
-            river_nutrients_remapped_cleaned["time"].attrs.update({
-                "units": time_units,
-                "calendar": "noleap",
-                "long_name": "time",
-            })
+            river_nutrients_remapped_cleaned["time"].attrs.update(
+                {
+                    "units": time_units,
+                    "calendar": "noleap",
+                    "long_name": "time",
+                }
+            )
 
             # encoding only for data vars
             encoding = {
@@ -999,11 +1069,9 @@ class Case:
 
             river_nutrients_remapped_cleaned.to_netcdf(
                 self.river_nutrients_nnsm_filepath,
-                encoding=encoding, unlimited_dims=["time"])
-
-
-
-
+                encoding=encoding,
+                unlimited_dims=["time"],
+            )
 
     def process_runoff(self):
         if self.runoff_in_compset and self.runoff_esmf_mesh_filepath:
@@ -1012,14 +1080,16 @@ class Case:
                 mapping.gen_rof_maps(
                     rof_mesh_path=self.runoff_esmf_mesh_filepath,
                     ocn_mesh_path=self.esmf_mesh_path,
-                    output_dir=self.inputdir/"ocnice",
+                    output_dir=self.inputdir / "ocnice",
                     mapping_file_prefix=f'glofas_{self.ocn_grid.name}_{cvars["MB_ATTEMPT_ID"].value}',
                     rmax=100.0,
-                    fold=100.0
+                    fold=100.0,
                 )
             else:
-                print(f"Runoff mapping file {self.runoff_mapping_file_nnsm} already exists, reusing it.")
-           
+                print(
+                    f"Runoff mapping file {self.runoff_mapping_file_nnsm} already exists, reusing it."
+                )
+
     def process_initial_and_boundary_conditions(
         self, process_initial_condition, process_velocity_tracers
     ):
@@ -1281,22 +1351,21 @@ class Case:
         if self.bgc_in_compset:
             bgc_params = [
                 ("MAX_FIELDS", "200"),
-                ("MARBL_FESEDFLUX_FILE",self.fesedflux_filepath),
-                ("MARBL_FEVENTFLUX_FILE",self.feventflux_filepath),
-                ("MARBL_TRACERS_IC_FILE",self.marbl_ic_filename)
+                ("MARBL_FESEDFLUX_FILE", self.fesedflux_filepath),
+                ("MARBL_FEVENTFLUX_FILE", self.feventflux_filepath),
+                ("MARBL_TRACERS_IC_FILE", self.marbl_ic_filename),
             ]
-
 
             # Runoff & River Fluxes
             if self.configured_river_nutrients:
-                bgc_params.extend([
-                    ("READ_RIV_FLUXES", "True"),
-                    ("RIV_FLUX_FILE", self.river_nutrients_nnsm_filepath)
-                ])
+                bgc_params.extend(
+                    [
+                        ("READ_RIV_FLUXES", "True"),
+                        ("RIV_FLUX_FILE", self.river_nutrients_nnsm_filepath),
+                    ]
+                )
             else:
-                bgc_params.extend([
-                    ("READ_RIV_FLUXES", "False")
-                ])
+                bgc_params.extend([("READ_RIV_FLUXES", "False")])
             append_user_nl(
                 "mom",
                 bgc_params,
@@ -1304,8 +1373,6 @@ class Case:
                 comment="BGC Params",
                 log_title=False,
             )
-
-
 
         # Tides
         if self.configured_tides:
@@ -1481,7 +1548,6 @@ class Case:
             str(self.date_range[0])[:10],
             is_non_local=self.cc._is_non_local(),
         )
-
 
         print(f"Case is ready to be built: {self.caseroot}")
 
