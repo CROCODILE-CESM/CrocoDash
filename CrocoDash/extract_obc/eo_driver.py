@@ -46,7 +46,7 @@ def extract_obcs(
             Path(params["paths"]["input_path"]),
             params["dates"]["start"],
             params["dates"]["end"],
-            params["cesm_information"]["space_character"],
+            params["cesm_information"]["delimiter"],
         )
 
     # Subset the dataset based on geographical bounds
