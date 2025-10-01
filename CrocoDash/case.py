@@ -1386,7 +1386,7 @@ class Case:
         # Chlorophyll
         if self.configured_chl:
             chl_params = [
-                ("CHL_FILE", self.regional_chl_file_path.name),
+                ("CHL_FILE", Path(self.regional_chl_file_path).name),
                 ("CHL_FROM_FILE", "TRUE"),
                 ("VAR_PEN_SW", "TRUE"),
                 ("PEN_SW_NBANDS", 3),
