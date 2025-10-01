@@ -163,6 +163,7 @@
 <li class="toctree-l1"><a class="reference external" href="https://crocodile-cesm.github.io/CrocoGallery/">Tutorials &amp; Gallery</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../datasets.html">Accessing Raw Data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../structure.html">Understanding CrocoDash’s Structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../configure_forcings.html">Setting up your forcings</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../additional_resources.html">Additional Resources</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../developers/index.html">Developer Information</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../developers/docs.html">Write Documentation</a></li>
@@ -359,15 +360,24 @@ document.write(`
 <li class="toctree-l2"><a class="reference internal" href="CrocoDash.html#submodules">Submodules</a></li>
 <li class="toctree-l2"><a class="reference internal" href="CrocoDash.html#module-CrocoDash.case">CrocoDash.case module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="CrocoDash.html#CrocoDash.case.Case"><code class="docutils literal notranslate"><span class="pre">Case</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.case.Case.configure_bgc_ic"><code class="docutils literal notranslate"><span class="pre">Case.configure_bgc_ic()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.case.Case.configure_bgc_iron_forcing"><code class="docutils literal notranslate"><span class="pre">Case.configure_bgc_iron_forcing()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.case.Case.configure_cesm_initial_and_boundary_conditions"><code class="docutils literal notranslate"><span class="pre">Case.configure_cesm_initial_and_boundary_conditions()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.case.Case.configure_chl"><code class="docutils literal notranslate"><span class="pre">Case.configure_chl()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.case.Case.configure_forcings"><code class="docutils literal notranslate"><span class="pre">Case.configure_forcings()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.case.Case.configure_initial_and_boundary_conditions"><code class="docutils literal notranslate"><span class="pre">Case.configure_initial_and_boundary_conditions()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.case.Case.configure_river_nutrients"><code class="docutils literal notranslate"><span class="pre">Case.configure_river_nutrients()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.case.Case.configure_runoff"><code class="docutils literal notranslate"><span class="pre">Case.configure_runoff()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.case.Case.configure_tides"><code class="docutils literal notranslate"><span class="pre">Case.configure_tides()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.case.Case.find_MOM6_rectangular_orientation"><code class="docutils literal notranslate"><span class="pre">Case.find_MOM6_rectangular_orientation()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.case.Case.name"><code class="docutils literal notranslate"><span class="pre">Case.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.case.Case.process_bgc_ic"><code class="docutils literal notranslate"><span class="pre">Case.process_bgc_ic()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.case.Case.process_bgc_iron_forcing"><code class="docutils literal notranslate"><span class="pre">Case.process_bgc_iron_forcing()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.case.Case.process_cesm_initial_and_boundary_conditions"><code class="docutils literal notranslate"><span class="pre">Case.process_cesm_initial_and_boundary_conditions()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.case.Case.process_chl"><code class="docutils literal notranslate"><span class="pre">Case.process_chl()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.case.Case.process_forcings"><code class="docutils literal notranslate"><span class="pre">Case.process_forcings()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.case.Case.process_initial_and_boundary_conditions"><code class="docutils literal notranslate"><span class="pre">Case.process_initial_and_boundary_conditions()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.case.Case.process_river_nutrients"><code class="docutils literal notranslate"><span class="pre">Case.process_river_nutrients()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.case.Case.process_runoff"><code class="docutils literal notranslate"><span class="pre">Case.process_runoff()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.case.Case.process_tides"><code class="docutils literal notranslate"><span class="pre">Case.process_tides()</span></code></a></li>
 </ul>
