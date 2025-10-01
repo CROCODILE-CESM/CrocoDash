@@ -24,7 +24,11 @@ from visualCaseGen.specs.options import set_options
 from visualCaseGen.specs.relational_constraints import get_relational_constraints
 from visualCaseGen.custom_widget_types.case_creator import CaseCreator, ERROR, RESET
 from visualCaseGen.custom_widget_types.case_tools import xmlchange, append_user_nl
-from mom6_bathy import chl, mapping
+from mom6_bathy import chl, mapping, grid
+import xesmf as xe
+import xarray as xr
+import numpy as np
+import cftime
 
 
 class Case:
@@ -138,6 +142,12 @@ class Case:
 
         self._cime_case = self.cime.get_case(
             self.caseroot, non_local=self.cc._is_non_local()
+        )
+
+        xmlchange(
+            "MOM6_MEMORY_MODE",
+            "dynamic_symmetric",
+            is_non_local=self.cc._is_non_local(),
         )
 
     def _init_args_check(
@@ -283,6 +293,8 @@ class Case:
         chl_processed_filepath: str | Path | None = None,
         runoff_esmf_mesh_filepath: str | Path | None = None,
         data_input_path: str | Path | None = None,
+        global_river_nutrients_filepath: str | Path | None = None,
+        marbl_ic_filepath: str | Path | None = None,
     ):
         """
         Configure the boundary conditions and tides for the MOM6 case.
@@ -324,7 +336,10 @@ class Case:
             If passed, points to the processed global runoff file for mapping through mom6_bathy.mapping
         data_input_path : str or Path, optional
             If passed, a path to the directory where raw output data is stored. This is used instead to extract OBCs and ICs for the case.
-
+        global_river_nutrients_filepath: str or Path, optional
+            If passed, points to the processed global river nutrients file for regional processing through mom6_bathy.mapping
+        marbl_ic_filepath: str or Path, optional
+            If passed, points to the processed MARBL initial condition file to be copied into the case input directory
         Raises
         ------
         TypeError
@@ -380,11 +395,47 @@ class Case:
             self.configured_chl = self.configure_chl(chl_processed_filepath)
         else:
             self.configured_chl = False
-        if runoff_esmf_mesh_filepath:
+        if self.runoff_in_compset:
             self.configured_runoff = self.configure_runoff(runoff_esmf_mesh_filepath)
         else:
             self.configured_runoff = False
+
+        if global_river_nutrients_filepath:
+            self.configured_river_nutrients = self.configure_river_nutrients(
+                global_river_nutrients_filepath
+            )
+        else:
+            self.configured_river_nutrients = False
+
+        if self.bgc_in_compset:
+            self.configure_bgc_ic(marbl_ic_filepath)
+            self.configured_bgc = self.configure_bgc_iron_forcing()
+        else:
+            self.configured_bgc = False
         self._configure_forcings_called = True
+
+    def configure_bgc_ic(self, marbl_ic_filepath: str | Path | None = None):
+        if marbl_ic_filepath is None:
+            raise ValueError("MARBL initial condition file path must be provided.")
+        if Path(marbl_ic_filepath).exists() is False:
+            raise FileNotFoundError(
+                f"MARBL initial condition file {marbl_ic_filepath} does not exist."
+            )
+        self.marbl_ic_filepath = marbl_ic_filepath
+        return True
+
+    def configure_bgc_iron_forcing(self):
+        self.feventflux_filepath = (
+            self.inputdir
+            / "ocnice"
+            / f"feventflux_5gmol_{self.ocn_grid.name}_{cvars['MB_ATTEMPT_ID'].value}.nc"
+        )
+        self.fesedflux_filepath = (
+            self.inputdir
+            / "ocnice"
+            / f"fesedflux_total_reduce_oxic_{self.ocn_grid.name}_{cvars['MB_ATTEMPT_ID'].value}.nc"
+        )
+        return True
 
     def configure_cesm_initial_and_boundary_conditions(
         self,
@@ -464,8 +515,10 @@ class Case:
         process_initial_condition=True,
         process_tides=True,
         process_velocity_tracers=True,
+        process_bgc=True,
         process_chl=True,
         process_runoff=True,
+        process_river_nutrients=True,
         process_param_changes=True,
     ):
         """
@@ -491,6 +544,8 @@ class Case:
             Whether to process runoff data. Default is True.
         process_param_changes : bool, optional
             Whether to process the namelist and xml changes required to run a regional MOM6 case in the CESM.
+        process_bgc : bool, optional
+            Whether to process BGC data. Default is True.
 
         Raises
         ------
@@ -523,16 +578,63 @@ class Case:
             self.process_initial_and_boundary_conditions(
                 process_initial_condition, process_velocity_tracers
             )
+        if self.configured_bgc and process_bgc:
+            self.process_bgc_iron_forcing()
+            self.process_bgc_ic()
         if self.configured_tides and process_tides:
             self.process_tides()
         if self.configured_chl and process_chl:
             self.process_chl()
         if self.configured_runoff and process_runoff:
             self.process_runoff()
+        if self.configured_river_nutrients and process_river_nutrients:
+            self.process_river_nutrients()
 
         # Apply forcing-related namelist and xml changes
         if process_param_changes:
             self._update_forcing_variables()
+
+    def process_bgc_ic(self):
+        dest_path = self.inputdir / "ocnice" / Path(self.marbl_ic_filepath).name
+        shutil.copy(self.marbl_ic_filepath, dest_path)
+        self.marbl_ic_filename = Path(self.marbl_ic_filepath).name
+
+    def process_bgc_iron_forcing(self):
+        # Create coordinate variables
+        nx = self.ocn_grid.nx
+        ny = self.ocn_grid.ny
+        depth = 103
+        depth_edges = depth + 1
+        dz = 6000.0 / depth
+        DEPTH = np.linspace(dz / 2, 6000.0 - dz / 2, depth)
+        DEPTH_EDGES = np.linspace(0, 6000, depth_edges)
+        ds = xr.Dataset(
+            {
+                "DEPTH": (["DEPTH"], DEPTH),
+                "DEPTH_EDGES": (["DEPTH_EDGES"], DEPTH_EDGES),
+                "FESEDFLUXIN": (
+                    ["DEPTH", "ny", "nx"],
+                    np.zeros((depth, ny, nx), dtype=np.float32),
+                ),
+                "KMT": (["ny", "nx"], np.zeros((ny, nx), dtype=np.int32)),
+                "TAREA": (["ny", "nx"], np.zeros((ny, nx), dtype=np.float64)),
+            }
+        )
+        # Assign attributes
+        ds["DEPTH"].attrs = {"units": "m", "edges": "DEPTH_EDGES"}
+        ds["DEPTH_EDGES"].attrs = {"units": "m"}
+        ds["FESEDFLUXIN"].attrs = {
+            "_FillValue": 1.0e20,
+            "units": "micromol/m^2/d",
+            "long_name": "Fe sediment flux (total)",
+        }
+        ds["TAREA"].attrs = {"units": "m^2"}
+        # Add global attributes
+        ds.attrs = {
+            "history": "Created with xarray (this file is empty)",
+        }
+        ds.to_netcdf(self.fesedflux_filepath)
+        ds.to_netcdf(self.feventflux_filepath)
 
     def process_cesm_initial_and_boundary_conditions(
         self,
@@ -679,6 +781,19 @@ class Case:
                 f"Large data workflow was called, please go to the large data workflow path: {self.large_data_workflow_path} and run the driver script there."
             )
 
+    def configure_river_nutrients(self, global_river_nutrients_filepath: str | Path):
+        if not (self.bgc_in_compset and self.runoff_in_compset):
+            raise ValueError(
+                "River Nutrients can only be turned on if both BGC and Runoff are in the compset!"
+            )
+        self.global_river_nutrients_filepath = Path(global_river_nutrients_filepath)
+        self.river_nutrients_nnsm_filepath = (
+            self.inputdir
+            / "ocnice"
+            / f"river_nutrients_{self.ocn_grid.name}_{cvars['MB_ATTEMPT_ID'].value}_nnsm.nc"
+        )
+        return True
+
     def configure_runoff(self, runoff_esmf_mesh_filepath: str | Path | None = None):
         if self.runoff_in_compset and (runoff_esmf_mesh_filepath is None):
             self.runoff_esmf_mesh_filepath = False
@@ -755,6 +870,9 @@ class Case:
         self.chl_processed_filepath = (
             Path(chl_processed_filepath) if chl_processed_filepath else None
         )
+        self.regional_chl_file_path = (
+            self.inputdir / "ocnice" / f"seawifs-clim-1997-2010-{self.ocn_grid.name}.nc"
+        )
         return True
 
     def process_tides(self):
@@ -775,12 +893,7 @@ class Case:
                 raise FileNotFoundError(
                     f"Chlorophyll file {self.chl_processed_filepath} does not exist."
                 )
-            # Process the chlorophyll file
-            self.regional_chl_file_path = (
-                self.inputdir
-                / "ocnice"
-                / f"seawifs-clim-1997-2010-{self.ocn_grid.name}.nc"
-            )
+
             chl.interpolate_and_fill_seawifs(
                 self.ocn_grid,
                 self.ocn_topo,
@@ -788,17 +901,173 @@ class Case:
                 self.regional_chl_file_path,
             )
 
+    def process_river_nutrients(self):
+        if (
+            self.bgc_in_compset
+            and self.runoff_in_compset
+            and self.global_river_nutrients_filepath is not None
+        ):
+            if not self.global_river_nutrients_filepath.exists():
+                raise FileNotFoundError(
+                    f"River Nutrients file {self.global_river_nutrients_filepath} does not exist."
+                )
+            # Process the river nutrients file
+            self.river_nutrients_filepath = (
+                self.inputdir / "ocnice" / f"river-nutrients-{self.ocn_grid.name}.nc"
+            )
+
+            # Open Dataset & Create Regridder
+            global_river_nutrients = xr.open_dataset(
+                self.global_river_nutrients_filepath
+            )
+            global_river_nutrients = global_river_nutrients.assign_coords(
+                lon=((global_river_nutrients.lon + 360) % 360)
+            )
+            global_river_nutrients = global_river_nutrients.sortby("lon")
+            grid_t_points = xr.Dataset()
+            grid_t_points["lon"] = self.ocn_grid.tlon
+            grid_t_points["lat"] = self.ocn_grid.tlat
+            glofas_grid_t_points = xr.Dataset()
+            glofas_grid_t_points["lon"] = global_river_nutrients.lon
+            glofas_grid_t_points["lon"].attrs["units"] = "degrees"
+            glofas_grid_t_points["lat"] = global_river_nutrients.lat
+            glofas_grid_t_points["lat"].attrs["units"] = "degrees"
+            print("Creating regridder for river nutrients...")
+            regridder = xe.Regridder(
+                glofas_grid_t_points,
+                grid_t_points,
+                method="bilinear",
+                reuse_weights=True,
+                filename=self.runoff_mapping_file_nnsm,
+            )
+
+            # Open Dataset & Unit Convert
+
+            vars = [
+                "din_riv_flux",
+                "dip_riv_flux",
+                "don_riv_flux",
+                "don_riv_flux",
+                "dsi_riv_flux",
+                "dsi_riv_flux",
+                "dic_riv_flux",
+                "alk_riv_flux",
+                "doc_riv_flux",
+            ]
+            conversion_factor = 0.01  # nmol/cm^2/s -> mmol/m^2/s
+            for v in vars:
+                global_river_nutrients[v] = (
+                    global_river_nutrients[v] * conversion_factor
+                )
+                global_river_nutrients[v].attrs["units"] = "mmol/cm^2/s"
+
+            print("Regridding river nutrients...")
+            river_nutrients_remapped = regridder(global_river_nutrients)
+
+            # Write out
+            print("Writing out river nutrients...")
+            # new time value as cftime
+            new_time_val = cftime.DatetimeNoLeap(1900, 1, 1, 0, 0, 0)
+
+            # select only variables that have 'time' as a dimension
+            vars_with_time = [
+                v
+                for v in river_nutrients_remapped.data_vars
+                if "time" in river_nutrients_remapped[v].dims
+            ]
+
+            # create new slice only for these
+            ref_slice_new = (
+                river_nutrients_remapped[vars_with_time]
+                .isel(time=0)
+                .expand_dims("time")
+                .copy()
+            )
+            ref_slice_new = ref_slice_new.assign_coords(time=[new_time_val])
+
+            # concatenate along time
+            river_nutrients_remapped_time_added = xr.concat(
+                [ref_slice_new, river_nutrients_remapped[vars_with_time]], dim="time"
+            )
+
+            # assign the new time coordinate
+            river_nutrients_remapped_time_added = (
+                river_nutrients_remapped_time_added.assign_coords(
+                    time=np.concatenate(
+                        [[new_time_val], river_nutrients_remapped["time"].values]
+                    )
+                )
+            )
+
+            # combine back with variables that don’t have time
+            vars_without_time = [
+                v
+                for v in river_nutrients_remapped.data_vars
+                if "time" not in river_nutrients_remapped[v].dims
+            ]
+            for v in vars_without_time:
+                river_nutrients_remapped_time_added[v] = river_nutrients_remapped[v]
+
+            # add units to all data vars
+            for var in vars:
+                river_nutrients_remapped_time_added[var].attrs["units"] = "mmol/cm^2/s"
+            time_units = "days since 0001-01-01 00:00:00"
+            time_calendar = "noleap"
+            time_num = cftime.date2num(
+                river_nutrients_remapped_time_added["time"].values,
+                units=time_units,
+                calendar=time_calendar,
+            )
+
+            # replace time coordinate with float64 numeric values
+            river_nutrients_remapped_cleaned = (
+                river_nutrients_remapped_time_added.assign_coords(
+                    time=("time", np.array(time_num, dtype="float64"))
+                )
+            )
+
+            # Change nx,ny to lon,lat
+            river_nutrients_remapped_cleaned = (
+                river_nutrients_remapped_cleaned.rename_dims({"nx": "lon", "ny": "lat"})
+            )
+
+            # set CF-compliant attrs
+            river_nutrients_remapped_cleaned["time"].attrs.update(
+                {
+                    "units": time_units,
+                    "calendar": "noleap",
+                    "long_name": "time",
+                }
+            )
+
+            # encoding only for data vars
+            encoding = {
+                var: {"_FillValue": np.NaN}
+                for var in river_nutrients_remapped_cleaned.data_vars
+            }
+
+            river_nutrients_remapped_cleaned.to_netcdf(
+                self.river_nutrients_nnsm_filepath,
+                encoding=encoding,
+                unlimited_dims=["time"],
+            )
+
     def process_runoff(self):
         if self.runoff_in_compset and self.runoff_esmf_mesh_filepath:
-
-            mapping.gen_rof_maps(
-                rof_mesh_path=self.runoff_esmf_mesh_filepath,
-                ocn_mesh_path=self.esmf_mesh_path,
-                output_dir=self.inputdir / "ocnice",
-                mapping_file_prefix=f'glofas_{self.ocn_grid.name}_{cvars["MB_ATTEMPT_ID"].value}',
-                rmax=100.0,
-                fold=100.0,
-            )
+            if not self.runoff_mapping_file_nnsm.exists():
+                print("Creating runoff mapping file(s)...")
+                mapping.gen_rof_maps(
+                    rof_mesh_path=self.runoff_esmf_mesh_filepath,
+                    ocn_mesh_path=self.esmf_mesh_path,
+                    output_dir=self.inputdir / "ocnice",
+                    mapping_file_prefix=f'glofas_{self.ocn_grid.name}_{cvars["MB_ATTEMPT_ID"].value}',
+                    rmax=100.0,
+                    fold=100.0,
+                )
+            else:
+                print(
+                    f"Runoff mapping file {self.runoff_mapping_file_nnsm} already exists, reusing it."
+                )
 
     def process_initial_and_boundary_conditions(
         self, process_initial_condition, process_velocity_tracers
@@ -1061,7 +1330,21 @@ class Case:
         if self.bgc_in_compset:
             bgc_params = [
                 ("MAX_FIELDS", "200"),
+                ("MARBL_FESEDFLUX_FILE", self.fesedflux_filepath),
+                ("MARBL_FEVENTFLUX_FILE", self.feventflux_filepath),
+                ("MARBL_TRACERS_IC_FILE", self.marbl_ic_filename),
             ]
+
+            # Runoff & River Fluxes
+            if self.configured_river_nutrients:
+                bgc_params.extend(
+                    [
+                        ("READ_RIV_FLUXES", "True"),
+                        ("RIV_FLUX_FILE", self.river_nutrients_nnsm_filepath),
+                    ]
+                )
+            else:
+                bgc_params.extend([("READ_RIV_FLUXES", "False")])
             append_user_nl(
                 "mom",
                 bgc_params,
@@ -1103,7 +1386,7 @@ class Case:
         # Chlorophyll
         if self.configured_chl:
             chl_params = [
-                ("CHL_FILE", f"seawifs-clim-1997-2010-{self.ocn_grid.name}.nc"),
+                ("CHL_FILE", Path(self.regional_chl_file_path).name),
                 ("CHL_FROM_FILE", "TRUE"),
                 ("VAR_PEN_SW", "TRUE"),
                 ("PEN_SW_NBANDS", 3),
@@ -1242,11 +1525,6 @@ class Case:
         xmlchange(
             "RUN_STARTDATE",
             str(self.date_range[0])[:10],
-            is_non_local=self.cc._is_non_local(),
-        )
-        xmlchange(
-            "MOM6_MEMORY_MODE",
-            "dynamic_symmetric",
             is_non_local=self.cc._is_non_local(),
         )
 

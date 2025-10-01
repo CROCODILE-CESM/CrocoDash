@@ -1,5 +1,5 @@
 """
-This script is used to load CESM datasets and extract all the necessary information for OBC generation. So, it takes in a variable name(s) and dataset path, finds all files related to the variable(s). 
+This script is used to load CESM datasets and extract all the necessary information for OBC generation. So, it takes in a variable name(s) and dataset path, finds all files related to the variable(s).
 It then outputs a dictionary with the variable name(s) and their corresponding file paths.
 """
 

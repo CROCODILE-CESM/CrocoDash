@@ -37,6 +37,8 @@ def subset_dataset(
     output_path = Path(output_path)
     output_path.mkdir(parents=True, exist_ok=True)
 
+
+    mask = None
     # Iterate through each variable and its corresponding file paths
     for var_name, file_paths in variable_info.items():
         output_file = output_path / f"{var_name}_subset.nc"
@@ -49,6 +51,16 @@ def subset_dataset(
 
         # Load the dataset for the variable
         ds = xr.open_mfdataset(file_paths)
+        dataset_is_degrees_east_longitude = False
+        if ds[lon_name].max()>180:
+            dataset_is_degrees_east_longitude = True
+        
+        if dataset_is_degrees_east_longitude:
+            lon_min = lon_min % 360
+            lon_max = lon_max % 360
+        else:
+            lon_min = ((lon_min + 180) % 360) - 180
+            lon_max = ((lon_max + 180) % 360) - 180
 
         # Convert time. Saving to netcdf is not working with cftime objects
         if isinstance(ds.time.values[0], cftime.datetime):
@@ -61,13 +73,15 @@ def subset_dataset(
 
         # Drop the time_bound variable for the cesm if it exists, cftime isn't playing well, eventually this should be converted in the same way.
         ds = drop_extra_cftime_vars(ds)
-        mask = (
-            (ds[lat_name] >= lat_min - 1)
-            & (ds[lat_name] <= lat_max + 1)
-            & (ds[lon_name] >= lon_min - 1)
-            & (ds[lon_name] <= lon_max + 1)
-        )
-        mask = mask.compute()
+
+        if mask is None:
+            mask = (
+                (ds[lat_name] >= lat_min - 1)
+                & (ds[lat_name] <= lat_max + 1)
+                & (ds[lon_name] >= lon_min - 1)
+                & (ds[lon_name] <= lon_max + 1)
+            )
+            mask = mask.compute()
 
         # Subset the dataset based on the provided geographical bounds
         if not preview:
@@ -93,12 +107,13 @@ def drop_extra_cftime_vars(ds):
 
 
 def first_value(da_var):
-    arr = da_var.data
-    if dask.base.is_dask_collection(arr):
-        # only pull the first element, not the whole array
-        return arr[0].compute()
+    arr = da_var.data  # could be numpy or dask
+    
+    if dask.is_dask_collection(arr):
+        # only compute the first element, not the whole array
+        return arr.ravel()[0].compute()
     else:
-        return arr.flat[0]
+        return arr.ravel()[0]
 
 
 if __name__ == "__main__":
