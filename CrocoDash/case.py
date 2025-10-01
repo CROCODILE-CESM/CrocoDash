@@ -412,6 +412,8 @@ class Case:
             self.configured_bgc = self.configure_bgc_iron_forcing()
         else:
             self.configured_bgc = False
+
+        self._update_forcing_variables()
         self._configure_forcings_called = True
 
     def configure_bgc_ic(self, marbl_ic_filepath: str | Path | None = None):
@@ -421,7 +423,8 @@ class Case:
             raise FileNotFoundError(
                 f"MARBL initial condition file {marbl_ic_filepath} does not exist."
             )
-        self.marbl_ic_filepath = marbl_ic_filepath
+        self.marbl_ic_filepath = Path(marbl_ic_filepath)
+        self.marbl_ic_filename = self.marbl_ic_filepath.name
         return True
 
     def configure_bgc_iron_forcing(self):
@@ -519,7 +522,6 @@ class Case:
         process_chl=True,
         process_runoff=True,
         process_river_nutrients=True,
-        process_param_changes=True,
     ):
         """
         Process boundary conditions, initial conditions, and tides for a MOM6 case.
@@ -542,8 +544,6 @@ class Case:
             This will be overridden and set to False if the large data workflow in configure_forcings is enabled.
         process_runoff : bool, optional
             Whether to process runoff data. Default is True.
-        process_param_changes : bool, optional
-            Whether to process the namelist and xml changes required to run a regional MOM6 case in the CESM.
         process_bgc : bool, optional
             Whether to process BGC data. Default is True.
 
@@ -589,15 +589,11 @@ class Case:
             self.process_runoff()
         if self.configured_river_nutrients and process_river_nutrients:
             self.process_river_nutrients()
-
-        # Apply forcing-related namelist and xml changes
-        if process_param_changes:
-            self._update_forcing_variables()
+        print(f"Case is ready to be built: {self.caseroot}")
 
     def process_bgc_ic(self):
         dest_path = self.inputdir / "ocnice" / Path(self.marbl_ic_filepath).name
         shutil.copy(self.marbl_ic_filepath, dest_path)
-        self.marbl_ic_filename = Path(self.marbl_ic_filepath).name
 
     def process_bgc_iron_forcing(self):
         # Create coordinate variables
@@ -1527,8 +1523,6 @@ class Case:
             str(self.date_range[0])[:10],
             is_non_local=self.cc._is_non_local(),
         )
-
-        print(f"Case is ready to be built: {self.caseroot}")
 
     def find_MOM6_rectangular_orientation(self, input):
         """
