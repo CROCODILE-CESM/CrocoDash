@@ -616,14 +616,6 @@ class Case:
                     ["DEPTH", "ny", "nx"],
                     np.zeros((depth, ny, nx), dtype=np.float32),
                 ),
-                "FESEDFLUXIN_oxic": (
-                    ["DEPTH", "ny", "nx"],
-                    np.zeros((depth, ny, nx), dtype=np.float32),
-                ),
-                "FESEDFLUXIN_reduce": (
-                    ["DEPTH", "ny", "nx"],
-                    np.zeros((depth, ny, nx), dtype=np.float32),
-                ),
                 "KMT": (["ny", "nx"], np.zeros((ny, nx), dtype=np.int32)),
                 "TAREA": (["ny", "nx"], np.zeros((ny, nx), dtype=np.float64)),
             }
@@ -631,25 +623,12 @@ class Case:
         # Assign attributes
         ds["DEPTH"].attrs = {"units": "m", "edges": "DEPTH_EDGES"}
         ds["DEPTH_EDGES"].attrs = {"units": "m"}
-
         ds["FESEDFLUXIN"].attrs = {
             "_FillValue": 1.0e20,
             "units": "micromol/m^2/d",
             "long_name": "Fe sediment flux (total)",
         }
-        # The two fields below are provided to show provenance of the field read in by MOM6, but aren't needed for the all-zero files we're creating.
-        ds["FESEDFLUXIN_oxic"].attrs = {
-            "_FillValue": 1.0e20,
-            "units": "micromol m$^{-2}$ d$^{-1}$",
-            "long_name": "Fe sediment flux (oxic)",
-        }
-        ds["FESEDFLUXIN_reduce"].attrs = {
-            "long_name": "Longitude of tracer (T) points",
-            "units": "micromol m$^{-2}$ d$^{-1}$",
-            "cell_methods": "time: point",
-        }
         ds["TAREA"].attrs = {"units": "m^2"}
-
         # Add global attributes
         ds.attrs = {
             "history": "Created with xarray (this file is empty)",
@@ -1407,7 +1386,7 @@ class Case:
         # Chlorophyll
         if self.configured_chl:
             chl_params = [
-                ("CHL_FILE", self.regional_chl_file_path),
+                ("CHL_FILE", self.regional_chl_file_path.name),
                 ("CHL_FROM_FILE", "TRUE"),
                 ("VAR_PEN_SW", "TRUE"),
                 ("PEN_SW_NBANDS", 3),
