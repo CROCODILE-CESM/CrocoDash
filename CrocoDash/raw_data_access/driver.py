@@ -31,7 +31,12 @@ class ProductFunctionRegistry:
         )  # {product: {function_name: function}}
         self._loaded_functions = False
         self.products_df, self.functions_df = tb.load_tables()
-        self.forcing_varnames_config = tb.load_varnames_config()
+
+    def add_product_config(self, product_name: str, product_info: str | Path | dict):
+        return tb.add_product_config(product_name, product_info)
+    def load_product_config(self, product_name: str):
+        """Load configuration files."""
+        return tb.load_product_config(product_name)
 
     def load_functions(self):
         """Reads the registry tables, dynamically imports functions, and verifies them."""

@@ -8,9 +8,9 @@ def test_load_tables():
     assert "GLORYS" in functions["Product_Name"].values
 
 
-def test_load_varnames_config():
-    config = tb.load_varnames_config()
-    assert "GLORYS" in config.keys()
+def test_load_product_config():
+    config = tb.load_product_config("glorys")
+    assert "xh" in config.keys()
 
 
 def test_list_products():

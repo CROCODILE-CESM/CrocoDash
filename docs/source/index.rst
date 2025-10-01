@@ -36,6 +36,7 @@ Get Started
    Tutorials & Gallery <https://crocodile-cesm.github.io/CrocoGallery/>
    datasets
    structure
+   configure_forcings
    additional_resources
    developers/index
    api-docs/modules
