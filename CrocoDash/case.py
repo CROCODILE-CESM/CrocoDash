@@ -387,7 +387,7 @@ class Case:
             raise ValueError("Product / Data Path is not supported quite yet")
         if tidal_constituents:
             self.configured_tides = self.configure_tides(
-                tidal_constituents, tpxo_elevation_filepath, tpxo_velocity_filepath
+                tidal_constituents, tpxo_elevation_filepath, tpxo_velocity_filepath, boundaries
             )
         else:
             self.configured_tides = False
