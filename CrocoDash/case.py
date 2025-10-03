@@ -209,7 +209,7 @@ class Case:
                 raise ValueError(f"project is required for machine {machine}.")
             if not isinstance(project, str):
                 raise TypeError("project must be a string.")
-        if not isinstance(ntasks_ocn, int):
+        if ntasks_ocn is not None and not isinstance(ntasks_ocn, int):
             raise TypeError("ntasks_ocn must be an integer.")
 
     def _create_grid_input_files(self):
