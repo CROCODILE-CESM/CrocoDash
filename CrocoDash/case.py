@@ -51,6 +51,7 @@ class Case:
         machine: str | None = None,
         project: str | None = None,
         override: bool = False,
+        ntasks_ocn: int | None = None,
     ):
         """
         Initialize a new regional MOM6 case within the CESM framework.
@@ -83,6 +84,8 @@ class Case:
             If the machine requires a project, this argument must be provided.
         override : bool, optional
             Whether to override existing caseroot and inputdir directories. Default is False.
+        ntasks_ocn : int, optional
+            Number of tasks for the ocean model. If None, defaults to VisualCaseGen Grid Calculation.
         """
 
         # Initialize the CIME interface object
@@ -104,6 +107,7 @@ class Case:
             machine,
             project,
             override,
+            ntasks_ocn
         )
 
         self.caseroot = Path(caseroot)
@@ -150,6 +154,8 @@ class Case:
             is_non_local=self.cc._is_non_local(),
         )
         xmlchange("ROOTPE_OCN",128,is_non_local=self.cc._is_non_local())
+        if ntasks_ocn is not None:
+            xmlchange("NTASKS_OCN", ntasks_ocn, is_non_local=self.cc._is_non_local())
 
 
     def _init_args_check(
@@ -165,6 +171,7 @@ class Case:
         machine: str | None,
         project: str | None,
         override: bool,
+        ntasks_ocn: int | None = None,
     ):
 
         if Path(caseroot).exists() and not override:
@@ -202,6 +209,8 @@ class Case:
                 raise ValueError(f"project is required for machine {machine}.")
             if not isinstance(project, str):
                 raise TypeError("project must be a string.")
+        if not isinstance(ntasks_ocn, int):
+            raise TypeError("ntasks_ocn must be an integer.")
 
     def _create_grid_input_files(self):
 
