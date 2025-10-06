@@ -7,7 +7,8 @@ import xarray as xr
 import json
 from pathlib import Path
 import numpy as np
-
+from mom6_bathy.aux import fill_missing_data
+from CrocoDash.topo import Topo
 REGRID_ITEMS = ["IC", "west", "south", "north", "east"]
 
 
@@ -15,11 +16,14 @@ def format_dataset(
     input_path: str | Path,
     output_path: str | Path,
     supergrid: xr.Dataset,
-    bathymetry: xr.Dataset,
+    bathymetry: Topo,
     vgrid: xr.Dataset,
     variable_info: dict,
     u_name: str = None,
     v_name: str = None,
+    temp_name: str = None,
+    salt_name: str = None,
+    ssh_name: str = None,
     lat_name: str = "lat",
     lon_name: str = "lon",
     z_dim: str = "z_t",
@@ -55,6 +59,9 @@ def format_dataset(
     for v in variable_info:
         for item in REGRID_ITEMS:
             if item != "IC" and item not in boundary_number_conversion.keys():
+                continue
+            if item == "IC" and v not in [u_name, v_name, temp_name, salt_name, ssh_name]:
+                #Only process IC for physical variables
                 continue
             # Open Dataset
             ds = xr.open_dataset(input_path / f"{v}_{item}_regridded.nc")
@@ -220,12 +227,40 @@ def format_dataset(
                 ds[x_dim] = ds[x_dim]
                 ds[y_dim] = ds[y_dim]
 
-                # Interpolate the vertical levels
+                
+
                 if z_dim_act != None:
+                    # Interpolate horizontally directions
+                    for z_ind in range(ds[v].shape[0]):
+                        if v == u_name:
+                            mask = bathymetry.umask.values
+                        elif v == v_name:
+                            mask = bathymetry.vmask.values
+                        else:
+                            mask = bathymetry.tmask.values
+                        ds[v][z_ind] = fill_missing_data(ds[v][z_ind].values,mask)
+                    # Interpolate the vertical levels
                     zl = np.cumsum(vgrid.dz) - 0.5 * vgrid.dz
                     ds = ds.interp(
                         {z_dim_act: zl.values}, kwargs={"fill_value": "extrapolate"}
                     )
+                else:
+                    ds[v][:] = fill_missing_data(ds[v].values,bathymetry.tmask.values)
+
+                # Final Fill where we replace zeroes with Nan and then interpolate.
+                ds[v] = (
+                    ds[v]
+                    .where(ds[v] != 0)  # convert 0.0 → NaN
+                    .interpolate_na(x_dim, method="linear")  # interpolate along x
+                    .ffill(x_dim)
+                    .bfill(x_dim)
+                    .ffill(y_dim)  # fill along y
+                    .bfill(y_dim)
+                )
+                if z_dim_act != None:
+                    ds[v] = ds[v].ffill(z_dim_act)
+                                
+
 
                 # Do Encoding
                 encoding_dict = {

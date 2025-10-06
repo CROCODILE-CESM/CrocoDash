@@ -17,6 +17,9 @@ def regrid_dataset_to_boundaries(
     variable_info: dict,
     u_name: str = None,
     v_name: str = None,
+    temp_name: str = None,
+    salt_name: str = None,
+    ssh_name: str = None,
     lat_name: str = "lat",
     lon_name: str = "lon",
     u_lat_name: str = "lat",
@@ -79,6 +82,9 @@ def regrid_dataset_to_boundaries(
         if item not in boundaries and item != "IC":
             continue
         for v in variable_info:
+            if item == "IC" and v not in [u_name, v_name, temp_name, salt_name, ssh_name]:
+                #Only regrid IC for physical variables
+                continue
             try:
                 print(f"Regridding {v} {item}")
                 input_file = input_path / f"{v}_subset.nc"

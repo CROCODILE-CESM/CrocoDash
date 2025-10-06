@@ -8,6 +8,7 @@ from CrocoDash.raw_data_access.driver import get_rectangular_segment_info
 from CrocoDash.grid import Grid
 import sys
 import json
+from CrocoDash.topo import Topo
 
 
 def test_driver():
@@ -38,7 +39,9 @@ def extract_obcs(
     variable_names.append(params["cesm_information"]["ssh"])
     for key in params["cesm_information"]["tracers"]:
         variable_names.append(params["cesm_information"]["tracers"][key])
-
+    grid = Grid.from_supergrid(params["paths"]["supergrid_path"])
+    bathymetry = xr.open_dataset(params["paths"]["bathymetry_path"])
+    bathy = Topo.from_topo_file(grid =grid, topo_file_path = params["paths"]["bathymetry_path"], min_depth = bathymetry.attrs["min_depth"])
     # Parse the raw dataset
     if parse_dataset:
         variable_info = pd.parse_dataset(
@@ -51,7 +54,7 @@ def extract_obcs(
 
     # Subset the dataset based on geographical bounds
     if subset_dataset:
-        grid = Grid.from_supergrid(params["paths"]["supergrid_path"])
+        
         boundary_info = get_rectangular_segment_info(grid)
         sd.subset_dataset(
             variable_info=variable_info,
@@ -75,6 +78,9 @@ def extract_obcs(
             variable_info,
             params["cesm_information"]["u"],
             params["cesm_information"]["v"],
+            params["cesm_information"]["tracers"]["temp"],
+            params["cesm_information"]["tracers"]["salt"],
+            params["cesm_information"]["ssh"],
             params["cesm_information"]["yh"],
             params["cesm_information"]["xh"],
             params["cesm_information"]["u_lat_name"],
@@ -88,17 +94,20 @@ def extract_obcs(
     # Format the dataset to MOM6 formats
     if format_dataset:
         supergrid = xr.open_dataset(params["paths"]["supergrid_path"])
-        bathymetry = xr.open_dataset(params["paths"]["bathymetry_path"])
+        
         vgrid = xr.open_dataset(params["paths"]["vgrid_path"])
         output_paths = fd.format_dataset(
             params["paths"]["regrid_path"],
             params["paths"]["output_path"],
             supergrid,
-            bathymetry,
+            bathy,
             vgrid,
             variable_info,
             params["cesm_information"]["u"],
             params["cesm_information"]["v"],
+            params["cesm_information"]["tracers"]["temp"],
+            params["cesm_information"]["tracers"]["salt"],
+            params["cesm_information"]["ssh"],
             params["cesm_information"]["yh"],
             params["cesm_information"]["xh"],
             params["cesm_information"]["zl"],
