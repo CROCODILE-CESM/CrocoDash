@@ -157,7 +157,7 @@ def format_dataset(
 
                 ds = rgd.mask_dataset(
                     ds,
-                    bathymetry,
+                    bathymetry.write_topo(file_path=None),
                     item,
                 )
                 # Add Time units
