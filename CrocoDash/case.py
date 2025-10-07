@@ -153,6 +153,12 @@ class Case:
             "dynamic_symmetric",
             is_non_local=self.cc._is_non_local(),
         )
+        xmlchange(
+            "MOM6_DOMAIN_TYPE",
+            "REGIONAL",
+            is_non_local=self.cc._is_non_local(),
+        )
+
         xmlchange("ROOTPE_OCN",128,is_non_local=self.cc._is_non_local())
         if ntasks_ocn is not None:
             xmlchange("NTASKS_OCN", ntasks_ocn, is_non_local=self.cc._is_non_local())
