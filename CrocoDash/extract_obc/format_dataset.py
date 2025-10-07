@@ -155,9 +155,12 @@ def format_dataset(
                 )
                 ds[f"{coords.attrs['perpendicular']}_{segment_name}"] = [0]
 
+                bathy_ds = None 
+                if bathymetry != None:
+                    bathy_ds = bathymetry.gen_topo_ds()
                 ds = rgd.mask_dataset(
                     ds,
-                    bathymetry.gen_topo_ds(),
+                    bathy_ds,
                     item,
                 )
                 # Add Time units

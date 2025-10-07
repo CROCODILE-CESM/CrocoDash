@@ -50,3 +50,6 @@ class Topo(mom6_bathy_Topo):
             positive_down=positive_down,
             write_to_file=write_to_file,
         ).depth
+
+        # Set units - to be added to rm6 through m6b
+        self._depth.attrs["units"] = "meters"
