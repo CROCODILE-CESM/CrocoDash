@@ -1494,9 +1494,9 @@ class Case:
                 ("ns_boundary_type", "'open'"),
                 ("ew_boundary_type", "'cyclic'"),
                 ("close_boundaries", ".false."),
-                ("grid_file", self.cice_file),
-                ("kmt_file", self.cice_file),
-            ]
+                ("grid_file", self.cice_grid_path),
+                ("kmt_file", self.cice_grid_path),
+            ] 
             append_user_nl(
                 "cice",
                 cice_param,
