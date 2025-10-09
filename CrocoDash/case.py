@@ -53,7 +53,7 @@ class Case:
         override: bool = False,
         ntasks_ocn: int | None = None,
         job_queue: str | None = None,
-        job_wallclock_time: str | None = None
+        job_wallclock_time: str | None = None,
     ):
         """
         Initialize a new regional MOM6 case within the CESM framework.
@@ -115,7 +115,7 @@ class Case:
             override,
             ntasks_ocn,
             job_queue,
-            job_wallclock_time
+            job_wallclock_time,
         )
 
         self.caseroot = Path(caseroot)
@@ -167,15 +167,18 @@ class Case:
         #     is_non_local=self.cc._is_non_local(),
         # )
 
-        xmlchange("ROOTPE_OCN",128,is_non_local=self.cc._is_non_local())
+        xmlchange("ROOTPE_OCN", 128, is_non_local=self.cc._is_non_local())
         if ntasks_ocn is not None:
             xmlchange("NTASKS_OCN", ntasks_ocn, is_non_local=self.cc._is_non_local())
         # This will trigger for both the run and the archiver.
         if job_queue is not None:
-            xmlchange("JOB_QUEUE",job_queue, is_non_local=self.cc._is_non_local())
+            xmlchange("JOB_QUEUE", job_queue, is_non_local=self.cc._is_non_local())
         if job_wallclock_time is not None:
-            xmlchange("JOB_WALLCLOCK_TIME", job_wallclock_time, is_non_local=self.cc._is_non_local())
-
+            xmlchange(
+                "JOB_WALLCLOCK_TIME",
+                job_wallclock_time,
+                is_non_local=self.cc._is_non_local(),
+            )
 
     def _init_args_check(
         self,
@@ -192,8 +195,7 @@ class Case:
         override: bool,
         ntasks_ocn: int | None = None,
         job_queue: str | None = None,
-        job_wallclock_time: str | None = None
-
+        job_wallclock_time: str | None = None,
     ):
 
         if Path(caseroot).exists() and not override:
@@ -424,7 +426,10 @@ class Case:
             raise ValueError("Product / Data Path is not supported quite yet")
         if tidal_constituents:
             self.configured_tides = self.configure_tides(
-                tidal_constituents, tpxo_elevation_filepath, tpxo_velocity_filepath, boundaries
+                tidal_constituents,
+                tpxo_elevation_filepath,
+                tpxo_velocity_filepath,
+                boundaries,
             )
         else:
             self.configured_tides = False
@@ -1532,7 +1537,7 @@ class Case:
                 ("ns_boundary_type", "'open'"),
                 ("ew_boundary_type", "'cyclic'"),
                 ("close_boundaries", ".false."),
-            ] 
+            ]
             append_user_nl(
                 "cice",
                 cice_param,
