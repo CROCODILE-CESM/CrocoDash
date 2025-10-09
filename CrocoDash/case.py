@@ -167,7 +167,7 @@ class Case:
         #     is_non_local=self.cc._is_non_local(),
         # )
 
-        xmlchange("ROOTPE_OCN", 128, is_non_local=self.cc._is_non_local())
+        # xmlchange("ROOTPE_OCN", 128, is_non_local=self.cc._is_non_local())
         if ntasks_ocn is not None:
             xmlchange("NTASKS_OCN", ntasks_ocn, is_non_local=self.cc._is_non_local())
         # This will trigger for both the run and the archiver.
@@ -1573,21 +1573,10 @@ class Case:
         )
         xmlchange(
             "STOP_N",
-            (dates[1] - dates[0]).days + 1,
+            (self.date_range[1] - self.date_range[0]).days + 1,
             is_non_local=self.cc._is_non_local(),
         )
 
-        self.date_range = pd.to_datetime(self.date_range)
-        xmlchange(
-            "STOP_OPTION",
-            "ndays",
-            is_non_local=self.cc._is_non_local(),
-        )
-        xmlchange(
-            "STOP_N",
-            (dates[1] - dates[0]).days + 1,
-            is_non_local=self.cc._is_non_local(),
-        )
 
     def find_MOM6_rectangular_orientation(self, input):
         """
