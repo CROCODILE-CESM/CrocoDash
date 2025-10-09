@@ -1297,6 +1297,7 @@ class Case:
                     ("SURFACE_HEIGHT_IC_FILE", "init_eta.nc"),
                     ("SURFACE_HEIGHT_IC_VAR", "eta_t"),
                     ("VELOCITY_FILE", "init_vel.nc"),
+                    ("Z_INIT_FILE_PTEMP_VAR", "temp"),
                 ]
             )
 
