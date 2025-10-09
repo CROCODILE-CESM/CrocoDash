@@ -404,7 +404,7 @@ class Case:
             raise ValueError("Product / Data Path is not supported quite yet")
         if tidal_constituents:
             self.configured_tides = self.configure_tides(
-                tidal_constituents, tpxo_elevation_filepath, tpxo_velocity_filepath
+                tidal_constituents, tpxo_elevation_filepath, tpxo_velocity_filepath, boundaries
             )
         else:
             self.configured_tides = False
@@ -429,6 +429,8 @@ class Case:
             self.configured_bgc = self.configure_bgc_iron_forcing()
         else:
             self.configured_bgc = False
+
+        self._update_forcing_variables()
         self._configure_forcings_called = True
 
     def configure_bgc_ic(self, marbl_ic_filepath: str | Path | None = None):
@@ -438,7 +440,8 @@ class Case:
             raise FileNotFoundError(
                 f"MARBL initial condition file {marbl_ic_filepath} does not exist."
             )
-        self.marbl_ic_filepath = marbl_ic_filepath
+        self.marbl_ic_filepath = Path(marbl_ic_filepath)
+        self.marbl_ic_filename = self.marbl_ic_filepath.name
         return True
 
     def configure_bgc_iron_forcing(self):
@@ -536,7 +539,6 @@ class Case:
         process_chl=True,
         process_runoff=True,
         process_river_nutrients=True,
-        process_param_changes=True,
     ):
         """
         Process boundary conditions, initial conditions, and tides for a MOM6 case.
@@ -559,8 +561,6 @@ class Case:
             This will be overridden and set to False if the large data workflow in configure_forcings is enabled.
         process_runoff : bool, optional
             Whether to process runoff data. Default is True.
-        process_param_changes : bool, optional
-            Whether to process the namelist and xml changes required to run a regional MOM6 case in the CESM.
         process_bgc : bool, optional
             Whether to process BGC data. Default is True.
 
@@ -606,15 +606,11 @@ class Case:
             self.process_runoff()
         if self.configured_river_nutrients and process_river_nutrients:
             self.process_river_nutrients()
-
-        # Apply forcing-related namelist and xml changes
-        if process_param_changes:
-            self._update_forcing_variables()
+        print(f"Case is ready to be built: {self.caseroot}")
 
     def process_bgc_ic(self):
         dest_path = self.inputdir / "ocnice" / Path(self.marbl_ic_filepath).name
         shutil.copy(self.marbl_ic_filepath, dest_path)
-        self.marbl_ic_filename = Path(self.marbl_ic_filepath).name
 
     def process_bgc_iron_forcing(self):
         # Create coordinate variables
@@ -1515,9 +1511,9 @@ class Case:
                 ("ns_boundary_type", "'open'"),
                 ("ew_boundary_type", "'cyclic'"),
                 ("close_boundaries", ".false."),
-                ("grid_file", self.cice_file),
-                ("kmt_file", self.cice_file),
-            ]
+                ("grid_file", self.cice_grid_path),
+                ("kmt_file", self.cice_grid_path),
+            ] 
             append_user_nl(
                 "cice",
                 cice_param,
@@ -1557,7 +1553,17 @@ class Case:
             is_non_local=self.cc._is_non_local(),
         )
 
-        print(f"Case is ready to be built: {self.caseroot}")
+        self.date_range = pd.to_datetime(self.date_range)
+        xmlchange(
+            "STOP_OPTION",
+            "ndays",
+            is_non_local=self.cc._is_non_local(),
+        )
+        xmlchange(
+            "STOP_N",
+            (dates[1] - dates[0]).days + 1,
+            is_non_local=self.cc._is_non_local(),
+        )
 
     def find_MOM6_rectangular_orientation(self, input):
         """
