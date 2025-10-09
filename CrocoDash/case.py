@@ -1314,6 +1314,7 @@ class Case:
                     ("SURFACE_HEIGHT_IC_FILE", "init_eta.nc"),
                     ("SURFACE_HEIGHT_IC_VAR", "eta_t"),
                     ("VELOCITY_FILE", "init_vel.nc"),
+                    ("Z_INIT_FILE_PTEMP_VAR", "temp"),
                 ]
             )
 
@@ -1511,8 +1512,6 @@ class Case:
                 ("ns_boundary_type", "'open'"),
                 ("ew_boundary_type", "'cyclic'"),
                 ("close_boundaries", ".false."),
-                ("grid_file", self.cice_grid_path),
-                ("kmt_file", self.cice_grid_path),
             ] 
             append_user_nl(
                 "cice",
