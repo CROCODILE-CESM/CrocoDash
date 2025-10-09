@@ -52,6 +52,8 @@ class Case:
         project: str | None = None,
         override: bool = False,
         ntasks_ocn: int | None = None,
+        job_queue: str | None = None,
+        job_wallclock_time: str | None = None
     ):
         """
         Initialize a new regional MOM6 case within the CESM framework.
@@ -86,6 +88,10 @@ class Case:
             Whether to override existing caseroot and inputdir directories. Default is False.
         ntasks_ocn : int, optional
             Number of tasks for the ocean model. If None, defaults to VisualCaseGen Grid Calculation.
+        job_queue: str, optional
+            The queue to submit the CESM case to. If None, defaults to the CESM defaults (usually main)
+        job_wallclock_time: str, optional
+            Must be in the form hh:mm:ss. If None, defaults to the CESM defaults
         """
 
         # Initialize the CIME interface object
@@ -107,7 +113,9 @@ class Case:
             machine,
             project,
             override,
-            ntasks_ocn
+            ntasks_ocn,
+            job_queue,
+            job_wallclock_time
         )
 
         self.caseroot = Path(caseroot)
@@ -162,6 +170,11 @@ class Case:
         xmlchange("ROOTPE_OCN",128,is_non_local=self.cc._is_non_local())
         if ntasks_ocn is not None:
             xmlchange("NTASKS_OCN", ntasks_ocn, is_non_local=self.cc._is_non_local())
+        # This will trigger for both the run and the archiver.
+        if job_queue is not None:
+            xmlchange("JOB_QUEUE",job_queue, is_non_local=self.cc._is_non_local())
+        if job_wallclock_time is not None:
+            xmlchange("JOB_WALLCLOCK_TIME", job_wallclock_time, is_non_local=self.cc._is_non_local())
 
 
     def _init_args_check(
@@ -178,6 +191,9 @@ class Case:
         project: str | None,
         override: bool,
         ntasks_ocn: int | None = None,
+        job_queue: str | None = None,
+        job_wallclock_time: str | None = None
+
     ):
 
         if Path(caseroot).exists() and not override:
@@ -217,6 +233,10 @@ class Case:
                 raise TypeError("project must be a string.")
         if ntasks_ocn is not None and not isinstance(ntasks_ocn, int):
             raise TypeError("ntasks_ocn must be an integer.")
+        if job_queue is not None and not isinstance(job_queue, str):
+            raise TypeError("job_queue must be a str")
+        if job_wallclock_time is not None and not isinstance(job_wallclock_time, str):
+            raise TypeError("job_wallclock_time must be a str of format hh:mm:ss")
 
     def _create_grid_input_files(self):
 
