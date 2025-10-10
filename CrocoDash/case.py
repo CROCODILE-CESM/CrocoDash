@@ -167,7 +167,7 @@ class Case:
         #     is_non_local=self.cc._is_non_local(),
         # )
 
-        # xmlchange("ROOTPE_OCN", 128, is_non_local=self.cc._is_non_local())
+        # xmlchange("ROOTPE_OCN", 128, is_non_local=self.cc._is_non_local()) -> needs to be before the the setup
         if ntasks_ocn is not None:
             xmlchange("NTASKS_OCN", ntasks_ocn, is_non_local=self.cc._is_non_local())
         # This will trigger for both the run and the archiver.
@@ -1573,7 +1573,7 @@ class Case:
         )
         xmlchange(
             "STOP_N",
-            (self.date_range[1] - self.date_range[0]).days + 1,
+            (self.date_range[1] - self.date_range[0]).days,
             is_non_local=self.cc._is_non_local(),
         )
 
