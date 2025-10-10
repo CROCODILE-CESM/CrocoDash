@@ -77,13 +77,13 @@ def merge_piecewise_dataset(
                 logger.warning("[%s] %s", boundary, m)
     else:
         logger.info("All boundaries continuous and non-overlapping.")
-
-    for seg_num in inverted_bnc:
-        if not any(f"{seg_num:03}" in boundary for boundary in boundary_list):
-            raise ValueError(
-                f"Segment Number '{seg_num}' from boundary_number_conversion not found in the available boundary files. Did you correctly regrid the right boundaries? Change the boundary number conversion to match."
-            )
-
+        
+    if run_boundary_conditions:
+        for seg_num in inverted_bnc:
+            if not any(f"{seg_num:03}" in boundary for boundary in boundary_list):
+                raise ValueError(
+                    f"Segment Number '{seg_num}' from boundary_number_conversion not found in the available boundary files. Did you correctly regrid the right boundaries? Change the boundary number conversion to match."
+                )
     matching_files = defaultdict(list)
     for boundary in boundary_list:
         for file_start, file_end, file_path in boundary_file_list[boundary]:
