@@ -162,7 +162,7 @@ class Case:
         # CICE grid file (if needed)
         if self.cice_in_compset:
             self.cice_grid_path = (
-                inputdir / "ocnice" / f"cice_grid_{ocn_grid.name}_{cvars["MB_ATTEMPT_ID"].value}.nc"
+                inputdir / "ocnice" / f"cice_grid_{ocn_grid.name}_{cvars['MB_ATTEMPT_ID'].value}.nc"
             )
             self.ocn_topo.write_cice_grid(self.cice_grid_path)
 
