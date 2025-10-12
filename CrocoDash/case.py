@@ -51,6 +51,9 @@ class Case:
         machine: str | None = None,
         project: str | None = None,
         override: bool = False,
+        ntasks_ocn: int | None = None,
+        job_queue: str | None = None,
+        job_wallclock_time: str | None = None,
     ):
         """
         Initialize a new regional MOM6 case within the CESM framework.
@@ -83,6 +86,12 @@ class Case:
             If the machine requires a project, this argument must be provided.
         override : bool, optional
             Whether to override existing caseroot and inputdir directories. Default is False.
+        ntasks_ocn : int, optional
+            Number of tasks for the ocean model. If None, defaults to VisualCaseGen Grid Calculation.
+        job_queue: str, optional
+            The queue to submit the CESM case to. If None, defaults to the CESM defaults (usually main)
+        job_wallclock_time: str, optional
+            Must be in the form hh:mm:ss. If None, defaults to the CESM defaults
         """
 
         # Initialize the CIME interface object
@@ -104,6 +113,9 @@ class Case:
             machine,
             project,
             override,
+            ntasks_ocn,
+            job_queue,
+            job_wallclock_time,
         )
 
         self.caseroot = Path(caseroot)
@@ -119,10 +131,6 @@ class Case:
         self._configure_forcings_called = False
         self._large_data_workflow_called = False
         self.compset = compset
-
-        self.runoff_in_compset = "DROF" in self.compset
-        self.bgc_in_compset = "%MARBL" in self.compset
-        self.cice_in_compset = "CICE" in self.compset
 
         # Resolution name:
         self.resolution = f"{datm_grid_name}_{ocn_grid.name}"
@@ -144,11 +152,43 @@ class Case:
             self.caseroot, non_local=self.cc._is_non_local()
         )
 
+        self.compset = self._cime_case.get_value("COMPSET")
+        print("Compset longname is:", self.compset)
+
+        self.runoff_in_compset = "DROF" in self.compset
+        self.bgc_in_compset = "%MARBL" in self.compset
+        self.cice_in_compset = "CICE" in self.compset
+
+        # CICE grid file (if needed)
+        if self.cice_in_compset:
+            self.cice_grid_path = (
+                inputdir / "ocnice" / f"cice_grid_{ocn_grid.name}_{cvars['MB_ATTEMPT_ID'].value}.nc"
+            )
+            self.ocn_topo.write_cice_grid(self.cice_grid_path)
+
         xmlchange(
             "MOM6_MEMORY_MODE",
             "dynamic_symmetric",
             is_non_local=self.cc._is_non_local(),
         )
+        # xmlchange(
+        #     "MOM6_DOMAIN_TYPE",
+        #     "REGIONAL",
+        #     is_non_local=self.cc._is_non_local(),
+        # )
+
+        # xmlchange("ROOTPE_OCN", 128, is_non_local=self.cc._is_non_local()) -> needs to be before the the setup
+        if ntasks_ocn is not None:
+            xmlchange("NTASKS_OCN", ntasks_ocn, is_non_local=self.cc._is_non_local())
+        # This will trigger for both the run and the archiver.
+        if job_queue is not None:
+            xmlchange("JOB_QUEUE", job_queue, is_non_local=self.cc._is_non_local())
+        if job_wallclock_time is not None:
+            xmlchange(
+                "JOB_WALLCLOCK_TIME",
+                job_wallclock_time,
+                is_non_local=self.cc._is_non_local(),
+            )
 
     def _init_args_check(
         self,
@@ -163,6 +203,9 @@ class Case:
         machine: str | None,
         project: str | None,
         override: bool,
+        ntasks_ocn: int | None = None,
+        job_queue: str | None = None,
+        job_wallclock_time: str | None = None,
     ):
 
         if Path(caseroot).exists() and not override:
@@ -200,6 +243,12 @@ class Case:
                 raise ValueError(f"project is required for machine {machine}.")
             if not isinstance(project, str):
                 raise TypeError("project must be a string.")
+        if ntasks_ocn is not None and not isinstance(ntasks_ocn, int):
+            raise TypeError("ntasks_ocn must be an integer.")
+        if job_queue is not None and not isinstance(job_queue, str):
+            raise TypeError("job_queue must be a str")
+        if job_wallclock_time is not None and not isinstance(job_wallclock_time, str):
+            raise TypeError("job_wallclock_time must be a str of format hh:mm:ss")
 
     def _create_grid_input_files(self):
 
@@ -244,13 +293,6 @@ class Case:
 
         # MOM6 vertical grid file
         ocn_vgrid.write(self.vgrid_path)
-
-        # CICE grid file (if needed)
-        if self.cice_in_compset:
-            self.cice_grid_path = (
-                inputdir / "ocnice" / f"cice_grid_{ocn_grid.name}_{session_id}.nc"
-            )
-            ocn_topo.write_cice_grid(self.cice_grid_path)
 
         # SCRIP grid file (needed for runoff remapping)
         ocn_topo.write_scrip_grid(self.scrip_grid_path)
@@ -387,7 +429,10 @@ class Case:
             raise ValueError("Product / Data Path is not supported quite yet")
         if tidal_constituents:
             self.configured_tides = self.configure_tides(
-                tidal_constituents, tpxo_elevation_filepath, tpxo_velocity_filepath, boundaries
+                tidal_constituents,
+                tpxo_elevation_filepath,
+                tpxo_velocity_filepath,
+                boundaries,
             )
         else:
             self.configured_tides = False
@@ -512,163 +557,6 @@ class Case:
             print(
                 f"Large data workflow was called, please go to the large data workflow path: {self.large_data_workflow_path} and run the driver script there."
             )
-
-    def process_forcings(
-        self,
-        process_initial_condition=True,
-        process_tides=True,
-        process_velocity_tracers=True,
-        process_bgc=True,
-        process_chl=True,
-        process_runoff=True,
-        process_river_nutrients=True,
-    ):
-        """
-        Process boundary conditions, initial conditions, and tides for a MOM6 case.
-
-        This method configures a regional MOM6 case's ocean state boundaries and initial conditions
-        using previously downloaded data setup in configure_forcings. It also processes tidal boundary conditions
-        if tidal constituents are specified. The method expects `configure_forcings()` to be
-        called beforehand.
-
-        Parameters
-        ----------
-        process_initial_condition : bool, optional
-            Whether to process the initial condition file. Default is True.
-        process_tides : bool, optional
-            Whether to process tidal boundary conditions. Default is True.
-        process_chl : bool, optional
-            Whether to process chlorophyll data. Default is True.
-        process_velocity_tracers : bool, optional
-            Whether to process velocity and tracer boundary conditions. Default is True.
-            This will be overridden and set to False if the large data workflow in configure_forcings is enabled.
-        process_runoff : bool, optional
-            Whether to process runoff data. Default is True.
-        process_bgc : bool, optional
-            Whether to process BGC data. Default is True.
-
-        Raises
-        ------
-        RuntimeError
-            If `configure_forcings()` was not called before this method.
-        FileNotFoundError
-            If required unprocessed files are missing in the expected directories.
-
-        Notes
-        -----
-        - This method uses variable name mappings specified in the forcing product configuration.
-        - If the large data workflow has been enabled, velocity and tracer OBCs are not processed
-          within this method and must be handled externally.
-        - If tidal constituents are configured, TPXO elevation and velocity files must be available.
-        - Applies forcing-related namelist and XML updates at the end of the method.
-
-        See Also
-        --------
-        configure_forcings : Must be called before this method to set up the environment.
-        """
-        if not self._configure_forcings_called:
-            raise RuntimeError(
-                "configure_forcings() must be called before process_forcings()."
-            )
-        if (self.forcing_product_name).upper() == "CESM_OUTPUT":
-            self.process_cesm_initial_and_boundary_conditions(
-                process_initial_condition, process_velocity_tracers
-            )
-        else:
-            self.process_initial_and_boundary_conditions(
-                process_initial_condition, process_velocity_tracers
-            )
-        if self.configured_bgc and process_bgc:
-            self.process_bgc_iron_forcing()
-            self.process_bgc_ic()
-        if self.configured_tides and process_tides:
-            self.process_tides()
-        if self.configured_chl and process_chl:
-            self.process_chl()
-        if self.configured_runoff and process_runoff:
-            self.process_runoff()
-        if self.configured_river_nutrients and process_river_nutrients:
-            self.process_river_nutrients()
-        print(f"Case is ready to be built: {self.caseroot}")
-
-    def process_bgc_ic(self):
-        dest_path = self.inputdir / "ocnice" / Path(self.marbl_ic_filepath).name
-        shutil.copy(self.marbl_ic_filepath, dest_path)
-
-    def process_bgc_iron_forcing(self):
-        # Create coordinate variables
-        nx = self.ocn_grid.nx
-        ny = self.ocn_grid.ny
-        depth = 103
-        depth_edges = depth + 1
-        dz = 6000.0 / depth
-        DEPTH = np.linspace(dz / 2, 6000.0 - dz / 2, depth)
-        DEPTH_EDGES = np.linspace(0, 6000, depth_edges)
-        ds = xr.Dataset(
-            {
-                "DEPTH": (["DEPTH"], DEPTH),
-                "DEPTH_EDGES": (["DEPTH_EDGES"], DEPTH_EDGES),
-                "FESEDFLUXIN": (
-                    ["DEPTH", "ny", "nx"],
-                    np.zeros((depth, ny, nx), dtype=np.float32),
-                ),
-                "KMT": (["ny", "nx"], np.zeros((ny, nx), dtype=np.int32)),
-                "TAREA": (["ny", "nx"], np.zeros((ny, nx), dtype=np.float64)),
-            }
-        )
-        # Assign attributes
-        ds["DEPTH"].attrs = {"units": "m", "edges": "DEPTH_EDGES"}
-        ds["DEPTH_EDGES"].attrs = {"units": "m"}
-        ds["FESEDFLUXIN"].attrs = {
-            "_FillValue": 1.0e20,
-            "units": "micromol/m^2/d",
-            "long_name": "Fe sediment flux (total)",
-        }
-        ds["TAREA"].attrs = {"units": "m^2"}
-        # Add global attributes
-        ds.attrs = {
-            "history": "Created with xarray (this file is empty)",
-        }
-        ds.to_netcdf(self.fesedflux_filepath)
-        ds.to_netcdf(self.feventflux_filepath)
-
-    def process_cesm_initial_and_boundary_conditions(
-        self,
-        process_initial_condition=True,
-        process_velocity_tracers=True,
-    ):
-        if self._large_data_workflow_called and (
-            process_velocity_tracers or process_initial_condition
-        ):
-            process_velocity_tracers = False
-            process_initial_condition = False
-            print(
-                f"Large data workflow was called, so boundary & initial conditions will not be processed."
-            )
-            print(
-                f"Please make sure to execute large_data_workflow as described in {self.large_data_workflow_path}"
-            )
-
-        # Set up the initial condition & boundary conditions
-
-        with open(self.large_data_workflow_path / "config.json", "r") as f:
-            config = json.load(f)
-        if process_initial_condition:
-            config["general"]["run_initial_condition"] = True
-        else:
-            config["general"]["run_initial_condition"] = False
-        if process_velocity_tracers:
-            config["general"]["run_boundary_conditions"] = True
-        else:
-            config["general"]["run_boundary_conditions"] = False
-        with open(self.large_data_workflow_path / "config.json", "w") as f:
-            json.dump(config, f, indent=4)
-
-        if process_initial_condition or process_velocity_tracers:
-            sys.path.append(str(self.large_data_workflow_path))
-            import eo_driver
-
-            eo_driver.extract_obcs(config)
 
     def configure_initial_and_boundary_conditions(
         self,
@@ -870,6 +758,163 @@ class Case:
             self.inputdir / "ocnice" / f"seawifs-clim-1997-2010-{self.ocn_grid.name}.nc"
         )
         return True
+
+    def process_forcings(
+        self,
+        process_initial_condition=True,
+        process_tides=True,
+        process_velocity_tracers=True,
+        process_bgc=True,
+        process_chl=True,
+        process_runoff=True,
+        process_river_nutrients=True,
+    ):
+        """
+        Process boundary conditions, initial conditions, and tides for a MOM6 case.
+
+        This method configures a regional MOM6 case's ocean state boundaries and initial conditions
+        using previously downloaded data setup in configure_forcings. It also processes tidal boundary conditions
+        if tidal constituents are specified. The method expects `configure_forcings()` to be
+        called beforehand.
+
+        Parameters
+        ----------
+        process_initial_condition : bool, optional
+            Whether to process the initial condition file. Default is True.
+        process_tides : bool, optional
+            Whether to process tidal boundary conditions. Default is True.
+        process_chl : bool, optional
+            Whether to process chlorophyll data. Default is True.
+        process_velocity_tracers : bool, optional
+            Whether to process velocity and tracer boundary conditions. Default is True.
+            This will be overridden and set to False if the large data workflow in configure_forcings is enabled.
+        process_runoff : bool, optional
+            Whether to process runoff data. Default is True.
+        process_bgc : bool, optional
+            Whether to process BGC data. Default is True.
+
+        Raises
+        ------
+        RuntimeError
+            If `configure_forcings()` was not called before this method.
+        FileNotFoundError
+            If required unprocessed files are missing in the expected directories.
+
+        Notes
+        -----
+        - This method uses variable name mappings specified in the forcing product configuration.
+        - If the large data workflow has been enabled, velocity and tracer OBCs are not processed
+          within this method and must be handled externally.
+        - If tidal constituents are configured, TPXO elevation and velocity files must be available.
+        - Applies forcing-related namelist and XML updates at the end of the method.
+
+        See Also
+        --------
+        configure_forcings : Must be called before this method to set up the environment.
+        """
+        if not self._configure_forcings_called:
+            raise RuntimeError(
+                "configure_forcings() must be called before process_forcings()."
+            )
+        if (self.forcing_product_name).upper() == "CESM_OUTPUT":
+            self.process_cesm_initial_and_boundary_conditions(
+                process_initial_condition, process_velocity_tracers
+            )
+        else:
+            self.process_initial_and_boundary_conditions(
+                process_initial_condition, process_velocity_tracers
+            )
+        if self.configured_bgc and process_bgc:
+            self.process_bgc_iron_forcing()
+            self.process_bgc_ic()
+        if self.configured_tides and process_tides:
+            self.process_tides()
+        if self.configured_chl and process_chl:
+            self.process_chl()
+        if self.configured_runoff and process_runoff:
+            self.process_runoff()
+        if self.configured_river_nutrients and process_river_nutrients:
+            self.process_river_nutrients()
+        print(f"Case is ready to be built: {self.caseroot}")
+
+    def process_bgc_ic(self):
+        dest_path = self.inputdir / "ocnice" / Path(self.marbl_ic_filepath).name
+        shutil.copy(self.marbl_ic_filepath, dest_path)
+
+    def process_bgc_iron_forcing(self):
+        # Create coordinate variables
+        nx = self.ocn_grid.nx
+        ny = self.ocn_grid.ny
+        depth = 103
+        depth_edges = depth + 1
+        dz = 6000.0 / depth
+        DEPTH = np.linspace(dz / 2, 6000.0 - dz / 2, depth)
+        DEPTH_EDGES = np.linspace(0, 6000, depth_edges)
+        ds = xr.Dataset(
+            {
+                "DEPTH": (["DEPTH"], DEPTH),
+                "DEPTH_EDGES": (["DEPTH_EDGES"], DEPTH_EDGES),
+                "FESEDFLUXIN": (
+                    ["DEPTH", "ny", "nx"],
+                    np.zeros((depth, ny, nx), dtype=np.float32),
+                ),
+                "KMT": (["ny", "nx"], np.zeros((ny, nx), dtype=np.int32)),
+                "TAREA": (["ny", "nx"], np.zeros((ny, nx), dtype=np.float64)),
+            }
+        )
+        # Assign attributes
+        ds["DEPTH"].attrs = {"units": "m", "edges": "DEPTH_EDGES"}
+        ds["DEPTH_EDGES"].attrs = {"units": "m"}
+        ds["FESEDFLUXIN"].attrs = {
+            "_FillValue": 1.0e20,
+            "units": "micromol/m^2/d",
+            "long_name": "Fe sediment flux (total)",
+        }
+        ds["TAREA"].attrs = {"units": "m^2"}
+        # Add global attributes
+        ds.attrs = {
+            "history": "Created with xarray (this file is empty)",
+        }
+        ds.to_netcdf(self.fesedflux_filepath)
+        ds.to_netcdf(self.feventflux_filepath)
+
+    def process_cesm_initial_and_boundary_conditions(
+        self,
+        process_initial_condition=True,
+        process_velocity_tracers=True,
+    ):
+        if self._large_data_workflow_called and (
+            process_velocity_tracers or process_initial_condition
+        ):
+            process_velocity_tracers = False
+            process_initial_condition = False
+            print(
+                f"Large data workflow was called, so boundary & initial conditions will not be processed."
+            )
+            print(
+                f"Please make sure to execute large_data_workflow as described in {self.large_data_workflow_path}"
+            )
+
+        # Set up the initial condition & boundary conditions
+
+        with open(self.large_data_workflow_path / "config.json", "r") as f:
+            config = json.load(f)
+        if process_initial_condition:
+            config["general"]["run_initial_condition"] = True
+        else:
+            config["general"]["run_initial_condition"] = False
+        if process_velocity_tracers:
+            config["general"]["run_boundary_conditions"] = True
+        else:
+            config["general"]["run_boundary_conditions"] = False
+        with open(self.large_data_workflow_path / "config.json", "w") as f:
+            json.dump(config, f, indent=4)
+
+        if process_initial_condition or process_velocity_tracers:
+            sys.path.append(str(self.large_data_workflow_path))
+            import eo_driver
+
+            eo_driver.extract_obcs(config)
 
     def process_tides(self):
         # Process the tides
@@ -1297,6 +1342,7 @@ class Case:
                     ("SURFACE_HEIGHT_IC_FILE", "init_eta.nc"),
                     ("SURFACE_HEIGHT_IC_VAR", "eta_t"),
                     ("VELOCITY_FILE", "init_vel.nc"),
+                    ("Z_INIT_FILE_PTEMP_VAR", "temp"),
                 ]
             )
 
@@ -1494,9 +1540,7 @@ class Case:
                 ("ns_boundary_type", "'open'"),
                 ("ew_boundary_type", "'cyclic'"),
                 ("close_boundaries", ".false."),
-                ("grid_file", self.cice_grid_path),
-                ("kmt_file", self.cice_grid_path),
-            ] 
+            ]
             append_user_nl(
                 "cice",
                 cice_param,
@@ -1521,6 +1565,18 @@ class Case:
         xmlchange(
             "RUN_STARTDATE",
             str(self.date_range[0])[:10],
+            is_non_local=self.cc._is_non_local(),
+        )
+
+        self.date_range = pd.to_datetime(self.date_range)
+        xmlchange(
+            "STOP_OPTION",
+            "ndays",
+            is_non_local=self.cc._is_non_local(),
+        )
+        xmlchange(
+            "STOP_N",
+            (self.date_range[1] - self.date_range[0]).days,
             is_non_local=self.cc._is_non_local(),
         )
 
