@@ -7,7 +7,7 @@ Installation
 
    .. code-block:: bash
 
-      git clone --recurse-submodules https://github.com/CROCODILE-CESM/CrocoDash.git
+      git clone --recurse-submodules https://github.com/CROCODILE-CESM/CrocoDash.git -b v0.1.0-beta
 
 #. Create the environment (called CrocoDash by default) using the provided environment.yml file
 
