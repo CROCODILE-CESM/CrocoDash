@@ -132,10 +132,6 @@ class Case:
         self._large_data_workflow_called = False
         self.compset = compset
 
-        self.runoff_in_compset = "DROF" in self.compset
-        self.bgc_in_compset = "%MARBL" in self.compset
-        self.cice_in_compset = "CICE" in self.compset
-
         # Resolution name:
         self.resolution = f"{datm_grid_name}_{ocn_grid.name}"
 
@@ -155,6 +151,19 @@ class Case:
         self._cime_case = self.cime.get_case(
             self.caseroot, non_local=self.cc._is_non_local()
         )
+
+        self.compset = self._cime_case.get_value("COMPSET")
+
+        self.runoff_in_compset = "DROF" in self.compset
+        self.bgc_in_compset = "%MARBL" in self.compset
+        self.cice_in_compset = "CICE" in self.compset
+
+        # CICE grid file (if needed)
+        if self.cice_in_compset:
+            self.cice_grid_path = (
+                inputdir / "ocnice" / f"cice_grid_{ocn_grid.name}_{session_id}.nc"
+            )
+            self.ocn_topo.write_cice_grid(self.cice_grid_path)
 
         xmlchange(
             "MOM6_MEMORY_MODE",
@@ -283,13 +292,6 @@ class Case:
 
         # MOM6 vertical grid file
         ocn_vgrid.write(self.vgrid_path)
-
-        # CICE grid file (if needed)
-        if self.cice_in_compset:
-            self.cice_grid_path = (
-                inputdir / "ocnice" / f"cice_grid_{ocn_grid.name}_{session_id}.nc"
-            )
-            ocn_topo.write_cice_grid(self.cice_grid_path)
 
         # SCRIP grid file (needed for runoff remapping)
         ocn_topo.write_scrip_grid(self.scrip_grid_path)
@@ -1576,7 +1578,6 @@ class Case:
             (self.date_range[1] - self.date_range[0]).days,
             is_non_local=self.cc._is_non_local(),
         )
-
 
     def find_MOM6_rectangular_orientation(self, input):
         """
