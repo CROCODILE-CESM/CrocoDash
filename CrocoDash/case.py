@@ -153,6 +153,7 @@ class Case:
         )
 
         self.compset = self._cime_case.get_value("COMPSET")
+        print("Compset longname is:", self.compset)
 
         self.runoff_in_compset = "DROF" in self.compset
         self.bgc_in_compset = "%MARBL" in self.compset
