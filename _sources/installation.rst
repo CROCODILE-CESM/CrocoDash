@@ -13,7 +13,7 @@ Installation
 
    .. code-block:: bash
 
-      conda env create -f environment.yml # Use Mamba if you have it installed! It's faster.
+      conda env create -f environment.yml --yes # Use Mamba if you have it installed! It's faster.
 
 #. Activate the environment! 
 
