@@ -1,0 +1,54 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: CrocoDash
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Manish
+    family-names: Venumuddula
+    orcid: 'https://orcid.org/0009-0009-5047-2018'
+    affiliation: NCAR
+    email: manishrv@ucar.edu
+  - given-names: Alper
+    family-names: Altuntas
+    email: altuntas@ucar.edu
+    affiliation: NCAR
+    orcid: 'https://orcid.org/0000-0003-1708-9518'
+  - given-names: Mike
+    family-names: Levy
+    email: mlevy@ucar.edu
+    affiliation: NCAR
+  - given-names: Aidan
+    family-names: Janney
+    email: ajanney@ucar.edu
+    affiliation: CU - Boulder
+    orcid: 'https://orcid.org/0009-0006-5304-0104'
+  - given-names: Andrew
+    family-names: Kwong
+    email: akwong@ucar.edu
+    affiliation: Cornell University
+    orcid: 'https://orcid.org/0009-0008-3189-1025'
+  - given-names: Nguyen
+    family-names: Hung
+    email: hmnguyen@ucar.edu
+    affiliation: University of South Florida
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.17342302
+repository-code: 'https://github.com/CROCODILE-CESM/CrocoDash'
+url: 'https://crocodile-cesm.github.io/CrocoDash/'
+repository: 'https://github.com/CROCODILE-CESM/CrocoGallery'
+keywords:
+  - MOM6
+  - Regional
+  - Modeling
+  - CROCODILE
+  - CESM
+license: Apache-2.0
+commit: 501c888
+version: v0.1.0-beta
+date-released: '2025-10-12'
