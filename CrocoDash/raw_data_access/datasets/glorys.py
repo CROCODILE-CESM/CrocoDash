@@ -55,9 +55,26 @@ def get_glorys_data_from_rda(
         pattern = os.path.join(ds_in_path, "**", f"*_{date}_*.nc")
         ds_in_files.extend(glob.glob(pattern, recursive=True))
     ds_in_files = sorted(ds_in_files)
-    dataset = xr.open_mfdataset(ds_in_files, decode_times=False)[dataset_varnames].sel(
-        latitude=slice(lat_min - 1, lat_max + 1),
-        longitude=slice(lon_min - 1, lon_max + 1),
+
+    if lon_min < lon_max:
+        dataset = xr.open_mfdataset(ds_in_files, decode_times=False)[dataset_varnames].sel(
+            latitude=slice(lat_min - 1, lat_max + 1),
+            longitude=slice(lon_min - 1, lon_max + 1),
+        )
+    else:
+        ds = xr.open_mfdataset(ds_in_files, decode_times=False)[dataset_varnames]
+        dataset = xr.concat(
+        [
+            ds.sel(
+                latitude=slice(lat_min - 1, lat_max + 1),
+                **{"longitude": slice(lon_min - 1, 360)}
+            ),
+            ds.sel(
+                latitude=slice(lat_min - 1, lat_max + 1),
+                **{"longitude": slice(-180, lon_max + 1)}
+            ),
+        ],
+        dim="longitude",
     )
 
     dataset.to_netcdf(path)
