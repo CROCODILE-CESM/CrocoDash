@@ -56,7 +56,7 @@ def get_glorys_data_from_rda(
         ds_in_files.extend(glob.glob(pattern, recursive=True))
     ds_in_files = sorted(ds_in_files)
 
-    if lon_min < lon_max:
+    if lon_min * lon_max > 0: # If the sign is the same (i.e. not over the seam)
         dataset = xr.open_mfdataset(ds_in_files, decode_times=False)[dataset_varnames].sel(
             latitude=slice(lat_min - 1, lat_max + 1),
             longitude=slice(lon_min - 1, lon_max + 1),
