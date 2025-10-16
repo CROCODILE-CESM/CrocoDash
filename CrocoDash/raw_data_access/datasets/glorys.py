@@ -76,11 +76,11 @@ def get_glorys_data_from_rda(
             ),
         ],
         dim="longitude",
-    )
+        )
+
         #convert longitude from degree west to degree east
         dataset["longitude"] = (360-dataset["longitude"]) % 360
         dataset = dataset.sortby("longitude")
-    
 
     dataset.to_netcdf(path)
     return path
