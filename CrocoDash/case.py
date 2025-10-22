@@ -146,14 +146,22 @@ class Case:
 
         self._create_grid_input_files()
 
-        self._create_newcase()
+        if cvars["MACHINE"].value != "CESM_NOT_PORTED":
+            self._create_newcase()
 
-        self._cime_case = self.cime.get_case(
-            self.caseroot, non_local=self.cc._is_non_local()
-        )
+            self._cime_case = self.cime.get_case(
+                self.caseroot, non_local=self.is_non_local
+            )
 
-        self.compset = self._cime_case.get_value("COMPSET")
-        print("Compset longname is:", self.compset)
+            self.compset = self._cime_case.get_value("COMPSET")
+            print("Compset longname is:", self.compset)
+
+            self.do_exec = True
+            self.is_non_local = self.cc._is_non_local()
+        else:
+            print("Machine is not yet ported to CESM, skipping case creation. You will only get an input directory! Please don't use a compset alias if you don't create a case!")
+            self.do_exec = False
+            self.is_non_local = False
 
         self.runoff_in_compset = "DROF" in self.compset
         self.bgc_in_compset = "%MARBL" in self.compset
@@ -169,25 +177,27 @@ class Case:
         xmlchange(
             "MOM6_MEMORY_MODE",
             "dynamic_symmetric",
-            is_non_local=self.cc._is_non_local(),
+            do_exec=self.do_exec,
+            is_non_local=self.is_non_local,
         )
         # xmlchange(
         #     "MOM6_DOMAIN_TYPE",
         #     "REGIONAL",
-        #     is_non_local=self.cc._is_non_local(),
+        #     is_non_local=self.is_non_local(),
         # )
 
-        # xmlchange("ROOTPE_OCN", 128, is_non_local=self.cc._is_non_local()) -> needs to be before the the setup
+        # xmlchange("ROOTPE_OCN", 128, is_non_local=self.is_non_local()) -> needs to be before the the setup
         if ntasks_ocn is not None:
-            xmlchange("NTASKS_OCN", ntasks_ocn, is_non_local=self.cc._is_non_local())
+            xmlchange("NTASKS_OCN", ntasks_ocn, do_exec=self.do_exec, is_non_local=self.is_non_local)
         # This will trigger for both the run and the archiver.
         if job_queue is not None:
-            xmlchange("JOB_QUEUE", job_queue, is_non_local=self.cc._is_non_local())
+            xmlchange("JOB_QUEUE", job_queue, do_exec=self.do_exec, is_non_local=self.is_non_local)
         if job_wallclock_time is not None:
             xmlchange(
                 "JOB_WALLCLOCK_TIME",
                 job_wallclock_time,
-                is_non_local=self.cc._is_non_local(),
+                do_exec=self.do_exec,
+                is_non_local=self.is_non_local,
             )
 
     def _init_args_check(
@@ -737,7 +747,7 @@ class Case:
             number_vertical_layers=None,
             layer_thickness_ratio=None,
             depth=self.ocn_topo.max_depth,
-            mom_run_dir=self._cime_case.get_value("RUNDIR"),
+            mom_run_dir=Path("None"),
             mom_input_dir=self.inputdir / "ocnice",
             hgrid_type="from_file",
             hgrid_path=self.supergrid_path,
@@ -1364,7 +1374,7 @@ class Case:
         append_user_nl(
             "mom",
             ic_params,
-            do_exec=True,
+            do_exec=self.do_exec,
             comment="Initial conditions",
         )
 
@@ -1390,7 +1400,7 @@ class Case:
             append_user_nl(
                 "mom",
                 bgc_params,
-                do_exec=True,
+                do_exec=self.do_exec,
                 comment="BGC Params",
                 log_title=False,
             )
@@ -1420,7 +1430,7 @@ class Case:
             append_user_nl(
                 "mom",
                 tidal_params,
-                do_exec=True,
+                do_exec=self.do_exec,
                 comment="Tides",
                 log_title=False,
             )
@@ -1436,7 +1446,7 @@ class Case:
             append_user_nl(
                 "mom",
                 chl_params,
-                do_exec=True,
+                do_exec=self.do_exec,
                 comment="Chlorophyll Climatology",
                 log_title=False,
             )
@@ -1530,7 +1540,7 @@ class Case:
         append_user_nl(
             "mom",
             obc_params,
-            do_exec=True,
+            do_exec=self.do_exec,
             comment="Open boundary conditions",
             log_title=False,
         )
@@ -1544,7 +1554,7 @@ class Case:
             append_user_nl(
                 "cice",
                 cice_param,
-                do_exec=True,
+                do_exec=self.do_exec,
                 comment="CICE options",
                 log_title=False,
             )
@@ -1554,30 +1564,35 @@ class Case:
             xmlchange(
                 "ROF2OCN_LIQ_RMAPNAME",
                 str(self.runoff_mapping_file_nnsm),
-                is_non_local=self.cc._is_non_local(),
+                do_exec=self.do_exec,
+                is_non_local=self.is_non_local,
             )
             xmlchange(
                 "ROF2OCN_ICE_RMAPNAME",
                 str(self.runoff_mapping_file_nnsm),
-                is_non_local=self.cc._is_non_local(),
+                do_exec=self.do_exec,
+                is_non_local=self.is_non_local,
             )
 
         xmlchange(
             "RUN_STARTDATE",
             str(self.date_range[0])[:10],
-            is_non_local=self.cc._is_non_local(),
+            do_exec=self.do_exec,
+            is_non_local=self.is_non_local,
         )
 
         self.date_range = pd.to_datetime(self.date_range)
         xmlchange(
             "STOP_OPTION",
             "ndays",
-            is_non_local=self.cc._is_non_local(),
+            do_exec=self.do_exec,
+            is_non_local=self.is_non_local,
         )
         xmlchange(
             "STOP_N",
             (self.date_range[1] - self.date_range[0]).days,
-            is_non_local=self.cc._is_non_local(),
+            do_exec=self.do_exec,
+            is_non_local=self.is_non_local,
         )
 
     def find_MOM6_rectangular_orientation(self, input):
