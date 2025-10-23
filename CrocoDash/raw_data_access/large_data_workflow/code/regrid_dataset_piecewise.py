@@ -4,7 +4,7 @@ from CrocoDash import utils
 from CrocoDash.raw_data_access.large_data_workflow.utils import (
     load_config,
     parse_dataset_folder,
-    check_date_continuity
+    check_date_continuity,
 )
 import re
 import os
@@ -141,13 +141,6 @@ def regrid_dataset_piecewise(
             for file_start, file_end, file_path in matching_files[boundary]:
                 expt.date_range = [file_start, None]
                 file_path = Path(file_path)
-                if not preview:
-                    expt.setup_single_boundary(
-                        file_path,
-                        dataset_varnames,
-                        boundary,
-                        boundary_number_conversion[boundary],
-                    )
 
                 # Rename output file
                 output_file_path = (
@@ -156,6 +149,19 @@ def regrid_dataset_piecewise(
                         boundary_number_conversion[boundary]
                     )
                 )
+
+                if not preview:
+                    if output_file_path.exists():
+                        logger.info(
+                            f"Output file {output_file_path} already exists. It will be skipped."
+                        )
+                    else:
+                        expt.setup_single_boundary(
+                            file_path,
+                            dataset_varnames,
+                            boundary,
+                            boundary_number_conversion[boundary],
+                        )
 
                 # Rename file
                 boundary_str = f"{boundary_number_conversion[boundary]:03d}"
@@ -175,9 +181,16 @@ def regrid_dataset_piecewise(
         file_path = Path(folder) / "ic_unprocessed.nc"
         matching_files["IC"] = [("None", "None", file_path)]
         vgrid_from_file = xr.open_dataset(vgrid_path)
-        expt.vgrid = expt._make_vgrid(vgrid_from_file.dz.data) # renames/changes meta data
+        expt.vgrid = expt._make_vgrid(
+            vgrid_from_file.dz.data
+        )  # renames/changes meta data
         if not preview:
-            expt.setup_initial_condition(file_path, dataset_varnames)
+            if (expt.mom_input_dir / "init_eta.nc").exists():
+                logger.info(
+                    f"Initial condition files already exist. They will be skipped."
+                )
+            else:
+                expt.setup_initial_condition(file_path, dataset_varnames)
         output_file_names.append("init_eta.nc")
         output_file_names.append("init_vel.nc")
         output_file_names.append("init_tracers.nc")

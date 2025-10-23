@@ -118,25 +118,13 @@ def get_dataset_piecewise(
 
             # Execute the data retrieval function
             if not preview:
-                data_access_function(
-                    dates=[start_date_str, end_ic_date_str],
-                    lat_min=latlon_info["lat_min"],
-                    lat_max=latlon_info["lat_max"],
-                    lon_min=latlon_info["lon_min"],
-                    lon_max=latlon_info["lon_max"],
-                    output_dir=output_dir,
-                    output_file=output_file,
-                )
-        if run_boundary_conditions:
-            for boundary in boundary_number_conversion.keys():
-
-                latlon_info = boundary_info[boundary]
-                output_file = f"{boundary}_unprocessed.{start_date_str}_{end_date_str}.nc"
-                output_file_names.append(output_file)
-                # Execute the data retrieval function
-                if not preview:
+                if (Path(output_dir) / output_file).exists():
+                    logger.info(
+                        f"Initial condition file {output_file} already exists. Skipping download."
+                    )
+                else:
                     data_access_function(
-                        dates=[start_date_str, end_date_str],
+                        dates=[start_date_str, end_ic_date_str],
                         lat_min=latlon_info["lat_min"],
                         lat_max=latlon_info["lat_max"],
                         lon_min=latlon_info["lon_min"],
@@ -144,6 +132,30 @@ def get_dataset_piecewise(
                         output_dir=output_dir,
                         output_file=output_file,
                     )
+        if run_boundary_conditions:
+            for boundary in boundary_number_conversion.keys():
+
+                latlon_info = boundary_info[boundary]
+                output_file = (
+                    f"{boundary}_unprocessed.{start_date_str}_{end_date_str}.nc"
+                )
+                output_file_names.append(output_file)
+                # Execute the data retrieval function
+                if not preview:
+                    if (Path(output_dir) / output_file).exists():
+                        logger.info(
+                            f"Boundary condition file {output_file} already exists. Skipping download."
+                        )
+                    else:
+                        data_access_function(
+                            dates=[start_date_str, end_date_str],
+                            lat_min=latlon_info["lat_min"],
+                            lat_max=latlon_info["lat_max"],
+                            lon_min=latlon_info["lon_min"],
+                            lon_max=latlon_info["lon_max"],
+                            output_dir=output_dir,
+                            output_file=output_file,
+                        )
 
         start_date = end_date + timedelta(days=1)
 
