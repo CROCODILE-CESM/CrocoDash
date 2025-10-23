@@ -162,6 +162,7 @@ class Case:
             print("Machine is not yet ported to CESM, skipping case creation. You will only get an input directory! Please don't use a compset alias if you don't create a case!")
             self.do_exec = False
             self.is_non_local = False
+            self.compset = compset
 
         self.runoff_in_compset = "DROF" in self.compset
         self.bgc_in_compset = "%MARBL" in self.compset
