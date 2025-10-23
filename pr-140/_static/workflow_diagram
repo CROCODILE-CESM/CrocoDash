@@ -1,0 +1,101 @@
+digraph {
+	generate_grid [label="Generate Grid
+[Grid]" color=lightblue shape=box style=filled]
+	grid_obj [label=grid_obj color=lightgray shape=ellipse style=filled]
+	generate_grid -> grid_obj
+	subset_grid [label="Subset Grid
+[Grid.subgrid_from_supergrid]" color=lightblue shape=box style=filled]
+	grid_obj [label=grid_obj color=lightgray shape=ellipse style=filled]
+	subset_grid -> grid_obj
+	grid_from_file [label="Grid From File
+[Grid.from_file]" color=lightblue shape=box style=filled]
+	grid_obj [label=grid_obj color=lightgray shape=ellipse style=filled]
+	grid_from_file -> grid_obj
+	topo_from_file [label="Topo From File
+[Topo.set_depth_via_topog_file]" color=lightblue shape=box style=filled]
+	topo_obj [label=topo_obj color=lightgray shape=ellipse style=filled]
+	topo_from_file -> topo_obj
+	topo_raw [label="Topo File Generation
+[From GEBCO Website]" color=lightblue shape=box style=filled]
+	global_topo_file [label=global_topo_file color=lightgray shape=ellipse style=filled]
+	topo_raw -> global_topo_file
+	generate_topo [label="Generate Topo
+[Topo]" color=lightblue shape=box style=filled]
+	topo_obj [label=topo_obj color=lightgray shape=ellipse style=filled]
+	generate_topo -> topo_obj
+	topo_editor [label="Topo Editor
+[TopoEditor]" color=lightblue shape=box style=filled]
+	topo_obj [label=topo_obj color=lightgray shape=ellipse style=filled]
+	topo_editor -> topo_obj
+	generate_vgrid_hyperbolic [label="Generate VGrid Hyperbolic
+[VGrid.hyperbolic]" color=lightblue shape=box style=filled]
+	vgrid_obj [label=vgrid_obj color=lightgray shape=ellipse style=filled]
+	generate_vgrid_hyperbolic -> vgrid_obj
+	generate_vgrid_uniform [label="Generate VGrid Uniform
+[VGrid.uniform]" color=lightblue shape=box style=filled]
+	vgrid_obj [label=vgrid_obj color=lightgray shape=ellipse style=filled]
+	generate_vgrid_uniform -> vgrid_obj
+	generate_vgrid_from_file [label="Generate VGrid from file
+[VGrid.from_file]" color=lightblue shape=box style=filled]
+	vgrid_obj [label=vgrid_obj color=lightgray shape=ellipse style=filled]
+	generate_vgrid_from_file -> vgrid_obj
+	make_case [label="Make Case
+[Case]" color=lightblue shape=box style=filled]
+	case [label=case color=lightgray shape=ellipse style=filled]
+	make_case -> case
+	configure_forcing [label="Configure Forcing
+[case.configure_forcings]" color=lightblue shape=box style=filled]
+	forcing_config [label=forcing_config color=lightgray shape=ellipse style=filled]
+	configure_forcing -> forcing_config
+	data_access [label="Raw Data Access
+[raw_data_access.driver.ProductFunctionRegistry]" color=lightblue shape=box style=filled]
+	data_access_function [label=data_access_function color=lightgray shape=ellipse style=filled]
+	data_access -> data_access_function
+	chl [label="Chlorophyll File Generation
+[From CESM Inputdata]" color=lightblue shape=box style=filled]
+	global_chl_file [label=global_chl_file color=lightgray shape=ellipse style=filled]
+	chl -> global_chl_file
+	tides [label="Tidal File Generation
+[From TPXO Website]" color=lightblue shape=box style=filled]
+	global_tidal_file [label=global_tidal_file color=lightgray shape=ellipse style=filled]
+	tides -> global_tidal_file
+	process_forcing [label="Process Forcing
+[case.process_forcings]" color=lightblue shape=box style=filled]
+	forcing [label=forcing color=lightgray shape=ellipse style=filled]
+	process_forcing -> forcing
+	large_data_process_forcing [label="Large Data Process Forcing
+[large_data_workflow.driver.main]" color=lightblue shape=box style=filled]
+	forcing [label=forcing color=lightgray shape=ellipse style=filled]
+	large_data_process_forcing -> forcing
+	grid_obj -> topo_from_file
+	grid_from_file -> topo_from_file
+	grid_obj -> generate_topo
+	global_topo_file -> generate_topo
+	topo_obj -> topo_editor
+	grid_obj -> make_case
+	topo_obj -> make_case
+	vgrid_obj -> make_case
+	case -> configure_forcing
+	data_access_function -> configure_forcing
+	global_tidal_file -> configure_forcing
+	global_chl_file -> configure_forcing
+	case -> process_forcing
+	forcing_config -> process_forcing
+	forcing_config -> large_data_process_forcing
+	forcing [label=forcing color="#66aa88" penwidth=2]
+	case [label=case color="#66aa88" penwidth=2]
+	forcing_config [label=forcing_config color="#66aa88" penwidth=2]
+	vgrid_obj [label=vgrid_obj color="#66aa88" penwidth=2]
+	topo_obj [label=topo_obj color="#66aa88" penwidth=2]
+	grid_obj [label=grid_obj color="#66aa88" penwidth=2]
+	global_chl_file [label=global_chl_file color="#cc6666" penwidth=2]
+	global_topo_file [label=global_topo_file color="#cc6666" penwidth=2]
+	data_access_function [label=data_access_function color="#cc6666" penwidth=2]
+	global_tidal_file [label=global_tidal_file color="#cc6666" penwidth=2]
+	subgraph cluster_legend {
+		color=gray fontsize=12 label=Legend style=rounded
+		mandatory_legend [label="Mandatory Requirement" color="#66aa88" shape=oval style=filled]
+		optional_legend [label="Optional Requirement" color="#cc6666" shape=oval style=filled]
+		mandatory_legend -> optional_legend [style=invis]
+	}
+}
