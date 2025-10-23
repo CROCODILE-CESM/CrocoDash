@@ -149,20 +149,6 @@ def regrid_dataset_piecewise(
                         boundary_number_conversion[boundary]
                     )
                 )
-
-                if not preview:
-                    if output_file_path.exists():
-                        logger.info(
-                            f"Output file {output_file_path} already exists. It will be skipped."
-                        )
-                    else:
-                        expt.setup_single_boundary(
-                            file_path,
-                            dataset_varnames,
-                            boundary,
-                            boundary_number_conversion[boundary],
-                        )
-
                 # Rename file
                 boundary_str = f"{boundary_number_conversion[boundary]:03d}"
                 file_start_date = file_start.strftime(date_format)
@@ -173,8 +159,19 @@ def regrid_dataset_piecewise(
                 output_file_names.append(filename_with_dates)
                 output_file_path_with_dates = expt.mom_input_dir / filename_with_dates
                 if not preview:
-                    logger.info(f"Saving regridding file as {filename_with_dates}")
-                    os.rename(output_file_path, output_file_path_with_dates)
+                    if output_file_path_with_dates.exists():
+                        logger.info(
+                            f"Output file {output_file_path_with_dates} already exists. It will be skipped."
+                        )
+                    else:
+                        expt.setup_single_boundary(
+                            file_path,
+                            dataset_varnames,
+                            boundary,
+                            boundary_number_conversion[boundary],
+                        )
+                        logger.info(f"Saving regridding file as {filename_with_dates}")
+                        os.rename(output_file_path, output_file_path_with_dates)
 
     # Run Initial Condition
     if run_initial_condition:
