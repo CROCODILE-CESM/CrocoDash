@@ -148,7 +148,7 @@ class Case:
 
         if cvars["MACHINE"].value != "CESM_NOT_PORTED":
             self._create_newcase()
-
+            self.is_non_local = self.cc._is_non_local()
             self._cime_case = self.cime.get_case(
                 self.caseroot, non_local=self.is_non_local
             )
@@ -157,7 +157,6 @@ class Case:
             print("Compset longname is:", self.compset)
 
             self.do_exec = True
-            self.is_non_local = self.cc._is_non_local()
         else:
             print("Machine is not yet ported to CESM, skipping case creation. You will only get an input directory! Please don't use a compset alias if you don't create a case!")
             self.do_exec = False
