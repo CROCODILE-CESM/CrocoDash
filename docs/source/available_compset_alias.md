@@ -1,5 +1,7 @@
 # Available Compset Aliases
 
+Regional compsets are available by checking out the CROCODILE-CESM/CESM fork. You can always use the long names of the compsets instead. The only job of the%REGIONAL flag on MOM6 in the compset longname is that it sets an xml variable MOM6_DOMAIN_TYPE=REGIONAl, which shifts input parameters to regional defaults.
+
 | Alias | Long name | Description |
 |---|---|---|
 | CR_JRA | 1850_DATM%JRA_SLND_SICE_MOM6%REGIONAL_SROF_SGLC_SWAV | Standalone ocean with data atmosphere from JRA |
