@@ -334,7 +334,7 @@ class Case:
         too_much_data: bool = False,
         chl_processed_filepath: str | Path | None = None,
         runoff_esmf_mesh_filepath: str | Path | None = None,
-        data_input_path: str | Path | None = None,
+        raw_data_path: str | Path | None = None,
         global_river_nutrients_filepath: str | Path | None = None,
         marbl_ic_filepath: str | Path | None = None,
     ):
@@ -376,7 +376,7 @@ class Case:
             If passed, points to the processed global chlorophyll file for regional processing through mom6_bathy.chl
         runoff_esmf_mesh_filepath : Path
             If passed, points to the processed global runoff file for mapping through mom6_bathy.mapping
-        data_input_path : str or Path, optional
+        raw_data_path : str or Path, optional
             If passed, a path to the directory where raw output data is stored. This is used instead to extract OBCs and ICs for the case.
         global_river_nutrients_filepath: str or Path, optional
             If passed, points to the processed global river nutrients file for regional processing through mom6_bathy.mapping
@@ -410,9 +410,9 @@ class Case:
             self.ProductFunctionRegistry.add_product_config(
                 product_name, product_info=product_info
             )
-        if data_input_path is not None and product_name.upper() == "CESM_OUTPUT":
+        if raw_data_path is not None and product_name.upper().startswith("CESM_OUTPUT"):
             self.configure_cesm_initial_and_boundary_conditions(
-                input_path=data_input_path,
+                input_path=raw_data_path,
                 date_range=date_range,
                 boundaries=boundaries,
                 too_much_data=too_much_data,
@@ -816,7 +816,7 @@ class Case:
             raise RuntimeError(
                 "configure_forcings() must be called before process_forcings()."
             )
-        if (self.forcing_product_name).upper() == "CESM_OUTPUT":
+        if self.forcing_product_name.upper().startswith("CESM_OUTPUT"):
             self.process_cesm_initial_and_boundary_conditions(
                 process_initial_condition, process_velocity_tracers
             )
@@ -1335,7 +1335,7 @@ class Case:
             ("DEPRESS_INITIAL_SURFACE", True),
             ("VELOCITY_CONFIG", "file"),
         ]
-        if self.forcing_product_name.upper() != "CESM_OUTPUT":
+        if not self.forcing_product_name.upper().startswith("CESM_OUTPUT"):
             ic_params.extend(
                 [
                     ("TEMP_SALT_Z_INIT_FILE", "init_tracers.nc"),
@@ -1482,7 +1482,7 @@ class Case:
             # Nudging
             obc_params.append((seg_id + "_VELOCITY_NUDGING_TIMESCALES", "0.3, 360.0"))
             bgc_tracers = ""
-            if self.forcing_product_name.upper() != "CESM_OUTPUT":
+            if not self.forcing_product_name.upper().startswith("CESM_OUTPUT"):
                 standard_data_str = lambda: (
                     f'"U=file:forcing_obc_segment_{seg_ix}.nc(u),'
                     f"V=file:forcing_obc_segment_{seg_ix}.nc(v),"
