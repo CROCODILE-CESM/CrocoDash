@@ -731,23 +731,6 @@ class Case:
         )
         session_id = cvars["MB_ATTEMPT_ID"].value
 
-        self.expt = rmom6.experiment(
-            date_range=("1850-01-01 00:00:00", "1851-01-01 00:00:00"),  # Dummy times
-            resolution=None,
-            number_vertical_layers=None,
-            layer_thickness_ratio=None,
-            depth=self.ocn_topo.max_depth,
-            mom_run_dir=self._cime_case.get_value("RUNDIR"),
-            mom_input_dir=self.inputdir / "ocnice",
-            hgrid_type="from_file",
-            hgrid_path=self.supergrid_path,
-            vgrid_type="from_file",
-            vgrid_path=self.vgrid_path,
-            minimum_depth=self.ocn_topo.min_depth,
-            tidal_constituents=self.tidal_constituents,
-            expt_name=self.caseroot.name,
-            boundaries=boundaries,
-        )
         return True
 
     def configure_chl(self, chl_processed_filepath: str | Path):
@@ -1179,6 +1162,38 @@ class Case:
     @property
     def name(self) -> str:
         return self.caseroot.name
+
+    @property 
+    def expt(self) -> rmom6.experiment:
+        
+        if not hasattr(self, "date_range"):
+            print("Date not found so using a dummy date of 1850-1851")
+            self.date_range = ("1850-01-01 00:00:00", "1851-01-01 00:00:00")  # Dummy times
+        if not hasattr(self, "boundaries"):
+            print("Boundaries not found so using default")
+            self.boundaries =  ["north", "south", "east", "west"]
+        if not hasattr(self, "tidal_constituents"):
+            print("tidal_constituents not found so using only M2")
+            self.tidal_constituents =  ["M2"]
+
+        return rmom6.experiment(
+            date_range=self.date_range,  
+            resolution=None,
+            number_vertical_layers=None,
+            layer_thickness_ratio=None,
+            depth=self.ocn_topo.max_depth,
+            mom_run_dir=self._cime_case.get_value("RUNDIR"),
+            mom_input_dir=self.inputdir / "ocnice",
+            hgrid_type="from_file",
+            hgrid_path=self.supergrid_path,
+            vgrid_type="from_file",
+            vgrid_path=self.vgrid_path,
+            minimum_depth=self.ocn_topo.min_depth,
+            tidal_constituents=self.tidal_constituents,
+            expt_name=self.caseroot.name,
+            boundaries=self.boundaries,
+        )
+
 
     def _initialize_visualCaseGen(self):
 
