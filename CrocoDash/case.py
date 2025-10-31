@@ -1168,7 +1168,9 @@ class Case:
         
         if not hasattr(self, "date_range"):
             print("Date not found so using a dummy date of 1850-1851")
-            self.date_range = ("1850-01-01 00:00:00", "1851-01-01 00:00:00")  # Dummy times
+            date_range = ("1850-01-01 00:00:00", "1851-01-01 00:00:00")  # Dummy times
+        else:
+            date_range = tuple(ts.strftime("%Y-%m-%d %H:%M:%S") for ts in self.date_range)
         if not hasattr(self, "boundaries"):
             print("Boundaries not found so using default")
             self.boundaries =  ["north", "south", "east", "west"]
@@ -1177,7 +1179,7 @@ class Case:
             self.tidal_constituents =  ["M2"]
 
         return rmom6.experiment(
-            date_range=self.date_range,  
+            date_range=date_range,  
             resolution=None,
             number_vertical_layers=None,
             layer_thickness_ratio=None,

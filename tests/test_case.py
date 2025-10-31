@@ -171,13 +171,6 @@ def test_update_forcing_variables(get_CrocoDash_case):
     search_string = "OBC_NUMBER_OF_SEGMENTS"
     found_user_nl_mom_adjusted_var = False
     case.tidal_constituents = ["M2"]
-    case.expt = rmom6.experiment.create_empty(
-        boundaries=[],
-        date_range=[
-            dt.datetime.strptime("2020-01-01", "%Y-%m-%d"),
-            dt.datetime.strptime("2020-02-01", "%Y-%m-%d"),
-        ],
-    )
     case.boundaries = []
     case.chl_processed_filepath = case.inputdir
     case.date_range = [
