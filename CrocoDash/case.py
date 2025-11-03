@@ -418,6 +418,8 @@ class Case:
                 too_much_data=too_much_data,
             )
         elif product_name.upper() == "GLORYS":
+            if raw_data_path is not None:
+                raise ValueError("raw data path is only supported for CESM_OUTPUT, you instead should use the function_name argument, which is the other way to get raw data, and is little bit better validated.")
             self.configure_initial_and_boundary_conditions(
                 date_range=date_range,
                 boundaries=boundaries,
