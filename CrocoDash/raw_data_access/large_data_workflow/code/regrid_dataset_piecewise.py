@@ -127,11 +127,7 @@ def regrid_dataset_piecewise(
     # Read in hgrid
     hgrid = xr.open_dataset(hgrid)
 
-    # Set up required information
-    expt = rm6.experiment.create_empty()
-    expt.hgrid = hgrid
-    expt.mom_input_dir = Path(output_folder)
-    expt.date_range = [start_date, None]
+    
 
     logger.info("Starting regridding")
     output_file_names = []
@@ -142,16 +138,29 @@ def regrid_dataset_piecewise(
                 expt.date_range = [file_start, None]
                 file_path = Path(file_path)
                 if not preview:
-                    expt.setup_single_boundary(
-                        file_path,
-                        dataset_varnames,
-                        boundary,
-                        boundary_number_conversion[boundary],
+                    # Use Segment Class 
+                    seg = rm6.segment(
+                        hgrid=hgrid,
+                        bathymetry_path=None,
+                        outfolder=Path(output_folder),
+                        segment_name="segment_{:03d}".format(boundary_number_conversion[boundary]),
+                        orientation=boundary, 
+                        startdate=start_date,
+                        repeat_year_forcing=False,
+                    )
+
+                    seg.regrid_velocity_tracers(
+                        infile=file_path,  # location of raw boundary
+                        varnames=dataset_varnames,
+                        arakawa_grid="A",
+                        rotational_method=rm6.rot.RotationMethod.EXPAND_GRID,
+                        regridding_method="bilinear",
+                        fill_method=rm6.regridding.fill_missing_data,
                     )
 
                 # Rename output file
                 output_file_path = (
-                    expt.mom_input_dir
+                    Path(output_folder)
                     / "forcing_obc_segment_{:03d}.nc".format(
                         boundary_number_conversion[boundary]
                     )
@@ -165,17 +174,22 @@ def regrid_dataset_piecewise(
                     boundary_str, file_start_date, file_end_date
                 )
                 output_file_names.append(filename_with_dates)
-                output_file_path_with_dates = expt.mom_input_dir / filename_with_dates
+                output_file_path_with_dates = Path(output_folder) / filename_with_dates
                 if not preview:
                     logger.info(f"Saving regridding file as {filename_with_dates}")
                     os.rename(output_file_path, output_file_path_with_dates)
 
     # Run Initial Condition
     if run_initial_condition:
+        # Set up required information
+        expt = rm6.experiment.create_empty()
+        expt.hgrid = hgrid
+        expt.mom_input_dir = Path(output_folder)
+        expt.date_range = [start_date, None]
+        expt.vgrid = expt._make_vgrid(vgrid_from_file.dz.data) # renames/changes meta data
         file_path = Path(folder) / "ic_unprocessed.nc"
         matching_files["IC"] = [("None", "None", file_path)]
         vgrid_from_file = xr.open_dataset(vgrid_path)
-        expt.vgrid = expt._make_vgrid(vgrid_from_file.dz.data) # renames/changes meta data
         if not preview:
             expt.setup_initial_condition(file_path, dataset_varnames)
         output_file_names.append("init_eta.nc")
