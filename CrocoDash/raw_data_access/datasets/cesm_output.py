@@ -12,7 +12,7 @@ from pathlib import Path
 import xarray as xr
 import cftime
 import dask.base
-
+import pandas as pd
 
 def get_cesm_data(
     dates: list,
@@ -23,7 +23,7 @@ def get_cesm_data(
     output_dir=Path(""),
     output_file=None,
     dataset_varnames=["SSH", "TEMP", "SALT", "VVEL", "UVEL"],
-    dataset_path="glade/campaign/collections/cmip/CMIP6/CESM-HR/FOSI_BGC/HR/g.e22.TL319_t13.G1850ECOIAF_JRA_HR.4p2z.001/ocn/proc/tseries/month_1",
+    dataset_path="/glade/campaign/collections/cmip/CMIP6/CESM-HR/FOSI_BGC/HR/g.e22.TL319_t13.G1850ECOIAF_JRA_HR.4p2z.001/ocn/proc/tseries/month_1",
     date_format: str = "%Y%m%d",
     regex=r"(\d{6,8})-(\d{6,8})",
     space_character=".",
@@ -32,7 +32,7 @@ def get_cesm_data(
     preview=False,
 ):
     dates = pd.date_range(start=dates[0], end=dates[1]).to_pydatetime().tolist()
-    variable_info = pd.parse_dataset(
+    variable_info = parse_dataset(
         dataset_varnames,
         dataset_path,
         dates[0].strftime(date_format),
@@ -41,7 +41,7 @@ def get_cesm_data(
         regex=regex,
         space_character=space_character,
     )
-    sd.subset_dataset(
+    paths = subset_dataset(
         variable_info=variable_info,
         output_path=output_dir,
         lat_min=lat_min - 1.5,
@@ -52,6 +52,7 @@ def get_cesm_data(
         lon_name=lon_name,
         preview=preview,
     )
+    return paths
 
 
 def parse_dataset(
@@ -142,8 +143,10 @@ def subset_dataset(
 
     mask = None
     # Iterate through each variable and its corresponding file paths
+    output_file_paths = []
     for var_name, file_paths in variable_info.items():
         output_file = output_path / f"{var_name}_subset.nc"
+        output_file_paths.append(output_file)
         if output_file.exists():
             print(f"Subset already exists for {var_name}, skipping")
             continue
@@ -166,9 +169,10 @@ def subset_dataset(
 
         # Convert time. Saving to netcdf is not working with cftime objects
         if isinstance(ds.time.values[0], cftime.datetime):
+            adjusted_time = [subtract_month(t) for t in ds.time.values]
             units = "days since 1850-01-01 00:00:00"
             calendar = "noleap"
-            numeric_time = cftime.date2num(ds.time, units=units, calendar=calendar)
+            numeric_time = cftime.date2num(adjusted_time, units=units, calendar=calendar)
             ds = ds.assign_coords(
                 time=("time", numeric_time, {"units": units, "calendar": calendar})
             )
@@ -195,7 +199,7 @@ def subset_dataset(
 
             print(f"Subsetted dataset for variable '{var_name}' saved to {output_file}")
 
-    return
+    return output_file_paths
 
 
 def get_date_range_from_filename(path, regex):
@@ -235,3 +239,14 @@ def first_value(da_var):
         return arr.ravel()[0].compute()
     else:
         return arr.ravel()[0]
+
+def subtract_month(dt):
+    # subtract one month, rolling back year if necessary
+    year = dt.year
+    month = dt.month - 1
+    if month == 0:
+        month = 12
+        year -= 1
+    # keep day, hour, minute, second as is
+    day = min(dt.day, 28)  # avoid invalid dates (Feb)
+    return cftime.DatetimeNoLeap(year, month, day, dt.hour, dt.minute, dt.second)
