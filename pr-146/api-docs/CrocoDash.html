@@ -513,7 +513,7 @@ If provided, both TPXO elevation and velocity file paths must also be provided.<
 <li><p><strong>tpxo_elevation_filepath</strong> (<em>str</em><em> or </em><em>Path</em><em>, </em><em>optional</em>) – File path to the TPXO tidal elevation data file.</p></li>
 <li><p><strong>tpxo_velocity_filepath</strong> (<em>str</em><em> or </em><em>Path</em><em>, </em><em>optional</em>) – File path to the TPXO tidal velocity data file.</p></li>
 <li><p><strong>product_name</strong> (<em>str</em><em>, </em><em>optional</em>) – Name of the forcing data product to use. Default is “GLORYS”.</p></li>
-<li><p><strong>function_name</strong> (<em>str</em><em>, </em><em>optional</em>) – Name of the function to call for downloading the forcing data.
+<li><p><strong>function_name</strong> (<em>str</em><em>, </em><em>optional</em>) – Name of the function to call for downloading the raw forcing data.
 Default is “get_glorys_data_script_for_cli”.</p></li>
 <li><p><strong>product_info</strong> (<em>str</em><em> | </em><em>Path</em><em> | </em><em>dict</em><em>, </em><em>optional</em>) – The equivalent MOM6 names to Product Names. Example:  xh -&gt; lat time -&gt; valid_time salinity -&gt; salt, as well as any other information required for product parsing
 The <cite>None</cite> option assumes the information is in raw_data_access/config under {product_name}.json. Every other option is copied there.</p></li>
