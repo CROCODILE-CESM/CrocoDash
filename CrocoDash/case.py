@@ -363,7 +363,7 @@ class Case:
         product_name : str, optional
             Name of the forcing data product to use. Default is "GLORYS".
         function_name : str, optional
-            Name of the function to call for downloading the forcing data.
+            Name of the function to call for downloading the raw forcing data.
             Default is "get_glorys_data_script_for_cli".
         product_info: str | Path | dict, optional
             The equivalent MOM6 names to Product Names. Example:  xh -> lat time -> valid_time salinity -> salt, as well as any other information required for product parsing
