@@ -135,7 +135,6 @@ def regrid_dataset_piecewise(
     if run_boundary_conditions:
         for boundary in matching_files.keys():
             for file_start, file_end, file_path in matching_files[boundary]:
-                expt.date_range = [file_start, None]
                 file_path = Path(file_path)
                 if not preview:
                     # Use Segment Class 
@@ -145,7 +144,7 @@ def regrid_dataset_piecewise(
                         outfolder=Path(output_folder),
                         segment_name="segment_{:03d}".format(boundary_number_conversion[boundary]),
                         orientation=boundary, 
-                        startdate=start_date,
+                        startdate=file_start,
                         repeat_year_forcing=False,
                     )
 
