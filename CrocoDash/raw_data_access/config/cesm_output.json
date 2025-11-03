@@ -8,7 +8,7 @@
     "u_lat_name":"TLAT",
     "u_lon_name":"TLONG",
     "v_lon_name":"TLONG",
-    "v_lat_name":"VLAT",
+    "v_lat_name":"TLAT",
     "ssh": "SSH",
     "zl": [
         "z_t",

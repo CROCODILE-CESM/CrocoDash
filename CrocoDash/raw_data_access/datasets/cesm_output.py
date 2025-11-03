@@ -13,6 +13,7 @@ import xarray as xr
 import cftime
 import dask.base
 
+
 def get_cesm_data(
     dates: list,
     lat_min,
@@ -21,19 +22,37 @@ def get_cesm_data(
     lon_max,
     output_dir=Path(""),
     output_file=None,
-    dataset_varnames=[
-        "time",
-        "latitude",
-        "longitude",
-        "depth",
-        "zos",
-        "uo",
-        "vo",
-        "so",
-        "thetao",
-    ],
-    dataset_path = ""
-)
+    dataset_varnames=["SSH", "TEMP", "SALT", "VVEL", "UVEL"],
+    dataset_path="glade/campaign/collections/cmip/CMIP6/CESM-HR/FOSI_BGC/HR/g.e22.TL319_t13.G1850ECOIAF_JRA_HR.4p2z.001/ocn/proc/tseries/month_1",
+    date_format: str = "%Y%m%d",
+    regex=r"(\d{6,8})-(\d{6,8})",
+    space_character=".",
+    lat_name="TLAT",
+    lon_name="TLONG",
+    preview=False,
+):
+    dates = pd.date_range(start=dates[0], end=dates[1]).to_pydatetime().tolist()
+    variable_info = pd.parse_dataset(
+        dataset_varnames,
+        dataset_path,
+        dates[0].strftime(date_format),
+        dates[1].strftime(date_format),
+        date_format=date_format,
+        regex=regex,
+        space_character=space_character,
+    )
+    sd.subset_dataset(
+        variable_info=variable_info,
+        output_path=output_dir,
+        lat_min=lat_min - 1.5,
+        lat_max=lat_max + 1.5,
+        lon_min=lon_min - 1.5,
+        lon_max=lon_max + 1.5,
+        lat_name=lat_name,
+        lon_name=lon_name,
+        preview=preview,
+    )
+
 
 def parse_dataset(
     variable_names: list[str],
