@@ -21,8 +21,21 @@ def add_product_config(product_name: str, product_info: str | Path | dict):
         elif product_info == None:
             raise ValueError(f"No product info provided but product information does not exist in {output_path}")
             return
-        # Validate, must have the keys time, xh, yh, u, v, ssh, z_dim or zl, and a subdict called tracers with the fields salt, temp
-        required_keys = {"time", "xh", "yh", "u", "v", "ssh", "zl", "u_lat_name","u_lon_name","v_lat_name","v_lon_name","z_unit_conversion"}
+        # Validate
+        required_keys = {
+            "time",
+            "u_x_coord",
+            "u_y_coord",
+            "v_x_coord",
+            "v_y_coord",
+            "tracer_x_coord",
+            "tracer_y_coord",
+            "depth_coord",
+            "u_var_name",
+            "v_var_name",
+            "eta_var_name",
+            "tracer_var_names",
+        }
         tracer_keys = {"salt", "temp"}
 
         missing = []

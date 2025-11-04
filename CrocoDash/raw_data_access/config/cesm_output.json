@@ -1,21 +1,21 @@
 {
     "time": "time",
-    "xh": "TLONG",
-    "yh": "TLAT",
-    "u": "UVEL",
+    "tracer_x_coord": "TLONG",
+    "tracer_y_coord": "TLAT",
+    "u_var_name": "UVEL",
     "z_unit_conversion": 0.01,
-    "v": "VVEL",
-    "u_lat_name":"TLAT",
-    "u_lon_name":"TLONG",
-    "v_lon_name":"TLONG",
-    "v_lat_name":"TLAT",
-    "ssh": "SSH",
-    "zl": [
+    "v_var_name": "VVEL",
+    "u_x_coord":"TLAT",
+    "u_x_coord":"TLONG",
+    "v_x_coord":"TLONG",
+    "v_y_coord":"TLAT",
+    "eta_var_name": "SSH",
+    "depth_coord": [
         "z_t",
         "z_t_150m"
     ],
     "delimiter": ".",
-    "tracers": {
+    "tracer_var_names": {
         "temp": "TEMP",
         "salt": "SALT",
         "PO4": "PO4",

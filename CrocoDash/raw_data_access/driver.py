@@ -113,6 +113,9 @@ class ProductFunctionRegistry:
                     assert any(temp_dir.glob("*.nc")), f"No .nc files found in {temp_dir}"
                 else:
                     assert os.path.exists(Path(temp_dir) / os.path.basename(res))
+                sig = inspect.signature(func)
+                assert "variables" in sig.parameters, "Forcing Product Functions must specify the variables arg"
+                    
                     
             else:
                 logger.error(

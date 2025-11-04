@@ -37,6 +37,7 @@ def main(get_dataset_piecewise= True, regrid_dataset_piecewise=True, merge_piece
         gdp.get_dataset_piecewise(
             product_name=config["forcing"]["product_name"],
             function_name=config["forcing"]["function_name"],
+            product_information=config["forcing"]["information"],
             date_format=config["dates"]["format"],
             start_date=config["dates"]["start"],
             end_date=config["dates"]["end"],
@@ -58,7 +59,7 @@ def main(get_dataset_piecewise= True, regrid_dataset_piecewise=True, merge_piece
             config["dates"]["start"],
             config["dates"]["end"],
             config["paths"]["hgrid_path"],
-            config["forcing"]["varnames"],
+            config["forcing"]["information"],
             config["paths"]["regridded_dataset_path"],
             config["general"]["boundary_number_conversion"],
             config["general"]["run_initial_condition"],

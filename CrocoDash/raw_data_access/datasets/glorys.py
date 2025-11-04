@@ -24,7 +24,7 @@ def get_glorys_data_from_rda(
     lon_max,
     output_dir=Path(""),
     output_file="raw_glorys.nc",
-    dataset_varnames=[
+    variables=[
         "time",
         "latitude",
         "longitude",
@@ -56,7 +56,7 @@ def get_glorys_data_from_rda(
         ds_in_files.extend(glob.glob(pattern, recursive=True))
     ds_in_files = sorted(ds_in_files)
     
-    ds = xr.open_mfdataset(ds_in_files, decode_times=False, engine = "h5netcdf", parallel = True)[dataset_varnames]
+    ds = xr.open_mfdataset(ds_in_files, decode_times=False, engine = "h5netcdf", parallel = True)[variables]
 
     if lon_min * lon_max > 0:
         dataset = ds.sel(
@@ -94,7 +94,7 @@ def get_glorys_data_from_cds_api(
     lon_max,
     output_dir=None,
     output_file=None,
-    dataset_varnames=["zos", "uo", "vo", "so", "thetao"],
+    variables=["zos", "uo", "vo", "so", "thetao"],
 ):
     """
     Using the copernucismarine api, query GLORYS data (any dates)
@@ -110,7 +110,7 @@ def get_glorys_data_from_cds_api(
         maximum_latitude=lat_max + 1,
         start_datetime=start_datetime,
         end_datetime=end_datetime,
-        variables=dataset_varnames,
+        variables=variables,
         output_directory=output_dir,
         output_filename=output_file,
     )
@@ -125,6 +125,7 @@ def get_glorys_data_script_for_cli(
     lon_max,
     output_dir,
     output_file,
+    variables = None
 ) -> None:
     """
     Script to run the GLORYS data query for the CLI

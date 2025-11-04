@@ -22,24 +22,24 @@ def get_cesm_data(
     lon_max,
     output_dir=Path(""),
     output_file=None,
-    dataset_varnames=["SSH", "TEMP", "SALT", "VVEL", "UVEL"],
+    variables=["SSH", "TEMP", "SALT", "VVEL", "UVEL"],
     dataset_path="/glade/campaign/collections/cmip/CMIP6/CESM-HR/FOSI_BGC/HR/g.e22.TL319_t13.G1850ECOIAF_JRA_HR.4p2z.001/ocn/proc/tseries/month_1",
     date_format: str = "%Y%m%d",
     regex=r"(\d{6,8})-(\d{6,8})",
-    space_character=".",
-    lat_name="TLAT",
-    lon_name="TLONG",
+    delimiter=".",
+    tracer_y_coord="TLAT",
+    tracer_x_coord="TLONG",
     preview=False,
 ):
     dates = pd.date_range(start=dates[0], end=dates[1]).to_pydatetime().tolist()
     variable_info = parse_dataset(
-        dataset_varnames,
+        variables,
         dataset_path,
         dates[0].strftime(date_format),
         dates[1].strftime(date_format),
         date_format=date_format,
         regex=regex,
-        space_character=space_character,
+        space_character=delimiter,
     )
     paths = subset_dataset(
         variable_info=variable_info,

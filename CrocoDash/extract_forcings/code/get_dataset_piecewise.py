@@ -13,6 +13,7 @@ logger = utils.setup_logger(__name__)
 def get_dataset_piecewise(
     product_name: str,
     function_name: str,
+    product_information:dict,
     date_format: str,
     start_date: str,
     end_date: str,
@@ -102,6 +103,16 @@ def get_dataset_piecewise(
     # Set up the first start_date starter
     start_date = dates[0]
     output_file_names = []
+
+
+    # Build requested variables
+    phys_vars = [product_information["u_var_name"],product_information["v_var_name"],product_information["eta_var_name"],product_information["tracer_var_names"]["temp"],product_information["tracer_var_names"]["salt"]]
+    extra_tracers = [v for k, v in product_information["tracer_var_names"].items() if k not in ("temp", "salt")]
+    #Build extra args
+    extra_args = {}
+    for key in ["dataset_path", "date_format", "regex","delimiter","tracer_x_coord","tracer_y_coord"]:
+        if key in product_information:
+            extra_args[key] = product_information[key]
     # Retrieve and save data piecewise
     for ind in range(len(dates) - 1):
         end_date = dates[ind + 1]
@@ -126,6 +137,7 @@ def get_dataset_piecewise(
                     lon_max=latlon_info["lon_max"],
                     output_dir=output_dir,
                     output_file=output_file,
+                    **extra_args
                 )
         if run_boundary_conditions:
             for boundary in boundary_number_conversion.keys():

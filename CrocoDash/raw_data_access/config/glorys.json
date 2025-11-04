@@ -1,15 +1,19 @@
 {
-
     "time": "time",
-    "yh": "latitude",
-    "xh": "longitude",
-    "zl": "depth",
-    "eta": "zos",
-    "u": "uo",
-    "v": "vo",
-    "tracers": {
-        "salt": "so",
-        "temp": "thetao"
+    "tracer_x_coord": "longitude",
+    "tracer_y_coord": "latitude",
+    "u_var_name": "uo",
+    "v_var_name": "vo",
+    "u_y_coord":"latitude",
+    "u_x_coord":"longitude",
+    "v_x_coord":"longitude",
+    "v_y_coord":"latitude",
+    "eta_var_name": "zos",
+    "depth_coord": [
+        "depth"
+    ],
+    "tracer_var_names": {
+        "temp": "thetao",
+        "salt": "so"
     }
-
 }
