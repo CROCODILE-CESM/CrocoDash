@@ -26,7 +26,8 @@ def get_cesm_data(
     dataset_path="/glade/campaign/collections/cmip/CMIP6/CESM-HR/FOSI_BGC/HR/g.e22.TL319_t13.G1850ECOIAF_JRA_HR.4p2z.001/ocn/proc/tseries/month_1",
     date_format: str = "%Y%m%d",
     regex=r"(\d{6,8})-(\d{6,8})",
-    delimiter="."
+    delimiter=".",
+    preview = False
 ):
     tracer_y_coord="TLAT"
     tracer_x_coord="TLONG"
@@ -48,8 +49,8 @@ def get_cesm_data(
         lon_min=lon_min - 1.5,
         lon_max=lon_max + 1.5,
         lat_name=tracer_y_coord,
-        lon_name=lon_name,
-        preview=tracer_x_coord,
+        lon_name=tracer_x_coord,
+        preview=preview,
     )
     return paths
 
