@@ -205,25 +205,5 @@ def regrid_dataset_piecewise(
             "output_file_names": output_file_names,
         }
 
-
-def main(config_path):
-    config = load_config(config_path)
-    regrid_dataset_piecewise(
-        config["paths"]["raw_dataset_path"],
-        config["raw_file_regex"]["raw_dataset_pattern"],
-        config["dates"]["format"],
-        config["dates"]["start"],
-        config["dates"]["end"],
-        config["paths"]["hgrid_path"],
-        config["varnames"],
-        config["paths"]["regridded_dataset_path"],
-        config["boundary_number_conversion"],
-        config["params"]["run_initial_condition"],
-        config["params"]["run_boundary_conditions"],
-        config["params"]["preview"],
-    )
-    return
-
-
 if __name__ == "__main__":
-    main("<CONFIG FILEPATH>")
+    print("This is the regrid of the extract forcings workflow, don't run this directly!")

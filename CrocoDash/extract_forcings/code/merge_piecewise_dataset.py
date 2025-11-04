@@ -129,19 +129,7 @@ def merge_piecewise_dataset(
         }
 
 
-def main(config_path):
-    config = load_config(config_path)
-    merge_piecewise_dataset(
-        config["paths"]["raw_dataset_path"],
-        config["raw_file_regex"]["regridded_dataset_pattern"],
-        config["dates"]["format"],
-        config["dates"]["start"],
-        config["dates"]["end"],
-        config["boundary_number_conversion"],
-        config["paths"]["merged_dataset_path"],
-    )
-    return
 
 
 if __name__ == "__main__":
-    main("<CONFIG FILEPATH>")
+    print("This is the merge & output part of the extract forcings workflow, don't run this directly!")

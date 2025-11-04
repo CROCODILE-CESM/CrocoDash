@@ -171,38 +171,6 @@ def get_dataset_piecewise(
         }
 
 
-def main(config_file):
-    """
-    Main function to run the large dataset workflow using a configuration file.
-
-    Parameters
-    ----------
-    config_file : str or Path
-        Path to the configuration JSON file.
-
-    Returns
-    -------
-    None
-    """
-    print("Starting Large Dataset Workflow")
-    config = load_config(config_file)
-
-    ## Check to make sure everything exists INCOMPLETE
-    get_dataset_piecewise(
-        product_name=config["forcing"]["product_name"],
-        function_name=config["forcing"]["function_name"],
-        date_format=config["dates"]["format"],
-        start_date=config["dates"]["start"],
-        end_date=config["dates"]["end"],
-        hgrid_path=config["paths"]["hgrid_path"],
-        step_days=int(config["params"]["step"]),
-        output_dir=config["paths"]["raw_dataset_path"],
-        boundary_number_conversion=config["boundary_number_conversion"],
-        run_initial_condition=True,
-        run_boundary_conditions=True,
-        preview=config["params"]["preview"],
-    )
-
 
 if __name__ == "__main__":
-    main("<CONFIG FILEPATH>")
+    print("This is the raw dataset accessor of the workflow, don't run this directly! ")
