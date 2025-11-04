@@ -201,7 +201,7 @@ def regrid_dataset_piecewise(
     elif preview:
         return {
             "matching_files": matching_files,
-            "output_folder": expt.mom_input_dir,
+            "output_folder": output_folder,
             "output_file_names": output_file_names,
         }
 
