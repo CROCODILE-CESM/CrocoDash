@@ -129,7 +129,7 @@ class Case:
         self.ProductFunctionRegistry.load_functions()
         self.forcing_product_name = None
         self._configure_forcings_called = False
-        self._large_data_workflow_called = False
+        self._too_much_data = False
         self.compset = compset
 
         # Resolution name:
@@ -410,14 +410,7 @@ class Case:
             self.ProductFunctionRegistry.add_product_config(
                 product_name, product_info=product_info
             )
-        if data_input_path is not None and product_name.upper() == "CESM_OUTPUT":
-            self.configure_cesm_initial_and_boundary_conditions(
-                input_path=data_input_path,
-                date_range=date_range,
-                boundaries=boundaries,
-                too_much_data=too_much_data,
-            )
-        elif product_name.upper() == "GLORYS":
+        if tb.product_exists(product_name.upper()) and tb.category_of_product(product_name.upper()) == "forcing":
             self.configure_initial_and_boundary_conditions(
                 date_range=date_range,
                 boundaries=boundaries,
@@ -485,79 +478,6 @@ class Case:
         )
         return True
 
-    def configure_cesm_initial_and_boundary_conditions(
-        self,
-        input_path: str | Path,
-        date_range: list[str],
-        boundaries: list[str] = ["south", "north", "west", "east"],
-        too_much_data: bool = False,
-    ):
-        """
-        Configure CESM OBC and ICs from previous CESM output
-        """
-        self.boundaries = boundaries
-
-        if too_much_data:
-            self._large_data_workflow_called = True
-
-        self.date_range = pd.to_datetime(date_range)
-        # Create the forcing directory
-        if self.override is True:
-            forcing_dir_path = self.inputdir / self.forcing_product_name
-            if forcing_dir_path.exists():
-                shutil.rmtree(forcing_dir_path)
-        forcing_dir_path.mkdir(exist_ok=False)
-
-        # Generate Boundary Info
-        boundary_info = dv.get_rectangular_segment_info(self.ocn_grid)
-
-        # Create the OBC generation files
-        self.large_data_workflow_path = (
-            self.inputdir
-            / self.forcing_product_name
-            / "cesm_output_extract_obc_workflow"
-        )
-
-        # Copy large data workflow folder there
-        shutil.copytree(
-            Path(__file__).parent / "extract_obc",
-            self.large_data_workflow_path,
-        )
-
-        # Set Vars for Config
-        date_format = "%Y%m%d"
-
-        with open(self.large_data_workflow_path / "config.json", "r") as f:
-            config = json.load(f)
-        config["paths"]["input_path"] = str(input_path)
-        config["paths"]["supergrid_path"] = self.supergrid_path
-        config["paths"]["bathymetry_path"] = self.topo_path
-        config["paths"]["vgrid_path"] = self.vgrid_path
-        config["paths"]["subset_input_path"] = str(
-            self.large_data_workflow_path / "subsetted_data"
-        )
-        config["paths"]["regrid_path"] = str(
-            self.large_data_workflow_path / "regridded_data"
-        )
-        config["paths"]["output_path"] = str(self.inputdir / "ocnice")
-        config["dates"]["start"] = self.date_range[0].strftime(date_format)
-        config["dates"]["end"] = self.date_range[1].strftime(date_format)
-        config["dates"]["format"] = date_format
-        config["cesm_information"] = self.ProductFunctionRegistry.load_product_config(
-            self.forcing_product_name.lower()
-        )
-        config["general"]["boundary_number_conversion"] = {
-            item: idx + 1 for idx, item in enumerate(self.boundaries)
-        }
-
-        # Write out
-        with open(self.large_data_workflow_path / "config.json", "w") as f:
-            json.dump(config, f, indent=4)
-        if self._large_data_workflow_called:
-            print(
-                f"Large data workflow was called, please go to the large data workflow path: {self.large_data_workflow_path} and run the driver script there."
-            )
-
     def configure_initial_and_boundary_conditions(
         self,
         date_range: list[str],
@@ -590,7 +510,9 @@ class Case:
         self.boundaries = boundaries
 
         if too_much_data:
-            self._large_data_workflow_called = True
+            self._too_much_data = True
+        else:
+            self._too_much_data = False
 
         self.date_range = pd.to_datetime(date_range)
         # Create the forcing directory
@@ -599,70 +521,78 @@ class Case:
             if forcing_dir_path.exists():
                 shutil.rmtree(forcing_dir_path)
         forcing_dir_path.mkdir(exist_ok=False)
-        # Generate Boundary Info
-        boundary_info = dv.get_rectangular_segment_info(self.ocn_grid)
 
         # Create the OBC generation files
-        self.large_data_workflow_path = (
-            self.inputdir / self.forcing_product_name / "large_data_workflow"
+        self.extract_forcings_path = (
+            self.inputdir / self.forcing_product_name / "extract_forcings"
         )
 
         # Copy large data workflow folder there
         shutil.copytree(
-            Path(__file__).parent / "raw_data_access" / "large_data_workflow",
-            self.large_data_workflow_path,
+            Path(__file__).parent / "extract_forcings",
+            self.extract_forcings_path,
         )
 
         # Set Vars for Config
         date_format = "%Y%m%d"
-        session_id = cvars["MB_ATTEMPT_ID"].value
 
         # Write Config File
 
         # Read in template
-        if not self._large_data_workflow_called:
+        if not self._too_much_data:
             step = (self.date_range[1] - self.date_range[0]).days + 1
         else:
             step = 5
 
-        with open(self.large_data_workflow_path / "config.json", "r") as f:
+        with open(self.extract_forcings_path / "config.json", "r") as f:
             config = json.load(f)
+
+        # Paths
         config["paths"]["hgrid_path"] = self.supergrid_path
         config["paths"]["vgrid_path"] = self.vgrid_path
+        config["paths"]["bathymetry_path"] = self.vgrid_path
         config["paths"]["raw_dataset_path"] = str(
-            self.large_data_workflow_path / "raw_data"
+            self.extract_forcings_path / "raw_data"
         )
         config["paths"]["regridded_dataset_path"] = str(
-            self.large_data_workflow_path / "regridded_data"
+            self.extract_forcings_path / "regridded_data"
         )
-        config["paths"]["merged_dataset_path"] = str(self.inputdir / "ocnice")
+        config["paths"]["output_path"] = str(self.inputdir / "ocnice")
+
+        # Regex never changes!
+
+        # Dates
         config["dates"]["start"] = self.date_range[0].strftime(date_format)
         config["dates"]["end"] = self.date_range[1].strftime(date_format)
         config["dates"]["format"] = date_format
+
+        # Product Information
         config["forcing"]["product_name"] = self.forcing_product_name.upper()
         config["forcing"]["function_name"] = function_name
-        config["forcing"]["varnames"] = (
+        config["forcing"]["information"] = (
             self.ProductFunctionRegistry.load_product_config(
                 self.forcing_product_name.lower()
             )
         )
-        config["boundary_number_conversion"] = {
+
+        # General
+        config["general"]["boundary_number_conversion"] = {
             item: idx + 1 for idx, item in enumerate(self.boundaries)
         }
-        config["params"]["step"] = step
+        config["general"]["step"] = step
 
         # Write out
-        with open(self.large_data_workflow_path / "config.json", "w") as f:
+        with open(self.extract_forcings_path / "config.json", "w") as f:
             json.dump(config, f, indent=4)
-        if not self._large_data_workflow_called:
+        if not self._too_much_data:
             # This means we start to run the driver right away, the get dataset piecewise option.
-            sys.path.append(str(self.large_data_workflow_path))
+            sys.path.append(str(self.extract_forcings_path))
             import driver
 
             driver.main(regrid_dataset_piecewise=False, merge_piecewise_dataset=False)
         else:
             print(
-                f"Large data workflow was called, please go to the large data workflow path: {self.large_data_workflow_path} and run the driver script there."
+                f"Extract Forcings workflow was called, please go to the extract forcings path: {self.extract_forcings_path} and run the driver script there."
             )
 
     def configure_river_nutrients(self, global_river_nutrients_filepath: str | Path):
@@ -883,7 +813,7 @@ class Case:
         process_initial_condition=True,
         process_velocity_tracers=True,
     ):
-        if self._large_data_workflow_called and (
+        if self._too_much_data and (
             process_velocity_tracers or process_initial_condition
         ):
             process_velocity_tracers = False
@@ -892,12 +822,12 @@ class Case:
                 f"Large data workflow was called, so boundary & initial conditions will not be processed."
             )
             print(
-                f"Please make sure to execute large_data_workflow as described in {self.large_data_workflow_path}"
+                f"Please make sure to execute large_data_workflow as described in {self.extract_forcings_path}"
             )
 
         # Set up the initial condition & boundary conditions
 
-        with open(self.large_data_workflow_path / "config.json", "r") as f:
+        with open(self.extract_forcings_path / "config.json", "r") as f:
             config = json.load(f)
         if process_initial_condition:
             config["general"]["run_initial_condition"] = True
@@ -907,11 +837,11 @@ class Case:
             config["general"]["run_boundary_conditions"] = True
         else:
             config["general"]["run_boundary_conditions"] = False
-        with open(self.large_data_workflow_path / "config.json", "w") as f:
+        with open(self.extract_forcings_path / "config.json", "w") as f:
             json.dump(config, f, indent=4)
 
         if process_initial_condition or process_velocity_tracers:
-            sys.path.append(str(self.large_data_workflow_path))
+            sys.path.append(str(self.extract_forcings_path))
             import eo_driver
 
             eo_driver.extract_obcs(config)
@@ -1114,7 +1044,7 @@ class Case:
         self, process_initial_condition, process_velocity_tracers
     ):
 
-        if self._large_data_workflow_called and (
+        if self._too_much_data and (
             process_velocity_tracers or process_initial_condition
         ):
             process_velocity_tracers = False
@@ -1123,37 +1053,37 @@ class Case:
                 f"Large data workflow was called, so boundary & initial conditions will not be processed."
             )
             print(
-                f"Please make sure to execute large_data_workflow as described in {self.large_data_workflow_path}"
+                f"Please make sure to execute large_data_workflow as described in {self.extract_forcings_path}"
             )
 
         # check all the boundary files are present:
         if (
             process_initial_condition
             and not (
-                self.large_data_workflow_path / "raw_data" / "ic_unprocessed.nc"
+                self.extract_forcings_path / "raw_data" / "ic_unprocessed.nc"
             ).exists()
         ):
             raise FileNotFoundError(
-                f"Initial condition file ic_unprocessed.nc not found in {self.large_data_workflow_path/'raw_data' }. "
+                f"Initial condition file ic_unprocessed.nc not found in {self.extract_forcings_path/'raw_data' }. "
                 "Please make sure to execute get_glorys_data.sh script as described in "
                 "the message printed by configure_forcings()."
             )
 
         for boundary in self.boundaries:
             if process_velocity_tracers and not any(
-                (self.large_data_workflow_path / "raw_data").glob(
+                (self.extract_forcings_path / "raw_data").glob(
                     f"{boundary}_unprocessed*.nc"
                 )
             ):
                 raise FileNotFoundError(
-                    f"Boundary file {boundary}_unprocessed.nc not found in {self.large_data_workflow_path / 'raw_data'}. "
+                    f"Boundary file {boundary}_unprocessed.nc not found in {self.extract_forcings_path / 'raw_data'}. "
                     "Please make sure to execute get_glorys_data.sh script as described in "
                     "the message printed by configure_forcings()."
                 )
 
         # Set up the initial condition & boundary conditions
 
-        with open(self.large_data_workflow_path / "config.json", "r") as f:
+        with open(self.extract_forcings_path / "config.json", "r") as f:
             config = json.load(f)
         if process_initial_condition:
             config["params"]["run_initial_condition"] = True
@@ -1163,11 +1093,11 @@ class Case:
             config["params"]["run_boundary_conditions"] = True
         else:
             config["params"]["run_boundary_conditions"] = False
-        with open(self.large_data_workflow_path / "config.json", "w") as f:
+        with open(self.extract_forcings_path / "config.json", "w") as f:
             json.dump(config, f, indent=4)
 
         if process_initial_condition or process_velocity_tracers:
-            sys.path.append(str(self.large_data_workflow_path))
+            sys.path.append(str(self.extract_forcings_path))
             import driver
 
             driver.main(
