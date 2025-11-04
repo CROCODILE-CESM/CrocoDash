@@ -185,10 +185,10 @@ def regrid_dataset_piecewise(
         expt.hgrid = hgrid
         expt.mom_input_dir = Path(output_folder)
         expt.date_range = [start_date, None]
+        vgrid_from_file = xr.open_dataset(vgrid_path)
         expt.vgrid = expt._make_vgrid(vgrid_from_file.dz.data) # renames/changes meta data
         file_path = Path(folder) / "ic_unprocessed.nc"
         matching_files["IC"] = [("None", "None", file_path)]
-        vgrid_from_file = xr.open_dataset(vgrid_path)
         if not preview:
             expt.setup_initial_condition(file_path, dataset_varnames)
         output_file_names.append("init_eta.nc")
