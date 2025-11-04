@@ -86,7 +86,7 @@ class ProductFunctionRegistry:
             )
             return False
         sig = inspect.signature(func)
-        temp_dir = tempfile.mkdtemp()
+        temp_dir = Path(tempfile.mkdtemp())
         test_file_name = "test_file.nc"
         test_args = [
             ["2000-01-01", "2000-01-02"],
@@ -110,16 +110,17 @@ class ProductFunctionRegistry:
         try:
             if tb.category_of_product(product) == "forcing":
                 if tb.type_of_function(product, func_name) != "SCRIPT":
-                    assert os.path.exists(Path(temp_dir) / test_file_name)
+                    assert any(temp_dir.glob("*.nc")), f"No .nc files found in {temp_dir}"
                 else:
                     assert os.path.exists(Path(temp_dir) / os.path.basename(res))
+                    
             else:
                 logger.error(
                     "Category of product is not supported by the validation function"
                 )
                 return False
-        except AssertionError:
-            logger.error("Checked return result failed!")
+        except AssertionError as e:
+            logger.error(f"Checked return result failed: {e}")
             return False
         shutil.rmtree(temp_dir)
         return True

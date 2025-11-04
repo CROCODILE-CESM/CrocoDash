@@ -8,3 +8,4 @@ GEBCO,SCRIPT,gebco,get_gebco_data_script,get script to download global bathymetr
 SEAWIFS,SCRIPT,seawifs,get_processed_global_seawifs_script_for_cli,Generates bash script for direct CLI access to processed chlorophyll data (No Package Required)
 GLOFAS,PYTHON,glofas,get_processed_global_glofas_script_for_cli,Generates bash script for access to CESM Inputdata processed glofas data
 GLOFAS,PYTHON,glofas,get_global_data_with_python,Gets glofas raw data through the cdsapi package
+CESM_OUTPUT,PYTHON,cesm_output,get_cesm_data,Gets CESM Data from a given path (by default a POP-MARBL run)
