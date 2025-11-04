@@ -152,7 +152,7 @@ def regrid_dataset_piecewise(
                         infile=file_path,  # location of raw boundary
                         varnames=dataset_varnames,
                         arakawa_grid="A",
-                        rotational_method=rm6.rot.RotationMethod.EXPAND_GRID,
+                        rotational_method=rm6.rotation.RotationMethod.EXPAND_GRID,
                         regridding_method="bilinear",
                         fill_method=rm6.regridding.fill_missing_data,
                     )
