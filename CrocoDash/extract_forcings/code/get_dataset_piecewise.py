@@ -13,7 +13,7 @@ logger = utils.setup_logger(__name__)
 def get_dataset_piecewise(
     product_name: str,
     function_name: str,
-    product_information:dict,
+    product_information: dict,
     date_format: str,
     start_date: str,
     end_date: str,
@@ -104,13 +104,22 @@ def get_dataset_piecewise(
     start_date = dates[0]
     output_file_names = []
 
-
     # Build requested variables
-    phys_vars = [product_information["u_var_name"],product_information["v_var_name"],product_information["eta_var_name"],product_information["tracer_var_names"]["temp"],product_information["tracer_var_names"]["salt"]]
-    extra_tracers = [v for k, v in product_information["tracer_var_names"].items() if k not in ("temp", "salt")]
-    #Build extra args
+    phys_vars = [
+        product_information["u_var_name"],
+        product_information["v_var_name"],
+        product_information["eta_var_name"],
+        product_information["tracer_var_names"]["temp"],
+        product_information["tracer_var_names"]["salt"],
+    ]
+    extra_tracers = [
+        v
+        for k, v in product_information["tracer_var_names"].items()
+        if k not in ("temp", "salt")
+    ]
+    # Build extra args
     extra_args = {}
-    for key in ["dataset_path", "date_format", "regex","delimiter"]:
+    for key in ["dataset_path", "date_format", "regex", "delimiter"]:
         if key in product_information:
             extra_args[key] = product_information[key]
     # Retrieve and save data piecewise
@@ -137,13 +146,15 @@ def get_dataset_piecewise(
                     lon_max=latlon_info["lon_max"],
                     output_dir=output_dir,
                     output_file=output_file,
-                    **extra_args
+                    **extra_args,
                 )
         if run_boundary_conditions:
             for boundary in boundary_number_conversion.keys():
 
                 latlon_info = boundary_info[boundary]
-                output_file = f"{boundary}_unprocessed.{start_date_str}_{end_date_str}.nc"
+                output_file = (
+                    f"{boundary}_unprocessed.{start_date_str}_{end_date_str}.nc"
+                )
                 output_file_names.append(output_file)
                 # Execute the data retrieval function
                 if not preview:
@@ -169,7 +180,6 @@ def get_dataset_piecewise(
             "output_file_names": output_file_names,
             "output_folder": output_dir,
         }
-
 
 
 if __name__ == "__main__":

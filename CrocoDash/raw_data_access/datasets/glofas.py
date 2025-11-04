@@ -2,6 +2,8 @@ from pathlib import Path
 from . import utils
 import cdsapi
 import pandas as pd
+
+
 def get_global_data_with_python(
     dates,
     lat_min="UNUSED",
@@ -34,9 +36,9 @@ def get_global_data_with_python(
     dataset = "cems-glofas-historical"
     start, end = pd.to_datetime(dates[0]), pd.to_datetime(dates[1])
     dates = pd.date_range(start=start, end=end)
-    hyear  = sorted(list({d.strftime("%Y") for d in dates}))
+    hyear = sorted(list({d.strftime("%Y") for d in dates}))
     hmonth = sorted(list({d.strftime("%m") for d in dates}))
-    hday   = sorted(list({d.strftime("%d") for d in dates}))
+    hday = sorted(list({d.strftime("%d") for d in dates}))
 
     request = {
         "system_version": ["version_4_0"],
@@ -47,11 +49,11 @@ def get_global_data_with_python(
         "hmonth": hmonth,
         "hday": hday,
         "data_format": "netcdf",
-        "download_format": "zip"
+        "download_format": "zip",
     }
 
     client = cdsapi.Client()
-    path = output_dir/output_file
+    path = output_dir / output_file
     client.retrieve(dataset, request, path)
     return path
 

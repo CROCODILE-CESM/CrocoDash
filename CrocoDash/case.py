@@ -162,7 +162,9 @@ class Case:
         # CICE grid file (if needed)
         if self.cice_in_compset:
             self.cice_grid_path = (
-                inputdir / "ocnice" / f"cice_grid_{ocn_grid.name}_{cvars['MB_ATTEMPT_ID'].value}.nc"
+                inputdir
+                / "ocnice"
+                / f"cice_grid_{ocn_grid.name}_{cvars['MB_ATTEMPT_ID'].value}.nc"
             )
             self.ocn_topo.write_cice_grid(self.cice_grid_path)
 
@@ -410,7 +412,10 @@ class Case:
             self.ProductFunctionRegistry.add_product_config(
                 product_name, product_info=product_info
             )
-        if tb.product_exists(product_name.upper()) and tb.category_of_product(product_name.upper()) == "forcing":
+        if (
+            tb.product_exists(product_name.upper())
+            and tb.category_of_product(product_name.upper()) == "forcing"
+        ):
             self.configure_initial_and_boundary_conditions(
                 date_range=date_range,
                 boundaries=boundaries,

@@ -4,7 +4,7 @@ from CrocoDash import utils
 from CrocoDash.raw_data_access.large_data_workflow.utils import (
     load_config,
     parse_dataset_folder,
-    check_date_continuity
+    check_date_continuity,
 )
 from pathlib import Path
 from collections import defaultdict
@@ -77,7 +77,7 @@ def merge_piecewise_dataset(
                 logger.warning("[%s] %s", boundary, m)
     else:
         logger.info("All boundaries continuous and non-overlapping.")
-        
+
     if run_boundary_conditions:
         for seg_num in inverted_bnc:
             if not any(f"{seg_num:03}" in boundary for boundary in boundary_list):
@@ -129,7 +129,7 @@ def merge_piecewise_dataset(
         }
 
 
-
-
 if __name__ == "__main__":
-    print("This is the merge & output part of the extract forcings workflow, don't run this directly!")
+    print(
+        "This is the merge & output part of the extract forcings workflow, don't run this directly!"
+    )

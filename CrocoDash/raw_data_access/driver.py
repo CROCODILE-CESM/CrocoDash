@@ -34,6 +34,7 @@ class ProductFunctionRegistry:
 
     def add_product_config(self, product_name: str, product_info: str | Path | dict):
         return tb.add_product_config(product_name, product_info)
+
     def load_product_config(self, product_name: str):
         """Load configuration files."""
         return tb.load_product_config(product_name)
@@ -110,13 +111,16 @@ class ProductFunctionRegistry:
         try:
             if tb.category_of_product(product) == "forcing":
                 if tb.type_of_function(product, func_name) != "SCRIPT":
-                    assert any(temp_dir.glob("*.nc")), f"No .nc files found in {temp_dir}"
+                    assert any(
+                        temp_dir.glob("*.nc")
+                    ), f"No .nc files found in {temp_dir}"
                 else:
                     assert os.path.exists(Path(temp_dir) / os.path.basename(res))
                 sig = inspect.signature(func)
-                assert "variables" in sig.parameters, "Forcing Product Functions must specify the variables arg"
-                    
-                    
+                assert (
+                    "variables" in sig.parameters
+                ), "Forcing Product Functions must specify the variables arg"
+
             else:
                 logger.error(
                     "Category of product is not supported by the validation function"

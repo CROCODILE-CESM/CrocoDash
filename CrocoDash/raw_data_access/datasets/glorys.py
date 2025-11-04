@@ -55,8 +55,10 @@ def get_glorys_data_from_rda(
         pattern = os.path.join(ds_in_path, "**", f"*_{date}_*.nc")
         ds_in_files.extend(glob.glob(pattern, recursive=True))
     ds_in_files = sorted(ds_in_files)
-    
-    ds = xr.open_mfdataset(ds_in_files, decode_times=False, engine = "h5netcdf", parallel = True)[variables]
+
+    ds = xr.open_mfdataset(
+        ds_in_files, decode_times=False, engine="h5netcdf", parallel=True
+    )[variables]
 
     if lon_min * lon_max > 0:
         dataset = ds.sel(
@@ -65,21 +67,21 @@ def get_glorys_data_from_rda(
         )
     else:
         dataset = xr.concat(
-        [
-            ds.sel(
-                latitude=slice(lat_min - 1, lat_max + 1),
-                **{"longitude": slice(lon_min - 1, 360)}
-            ),
-            ds.sel(
-                latitude=slice(lat_min - 1, lat_max + 1),
-                **{"longitude": slice(-180, lon_max + 1)}
-            ),
-        ],
-        dim="longitude",
+            [
+                ds.sel(
+                    latitude=slice(lat_min - 1, lat_max + 1),
+                    **{"longitude": slice(lon_min - 1, 360)},
+                ),
+                ds.sel(
+                    latitude=slice(lat_min - 1, lat_max + 1),
+                    **{"longitude": slice(-180, lon_max + 1)},
+                ),
+            ],
+            dim="longitude",
         )
 
-        #convert longitude from degree west to degree east
-        dataset["longitude"] = (360-dataset["longitude"]) % 360
+        # convert longitude from degree west to degree east
+        dataset["longitude"] = (360 - dataset["longitude"]) % 360
         dataset = dataset.sortby("longitude")
 
     dataset.to_netcdf(path)
@@ -125,7 +127,7 @@ def get_glorys_data_script_for_cli(
     lon_max,
     output_dir,
     output_file,
-    variables = None
+    variables=None,
 ) -> None:
     """
     Script to run the GLORYS data query for the CLI

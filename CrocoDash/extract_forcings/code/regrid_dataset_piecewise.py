@@ -4,7 +4,7 @@ from CrocoDash import utils
 from CrocoDash.raw_data_access.large_data_workflow.utils import (
     load_config,
     parse_dataset_folder,
-    check_date_continuity
+    check_date_continuity,
 )
 import re
 import os
@@ -127,8 +127,6 @@ def regrid_dataset_piecewise(
     # Read in hgrid
     hgrid = xr.open_dataset(hgrid)
 
-    
-
     logger.info("Starting regridding")
     output_file_names = []
     # Do Regridding (Boundaries)
@@ -137,13 +135,15 @@ def regrid_dataset_piecewise(
             for file_start, file_end, file_path in matching_files[boundary]:
                 file_path = Path(file_path)
                 if not preview:
-                    # Use Segment Class 
+                    # Use Segment Class
                     seg = rm6.segment(
                         hgrid=hgrid,
                         bathymetry_path=None,
                         outfolder=Path(output_folder),
-                        segment_name="segment_{:03d}".format(boundary_number_conversion[boundary]),
-                        orientation=boundary, 
+                        segment_name="segment_{:03d}".format(
+                            boundary_number_conversion[boundary]
+                        ),
+                        orientation=boundary,
                         startdate=file_start,
                         repeat_year_forcing=False,
                     )
@@ -158,11 +158,10 @@ def regrid_dataset_piecewise(
                     )
 
                 # Rename output file
-                output_file_path = (
-                    Path(output_folder)
-                    / "forcing_obc_segment_{:03d}.nc".format(
-                        boundary_number_conversion[boundary]
-                    )
+                output_file_path = Path(
+                    output_folder
+                ) / "forcing_obc_segment_{:03d}.nc".format(
+                    boundary_number_conversion[boundary]
                 )
 
                 # Rename file
@@ -186,7 +185,9 @@ def regrid_dataset_piecewise(
         expt.mom_input_dir = Path(output_folder)
         expt.date_range = [start_date, None]
         vgrid_from_file = xr.open_dataset(vgrid_path)
-        expt.vgrid = expt._make_vgrid(vgrid_from_file.dz.data) # renames/changes meta data
+        expt.vgrid = expt._make_vgrid(
+            vgrid_from_file.dz.data
+        )  # renames/changes meta data
         file_path = Path(folder) / "ic_unprocessed.nc"
         matching_files["IC"] = [("None", "None", file_path)]
         if not preview:
@@ -205,5 +206,8 @@ def regrid_dataset_piecewise(
             "output_file_names": output_file_names,
         }
 
+
 if __name__ == "__main__":
-    print("This is the regrid of the extract forcings workflow, don't run this directly!")
+    print(
+        "This is the regrid of the extract forcings workflow, don't run this directly!"
+    )

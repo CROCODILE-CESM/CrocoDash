@@ -21,7 +21,11 @@ def test_driver():
     return
 
 
-def main(get_dataset_piecewise= True, regrid_dataset_piecewise=True, merge_piecewise_dataset=True):
+def main(
+    get_dataset_piecewise=True,
+    regrid_dataset_piecewise=True,
+    merge_piecewise_dataset=True,
+):
     """
     Driver file to run the large data workflow
     """

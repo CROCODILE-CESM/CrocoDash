@@ -14,6 +14,7 @@ import cftime
 import dask.base
 import pandas as pd
 
+
 def get_cesm_data(
     dates: list,
     lat_min,
@@ -27,10 +28,10 @@ def get_cesm_data(
     date_format: str = "%Y%m%d",
     regex=r"(\d{6,8})-(\d{6,8})",
     delimiter=".",
-    preview = False
+    preview=False,
 ):
-    tracer_y_coord="TLAT"
-    tracer_x_coord="TLONG"
+    tracer_y_coord = "TLAT"
+    tracer_x_coord = "TLONG"
     dates = pd.date_range(start=dates[0], end=dates[1]).to_pydatetime().tolist()
     variable_info = parse_dataset(
         variables,
@@ -172,7 +173,9 @@ def subset_dataset(
             adjusted_time = [subtract_month(t) for t in ds.time.values]
             units = "days since 1850-01-01 00:00:00"
             calendar = "noleap"
-            numeric_time = cftime.date2num(adjusted_time, units=units, calendar=calendar)
+            numeric_time = cftime.date2num(
+                adjusted_time, units=units, calendar=calendar
+            )
             ds = ds.assign_coords(
                 time=("time", numeric_time, {"units": units, "calendar": calendar})
             )
@@ -239,6 +242,7 @@ def first_value(da_var):
         return arr.ravel()[0].compute()
     else:
         return arr.ravel()[0]
+
 
 def subtract_month(dt):
     # subtract one month, rolling back year if necessary
