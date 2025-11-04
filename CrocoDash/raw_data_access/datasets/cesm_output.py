@@ -26,11 +26,10 @@ def get_cesm_data(
     dataset_path="/glade/campaign/collections/cmip/CMIP6/CESM-HR/FOSI_BGC/HR/g.e22.TL319_t13.G1850ECOIAF_JRA_HR.4p2z.001/ocn/proc/tseries/month_1",
     date_format: str = "%Y%m%d",
     regex=r"(\d{6,8})-(\d{6,8})",
-    delimiter=".",
-    tracer_y_coord="TLAT",
-    tracer_x_coord="TLONG",
-    preview=False,
+    delimiter="."
 ):
+    tracer_y_coord="TLAT"
+    tracer_x_coord="TLONG"
     dates = pd.date_range(start=dates[0], end=dates[1]).to_pydatetime().tolist()
     variable_info = parse_dataset(
         variables,
@@ -48,9 +47,9 @@ def get_cesm_data(
         lat_max=lat_max + 1.5,
         lon_min=lon_min - 1.5,
         lon_max=lon_max + 1.5,
-        lat_name=lat_name,
+        lat_name=tracer_y_coord,
         lon_name=lon_name,
-        preview=preview,
+        preview=tracer_x_coord,
     )
     return paths
 

@@ -110,7 +110,7 @@ def get_dataset_piecewise(
     extra_tracers = [v for k, v in product_information["tracer_var_names"].items() if k not in ("temp", "salt")]
     #Build extra args
     extra_args = {}
-    for key in ["dataset_path", "date_format", "regex","delimiter","tracer_x_coord","tracer_y_coord"]:
+    for key in ["dataset_path", "date_format", "regex","delimiter"]:
         if key in product_information:
             extra_args[key] = product_information[key]
     # Retrieve and save data piecewise
