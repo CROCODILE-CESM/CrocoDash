@@ -34,7 +34,7 @@ def test_case_integration_config(get_CrocoDash_case):
         function_name="get_glorys_data_script_for_cli",
     )
     large_data_workflow_path = (
-        case.inputdir / case.forcing_product_name / "large_data_workflow"
+        case.inputdir / case.forcing_product_name / "extract_forcings"
     )
     assert (large_data_workflow_path).exists()
     with open(large_data_workflow_path / "config.json", "r") as f:
