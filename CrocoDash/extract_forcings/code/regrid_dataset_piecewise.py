@@ -1,8 +1,7 @@
 import regional_mom6 as rm6
 from pathlib import Path
 from CrocoDash import utils
-from CrocoDash.raw_data_access.large_data_workflow.utils import (
-    load_config,
+from CrocoDash.extract_forcings.utils import (
     parse_dataset_folder,
     check_date_continuity,
 )
@@ -134,29 +133,6 @@ def regrid_dataset_piecewise(
         for boundary in matching_files.keys():
             for file_start, file_end, file_path in matching_files[boundary]:
                 file_path = Path(file_path)
-                if not preview:
-                    # Use Segment Class
-                    seg = rm6.segment(
-                        hgrid=hgrid,
-                        bathymetry_path=None,
-                        outfolder=Path(output_folder),
-                        segment_name="segment_{:03d}".format(
-                            boundary_number_conversion[boundary]
-                        ),
-                        orientation=boundary,
-                        startdate=file_start,
-                        repeat_year_forcing=False,
-                    )
-
-                    seg.regrid_velocity_tracers(
-                        infile=file_path,  # location of raw boundary
-                        varnames=dataset_varnames,
-                        arakawa_grid="A",
-                        rotational_method=rm6.rotation.RotationMethod.EXPAND_GRID,
-                        regridding_method="bilinear",
-                        fill_method=rm6.regridding.fill_missing_data,
-                    )
-
                 # Rename output file
                 output_file_path = Path(
                     output_folder
@@ -174,8 +150,35 @@ def regrid_dataset_piecewise(
                 output_file_names.append(filename_with_dates)
                 output_file_path_with_dates = Path(output_folder) / filename_with_dates
                 if not preview:
-                    logger.info(f"Saving regridding file as {filename_with_dates}")
-                    os.rename(output_file_path, output_file_path_with_dates)
+                    if output_file_path_with_dates.exists():
+                        logger.info(
+                            f"Output file {output_file_path_with_dates} already exists. It will be skipped."
+                        )
+                    else:
+                    # Use Segment Class
+                        seg = rm6.segment(
+                            hgrid=hgrid,
+                            bathymetry_path=None,
+                            outfolder=Path(output_folder),
+                            segment_name="segment_{:03d}".format(
+                                boundary_number_conversion[boundary]
+                            ),
+                            orientation=boundary,
+                            startdate=file_start,
+                            repeat_year_forcing=False,
+                        )
+
+                        seg.regrid_velocity_tracers(
+                            infile=file_path,  # location of raw boundary
+                            varnames=dataset_varnames,
+                            arakawa_grid=None, # Already organized into the correct mapping format
+                            rotational_method=rm6.rotation.RotationMethod.EXPAND_GRID,
+                            regridding_method="bilinear",
+                            fill_method=rm6.regridding.fill_missing_data,
+                        )
+
+                        logger.info(f"Saving regridding file as {filename_with_dates}")
+                        os.rename(output_file_path, output_file_path_with_dates)
 
     # Run Initial Condition
     if run_initial_condition:
@@ -191,7 +194,12 @@ def regrid_dataset_piecewise(
         file_path = Path(folder) / "ic_unprocessed.nc"
         matching_files["IC"] = [("None", "None", file_path)]
         if not preview:
-            expt.setup_initial_condition(file_path, dataset_varnames)
+            if (expt.mom_input_dir / "init_eta.nc").exists():
+                logger.info(
+                    f"Initial condition files already exist. They will be skipped."
+                )
+            else:
+                expt.setup_initial_condition(file_path, dataset_varnames, arakawa_grid = None)
         output_file_names.append("init_eta.nc")
         output_file_names.append("init_vel.nc")
         output_file_names.append("init_tracers.nc")

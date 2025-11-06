@@ -1,8 +1,7 @@
 from datetime import datetime
 import xarray as xr
 from CrocoDash import utils
-from CrocoDash.raw_data_access.large_data_workflow.utils import (
-    load_config,
+from CrocoDash.extract_forcings.utils import (
     parse_dataset_folder,
     check_date_continuity,
 )

@@ -1091,13 +1091,13 @@ class Case:
         with open(self.extract_forcings_path / "config.json", "r") as f:
             config = json.load(f)
         if process_initial_condition:
-            config["params"]["run_initial_condition"] = True
+            config["general"]["run_initial_condition"] = True
         else:
-            config["params"]["run_initial_condition"] = False
+            config["general"]["run_initial_condition"] = False
         if process_velocity_tracers:
-            config["params"]["run_boundary_conditions"] = True
+            config["general"]["run_boundary_conditions"] = True
         else:
-            config["params"]["run_boundary_conditions"] = False
+            config["general"]["run_boundary_conditions"] = False
         with open(self.extract_forcings_path / "config.json", "w") as f:
             json.dump(config, f, indent=4)
 

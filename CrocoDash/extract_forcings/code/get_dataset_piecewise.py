@@ -1,7 +1,6 @@
 from pathlib import Path
 from CrocoDash import utils
 from CrocoDash.raw_data_access.driver import get_rectangular_segment_info
-from CrocoDash.raw_data_access.utils import load_config
 from CrocoDash.raw_data_access import driver as dv
 import xarray as xr
 import pandas as pd
@@ -138,16 +137,22 @@ def get_dataset_piecewise(
 
             # Execute the data retrieval function
             if not preview:
-                data_access_function(
-                    dates=[start_date_str, end_ic_date_str],
-                    lat_min=latlon_info["lat_min"],
-                    lat_max=latlon_info["lat_max"],
-                    lon_min=latlon_info["lon_min"],
-                    lon_max=latlon_info["lon_max"],
-                    output_dir=output_dir,
-                    output_file=output_file,
-                    **extra_args,
-                )
+                if (Path(output_dir) / output_file).exists():
+                    logger.info(
+                        f"Initial condition file {output_file} already exists. Skipping download."
+                    )
+                else:
+                    data_access_function(
+                        dates=[start_date_str, end_ic_date_str],
+                        lat_min=latlon_info["lat_min"],
+                        lat_max=latlon_info["lat_max"],
+                        lon_min=latlon_info["lon_min"],
+                        lon_max=latlon_info["lon_max"],
+                        output_dir=output_dir,
+                        output_file=output_file,
+                        variables = phys_vars + extra_tracers
+                        **extra_args,
+                    )
         if run_boundary_conditions:
             for boundary in boundary_number_conversion.keys():
 
@@ -158,7 +163,12 @@ def get_dataset_piecewise(
                 output_file_names.append(output_file)
                 # Execute the data retrieval function
                 if not preview:
-                    data_access_function(
+                    if (Path(output_dir) / output_file).exists():
+                        logger.info(
+                        f"OBC file {output_file} already exists. Skipping download."
+                    )
+                    else:
+                        data_access_function(
                         dates=[start_date_str, end_date_str],
                         lat_min=latlon_info["lat_min"],
                         lat_max=latlon_info["lat_max"],
@@ -166,6 +176,7 @@ def get_dataset_piecewise(
                         lon_max=latlon_info["lon_max"],
                         output_dir=output_dir,
                         output_file=output_file,
+                        variables = phys_vars+extra_tracers
                     )
 
         start_date = end_date + timedelta(days=1)
