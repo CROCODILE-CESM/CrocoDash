@@ -33,6 +33,7 @@ def get_cesm_data(
     tracer_y_coord = "TLAT"
     tracer_x_coord = "TLONG"
     dates = pd.date_range(start=dates[0], end=dates[1]).to_pydatetime().tolist()
+    end_file_name = "."+dates[0].strftime("%Y%m%d")+"_"+dates[1].strftime("%Y%m%d")+".nc"
     variable_info = parse_dataset(
         variables,
         dataset_path,
@@ -45,6 +46,7 @@ def get_cesm_data(
     paths = subset_dataset(
         variable_info=variable_info,
         output_path=output_dir,
+        end_file_name = end_file_name,
         lat_min=lat_min - 1.5,
         lat_max=lat_max + 1.5,
         lon_min=lon_min - 1.5,
@@ -116,6 +118,7 @@ def parse_dataset(
 def subset_dataset(
     variable_info: dict,
     output_path: str | Path,
+    end_file_name: str,
     lat_min: float,
     lat_max: float,
     lon_min: float,
@@ -146,7 +149,7 @@ def subset_dataset(
     # Iterate through each variable and its corresponding file paths
     output_file_paths = []
     for var_name, file_paths in variable_info.items():
-        output_file = output_path / f"{var_name}_subset.nc"
+        output_file = output_path / (f"{var_name}"+end_file_name)
         output_file_paths.append(output_file)
         if output_file.exists():
             print(f"Subset already exists for {var_name}, skipping")

@@ -39,10 +39,12 @@ def get_glorys_data_from_rda(
     """
     Gather GLORYS Data on Derecho Computers from the campaign storage and return the dataset sliced to the llc and urc coordinates at the specific dates
     """
+    dates = pd.date_range(start=dates[0], end=dates[1]).to_pydatetime().tolist()
+    output_file = str(variables)+"."+dates[0].strftime("%Y%m%d")+"_"+dates[1].strftime("%Y%m%d")+".nc"
     path = Path(output_dir) / output_file
     logger.info(f"Downloading Glorys data from RDA to {path}")
 
-    dates = pd.date_range(start=dates[0], end=dates[1]).to_pydatetime().tolist()
+    
     # Access RDA Path
     ds_in_path = "/glade/campaign/collections/rda/data/d010049/"
     ds_in_files = []
@@ -103,6 +105,7 @@ def get_glorys_data_from_cds_api(
     """
     start_datetime = dates[0]
     end_datetime = dates[-1]
+    output_file = str(variables)+"."+dates[0]+"_"+dates[1]+".nc"
     dataset_id = "cmems_mod_glo_phy_my_0.083deg_P1D-m"
     response = copernicusmarine.subset(
         dataset_id=dataset_id,
@@ -116,7 +119,7 @@ def get_glorys_data_from_cds_api(
         output_directory=output_dir,
         output_filename=output_file,
     )
-    return response
+    return Path(output_dir)/output_file
 
 
 def get_glorys_data_script_for_cli(
@@ -135,6 +138,7 @@ def get_glorys_data_script_for_cli(
     modify_existing = False
     if os.path.exists(output_dir / Path("get_glorys_data.sh")):
         modify_existing = True
+    output_file = str(variables)+"."+dates[0]+"_"+dates[1]+".nc"
     path = rm6.get_glorys_data(
         [lon_min, lon_max],
         [lat_min, lat_max],
