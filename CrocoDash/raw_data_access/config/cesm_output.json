@@ -6,7 +6,7 @@
     "z_unit_conversion": 0.01,
     "v_var_name": "VVEL",
     "u_x_coord":"TLAT",
-    "u_x_coord":"TLONG",
+    "u_y_coord":"TLONG",
     "v_x_coord":"TLONG",
     "v_y_coord":"TLAT",
     "eta_var_name": "SSH",

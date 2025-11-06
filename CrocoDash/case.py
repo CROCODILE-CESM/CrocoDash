@@ -751,12 +751,8 @@ class Case:
             raise RuntimeError(
                 "configure_forcings() must be called before process_forcings()."
             )
-        if (self.forcing_product_name).upper() == "CESM_OUTPUT":
-            self.process_cesm_initial_and_boundary_conditions(
-                process_initial_condition, process_velocity_tracers
-            )
-        else:
-            self.process_initial_and_boundary_conditions(
+
+        self.process_initial_and_boundary_conditions(
                 process_initial_condition, process_velocity_tracers
             )
         if self.configured_bgc and process_bgc:
@@ -1061,30 +1057,7 @@ class Case:
                 f"Please make sure to execute large_data_workflow as described in {self.extract_forcings_path}"
             )
 
-        # check all the boundary files are present:
-        if (
-            process_initial_condition
-            and not (
-                self.extract_forcings_path / "raw_data" / "ic_unprocessed.nc"
-            ).exists()
-        ):
-            raise FileNotFoundError(
-                f"Initial condition file ic_unprocessed.nc not found in {self.extract_forcings_path/'raw_data' }. "
-                "Please make sure to execute get_glorys_data.sh script as described in "
-                "the message printed by configure_forcings()."
-            )
-
-        for boundary in self.boundaries:
-            if process_velocity_tracers and not any(
-                (self.extract_forcings_path / "raw_data").glob(
-                    f"{boundary}_unprocessed*.nc"
-                )
-            ):
-                raise FileNotFoundError(
-                    f"Boundary file {boundary}_unprocessed.nc not found in {self.extract_forcings_path / 'raw_data'}. "
-                    "Please make sure to execute get_glorys_data.sh script as described in "
-                    "the message printed by configure_forcings()."
-                )
+        # Update the checks for IC and OBC Files
 
         # Set up the initial condition & boundary conditions
 
@@ -1432,16 +1405,16 @@ class Case:
                 )
 
                 standard_data_str = lambda: (
-                    f"\"U=file:{product_info['u']}_obc_segment_{seg_ix}.nc({product_info['u']}),"
-                    f"V=file:{product_info['v']}_obc_segment_{seg_ix}.nc({product_info['v']}),"
-                    f"SSH=file:{product_info['ssh']}_obc_segment_{seg_ix}.nc({product_info['ssh']}),"
-                    f"TEMP=file:{product_info['tracers']['temp']}_obc_segment_{seg_ix}.nc({product_info['tracers']['temp']}),"
-                    f"SALT=file:{product_info['tracers']['salt']}_obc_segment_{seg_ix}.nc({product_info['tracers']['salt']})"
+                    f"\"U=file:{product_info['u_var_name']}_obc_segment_{seg_ix}.nc({product_info['u_var_name']}),"
+                    f"V=file:{product_info['v_var_name']}_obc_segment_{seg_ix}.nc({product_info['v_var_name']}),"
+                    f"SSH=file:{product_info['eta_var_name']}_obc_segment_{seg_ix}.nc({product_info['eta_var_name']}),"
+                    f"TEMP=file:{product_info['tracer_var_names']['temp']}_obc_segment_{seg_ix}.nc({product_info['tracer_var_names']['temp']}),"
+                    f"SALT=file:{product_info['tracer_var_names']['salt']}_obc_segment_{seg_ix}.nc({product_info['tracer_var_names']['salt']})"
                 )
 
-                for tracer_mom6_name in product_info["tracers"]:
+                for tracer_mom6_name in product_info["tracer_var_names"]:
                     if tracer_mom6_name != "temp" and tracer_mom6_name != "salt":
-                        bgc_tracers += f',{tracer_mom6_name}=file:{product_info["tracers"][tracer_mom6_name]}_obc_segment_{seg_ix}.nc({product_info["tracers"][tracer_mom6_name]})'
+                        bgc_tracers += f',{tracer_mom6_name}=file:{product_info["tracer_var_names"][tracer_mom6_name]}_obc_segment_{seg_ix}.nc({product_info["tracer_var_names"][tracer_mom6_name]})'
             tidal_data_str = lambda: (
                 f",Uamp=file:tu_segment_{seg_ix}.nc(uamp),"
                 f"Uphase=file:tu_segment_{seg_ix}.nc(uphase),"
