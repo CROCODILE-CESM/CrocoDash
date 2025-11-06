@@ -33,7 +33,6 @@ def get_cesm_data(
     tracer_y_coord = "TLAT"
     tracer_x_coord = "TLONG"
     dates = pd.date_range(start=dates[0], end=dates[1]).to_pydatetime().tolist()
-    end_file_name = "."+dates[0].strftime("%Y%m%d")+"_"+dates[1].strftime("%Y%m%d")+".nc"
     variable_info = parse_dataset(
         variables,
         dataset_path,
@@ -46,7 +45,6 @@ def get_cesm_data(
     paths = subset_dataset(
         variable_info=variable_info,
         output_path=output_dir,
-        end_file_name = end_file_name,
         lat_min=lat_min - 1.5,
         lat_max=lat_max + 1.5,
         lon_min=lon_min - 1.5,
@@ -55,6 +53,13 @@ def get_cesm_data(
         lon_name=tracer_x_coord,
         preview=preview,
     )
+
+    # Merge the file into the specified output file.
+    if output_file is not None:
+        print("Merging the files since output file is not None")
+        merged = xr.open_mfdataset(files, combine='by_coords', parallel=True)
+        merged.to_netcdf(output_dir/output_file.nc)
+
     return paths
 
 

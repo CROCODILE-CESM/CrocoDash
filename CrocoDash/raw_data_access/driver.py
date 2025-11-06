@@ -112,8 +112,8 @@ class ProductFunctionRegistry:
             if tb.category_of_product(product) == "forcing":
                 if tb.type_of_function(product, func_name) != "SCRIPT":
                     assert any(
-                    temp_dir.glob("*.????????_????????.nc")
-                ), f"No .nc files matching '<vars>.yyyymmdd_yyyyymmdd.nc' found in {temp_dir}"
+                    temp_dir.glob("*.nc")
+                ), f"No .nc files found in {temp_dir}"
                 else:
                     assert os.path.exists(Path(temp_dir) / os.path.basename(res))
                 sig = inspect.signature(func)
