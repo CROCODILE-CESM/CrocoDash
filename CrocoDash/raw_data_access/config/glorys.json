@@ -9,9 +9,7 @@
     "v_x_coord":"longitude",
     "v_y_coord":"latitude",
     "eta_var_name": "zos",
-    "depth_coord": [
-        "depth"
-    ],
+    "depth_coord": "depth",
     "tracer_var_names": {
         "temp": "thetao",
         "salt": "so"
