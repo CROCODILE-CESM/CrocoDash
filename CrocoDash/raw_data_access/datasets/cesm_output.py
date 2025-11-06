@@ -56,9 +56,9 @@ def get_cesm_data(
 
     # Merge the file into the specified output file.
     if output_file is not None:
-        print("Merging the files since output file is not None")
-        merged = xr.open_mfdataset(files, combine='by_coords', parallel=True)
-        merged.to_netcdf(output_dir/output_file.nc)
+        print(f"Merging the files since output file is specified, into {Path(output_dir)/output_file}")
+        merged = xr.open_mfdataset(paths, combine='by_coords', parallel=True)
+        merged.to_netcdf(Path(output_dir)/output_file)
 
     return paths
 
@@ -123,7 +123,6 @@ def parse_dataset(
 def subset_dataset(
     variable_info: dict,
     output_path: str | Path,
-    end_file_name: str,
     lat_min: float,
     lat_max: float,
     lon_min: float,
@@ -154,7 +153,7 @@ def subset_dataset(
     # Iterate through each variable and its corresponding file paths
     output_file_paths = []
     for var_name, file_paths in variable_info.items():
-        output_file = output_path / (f"{var_name}"+end_file_name)
+        output_file = output_path / (f"{var_name}_subset.nc")
         output_file_paths.append(output_file)
         if output_file.exists():
             print(f"Subset already exists for {var_name}, skipping")
