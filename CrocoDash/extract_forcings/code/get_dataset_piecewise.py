@@ -150,8 +150,8 @@ def get_dataset_piecewise(
                         lon_max=latlon_info["lon_max"],
                         output_dir=output_dir,
                         output_file=output_file,
-                        variables = phys_vars + extra_tracers
-                        **extra_args,
+                        variables = phys_vars + extra_tracers,
+                        **extra_args
                     )
         if run_boundary_conditions:
             for boundary in boundary_number_conversion.keys():
@@ -176,7 +176,8 @@ def get_dataset_piecewise(
                         lon_max=latlon_info["lon_max"],
                         output_dir=output_dir,
                         output_file=output_file,
-                        variables = phys_vars+extra_tracers
+                        variables = phys_vars+extra_tracers,
+                        **extra_args
                     )
 
         start_date = end_date + timedelta(days=1)

@@ -10,7 +10,7 @@ def test_case_integration_driver(get_CrocoDash_case, skip_if_not_glade):
         too_much_data=True,
     )
     large_data_workflow_path = (
-        case.inputdir / case.forcing_product_name / "large_data_workflow"
+        case.inputdir / case.forcing_product_name / "extract_forcings"
     )
     assert (large_data_workflow_path).exists()
     result = subprocess.run(
