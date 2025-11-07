@@ -8,6 +8,12 @@
     "u_x_coord":"longitude",
     "v_x_coord":"longitude",
     "v_y_coord":"latitude",
+    "u_lat_coord":"latitude",
+    "u_lon_coord":"longitude",
+    "v_lat_coord":"latitude",
+    "v_lon_coord":"longitude",
+    "tracer_lat_coord":"latitude",
+    "tracer_lon_coord":"longitude",
     "eta_var_name": "zos",
     "depth_coord": "depth",
     "tracer_var_names": {
