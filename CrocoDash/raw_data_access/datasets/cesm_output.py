@@ -51,6 +51,7 @@ def get_cesm_data(
         lon_max=lon_max + 1.5,
         lat_name=tracer_y_coord,
         lon_name=tracer_x_coord,
+        dates=(dates[0].strftime(date_format),dates[1].strftime(date_format)),
         preview=preview,
     )
 
@@ -129,6 +130,7 @@ def subset_dataset(
     lon_max: float,
     lat_name="lat",
     lon_name="lon",
+    dates = None,
     preview: bool = False,
 ) -> None:
     """
@@ -142,6 +144,7 @@ def subset_dataset(
         lon_max (float): Maximum longitude for subsetting.
         lat_name (str): Name of the latitude variable in the dataset. Default is "lat".
         lon_name (str): Name of the longitude variable in the dataset. Default is "lon".
+        dates (tuple): Just used for the file naming
         preview (bool): If True, only previews the subsetting without saving. Default is False.
     """
 
@@ -153,7 +156,9 @@ def subset_dataset(
     # Iterate through each variable and its corresponding file paths
     output_file_paths = []
     for var_name, file_paths in variable_info.items():
-        output_file = output_path / (f"{var_name}_subset.nc")
+        if dates is None:
+            dates = ("NotSpecifiedDate","NotSpecifiedDate")
+        output_file = output_path / (f"{var_name}_subset_{lat_min}_{lat_max}_{lon_min}_{lon_max}_{dates[0]}_{dates[1]}.nc")
         output_file_paths.append(output_file)
         if output_file.exists():
             print(f"Subset already exists for {var_name}, skipping")
