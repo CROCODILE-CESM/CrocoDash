@@ -17,6 +17,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: CROCODILE-CESM/CESM
+          ref: workshop_2025
           path: CESM
       # Run git-fleximod
       - name: checkout CESM
