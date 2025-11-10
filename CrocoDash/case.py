@@ -3,7 +3,7 @@ import uuid
 import shutil
 from datetime import datetime
 import json
-import sys
+import importlib.util
 import pandas as pd
 import regional_mom6 as rmom6
 from CrocoDash.grid import Grid
@@ -521,11 +521,11 @@ class Case:
 
         self.date_range = pd.to_datetime(date_range)
         # Create the forcing directory
+        forcing_dir_path = self.inputdir / self.forcing_product_name
         if self.override is True:
-            forcing_dir_path = self.inputdir / self.forcing_product_name
             if forcing_dir_path.exists():
                 shutil.rmtree(forcing_dir_path)
-        forcing_dir_path.mkdir(exist_ok=False)
+        forcing_dir_path.mkdir(exist_ok=True)
 
         # Create the OBC generation files
         self.extract_forcings_path = (
@@ -589,12 +589,15 @@ class Case:
         # Write out
         with open(self.extract_forcings_path / "config.json", "w") as f:
             json.dump(config, f, indent=4)
-        if not self._too_much_data:
-            # This means we start to run the driver right away, the get dataset piecewise option.
-            sys.path.append(str(self.extract_forcings_path))
-            import driver
 
-            driver.main(regrid_dataset_piecewise=False, merge_piecewise_dataset=False)
+        # Import Extract Forcings Workflow    
+        module_name = f"driver_{uuid.uuid4().hex}"
+        spec = importlib.util.spec_from_file_location(module_name, self.extract_forcings_path/"driver.py")
+        self.driver = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(self.driver)
+
+        if not self._too_much_data:
+            self.driver.main(regrid_dataset_piecewise=False, merge_piecewise_dataset=False)
         else:
             print(
                 f"Extract Forcings workflow was called, please go to the extract forcings path: {self.extract_forcings_path} and run the driver script there."
@@ -808,44 +811,6 @@ class Case:
         }
         ds.to_netcdf(self.fesedflux_filepath)
         ds.to_netcdf(self.feventflux_filepath)
-
-    def process_cesm_initial_and_boundary_conditions(
-        self,
-        process_initial_condition=True,
-        process_velocity_tracers=True,
-    ):
-        if self._too_much_data and (
-            process_velocity_tracers or process_initial_condition
-        ):
-            process_velocity_tracers = False
-            process_initial_condition = False
-            print(
-                f"Large data workflow was called, so boundary & initial conditions will not be processed."
-            )
-            print(
-                f"Please make sure to execute large_data_workflow as described in {self.extract_forcings_path}"
-            )
-
-        # Set up the initial condition & boundary conditions
-
-        with open(self.extract_forcings_path / "config.json", "r") as f:
-            config = json.load(f)
-        if process_initial_condition:
-            config["general"]["run_initial_condition"] = True
-        else:
-            config["general"]["run_initial_condition"] = False
-        if process_velocity_tracers:
-            config["general"]["run_boundary_conditions"] = True
-        else:
-            config["general"]["run_boundary_conditions"] = False
-        with open(self.extract_forcings_path / "config.json", "w") as f:
-            json.dump(config, f, indent=4)
-
-        if process_initial_condition or process_velocity_tracers:
-            sys.path.append(str(self.extract_forcings_path))
-            import eo_driver
-
-            eo_driver.extract_obcs(config)
 
     def process_tides(self):
         # Process the tides
@@ -1075,10 +1040,7 @@ class Case:
             json.dump(config, f, indent=4)
 
         if process_initial_condition or process_velocity_tracers:
-            sys.path.append(str(self.extract_forcings_path))
-            import driver
-
-            driver.main(
+            self.driver.main(
                 get_dataset_piecewise=False,
                 regrid_dataset_piecewise=True,
                 merge_piecewise_dataset=True,
