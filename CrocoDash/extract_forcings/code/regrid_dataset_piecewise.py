@@ -10,6 +10,8 @@ import os
 from collections import defaultdict
 from datetime import datetime
 import xarray as xr
+import mom6_bathy as m6b
+import numpy as np
 
 logger = utils.setup_logger(__name__)
 
@@ -128,6 +130,15 @@ def regrid_dataset_piecewise(
 
     logger.info("Starting regridding")
     output_file_names = []
+
+    # Determine fill method
+    fill_method = rm6.regridding.fill_missing_data
+    if "boundary_fill_method" in dataset_varnames:
+        if dataset_varnames["boundary_fill_method"] == "mom6_bathy":
+            fill_method = m6b_fill_missing_data_wrapper
+        elif dataset_varnames["boundary_fill_method"] != "regional_mom6":
+            raise ValueError("Provided fill method is not supported yet. ")
+
     # Do Regridding (Boundaries)
     if run_boundary_conditions:
         for boundary in matching_files.keys():
@@ -174,7 +185,7 @@ def regrid_dataset_piecewise(
                             arakawa_grid=None, # Already organized into the correct mapping format
                             rotational_method=rm6.rotation.RotationMethod.EXPAND_GRID,
                             regridding_method="bilinear",
-                            fill_method=rm6.regridding.fill_missing_data,
+                            fill_method=fill_method,
                         )
 
                         logger.info(f"Saving regridding file as {filename_with_dates}")
@@ -214,6 +225,18 @@ def regrid_dataset_piecewise(
             "output_file_names": output_file_names,
         }
 
+def m6b_fill_missing_data_wrapper(ds,xdim, zdim, fill):
+    
+    if zdim is not None:
+        if type(zdim) != list:
+            zdim = [zdim]
+            for z in zdim:
+                if z in ds.dims:
+                    for z_ind in range(ds.shape[1]):
+                        filled = fill_missing_data(ds[z_ind].values,np.ones_like(ds[z_ind].values))
+        return filled
+    else:
+        return fill_missing_data(ds.values,np.ones_like(ds.values))
 
 if __name__ == "__main__":
     print(

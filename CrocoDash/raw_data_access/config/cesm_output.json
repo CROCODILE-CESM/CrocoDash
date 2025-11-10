@@ -1,5 +1,6 @@
 {
     "time": "time",
+    "boundary_fill_method": "regional_mom6",
     "tracer_x_coord": "nlon",
     "tracer_y_coord": "nlat",
     "u_var_name": "UVEL",

@@ -39,6 +39,7 @@ def add_product_config(product_name: str, product_info: str | Path | dict):
             "v_var_name",
             "eta_var_name",
             "tracer_var_names",
+            "boundary_fill_method"
         }
         tracer_keys = {"salt", "temp"}
 
