@@ -116,6 +116,7 @@ def merge_piecewise_dataset(
         ]
         for file_path in ic_files_to_copy:
             shutil.copy(file_path, Path(output_folder))
+            logger.info(f"Saved {file_path.name} initial condition to {output_folder}")
             matching_files["IC"].append(str(file_path))
         output_file_names.append("init_eta.nc")
         output_file_names.append("init_vel.nc")
