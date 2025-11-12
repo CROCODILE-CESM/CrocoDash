@@ -336,7 +336,6 @@ class Case:
         too_much_data: bool = False,
         chl_processed_filepath: str | Path | None = None,
         runoff_esmf_mesh_filepath: str | Path | None = None,
-        data_input_path: str | Path | None = None,
         global_river_nutrients_filepath: str | Path | None = None,
         marbl_ic_filepath: str | Path | None = None,
     ):
@@ -378,8 +377,6 @@ class Case:
             If passed, points to the processed global chlorophyll file for regional processing through mom6_bathy.chl
         runoff_esmf_mesh_filepath : Path
             If passed, points to the processed global runoff file for mapping through mom6_bathy.mapping
-        data_input_path : str or Path, optional
-            If passed, a path to the directory where raw output data is stored. This is used instead to extract OBCs and ICs for the case.
         global_river_nutrients_filepath: str or Path, optional
             If passed, points to the processed global river nutrients file for regional processing through mom6_bathy.mapping
         marbl_ic_filepath: str or Path, optional
@@ -576,7 +573,7 @@ class Case:
         config["forcing"]["function_name"] = function_name
         config["forcing"]["information"] = (
             self.ProductFunctionRegistry.load_product_config(
-                self.forcing_product_name.lower()
+                self.forcing_product_name.lower() + "_marbl"
             )
         )
 
@@ -590,14 +587,18 @@ class Case:
         with open(self.extract_forcings_path / "config.json", "w") as f:
             json.dump(config, f, indent=4)
 
-        # Import Extract Forcings Workflow    
+        # Import Extract Forcings Workflow
         module_name = f"driver_{uuid.uuid4().hex}"
-        spec = importlib.util.spec_from_file_location(module_name, self.extract_forcings_path/"driver.py")
+        spec = importlib.util.spec_from_file_location(
+            module_name, self.extract_forcings_path / "driver.py"
+        )
         self.driver = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(self.driver)
 
         if not self._too_much_data:
-            self.driver.main(regrid_dataset_piecewise=False, merge_piecewise_dataset=False)
+            self.driver.main(
+                regrid_dataset_piecewise=False, merge_piecewise_dataset=False
+            )
         else:
             print(
                 f"Extract Forcings workflow was called, please go to the extract forcings path: {self.extract_forcings_path} and run the driver script there."
@@ -689,6 +690,10 @@ class Case:
         return True
 
     def configure_chl(self, chl_processed_filepath: str | Path):
+        if self.bgc_in_compset:
+            raise ValueError(
+                "Chlorophyll configuration through MOM6 was requested, but cannot be used if BGC is in compset (chlorophyll is a part of BGC)"
+            )
         self.chl_processed_filepath = (
             Path(chl_processed_filepath) if chl_processed_filepath else None
         )
@@ -756,8 +761,8 @@ class Case:
             )
 
         self.process_initial_and_boundary_conditions(
-                process_initial_condition, process_velocity_tracers
-            )
+            process_initial_condition, process_velocity_tracers
+        )
         if self.configured_bgc and process_bgc:
             self.process_bgc_iron_forcing()
             self.process_bgc_ic()
@@ -1205,31 +1210,20 @@ class Case:
             ("DEPRESS_INITIAL_SURFACE", True),
             ("VELOCITY_CONFIG", "file"),
         ]
-        if self.forcing_product_name.upper() != "CESM_OUTPUT":
-            ic_params.extend(
-                [
-                    ("TEMP_SALT_Z_INIT_FILE", "init_tracers.nc"),
-                    ("SURFACE_HEIGHT_IC_FILE", "init_eta.nc"),
-                    ("SURFACE_HEIGHT_IC_VAR", "eta_t"),
-                    ("VELOCITY_FILE", "init_vel.nc"),
-                    ("Z_INIT_FILE_PTEMP_VAR", "temp"),
-                ]
-            )
 
-        else:
-            ic_params.extend(
-                [
-                    ("TEMP_Z_INIT_FILE", "TEMP_IC.nc"),
-                    ("SALT_Z_INIT_FILE", "SALT_IC.nc"),
-                    ("Z_INIT_FILE_PTEMP_VAR", "TEMP"),
-                    ("Z_INIT_FILE_SALT_VAR", "SALT"),
-                    ("SURFACE_HEIGHT_IC_FILE", "SSH_IC.nc"),
-                    ("SURFACE_HEIGHT_IC_VAR", "SSH"),
-                    ("VELOCITY_FILE", "VEL_IC.nc"),
-                    ("U_IC_VAR", "UVEL"),
-                    ("V_IC_VAR", "VVEL"),
-                ]
-            )
+        ic_params.extend(
+            [
+                ("TEMP_Z_INIT_FILE", "TEMP_IC.nc"),
+                ("SALT_Z_INIT_FILE", "SALT_IC.nc"),
+                ("Z_INIT_FILE_PTEMP_VAR", "TEMP"),
+                ("Z_INIT_FILE_SALT_VAR", "SALT"),
+                ("SURFACE_HEIGHT_IC_FILE", "SSH_IC.nc"),
+                ("SURFACE_HEIGHT_IC_VAR", "SSH"),
+                ("VELOCITY_FILE", "VEL_IC.nc"),
+                ("U_IC_VAR", "UVEL"),
+                ("V_IC_VAR", "VVEL"),
+            ]
+        )
 
         append_user_nl(
             "mom",
@@ -1352,31 +1346,22 @@ class Case:
             # Nudging
             obc_params.append((seg_id + "_VELOCITY_NUDGING_TIMESCALES", "0.3, 360.0"))
             bgc_tracers = ""
-            if self.forcing_product_name.upper() != "CESM_OUTPUT":
-                standard_data_str = lambda: (
-                    f'"U=file:forcing_obc_segment_{seg_ix}.nc(u),'
-                    f"V=file:forcing_obc_segment_{seg_ix}.nc(v),"
-                    f"SSH=file:forcing_obc_segment_{seg_ix}.nc(eta),"
-                    f"TEMP=file:forcing_obc_segment_{seg_ix}.nc(temp),"
-                    f"SALT=file:forcing_obc_segment_{seg_ix}.nc(salt)"
-                )
-            else:
+            standard_data_str = lambda: (
+                f'"U=file:forcing_obc_segment_{seg_ix}.nc(u),'
+                f"V=file:forcing_obc_segment_{seg_ix}.nc(v),"
+                f"SSH=file:forcing_obc_segment_{seg_ix}.nc(eta),"
+                f"TEMP=file:forcing_obc_segment_{seg_ix}.nc(temp),"
+                f"SALT=file:forcing_obc_segment_{seg_ix}.nc(salt)"
+            )
+            if self.bgc_in_compset:
 
                 product_info = self.ProductFunctionRegistry.load_product_config(
-                    self.forcing_product_name
+                    self.forcing_product_name + "_marbl"
                 )
-
-                standard_data_str = lambda: (
-                    f"\"U=file:{product_info['u_var_name']}_obc_segment_{seg_ix}.nc({product_info['u_var_name']}),"
-                    f"V=file:{product_info['v_var_name']}_obc_segment_{seg_ix}.nc({product_info['v_var_name']}),"
-                    f"SSH=file:{product_info['eta_var_name']}_obc_segment_{seg_ix}.nc({product_info['eta_var_name']}),"
-                    f"TEMP=file:{product_info['tracer_var_names']['temp']}_obc_segment_{seg_ix}.nc({product_info['tracer_var_names']['temp']}),"
-                    f"SALT=file:{product_info['tracer_var_names']['salt']}_obc_segment_{seg_ix}.nc({product_info['tracer_var_names']['salt']})"
-                )
-
                 for tracer_mom6_name in product_info["tracer_var_names"]:
                     if tracer_mom6_name != "temp" and tracer_mom6_name != "salt":
                         bgc_tracers += f',{tracer_mom6_name}=file:{product_info["tracer_var_names"][tracer_mom6_name]}_obc_segment_{seg_ix}.nc({product_info["tracer_var_names"][tracer_mom6_name]})'
+
             tidal_data_str = lambda: (
                 f",Uamp=file:tu_segment_{seg_ix}.nc(uamp),"
                 f"Uphase=file:tu_segment_{seg_ix}.nc(uphase),"
