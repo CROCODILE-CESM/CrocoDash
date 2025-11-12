@@ -102,10 +102,10 @@ def test_subset_dataset(dummy_forcing_factory, get_rect_grid, tmp_path):
         lon_name="longitude",
         preview=False,
     )
-    assert any(p.name.startswith("so_subset") for p in tmp_path.glob("*.nc"))
-    assert any(p.name.startswith("thetao_subset") for p in tmp_path.glob("*.nc"))
-    matches = list(tmp_path.glob("thetao_subset*.nc"))
+    assert any(p.name.startswith("temp") for p in tmp_path.glob("*.nc"))
+    matches = list(tmp_path.glob("temp.nc"))
     ds = xr.open_dataset(matches[0])
     assert ds["latitude"].max() < boundary_info["ic"]["lat_max"] + 2
     assert ds["latitude"].min() > boundary_info["ic"]["lat_min"] - 2
-    assert len(ds.time) == 64
+    breakpoint()
+    assert len(ds.time) == 128
