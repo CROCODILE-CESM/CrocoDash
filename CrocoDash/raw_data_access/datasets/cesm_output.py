@@ -45,21 +45,16 @@ def get_cesm_data(
     paths = subset_dataset(
         variable_info=variable_info,
         output_path=output_dir,
+        output_file=output_file,
         lat_min=lat_min - 1.5,
         lat_max=lat_max + 1.5,
         lon_min=lon_min - 1.5,
         lon_max=lon_max + 1.5,
         lat_name=tracer_y_coord,
         lon_name=tracer_x_coord,
-        dates=(dates[0].strftime(date_format),dates[1].strftime(date_format)),
+        dates=(dates[0].strftime(date_format), dates[1].strftime(date_format)),
         preview=preview,
     )
-
-    # Merge the file into the specified output file.
-    if output_file is not None:
-        print(f"Merging the files since output file is specified, into {Path(output_dir)/output_file}")
-        merged = xr.open_mfdataset(paths, combine='by_coords', parallel=True)
-        merged.to_netcdf(Path(output_dir)/output_file)
 
     return paths
 
@@ -124,13 +119,14 @@ def parse_dataset(
 def subset_dataset(
     variable_info: dict,
     output_path: str | Path,
+    output_file: str | Path,
     lat_min: float,
     lat_max: float,
     lon_min: float,
     lon_max: float,
     lat_name="lat",
     lon_name="lon",
-    dates = None,
+    dates=None,
     preview: bool = False,
 ) -> None:
     """
@@ -149,72 +145,73 @@ def subset_dataset(
     """
 
     # Create the output directory if it does not exist
+    print("Subsetting data...")
     output_path = Path(output_path)
     output_path.mkdir(parents=True, exist_ok=True)
 
     mask = None
     # Iterate through each variable and its corresponding file paths
     output_file_paths = []
-    for var_name, file_paths in variable_info.items():
-        if dates is None:
-            dates = ("NotSpecifiedDate","NotSpecifiedDate")
-        output_file = output_path / (f"{var_name}_subset_{lat_min}_{lat_max}_{lon_min}_{lon_max}_{dates[0]}_{dates[1]}.nc")
-        output_file_paths.append(output_file)
-        if output_file.exists():
-            print(f"Subset already exists for {var_name}, skipping")
-            continue
-        if not file_paths:
-            print(f"No files found for variable: {var_name}")
-            continue
+    all_files = [fp for paths in variable_info.values() for fp in paths]
 
-        # Load the dataset for the variable
-        ds = xr.open_mfdataset(file_paths)
-        dataset_is_degrees_east_longitude = False
-        if ds[lon_name].max() > 180:
-            dataset_is_degrees_east_longitude = True
+    if dates is None:
+        dates = ("NotSpecifiedDate", "NotSpecifiedDate")
+    output_file = output_path / output_file
+    if output_file.exists():
+        print(f"Subset already exists, skipping")
+        return
+    if not all_files:
+        print(f"No files found for these paths")
+        return
 
-        if dataset_is_degrees_east_longitude:
-            lon_min = lon_min % 360
-            lon_max = lon_max % 360
-        else:
-            lon_min = ((lon_min + 180) % 360) - 180
-            lon_max = ((lon_max + 180) % 360) - 180
+    # Load the dataset for the variable
+    print("Opening...")
+    ds = xr.open_mfdataset(all_files)
+    dataset_is_degrees_east_longitude = False
+    if ds[lon_name].max() > 180:
+        dataset_is_degrees_east_longitude = True
 
-        # Convert time. Saving to netcdf is not working with cftime objects
-        if isinstance(ds.time.values[0], cftime.datetime):
-            adjusted_time = [subtract_month(t) for t in ds.time.values]
-            units = "days since 1850-01-01 00:00:00"
-            calendar = "noleap"
-            numeric_time = cftime.date2num(
-                adjusted_time, units=units, calendar=calendar
-            )
-            ds = ds.assign_coords(
-                time=("time", numeric_time, {"units": units, "calendar": calendar})
-            )
+    if dataset_is_degrees_east_longitude:
+        lon_min = lon_min % 360
+        lon_max = lon_max % 360
+    else:
+        lon_min = ((lon_min + 180) % 360) - 180
+        lon_max = ((lon_max + 180) % 360) - 180
 
-        # Drop the time_bound variable for the cesm if it exists, cftime isn't playing well, eventually this should be converted in the same way.
-        ds = drop_extra_cftime_vars(ds)
+    # Convert time. Saving to netcdf is not working with cftime objects
+    if isinstance(ds.time.values[0], cftime.datetime):
+        adjusted_time = [subtract_month(t) for t in ds.time.values]
+        units = "days since 1850-01-01 00:00:00"
+        calendar = "noleap"
+        numeric_time = cftime.date2num(adjusted_time, units=units, calendar=calendar)
+        ds = ds.assign_coords(
+            time=("time", numeric_time, {"units": units, "calendar": calendar})
+        )
 
-        if mask is None:
-            mask = (
-                (ds[lat_name] >= lat_min - 1)
-                & (ds[lat_name] <= lat_max + 1)
-                & (ds[lon_name] >= lon_min - 1)
-                & (ds[lon_name] <= lon_max + 1)
-            )
-            mask = mask.compute()
+    # Drop the time_bound variable for the cesm if it exists, cftime isn't playing well, eventually this should be converted in the same way.
+    ds = drop_extra_cftime_vars(ds)
 
-        # Subset the dataset based on the provided geographical bounds
-        if not preview:
-            subset_ds = ds.where(mask, drop=True)
+    print("Masking...")
+    if mask is None:
+        mask = (
+            (ds[lat_name] >= lat_min - 1)
+            & (ds[lat_name] <= lat_max + 1)
+            & (ds[lon_name] >= lon_min - 1)
+            & (ds[lon_name] <= lon_max + 1)
+        )
+        mask = mask.compute()
 
-            # Save the subsetted dataset to the output path
+    # Subset the dataset based on the provided geographical bounds
+    if not preview:
+        subset_ds = ds.where(mask, drop=True)
 
-            subset_ds.load().to_netcdf(output_file)
+        # Save the subsetted dataset to the output path
 
-            print(f"Subsetted dataset for variable '{var_name}' saved to {output_file}")
+        subset_ds.load().to_netcdf(output_file)
 
-    return output_file_paths
+        print(f"Subsetted dataset saved to {output_file}")
+
+    return output_file
 
 
 def get_date_range_from_filename(path, regex):

@@ -13,10 +13,10 @@ def test_get_cesm_data(skip_if_not_glade, tmp_path):
     lat_max = 31
     lon_min = 289
     lon_max = 290
-    paths = co.get_cesm_data(
-        dates, lat_min, lat_max, lon_min, lon_max, tmp_path, "temp.nc",variables=["SSH"]
+    path = co.get_cesm_data(
+        dates, lat_min, lat_max, lon_min, lon_max, tmp_path, "temp.nc",variables=["SSH","TEMP"]
     )
-    dataset = xr.open_dataset(paths[0])
+    dataset = xr.open_dataset(path)
     start = cftime.DatetimeNoLeap(2000, 1, 1, 12, 0, 0)
     end = cftime.DatetimeNoLeap(2000, 1, 5, 12, 0, 0)
     time_vals = dataset.time.values
