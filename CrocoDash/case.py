@@ -571,9 +571,13 @@ class Case:
         # Product Information
         config["forcing"]["product_name"] = self.forcing_product_name.upper()
         config["forcing"]["function_name"] = function_name
+        if self.bgc_in_compset:
+            product_info_to_load = self.forcing_product_name.lower() + "_marbl"
+        else:
+            product_info_to_load = self.forcing_product_name.lower()
         config["forcing"]["information"] = (
             self.ProductFunctionRegistry.load_product_config(
-                self.forcing_product_name.lower() + "_marbl"
+                product_info_to_load
             )
         )
 
