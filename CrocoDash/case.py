@@ -1029,23 +1029,6 @@ class Case:
                 f"Please make sure to execute large_data_workflow as described in {self.extract_forcings_path}"
             )
 
-        # Update the checks for IC and OBC Files
-
-        # Set up the initial condition & boundary conditions
-
-        with open(self.extract_forcings_path / "config.json", "r") as f:
-            config = json.load(f)
-        if process_initial_condition:
-            config["general"]["run_initial_condition"] = True
-        else:
-            config["general"]["run_initial_condition"] = False
-        if process_velocity_tracers:
-            config["general"]["run_boundary_conditions"] = True
-        else:
-            config["general"]["run_boundary_conditions"] = False
-        with open(self.extract_forcings_path / "config.json", "w") as f:
-            json.dump(config, f, indent=4)
-
         if process_initial_condition or process_velocity_tracers:
             self.driver.main(
                 get_dataset_piecewise=False,
