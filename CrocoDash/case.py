@@ -576,9 +576,7 @@ class Case:
         else:
             product_info_to_load = self.forcing_product_name.lower()
         config["forcing"]["information"] = (
-            self.ProductFunctionRegistry.load_product_config(
-                product_info_to_load
-            )
+            self.ProductFunctionRegistry.load_product_config(product_info_to_load)
         )
 
         # General
@@ -1217,15 +1215,14 @@ class Case:
 
         ic_params.extend(
             [
-                ("TEMP_Z_INIT_FILE", "TEMP_IC.nc"),
-                ("SALT_Z_INIT_FILE", "SALT_IC.nc"),
-                ("Z_INIT_FILE_PTEMP_VAR", "TEMP"),
-                ("Z_INIT_FILE_SALT_VAR", "SALT"),
-                ("SURFACE_HEIGHT_IC_FILE", "SSH_IC.nc"),
-                ("SURFACE_HEIGHT_IC_VAR", "SSH"),
-                ("VELOCITY_FILE", "VEL_IC.nc"),
-                ("U_IC_VAR", "UVEL"),
-                ("V_IC_VAR", "VVEL"),
+                ("TEMP_SALT_Z_INIT_FILE", "init_tracers.nc"),
+                ("SURFACE_HEIGHT_IC_FILE", "init_eta.nc"),
+                ("VELOCITY_FILE", "init_vel.nc"),
+                ("Z_INIT_FILE_PTEMP_VAR", "temp"),
+                ("Z_INIT_FILE_SALT_VAR", "salt"),
+                ("SURFACE_HEIGHT_IC_VAR", "eta_t"),
+                ("U_IC_VAR", "u"),
+                ("V_IC_VAR", "v"),
             ]
         )
 

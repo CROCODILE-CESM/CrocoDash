@@ -107,5 +107,4 @@ def test_subset_dataset(dummy_forcing_factory, get_rect_grid, tmp_path):
     ds = xr.open_dataset(matches[0])
     assert ds["latitude"].max() < boundary_info["ic"]["lat_max"] + 2
     assert ds["latitude"].min() > boundary_info["ic"]["lat_min"] - 2
-    breakpoint()
     assert len(ds.time) == 128
