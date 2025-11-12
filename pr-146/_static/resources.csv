@@ -1,8 +1,0 @@
-"CROCODILE Presentation to Regional MOM6",[See here](https://docs.google.com/presentation/d/1CPE9IdNjDHvQxEifghqQbhbhYKpuqzg00OuOMPVGMqo/edit?slide=id.g3302f22671f_0_2#slide=id.g3302f22671f_0_2),Slide Deck,2025-08-05,A presentation on the status of CROCODILE with a nice overview of the project
-"CrocoDash Draft Video Demo",[See here](https://youtu.be/U4tWKi1dNU8),Narrated Video Demo,2025-02-01,A narrated video demo of CrocoDash showing how to use CrocoDash
-"CrocoDash Short Video Demo",[See here](https://youtu.be/7tWZfQL_Irc),Video Demo,2025-02-01,A silent video demo showing how to use CrocoDash
-"CESM Tutorial",[See here](https://ncar.github.io/CESM-Tutorial/README.html),Documentation,Live/Updated, A comprehensive tutorial for the CESM model - a very useful tool for understanding the CESM framework which CrocoDash is built on
-"MOM6 Documentation",[See here](https://mom6.readthedocs.io/en/main/),Documentation,Live/Updated,Documentation for the MOM6 model including parameter file details
-"regional_mom6 Documentation",[See here](https://regional-mom6.readthedocs.io/en/latest/),Documentation,Live/Updated, Documentation for the regional_mom6 package - a subpackage of CrocoDash
-"visualCaseGen Documentation",[See here](https://esmci.github.io/visualCaseGen/),Documentation,Live/Updated, Documentation for the visualCaseGen package - a subpackage of CrocoDash
-"OMWG CrocoDash Presentation",[See here](https://docs.google.com/presentation/d/1V2ZkjdzFS8ivzhaMUEVIo16qGS7LZflx3QH0Jdsh6B8/edit?usp=sharing),Slide Deck,2025-02-01,A presentation on the status of CrocoDash with a nice overview of what we were working on at the time
