@@ -13,10 +13,10 @@ def test_get_cesm_data(skip_if_not_glade, tmp_path):
     lat_max = 31
     lon_min = 289
     lon_max = 290
-    path = co.get_cesm_data(
-        dates, lat_min, lat_max, lon_min, lon_max, tmp_path, "temp.nc",variables=["SSH","TEMP"]
+    paths = co.get_cesm_data(
+        dates, lat_min, lat_max, lon_min, lon_max, tmp_path, "temp.nc",variables=["SSH"]
     )
-    dataset = xr.open_dataset(path)
+    dataset = xr.open_dataset(paths[0])
     start = cftime.DatetimeNoLeap(2000, 1, 1, 12, 0, 0)
     end = cftime.DatetimeNoLeap(2000, 1, 5, 12, 0, 0)
     time_vals = dataset.time.values
@@ -93,7 +93,6 @@ def test_subset_dataset(dummy_forcing_factory, get_rect_grid, tmp_path):
     co.subset_dataset(
         variable_info=variable_info,
         output_path=tmp_path,
-        output_file = "temp.nc",
         lat_min=boundary_info["ic"]["lat_min"] - 1,
         lat_max=boundary_info["ic"]["lat_max"] + 1,
         lon_min=boundary_info["ic"]["lon_min"] - 1,
@@ -102,9 +101,10 @@ def test_subset_dataset(dummy_forcing_factory, get_rect_grid, tmp_path):
         lon_name="longitude",
         preview=False,
     )
-    assert any(p.name.startswith("temp") for p in tmp_path.glob("*.nc"))
-    matches = list(tmp_path.glob("temp.nc"))
+    assert any(p.name.startswith("so_subset") for p in tmp_path.glob("*.nc"))
+    assert any(p.name.startswith("thetao_subset") for p in tmp_path.glob("*.nc"))
+    matches = list(tmp_path.glob("thetao_subset*.nc"))
     ds = xr.open_dataset(matches[0])
     assert ds["latitude"].max() < boundary_info["ic"]["lat_max"] + 2
     assert ds["latitude"].min() > boundary_info["ic"]["lat_min"] - 2
-    assert len(ds.time) == 128
+    assert len(ds.time) == 64

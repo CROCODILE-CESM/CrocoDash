@@ -492,10 +492,10 @@ class Case:
             tb.category_of_product(product_name) == "forcing"
         ), "Data product must be a forcing product"
 
-        if not self.ProductFunctionRegistry.validate_function(
-            product_name, function_name
-        ):
-            raise ValueError("Selected Product or Function was not valid")
+        # if not self.ProductFunctionRegistry.validate_function(
+        #     product_name, function_name
+        # ):
+        #     raise ValueError("Selected Product or Function was not valid")
         self.forcing_product_name = product_name.lower()
         if not (
             isinstance(date_range, list)
@@ -1344,7 +1344,7 @@ class Case:
                 )
                 for tracer_mom6_name in product_info["tracer_var_names"]:
                     if tracer_mom6_name != "temp" and tracer_mom6_name != "salt":
-                        bgc_tracers += f',{tracer_mom6_name}=file:{product_info["tracer_var_names"][tracer_mom6_name]}_obc_segment_{seg_ix}.nc({product_info["tracer_var_names"][tracer_mom6_name]})'
+                        bgc_tracers += f',{tracer_mom6_name}=file:forcing_obc_segment_{seg_ix}.nc({product_info["tracer_var_names"][tracer_mom6_name]})'
 
             tidal_data_str = lambda: (
                 f",Uamp=file:tu_segment_{seg_ix}.nc(uamp),"

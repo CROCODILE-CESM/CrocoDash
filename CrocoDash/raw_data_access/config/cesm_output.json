@@ -18,8 +18,7 @@
     "tracer_lon_coord":"TLONG",
     "eta_var_name": "SSH",
     "depth_coord": [
-        "z_t",
-        "z_t_150m"
+        "z_t"
     ],
     "delimiter": ".",
     "tracer_var_names": {
