@@ -93,6 +93,7 @@ def test_subset_dataset(dummy_forcing_factory, get_rect_grid, tmp_path):
     co.subset_dataset(
         variable_info=variable_info,
         output_path=tmp_path,
+        output_file = "temp.nc",
         lat_min=boundary_info["ic"]["lat_min"] - 1,
         lat_max=boundary_info["ic"]["lat_max"] + 1,
         lon_min=boundary_info["ic"]["lon_min"] - 1,
