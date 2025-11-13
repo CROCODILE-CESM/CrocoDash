@@ -432,7 +432,6 @@ document.write(`
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.rm6.regional_mom6.utils.rotate"><code class="docutils literal notranslate"><span class="pre">rotate()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.rm6.regional_mom6.utils.rotate_complex"><code class="docutils literal notranslate"><span class="pre">rotate_complex()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.rm6.regional_mom6.utils.setup_logger"><code class="docutils literal notranslate"><span class="pre">setup_logger()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.rm6.regional_mom6.utils.try_pint_convert"><code class="docutils literal notranslate"><span class="pre">try_pint_convert()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.rm6.regional_mom6.utils.vecdot"><code class="docutils literal notranslate"><span class="pre">vecdot()</span></code></a></li>
 </ul>
 </li>
@@ -1227,7 +1226,7 @@ Web<span class="w"> </span>Address:<span class="w"> </span>https://github.com/js
 
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.rm6.regional_mom6.regional_mom6.segment.regrid_velocity_tracers">
-<span class="sig-name descname"><span class="pre">regrid_velocity_tracers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">infile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">varnames:</span> <span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">arakawa_grid='A'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rotational_method=RotationMethod.EXPAND_GRID</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regridding_method='bilinear'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_units='days'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fill_method=&lt;function</span> <span class="pre">fill_missing_data&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.rm6.regional_mom6.regional_mom6.segment.regrid_velocity_tracers" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">regrid_velocity_tracers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">infile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">varnames:</span> <span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">arakawa_grid='A'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rotational_method=RotationMethod.EXPAND_GRID</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regridding_method='bilinear'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_units='days'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calendar='julian'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fill_method=&lt;function</span> <span class="pre">fill_missing_data&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.rm6.regional_mom6.regional_mom6.segment.regrid_velocity_tracers" title="Link to this definition">#</a></dt>
 <dd><p>Cut out and interpolate the velocities and tracers.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -2028,44 +2027,6 @@ sum of the areas gives us the total area of the sphere.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="CrocoDash.rm6.regional_mom6.utils.try_pint_convert">
-<span class="sig-prename descclassname"><span class="pre">CrocoDash.rm6.regional_mom6.utils.</span></span><span class="sig-name descname"><span class="pre">try_pint_convert</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">da</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_units</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">var_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.rm6.regional_mom6.utils.try_pint_convert" title="Link to this definition">#</a></dt>
-<dd><p>Attempt to quantify and convert an xarray DataArray using Pint.</p>
-<p>Steps:
-1. Check if the DataArray has a ‘units’ attribute.</p>
-<blockquote>
-<div><ul class="simple">
-<li><p>If not, Pint cannot quantify it, so we raise a ValueError.</p></li>
-</ul>
-</div></blockquote>
-<ol class="arabic simple" start="2">
-<li><p>Quantify the DataArray using Pint (attach units).
-- This converts the DataArray into a pint-aware object.
-- If already a Pint Quantity, skip quantification.</p></li>
-<li><p>Convert the DataArray to the target units if necessary.
-- Uses Pint’s <cite>.to()</cite> to perform unit conversion.
-- Dequantify afterwards to return a plain xarray DataArray.</p></li>
-<li><p>If any step fails (missing units, invalid units, etc.),
-- Log a warning and return the original DataArray unchanged.</p></li>
-</ol>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>da</strong> (<em>xarray.DataArray</em>) – The DataArray to quantify and/or convert.</p></li>
-<li><p><strong>target_units</strong> (<em>str</em>) – Units to convert the DataArray to.</p></li>
-<li><p><strong>var_name</strong> (<em>str</em><em>, </em><em>optional</em>) – Name of the variable (used for logging messages).</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A DataArray with units converted if successful; otherwise the original.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>xarray.DataArray</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
 <dt class="sig sig-object py" id="CrocoDash.rm6.regional_mom6.utils.vecdot">
 <span class="sig-prename descclassname"><span class="pre">CrocoDash.rm6.regional_mom6.utils.</span></span><span class="sig-name descname"><span class="pre">vecdot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">v1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v2</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.rm6.regional_mom6.utils.vecdot" title="Link to this definition">#</a></dt>
 <dd><p>Return the dot product of vectors <code class="docutils literal notranslate"><span class="pre">v1</span></code> and <code class="docutils literal notranslate"><span class="pre">v2</span></code>.
@@ -2216,7 +2177,6 @@ over which the dot product is taken.</p>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.rm6.regional_mom6.utils.rotate"><code class="docutils literal notranslate"><span class="pre">rotate()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.rm6.regional_mom6.utils.rotate_complex"><code class="docutils literal notranslate"><span class="pre">rotate_complex()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.rm6.regional_mom6.utils.setup_logger"><code class="docutils literal notranslate"><span class="pre">setup_logger()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.rm6.regional_mom6.utils.try_pint_convert"><code class="docutils literal notranslate"><span class="pre">try_pint_convert()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.rm6.regional_mom6.utils.vecdot"><code class="docutils literal notranslate"><span class="pre">vecdot()</span></code></a></li>
 </ul>
 </li>
