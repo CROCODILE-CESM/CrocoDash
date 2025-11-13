@@ -552,7 +552,7 @@ class Case:
         # Paths
         config["paths"]["hgrid_path"] = self.supergrid_path
         config["paths"]["vgrid_path"] = self.vgrid_path
-        config["paths"]["bathymetry_path"] = self.vgrid_path
+        config["paths"]["bathymetry_path"] = self.topo_path
         config["paths"]["raw_dataset_path"] = str(
             self.extract_forcings_path / "raw_data"
         )
