@@ -165,7 +165,7 @@ def test_regrid_data_piecewise_parsing(
         ] == "forcing_obc_segment_{}_{}_{}.nc".format(
             boundary_str, file_start_date, file_end_date
         )
-    assert "init_eta.nc" in preview_dict["output_file_names"]
+    assert "init_eta_filled.nc" in preview_dict["output_file_names"]
     assert (
         directory_raw_data / "ic_unprocessed.nc"
         == preview_dict["matching_files"]["IC"][0][2]

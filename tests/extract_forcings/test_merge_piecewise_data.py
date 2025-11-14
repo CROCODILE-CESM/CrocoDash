@@ -137,9 +137,9 @@ def test_merge_piecewise_data_parsing(
         )
 
     # Assert IC
-    assert "init_eta.nc" in preview_dict["output_file_names"]
+    assert "init_eta_filled.nc" in preview_dict["output_file_names"]
     assert (
-        str(regridded_data_path / f"init_eta.nc")
+        str(regridded_data_path / f"init_eta_filled.nc")
         in preview_dict["matching_files"]["IC"]
     )
 
