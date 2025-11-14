@@ -22,8 +22,7 @@ WORKDIR ${WORKDIR}/CrocoDash
 RUN sha256sum ${WORKDIR}/CrocoDash/environment.yml > /env_hash.txt
 
 # ---- Create conda environment ----
-RUN conda env create -f ${WORKDIR}/CrocoDash/environment.yml && \
-    conda clean --all --yes
+RUN conda env create -f ${WORKDIR}/CrocoDash/environment.yml -y
 
 
 # ---- Default shell & entry ----
