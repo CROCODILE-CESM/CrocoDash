@@ -18,8 +18,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-          path: /workspace/CrocoDash
-
+          path: CrocoDash
+      - name: Copy CrocoDash into container
+        run: cp -r $GITHUB_WORKSPACE/CrocoDash $WORKDIR/CrocoDash
       - name: Run Pytest
         run: |
           source /opt/conda/etc/profile.d/conda.sh
