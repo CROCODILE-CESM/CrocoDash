@@ -226,7 +226,11 @@ def regrid_dataset_piecewise(
                 print("Start Fill")
                 # Read in bathymetry
                 grid = Grid.from_supergrid(hgrid_path)
-                bathymetry = Topo.from_topo_file(grid = grid, topo_file_path = bathymetry, min_depth = 9.5)        
+
+                # Have to get min depth from the file first
+                with xr.open_dataset(bathymetry) as ds:
+                    min_depth = ds.attrs.get("min_depth")
+                bathymetry = Topo.from_topo_file(grid = grid, topo_file_path = bathymetry, min_depth = min_depth)        
                 
                 # ETA - no depth
                 print("ETA")
