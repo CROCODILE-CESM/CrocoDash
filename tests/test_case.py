@@ -20,7 +20,7 @@ def test_case_init(
     get_cesm_root_path,
     is_glade_file_system,
 ):
-
+    raise AssertionError("TEST ERROR")
     # Set Grid Info
     grid, topo, vgrid = gen_grid_topo_vgrid
 
