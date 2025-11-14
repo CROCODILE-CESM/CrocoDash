@@ -19,10 +19,10 @@ WORKDIR ${WORKDIR}/CrocoDash
 
 # ---- Compute environment hash ----
 # This will go inside the container for CI comparison
-RUN sha256sum ${WORKDIR}/CrocoDash/environment.yml > /env_hash.txt
+RUN sha256sum environment.yml > /env_hash.txt
 
 # ---- Create conda environment ----
-RUN conda env create -f ${WORKDIR}/CrocoDash/environment.yml && \
+RUN conda env create -f environment.yml && \
     conda clean --all --yes
 
 
