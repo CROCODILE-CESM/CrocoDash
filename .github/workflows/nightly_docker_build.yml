@@ -1,0 +1,46 @@
+name: Nightly Docker Build
+
+on:
+  schedule:
+    - cron: "0 7 * * *"   # 7 AM UTC nightly
+  workflow_dispatch:       # allow manual runs
+
+jobs:
+  build-nightly-image:
+    name: Build Nightly CrocoDash Image
+    runs-on: ubuntu-latest
+
+    steps:
+      # ---- Checkout repository ----
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: true  # Docker build copies from the hardcoded CrocoDash/ folder
+
+      # ---- Set up Docker Buildx ----
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # ---- Login to GitHub Container Registry ----
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # ---- Build Docker image ----
+      - name: Build CrocoDash nightly image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile
+          push: true
+          tags: ghcr.io/${{ github.repository }}/crocodash:nightly
+
+      # ---- Print environment hash stored inside image ----
+      # You can remove this if not desired — it pulls the hash out of /env_hash.txt
+      - name: Extract environment hash
+        run: |
+          docker run --rm ghcr.io/${{ github.repository }}/crocodash:nightly \
+            bash -c "cat /env_hash.txt" || echo "Could not read env_hash.txt"

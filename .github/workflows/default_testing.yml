@@ -12,36 +12,27 @@ env:
 jobs:
   pytest:
     runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/CROCODILE-CESM/CrocoDash/croco-dash:nightly
     steps:
-      # Check out the CESM
       - uses: actions/checkout@v4
         with:
-          repository: CROCODILE-CESM/CESM
-          path: CESM
-      # Run git-fleximod
-      - name: checkout CESM
-        env:
-          GIT_CLONE_PROTECTION_ACTIVE: false
-        run: |
-          cd $CESMROOT
-          ./bin/git-fleximod update
+          submodules: recursive
+          path: /workspace/CrocoDash
 
-      - uses: actions/checkout@v4
-        with:
-            submodules: recursive
-            path: CrocoDash
-      - uses: actions/setup-python@v5
-      - uses: conda-incubator/setup-miniconda@v3
-        with:
-          activate-environment: CrocoDash
-          environment-file: CrocoDash/environment.yml
-      # It runs the tests in rm6 by default as well, but ignores visualCaseGen & mom6_bathy
-      - name: Run Pytest Suite
+      - name: Run Pytest
         run: |
-          source $(conda info --base)/etc/profile.d/conda.sh # Initialize Conda
-          conda activate CrocoDash # Activate env for autodocs
-          cd CrocoDash
-          pytest --ignore=CrocoDash/visualCaseGen -m "not workflow"
+          source /opt/conda/etc/profile.d/conda.sh
+          conda activate CrocoDash
+          cd /workspace/CrocoDash
+          pytest --ignore=visualCaseGen -m "not workflow"
+
+      - name: Run Workflow Tests
+        run: |
+          source /opt/conda/etc/profile.d/conda.sh
+          conda activate CrocoDash
+          cd /workspace/CrocoDash
+          pytest -m "workflow" -s --ignore=CrocoDash/visualCaseGen
         shell: bash
       - name: Run Full Workflow Test
         run: |
