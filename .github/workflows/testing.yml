@@ -1,11 +1,10 @@
 name: Default Testing
 
-on: [push, pull_request, workflow_dispatch]
+on: [push, workflow_dispatch]
 
 permissions:
   contents: write
 env:
-  CESMROOT: ${{ github.workspace }}/CESM/ # See the checkout step below for the path
   CIME_MACHINE: ubuntu-latest
   DIN_LOC_ROOT: ${{ github.workspace }}
   CIME_OUTPUT_ROOT: ${{ github.workspace }}
@@ -23,9 +22,8 @@ jobs:
         run: cp -r $GITHUB_WORKSPACE/CrocoDash $WORKDIR/CrocoDash
       - name: Run Pytest
         run: |
-          source /opt/conda/etc/profile.d/conda.sh
           conda activate CrocoDash
-          cd /workspace/CrocoDash
+          cd $WORKDIR/CrocoDash
           pytest --ignore=visualCaseGen -m "not workflow"
 
       - name: Run Workflow Tests
