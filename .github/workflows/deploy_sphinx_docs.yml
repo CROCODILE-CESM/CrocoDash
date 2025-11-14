@@ -10,19 +10,15 @@ permissions:
 jobs:
   docs:
     runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/crocodile-cesm/crocodash:nightly
     steps:
       - uses: actions/checkout@v4
         with:
             submodules: recursive
       - uses: actions/setup-python@v5
-      - uses: conda-incubator/setup-miniconda@v3
-        with:
-          activate-environment: CrocoDash
-          environment-file: environment.yml
       - name: Sphinx build
         run: |
-          source $(conda info --base)/etc/profile.d/conda.sh # Initialize Conda
-          conda activate CrocoDash # Activate env for autodocs
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
             sphinx-build docs/source _build/pr-${{ github.event.number }}
           else

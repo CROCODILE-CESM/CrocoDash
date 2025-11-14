@@ -19,12 +19,10 @@ jobs:
           submodules: recursive
           path: CrocoDash
       - name: Copy CrocoDash into container
-        run: cp -r $GITHUB_WORKSPACE/CrocoDash $WORKDIR/CrocoDash
+        run: cp -r $GITHUB_WORKSPACE/CrocoDash $WORKDIR
       - name: Run Pytest
         run: |
           cd $WORKDIR/CrocoDash
-          echo "Listing files in $WORKDIR/CrocoDash:"
-          ls -l
           pytest --ignore=CrocoDash/visualCaseGen -m "not workflow"
       - name: Run Workflow Tests
         run: |
