@@ -10,12 +10,14 @@ ENV CESMROOT=/workspace/CESM
 WORKDIR ${WORKDIR}
 
 # ---- Install CESM ----
-RUN git clone https://github.com/CROCODILE-CESM/CESM.git ${CESMROOT} && \
-    cd ${CESMROOT} && ./bin/git-fleximod update
+# RUN git clone https://github.com/CROCODILE-CESM/CESM.git ${CESMROOT} && \
+#     cd ${CESMROOT} && ./bin/git-fleximod update
 
 # ---- Copy CrocoDash only for environment build ----
 COPY CrocoDash/ ${WORKDIR}/CrocoDash/
 WORKDIR ${WORKDIR}/CrocoDash
+RUN ls -l ${WORKDIR}/CrocoDash
+
 
 # ---- Compute environment hash ----
 # This will go inside the container for CI comparison
