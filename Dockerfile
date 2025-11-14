@@ -16,8 +16,6 @@ WORKDIR ${WORKDIR}
 # ---- Copy CrocoDash only for environment build ----
 COPY CrocoDash/ ${WORKDIR}/CrocoDash/
 WORKDIR ${WORKDIR}/CrocoDash
-RUN ls -l ${WORKDIR}
-
 
 # ---- Compute environment hash ----
 # This will go inside the container for CI comparison
