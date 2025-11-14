@@ -16,15 +16,14 @@ WORKDIR ${WORKDIR}
 # ---- Copy CrocoDash only for environment build ----
 COPY CrocoDash/ ${WORKDIR}/CrocoDash/
 WORKDIR ${WORKDIR}/CrocoDash
-RUN ls -l ${WORKDIR}/CrocoDash
 
 
 # ---- Compute environment hash ----
 # This will go inside the container for CI comparison
-RUN sha256sum environment.yml > /env_hash.txt
+RUN sha256sum ${WORKDIR}/environment.yml > /env_hash.txt
 
 # ---- Create conda environment ----
-RUN conda env create -f environment.yml && \
+RUN conda env create -f ${WORKDIR}/environment.yml && \
     conda clean --all --yes
 
 
