@@ -42,10 +42,3 @@ jobs:
           push: true
           tags: |
             ghcr.io/crocodile-cesm/crocodash:nightly
-
-      # ---- Print environment hash stored inside image ----
-      # You can remove this if not desired — it pulls the hash out of /env_hash.txt
-      - name: Extract environment hash
-        run: |
-          docker run --rm ghcr.io/crocodile-cesm/crocodash:nightly \
-            bash -c "cat /env_hash.txt" || echo "Could not read env_hash.txt"
