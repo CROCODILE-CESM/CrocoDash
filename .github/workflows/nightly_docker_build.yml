@@ -6,6 +6,9 @@ on:
   workflow_dispatch:       # allow manual runs
   push:
 
+permissions:
+  packages: write
+
 jobs:
   build-nightly-image:
     name: Build Nightly CrocoDash Image
