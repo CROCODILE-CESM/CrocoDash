@@ -1,6 +1,6 @@
 name: Quality Control
 
-on: [push, pull_request, workflow_dispatch]
+on: [push]
 
 jobs:
   check-glade:
