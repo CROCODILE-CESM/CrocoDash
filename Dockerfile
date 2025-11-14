@@ -16,6 +16,7 @@ WORKDIR ${WORKDIR}
 # ---- Copy CrocoDash only for environment build ----
 COPY CrocoDash/ ${WORKDIR}/CrocoDash/
 WORKDIR ${WORKDIR}/CrocoDash
+RUN ls -l ${WORKDIR}
 
 
 # ---- Compute environment hash ----
