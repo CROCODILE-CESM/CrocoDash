@@ -20,6 +20,8 @@ jobs:
           path: CrocoDash
       - name: Copy CrocoDash into container
         run: cp -r $GITHUB_WORKSPACE/CrocoDash $WORKDIR
+      - name: Setup upterm session
+        uses: owenthereal/action-upterm@v1
       - name: Run Pytest
         run: |
           cd $WORKDIR/CrocoDash
