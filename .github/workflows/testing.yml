@@ -23,6 +23,8 @@ jobs:
       - name: Run Pytest
         run: |
           cd $WORKDIR/CrocoDash
+          echo "Listing files in $WORKDIR/CrocoDash:"
+          ls -l
           pytest --ignore=CrocoDash/visualCaseGen -m "not workflow"
       - name: Run Workflow Tests
         run: |
