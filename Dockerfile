@@ -10,8 +10,8 @@ ENV CESMROOT=/workspace/CESM
 WORKDIR ${WORKDIR}
 
 # ---- Install CESM ----
-RUN git clone https://github.com/CROCODILE-CESM/CESM.git ${CESMROOT} -b workshop_2025 && \
-    cd ${CESMROOT} && ./bin/git-fleximod update
+# RUN git clone https://github.com/CROCODILE-CESM/CESM.git ${CESMROOT} -b workshop_2025 && \
+#     cd ${CESMROOT} && ./bin/git-fleximod update
 
 # ---- Copy CrocoDash only for environment build ----
 COPY CrocoDash/ ${WORKDIR}/CrocoDash/

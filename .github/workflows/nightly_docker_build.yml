@@ -16,7 +16,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          submodules: true  # Docker build copies from the hardcoded CrocoDash/ folder
+          submodules: recursive  # Docker build copies from the hardcoded CrocoDash/ folder
           path: CrocoDash
 
       # ---- Set up Docker Buildx ----
