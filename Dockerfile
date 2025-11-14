@@ -7,6 +7,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 ENV WORKDIR=/workspace
 ENV CESMROOT=/workspace/CESM
+ENV CIME_MACHINE=ubuntu-latest
+ENV DIN_LOC_ROOT=/workspace
+ENV CIME_OUTPUT_ROOT=/workspace
+ENV USER=crocobot
 WORKDIR ${WORKDIR}
 
 # ---- Install CESM ----
