@@ -13,7 +13,7 @@ jobs:
   pytest:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/CROCODILE-CESM/CrocoDash/croco-dash:nightly
+      image: ghcr.io/crocodile-cesm/crocodash:nightly
     steps:
       - uses: actions/checkout@v4
         with:
