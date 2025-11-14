@@ -22,21 +22,10 @@ jobs:
         run: cp -r $GITHUB_WORKSPACE/CrocoDash $WORKDIR/CrocoDash
       - name: Run Pytest
         run: |
-          conda activate CrocoDash
           cd $WORKDIR/CrocoDash
           pytest --ignore=visualCaseGen -m "not workflow"
-
       - name: Run Workflow Tests
         run: |
-          source /opt/conda/etc/profile.d/conda.sh
-          conda activate CrocoDash
-          cd /workspace/CrocoDash
+          cd $WORKDIR/CrocoDash
           pytest -m "workflow" -s --ignore=CrocoDash/visualCaseGen
-        shell: bash
-      - name: Run Full Workflow Test
-        run: |
-          source $(conda info --base)/etc/profile.d/conda.sh
-          conda activate CrocoDash
-          cd CrocoDash
-          pytest -m "workflow"  -s --ignore=CrocoDash/visualCaseGen # Only run workflow tests
         shell: bash
