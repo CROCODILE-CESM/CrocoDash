@@ -20,13 +20,10 @@ jobs:
           path: CrocoDash
       - name: Copy CrocoDash into container
         run: cp -r $GITHUB_WORKSPACE/CrocoDash $WORKDIR
-      - uses: owenthereal/action-upterm@v1
-        with:
-          upterm_install_dir: $HOME/.local/bin
       - name: Run Pytest
         run: |
           cd $WORKDIR/CrocoDash
-          pytest --ignore=CrocoDash/visualCaseGen -m "not workflow"
+          pytest --ignore=CrocoDash/visualCaseGen -m "not workflow" -vv --capture=no --showlocals --tb=short
       - name: Run Workflow Tests
         run: |
           cd $WORKDIR/CrocoDash
