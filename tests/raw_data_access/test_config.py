@@ -10,7 +10,7 @@ def test_load_tables():
 
 def test_load_product_config():
     config = tb.load_product_config("glorys")
-    assert "xh" in config.keys()
+    assert "tracer_x_coord" in config.keys()
 
 
 def test_list_products():

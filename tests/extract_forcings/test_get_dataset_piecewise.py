@@ -1,4 +1,4 @@
-from CrocoDash.raw_data_access.large_data_workflow.code import (
+from CrocoDash.extract_forcings.code import (
     get_dataset_piecewise as dp,
 )
 import os
@@ -31,6 +31,23 @@ def test_get_dataset_piecewise_workflow(tmp_path, get_rect_grid, skip_if_not_gla
     dp.get_dataset_piecewise(
         "GLORYS",
         "get_glorys_data_from_rda",
+        {
+            "time": "time",
+            "tracer_x_coord": "longitude",
+            "tracer_y_coord": "latitude",
+            "u_var_name": "uo",
+            "v_var_name": "vo",
+            "u_y_coord":"latitude",
+            "u_x_coord":"longitude",
+            "v_x_coord":"longitude",
+            "v_y_coord":"latitude",
+            "eta_var_name": "zos",
+            "depth_coord": "depth",
+            "tracer_var_names": {
+                "temp": "thetao",
+                "salt": "so"
+            }
+        },
         "%Y%m%d",
         "20200130",
         "20200201",
@@ -51,6 +68,23 @@ def test_get_dataset_piecewise_parsing(tmp_path, get_rect_grid):
     preview_dict = dp.get_dataset_piecewise(
         "GLORYS",
         "get_glorys_data_script_for_cli",
+        {
+            "time": "time",
+            "tracer_x_coord": "longitude",
+            "tracer_y_coord": "latitude",
+            "u_var_name": "uo",
+            "v_var_name": "vo",
+            "u_y_coord":"latitude",
+            "u_x_coord":"longitude",
+            "v_x_coord":"longitude",
+            "v_y_coord":"latitude",
+            "eta_var_name": "zos",
+            "depth_coord": "depth",
+            "tracer_var_names": {
+                "temp": "thetao",
+                "salt": "so"
+            }
+        },
         "%Y%m%d",
         "20200101",
         "20200201",

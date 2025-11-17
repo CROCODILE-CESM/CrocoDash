@@ -1,10 +1,9 @@
 from datetime import datetime
 import xarray as xr
 from CrocoDash import utils
-from CrocoDash.raw_data_access.large_data_workflow.utils import (
-    load_config,
+from CrocoDash.extract_forcings.utils import (
     parse_dataset_folder,
-    check_date_continuity
+    check_date_continuity,
 )
 from pathlib import Path
 from collections import defaultdict
@@ -77,7 +76,7 @@ def merge_piecewise_dataset(
                 logger.warning("[%s] %s", boundary, m)
     else:
         logger.info("All boundaries continuous and non-overlapping.")
-        
+
     if run_boundary_conditions:
         for seg_num in inverted_bnc:
             if not any(f"{seg_num:03}" in boundary for boundary in boundary_list):
@@ -111,16 +110,19 @@ def merge_piecewise_dataset(
     # Copy Initial Condition
     if run_initial_condition:
         ic_files_to_copy = [
-            folder / "init_eta.nc",
-            folder / "init_vel.nc",
-            folder / "init_tracers.nc",
+            folder / "init_eta_filled.nc",
+            folder / "init_vel_filled.nc",
+            folder / "init_tracers_filled.nc",
         ]
         for file_path in ic_files_to_copy:
-            shutil.copy(file_path, Path(output_folder))
+        # Remove "_filled" from filename
+            new_name = file_path.name.replace("_filled", "")
+            shutil.copy(file_path, Path(output_folder) / new_name)
+            logger.info(f"Saved {new_name} initial condition to {output_folder}")
             matching_files["IC"].append(str(file_path))
-        output_file_names.append("init_eta.nc")
-        output_file_names.append("init_vel.nc")
-        output_file_names.append("init_tracers.nc")
+        output_file_names.append("init_eta_filled.nc")
+        output_file_names.append("init_vel_filled.nc")
+        output_file_names.append("init_tracers_filled.nc")
     if preview:
         return {
             "matching_files": matching_files,
@@ -129,19 +131,7 @@ def merge_piecewise_dataset(
         }
 
 
-def main(config_path):
-    config = load_config(config_path)
-    merge_piecewise_dataset(
-        config["paths"]["raw_dataset_path"],
-        config["raw_file_regex"]["regridded_dataset_pattern"],
-        config["dates"]["format"],
-        config["dates"]["start"],
-        config["dates"]["end"],
-        config["boundary_number_conversion"],
-        config["paths"]["merged_dataset_path"],
-    )
-    return
-
-
 if __name__ == "__main__":
-    main("<CONFIG FILEPATH>")
+    print(
+        "This is the merge & output part of the extract forcings workflow, don't run this directly!"
+    )

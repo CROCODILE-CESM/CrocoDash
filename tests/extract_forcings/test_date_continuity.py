@@ -2,7 +2,7 @@ import tempfile
 from pathlib import Path
 from datetime import datetime
 import pytest
-from CrocoDash.raw_data_access.large_data_workflow import utils
+from CrocoDash.extract_forcings import utils
 
 
 def test_date_continuity(tmp_path: Path):

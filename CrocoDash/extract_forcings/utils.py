@@ -106,6 +106,7 @@ def parse_dataset_folder(
 
     return boundary_file_list
 
+
 def check_date_continuity(boundary_file_list: dict):
     """
     Check for overlaps or missing dates between consecutive files.
@@ -113,7 +114,9 @@ def check_date_continuity(boundary_file_list: dict):
     issues = defaultdict(list)
 
     for boundary, files in boundary_file_list.items():
-        for (prev_start, prev_end, prev_file), (next_start, next_end, next_file) in zip(files, files[1:]):
+        for (prev_start, prev_end, prev_file), (next_start, next_end, next_file) in zip(
+            files, files[1:]
+        ):
             # Expect next_start == prev_end + 1 day
             expected_next = prev_end + timedelta(days=1)
             if next_start < expected_next:

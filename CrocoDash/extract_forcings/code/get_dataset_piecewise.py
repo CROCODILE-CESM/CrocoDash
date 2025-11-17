@@ -1,7 +1,6 @@
 from pathlib import Path
 from CrocoDash import utils
 from CrocoDash.raw_data_access.driver import get_rectangular_segment_info
-from CrocoDash.raw_data_access.utils import load_config
 from CrocoDash.raw_data_access import driver as dv
 import xarray as xr
 import pandas as pd
@@ -13,6 +12,7 @@ logger = utils.setup_logger(__name__)
 def get_dataset_piecewise(
     product_name: str,
     function_name: str,
+    product_information: dict,
     date_format: str,
     start_date: str,
     end_date: str,
@@ -102,6 +102,25 @@ def get_dataset_piecewise(
     # Set up the first start_date starter
     start_date = dates[0]
     output_file_names = []
+
+    # Build requested variables
+    phys_vars = [
+        product_information["u_var_name"],
+        product_information["v_var_name"],
+        product_information["eta_var_name"],
+        product_information["tracer_var_names"]["temp"],
+        product_information["tracer_var_names"]["salt"],
+    ]
+    extra_tracers = [
+        v
+        for k, v in product_information["tracer_var_names"].items()
+        if k not in ("temp", "salt")
+    ]
+    # Build extra args
+    extra_args = {}
+    for key in ["dataset_path", "date_format", "regex", "delimiter"]:
+        if key in product_information:
+            extra_args[key] = product_information[key]
     # Retrieve and save data piecewise
     for ind in range(len(dates) - 1):
         end_date = dates[ind + 1]
@@ -118,24 +137,38 @@ def get_dataset_piecewise(
 
             # Execute the data retrieval function
             if not preview:
-                data_access_function(
-                    dates=[start_date_str, end_ic_date_str],
-                    lat_min=latlon_info["lat_min"],
-                    lat_max=latlon_info["lat_max"],
-                    lon_min=latlon_info["lon_min"],
-                    lon_max=latlon_info["lon_max"],
-                    output_dir=output_dir,
-                    output_file=output_file,
-                )
+                if (Path(output_dir) / output_file).exists():
+                    logger.info(
+                        f"Initial condition file {output_file} already exists. Skipping download."
+                    )
+                else:
+                    data_access_function(
+                        dates=[start_date_str, end_ic_date_str],
+                        lat_min=latlon_info["lat_min"],
+                        lat_max=latlon_info["lat_max"],
+                        lon_min=latlon_info["lon_min"],
+                        lon_max=latlon_info["lon_max"],
+                        output_dir=output_dir,
+                        output_file=output_file,
+                        variables = phys_vars + extra_tracers,
+                        **extra_args
+                    )
         if run_boundary_conditions:
             for boundary in boundary_number_conversion.keys():
 
                 latlon_info = boundary_info[boundary]
-                output_file = f"{boundary}_unprocessed.{start_date_str}_{end_date_str}.nc"
+                output_file = (
+                    f"{boundary}_unprocessed.{start_date_str}_{end_date_str}.nc"
+                )
                 output_file_names.append(output_file)
                 # Execute the data retrieval function
                 if not preview:
-                    data_access_function(
+                    if (Path(output_dir) / output_file).exists():
+                        logger.info(
+                        f"OBC file {output_file} already exists. Skipping download."
+                    )
+                    else:
+                        data_access_function(
                         dates=[start_date_str, end_date_str],
                         lat_min=latlon_info["lat_min"],
                         lat_max=latlon_info["lat_max"],
@@ -143,6 +176,8 @@ def get_dataset_piecewise(
                         lon_max=latlon_info["lon_max"],
                         output_dir=output_dir,
                         output_file=output_file,
+                        variables = phys_vars+extra_tracers,
+                        **extra_args
                     )
 
         start_date = end_date + timedelta(days=1)
@@ -159,38 +194,5 @@ def get_dataset_piecewise(
         }
 
 
-def main(config_file):
-    """
-    Main function to run the large dataset workflow using a configuration file.
-
-    Parameters
-    ----------
-    config_file : str or Path
-        Path to the configuration JSON file.
-
-    Returns
-    -------
-    None
-    """
-    print("Starting Large Dataset Workflow")
-    config = load_config(config_file)
-
-    ## Check to make sure everything exists INCOMPLETE
-    get_dataset_piecewise(
-        product_name=config["forcing"]["product_name"],
-        function_name=config["forcing"]["function_name"],
-        date_format=config["dates"]["format"],
-        start_date=config["dates"]["start"],
-        end_date=config["dates"]["end"],
-        hgrid_path=config["paths"]["hgrid_path"],
-        step_days=int(config["params"]["step"]),
-        output_dir=config["paths"]["raw_dataset_path"],
-        boundary_number_conversion=config["boundary_number_conversion"],
-        run_initial_condition=True,
-        run_boundary_conditions=True,
-        preview=config["params"]["preview"],
-    )
-
-
 if __name__ == "__main__":
-    main("<CONFIG FILEPATH>")
+    print("This is the raw dataset accessor of the workflow, don't run this directly! ")

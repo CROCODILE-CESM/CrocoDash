@@ -12,17 +12,36 @@ def add_product_config(product_name: str, product_info: str | Path | dict):
     product_name = product_name.lower()
     output_path = CONFIG_DIR / (product_name + ".json")
     if output_path.exists():
-        raise ValueError(f"Product config already exists in {output_path}. Please delete this to replace it.")
+        raise ValueError(
+            f"Product config already exists in {output_path}. Please delete this to replace it."
+        )
     else:
 
         if isinstance(product_info, (str, Path)):
             with open(product_info, "r") as f:
                 product_info = json.load(f)
         elif product_info == None:
-            raise ValueError(f"No product info provided but product information does not exist in {output_path}")
+            raise ValueError(
+                f"No product info provided but product information does not exist in {output_path}"
+            )
             return
-        # Validate, must have the keys time, xh, yh, u, v, ssh, z_dim or zl, and a subdict called tracers with the fields salt, temp
-        required_keys = {"time", "xh", "yh", "u", "v", "ssh", "zl", "u_lat_name","u_lon_name","v_lat_name","v_lon_name","z_unit_conversion"}
+        # Validate
+        required_keys = {
+            "time",
+            "u_x_coord",
+            "u_y_coord",
+            "v_x_coord",
+            "v_y_coord",
+            "tracer_x_coord",
+            "tracer_y_coord",
+            "depth_coord",
+            "u_var_name",
+            "v_var_name",
+            "eta_var_name",
+            "tracer_var_names",
+            "boundary_fill_method",
+            "time_units"
+        }
         tracer_keys = {"salt", "temp"}
 
         missing = []
@@ -33,7 +52,9 @@ def add_product_config(product_name: str, product_info: str | Path | dict):
                 missing.append(key)
 
         # Check tracers subdict
-        if "tracers" not in product_info or not isinstance(product_info["tracers"], dict):
+        if "tracers" not in product_info or not isinstance(
+            product_info["tracers"], dict
+        ):
             missing.append("tracers (dict with at least salt, temp)")
         else:
             for key in tracer_keys:
@@ -41,11 +62,14 @@ def add_product_config(product_name: str, product_info: str | Path | dict):
                     missing.append(f"tracers.{key}")
 
         if missing:
-            raise ValueError(f"Product dict is missing required keys: {', '.join(missing)}")
+            raise ValueError(
+                f"Product dict is missing required keys: {', '.join(missing)}"
+            )
 
         # Write out
         with open(output_path, "w") as f:
             json.dump(product_info, f, indent=4)
+
 
 def load_product_config(product_name: str):
     """Load configuration files."""
@@ -55,7 +79,9 @@ def load_product_config(product_name: str):
             data = json.load(f)  # Use `json.load()` for files
             return data
     except:
-        raise ValueError(f"Product Information not found in {CONFIG_DIR}/{product_name}")
+        raise ValueError(
+            f"Product Information not found in {CONFIG_DIR}/{product_name}"
+        )
 
 
 def load_tables():

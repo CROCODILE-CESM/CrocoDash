@@ -3,8 +3,9 @@
         "raw_dataset_path": "",
         "hgrid_path": "",
         "vgrid_path": "",
+        "bathymetry_path": "",
         "regridded_dataset_path": "",
-        "merged_dataset_path": ""
+        "output_path": ""
     },
     "file_regex": {
         "raw_dataset_pattern": "(north|east|south|west)_unprocessed\\.(\\d{8})_(\\d{8})\\.nc",
@@ -18,13 +19,15 @@
     "forcing": {
         "product_name": "",
         "function_name": "",
-        "varnames": {}
+        "information": {}
     },
-    "boundary_number_conversion": {},
-    "params": {
+    
+    "general": {
+        "boundary_number_conversion": {},
         "step": "",
         "preview": false,
         "run_initial_condition": true,
         "run_boundary_conditions": true
+        
     }
 }

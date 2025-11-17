@@ -21,7 +21,11 @@ def test_driver():
     return
 
 
-def main(get_dataset_piecewise= True, regrid_dataset_piecewise=True, merge_piecewise_dataset=True):
+def main(
+    get_dataset_piecewise=True,
+    regrid_dataset_piecewise=True,
+    merge_piecewise_dataset=True,
+):
     """
     Driver file to run the large data workflow
     """
@@ -37,16 +41,17 @@ def main(get_dataset_piecewise= True, regrid_dataset_piecewise=True, merge_piece
         gdp.get_dataset_piecewise(
             product_name=config["forcing"]["product_name"],
             function_name=config["forcing"]["function_name"],
+            product_information=config["forcing"]["information"],
             date_format=config["dates"]["format"],
             start_date=config["dates"]["start"],
             end_date=config["dates"]["end"],
             hgrid_path=config["paths"]["hgrid_path"],
-            step_days=int(config["params"]["step"]),
+            step_days=int(config["general"]["step"]),
             output_dir=config["paths"]["raw_dataset_path"],
-            boundary_number_conversion=config["boundary_number_conversion"],
-            run_initial_condition=config["params"]["run_initial_condition"],
-            run_boundary_conditions=config["params"]["run_boundary_conditions"],
-            preview=config["params"]["preview"],
+            boundary_number_conversion=config["general"]["boundary_number_conversion"],
+            run_initial_condition=config["general"]["run_initial_condition"],
+            run_boundary_conditions=config["general"]["run_boundary_conditions"],
+            preview=config["general"]["preview"],
         )
 
     # Call regrid_dataset_piecewise
@@ -58,13 +63,14 @@ def main(get_dataset_piecewise= True, regrid_dataset_piecewise=True, merge_piece
             config["dates"]["start"],
             config["dates"]["end"],
             config["paths"]["hgrid_path"],
-            config["forcing"]["varnames"],
+            config["paths"]["bathymetry_path"],
+            config["forcing"]["information"],
             config["paths"]["regridded_dataset_path"],
-            config["boundary_number_conversion"],
-            config["params"]["run_initial_condition"],
-            config["params"]["run_boundary_conditions"],
+            config["general"]["boundary_number_conversion"],
+            config["general"]["run_initial_condition"],
+            config["general"]["run_boundary_conditions"],
             config["paths"]["vgrid_path"],
-            config["params"]["preview"],
+            config["general"]["preview"],
         )
 
     # Call merge_dataset_piecewise
@@ -75,11 +81,11 @@ def main(get_dataset_piecewise= True, regrid_dataset_piecewise=True, merge_piece
             config["dates"]["format"],
             config["dates"]["start"],
             config["dates"]["end"],
-            config["boundary_number_conversion"],
-            config["paths"]["merged_dataset_path"],
-            config["params"]["run_initial_condition"],
-            config["params"]["run_boundary_conditions"],
-            config["params"]["preview"],
+            config["general"]["boundary_number_conversion"],
+            config["paths"]["output_path"],
+            config["general"]["run_initial_condition"],
+            config["general"]["run_boundary_conditions"],
+            config["general"]["preview"],
         )
     return
 

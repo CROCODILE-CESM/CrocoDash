@@ -24,7 +24,7 @@ def get_glorys_data_from_rda(
     lon_max,
     output_dir=Path(""),
     output_file="raw_glorys.nc",
-    dataset_varnames=[
+    variables=[
         "time",
         "latitude",
         "longitude",
@@ -39,10 +39,11 @@ def get_glorys_data_from_rda(
     """
     Gather GLORYS Data on Derecho Computers from the campaign storage and return the dataset sliced to the llc and urc coordinates at the specific dates
     """
+    dates = pd.date_range(start=dates[0], end=dates[1]).to_pydatetime().tolist()
     path = Path(output_dir) / output_file
     logger.info(f"Downloading Glorys data from RDA to {path}")
 
-    dates = pd.date_range(start=dates[0], end=dates[1]).to_pydatetime().tolist()
+    
     # Access RDA Path
     ds_in_path = "/glade/campaign/collections/rda/data/d010049/"
     ds_in_files = []
@@ -55,8 +56,10 @@ def get_glorys_data_from_rda(
         pattern = os.path.join(ds_in_path, "**", f"*_{date}_*.nc")
         ds_in_files.extend(glob.glob(pattern, recursive=True))
     ds_in_files = sorted(ds_in_files)
-    
-    ds = xr.open_mfdataset(ds_in_files, decode_times=False, engine = "h5netcdf", parallel = True)[dataset_varnames]
+
+    ds = xr.open_mfdataset(
+        ds_in_files, decode_times=False, engine="h5netcdf", parallel=True
+    )[variables]
 
     if lon_min * lon_max > 0:
         dataset = ds.sel(
@@ -65,21 +68,21 @@ def get_glorys_data_from_rda(
         )
     else:
         dataset = xr.concat(
-        [
-            ds.sel(
-                latitude=slice(lat_min - 1, lat_max + 1),
-                **{"longitude": slice(lon_min - 1, 360)}
-            ),
-            ds.sel(
-                latitude=slice(lat_min - 1, lat_max + 1),
-                **{"longitude": slice(-180, lon_max + 1)}
-            ),
-        ],
-        dim="longitude",
+            [
+                ds.sel(
+                    latitude=slice(lat_min - 1, lat_max + 1),
+                    **{"longitude": slice(lon_min - 1, 360)},
+                ),
+                ds.sel(
+                    latitude=slice(lat_min - 1, lat_max + 1),
+                    **{"longitude": slice(-180, lon_max + 1)},
+                ),
+            ],
+            dim="longitude",
         )
 
-        #convert longitude from degree west to degree east
-        dataset["longitude"] = (360-dataset["longitude"]) % 360
+        # convert longitude from degree west to degree east
+        dataset["longitude"] = (360 - dataset["longitude"]) % 360
         dataset = dataset.sortby("longitude")
 
     dataset.to_netcdf(path)
@@ -94,7 +97,7 @@ def get_glorys_data_from_cds_api(
     lon_max,
     output_dir=None,
     output_file=None,
-    dataset_varnames=["zos", "uo", "vo", "so", "thetao"],
+    variables=["zos", "uo", "vo", "so", "thetao"],
 ):
     """
     Using the copernucismarine api, query GLORYS data (any dates)
@@ -110,11 +113,11 @@ def get_glorys_data_from_cds_api(
         maximum_latitude=lat_max + 1,
         start_datetime=start_datetime,
         end_datetime=end_datetime,
-        variables=dataset_varnames,
+        variables=variables,
         output_directory=output_dir,
         output_filename=output_file,
     )
-    return response
+    return Path(output_dir)/output_file
 
 
 def get_glorys_data_script_for_cli(
@@ -125,6 +128,7 @@ def get_glorys_data_script_for_cli(
     lon_max,
     output_dir,
     output_file,
+    variables=None,
 ) -> None:
     """
     Script to run the GLORYS data query for the CLI

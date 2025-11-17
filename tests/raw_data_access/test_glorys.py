@@ -39,7 +39,7 @@ def test_get_glorys_data_from_cds_api(tmp_path):
         output_dir=tmp_path,
         output_file="temp.nc",
     )
-    dataset = xr.open_dataset(tmp_path / "temp.nc")
+    dataset = xr.open_dataset(res)
     assert dataset.time.values[0] == np.datetime64("2000-01-01T00:00:00.000000000")
     assert dataset.time.values[-1] == np.datetime64("2000-01-05T00:00:00.000000000")
     assert dataset.latitude.values[-1] == lat_max + 1
