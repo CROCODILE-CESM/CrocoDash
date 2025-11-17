@@ -408,8 +408,8 @@ document.write(`
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.rm6.regional_mom6.rotation.RotationMethod.GIVEN_ANGLE"><code class="docutils literal notranslate"><span class="pre">RotationMethod.GIVEN_ANGLE</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.rm6.regional_mom6.rotation.RotationMethod.NO_ROTATION"><code class="docutils literal notranslate"><span class="pre">RotationMethod.NO_ROTATION</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id0"><code class="docutils literal notranslate"><span class="pre">RotationMethod.EXPAND_GRID</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id1"><code class="docutils literal notranslate"><span class="pre">RotationMethod.GIVEN_ANGLE</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id2"><code class="docutils literal notranslate"><span class="pre">RotationMethod.NO_ROTATION</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id3"><code class="docutils literal notranslate"><span class="pre">RotationMethod.GIVEN_ANGLE</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id4"><code class="docutils literal notranslate"><span class="pre">RotationMethod.NO_ROTATION</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.rm6.regional_mom6.rotation.create_expanded_hgrid"><code class="docutils literal notranslate"><span class="pre">create_expanded_hgrid()</span></code></a></li>
@@ -1094,7 +1094,7 @@ longitude coordinates(s) in <code class="docutils literal notranslate"><span cla
 
 <dl class="py class">
 <dt class="sig sig-object py" id="CrocoDash.rm6.regional_mom6.regional_mom6.segment">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.rm6.regional_mom6.regional_mom6.</span></span><span class="sig-name descname"><span class="pre">segment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hgrid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">infile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outfolder</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">varnames</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">segment_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">orientation</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">startdate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bathymetry_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">arakawa_grid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'A'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_units</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'days'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">repeat_year_forcing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.rm6.regional_mom6.regional_mom6.segment" title="Link to this definition">#</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.rm6.regional_mom6.regional_mom6.</span></span><span class="sig-name descname"><span class="pre">segment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hgrid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outfolder</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">segment_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">orientation</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">startdate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bathymetry_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">repeat_year_forcing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.rm6.regional_mom6.regional_mom6.segment" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Class to turn raw boundary and tidal segment data into MOM6 boundary
 and tidal segments.</p>
@@ -1112,19 +1112,12 @@ and puts it on Julian calendar.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>hgrid</strong> (<em>xarray.Dataset</em>) – The horizontal grid used for domain.</p></li>
-<li><p><strong>infile</strong> (<em>Union</em><em>[</em><em>str</em><em>, </em><em>Path</em><em>]</em>) – Path to the raw, unprocessed boundary segment.</p></li>
 <li><p><strong>outfolder</strong> (<em>Union</em><em>[</em><em>str</em><em>, </em><em>Path</em><em>]</em>) – Path to folder where the model inputs will
 be stored.</p></li>
-<li><p><strong>varnames</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em>) – Mapping between the variable/dimension names and
-standard naming convention of this pipeline, e.g., <code class="docutils literal notranslate"><span class="pre">{&quot;xq&quot;:</span> <span class="pre">&quot;longitude,</span>
-<span class="pre">&quot;yh&quot;:</span> <span class="pre">&quot;latitude&quot;,</span> <span class="pre">&quot;salt&quot;:</span> <span class="pre">&quot;salinity&quot;,</span> <span class="pre">...}</span></code>. Key “tracers” points to nested
-dictionary of tracers to include in boundary.</p></li>
 <li><p><strong>segment_name</strong> (<em>str</em>) – Name of the segment, e.g., <code class="docutils literal notranslate"><span class="pre">'segment_001'</span></code>.</p></li>
 <li><p><strong>orientation</strong> (<em>str</em>) – Cardinal direction (lowercase) of the boundary segment,
 i.e., <code class="docutils literal notranslate"><span class="pre">'east'</span></code>, <code class="docutils literal notranslate"><span class="pre">'west'</span></code>, <code class="docutils literal notranslate"><span class="pre">'north'</span></code>, or <code class="docutils literal notranslate"><span class="pre">'south'</span></code>.</p></li>
 <li><p><strong>startdate</strong> (<em>str</em>) – The starting date to use in the segment calendar.</p></li>
-<li><p><strong>arakawa_grid</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – Arakawa grid staggering type of the boundary forcing.
-Either <code class="docutils literal notranslate"><span class="pre">'A'</span></code> (default), <code class="docutils literal notranslate"><span class="pre">'B'</span></code>, or <code class="docutils literal notranslate"><span class="pre">'C'</span></code>.</p></li>
 <li><p><strong>time_units</strong> (<em>str</em>) – The units used by the raw forcing files, e.g., <code class="docutils literal notranslate"><span class="pre">hours</span></code>,
 <code class="docutils literal notranslate"><span class="pre">days</span></code> (default).</p></li>
 <li><p><strong>repeat_year_forcing</strong> (<em>Optional</em><em>[</em><em>bool</em><em>]</em>) – When <code class="docutils literal notranslate"><span class="pre">True</span></code> the experiment runs with repeat-year
@@ -1234,12 +1227,22 @@ Web<span class="w"> </span>Address:<span class="w"> </span>https://github.com/js
 
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.rm6.regional_mom6.regional_mom6.segment.regrid_velocity_tracers">
-<span class="sig-name descname"><span class="pre">regrid_velocity_tracers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rotational_method=RotationMethod.EXPAND_GRID</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regridding_method='bilinear'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fill_method=&lt;function</span> <span class="pre">fill_missing_data&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.rm6.regional_mom6.regional_mom6.segment.regrid_velocity_tracers" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">regrid_velocity_tracers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">infile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">varnames:</span> <span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">arakawa_grid='A'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rotational_method=RotationMethod.EXPAND_GRID</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regridding_method='bilinear'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_units='days'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calendar='julian'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fill_method=&lt;function</span> <span class="pre">fill_missing_data&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.rm6.regional_mom6.regional_mom6.segment.regrid_velocity_tracers" title="Link to this definition">#</a></dt>
 <dd><p>Cut out and interpolate the velocities and tracers.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>rotational_method</strong> (<em>rot.RotationMethod</em>) – The method to use for rotation of the velocities. Currently, the default method, <code class="docutils literal notranslate"><span class="pre">EXPAND_GRID</span></code>, works even with non-rotated grids.</p></li>
+<li><p><strong>infile</strong> (<em>Union</em><em>[</em><em>str</em><em>, </em><em>Path</em><em>]</em>) – Path to the raw, unprocessed boundary segment.</p></li>
+<li><p><strong>varnames</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em>) – Mapping between the variable/dimension names and</p></li>
+<li><p><strong>pipeline</strong> (<em>standard naming convention</em><em> of </em><em>this</em>) – “longitude,</p></li>
+<li><p><strong>e.g.</strong> – “longitude,</p></li>
+<li><p><strong>``{&quot;xq&quot;</strong> – <p>”longitude,</p>
+</p></li>
+<li><p><strong>&quot;yh&quot;</strong> – “latitude”, “salt”: “salinity”, …}``. Key “tracers” points to nested</p></li>
+<li><p><strong>boundary.</strong> (<em>dictionary</em><em> of </em><em>tracers to include in</em>)</p></li>
+<li><p><strong>arakawa_grid</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – Arakawa grid staggering type of the boundary forcing.
+Either <code class="docutils literal notranslate"><span class="pre">'A'</span></code> (default), <code class="docutils literal notranslate"><span class="pre">'B'</span></code>, or <code class="docutils literal notranslate"><span class="pre">'C'</span></code>.</p></li>
 <li><p><strong>regridding_method</strong> (<em>str</em>) – regridding method to use throughout the function. Default is <code class="docutils literal notranslate"><span class="pre">'bilinear'</span></code></p></li>
 <li><p><strong>fill_method</strong> (<em>Function</em>) – Fill method to use throughout the function. Default is <code class="docutils literal notranslate"><span class="pre">rgd.fill_missing_data</span></code></p></li>
 </ul>
@@ -1279,13 +1282,14 @@ Web<span class="w"> </span>Address:<span class="w"> </span>https://github.com/js
 </ol>
 <dl class="py function">
 <dt class="sig sig-object py" id="CrocoDash.rm6.regional_mom6.regridding.add_or_update_time_dim">
-<span class="sig-prename descclassname"><span class="pre">CrocoDash.rm6.regional_mom6.regridding.</span></span><span class="sig-name descname"><span class="pre">add_or_update_time_dim</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">times</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dataset</span></span></span><a class="headerlink" href="#CrocoDash.rm6.regional_mom6.regridding.add_or_update_time_dim" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.rm6.regional_mom6.regridding.</span></span><span class="sig-name descname"><span class="pre">add_or_update_time_dim</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">times</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z_dims</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dataset</span></span></span><a class="headerlink" href="#CrocoDash.rm6.regional_mom6.regridding.add_or_update_time_dim" title="Link to this definition">#</a></dt>
 <dd><p>Add the time dimension to the dataset, in tides case can be one time step.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>ds</strong> (<em>xr.Dataset</em>) – The dataset to add the time dimension to</p></li>
 <li><p><strong>times</strong> (<em>list</em><em>, </em><em>np.Array</em><em>, </em><em>xr.DataArray</em>) – The list of times</p></li>
+<li><p><strong>z_dims</strong> (<em>list</em>) – z dimensions must go first, if they are provided that is enforced</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1586,13 +1590,13 @@ class passes this <code class="docutils literal notranslate"><span class="pre">E
 <dd></dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="id1">
-<span class="sig-name descname"><span class="pre">GIVEN_ANGLE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></em><a class="headerlink" href="#id1" title="Link to this definition">#</a></dt>
+<dt class="sig sig-object py" id="id3">
+<span class="sig-name descname"><span class="pre">GIVEN_ANGLE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></em><a class="headerlink" href="#id3" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="id2">
-<span class="sig-name descname"><span class="pre">NO_ROTATION</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">3</span></em><a class="headerlink" href="#id2" title="Link to this definition">#</a></dt>
+<dt class="sig sig-object py" id="id4">
+<span class="sig-name descname"><span class="pre">NO_ROTATION</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">3</span></em><a class="headerlink" href="#id4" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -2149,8 +2153,8 @@ over which the dot product is taken.</p>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.rm6.regional_mom6.rotation.RotationMethod.GIVEN_ANGLE"><code class="docutils literal notranslate"><span class="pre">RotationMethod.GIVEN_ANGLE</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.rm6.regional_mom6.rotation.RotationMethod.NO_ROTATION"><code class="docutils literal notranslate"><span class="pre">RotationMethod.NO_ROTATION</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id0"><code class="docutils literal notranslate"><span class="pre">RotationMethod.EXPAND_GRID</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id1"><code class="docutils literal notranslate"><span class="pre">RotationMethod.GIVEN_ANGLE</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id2"><code class="docutils literal notranslate"><span class="pre">RotationMethod.NO_ROTATION</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id3"><code class="docutils literal notranslate"><span class="pre">RotationMethod.GIVEN_ANGLE</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id4"><code class="docutils literal notranslate"><span class="pre">RotationMethod.NO_ROTATION</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.rm6.regional_mom6.rotation.create_expanded_hgrid"><code class="docutils literal notranslate"><span class="pre">create_expanded_hgrid()</span></code></a></li>
