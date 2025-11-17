@@ -224,7 +224,7 @@ def regrid_dataset_piecewise(
                 )
             else:
                 # Add the M6b Fill method onto the initial conditions
-                print("Start Fill")
+                print("Apply mom6_bathy fill...")
                 # Read in bathymetry
                 grid = Grid.from_supergrid(hgrid_path)
 
@@ -234,14 +234,12 @@ def regrid_dataset_piecewise(
                 bathymetry = Topo.from_topo_file(grid = grid, topo_file_path = bathymetry, min_depth = min_depth)        
                 
                 # ETA - no depth
-                print("ETA")
                 file_path = output_folder/"init_eta.nc"
                 ds = xr.open_dataset(file_path)
                 ds["eta_t"][:] = m6b.aux.fill_missing_data(ds["eta_t"].values,bathymetry.tmask.values)
                 ds.fillna(0).to_netcdf(output_folder/"init_eta_filled.nc")
 
                 # Velocity
-                print("Start Vel")
                 file_path = output_folder/"init_vel.nc"
                 ds = xr.open_dataset(file_path)
 
@@ -254,7 +252,6 @@ def regrid_dataset_piecewise(
                 ds.fillna(0).to_netcdf(output_folder/"init_vel_filled.nc")
 
                 # Tracers
-                print("Start Tracers")
                 file_path = output_folder/"init_tracers.nc"
                 ds = xr.open_dataset(file_path)
                 for var in ["temp","salt"]:
@@ -263,6 +260,8 @@ def regrid_dataset_piecewise(
                             ds[var][z_ind] = m6b.aux.fill_missing_data(ds[var][z_ind].values,bathymetry.tmask.values)
 
                 ds.fillna(0).to_netcdf(output_folder/"init_tracers_filled.nc")
+
+                print("...end mom6_bathy_fill")
             
         output_file_names.append("init_eta_filled.nc")
         output_file_names.append("init_vel_filled.nc")
