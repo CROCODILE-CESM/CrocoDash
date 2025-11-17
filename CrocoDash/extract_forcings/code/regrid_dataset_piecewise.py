@@ -261,7 +261,7 @@ def regrid_dataset_piecewise(
 
                 ds.fillna(0).to_netcdf(output_folder/"init_tracers_filled.nc")
 
-                print("...end mom6_bathy_fill")
+                print("...end mom6_bathy fill")
             
         output_file_names.append("init_eta_filled.nc")
         output_file_names.append("init_vel_filled.nc")
