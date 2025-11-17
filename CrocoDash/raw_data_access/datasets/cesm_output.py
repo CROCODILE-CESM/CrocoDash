@@ -30,6 +30,8 @@ def get_cesm_data(
     delimiter=".",
     preview=False,
 ):
+    if not Path(dataset_path).exists():
+        raise FileNotFoundError(f"Provided dataset path {dataset_path} does not exist.")
     tracer_y_coord = "TLAT"
     tracer_x_coord = "TLONG"
     dates = pd.date_range(start=dates[0], end=dates[1]).to_pydatetime().tolist()
