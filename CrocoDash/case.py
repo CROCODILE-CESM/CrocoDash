@@ -509,14 +509,11 @@ class Case:
             raise TypeError("boundaries must be a list of strings.")
         if not all(isinstance(boundary, str) for boundary in boundaries):
             raise TypeError("boundaries must be a list of strings.")
+
         self.boundaries = boundaries
-
-        if too_much_data:
-            self._too_much_data = True
-        else:
-            self._too_much_data = False
-
+        self._too_much_data = too_much_data
         self.date_range = pd.to_datetime(date_range)
+        
         # Create the forcing directory
         forcing_dir_path = self.inputdir / self.forcing_product_name
         if self.override is True:

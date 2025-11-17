@@ -137,6 +137,7 @@ def regrid_dataset_piecewise(
     fill_method = rm6.regridding.fill_missing_data
     if "boundary_fill_method" in dataset_varnames:
         if dataset_varnames["boundary_fill_method"] == "mom6_bathy":
+            raise ValueError("This is not quite supported yet")
             fill_method = m6b_fill_missing_data_wrapper
         elif dataset_varnames["boundary_fill_method"] != "regional_mom6":
             raise ValueError("Provided fill method is not supported yet. ")
