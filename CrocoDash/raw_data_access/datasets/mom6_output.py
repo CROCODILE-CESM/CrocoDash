@@ -15,7 +15,7 @@ import dask.base
 import pandas as pd
 
 
-def get_cesm_data(
+def get_mom6_data(
     dates: list,
     lat_min,
     lat_max,
