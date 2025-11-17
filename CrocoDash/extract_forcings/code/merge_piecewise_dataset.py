@@ -110,17 +110,19 @@ def merge_piecewise_dataset(
     # Copy Initial Condition
     if run_initial_condition:
         ic_files_to_copy = [
-            folder / "init_eta.nc",
-            folder / "init_vel.nc",
-            folder / "init_tracers.nc",
+            folder / "init_eta_filled.nc",
+            folder / "init_vel_filled.nc",
+            folder / "init_tracers_filled.nc",
         ]
         for file_path in ic_files_to_copy:
-            shutil.copy(file_path, Path(output_folder))
-            logger.info(f"Saved {file_path.name} initial condition to {output_folder}")
+        # Remove "_filled" from filename
+            new_name = file_path.name.replace("_filled", "")
+            shutil.copy(file_path, Path(output_folder) / new_name)
+            logger.info(f"Saved {new_name} initial condition to {output_folder}")
             matching_files["IC"].append(str(file_path))
-        output_file_names.append("init_eta.nc")
-        output_file_names.append("init_vel.nc")
-        output_file_names.append("init_tracers.nc")
+        output_file_names.append("init_eta_filled.nc")
+        output_file_names.append("init_vel_filled.nc")
+        output_file_names.append("init_tracers_filled.nc")
     if preview:
         return {
             "matching_files": matching_files,

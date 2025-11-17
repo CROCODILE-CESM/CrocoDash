@@ -103,9 +103,9 @@ def test_merge_piecewise_data_parsing(
     regridded_data_path = Path(
         piecewise_factory(south, "2020-01-01", "2020-01-31", "forcing_obc_segment_002_")
     )
-    south.to_netcdf(regridded_data_path / "init_eta.nc")
-    south.to_netcdf(regridded_data_path / "init_tracers.nc")
-    south.to_netcdf(regridded_data_path / "init_vel.nc")
+    south.to_netcdf(regridded_data_path / "init_eta_filled.nc")
+    south.to_netcdf(regridded_data_path / "init_tracers_filled.nc")
+    south.to_netcdf(regridded_data_path / "init_vel_filled.nc")
     output_folder = tmp_path / "output"
     output_folder.mkdir()
 
@@ -137,9 +137,9 @@ def test_merge_piecewise_data_parsing(
         )
 
     # Assert IC
-    assert "init_eta.nc" in preview_dict["output_file_names"]
+    assert "init_eta_filled.nc" in preview_dict["output_file_names"]
     assert (
-        str(regridded_data_path / f"init_eta.nc")
+        str(regridded_data_path / f"init_eta_filled.nc")
         in preview_dict["matching_files"]["IC"]
     )
 

@@ -63,6 +63,7 @@ def main(
             config["dates"]["start"],
             config["dates"]["end"],
             config["paths"]["hgrid_path"],
+            config["paths"]["bathymetry_path"],
             config["forcing"]["information"],
             config["paths"]["regridded_dataset_path"],
             config["general"]["boundary_number_conversion"],

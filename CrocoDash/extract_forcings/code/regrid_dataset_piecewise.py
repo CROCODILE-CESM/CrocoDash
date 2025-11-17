@@ -12,7 +12,8 @@ from datetime import datetime
 import xarray as xr
 import mom6_bathy as m6b
 import numpy as np
-
+from CrocoDash.topo import Topo
+from CrocoDash.grid import Grid
 logger = utils.setup_logger(__name__)
 
 
@@ -22,7 +23,8 @@ def regrid_dataset_piecewise(
     date_format: str,
     start_date: str,
     end_date: str,
-    hgrid: str | Path,
+    hgrid_path: str | Path,
+    bathymetry: str | Path,
     dataset_varnames: dict,
     output_folder: str | Path,
     boundary_number_conversion: dict,
@@ -84,7 +86,7 @@ def regrid_dataset_piecewise(
 
     """
     logger.info("Parsing Raw Data Folder")
-
+    output_folder = Path(output_folder)
     # If run_initial_condition is True, vgrid_path must exist as well
     if run_initial_condition and not os.path.exists(vgrid_path):
         raise FileNotFoundError(
@@ -126,7 +128,7 @@ def regrid_dataset_piecewise(
     # Setup required information for regridding
 
     # Read in hgrid
-    hgrid = xr.open_dataset(hgrid)
+    hgrid = xr.open_dataset(hgrid_path)
 
     logger.info("Starting regridding")
     output_file_names = []
@@ -179,7 +181,10 @@ def regrid_dataset_piecewise(
                             startdate=file_start,
                             repeat_year_forcing=False,
                         )
-
+                        kwargs = {}
+                        if "calendar" in dataset_varnames:
+                            kwargs["calendar"] = dataset_varnames["calendar"]
+                            kwargs["time_units"] = dataset_varnames["time_units"]
                         seg.regrid_velocity_tracers(
                             infile=file_path,  # location of raw boundary
                             varnames=dataset_varnames,
@@ -187,6 +192,7 @@ def regrid_dataset_piecewise(
                             rotational_method=rm6.rotation.RotationMethod.EXPAND_GRID,
                             regridding_method="bilinear",
                             fill_method=fill_method,
+                            **kwargs # Only passes time info if it exists
                         )
 
                         logger.info(f"Saving regridding file as {filename_with_dates}")
@@ -212,9 +218,57 @@ def regrid_dataset_piecewise(
                 )
             else:
                 expt.setup_initial_condition(file_path, dataset_varnames, arakawa_grid = None)
-        output_file_names.append("init_eta.nc")
-        output_file_names.append("init_vel.nc")
-        output_file_names.append("init_tracers.nc")
+            if (expt.mom_input_dir / "init_eta_filled.nc").exists():
+                logger.info(
+                    f"Initial condition filled files already exist. They will be skipped."
+                )
+            else:
+                # Add the M6b Fill method onto the initial conditions
+                print("Start Fill")
+                # Read in bathymetry
+                grid = Grid.from_supergrid(hgrid_path)
+
+                # Have to get min depth from the file first
+                with xr.open_dataset(bathymetry) as ds:
+                    min_depth = ds.attrs.get("min_depth")
+                bathymetry = Topo.from_topo_file(grid = grid, topo_file_path = bathymetry, min_depth = min_depth)        
+                
+                # ETA - no depth
+                print("ETA")
+                file_path = output_folder/"init_eta.nc"
+                ds = xr.open_dataset(file_path)
+                ds["eta_t"][:] = m6b.aux.fill_missing_data(ds["eta_t"].values,bathymetry.tmask.values)
+                ds.fillna(0).to_netcdf(output_folder/"init_eta_filled.nc")
+
+                # Velocity
+                print("Start Vel")
+                file_path = output_folder/"init_vel.nc"
+                ds = xr.open_dataset(file_path)
+
+                z_act = "zl"
+                            
+                for z_ind in range(ds[z_act].shape[0]): 
+                    ds["u"][z_ind] = m6b.aux.fill_missing_data(ds["u"][z_ind].values,bathymetry.umask.values)
+                    ds["v"][z_ind] = m6b.aux.fill_missing_data(ds["v"][z_ind].values,bathymetry.vmask.values)
+
+                ds.fillna(0).to_netcdf(output_folder/"init_vel_filled.nc")
+
+                # Tracers
+                print("Start Tracers")
+                file_path = output_folder/"init_tracers.nc"
+                ds = xr.open_dataset(file_path)
+                for var in ["temp","salt"]:
+                    z_act = "zl"
+                    for z_ind in range(ds[z_act].shape[0]): 
+                            ds[var][z_ind] = m6b.aux.fill_missing_data(ds[var][z_ind].values,bathymetry.tmask.values)
+
+                ds.fillna(0).to_netcdf(output_folder/"init_tracers_filled.nc")
+            
+        output_file_names.append("init_eta_filled.nc")
+        output_file_names.append("init_vel_filled.nc")
+        output_file_names.append("init_tracers_filled.nc")
+
+
 
     if not preview:
         logger.info("Finished regridding")

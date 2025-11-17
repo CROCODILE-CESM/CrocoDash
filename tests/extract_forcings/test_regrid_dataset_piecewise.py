@@ -12,14 +12,16 @@ def test_regrid_data_piecewise_workflow(
     generate_piecewise_raw_data,
     dummy_forcing_factory,
     tmp_path,
-    get_rect_grid,
+    get_rect_grid_and_topo,
 ):
 
     # Get Grids
-    grid = get_rect_grid
+    grid, topo = get_rect_grid_and_topo
 
     hgrid_path = tmp_path / "hgrid.nc"
     grid.write_supergrid(hgrid_path)
+    topo_path = tmp_path / "topo.nc"
+    topo.write_topo(topo_path)
 
     # Generate piecewise data
     piecewise_factory = generate_piecewise_raw_data
@@ -59,6 +61,8 @@ def test_regrid_data_piecewise_workflow(
         "20200101",
         "20200106",
         hgrid_path,
+        topo_path,
+        None,
         varnames,
         output_folder,
         {"east": 1, "south": 2},
@@ -79,15 +83,17 @@ def test_regrid_data_piecewise_parsing(
     generate_piecewise_raw_data,
     dummy_forcing_factory,
     tmp_path,
-    get_rect_grid,
+    get_rect_grid_and_topo,
     get_vgrid,
 ):
 
     # Get Grids
-    grid = get_rect_grid
+    grid,topo = get_rect_grid_and_topo
     vgrid = get_vgrid
     vgrid_path = tmp_path / "vgrid.nc"
     hgrid_path = tmp_path / "hgrid.nc"
+    topo_path = tmp_path / "topo.nc"
+    topo.write_topo(topo_path)
     grid.write_supergrid(hgrid_path)
     vgrid.write(vgrid_path)
 
@@ -130,6 +136,7 @@ def test_regrid_data_piecewise_parsing(
         "20200101",
         "20200106",
         hgrid_path,
+        topo_path,
         varnames,
         output_folder,
         {"east": 1, "south": 2},
@@ -158,7 +165,7 @@ def test_regrid_data_piecewise_parsing(
         ] == "forcing_obc_segment_{}_{}_{}.nc".format(
             boundary_str, file_start_date, file_end_date
         )
-    assert "init_eta.nc" in preview_dict["output_file_names"]
+    assert "init_eta_filled.nc" in preview_dict["output_file_names"]
     assert (
         directory_raw_data / "ic_unprocessed.nc"
         == preview_dict["matching_files"]["IC"][0][2]
@@ -172,6 +179,7 @@ def test_regrid_data_piecewise_parsing(
         "20200107",
         "20200131",
         hgrid_path,
+        topo_path,
         varnames,
         new_output_folder,
         {"east": 1, "south": 2},

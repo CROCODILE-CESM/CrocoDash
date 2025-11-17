@@ -1,4 +1,4 @@
-from CrocoDash.raw_data_access.datasets import cesm_output as co 
+from CrocoDash.raw_data_access.datasets import mom6_output as co 
 from CrocoDash.raw_data_access import driver as dv
 import xarray as xr
 import pytest 
@@ -7,13 +7,13 @@ import cftime
 from pathlib import Path
 from CrocoDash.raw_data_access.driver import get_rectangular_segment_info
 
-def test_get_cesm_data(skip_if_not_glade, tmp_path):
+def test_get_mom6_data(skip_if_not_glade, tmp_path):
     dates = ["2000-01-01", "2000-01-05"]
     lat_min = 30
     lat_max = 31
     lon_min = 289
     lon_max = 290
-    paths = co.get_cesm_data(
+    paths = co.get_mom6_data(
         dates, lat_min, lat_max, lon_min, lon_max, tmp_path, "temp.nc",variables=["SSH"]
     )
     dataset = xr.open_dataset(paths[0])
@@ -34,10 +34,10 @@ def test_get_cesm_data(skip_if_not_glade, tmp_path):
     assert np.abs(dataset.TLONG.values[0,0] - lon_min) <= 4
     
 @pytest.mark.slow
-def test_get_cesm_data_validation(skip_if_not_glade,tmp_path):
+def test_get_mom6_data_validation(skip_if_not_glade,tmp_path):
     pfd_obj = dv.ProductFunctionRegistry()
     pfd_obj.load_functions()
-    assert  pfd_obj.validate_function("CESM_OUTPUT", "get_cesm_data")
+    assert  pfd_obj.validate_function("mom6_output", "get_mom6_data")
 
 def test_parse_dataset(tmp_path, dummy_forcing_factory):
 
