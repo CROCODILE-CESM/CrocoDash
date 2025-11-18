@@ -260,8 +260,8 @@ def regrid_dataset_piecewise(
                     ds["v"][z_ind] = m6b.aux.fill_missing_data(
                         ds["v"][z_ind].values, bathymetry.vmask.values
                     )
-                ds["v"] = final_cleanliness_fill(ds["v"], "nxp", "ny", "zl")
-                ds["u"] = final_cleanliness_fill(ds["u"], "nx", "nyp", "zl")
+                ds["v"] = final_cleanliness_fill(ds["v"], "nx", "nyp", "zl")
+                ds["u"] = final_cleanliness_fill(ds["u"], "nxp", "ny", "zl")
                 ds.fillna(0).to_netcdf(output_folder / "init_vel_filled.nc")
 
                 # Tracers
@@ -274,11 +274,12 @@ def regrid_dataset_piecewise(
                             ds[var][z_ind].values, bathymetry.tmask.values
                         )
 
-                for var in ds._data_vars:
+                for var in ds.data_vars:
                     if (
-                        "_" not in var and (ds[var].dims) == 3
+                        "_" not in var and len(ds[var].dims) == 3
                     ):  # So it's an actual tracer not like dz_ or something
-                        ds[var] = final_cleanliness_fill(ds["v"], "nx", "ny", "zl")
+                        print(var)
+                        ds[var] = final_cleanliness_fill(ds[var], "nx", "ny", "zl")
                 ds.fillna(0).to_netcdf(output_folder / "init_tracers_filled.nc")
 
                 print("...end mom6_bathy fill")
