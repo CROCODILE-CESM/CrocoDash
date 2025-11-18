@@ -226,8 +226,8 @@ def regrid_dataset_piecewise(
                     f"Initial condition filled files already exist. They will be skipped."
                 )
             else:
-                # Add the M6b Fill method onto the initial conditions, which is the mom6_bathy fill, then a f&bfill
-                print("Apply mom6_bathy fill...")
+                # Add the M6b Fill method onto the initial conditions
+                print("Start mom6_bathy fill...")
                 # Read in bathymetry
                 grid = Grid.from_supergrid(hgrid_path)
 
@@ -241,16 +241,21 @@ def regrid_dataset_piecewise(
                 # ETA - no depth
                 file_path = output_folder / "init_eta.nc"
                 ds = xr.open_dataset(file_path)
+                original_fill = capture_fill_metadata(ds)
                 ds["eta_t"][:] = m6b.aux.fill_missing_data(
                     ds["eta_t"].values, bathymetry.tmask.values
                 )
-                ds["eta_t"] = final_cleanliness_fill(ds["eta_t"], "nx", "ny")
-                ds.fillna(0).to_netcdf(output_folder / "init_eta_filled.nc")
+                encoding = {}
+                for var, meta in original_fill.items():
+                    encoding[var] = {k: v for k, v in meta.items()}
+                ds.fillna(0).to_netcdf(
+                    output_folder / "init_eta_filled.nc", encoding=encoding
+                )
 
                 # Velocity
                 file_path = output_folder / "init_vel.nc"
                 ds = xr.open_dataset(file_path)
-
+                original_fill = capture_fill_metadata(ds)
                 z_act = "zl"
 
                 for z_ind in range(ds[z_act].shape[0]):
@@ -260,30 +265,30 @@ def regrid_dataset_piecewise(
                     ds["v"][z_ind] = m6b.aux.fill_missing_data(
                         ds["v"][z_ind].values, bathymetry.vmask.values
                     )
-                ds["v"] = final_cleanliness_fill(ds["v"], "nx", "nyp", "zl")
-                ds["u"] = final_cleanliness_fill(ds["u"], "nxp", "ny", "zl")
-                ds.fillna(0).to_netcdf(output_folder / "init_vel_filled.nc")
+                encoding = {}
+                for var, meta in original_fill.items():
+                    encoding[var] = {k: v for k, v in meta.items()}
+                ds.fillna(0).to_netcdf(
+                    output_folder / "init_vel_filled.nc", encoding=encoding
+                )
 
                 # Tracers
                 file_path = output_folder / "init_tracers.nc"
                 ds = xr.open_dataset(file_path)
+                original_fill = capture_fill_metadata(ds)
                 for var in ["temp", "salt"]:
                     z_act = "zl"
                     for z_ind in range(ds[z_act].shape[0]):
                         ds[var][z_ind] = m6b.aux.fill_missing_data(
                             ds[var][z_ind].values, bathymetry.tmask.values
                         )
-
-                for var in ds.data_vars:
-                    if (
-                        "_" not in var and len(ds[var].dims) == 3
-                    ):  # So it's an actual tracer not like dz_ or something
-                        print(var)
-                        ds[var] = final_cleanliness_fill(ds[var], "nx", "ny", "zl")
-                ds.fillna(0).to_netcdf(output_folder / "init_tracers_filled.nc")
-
-                print("...end mom6_bathy fill")
-
+                encoding = {}
+                for var, meta in original_fill.items():
+                    encoding[var] = {k: v for k, v in meta.items()}
+                ds.fillna(0).to_netcdf(
+                    output_folder / "init_tracers_filled.nc", encoding=encoding
+                )
+                print("...end mom6_bathy fill.")
         output_file_names.append("init_eta_filled.nc")
         output_file_names.append("init_vel_filled.nc")
         output_file_names.append("init_tracers_filled.nc")
@@ -299,18 +304,42 @@ def regrid_dataset_piecewise(
         }
 
 
-def final_cleanliness_fill(var, x_dim, y_dim, z_dim=None):
-    var = (
-        var.where(var != 0)  # convert 0.0 → NaN
-        .interpolate_na(x_dim, method="linear")  # interpolate along x
-        .ffill(x_dim)
-        .bfill(x_dim)
-        .ffill(y_dim)  # fill along y
-        .bfill(y_dim)
-    )
-    if z_dim != None:
-        var = var.ffill(z_dim)
-    return var
+def capture_fill_metadata(ds):
+    """
+    Return a dict mapping variable names → {'_FillValue': ..., 'missing_value': ...}
+    Only stores attributes that exist.
+    """
+    fillmeta = {}
+
+    for var in ds.data_vars:
+        meta = {}
+        attrs = ds[var].attrs
+
+        if "_FillValue" in attrs:
+            meta["_FillValue"] = attrs["_FillValue"]
+        if "missing_value" in attrs:
+            meta["missing_value"] = attrs["missing_value"]
+
+        if meta:
+            fillmeta[var] = meta
+
+    return fillmeta
+
+
+def m6b_fill_missing_data_wrapper(ds, xdim, zdim, fill):
+    raise ValueError("This is just skeleton code and is not supported")
+    if zdim is not None:
+        if type(zdim) != list:
+            zdim = [zdim]
+            for z in zdim:
+                if z in ds.dims:
+                    for z_ind in range(ds.shape[1]):
+                        filled = fill_missing_data(
+                            ds[z_ind].values, np.ones_like(ds[z_ind].values)
+                        )
+        return filled
+    else:
+        return fill_missing_data(ds.values, np.ones_like(ds.values))
 
 
 if __name__ == "__main__":
