@@ -14,6 +14,8 @@ import mom6_bathy as m6b
 import numpy as np
 from CrocoDash.topo import Topo
 from CrocoDash.grid import Grid
+import netCDF4
+
 logger = utils.setup_logger(__name__)
 
 
@@ -169,7 +171,7 @@ def regrid_dataset_piecewise(
                             f"Output file {output_file_path_with_dates} already exists. It will be skipped."
                         )
                     else:
-                    # Use Segment Class
+                        # Use Segment Class
                         seg = rm6.segment(
                             hgrid=hgrid,
                             bathymetry_path=None,
@@ -188,11 +190,11 @@ def regrid_dataset_piecewise(
                         seg.regrid_velocity_tracers(
                             infile=file_path,  # location of raw boundary
                             varnames=dataset_varnames,
-                            arakawa_grid=None, # Already organized into the correct mapping format
+                            arakawa_grid=None,  # Already organized into the correct mapping format
                             rotational_method=rm6.rotation.RotationMethod.EXPAND_GRID,
                             regridding_method="bilinear",
                             fill_method=fill_method,
-                            **kwargs # Only passes time info if it exists
+                            **kwargs,  # Only passes time info if it exists
                         )
 
                         logger.info(f"Saving regridding file as {filename_with_dates}")
@@ -217,58 +219,83 @@ def regrid_dataset_piecewise(
                     f"Initial condition files already exist. They will be skipped."
                 )
             else:
-                expt.setup_initial_condition(file_path, dataset_varnames, arakawa_grid = None)
+                expt.setup_initial_condition(
+                    file_path, dataset_varnames, arakawa_grid=None
+                )
             if (expt.mom_input_dir / "init_eta_filled.nc").exists():
                 logger.info(
                     f"Initial condition filled files already exist. They will be skipped."
                 )
             else:
                 # Add the M6b Fill method onto the initial conditions
-                print("Start Fill")
+                logger.info("Start mom6_bathy fill...")
                 # Read in bathymetry
                 grid = Grid.from_supergrid(hgrid_path)
 
                 # Have to get min depth from the file first
                 with xr.open_dataset(bathymetry) as ds:
                     min_depth = ds.attrs.get("min_depth")
-                bathymetry = Topo.from_topo_file(grid = grid, topo_file_path = bathymetry, min_depth = min_depth)        
-                
+                bathymetry = Topo.from_topo_file(
+                    grid=grid, topo_file_path=bathymetry, min_depth=min_depth
+                )
+
                 # ETA - no depth
-                print("ETA")
-                file_path = output_folder/"init_eta.nc"
-                ds = xr.open_dataset(file_path)
-                ds["eta_t"][:] = m6b.aux.fill_missing_data(ds["eta_t"].values,bathymetry.tmask.values)
-                ds.fillna(0).to_netcdf(output_folder/"init_eta_filled.nc")
+                file_path = output_folder / "init_eta.nc"
+                ds = xr.open_dataset(file_path, mask_and_scale=True)
+                ds["eta_t"][:] = m6b.aux.fill_missing_data(
+                    ds["eta_t"].values, bathymetry.tmask.values
+                )
+                ds["eta_t"] = final_cleanliness_fill(ds["eta_t"], "nx", "ny")
+                encoding = {
+                    "eta_t": {"_FillValue": None},
+                }
+                ds = ds.fillna(0)
+                ds.to_netcdf(output_folder / "init_eta_filled.nc", encoding=encoding)
 
                 # Velocity
-                print("Start Vel")
-                file_path = output_folder/"init_vel.nc"
-                ds = xr.open_dataset(file_path)
-
+                file_path = output_folder / "init_vel.nc"
+                ds = xr.open_dataset(file_path, mask_and_scale=True)
                 z_act = "zl"
-                            
-                for z_ind in range(ds[z_act].shape[0]): 
-                    ds["u"][z_ind] = m6b.aux.fill_missing_data(ds["u"][z_ind].values,bathymetry.umask.values)
-                    ds["v"][z_ind] = m6b.aux.fill_missing_data(ds["v"][z_ind].values,bathymetry.vmask.values)
 
-                ds.fillna(0).to_netcdf(output_folder/"init_vel_filled.nc")
+                for z_ind in range(ds[z_act].shape[0]):
+                    ds["u"][z_ind] = m6b.aux.fill_missing_data(
+                        ds["u"][z_ind].values, bathymetry.umask.values
+                    )
+                    ds["v"][z_ind] = m6b.aux.fill_missing_data(
+                        ds["v"][z_ind].values, bathymetry.vmask.values
+                    )
+                ds["v"] = final_cleanliness_fill(ds["v"], "nx", "nyp", "zl")
+                ds["u"] = final_cleanliness_fill(ds["u"], "nxp", "ny", "zl")
+                encoding = {
+                    "u": {"_FillValue": netCDF4.default_fillvals["f4"]},
+                    "v": {"_FillValue": netCDF4.default_fillvals["f4"]},
+                }
+                ds = ds.fillna(0)
+                ds.to_netcdf(output_folder / "init_vel_filled.nc", encoding=encoding)
 
                 # Tracers
-                print("Start Tracers")
-                file_path = output_folder/"init_tracers.nc"
-                ds = xr.open_dataset(file_path)
-                for var in ["temp","salt"]:
+                file_path = output_folder / "init_tracers.nc"
+                ds = xr.open_dataset(file_path, mask_and_scale=True)
+                for var in ["temp", "salt"]:
                     z_act = "zl"
-                    for z_ind in range(ds[z_act].shape[0]): 
-                            ds[var][z_ind] = m6b.aux.fill_missing_data(ds[var][z_ind].values,bathymetry.tmask.values)
+                    for z_ind in range(ds[z_act].shape[0]):
+                        ds[var][z_ind] = m6b.aux.fill_missing_data(
+                            ds[var][z_ind].values, bathymetry.tmask.values
+                        )
+                    ds[var] = final_cleanliness_fill(ds[var], "nx", "ny", "zl")
+                encoding = {
+                    "temp": {"_FillValue": -1e20, "missing_value": -1e20},
+                    "salt": {"_FillValue": -1e20, "missing_value": -1e20},
+                }
 
-                ds.fillna(0).to_netcdf(output_folder/"init_tracers_filled.nc")
-            
+                ds = ds.fillna(0)
+                ds.to_netcdf(
+                    output_folder / "init_tracers_filled.nc", encoding=encoding
+                )
+                logger.info("...end mom6_bathy fill.")
         output_file_names.append("init_eta_filled.nc")
         output_file_names.append("init_vel_filled.nc")
         output_file_names.append("init_tracers_filled.nc")
-
-
 
     if not preview:
         logger.info("Finished regridding")
@@ -280,18 +307,58 @@ def regrid_dataset_piecewise(
             "output_file_names": output_file_names,
         }
 
-def m6b_fill_missing_data_wrapper(ds,xdim, zdim, fill):
-    
+
+def final_cleanliness_fill(var, x_dim, y_dim, z_dim=None):
+    var = (
+        var.where(var != 0)  # convert 0.0 → NaN
+        .interpolate_na(x_dim, method="linear")  # interpolate along x
+        .ffill(x_dim)
+        .bfill(x_dim)
+        .ffill(y_dim)  # fill along y
+        .bfill(y_dim)
+    )
+    if z_dim != None:
+        var = var.ffill(z_dim)
+    return var
+
+
+def capture_fill_metadata(ds):
+    """
+    Return a dict mapping variable names → {'_FillValue': ..., 'missing_value': ...}
+    Only stores attributes that exist.
+    """
+    fillmeta = {}
+
+    for var in ds.data_vars:
+        meta = {}
+        attrs = ds[var].attrs
+
+        if "_FillValue" in attrs:
+            meta["_FillValue"] = attrs["_FillValue"]
+        if "missing_value" in attrs:
+            meta["missing_value"] = attrs["missing_value"]
+
+        if meta:
+            fillmeta[var] = meta
+
+    return fillmeta
+
+
+def m6b_fill_missing_data_wrapper(ds, xdim, zdim, fill):
+    raise ValueError("This is just skeleton code and is not supported")
     if zdim is not None:
         if type(zdim) != list:
             zdim = [zdim]
             for z in zdim:
                 if z in ds.dims:
                     for z_ind in range(ds.shape[1]):
-                        filled = fill_missing_data(ds[z_ind].values,np.ones_like(ds[z_ind].values))
+                        filled = fill_missing_data(
+                            ds[z_ind].values, np.ones_like(ds[z_ind].values)
+                        )
         return filled
     else:
-        return fill_missing_data(ds.values,np.ones_like(ds.values))
+        return fill_missing_data(ds.values, np.ones_like(ds.values))
+
 
 if __name__ == "__main__":
     print(
