@@ -247,6 +247,8 @@ def regrid_dataset_piecewise(
                 )
                 encoding = {}
                 for var, meta in original_fill.items():
+                    ds[var].attrs.pop("_FillValue", None)
+                    ds[var].attrs.pop("missing_value", None)
                     encoding[var] = {k: v for k, v in meta.items()}
                 ds.fillna(0).to_netcdf(
                     output_folder / "init_eta_filled.nc", encoding=encoding
@@ -254,7 +256,7 @@ def regrid_dataset_piecewise(
 
                 # Velocity
                 file_path = output_folder / "init_vel.nc"
-                ds = xr.open_dataset(file_path)
+                ds = xr.open_dataset(file_path, mask_and_scale=False)
                 original_fill = capture_fill_metadata(ds)
                 z_act = "zl"
 
@@ -267,6 +269,8 @@ def regrid_dataset_piecewise(
                     )
                 encoding = {}
                 for var, meta in original_fill.items():
+                    ds[var].attrs.pop("_FillValue", None)
+                    ds[var].attrs.pop("missing_value", None)
                     encoding[var] = {k: v for k, v in meta.items()}
                 ds.fillna(0).to_netcdf(
                     output_folder / "init_vel_filled.nc", encoding=encoding
@@ -274,7 +278,7 @@ def regrid_dataset_piecewise(
 
                 # Tracers
                 file_path = output_folder / "init_tracers.nc"
-                ds = xr.open_dataset(file_path)
+                ds = xr.open_dataset(file_path, mask_and_scale=False)
                 original_fill = capture_fill_metadata(ds)
                 for var in ["temp", "salt"]:
                     z_act = "zl"
@@ -284,6 +288,8 @@ def regrid_dataset_piecewise(
                         )
                 encoding = {}
                 for var, meta in original_fill.items():
+                    ds[var].attrs.pop("_FillValue", None)
+                    ds[var].attrs.pop("missing_value", None)
                     encoding[var] = {k: v for k, v in meta.items()}
                 ds.fillna(0).to_netcdf(
                     output_folder / "init_tracers_filled.nc", encoding=encoding
