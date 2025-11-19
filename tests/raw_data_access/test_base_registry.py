@@ -9,7 +9,6 @@ class DummyProduct(BaseProduct):
     description = "A dummy product for testing"
 
     @accessmethod
-    @staticmethod
     def dummy_method(cls, dates, output_folder, output_filename):
         return f"{dates[0]}{dates[1]}{output_folder}/{output_filename}"
 
@@ -34,7 +33,6 @@ class DummyForcing(ForcingProduct):
     time_units = "days since 2000-01-01"
 
     @accessmethod
-    @staticmethod
     def fetch_dummy(
         cls,
         dates,

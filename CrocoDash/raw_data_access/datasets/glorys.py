@@ -144,7 +144,6 @@ class GLORYS(ForcingProduct):
         return Path(output_folder) / output_filename
 
     @accessmethod(description="	Generates bash script for direct CLI run with the copernicusmarine package", type="script")
-    @staticmethod
     def get_glorys_data_script_for_cli(
         dates: tuple,
         lat_min,

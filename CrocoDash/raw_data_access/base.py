@@ -8,6 +8,7 @@ from ..utils import setup_logger
 
 def accessmethod(func=None, *, description=None, type=None):
     def decorator(f):
+        f = staticmethod(f)
         f._is_access_method = True
         f._description = description
         f._dtype = type
@@ -157,10 +158,10 @@ class ForcingProduct(BaseProduct):
 
         # 2. Merge marbl_var_names → tracer_var_names
         merged = dict(base["tracer_var_names"])  # copy existing
-        if hasattr(cls, "marbl_var_names"):
+        if include_marbl_tracers and hasattr(cls, "marbl_var_names"):
             merged.update(cls.marbl_var_names)
             base["tracer_var_names"] = merged
-        else:
+        elif include_marbl_tracers and not hasattr(cls, "marbl_var_names"):
             raise ValueError(
                 "This product does not have marbl tracer var names and cannot be written out as such."
             )
