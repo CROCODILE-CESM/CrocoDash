@@ -12,6 +12,7 @@ Subpackages
 
    CrocoDash.raw_data_access
    CrocoDash.rm6
+   CrocoDash.extract_forcings
 
 Submodules
 ----------
