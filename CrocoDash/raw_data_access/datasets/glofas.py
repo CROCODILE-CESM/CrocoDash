@@ -8,7 +8,6 @@ class GLOFAS(BaseProduct):
     product_name = "glofas"
     description = "	GLOFAS (Global Flood Awareness System) is a public river discharge/runoff Product"
     @accessmethod(description="Gets glofas raw data through the cdsapi package",type="python")
-    @staticmethod
     def get_global_data_with_python(
         dates,
         output_folder=Path(""),
@@ -51,7 +50,6 @@ class GLOFAS(BaseProduct):
         return path
 
     @accessmethod(description="Generates bash script for access to CESM Inputdata processed glofas data",type="script")
-    @staticmethod
     def get_processed_global_glofas_script_for_cli(
         dates="UNUSED",
         output_folder=Path(""),

@@ -8,7 +8,6 @@ class GEBCO(BaseProduct):
     product_name = "gebco"
     description = "GEBCO (General Bathymetric Chart of the Ocean) is a public dataset of global ocean bathymetry"
     @accessmethod(description="Python request for global bathymetry data", type="python")
-    @staticmethod
     def get_gebco_data_with_python(
         output_folder=None,
         output_filename=None,
@@ -34,7 +33,6 @@ class GEBCO(BaseProduct):
         return
 
     @accessmethod(description="get script to download global bathymetry data", type="script")
-    @staticmethod
     def get_gebco_data_script(
         output_folder=None,
         output_filename=None,

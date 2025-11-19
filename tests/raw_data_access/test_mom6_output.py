@@ -1,11 +1,11 @@
 from CrocoDash.raw_data_access.datasets import mom6_output as co 
-from CrocoDash.raw_data_access import driver as dv
 import xarray as xr
 import pytest 
 import numpy as np
 import cftime
 from pathlib import Path
 from CrocoDash.grid import Grid
+from CrocoDash.raw_data_access.registry import ProductRegistry
 
 def test_get_mom6_data(skip_if_not_glade, tmp_path):
     dates = ["2000-01-01", "2000-01-05"]
@@ -35,9 +35,8 @@ def test_get_mom6_data(skip_if_not_glade, tmp_path):
     
 @pytest.mark.slow
 def test_get_mom6_data_validation(skip_if_not_glade,tmp_path):
-    pfd_obj = dv.ProductFunctionRegistry()
-    pfd_obj.load_functions()
-    assert  pfd_obj.validate_function("mom6_output", "get_mom6_data")
+    
+    assert  ProductRegistry.validate_function("mom6_output", "get_mom6_data")
 
 def test_parse_dataset(tmp_path, dummy_forcing_factory):
 
