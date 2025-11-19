@@ -2,6 +2,7 @@
 
 from .registry import ProductRegistry
 import inspect
+import json
 
 
 # tiny decorator
@@ -63,6 +64,30 @@ class BaseProduct:
         missing = [arg for arg in cls.required_args if arg not in kwargs]
         if missing:
             raise ValueError(f"{cls.product_name}.{method_name} missing args {missing}")
+
+    @classmethod
+    def write_metadata(cls, file_path: str = None) -> dict:
+        """Return a dict of the class metadata fields and their values, writes a file if a filepath is specified."""
+
+        def is_json_compatible(value):
+            try:
+                json.dumps(value)
+                return True
+            except (TypeError, OverflowError):
+                return False
+
+        metadata = {}
+        for name, value in cls.__dict__.items():
+            if (
+                not name.startswith("_")
+                and not callable(value)
+                and is_json_compatible(value)
+            ):
+                metadata[name] = value
+        if file_path is not None:
+            with open(filepath, "w") as f:
+                json.dump(metadata, f, indent=2)
+        return metadata
 
 
 class ForcingProduct(BaseProduct):
