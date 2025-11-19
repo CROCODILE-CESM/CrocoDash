@@ -87,7 +87,6 @@ class MOM6_OUTPUT(ForcingProduct):
     }
 
     @accessmethod(description="Gets MOM6 Data from a given path (by default a POP-MARBL run)",type="python")
-    @staticmethod
     def get_mom6_data(
         dates: list,
         lat_min,

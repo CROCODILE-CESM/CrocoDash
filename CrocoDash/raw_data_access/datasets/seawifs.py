@@ -7,7 +7,6 @@ class SeaWIFS(BaseProduct):
     product_name = "seawifs"
     description = "SEAWIFS is a Chlorophyll Dataset for MOM6"
     @accessmethod(description="Generates bash script for direct CLI access to chlorophyll data (No Package Required)", type="script")
-    @staticmethod
     def get_global_seawifs_script_for_cli(
         output_folder=None,
         output_filename="UNUSED",
@@ -55,7 +54,6 @@ class SeaWIFS(BaseProduct):
         return script_path
 
     @accessmethod(description="	Generates bash script for direct CLI access to processed chlorophyll data (No Package Required)",type="script")
-    @staticmethod
     def get_processed_global_seawifs_script_for_cli(
         output_folder=Path(""),
         output_filename="processed_seawifs.nc",

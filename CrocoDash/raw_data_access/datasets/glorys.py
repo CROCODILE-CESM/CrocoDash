@@ -39,7 +39,6 @@ class GLORYS(ForcingProduct):
     tracer_var_names = {"temp": "thetao", "salt": "so"}
 
     @accessmethod(description="Gathers GLORYS data from RDA on computers with access to glade/rda", type="python")
-    @staticmethod
     def get_glorys_data_from_rda(
         dates: list,
         lat_min,
@@ -112,7 +111,6 @@ class GLORYS(ForcingProduct):
         return path
 
     @accessmethod(description="Python request with copernicusmarine api", type="python")
-    @staticmethod
     def get_glorys_data_from_cds_api(
         dates,
         lat_min,
