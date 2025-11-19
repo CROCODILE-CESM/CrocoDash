@@ -4,11 +4,17 @@ from .registry import ProductRegistry
 import inspect
 
 
+# tiny decorator
+def accessmethod(func):
+    func._is_access_method = True
+    return func
+
+
 class BaseProduct:
     """Base class for all raw data products. It enforces the metadata on the product as well as the function args."""
 
     # Subclasses must define this
-    required_metadata = ["product_name"]
+    required_metadata = ["product_name", "description"]
     required_args = ["dates", "output_folder", "output_filename"]
 
     _access_methods = {}  # method_name → {func}
@@ -20,6 +26,14 @@ class BaseProduct:
         # Skip validation for intermediate base classes
         if getattr(cls, "_is_abstract_base", False):
             return
+
+        cls._access_methods = {}
+        for name, attr in cls.__dict__.items():
+            if isinstance(attr, staticmethod) and getattr(
+                attr, "_is_access_method", False
+            ):
+                cls._access_methods[name] = attr
+
         # ---- Validate metadata ----
         for field in cls.required_metadata:
             if not hasattr(cls, field):
@@ -27,7 +41,7 @@ class BaseProduct:
 
         # ---- Validate access methods ----
         for name, entry in cls._access_methods.items():
-            func = entry["func"]
+            func = entry.__func__
             sig = inspect.signature(func)
 
             # All required args must be present
@@ -39,16 +53,6 @@ class BaseProduct:
 
         # ---- Auto-register product ----
         ProductRegistry.register(cls)
-
-    # Decorator to register access methods
-    @classmethod
-    def access_method(cls, name=None):
-        def decorator(func):
-            method_name = name or func.__name__
-            cls._access_methods[method_name] = {"func": func}
-            return func
-
-        return decorator
 
     @classmethod
     def validate_call(cls, method_name, **kwargs):
@@ -92,6 +96,10 @@ class ForcingProduct(BaseProduct):
     ]
 
     def __init_subclass__(cls, **kwargs):
+
+        # Concrete subclasses should not have the abstract flag
+        cls._is_abstract_base = False
+
         # 1. Let BaseProduct do its validation first
         super().__init_subclass__(**kwargs)
 
@@ -99,4 +107,4 @@ class ForcingProduct(BaseProduct):
         assert (
             "temp" in cls.tracer_var_names.keys()
             and "salt" in cls.tracer_var_names.keys()
-        )
+        ), "keys temp & salt must be in the tracer_var_names variable."

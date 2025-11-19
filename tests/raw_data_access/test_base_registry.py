@@ -1,6 +1,6 @@
 import pytest
 from CrocoDash.raw_data_access.registry import ProductRegistry
-from CrocoDash.raw_data_access.base import BaseProduct, ForcingProduct
+from CrocoDash.raw_data_access.base import BaseProduct, ForcingProduct, accessmethod
 
 
 # --- Dummy product for testing ---
@@ -8,9 +8,11 @@ class DummyProduct(BaseProduct):
     product_name = "dummy"
     description = "A dummy product for testing"
 
-    @BaseProduct.access_method("dummy_method")
-    def dummy_method(dates, output_folder, output_filename):
+    @accessmethod
+    @staticmethod
+    def dummy_method(cls, dates, output_folder, output_filename):
         return f"{dates[0]}{dates[1]}{output_folder}/{output_filename}"
+
 
 # Dummy concrete forcing product
 class DummyForcing(ForcingProduct):
@@ -31,9 +33,22 @@ class DummyForcing(ForcingProduct):
     boundary_fill_method = "nearest"
     time_units = "days since 2000-01-01"
 
-    @ForcingProduct.access_method("fetch_dummy")
-    def fetch_dummy(output_folder, output_filename, variables, lon_max, lat_max, lon_min, lat_min):
+    @accessmethod
+    @staticmethod
+    def fetch_dummy(
+        cls,
+        dates,
+        output_folder,
+        output_filename,
+        variables,
+        lon_max,
+        lat_max,
+        lon_min,
+        lat_min,
+    ):
         return f"Fetched {variables} to {output_folder}/{output_filename}"
+
+
 # by default the products should be registered
 
 
@@ -52,7 +67,7 @@ def test_list_access_methods():
     assert "dummy_method" in methods
 
 
-def test_call_access_method_success():
+def test_call_access_method_success_basic():
     result = ProductRegistry.call(
         "dummy",
         "dummy_method",
@@ -74,17 +89,42 @@ def test_call_nonexistent_method():
     with pytest.raises(KeyError):
         ProductRegistry.call("dummy", "nonexistent_method")
 
-# def test_call_access_method_success():
-#     result = ProductRegistry.call(
-#         "dummy_forcing",
-#         "fetch_dummy",
-#         output_folder="/tmp",
-#         output_filename="file.nc",
-#         variables=["temp", "salt"],
-#         lon_max=10,
-#         lat_max=20,
-#         lon_min=0,
-#         lat_min=0,
-#     )
-#     assert "Fetched" in result
-#     assert "/tmp/file.nc" in result
+
+def test_call_access_method_success():
+    result = ProductRegistry.call(
+        "dummy_forcing",
+        "fetch_dummy",
+        dates=["!23", "123"],
+        output_folder="/tmp",
+        output_filename="file.nc",
+        variables=["temp", "salt"],
+        lon_max=10,
+        lat_max=20,
+        lon_min=0,
+        lat_min=0,
+    )
+    assert "Fetched" in result
+    assert "/tmp/file.nc" in result
+
+
+def test_tracer_names_check():
+    # Dummy concrete forcing product with broken tracer names
+    with pytest.raises(AssertionError):
+
+        class DummyForcing(ForcingProduct):
+            product_name = "dummy_forcing"
+            description = "Dummy forcing product for testing"
+            time_var_name = "time"
+            u_x_coord = "xu"
+            u_y_coord = "yu"
+            v_x_coord = "xv"
+            v_y_coord = "yv"
+            tracer_x_coord = "xt"
+            tracer_y_coord = "yt"
+            depth_coord = "depth"
+            u_var_name = "u"
+            v_var_name = "v"
+            eta_var_name = "eta"
+            tracer_var_names = {"not_temp": "theta", "salt": "salt"}
+            boundary_fill_method = "nearest"
+            time_units = "days since 2000-01-01"

@@ -1,9 +1,10 @@
 # raw_data_access/registry.py
 
+
 class ProductRegistry:
     """Static registry that tracks all products and provides driver-like introspection."""
 
-    products = {}   # product_name → class
+    products = {}  # product_name → class
 
     @classmethod
     def register(cls, product_cls):
@@ -27,5 +28,5 @@ class ProductRegistry:
     def call(cls, product_name, method_name, **kwargs):
         product = cls.get_product(product_name)
         product.validate_call(method_name, **kwargs)
-        method = product._access_methods[method_name]["func"]
-        return method(**kwargs)
+        method = product._access_methods[method_name]
+        return method(product, **kwargs)
