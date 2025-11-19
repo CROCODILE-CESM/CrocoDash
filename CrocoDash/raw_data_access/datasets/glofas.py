@@ -2,8 +2,11 @@ from pathlib import Path
 from . import utils
 import cdsapi
 import pandas as pd
+from CrocoDash.raw_data_access.base import *
 
-class GLORYS(ForcingProduct):
+class GLOFAS(BaseProduct):
+    product_name = "glofas"
+    description = "	GLOFAS (Global Flood Awareness System) is a public river discharge/runoff Product"
     def get_global_data_with_python(
         dates,
         output_folder=Path(""),
@@ -77,5 +80,5 @@ class GLORYS(ForcingProduct):
             url="https://svn-ccsm-inputdata.cgd.ucar.edu/trunk/inputdata/ocn/mom/croc/rof/glofas/processed_glofas_data.nc",
             script_name="get_processed_glofas.sh",
             output_folder=output_folder,
-            output_filenamename=output_filename,
+            output_filename=output_filename,
         )
