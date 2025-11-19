@@ -6,7 +6,8 @@ from CrocoDash.raw_data_access.base import *
 class SeaWIFS(BaseProduct):
     product_name = "seawifs"
     description = "SEAWIFS is a Chlorophyll Dataset for MOM6"
-
+    @accessmethod
+    @staticmethod
     def get_global_seawifs_script_for_cli(
         output_folder=None,
         output_filename="UNUSED",
@@ -53,7 +54,8 @@ class SeaWIFS(BaseProduct):
         script_path.chmod(0o755)
         return script_path
 
-
+    @accessmethod
+    @staticmethod
     def get_processed_global_seawifs_script_for_cli(
         output_folder=Path(""),
         output_filename="processed_seawifs.nc",

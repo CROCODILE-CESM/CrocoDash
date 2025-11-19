@@ -14,56 +14,90 @@ import cftime
 import dask.base
 import pandas as pd
 
+from CrocoDash.raw_data_access.base import *
 
-def get_mom6_data(
-    dates: list,
-    lat_min,
-    lat_max,
-    lon_min,
-    lon_max,
-    output_dir=Path(""),
-    output_file=None,
-    variables=["SSH", "TEMP", "SALT", "VVEL", "UVEL"],
-    dataset_path="/glade/campaign/collections/cmip/CMIP6/CESM-HR/FOSI_BGC/HR/g.e22.TL319_t13.G1850ECOIAF_JRA_HR.4p2z.001/ocn/proc/tseries/month_1",
-    date_format: str = "%Y%m%d",
-    regex=r"(\d{6,8})-(\d{6,8})",
-    delimiter=".",
-    preview=False,
-):
-    if not Path(dataset_path).exists():
-        raise FileNotFoundError(f"Provided dataset path {dataset_path} does not exist.")
-    tracer_y_coord = "TLAT"
-    tracer_x_coord = "TLONG"
-    dates = pd.date_range(start=dates[0], end=dates[1]).to_pydatetime().tolist()
-    variable_info = parse_dataset(
-        variables,
-        dataset_path,
-        dates[0].strftime(date_format),
-        dates[1].strftime(date_format),
-        date_format=date_format,
-        regex=regex,
-        space_character=delimiter,
-    )
-    paths = subset_dataset(
-        variable_info=variable_info,
-        output_path=output_dir,
-        lat_min=lat_min - 1.5,
-        lat_max=lat_max + 1.5,
-        lon_min=lon_min - 1.5,
-        lon_max=lon_max + 1.5,
-        lat_name=tracer_y_coord,
-        lon_name=tracer_x_coord,
-        dates=(dates[0].strftime(date_format),dates[1].strftime(date_format)),
-        preview=preview,
-    )
 
-    # Merge the file into the specified output file.
-    if output_file is not None:
-        print(f"Merging the files since output file is specified, into {Path(output_dir)/output_file}")
-        merged = xr.open_mfdataset(paths, combine='by_coords', parallel=True)
-        merged.to_netcdf(Path(output_dir)/output_file)
+class MOM6_OUTPUT(ForcingProduct):
+    product_name = "mom6_output"
+    description = "CESM had old runs that can be used for IC and OBC"
+    time_var_name = "time"
+    boundary_fill_method = "regional_mom6"
+    tracer_x_coord = "nlon"
+    tracer_y_coord = "nlat"
+    u_var_name = "UVEL"
+    z_unit_conversion = 0.01
+    v_var_name = "VVEL"
+    u_x_coord = "nlon"
+    u_y_coord = "nlat"
+    v_x_coord = "nlon"
+    v_y_coord = "nlat"
+    u_lat_coord = "TLAT"
+    u_lon_coord = "TLONG"
+    v_lat_coord = "TLAT"
+    v_lon_coord = "TLONG"
+    tracer_lat_coord = "TLAT"
+    tracer_lon_coord = "TLONG"
+    eta_var_name = "SSH"
+    time_units = "days since 1850-01-01"
+    calendar = "NOLEAP"
+    depth_coord = ["z_t"]
+    delimiter = "."
+    tracer_var_names = {
+        "temp": "TEMP",
+        "salt": "SALT"
+    }
 
-    return paths
+    @accessmethod
+    @staticmethod
+    def get_mom6_data(
+        dates: list,
+        lat_min,
+        lat_max,
+        lon_min,
+        lon_max,
+        output_folder=Path(""),
+        output_filename=None,
+        variables=["SSH", "TEMP", "SALT", "VVEL", "UVEL"],
+        dataset_path="/glade/campaign/collections/cmip/CMIP6/CESM-HR/FOSI_BGC/HR/g.e22.TL319_t13.G1850ECOIAF_JRA_HR.4p2z.001/ocn/proc/tseries/month_1",
+        date_format: str = "%Y%m%d",
+        regex=r"(\d{6,8})-(\d{6,8})",
+        delimiter=".",
+        preview=False,
+    ):
+        if not Path(dataset_path).exists():
+            raise FileNotFoundError(f"Provided dataset path {dataset_path} does not exist.")
+        tracer_y_coord = "TLAT"
+        tracer_x_coord = "TLONG"
+        dates = pd.date_range(start=dates[0], end=dates[1]).to_pydatetime().tolist()
+        variable_info = parse_dataset(
+            variables,
+            dataset_path,
+            dates[0].strftime(date_format),
+            dates[1].strftime(date_format),
+            date_format=date_format,
+            regex=regex,
+            space_character=delimiter,
+        )
+        paths = subset_dataset(
+            variable_info=variable_info,
+            output_path=output_folder,
+            lat_min=lat_min - 1.5,
+            lat_max=lat_max + 1.5,
+            lon_min=lon_min - 1.5,
+            lon_max=lon_max + 1.5,
+            lat_name=tracer_y_coord,
+            lon_name=tracer_x_coord,
+            dates=(dates[0].strftime(date_format),dates[1].strftime(date_format)),
+            preview=preview,
+        )
+
+        # Merge the file into the specified output file.
+        if output_file is not None:
+            print(f"Merging the files since output file is specified, into {Path(output_folder)/output_filename}")
+            merged = xr.open_mfdataset(paths, combine='by_coords', parallel=True)
+            merged.to_netcdf(Path(output_folder)/output_filename)
+
+        return paths
 
 
 def parse_dataset(

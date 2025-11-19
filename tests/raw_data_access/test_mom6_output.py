@@ -13,7 +13,7 @@ def test_get_mom6_data(skip_if_not_glade, tmp_path):
     lat_max = 31
     lon_min = 289
     lon_max = 290
-    paths = co.get_mom6_data(
+    paths = co.MOM6_OUTPUT.get_mom6_data(
         dates, lat_min, lat_max, lon_min, lon_max, tmp_path, "temp.nc",variables=["SSH"]
     )
     dataset = xr.open_dataset(paths[0])

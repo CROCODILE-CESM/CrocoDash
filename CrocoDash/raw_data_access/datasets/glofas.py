@@ -7,6 +7,8 @@ from CrocoDash.raw_data_access.base import *
 class GLOFAS(BaseProduct):
     product_name = "glofas"
     description = "	GLOFAS (Global Flood Awareness System) is a public river discharge/runoff Product"
+    @accessmethod
+    @staticmethod
     def get_global_data_with_python(
         dates,
         output_folder=Path(""),
@@ -48,7 +50,8 @@ class GLOFAS(BaseProduct):
         client.retrieve(dataset, request, path)
         return path
 
-
+    @accessmethod
+    @staticmethod
     def get_processed_global_glofas_script_for_cli(
         dates="UNUSED",
         output_folder=Path(""),
