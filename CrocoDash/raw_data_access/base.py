@@ -18,7 +18,7 @@ class BaseProduct:
 
     # Subclasses must define this
     required_metadata = ["product_name", "description"]
-    required_args = ["dates", "output_folder", "output_filename"]
+    required_args = ["output_folder", "output_filename"]
 
     _access_methods = {}  # method_name → {func}
     
@@ -32,7 +32,7 @@ class BaseProduct:
             
         # Assign a logger for each subclass
         cls.logger = setup_logger(cls.__name__)
-        
+
         cls._access_methods = {}
         for name, attr in cls.__dict__.items():
             if isinstance(attr, staticmethod) and getattr(
@@ -118,6 +118,7 @@ class ForcingProduct(BaseProduct):
     ]
 
     required_args = BaseProduct.required_args + [
+        "dates",
         "variables",
         "lon_max",
         "lat_max",

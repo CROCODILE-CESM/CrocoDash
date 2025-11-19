@@ -9,11 +9,6 @@ class GEBCO(BaseProduct):
     description = "GEBCO (General Bathymetric Chart of the Ocean) is a public dataset of global ocean bathymetry"
 
     def get_gebco_data_with_python(
-        dates="UNUSED",
-        lat_min="UNUSED",
-        lat_max="UNUSED",
-        lon_min="UNUSED",
-        lon_max="UNUSED",
         output_folder=None,
         output_filename=None,
     ):
@@ -39,11 +34,6 @@ class GEBCO(BaseProduct):
 
 
     def get_gebco_data_script(
-        dates="UNUSED",
-        lat_min="UNUSED",
-        lat_max="UNUSED",
-        lon_min="UNUSED",
-        lon_max="UNUSED",
         output_folder=None,
         output_filename=None,
     ):
