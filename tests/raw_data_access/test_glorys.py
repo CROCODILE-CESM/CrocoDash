@@ -11,7 +11,7 @@ def test_get_glorys_data_from_rda(skip_if_not_glade, tmp_path):
     lat_max = 31
     lon_min = -71
     lon_max = -70
-    dataset_path = gl.get_glorys_data_from_rda(
+    dataset_path = gl.GLORYS.get_glorys_data_from_rda(
         dates, lat_min, lat_max, lon_min, lon_max, tmp_path, "temp.nc"
     )
     dataset = xr.open_dataset(dataset_path)
@@ -30,14 +30,14 @@ def test_get_glorys_data_from_cds_api(tmp_path):
     lat_max = 61
     lon_min = -35
     lon_max = -34
-    res = gl.get_glorys_data_from_cds_api(
+    res = gl.GLORYS.get_glorys_data_from_cds_api(
         dates,
         lat_min,
         lat_max,
         lon_min,
         lon_max,
-        output_dir=tmp_path,
-        output_file="temp.nc",
+        output_folder=tmp_path,
+        output_filename="temp.nc",
     )
     dataset = xr.open_dataset(res)
     assert dataset.time.values[0] == np.datetime64("2000-01-01T00:00:00.000000000")
@@ -54,14 +54,14 @@ def test_get_glorys_data_script_for_cli(tmp_path):
     lat_max = 61
     lon_min = -101
     lon_max = -34
-    path = gl.get_glorys_data_script_for_cli(
+    path = gl.GLORYS.get_glorys_data_script_for_cli(
         dates,
         lat_min,
         lat_max,
         lon_min,
         lon_max,
-        output_dir=tmp_path,
-        output_file="temp",
+        output_folder=tmp_path,
+        output_filename="temp",
     )
 
     # Just testing if it exists, this function just calls a regional_mom6 function

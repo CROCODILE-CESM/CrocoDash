@@ -3,6 +3,8 @@
 from .registry import ProductRegistry
 import inspect
 import json
+from ..utils import setup_logger
+
 
 
 # tiny decorator
@@ -19,7 +21,7 @@ class BaseProduct:
     required_args = ["dates", "output_folder", "output_filename"]
 
     _access_methods = {}  # method_name → {func}
-
+    
     def __init_subclass__(cls, **kwargs):
 
         super().__init_subclass__(**kwargs)
@@ -27,7 +29,10 @@ class BaseProduct:
         # Skip validation for intermediate base classes
         if getattr(cls, "_is_abstract_base", False):
             return
-
+            
+        # Assign a logger for each subclass
+        cls.logger = setup_logger(cls.__name__)
+        
         cls._access_methods = {}
         for name, attr in cls.__dict__.items():
             if isinstance(attr, staticmethod) and getattr(
