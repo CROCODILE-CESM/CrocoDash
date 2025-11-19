@@ -5,7 +5,7 @@ import pytest
 import numpy as np
 import cftime
 from pathlib import Path
-from CrocoDash.raw_data_access.driver import get_rectangular_segment_info
+from CrocoDash.grid import Grid
 
 def test_get_mom6_data(skip_if_not_glade, tmp_path):
     dates = ["2000-01-01", "2000-01-05"]
@@ -89,7 +89,7 @@ def test_subset_dataset(dummy_forcing_factory, get_rect_grid, tmp_path):
     )
 
     grid = get_rect_grid
-    boundary_info = get_rectangular_segment_info(grid)
+    boundary_info = Grid.get_bounding_boxes_of_rectangular_grid(grid)
     co.subset_dataset(
         variable_info=variable_info,
         output_path=tmp_path,

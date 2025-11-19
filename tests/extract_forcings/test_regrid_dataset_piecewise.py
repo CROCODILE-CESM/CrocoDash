@@ -5,7 +5,7 @@ from CrocoDash.extract_forcings.code import (
 from CrocoDash.raw_data_access import driver as dv
 import pytest
 from datetime import datetime
-
+from CrocoDash.grid import Grid
 
 @pytest.mark.slow
 def test_regrid_data_piecewise_workflow(
@@ -25,7 +25,7 @@ def test_regrid_data_piecewise_workflow(
 
     # Generate piecewise data
     piecewise_factory = generate_piecewise_raw_data
-    bounds = dv.get_rectangular_segment_info(grid)
+    bounds =  Grid.get_bounding_boxes_of_rectangular_grid(grid)
     ds = dummy_forcing_factory(
         bounds["ic"]["lat_min"],
         bounds["ic"]["lat_max"],
@@ -99,7 +99,7 @@ def test_regrid_data_piecewise_parsing(
 
     # Generate piecewise data
     piecewise_factory = generate_piecewise_raw_data
-    bounds = dv.get_rectangular_segment_info(grid)
+    bounds =  Grid.get_bounding_boxes_of_rectangular_grid(grid)
     ds = dummy_forcing_factory(
         bounds["ic"]["lat_min"],
         bounds["ic"]["lat_max"],

@@ -35,13 +35,3 @@ def test_verify_data_sufficiency(get_ProductFunctionRegistry):
     assert sufficient == False
     assert len(missing) == 1
     assert list(missing)[0] == "bathymetry"
-
-
-def test_get_rectangular_segment_info(get_rect_grid):
-    grid = get_rect_grid
-    res = dv.get_rectangular_segment_info(grid)
-    assert "east" in res.keys()
-    assert "west" in res.keys()
-    assert "north" in res.keys()
-    assert "south" in res.keys()
-    assert "lat_min" in res["east"].keys()

@@ -1,6 +1,6 @@
 from pathlib import Path
 from CrocoDash import utils
-from CrocoDash.raw_data_access.driver import get_rectangular_segment_info
+from CrocoDash.grid import *
 from CrocoDash.raw_data_access import driver as dv
 import xarray as xr
 import pandas as pd
@@ -77,7 +77,7 @@ def get_dataset_piecewise(
 
     # Get lat,lon information for each boundary
     hgrid = xr.open_dataset(hgrid_path)
-    boundary_info = get_rectangular_segment_info(hgrid)
+    boundary_info = Grid.get_bounding_boxes_of_rectangular_grid(hgrid)
 
     # Set up date range, pd.date_range is exclusive of the end_date
     dates = (
