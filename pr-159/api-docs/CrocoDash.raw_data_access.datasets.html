@@ -370,8 +370,14 @@ document.write(`
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.raw_data_access.datasets.seawifs">CrocoDash.raw_data_access.datasets.seawifs module</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.seawifs.get_global_seawifs_script_for_cli"><code class="docutils literal notranslate"><span class="pre">get_global_seawifs_script_for_cli()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.seawifs.get_processed_global_seawifs_script_for_cli"><code class="docutils literal notranslate"><span class="pre">get_processed_global_seawifs_script_for_cli()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.seawifs.SeaWIFS"><code class="docutils literal notranslate"><span class="pre">SeaWIFS</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.seawifs.SeaWIFS.description"><code class="docutils literal notranslate"><span class="pre">SeaWIFS.description</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.seawifs.SeaWIFS.get_global_seawifs_script_for_cli"><code class="docutils literal notranslate"><span class="pre">SeaWIFS.get_global_seawifs_script_for_cli()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.seawifs.SeaWIFS.get_processed_global_seawifs_script_for_cli"><code class="docutils literal notranslate"><span class="pre">SeaWIFS.get_processed_global_seawifs_script_for_cli()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.seawifs.SeaWIFS.logger"><code class="docutils literal notranslate"><span class="pre">SeaWIFS.logger</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.seawifs.SeaWIFS.product_name"><code class="docutils literal notranslate"><span class="pre">SeaWIFS.product_name</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.raw_data_access.datasets.utils">CrocoDash.raw_data_access.datasets.utils module</a><ul class="nav section-nav flex-column">
@@ -541,9 +547,18 @@ document.write(`
 </section>
 <section id="module-CrocoDash.raw_data_access.datasets.seawifs">
 <span id="crocodash-raw-data-access-datasets-seawifs-module"></span><h2>CrocoDash.raw_data_access.datasets.seawifs module<a class="headerlink" href="#module-CrocoDash.raw_data_access.datasets.seawifs" title="Link to this heading">#</a></h2>
-<dl class="py function">
-<dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.seawifs.get_global_seawifs_script_for_cli">
-<span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.datasets.seawifs.</span></span><span class="sig-name descname"><span class="pre">get_global_seawifs_script_for_cli</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dates</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'UNUSED'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'UNUSED'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'UNUSED'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'UNUSED'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'UNUSED'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'UNUSED'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">username</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.seawifs.get_global_seawifs_script_for_cli" title="Link to this definition">#</a></dt>
+<dl class="py class">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.seawifs.SeaWIFS">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.datasets.seawifs.</span></span><span class="sig-name descname"><span class="pre">SeaWIFS</span></span><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.seawifs.SeaWIFS" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseProduct</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.seawifs.SeaWIFS.description">
+<span class="sig-name descname"><span class="pre">description</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'SEAWIFS</span> <span class="pre">is</span> <span class="pre">a</span> <span class="pre">Chlorophyll</span> <span class="pre">Dataset</span> <span class="pre">for</span> <span class="pre">MOM6'</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.seawifs.SeaWIFS.description" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.seawifs.SeaWIFS.get_global_seawifs_script_for_cli">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_global_seawifs_script_for_cli</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_folder</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_filename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'UNUSED'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">username</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.seawifs.SeaWIFS.get_global_seawifs_script_for_cli" title="Link to this definition">#</a></dt>
 <dd><p>Downloads chlor_a data using NASA OceanData API with authentication.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -554,15 +569,15 @@ document.write(`
 <li><p><strong>lat_max</strong> (<em>float</em><em>, </em><em>optional</em>) – Currently unused; placeholder for future spatial filtering.</p></li>
 <li><p><strong>lon_min</strong> (<em>float</em><em>, </em><em>optional</em>) – Currently unused; placeholder for future spatial filtering.</p></li>
 <li><p><strong>lon_max</strong> (<em>float</em><em>, </em><em>optional</em>) – Currently unused; placeholder for future spatial filtering.</p></li>
-<li><p><strong>output_dir</strong> (<em>str</em><em>, </em><em>optional</em>) – Directory where downloaded files will be saved.</p></li>
+<li><p><strong>output_folder</strong> (<em>str</em><em>, </em><em>optional</em>) – Directory where downloaded files will be saved.</p></li>
 </ul>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="py function">
-<dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.seawifs.get_processed_global_seawifs_script_for_cli">
-<span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.datasets.seawifs.</span></span><span class="sig-name descname"><span class="pre">get_processed_global_seawifs_script_for_cli</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dates</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'UNUSED'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'UNUSED'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'UNUSED'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'UNUSED'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'UNUSED'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">PosixPath('.')</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'processed_seawifs.nc'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.seawifs.get_processed_global_seawifs_script_for_cli" title="Link to this definition">#</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.seawifs.SeaWIFS.get_processed_global_seawifs_script_for_cli">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_processed_global_seawifs_script_for_cli</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_folder</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">PosixPath('.')</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_filename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'processed_seawifs.nc'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.seawifs.SeaWIFS.get_processed_global_seawifs_script_for_cli" title="Link to this definition">#</a></dt>
 <dd><p>Downloads chlor_a data from the CESM inputdata repository by generating a script users can run in their terminal.
 :param date: Currently unused; placeholder for future date-based filtering.
 :type date: str, optional
@@ -574,10 +589,22 @@ document.write(`
 :type lon_min: float, optional
 :param lon_max: Currently unused; placeholder for future spatial filtering.
 :type lon_max: float, optional
-:param output_dir: Directory where downloaded files will be saved.
-:type output_dir: str, optional
-:param output_file: filename in output directory
-:type output_file: str, optional</p>
+:param output_folder: Directory where downloaded files will be saved.
+:type output_folder: str, optional
+:param output_filename: filename in output directory
+:type output_filename: str, optional</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.seawifs.SeaWIFS.logger">
+<span class="sig-name descname"><span class="pre">logger</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;Logger</span> <span class="pre">SeaWIFS</span> <span class="pre">(INFO)&gt;</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.seawifs.SeaWIFS.logger" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.seawifs.SeaWIFS.product_name">
+<span class="sig-name descname"><span class="pre">product_name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'seawifs'</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.seawifs.SeaWIFS.product_name" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
 </dd></dl>
 
 </section>
@@ -678,8 +705,14 @@ document.write(`
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.raw_data_access.datasets.seawifs">CrocoDash.raw_data_access.datasets.seawifs module</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.seawifs.get_global_seawifs_script_for_cli"><code class="docutils literal notranslate"><span class="pre">get_global_seawifs_script_for_cli()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.seawifs.get_processed_global_seawifs_script_for_cli"><code class="docutils literal notranslate"><span class="pre">get_processed_global_seawifs_script_for_cli()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.seawifs.SeaWIFS"><code class="docutils literal notranslate"><span class="pre">SeaWIFS</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.seawifs.SeaWIFS.description"><code class="docutils literal notranslate"><span class="pre">SeaWIFS.description</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.seawifs.SeaWIFS.get_global_seawifs_script_for_cli"><code class="docutils literal notranslate"><span class="pre">SeaWIFS.get_global_seawifs_script_for_cli()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.seawifs.SeaWIFS.get_processed_global_seawifs_script_for_cli"><code class="docutils literal notranslate"><span class="pre">SeaWIFS.get_processed_global_seawifs_script_for_cli()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.seawifs.SeaWIFS.logger"><code class="docutils literal notranslate"><span class="pre">SeaWIFS.logger</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.seawifs.SeaWIFS.product_name"><code class="docutils literal notranslate"><span class="pre">SeaWIFS.product_name</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.raw_data_access.datasets.utils">CrocoDash.raw_data_access.datasets.utils module</a><ul class="nav section-nav flex-column">
