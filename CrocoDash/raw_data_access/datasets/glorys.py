@@ -38,7 +38,7 @@ class GLORYS(ForcingProduct):
     depth_coord = "depth"
     tracer_var_names = {"temp": "thetao", "salt": "so"}
 
-    @accessmethod
+    @accessmethod(description="Gathers GLORYS data from RDA on computers with access to glade/rda", type="python")
     @staticmethod
     def get_glorys_data_from_rda(
         dates: list,
@@ -111,7 +111,7 @@ class GLORYS(ForcingProduct):
         dataset.to_netcdf(path)
         return path
 
-    @accessmethod
+    @accessmethod(description="Python request with copernicusmarine api", type="python")
     @staticmethod
     def get_glorys_data_from_cds_api(
         dates,
@@ -143,7 +143,7 @@ class GLORYS(ForcingProduct):
         )
         return Path(output_folder) / output_filename
 
-    @accessmethod
+    @accessmethod(description="	Generates bash script for direct CLI run with the copernicusmarine package", type="script")
     @staticmethod
     def get_glorys_data_script_for_cli(
         dates: tuple,

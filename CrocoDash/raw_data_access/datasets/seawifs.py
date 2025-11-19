@@ -6,7 +6,7 @@ from CrocoDash.raw_data_access.base import *
 class SeaWIFS(BaseProduct):
     product_name = "seawifs"
     description = "SEAWIFS is a Chlorophyll Dataset for MOM6"
-    @accessmethod
+    @accessmethod(description="Generates bash script for direct CLI access to chlorophyll data (No Package Required)", type="script")
     @staticmethod
     def get_global_seawifs_script_for_cli(
         output_folder=None,
@@ -54,7 +54,7 @@ class SeaWIFS(BaseProduct):
         script_path.chmod(0o755)
         return script_path
 
-    @accessmethod
+    @accessmethod(description="	Generates bash script for direct CLI access to processed chlorophyll data (No Package Required)",type="script")
     @staticmethod
     def get_processed_global_seawifs_script_for_cli(
         output_folder=Path(""),

@@ -46,8 +46,47 @@ class MOM6_OUTPUT(ForcingProduct):
         "temp": "TEMP",
         "salt": "SALT"
     }
+    marbl_var_names = {
+        "PO4": "PO4",
+        "NO3": "NO3",
+        "SiO3": "SiO3",
+        "NH4": "NH4",
+        "Fe": "Fe",
+        "Lig": "Lig",
+        "O2": "O2",
+        "DIC": "DIC",
+        "DIC_ALT_CO2": "DIC_ALT_CO2",
+        "ALK": "ALK",
+        "ALK_ALT_CO2": "ALK_ALT_CO2",
+        "DOC": "DOC",
+        "DON": "DON",
+        "DOP": "DOP",
+        "DOPr": "DOPr",
+        "DONr": "DONr",
+        "DOCr": "DOCr",
+        "microzooC": "microzooC",
+        "mesozooC": "mesozooC",
+        "spChl": "spChl",
+        "spC": "spC",
+        "spP": "spP",
+        "spFe": "spFe",
+        "diatChl": "diatChl",
+        "diatC": "diatC",
+        "diatP": "diatP",
+        "diatFe": "diatFe",
+        "diatSi": "diatSi",
+        "diazChl": "diazChl",
+        "diazC": "diazC",
+        "diazP": "diazP",
+        "diazFe": "diazFe",
+        "coccoChl": "coccoChl",
+        "coccoC": "coccoC",
+        "coccoP": "coccoP",
+        "coccoFe": "coccoFe",
+        "coccoCaCO3": "coccoCaCO3"
+    }
 
-    @accessmethod
+    @accessmethod(description="Gets MOM6 Data from a given path (by default a POP-MARBL run)",type="python")
     @staticmethod
     def get_mom6_data(
         dates: list,

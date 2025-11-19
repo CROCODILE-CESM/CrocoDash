@@ -6,11 +6,19 @@ import json
 from ..utils import setup_logger
 
 
+def accessmethod(func=None, *, description=None, type=None):
+    def decorator(f):
+        f._is_access_method = True
+        f._description = description
+        f._dtype = type
+        return f
 
-# tiny decorator
-def accessmethod(func):
-    func._is_access_method = True
-    return func
+    # Case 1: decorator used WITHOUT args: @accessmethod
+    if callable(func):
+        return decorator(func)
+
+    # Case 2: decorator used WITH args: @accessmethod(description="foo")
+    return decorator
 
 
 class BaseProduct:
@@ -21,7 +29,7 @@ class BaseProduct:
     required_args = ["output_folder", "output_filename"]
 
     _access_methods = {}  # method_name → {func}
-    
+
     def __init_subclass__(cls, **kwargs):
 
         super().__init_subclass__(**kwargs)
@@ -29,7 +37,7 @@ class BaseProduct:
         # Skip validation for intermediate base classes
         if getattr(cls, "_is_abstract_base", False):
             return
-            
+
         # Assign a logger for each subclass
         cls.logger = setup_logger(cls.__name__)
 
@@ -85,12 +93,12 @@ class BaseProduct:
         for name, value in cls.__dict__.items():
             if (
                 not name.startswith("_")
-                and not callable(value)
+                and not isinstance(value, (staticmethod, classmethod))
                 and is_json_compatible(value)
             ):
                 metadata[name] = value
         if file_path is not None:
-            with open(filepath, "w") as f:
+            with open(file_path, "w") as f:
                 json.dump(metadata, f, indent=2)
         return metadata
 
@@ -139,3 +147,27 @@ class ForcingProduct(BaseProduct):
             "temp" in cls.tracer_var_names.keys()
             and "salt" in cls.tracer_var_names.keys()
         ), "keys temp & salt must be in the tracer_var_names variable."
+
+    @classmethod
+    def write_metadata(
+        cls, file_path: str | None = None, include_marbl_tracers=False
+    ) -> dict:
+        # 1. Get base metadata
+        base = super().write_metadata()
+
+        # 2. Merge marbl_var_names → tracer_var_names
+        merged = dict(base["tracer_var_names"])  # copy existing
+        if hasattr(cls, "marbl_var_names"):
+            merged.update(cls.marbl_var_names)
+            base["tracer_var_names"] = merged
+        else:
+            raise ValueError(
+                "This product does not have marbl tracer var names and cannot be written out as such."
+            )
+
+        # 3. Optionally write file
+        if file_path is not None:
+            with open(file_path, "w") as f:
+                json.dump(base, f, indent=2)
+
+        return base
