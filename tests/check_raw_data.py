@@ -1,5 +1,4 @@
-from CrocoDash.raw_data_access import config
-from CrocoDash.raw_data_access import driver
+from CrocoDash.raw_data_access.registry import ProductRegistry
 from datetime import datetime
 import pandas as pd
 import requests
@@ -7,8 +6,6 @@ from pathlib import Path
 
 
 def main():
-    pfd_obj = driver.ProductFunctionRegistry()
-    pfd_obj.load_functions()
 
     results = pd.DataFrame({"Product": [], "Access": [], "Result": []})
     product_df, functions_df = config.load_tables()
@@ -27,7 +24,7 @@ def main():
         results = pd.concat([results, pd.DataFrame([row])], ignore_index=True)
 
         for func in config.list_functions(product):
-            func_result = pfd_obj.validate_function(product, func)
+            func_result = ProductRegistry.validate_function(product, func)
             row = {
                 "Product": product,
                 "Access": func,

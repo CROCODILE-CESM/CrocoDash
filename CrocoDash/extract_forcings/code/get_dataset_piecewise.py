@@ -1,7 +1,7 @@
 from pathlib import Path
 from CrocoDash import utils
 from CrocoDash.grid import *
-from CrocoDash.raw_data_access import driver as dv
+from CrocoDash.raw_data_access.registry import ProductRegistry
 import xarray as xr
 import pandas as pd
 from datetime import datetime, timedelta
@@ -68,12 +68,11 @@ def get_dataset_piecewise(
     Path(output_dir).mkdir(exist_ok=True)
 
     ## Initialize PFD
-    ProductFunctionRegistry = dv.ProductFunctionRegistry()
-    ProductFunctionRegistry.load_functions()
-    ProductFunctionRegistry.validate_function(product_name, function_name)
-    data_access_function = ProductFunctionRegistry.functions[product_name][
+    ProductRegistry.load_functions()
+    ProductRegistry.validate_function(product_name, function_name)
+    data_access_function = ProductRegistry.get_function(product_name,
         function_name
-    ]
+    )
 
     # Get lat,lon information for each boundary
     hgrid = xr.open_dataset(hgrid_path)
@@ -148,8 +147,8 @@ def get_dataset_piecewise(
                         lat_max=latlon_info["lat_max"],
                         lon_min=latlon_info["lon_min"],
                         lon_max=latlon_info["lon_max"],
-                        output_dir=output_dir,
-                        output_file=output_file,
+                        output_folder=output_dir,
+                        output_filename=output_file,
                         variables = phys_vars + extra_tracers,
                         **extra_args
                     )
