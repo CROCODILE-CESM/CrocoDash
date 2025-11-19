@@ -30,7 +30,8 @@ class ProductRegistry:
         return list(product._access_methods.keys())
 
     @classmethod
-    def get_function(cls, product_name, method_name):
+    def call(cls, product_name, method_name, **kwargs):
         product = cls.get_product(product_name)
+        product.validate_call(method_name, **kwargs)
         method = product._access_methods[method_name]
-        return method(product)
+        return method(product, **kwargs)

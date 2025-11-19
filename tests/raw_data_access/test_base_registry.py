@@ -66,34 +66,32 @@ def test_list_access_methods():
 
 
 def test_call_access_method_success_basic():
-    func = ProductRegistry.get_function(
+    result = ProductRegistry.call(
         "dummy",
         "dummy_method",
-    )
-    result = func( dates=["asd", "asd"],
+        dates=["asd", "asd"],
         output_folder="/tmp",
-        output_filename="file.nc")
+        output_filename="file.nc",
+    )
     assert result == "asdasd/tmp/file.nc"
 
 
 def test_call_access_method_missing_arg():
     with pytest.raises(ValueError):
-        func = ProductRegistry.get_function(
-            "dummy", "dummy_method"
+        ProductRegistry.call(
+            "dummy", "dummy_method", output_folder="/tmp"  # missing output_filename
         )
-        func(output_folder="/tmp")  # missing output_filename)
 
 
 def test_call_nonexistent_method():
     with pytest.raises(KeyError):
-        ProductRegistry.get_function("dummy", "nonexistent_method")
+        ProductRegistry.call("dummy", "nonexistent_method")
 
 
 def test_call_access_method_success():
-    func = ProductRegistry.get_function(
+    result = ProductRegistry.call(
         "dummy_forcing",
-        "fetch_dummy")
-    result = func(
+        "fetch_dummy",
         dates=["!23", "123"],
         output_folder="/tmp",
         output_filename="file.nc",
