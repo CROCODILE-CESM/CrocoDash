@@ -172,8 +172,8 @@ def get_dataset_piecewise(
                         lat_max=latlon_info["lat_max"],
                         lon_min=latlon_info["lon_min"],
                         lon_max=latlon_info["lon_max"],
-                        output_dir=output_dir,
-                        output_file=output_file,
+                        output_folder=output_dir,
+                        output_filename=output_file,
                         variables = phys_vars+extra_tracers,
                         **extra_args
                     )
