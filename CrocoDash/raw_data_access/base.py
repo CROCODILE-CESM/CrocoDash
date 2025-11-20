@@ -1,4 +1,22 @@
-# raw_data_access/base.py
+"""
+Raw Data Access Module Requirements:
+1. Must enforce a certain amount of metadata for each product (things like z coordinate name, u velocity name, etc) (from the parent class)
+2. Must enforce specific keyword args in each access function (from the parent class)
+3. There must be some sort of registry that can list/query all products & access methods
+4. As minimal overhead as possible (for me, that meant no initialization!)
+5. Should be easy to validate the function (easy to test if they work and the metadata)
+6. Should be easy to validate the metadata
+7. Need to be able to print out the available products, functions, and their respective descriptions.
+
+How it was solved:
+1. There is a set of "abstract" classes that specify an array of "required_metadata". There is no type enforcement currently. This is checked in the _init_subclass hook.
+2. There is a set of "abstract" classes that specify an array of "required_args". There is no type enforcement. This is checked in the _init_subclass hook.
+3. There is a class called ProductRegistry in the registry.py file that does this
+4. The classes are all static.
+5. There is a validate method in the BaseProduct class that takes in additional default args from child classes, and the _init_subclass hook validates the args.
+6. The metadata is validated in the _init_subclass hook
+7. The ProductRegistry holds all of that.
+"""
 
 from .registry import ProductRegistry
 import inspect
