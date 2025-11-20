@@ -1,3 +1,5 @@
+"""RERUN THIS WHEN TABLES NEED TO BE UPDATED"""
+
 from CrocoDash.raw_data_access.datasets import load_all_datasets
 from CrocoDash.raw_data_access.registry import ProductRegistry
 from pathlib import Path
