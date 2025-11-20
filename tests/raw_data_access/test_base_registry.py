@@ -1,15 +1,15 @@
 import pytest
 from CrocoDash.raw_data_access.registry import ProductRegistry
-from CrocoDash.raw_data_access.base import BaseProduct, ForcingProduct, accessmethod
+from CrocoDash.raw_data_access.base import *
 
 
 # --- Dummy product for testing ---
-class DummyProduct(BaseProduct):
+class DummyProduct(DatedBaseProduct):
     product_name = "dummy"
     description = "A dummy product for testing"
 
     @accessmethod
-    def dummy_method(cls, dates, output_folder, output_filename):
+    def dummy_method(dates, output_folder, output_filename):
         return f"{dates[0]}{dates[1]}{output_folder}/{output_filename}"
 
 
@@ -34,7 +34,6 @@ class DummyForcing(ForcingProduct):
 
     @accessmethod
     def fetch_dummy(
-        cls,
         dates,
         output_folder,
         output_filename,
@@ -132,3 +131,6 @@ def test_write_metadata():
     # Check that every required_arg is present as a key
     missing = [arg for arg in DummyForcing.required_metadata if arg not in dummy_forcing_dict]
     assert not missing, f"Missing required args in metadata: {missing}"
+
+def test_validate_method():
+    assert DummyProduct.validate_method("dummy_method")

@@ -124,7 +124,7 @@ class Case:
         self.ocn_vgrid = ocn_vgrid
         self.ninst = ninst
         self.override = override
-        ProductRegistry = ProductRegistry
+        self.ProductRegistry = ProductRegistry
         self.forcing_product_name = None
         self._configure_forcings_called = False
         self._too_much_data = False

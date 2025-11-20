@@ -4,6 +4,8 @@ from .registry import ProductRegistry
 import inspect
 import json
 from ..utils import setup_logger
+import tempfile
+import shutil
 
 
 def accessmethod(func=None, *, description=None, type=None):
@@ -32,12 +34,14 @@ class BaseProduct:
     _access_methods = {}  # method_name → {func}
 
     def __init_subclass__(cls, **kwargs):
-
         super().__init_subclass__(**kwargs)
 
-        # Skip validation for intermediate base classes
-        if getattr(cls, "_is_abstract_base", False):
+        # Only register concrete classes - i.e. how we make all these base classes "abstract" (Not actually abstract because we're not trying to enforce methods in child classes, just attributes)
+        if not getattr(cls, "product_name", None):
+            cls._is_abstract = True
             return
+        else:
+            cls._is_abstract = False
 
         # Assign a logger for each subclass
         cls.logger = setup_logger(cls.__name__)
@@ -48,7 +52,6 @@ class BaseProduct:
                 attr, "_is_access_method", False
             ):
                 cls._access_methods[name] = attr
-
         # ---- Validate metadata ----
         for field in cls.required_metadata:
             if not hasattr(cls, field):
@@ -79,6 +82,32 @@ class BaseProduct:
         if missing:
             raise ValueError(f"{cls.product_name}.{method_name} missing args {missing}")
 
+    # Default validation — can be overridden
+    @classmethod
+    def validate_method(cls, method_name, **kwargs):
+        """Default validation just makes a toy call with a temporary directory."""
+        temp_dir = tempfile.mkdtemp()
+        default_args = {
+            "output_folder": temp_dir,
+            "output_filename": "test_file.notreal",
+        }
+        final_args = {**default_args, **kwargs}
+        if method_name not in cls._access_methods:
+            raise ValueError(f"{method_name} not in {cls.__name__}")
+
+        func = cls._access_methods[method_name].__func__
+
+        # Default “toy call” signature:
+        try:
+            return func(**final_args)
+        except Exception as e:
+            cls.logger.error(
+                f"Validation failed for {cls.product_name}.{method_name}: {e}"
+            )
+            return False
+        shutil.rmtree(temp_dir)
+        return True
+
     @classmethod
     def write_metadata(cls, file_path: str = None) -> dict:
         """Return a dict of the class metadata fields and their values, writes a file if a filepath is specified."""
@@ -104,10 +133,27 @@ class BaseProduct:
         return metadata
 
 
-class ForcingProduct(BaseProduct):
-    """Specific enforcement needs for Forcing Products"""
+class DatedBaseProduct(BaseProduct):
+    """Specific enforcement needs for Dated Products"""
 
-    _is_abstract_base = True  # <- tells BaseProduct to skip validation
+    required_args = BaseProduct.required_args + [
+        "dates",
+    ]
+
+    @classmethod
+    def validate_method(cls, method_name, **kwargs):
+
+        # Add child-class defaults
+        extra_defaults = {
+            "dates": ["asdasd", "asdasdsad"],
+        }
+
+        # Delegate to the base implementation
+        return super().validate_method(method_name, **extra_defaults)
+
+
+class ForcingProduct(DatedBaseProduct):
+    """Specific enforcement needs for Forcing Products"""
 
     required_metadata = BaseProduct.required_metadata + [
         "time_var_name",
@@ -127,7 +173,6 @@ class ForcingProduct(BaseProduct):
     ]
 
     required_args = BaseProduct.required_args + [
-        "dates",
         "variables",
         "lon_max",
         "lat_max",
@@ -136,9 +181,6 @@ class ForcingProduct(BaseProduct):
     ]
 
     def __init_subclass__(cls, **kwargs):
-
-        # Concrete subclasses should not have the abstract flag
-        cls._is_abstract_base = False
 
         # 1. Let BaseProduct do its validation first
         super().__init_subclass__(**kwargs)
@@ -172,3 +214,17 @@ class ForcingProduct(BaseProduct):
                 json.dump(base, f, indent=2)
 
         return base
+
+    @classmethod
+    def validate_method(cls, method_name, **kwargs):
+
+        # Add child-class defaults
+        extra_defaults = {
+            "lat_min": 30,
+            "lat_max": 30.1,
+            "lon_min": 30,
+            "lon_max": 30.1,
+        }
+
+        # Delegate to the base implementation
+        return super().validate_method(method_name, **extra_defaults)

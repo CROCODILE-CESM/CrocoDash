@@ -130,7 +130,7 @@ class MOM6_OUTPUT(ForcingProduct):
         )
 
         # Merge the file into the specified output file.
-        if output_file is not None:
+        if output_filename is not None:
             print(f"Merging the files since output file is specified, into {Path(output_folder)/output_filename}")
             merged = xr.open_mfdataset(paths, combine='by_coords', parallel=True)
             merged.to_netcdf(Path(output_folder)/output_filename)
