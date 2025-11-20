@@ -145,7 +145,7 @@ class DatedBaseProduct(BaseProduct):
 
         # Add child-class defaults
         extra_defaults = {
-            "dates": ["asdasd", "asdasdsad"],
+            "dates": ["2000-01-01", "2000-01-02"],
         }
         final_args = {**extra_defaults, **kwargs}
 

@@ -4,7 +4,7 @@ import cdsapi
 import pandas as pd
 from CrocoDash.raw_data_access.base import *
 
-class GLOFAS(BaseProduct):
+class GLOFAS(DatedBaseProduct):
     product_name = "glofas"
     description = "	GLOFAS (Global Flood Awareness System) is a public river discharge/runoff Product"
     @accessmethod(description="Gets glofas raw data through the cdsapi package",type="python")
@@ -51,7 +51,7 @@ class GLOFAS(BaseProduct):
 
     @accessmethod(description="Generates bash script for access to CESM Inputdata processed glofas data",type="script")
     def get_processed_global_glofas_script_for_cli(
-        dates="UNUSED",
+        dates = "UNUSED",
         output_folder=Path(""),
         output_filename="processed_glofas.nc",
     ):
