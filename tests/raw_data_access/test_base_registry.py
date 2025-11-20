@@ -137,3 +137,7 @@ def test_validate_method():
 
 def test_forcing_validate_method():
     assert DummyForcing.validate_method("fetch_dummy")
+
+def test_get_access_function(tmp_path):
+    func = ProductRegistry.get_access_function("dummy","dummy_method")
+    func(dates = "asdasd", output_folder = tmp_path, output_filename = "asdasd")

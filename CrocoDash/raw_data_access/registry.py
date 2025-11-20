@@ -32,10 +32,10 @@ class ProductRegistry:
     @classmethod
     def get_access_function(cls, product_name, method_name):
         """Return the raw function (unbound), even if staticmethod."""
-        product = cls.get(product_name)
-        func = product.access_methods[method_name]
+        product = cls.get_product(product_name)
+        func = product._access_methods[method_name]
 
-        return func.__func__ # It's stored as a static method, so unwrap it.
+        return func
     @classmethod
     def call(cls, product_name, method_name, **kwargs):
         product = cls.get_product(product_name)
