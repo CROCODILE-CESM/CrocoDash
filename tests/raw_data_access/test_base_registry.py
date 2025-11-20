@@ -37,11 +37,11 @@ class DummyForcing(ForcingProduct):
         dates,
         output_folder,
         output_filename,
-        variables,
         lon_max,
         lat_max,
         lon_min,
         lat_min,
+        variables = "SSH",
     ):
         return f"Fetched {variables} to {output_folder}/{output_filename}"
 
@@ -134,3 +134,6 @@ def test_write_metadata():
 
 def test_validate_method():
     assert DummyProduct.validate_method("dummy_method")
+
+def test_forcing_validate_method():
+    assert DummyForcing.validate_method("fetch_dummy")

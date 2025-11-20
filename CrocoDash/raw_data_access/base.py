@@ -147,9 +147,10 @@ class DatedBaseProduct(BaseProduct):
         extra_defaults = {
             "dates": ["asdasd", "asdasdsad"],
         }
+        final_args = {**extra_defaults, **kwargs}
 
         # Delegate to the base implementation
-        return super().validate_method(method_name, **extra_defaults)
+        return super().validate_method(method_name, **final_args)
 
 
 class ForcingProduct(DatedBaseProduct):
