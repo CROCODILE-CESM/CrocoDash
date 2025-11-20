@@ -31,7 +31,7 @@ def accessmethod(func=None, *, description=None, type=None):
         f = staticmethod(f)
         f._is_access_method = True
         f._description = description
-        f._dtype = type
+        f._type = type
         return f
 
     # Case 1: decorator used WITHOUT args: @accessmethod
