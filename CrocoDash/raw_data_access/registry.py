@@ -36,6 +36,12 @@ class ProductRegistry:
         func = product._access_methods[method_name]
 
         return func
+
+    @classmethod
+    def validate_function(cls, product_name, method_name):
+        product = cls.get_product(product_name)
+        return product.validate_method(method_name)
+    
     @classmethod
     def call(cls, product_name, method_name, **kwargs):
         product = cls.get_product(product_name)
