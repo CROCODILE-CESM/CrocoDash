@@ -11,9 +11,9 @@ def main():
     products_csv = Path(script_dir/"products.csv")
     with open(products_csv, "w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
-        writer.writerow(["Product", "Description"])
+        writer.writerow(["Product", "Description", "Link"])
         for key, value in product_info_dict.items():
-            writer.writerow([value["product_name"], value["product_description"]])
+            writer.writerow([value["product_name"], value["product_description"], value["link"]])
 
     # --- Write Functions CSV ---
     functions_csv = Path(script_dir/"functions.csv")
