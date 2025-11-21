@@ -111,6 +111,7 @@ def test_tracer_names_check():
     with pytest.raises(AssertionError):
 
         class DummyForcing(ForcingProduct):
+            link = "dummy_link"
             product_name = "dummy_forcing"
             description = "Dummy forcing product for testing"
             time_var_name = "time"
