@@ -5,7 +5,9 @@ import pytest
 
 def test_get_gebco_data_script(tmp_path):
 
-    path = gb.GEBCO.get_gebco_data_script(output_folder=tmp_path, output_filename="gebco_2024.nc")
+    path = gb.GEBCO.get_gebco_data_script(
+        output_folder=tmp_path, output_filename="gebco_2024.nc"
+    )
 
     assert os.path.exists(path)
 

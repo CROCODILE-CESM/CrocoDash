@@ -43,10 +43,7 @@ class MOM6_OUTPUT(ForcingProduct):
     calendar = "NOLEAP"
     depth_coord = ["z_t"]
     delimiter = "."
-    tracer_var_names = {
-        "temp": "TEMP",
-        "salt": "SALT"
-    }
+    tracer_var_names = {"temp": "TEMP", "salt": "SALT"}
     marbl_var_names = {
         "PO4": "PO4",
         "NO3": "NO3",
@@ -84,10 +81,13 @@ class MOM6_OUTPUT(ForcingProduct):
         "coccoC": "coccoC",
         "coccoP": "coccoP",
         "coccoFe": "coccoFe",
-        "coccoCaCO3": "coccoCaCO3"
+        "coccoCaCO3": "coccoCaCO3",
     }
 
-    @accessmethod(description="Gets MOM6 Data from a given path (by default a POP-MARBL run)",type="python")
+    @accessmethod(
+        description="Gets MOM6 Data from a given path (by default a POP-MARBL run)",
+        type="python",
+    )
     def get_mom6_data(
         dates: list,
         lat_min,
@@ -104,7 +104,9 @@ class MOM6_OUTPUT(ForcingProduct):
         preview=False,
     ):
         if not Path(dataset_path).exists():
-            raise FileNotFoundError(f"Provided dataset path {dataset_path} does not exist.")
+            raise FileNotFoundError(
+                f"Provided dataset path {dataset_path} does not exist."
+            )
         tracer_y_coord = "TLAT"
         tracer_x_coord = "TLONG"
         dates = pd.date_range(start=dates[0], end=dates[1]).to_pydatetime().tolist()
@@ -126,15 +128,17 @@ class MOM6_OUTPUT(ForcingProduct):
             lon_max=lon_max + 1.5,
             lat_name=tracer_y_coord,
             lon_name=tracer_x_coord,
-            dates=(dates[0].strftime(date_format),dates[1].strftime(date_format)),
+            dates=(dates[0].strftime(date_format), dates[1].strftime(date_format)),
             preview=preview,
         )
 
         # Merge the file into the specified output file.
         if output_filename is not None:
-            print(f"Merging the files since output file is specified, into {Path(output_folder)/output_filename}")
-            merged = xr.open_mfdataset(paths, combine='by_coords', parallel=True)
-            merged.to_netcdf(Path(output_folder)/output_filename)
+            print(
+                f"Merging the files since output file is specified, into {Path(output_folder)/output_filename}"
+            )
+            merged = xr.open_mfdataset(paths, combine="by_coords", parallel=True)
+            merged.to_netcdf(Path(output_folder) / output_filename)
 
         return paths
 
@@ -205,7 +209,7 @@ def subset_dataset(
     lon_max: float,
     lat_name="lat",
     lon_name="lon",
-    dates = None,
+    dates=None,
     preview: bool = False,
 ) -> None:
     """
@@ -232,8 +236,10 @@ def subset_dataset(
     output_file_paths = []
     for var_name, file_paths in variable_info.items():
         if dates is None:
-            dates = ("NotSpecifiedDate","NotSpecifiedDate")
-        output_file = output_path / (f"{var_name}_subset_{lat_min}_{lat_max}_{lon_min}_{lon_max}_{dates[0]}_{dates[1]}.nc")
+            dates = ("NotSpecifiedDate", "NotSpecifiedDate")
+        output_file = output_path / (
+            f"{var_name}_subset_{lat_min}_{lat_max}_{lon_min}_{lon_max}_{dates[0]}_{dates[1]}.nc"
+        )
         output_file_paths.append(output_file)
         if output_file.exists():
             print(f"Subset already exists for {var_name}, skipping")

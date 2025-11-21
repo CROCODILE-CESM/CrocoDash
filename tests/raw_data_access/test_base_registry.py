@@ -41,7 +41,7 @@ class DummyForcing(ForcingProduct):
         lat_max,
         lon_min,
         lat_min,
-        variables = "SSH",
+        variables="SSH",
     ):
         return f"Fetched {variables} to {output_folder}/{output_filename}"
 
@@ -126,18 +126,24 @@ def test_tracer_names_check():
             boundary_fill_method = "nearest"
             time_units = "days since 2000-01-01"
 
+
 def test_write_metadata():
     dummy_forcing_dict = DummyForcing.write_metadata()
     # Check that every required_arg is present as a key
-    missing = [arg for arg in DummyForcing.required_metadata if arg not in dummy_forcing_dict]
+    missing = [
+        arg for arg in DummyForcing.required_metadata if arg not in dummy_forcing_dict
+    ]
     assert not missing, f"Missing required args in metadata: {missing}"
+
 
 def test_validate_method():
     assert DummyProduct.validate_method("dummy_method")
 
+
 def test_forcing_validate_method():
     assert DummyForcing.validate_method("fetch_dummy")
 
+
 def test_get_access_function(tmp_path):
-    func = ProductRegistry.get_access_function("dummy","dummy_method")
-    func(dates = "asdasd", output_folder = tmp_path, output_filename = "asdasd")
+    func = ProductRegistry.get_access_function("dummy", "dummy_method")
+    func(dates="asdasd", output_folder=tmp_path, output_filename="asdasd")

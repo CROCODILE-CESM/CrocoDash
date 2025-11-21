@@ -4,11 +4,15 @@ import cdsapi
 import pandas as pd
 from CrocoDash.raw_data_access.base import *
 
+
 class GLOFAS(DatedBaseProduct):
     product_name = "glofas"
     description = "	GLOFAS (Global Flood Awareness System) is a public river discharge/runoff Product"
     link = "https://ewds.climate.copernicus.eu/datasets/cems-glofas-historical?tab=download"
-    @accessmethod(description="Gets glofas raw data through the cdsapi package",type="python")
+
+    @accessmethod(
+        description="Gets glofas raw data through the cdsapi package", type="python"
+    )
     def get_global_data_with_python(
         dates,
         output_folder=Path(""),
@@ -50,9 +54,12 @@ class GLOFAS(DatedBaseProduct):
         client.retrieve(dataset, request, path)
         return path
 
-    @accessmethod(description="Generates bash script for access to CESM Inputdata processed glofas data",type="script")
+    @accessmethod(
+        description="Generates bash script for access to CESM Inputdata processed glofas data",
+        type="script",
+    )
     def get_processed_global_glofas_script_for_cli(
-        dates = "UNUSED",
+        dates="UNUSED",
         output_folder=Path(""),
         output_filename="processed_glofas.nc",
     ):

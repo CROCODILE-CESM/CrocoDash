@@ -4,11 +4,15 @@ from zipfile import ZipFile
 from pathlib import Path
 from CrocoDash.raw_data_access.base import *
 
+
 class GEBCO(BaseProduct):
     product_name = "gebco"
     description = "GEBCO (General Bathymetric Chart of the Ocean) is a public dataset of global ocean bathymetry"
     link = "https://www.gebco.net/data_and_products/gridded_bathymetry_data/#global"
-    @accessmethod(description="Python request for global bathymetry data", type="python")
+
+    @accessmethod(
+        description="Python request for global bathymetry data", type="python"
+    )
     def get_gebco_data_with_python(
         output_folder=None,
         output_filename=None,
@@ -33,7 +37,9 @@ class GEBCO(BaseProduct):
             zip_ref.extractall(output_folder)
         return
 
-    @accessmethod(description="get script to download global bathymetry data", type="script")
+    @accessmethod(
+        description="get script to download global bathymetry data", type="script"
+    )
     def get_gebco_data_script(
         output_folder=None,
         output_filename=None,

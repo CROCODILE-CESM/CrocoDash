@@ -1,11 +1,12 @@
-from CrocoDash.raw_data_access.datasets import mom6_output as co 
+from CrocoDash.raw_data_access.datasets import mom6_output as co
 import xarray as xr
-import pytest 
+import pytest
 import numpy as np
 import cftime
 from pathlib import Path
 from CrocoDash.grid import Grid
 from CrocoDash.raw_data_access.registry import ProductRegistry
+
 
 def test_get_mom6_data(skip_if_not_glade, tmp_path):
     dates = ["2000-01-01", "2000-01-05"]
@@ -14,7 +15,14 @@ def test_get_mom6_data(skip_if_not_glade, tmp_path):
     lon_min = 289
     lon_max = 290
     paths = co.MOM6_OUTPUT.get_mom6_data(
-        dates, lat_min, lat_max, lon_min, lon_max, tmp_path, "temp.nc",variables=["SSH"]
+        dates,
+        lat_min,
+        lat_max,
+        lon_min,
+        lon_max,
+        tmp_path,
+        "temp.nc",
+        variables=["SSH"],
     )
     dataset = xr.open_dataset(paths[0])
     start = cftime.DatetimeNoLeap(2000, 1, 1, 12, 0, 0)
@@ -27,16 +35,19 @@ def test_get_mom6_data(skip_if_not_glade, tmp_path):
     )
     assert time_vals[0] <= end <= time_vals[-1], (
         f"End date {end} not within dataset time range "
-        f"({time_vals[0]} to {time_vals[-1]})")
-    assert np.abs(dataset.TLAT.values[-1,0] - lat_max) <= 4
-    assert np.abs(dataset.TLAT.values[0,0] - lat_min) <= 4
-    assert np.abs(dataset.TLONG.values[0,-1] - lon_max) <= 4
-    assert np.abs(dataset.TLONG.values[0,0] - lon_min) <= 4
-    
+        f"({time_vals[0]} to {time_vals[-1]})"
+    )
+    assert np.abs(dataset.TLAT.values[-1, 0] - lat_max) <= 4
+    assert np.abs(dataset.TLAT.values[0, 0] - lat_min) <= 4
+    assert np.abs(dataset.TLONG.values[0, -1] - lon_max) <= 4
+    assert np.abs(dataset.TLONG.values[0, 0] - lon_min) <= 4
+
+
 @pytest.mark.slow
-def test_get_mom6_data_validation(skip_if_not_glade,tmp_path):
-    
-    assert  ProductRegistry.validate_function("mom6_output", "get_mom6_data")
+def test_get_mom6_data_validation(skip_if_not_glade, tmp_path):
+
+    assert ProductRegistry.validate_function("mom6_output", "get_mom6_data")
+
 
 def test_parse_dataset(tmp_path, dummy_forcing_factory):
 
@@ -60,8 +71,6 @@ def test_parse_dataset(tmp_path, dummy_forcing_factory):
 
     assert str(tmp_path / "north.DIC.20200101.20200102.nc") in variable_info["DIC"]
     assert str(tmp_path / "west.DOC.20200101.20200102.nc") in variable_info["DOC"]
-
-
 
 
 def test_subset_dataset(dummy_forcing_factory, get_rect_grid, tmp_path):

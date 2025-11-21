@@ -39,7 +39,10 @@ class GLORYS(ForcingProduct):
     depth_coord = "depth"
     tracer_var_names = {"temp": "thetao", "salt": "so"}
 
-    @accessmethod(description="Gathers GLORYS data from RDA on computers with access to glade/rda", type="python")
+    @accessmethod(
+        description="Gathers GLORYS data from RDA on computers with access to glade/rda",
+        type="python",
+    )
     def get_glorys_data_from_rda(
         dates: list,
         lat_min,
@@ -142,7 +145,10 @@ class GLORYS(ForcingProduct):
         )
         return Path(output_folder) / output_filename
 
-    @accessmethod(description="	Generates bash script for direct CLI run with the copernicusmarine package", type="script")
+    @accessmethod(
+        description="	Generates bash script for direct CLI run with the copernicusmarine package",
+        type="script",
+    )
     def get_glorys_data_script_for_cli(
         dates: tuple,
         lat_min,

@@ -13,12 +13,12 @@ class ProductRegistry:
         return list(cls.products.keys())
 
     @classmethod
-    def product_exists(cls,name):
+    def product_exists(cls, name):
         return name.lower() in cls.products
-    
+
     @classmethod
-    def product_is_of_type(cls,name, the_class):
-        return issubclass(cls.products[name.lower()],the_class)
+    def product_is_of_type(cls, name, the_class):
+        return issubclass(cls.products[name.lower()], the_class)
 
     @classmethod
     def get_product(cls, name):
@@ -41,7 +41,7 @@ class ProductRegistry:
     def validate_function(cls, product_name, method_name):
         product = cls.get_product(product_name)
         return product.validate_method(method_name)
-    
+
     @classmethod
     def call(cls, product_name, method_name, **kwargs):
         product = cls.get_product(product_name)
