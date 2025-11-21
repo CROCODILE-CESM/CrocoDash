@@ -46,7 +46,7 @@ class BaseProduct:
     """Base class for all raw data products. It enforces the metadata on the product as well as the function args."""
 
     # Subclasses must define this
-    required_metadata = ["product_name", "description"]
+    required_metadata = ["product_name", "description", "link"]
     required_args = ["output_folder", "output_filename"]
 
     _access_methods = {}  # method_name → {func}

@@ -34,6 +34,7 @@ def generate_dict():
         product_info_dict[product_key] = {
             "product_name": product_key,
             "product_description":  ProductRegistry.products[product_key].description,
+            "link": ProductRegistry.products[product_key].link,
             "functions": {}
         }
         for method in ProductRegistry.products[product_key]._access_methods:

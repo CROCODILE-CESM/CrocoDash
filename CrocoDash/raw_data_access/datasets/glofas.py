@@ -7,6 +7,7 @@ from CrocoDash.raw_data_access.base import *
 class GLOFAS(DatedBaseProduct):
     product_name = "glofas"
     description = "	GLOFAS (Global Flood Awareness System) is a public river discharge/runoff Product"
+    link = "https://ewds.climate.copernicus.eu/datasets/cems-glofas-historical?tab=download"
     @accessmethod(description="Gets glofas raw data through the cdsapi package",type="python")
     def get_global_data_with_python(
         dates,

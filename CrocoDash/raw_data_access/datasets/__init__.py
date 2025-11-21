@@ -6,7 +6,7 @@ import importlib
 def load_all_datasets():
     """
     Dynamically import all modules in this package so that their
-    @register_product decorators run and populate the registry.
+    _init_subclass hook run and populate the registry.
     """
     package = __name__
     for _, module_name, _ in pkgutil.iter_modules(__path__):

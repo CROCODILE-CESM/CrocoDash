@@ -20,6 +20,7 @@ from CrocoDash.raw_data_access.base import *
 class MOM6_OUTPUT(ForcingProduct):
     product_name = "mom6_output"
     description = "CESM had old runs that can be used for IC and OBC"
+    link = "https://gdex.ucar.edu/datasets/d267000/"
     time_var_name = "time"
     boundary_fill_method = "regional_mom6"
     tracer_x_coord = "nlon"

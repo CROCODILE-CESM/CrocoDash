@@ -16,7 +16,8 @@ from CrocoDash.raw_data_access.base import *
 
 class GLORYS(ForcingProduct):
     product_name = "glorys"
-    description = "GLORYS (Global Ocean Physics Reanalysis) is a public dataset provided through the copernicus marine service., https://data.marine.copernicus.eu/product/GLOBAL_MULTIYEAR_PHY_001_030/description"
+    description = "GLORYS (Global Ocean Physics Reanalysis) is a public dataset provided through the copernicus marine service."
+    link = "https://data.marine.copernicus.eu/product/GLOBAL_MULTIYEAR_PHY_001_030/description"
     time_var_name = "time"
     time_units = "days"
     boundary_fill_method = "regional_mom6"

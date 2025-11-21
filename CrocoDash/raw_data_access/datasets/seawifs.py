@@ -6,6 +6,7 @@ from CrocoDash.raw_data_access.base import *
 class SeaWIFS(BaseProduct):
     product_name = "seawifs"
     description = "SEAWIFS is a Chlorophyll Dataset for MOM6"
+    link = "https://oceandata.sci.gsfc.nasa.gov/getfile/SEASTAR_SEAWIFS_GAC.19980201_20100228.L3m.MC.CHL.chlor_a.9km.nc"
     @accessmethod(description="Generates bash script for direct CLI access to chlorophyll data (No Package Required)", type="script")
     def get_global_seawifs_script_for_cli(
         output_folder=None,
