@@ -7,6 +7,7 @@ from CrocoDash.raw_data_access.base import *
 class DummyProduct(DatedBaseProduct):
     product_name = "dummy"
     description = "A dummy product for testing"
+    link = "dummy_link"
 
     @accessmethod
     def dummy_method(dates, output_folder, output_filename):
@@ -15,6 +16,7 @@ class DummyProduct(DatedBaseProduct):
 
 # Dummy concrete forcing product
 class DummyForcing(ForcingProduct):
+    link = "dummy_link"
     product_name = "dummy_forcing"
     description = "Dummy forcing product for testing"
     time_var_name = "time"
