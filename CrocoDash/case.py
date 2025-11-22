@@ -12,19 +12,13 @@ from CrocoDash.vgrid import VGrid
 from CrocoDash.raw_data_access import driver as dv
 from CrocoDash.raw_data_access import config as tb
 from CrocoDash.raw_data_access import driver as dv
-from ProConPy.config_var import ConfigVar, cvars
+from ProConPy.config_var import cvars
 from ProConPy.stage import Stage
-from ProConPy.csp_solver import csp
 from ProConPy.dev_utils import ConstraintViolation
-from visualCaseGen.cime_interface import CIME_interface
-from visualCaseGen.initialize_configvars import initialize_configvars
-from visualCaseGen.initialize_widgets import initialize_widgets
-from visualCaseGen.initialize_stages import initialize_stages
-from visualCaseGen.specs.options import set_options
-from visualCaseGen.specs.relational_constraints import get_relational_constraints
+from visualCaseGen.initialize import initialize as initialize_visualCaseGen
 from visualCaseGen.custom_widget_types.case_creator import CaseCreator, ERROR, RESET
 from visualCaseGen.custom_widget_types.case_tools import xmlchange, append_user_nl
-from mom6_bathy import chl, mapping, grid
+from mom6_bathy import chl, mapping
 import xesmf as xe
 import xarray as xr
 import numpy as np
@@ -94,11 +88,8 @@ class Case:
             Must be in the form hh:mm:ss. If None, defaults to the CESM defaults
         """
 
-        # Initialize the CIME interface object
-        self.cime = CIME_interface(cesmroot)
-
-        if machine is None:
-            machine = self.cime.machine
+        # Initialize visualCaseGen system and get the CIME interface
+        self.cime = initialize_visualCaseGen(cesmroot)
 
         # Sanity checks on the input arguments
         self._init_args_check(
@@ -131,64 +122,50 @@ class Case:
         self._configure_forcings_called = False
         self._large_data_workflow_called = False
         self.compset = compset
+        self.machine = machine or self.cime.machine
+        self.project = project
 
-        # Resolution name:
-        self.resolution = f"{datm_grid_name}_{ocn_grid.name}"
-
-        self._initialize_visualCaseGen()
-
+        # Using visualCaseGen's configuration system, set the configuration variables for the case
+        # based on the provided arguments. This includes setting the compset, grid, and launch variables.
         try:
-            self._assign_configvars(compset, machine, project)
+            self._configure_case()
         except ConstraintViolation as e:
             print(f"{ERROR}{str(e)}{RESET}")
             return
-        # Removed redundant exception handling block.
 
+        # Before creating the case, we need to create the grid input files.
         self._create_grid_input_files()
 
+        # Having set the configuration variables and created the grid input files, we can now create the case instance.
         self._create_newcase()
 
+        # After creating the case, instantiate the CIME case object for later use.
         self._cime_case = self.cime.get_case(
             self.caseroot, non_local=self.cc._is_non_local()
         )
 
-        self.compset = self._cime_case.get_value("COMPSET")
-        print("Compset longname is:", self.compset)
+        self._apply_final_xmlchanges(ntasks_ocn, job_queue, job_wallclock_time)
 
-        self.runoff_in_compset = "DROF" in self.compset
-        self.bgc_in_compset = "%MARBL" in self.compset
-        self.cice_in_compset = "CICE" in self.compset
+    @property
+    def cice_in_compset(self):
+        """Check if CICE is included in the compset."""
+        if not hasattr(self, "_cice_in_compset"):
+            self._cice_in_compset = "CICE" in self.compset
+        return self._cice_in_compset
 
-        # CICE grid file (if needed)
-        if self.cice_in_compset:
-            self.cice_grid_path = (
-                inputdir / "ocnice" / f"cice_grid_{ocn_grid.name}_{cvars['MB_ATTEMPT_ID'].value}.nc"
-            )
-            self.ocn_topo.write_cice_grid(self.cice_grid_path)
+    @property
+    def runoff_in_compset(self):
+        """Check if runoff is included in the compset."""
+        if not hasattr(self, "_runoff_in_compset"):
+            self._runoff_in_compset = "%ROF" in self.compset
+        return self._runoff_in_compset
 
-        xmlchange(
-            "MOM6_MEMORY_MODE",
-            "dynamic_symmetric",
-            is_non_local=self.cc._is_non_local(),
-        )
-        # xmlchange(
-        #     "MOM6_DOMAIN_TYPE",
-        #     "REGIONAL",
-        #     is_non_local=self.cc._is_non_local(),
-        # )
-
-        # xmlchange("ROOTPE_OCN", 128, is_non_local=self.cc._is_non_local()) -> needs to be before the the setup
-        if ntasks_ocn is not None:
-            xmlchange("NTASKS_OCN", ntasks_ocn, is_non_local=self.cc._is_non_local())
-        # This will trigger for both the run and the archiver.
-        if job_queue is not None:
-            xmlchange("JOB_QUEUE", job_queue, is_non_local=self.cc._is_non_local())
-        if job_wallclock_time is not None:
-            xmlchange(
-                "JOB_WALLCLOCK_TIME",
-                job_wallclock_time,
-                is_non_local=self.cc._is_non_local(),
-            )
+    @property
+    def bgc_in_compset(self):
+        """Check if BGC is included in the compset."""
+        if not hasattr(self, "_bgc_in_compset"):
+            self._bgc_in_compset = "%MARBL" in self.compset
+        return self._bgc_in_compset
 
     def _init_args_check(
         self,
@@ -207,6 +184,7 @@ class Case:
         job_queue: str | None = None,
         job_wallclock_time: str | None = None,
     ):
+        """Perform sanity checks on the input arguments to ensure they are valid and consistent."""
 
         if Path(caseroot).exists() and not override:
             raise ValueError(f"Given caseroot {caseroot} already exists!")
@@ -299,6 +277,13 @@ class Case:
 
         # ESMF mesh file:
         ocn_topo.write_esmf_mesh(self.esmf_mesh_path)
+
+        # CICE grid file (if needed)
+        if self.cice_in_compset:
+            self.cice_grid_path = (
+                inputdir / "ocnice" / f"cice_grid_{ocn_grid.name}_{cvars['MB_ATTEMPT_ID'].value}.nc"
+            )
+            self.ocn_topo.write_cice_grid(self.cice_grid_path)
 
     def _create_newcase(self):
         """Create the case instance."""
@@ -615,7 +600,6 @@ class Case:
 
         # Set Vars for Config
         date_format = "%Y%m%d"
-        session_id = cvars["MB_ATTEMPT_ID"].value
 
         # Write Config File
 
@@ -729,7 +713,6 @@ class Case:
         self.tpxo_velocity_filepath = (
             Path(tpxo_velocity_filepath) if tpxo_velocity_filepath else None
         )
-        session_id = cvars["MB_ATTEMPT_ID"].value
 
         self.expt = rmom6.experiment(
             date_range=("1850-01-01 00:00:00", "1851-01-01 00:00:00"),  # Dummy times
@@ -1180,15 +1163,24 @@ class Case:
     def name(self) -> str:
         return self.caseroot.name
 
-    def _initialize_visualCaseGen(self):
 
-        ConfigVar.reboot()
-        Stage.reboot()
-        initialize_configvars(self.cime)
-        initialize_widgets(self.cime)
-        initialize_stages(self.cime)
-        set_options(self.cime)
-        csp.initialize(cvars, get_relational_constraints(cvars), Stage.first())
+    def _configure_case(self):
+        """Using visualCaseGen's case configuration pipeline, set the variables for the case based
+        on the provided arguments. This includes setting the compset, grid, and launch variables.
+        """
+
+        # 1. Compset
+        if self.compset in self.cime.compsets:
+            self._configure_standard_compset(self.compset)
+        else:
+            self._configure_custom_compset(self.compset)
+
+        # 2. Grid
+        self._configure_custom_grid()
+
+        # 3. Launch
+        self._configure_launch()
+
 
     def _configure_standard_compset(self, compset: str):
         """Configure the case for a standard component set."""
@@ -1265,19 +1257,8 @@ class Case:
         # Confirm successful configuration of custom component set
         assert Stage.active().title == "2. Grid"
 
-    def _assign_configvars(self, compset, machine, project):
-        """Assign the configvars (i.e., configuration variables for the case, such as components, physics,
-        options, grids, etc.) The cvars dict is a visualCaseGen data structure that contains all the
-        configuration variables for a case to be created. Incrementally setting configvars leads to the
-        completion of successive stages in the visualCaseGen workflow and thus enables the creation of
-        a new case.
-        """
-
-        # 1. Compset
-        if compset in self.cime.compsets:
-            self._configure_standard_compset(compset)
-        else:
-            self._configure_custom_compset(compset)
+    def _configure_custom_grid(self):
+        """Assign the custom grid variables for the case."""
 
         # 2. Grid
         assert Stage.active().title == "2. Grid"
@@ -1314,15 +1295,40 @@ class Case:
         cvars["IC_PTEMP_NAME"].value = "TBD"
         cvars["IC_SALT_NAME"].value = "TBD"
 
-        # 3. Grid
+    def _configure_launch(self):
+        """Assign the launch variables for the case."""
+
         assert Stage.active().title == "3. Launch"
         cvars["CASEROOT"].value = self.caseroot.as_posix()
-        cvars["MACHINE"].value = machine
-        if project is not None:
-            cvars["PROJECT"].value = project
+        cvars["MACHINE"].value = self.machine
+        if self.project is not None:
+            cvars["PROJECT"].value = self.project
 
         # Variables that are not included in a stage:
         cvars["NINST"].value = self.ninst
+
+    def _apply_final_xmlchanges(self, ntasks_ocn=None, job_queue=None, job_wallclock_time=None):
+        """Apply final XML changes after the case has been configured, and before the user
+        configures the forcings."""
+
+        xmlchange(
+            "MOM6_MEMORY_MODE",
+            "dynamic_symmetric",
+            is_non_local=self.cc._is_non_local(),
+        )
+
+        # xmlchange("ROOTPE_OCN", 128, is_non_local=self.cc._is_non_local()) -> needs to be before the the setup
+        if ntasks_ocn is not None:
+            xmlchange("NTASKS_OCN", ntasks_ocn, is_non_local=self.cc._is_non_local())
+        # This will trigger for both the run and the archiver.
+        if job_queue is not None:
+            xmlchange("JOB_QUEUE", job_queue, is_non_local=self.cc._is_non_local())
+        if job_wallclock_time is not None:
+            xmlchange(
+                "JOB_WALLCLOCK_TIME",
+                job_wallclock_time,
+                is_non_local=self.cc._is_non_local(),
+            )
 
     def _update_forcing_variables(self):
         """Update the runtime parameters of the case."""
