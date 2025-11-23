@@ -40,7 +40,8 @@ class Case:
         ocn_grid: Grid,
         ocn_topo: Topo,
         ocn_vgrid: VGrid,
-        datm_grid_name: str = "TL319",
+        atm_grid_name: str = "TL319",
+        rof_grid_name: str | None = None,
         ninst: int = 1,
         machine: str | None = None,
         project: str | None = None,
@@ -69,8 +70,12 @@ class Case:
             The ocean topography object to be used in the case.
         ocn_vgrid : VGrid
             The ocean vertical grid object to be used in the case.
-        datm_grid_name : str, optional
-            The data atmosphere grid name of the case. Default is "TL319".
+        atm_grid_name : str, optional
+            The atmosphere grid name of the case. Default is "TL319".
+        rof_grid_name : str | None, optional
+            The runoff grid name of the case. Default is None.
+            If None, it will be set according to the compset. If multiple
+            options are available, the user will be prompted to select one.
         ninst : int, optional
             The number of model instances. Default is 1.
         machine : str, optional
@@ -99,7 +104,8 @@ class Case:
             ocn_topo,
             ocn_vgrid,
             compset,
-            datm_grid_name,
+            atm_grid_name,
+            rof_grid_name,
             ninst,
             machine,
             project,
@@ -128,9 +134,10 @@ class Case:
         # Using visualCaseGen's configuration system, set the configuration variables for the case
         # based on the provided arguments. This includes setting the compset, grid, and launch variables.
         try:
-            self._configure_case()
-        except ConstraintViolation as e:
-            print(f"{ERROR}{str(e)}{RESET}")
+            self._configure_case(atm_grid_name, rof_grid_name)
+        except Exception as e:
+            print(f"\n{ERROR}Case Configuration Error:{RESET}")
+            print(f"  {str(e)}")
             return
 
         # Before creating the case, we need to create the grid input files.
@@ -175,7 +182,8 @@ class Case:
         ocn_topo: Topo,
         ocn_vgrid: VGrid,
         compset: str,
-        datm_grid_name: str,
+        atm_grid_name: str,
+        rof_grid_name: str | None,
         ninst: int,
         machine: str | None,
         project: str | None,
@@ -194,12 +202,18 @@ class Case:
             raise TypeError("ocn_grid must be a Grid object.")
         if not isinstance(ocn_vgrid, VGrid):
             raise TypeError("ocn_vgrid must be a VGrid object.")
+        if not isinstance(compset, str) or len(compset) == 0:
+            raise TypeError("compset must be a non-empty string.")
         if not isinstance(ocn_topo, Topo):
             raise TypeError("ocn_topo must be a Topo object.")
-        if datm_grid_name not in (
+        if atm_grid_name not in (
             available_atm_grids := self.cime.domains["atm"].keys()
         ):
-            raise ValueError(f"datm_grid_name must be one of {available_atm_grids}.")
+            raise ValueError(f"atm_grid_name must be one of {available_atm_grids}.")
+        if rof_grid_name is not None and rof_grid_name not in (
+            available_rof_grids := self.cime.domains["rof"].keys()
+        ):
+            raise ValueError(f"rof_grid_name must be one of {available_rof_grids}.")
         if ocn_grid.name is None:
             raise ValueError(
                 "ocn_grid must have a name. Please set it using the 'name' attribute."
@@ -1164,7 +1178,7 @@ class Case:
         return self.caseroot.name
 
 
-    def _configure_case(self):
+    def _configure_case(self, atm_grid_name, rof_grid_name):
         """Using visualCaseGen's case configuration pipeline, set the variables for the case based
         on the provided arguments. This includes setting the compset, grid, and launch variables.
         """
@@ -1176,7 +1190,7 @@ class Case:
             self._configure_custom_compset(self.compset)
 
         # 2. Grid
-        self._configure_custom_grid()
+        self._configure_custom_grid(atm_grid_name, rof_grid_name)
 
         # 3. Launch
         self._configure_launch()
@@ -1257,7 +1271,7 @@ class Case:
         # Confirm successful configuration of custom component set
         assert Stage.active().title == "2. Grid"
 
-    def _configure_custom_grid(self):
+    def _configure_custom_grid(self, atm_grid_name, rof_grid_name):
         """Assign the custom grid variables for the case."""
 
         # 2. Grid
@@ -1266,6 +1280,36 @@ class Case:
 
         assert Stage.active().title == "Custom Grid"
         cvars["CUSTOM_GRID_PATH"].value = self.inputdir.as_posix()
+
+        self._configure_custom_atmosphere_grid(atm_grid_name)
+        self._configure_custom_ocean_grid()
+        self._configure_custom_runoff_grid(rof_grid_name)
+
+    def _configure_custom_atmosphere_grid(self, atm_grid_name):
+        """Configure the atmosphere grid for the case. To be called by _configure_custom_grid()"""
+
+        # Check if we are in the Atmosphere Grid stage. If so, that means there are multiple (or no) options for
+        # the atm grid name. In that case, we need to check if the atm_grid_name is provided and valid.
+        # If not, raise an error. If specified, then we can just set the atm grid name to the provided value.
+        if Stage.active().title == "Atmosphere Grid":
+            if not atm_grid_name:
+                atm_grid_options = cvars["CUSTOM_ATM_GRID"].valid_options
+                raise ValueError(
+                    f"Atmosphere grid name (atm_grid_name) must be provided.\n  Valid options are: {atm_grid_options}"
+                )
+            cvars["CUSTOM_ATM_GRID"].value = atm_grid_name
+
+        # If we are not in the Atmosphere Grid stage, that means atmosphere grid name is already set to the only
+        # valid option available. In that case, check if the provided atm_grid_name is same as the valid option.
+        elif atm_grid_name is not None:
+            valid_atm_grid_name = cvars["CUSTOM_ATM_GRID"].value
+            if atm_grid_name != valid_atm_grid_name:
+                raise ValueError(
+                    f"Based on the compset, the valid atmosphere grid name is {valid_atm_grid_name}, but got {atm_grid_name}."
+                )
+
+    def _configure_custom_ocean_grid(self):
+        """Configure the ocean grid for the case. To be called by _configure_custom_grid()"""
 
         assert Stage.active().title == "Ocean Grid Mode"
         cvars["OCN_GRID_MODE"].value = "Create New"
@@ -1294,6 +1338,26 @@ class Case:
         cvars["TEMP_SALT_Z_INIT_FILE"].value = "TBD"
         cvars["IC_PTEMP_NAME"].value = "TBD"
         cvars["IC_SALT_NAME"].value = "TBD"
+
+    def _configure_custom_runoff_grid(self, rof_grid_name):
+        """Configure the runoff grid for the case. To be called by _configure_custom_grid()"""
+
+        # Check if we are in the Runoff Grid stage. If so, that means there are multiple (or no) options for
+        # the rof grid name. In that case, we need to check if the rof_grid_name is provided and valid.
+        # If not, raise an error. If specified, then we can just set the rof grid name to the provided value.
+        if Stage.active().title == "Runoff Grid":
+            if rof_grid_name is None:
+                rof_grid_options = cvars["CUSTOM_ROF_GRID"].valid_options
+                raise ValueError(
+                    f"Runoff grid name (rof_grid_name) must be provided.\n  Valid options are: {rof_grid_options}"
+                )
+            cvars["CUSTOM_ROF_GRID"].value = rof_grid_name
+        elif rof_grid_name is not None:
+            valid_rof_grid_name = cvars["CUSTOM_ROF_GRID"].value
+            if rof_grid_name != valid_rof_grid_name:
+                raise ValueError(
+                    f"Based on the compset, the valid runoff grid name is {valid_rof_grid_name}, but got {rof_grid_name}."
+                )
 
     def _configure_launch(self):
         """Assign the launch variables for the case."""
