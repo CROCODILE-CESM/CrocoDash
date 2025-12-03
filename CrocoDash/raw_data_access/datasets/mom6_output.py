@@ -347,3 +347,11 @@ def subtract_month(dt):
     # keep day, hour, minute, second as is
     day = min(dt.day, 28)  # avoid invalid dates (Feb)
     return cftime.DatetimeNoLeap(year, month, day, dt.hour, dt.minute, dt.second)
+
+
+class CESM_LARGE_ENSEMBLE(MOM6_OUTPUT):
+    def get_data(self, **kwargs):
+        return super().get_mom6_data(
+            **kwargs,
+            dataset_path="/gdex/data/d651056/CESM2-LE/ocn/proc/tseries/month_1"
+        )
