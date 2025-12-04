@@ -10,6 +10,7 @@ from CrocoDash.grid import Grid
 from CrocoDash.topo import Topo
 from CrocoDash.vgrid import VGrid
 from CrocoDash.raw_data_access.registry import ProductRegistry
+from CrocoDash.raw_data_access.datasets import load_all_datasets
 from CrocoDash.raw_data_access.base import ForcingProduct
 from ProConPy.config_var import ConfigVar, cvars
 from ProConPy.stage import Stage
@@ -401,7 +402,7 @@ class Case:
         --------
         process_forcings : Executes the actual boundary, initial condition, and tide setup based on the configuration.
         """
-
+        load_all_datasets()
         self.forcing_product_name = product_name.lower()
         if (
             ProductRegistry.product_exists(product_name)
