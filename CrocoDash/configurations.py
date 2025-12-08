@@ -77,6 +77,10 @@ class BaseConfigurator(ABC):
     def configure(self):
         pass
 
+    @abstractmethod
+    def deconfigure(self):
+        pass
+
     @classmethod
     def is_required(cls, compset):
         if cls.validate_compset_compatibility(compset):
@@ -177,9 +181,19 @@ class RunoffConfigurator(BaseConfigurator):
             grid_name=grid_name,
             session_id=session_id,
         )
+        self.runoff_mapping_file_nnsm = ( f"glofas_{self.grid_name}_{self.session_id}_nnsm.nc")
+        params.append(XMLConfigParam("ROF2OCN_LIQ_RMAPNAME", self.runoff_mapping_file_nnsm))
+        params.append(XMLConfigParam("ROF2OCN_LIQ_RMAPNAME", self.runoff_mapping_file_nnsm))
+
+
 
     def configure(self):
-        pass
+        for p in params:
+            p.apply()
+
+    def deconfigure(self):
+        raise NotImplementedError("You cannot undo runoff mapping configuration")
+
 
 
 class ChlConfigurator(BaseConfigurator):
@@ -188,6 +202,7 @@ class ChlConfigurator(BaseConfigurator):
     required_for_compsets = []
     allowed_compsets = []
     forbidden_compsets = {"MARBL"}
+    params = []
 
     def __init__(self, chl_processed_filepath, grid_name, session_id):
         super().__init__(
@@ -195,9 +210,24 @@ class ChlConfigurator(BaseConfigurator):
             grid_name=grid_name,
             session_id=session_id,
         )
+        self.regional_chl_file_path =  f"seawifs-clim-1997-2010-{self.grid_name}.nc"
+        params.append(UserNLConfigParam("CHL_FILE", Path(self.regional_chl_file_path), "mom"))
+        params.append(UserNLConfigParam("CHL_FROM_FILE", "TRUE", "mom"))
+        params.append(UserNLConfigParam("VAR_PEN_SW", "TRUE", "mom"))
+        params.append(UserNLConfigParam("PEN_SW_NBANDS", 3, "mom"))
+        
+    
 
     def configure(self):
-        pass
+        for p in params:
+            p.apply()
+
+    def deconfigure(self):
+        for p in params:
+            if type(p) == UserNLConfigParam:
+                p.remove()
+
+            
 
 
 
