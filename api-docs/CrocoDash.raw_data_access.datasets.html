@@ -179,6 +179,10 @@
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html">CrocoDash.rm6.regional_mom6 package</a></li>
 </ul>
 </details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="CrocoDash.extract_forcings.html">CrocoDash.extract_forcings package</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.extract_forcings.code.html">CrocoDash.extract_forcings.code package</a></li>
+</ul>
+</details></li>
 </ul>
 </details></li>
 </ul>
@@ -334,14 +338,48 @@ document.write(`
                 <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#submodules">Submodules</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.raw_data_access.datasets.glorys">CrocoDash.raw_data_access.datasets.glorys module</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.get_glorys_data_from_cds_api"><code class="docutils literal notranslate"><span class="pre">get_glorys_data_from_cds_api()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.get_glorys_data_from_rda"><code class="docutils literal notranslate"><span class="pre">get_glorys_data_from_rda()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.get_glorys_data_script_for_cli"><code class="docutils literal notranslate"><span class="pre">get_glorys_data_script_for_cli()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS"><code class="docutils literal notranslate"><span class="pre">GLORYS</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.boundary_fill_method"><code class="docutils literal notranslate"><span class="pre">GLORYS.boundary_fill_method</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.depth_coord"><code class="docutils literal notranslate"><span class="pre">GLORYS.depth_coord</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.description"><code class="docutils literal notranslate"><span class="pre">GLORYS.description</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.eta_var_name"><code class="docutils literal notranslate"><span class="pre">GLORYS.eta_var_name</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.get_glorys_data_from_cds_api"><code class="docutils literal notranslate"><span class="pre">GLORYS.get_glorys_data_from_cds_api()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.get_glorys_data_from_rda"><code class="docutils literal notranslate"><span class="pre">GLORYS.get_glorys_data_from_rda()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.get_glorys_data_script_for_cli"><code class="docutils literal notranslate"><span class="pre">GLORYS.get_glorys_data_script_for_cli()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.link"><code class="docutils literal notranslate"><span class="pre">GLORYS.link</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.logger"><code class="docutils literal notranslate"><span class="pre">GLORYS.logger</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.product_name"><code class="docutils literal notranslate"><span class="pre">GLORYS.product_name</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.time_units"><code class="docutils literal notranslate"><span class="pre">GLORYS.time_units</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.time_var_name"><code class="docutils literal notranslate"><span class="pre">GLORYS.time_var_name</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.tracer_lat_coord"><code class="docutils literal notranslate"><span class="pre">GLORYS.tracer_lat_coord</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.tracer_lon_coord"><code class="docutils literal notranslate"><span class="pre">GLORYS.tracer_lon_coord</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.tracer_var_names"><code class="docutils literal notranslate"><span class="pre">GLORYS.tracer_var_names</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.tracer_x_coord"><code class="docutils literal notranslate"><span class="pre">GLORYS.tracer_x_coord</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.tracer_y_coord"><code class="docutils literal notranslate"><span class="pre">GLORYS.tracer_y_coord</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.u_lat_coord"><code class="docutils literal notranslate"><span class="pre">GLORYS.u_lat_coord</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.u_lon_coord"><code class="docutils literal notranslate"><span class="pre">GLORYS.u_lon_coord</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.u_var_name"><code class="docutils literal notranslate"><span class="pre">GLORYS.u_var_name</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.u_x_coord"><code class="docutils literal notranslate"><span class="pre">GLORYS.u_x_coord</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.u_y_coord"><code class="docutils literal notranslate"><span class="pre">GLORYS.u_y_coord</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.v_lat_coord"><code class="docutils literal notranslate"><span class="pre">GLORYS.v_lat_coord</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.v_lon_coord"><code class="docutils literal notranslate"><span class="pre">GLORYS.v_lon_coord</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.v_var_name"><code class="docutils literal notranslate"><span class="pre">GLORYS.v_var_name</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.v_x_coord"><code class="docutils literal notranslate"><span class="pre">GLORYS.v_x_coord</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.v_y_coord"><code class="docutils literal notranslate"><span class="pre">GLORYS.v_y_coord</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.raw_data_access.datasets.seawifs">CrocoDash.raw_data_access.datasets.seawifs module</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.seawifs.get_global_seawifs_script_for_cli"><code class="docutils literal notranslate"><span class="pre">get_global_seawifs_script_for_cli()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.seawifs.get_processed_global_seawifs_script_for_cli"><code class="docutils literal notranslate"><span class="pre">get_processed_global_seawifs_script_for_cli()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.seawifs.SeaWIFS"><code class="docutils literal notranslate"><span class="pre">SeaWIFS</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.seawifs.SeaWIFS.description"><code class="docutils literal notranslate"><span class="pre">SeaWIFS.description</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.seawifs.SeaWIFS.get_global_seawifs_script_for_cli"><code class="docutils literal notranslate"><span class="pre">SeaWIFS.get_global_seawifs_script_for_cli()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.seawifs.SeaWIFS.get_processed_global_seawifs_script_for_cli"><code class="docutils literal notranslate"><span class="pre">SeaWIFS.get_processed_global_seawifs_script_for_cli()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.seawifs.SeaWIFS.link"><code class="docutils literal notranslate"><span class="pre">SeaWIFS.link</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.seawifs.SeaWIFS.logger"><code class="docutils literal notranslate"><span class="pre">SeaWIFS.logger</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.seawifs.SeaWIFS.product_name"><code class="docutils literal notranslate"><span class="pre">SeaWIFS.product_name</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.raw_data_access.datasets.utils">CrocoDash.raw_data_access.datasets.utils module</a><ul class="nav section-nav flex-column">
@@ -349,7 +387,10 @@ document.write(`
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.utils.write_bash_curl_script"><code class="docutils literal notranslate"><span class="pre">write_bash_curl_script()</span></code></a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.raw_data_access.datasets">Module contents</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.raw_data_access.datasets">Module contents</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.load_all_datasets"><code class="docutils literal notranslate"><span class="pre">load_all_datasets()</span></code></a></li>
+</ul>
+</li>
 </ul>
             </nav>
         </div>
@@ -369,30 +410,165 @@ document.write(`
 <section id="module-CrocoDash.raw_data_access.datasets.glorys">
 <span id="crocodash-raw-data-access-datasets-glorys-module"></span><h2>CrocoDash.raw_data_access.datasets.glorys module<a class="headerlink" href="#module-CrocoDash.raw_data_access.datasets.glorys" title="Link to this heading">#</a></h2>
 <p>Data Access Module -&gt; Glorys</p>
-<dl class="py function">
-<dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.glorys.get_glorys_data_from_cds_api">
-<span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.datasets.glorys.</span></span><span class="sig-name descname"><span class="pre">get_glorys_data_from_cds_api</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dates</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variables</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['zos',</span> <span class="pre">'uo',</span> <span class="pre">'vo',</span> <span class="pre">'so',</span> <span class="pre">'thetao']</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.glorys.get_glorys_data_from_cds_api" title="Link to this definition">#</a></dt>
+<dl class="py class">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.glorys.GLORYS">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.datasets.glorys.</span></span><span class="sig-name descname"><span class="pre">GLORYS</span></span><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ForcingProduct</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.glorys.GLORYS.boundary_fill_method">
+<span class="sig-name descname"><span class="pre">boundary_fill_method</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'regional_mom6'</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.boundary_fill_method" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.glorys.GLORYS.depth_coord">
+<span class="sig-name descname"><span class="pre">depth_coord</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'depth'</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.depth_coord" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.glorys.GLORYS.description">
+<span class="sig-name descname"><span class="pre">description</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'GLORYS</span> <span class="pre">(Global</span> <span class="pre">Ocean</span> <span class="pre">Physics</span> <span class="pre">Reanalysis)</span> <span class="pre">is</span> <span class="pre">a</span> <span class="pre">public</span> <span class="pre">dataset</span> <span class="pre">provided</span> <span class="pre">through</span> <span class="pre">the</span> <span class="pre">copernicus</span> <span class="pre">marine</span> <span class="pre">service.'</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.description" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.glorys.GLORYS.eta_var_name">
+<span class="sig-name descname"><span class="pre">eta_var_name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'zos'</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.eta_var_name" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.glorys.GLORYS.get_glorys_data_from_cds_api">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_glorys_data_from_cds_api</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dates</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_folder</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_filename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variables</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['zos',</span> <span class="pre">'uo',</span> <span class="pre">'vo',</span> <span class="pre">'so',</span> <span class="pre">'thetao']</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.get_glorys_data_from_cds_api" title="Link to this definition">#</a></dt>
 <dd><p>Using the copernucismarine api, query GLORYS data (any dates)</p>
 </dd></dl>
 
-<dl class="py function">
-<dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.glorys.get_glorys_data_from_rda">
-<span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.datasets.glorys.</span></span><span class="sig-name descname"><span class="pre">get_glorys_data_from_rda</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dates</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">PosixPath('.')</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'raw_glorys.nc'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variables</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['time',</span> <span class="pre">'latitude',</span> <span class="pre">'longitude',</span> <span class="pre">'depth',</span> <span class="pre">'zos',</span> <span class="pre">'uo',</span> <span class="pre">'vo',</span> <span class="pre">'so',</span> <span class="pre">'thetao']</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dataset</span></span></span><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.glorys.get_glorys_data_from_rda" title="Link to this definition">#</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.glorys.GLORYS.get_glorys_data_from_rda">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_glorys_data_from_rda</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dates</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_folder</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">PosixPath('.')</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_filename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'raw_glorys.nc'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variables</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['time',</span> <span class="pre">'latitude',</span> <span class="pre">'longitude',</span> <span class="pre">'depth',</span> <span class="pre">'zos',</span> <span class="pre">'uo',</span> <span class="pre">'vo',</span> <span class="pre">'so',</span> <span class="pre">'thetao']</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dataset</span></span></span><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.get_glorys_data_from_rda" title="Link to this definition">#</a></dt>
 <dd><p>Gather GLORYS Data on Derecho Computers from the campaign storage and return the dataset sliced to the llc and urc coordinates at the specific dates</p>
 </dd></dl>
 
-<dl class="py function">
-<dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.glorys.get_glorys_data_script_for_cli">
-<span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.datasets.glorys.</span></span><span class="sig-name descname"><span class="pre">get_glorys_data_script_for_cli</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dates</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variables</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.glorys.get_glorys_data_script_for_cli" title="Link to this definition">#</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.glorys.GLORYS.get_glorys_data_script_for_cli">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_glorys_data_script_for_cli</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dates</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_folder</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variables</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.get_glorys_data_script_for_cli" title="Link to this definition">#</a></dt>
 <dd><p>Script to run the GLORYS data query for the CLI</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.glorys.GLORYS.link">
+<span class="sig-name descname"><span class="pre">link</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'https://data.marine.copernicus.eu/product/GLOBAL_MULTIYEAR_PHY_001_030/description'</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.link" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.glorys.GLORYS.logger">
+<span class="sig-name descname"><span class="pre">logger</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;Logger</span> <span class="pre">GLORYS</span> <span class="pre">(INFO)&gt;</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.logger" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.glorys.GLORYS.product_name">
+<span class="sig-name descname"><span class="pre">product_name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'glorys'</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.product_name" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.glorys.GLORYS.time_units">
+<span class="sig-name descname"><span class="pre">time_units</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'days'</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.time_units" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.glorys.GLORYS.time_var_name">
+<span class="sig-name descname"><span class="pre">time_var_name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'time'</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.time_var_name" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.glorys.GLORYS.tracer_lat_coord">
+<span class="sig-name descname"><span class="pre">tracer_lat_coord</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'latitude'</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.tracer_lat_coord" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.glorys.GLORYS.tracer_lon_coord">
+<span class="sig-name descname"><span class="pre">tracer_lon_coord</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'longitude'</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.tracer_lon_coord" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.glorys.GLORYS.tracer_var_names">
+<span class="sig-name descname"><span class="pre">tracer_var_names</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'salt':</span> <span class="pre">'so',</span> <span class="pre">'temp':</span> <span class="pre">'thetao'}</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.tracer_var_names" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.glorys.GLORYS.tracer_x_coord">
+<span class="sig-name descname"><span class="pre">tracer_x_coord</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'longitude'</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.tracer_x_coord" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.glorys.GLORYS.tracer_y_coord">
+<span class="sig-name descname"><span class="pre">tracer_y_coord</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'latitude'</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.tracer_y_coord" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.glorys.GLORYS.u_lat_coord">
+<span class="sig-name descname"><span class="pre">u_lat_coord</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'latitude'</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.u_lat_coord" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.glorys.GLORYS.u_lon_coord">
+<span class="sig-name descname"><span class="pre">u_lon_coord</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'longitude'</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.u_lon_coord" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.glorys.GLORYS.u_var_name">
+<span class="sig-name descname"><span class="pre">u_var_name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'uo'</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.u_var_name" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.glorys.GLORYS.u_x_coord">
+<span class="sig-name descname"><span class="pre">u_x_coord</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'longitude'</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.u_x_coord" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.glorys.GLORYS.u_y_coord">
+<span class="sig-name descname"><span class="pre">u_y_coord</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'latitude'</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.u_y_coord" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.glorys.GLORYS.v_lat_coord">
+<span class="sig-name descname"><span class="pre">v_lat_coord</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'latitude'</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.v_lat_coord" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.glorys.GLORYS.v_lon_coord">
+<span class="sig-name descname"><span class="pre">v_lon_coord</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'longitude'</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.v_lon_coord" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.glorys.GLORYS.v_var_name">
+<span class="sig-name descname"><span class="pre">v_var_name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'vo'</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.v_var_name" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.glorys.GLORYS.v_x_coord">
+<span class="sig-name descname"><span class="pre">v_x_coord</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'longitude'</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.v_x_coord" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.glorys.GLORYS.v_y_coord">
+<span class="sig-name descname"><span class="pre">v_y_coord</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'latitude'</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.v_y_coord" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
 </dd></dl>
 
 </section>
 <section id="module-CrocoDash.raw_data_access.datasets.seawifs">
 <span id="crocodash-raw-data-access-datasets-seawifs-module"></span><h2>CrocoDash.raw_data_access.datasets.seawifs module<a class="headerlink" href="#module-CrocoDash.raw_data_access.datasets.seawifs" title="Link to this heading">#</a></h2>
-<dl class="py function">
-<dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.seawifs.get_global_seawifs_script_for_cli">
-<span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.datasets.seawifs.</span></span><span class="sig-name descname"><span class="pre">get_global_seawifs_script_for_cli</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dates</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'UNUSED'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'UNUSED'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'UNUSED'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'UNUSED'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'UNUSED'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'UNUSED'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">username</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.seawifs.get_global_seawifs_script_for_cli" title="Link to this definition">#</a></dt>
+<dl class="py class">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.seawifs.SeaWIFS">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.datasets.seawifs.</span></span><span class="sig-name descname"><span class="pre">SeaWIFS</span></span><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.seawifs.SeaWIFS" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseProduct</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.seawifs.SeaWIFS.description">
+<span class="sig-name descname"><span class="pre">description</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'SEAWIFS</span> <span class="pre">is</span> <span class="pre">a</span> <span class="pre">Chlorophyll</span> <span class="pre">Dataset</span> <span class="pre">for</span> <span class="pre">MOM6'</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.seawifs.SeaWIFS.description" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.seawifs.SeaWIFS.get_global_seawifs_script_for_cli">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_global_seawifs_script_for_cli</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_folder</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_filename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'UNUSED'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">username</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.seawifs.SeaWIFS.get_global_seawifs_script_for_cli" title="Link to this definition">#</a></dt>
 <dd><p>Downloads chlor_a data using NASA OceanData API with authentication.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -403,15 +579,15 @@ document.write(`
 <li><p><strong>lat_max</strong> (<em>float</em><em>, </em><em>optional</em>) – Currently unused; placeholder for future spatial filtering.</p></li>
 <li><p><strong>lon_min</strong> (<em>float</em><em>, </em><em>optional</em>) – Currently unused; placeholder for future spatial filtering.</p></li>
 <li><p><strong>lon_max</strong> (<em>float</em><em>, </em><em>optional</em>) – Currently unused; placeholder for future spatial filtering.</p></li>
-<li><p><strong>output_dir</strong> (<em>str</em><em>, </em><em>optional</em>) – Directory where downloaded files will be saved.</p></li>
+<li><p><strong>output_folder</strong> (<em>str</em><em>, </em><em>optional</em>) – Directory where downloaded files will be saved.</p></li>
 </ul>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="py function">
-<dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.seawifs.get_processed_global_seawifs_script_for_cli">
-<span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.datasets.seawifs.</span></span><span class="sig-name descname"><span class="pre">get_processed_global_seawifs_script_for_cli</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dates</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'UNUSED'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'UNUSED'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'UNUSED'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'UNUSED'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'UNUSED'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">PosixPath('.')</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'processed_seawifs.nc'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.seawifs.get_processed_global_seawifs_script_for_cli" title="Link to this definition">#</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.seawifs.SeaWIFS.get_processed_global_seawifs_script_for_cli">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_processed_global_seawifs_script_for_cli</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_folder</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">PosixPath('.')</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_filename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'processed_seawifs.nc'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.seawifs.SeaWIFS.get_processed_global_seawifs_script_for_cli" title="Link to this definition">#</a></dt>
 <dd><p>Downloads chlor_a data from the CESM inputdata repository by generating a script users can run in their terminal.
 :param date: Currently unused; placeholder for future date-based filtering.
 :type date: str, optional
@@ -423,10 +599,27 @@ document.write(`
 :type lon_min: float, optional
 :param lon_max: Currently unused; placeholder for future spatial filtering.
 :type lon_max: float, optional
-:param output_dir: Directory where downloaded files will be saved.
-:type output_dir: str, optional
-:param output_file: filename in output directory
-:type output_file: str, optional</p>
+:param output_folder: Directory where downloaded files will be saved.
+:type output_folder: str, optional
+:param output_filename: filename in output directory
+:type output_filename: str, optional</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.seawifs.SeaWIFS.link">
+<span class="sig-name descname"><span class="pre">link</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'https://oceandata.sci.gsfc.nasa.gov/getfile/SEASTAR_SEAWIFS_GAC.19980201_20100228.L3m.MC.CHL.chlor_a.9km.nc'</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.seawifs.SeaWIFS.link" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.seawifs.SeaWIFS.logger">
+<span class="sig-name descname"><span class="pre">logger</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;Logger</span> <span class="pre">SeaWIFS</span> <span class="pre">(INFO)&gt;</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.seawifs.SeaWIFS.logger" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.seawifs.SeaWIFS.product_name">
+<span class="sig-name descname"><span class="pre">product_name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'seawifs'</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.seawifs.SeaWIFS.product_name" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
 </dd></dl>
 
 </section>
@@ -439,12 +632,19 @@ document.write(`
 
 <dl class="py function">
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.utils.write_bash_curl_script">
-<span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.datasets.utils.</span></span><span class="sig-name descname"><span class="pre">write_bash_curl_script</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">script_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_filename</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.utils.write_bash_curl_script" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.datasets.utils.</span></span><span class="sig-name descname"><span class="pre">write_bash_curl_script</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">script_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_folder</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_filename</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.utils.write_bash_curl_script" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 </section>
 <section id="module-CrocoDash.raw_data_access.datasets">
 <span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-CrocoDash.raw_data_access.datasets" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.load_all_datasets">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.datasets.</span></span><span class="sig-name descname"><span class="pre">load_all_datasets</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.load_all_datasets" title="Link to this definition">#</a></dt>
+<dd><p>Dynamically import all modules in this package so that their
+_init_subclass hook run and populate the registry.</p>
+</dd></dl>
+
 </section>
 </section>
 
@@ -495,14 +695,48 @@ document.write(`
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#submodules">Submodules</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.raw_data_access.datasets.glorys">CrocoDash.raw_data_access.datasets.glorys module</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.get_glorys_data_from_cds_api"><code class="docutils literal notranslate"><span class="pre">get_glorys_data_from_cds_api()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.get_glorys_data_from_rda"><code class="docutils literal notranslate"><span class="pre">get_glorys_data_from_rda()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.get_glorys_data_script_for_cli"><code class="docutils literal notranslate"><span class="pre">get_glorys_data_script_for_cli()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS"><code class="docutils literal notranslate"><span class="pre">GLORYS</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.boundary_fill_method"><code class="docutils literal notranslate"><span class="pre">GLORYS.boundary_fill_method</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.depth_coord"><code class="docutils literal notranslate"><span class="pre">GLORYS.depth_coord</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.description"><code class="docutils literal notranslate"><span class="pre">GLORYS.description</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.eta_var_name"><code class="docutils literal notranslate"><span class="pre">GLORYS.eta_var_name</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.get_glorys_data_from_cds_api"><code class="docutils literal notranslate"><span class="pre">GLORYS.get_glorys_data_from_cds_api()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.get_glorys_data_from_rda"><code class="docutils literal notranslate"><span class="pre">GLORYS.get_glorys_data_from_rda()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.get_glorys_data_script_for_cli"><code class="docutils literal notranslate"><span class="pre">GLORYS.get_glorys_data_script_for_cli()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.link"><code class="docutils literal notranslate"><span class="pre">GLORYS.link</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.logger"><code class="docutils literal notranslate"><span class="pre">GLORYS.logger</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.product_name"><code class="docutils literal notranslate"><span class="pre">GLORYS.product_name</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.time_units"><code class="docutils literal notranslate"><span class="pre">GLORYS.time_units</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.time_var_name"><code class="docutils literal notranslate"><span class="pre">GLORYS.time_var_name</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.tracer_lat_coord"><code class="docutils literal notranslate"><span class="pre">GLORYS.tracer_lat_coord</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.tracer_lon_coord"><code class="docutils literal notranslate"><span class="pre">GLORYS.tracer_lon_coord</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.tracer_var_names"><code class="docutils literal notranslate"><span class="pre">GLORYS.tracer_var_names</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.tracer_x_coord"><code class="docutils literal notranslate"><span class="pre">GLORYS.tracer_x_coord</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.tracer_y_coord"><code class="docutils literal notranslate"><span class="pre">GLORYS.tracer_y_coord</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.u_lat_coord"><code class="docutils literal notranslate"><span class="pre">GLORYS.u_lat_coord</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.u_lon_coord"><code class="docutils literal notranslate"><span class="pre">GLORYS.u_lon_coord</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.u_var_name"><code class="docutils literal notranslate"><span class="pre">GLORYS.u_var_name</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.u_x_coord"><code class="docutils literal notranslate"><span class="pre">GLORYS.u_x_coord</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.u_y_coord"><code class="docutils literal notranslate"><span class="pre">GLORYS.u_y_coord</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.v_lat_coord"><code class="docutils literal notranslate"><span class="pre">GLORYS.v_lat_coord</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.v_lon_coord"><code class="docutils literal notranslate"><span class="pre">GLORYS.v_lon_coord</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.v_var_name"><code class="docutils literal notranslate"><span class="pre">GLORYS.v_var_name</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.v_x_coord"><code class="docutils literal notranslate"><span class="pre">GLORYS.v_x_coord</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.v_y_coord"><code class="docutils literal notranslate"><span class="pre">GLORYS.v_y_coord</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.raw_data_access.datasets.seawifs">CrocoDash.raw_data_access.datasets.seawifs module</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.seawifs.get_global_seawifs_script_for_cli"><code class="docutils literal notranslate"><span class="pre">get_global_seawifs_script_for_cli()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.seawifs.get_processed_global_seawifs_script_for_cli"><code class="docutils literal notranslate"><span class="pre">get_processed_global_seawifs_script_for_cli()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.seawifs.SeaWIFS"><code class="docutils literal notranslate"><span class="pre">SeaWIFS</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.seawifs.SeaWIFS.description"><code class="docutils literal notranslate"><span class="pre">SeaWIFS.description</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.seawifs.SeaWIFS.get_global_seawifs_script_for_cli"><code class="docutils literal notranslate"><span class="pre">SeaWIFS.get_global_seawifs_script_for_cli()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.seawifs.SeaWIFS.get_processed_global_seawifs_script_for_cli"><code class="docutils literal notranslate"><span class="pre">SeaWIFS.get_processed_global_seawifs_script_for_cli()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.seawifs.SeaWIFS.link"><code class="docutils literal notranslate"><span class="pre">SeaWIFS.link</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.seawifs.SeaWIFS.logger"><code class="docutils literal notranslate"><span class="pre">SeaWIFS.logger</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.seawifs.SeaWIFS.product_name"><code class="docutils literal notranslate"><span class="pre">SeaWIFS.product_name</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.raw_data_access.datasets.utils">CrocoDash.raw_data_access.datasets.utils module</a><ul class="nav section-nav flex-column">
@@ -510,7 +744,10 @@ document.write(`
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.utils.write_bash_curl_script"><code class="docutils literal notranslate"><span class="pre">write_bash_curl_script()</span></code></a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.raw_data_access.datasets">Module contents</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.raw_data_access.datasets">Module contents</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.load_all_datasets"><code class="docutils literal notranslate"><span class="pre">load_all_datasets()</span></code></a></li>
+</ul>
+</li>
 </ul>
   </nav></div>
 
