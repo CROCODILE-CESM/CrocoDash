@@ -3,6 +3,202 @@ from typing import List, Dict
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from visualCaseGen.custom_widget_types.case_tools import xmlchange, append_user_nl
+from CrocoDash.utils import setup_logger
+
+logger = setup_logger(__name__)
+
+
+
+class ConfiguratorRegistry:
+    registered_types: List[type] = []
+    active_configurators = []
+
+    @classmethod
+    def register(cls, configurator_cls: type):
+        cls.registered_types.append(configurator_cls)
+
+    @classmethod
+    def configure_case(cls, compset, inputs: dict):
+        cls.active_configurators.clear()
+
+        # Iterate through Registry, find the inouts that match the args, if exist (if not then continue)
+
+        for configurator in registered_types:
+
+            # If required add to active configurators
+            if configurator.is_required(compset):
+                configurator = configurator_cls(inputs)
+                logger.info(f"Configuration option is required: {configurator.name}")
+                cls.active_configurators.append(**configurator)
+            else:
+                if not configurator_cls.validate_compset_compatibility(
+                    inputs["compset"]
+                ):
+
+                    logger.info(
+                        f"Configuration option is not compatible: {configurator.name}"
+                    )
+                    continue
+                # Check if all required constructor args are in inputs
+                import inspect
+
+                sig = inspect.signature(configurator_cls.__init__)
+                # Drop 'self' from parameters
+                required_args = [
+                    p.name for p in sig.parameters.values() if p.name != "self"
+                ]
+                if not all(arg in inputs for arg in required_args):
+                    logger.info(
+                        f"Configuration option does not gave all the required args: {configurator.name} {required_args}"
+                    )
+                    continue
+
+                cls.active_configurators.append(configurator_cls(**inputs))
+            logger.info(f"Configuring {configurator.name}")
+            configurator.configure()
+
+
+class BaseConfigurator(ABC):
+    """Base class for all CrocoDash configurators."""
+
+    name: str
+    required_for_compsets: List[str] = []  # What compsets you must have this class
+    allowed_compsets: List[str] = (
+        []
+    )  # What compsets this class is allowed for (must have all in the compset, e.g. DROF and BGC for river nutrients)
+    forbidden_compsets: List[str] = []  # What compsets you cannot have this class
+
+    def __init__(self, **kwargs):
+        # Store everything directly as attributes
+        for k, v in kwargs.items():
+            setattr(self, k, v)
+
+    @abstractmethod
+    def configure(self):
+        pass
+
+    @classmethod
+    def is_required(cls, compset):
+        if cls.validate_compset_compatibility(compset):
+            return any(sub in compset for sub in cls.required_for_compsets)
+
+    @classmethod
+    def validate_compset_compatibility(cls, compset):
+        return all(sub in compset for sub in cls.allowed_compsets) and all(
+            sub not in compset for sub in cls.forbidden_compsets
+        )
+
+
+class TidesConfigurator(BaseConfigurator):
+    name = "tides"
+    expected_output_files = [
+        "tu_segment_{boundaries}.nc",
+        "tz_segment_{boundaries}.nc",
+    ]
+
+    def __init__(
+        self,
+        tpxo_elevation_filepath,
+        tpxo_velocity_filepath,
+        tidal_constituents,
+        boundaries,
+    ):
+        super().__init__(
+            tpxo_elevation_filepath=tpxo_elevation_filepath,
+            tpxo_velocity_filepath=tpxo_velocity_filepath,
+            tidal_constituents=tidal_constituents,
+            boundaries=boundaries,
+        )
+
+    def configure(self):
+        pass
+
+
+class BGCICConfigurator(BaseConfigurator):
+    name = "BGCIC"
+    expected_output_files = ["{self.marbl_ic_filepath.name}"]
+    required_for_compsets = {"MARBL"}
+    allowed_compsets = {"MARBL"}
+    forbidden_compsets = []
+
+    def __init__(self, marbl_ic_filepath):
+        super().__init__(marbl_ic_filepath=marbl_ic_filepath)
+
+    def configure(self):
+        pass
+
+
+class BGCIronForcingConfigurator(BaseConfigurator):
+    name = "BGCIronForcing"
+    required_for_compsets = {"MARBL"}
+    allowed_compsets = {"MARBL"}
+    forbidden_compsets = []
+
+    expected_output_files = [
+        "fesedflux_total_reduce_oxic_{ocn_grid_name}_{session_id}.nc",
+        "feventflux_5gmol_{ocn_grid_name}_{session_id}.nc",
+    ]
+
+    def __init__(self, session_id, grid_name):
+        super().__init__(session_id=session_id, grid_name=grid_name)
+
+    def configure(self):
+        pass
+
+
+class BGCRiverNutrientsConfigurator(BaseConfigurator):
+    name = "BGCRiverNutrients"
+    expected_output_files = ["river_nutrients_{ocn_grid_name}_{session_id}_nnsm.nc"]
+    required_for_compsets = []
+    allowed_compsets = {"MARBL", "DROF"}
+    forbidden_compsets = []
+
+    def __init__(self, global_river_nutrients_filepath, session_id, grid_name):
+        super().__init__(
+            global_river_nutrients_filepath=global_river_nutrients_filepath,
+            session_id=session_id,
+            grid_name=grid_name,
+        )
+
+    def configure(self):
+        pass
+
+
+class RunoffConfigurator(BaseConfigurator):
+    name = "Runoff"
+    expected_output_files = ["glofas_{ocn_grid_name}_{session_id}_nnsm.nc"]
+    required_for_compsets = {"DROF"}
+    allowed_compsets = {"DROF"}
+    forbidden_compsets = []
+
+    def __init__(self, runoff_esmf_mesh_filepath, grid_name, session_id):
+        super().__init__(
+            runoff_esmf_mesh_filepath=runoff_esmf_mesh_filepath,
+            grid_name=grid_name,
+            session_id=session_id,
+        )
+
+    def configure(self):
+        pass
+
+
+class ChlConfigurator(BaseConfigurator):
+    name = "Chl"
+    expected_output_files = ["seawifs-clim-1997-2010-{ocn_grid_name}-{session_id}.nc"]
+    required_for_compsets = []
+    allowed_compsets = []
+    forbidden_compsets = {"MARBL"}
+
+    def __init__(self, chl_processed_filepath, grid_name, session_id):
+        super().__init__(
+            chl_processed_filepath=chl_processed_filepath,
+            grid_name=grid_name,
+            session_id=session_id,
+        )
+
+    def configure(self):
+        pass
+
 
 
 @dataclass
@@ -50,139 +246,3 @@ class XMLConfigParam(ConfigParam):
 
     def remove(self):
         raise ValueError("You cannot remove an xml change")
-
-
-class ConfiguratorRegistry:
-    registered_types: List[type] = []
-    active_configurators = []
-
-    @classmethod
-    def register(cls, configurator_cls: type):
-        cls.registered_types.append(configurator_cls)
-
-    @classmethod
-    def configure_case(cls, inputs: dict):
-
-        # Iterate through Registry, find the inouts that match the args
-        for configurator in registered_types:
-            satisfied_args = True
-            for arg in configurator.input_args:
-                if arg not in inputs:
-                    satisfied_args = False
-            if not satisfied_args:
-                continue
-
-            # Create the corresponding configurator
-
-            configurator = configurator_cls(inputs)
-
-            # add to list
-            cls.active_configurators.append(configurator)
-
-            configurator.validate_args_satisfied()
-            configurator.validate_input_files_exist()
-            configurator.validate_param_inputs()
-            configurator.set_user_nl_params()
-            configurator.set_xml_params()
-            activate_configurators.append(configurator)
-
-
-class BaseConfigurator(ABC):
-    """Base class for all CrocoDash configurators (which are singleton classes)."""
-
-    name: str
-    file_inputs: List[str]
-    param_inputs: List[str]
-    required_for_compset: List[str]
-    compsets_required_for: List[str]
-    expected_output_files: List[str]
-
-    def __init__(self, inputs):
-        self.inputs = inputs
-
-    # ---- Validation methods ----
-    def check_if_args_satisfied(self, inputs: Dict):
-        required = set(self.file_inputs) | set(self.param_inputs)
-        provided = set(inputs.keys())
-
-        missing = required - provided
-        if missing:
-            return False
-        return True
-
-    def validate_input_files_exist(self, inputs: Dict):
-        for item in self.file_inputs:
-            filepath = inputs.get(item)
-            if not Path(filepath).exists():
-                raise ValueError(f"{self.name}: file does not exist: {filepath}")
-
-    def validate_param_inputs(self, inputs: Dict):
-        """Optional hook for subclasses to implement extra validation."""
-        pass
-
-    @abstractmethod
-    def set_params():
-        pass
-
-
-class TidesConfigurator(BaseConfigurator):
-    name = "tides"
-    self.file_inputs = ["tpxo_elevation_filepath", "tpxo_velocity_filepath"]
-    self.param_inputs = ["tidal_constituents", "boundaries"]
-    self.expected_output_files = [
-        "tu_segment_{boundaries}.nc",
-        "tz_segment_{boundaries}.nc",
-    ]
-
-    def generate_output_file_names(self, **kwargs):
-        """Need unique handling because I get multiple file names"""
-        pass
-
-
-class BGCICConfigurator(BaseConfigurator):
-    name = "BGCIC"
-    self.file_inputs = []
-    self.required_for_compset = ["MOM6%REGIONAL%MARBL-BIO"]
-    self.param_inputs = ["marbl_ic_filepath"]
-    self.expected_output_files = ["{self.marbl_ic_filepath.name}"]
-
-
-class BGCIronForcingConfigurator(BaseConfigurator):
-    name = "BGCIronForcing"
-    self.file_inputs = []
-    self.param_inputs = ["session_id", "grid_name"]
-    self.required_for_compset = ["MOM6%REGIONAL%MARBL-BIO"]
-    self.expected_output_files = [
-        "fesedflux_total_reduce_oxic_{ocn_grid_name}_{session_id}.nc",
-        "feventflux_5gmol_{ocn_grid_name}_{session_id}.nc",
-    ]
-
-
-class BGCRiverNutrientsConfigurator(BaseConfigurator):
-    name = "BGCRiverNutrients"
-    self.file_inputs = ["global_river_nutrients_filepath"]
-    self.param_inputs = ["session_id", "grid_name"]
-    self.compsets_required_for = ["MOM6%REGIONAL%MARBL-BIO", "DROF"]
-    self.expected_output_files = [
-        "river_nutrients_{ocn_grid_name}_{session_id}_nnsm.nc"
-    ]
-
-
-class RunoffConfigurator(BaseConfigurator):
-    name = "Runoff"
-
-    self.file_inputs = ["runoff_esmf_mesh_filepath"]
-    self.param_inputs = ["grid_name", "session_id"]
-    self.required_for_compset = ["DROF"]
-    self.expected_output_files = ["glofas_{ocn_grid_name}_{session_id}_nnsm.nc"]
-
-
-class ChlConfigurator(BaseConfigurator):
-    name = "Chl"
-
-    self.file_inputs = ["chl_processed_filepath"]
-    self.param_inputs = ["grid_name", "session_id"]
-    self.required_for_compset = ["MOM6%REGIONAL_"]
-    self.expected_output_files = [
-        "seawifs-clim-1997-2010-{ocn_grid_name}-{session_id}.nc"
-    ]
