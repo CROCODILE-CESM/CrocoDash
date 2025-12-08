@@ -1,6 +1,10 @@
+from CrocoDash.raw_data_access.datasets import load_all_datasets
+
+
 class ProductRegistry:
     """Static registry that tracks all products and provides driver-like introspection."""
 
+    loaded = False
     products = {}  # product_name → class
 
     @classmethod
@@ -48,3 +52,8 @@ class ProductRegistry:
         product.validate_call(method_name, **kwargs)
         method = product._access_methods[method_name]
         return method(**kwargs)
+
+    @classmethod
+    def load(cls):
+        loaded = True
+        load_all_datasets()
