@@ -24,14 +24,14 @@ jobs:
         run: |
           source $(conda info --base)/etc/profile.d/conda.sh 
           conda activate CrocoDash 
-          python tests/check_raw_data.py
+          python docs/source/raw_data_access/check_raw_data.py
       - run: find docs/source/_static -name ".gitignore" -delete
       - name: Upload report to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           publish_branch: gh-pages
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: docs/source/_static
+          publish_dir: docs/source/raw_data_access
           destination_dir: reports 
           keep_files: false  
           

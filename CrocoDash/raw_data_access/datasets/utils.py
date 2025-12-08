@@ -8,13 +8,13 @@ def convert_lons_to_180_range(*lons):
     return lons_adj
 
 
-def write_bash_curl_script(url, script_name, output_dir, output_filename):
-    full_script_path = os.path.join(output_dir, script_name)
-    full_path = os.path.join(output_dir, output_filename)
+def write_bash_curl_script(url, script_name, output_folder, output_filename):
+    full_script_path = os.path.join(output_folder, script_name)
+    full_path = os.path.join(output_folder, output_filename)
     script_lines = [
         "#!/bin/bash",
         "",
-        f"mkdir -p {output_dir}",
+        f"mkdir -p {output_folder}",
         f"curl -L '{url}' -o '{full_path}'",
         'echo "Download complete."',
     ]

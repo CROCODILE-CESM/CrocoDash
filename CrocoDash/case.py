@@ -9,9 +9,8 @@ import regional_mom6 as rmom6
 from CrocoDash.grid import Grid
 from CrocoDash.topo import Topo
 from CrocoDash.vgrid import VGrid
-from CrocoDash.raw_data_access import driver as dv
-from CrocoDash.raw_data_access import config as tb
-from CrocoDash.raw_data_access import driver as dv
+from CrocoDash.raw_data_access.registry import ProductRegistry
+from CrocoDash.raw_data_access.base import ForcingProduct
 from ProConPy.config_var import ConfigVar, cvars
 from ProConPy.stage import Stage
 from ProConPy.csp_solver import csp
@@ -125,8 +124,7 @@ class Case:
         self.ocn_vgrid = ocn_vgrid
         self.ninst = ninst
         self.override = override
-        self.ProductFunctionRegistry = dv.ProductFunctionRegistry()
-        self.ProductFunctionRegistry.load_functions()
+        self.ProductRegistry = ProductRegistry
         self.forcing_product_name = None
         self._configure_forcings_called = False
         self._too_much_data = False
@@ -403,15 +401,11 @@ class Case:
         --------
         process_forcings : Executes the actual boundary, initial condition, and tide setup based on the configuration.
         """
-
+        ProductRegistry.load()
         self.forcing_product_name = product_name.lower()
-        if product_info != None:
-            self.ProductFunctionRegistry.add_product_config(
-                product_name, product_info=product_info
-            )
         if (
-            tb.product_exists(product_name.upper())
-            and tb.category_of_product(product_name.upper()) == "forcing"
+            ProductRegistry.product_exists(product_name)
+            and ProductRegistry.product_is_of_type(product_name,ForcingProduct)
         ):
             self.configure_initial_and_boundary_conditions(
                 date_range=date_range,
@@ -488,14 +482,6 @@ class Case:
         function_name: str = "get_glorys_data_script_for_cli",
         too_much_data: bool = False,
     ):
-        assert (
-            tb.category_of_product(product_name) == "forcing"
-        ), "Data product must be a forcing product"
-
-        # if not self.ProductFunctionRegistry.validate_function(
-        #     product_name, function_name
-        # ):
-        #     raise ValueError("Selected Product or Function was not valid")
         self.forcing_product_name = product_name.lower()
         if not (
             isinstance(date_range, list)
@@ -568,13 +554,8 @@ class Case:
         # Product Information
         config["forcing"]["product_name"] = self.forcing_product_name.upper()
         config["forcing"]["function_name"] = function_name
-        if self.bgc_in_compset:
-            product_info_to_load = self.forcing_product_name.lower() + "_marbl"
-        else:
-            product_info_to_load = self.forcing_product_name.lower()
-        config["forcing"]["information"] = (
-            self.ProductFunctionRegistry.load_product_config(product_info_to_load)
-        )
+        config["forcing"]["information"] = ProductRegistry.get_product(self.forcing_product_name.lower()).write_metadata(include_marbl_tracers=self.bgc_in_compset)
+        
 
         # General
         config["general"]["boundary_number_conversion"] = {
@@ -1336,12 +1317,9 @@ class Case:
             )
             if self.bgc_in_compset:
 
-                product_info = self.ProductFunctionRegistry.load_product_config(
-                    self.forcing_product_name + "_marbl"
-                )
-                for tracer_mom6_name in product_info["tracer_var_names"]:
-                    if tracer_mom6_name != "temp" and tracer_mom6_name != "salt":
-                        bgc_tracers += f',{tracer_mom6_name}=file:forcing_obc_segment_{seg_ix}.nc({product_info["tracer_var_names"][tracer_mom6_name]})'
+                product_info = ProductRegistry.get_product(self.forcing_product_name.lower()).marbl_var_names
+                for tracer_mom6_name in product_info:
+                    bgc_tracers += f',{tracer_mom6_name}=file:forcing_obc_segment_{seg_ix}.nc({product_info["tracer_var_names"][tracer_mom6_name]})'
 
             tidal_data_str = lambda: (
                 f",Uamp=file:tu_segment_{seg_ix}.nc(uamp),"

@@ -5,7 +5,6 @@ from CrocoDash.vgrid import VGrid
 from pathlib import Path
 from CrocoDash.case import Case
 import os
-from CrocoDash.raw_data_access import driver as dv
 import numpy as np
 import xarray as xr
 import logging
@@ -70,7 +69,7 @@ def run_full_workflow(
             too_much_data=too_much_data,
         )
         # Create dummy forcings
-        bounds = dv.get_rectangular_segment_info(case.ocn_grid)
+        bounds = Grid.get_bounding_boxes_of_rectangular_grid(case.ocn_grid)
         ds = dummy_forcing_factory(
             bounds["ic"]["lat_min"],
             bounds["ic"]["lat_max"],

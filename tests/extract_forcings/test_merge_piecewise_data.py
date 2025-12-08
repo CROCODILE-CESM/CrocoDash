@@ -2,11 +2,11 @@ from pathlib import Path
 from CrocoDash.extract_forcings.code import (
     merge_piecewise_dataset as md,
 )
-from CrocoDash.raw_data_access import driver as dv
 import xarray as xr
 from datetime import datetime
 import os
 import pytest
+from CrocoDash.grid import Grid
 
 @pytest.mark.slow
 def test_merge_piecewise_data_workflow(
@@ -21,7 +21,7 @@ def test_merge_piecewise_data_workflow(
 
     # Generate piecewise data
     piecewise_factory = generate_piecewise_raw_data
-    bounds = dv.get_rectangular_segment_info(grid)
+    bounds =  Grid.get_bounding_boxes_of_rectangular_grid(grid)
     east = dummy_mom6_obc_data_factory(
         bounds["ic"]["lat_min"],
         bounds["ic"]["lat_max"],
@@ -80,7 +80,7 @@ def test_merge_piecewise_data_parsing(
 
     # Generate piecewise data
     piecewise_factory = generate_piecewise_raw_data
-    bounds = dv.get_rectangular_segment_info(grid)
+    bounds =  Grid.get_bounding_boxes_of_rectangular_grid(grid)
     east = dummy_mom6_obc_data_factory(
         bounds["ic"]["lat_min"],
         bounds["ic"]["lat_max"],
