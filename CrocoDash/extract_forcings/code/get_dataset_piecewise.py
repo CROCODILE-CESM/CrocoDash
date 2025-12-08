@@ -68,6 +68,7 @@ def get_dataset_piecewise(
     Path(output_dir).mkdir(exist_ok=True)
 
     ## Initialize PFD
+    ProductRegistry.load()
     ProductRegistry.validate_function(product_name, function_name)
     data_access_function = ProductRegistry.get_access_function(product_name,
         function_name
