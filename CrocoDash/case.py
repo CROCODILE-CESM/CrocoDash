@@ -1172,20 +1172,15 @@ class Case:
             ("TEMP_SALT_INIT_VERTICAL_REMAP_ONLY", True),
             ("DEPRESS_INITIAL_SURFACE", True),
             ("VELOCITY_CONFIG", "file"),
+            ("TEMP_SALT_Z_INIT_FILE", "init_tracers.nc"),
+            ("SURFACE_HEIGHT_IC_FILE", "init_eta.nc"),
+            ("VELOCITY_FILE", "init_vel.nc"),
+            ("Z_INIT_FILE_PTEMP_VAR", "temp"),
+            ("Z_INIT_FILE_SALT_VAR", "salt"),
+            ("SURFACE_HEIGHT_IC_VAR", "eta_t"),
+            ("U_IC_VAR", "u"),
+            ("V_IC_VAR", "v"),
         ]
-
-        ic_params.extend(
-            [
-                ("TEMP_SALT_Z_INIT_FILE", "init_tracers.nc"),
-                ("SURFACE_HEIGHT_IC_FILE", "init_eta.nc"),
-                ("VELOCITY_FILE", "init_vel.nc"),
-                ("Z_INIT_FILE_PTEMP_VAR", "temp"),
-                ("Z_INIT_FILE_SALT_VAR", "salt"),
-                ("SURFACE_HEIGHT_IC_VAR", "eta_t"),
-                ("U_IC_VAR", "u"),
-                ("V_IC_VAR", "v"),
-            ]
-        )
 
         append_user_nl(
             "mom",
