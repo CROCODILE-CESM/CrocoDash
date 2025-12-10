@@ -14,11 +14,11 @@ logger = setup_logger(__name__)
 
 
 def register(cls):
-    ConfiguratorRegistry.register(cls)
+    ForcingConfigRegistry.register(cls)
     return cls
 
 
-class ConfiguratorRegistry:
+class ForcingConfigRegistry:
     registered_types: List[type] = []
     active_configurators = {}
 
@@ -27,7 +27,7 @@ class ConfiguratorRegistry:
         cls.registered_types.append(configurator_cls)
 
     @classmethod
-    def configure_case(cls, compset, inputs: dict):
+    def find_active_configurators(cls, compset, inputs: dict):
 
         # Find Active Configurators
         for configurator_cls in cls.registered_types:
@@ -57,11 +57,28 @@ class ConfiguratorRegistry:
                 cls.active_configurators[configurator.name.lower()] = configurator_cls(
                     **ctor_kwargs
                 )
-
+    @classmethod
+    def run_configurators(cls):
         # Run Configurators
         for configurator in cls.active_configurators.values():
             logger.info(f"Configuring {configurator.name}")
             configurator.configure()
+    
+    @classmethod
+    def get_active_configurators(cls):
+        return cls.active_configurators.keys()
+
+    @classmethod
+    def is_active(cls, name: str) -> bool:
+        """Return True if a configurator with this name is active."""
+        return name.lower() in cls.active_configurators
+    
+    @classmethod
+    def is_processed(cls, name: str) -> bool:
+        """Return True if a configurator with this name is active."""
+        return cls.active_configurators[name.lower()].is_processed()
+
+        
 
 
 class BaseConfigurator(ABC):
@@ -81,10 +98,22 @@ class BaseConfigurator(ABC):
 
     @abstractmethod
     def configure(self):
+        for p in self.params:
+            p.apply()
         pass
 
     @abstractmethod
     def deconfigure(self):
+        for p in self.params:
+            p.remove()
+        pass
+
+    @abstractmethod
+    def process(self):
+        pass
+
+    @abstractmethod
+    def is_processed(self):
         pass
 
     @classmethod
@@ -158,13 +187,11 @@ class TidesConfigurator(BaseConfigurator):
         # "001", "002", etc.
 
     def configure(self):
-        for p in self.params:
-            p.apply()
+        super().configure()
         # You also need to add the files to the OBC string, which is handled in the main case unfortunately
 
     def deconfigure(self):
-        for p in self.params:
-            p.remove()
+        super().deconfigure()
         UserNLConfigParam("OBC_TIDE_N_CONSTITUENTS", 0).apply()
 
 
@@ -183,12 +210,10 @@ class BGCConfigurator(BaseConfigurator):
         self.params.append(UserNLConfigParam("MAX_FIELDS", 200))
 
     def configure(self):
-        for p in self.params:
-            p.apply()
+        super().configure()
 
     def deconfigure(self):
-        for p in self.params:
-            p.remove()
+        super().deconfigure()
 
 
 @register
@@ -215,12 +240,10 @@ class CICEConfigurator(BaseConfigurator):
         )
 
     def configure(self):
-        for p in self.params:
-            p.apply()
+        super().configure()
 
     def deconfigure(self):
-        for p in self.params:
-            p.remove()
+        super().deconfigure()
 
 
 @register
@@ -239,12 +262,10 @@ class BGCICConfigurator(BaseConfigurator):
         )
 
     def configure(self):
-        for p in self.params:
-            p.apply()
+        super().configure()
 
     def deconfigure(self):
-        for p in self.params:
-            p.remove()
+        super().deconfigure()
 
 
 @register
@@ -271,12 +292,10 @@ class BGCIronForcingConfigurator(BaseConfigurator):
         )
 
     def configure(self):
-        for p in self.params:
-            p.apply()
+        super().configure()
 
     def deconfigure(self):
-        for p in self.params:
-            p.remove()
+        super().deconfigure()
 
 
 @register
@@ -306,12 +325,10 @@ class BGCRiverNutrientsConfigurator(BaseConfigurator):
         )
 
     def configure(self):
-        for p in self.params:
-            p.apply()
+        super().configure()
 
     def deconfigure(self):
-        for p in self.params:
-            p.remove()
+        super().deconfigure()
         UserNLConfigParam("READ_RIV_FLUXES", "False", user_nl_name="mom").apply()
 
 
@@ -340,8 +357,7 @@ class RunoffConfigurator(BaseConfigurator):
         )
 
     def configure(self):
-        for p in self.params:
-            p.apply()
+        super().configure()
 
     def deconfigure(self):
         raise NotImplementedError("You cannot undo runoff mapping configuration")
@@ -370,13 +386,10 @@ class ChlConfigurator(BaseConfigurator):
         self.params.append(UserNLConfigParam("PEN_SW_NBANDS", 3, "mom"))
 
     def configure(self):
-        for p in self.params:
-            p.apply()
+        super().configure()
 
     def deconfigure(self):
-        for p in self.params:
-            if type(p) == UserNLConfigParam:
-                p.remove()
+        super().deconfigure()
 
 
 @dataclass

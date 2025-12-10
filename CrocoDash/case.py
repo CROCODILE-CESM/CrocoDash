@@ -9,7 +9,7 @@ import regional_mom6 as rmom6
 from CrocoDash.grid import Grid
 from CrocoDash.topo import Topo
 from CrocoDash.vgrid import VGrid
-from CrocoDash.configurations import ConfiguratorRegistry
+from CrocoDash.forcing_configurations import ForcingConfigRegistry
 from CrocoDash.raw_data_access.registry import ProductRegistry
 from CrocoDash.raw_data_access.base import ForcingProduct
 from ProConPy.config_var import ConfigVar, cvars
@@ -401,7 +401,7 @@ class Case:
             "grid_name": self.ocn_grid.name,
             "session_id": cvars["MB_ATTEMPT_ID"].value,
         }
-        ConfiguratorRegistry.configure_case(self.compset, inputs)
+        ForcingConfigRegistry.find_active_configurators(self.compset, inputs)
 
         self._update_forcing_variables()
         self._configure_forcings_called = True
@@ -519,36 +519,25 @@ class Case:
     def process_forcings(
         self,
         process_initial_condition=True,
-        process_tides=True,
         process_velocity_tracers=True,
-        process_bgc=True,
-        process_chl=True,
-        process_runoff=True,
-        process_river_nutrients=True,
+        **kwargs
     ):
         """
-        Process boundary conditions, initial conditions, and tides for a MOM6 case.
+        Process boundary conditions, initial conditions, and other forcings for a MOM6 case.
 
         This method configures a regional MOM6 case's ocean state boundaries and initial conditions
-        using previously downloaded data setup in configure_forcings. It also processes tidal boundary conditions
-        if tidal constituents are specified. The method expects `configure_forcings()` to be
+        using previously downloaded data setup in configure_forcings. The method expects `configure_forcings()` to be
         called beforehand.
 
         Parameters
         ----------
         process_initial_condition : bool, optional
             Whether to process the initial condition file. Default is True.
-        process_tides : bool, optional
-            Whether to process tidal boundary conditions. Default is True.
-        process_chl : bool, optional
-            Whether to process chlorophyll data. Default is True.
         process_velocity_tracers : bool, optional
             Whether to process velocity and tracer boundary conditions. Default is True.
             This will be overridden and set to False if the large data workflow in configure_forcings is enabled.
-        process_runoff : bool, optional
-            Whether to process runoff data. Default is True.
-        process_bgc : bool, optional
-            Whether to process BGC data. Default is True.
+        kwargs : bool, optional
+            Whether to process the other forcings, of the form process_{configurator.name} = False 
 
         Raises
         ------
@@ -562,10 +551,9 @@ class Case:
         - This method uses variable name mappings specified in the forcing product configuration.
         - If the large data workflow has been enabled, velocity and tracer OBCs are not processed
           within this method and must be handled externally.
-        - If tidal constituents are configured, TPXO elevation and velocity files must be available.
         - Applies forcing-related namelist and XML updates at the end of the method.
 
-        See Also
+        See Also  
         --------
         configure_forcings : Must be called before this method to set up the environment.
         """
@@ -577,6 +565,8 @@ class Case:
         self.process_initial_and_boundary_conditions(
             process_initial_condition, process_velocity_tracers
         )
+
+        
         if self.configured_bgc and process_bgc:
             self.process_bgc_iron_forcing()
             self.process_bgc_ic()
@@ -1071,18 +1061,18 @@ class Case:
                 f"TEMP=file:forcing_obc_segment_{seg_ix}.nc(temp),"
                 f"SALT=file:forcing_obc_segment_{seg_ix}.nc(salt)"
             )
-            if "BGC" in ConfiguratorRegistry.active_configurators.keys():
+            if ForcingConfigRegistry.is_active("bgc"):
 
                 product_info = ProductRegistry.get_product(self.forcing_product_name.lower()).marbl_var_names
                 for tracer_mom6_name in product_info:
                     bgc_tracers += f',{tracer_mom6_name}=file:forcing_obc_segment_{seg_ix}.nc({product_info["tracer_var_names"][tracer_mom6_name]})'
 
 
-            if "tides" in ConfiguratorRegistry.active_configurators.keys():
+            if ForcingConfigRegistry.is_active("tides"):
                 obc_params.append(
                     (
                         seg_id + "_DATA",
-                        standard_data_str() +  ConfiguratorRegistry.active_configurators["tides"].tidal_data_str(seg_ix) + bgc_tracers + '"',
+                        standard_data_str() +  ForcingConfigRegistry.active_configurators["tides"].tidal_data_str(seg_ix) + bgc_tracers + '"',
                     )
                 )
             else:
