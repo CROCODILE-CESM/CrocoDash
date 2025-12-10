@@ -556,22 +556,18 @@ for external processing in the forcing directory, inside the input directory.</p
 
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.case.Case.process_forcings">
-<span class="sig-name descname"><span class="pre">process_forcings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">process_initial_condition</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">process_tides</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">process_velocity_tracers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">process_bgc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">process_chl</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">process_runoff</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">process_river_nutrients</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.case.Case.process_forcings" title="Link to this definition">#</a></dt>
-<dd><p>Process boundary conditions, initial conditions, and tides for a MOM6 case.</p>
+<span class="sig-name descname"><span class="pre">process_forcings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">process_initial_condition</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">process_velocity_tracers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.case.Case.process_forcings" title="Link to this definition">#</a></dt>
+<dd><p>Process boundary conditions, initial conditions, and other forcings for a MOM6 case.</p>
 <p>This method configures a regional MOM6 case’s ocean state boundaries and initial conditions
-using previously downloaded data setup in configure_forcings. It also processes tidal boundary conditions
-if tidal constituents are specified. The method expects <cite>configure_forcings()</cite> to be
+using previously downloaded data setup in configure_forcings. The method expects <cite>configure_forcings()</cite> to be
 called beforehand.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>process_initial_condition</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to process the initial condition file. Default is True.</p></li>
-<li><p><strong>process_tides</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to process tidal boundary conditions. Default is True.</p></li>
-<li><p><strong>process_chl</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to process chlorophyll data. Default is True.</p></li>
 <li><p><strong>process_velocity_tracers</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to process velocity and tracer boundary conditions. Default is True.
 This will be overridden and set to False if the large data workflow in configure_forcings is enabled.</p></li>
-<li><p><strong>process_runoff</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to process runoff data. Default is True.</p></li>
-<li><p><strong>process_bgc</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to process BGC data. Default is True.</p></li>
+<li><p><strong>kwargs</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to process the other forcings, of the form process_{configurator.name} = False</p></li>
 </ul>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
@@ -586,7 +582,6 @@ This will be overridden and set to False if the large data workflow in configure
 <li><p>This method uses variable name mappings specified in the forcing product configuration.</p></li>
 <li><p>If the large data workflow has been enabled, velocity and tracer OBCs are not processed
 within this method and must be handled externally.</p></li>
-<li><p>If tidal constituents are configured, TPXO elevation and velocity files must be available.</p></li>
 <li><p>Applies forcing-related namelist and XML updates at the end of the method.</p></li>
 </ul>
 <div class="admonition seealso">
