@@ -5,7 +5,6 @@ from CrocoDash.vgrid import VGrid
 from pathlib import Path
 from CrocoDash.case import Case
 import os
-from CrocoDash.raw_data_access import driver as dv
 import numpy as np
 import xarray as xr
 import logging
@@ -70,18 +69,18 @@ def run_full_workflow(
             too_much_data=too_much_data,
         )
         # Create dummy forcings
-        bounds = dv.get_rectangular_segment_info(case.ocn_grid)
+        bounds = Grid.get_bounding_boxes_of_rectangular_grid(case.ocn_grid)
         ds = dummy_forcing_factory(
             bounds["ic"]["lat_min"],
             bounds["ic"]["lat_max"],
             bounds["ic"]["lon_min"],
             bounds["ic"]["lon_max"],
         )
-        ds.to_netcdf(case.inputdir / "glorys" / "large_data_workflow"/"raw_data"/ "ic_unprocessed.nc")
-        ds.to_netcdf(case.inputdir / "glorys" / "large_data_workflow"/"raw_data" / "east_unprocessed.20200101_20200201.nc")
-        ds.to_netcdf(case.inputdir / "glorys" / "large_data_workflow"/"raw_data" / "west_unprocessed.20200101_20200201.nc")
-        ds.to_netcdf(case.inputdir / "glorys" / "large_data_workflow"/"raw_data" / "north_unprocessed.20200101_20200201.nc")
-        ds.to_netcdf(case.inputdir / "glorys" / "large_data_workflow"/"raw_data" / "south_unprocessed.20200101_20200201.nc")
+        ds.to_netcdf(case.inputdir / "glorys" / "extract_forcings"/"raw_data"/ "ic_unprocessed.nc")
+        ds.to_netcdf(case.inputdir / "glorys" / "extract_forcings"/"raw_data" / "east_unprocessed.20200101_20200201.nc")
+        ds.to_netcdf(case.inputdir / "glorys" / "extract_forcings"/"raw_data" / "west_unprocessed.20200101_20200201.nc")
+        ds.to_netcdf(case.inputdir / "glorys" / "extract_forcings"/"raw_data" / "north_unprocessed.20200101_20200201.nc")
+        ds.to_netcdf(case.inputdir / "glorys" / "extract_forcings"/"raw_data" / "south_unprocessed.20200101_20200201.nc")
     else:
         case.configure_forcings(
             date_range=["2020-01-01 00:00:00", "2020-02-06 00:00:00"],
@@ -89,7 +88,7 @@ def run_full_workflow(
             function_name="get_glorys_data_from_cds_api",
         )
         subprocess.run(
-            ["python", str(case.inputdir / "glorys/large_data_workflow/driver.py")]
+            ["python", str(case.inputdir / "glorys/extract_forcings/driver.py")]
         )
     # Process Forcings
     case.process_forcings()
