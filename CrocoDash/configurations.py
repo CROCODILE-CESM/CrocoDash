@@ -2,16 +2,19 @@ from pathlib import Path
 from typing import List, Dict
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from visualCaseGen.custom_widget_types.case_tools import xmlchange, append_user_nl
+from visualCaseGen.custom_widget_types.case_tools import xmlchange, append_user_nl, remove_user_nl
 from CrocoDash.utils import setup_logger
-
+import inspect
 logger = setup_logger(__name__)
 
 
+def register(cls):
+    ConfiguratorRegistry.register(cls)
+    return cls
 
 class ConfiguratorRegistry:
     registered_types: List[type] = []
-    active_configurators = []
+    active_configurators = {}
 
     @classmethod
     def register(cls, configurator_cls: type):
@@ -19,41 +22,37 @@ class ConfiguratorRegistry:
 
     @classmethod
     def configure_case(cls, compset, inputs: dict):
-        cls.active_configurators.clear()
 
-        # Iterate through Registry, find the inouts that match the args, if exist (if not then continue)
-
-        for configurator in registered_types:
-
+        # Find Active Configurators
+        for configurator_cls in cls.registered_types:
+            sig = inspect.signature(configurator_cls.__init__)
+            args = [
+                    p.name for p in sig.parameters.values() if p.name != "self"
+                ]
             # If required add to active configurators
-            if configurator.is_required(compset):
-                configurator = configurator_cls(inputs)
-                logger.info(f"Configuration option is required: {configurator.name}")
-                cls.active_configurators.append(**configurator)
+            if configurator_cls.is_required(compset):
+                ctor_kwargs = {arg: inputs[arg] for arg in args if arg in inputs}
+                configurator = configurator_cls(**ctor_kwargs)
+                logger.info(f"[REQUIRED] Activating {configurator_cls.name}")
+                cls.active_configurators[configurator.name]=(configurator)
             else:
                 if not configurator_cls.validate_compset_compatibility(
                     inputs["compset"]
                 ):
 
-                    logger.info(
-                        f"Configuration option is not compatible: {configurator.name}"
-                    )
+                    logger.info(f"[SKIP] {configurator_cls.name} incompatible with compset")
                     continue
-                # Check if all required constructor args are in inputs
-                import inspect
-
-                sig = inspect.signature(configurator_cls.__init__)
-                # Drop 'self' from parameters
-                required_args = [
-                    p.name for p in sig.parameters.values() if p.name != "self"
-                ]
-                if not all(arg in inputs for arg in required_args):
-                    logger.info(
-                        f"Configuration option does not gave all the required args: {configurator.name} {required_args}"
-                    )
+                if not all(arg in inputs for arg in args):
+                    logger.info(f"[SKIP] {configurator_cls.name} missing args: {args}")
                     continue
 
-                cls.active_configurators.append(configurator_cls(**inputs))
+                # setup configurator
+                ctor_kwargs = {arg: inputs[arg] for arg in args if arg in inputs}
+                cls.active_configurators[configurator.name.lower()]=configurator_cls(**ctor_kwargs)
+                
+        
+        # Run Configurators
+        for configurator in cls.active_configurators.values():
             logger.info(f"Configuring {configurator.name}")
             configurator.configure()
 
@@ -83,8 +82,7 @@ class BaseConfigurator(ABC):
 
     @classmethod
     def is_required(cls, compset):
-        if cls.validate_compset_compatibility(compset):
-            return any(sub in compset for sub in cls.required_for_compsets)
+        return any(sub in compset for sub in cls.required_for_compsets) and cls.validate_compset_compatibility(compset) 
 
     @classmethod
     def validate_compset_compatibility(cls, compset):
@@ -92,70 +90,178 @@ class BaseConfigurator(ABC):
             sub not in compset for sub in cls.forbidden_compsets
         )
 
-
+@register
 class TidesConfigurator(BaseConfigurator):
     name = "tides"
-    expected_output_files = [
-        "tu_segment_{boundaries}.nc",
-        "tz_segment_{boundaries}.nc",
-    ]
+    
 
     def __init__(
         self,
         tpxo_elevation_filepath,
         tpxo_velocity_filepath,
         tidal_constituents,
+        date_range,
         boundaries,
     ):
         super().__init__(
             tpxo_elevation_filepath=tpxo_elevation_filepath,
             tpxo_velocity_filepath=tpxo_velocity_filepath,
             tidal_constituents=tidal_constituents,
+            date_range = date_range,
             boundaries=boundaries,
         )
+        self.params=[]
+        self.params.append(UserNLConfigParam("TIDES", "True"))
+        self.params.append(UserNLConfigParam("TIDE_M2", "True"))
+        self.params.append(UserNLConfigParam("CD_TIDES", 0.0018))
+        self.params.append(UserNLConfigParam("TIDE_USE_EQ_PHASE", "True"))
+        self.params.append(UserNLConfigParam(
+                    "TIDE_REF_DATE",
+                    f"{self.date_range[0].year}, {self.date_range[0].month}, {self.date_range[0].day}",
+                ))
+        self.params.append(UserNLConfigParam("OBC_TIDE_ADD_EQ_PHASE", "True"))
+        self.params.append(UserNLConfigParam("OBC_TIDE_N_CONSTITUENTS", len(self.tidal_constituents)))
+        self.params.append(UserNLConfigParam("OBC_TIDE_CONSTITUENTS", '"' + ", ".join(self.tidal_constituents) + '"'))
+        self.params.append(UserNLConfigParam(
+                    "OBC_TIDE_REF_DATE",
+                    f"{self.date_range[0].year}, {self.date_range[0].month}, {self.date_range[0].day}",
+                ))
+        
+    def tidal_data_str(self, seg_ix):
+        return (
+            f",Uamp=file:tu_segment_{seg_ix}.nc(uamp),"
+            f"Uphase=file:tu_segment_{seg_ix}.nc(uphase),"
+            f"Vamp=file:tu_segment_{seg_ix}.nc(vamp),"
+            f"Vphase=file:tu_segment_{seg_ix}.nc(vphase),"
+            f"SSHamp=file:tz_segment_{seg_ix}.nc(zamp),"
+            f"SSHphase=file:tz_segment_{seg_ix}.nc(zphase)"
+        )
+        # "001", "002", etc.
+            
+
 
     def configure(self):
-        pass
+        for p in self.params:
+            p.apply()
+        # You also need to add the files to the OBC string
+        for seg in self.boundaries:
+            # seg_ix = str(self.find_MOM6_rectangular_orientation(seg)).zfill(
+            #     3
+            # )  
+            # boundary_string = self.tidal_data_str(seg_ix)
+            # seg_id = "OBC_SEGMENT_" + seg_ix+"_DATA"
 
+            # Find the seg_id in the user_nl_mom file, and , add to the end
+            raise NotImplementedError("Not sure how to add tides to the OBC string")
 
-class BGCICConfigurator(BaseConfigurator):
-    name = "BGCIC"
-    expected_output_files = ["{self.marbl_ic_filepath.name}"]
+        
+            
+
+    def deconfigure(self):
+        for p in self.params:
+            p.remove()
+        UserNLConfigParam("OBC_TIDE_N_CONSTITUENTS", 0).apply()
+
+@register
+class BGCConfigurator(BaseConfigurator):
+    name = "BGC"
     required_for_compsets = {"MARBL"}
     allowed_compsets = {"MARBL"}
     forbidden_compsets = []
+    
+    def __init__(self, ):
+        super().__init__()
+        self.params = []
+        self.params.append(UserNLConfigParam("MAX_FIELDS", 200))
 
-    def __init__(self, marbl_ic_filepath):
-        super().__init__(marbl_ic_filepath=marbl_ic_filepath)
 
     def configure(self):
-        pass
+        for p in self.params:
+            p.apply()
+
+    def deconfigure(self):
+        for p in self.params:
+            p.remove()
+
+@register
+class CICEConfigurator(BaseConfigurator):
+    name = "CICE"
+    required_for_compsets = {"CICE"}
+    allowed_compsets = {"CICE"}
+    forbidden_compsets = []
+    
+    def __init__(self, ):
+        super().__init__()
+        self.params = []
+        self.params.append(UserNLConfigParam("ice_ic", "'UNSET'", user_nl_name = "cice"))
+        self.params.append(UserNLConfigParam("ns_boundary_type", "'open'", user_nl_name = "cice"))
+        self.params.append(UserNLConfigParam("ew_boundary_type", "'cyclic'", user_nl_name = "cice"))
+        self.params.append(UserNLConfigParam("close_boundaries", ".false.", user_nl_name = "cice"))
 
 
+    def configure(self):
+        for p in self.params:
+            p.apply()
+
+    def deconfigure(self):
+        for p in self.params:
+            p.remove()
+
+@register
+class BGCICConfigurator(BaseConfigurator):
+    name = "BGCIC"
+    required_for_compsets = {"MARBL"}
+    allowed_compsets = {"MARBL"}
+    forbidden_compsets = []
+    
+    def __init__(self, marbl_ic_filepath):
+        super().__init__(marbl_ic_filepath=marbl_ic_filepath)
+        self.marbl_ic_filename = Path(marbl_ic_filepath).name
+        self.params = []
+        self.params.append(UserNLConfigParam("MARBL_TRACERS_IC_FILE", self.marbl_ic_filename))
+
+
+    def configure(self):
+        for p in self.params:
+            p.apply()
+
+    def deconfigure(self):
+        for p in self.params:
+            p.remove()
+
+@register
 class BGCIronForcingConfigurator(BaseConfigurator):
     name = "BGCIronForcing"
     required_for_compsets = {"MARBL"}
     allowed_compsets = {"MARBL"}
     forbidden_compsets = []
-
-    expected_output_files = [
-        "fesedflux_total_reduce_oxic_{ocn_grid_name}_{session_id}.nc",
-        "feventflux_5gmol_{ocn_grid_name}_{session_id}.nc",
-    ]
+    
 
     def __init__(self, session_id, grid_name):
         super().__init__(session_id=session_id, grid_name=grid_name)
+        self.feventflux_filepath = (f"feventflux_5gmol_{self.grid_name}_{self.session_id}.nc"
+        )
+        self.fesedflux_filepath = (f"fesedflux_total_reduce_oxic_{self.grid_name}_{self.session_id}.nc"
+        )
+        self.params = []
+        self.params.append(UserNLConfigParam("MARBL_FESEDFLUX_FILE", self.fesedflux_filepath))
+        self.params.append(UserNLConfigParam("MARBL_FEVENTFLUX_FILE", self.feventflux_filepath))
 
     def configure(self):
-        pass
+        for p in self.params:
+            p.apply()
 
+    def deconfigure(self):
+        for p in self.params:
+            p.remove()
 
+@register
 class BGCRiverNutrientsConfigurator(BaseConfigurator):
     name = "BGCRiverNutrients"
-    expected_output_files = ["river_nutrients_{ocn_grid_name}_{session_id}_nnsm.nc"]
     required_for_compsets = []
     allowed_compsets = {"MARBL", "DROF"}
     forbidden_compsets = []
+    
 
     def __init__(self, global_river_nutrients_filepath, session_id, grid_name):
         super().__init__(
@@ -163,14 +269,23 @@ class BGCRiverNutrientsConfigurator(BaseConfigurator):
             session_id=session_id,
             grid_name=grid_name,
         )
+        self.params = []
+        self.river_nutrients_nnsm_filepath = f"river_nutrients_{self.grid_name}_{self.session_id}_nnsm.nc"
+        self.params.append(UserNLConfigParam("READ_RIV_FLUXES", "True",user_nl_name="mom"))
+        self.params.append(UserNLConfigParam("RIV_FLUX_FILE", self.river_nutrients_nnsm_filepath,user_nl_name="mom"))
 
     def configure(self):
-        pass
+        for p in self.params:
+            p.apply()
+    
+    def deconfigure(self):
+        for p in self.params:
+            p.remove()
+        UserNLConfigParam("READ_RIV_FLUXES", "False",user_nl_name="mom").apply()
 
-
+@register
 class RunoffConfigurator(BaseConfigurator):
     name = "Runoff"
-    expected_output_files = ["glofas_{ocn_grid_name}_{session_id}_nnsm.nc"]
     required_for_compsets = {"DROF"}
     allowed_compsets = {"DROF"}
     forbidden_compsets = []
@@ -181,28 +296,28 @@ class RunoffConfigurator(BaseConfigurator):
             grid_name=grid_name,
             session_id=session_id,
         )
+        self.params=[]
         self.runoff_mapping_file_nnsm = ( f"glofas_{self.grid_name}_{self.session_id}_nnsm.nc")
-        params.append(XMLConfigParam("ROF2OCN_LIQ_RMAPNAME", self.runoff_mapping_file_nnsm))
-        params.append(XMLConfigParam("ROF2OCN_LIQ_RMAPNAME", self.runoff_mapping_file_nnsm))
+        self.params.append(XMLConfigParam("ROF2OCN_LIQ_RMAPNAME", self.runoff_mapping_file_nnsm))
+        self.params.append(XMLConfigParam("ROF2OCN_ICE_RMAPNAME", self.runoff_mapping_file_nnsm))
 
 
 
     def configure(self):
-        for p in params:
+        for p in self.params:
             p.apply()
 
     def deconfigure(self):
         raise NotImplementedError("You cannot undo runoff mapping configuration")
 
 
-
+@register
 class ChlConfigurator(BaseConfigurator):
     name = "Chl"
-    expected_output_files = ["seawifs-clim-1997-2010-{ocn_grid_name}-{session_id}.nc"]
     required_for_compsets = []
     allowed_compsets = []
     forbidden_compsets = {"MARBL"}
-    params = []
+    
 
     def __init__(self, chl_processed_filepath, grid_name, session_id):
         super().__init__(
@@ -210,69 +325,94 @@ class ChlConfigurator(BaseConfigurator):
             grid_name=grid_name,
             session_id=session_id,
         )
+        self.params=[]
         self.regional_chl_file_path =  f"seawifs-clim-1997-2010-{self.grid_name}.nc"
-        params.append(UserNLConfigParam("CHL_FILE", Path(self.regional_chl_file_path), "mom"))
-        params.append(UserNLConfigParam("CHL_FROM_FILE", "TRUE", "mom"))
-        params.append(UserNLConfigParam("VAR_PEN_SW", "TRUE", "mom"))
-        params.append(UserNLConfigParam("PEN_SW_NBANDS", 3, "mom"))
+        self.params.append(UserNLConfigParam("CHL_FILE", Path(self.regional_chl_file_path), "mom"))
+        self.params.append(UserNLConfigParam("CHL_FROM_FILE", "TRUE", "mom"))
+        self.params.append(UserNLConfigParam("VAR_PEN_SW", "TRUE", "mom"))
+        self.params.append(UserNLConfigParam("PEN_SW_NBANDS", 3, "mom"))
         
     
 
     def configure(self):
-        for p in params:
+        for p in self.params:
             p.apply()
 
     def deconfigure(self):
-        for p in params:
+        for p in self.params:
             if type(p) == UserNLConfigParam:
                 p.remove()
-
-            
 
 
 
 @dataclass
 class ConfigParam(ABC):
+    """
+    Base class for a single configuration parameter applied to a CESM/MOM6 case.
+
+    Subclasses implement how the parameter is written (user_nl or XML).
+    """
+
     name: str
     value: str
     comment: str = None
-    executed = False
+    executed: bool = False
 
     @abstractmethod
-    def apply():
+    def apply(self):
+        """Apply the configuration change."""
         pass
 
     @abstractmethod
-    def remove():
+    def remove(self):
+        """Undo the configuration change."""
         pass
 
 
 @dataclass
 class UserNLConfigParam(ConfigParam):
-    user_nl_name: str
+    """
+    Parameter written to a `user_nl_<component>` file (default: user_nl_mom).
+    """
+
+    user_nl_name: str = "mom"
 
     def apply(self):
-        executed = True
-        param = [(self.name, self.value)]
-        append_user_nl(self.user_nl_name, param, do_exec=True, comment=self.comment)
+        """Insert this parameter into the appropriate user_nl file."""
+        self.executed = True
+        self.param = [(self.name, self.value)]
+        append_user_nl(
+            self.user_nl_name,
+            self.param,
+            do_exec=True,
+            comment=self.comment,
+        )
 
     def remove(self):
-        remove_user_nl(self.user_nl_name, param)
-        exectued = False
+        """Remove this parameter from the user_nl file."""
+        remove_user_nl(self.user_nl_name, self.name)
+        self.executed = False
 
 
 @dataclass
 class XMLConfigParam(ConfigParam):
-    is_non_local = False
-    executed = False
+    """
+    Parameter applied via xmlchange 
+
+    XML changes are permanent and do not save previous state, so removal is unsupported.
+    """
+
+    is_non_local: bool = False
 
     def apply(self):
-        executed = True
+        """Apply this change using xmlchange."""
+        self.executed = True
         xmlchange(
             self.name,
             str(self.value),
-            is_non_local=is_non_local,
+            is_non_local=self.is_non_local,
         )
 
     def remove(self):
-        raise ValueError("You cannot remove an xml change")
+        """XML changes cannot be undone."""
+        raise ValueError("You cannot remove an XML change")
