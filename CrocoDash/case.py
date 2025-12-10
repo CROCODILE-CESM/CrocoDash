@@ -650,23 +650,6 @@ class Case:
         )
         session_id = cvars["MB_ATTEMPT_ID"].value
 
-        self.expt = rmom6.experiment(
-            date_range=("1850-01-01 00:00:00", "1851-01-01 00:00:00"),  # Dummy times
-            resolution=None,
-            number_vertical_layers=None,
-            layer_thickness_ratio=None,
-            depth=self.ocn_topo.max_depth,
-            mom_run_dir=self._cime_case.get_value("RUNDIR"),
-            mom_input_dir=self.inputdir / "ocnice",
-            hgrid_type="from_file",
-            hgrid_path=self.supergrid_path,
-            vgrid_type="from_file",
-            vgrid_path=self.vgrid_path,
-            minimum_depth=self.ocn_topo.min_depth,
-            tidal_constituents=self.tidal_constituents,
-            expt_name=self.caseroot.name,
-            boundaries=boundaries,
-        )
         return True
 
     def configure_chl(self, chl_processed_filepath: str | Path):
@@ -1017,6 +1000,43 @@ class Case:
     @property
     def name(self) -> str:
         return self.caseroot.name
+
+    @property 
+    def expt(self) -> rmom6.experiment:
+        
+        if not hasattr(self, "date_range"):
+            print("Date not found so using a dummy date of 1850-1851")
+            date_range = ("1850-01-01 00:00:00", "1851-01-01 00:00:00")  # Dummy times
+        else:
+            date_range = tuple(ts.strftime("%Y-%m-%d %H:%M:%S") for ts in self.date_range)
+        if not hasattr(self, "boundaries"):
+            print("Boundaries not found so using default")
+            self.boundaries =  ["north", "south", "east", "west"]
+        if not hasattr(self, "tidal_constituents"):
+            print("tidal_constituents not found so using only M2")
+            self.tidal_constituents =  ["M2"]
+
+        expt = rmom6.experiment(
+            date_range=date_range,  
+            resolution=None,
+            number_vertical_layers=None,
+            layer_thickness_ratio=None,
+            depth=self.ocn_topo.max_depth,
+            mom_run_dir=self._cime_case.get_value("RUNDIR"),
+            mom_input_dir=self.inputdir / "ocnice",
+            hgrid_type="from_file",
+            hgrid_path=self.supergrid_path,
+            vgrid_type="from_file",
+            vgrid_path=self.vgrid_path,
+            minimum_depth=self.ocn_topo.min_depth,
+            tidal_constituents=self.tidal_constituents,
+            expt_name=self.caseroot.name,
+            boundaries=self.boundaries,
+        )
+        expt.hgrid = self.ocn_grid.gen_supergrid_ds()
+        # expt.vgrid = self.ocn_vgrid.gen_vgrid_ds() # Not implemented yet
+        return expt
+
 
     def _initialize_visualCaseGen(self):
 
