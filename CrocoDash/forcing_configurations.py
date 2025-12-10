@@ -27,6 +27,10 @@ class ForcingConfigRegistry:
         cls.registered_types.append(configurator_cls)
 
     @classmethod
+    def __getitem__(cls, key: str):
+        return cls.active_configurators[key.lower()]
+
+    @classmethod
     def find_active_configurators(cls, compset, inputs: dict):
 
         # Find Active Configurators
@@ -57,13 +61,14 @@ class ForcingConfigRegistry:
                 cls.active_configurators[configurator.name.lower()] = configurator_cls(
                     **ctor_kwargs
                 )
+
     @classmethod
     def run_configurators(cls):
         # Run Configurators
         for configurator in cls.active_configurators.values():
             logger.info(f"Configuring {configurator.name}")
             configurator.configure()
-    
+
     @classmethod
     def get_active_configurators(cls):
         return cls.active_configurators.keys()
@@ -72,13 +77,11 @@ class ForcingConfigRegistry:
     def is_active(cls, name: str) -> bool:
         """Return True if a configurator with this name is active."""
         return name.lower() in cls.active_configurators
-    
-    @classmethod
-    def is_processed(cls, name: str) -> bool:
-        """Return True if a configurator with this name is active."""
-        return cls.active_configurators[name.lower()].is_processed()
 
-        
+    @classmethod
+    def is_processed(cls, name: str, output_directory) -> bool:
+        """Return True if a configurator with this name is active."""
+        return cls.active_configurators[name.lower()].is_processed(cls.output_directory)
 
 
 class BaseConfigurator(ABC):
@@ -92,9 +95,13 @@ class BaseConfigurator(ABC):
     forbidden_compsets: List[str] = []  # What compsets you cannot have this class
 
     def __init__(self, **kwargs):
+        self.validate_args(**kwargs)
         # Store everything directly as attributes
         for k, v in kwargs.items():
             setattr(self, k, v)
+
+    def validate_args(self, **kwargs):
+        pass
 
     @abstractmethod
     def configure(self):
@@ -106,14 +113,6 @@ class BaseConfigurator(ABC):
     def deconfigure(self):
         for p in self.params:
             p.remove()
-        pass
-
-    @abstractmethod
-    def process(self):
-        pass
-
-    @abstractmethod
-    def is_processed(self):
         pass
 
     @classmethod
@@ -324,6 +323,12 @@ class BGCRiverNutrientsConfigurator(BaseConfigurator):
             )
         )
 
+    def validate_args(self, **kwargs):
+        if not global_river_nutrients_filepath.exists():
+            raise FileNotFoundError(
+                f"River Nutrients file {global_river_nutrients_filepath} does not exist."
+            )
+
     def configure(self):
         super().configure()
 
@@ -344,6 +349,8 @@ class RunoffConfigurator(BaseConfigurator):
             runoff_esmf_mesh_filepath=runoff_esmf_mesh_filepath,
             grid_name=grid_name,
             session_id=session_id,
+            rmax=100,
+            fold=100,
         )
         self.params = []
         self.runoff_mapping_file_nnsm = (
@@ -371,6 +378,7 @@ class ChlConfigurator(BaseConfigurator):
     forbidden_compsets = {"MARBL"}
 
     def __init__(self, chl_processed_filepath, grid_name, session_id):
+
         super().__init__(
             chl_processed_filepath=chl_processed_filepath,
             grid_name=grid_name,
@@ -384,6 +392,12 @@ class ChlConfigurator(BaseConfigurator):
         self.params.append(UserNLConfigParam("CHL_FROM_FILE", "TRUE", "mom"))
         self.params.append(UserNLConfigParam("VAR_PEN_SW", "TRUE", "mom"))
         self.params.append(UserNLConfigParam("PEN_SW_NBANDS", 3, "mom"))
+
+    def validate_args(self, **kwargs):
+        if not chl_processed_filepath.exists():
+            raise FileNotFoundError(
+                f"Chlorophyll file {chl_processed_filepath} does not exist."
+            )
 
     def configure(self):
         super().configure()
