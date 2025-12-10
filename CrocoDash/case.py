@@ -1016,7 +1016,7 @@ class Case:
             print("tidal_constituents not found so using only M2")
             self.tidal_constituents =  ["M2"]
 
-        return rmom6.experiment(
+        expt = rmom6.experiment(
             date_range=date_range,  
             resolution=None,
             number_vertical_layers=None,
@@ -1033,6 +1033,9 @@ class Case:
             expt_name=self.caseroot.name,
             boundaries=self.boundaries,
         )
+        expt.hgrid = self.ocn_grid.gen_supergrid_ds()
+        # expt.vgrid = self.ocn_vgrid.gen_vgrid_ds() # Not implemented yet
+        return expt
 
 
     def _initialize_visualCaseGen(self):
