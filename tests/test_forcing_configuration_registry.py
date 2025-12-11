@@ -83,6 +83,7 @@ def test_FCR_find_active_configurators_fail_if_required_and_no_valid_args():
 
 def test_FCR_find_active_configurators_skip_if_no_args():
     """Test if we can trigger skip if the proper args aren't given in dummy1"""
+    ForcingConfigRegistry.clear()
     ForcingConfigRegistry.find_active_configurators("", {})
     assert (
         "dummy1" not in ForcingConfigRegistry.active_configurators

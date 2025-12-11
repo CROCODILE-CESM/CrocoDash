@@ -397,9 +397,10 @@ class Case:
             raise ValueError("Product / Data Path is not supported quite yet")
         
         inputs = kwargs | {
-            "date_range": date_range,
+            "date_range": pd.to_datetime(date_range),
             "grid_name": self.ocn_grid.name,
             "session_id": cvars["MB_ATTEMPT_ID"].value,
+            "boundaries":boundaries
         }
         ForcingConfigRegistry.find_active_configurators(self.compset, inputs)
         ForcingConfigRegistry.run_configurators()
@@ -568,16 +569,16 @@ class Case:
         )
 
         
-        if ForcingConfigRegistry.is_active("bgc") and process_bgc:
+        if ForcingConfigRegistry.is_active("bgc") and not (kwargs.get("process_bgc") == False):
             self.process_bgc_iron_forcing()
             self.process_bgc_ic()
-        if ForcingConfigRegistry.is_active("tides") and process_tides:
+        if ForcingConfigRegistry.is_active("tides") and not (kwargs.get("process_tides") == False):
             self.process_tides()
-        if ForcingConfigRegistry.is_active("chl") and process_chl:
+        if ForcingConfigRegistry.is_active("chl") and not (kwargs.get("process_chl") == False):
             self.process_chl()
-        if ForcingConfigRegistry.is_active("runoff") and process_runoff:
+        if ForcingConfigRegistry.is_active("runoff") and not (kwargs.get("process_runoff") == False):
             self.process_runoff()
-        if ForcingConfigRegistry.is_active("BGCRiverNutrients") and process_river_nutrients:
+        if ForcingConfigRegistry.is_active("BGCRiverNutrients") and not (kwargs.get("process_bgc_river_nutrients") == False):
             self.process_river_nutrients()
         print(f"Case is ready to be built: {self.caseroot}")
 

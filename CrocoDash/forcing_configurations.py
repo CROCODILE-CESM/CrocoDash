@@ -22,6 +22,10 @@ class ForcingConfigRegistry:
     active_configurators = {}
 
     @classmethod
+    def clear(cls):
+        cls.active_configurators = {}
+
+    @classmethod
     def register(cls, configurator_cls: type):
         cls.registered_types.append(configurator_cls)
 
