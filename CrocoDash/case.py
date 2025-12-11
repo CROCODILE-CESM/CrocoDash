@@ -96,25 +96,35 @@ class Case:
         # Initialize visualCaseGen system and get the CIME interface
         self.cime = initialize_visualCaseGen(cesmroot)
 
+        # Determine compset alias and long name
+        if compset in self.cime.compsets:
+            compset_alias = compset
+            compset_lname = self.cime.compsets[compset].lname
+        else:
+            compset_alias = None
+            compset_lname = compset
+
         # Sanity checks on the input arguments
-        self._init_args_check(
-            caseroot,
-            inputdir,
-            ocn_grid,
-            ocn_topo,
-            ocn_vgrid,
-            compset,
-            atm_grid_name,
-            rof_grid_name,
-            ninst,
-            machine,
-            project,
-            override,
-            ntasks_ocn,
-            job_queue,
-            job_wallclock_time,
+        Case.init_args_check(
+            cime=self.cime,
+            caseroot=caseroot,
+            inputdir=inputdir,
+            ocn_grid=ocn_grid,
+            ocn_topo=ocn_topo,
+            ocn_vgrid=ocn_vgrid,
+            compset_lname=compset_lname,
+            atm_grid_name=atm_grid_name,
+            rof_grid_name=rof_grid_name,
+            ninst=ninst,
+            machine=machine,
+            project=project,
+            override=override,
+            ntasks_ocn=ntasks_ocn,
+            job_queue=job_queue,
+            job_wallclock_time=job_wallclock_time,
         )
 
+        # Set instance attributes
         self.caseroot = Path(caseroot)
         self.inputdir = Path(inputdir)
         self.ocn_grid = ocn_grid
@@ -127,7 +137,8 @@ class Case:
         self.forcing_product_name = None
         self._configure_forcings_called = False
         self._large_data_workflow_called = False
-        self.compset = compset
+        self.compset_alias = compset_alias
+        self.compset_lname = compset_lname
         self.machine = machine or self.cime.machine
         self.project = project
 
@@ -140,7 +151,8 @@ class Case:
             print(f"  {str(e)}")
             return
 
-        # Before creating the case, we need to create the grid input files.
+        # Before creating the case, we need to create the grid input files (except for mapping files,
+        # which will be created later in process_forcings if needed).
         self._create_grid_input_files()
 
         # Having set the configuration variables and created the grid input files, we can now create the case instance.
@@ -156,32 +168,29 @@ class Case:
     @property
     def cice_in_compset(self):
         """Check if CICE is included in the compset."""
-        if not hasattr(self, "_cice_in_compset"):
-            self._cice_in_compset = "CICE" in self.compset
-        return self._cice_in_compset
+        return "CICE" in self.compset_lname
 
     @property
     def runoff_in_compset(self):
         """Check if runoff is included in the compset."""
-        if not hasattr(self, "_runoff_in_compset"):
-            self._runoff_in_compset = "%ROF" in self.compset
-        return self._runoff_in_compset
+        return "SROF" not in self.compset_lname
 
     @property
     def bgc_in_compset(self):
         """Check if BGC is included in the compset."""
-        if not hasattr(self, "_bgc_in_compset"):
-            self._bgc_in_compset = "%MARBL" in self.compset
-        return self._bgc_in_compset
+        return "%MARBL" in self.compset_lname
 
-    def _init_args_check(
-        self,
+    @classmethod
+    def init_args_check(
+        cls,
+        *,
+        cime,
         caseroot: str | Path,
         inputdir: str | Path,
         ocn_grid: Grid,
         ocn_topo: Topo,
         ocn_vgrid: VGrid,
-        compset: str,
+        compset_lname: str,
         atm_grid_name: str,
         rof_grid_name: str | None,
         ninst: int,
@@ -202,23 +211,39 @@ class Case:
             raise TypeError("ocn_grid must be a Grid object.")
         if not isinstance(ocn_vgrid, VGrid):
             raise TypeError("ocn_vgrid must be a VGrid object.")
-        if not isinstance(compset, str) or len(compset) == 0:
+        if not isinstance(compset_lname, str) or len(compset_lname) == 0:
             raise TypeError("compset must be a non-empty string.")
+        assert compset_lname.count("_") >= 6, \
+            "compset must be a valid CESM compset long name or alias."
+        assert 'MOM6' in compset_lname, \
+            "In CrocoDash, only MOM6-based compsets are supported."
+        assert 'SLND' in compset_lname, \
+            "Currently, active or data land models are not supported by CrocoDash." \
+            "Please use a compset with SLND."
+        assert 'SGLC' in compset_lname, \
+            "Currently, active or data glacier models are not supported by CrocoDash." \
+            "Please use a compset with SGLC."
+        assert 'SWAV' in compset_lname, \
+            "Currently, active or data wave models are not supported by CrocoDash." \
+            "Please use a compset with SWAV."
         if not isinstance(ocn_topo, Topo):
             raise TypeError("ocn_topo must be a Topo object.")
         if atm_grid_name not in (
-            available_atm_grids := self.cime.domains["atm"].keys()
+            available_atm_grids := cime.domains["atm"].keys()
         ):
             raise ValueError(f"atm_grid_name must be one of {available_atm_grids}.")
-        if rof_grid_name is not None and rof_grid_name not in (
-            available_rof_grids := self.cime.domains["rof"].keys()
-        ):
-            raise ValueError(f"rof_grid_name must be one of {available_rof_grids}.")
+        if rof_grid_name is not None:
+            assert 'SROF' not in compset_lname, "When a runoff grid is specified, " \
+                "the compset must include an active or data runoff model."
+            if rof_grid_name not in (
+                available_rof_grids := cime.domains["rof"].keys()
+            ):
+                raise ValueError(f"rof_grid_name must be one of {available_rof_grids}.")
         if ocn_grid.name is None:
             raise ValueError(
                 "ocn_grid must have a name. Please set it using the 'name' attribute."
             )
-        if ocn_grid.name in self.cime.domains["ocnice"] and not override:
+        if ocn_grid.name in cime.domains["ocnice"] and not override:
             raise ValueError(f"ocn_grid name {ocn_grid.name} is already in use.")
         if not isinstance(ninst, int):
             raise TypeError("ninst must be an integer.")
@@ -228,9 +253,9 @@ class Case:
             )
         if not isinstance(machine, str):
             raise TypeError("machine must be a string.")
-        if not machine in self.cime.machines:
-            raise ValueError(f"machine must be one of {self.cime.machines}.")
-        if self.cime.project_required[machine] is True:
+        if not machine in cime.machines:
+            raise ValueError(f"machine must be one of {cime.machines}.")
+        if cime.project_required[machine] is True:
             if project is None:
                 raise ValueError(f"project is required for machine {machine}.")
             if not isinstance(project, str):
@@ -301,7 +326,6 @@ class Case:
 
     def _create_newcase(self):
         """Create the case instance."""
-        # cvars["COMPSET_LNAME"].value = self.compset
         # If override is True, clean up the existing caseroot and output directories
         if self.override is True:
             if self.caseroot.exists():
@@ -331,8 +355,9 @@ class Case:
         function_name: str = "get_glorys_data_script_for_cli",
         product_info: str | Path | dict = None,
         too_much_data: bool = False,
+        rmax: float | None = None,
+        fold: float | None = None,
         chl_processed_filepath: str | Path | None = None,
-        runoff_esmf_mesh_filepath: str | Path | None = None,
         data_input_path: str | Path | None = None,
         global_river_nutrients_filepath: str | Path | None = None,
         marbl_ic_filepath: str | Path | None = None,
@@ -371,10 +396,14 @@ class Case:
             If True, configures the large data workflow. In this case, data are not downloaded
             immediately, but a config file and workflow directory are created
             for external processing in the forcing directory, inside the input directory.
+        rmax : float, optional
+            If passed, specifies the smoothing radius (in meters) for runoff mapping generation.
+            If not provided, a suggested value based on the ocean grid will be used.
+        fold : float, optional
+            If passed, specifies the smoothing fold parameter for runoff mapping generation.
+            If not provided, a suggested value based on the ocean grid will be used.
         chl_processed_filepath : Path
             If passed, points to the processed global chlorophyll file for regional processing through mom6_bathy.chl
-        runoff_esmf_mesh_filepath : Path
-            If passed, points to the processed global runoff file for mapping through mom6_bathy.mapping
         data_input_path : str or Path, optional
             If passed, a path to the directory where raw output data is stored. This is used instead to extract OBCs and ICs for the case.
         global_river_nutrients_filepath: str or Path, optional
@@ -435,14 +464,19 @@ class Case:
             )
         else:
             self.configured_tides = False
+
+        if (rmax is None) != (fold is None):
+            raise ValueError("Both rmax and fold must be specified together.")
+        if rmax is not None:
+            assert 'SROF' not in self.compset_lname, "When rmax and fold are specified, " \
+                "the compset must include an active or data runoff model."
+        self.rmax = rmax
+        self.fold = fold
+
         if chl_processed_filepath:
             self.configured_chl = self.configure_chl(chl_processed_filepath)
         else:
             self.configured_chl = False
-        if self.runoff_in_compset:
-            self.configured_runoff = self.configure_runoff(runoff_esmf_mesh_filepath)
-        else:
-            self.configured_runoff = False
 
         if global_river_nutrients_filepath:
             self.configured_river_nutrients = self.configure_river_nutrients(
@@ -676,26 +710,6 @@ class Case:
         )
         return True
 
-    def configure_runoff(self, runoff_esmf_mesh_filepath: str | Path | None = None):
-        if self.runoff_in_compset and (runoff_esmf_mesh_filepath is None):
-            self.runoff_esmf_mesh_filepath = False
-            raise ValueError(
-                "Runoff ESMF Mesh File and Global Runoff file must be provided for mapping"
-            )
-        elif (runoff_esmf_mesh_filepath is not None) and not self.runoff_in_compset:
-            self.runoff_esmf_mesh_filepath = False
-            raise ValueError("Runoff can only be turned on if it is in the compset!")
-        elif self.runoff_in_compset and (runoff_esmf_mesh_filepath is not None):
-            self.runoff_esmf_mesh_filepath = runoff_esmf_mesh_filepath
-
-        # Set runoff mapping file path
-        self.runoff_mapping_file_nnsm = (
-            self.inputdir
-            / "ocnice"
-            / f"glofas_{self.ocn_grid.name}_{cvars['MB_ATTEMPT_ID'].value}_nnsm.nc"
-        )
-        return True
-
     def configure_tides(
         self,
         tidal_constituents: list[str] | None = None,
@@ -763,7 +777,6 @@ class Case:
         process_velocity_tracers=True,
         process_bgc=True,
         process_chl=True,
-        process_runoff=True,
         process_river_nutrients=True,
     ):
         """
@@ -771,7 +784,8 @@ class Case:
 
         This method configures a regional MOM6 case's ocean state boundaries and initial conditions
         using previously downloaded data setup in configure_forcings. It also processes tidal boundary conditions
-        if tidal constituents are specified. The method expects `configure_forcings()` to be
+        if tidal constituents are specified. Additionally, it generates runoff to ocean mapping files if necessary.
+        The method expects `configure_forcings()` to be
         called beforehand.
 
         Parameters
@@ -785,8 +799,6 @@ class Case:
         process_velocity_tracers : bool, optional
             Whether to process velocity and tracer boundary conditions. Default is True.
             This will be overridden and set to False if the large data workflow in configure_forcings is enabled.
-        process_runoff : bool, optional
-            Whether to process runoff data. Default is True.
         process_bgc : bool, optional
             Whether to process BGC data. Default is True.
 
@@ -828,8 +840,8 @@ class Case:
             self.process_tides()
         if self.configured_chl and process_chl:
             self.process_chl()
-        if self.configured_runoff and process_runoff:
-            self.process_runoff()
+        if self.runoff_in_compset:
+            self.generate_rof_ocn_map()
         if self.configured_river_nutrients and process_river_nutrients:
             self.process_river_nutrients()
         print(f"Case is ready to be built: {self.caseroot}")
@@ -1090,22 +1102,57 @@ class Case:
                 unlimited_dims=["time"],
             )
 
-    def process_runoff(self):
-        if self.runoff_in_compset and self.runoff_esmf_mesh_filepath:
-            if not self.runoff_mapping_file_nnsm.exists():
-                print("Creating runoff mapping file(s)...")
-                mapping.gen_rof_maps(
-                    rof_mesh_path=self.runoff_esmf_mesh_filepath,
-                    ocn_mesh_path=self.esmf_mesh_path,
-                    output_dir=self.inputdir / "ocnice",
-                    mapping_file_prefix=f'glofas_{self.ocn_grid.name}_{cvars["MB_ATTEMPT_ID"].value}',
-                    rmax=100.0,
-                    fold=100.0,
-                )
-            else:
-                print(
-                    f"Runoff mapping file {self.runoff_mapping_file_nnsm} already exists, reusing it."
-                )
+    def generate_rof_ocn_map(self):
+        """Generate runoff to ocean mapping files if runoff is active in the compset."""
+
+        assert self.runoff_in_compset, "Must have active or data runoff in compset to generate rof_to_ocn map."
+        assert self.esmf_mesh_path is not None, "MOM6 ESMF mesh path is not set."
+
+        if self.rmax is None:
+            self.rmax, self.fold = mapping.get_suggested_smoothing_params(self.esmf_mesh_path)
+
+        rof_grid_name = cvars["CUSTOM_ROF_GRID"].value
+        assert rof_grid_name is not None, "Couldn't determine runoff grid name."
+        rof_esmf_mesh_filepath = self.cime.get_mesh_path("rof", rof_grid_name)
+        assert rof_esmf_mesh_filepath != '', "Runoff ESMF mesh path could not be found."
+
+        ocn_grid_name = self.ocn_grid.name
+        mapping_file_prefix = f"{rof_grid_name}_to_{ocn_grid_name}_map"
+        mapping_dir = self.inputdir / "mapping"
+        mapping_dir.mkdir(exist_ok=False)
+
+        self.runoff_mapping_file_nnsm = mapping.get_smoothed_map_filepath(
+            mapping_file_prefix=mapping_file_prefix,
+            output_dir=mapping_dir,
+            rmax=self.rmax,
+            fold=self.fold,
+        )
+
+        if not self.runoff_mapping_file_nnsm.exists():
+            print("Creating runoff mapping file(s)...")
+            mapping.gen_rof_maps(
+                rof_mesh_path=rof_esmf_mesh_filepath,
+                ocn_mesh_path=self.esmf_mesh_path,
+                output_dir=mapping_dir,
+                mapping_file_prefix=mapping_file_prefix,
+                rmax=self.rmax,
+                fold=self.fold
+            )
+
+            xmlchange(
+                "ROF2OCN_LIQ_RMAPNAME",
+                str(self.runoff_mapping_file_nnsm),
+                is_non_local=self.cc._is_non_local(),
+            )
+            xmlchange(
+                "ROF2OCN_ICE_RMAPNAME",
+                str(self.runoff_mapping_file_nnsm),
+                is_non_local=self.cc._is_non_local(),
+            )
+        else:
+            print(
+                f"Runoff mapping file {self.runoff_mapping_file_nnsm} already exists, reusing it."
+            )
 
     def process_initial_and_boundary_conditions(
         self, process_initial_condition, process_velocity_tracers
@@ -1184,10 +1231,10 @@ class Case:
         """
 
         # 1. Compset
-        if self.compset in self.cime.compsets:
-            self._configure_standard_compset(self.compset)
+        if self.compset_alias is not None:
+            self._configure_standard_compset(self.compset_alias)
         else:
-            self._configure_custom_compset(self.compset)
+            self._configure_custom_compset(self.compset_lname)
 
         # 2. Grid
         self._configure_custom_grid(atm_grid_name, rof_grid_name)
@@ -1196,7 +1243,7 @@ class Case:
         self._configure_launch()
 
 
-    def _configure_standard_compset(self, compset: str):
+    def _configure_standard_compset(self, compset_alias: str):
         """Configure the case for a standard component set."""
 
         assert Stage.active().title == "1. Component Set"
@@ -1209,10 +1256,10 @@ class Case:
         for comp_class in self.cime.comp_classes:
             cvars[f"COMP_{comp_class}_FILTER"].value = "any"
 
-        ## Pick a standard compset
-        cvars["COMPSET_ALIAS"].value = compset
+        ## Pick a standard compset by alias
+        cvars["COMPSET_ALIAS"].value = compset_alias
 
-    def _configure_custom_compset(self, compset: str):
+    def _configure_custom_compset(self, compset_lname: str):
         """Configure the case for a custom component set by setting individual component variables,
         which occurs in 4 stages:
           1. Time Period
@@ -1226,7 +1273,7 @@ class Case:
 
         # Stage: Time Period
         assert Stage.active().title.startswith("Time Period")
-        inittime = compset.split("_")[0]
+        inittime = compset_lname.split("_")[0]
         cvars["INITTIME"].value = inittime
 
         # Generate a mapping from physics to models, e.g., "CAM60" -> "cam"
@@ -1235,8 +1282,8 @@ class Case:
             for phys in phys_list:
                 phys_to_model[phys] = model
 
-        # Split the compset into components
-        components = self.cime.get_components_from_compset_lname(compset)
+        # Split the compset_lname into components
+        components = self.cime.get_components_from_compset_lname(compset_lname)
 
         # Stage: Components (i.e., models, e.g., cam, cice, mom6, etc.)
         assert Stage.active().title.startswith("Components")
@@ -1358,6 +1405,8 @@ class Case:
                 raise ValueError(
                     f"Based on the compset, the valid runoff grid name is {valid_rof_grid_name}, but got {rof_grid_name}."
                 )
+        if Stage.active().title == "Runoff to Ocean Mapping":
+            cvars["ROF_OCN_MAPPING_STATUS"].value = "skip" # to be generated later in process_forcings
 
     def _configure_launch(self):
         """Assign the launch variables for the case."""
@@ -1617,19 +1666,6 @@ class Case:
                 do_exec=True,
                 comment="CICE options",
                 log_title=False,
-            )
-
-        if self.runoff_in_compset and self.configured_runoff:
-
-            xmlchange(
-                "ROF2OCN_LIQ_RMAPNAME",
-                str(self.runoff_mapping_file_nnsm),
-                is_non_local=self.cc._is_non_local(),
-            )
-            xmlchange(
-                "ROF2OCN_ICE_RMAPNAME",
-                str(self.runoff_mapping_file_nnsm),
-                is_non_local=self.cc._is_non_local(),
             )
 
         xmlchange(
