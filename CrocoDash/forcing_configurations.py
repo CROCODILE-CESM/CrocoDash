@@ -5,7 +5,6 @@ from dataclasses import dataclass
 from visualCaseGen.custom_widget_types.case_tools import (
     xmlchange,
     append_user_nl,
-    remove_user_nl,
 )
 from CrocoDash.utils import setup_logger
 import inspect
@@ -27,7 +26,7 @@ class ForcingConfigRegistry:
         cls.registered_types.append(configurator_cls)
 
     @classmethod
-    def __getitem__(cls, key: str):
+    def __class_getitem__(cls, key: str):
         return cls.active_configurators[key.lower()]
 
     @classmethod
@@ -40,13 +39,16 @@ class ForcingConfigRegistry:
             # If required add to active configurators
             if configurator_cls.is_required(compset):
                 ctor_kwargs = {arg: inputs[arg] for arg in args if arg in inputs}
-                configurator = configurator_cls(**ctor_kwargs)
                 logger.info(f"[REQUIRED] Activating {configurator_cls.name}")
-                cls.active_configurators[configurator.name] = configurator
+                if not all(arg in inputs for arg in args):
+                    raise ValueError(
+                        f"[ERROR] Required configurator {configurator_cls.name} missing at least one of the args: {args}"
+                    )
+                cls.active_configurators[configurator_cls.name.lower()] = (
+                    configurator_cls(**ctor_kwargs)
+                )
             else:
-                if not configurator_cls.validate_compset_compatibility(
-                    inputs["compset"]
-                ):
+                if not configurator_cls.validate_compset_compatibility(compset):
 
                     logger.info(
                         f"[SKIP] {configurator_cls.name} incompatible with compset"
@@ -58,8 +60,8 @@ class ForcingConfigRegistry:
 
                 # setup configurator
                 ctor_kwargs = {arg: inputs[arg] for arg in args if arg in inputs}
-                cls.active_configurators[configurator.name.lower()] = configurator_cls(
-                    **ctor_kwargs
+                cls.active_configurators[configurator_cls.name.lower()] = (
+                    configurator_cls(**ctor_kwargs)
                 )
 
     @classmethod
@@ -77,11 +79,6 @@ class ForcingConfigRegistry:
     def is_active(cls, name: str) -> bool:
         """Return True if a configurator with this name is active."""
         return name.lower() in cls.active_configurators
-
-    @classmethod
-    def is_processed(cls, name: str, output_directory) -> bool:
-        """Return True if a configurator with this name is active."""
-        return cls.active_configurators[name.lower()].is_processed(cls.output_directory)
 
 
 class BaseConfigurator(ABC):
@@ -109,17 +106,14 @@ class BaseConfigurator(ABC):
             p.apply()
         pass
 
-    @abstractmethod
-    def deconfigure(self):
-        for p in self.params:
-            p.remove()
-        pass
+    # @abstractmethod Will implement when we get to the shareable case config part.
+    # @classmethod
+    # def identify():
+    #     pass
 
     @classmethod
     def is_required(cls, compset):
-        return any(
-            sub in compset for sub in cls.required_for_compsets
-        ) and cls.validate_compset_compatibility(compset)
+        return any(sub in compset for sub in cls.required_for_compsets)
 
     @classmethod
     def validate_compset_compatibility(cls, compset):
@@ -189,16 +183,12 @@ class TidesConfigurator(BaseConfigurator):
         super().configure()
         # You also need to add the files to the OBC string, which is handled in the main case unfortunately
 
-    def deconfigure(self):
-        super().deconfigure()
-        UserNLConfigParam("OBC_TIDE_N_CONSTITUENTS", 0).apply()
-
 
 @register
 class BGCConfigurator(BaseConfigurator):
     name = "BGC"
-    required_for_compsets = {"MARBL"}
-    allowed_compsets = {"MARBL"}
+    required_for_compsets = ["MARBL"]
+    allowed_compsets = ["MARBL"]
     forbidden_compsets = []
 
     def __init__(
@@ -211,15 +201,12 @@ class BGCConfigurator(BaseConfigurator):
     def configure(self):
         super().configure()
 
-    def deconfigure(self):
-        super().deconfigure()
-
 
 @register
 class CICEConfigurator(BaseConfigurator):
     name = "CICE"
-    required_for_compsets = {"CICE"}
-    allowed_compsets = {"CICE"}
+    required_for_compsets = ["CICE"]
+    allowed_compsets = ["CICE"]
     forbidden_compsets = []
 
     def __init__(
@@ -241,15 +228,12 @@ class CICEConfigurator(BaseConfigurator):
     def configure(self):
         super().configure()
 
-    def deconfigure(self):
-        super().deconfigure()
-
 
 @register
 class BGCICConfigurator(BaseConfigurator):
     name = "BGCIC"
-    required_for_compsets = {"MARBL"}
-    allowed_compsets = {"MARBL"}
+    required_for_compsets = ["MARBL"]
+    allowed_compsets = ["MARBL"]
     forbidden_compsets = []
 
     def __init__(self, marbl_ic_filepath):
@@ -263,15 +247,12 @@ class BGCICConfigurator(BaseConfigurator):
     def configure(self):
         super().configure()
 
-    def deconfigure(self):
-        super().deconfigure()
-
 
 @register
 class BGCIronForcingConfigurator(BaseConfigurator):
     name = "BGCIronForcing"
-    required_for_compsets = {"MARBL"}
-    allowed_compsets = {"MARBL"}
+    required_for_compsets = ["MARBL"]
+    allowed_compsets = ["MARBL"]
     forbidden_compsets = []
 
     def __init__(self, session_id, grid_name):
@@ -293,15 +274,12 @@ class BGCIronForcingConfigurator(BaseConfigurator):
     def configure(self):
         super().configure()
 
-    def deconfigure(self):
-        super().deconfigure()
-
 
 @register
 class BGCRiverNutrientsConfigurator(BaseConfigurator):
     name = "BGCRiverNutrients"
     required_for_compsets = []
-    allowed_compsets = {"MARBL", "DROF"}
+    allowed_compsets = ["MARBL", "DROF"]
     forbidden_compsets = []
 
     def __init__(self, global_river_nutrients_filepath, session_id, grid_name):
@@ -324,17 +302,13 @@ class BGCRiverNutrientsConfigurator(BaseConfigurator):
         )
 
     def validate_args(self, **kwargs):
-        if not global_river_nutrients_filepath.exists():
+        if not kwargs["global_river_nutrients_filepath"].exists():
             raise FileNotFoundError(
-                f"River Nutrients file {global_river_nutrients_filepath} does not exist."
+                f"River Nutrients file {kwargs['global_river_nutrients_filepath']} does not exist."
             )
 
     def configure(self):
         super().configure()
-
-    def deconfigure(self):
-        super().deconfigure()
-        UserNLConfigParam("READ_RIV_FLUXES", "False", user_nl_name="mom").apply()
 
 
 @register
@@ -366,16 +340,13 @@ class RunoffConfigurator(BaseConfigurator):
     def configure(self):
         super().configure()
 
-    def deconfigure(self):
-        raise NotImplementedError("You cannot undo runoff mapping configuration")
-
 
 @register
 class ChlConfigurator(BaseConfigurator):
     name = "Chl"
     required_for_compsets = []
     allowed_compsets = []
-    forbidden_compsets = {"MARBL"}
+    forbidden_compsets = ["MARBL"]
 
     def __init__(self, chl_processed_filepath, grid_name, session_id):
 
@@ -394,16 +365,13 @@ class ChlConfigurator(BaseConfigurator):
         self.params.append(UserNLConfigParam("PEN_SW_NBANDS", 3, "mom"))
 
     def validate_args(self, **kwargs):
-        if not chl_processed_filepath.exists():
+        if not kwargs["chl_processed_filepath"].exists():
             raise FileNotFoundError(
-                f"Chlorophyll file {chl_processed_filepath} does not exist."
+                f"Chlorophyll file {kwargs['chl_processed_filepath']} does not exist."
             )
 
     def configure(self):
         super().configure()
-
-    def deconfigure(self):
-        super().deconfigure()
 
 
 @dataclass
@@ -422,11 +390,6 @@ class ConfigParam(ABC):
     @abstractmethod
     def apply(self):
         """Apply the configuration change."""
-        pass
-
-    @abstractmethod
-    def remove(self):
-        """Undo the configuration change."""
         pass
 
 
@@ -449,11 +412,6 @@ class UserNLConfigParam(ConfigParam):
             comment=self.comment,
         )
 
-    def remove(self):
-        """Remove this parameter from the user_nl file."""
-        remove_user_nl(self.user_nl_name, self.name)
-        self.executed = False
-
 
 @dataclass
 class XMLConfigParam(ConfigParam):
@@ -473,7 +431,3 @@ class XMLConfigParam(ConfigParam):
             str(self.value),
             is_non_local=self.is_non_local,
         )
-
-    def remove(self):
-        """XML changes cannot be undone."""
-        raise ValueError("You cannot remove an XML change")
