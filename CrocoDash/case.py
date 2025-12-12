@@ -3,16 +3,15 @@ import uuid
 import shutil
 from datetime import datetime
 import json
-import sys
+import importlib.util
 import pandas as pd
 import regional_mom6 as rmom6
 from CrocoDash.grid import Grid
 from CrocoDash.topo import Topo
 from CrocoDash.vgrid import VGrid
-from CrocoDash.raw_data_access import driver as dv
-from CrocoDash.raw_data_access import config as tb
-from CrocoDash.raw_data_access import driver as dv
-from ProConPy.config_var import cvars
+from CrocoDash.raw_data_access.registry import ProductRegistry
+from CrocoDash.raw_data_access.base import ForcingProduct
+from ProConPy.config_var import ConfigVar, cvars
 from ProConPy.stage import Stage
 from ProConPy.dev_utils import ConstraintViolation
 from visualCaseGen.initialize import initialize as initialize_visualCaseGen
@@ -132,15 +131,14 @@ class Case:
         self.ocn_vgrid = ocn_vgrid
         self.ninst = ninst
         self.override = override
-        self.ProductFunctionRegistry = dv.ProductFunctionRegistry()
-        self.ProductFunctionRegistry.load_functions()
+        self.ProductRegistry = ProductRegistry
         self.forcing_product_name = None
         self._configure_forcings_called = False
-        self._large_data_workflow_called = False
         self.compset_alias = compset_alias
         self.compset_lname = compset_lname
         self.machine = machine or self.cime.machine
         self.project = project
+        self._too_much_data = False
 
         # Using visualCaseGen's configuration system, set the configuration variables for the case
         # based on the provided arguments. This includes setting the compset, grid, and launch variables.
@@ -358,7 +356,6 @@ class Case:
         rmax: float | None = None,
         fold: float | None = None,
         chl_processed_filepath: str | Path | None = None,
-        data_input_path: str | Path | None = None,
         global_river_nutrients_filepath: str | Path | None = None,
         marbl_ic_filepath: str | Path | None = None,
     ):
@@ -404,8 +401,6 @@ class Case:
             If not provided, a suggested value based on the ocean grid will be used.
         chl_processed_filepath : Path
             If passed, points to the processed global chlorophyll file for regional processing through mom6_bathy.chl
-        data_input_path : str or Path, optional
-            If passed, a path to the directory where raw output data is stored. This is used instead to extract OBCs and ICs for the case.
         global_river_nutrients_filepath: str or Path, optional
             If passed, points to the processed global river nutrients file for regional processing through mom6_bathy.mapping
         marbl_ic_filepath: str or Path, optional
@@ -432,20 +427,12 @@ class Case:
         --------
         process_forcings : Executes the actual boundary, initial condition, and tide setup based on the configuration.
         """
-
+        ProductRegistry.load()
         self.forcing_product_name = product_name.lower()
-        if product_info != None:
-            self.ProductFunctionRegistry.add_product_config(
-                product_name, product_info=product_info
-            )
-        if data_input_path is not None and product_name.upper() == "CESM_OUTPUT":
-            self.configure_cesm_initial_and_boundary_conditions(
-                input_path=data_input_path,
-                date_range=date_range,
-                boundaries=boundaries,
-                too_much_data=too_much_data,
-            )
-        elif product_name.upper() == "GLORYS":
+        if (
+            ProductRegistry.product_exists(product_name)
+            and ProductRegistry.product_is_of_type(product_name,ForcingProduct)
+        ):
             self.configure_initial_and_boundary_conditions(
                 date_range=date_range,
                 boundaries=boundaries,
@@ -518,79 +505,6 @@ class Case:
         )
         return True
 
-    def configure_cesm_initial_and_boundary_conditions(
-        self,
-        input_path: str | Path,
-        date_range: list[str],
-        boundaries: list[str] = ["south", "north", "west", "east"],
-        too_much_data: bool = False,
-    ):
-        """
-        Configure CESM OBC and ICs from previous CESM output
-        """
-        self.boundaries = boundaries
-
-        if too_much_data:
-            self._large_data_workflow_called = True
-
-        self.date_range = pd.to_datetime(date_range)
-        # Create the forcing directory
-        if self.override is True:
-            forcing_dir_path = self.inputdir / self.forcing_product_name
-            if forcing_dir_path.exists():
-                shutil.rmtree(forcing_dir_path)
-        forcing_dir_path.mkdir(exist_ok=False)
-
-        # Generate Boundary Info
-        boundary_info = dv.get_rectangular_segment_info(self.ocn_grid)
-
-        # Create the OBC generation files
-        self.large_data_workflow_path = (
-            self.inputdir
-            / self.forcing_product_name
-            / "cesm_output_extract_obc_workflow"
-        )
-
-        # Copy large data workflow folder there
-        shutil.copytree(
-            Path(__file__).parent / "extract_obc",
-            self.large_data_workflow_path,
-        )
-
-        # Set Vars for Config
-        date_format = "%Y%m%d"
-
-        with open(self.large_data_workflow_path / "config.json", "r") as f:
-            config = json.load(f)
-        config["paths"]["input_path"] = str(input_path)
-        config["paths"]["supergrid_path"] = self.supergrid_path
-        config["paths"]["bathymetry_path"] = self.topo_path
-        config["paths"]["vgrid_path"] = self.vgrid_path
-        config["paths"]["subset_input_path"] = str(
-            self.large_data_workflow_path / "subsetted_data"
-        )
-        config["paths"]["regrid_path"] = str(
-            self.large_data_workflow_path / "regridded_data"
-        )
-        config["paths"]["output_path"] = str(self.inputdir / "ocnice")
-        config["dates"]["start"] = self.date_range[0].strftime(date_format)
-        config["dates"]["end"] = self.date_range[1].strftime(date_format)
-        config["dates"]["format"] = date_format
-        config["cesm_information"] = self.ProductFunctionRegistry.load_product_config(
-            self.forcing_product_name.lower()
-        )
-        config["general"]["boundary_number_conversion"] = {
-            item: idx + 1 for idx, item in enumerate(self.boundaries)
-        }
-
-        # Write out
-        with open(self.large_data_workflow_path / "config.json", "w") as f:
-            json.dump(config, f, indent=4)
-        if self._large_data_workflow_called:
-            print(
-                f"Large data workflow was called, please go to the large data workflow path: {self.large_data_workflow_path} and run the driver script there."
-            )
-
     def configure_initial_and_boundary_conditions(
         self,
         date_range: list[str],
@@ -599,14 +513,6 @@ class Case:
         function_name: str = "get_glorys_data_script_for_cli",
         too_much_data: bool = False,
     ):
-        assert (
-            tb.category_of_product(product_name) == "forcing"
-        ), "Data product must be a forcing product"
-
-        if not self.ProductFunctionRegistry.validate_function(
-            product_name, function_name
-        ):
-            raise ValueError("Selected Product or Function was not valid")
         self.forcing_product_name = product_name.lower()
         if not (
             isinstance(date_range, list)
@@ -620,30 +526,27 @@ class Case:
             raise TypeError("boundaries must be a list of strings.")
         if not all(isinstance(boundary, str) for boundary in boundaries):
             raise TypeError("boundaries must be a list of strings.")
+
         self.boundaries = boundaries
-
-        if too_much_data:
-            self._large_data_workflow_called = True
-
+        self._too_much_data = too_much_data
         self.date_range = pd.to_datetime(date_range)
+        
         # Create the forcing directory
+        forcing_dir_path = self.inputdir / self.forcing_product_name
         if self.override is True:
-            forcing_dir_path = self.inputdir / self.forcing_product_name
             if forcing_dir_path.exists():
                 shutil.rmtree(forcing_dir_path)
-        forcing_dir_path.mkdir(exist_ok=False)
-        # Generate Boundary Info
-        boundary_info = dv.get_rectangular_segment_info(self.ocn_grid)
+        forcing_dir_path.mkdir(exist_ok=True)
 
         # Create the OBC generation files
-        self.large_data_workflow_path = (
-            self.inputdir / self.forcing_product_name / "large_data_workflow"
+        self.extract_forcings_path = (
+            self.inputdir / self.forcing_product_name / "extract_forcings"
         )
 
         # Copy large data workflow folder there
         shutil.copytree(
-            Path(__file__).parent / "raw_data_access" / "large_data_workflow",
-            self.large_data_workflow_path,
+            Path(__file__).parent / "extract_forcings",
+            self.extract_forcings_path,
         )
 
         # Set Vars for Config
@@ -652,49 +555,64 @@ class Case:
         # Write Config File
 
         # Read in template
-        if not self._large_data_workflow_called:
+        if not self._too_much_data:
             step = (self.date_range[1] - self.date_range[0]).days + 1
         else:
             step = 5
 
-        with open(self.large_data_workflow_path / "config.json", "r") as f:
+        with open(self.extract_forcings_path / "config.json", "r") as f:
             config = json.load(f)
+
+        # Paths
         config["paths"]["hgrid_path"] = self.supergrid_path
         config["paths"]["vgrid_path"] = self.vgrid_path
+        config["paths"]["bathymetry_path"] = self.topo_path
         config["paths"]["raw_dataset_path"] = str(
-            self.large_data_workflow_path / "raw_data"
+            self.extract_forcings_path / "raw_data"
         )
         config["paths"]["regridded_dataset_path"] = str(
-            self.large_data_workflow_path / "regridded_data"
+            self.extract_forcings_path / "regridded_data"
         )
-        config["paths"]["merged_dataset_path"] = str(self.inputdir / "ocnice")
+        config["paths"]["output_path"] = str(self.inputdir / "ocnice")
+
+        # Regex never changes!
+
+        # Dates
         config["dates"]["start"] = self.date_range[0].strftime(date_format)
         config["dates"]["end"] = self.date_range[1].strftime(date_format)
         config["dates"]["format"] = date_format
+
+        # Product Information
         config["forcing"]["product_name"] = self.forcing_product_name.upper()
         config["forcing"]["function_name"] = function_name
-        config["forcing"]["varnames"] = (
-            self.ProductFunctionRegistry.load_product_config(
-                self.forcing_product_name.lower()
-            )
-        )
-        config["boundary_number_conversion"] = {
+        config["forcing"]["information"] = ProductRegistry.get_product(self.forcing_product_name.lower()).write_metadata(include_marbl_tracers=self.bgc_in_compset)
+        
+
+        # General
+        config["general"]["boundary_number_conversion"] = {
             item: idx + 1 for idx, item in enumerate(self.boundaries)
         }
-        config["params"]["step"] = step
+        config["general"]["step"] = step
 
         # Write out
-        with open(self.large_data_workflow_path / "config.json", "w") as f:
+        with open(self.extract_forcings_path / "config.json", "w") as f:
             json.dump(config, f, indent=4)
-        if not self._large_data_workflow_called:
-            # This means we start to run the driver right away, the get dataset piecewise option.
-            sys.path.append(str(self.large_data_workflow_path))
-            import driver
 
-            driver.main(regrid_dataset_piecewise=False, merge_piecewise_dataset=False)
+        # Import Extract Forcings Workflow
+        module_name = f"driver_{uuid.uuid4().hex}"
+        spec = importlib.util.spec_from_file_location(
+            module_name, self.extract_forcings_path / "driver.py"
+        )
+        self.driver = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(self.driver)
+
+        if not self._too_much_data:
+            self.driver.main(
+                regrid_dataset_piecewise=False, merge_piecewise_dataset=False
+            )
         else:
             print(
-                f"Large data workflow was called, please go to the large data workflow path: {self.large_data_workflow_path} and run the driver script there."
+                f"Extract Forcings workflow was called, please go to the extract forcings path: {self.extract_forcings_path} and run the driver script there."
             )
 
     def configure_river_nutrients(self, global_river_nutrients_filepath: str | Path):
@@ -742,26 +660,13 @@ class Case:
             Path(tpxo_velocity_filepath) if tpxo_velocity_filepath else None
         )
 
-        self.expt = rmom6.experiment(
-            date_range=("1850-01-01 00:00:00", "1851-01-01 00:00:00"),  # Dummy times
-            resolution=None,
-            number_vertical_layers=None,
-            layer_thickness_ratio=None,
-            depth=self.ocn_topo.max_depth,
-            mom_run_dir=self._cime_case.get_value("RUNDIR"),
-            mom_input_dir=self.inputdir / "ocnice",
-            hgrid_type="from_file",
-            hgrid_path=self.supergrid_path,
-            vgrid_type="from_file",
-            vgrid_path=self.vgrid_path,
-            minimum_depth=self.ocn_topo.min_depth,
-            tidal_constituents=self.tidal_constituents,
-            expt_name=self.caseroot.name,
-            boundaries=boundaries,
-        )
         return True
 
     def configure_chl(self, chl_processed_filepath: str | Path):
+        if self.bgc_in_compset:
+            raise ValueError(
+                "Chlorophyll configuration through MOM6 was requested, but cannot be used if BGC is in compset (chlorophyll is a part of BGC)"
+            )
         self.chl_processed_filepath = (
             Path(chl_processed_filepath) if chl_processed_filepath else None
         )
@@ -825,14 +730,10 @@ class Case:
             raise RuntimeError(
                 "configure_forcings() must be called before process_forcings()."
             )
-        if (self.forcing_product_name).upper() == "CESM_OUTPUT":
-            self.process_cesm_initial_and_boundary_conditions(
-                process_initial_condition, process_velocity_tracers
-            )
-        else:
-            self.process_initial_and_boundary_conditions(
-                process_initial_condition, process_velocity_tracers
-            )
+
+        self.process_initial_and_boundary_conditions(
+            process_initial_condition, process_velocity_tracers
+        )
         if self.configured_bgc and process_bgc:
             self.process_bgc_iron_forcing()
             self.process_bgc_ic()
@@ -886,44 +787,6 @@ class Case:
         }
         ds.to_netcdf(self.fesedflux_filepath)
         ds.to_netcdf(self.feventflux_filepath)
-
-    def process_cesm_initial_and_boundary_conditions(
-        self,
-        process_initial_condition=True,
-        process_velocity_tracers=True,
-    ):
-        if self._large_data_workflow_called and (
-            process_velocity_tracers or process_initial_condition
-        ):
-            process_velocity_tracers = False
-            process_initial_condition = False
-            print(
-                f"Large data workflow was called, so boundary & initial conditions will not be processed."
-            )
-            print(
-                f"Please make sure to execute large_data_workflow as described in {self.large_data_workflow_path}"
-            )
-
-        # Set up the initial condition & boundary conditions
-
-        with open(self.large_data_workflow_path / "config.json", "r") as f:
-            config = json.load(f)
-        if process_initial_condition:
-            config["general"]["run_initial_condition"] = True
-        else:
-            config["general"]["run_initial_condition"] = False
-        if process_velocity_tracers:
-            config["general"]["run_boundary_conditions"] = True
-        else:
-            config["general"]["run_boundary_conditions"] = False
-        with open(self.large_data_workflow_path / "config.json", "w") as f:
-            json.dump(config, f, indent=4)
-
-        if process_initial_condition or process_velocity_tracers:
-            sys.path.append(str(self.large_data_workflow_path))
-            import eo_driver
-
-            eo_driver.extract_obcs(config)
 
     def process_tides(self):
         # Process the tides
@@ -1158,7 +1021,7 @@ class Case:
         self, process_initial_condition, process_velocity_tracers
     ):
 
-        if self._large_data_workflow_called and (
+        if self._too_much_data and (
             process_velocity_tracers or process_initial_condition
         ):
             process_velocity_tracers = False
@@ -1167,54 +1030,11 @@ class Case:
                 f"Large data workflow was called, so boundary & initial conditions will not be processed."
             )
             print(
-                f"Please make sure to execute large_data_workflow as described in {self.large_data_workflow_path}"
+                f"Please make sure to execute large_data_workflow as described in {self.extract_forcings_path}"
             )
-
-        # check all the boundary files are present:
-        if (
-            process_initial_condition
-            and not (
-                self.large_data_workflow_path / "raw_data" / "ic_unprocessed.nc"
-            ).exists()
-        ):
-            raise FileNotFoundError(
-                f"Initial condition file ic_unprocessed.nc not found in {self.large_data_workflow_path/'raw_data' }. "
-                "Please make sure to execute get_glorys_data.sh script as described in "
-                "the message printed by configure_forcings()."
-            )
-
-        for boundary in self.boundaries:
-            if process_velocity_tracers and not any(
-                (self.large_data_workflow_path / "raw_data").glob(
-                    f"{boundary}_unprocessed*.nc"
-                )
-            ):
-                raise FileNotFoundError(
-                    f"Boundary file {boundary}_unprocessed.nc not found in {self.large_data_workflow_path / 'raw_data'}. "
-                    "Please make sure to execute get_glorys_data.sh script as described in "
-                    "the message printed by configure_forcings()."
-                )
-
-        # Set up the initial condition & boundary conditions
-
-        with open(self.large_data_workflow_path / "config.json", "r") as f:
-            config = json.load(f)
-        if process_initial_condition:
-            config["params"]["run_initial_condition"] = True
-        else:
-            config["params"]["run_initial_condition"] = False
-        if process_velocity_tracers:
-            config["params"]["run_boundary_conditions"] = True
-        else:
-            config["params"]["run_boundary_conditions"] = False
-        with open(self.large_data_workflow_path / "config.json", "w") as f:
-            json.dump(config, f, indent=4)
 
         if process_initial_condition or process_velocity_tracers:
-            sys.path.append(str(self.large_data_workflow_path))
-            import driver
-
-            driver.main(
+            self.driver.main(
                 get_dataset_piecewise=False,
                 regrid_dataset_piecewise=True,
                 merge_piecewise_dataset=True,
@@ -1223,6 +1043,42 @@ class Case:
     @property
     def name(self) -> str:
         return self.caseroot.name
+
+    @property 
+    def expt(self) -> rmom6.experiment:
+        
+        if not hasattr(self, "date_range"):
+            print("Date not found so using a dummy date of 1850-1851")
+            date_range = ("1850-01-01 00:00:00", "1851-01-01 00:00:00")  # Dummy times
+        else:
+            date_range = tuple(ts.strftime("%Y-%m-%d %H:%M:%S") for ts in self.date_range)
+        if not hasattr(self, "boundaries"):
+            print("Boundaries not found so using default")
+            self.boundaries =  ["north", "south", "east", "west"]
+        if not hasattr(self, "tidal_constituents"):
+            print("tidal_constituents not found so using only M2")
+            self.tidal_constituents =  ["M2"]
+
+        expt = rmom6.experiment(
+            date_range=date_range,  
+            resolution=None,
+            number_vertical_layers=None,
+            layer_thickness_ratio=None,
+            depth=self.ocn_topo.max_depth,
+            mom_run_dir=self._cime_case.get_value("RUNDIR"),
+            mom_input_dir=self.inputdir / "ocnice",
+            hgrid_type="from_file",
+            hgrid_path=self.supergrid_path,
+            vgrid_type="from_file",
+            vgrid_path=self.vgrid_path,
+            minimum_depth=self.ocn_topo.min_depth,
+            tidal_constituents=self.tidal_constituents,
+            expt_name=self.caseroot.name,
+            boundaries=self.boundaries,
+        )
+        expt.hgrid = self.ocn_grid.gen_supergrid_ds()
+        # expt.vgrid = self.ocn_vgrid.gen_vgrid_ds() # Not implemented yet
+        return expt
 
 
     def _configure_case(self, atm_grid_name, rof_grid_name):
@@ -1454,31 +1310,19 @@ class Case:
             ("DEPRESS_INITIAL_SURFACE", True),
             ("VELOCITY_CONFIG", "file"),
         ]
-        if self.forcing_product_name.upper() != "CESM_OUTPUT":
-            ic_params.extend(
-                [
-                    ("TEMP_SALT_Z_INIT_FILE", "init_tracers.nc"),
-                    ("SURFACE_HEIGHT_IC_FILE", "init_eta.nc"),
-                    ("SURFACE_HEIGHT_IC_VAR", "eta_t"),
-                    ("VELOCITY_FILE", "init_vel.nc"),
-                    ("Z_INIT_FILE_PTEMP_VAR", "temp"),
-                ]
-            )
 
-        else:
-            ic_params.extend(
-                [
-                    ("TEMP_Z_INIT_FILE", "TEMP_IC.nc"),
-                    ("SALT_Z_INIT_FILE", "SALT_IC.nc"),
-                    ("Z_INIT_FILE_PTEMP_VAR", "TEMP"),
-                    ("Z_INIT_FILE_SALT_VAR", "SALT"),
-                    ("SURFACE_HEIGHT_IC_FILE", "SSH_IC.nc"),
-                    ("SURFACE_HEIGHT_IC_VAR", "SSH"),
-                    ("VELOCITY_FILE", "VEL_IC.nc"),
-                    ("U_IC_VAR", "UVEL"),
-                    ("V_IC_VAR", "VVEL"),
-                ]
-            )
+        ic_params.extend(
+            [
+                ("TEMP_SALT_Z_INIT_FILE", "init_tracers.nc"),
+                ("SURFACE_HEIGHT_IC_FILE", "init_eta.nc"),
+                ("VELOCITY_FILE", "init_vel.nc"),
+                ("Z_INIT_FILE_PTEMP_VAR", "temp"),
+                ("Z_INIT_FILE_SALT_VAR", "salt"),
+                ("SURFACE_HEIGHT_IC_VAR", "eta_t"),
+                ("U_IC_VAR", "u"),
+                ("V_IC_VAR", "v"),
+            ]
+        )
 
         append_user_nl(
             "mom",
@@ -1601,31 +1445,19 @@ class Case:
             # Nudging
             obc_params.append((seg_id + "_VELOCITY_NUDGING_TIMESCALES", "0.3, 360.0"))
             bgc_tracers = ""
-            if self.forcing_product_name.upper() != "CESM_OUTPUT":
-                standard_data_str = lambda: (
-                    f'"U=file:forcing_obc_segment_{seg_ix}.nc(u),'
-                    f"V=file:forcing_obc_segment_{seg_ix}.nc(v),"
-                    f"SSH=file:forcing_obc_segment_{seg_ix}.nc(eta),"
-                    f"TEMP=file:forcing_obc_segment_{seg_ix}.nc(temp),"
-                    f"SALT=file:forcing_obc_segment_{seg_ix}.nc(salt)"
-                )
-            else:
+            standard_data_str = lambda: (
+                f'"U=file:forcing_obc_segment_{seg_ix}.nc(u),'
+                f"V=file:forcing_obc_segment_{seg_ix}.nc(v),"
+                f"SSH=file:forcing_obc_segment_{seg_ix}.nc(eta),"
+                f"TEMP=file:forcing_obc_segment_{seg_ix}.nc(temp),"
+                f"SALT=file:forcing_obc_segment_{seg_ix}.nc(salt)"
+            )
+            if self.bgc_in_compset:
 
-                product_info = self.ProductFunctionRegistry.load_product_config(
-                    self.forcing_product_name
-                )
+                product_info = ProductRegistry.get_product(self.forcing_product_name.lower()).marbl_var_names
+                for tracer_mom6_name in product_info:
+                    bgc_tracers += f',{tracer_mom6_name}=file:forcing_obc_segment_{seg_ix}.nc({product_info["tracer_var_names"][tracer_mom6_name]})'
 
-                standard_data_str = lambda: (
-                    f"\"U=file:{product_info['u']}_obc_segment_{seg_ix}.nc({product_info['u']}),"
-                    f"V=file:{product_info['v']}_obc_segment_{seg_ix}.nc({product_info['v']}),"
-                    f"SSH=file:{product_info['ssh']}_obc_segment_{seg_ix}.nc({product_info['ssh']}),"
-                    f"TEMP=file:{product_info['tracers']['temp']}_obc_segment_{seg_ix}.nc({product_info['tracers']['temp']}),"
-                    f"SALT=file:{product_info['tracers']['salt']}_obc_segment_{seg_ix}.nc({product_info['tracers']['salt']})"
-                )
-
-                for tracer_mom6_name in product_info["tracers"]:
-                    if tracer_mom6_name != "temp" and tracer_mom6_name != "salt":
-                        bgc_tracers += f',{tracer_mom6_name}=file:{product_info["tracers"][tracer_mom6_name]}_obc_segment_{seg_ix}.nc({product_info["tracers"][tracer_mom6_name]})'
             tidal_data_str = lambda: (
                 f",Uamp=file:tu_segment_{seg_ix}.nc(uamp),"
                 f"Uphase=file:tu_segment_{seg_ix}.nc(uphase),"

@@ -1,1 +1,0 @@
-A mid-step folder to store subsetted CESM data.

@@ -37,6 +37,7 @@ Get Started
    datasets
    structure
    configure_forcings
+   available_compset_alias
    additional_resources
    developers/index
    api-docs/modules
