@@ -423,7 +423,7 @@ class Case:
             "session_id": cvars["MB_ATTEMPT_ID"].value,
             "boundaries":boundaries
         }
-        ForcingConfigRegistry.find_active_configurators(self.compset, inputs)
+        ForcingConfigRegistry.find_active_configurators(self.compset_lname, inputs)
         ForcingConfigRegistry.run_configurators()
 
         self._update_forcing_variables()
@@ -597,7 +597,7 @@ class Case:
         if ForcingConfigRegistry.is_active("chl") and not (kwargs.get("process_chl") == False):
             self.process_chl()
         if ForcingConfigRegistry.is_active("runoff") and not (kwargs.get("process_runoff") == False):
-            self.process_runoff()
+            self.generate_rof_ocn_map()
         if ForcingConfigRegistry.is_active("BGCRiverNutrients") and not (kwargs.get("process_bgc_river_nutrients") == False):
             self.process_river_nutrients()
         print(f"Case is ready to be built: {self.caseroot}")
@@ -799,48 +799,42 @@ class Case:
     def generate_rof_ocn_map(self):
         """Generate runoff to ocean mapping files if runoff is active in the compset."""
 
-        assert self.runoff_in_compset, "Must have active or data runoff in compset to generate rof_to_ocn map."
-        assert self.esmf_mesh_path is not None, "MOM6 ESMF mesh path is not set."
-
-        if self.rmax is None:
-            self.rmax, self.fold = mapping.get_suggested_smoothing_params(self.esmf_mesh_path)
-
         rof_grid_name = cvars["CUSTOM_ROF_GRID"].value
         assert rof_grid_name is not None, "Couldn't determine runoff grid name."
         rof_esmf_mesh_filepath = self.cime.get_mesh_path("rof", rof_grid_name)
         assert rof_esmf_mesh_filepath != '', "Runoff ESMF mesh path could not be found."
 
-        ocn_grid_name = self.ocn_grid.name
+        ocn_grid_name = ForcingConfigRegistry["runoff"].grid_name
         mapping_file_prefix = f"{rof_grid_name}_to_{ocn_grid_name}_map"
         mapping_dir = self.inputdir / "mapping"
         mapping_dir.mkdir(exist_ok=False)
 
-        self.runoff_mapping_file_nnsm = mapping.get_smoothed_map_filepath(
+        runoff_mapping_file_nnsm = mapping.get_smoothed_map_filepath(
             mapping_file_prefix=mapping_file_prefix,
             output_dir=mapping_dir,
-            rmax=self.rmax,
-            fold=self.fold,
+            rmax=ForcingConfigRegistry["runoff"].rmax,
+            fold=ForcingConfigRegistry["runoff"].fold,
         )
 
-        if not self.runoff_mapping_file_nnsm.exists():
+        if not runoff_mapping_file_nnsm.exists():
             print("Creating runoff mapping file(s)...")
             mapping.gen_rof_maps(
                 rof_mesh_path=rof_esmf_mesh_filepath,
-                ocn_mesh_path=self.esmf_mesh_path,
+                ocn_mesh_path=ForcingConfigRegistry["runoff"].esmf_mesh_path,
                 output_dir=mapping_dir,
                 mapping_file_prefix=mapping_file_prefix,
-                rmax=self.rmax,
-                fold=self.fold
+                rmax=ForcingConfigRegistry["runoff"].rmax,
+                fold=ForcingConfigRegistry["runoff"].fold
             )
 
             xmlchange(
                 "ROF2OCN_LIQ_RMAPNAME",
-                str(self.runoff_mapping_file_nnsm),
+                str(runoff_mapping_file_nnsm),
                 is_non_local=self.cc._is_non_local(),
             )
             xmlchange(
                 "ROF2OCN_ICE_RMAPNAME",
-                str(self.runoff_mapping_file_nnsm),
+                str(runoff_mapping_file_nnsm),
                 is_non_local=self.cc._is_non_local(),
             )
         else:

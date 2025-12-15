@@ -8,6 +8,7 @@ from visualCaseGen.custom_widget_types.case_tools import (
 )
 from CrocoDash.utils import setup_logger
 import inspect
+from ProConPy.config_var import ConfigVar, cvars
 
 logger = setup_logger(__name__)
 
@@ -35,19 +36,21 @@ class ForcingConfigRegistry:
 
     @classmethod
     def find_active_configurators(cls, compset, inputs: dict):
-
+        inputs["compset"] = compset
         # Find Active Configurators
         for configurator_cls in cls.registered_types:
             sig = inspect.signature(configurator_cls.__init__)
             args = [p.name for p in sig.parameters.values() if p.name != "self"]
+            required_args = [ p.name for p in sig.parameters.values() if p.name != "self" and p.default is inspect._empty ]
             # If required add to active configurators
             if configurator_cls.is_required(compset):
-                ctor_kwargs = {arg: inputs[arg] for arg in args if arg in inputs}
+                
                 logger.info(f"[REQUIRED] Activating {configurator_cls.name}")
-                if not all(arg in inputs for arg in args):
+                if not all(arg in inputs for arg in required_args):
                     raise ValueError(
-                        f"[ERROR] Required configurator {configurator_cls.name} missing at least one of the args: {args}"
+                        f"[ERROR] Required configurator {configurator_cls.name} missing at least one of the args: {required_args}"
                     )
+                ctor_kwargs = {arg: inputs[arg] for arg in args if arg in inputs}
                 cls.active_configurators[configurator_cls.name.lower()] = (
                     configurator_cls(**ctor_kwargs)
                 )
@@ -58,8 +61,8 @@ class ForcingConfigRegistry:
                         f"[SKIP] {configurator_cls.name} incompatible with compset"
                     )
                     continue
-                if not all(arg in inputs for arg in args):
-                    logger.info(f"[SKIP] {configurator_cls.name} missing args: {args}")
+                if not all(arg in inputs for arg in required_args):
+                    logger.info(f"[SKIP] {configurator_cls.name} missing args: {required_args}")
                     continue
 
                 # setup configurator
@@ -322,17 +325,38 @@ class RunoffConfigurator(BaseConfigurator):
     allowed_compsets = {"DROF"}
     forbidden_compsets = []
 
-    def __init__(self, runoff_esmf_mesh_filepath, grid_name, session_id):
+    def __init__(self, runoff_esmf_mesh_filepath,grid_name, session_id, compset,inputdir, rmax=None, fold=None):
+        """
+        rmax : float, optional
+            If passed, specifies the smoothing radius (in meters) for runoff mapping generation.
+            If not provided, a suggested value based on the ocean grid will be used.
+        fold : float, optional
+            If passed, specifies the smoothing fold parameter for runoff mapping generation.
+            If not provided, a suggested value based on the ocean grid will be used.
+        """
         super().__init__(
             runoff_esmf_mesh_filepath=runoff_esmf_mesh_filepath,
             grid_name=grid_name,
             session_id=session_id,
-            rmax=100,
-            fold=100,
+            rmax=rmax,
+            fold=fold,
+            compset=compset
         )
         self.params = []
         self.runoff_mapping_file_nnsm = (
             f"glofas_{self.grid_name}_{self.session_id}_nnsm.nc"
+        )
+        rof_grid_name = cvars["CUSTOM_ROF_GRID"].value
+        mapping_file_prefix = f"{rof_grid_name}_to_{grid_name}_map"
+        mapping_dir = inputdir / "mapping"
+        mapping_dir.mkdir(exist_ok=False)
+        if self.rmax is None:
+            self.rmax, self.fold = mapping.get_suggested_smoothing_params(self.esmf_mesh_path)
+        self.runoff_mapping_file_nnsm = mapping.get_smoothed_map_filepath(
+            mapping_file_prefix=mapping_file_prefix,
+            output_dir=mapping_dir,
+            rmax=self.rmax,
+            fold=self.fold,
         )
         self.params.append(
             XMLConfigParam("ROF2OCN_LIQ_RMAPNAME", self.runoff_mapping_file_nnsm)
@@ -344,6 +368,13 @@ class RunoffConfigurator(BaseConfigurator):
     def configure(self):
         super().configure()
 
+    def validate_args(self, **kwargs):
+
+        if (rmax is None) != (fold is None):
+                    raise ValueError("Both rmax and fold must be specified together.")
+        if rmax is not None:
+            assert 'SROF' not in self.compset, "When rmax and fold are specified, " \
+                "the compset must include an active or data runoff model."
 
 @register
 class ChlConfigurator(BaseConfigurator):
