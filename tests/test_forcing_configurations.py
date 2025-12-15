@@ -54,8 +54,10 @@ def test_all_configurators_smoke(fake_param_case):
             else:
                 ctor_args[a] = dummy_str
         instance = config_class(**ctor_args)
-        
-        if hasattr(instance,"params") and any(isinstance(x, XMLConfigParam) for x in instance.params):
+
+        if hasattr(instance, "params") and any(
+            isinstance(x, XMLConfigParam) for x in instance.params
+        ):
             with pytest.raises(RuntimeError):
                 instance.configure()
         else:

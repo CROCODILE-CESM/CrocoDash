@@ -43,7 +43,7 @@ class Dummy1(BaseConfigurator):
 
 @pytest.fixture
 def fcr_add_dummy1():
-    ForcingConfigRegistry.find_active_configurators("", {"dummy": "dummy"})
+    return ForcingConfigRegistry("", {"dummy": "dummy"})
 
 
 def test_validate_compset_compatability():
@@ -68,28 +68,29 @@ def test_FCR_register():
 
 def test_FCR_find_active_configurators_accessible_and_check_init():
     """Test if you have a properly set up configurator with the right arguments it gets registered, and has required compset and the init works"""
-    ForcingConfigRegistry.find_active_configurators("req", {"dummy": "dummy"})
-    assert ForcingConfigRegistry.is_active("dummy")
-    assert ForcingConfigRegistry.is_active("dummy1")
-    assert type(ForcingConfigRegistry["dummy1"]) == Dummy1
-    assert ForcingConfigRegistry["dummy1"].dummy == "dummy"  # check init works
+    fcr = ForcingConfigRegistry("req", {"dummy": "dummy"})
+    assert fcr.is_active("dummy")
+    assert fcr.is_active("dummy1")
+    assert type(fcr["dummy1"]) == Dummy1
+    assert fcr["dummy1"].dummy == "dummy"  # check init works
 
 
 def test_FCR_find_active_configurators_fail_if_required_and_no_valid_args():
     """Test if we can trigger the is_required option andfaily with the wrong args"""
     with pytest.raises(ValueError):
-        ForcingConfigRegistry.find_active_configurators("req", {})
+        ForcingConfigRegistry("req", {})
 
 
 def test_FCR_find_active_configurators_skip_if_no_args():
     """Test if we can trigger skip if the proper args aren't given in dummy1"""
-    ForcingConfigRegistry.clear()
-    ForcingConfigRegistry.find_active_configurators("", {})
+
+    fcr = ForcingConfigRegistry("", {})
     assert (
-        "dummy1" not in ForcingConfigRegistry.active_configurators
+        "dummy1" not in fcr.active_configurators
     )  # active configurators should be empty
 
 
 def test_FCR_configure(fcr_add_dummy1):
-    ForcingConfigRegistry.run_configurators()
-    assert ForcingConfigRegistry["dummy1"].dummy1 == 1
+    fcr = fcr_add_dummy1
+    fcr.run_configurators()
+    assert fcr["dummy1"].dummy1 == 1

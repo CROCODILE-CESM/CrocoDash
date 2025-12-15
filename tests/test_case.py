@@ -136,7 +136,7 @@ def test_configure_forcings(get_CrocoDash_case, tmp_path):
     )
 
     assert case.date_range[0].year == 2020
-    assert ForcingConfigRegistry["tides"].tidal_constituents == ["M2"]
+    assert case.fcr["tides"].tidal_constituents == ["M2"]
     assert case.boundaries == ["north", "south", "east"]
 
 def test_process_forcing(get_CrocoDash_case, tmp_path):

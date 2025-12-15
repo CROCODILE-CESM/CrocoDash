@@ -20,38 +20,40 @@ def register(cls):
 
 class ForcingConfigRegistry:
     registered_types: List[type] = []
-    active_configurators = {}
-
-    @classmethod
-    def clear(cls):
-        cls.active_configurators = {}
 
     @classmethod
     def register(cls, configurator_cls: type):
+
         cls.registered_types.append(configurator_cls)
 
-    @classmethod
-    def __class_getitem__(cls, key: str):
-        return cls.active_configurators[key.lower()]
+    def __getitem__(self, key: str):
+        return self.active_configurators[key.lower()]
 
-    @classmethod
-    def find_active_configurators(cls, compset, inputs: dict):
+    def __init__(self, compset, inputs: dict):
+        self.active_configurators = {}
+        self.find_active_configurators(compset, inputs)
+
+    def find_active_configurators(self, compset, inputs: dict):
         inputs["compset"] = compset
         # Find Active Configurators
-        for configurator_cls in cls.registered_types:
+        for configurator_cls in self.registered_types:
             sig = inspect.signature(configurator_cls.__init__)
             args = [p.name for p in sig.parameters.values() if p.name != "self"]
-            required_args = [ p.name for p in sig.parameters.values() if p.name != "self" and p.default is inspect._empty ]
+            required_args = [
+                p.name
+                for p in sig.parameters.values()
+                if p.name != "self" and p.default is inspect._empty
+            ]
             # If required add to active configurators
             if configurator_cls.is_required(compset):
-                
+
                 logger.info(f"[REQUIRED] Activating {configurator_cls.name}")
                 if not all(arg in inputs for arg in required_args):
                     raise ValueError(
                         f"[ERROR] Required configurator {configurator_cls.name} missing at least one of the args: {required_args}"
                     )
                 ctor_kwargs = {arg: inputs[arg] for arg in args if arg in inputs}
-                cls.active_configurators[configurator_cls.name.lower()] = (
+                self.active_configurators[configurator_cls.name.lower()] = (
                     configurator_cls(**ctor_kwargs)
                 )
             else:
@@ -62,30 +64,29 @@ class ForcingConfigRegistry:
                     )
                     continue
                 if not all(arg in inputs for arg in required_args):
-                    logger.info(f"[SKIP] {configurator_cls.name} missing args: {required_args}")
+                    logger.info(
+                        f"[SKIP] {configurator_cls.name} missing args: {required_args}"
+                    )
                     continue
 
                 # setup configurator
                 ctor_kwargs = {arg: inputs[arg] for arg in args if arg in inputs}
-                cls.active_configurators[configurator_cls.name.lower()] = (
+                self.active_configurators[configurator_cls.name.lower()] = (
                     configurator_cls(**ctor_kwargs)
                 )
 
-    @classmethod
-    def run_configurators(cls):
+    def run_configurators(self):
         # Run Configurators
-        for configurator in cls.active_configurators.values():
+        for configurator in self.active_configurators.values():
             logger.info(f"Configuring {configurator.name}")
             configurator.configure()
 
-    @classmethod
-    def get_active_configurators(cls):
-        return cls.active_configurators.keys()
+    def get_active_configurators(self):
+        return self.active_configurators.keys()
 
-    @classmethod
-    def is_active(cls, name: str) -> bool:
+    def is_active(self, name: str) -> bool:
         """Return True if a configurator with this name is active."""
-        return name.lower() in cls.active_configurators
+        return name.lower() in self.active_configurators
 
 
 class BaseConfigurator(ABC):
@@ -325,7 +326,16 @@ class RunoffConfigurator(BaseConfigurator):
     allowed_compsets = {"DROF"}
     forbidden_compsets = []
 
-    def __init__(self, runoff_esmf_mesh_filepath,grid_name, session_id, compset,inputdir, rmax=None, fold=None):
+    def __init__(
+        self,
+        runoff_esmf_mesh_filepath,
+        grid_name,
+        session_id,
+        compset,
+        inputdir,
+        rmax=None,
+        fold=None,
+    ):
         """
         rmax : float, optional
             If passed, specifies the smoothing radius (in meters) for runoff mapping generation.
@@ -340,7 +350,7 @@ class RunoffConfigurator(BaseConfigurator):
             session_id=session_id,
             rmax=rmax,
             fold=fold,
-            compset=compset
+            compset=compset,
         )
         self.params = []
         self.runoff_mapping_file_nnsm = (
@@ -351,7 +361,9 @@ class RunoffConfigurator(BaseConfigurator):
         mapping_dir = inputdir / "mapping"
         mapping_dir.mkdir(exist_ok=False)
         if self.rmax is None:
-            self.rmax, self.fold = mapping.get_suggested_smoothing_params(self.esmf_mesh_path)
+            self.rmax, self.fold = mapping.get_suggested_smoothing_params(
+                self.esmf_mesh_path
+            )
         self.runoff_mapping_file_nnsm = mapping.get_smoothed_map_filepath(
             mapping_file_prefix=mapping_file_prefix,
             output_dir=mapping_dir,
@@ -371,10 +383,13 @@ class RunoffConfigurator(BaseConfigurator):
     def validate_args(self, **kwargs):
 
         if (rmax is None) != (fold is None):
-                    raise ValueError("Both rmax and fold must be specified together.")
+            raise ValueError("Both rmax and fold must be specified together.")
         if rmax is not None:
-            assert 'SROF' not in self.compset, "When rmax and fold are specified, " \
+            assert "SROF" not in self.compset, (
+                "When rmax and fold are specified, "
                 "the compset must include an active or data runoff model."
+            )
+
 
 @register
 class ChlConfigurator(BaseConfigurator):

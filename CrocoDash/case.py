@@ -423,8 +423,8 @@ class Case:
             "session_id": cvars["MB_ATTEMPT_ID"].value,
             "boundaries":boundaries
         }
-        ForcingConfigRegistry.find_active_configurators(self.compset_lname, inputs)
-        ForcingConfigRegistry.run_configurators()
+        self.fcr = ForcingConfigRegistry(self.compset_lname, inputs)
+        self.fcr.run_configurators()
 
         self._update_forcing_variables()
         self._configure_forcings_called = True
@@ -543,6 +543,7 @@ class Case:
         self,
         process_initial_condition=True,
         process_velocity_tracers=True,
+        **kwargs
     ):
         """
         Process boundary conditions, initial conditions, and other forcings for a MOM6 case.
@@ -589,22 +590,22 @@ class Case:
         )
 
         
-        if ForcingConfigRegistry.is_active("bgc") and not (kwargs.get("process_bgc") == False):
+        if self.fcr.is_active("bgc") and not (kwargs.get("process_bgc") == False):
             self.process_bgc_iron_forcing()
             self.process_bgc_ic()
-        if ForcingConfigRegistry.is_active("tides") and not (kwargs.get("process_tides") == False):
+        if self.fcr.is_active("tides") and not (kwargs.get("process_tides") == False):
             self.process_tides()
-        if ForcingConfigRegistry.is_active("chl") and not (kwargs.get("process_chl") == False):
+        if self.fcr.is_active("chl") and not (kwargs.get("process_chl") == False):
             self.process_chl()
-        if ForcingConfigRegistry.is_active("runoff") and not (kwargs.get("process_runoff") == False):
+        if self.fcr.is_active("runoff") and not (kwargs.get("process_runoff") == False):
             self.generate_rof_ocn_map()
-        if ForcingConfigRegistry.is_active("BGCRiverNutrients") and not (kwargs.get("process_bgc_river_nutrients") == False):
+        if self.fcr.is_active("BGCRiverNutrients") and not (kwargs.get("process_bgc_river_nutrients") == False):
             self.process_river_nutrients()
         print(f"Case is ready to be built: {self.caseroot}")
 
     def process_bgc_ic(self):
-        dest_path = self.inputdir / "ocnice" / Path(ForcingConfigRegistry["bgc"].marbl_ic_filepath).name
-        shutil.copy(ForcingConfigRegistry["bgc"].marbl_ic_filepath, dest_path)
+        dest_path = self.inputdir / "ocnice" / Path(self.fcr["bgc"].marbl_ic_filepath).name
+        shutil.copy(self.fcr["bgc"].marbl_ic_filepath, dest_path)
 
     def process_bgc_iron_forcing(self):
         # Create coordinate variables
@@ -640,29 +641,29 @@ class Case:
         ds.attrs = {
             "history": "Created with xarray (this file is empty)",
         }
-        ds.to_netcdf(self.inputdir / "ocnice" /ForcingConfigRegistry["BGCIronForcing"].fesedflux_filepath)
-        ds.to_netcdf(self.inputdir / "ocnice" /ForcingConfigRegistry["BGCIronForcing"].feventflux_filepath)
+        ds.to_netcdf(self.inputdir / "ocnice" /self.fcr["BGCIronForcing"].fesedflux_filepath)
+        ds.to_netcdf(self.inputdir / "ocnice" /self.fcr["BGCIronForcing"].feventflux_filepath)
 
     def process_tides(self):
         self.expt.setup_boundary_tides(
-            tpxo_elevation_filepath=ForcingConfigRegistry["tides"].tpxo_elevation_filepath,
-            tpxo_velocity_filepath=ForcingConfigRegistry["tides"].tpxo_velocity_filepath,
-            tidal_constituents=ForcingConfigRegistry["tides"].tidal_constituents,
+            tpxo_elevation_filepath=self.fcr["tides"].tpxo_elevation_filepath,
+            tpxo_velocity_filepath=self.fcr["tides"].tpxo_velocity_filepath,
+            tidal_constituents=self.fcr["tides"].tidal_constituents,
         )
 
     def process_chl(self):       
         chl.interpolate_and_fill_seawifs(
             self.ocn_grid,
             self.ocn_topo,
-            ForcingConfigRegistry["chl"].chl_processed_filepath,
-            ForcingConfigRegistry["chl"].regional_chl_file_path,
+            self.fcr["chl"].chl_processed_filepath,
+            self.fcr["chl"].regional_chl_file_path,
         )
 
     def process_river_nutrients(self):
            
             # Open Dataset & Create Regridder
             global_river_nutrients = xr.open_dataset(
-                ForcingConfigRegistry["bgcrivernutrients"].global_river_nutrients_filepath
+                self.fcr["bgcrivernutrients"].global_river_nutrients_filepath
             )
             global_river_nutrients = global_river_nutrients.assign_coords(
                 lon=((global_river_nutrients.lon + 360) % 360)
@@ -682,7 +683,7 @@ class Case:
                 grid_t_points,
                 method="bilinear",
                 reuse_weights=True,
-                filename=ForcingConfigRegistry["runoff"].runoff_mapping_file_nnsm,
+                filename=self.fcr["runoff"].runoff_mapping_file_nnsm,
             )
 
             # Open Dataset & Unit Convert
@@ -791,7 +792,7 @@ class Case:
             }
 
             river_nutrients_remapped_cleaned.to_netcdf(
-                ForcingConfigRegistry["bgcrivernutrients"].river_nutrients_nnsm_filepath,
+                self.fcr["bgcrivernutrients"].river_nutrients_nnsm_filepath,
                 encoding=encoding,
                 unlimited_dims=["time"],
             )
@@ -804,7 +805,7 @@ class Case:
         rof_esmf_mesh_filepath = self.cime.get_mesh_path("rof", rof_grid_name)
         assert rof_esmf_mesh_filepath != '', "Runoff ESMF mesh path could not be found."
 
-        ocn_grid_name = ForcingConfigRegistry["runoff"].grid_name
+        ocn_grid_name = self.fcr["runoff"].grid_name
         mapping_file_prefix = f"{rof_grid_name}_to_{ocn_grid_name}_map"
         mapping_dir = self.inputdir / "mapping"
         mapping_dir.mkdir(exist_ok=False)
@@ -812,19 +813,19 @@ class Case:
         runoff_mapping_file_nnsm = mapping.get_smoothed_map_filepath(
             mapping_file_prefix=mapping_file_prefix,
             output_dir=mapping_dir,
-            rmax=ForcingConfigRegistry["runoff"].rmax,
-            fold=ForcingConfigRegistry["runoff"].fold,
+            rmax=self.fcr["runoff"].rmax,
+            fold=self.fcr["runoff"].fold,
         )
 
         if not runoff_mapping_file_nnsm.exists():
             print("Creating runoff mapping file(s)...")
             mapping.gen_rof_maps(
                 rof_mesh_path=rof_esmf_mesh_filepath,
-                ocn_mesh_path=ForcingConfigRegistry["runoff"].esmf_mesh_path,
+                ocn_mesh_path=self.fcr["runoff"].esmf_mesh_path,
                 output_dir=mapping_dir,
                 mapping_file_prefix=mapping_file_prefix,
-                rmax=ForcingConfigRegistry["runoff"].rmax,
-                fold=ForcingConfigRegistry["runoff"].fold
+                rmax=self.fcr["runoff"].rmax,
+                fold=self.fcr["runoff"].fold
             )
 
             xmlchange(
@@ -1199,18 +1200,18 @@ class Case:
                 f"TEMP=file:forcing_obc_segment_{seg_ix}.nc(temp),"
                 f"SALT=file:forcing_obc_segment_{seg_ix}.nc(salt)"
             )
-            if ForcingConfigRegistry.is_active("bgc"):
+            if self.fcr.is_active("bgc"):
 
                 product_info = ProductRegistry.get_product(self.forcing_product_name.lower()).marbl_var_names
                 for tracer_mom6_name in product_info:
                     bgc_tracers += f',{tracer_mom6_name}=file:forcing_obc_segment_{seg_ix}.nc({product_info["tracer_var_names"][tracer_mom6_name]})'
 
 
-            if ForcingConfigRegistry.is_active("tides"):
+            if self.fcr.is_active("tides"):
                 obc_params.append(
                     (
                         seg_id + "_DATA",
-                        standard_data_str() +  ForcingConfigRegistry.active_configurators["tides"].tidal_data_str(seg_ix) + bgc_tracers + '"',
+                        standard_data_str() +  self.fcr.active_configurators["tides"].tidal_data_str(seg_ix) + bgc_tracers + '"',
                     )
                 )
             else:
