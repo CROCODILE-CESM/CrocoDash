@@ -91,34 +91,54 @@
 <title>CrocoDash_grid&#45;&gt;case_py</title><style>.edge>path:hover{stroke-width:8}</style>
 <path fill="none" stroke="black" d="M4287.22,-116.07C4273.85,-104.82 4260.86,-88.88 4268,-73"/>
 </g>
-<!-- CrocoDash_raw_data_access -->
+<!-- CrocoDash_logging -->
 <g id="node8" class="node">
-<title>CrocoDash_raw_data_access</title><style>.edge>path:hover{stroke-width:8}</style>
-<ellipse fill="#c24747" stroke="black" cx="3839" cy="-132.69" rx="70.18" ry="23.69"/>
-<text text-anchor="middle" x="3839" y="-135.94" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#ffffff">CrocoDash.</text>
-<text text-anchor="middle" x="3839" y="-123.19" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#ffffff">raw_data_access</text>
+<title>CrocoDash_logging</title><style>.edge>path:hover{stroke-width:8}</style>
+<ellipse fill="#c24747" stroke="black" cx="3505" cy="-427.89" rx="50.56" ry="23.69"/>
+<text text-anchor="middle" x="3505" y="-431.14" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#ffffff">CrocoDash.</text>
+<text text-anchor="middle" x="3505" y="-418.39" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#ffffff">logging</text>
 </g>
-<!-- CrocoDash_raw_data_access&#45;&gt;case_py -->
+<!-- CrocoDash_logging&#45;&gt;CrocoDash_forcing_configurations -->
 <g id="edge7" class="edge">
-<title>CrocoDash_raw_data_access&#45;&gt;case_py</title><style>.edge>path:hover{stroke-width:8}</style>
-<path fill="none" stroke="black" d="M3890.68,-116.34C3901.3,-113.58 3912.46,-110.96 3923,-109 3960.89,-101.95 4252.19,-108.15 4268,-73"/>
+<title>CrocoDash_logging&#45;&gt;CrocoDash_forcing_configurations</title><style>.edge>path:hover{stroke-width:8}</style>
+<path fill="none" stroke="black" d="M3537.43,-409.24C3582.01,-384.55 3657.32,-341.19 3662,-327.49"/>
+<path fill="none" stroke="black" d="M3662,-325.49C3680.01,-272.8 3674.92,-207.12 3669.22,-167.89"/>
+<polygon fill="#c24747" stroke="black" points="3672.7,-167.45 3667.69,-158.11 3665.78,-168.53 3672.7,-167.45"/>
 </g>
 <!-- CrocoDash_raw_data_access_base -->
-<g id="node9" class="node">
+<g id="node10" class="node">
 <title>CrocoDash_raw_data_access_base</title><style>.edge>path:hover{stroke-width:8}</style>
 <ellipse fill="#ac4949" stroke="black" cx="3837" cy="-225.08" rx="72.3" ry="32.7"/>
 <text text-anchor="middle" x="3837" y="-234.7" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#ffffff">CrocoDash.</text>
 <text text-anchor="middle" x="3837" y="-221.95" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#ffffff">raw_data_access.</text>
 <text text-anchor="middle" x="3837" y="-209.2" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#ffffff">base</text>
 </g>
-<!-- CrocoDash_raw_data_access_base&#45;&gt;case_py -->
+<!-- CrocoDash_logging&#45;&gt;CrocoDash_raw_data_access_base -->
 <g id="edge8" class="edge">
+<title>CrocoDash_logging&#45;&gt;CrocoDash_raw_data_access_base</title><style>.edge>path:hover{stroke-width:8}</style>
+<path fill="none" stroke="black" d="M3536.02,-408.86C3544.89,-404.08 3554.69,-399.15 3564,-395.19 3612.12,-374.73 3630.14,-384.3 3676,-359.19 3723.16,-333.37 3769.69,-292.81 3800.51,-263.25"/>
+<polygon fill="#c24747" stroke="black" points="3802.56,-266.14 3807.3,-256.66 3797.68,-261.11 3802.56,-266.14"/>
+</g>
+<!-- CrocoDash_raw_data_access -->
+<g id="node9" class="node">
+<title>CrocoDash_raw_data_access</title><style>.edge>path:hover{stroke-width:8}</style>
+<ellipse fill="#c24747" stroke="black" cx="3839" cy="-132.69" rx="70.18" ry="23.69"/>
+<text text-anchor="middle" x="3839" y="-135.94" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#ffffff">CrocoDash.</text>
+<text text-anchor="middle" x="3839" y="-123.19" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#ffffff">raw_data_access</text>
+</g>
+<!-- CrocoDash_raw_data_access&#45;&gt;case_py -->
+<g id="edge9" class="edge">
+<title>CrocoDash_raw_data_access&#45;&gt;case_py</title><style>.edge>path:hover{stroke-width:8}</style>
+<path fill="none" stroke="black" d="M3890.68,-116.34C3901.3,-113.58 3912.46,-110.96 3923,-109 3960.89,-101.95 4252.19,-108.15 4268,-73"/>
+</g>
+<!-- CrocoDash_raw_data_access_base&#45;&gt;case_py -->
+<g id="edge10" class="edge">
 <title>CrocoDash_raw_data_access_base&#45;&gt;case_py</title><style>.edge>path:hover{stroke-width:8}</style>
 <path fill="none" stroke="black" d="M3872.87,-196.39C3887.39,-184.6 3904,-170.37 3918,-156.38 3927.3,-147.08 3926.35,-141.41 3937,-133.69"/>
 <path fill="none" stroke="black" d="M3937,-131.69C3947.65,-123.97 3944.42,-115.24 3956,-109 4017.44,-75.89 4239.37,-136.65 4268,-73"/>
 </g>
 <!-- CrocoDash_raw_data_access_datasets -->
-<g id="node10" class="node">
+<g id="node11" class="node">
 <title>CrocoDash_raw_data_access_datasets</title><style>.edge>path:hover{stroke-width:8}</style>
 <ellipse fill="#b65353" stroke="black" cx="3841" cy="-427.89" rx="72.3" ry="32.7"/>
 <text text-anchor="middle" x="3841" y="-437.52" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#ffffff">CrocoDash.</text>
@@ -126,7 +146,7 @@
 <text text-anchor="middle" x="3841" y="-412.02" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#ffffff">datasets</text>
 </g>
 <!-- CrocoDash_raw_data_access_registry -->
-<g id="node12" class="node">
+<g id="node13" class="node">
 <title>CrocoDash_raw_data_access_registry</title><style>.edge>path:hover{stroke-width:8}</style>
 <ellipse fill="#a83838" stroke="black" cx="3937" cy="-326.49" rx="72.3" ry="32.7"/>
 <text text-anchor="middle" x="3937" y="-336.11" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#ffffff">CrocoDash.</text>
@@ -134,13 +154,13 @@
 <text text-anchor="middle" x="3937" y="-310.61" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#ffffff">registry</text>
 </g>
 <!-- CrocoDash_raw_data_access_datasets&#45;&gt;CrocoDash_raw_data_access_registry -->
-<g id="edge9" class="edge">
+<g id="edge11" class="edge">
 <title>CrocoDash_raw_data_access_datasets&#45;&gt;CrocoDash_raw_data_access_registry</title><style>.edge>path:hover{stroke-width:8}</style>
 <path fill="none" stroke="black" d="M3869.28,-397.61C3879.16,-387.38 3890.38,-375.77 3900.8,-364.97"/>
 <polygon fill="#b65353" stroke="black" points="3903.11,-367.62 3907.54,-358 3898.07,-362.76 3903.11,-367.62"/>
 </g>
 <!-- CrocoDash_raw_data_access_datasets_load_all_datasets -->
-<g id="node11" class="node">
+<g id="node12" class="node">
 <title>CrocoDash_raw_data_access_datasets_load_all_datasets</title><style>.edge>path:hover{stroke-width:8}</style>
 <ellipse fill="#b65353" stroke="black" cx="3941" cy="-538.32" rx="72.3" ry="41.72"/>
 <text text-anchor="middle" x="3941" y="-554.32" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#ffffff">CrocoDash.</text>
@@ -149,52 +169,32 @@
 <text text-anchor="middle" x="3941" y="-516.07" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#ffffff">load_all_datasets</text>
 </g>
 <!-- CrocoDash_raw_data_access_datasets_load_all_datasets&#45;&gt;CrocoDash_raw_data_access_registry -->
-<g id="edge10" class="edge">
+<g id="edge12" class="edge">
 <title>CrocoDash_raw_data_access_datasets_load_all_datasets&#45;&gt;CrocoDash_raw_data_access_registry</title><style>.edge>path:hover{stroke-width:8}</style>
 <path fill="none" stroke="black" d="M3940.21,-496.11C3939.53,-460.03 3938.53,-407.78 3937.83,-371.02"/>
 <polygon fill="#b65353" stroke="black" points="3941.33,-371.12 3937.64,-361.19 3934.33,-371.25 3941.33,-371.12"/>
 </g>
 <!-- CrocoDash_raw_data_access_registry&#45;&gt;case_py -->
-<g id="edge11" class="edge">
+<g id="edge13" class="edge">
 <title>CrocoDash_raw_data_access_registry&#45;&gt;case_py</title><style>.edge>path:hover{stroke-width:8}</style>
 <path fill="none" stroke="black" d="M3939,-293.58C3939.73,-274.02 3939.8,-248.51 3937,-226.08"/>
 </g>
 <!-- CrocoDash_raw_data_access_registry&#45;&gt;CrocoDash_raw_data_access_base -->
-<g id="edge12" class="edge">
+<g id="edge14" class="edge">
 <title>CrocoDash_raw_data_access_registry&#45;&gt;CrocoDash_raw_data_access_base</title><style>.edge>path:hover{stroke-width:8}</style>
 <path fill="none" stroke="black" d="M3907.54,-296.2C3897.16,-285.89 3885.36,-274.15 3874.41,-263.27"/>
 <polygon fill="#a83838" stroke="black" points="3876.88,-260.79 3867.33,-256.23 3871.95,-265.76 3876.88,-260.79"/>
 </g>
 <!-- CrocoDash_topo -->
-<g id="node13" class="node">
+<g id="node14" class="node">
 <title>CrocoDash_topo</title><style>.edge>path:hover{stroke-width:8}</style>
 <ellipse fill="#a44646" stroke="black" cx="4142" cy="-132.69" rx="57.06" ry="18"/>
 <text text-anchor="middle" x="4142" y="-129.56" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#ffffff">CrocoDash.topo</text>
 </g>
 <!-- CrocoDash_topo&#45;&gt;case_py -->
-<g id="edge13" class="edge">
+<g id="edge15" class="edge">
 <title>CrocoDash_topo&#45;&gt;case_py</title><style>.edge>path:hover{stroke-width:8}</style>
 <path fill="none" stroke="black" d="M4181.78,-119.46C4215.76,-107.97 4260.33,-90.06 4268,-73"/>
-</g>
-<!-- CrocoDash_utils -->
-<g id="node14" class="node">
-<title>CrocoDash_utils</title><style>.edge>path:hover{stroke-width:8}</style>
-<ellipse fill="#c24747" stroke="black" cx="3505" cy="-427.89" rx="50.56" ry="23.69"/>
-<text text-anchor="middle" x="3505" y="-431.14" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#ffffff">CrocoDash.</text>
-<text text-anchor="middle" x="3505" y="-418.39" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#ffffff">utils</text>
-</g>
-<!-- CrocoDash_utils&#45;&gt;CrocoDash_forcing_configurations -->
-<g id="edge14" class="edge">
-<title>CrocoDash_utils&#45;&gt;CrocoDash_forcing_configurations</title><style>.edge>path:hover{stroke-width:8}</style>
-<path fill="none" stroke="black" d="M3537.43,-409.24C3582.01,-384.55 3657.32,-341.19 3662,-327.49"/>
-<path fill="none" stroke="black" d="M3662,-325.49C3680.01,-272.8 3674.92,-207.12 3669.22,-167.89"/>
-<polygon fill="#c24747" stroke="black" points="3672.7,-167.45 3667.69,-158.11 3665.78,-168.53 3672.7,-167.45"/>
-</g>
-<!-- CrocoDash_utils&#45;&gt;CrocoDash_raw_data_access_base -->
-<g id="edge15" class="edge">
-<title>CrocoDash_utils&#45;&gt;CrocoDash_raw_data_access_base</title><style>.edge>path:hover{stroke-width:8}</style>
-<path fill="none" stroke="black" d="M3536.02,-408.86C3544.89,-404.08 3554.69,-399.15 3564,-395.19 3612.12,-374.73 3630.14,-384.3 3676,-359.19 3723.16,-333.37 3769.69,-292.81 3800.51,-263.25"/>
-<polygon fill="#c24747" stroke="black" points="3802.56,-266.14 3807.3,-256.66 3797.68,-261.11 3802.56,-266.14"/>
 </g>
 <!-- CrocoDash_vgrid -->
 <g id="node15" class="node">
