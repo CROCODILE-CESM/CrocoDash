@@ -1,5 +1,5 @@
 """
-This module (utils) contains utility functions that are used across the CrocoDash package.
+This module (logging) contains logging functions that are used across the CrocoDash package.
 """
 
 import os

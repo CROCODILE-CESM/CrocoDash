@@ -6,7 +6,7 @@ from visualCaseGen.custom_widget_types.case_tools import (
     xmlchange,
     append_user_nl,
 )
-from CrocoDash.utils import setup_logger
+from CrocoDash.logging import setup_logger
 import inspect
 from ProConPy.config_var import ConfigVar, cvars
 
@@ -358,7 +358,7 @@ class RunoffConfigurator(BaseConfigurator):
         )
         rof_grid_name = cvars["CUSTOM_ROF_GRID"].value
         mapping_file_prefix = f"{rof_grid_name}_to_{grid_name}_map"
-        mapping_dir = inputdir / "mapping"
+        mapping_dir = Path(inputdir) / "mapping"
         mapping_dir.mkdir(exist_ok=False)
         if self.rmax is None:
             self.rmax, self.fold = mapping.get_suggested_smoothing_params(

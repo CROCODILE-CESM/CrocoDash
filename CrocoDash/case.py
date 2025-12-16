@@ -419,6 +419,7 @@ class Case:
         
         inputs = kwargs | {
             "date_range": pd.to_datetime(date_range),
+            "inputdir": self.inputdir,
             "grid_name": self.ocn_grid.name,
             "session_id": cvars["MB_ATTEMPT_ID"].value,
             "boundaries":boundaries
