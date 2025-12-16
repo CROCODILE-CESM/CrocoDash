@@ -32,7 +32,7 @@ def test_case_init(
     project_num = "NCGD0011"
     override = True
     compsets = ["1850_DATM%JRA_SLND_SICE_MOM6_SROF_SGLC_SWAV","1850_DATM%JRA_SLND_SICE_MOM6_DROF%GLOFAS_SGLC_SWAV","1850_DATM%JRA_SLND_CICE_MOM6_SROF_SGLC_SWAV"]
-    datm_grid_name = "TL319"
+    atm_grid_name = "TL319"
     ninst = 2
     glade_bool = is_glade_file_system
     if is_github_actions:
@@ -55,7 +55,7 @@ def test_case_init(
             project=project_num,
             override=override,
             machine=machine,
-            datm_grid_name=datm_grid_name,
+            atm_grid_name=atm_grid_name,
             ninst=ninst,
     )
 
@@ -100,7 +100,7 @@ def test_create_grid_input(get_CrocoDash_case):
         if f.startswith(f"ESMF_mesh_{case.ocn_grid.name}")
     ]
     assert len(files) > 0
-    if "CICE" in case.compset:
+    if "CICE" in case.compset_lname:
         files = [
             f
             for f in os.listdir(case.inputdir / "ocnice")
@@ -108,6 +108,17 @@ def test_create_grid_input(get_CrocoDash_case):
         ]
         assert len(files) > 0
 
+def test_case_expt_smoke(get_CrocoDash_case, tmp_path):
+    case = get_CrocoDash_case
+    case.configure_forcings(
+        date_range=["2020-01-01 00:00:00", "2020-02-01 00:00:00"],
+        tidal_constituents=["M2"],
+        tpxo_elevation_filepath=tmp_path,
+        tpxo_velocity_filepath=tmp_path,
+        chl_processed_filepath=tmp_path,
+        boundaries=["north", "south", "east"],
+    )
+    assert case.expt is not None
 
 def test_configure_forcings(get_CrocoDash_case, tmp_path):
     """
@@ -159,13 +170,6 @@ def test_update_forcing_variables(get_CrocoDash_case):
     search_string = "OBC_NUMBER_OF_SEGMENTS"
     found_user_nl_mom_adjusted_var = False
     case.tidal_constituents = ["M2"]
-    case.expt = rmom6.experiment.create_empty(
-        boundaries=[],
-        date_range=[
-            dt.datetime.strptime("2020-01-01", "%Y-%m-%d"),
-            dt.datetime.strptime("2020-02-01", "%Y-%m-%d"),
-        ],
-    )
     case.boundaries = []
     case.chl_processed_filepath = case.inputdir
     case.date_range = [
@@ -174,7 +178,6 @@ def test_update_forcing_variables(get_CrocoDash_case):
         ]
     case.forcing_product_name = "glorys"
     case.runoff_esmf_mesh_filepath = True
-    case.bgc_in_compset = False
     case.marbl_ic_filepath = "PATH"
     case.regional_chl_file_path  = "Path"
     case.runoff_mapping_file_nnsm = "Path"
