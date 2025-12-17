@@ -39,6 +39,7 @@ def test_all_configurators_smoke(fake_param_case):
     dummy_date_range = ["2000-01-01", "2000-01-02"]
     dummy_date_range = pd.to_datetime(dummy_date_range)
     dummy_path = fake_param_case / "dummy_path"
+    dummy_dir = fake_param_case
     dummy_path.touch()
 
     ## Iterate through config classes
@@ -51,6 +52,8 @@ def test_all_configurators_smoke(fake_param_case):
                 ctor_args[a] = dummy_date_range
             elif "filepath" in a:
                 ctor_args[a] = dummy_path
+            elif "dir" in a:
+                ctor_args[a] = dummy_dir
             else:
                 ctor_args[a] = dummy_str
         instance = config_class(**ctor_args)

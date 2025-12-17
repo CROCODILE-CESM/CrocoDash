@@ -34,6 +34,20 @@ class ForcingConfigRegistry:
         self.find_active_configurators(compset, inputs)
 
     @classmethod
+    def find_valid_configurators(cls, compset):
+        """Returns the valid configurations based on the compset in a list"""
+        valid_configs = []
+        for configurator_cls in cls.registered_types:
+           if configurator_cls.validate_compset_compatibility(compset):
+            valid_configs.append(configurator_cls)
+        return valid_configs
+
+    @classmethod
+    def find_required_configurators(cls, compset):
+        """Returns the required configurations based on the compset in a list"""
+
+
+    @classmethod
     def get_configurator_args(cls, configurator_name):
         """
         Return the arguments of a specific configurator by name
