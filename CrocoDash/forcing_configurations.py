@@ -30,11 +30,12 @@ class ForcingConfigRegistry:
     def __getitem__(self, key: str):
         return self.active_configurators[key.lower()]
 
-    def __init__(self, inputs: dict, case_info: dict):
+    def __init__(self, compset,inputs: dict, case_info: dict):
+        self.compset = compset
         self.active_configurators = {}
         self.case_info = case_info
         inputs = inputs | case_info
-        self.find_active_configurators(inputs)
+        self.find_active_configurators(self.compset, inputs)
 
     @classmethod
     def find_valid_configurators(cls, compset):
@@ -83,7 +84,6 @@ class ForcingConfigRegistry:
         return configurator_cls(**ctor_kwargs)
 
     def find_active_configurators(self, compset, inputs: dict):
-        compset = inputs["case_compset"]
 
         required = self.find_required_configurators(compset)
         valid = self.find_valid_configurators(compset)

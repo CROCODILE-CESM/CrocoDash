@@ -436,9 +436,8 @@ class Case:
         case_info = {
             "case_grid_name": self.ocn_grid.name,
             "case_session_id": cvars["MB_ATTEMPT_ID"].value,
-            "case_compset":self.compset_lname
         }
-        self.fcr = ForcingConfigRegistry(inputs,case_info)
+        self.fcr = ForcingConfigRegistry(self.compset_lname,inputs,case_info)
         self.fcr.run_configurators()
 
         self._update_forcing_variables()
