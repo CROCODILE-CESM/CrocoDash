@@ -312,7 +312,9 @@ document.write(`
   </button>
 `);
 </script>
-
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
 </div></div>
       
     </div>
@@ -328,6 +330,20 @@ document.write(`
     <div id="print-main-content">
         <div id="jb-print-toc">
             
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#">Forcing Configuration</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#how-it-works">How it works</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#some-helper-functions">Some Helper Functions</a></li>
+</ul>
+</li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#in-the-case-workflow">In the Case workflow</a></li>
+</ul>
+
+            </nav>
         </div>
     </div>
 </div>
@@ -339,12 +355,40 @@ document.write(`
                   
   <section id="forcing-configuration">
 <h1>Forcing Configuration<a class="headerlink" href="#forcing-configuration" title="Link to this heading">#</a></h1>
-<p>Forcing Configuration is handled by the forcing_configurations.py module. How it works:</p>
+<p>Forcing Configuration is handled by the <code class="docutils literal notranslate"><span class="pre">forcing_configurations.py</span></code> module.</p>
+<section id="how-it-works">
+<h2>How it works<a class="headerlink" href="#how-it-works" title="Link to this heading">#</a></h2>
 <ol class="arabic simple">
-<li><p>Each forcing configuration option in the module, like tides, chlorophyll, or runoff mapping states the arguments it needs and the compset requirements.</p></li>
-<li><p>The ForcingConfigRegistry registed all of these options. I can provide what configuration option is required or valid based on the compset and/or input arguments</p></li>
-<li><p>In the Case workflow, this is all handled in configure_forcings. It initialize the FOrcingConfigRegistry</p></li>
+<li><p>Each forcing configuration option in the module, like tides, chlorophyll, or runoff, specifies the arguments it needs and its compset requirements.</p></li>
+<li><p>The <code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry</span></code> registers all of these options. It can provide which configuration options are required or valid based on the compset and/or input arguments.</p></li>
+<li><p>In the <code class="docutils literal notranslate"><span class="pre">Case</span></code> workflow, this is all handled in <code class="docutils literal notranslate"><span class="pre">configure_forcings</span></code>. It initializes the <code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry</span></code> with all the keyword arguments provided by the user. Based on those options, it finds the configuration options and configures the corresponding forcings. (It will fail if the required configuration options are not provided.)</p></li>
 </ol>
+</section>
+<section id="some-helper-functions">
+<h2>Some Helper Functions<a class="headerlink" href="#some-helper-functions" title="Link to this heading">#</a></h2>
+<p>Here are some useful helper functions to understand what you need for each configuration option and which configuration options you must provide.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">CrocoDash.forcing_configurations</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
+
+<span class="c1"># Find required options</span>
+<span class="n">required_options</span> <span class="o">=</span> <span class="n">ForcingConfigRegistry</span><span class="o">.</span><span class="n">find_required_configurators</span><span class="p">(</span><span class="n">compset</span><span class="p">)</span>
+
+<span class="c1"># Find possible options</span>
+<span class="n">valid_options</span> <span class="o">=</span> <span class="n">ForcingConfigRegistry</span><span class="o">.</span><span class="n">find_valid_configurators</span><span class="p">(</span><span class="n">compset</span><span class="p">)</span>
+
+<span class="c1"># Find user-required arguments for a configurator class</span>
+<span class="n">user_args</span> <span class="o">=</span> <span class="n">ForcingConfigRegistry</span><span class="o">.</span><span class="n">get_user_args</span><span class="p">(</span><span class="n">configurator_class</span><span class="p">)</span>
+
+<span class="c1"># Example usage:</span>
+<span class="n">req_opts</span> <span class="o">=</span> <span class="n">ForcingConfigRegistry</span><span class="o">.</span><span class="n">find_required_configurators</span><span class="p">(</span><span class="n">compset</span><span class="p">)</span>
+<span class="n">user_args_for_first</span> <span class="o">=</span> <span class="n">ForcingConfigRegistry</span><span class="o">.</span><span class="n">get_user_args</span><span class="p">(</span><span class="n">req_opts</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>s</p>
+</section>
+</section>
+<section id="in-the-case-workflow">
+<h1>In the Case workflow<a class="headerlink" href="#in-the-case-workflow" title="Link to this heading">#</a></h1>
+<p>The Case.configure_forcings method runs all the helper functions you need and will fail if any required configuration options or arguments are missing.</p>
 </section>
 
 
@@ -364,6 +408,27 @@ document.write(`
             </div>
             
             
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#">Forcing Configuration</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#how-it-works">How it works</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#some-helper-functions">Some Helper Functions</a></li>
+</ul>
+</li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#in-the-case-workflow">In the Case workflow</a></li>
+</ul>
+
+  </nav></div>
+
+</div></div>
               
             
           </div>
