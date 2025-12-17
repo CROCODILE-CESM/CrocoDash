@@ -169,8 +169,7 @@ class Case:
         required_configurators = ForcingConfigRegistry.find_required_configurators(self.compset_lname)
 
         for configurator in required_configurators:
-            args, required_args, user_args = ForcingConfigRegistry.get_ctor_signature(configurator)
-
+            user_args = ForcingConfigRegistry.get_user_args(configurator)
             args_str = ", ".join(user_args) if user_args else "no arguments"
             print(f"  - {configurator.name}: {args_str}")
                     
