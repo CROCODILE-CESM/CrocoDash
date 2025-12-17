@@ -173,16 +173,16 @@
 </details></li>
 <li class="toctree-l1 current active has-children"><a class="current reference internal" href="#">API Documentation</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="CrocoDash.html">CrocoDash package</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="CrocoDash.extract_forcings.html">CrocoDash.extract_forcings package</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.extract_forcings.code.html">CrocoDash.extract_forcings.code package</a></li>
+</ul>
+</details></li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="CrocoDash.raw_data_access.html">CrocoDash.raw_data_access package</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html">CrocoDash.raw_data_access.datasets package</a></li>
 </ul>
 </details></li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="CrocoDash.rm6.html">CrocoDash.rm6 package</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html">CrocoDash.rm6.regional_mom6 package</a></li>
-</ul>
-</details></li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="CrocoDash.extract_forcings.html">CrocoDash.extract_forcings package</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
-<li class="toctree-l4"><a class="reference internal" href="CrocoDash.extract_forcings.code.html">CrocoDash.extract_forcings.code package</a></li>
 </ul>
 </details></li>
 </ul>
@@ -346,6 +346,14 @@ document.write(`
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="CrocoDash.html">CrocoDash package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="CrocoDash.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.extract_forcings.html">CrocoDash.extract_forcings package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.extract_forcings.html#subpackages">Subpackages</a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.extract_forcings.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.extract_forcings.html#module-CrocoDash.extract_forcings.driver">CrocoDash.extract_forcings.driver module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.extract_forcings.html#module-CrocoDash.extract_forcings.utils">CrocoDash.extract_forcings.utils module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.extract_forcings.html#module-CrocoDash.extract_forcings">Module contents</a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="CrocoDash.raw_data_access.html">CrocoDash.raw_data_access package</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.html#subpackages">Subpackages</a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.html#submodules">Submodules</a></li>
@@ -358,14 +366,6 @@ document.write(`
 <li class="toctree-l3"><a class="reference internal" href="CrocoDash.rm6.html">CrocoDash.rm6 package</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.rm6.html#subpackages">Subpackages</a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.rm6.html#module-CrocoDash.rm6">Module contents</a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="CrocoDash.extract_forcings.html">CrocoDash.extract_forcings package</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="CrocoDash.extract_forcings.html#subpackages">Subpackages</a></li>
-<li class="toctree-l4"><a class="reference internal" href="CrocoDash.extract_forcings.html#submodules">Submodules</a></li>
-<li class="toctree-l4"><a class="reference internal" href="CrocoDash.extract_forcings.html#module-CrocoDash.extract_forcings.driver">CrocoDash.extract_forcings.driver module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="CrocoDash.extract_forcings.html#module-CrocoDash.extract_forcings.utils">CrocoDash.extract_forcings.utils module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="CrocoDash.extract_forcings.html#module-CrocoDash.extract_forcings">Module contents</a></li>
 </ul>
 </li>
 </ul>
@@ -394,7 +394,124 @@ document.write(`
 </li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="CrocoDash.html#module-CrocoDash.forcing_configurations">CrocoDash.forcing_configurations module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.BGCConfigurator"><code class="docutils literal notranslate"><span class="pre">BGCConfigurator</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.BGCConfigurator.allowed_compsets"><code class="docutils literal notranslate"><span class="pre">BGCConfigurator.allowed_compsets</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.BGCConfigurator.configure"><code class="docutils literal notranslate"><span class="pre">BGCConfigurator.configure()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.BGCConfigurator.forbidden_compsets"><code class="docutils literal notranslate"><span class="pre">BGCConfigurator.forbidden_compsets</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.BGCConfigurator.name"><code class="docutils literal notranslate"><span class="pre">BGCConfigurator.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.BGCConfigurator.required_for_compsets"><code class="docutils literal notranslate"><span class="pre">BGCConfigurator.required_for_compsets</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.BGCICConfigurator"><code class="docutils literal notranslate"><span class="pre">BGCICConfigurator</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.BGCICConfigurator.allowed_compsets"><code class="docutils literal notranslate"><span class="pre">BGCICConfigurator.allowed_compsets</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.BGCICConfigurator.configure"><code class="docutils literal notranslate"><span class="pre">BGCICConfigurator.configure()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.BGCICConfigurator.forbidden_compsets"><code class="docutils literal notranslate"><span class="pre">BGCICConfigurator.forbidden_compsets</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.BGCICConfigurator.name"><code class="docutils literal notranslate"><span class="pre">BGCICConfigurator.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.BGCICConfigurator.required_for_compsets"><code class="docutils literal notranslate"><span class="pre">BGCICConfigurator.required_for_compsets</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.BGCIronForcingConfigurator"><code class="docutils literal notranslate"><span class="pre">BGCIronForcingConfigurator</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.BGCIronForcingConfigurator.allowed_compsets"><code class="docutils literal notranslate"><span class="pre">BGCIronForcingConfigurator.allowed_compsets</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.BGCIronForcingConfigurator.configure"><code class="docutils literal notranslate"><span class="pre">BGCIronForcingConfigurator.configure()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.BGCIronForcingConfigurator.forbidden_compsets"><code class="docutils literal notranslate"><span class="pre">BGCIronForcingConfigurator.forbidden_compsets</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.BGCIronForcingConfigurator.name"><code class="docutils literal notranslate"><span class="pre">BGCIronForcingConfigurator.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.BGCIronForcingConfigurator.required_for_compsets"><code class="docutils literal notranslate"><span class="pre">BGCIronForcingConfigurator.required_for_compsets</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.BGCRiverNutrientsConfigurator"><code class="docutils literal notranslate"><span class="pre">BGCRiverNutrientsConfigurator</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.BGCRiverNutrientsConfigurator.allowed_compsets"><code class="docutils literal notranslate"><span class="pre">BGCRiverNutrientsConfigurator.allowed_compsets</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.BGCRiverNutrientsConfigurator.configure"><code class="docutils literal notranslate"><span class="pre">BGCRiverNutrientsConfigurator.configure()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.BGCRiverNutrientsConfigurator.forbidden_compsets"><code class="docutils literal notranslate"><span class="pre">BGCRiverNutrientsConfigurator.forbidden_compsets</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.BGCRiverNutrientsConfigurator.name"><code class="docutils literal notranslate"><span class="pre">BGCRiverNutrientsConfigurator.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.BGCRiverNutrientsConfigurator.required_for_compsets"><code class="docutils literal notranslate"><span class="pre">BGCRiverNutrientsConfigurator.required_for_compsets</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.BGCRiverNutrientsConfigurator.validate_args"><code class="docutils literal notranslate"><span class="pre">BGCRiverNutrientsConfigurator.validate_args()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.BaseConfigurator"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.BaseConfigurator.allowed_compsets"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.allowed_compsets</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.BaseConfigurator.configure"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.configure()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.BaseConfigurator.forbidden_compsets"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.forbidden_compsets</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.BaseConfigurator.is_required"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.is_required()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.BaseConfigurator.name"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.BaseConfigurator.required_for_compsets"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.required_for_compsets</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.BaseConfigurator.validate_args"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.validate_args()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.BaseConfigurator.validate_compset_compatibility"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.validate_compset_compatibility()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.CICEConfigurator"><code class="docutils literal notranslate"><span class="pre">CICEConfigurator</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.CICEConfigurator.allowed_compsets"><code class="docutils literal notranslate"><span class="pre">CICEConfigurator.allowed_compsets</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.CICEConfigurator.configure"><code class="docutils literal notranslate"><span class="pre">CICEConfigurator.configure()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.CICEConfigurator.forbidden_compsets"><code class="docutils literal notranslate"><span class="pre">CICEConfigurator.forbidden_compsets</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.CICEConfigurator.name"><code class="docutils literal notranslate"><span class="pre">CICEConfigurator.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.CICEConfigurator.required_for_compsets"><code class="docutils literal notranslate"><span class="pre">CICEConfigurator.required_for_compsets</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.ChlConfigurator"><code class="docutils literal notranslate"><span class="pre">ChlConfigurator</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.ChlConfigurator.allowed_compsets"><code class="docutils literal notranslate"><span class="pre">ChlConfigurator.allowed_compsets</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.ChlConfigurator.configure"><code class="docutils literal notranslate"><span class="pre">ChlConfigurator.configure()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.ChlConfigurator.forbidden_compsets"><code class="docutils literal notranslate"><span class="pre">ChlConfigurator.forbidden_compsets</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.ChlConfigurator.name"><code class="docutils literal notranslate"><span class="pre">ChlConfigurator.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.ChlConfigurator.required_for_compsets"><code class="docutils literal notranslate"><span class="pre">ChlConfigurator.required_for_compsets</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.ChlConfigurator.validate_args"><code class="docutils literal notranslate"><span class="pre">ChlConfigurator.validate_args()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.ConfigParam"><code class="docutils literal notranslate"><span class="pre">ConfigParam</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.ConfigParam.apply"><code class="docutils literal notranslate"><span class="pre">ConfigParam.apply()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.ConfigParam.comment"><code class="docutils literal notranslate"><span class="pre">ConfigParam.comment</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.ConfigParam.executed"><code class="docutils literal notranslate"><span class="pre">ConfigParam.executed</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.ConfigParam.name"><code class="docutils literal notranslate"><span class="pre">ConfigParam.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.ConfigParam.value"><code class="docutils literal notranslate"><span class="pre">ConfigParam.value</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.ForcingConfigRegistry"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.ForcingConfigRegistry.find_active_configurators"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.find_active_configurators()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.ForcingConfigRegistry.find_required_configurators"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.find_required_configurators()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.ForcingConfigRegistry.find_valid_configurators"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.find_valid_configurators()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.ForcingConfigRegistry.get_active_configurators"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.get_active_configurators()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.ForcingConfigRegistry.get_ctor_signature"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.get_ctor_signature()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.ForcingConfigRegistry.get_user_args"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.get_user_args()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.ForcingConfigRegistry.instantiate_configurator"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.instantiate_configurator()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.ForcingConfigRegistry.is_active"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.is_active()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.ForcingConfigRegistry.register"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.register()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.ForcingConfigRegistry.registered_types"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.registered_types</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.ForcingConfigRegistry.return_missing_inputs"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.return_missing_inputs()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.ForcingConfigRegistry.run_configurators"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.run_configurators()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.RunoffConfigurator"><code class="docutils literal notranslate"><span class="pre">RunoffConfigurator</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.RunoffConfigurator.allowed_compsets"><code class="docutils literal notranslate"><span class="pre">RunoffConfigurator.allowed_compsets</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.RunoffConfigurator.configure"><code class="docutils literal notranslate"><span class="pre">RunoffConfigurator.configure()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.RunoffConfigurator.forbidden_compsets"><code class="docutils literal notranslate"><span class="pre">RunoffConfigurator.forbidden_compsets</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.RunoffConfigurator.name"><code class="docutils literal notranslate"><span class="pre">RunoffConfigurator.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.RunoffConfigurator.required_for_compsets"><code class="docutils literal notranslate"><span class="pre">RunoffConfigurator.required_for_compsets</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.RunoffConfigurator.validate_args"><code class="docutils literal notranslate"><span class="pre">RunoffConfigurator.validate_args()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.TidesConfigurator"><code class="docutils literal notranslate"><span class="pre">TidesConfigurator</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.TidesConfigurator.configure"><code class="docutils literal notranslate"><span class="pre">TidesConfigurator.configure()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.TidesConfigurator.name"><code class="docutils literal notranslate"><span class="pre">TidesConfigurator.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.TidesConfigurator.tidal_data_str"><code class="docutils literal notranslate"><span class="pre">TidesConfigurator.tidal_data_str()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.UserNLConfigParam"><code class="docutils literal notranslate"><span class="pre">UserNLConfigParam</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.UserNLConfigParam.apply"><code class="docutils literal notranslate"><span class="pre">UserNLConfigParam.apply()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.UserNLConfigParam.user_nl_name"><code class="docutils literal notranslate"><span class="pre">UserNLConfigParam.user_nl_name</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.XMLConfigParam"><code class="docutils literal notranslate"><span class="pre">XMLConfigParam</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.XMLConfigParam.apply"><code class="docutils literal notranslate"><span class="pre">XMLConfigParam.apply()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.XMLConfigParam.is_non_local"><code class="docutils literal notranslate"><span class="pre">XMLConfigParam.is_non_local</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.html#CrocoDash.forcing_configurations.register"><code class="docutils literal notranslate"><span class="pre">register()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="CrocoDash.html#module-CrocoDash.grid">CrocoDash.grid module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="CrocoDash.html#module-CrocoDash.logging">CrocoDash.logging module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.html#CrocoDash.logging.setup_logger"><code class="docutils literal notranslate"><span class="pre">setup_logger()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="CrocoDash.html#module-CrocoDash.topo">CrocoDash.topo module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="CrocoDash.html#CrocoDash.topo.Topo"><code class="docutils literal notranslate"><span class="pre">Topo</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.html#CrocoDash.topo.Topo.interpolate_from_file"><code class="docutils literal notranslate"><span class="pre">Topo.interpolate_from_file()</span></code></a></li>
@@ -403,11 +520,6 @@ document.write(`
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="CrocoDash.html#module-CrocoDash.topo_editor">CrocoDash.topo_editor module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="CrocoDash.html#module-CrocoDash.utils">CrocoDash.utils module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="CrocoDash.html#CrocoDash.utils.export_dataset"><code class="docutils literal notranslate"><span class="pre">export_dataset()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="CrocoDash.html#CrocoDash.utils.setup_logger"><code class="docutils literal notranslate"><span class="pre">setup_logger()</span></code></a></li>
-</ul>
-</li>
 <li class="toctree-l2"><a class="reference internal" href="CrocoDash.html#module-CrocoDash.vgrid">CrocoDash.vgrid module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="CrocoDash.html#module-CrocoDash">Module contents</a></li>
 </ul>

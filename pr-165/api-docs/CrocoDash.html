@@ -46,7 +46,7 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'api-docs/CrocoDash';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="CrocoDash.raw_data_access package" href="CrocoDash.raw_data_access.html" />
+    <link rel="next" title="CrocoDash.extract_forcings package" href="CrocoDash.extract_forcings.html" />
     <link rel="prev" title="API Documentation" href="modules.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -173,16 +173,16 @@
 </details></li>
 <li class="toctree-l1 current active has-children"><a class="reference internal" href="modules.html">API Documentation</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
 <li class="toctree-l2 current active has-children"><a class="current reference internal" href="#">CrocoDash package</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="CrocoDash.extract_forcings.html">CrocoDash.extract_forcings package</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.extract_forcings.code.html">CrocoDash.extract_forcings.code package</a></li>
+</ul>
+</details></li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="CrocoDash.raw_data_access.html">CrocoDash.raw_data_access package</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html">CrocoDash.raw_data_access.datasets package</a></li>
 </ul>
 </details></li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="CrocoDash.rm6.html">CrocoDash.rm6 package</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html">CrocoDash.rm6.regional_mom6 package</a></li>
-</ul>
-</details></li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="CrocoDash.extract_forcings.html">CrocoDash.extract_forcings package</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
-<li class="toctree-l4"><a class="reference internal" href="CrocoDash.extract_forcings.code.html">CrocoDash.extract_forcings.code package</a></li>
 </ul>
 </details></li>
 </ul>
@@ -363,7 +363,124 @@ document.write(`
 </li>
 </ul>
 </li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.forcing_configurations">CrocoDash.forcing_configurations module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BGCConfigurator"><code class="docutils literal notranslate"><span class="pre">BGCConfigurator</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BGCConfigurator.allowed_compsets"><code class="docutils literal notranslate"><span class="pre">BGCConfigurator.allowed_compsets</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BGCConfigurator.configure"><code class="docutils literal notranslate"><span class="pre">BGCConfigurator.configure()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BGCConfigurator.forbidden_compsets"><code class="docutils literal notranslate"><span class="pre">BGCConfigurator.forbidden_compsets</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BGCConfigurator.name"><code class="docutils literal notranslate"><span class="pre">BGCConfigurator.name</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BGCConfigurator.required_for_compsets"><code class="docutils literal notranslate"><span class="pre">BGCConfigurator.required_for_compsets</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BGCICConfigurator"><code class="docutils literal notranslate"><span class="pre">BGCICConfigurator</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BGCICConfigurator.allowed_compsets"><code class="docutils literal notranslate"><span class="pre">BGCICConfigurator.allowed_compsets</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BGCICConfigurator.configure"><code class="docutils literal notranslate"><span class="pre">BGCICConfigurator.configure()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BGCICConfigurator.forbidden_compsets"><code class="docutils literal notranslate"><span class="pre">BGCICConfigurator.forbidden_compsets</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BGCICConfigurator.name"><code class="docutils literal notranslate"><span class="pre">BGCICConfigurator.name</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BGCICConfigurator.required_for_compsets"><code class="docutils literal notranslate"><span class="pre">BGCICConfigurator.required_for_compsets</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BGCIronForcingConfigurator"><code class="docutils literal notranslate"><span class="pre">BGCIronForcingConfigurator</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BGCIronForcingConfigurator.allowed_compsets"><code class="docutils literal notranslate"><span class="pre">BGCIronForcingConfigurator.allowed_compsets</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BGCIronForcingConfigurator.configure"><code class="docutils literal notranslate"><span class="pre">BGCIronForcingConfigurator.configure()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BGCIronForcingConfigurator.forbidden_compsets"><code class="docutils literal notranslate"><span class="pre">BGCIronForcingConfigurator.forbidden_compsets</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BGCIronForcingConfigurator.name"><code class="docutils literal notranslate"><span class="pre">BGCIronForcingConfigurator.name</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BGCIronForcingConfigurator.required_for_compsets"><code class="docutils literal notranslate"><span class="pre">BGCIronForcingConfigurator.required_for_compsets</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BGCRiverNutrientsConfigurator"><code class="docutils literal notranslate"><span class="pre">BGCRiverNutrientsConfigurator</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BGCRiverNutrientsConfigurator.allowed_compsets"><code class="docutils literal notranslate"><span class="pre">BGCRiverNutrientsConfigurator.allowed_compsets</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BGCRiverNutrientsConfigurator.configure"><code class="docutils literal notranslate"><span class="pre">BGCRiverNutrientsConfigurator.configure()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BGCRiverNutrientsConfigurator.forbidden_compsets"><code class="docutils literal notranslate"><span class="pre">BGCRiverNutrientsConfigurator.forbidden_compsets</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BGCRiverNutrientsConfigurator.name"><code class="docutils literal notranslate"><span class="pre">BGCRiverNutrientsConfigurator.name</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BGCRiverNutrientsConfigurator.required_for_compsets"><code class="docutils literal notranslate"><span class="pre">BGCRiverNutrientsConfigurator.required_for_compsets</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BGCRiverNutrientsConfigurator.validate_args"><code class="docutils literal notranslate"><span class="pre">BGCRiverNutrientsConfigurator.validate_args()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BaseConfigurator"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BaseConfigurator.allowed_compsets"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.allowed_compsets</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BaseConfigurator.configure"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.configure()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BaseConfigurator.forbidden_compsets"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.forbidden_compsets</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BaseConfigurator.is_required"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.is_required()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BaseConfigurator.name"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.name</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BaseConfigurator.required_for_compsets"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.required_for_compsets</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BaseConfigurator.validate_args"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.validate_args()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BaseConfigurator.validate_compset_compatibility"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.validate_compset_compatibility()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.CICEConfigurator"><code class="docutils literal notranslate"><span class="pre">CICEConfigurator</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.CICEConfigurator.allowed_compsets"><code class="docutils literal notranslate"><span class="pre">CICEConfigurator.allowed_compsets</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.CICEConfigurator.configure"><code class="docutils literal notranslate"><span class="pre">CICEConfigurator.configure()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.CICEConfigurator.forbidden_compsets"><code class="docutils literal notranslate"><span class="pre">CICEConfigurator.forbidden_compsets</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.CICEConfigurator.name"><code class="docutils literal notranslate"><span class="pre">CICEConfigurator.name</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.CICEConfigurator.required_for_compsets"><code class="docutils literal notranslate"><span class="pre">CICEConfigurator.required_for_compsets</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.ChlConfigurator"><code class="docutils literal notranslate"><span class="pre">ChlConfigurator</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.ChlConfigurator.allowed_compsets"><code class="docutils literal notranslate"><span class="pre">ChlConfigurator.allowed_compsets</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.ChlConfigurator.configure"><code class="docutils literal notranslate"><span class="pre">ChlConfigurator.configure()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.ChlConfigurator.forbidden_compsets"><code class="docutils literal notranslate"><span class="pre">ChlConfigurator.forbidden_compsets</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.ChlConfigurator.name"><code class="docutils literal notranslate"><span class="pre">ChlConfigurator.name</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.ChlConfigurator.required_for_compsets"><code class="docutils literal notranslate"><span class="pre">ChlConfigurator.required_for_compsets</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.ChlConfigurator.validate_args"><code class="docutils literal notranslate"><span class="pre">ChlConfigurator.validate_args()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.ConfigParam"><code class="docutils literal notranslate"><span class="pre">ConfigParam</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.ConfigParam.apply"><code class="docutils literal notranslate"><span class="pre">ConfigParam.apply()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.ConfigParam.comment"><code class="docutils literal notranslate"><span class="pre">ConfigParam.comment</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.ConfigParam.executed"><code class="docutils literal notranslate"><span class="pre">ConfigParam.executed</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.ConfigParam.name"><code class="docutils literal notranslate"><span class="pre">ConfigParam.name</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.ConfigParam.value"><code class="docutils literal notranslate"><span class="pre">ConfigParam.value</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.ForcingConfigRegistry"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.ForcingConfigRegistry.find_active_configurators"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.find_active_configurators()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.ForcingConfigRegistry.find_required_configurators"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.find_required_configurators()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.ForcingConfigRegistry.find_valid_configurators"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.find_valid_configurators()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.ForcingConfigRegistry.get_active_configurators"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.get_active_configurators()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.ForcingConfigRegistry.get_ctor_signature"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.get_ctor_signature()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.ForcingConfigRegistry.get_user_args"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.get_user_args()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.ForcingConfigRegistry.instantiate_configurator"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.instantiate_configurator()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.ForcingConfigRegistry.is_active"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.is_active()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.ForcingConfigRegistry.register"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.register()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.ForcingConfigRegistry.registered_types"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.registered_types</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.ForcingConfigRegistry.return_missing_inputs"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.return_missing_inputs()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.ForcingConfigRegistry.run_configurators"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.run_configurators()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.RunoffConfigurator"><code class="docutils literal notranslate"><span class="pre">RunoffConfigurator</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.RunoffConfigurator.allowed_compsets"><code class="docutils literal notranslate"><span class="pre">RunoffConfigurator.allowed_compsets</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.RunoffConfigurator.configure"><code class="docutils literal notranslate"><span class="pre">RunoffConfigurator.configure()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.RunoffConfigurator.forbidden_compsets"><code class="docutils literal notranslate"><span class="pre">RunoffConfigurator.forbidden_compsets</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.RunoffConfigurator.name"><code class="docutils literal notranslate"><span class="pre">RunoffConfigurator.name</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.RunoffConfigurator.required_for_compsets"><code class="docutils literal notranslate"><span class="pre">RunoffConfigurator.required_for_compsets</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.RunoffConfigurator.validate_args"><code class="docutils literal notranslate"><span class="pre">RunoffConfigurator.validate_args()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.TidesConfigurator"><code class="docutils literal notranslate"><span class="pre">TidesConfigurator</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.TidesConfigurator.configure"><code class="docutils literal notranslate"><span class="pre">TidesConfigurator.configure()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.TidesConfigurator.name"><code class="docutils literal notranslate"><span class="pre">TidesConfigurator.name</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.TidesConfigurator.tidal_data_str"><code class="docutils literal notranslate"><span class="pre">TidesConfigurator.tidal_data_str()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.UserNLConfigParam"><code class="docutils literal notranslate"><span class="pre">UserNLConfigParam</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.UserNLConfigParam.apply"><code class="docutils literal notranslate"><span class="pre">UserNLConfigParam.apply()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.UserNLConfigParam.user_nl_name"><code class="docutils literal notranslate"><span class="pre">UserNLConfigParam.user_nl_name</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.XMLConfigParam"><code class="docutils literal notranslate"><span class="pre">XMLConfigParam</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.XMLConfigParam.apply"><code class="docutils literal notranslate"><span class="pre">XMLConfigParam.apply()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.XMLConfigParam.is_non_local"><code class="docutils literal notranslate"><span class="pre">XMLConfigParam.is_non_local</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.register"><code class="docutils literal notranslate"><span class="pre">register()</span></code></a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.grid">CrocoDash.grid module</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.logging">CrocoDash.logging module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.logging.setup_logger"><code class="docutils literal notranslate"><span class="pre">setup_logger()</span></code></a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.topo">CrocoDash.topo module</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.topo.Topo"><code class="docutils literal notranslate"><span class="pre">Topo</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.topo.Topo.interpolate_from_file"><code class="docutils literal notranslate"><span class="pre">Topo.interpolate_from_file()</span></code></a></li>
@@ -372,11 +489,6 @@ document.write(`
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.topo_editor">CrocoDash.topo_editor module</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.utils">CrocoDash.utils module</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.utils.export_dataset"><code class="docutils literal notranslate"><span class="pre">export_dataset()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.utils.setup_logger"><code class="docutils literal notranslate"><span class="pre">setup_logger()</span></code></a></li>
-</ul>
-</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.vgrid">CrocoDash.vgrid module</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash">Module contents</a></li>
 </ul>
@@ -391,11 +503,39 @@ document.write(`
                 <article class="bd-article">
                   
   <section id="crocodash-package">
-<span id="crocodash"></span><h1>CrocoDash package<a class="headerlink" href="#crocodash-package" title="Link to this heading">#</a></h1>
+<h1>CrocoDash package<a class="headerlink" href="#crocodash-package" title="Link to this heading">#</a></h1>
 <section id="subpackages">
 <h2>Subpackages<a class="headerlink" href="#subpackages" title="Link to this heading">#</a></h2>
 <div class="toctree-wrapper compound">
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="CrocoDash.extract_forcings.html">CrocoDash.extract_forcings package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="CrocoDash.extract_forcings.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.extract_forcings.code.html">CrocoDash.extract_forcings.code package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.extract_forcings.code.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.extract_forcings.code.html#module-CrocoDash.extract_forcings.code.get_dataset_piecewise">CrocoDash.extract_forcings.code.get_dataset_piecewise module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.extract_forcings.code.html#module-CrocoDash.extract_forcings.code.merge_piecewise_dataset">CrocoDash.extract_forcings.code.merge_piecewise_dataset module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.extract_forcings.code.html#module-CrocoDash.extract_forcings.code.regrid_dataset_piecewise">CrocoDash.extract_forcings.code.regrid_dataset_piecewise module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.extract_forcings.code.html#module-CrocoDash.extract_forcings.code">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="CrocoDash.extract_forcings.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="CrocoDash.extract_forcings.html#module-CrocoDash.extract_forcings.driver">CrocoDash.extract_forcings.driver module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.extract_forcings.html#CrocoDash.extract_forcings.driver.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.extract_forcings.html#CrocoDash.extract_forcings.driver.test_driver"><code class="docutils literal notranslate"><span class="pre">test_driver()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="CrocoDash.extract_forcings.html#module-CrocoDash.extract_forcings.utils">CrocoDash.extract_forcings.utils module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.extract_forcings.html#CrocoDash.extract_forcings.utils.check_date_continuity"><code class="docutils literal notranslate"><span class="pre">check_date_continuity()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.extract_forcings.html#CrocoDash.extract_forcings.utils.load_config"><code class="docutils literal notranslate"><span class="pre">load_config()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.extract_forcings.html#CrocoDash.extract_forcings.utils.parse_dataset_folder"><code class="docutils literal notranslate"><span class="pre">parse_dataset_folder()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.extract_forcings.html#CrocoDash.extract_forcings.utils.write_config"><code class="docutils literal notranslate"><span class="pre">write_config()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="CrocoDash.extract_forcings.html#module-CrocoDash.extract_forcings">Module contents</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="CrocoDash.raw_data_access.html">CrocoDash.raw_data_access package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="CrocoDash.raw_data_access.html#subpackages">Subpackages</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html">CrocoDash.raw_data_access.datasets package</a><ul>
@@ -436,34 +576,6 @@ document.write(`
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="CrocoDash.rm6.html#module-CrocoDash.rm6">Module contents</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="CrocoDash.extract_forcings.html">CrocoDash.extract_forcings package</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="CrocoDash.extract_forcings.html#subpackages">Subpackages</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="CrocoDash.extract_forcings.code.html">CrocoDash.extract_forcings.code package</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="CrocoDash.extract_forcings.code.html#submodules">Submodules</a></li>
-<li class="toctree-l4"><a class="reference internal" href="CrocoDash.extract_forcings.code.html#module-CrocoDash.extract_forcings.code.get_dataset_piecewise">CrocoDash.extract_forcings.code.get_dataset_piecewise module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="CrocoDash.extract_forcings.code.html#module-CrocoDash.extract_forcings.code.merge_piecewise_dataset">CrocoDash.extract_forcings.code.merge_piecewise_dataset module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="CrocoDash.extract_forcings.code.html#module-CrocoDash.extract_forcings.code.regrid_dataset_piecewise">CrocoDash.extract_forcings.code.regrid_dataset_piecewise module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="CrocoDash.extract_forcings.code.html#module-CrocoDash.extract_forcings.code">Module contents</a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="CrocoDash.extract_forcings.html#submodules">Submodules</a></li>
-<li class="toctree-l2"><a class="reference internal" href="CrocoDash.extract_forcings.html#module-CrocoDash.extract_forcings.driver">CrocoDash.extract_forcings.driver module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="CrocoDash.extract_forcings.html#CrocoDash.extract_forcings.driver.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="CrocoDash.extract_forcings.html#CrocoDash.extract_forcings.driver.test_driver"><code class="docutils literal notranslate"><span class="pre">test_driver()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="CrocoDash.extract_forcings.html#module-CrocoDash.extract_forcings.utils">CrocoDash.extract_forcings.utils module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="CrocoDash.extract_forcings.html#CrocoDash.extract_forcings.utils.check_date_continuity"><code class="docutils literal notranslate"><span class="pre">check_date_continuity()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="CrocoDash.extract_forcings.html#CrocoDash.extract_forcings.utils.load_config"><code class="docutils literal notranslate"><span class="pre">load_config()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="CrocoDash.extract_forcings.html#CrocoDash.extract_forcings.utils.parse_dataset_folder"><code class="docutils literal notranslate"><span class="pre">parse_dataset_folder()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="CrocoDash.extract_forcings.html#CrocoDash.extract_forcings.utils.write_config"><code class="docutils literal notranslate"><span class="pre">write_config()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="CrocoDash.extract_forcings.html#module-CrocoDash.extract_forcings">Module contents</a></li>
 </ul>
 </li>
 </ul>
@@ -652,8 +764,477 @@ within this method and must be handled externally.</p></li>
 </dd></dl>
 
 </section>
+<section id="module-CrocoDash.forcing_configurations">
+<span id="crocodash-forcing-configurations-module"></span><h2>CrocoDash.forcing_configurations module<a class="headerlink" href="#module-CrocoDash.forcing_configurations" title="Link to this heading">#</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.BGCConfigurator">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.forcing_configurations.</span></span><span class="sig-name descname"><span class="pre">BGCConfigurator</span></span><a class="headerlink" href="#CrocoDash.forcing_configurations.BGCConfigurator" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#CrocoDash.forcing_configurations.BaseConfigurator" title="CrocoDash.forcing_configurations.BaseConfigurator"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseConfigurator</span></code></a></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.BGCConfigurator.allowed_compsets">
+<span class="sig-name descname"><span class="pre">allowed_compsets</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['MARBL']</span></em><a class="headerlink" href="#CrocoDash.forcing_configurations.BGCConfigurator.allowed_compsets" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.BGCConfigurator.configure">
+<span class="sig-name descname"><span class="pre">configure</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing_configurations.BGCConfigurator.configure" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.BGCConfigurator.forbidden_compsets">
+<span class="sig-name descname"><span class="pre">forbidden_compsets</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[]</span></em><a class="headerlink" href="#CrocoDash.forcing_configurations.BGCConfigurator.forbidden_compsets" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.BGCConfigurator.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'BGC'</span></em><a class="headerlink" href="#CrocoDash.forcing_configurations.BGCConfigurator.name" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.BGCConfigurator.required_for_compsets">
+<span class="sig-name descname"><span class="pre">required_for_compsets</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['MARBL']</span></em><a class="headerlink" href="#CrocoDash.forcing_configurations.BGCConfigurator.required_for_compsets" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.BGCICConfigurator">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.forcing_configurations.</span></span><span class="sig-name descname"><span class="pre">BGCICConfigurator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">marbl_ic_filepath</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing_configurations.BGCICConfigurator" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#CrocoDash.forcing_configurations.BaseConfigurator" title="CrocoDash.forcing_configurations.BaseConfigurator"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseConfigurator</span></code></a></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.BGCICConfigurator.allowed_compsets">
+<span class="sig-name descname"><span class="pre">allowed_compsets</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['MARBL']</span></em><a class="headerlink" href="#CrocoDash.forcing_configurations.BGCICConfigurator.allowed_compsets" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.BGCICConfigurator.configure">
+<span class="sig-name descname"><span class="pre">configure</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing_configurations.BGCICConfigurator.configure" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.BGCICConfigurator.forbidden_compsets">
+<span class="sig-name descname"><span class="pre">forbidden_compsets</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[]</span></em><a class="headerlink" href="#CrocoDash.forcing_configurations.BGCICConfigurator.forbidden_compsets" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.BGCICConfigurator.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'BGCIC'</span></em><a class="headerlink" href="#CrocoDash.forcing_configurations.BGCICConfigurator.name" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.BGCICConfigurator.required_for_compsets">
+<span class="sig-name descname"><span class="pre">required_for_compsets</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['MARBL']</span></em><a class="headerlink" href="#CrocoDash.forcing_configurations.BGCICConfigurator.required_for_compsets" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.BGCIronForcingConfigurator">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.forcing_configurations.</span></span><span class="sig-name descname"><span class="pre">BGCIronForcingConfigurator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">case_session_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">case_grid_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing_configurations.BGCIronForcingConfigurator" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#CrocoDash.forcing_configurations.BaseConfigurator" title="CrocoDash.forcing_configurations.BaseConfigurator"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseConfigurator</span></code></a></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.BGCIronForcingConfigurator.allowed_compsets">
+<span class="sig-name descname"><span class="pre">allowed_compsets</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['MARBL']</span></em><a class="headerlink" href="#CrocoDash.forcing_configurations.BGCIronForcingConfigurator.allowed_compsets" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.BGCIronForcingConfigurator.configure">
+<span class="sig-name descname"><span class="pre">configure</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing_configurations.BGCIronForcingConfigurator.configure" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.BGCIronForcingConfigurator.forbidden_compsets">
+<span class="sig-name descname"><span class="pre">forbidden_compsets</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[]</span></em><a class="headerlink" href="#CrocoDash.forcing_configurations.BGCIronForcingConfigurator.forbidden_compsets" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.BGCIronForcingConfigurator.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'BGCIronForcing'</span></em><a class="headerlink" href="#CrocoDash.forcing_configurations.BGCIronForcingConfigurator.name" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.BGCIronForcingConfigurator.required_for_compsets">
+<span class="sig-name descname"><span class="pre">required_for_compsets</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['MARBL']</span></em><a class="headerlink" href="#CrocoDash.forcing_configurations.BGCIronForcingConfigurator.required_for_compsets" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.BGCRiverNutrientsConfigurator">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.forcing_configurations.</span></span><span class="sig-name descname"><span class="pre">BGCRiverNutrientsConfigurator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">global_river_nutrients_filepath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">case_session_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">case_grid_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing_configurations.BGCRiverNutrientsConfigurator" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#CrocoDash.forcing_configurations.BaseConfigurator" title="CrocoDash.forcing_configurations.BaseConfigurator"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseConfigurator</span></code></a></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.BGCRiverNutrientsConfigurator.allowed_compsets">
+<span class="sig-name descname"><span class="pre">allowed_compsets</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['MARBL',</span> <span class="pre">'DROF']</span></em><a class="headerlink" href="#CrocoDash.forcing_configurations.BGCRiverNutrientsConfigurator.allowed_compsets" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.BGCRiverNutrientsConfigurator.configure">
+<span class="sig-name descname"><span class="pre">configure</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing_configurations.BGCRiverNutrientsConfigurator.configure" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.BGCRiverNutrientsConfigurator.forbidden_compsets">
+<span class="sig-name descname"><span class="pre">forbidden_compsets</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[]</span></em><a class="headerlink" href="#CrocoDash.forcing_configurations.BGCRiverNutrientsConfigurator.forbidden_compsets" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.BGCRiverNutrientsConfigurator.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'BGCRiverNutrients'</span></em><a class="headerlink" href="#CrocoDash.forcing_configurations.BGCRiverNutrientsConfigurator.name" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.BGCRiverNutrientsConfigurator.required_for_compsets">
+<span class="sig-name descname"><span class="pre">required_for_compsets</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[]</span></em><a class="headerlink" href="#CrocoDash.forcing_configurations.BGCRiverNutrientsConfigurator.required_for_compsets" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.BGCRiverNutrientsConfigurator.validate_args">
+<span class="sig-name descname"><span class="pre">validate_args</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing_configurations.BGCRiverNutrientsConfigurator.validate_args" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.BaseConfigurator">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.forcing_configurations.</span></span><span class="sig-name descname"><span class="pre">BaseConfigurator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing_configurations.BaseConfigurator" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
+<p>Base class for all CrocoDash configurators.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.BaseConfigurator.allowed_compsets">
+<span class="sig-name descname"><span class="pre">allowed_compsets</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[]</span></em><a class="headerlink" href="#CrocoDash.forcing_configurations.BaseConfigurator.allowed_compsets" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.BaseConfigurator.configure">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">configure</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing_configurations.BaseConfigurator.configure" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.BaseConfigurator.forbidden_compsets">
+<span class="sig-name descname"><span class="pre">forbidden_compsets</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[]</span></em><a class="headerlink" href="#CrocoDash.forcing_configurations.BaseConfigurator.forbidden_compsets" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.BaseConfigurator.is_required">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_required</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">compset</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing_configurations.BaseConfigurator.is_required" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.BaseConfigurator.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#CrocoDash.forcing_configurations.BaseConfigurator.name" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.BaseConfigurator.required_for_compsets">
+<span class="sig-name descname"><span class="pre">required_for_compsets</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[]</span></em><a class="headerlink" href="#CrocoDash.forcing_configurations.BaseConfigurator.required_for_compsets" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.BaseConfigurator.validate_args">
+<span class="sig-name descname"><span class="pre">validate_args</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing_configurations.BaseConfigurator.validate_args" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.BaseConfigurator.validate_compset_compatibility">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">validate_compset_compatibility</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">compset</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing_configurations.BaseConfigurator.validate_compset_compatibility" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.CICEConfigurator">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.forcing_configurations.</span></span><span class="sig-name descname"><span class="pre">CICEConfigurator</span></span><a class="headerlink" href="#CrocoDash.forcing_configurations.CICEConfigurator" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#CrocoDash.forcing_configurations.BaseConfigurator" title="CrocoDash.forcing_configurations.BaseConfigurator"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseConfigurator</span></code></a></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.CICEConfigurator.allowed_compsets">
+<span class="sig-name descname"><span class="pre">allowed_compsets</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['CICE']</span></em><a class="headerlink" href="#CrocoDash.forcing_configurations.CICEConfigurator.allowed_compsets" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.CICEConfigurator.configure">
+<span class="sig-name descname"><span class="pre">configure</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing_configurations.CICEConfigurator.configure" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.CICEConfigurator.forbidden_compsets">
+<span class="sig-name descname"><span class="pre">forbidden_compsets</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[]</span></em><a class="headerlink" href="#CrocoDash.forcing_configurations.CICEConfigurator.forbidden_compsets" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.CICEConfigurator.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'CICE'</span></em><a class="headerlink" href="#CrocoDash.forcing_configurations.CICEConfigurator.name" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.CICEConfigurator.required_for_compsets">
+<span class="sig-name descname"><span class="pre">required_for_compsets</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['CICE']</span></em><a class="headerlink" href="#CrocoDash.forcing_configurations.CICEConfigurator.required_for_compsets" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.ChlConfigurator">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.forcing_configurations.</span></span><span class="sig-name descname"><span class="pre">ChlConfigurator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">chl_processed_filepath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">case_grid_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">case_session_id</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing_configurations.ChlConfigurator" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#CrocoDash.forcing_configurations.BaseConfigurator" title="CrocoDash.forcing_configurations.BaseConfigurator"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseConfigurator</span></code></a></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.ChlConfigurator.allowed_compsets">
+<span class="sig-name descname"><span class="pre">allowed_compsets</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[]</span></em><a class="headerlink" href="#CrocoDash.forcing_configurations.ChlConfigurator.allowed_compsets" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.ChlConfigurator.configure">
+<span class="sig-name descname"><span class="pre">configure</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing_configurations.ChlConfigurator.configure" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.ChlConfigurator.forbidden_compsets">
+<span class="sig-name descname"><span class="pre">forbidden_compsets</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['MARBL']</span></em><a class="headerlink" href="#CrocoDash.forcing_configurations.ChlConfigurator.forbidden_compsets" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.ChlConfigurator.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Chl'</span></em><a class="headerlink" href="#CrocoDash.forcing_configurations.ChlConfigurator.name" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.ChlConfigurator.required_for_compsets">
+<span class="sig-name descname"><span class="pre">required_for_compsets</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[]</span></em><a class="headerlink" href="#CrocoDash.forcing_configurations.ChlConfigurator.required_for_compsets" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.ChlConfigurator.validate_args">
+<span class="sig-name descname"><span class="pre">validate_args</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing_configurations.ChlConfigurator.validate_args" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.ConfigParam">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.forcing_configurations.</span></span><span class="sig-name descname"><span class="pre">ConfigParam</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">comment</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">executed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing_configurations.ConfigParam" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
+<p>Base class for a single configuration parameter applied to a CESM/MOM6 case.</p>
+<p>Subclasses implement how the parameter is written (user_nl or XML).</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.ConfigParam.apply">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">apply</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing_configurations.ConfigParam.apply" title="Link to this definition">#</a></dt>
+<dd><p>Apply the configuration change.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.ConfigParam.comment">
+<span class="sig-name descname"><span class="pre">comment</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#CrocoDash.forcing_configurations.ConfigParam.comment" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.ConfigParam.executed">
+<span class="sig-name descname"><span class="pre">executed</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#CrocoDash.forcing_configurations.ConfigParam.executed" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.ConfigParam.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#CrocoDash.forcing_configurations.ConfigParam.name" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.ConfigParam.value">
+<span class="sig-name descname"><span class="pre">value</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#CrocoDash.forcing_configurations.ConfigParam.value" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.ForcingConfigRegistry">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.forcing_configurations.</span></span><span class="sig-name descname"><span class="pre">ForcingConfigRegistry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">compset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">case_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing_configurations.ForcingConfigRegistry" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.ForcingConfigRegistry.find_active_configurators">
+<span class="sig-name descname"><span class="pre">find_active_configurators</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">compset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing_configurations.ForcingConfigRegistry.find_active_configurators" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.ForcingConfigRegistry.find_required_configurators">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">find_required_configurators</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">compset</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing_configurations.ForcingConfigRegistry.find_required_configurators" title="Link to this definition">#</a></dt>
+<dd><p>Returns the required configurations based on the compset in a list</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.ForcingConfigRegistry.find_valid_configurators">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">find_valid_configurators</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">compset</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing_configurations.ForcingConfigRegistry.find_valid_configurators" title="Link to this definition">#</a></dt>
+<dd><p>Returns the valid configurations based on the compset in a list</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.ForcingConfigRegistry.get_active_configurators">
+<span class="sig-name descname"><span class="pre">get_active_configurators</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing_configurations.ForcingConfigRegistry.get_active_configurators" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.ForcingConfigRegistry.get_ctor_signature">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_ctor_signature</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">configurator_cls</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing_configurations.ForcingConfigRegistry.get_ctor_signature" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.ForcingConfigRegistry.get_user_args">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_user_args</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">configurator_cls</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing_configurations.ForcingConfigRegistry.get_user_args" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.ForcingConfigRegistry.instantiate_configurator">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">instantiate_configurator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">configurator_cls</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing_configurations.ForcingConfigRegistry.instantiate_configurator" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.ForcingConfigRegistry.is_active">
+<span class="sig-name descname"><span class="pre">is_active</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#CrocoDash.forcing_configurations.ForcingConfigRegistry.is_active" title="Link to this definition">#</a></dt>
+<dd><p>Return True if a configurator with this name is active.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.ForcingConfigRegistry.register">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">register</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">configurator_cls</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">type</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing_configurations.ForcingConfigRegistry.register" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.ForcingConfigRegistry.registered_types">
+<span class="sig-name descname"><span class="pre">registered_types</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">type</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[&lt;class</span> <span class="pre">'CrocoDash.forcing_configurations.TidesConfigurator'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'CrocoDash.forcing_configurations.BGCConfigurator'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'CrocoDash.forcing_configurations.CICEConfigurator'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'CrocoDash.forcing_configurations.BGCICConfigurator'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'CrocoDash.forcing_configurations.BGCIronForcingConfigurator'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'CrocoDash.forcing_configurations.BGCRiverNutrientsConfigurator'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'CrocoDash.forcing_configurations.RunoffConfigurator'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'CrocoDash.forcing_configurations.ChlConfigurator'&gt;]</span></em><a class="headerlink" href="#CrocoDash.forcing_configurations.ForcingConfigRegistry.registered_types" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.ForcingConfigRegistry.return_missing_inputs">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">return_missing_inputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">configurator_cls</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing_configurations.ForcingConfigRegistry.return_missing_inputs" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.ForcingConfigRegistry.run_configurators">
+<span class="sig-name descname"><span class="pre">run_configurators</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing_configurations.ForcingConfigRegistry.run_configurators" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.RunoffConfigurator">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.forcing_configurations.</span></span><span class="sig-name descname"><span class="pre">RunoffConfigurator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">runoff_esmf_mesh_filepath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">case_grid_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">case_session_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">case_compset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">case_inputdir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rmax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing_configurations.RunoffConfigurator" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#CrocoDash.forcing_configurations.BaseConfigurator" title="CrocoDash.forcing_configurations.BaseConfigurator"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseConfigurator</span></code></a></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.RunoffConfigurator.allowed_compsets">
+<span class="sig-name descname"><span class="pre">allowed_compsets</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'DROF'}</span></em><a class="headerlink" href="#CrocoDash.forcing_configurations.RunoffConfigurator.allowed_compsets" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.RunoffConfigurator.configure">
+<span class="sig-name descname"><span class="pre">configure</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing_configurations.RunoffConfigurator.configure" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.RunoffConfigurator.forbidden_compsets">
+<span class="sig-name descname"><span class="pre">forbidden_compsets</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[]</span></em><a class="headerlink" href="#CrocoDash.forcing_configurations.RunoffConfigurator.forbidden_compsets" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.RunoffConfigurator.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Runoff'</span></em><a class="headerlink" href="#CrocoDash.forcing_configurations.RunoffConfigurator.name" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.RunoffConfigurator.required_for_compsets">
+<span class="sig-name descname"><span class="pre">required_for_compsets</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'DROF'}</span></em><a class="headerlink" href="#CrocoDash.forcing_configurations.RunoffConfigurator.required_for_compsets" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.RunoffConfigurator.validate_args">
+<span class="sig-name descname"><span class="pre">validate_args</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing_configurations.RunoffConfigurator.validate_args" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.TidesConfigurator">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.forcing_configurations.</span></span><span class="sig-name descname"><span class="pre">TidesConfigurator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tpxo_elevation_filepath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tpxo_velocity_filepath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tidal_constituents</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date_range</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundaries</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing_configurations.TidesConfigurator" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#CrocoDash.forcing_configurations.BaseConfigurator" title="CrocoDash.forcing_configurations.BaseConfigurator"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseConfigurator</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.TidesConfigurator.configure">
+<span class="sig-name descname"><span class="pre">configure</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing_configurations.TidesConfigurator.configure" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.TidesConfigurator.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'tides'</span></em><a class="headerlink" href="#CrocoDash.forcing_configurations.TidesConfigurator.name" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.TidesConfigurator.tidal_data_str">
+<span class="sig-name descname"><span class="pre">tidal_data_str</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seg_ix</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing_configurations.TidesConfigurator.tidal_data_str" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.UserNLConfigParam">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.forcing_configurations.</span></span><span class="sig-name descname"><span class="pre">UserNLConfigParam</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">comment</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">executed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user_nl_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'mom'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing_configurations.UserNLConfigParam" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#CrocoDash.forcing_configurations.ConfigParam" title="CrocoDash.forcing_configurations.ConfigParam"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConfigParam</span></code></a></p>
+<p>Parameter written to a <cite>user_nl_&lt;component&gt;</cite> file (default: user_nl_mom).</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.UserNLConfigParam.apply">
+<span class="sig-name descname"><span class="pre">apply</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing_configurations.UserNLConfigParam.apply" title="Link to this definition">#</a></dt>
+<dd><p>Insert this parameter into the appropriate user_nl file.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.UserNLConfigParam.user_nl_name">
+<span class="sig-name descname"><span class="pre">user_nl_name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'mom'</span></em><a class="headerlink" href="#CrocoDash.forcing_configurations.UserNLConfigParam.user_nl_name" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.XMLConfigParam">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.forcing_configurations.</span></span><span class="sig-name descname"><span class="pre">XMLConfigParam</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">comment</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">executed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_non_local</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing_configurations.XMLConfigParam" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#CrocoDash.forcing_configurations.ConfigParam" title="CrocoDash.forcing_configurations.ConfigParam"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConfigParam</span></code></a></p>
+<p>Parameter applied via xmlchange</p>
+<p>XML changes are permanent and do not save previous state, so removal is unsupported.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.XMLConfigParam.apply">
+<span class="sig-name descname"><span class="pre">apply</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing_configurations.XMLConfigParam.apply" title="Link to this definition">#</a></dt>
+<dd><p>Apply this change using xmlchange.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.XMLConfigParam.is_non_local">
+<span class="sig-name descname"><span class="pre">is_non_local</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#CrocoDash.forcing_configurations.XMLConfigParam.is_non_local" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.register">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.forcing_configurations.</span></span><span class="sig-name descname"><span class="pre">register</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cls</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing_configurations.register" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+</section>
 <section id="module-CrocoDash.grid">
 <span id="crocodash-grid-module"></span><h2>CrocoDash.grid module<a class="headerlink" href="#module-CrocoDash.grid" title="Link to this heading">#</a></h2>
+</section>
+<section id="module-CrocoDash.logging">
+<span id="crocodash-logging-module"></span><h2>CrocoDash.logging module<a class="headerlink" href="#module-CrocoDash.logging" title="Link to this heading">#</a></h2>
+<p>This module (logging) contains logging functions that are used across the CrocoDash package.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.logging.setup_logger">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.logging.</span></span><span class="sig-name descname"><span class="pre">setup_logger</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.logging.setup_logger" title="Link to this definition">#</a></dt>
+<dd><p>This function sets up a logger format for the package. It attaches logger output to stdout (if a handler doesn’t already exist) and formats it in a pretty way!</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>name</strong> (<em>str</em>) – The name of the logger.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The logger</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>logging.Logger</p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 <section id="module-CrocoDash.topo">
 <span id="crocodash-topo-module"></span><h2>CrocoDash.topo module<a class="headerlink" href="#module-CrocoDash.topo" title="Link to this heading">#</a></h2>
@@ -671,44 +1252,6 @@ within this method and must be handled externally.</p></li>
 </section>
 <section id="module-CrocoDash.topo_editor">
 <span id="crocodash-topo-editor-module"></span><h2>CrocoDash.topo_editor module<a class="headerlink" href="#module-CrocoDash.topo_editor" title="Link to this heading">#</a></h2>
-</section>
-<section id="module-CrocoDash.utils">
-<span id="crocodash-utils-module"></span><h2>CrocoDash.utils module<a class="headerlink" href="#module-CrocoDash.utils" title="Link to this heading">#</a></h2>
-<p>This module (utils) contains utility functions that are used across the CrocoDash package.</p>
-<dl class="py function">
-<dt class="sig sig-object py" id="CrocoDash.utils.export_dataset">
-<span class="sig-prename descclassname"><span class="pre">CrocoDash.utils.</span></span><span class="sig-name descname"><span class="pre">export_dataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.utils.export_dataset" title="Link to this definition">#</a></dt>
-<dd><p>This function exports an xarray dataset to a netcdf file at the specified path, but deletes the previous netcdf beforehand for safety.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>ds</strong> (<em>xarray.Dataset</em>) – The dataset to export.</p></li>
-<li><p><strong>path</strong> (<em>str</em>) – The path to the netcdf file to export</p></li>
-</ul>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>None</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="CrocoDash.utils.setup_logger">
-<span class="sig-prename descclassname"><span class="pre">CrocoDash.utils.</span></span><span class="sig-name descname"><span class="pre">setup_logger</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.utils.setup_logger" title="Link to this definition">#</a></dt>
-<dd><p>This function sets up a logger format for the package. It attaches logger output to stdout (if a handler doesn’t already exist) and formats it in a pretty way!</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>name</strong> (<em>str</em>) – The name of the logger.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The logger</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>logging.Logger</p>
-</dd>
-</dl>
-</dd></dl>
-
 </section>
 <section id="module-CrocoDash.vgrid">
 <span id="crocodash-vgrid-module"></span><h2>CrocoDash.vgrid module<a class="headerlink" href="#module-CrocoDash.vgrid" title="Link to this heading">#</a></h2>
@@ -739,11 +1282,11 @@ within this method and must be handled externally.</p></li>
       </div>
     </a>
     <a class="right-next"
-       href="CrocoDash.raw_data_access.html"
+       href="CrocoDash.extract_forcings.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">CrocoDash.raw_data_access package</p>
+        <p class="prev-next-title">CrocoDash.extract_forcings package</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -788,7 +1331,124 @@ within this method and must be handled externally.</p></li>
 </li>
 </ul>
 </li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.forcing_configurations">CrocoDash.forcing_configurations module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BGCConfigurator"><code class="docutils literal notranslate"><span class="pre">BGCConfigurator</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BGCConfigurator.allowed_compsets"><code class="docutils literal notranslate"><span class="pre">BGCConfigurator.allowed_compsets</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BGCConfigurator.configure"><code class="docutils literal notranslate"><span class="pre">BGCConfigurator.configure()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BGCConfigurator.forbidden_compsets"><code class="docutils literal notranslate"><span class="pre">BGCConfigurator.forbidden_compsets</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BGCConfigurator.name"><code class="docutils literal notranslate"><span class="pre">BGCConfigurator.name</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BGCConfigurator.required_for_compsets"><code class="docutils literal notranslate"><span class="pre">BGCConfigurator.required_for_compsets</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BGCICConfigurator"><code class="docutils literal notranslate"><span class="pre">BGCICConfigurator</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BGCICConfigurator.allowed_compsets"><code class="docutils literal notranslate"><span class="pre">BGCICConfigurator.allowed_compsets</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BGCICConfigurator.configure"><code class="docutils literal notranslate"><span class="pre">BGCICConfigurator.configure()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BGCICConfigurator.forbidden_compsets"><code class="docutils literal notranslate"><span class="pre">BGCICConfigurator.forbidden_compsets</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BGCICConfigurator.name"><code class="docutils literal notranslate"><span class="pre">BGCICConfigurator.name</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BGCICConfigurator.required_for_compsets"><code class="docutils literal notranslate"><span class="pre">BGCICConfigurator.required_for_compsets</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BGCIronForcingConfigurator"><code class="docutils literal notranslate"><span class="pre">BGCIronForcingConfigurator</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BGCIronForcingConfigurator.allowed_compsets"><code class="docutils literal notranslate"><span class="pre">BGCIronForcingConfigurator.allowed_compsets</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BGCIronForcingConfigurator.configure"><code class="docutils literal notranslate"><span class="pre">BGCIronForcingConfigurator.configure()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BGCIronForcingConfigurator.forbidden_compsets"><code class="docutils literal notranslate"><span class="pre">BGCIronForcingConfigurator.forbidden_compsets</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BGCIronForcingConfigurator.name"><code class="docutils literal notranslate"><span class="pre">BGCIronForcingConfigurator.name</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BGCIronForcingConfigurator.required_for_compsets"><code class="docutils literal notranslate"><span class="pre">BGCIronForcingConfigurator.required_for_compsets</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BGCRiverNutrientsConfigurator"><code class="docutils literal notranslate"><span class="pre">BGCRiverNutrientsConfigurator</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BGCRiverNutrientsConfigurator.allowed_compsets"><code class="docutils literal notranslate"><span class="pre">BGCRiverNutrientsConfigurator.allowed_compsets</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BGCRiverNutrientsConfigurator.configure"><code class="docutils literal notranslate"><span class="pre">BGCRiverNutrientsConfigurator.configure()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BGCRiverNutrientsConfigurator.forbidden_compsets"><code class="docutils literal notranslate"><span class="pre">BGCRiverNutrientsConfigurator.forbidden_compsets</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BGCRiverNutrientsConfigurator.name"><code class="docutils literal notranslate"><span class="pre">BGCRiverNutrientsConfigurator.name</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BGCRiverNutrientsConfigurator.required_for_compsets"><code class="docutils literal notranslate"><span class="pre">BGCRiverNutrientsConfigurator.required_for_compsets</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BGCRiverNutrientsConfigurator.validate_args"><code class="docutils literal notranslate"><span class="pre">BGCRiverNutrientsConfigurator.validate_args()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BaseConfigurator"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BaseConfigurator.allowed_compsets"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.allowed_compsets</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BaseConfigurator.configure"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.configure()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BaseConfigurator.forbidden_compsets"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.forbidden_compsets</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BaseConfigurator.is_required"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.is_required()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BaseConfigurator.name"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.name</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BaseConfigurator.required_for_compsets"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.required_for_compsets</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BaseConfigurator.validate_args"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.validate_args()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.BaseConfigurator.validate_compset_compatibility"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.validate_compset_compatibility()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.CICEConfigurator"><code class="docutils literal notranslate"><span class="pre">CICEConfigurator</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.CICEConfigurator.allowed_compsets"><code class="docutils literal notranslate"><span class="pre">CICEConfigurator.allowed_compsets</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.CICEConfigurator.configure"><code class="docutils literal notranslate"><span class="pre">CICEConfigurator.configure()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.CICEConfigurator.forbidden_compsets"><code class="docutils literal notranslate"><span class="pre">CICEConfigurator.forbidden_compsets</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.CICEConfigurator.name"><code class="docutils literal notranslate"><span class="pre">CICEConfigurator.name</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.CICEConfigurator.required_for_compsets"><code class="docutils literal notranslate"><span class="pre">CICEConfigurator.required_for_compsets</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.ChlConfigurator"><code class="docutils literal notranslate"><span class="pre">ChlConfigurator</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.ChlConfigurator.allowed_compsets"><code class="docutils literal notranslate"><span class="pre">ChlConfigurator.allowed_compsets</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.ChlConfigurator.configure"><code class="docutils literal notranslate"><span class="pre">ChlConfigurator.configure()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.ChlConfigurator.forbidden_compsets"><code class="docutils literal notranslate"><span class="pre">ChlConfigurator.forbidden_compsets</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.ChlConfigurator.name"><code class="docutils literal notranslate"><span class="pre">ChlConfigurator.name</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.ChlConfigurator.required_for_compsets"><code class="docutils literal notranslate"><span class="pre">ChlConfigurator.required_for_compsets</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.ChlConfigurator.validate_args"><code class="docutils literal notranslate"><span class="pre">ChlConfigurator.validate_args()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.ConfigParam"><code class="docutils literal notranslate"><span class="pre">ConfigParam</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.ConfigParam.apply"><code class="docutils literal notranslate"><span class="pre">ConfigParam.apply()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.ConfigParam.comment"><code class="docutils literal notranslate"><span class="pre">ConfigParam.comment</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.ConfigParam.executed"><code class="docutils literal notranslate"><span class="pre">ConfigParam.executed</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.ConfigParam.name"><code class="docutils literal notranslate"><span class="pre">ConfigParam.name</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.ConfigParam.value"><code class="docutils literal notranslate"><span class="pre">ConfigParam.value</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.ForcingConfigRegistry"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.ForcingConfigRegistry.find_active_configurators"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.find_active_configurators()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.ForcingConfigRegistry.find_required_configurators"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.find_required_configurators()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.ForcingConfigRegistry.find_valid_configurators"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.find_valid_configurators()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.ForcingConfigRegistry.get_active_configurators"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.get_active_configurators()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.ForcingConfigRegistry.get_ctor_signature"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.get_ctor_signature()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.ForcingConfigRegistry.get_user_args"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.get_user_args()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.ForcingConfigRegistry.instantiate_configurator"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.instantiate_configurator()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.ForcingConfigRegistry.is_active"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.is_active()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.ForcingConfigRegistry.register"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.register()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.ForcingConfigRegistry.registered_types"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.registered_types</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.ForcingConfigRegistry.return_missing_inputs"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.return_missing_inputs()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.ForcingConfigRegistry.run_configurators"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.run_configurators()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.RunoffConfigurator"><code class="docutils literal notranslate"><span class="pre">RunoffConfigurator</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.RunoffConfigurator.allowed_compsets"><code class="docutils literal notranslate"><span class="pre">RunoffConfigurator.allowed_compsets</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.RunoffConfigurator.configure"><code class="docutils literal notranslate"><span class="pre">RunoffConfigurator.configure()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.RunoffConfigurator.forbidden_compsets"><code class="docutils literal notranslate"><span class="pre">RunoffConfigurator.forbidden_compsets</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.RunoffConfigurator.name"><code class="docutils literal notranslate"><span class="pre">RunoffConfigurator.name</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.RunoffConfigurator.required_for_compsets"><code class="docutils literal notranslate"><span class="pre">RunoffConfigurator.required_for_compsets</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.RunoffConfigurator.validate_args"><code class="docutils literal notranslate"><span class="pre">RunoffConfigurator.validate_args()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.TidesConfigurator"><code class="docutils literal notranslate"><span class="pre">TidesConfigurator</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.TidesConfigurator.configure"><code class="docutils literal notranslate"><span class="pre">TidesConfigurator.configure()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.TidesConfigurator.name"><code class="docutils literal notranslate"><span class="pre">TidesConfigurator.name</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.TidesConfigurator.tidal_data_str"><code class="docutils literal notranslate"><span class="pre">TidesConfigurator.tidal_data_str()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.UserNLConfigParam"><code class="docutils literal notranslate"><span class="pre">UserNLConfigParam</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.UserNLConfigParam.apply"><code class="docutils literal notranslate"><span class="pre">UserNLConfigParam.apply()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.UserNLConfigParam.user_nl_name"><code class="docutils literal notranslate"><span class="pre">UserNLConfigParam.user_nl_name</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.XMLConfigParam"><code class="docutils literal notranslate"><span class="pre">XMLConfigParam</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.XMLConfigParam.apply"><code class="docutils literal notranslate"><span class="pre">XMLConfigParam.apply()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.XMLConfigParam.is_non_local"><code class="docutils literal notranslate"><span class="pre">XMLConfigParam.is_non_local</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.register"><code class="docutils literal notranslate"><span class="pre">register()</span></code></a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.grid">CrocoDash.grid module</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.logging">CrocoDash.logging module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.logging.setup_logger"><code class="docutils literal notranslate"><span class="pre">setup_logger()</span></code></a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.topo">CrocoDash.topo module</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.topo.Topo"><code class="docutils literal notranslate"><span class="pre">Topo</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.topo.Topo.interpolate_from_file"><code class="docutils literal notranslate"><span class="pre">Topo.interpolate_from_file()</span></code></a></li>
@@ -797,11 +1457,6 @@ within this method and must be handled externally.</p></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.topo_editor">CrocoDash.topo_editor module</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.utils">CrocoDash.utils module</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.utils.export_dataset"><code class="docutils literal notranslate"><span class="pre">export_dataset()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.utils.setup_logger"><code class="docutils literal notranslate"><span class="pre">setup_logger()</span></code></a></li>
-</ul>
-</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.vgrid">CrocoDash.vgrid module</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash">Module contents</a></li>
 </ul>
