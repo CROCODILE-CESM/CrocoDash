@@ -10,6 +10,7 @@ from CrocoDash.logging import setup_logger
 import inspect
 from ProConPy.config_var import ConfigVar, cvars
 from mom6_bathy import mapping
+
 logger = setup_logger(__name__)
 
 
@@ -38,73 +39,77 @@ class ForcingConfigRegistry:
         """Returns the valid configurations based on the compset in a list"""
         valid_configs = []
         for configurator_cls in cls.registered_types:
-           if configurator_cls.validate_compset_compatibility(compset):
-            valid_configs.append(configurator_cls)
+            if configurator_cls.validate_compset_compatibility(compset):
+                valid_configs.append(configurator_cls)
         return valid_configs
 
     @classmethod
     def find_required_configurators(cls, compset):
         """Returns the required configurations based on the compset in a list"""
-
+        required_configs = []
+        for configurator_cls in cls.registered_types:
+            if configurator_cls.is_required(compset):
+                required_configs.append(configurator_cls)
+        return required_configs
 
     @classmethod
-    def get_configurator_args(cls, configurator_name):
-        """
-        Return the arguments of a specific configurator by name
-        """
-        configurator = None
-        for configurator_cls in cls.registered_types:
-            if configurator_cls.name == configurator_name:
-                configurator = configurator_cls
+    def get_ctor_signature(cls, configurator_cls):
+        sig = inspect.signature(configurator_cls.__init__)
+        args = [p.name for p in sig.parameters.values() if p.name != "self"]
+        required_args = [
+            p.name
+            for p in sig.parameters.values()
+            if p.name != "self" and p.default is inspect._empty
+        ]
+        return args, required_args
 
-        if configurator == None:
-            raise ValueError("Could not find configurator with this name")
-        else:
-            sig = inspect.signature(configurator_cls.__init__)
-            args = [p.name for p in sig.parameters.values() if p.name != "self"]
-            return args
+    @classmethod
+    def return_missing_inputs(cls, configurator_cls, inputs):
+        _, required_args = cls.get_ctor_signature(configurator_cls)
+        missing = [arg for arg in required_args if arg not in inputs]
+        return missing
+
+    @classmethod
+    def instantiate_configurator(cls, configurator_cls, inputs):
+        args, _ = cls.get_ctor_signature(configurator_cls)
+        ctor_kwargs = {arg: inputs[arg] for arg in args if arg in inputs}
+        return configurator_cls(**ctor_kwargs)
 
     def find_active_configurators(self, compset, inputs: dict):
         inputs["compset"] = compset
-        # Find Active Configurators
+
+        required = self.find_required_configurators(compset)
+        valid = self.find_valid_configurators(compset)
+
         for configurator_cls in self.registered_types:
-            sig = inspect.signature(configurator_cls.__init__)
-            args = [p.name for p in sig.parameters.values() if p.name != "self"]
-            required_args = [
-                p.name
-                for p in sig.parameters.values()
-                if p.name != "self" and p.default is inspect._empty
-            ]
-            # If required add to active configurators
-            if configurator_cls.is_required(compset):
-
-                logger.info(f"[REQUIRED] Activating {configurator_cls.name}")
-                if not all(arg in inputs for arg in required_args):
+            name = configurator_cls.name
+            lname = name.lower()
+            if configurator_cls in required:
+                missing = self.return_missing_inputs(configurator_cls, inputs)
+                if missing:
                     raise ValueError(
-                        f"[ERROR] Required configurator {configurator_cls.name} missing at least one of the args: {required_args}"
+                        f"[ERROR] Required configurator {name} missing args: {missing}"
                     )
-                ctor_kwargs = {arg: inputs[arg] for arg in args if arg in inputs}
-                self.active_configurators[configurator_cls.name.lower()] = (
-                    configurator_cls(**ctor_kwargs)
+                logger.info(f"[REQUIRED] Activating {name}")
+                self.active_configurators[lname] = self.instantiate_configurator(
+                    configurator_cls, inputs
                 )
-            else:
-                if not configurator_cls.validate_compset_compatibility(compset):
+                continue  # We do not want to to be added twice with the valid configs
 
-                    logger.info(
-                        f"[SKIP] {configurator_cls.name} incompatible with compset"
-                    )
-                    continue
-                if not all(arg in inputs for arg in required_args):
-                    logger.info(
-                        f"[SKIP] {configurator_cls.name} missing args: {required_args}"
-                    )
-                    continue
+            # --- OPTIONAL CONFIGURATORS ---
+            if configurator_cls not in valid:
+                logger.info(f"[SKIP] {name} incompatible with compset")
+                continue
 
-                # setup configurator
-                ctor_kwargs = {arg: inputs[arg] for arg in args if arg in inputs}
-                self.active_configurators[configurator_cls.name.lower()] = (
-                    configurator_cls(**ctor_kwargs)
-                )
+            missing = self.return_missing_inputs(configurator_cls, inputs)
+            if missing:
+                logger.info(f"[SKIP] {name} missing args: {missing}")
+                continue
+
+            logger.info(f"[OPTIONAL] Activating {name}")
+            self.active_configurators[lname] = self.instantiate_configurator(
+                configurator_cls, inputs
+            )
 
     def run_configurators(self):
         # Run Configurators
