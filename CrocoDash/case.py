@@ -164,6 +164,17 @@ class Case:
 
         self._apply_final_xmlchanges(ntasks_ocn, job_queue, job_wallclock_time)
 
+        print("The following additional configuration options are required and must be provided with these arguments in configure_forcings:")
+
+        required_configurators = ForcingConfigRegistry.find_required_configurators(self.compset_lname)
+
+        for configurator in required_configurators:
+            args, required_args, user_args = ForcingConfigRegistry.get_ctor_signature(configurator)
+
+            args_str = ", ".join(user_args) if user_args else "no arguments"
+            print(f"  - {configurator.name}: {args_str}")
+                    
+
     @property
     def cice_in_compset(self):
         """Check if CICE is included in the compset."""
@@ -420,11 +431,14 @@ class Case:
         inputs = kwargs | {
             "date_range": pd.to_datetime(date_range),
             "inputdir": self.inputdir,
-            "grid_name": self.ocn_grid.name,
-            "session_id": cvars["MB_ATTEMPT_ID"].value,
             "boundaries":boundaries
         }
-        self.fcr = ForcingConfigRegistry(self.compset_lname, inputs)
+        case_info = {
+            "case_grid_name": self.ocn_grid.name,
+            "case_session_id": cvars["MB_ATTEMPT_ID"].value,
+            "case_compset":self.compset_lname
+        }
+        self.fcr = ForcingConfigRegistry(inputs,case_info)
         self.fcr.run_configurators()
 
         self._update_forcing_variables()

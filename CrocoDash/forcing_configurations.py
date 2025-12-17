@@ -30,9 +30,11 @@ class ForcingConfigRegistry:
     def __getitem__(self, key: str):
         return self.active_configurators[key.lower()]
 
-    def __init__(self, compset, inputs: dict):
+    def __init__(self, inputs: dict, case_info: dict):
         self.active_configurators = {}
-        self.find_active_configurators(compset, inputs)
+        self.case_info = case_info
+        inputs = inputs | case_info
+        self.find_active_configurators(inputs)
 
     @classmethod
     def find_valid_configurators(cls, compset):
@@ -61,7 +63,12 @@ class ForcingConfigRegistry:
             for p in sig.parameters.values()
             if p.name != "self" and p.default is inspect._empty
         ]
-        return args, required_args
+        user_args = [
+            name
+            for name, param in sig.parameters.items()
+            if name not in ("self") and not name.startswith("case_")
+        ]
+        return args, required_args, user_args
 
     @classmethod
     def return_missing_inputs(cls, configurator_cls, inputs):
@@ -76,7 +83,7 @@ class ForcingConfigRegistry:
         return configurator_cls(**ctor_kwargs)
 
     def find_active_configurators(self, compset, inputs: dict):
-        inputs["compset"] = compset
+        compset = inputs["case_compset"]
 
         required = self.find_required_configurators(compset)
         valid = self.find_valid_configurators(compset)
@@ -299,14 +306,12 @@ class BGCIronForcingConfigurator(BaseConfigurator):
     allowed_compsets = ["MARBL"]
     forbidden_compsets = []
 
-    def __init__(self, session_id, grid_name):
-        super().__init__(session_id=session_id, grid_name=grid_name)
+    def __init__(self, case_session_id, case_grid_name):
+        super().__init__(case_session_id=case_session_id, case_grid_name=case_grid_name)
         self.feventflux_filepath = (
-            f"feventflux_5gmol_{self.grid_name}_{self.session_id}.nc"
+            f"feventflux_5gmol_{self.case_grid_name}_{self.case_session_id}.nc"
         )
-        self.fesedflux_filepath = (
-            f"fesedflux_total_reduce_oxic_{self.grid_name}_{self.session_id}.nc"
-        )
+        self.fesedflux_filepath = f"fesedflux_total_reduce_oxic_{self.case_grid_name}_{self.case_session_id}.nc"
         self.params = []
         self.params.append(
             UserNLConfigParam("MARBL_FESEDFLUX_FILE", self.fesedflux_filepath)
@@ -326,15 +331,17 @@ class BGCRiverNutrientsConfigurator(BaseConfigurator):
     allowed_compsets = ["MARBL", "DROF"]
     forbidden_compsets = []
 
-    def __init__(self, global_river_nutrients_filepath, session_id, grid_name):
+    def __init__(
+        self, global_river_nutrients_filepath, case_session_id, case_grid_name
+    ):
         super().__init__(
             global_river_nutrients_filepath=global_river_nutrients_filepath,
-            session_id=session_id,
-            grid_name=grid_name,
+            case_session_id=case_session_id,
+            case_grid_name=case_grid_name,
         )
         self.params = []
         self.river_nutrients_nnsm_filepath = (
-            f"river_nutrients_{self.grid_name}_{self.session_id}_nnsm.nc"
+            f"river_nutrients_{self.case_grid_name}_{self.case_session_id}_nnsm.nc"
         )
         self.params.append(
             UserNLConfigParam("READ_RIV_FLUXES", "True", user_nl_name="mom")
@@ -365,8 +372,8 @@ class RunoffConfigurator(BaseConfigurator):
     def __init__(
         self,
         runoff_esmf_mesh_filepath,
-        grid_name,
-        session_id,
+        case_grid_name,
+        case_session_id,
         compset,
         inputdir,
         rmax=None,
@@ -382,18 +389,18 @@ class RunoffConfigurator(BaseConfigurator):
         """
         super().__init__(
             runoff_esmf_mesh_filepath=runoff_esmf_mesh_filepath,
-            grid_name=grid_name,
-            session_id=session_id,
+            case_grid_name=case_grid_name,
+            case_session_id=case_session_id,
             rmax=rmax,
             fold=fold,
             compset=compset,
         )
         self.params = []
         self.runoff_mapping_file_nnsm = (
-            f"glofas_{self.grid_name}_{self.session_id}_nnsm.nc"
+            f"glofas_{self.case_grid_name}_{self.case_session_id}_nnsm.nc"
         )
-        rof_grid_name = cvars["CUSTOM_ROF_GRID"].value
-        mapping_file_prefix = f"{rof_grid_name}_to_{grid_name}_map"
+        rof_case_grid_name = cvars["CUSTOM_ROF_GRID"].value
+        mapping_file_prefix = f"{rof_case_grid_name}_to_{case_grid_name}_map"
         mapping_dir = Path(inputdir) / "mapping"
         mapping_dir.mkdir(exist_ok=False)
         if self.rmax is None:
@@ -434,15 +441,15 @@ class ChlConfigurator(BaseConfigurator):
     allowed_compsets = []
     forbidden_compsets = ["MARBL"]
 
-    def __init__(self, chl_processed_filepath, grid_name, session_id):
+    def __init__(self, chl_processed_filepath, case_grid_name, case_session_id):
 
         super().__init__(
             chl_processed_filepath=chl_processed_filepath,
-            grid_name=grid_name,
-            session_id=session_id,
+            case_grid_name=case_grid_name,
+            case_session_id=case_session_id,
         )
         self.params = []
-        self.regional_chl_file_path = f"seawifs-clim-1997-2010-{self.grid_name}.nc"
+        self.regional_chl_file_path = f"seawifs-clim-1997-2010-{self.case_grid_name}.nc"
         self.params.append(
             UserNLConfigParam("CHL_FILE", Path(self.regional_chl_file_path), "mom")
         )
