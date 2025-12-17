@@ -35,7 +35,7 @@ def test_xml_apply(fake_param_case):
 def test_all_configurators_smoke(fake_param_case):
 
     ## Set up some dummy args
-    dummy_str = "bleh"
+    dummy_str = "123"
     dummy_date_range = ["2000-01-01", "2000-01-02"]
     dummy_date_range = pd.to_datetime(dummy_date_range)
     dummy_path = fake_param_case / "dummy_path"

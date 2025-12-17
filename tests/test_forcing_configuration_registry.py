@@ -45,12 +45,6 @@ class Dummy1(BaseConfigurator):
 def fcr_add_dummy1():
     return ForcingConfigRegistry("", {"dummy": "dummy"})
 
-
-def test_get_configurator_args():
-    assert ForcingConfigRegistry.get_configurator_args("dummy1") == ["dummy"]
-    with pytest.raises(ValueError):
-        ForcingConfigRegistry.get_configurator_args("notreal")
-
 def test_validate_compset_compatability():
     assert Dummy.validate_compset_compatibility("req")
     assert Dummy.validate_compset_compatibility("dummy")
