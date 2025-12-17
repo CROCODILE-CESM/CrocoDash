@@ -1,12 +1,12 @@
 from pathlib import Path
-from CrocoDash import utils
+from CrocoDash import logging
 from CrocoDash.grid import *
 from CrocoDash.raw_data_access.registry import ProductRegistry
 import xarray as xr
 import pandas as pd
 from datetime import datetime, timedelta
 
-logger = utils.setup_logger(__name__)
+logger = logging.setup_logger(__name__)
 
 
 def get_dataset_piecewise(

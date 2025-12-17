@@ -34,9 +34,9 @@ Get Started
 
    installation
    Tutorials & Gallery <https://crocodile-cesm.github.io/CrocoGallery/>
-   datasets
    structure
-   configure_forcings
+   datasets
+   forcing_configurations
    available_compset_alias
    additional_resources
    developers/index

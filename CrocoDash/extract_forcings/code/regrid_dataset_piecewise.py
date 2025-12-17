@@ -1,6 +1,6 @@
 import regional_mom6 as rm6
 from pathlib import Path
-from CrocoDash import utils
+from CrocoDash import logging
 from CrocoDash.extract_forcings.utils import (
     parse_dataset_folder,
     check_date_continuity,
@@ -16,7 +16,7 @@ from CrocoDash.topo import Topo
 from CrocoDash.grid import Grid
 import netCDF4
 
-logger = utils.setup_logger(__name__)
+logger = logging.setup_logger(__name__)
 
 
 def regrid_dataset_piecewise(

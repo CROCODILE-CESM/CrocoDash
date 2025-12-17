@@ -1,31 +1,10 @@
 """
-This module (utils) contains utility functions that are used across the CrocoDash package.
+This module (logging) contains logging functions that are used across the CrocoDash package.
 """
 
 import os
 import logging
 import sys
-
-
-def export_dataset(ds, path):
-    """
-    This function exports an xarray dataset to a netcdf file at the specified path, but deletes the previous netcdf beforehand for safety.
-
-    Parameters
-    ----------
-    ds : xarray.Dataset
-        The dataset to export.
-    path : str
-        The path to the netcdf file to export
-
-    Returns
-    -------
-    None
-    """
-    if os.path.exists(path):
-        os.remove(path)
-    ds.to_netcdf(path)
-    ds.close()
 
 
 def setup_logger(name):
