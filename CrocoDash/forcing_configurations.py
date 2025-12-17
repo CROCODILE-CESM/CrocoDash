@@ -30,7 +30,7 @@ class ForcingConfigRegistry:
     def __getitem__(self, key: str):
         return self.active_configurators[key.lower()]
 
-    def __init__(self, compset,inputs: dict, case_info: dict):
+    def __init__(self, compset,inputs: dict, case_info: dict = {}):
         self.compset = compset
         self.active_configurators = {}
         self.case_info = case_info
@@ -64,12 +64,14 @@ class ForcingConfigRegistry:
             for p in sig.parameters.values()
             if p.name != "self" and p.default is inspect._empty
         ]
-        user_args = [
-            name
-            for name, param in sig.parameters.items()
-            if name not in ("self") and not name.startswith("case_")
-        ]
-        return args, required_args, user_args
+
+        return args, required_args
+
+    @classmethod
+    def get_user_args(cls, configurator_cls):
+        args, required_args = cls.get_ctor_signature(configurator_cls)
+        user_args = [arg for arg in required_args if not arg.startswith("case_")]
+        return user_args
 
     @classmethod
     def return_missing_inputs(cls, configurator_cls, inputs):
