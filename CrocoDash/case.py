@@ -164,14 +164,15 @@ class Case:
 
         self._apply_final_xmlchanges(ntasks_ocn, job_queue, job_wallclock_time)
 
-        print("The following additional configuration options are required and must be provided with these arguments in configure_forcings:")
-
         required_configurators = ForcingConfigRegistry.find_required_configurators(self.compset_lname)
-
-        for configurator in required_configurators:
-            user_args = ForcingConfigRegistry.get_user_args(configurator)
-            args_str = ", ".join(user_args) if user_args else "no arguments"
-            print(f"  - {configurator.name}: {args_str}")
+        
+        if len(required_configurators) > 0:
+            print("The following additional configuration options are required to run and must be provided with any listed arguments in configure_forcings:")
+            
+            for configurator in required_configurators:
+                user_args = ForcingConfigRegistry.get_user_args(configurator)
+                args_str = ", ".join(user_args) if user_args else "no arguments"
+                print(f"  - {configurator.name}: {args_str}")
                     
 
     @property
@@ -429,10 +430,11 @@ class Case:
         
         inputs = kwargs | {
             "date_range": pd.to_datetime(date_range),
-            "inputdir": self.inputdir,
+            
             "boundaries":boundaries
         }
         case_info = {
+            "case_inputdir": self.inputdir,
             "case_grid_name": self.ocn_grid.name,
             "case_session_id": cvars["MB_ATTEMPT_ID"].value,
         }

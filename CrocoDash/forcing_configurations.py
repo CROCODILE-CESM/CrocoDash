@@ -30,7 +30,7 @@ class ForcingConfigRegistry:
     def __getitem__(self, key: str):
         return self.active_configurators[key.lower()]
 
-    def __init__(self, compset,inputs: dict, case_info: dict = {}):
+    def __init__(self, compset, inputs: dict, case_info: dict = {}):
         self.compset = compset
         self.active_configurators = {}
         self.case_info = case_info
@@ -376,8 +376,8 @@ class RunoffConfigurator(BaseConfigurator):
         runoff_esmf_mesh_filepath,
         case_grid_name,
         case_session_id,
-        compset,
-        inputdir,
+        case_compset,
+        case_inputdir,
         rmax=None,
         fold=None,
     ):
@@ -395,7 +395,7 @@ class RunoffConfigurator(BaseConfigurator):
             case_session_id=case_session_id,
             rmax=rmax,
             fold=fold,
-            compset=compset,
+            case_compset=case_compset,
         )
         self.params = []
         self.runoff_mapping_file_nnsm = (
@@ -403,7 +403,7 @@ class RunoffConfigurator(BaseConfigurator):
         )
         rof_case_grid_name = cvars["CUSTOM_ROF_GRID"].value
         mapping_file_prefix = f"{rof_case_grid_name}_to_{case_grid_name}_map"
-        mapping_dir = Path(inputdir) / "mapping"
+        mapping_dir = Path(case_inputdir) / "mapping"
         mapping_dir.mkdir(exist_ok=False)
         if self.rmax is None:
             self.rmax, self.fold = mapping.get_suggested_smoothing_params(
@@ -430,7 +430,7 @@ class RunoffConfigurator(BaseConfigurator):
         if (kwargs["rmax"] is None) != (kwargs["fold"] is None):
             raise ValueError("Both rmax and fold must be specified together.")
         if kwargs["rmax"] is not None:
-            assert "SROF" not in kwargs["compset"], (
+            assert "SROF" not in kwargs["case_compset"], (
                 "When rmax and fold are specified, "
                 "the compset must include an active or data runoff model."
             )
