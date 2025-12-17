@@ -30,7 +30,7 @@ jobs:
             echo "env_changed=true" >> $GITHUB_OUTPUT
           fi
       - name: Copy CrocoDash into container
-          run: |
+        run: |
               rm -rf $WORKDIR/CrocoDash
               cp -r $GITHUB_WORKSPACE/CrocoDash $WORKDIR/
       - name: Create CrocoDash environment if changed

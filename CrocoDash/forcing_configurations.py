@@ -33,6 +33,23 @@ class ForcingConfigRegistry:
         self.active_configurators = {}
         self.find_active_configurators(compset, inputs)
 
+    @classmethod
+    def get_configurator_args(cls, configurator_name):
+        """
+        Return the arguments of a specific configurator by name
+        """
+        configurator = None
+        for configurator_cls in cls.registered_types:
+            if configurator_cls.name == configurator_name:
+                configurator = configurator_cls
+
+        if configurator == None:
+            raise ValueError("Could not find configurator with this name")
+        else:
+            sig = inspect.signature(configurator_cls.__init__)
+            args = [p.name for p in sig.parameters.values() if p.name != "self"]
+            return args
+
     def find_active_configurators(self, compset, inputs: dict):
         inputs["compset"] = compset
         # Find Active Configurators
