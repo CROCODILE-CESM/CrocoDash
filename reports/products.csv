@@ -1,0 +1,8 @@
+Product,Description,Link
+tpxo,TPXO (TOPEX/POSEIDON Global Tidal Ocean I think) is a public tidal model dataset,https://www.tpxo.net/global
+cesm inputdata,The CESM Input SVN repo holds all files CrocoDash exposes publicly themselves at the following repo link,https://svn-ccsm-inputdata.cgd.ucar.edu/trunk/inputdata/ocn/mom/croc
+gebco,GEBCO (General Bathymetric Chart of the Ocean) is a public dataset of global ocean bathymetry,https://www.gebco.net/data_and_products/gridded_bathymetry_data/#global
+glofas,	GLOFAS (Global Flood Awareness System) is a public river discharge/runoff Product,https://ewds.climate.copernicus.eu/datasets/cems-glofas-historical?tab=download
+glorys,GLORYS (Global Ocean Physics Reanalysis) is a public dataset provided through the copernicus marine service.,https://data.marine.copernicus.eu/product/GLOBAL_MULTIYEAR_PHY_001_030/description
+mom6_output,CESM had old runs that can be used for IC and OBC,https://gdex.ucar.edu/datasets/d267000/
+seawifs,SEAWIFS is a Chlorophyll Dataset for MOM6,https://oceandata.sci.gsfc.nasa.gov/getfile/SEASTAR_SEAWIFS_GAC.19980201_20100228.L3m.MC.CHL.chlor_a.9km.nc
