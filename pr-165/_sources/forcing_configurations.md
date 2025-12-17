@@ -30,7 +30,7 @@ user_args = ForcingConfigRegistry.get_user_args(configurator_class)
 req_opts = ForcingConfigRegistry.find_required_configurators(compset)
 user_args_for_first = ForcingConfigRegistry.get_user_args(req_opts[0])
 ```
-s
+
 # In the Case workflow
 
 The Case.configure_forcings method runs all the helper functions you need and will fail if any required configuration options or arguments are missing.
