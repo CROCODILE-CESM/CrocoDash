@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Setting up your forcings &#8212; CrocoDash  documentation</title>
+    <title>Forcing Configuration &#8212; CrocoDash  documentation</title>
   
   
   
@@ -41,11 +41,9 @@
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'configure_forcings';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'forcing_configurations';</script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Available Compset Aliases" href="available_compset_alias.html" />
-    <link rel="prev" title="Understanding CrocoDash’s Structure" href="structure.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -108,6 +106,8 @@
       
       
       
+        
+      
       <div class="bd-sidebar-primary bd-sidebar">
         
 
@@ -156,12 +156,11 @@
         <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
     <div class="bd-toc-item navbar-nav active">
         <p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents:</span></p>
-<ul class="current nav bd-sidenav">
+<ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://crocodile-cesm.github.io/CrocoGallery/">Tutorials &amp; Gallery</a></li>
 <li class="toctree-l1"><a class="reference internal" href="datasets.html">Accessing Raw Data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="structure.html">Understanding CrocoDash’s Structure</a></li>
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">Setting up your forcings</a></li>
 <li class="toctree-l1"><a class="reference internal" href="available_compset_alias.html">Available Compset Aliases</a></li>
 <li class="toctree-l1"><a class="reference internal" href="additional_resources.html">Additional Resources</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="developers/index.html">Developer Information</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
@@ -242,7 +241,7 @@
       
       
       
-      <li><a href="_sources/configure_forcings.md" target="_blank"
+      <li><a href="_sources/forcing_configurations.md" target="_blank"
    class="btn btn-sm btn-download-source-button dropdown-item"
    title="Download source file"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -324,7 +323,7 @@ document.write(`
               
 
 <div id="jb-print-docs-body" class="onlyprint">
-    <h1>Setting up your forcings</h1>
+    <h1>Forcing Configuration</h1>
     <!-- Table of contents -->
     <div id="print-main-content">
         <div id="jb-print-toc">
@@ -338,10 +337,14 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="setting-up-your-forcings">
-<h1>Setting up your forcings<a class="headerlink" href="#setting-up-your-forcings" title="Link to this heading">#</a></h1>
-<p>To set up the forcings for your previously not included raw data product, a product information, path to the raw data, and product name must be provided</p>
-<p>These can be passed into the configure forcings arguments to set up a set of code to take the product information and setup initial and boundary conditions. For cesm output, simply add the path, the product information (As a dict like in raw_data_access/config), and the product name “CESM_OUTPUT”. This will copy a folder of code into your input directory that is then run during process forcings. Why this is useful is you can then edit the processing code as issues come up, including unit conversions issues among other problems. You can edit the code in your input directory and run it using the driver script.</p>
+  <section id="forcing-configuration">
+<h1>Forcing Configuration<a class="headerlink" href="#forcing-configuration" title="Link to this heading">#</a></h1>
+<p>Forcing Configuration is handled by the forcing_configurations.py module. How it works:</p>
+<ol class="arabic simple">
+<li><p>Each forcing configuration option in the module, like tides, chlorophyll, or runoff mapping states the arguments it needs and the compset requirements.</p></li>
+<li><p>The ForcingConfigRegistry registed all of these options. I can provide what configuration option is required or valid based on the compset and/or input arguments</p></li>
+<li><p>In the Case workflow, this is all handled in configure_forcings. It initialize the FOrcingConfigRegistry</p></li>
+</ol>
 </section>
 
 
@@ -355,24 +358,6 @@ document.write(`
                 <footer class="prev-next-footer d-print-none">
                   
 <div class="prev-next-area">
-    <a class="left-prev"
-       href="structure.html"
-       title="previous page">
-      <i class="fa-solid fa-angle-left"></i>
-      <div class="prev-next-info">
-        <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Understanding CrocoDash’s Structure</p>
-      </div>
-    </a>
-    <a class="right-next"
-       href="available_compset_alias.html"
-       title="next page">
-      <div class="prev-next-info">
-        <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Available Compset Aliases</p>
-      </div>
-      <i class="fa-solid fa-angle-right"></i>
-    </a>
 </div>
                 </footer>
               
