@@ -10,6 +10,8 @@ from CrocoDash.logging import setup_logger
 import inspect
 from ProConPy.config_var import ConfigVar, cvars
 from mom6_bathy import mapping
+from typing import Optional, Any
+
 
 logger = setup_logger(__name__)
 
@@ -137,39 +139,63 @@ class ForcingConfigRegistry:
 class BaseConfigurator(ABC):
     """Base class for all CrocoDash configurators."""
 
-    name: str
-    required_for_compsets: List[str] = []  # What compsets you must have this class
-    allowed_compsets: List[str] = (
-        []
-    )  # What compsets this class is allowed for (must have all in the compset, e.g. DROF and BGC for river nutrients)
-    forbidden_compsets: List[str] = []  # What compsets you cannot have this class
+    # ---- class-level declarative metadata ----
+    name: str = ""
+
+    required_for_compsets: List[str] = []
+    allowed_compsets: List[str] = []
+    forbidden_compsets: List[str] = []
+
+    input_params: List[Param] = []
+    output_params: List[ConfigParam] = []
 
     def __init__(self, **kwargs):
+        # Clone declared params for this instance
+        self.input_params = [copy.copy(p) for p in self.__class__.input_params]
+        self.output_params = [copy.copy(p) for p in self.__class__.output_params]
+
         self.validate_args(**kwargs)
-        # Store everything directly as attributes
-        for k, v in kwargs.items():
-            setattr(self, k, v)
+
+        # Bind input values to parameters
+        for param in self.input_params:
+            param.set_item(kwargs[param.name])
 
     def validate_args(self, **kwargs):
-        pass
+        """Validate provided inputs against declared input_params."""
+        expected = {p.name for p in self.input_params}
+        provided = set(kwargs.keys())
+
+        missing = expected - provided
+        extra = provided - expected
+
+        if missing:
+            raise ValueError(f"Missing required inputs: {missing}")
+        if extra:
+            raise ValueError(f"Unexpected inputs: {extra}")
 
     @abstractmethod
     def configure(self):
-        for p in self.params:
-            p.apply()
+        """Bind input values to parameters and files."""
         pass
 
-    # @abstractmethod Will implement when we get to the shareable case config part.
-    # @classmethod
-    # def identify():
-    #     pass
+    @classmethod
+    @abstractmethod
+    def identify(cls) -> str:
+        """Return a unique identifier for this configurator."""
+        pass
+
+    @abstractmethod
+    def serialize(self) -> Dict[str, Any]:
+        pass
+
+    # ---- compset logic ----
 
     @classmethod
-    def is_required(cls, compset):
+    def is_required(cls, compset: str) -> bool:
         return any(sub in compset for sub in cls.required_for_compsets)
 
     @classmethod
-    def validate_compset_compatibility(cls, compset):
+    def validate_compset_compatibility(cls, compset: str) -> bool:
         return all(sub in compset for sub in cls.allowed_compsets) and all(
             sub not in compset for sub in cls.forbidden_compsets
         )
@@ -469,18 +495,59 @@ class ChlConfigurator(BaseConfigurator):
         super().configure()
 
 
-@dataclass
-class ConfigParam(ABC):
+class Param(ABC):
+    """
+    Base class for a single parameter in our forcing configurations.
+    """
+
+    def __init__(self, name: str, comment: Optional[str] = None):
+        self.name = name
+        self.comment = comment
+
+    @abstractmethod
+    def set_item(self, item: Any):
+        """Bind a runtime value to this parameter."""
+        pass
+
+
+class InputValueParam(Param):
+    """
+    Base class for a single value parameter in our forcing configurations.
+    """
+
+    def __init__(self, name: str, comment: Optional[str] = None):
+        super().__init__(name, comment)
+        self.filepath: Optional[str] = None
+
+    def set_item(self, item):
+        self.value = item
+
+
+class InputFileParam(Param):
+    """
+    Base class for a single file parameter in our forcing configurations.
+    """
+
+    def __init__(self, name: str, comment: Optional[str] = None):
+        super().__init__(name, comment)
+        self.filepath: Optional[str] = None
+
+    def set_item(self, filepath: str):
+        self.filepath = filepath
+
+
+class ConfigParam(Param):
     """
     Base class for a single configuration parameter applied to a CESM/MOM6 case.
-
-    Subclasses implement how the parameter is written (user_nl or XML).
     """
 
-    name: str
-    value: str
-    comment: str = None
-    executed: bool = False
+    def __init__(self, name: str, comment: Optional[str] = None):
+        super().__init__(name, comment)
+        self.value: Any = None
+        self.executed: bool = False
+
+    def set_item(self, value: Any):
+        self.value = value
 
     @abstractmethod
     def apply(self):
@@ -488,41 +555,57 @@ class ConfigParam(ABC):
         pass
 
 
-@dataclass
 class UserNLConfigParam(ConfigParam):
     """
     Parameter written to a `user_nl_<component>` file (default: user_nl_mom).
     """
 
-    user_nl_name: str = "mom"
+    def __init__(
+        self,
+        name: str,
+        user_nl_name: str = "mom",
+        comment: Optional[str] = None,
+    ):
+        super().__init__(name, comment)
+        self.user_nl_name = user_nl_name
 
     def apply(self):
-        """Insert this parameter into the appropriate user_nl file."""
-        self.executed = True
-        self.param = [(self.name, self.value)]
+        if self.value is None:
+            raise ValueError(f"Value for parameter {self.name} has not been set.")
+
+        param = [(self.name, self.value)]
         append_user_nl(
             self.user_nl_name,
-            self.param,
+            param,
             do_exec=True,
             comment=self.comment,
         )
+        self.executed = True
 
 
-@dataclass
 class XMLConfigParam(ConfigParam):
     """
-    Parameter applied via xmlchange
+    Parameter applied via xmlchange.
 
-    XML changes are permanent and do not save previous state, so removal is unsupported.
+    XML changes are permanent and do not save previous state.
     """
 
-    is_non_local: bool = False
+    def __init__(
+        self,
+        name: str,
+        is_non_local: bool = False,
+        comment: Optional[str] = None,
+    ):
+        super().__init__(name, comment)
+        self.is_non_local = is_non_local
 
     def apply(self):
-        """Apply this change using xmlchange."""
-        self.executed = True
+        if self.value is None:
+            raise ValueError(f"Value for parameter {self.name} has not been set.")
+
         xmlchange(
             self.name,
             str(self.value),
             is_non_local=self.is_non_local,
         )
+        self.executed = True
