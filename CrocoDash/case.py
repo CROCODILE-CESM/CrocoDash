@@ -656,8 +656,8 @@ class Case:
         ds.attrs = {
             "history": "Created with xarray (this file is empty)",
         }
-        ds.to_netcdf(self.inputdir / "ocnice" /self.fcr["BGCIronForcing"].fesedflux_filepath)
-        ds.to_netcdf(self.inputdir / "ocnice" /self.fcr["BGCIronForcing"].feventflux_filepath)
+        ds.to_netcdf(self.inputdir / "ocnice" /self.fcr["BGCIronForcing"].get_output_param("MARBL_FESEDFLUX_FILE"))
+        ds.to_netcdf(self.inputdir / "ocnice" /self.fcr["BGCIronForcing"].get_output_param("MARBL_FEVENTFLUX_FILE"))
 
     def process_tides(self):
         self.expt.setup_boundary_tides(
@@ -671,7 +671,7 @@ class Case:
             self.ocn_grid,
             self.ocn_topo,
             self.fcr["chl"].chl_processed_filepath,
-            self.fcr["chl"].regional_chl_file_path,
+            self.fcr["chl"].get_output_param("CHL_FILE"),
         )
 
     def process_river_nutrients(self):
@@ -698,7 +698,7 @@ class Case:
                 grid_t_points,
                 method="bilinear",
                 reuse_weights=True,
-                filename=self.fcr["runoff"].runoff_mapping_file_nnsm,
+                filename=self.fcr["runoff"].get_output_param("ROF2OCN_LIQ_RMAPNAME"),
             )
 
             # Open Dataset & Unit Convert
@@ -836,7 +836,7 @@ class Case:
             print("Creating runoff mapping file(s)...")
             mapping.gen_rof_maps(
                 rof_mesh_path=rof_esmf_mesh_filepath,
-                ocn_mesh_path=self.fcr["runoff"].esmf_mesh_path,
+                ocn_mesh_path=self.fcr["runoff"].runoff_esmf_mesh_path,
                 output_dir=mapping_dir,
                 mapping_file_prefix=mapping_file_prefix,
                 rmax=self.fcr["runoff"].rmax,

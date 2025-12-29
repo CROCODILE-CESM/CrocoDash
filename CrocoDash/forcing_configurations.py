@@ -268,6 +268,19 @@ class BaseConfigurator(ABC):
     input_params: List[Param]
     output_params: List[ConfigParam]
 
+    def __getattr__(self, name):
+        """
+        Allow input params to be accessed as attributes:
+        self.date_range -> self.get_input_param("date_range").value
+        """
+        try:
+            param = self.get_input_param(name)
+        except KeyError:
+            raise AttributeError(
+                f"{type(self).__name__} has no attribute '{name}'"
+            ) from None
+        return param
+
     def __init__(self, **kwargs):
         # Clone declared params for this instance
         self.input_params = [copy.copy(p) for p in self.__class__.input_params]
