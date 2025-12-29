@@ -8,6 +8,13 @@ class Dummy(BaseConfigurator):
     required_for_compsets = ["req"]
     allowed_compsets = []
     forbidden_compsets = ["for"]
+    input_params = [
+        InputValueParam(
+            "dummy",
+            comment="Boop Boop",
+        )
+    ]
+    output_params = []
 
     def __init__(self, dummy):
         super().__init__(dummy=dummy)
@@ -22,6 +29,13 @@ class Dummy2(BaseConfigurator):
     required_for_compsets = ["req"]
     allowed_compsets = ["req", "dummy"]
     forbidden_compsets = ["for"]
+    input_params = [
+        InputValueParam(
+            "dummy",
+            comment="Boop Boop",
+        )
+    ]
+    output_params = []
 
     def __init__(self, dummy):
         super().__init__(dummy=dummy)
@@ -34,6 +48,14 @@ class Dummy2(BaseConfigurator):
 class Dummy1(BaseConfigurator):
     name = "dummy1"
 
+    input_params = [
+        InputValueParam(
+            "dummy",
+            comment="Boop Boop",
+        )
+    ]
+    output_params = []
+
     def __init__(self, dummy):
         super().__init__(dummy=dummy)
 
@@ -44,6 +66,7 @@ class Dummy1(BaseConfigurator):
 @pytest.fixture
 def fcr_add_dummy1():
     return ForcingConfigRegistry("", {"dummy": "dummy"})
+
 
 def test_validate_compset_compatability():
     assert Dummy.validate_compset_compatibility("req")
@@ -71,7 +94,7 @@ def test_FCR_find_active_configurators_accessible_and_check_init():
     assert fcr.is_active("dummy")
     assert fcr.is_active("dummy1")
     assert type(fcr["dummy1"]) == Dummy1
-    assert fcr["dummy1"].dummy == "dummy"  # check init works
+    assert fcr["dummy1"].get_input_param("dummy") == "dummy"  # check init works
 
 
 def test_FCR_find_active_configurators_fail_if_required_and_no_valid_args():

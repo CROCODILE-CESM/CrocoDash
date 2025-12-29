@@ -8,9 +8,12 @@ import pandas as pd
 @pytest.fixture
 def fake_param_case(tmp_path):
     cvars["CASEROOT"] = SimpleNamespace(value=None)
+    cvars["CUSTOM_ROF_GRID"] = SimpleNamespace(value=None)
     cvars["NINST"] = SimpleNamespace(value=None)
     cvars["NINST"].value = None
     cvars["CASEROOT"].value = tmp_path
+    cvars["CUSTOM_ROF_GRID"].value = "s"
+
     (tmp_path / "user_nl_mom").touch()
     (tmp_path / "user_nl_cice").touch()
     return tmp_path
@@ -18,7 +21,9 @@ def fake_param_case(tmp_path):
 
 def test_user_nl_mom_apply(fake_param_case):
     path = fake_param_case
-    UserNLConfigParam("test", "test").apply()
+    s = UserNLConfigParam("test")
+    s.set_item("test")
+    s.apply()
     fname = path / "user_nl_mom"
 
     with open(fname) as f:
@@ -29,15 +34,17 @@ def test_user_nl_mom_apply(fake_param_case):
 
 def test_xml_apply(fake_param_case):
     with pytest.raises(RuntimeError):  # This is not a real case
-        XMLConfigParam("test", "test").apply()
+        s = XMLConfigParam("test")
+        s.set_item("test")
+        s.apply()
 
 
 def test_all_configurators_args_synced():
 
     for config_class in ForcingConfigRegistry.registered_types:
 
-        # Test the input params & init args are synced
         config_class.check_input_params_synced()
+        config_class.check_output_params_exist()
 
 def test_all_configurators_smoke(fake_param_case):
 
@@ -66,8 +73,8 @@ def test_all_configurators_smoke(fake_param_case):
                 ctor_args[a] = dummy_str
         instance = config_class(**ctor_args)
 
-        if hasattr(instance, "params") and any(
-            isinstance(x, XMLConfigParam) for x in instance.params
+        if hasattr(instance, "output_params") and any(
+            isinstance(x, XMLConfigParam) for x in instance.output_params
         ):
             with pytest.raises(RuntimeError):
                 instance.configure()

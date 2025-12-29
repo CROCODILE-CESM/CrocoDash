@@ -11,12 +11,132 @@ import inspect
 from ProConPy.config_var import ConfigVar, cvars
 from mom6_bathy import mapping
 from typing import Optional, Any
-
+import copy
 
 logger = setup_logger(__name__)
 
 
 # START FRAMEWORK
+
+
+def register(cls):
+    ForcingConfigRegistry.register(cls)
+    return cls
+
+
+class ForcingConfigRegistry:
+    registered_types: List[type] = []
+
+    @classmethod
+    def register(cls, configurator_cls: type):
+
+        cls.registered_types.append(configurator_cls)
+
+    def __getitem__(self, key: str):
+        return self.active_configurators[key.lower()]
+
+    def __init__(self, compset, inputs: dict, case_info: dict = {}):
+        self.compset = compset
+        self.active_configurators = {}
+        self.case_info = case_info
+        inputs = inputs | case_info
+        self.find_active_configurators(self.compset, inputs)
+
+    @classmethod
+    def find_valid_configurators(cls, compset):
+        """Returns the valid configurations based on the compset in a list"""
+        valid_configs = []
+        for configurator_cls in cls.registered_types:
+            if configurator_cls.validate_compset_compatibility(compset):
+                valid_configs.append(configurator_cls)
+        return valid_configs
+
+    @classmethod
+    def find_required_configurators(cls, compset):
+        """Returns the required configurations based on the compset in a list"""
+        required_configs = []
+        for configurator_cls in cls.registered_types:
+            if configurator_cls.is_required(compset):
+                required_configs.append(configurator_cls)
+        return required_configs
+
+    @classmethod
+    def get_ctor_signature(cls, configurator_cls):
+        sig = inspect.signature(configurator_cls.__init__)
+        args = [p.name for p in sig.parameters.values() if p.name != "self"]
+        required_args = [
+            p.name
+            for p in sig.parameters.values()
+            if p.name != "self" and p.default is inspect._empty
+        ]
+
+        return args, required_args
+
+    @classmethod
+    def get_user_args(cls, configurator_cls):
+        args, required_args = cls.get_ctor_signature(configurator_cls)
+        user_args = [arg for arg in required_args if not arg.startswith("case_")]
+        return user_args
+
+    @classmethod
+    def return_missing_inputs(cls, configurator_cls, inputs):
+        _, required_args = cls.get_ctor_signature(configurator_cls)
+        missing = [arg for arg in required_args if arg not in inputs]
+        return missing
+
+    @classmethod
+    def instantiate_configurator(cls, configurator_cls, inputs):
+        args, _ = cls.get_ctor_signature(configurator_cls)
+        ctor_kwargs = {arg: inputs[arg] for arg in args if arg in inputs}
+        return configurator_cls(**ctor_kwargs)
+
+    def find_active_configurators(self, compset, inputs: dict):
+
+        required = self.find_required_configurators(compset)
+        valid = self.find_valid_configurators(compset)
+
+        for configurator_cls in self.registered_types:
+            name = configurator_cls.name
+            lname = name.lower()
+            if configurator_cls in required:
+                missing = self.return_missing_inputs(configurator_cls, inputs)
+                if missing:
+                    raise ValueError(
+                        f"[ERROR] Required configurator {name} missing args: {missing}"
+                    )
+                logger.info(f"[REQUIRED] Activating {name}")
+                self.active_configurators[lname] = self.instantiate_configurator(
+                    configurator_cls, inputs
+                )
+                continue  # We do not want to to be added twice with the valid configs
+
+            # --- OPTIONAL CONFIGURATORS ---
+            if configurator_cls not in valid:
+                logger.info(f"[SKIP] {name} incompatible with compset")
+                continue
+
+            missing = self.return_missing_inputs(configurator_cls, inputs)
+            if missing:
+                logger.info(f"[SKIP] {name} missing args: {missing}")
+                continue
+
+            logger.info(f"[OPTIONAL] Activating {name}")
+            self.active_configurators[lname] = self.instantiate_configurator(
+                configurator_cls, inputs
+            )
+
+    def run_configurators(self):
+        # Run Configurators
+        for configurator in self.active_configurators.values():
+            logger.info(f"Configuring {configurator.name}")
+            configurator.configure()
+
+    def get_active_configurators(self):
+        return self.active_configurators.keys()
+
+    def is_active(self, name: str) -> bool:
+        """Return True if a configurator with this name is active."""
+        return name.lower() in self.active_configurators
 
 
 class Param(ABC):
@@ -160,6 +280,12 @@ class BaseConfigurator(ABC):
             param.set_item(kwargs[param.name])
 
     @classmethod
+    def check_output_params_exist(cls):
+        assert hasattr(
+            cls, "output_params"
+        ), f"{cls.__name__} has no output_params defined."
+
+    @classmethod
     def check_input_params_synced(cls):
         """Make sure the init args exactly match the input param names. This check is only run in testing"""
         sig = inspect.signature(cls.__init__)
@@ -198,13 +324,6 @@ class BaseConfigurator(ABC):
             p.apply()
         pass
 
-    @classmethod
-    @abstractmethod
-    def identify(cls) -> str:
-        """Return a unique identifier for this configurator."""
-        pass
-
-    @abstractmethod
     def serialize(self) -> Dict[str, Any]:
         output_dict = {"inputs": {}, "outputs": {}}
         for param in self.input_params:
@@ -214,19 +333,25 @@ class BaseConfigurator(ABC):
         return output_dict
 
     def get_input_param(self, name: str) -> ConfigParam:
+        return self.get_input_param_object(name).value
+
+    def get_input_param_object(self, name: str) -> ConfigParam:
         try:
             return next(p for p in self.input_params if p.name == name)
         except StopIteration:
             raise KeyError(f"Input param '{name}' not found")
 
     def get_output_param(self, name: str) -> ConfigParam:
+        return self.get_output_param_object(name).value
+
+    def get_output_param_object(self, name: str) -> ConfigParam:
         try:
             return next(p for p in self.output_params if p.name == name)
         except StopIteration:
             raise KeyError(f"Output param '{name}' not found")
 
     def set_output_param(self, name: str, value):
-        self.get_output_param(name).set_item(value)
+        self.get_output_param_object(name).set_item(value)
 
     # ---- compset logic ----
 
@@ -256,15 +381,15 @@ class TidesConfigurator(BaseConfigurator):
             "tpxo_velocity_filepath",
             comment="NetCDF file containing tidal velocity data",
         ),
-        InputVarParam(
+        InputValueParam(
             "tidal_constituents",
             comment="List of tidal constituents to include",
         ),
-        InputVarParam(
+        InputValueParam(
             "date_range",
             comment="date_range for the simulation",
         ),
-        InputVarParam(
+        InputValueParam(
             "boundaries",
             comment="boundaries to apply tidal forcing (e.g., ['N', 'S', 'E', 'W'])",
         ),
@@ -326,7 +451,7 @@ class TidesConfigurator(BaseConfigurator):
         )
 
     def configure(self):
-        date_range = self.get_input_param("date_range").value
+        date_range = self.get_input_param("date_range")
         self.set_output_param(
             "TIDE_REF_DATE",
             f"{date_range[0].year}, {date_range[0].month}, {date_range[0].day}",
@@ -334,11 +459,11 @@ class TidesConfigurator(BaseConfigurator):
         self.set_output_param("OBC_TIDE_ADD_EQ_PHASE", "True")
         self.set_output_param(
             "OBC_TIDE_N_CONSTITUENTS",
-            len(self.get_input_param("tidal_constituents").value),
+            len(self.get_input_param("tidal_constituents")),
         )
         self.set_output_param(
             "OBC_TIDE_CONSTITUENTS",
-            '"' + ", ".join(self.get_input_param("tidal_constituents").value) + '"',
+            '"' + ", ".join(self.get_input_param("tidal_constituents")) + '"',
         )
         self.set_output_param(
             "OBC_TIDE_REF_DATE",
@@ -347,29 +472,27 @@ class TidesConfigurator(BaseConfigurator):
         super().configure()
         # You also need to add the files to the OBC string, which is handled in the main case unfortunately
 
-    @classmethod
-    def inspect(cls):
-        pass
-
-    def serialize(self) -> Dict[str, Any]:
-        return super().serialize()
-
 
 @register
 class BGCConfigurator(BaseConfigurator):
     name = "BGC"
     required_for_compsets = ["MARBL"]
     allowed_compsets = ["MARBL"]
-    forbidden_compsets = []
+    input_params = []
+    output_params = [
+        UserNLConfigParam(
+            "MAX_FIELDS",
+            comment="Maximum number of tracer fields, bumped to accomodate MARBL tracers",
+        )
+    ]
 
     def __init__(
         self,
     ):
         super().__init__()
-        self.params = []
-        self.params.append(UserNLConfigParam("MAX_FIELDS", 200))
 
     def configure(self):
+        self.set_output_param("MAX_FIELDS", 200)
         super().configure()
 
 
@@ -378,25 +501,24 @@ class CICEConfigurator(BaseConfigurator):
     name = "CICE"
     required_for_compsets = ["CICE"]
     allowed_compsets = ["CICE"]
-    forbidden_compsets = []
+    input_params = []
+    output_params = [
+        UserNLConfigParam("ice_ic", user_nl_name="cice"),
+        UserNLConfigParam("ns_boundary_type", user_nl_name="cice"),
+        UserNLConfigParam("ew_boundary_type", user_nl_name="cice"),
+        UserNLConfigParam("close_boundaries", user_nl_name="cice"),
+    ]
 
     def __init__(
         self,
     ):
         super().__init__()
-        self.params = []
-        self.params.append(UserNLConfigParam("ice_ic", "'UNSET'", user_nl_name="cice"))
-        self.params.append(
-            UserNLConfigParam("ns_boundary_type", "'open'", user_nl_name="cice")
-        )
-        self.params.append(
-            UserNLConfigParam("ew_boundary_type", "'cyclic'", user_nl_name="cice")
-        )
-        self.params.append(
-            UserNLConfigParam("close_boundaries", ".false.", user_nl_name="cice")
-        )
 
     def configure(self):
+        self.set_output_param("ice_ic", "'UNSET'")
+        self.set_output_param("ns_boundary_type", "'open'")
+        self.set_output_param("ew_boundary_type", "'cyclic'")
+        self.set_output_param("close_boundaries", ".false.")
         super().configure()
 
 
@@ -405,17 +527,28 @@ class BGCICConfigurator(BaseConfigurator):
     name = "BGCIC"
     required_for_compsets = ["MARBL"]
     allowed_compsets = ["MARBL"]
-    forbidden_compsets = []
+    input_params = [
+        InputFileParam(
+            "marbl_ic_filepath",
+            comment="NetCDF file containing MARBL initial conditions",
+        )
+    ]
+    output_params = [
+        UserNLConfigParam(
+            "MARBL_TRACERS_IC_FILE",
+            comment="MARBL initial conditions file",
+            user_nl_name="mom",
+        )
+    ]
 
     def __init__(self, marbl_ic_filepath):
         super().__init__(marbl_ic_filepath=marbl_ic_filepath)
         self.marbl_ic_filename = Path(marbl_ic_filepath).name
-        self.params = []
-        self.params.append(
-            UserNLConfigParam("MARBL_TRACERS_IC_FILE", self.marbl_ic_filename)
-        )
 
     def configure(self):
+        self.set_output_param(
+            "MARBL_TRACERS_IC_FILE", self.get_input_param("marbl_ic_filepath")
+        )
         super().configure()
 
 
@@ -424,32 +557,58 @@ class BGCIronForcingConfigurator(BaseConfigurator):
     name = "BGCIronForcing"
     required_for_compsets = ["MARBL"]
     allowed_compsets = ["MARBL"]
-    forbidden_compsets = []
+    input_params = [
+        InputValueParam("case_session_id", comment="Case session identifier"),
+        InputValueParam("case_grid_name", comment="Case grid name"),
+    ]
+    output_params = [
+        UserNLConfigParam(
+            "MARBL_FESEDFLUX_FILE",
+            comment="MARBL sedimentary iron flux file",
+            user_nl_name="mom",
+        ),
+        UserNLConfigParam(
+            "MARBL_FEVENTFLUX_FILE",
+            comment="MARBL event iron flux file",
+            user_nl_name="mom",
+        ),
+    ]
 
     def __init__(self, case_session_id, case_grid_name):
         super().__init__(case_session_id=case_session_id, case_grid_name=case_grid_name)
-        self.feventflux_filepath = (
-            f"feventflux_5gmol_{self.case_grid_name}_{self.case_session_id}.nc"
-        )
-        self.fesedflux_filepath = f"fesedflux_total_reduce_oxic_{self.case_grid_name}_{self.case_session_id}.nc"
-        self.params = []
-        self.params.append(
-            UserNLConfigParam("MARBL_FESEDFLUX_FILE", self.fesedflux_filepath)
-        )
-        self.params.append(
-            UserNLConfigParam("MARBL_FEVENTFLUX_FILE", self.feventflux_filepath)
-        )
 
     def configure(self):
+        feventflux_filepath = f"feventflux_5gmol_{self.get_input_param('case_grid_name')}_{self.get_input_param('case_session_id')}.nc"
+        fesedflux_filepath = f"fesedflux_total_reduce_oxic_{self.get_input_param('case_grid_name')}_{self.get_input_param('case_session_id')}.nc"
+        self.set_output_param("MARBL_FESEDFLUX_FILE", fesedflux_filepath)
+        self.set_output_param("MARBL_FEVENTFLUX_FILE", feventflux_filepath)
         super().configure()
 
 
 @register
 class BGCRiverNutrientsConfigurator(BaseConfigurator):
     name = "BGCRiverNutrients"
-    required_for_compsets = []
     allowed_compsets = ["MARBL", "DROF"]
-    forbidden_compsets = []
+    input_params = [
+        InputFileParam(
+            "global_river_nutrients_filepath",
+            comment="NetCDF file containing global river nutrients data",
+        ),
+        InputValueParam("case_session_id", comment="Case session identifier"),
+        InputValueParam("case_grid_name", comment="Case grid name"),
+    ]
+    output_params = [
+        UserNLConfigParam(
+            "READ_RIV_FLUXES",
+            comment="Enable river nutrient fluxes in MOM6",
+            user_nl_name="mom",
+        ),
+        UserNLConfigParam(
+            "RIV_FLUX_FILE",
+            comment="River nutrient flux file",
+            user_nl_name="mom",
+        ),
+    ]
 
     def __init__(
         self, global_river_nutrients_filepath, case_session_id, case_grid_name
@@ -459,18 +618,6 @@ class BGCRiverNutrientsConfigurator(BaseConfigurator):
             case_session_id=case_session_id,
             case_grid_name=case_grid_name,
         )
-        self.params = []
-        self.river_nutrients_nnsm_filepath = (
-            f"river_nutrients_{self.case_grid_name}_{self.case_session_id}_nnsm.nc"
-        )
-        self.params.append(
-            UserNLConfigParam("READ_RIV_FLUXES", "True", user_nl_name="mom")
-        )
-        self.params.append(
-            UserNLConfigParam(
-                "RIV_FLUX_FILE", self.river_nutrients_nnsm_filepath, user_nl_name="mom"
-            )
-        )
 
     def validate_args(self, **kwargs):
         if not kwargs["global_river_nutrients_filepath"].exists():
@@ -479,6 +626,10 @@ class BGCRiverNutrientsConfigurator(BaseConfigurator):
             )
 
     def configure(self):
+        river_nutrients_nnsm_filepath = f"river_nutrients_{self.get_input_param('case_grid_name')}_{self.get_input_param('case_session_id')}_nnsm.nc"
+        self.set_output_param("READ_RIV_FLUXES", "True")
+        self.set_output_param("RIV_FLUX_FILE", river_nutrients_nnsm_filepath)
+
         super().configure()
 
 
@@ -487,7 +638,30 @@ class RunoffConfigurator(BaseConfigurator):
     name = "Runoff"
     required_for_compsets = {"DROF"}
     allowed_compsets = {"DROF"}
-    forbidden_compsets = []
+    input_params = [
+        InputFileParam(
+            "runoff_esmf_mesh_filepath",
+            comment="ESMF mesh file for runoff mapping",
+        ),
+        InputValueParam("case_grid_name", comment="Case grid name"),
+        InputValueParam("case_session_id", comment="Case session identifier"),
+        InputValueParam("case_compset", comment="Case compset"),
+        InputValueParam("case_inputdir", comment="Case input directory"),
+        InputValueParam(
+            "rmax", comment="Smoothing radius (in meters) for runoff mapping generation"
+        ),
+        InputValueParam(
+            "fold", comment="Smoothing fold parameter for runoff mapping generation"
+        ),
+    ]
+    output_params = [
+        XMLConfigParam(
+            "ROF2OCN_LIQ_RMAPNAME", comment="Runoff to ocean liquid runoff mapping file"
+        ),
+        XMLConfigParam(
+            "ROF2OCN_ICE_RMAPNAME", comment="Runoff to ocean ice runoff mapping file"
+        ),
+    ]
 
     def __init__(
         self,
@@ -511,36 +685,34 @@ class RunoffConfigurator(BaseConfigurator):
             runoff_esmf_mesh_filepath=runoff_esmf_mesh_filepath,
             case_grid_name=case_grid_name,
             case_session_id=case_session_id,
+            case_inputdir=case_inputdir,
             rmax=rmax,
             fold=fold,
             case_compset=case_compset,
         )
-        self.params = []
-        self.runoff_mapping_file_nnsm = (
-            f"glofas_{self.case_grid_name}_{self.case_session_id}_nnsm.nc"
-        )
+
+    def configure(self):
+        runoff_mapping_file_nnsm = f"glofas_{self.get_input_param('case_grid_name')}_{self.get_input_param('case_session_id')}_nnsm.nc"
         rof_case_grid_name = cvars["CUSTOM_ROF_GRID"].value
-        mapping_file_prefix = f"{rof_case_grid_name}_to_{case_grid_name}_map"
-        mapping_dir = Path(case_inputdir) / "mapping"
+        mapping_file_prefix = (
+            f"{rof_case_grid_name}_to_{self.get_input_param('case_grid_name')}_map"
+        )
+        mapping_dir = Path(self.get_input_param("case_inputdir")) / "mapping"
         mapping_dir.mkdir(exist_ok=False)
-        if self.rmax is None:
-            self.rmax, self.fold = mapping.get_suggested_smoothing_params(
-                self.esmf_mesh_path
+        if self.get_input_param("rmax") is None:
+            rmax, fold = mapping.get_suggested_smoothing_params(
+                self.get_input_param("runoff_esmf_mesh_filepath")
             )
+            self.set_output_param("rmax", rmax)
+            self.set_output_param("fold", fold)
         self.runoff_mapping_file_nnsm = mapping.get_smoothed_map_filepath(
             mapping_file_prefix=mapping_file_prefix,
             output_dir=mapping_dir,
-            rmax=self.rmax,
-            fold=self.fold,
+            rmax=self.get_input_param("rmax"),
+            fold=self.get_input_param("fold"),
         )
-        self.params.append(
-            XMLConfigParam("ROF2OCN_LIQ_RMAPNAME", self.runoff_mapping_file_nnsm)
-        )
-        self.params.append(
-            XMLConfigParam("ROF2OCN_ICE_RMAPNAME", self.runoff_mapping_file_nnsm)
-        )
-
-    def configure(self):
+        self.set_output_param("ROF2OCN_LIQ_RMAPNAME", self.runoff_mapping_file_nnsm)
+        self.set_output_param("ROF2OCN_ICE_RMAPNAME", self.runoff_mapping_file_nnsm)
         super().configure()
 
     def validate_args(self, **kwargs):
@@ -557,9 +729,33 @@ class RunoffConfigurator(BaseConfigurator):
 @register
 class ChlConfigurator(BaseConfigurator):
     name = "Chl"
-    required_for_compsets = []
-    allowed_compsets = []
     forbidden_compsets = ["MARBL"]
+    input_params = [
+        InputFileParam(
+            "chl_processed_filepath",
+            comment="NetCDF file containing processed chlorophyll data",
+        ),
+        InputValueParam("case_grid_name", comment="Case grid name"),
+        InputValueParam("case_session_id", comment="Case session identifier"),
+    ]
+    output_params = [
+        UserNLConfigParam(
+            "CHL_FILE", comment="Chlorophyll data file", user_nl_name="mom"
+        ),
+        UserNLConfigParam(
+            "CHL_FROM_FILE", comment="Enable chlorophyll from file", user_nl_name="mom"
+        ),
+        UserNLConfigParam(
+            "VAR_PEN_SW",
+            comment="Enable variable penetration for shortwave",
+            user_nl_name="mom",
+        ),
+        UserNLConfigParam(
+            "PEN_SW_NBANDS",
+            comment="Number of shortwave penetration bands",
+            user_nl_name="mom",
+        ),
+    ]
 
     def __init__(self, chl_processed_filepath, case_grid_name, case_session_id):
 
@@ -568,14 +764,6 @@ class ChlConfigurator(BaseConfigurator):
             case_grid_name=case_grid_name,
             case_session_id=case_session_id,
         )
-        self.params = []
-        self.regional_chl_file_path = f"seawifs-clim-1997-2010-{self.case_grid_name}.nc"
-        self.params.append(
-            UserNLConfigParam("CHL_FILE", Path(self.regional_chl_file_path), "mom")
-        )
-        self.params.append(UserNLConfigParam("CHL_FROM_FILE", "TRUE", "mom"))
-        self.params.append(UserNLConfigParam("VAR_PEN_SW", "TRUE", "mom"))
-        self.params.append(UserNLConfigParam("PEN_SW_NBANDS", 3, "mom"))
 
     def validate_args(self, **kwargs):
         if not kwargs["chl_processed_filepath"].exists():
@@ -584,124 +772,11 @@ class ChlConfigurator(BaseConfigurator):
             )
 
     def configure(self):
+        regional_chl_file_path = (
+            f"seawifs-clim-1997-2010-{self.get_input_param('case_grid_name')}.nc"
+        )
+        self.set_output_param("CHL_FILE", regional_chl_file_path)
+        self.set_output_param("CHL_FROM_FILE", "TRUE")
+        self.set_output_param("VAR_PEN_SW", "TRUE")
+        self.set_output_param("PEN_SW_NBANDS", 3)
         super().configure()
-
-
-def register(cls):
-    ForcingConfigRegistry.register(cls)
-    return cls
-
-
-class ForcingConfigRegistry:
-    registered_types: List[type] = []
-
-    @classmethod
-    def register(cls, configurator_cls: type):
-
-        cls.registered_types.append(configurator_cls)
-
-    def __getitem__(self, key: str):
-        return self.active_configurators[key.lower()]
-
-    def __init__(self, compset, inputs: dict, case_info: dict = {}):
-        self.compset = compset
-        self.active_configurators = {}
-        self.case_info = case_info
-        inputs = inputs | case_info
-        self.find_active_configurators(self.compset, inputs)
-
-    @classmethod
-    def find_valid_configurators(cls, compset):
-        """Returns the valid configurations based on the compset in a list"""
-        valid_configs = []
-        for configurator_cls in cls.registered_types:
-            if configurator_cls.validate_compset_compatibility(compset):
-                valid_configs.append(configurator_cls)
-        return valid_configs
-
-    @classmethod
-    def find_required_configurators(cls, compset):
-        """Returns the required configurations based on the compset in a list"""
-        required_configs = []
-        for configurator_cls in cls.registered_types:
-            if configurator_cls.is_required(compset):
-                required_configs.append(configurator_cls)
-        return required_configs
-
-    @classmethod
-    def get_ctor_signature(cls, configurator_cls):
-        sig = inspect.signature(configurator_cls.__init__)
-        args = [p.name for p in sig.parameters.values() if p.name != "self"]
-        required_args = [
-            p.name
-            for p in sig.parameters.values()
-            if p.name != "self" and p.default is inspect._empty
-        ]
-
-        return args, required_args
-
-    @classmethod
-    def get_user_args(cls, configurator_cls):
-        args, required_args = cls.get_ctor_signature(configurator_cls)
-        user_args = [arg for arg in required_args if not arg.startswith("case_")]
-        return user_args
-
-    @classmethod
-    def return_missing_inputs(cls, configurator_cls, inputs):
-        _, required_args = cls.get_ctor_signature(configurator_cls)
-        missing = [arg for arg in required_args if arg not in inputs]
-        return missing
-
-    @classmethod
-    def instantiate_configurator(cls, configurator_cls, inputs):
-        args, _ = cls.get_ctor_signature(configurator_cls)
-        ctor_kwargs = {arg: inputs[arg] for arg in args if arg in inputs}
-        return configurator_cls(**ctor_kwargs)
-
-    def find_active_configurators(self, compset, inputs: dict):
-
-        required = self.find_required_configurators(compset)
-        valid = self.find_valid_configurators(compset)
-
-        for configurator_cls in self.registered_types:
-            name = configurator_cls.name
-            lname = name.lower()
-            if configurator_cls in required:
-                missing = self.return_missing_inputs(configurator_cls, inputs)
-                if missing:
-                    raise ValueError(
-                        f"[ERROR] Required configurator {name} missing args: {missing}"
-                    )
-                logger.info(f"[REQUIRED] Activating {name}")
-                self.active_configurators[lname] = self.instantiate_configurator(
-                    configurator_cls, inputs
-                )
-                continue  # We do not want to to be added twice with the valid configs
-
-            # --- OPTIONAL CONFIGURATORS ---
-            if configurator_cls not in valid:
-                logger.info(f"[SKIP] {name} incompatible with compset")
-                continue
-
-            missing = self.return_missing_inputs(configurator_cls, inputs)
-            if missing:
-                logger.info(f"[SKIP] {name} missing args: {missing}")
-                continue
-
-            logger.info(f"[OPTIONAL] Activating {name}")
-            self.active_configurators[lname] = self.instantiate_configurator(
-                configurator_cls, inputs
-            )
-
-    def run_configurators(self):
-        # Run Configurators
-        for configurator in self.active_configurators.values():
-            logger.info(f"Configuring {configurator.name}")
-            configurator.configure()
-
-    def get_active_configurators(self):
-        return self.active_configurators.keys()
-
-    def is_active(self, name: str) -> bool:
-        """Return True if a configurator with this name is active."""
-        return name.lower() in self.active_configurators
