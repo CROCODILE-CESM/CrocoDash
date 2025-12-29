@@ -32,6 +32,13 @@ def test_xml_apply(fake_param_case):
         XMLConfigParam("test", "test").apply()
 
 
+def test_all_configurators_args_synced():
+
+    for config_class in ForcingConfigRegistry.registered_types:
+
+        # Test the input params & init args are synced
+        config_class.check_input_params_synced()
+
 def test_all_configurators_smoke(fake_param_case):
 
     ## Set up some dummy args
@@ -44,6 +51,7 @@ def test_all_configurators_smoke(fake_param_case):
 
     ## Iterate through config classes
     for config_class in ForcingConfigRegistry.registered_types:
+        # Test the init and configuration
         sig = inspect.signature(config_class.__init__)
         args = [p.name for p in sig.parameters.values() if p.name != "self"]
         ctor_args = {}

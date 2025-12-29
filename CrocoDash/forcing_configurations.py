@@ -16,124 +16,123 @@ from typing import Optional, Any
 logger = setup_logger(__name__)
 
 
-def register(cls):
-    ForcingConfigRegistry.register(cls)
-    return cls
+# START FRAMEWORK
 
 
-class ForcingConfigRegistry:
-    registered_types: List[type] = []
+class Param(ABC):
+    """
+    Base class for a single parameter in our forcing configurations.
+    """
 
-    @classmethod
-    def register(cls, configurator_cls: type):
+    def __init__(self, name: str, comment: Optional[str] = None):
+        self.name = name
+        self.comment = comment
 
-        cls.registered_types.append(configurator_cls)
+    @abstractmethod
+    def set_item(self, item: Any):
+        """Bind a runtime value to this parameter."""
+        pass
 
-    def __getitem__(self, key: str):
-        return self.active_configurators[key.lower()]
 
-    def __init__(self, compset, inputs: dict, case_info: dict = {}):
-        self.compset = compset
-        self.active_configurators = {}
-        self.case_info = case_info
-        inputs = inputs | case_info
-        self.find_active_configurators(self.compset, inputs)
+class InputValueParam(Param):
+    """
+    Base class for a single value parameter in our forcing configurations.
+    """
 
-    @classmethod
-    def find_valid_configurators(cls, compset):
-        """Returns the valid configurations based on the compset in a list"""
-        valid_configs = []
-        for configurator_cls in cls.registered_types:
-            if configurator_cls.validate_compset_compatibility(compset):
-                valid_configs.append(configurator_cls)
-        return valid_configs
+    def __init__(self, name: str, comment: Optional[str] = None):
+        super().__init__(name, comment)
+        self.value: Optional[str] = None
 
-    @classmethod
-    def find_required_configurators(cls, compset):
-        """Returns the required configurations based on the compset in a list"""
-        required_configs = []
-        for configurator_cls in cls.registered_types:
-            if configurator_cls.is_required(compset):
-                required_configs.append(configurator_cls)
-        return required_configs
+    def set_item(self, item):
+        self.value = item
 
-    @classmethod
-    def get_ctor_signature(cls, configurator_cls):
-        sig = inspect.signature(configurator_cls.__init__)
-        args = [p.name for p in sig.parameters.values() if p.name != "self"]
-        required_args = [
-            p.name
-            for p in sig.parameters.values()
-            if p.name != "self" and p.default is inspect._empty
-        ]
 
-        return args, required_args
+class InputFileParam(Param):
+    """
+    Base class for a single file parameter in our forcing configurations.
+    """
 
-    @classmethod
-    def get_user_args(cls, configurator_cls):
-        args, required_args = cls.get_ctor_signature(configurator_cls)
-        user_args = [arg for arg in required_args if not arg.startswith("case_")]
-        return user_args
+    def __init__(self, name: str, comment: Optional[str] = None):
+        super().__init__(name, comment)
+        self.value: Optional[str] = None
 
-    @classmethod
-    def return_missing_inputs(cls, configurator_cls, inputs):
-        _, required_args = cls.get_ctor_signature(configurator_cls)
-        missing = [arg for arg in required_args if arg not in inputs]
-        return missing
+    def set_item(self, filepath: str):
+        self.value = filepath
 
-    @classmethod
-    def instantiate_configurator(cls, configurator_cls, inputs):
-        args, _ = cls.get_ctor_signature(configurator_cls)
-        ctor_kwargs = {arg: inputs[arg] for arg in args if arg in inputs}
-        return configurator_cls(**ctor_kwargs)
 
-    def find_active_configurators(self, compset, inputs: dict):
+class ConfigParam(Param):
+    """
+    Base class for a single configuration parameter applied to a CESM/MOM6 case.
+    """
 
-        required = self.find_required_configurators(compset)
-        valid = self.find_valid_configurators(compset)
+    def __init__(self, name: str, comment: Optional[str] = None):
+        super().__init__(name, comment)
+        self.value: Any = None
+        self.executed: bool = False
 
-        for configurator_cls in self.registered_types:
-            name = configurator_cls.name
-            lname = name.lower()
-            if configurator_cls in required:
-                missing = self.return_missing_inputs(configurator_cls, inputs)
-                if missing:
-                    raise ValueError(
-                        f"[ERROR] Required configurator {name} missing args: {missing}"
-                    )
-                logger.info(f"[REQUIRED] Activating {name}")
-                self.active_configurators[lname] = self.instantiate_configurator(
-                    configurator_cls, inputs
-                )
-                continue  # We do not want to to be added twice with the valid configs
+    def set_item(self, value: Any):
+        self.value = value
 
-            # --- OPTIONAL CONFIGURATORS ---
-            if configurator_cls not in valid:
-                logger.info(f"[SKIP] {name} incompatible with compset")
-                continue
+    @abstractmethod
+    def apply(self):
+        """Apply the configuration change."""
+        pass
 
-            missing = self.return_missing_inputs(configurator_cls, inputs)
-            if missing:
-                logger.info(f"[SKIP] {name} missing args: {missing}")
-                continue
 
-            logger.info(f"[OPTIONAL] Activating {name}")
-            self.active_configurators[lname] = self.instantiate_configurator(
-                configurator_cls, inputs
-            )
+class UserNLConfigParam(ConfigParam):
+    """
+    Parameter written to a `user_nl_<component>` file (default: user_nl_mom).
+    """
 
-    def run_configurators(self):
-        # Run Configurators
-        for configurator in self.active_configurators.values():
-            logger.info(f"Configuring {configurator.name}")
-            configurator.configure()
+    def __init__(
+        self,
+        name: str,
+        user_nl_name: str = "mom",
+        comment: Optional[str] = None,
+    ):
+        super().__init__(name, comment)
+        self.user_nl_name = user_nl_name
 
-    def get_active_configurators(self):
-        return self.active_configurators.keys()
+    def apply(self):
+        if self.value is None:
+            raise ValueError(f"Value for parameter {self.name} has not been set.")
 
-    def is_active(self, name: str) -> bool:
-        """Return True if a configurator with this name is active."""
-        return name.lower() in self.active_configurators
+        param = [(self.name, self.value)]
+        append_user_nl(
+            self.user_nl_name,
+            param,
+            do_exec=True,
+            comment=self.comment,
+        )
+        self.executed = True
+
+
+class XMLConfigParam(ConfigParam):
+    """
+    Parameter applied via xmlchange.
+
+    XML changes are permanent and do not save previous state.
+    """
+
+    def __init__(
+        self,
+        name: str,
+        is_non_local: bool = False,
+        comment: Optional[str] = None,
+    ):
+        super().__init__(name, comment)
+        self.is_non_local = is_non_local
+
+    def apply(self):
+        if self.value is None:
+            raise ValueError(f"Value for parameter {self.name} has not been set.")
+
+        xmlchange(
+            self.name,
+            str(self.value),
+            is_non_local=self.is_non_local,
+        )
+        self.executed = True
 
 
 class BaseConfigurator(ABC):
@@ -146,8 +145,8 @@ class BaseConfigurator(ABC):
     allowed_compsets: List[str] = []
     forbidden_compsets: List[str] = []
 
-    input_params: List[Param] = []
-    output_params: List[ConfigParam] = []
+    input_params: List[Param]
+    output_params: List[ConfigParam]
 
     def __init__(self, **kwargs):
         # Clone declared params for this instance
@@ -159,6 +158,25 @@ class BaseConfigurator(ABC):
         # Bind input values to parameters
         for param in self.input_params:
             param.set_item(kwargs[param.name])
+
+    @classmethod
+    def check_input_params_synced(cls):
+        """Make sure the init args exactly match the input param names. This check is only run in testing"""
+        sig = inspect.signature(cls.__init__)
+        params = sig.parameters
+
+        init_args = {name for name in params if name != "self"}
+
+        input_param_names = {p.name for p in cls.input_params}
+
+        missing = input_param_names - init_args
+        extra = init_args - input_param_names
+
+        assert not (missing or extra), (
+            f"{self.__class__.__name__} init/input mismatch:\n"
+            f"  Missing init args for input_params: {sorted(missing)}\n"
+            f"  Extra init args not declared as input_params: {sorted(extra)}"
+        )
 
     def validate_args(self, **kwargs):
         """Validate provided inputs against declared input_params."""
@@ -176,6 +194,8 @@ class BaseConfigurator(ABC):
     @abstractmethod
     def configure(self):
         """Bind input values to parameters and files."""
+        for p in self.output_params:
+            p.apply()
         pass
 
     @classmethod
@@ -186,7 +206,27 @@ class BaseConfigurator(ABC):
 
     @abstractmethod
     def serialize(self) -> Dict[str, Any]:
-        pass
+        output_dict = {"inputs": {}, "outputs": {}}
+        for param in self.input_params:
+            output_dict["inputs"][param.name] = param.value
+        for param in self.output_params:
+            output_dict["outputs"][param.name] = param.value
+        return output_dict
+
+    def get_input_param(self, name: str) -> ConfigParam:
+        try:
+            return next(p for p in self.input_params if p.name == name)
+        except StopIteration:
+            raise KeyError(f"Input param '{name}' not found")
+
+    def get_output_param(self, name: str) -> ConfigParam:
+        try:
+            return next(p for p in self.output_params if p.name == name)
+        except StopIteration:
+            raise KeyError(f"Output param '{name}' not found")
+
+    def set_output_param(self, name: str, value):
+        self.get_output_param(name).set_item(value)
 
     # ---- compset logic ----
 
@@ -201,9 +241,55 @@ class BaseConfigurator(ABC):
         )
 
 
+# END FRAMEWORK
+
+
 @register
 class TidesConfigurator(BaseConfigurator):
     name = "tides"
+    input_params = [
+        InputFileParam(
+            "tpxo_elevation_filepath",
+            comment="NetCDF file containing tidal elevation data",
+        ),
+        InputFileParam(
+            "tpxo_velocity_filepath",
+            comment="NetCDF file containing tidal velocity data",
+        ),
+        InputVarParam(
+            "tidal_constituents",
+            comment="List of tidal constituents to include",
+        ),
+        InputVarParam(
+            "date_range",
+            comment="date_range for the simulation",
+        ),
+        InputVarParam(
+            "boundaries",
+            comment="boundaries to apply tidal forcing (e.g., ['N', 'S', 'E', 'W'])",
+        ),
+    ]
+    output_params = [
+        UserNLConfigParam("TIDES", comment="Enable tidal forcing in MOM6"),
+        UserNLConfigParam("TIDE_M2", comment="Enable M2 tidal constituent"),
+        UserNLConfigParam("CD_TIDES", comment="Drag coefficient for tidal forcing"),
+        UserNLConfigParam(
+            "TIDE_USE_EQ_PHASE", comment="Use equilibrium phase for tides"
+        ),
+        UserNLConfigParam("TIDE_REF_DATE", comment="Reference date for tidal forcing"),
+        UserNLConfigParam(
+            "OBC_TIDE_ADD_EQ_PHASE", comment="Add equilibrium phase to OBC tides"
+        ),
+        UserNLConfigParam(
+            "OBC_TIDE_N_CONSTITUENTS", comment="Number of tidal constituents"
+        ),
+        UserNLConfigParam(
+            "OBC_TIDE_CONSTITUENTS", comment="List of tidal constituents"
+        ),
+        UserNLConfigParam(
+            "OBC_TIDE_REF_DATE", comment="Reference date for OBC tidal forcing"
+        ),
+    ]
 
     def __init__(
         self,
@@ -213,6 +299,8 @@ class TidesConfigurator(BaseConfigurator):
         date_range,
         boundaries,
     ):
+
+        # Set the input params
         super().__init__(
             tpxo_elevation_filepath=tpxo_elevation_filepath,
             tpxo_velocity_filepath=tpxo_velocity_filepath,
@@ -220,32 +308,12 @@ class TidesConfigurator(BaseConfigurator):
             date_range=date_range,
             boundaries=boundaries,
         )
-        self.params = []
-        self.params.append(UserNLConfigParam("TIDES", "True"))
-        self.params.append(UserNLConfigParam("TIDE_M2", "True"))
-        self.params.append(UserNLConfigParam("CD_TIDES", 0.0018))
-        self.params.append(UserNLConfigParam("TIDE_USE_EQ_PHASE", "True"))
-        self.params.append(
-            UserNLConfigParam(
-                "TIDE_REF_DATE",
-                f"{self.date_range[0].year}, {self.date_range[0].month}, {self.date_range[0].day}",
-            )
-        )
-        self.params.append(UserNLConfigParam("OBC_TIDE_ADD_EQ_PHASE", "True"))
-        self.params.append(
-            UserNLConfigParam("OBC_TIDE_N_CONSTITUENTS", len(self.tidal_constituents))
-        )
-        self.params.append(
-            UserNLConfigParam(
-                "OBC_TIDE_CONSTITUENTS", '"' + ", ".join(self.tidal_constituents) + '"'
-            )
-        )
-        self.params.append(
-            UserNLConfigParam(
-                "OBC_TIDE_REF_DATE",
-                f"{self.date_range[0].year}, {self.date_range[0].month}, {self.date_range[0].day}",
-            )
-        )
+
+        # Set the output params
+        self.set_output_param("TIDES", "True")
+        self.set_output_param("TIDE_M2", "True")
+        self.set_output_param("CD_TIDES", 0.0018)
+        self.set_output_param("TIDE_USE_EQ_PHASE", "True")
 
     def tidal_data_str(self, seg_ix):
         return (
@@ -256,11 +324,35 @@ class TidesConfigurator(BaseConfigurator):
             f"SSHamp=file:tz_segment_{seg_ix}.nc(zamp),"
             f"SSHphase=file:tz_segment_{seg_ix}.nc(zphase)"
         )
-        # "001", "002", etc.
 
     def configure(self):
+        date_range = self.get_input_param("date_range").value
+        self.set_output_param(
+            "TIDE_REF_DATE",
+            f"{date_range[0].year}, {date_range[0].month}, {date_range[0].day}",
+        )
+        self.set_output_param("OBC_TIDE_ADD_EQ_PHASE", "True")
+        self.set_output_param(
+            "OBC_TIDE_N_CONSTITUENTS",
+            len(self.get_input_param("tidal_constituents").value),
+        )
+        self.set_output_param(
+            "OBC_TIDE_CONSTITUENTS",
+            '"' + ", ".join(self.get_input_param("tidal_constituents").value) + '"',
+        )
+        self.set_output_param(
+            "OBC_TIDE_REF_DATE",
+            f"{date_range[0].year}, {date_range[0].month}, {date_range[0].day}",
+        )
         super().configure()
         # You also need to add the files to the OBC string, which is handled in the main case unfortunately
+
+    @classmethod
+    def inspect(cls):
+        pass
+
+    def serialize(self) -> Dict[str, Any]:
+        return super().serialize()
 
 
 @register
@@ -495,117 +587,121 @@ class ChlConfigurator(BaseConfigurator):
         super().configure()
 
 
-class Param(ABC):
-    """
-    Base class for a single parameter in our forcing configurations.
-    """
-
-    def __init__(self, name: str, comment: Optional[str] = None):
-        self.name = name
-        self.comment = comment
-
-    @abstractmethod
-    def set_item(self, item: Any):
-        """Bind a runtime value to this parameter."""
-        pass
+def register(cls):
+    ForcingConfigRegistry.register(cls)
+    return cls
 
 
-class InputValueParam(Param):
-    """
-    Base class for a single value parameter in our forcing configurations.
-    """
+class ForcingConfigRegistry:
+    registered_types: List[type] = []
 
-    def __init__(self, name: str, comment: Optional[str] = None):
-        super().__init__(name, comment)
-        self.filepath: Optional[str] = None
+    @classmethod
+    def register(cls, configurator_cls: type):
 
-    def set_item(self, item):
-        self.value = item
+        cls.registered_types.append(configurator_cls)
 
+    def __getitem__(self, key: str):
+        return self.active_configurators[key.lower()]
 
-class InputFileParam(Param):
-    """
-    Base class for a single file parameter in our forcing configurations.
-    """
+    def __init__(self, compset, inputs: dict, case_info: dict = {}):
+        self.compset = compset
+        self.active_configurators = {}
+        self.case_info = case_info
+        inputs = inputs | case_info
+        self.find_active_configurators(self.compset, inputs)
 
-    def __init__(self, name: str, comment: Optional[str] = None):
-        super().__init__(name, comment)
-        self.filepath: Optional[str] = None
+    @classmethod
+    def find_valid_configurators(cls, compset):
+        """Returns the valid configurations based on the compset in a list"""
+        valid_configs = []
+        for configurator_cls in cls.registered_types:
+            if configurator_cls.validate_compset_compatibility(compset):
+                valid_configs.append(configurator_cls)
+        return valid_configs
 
-    def set_item(self, filepath: str):
-        self.filepath = filepath
+    @classmethod
+    def find_required_configurators(cls, compset):
+        """Returns the required configurations based on the compset in a list"""
+        required_configs = []
+        for configurator_cls in cls.registered_types:
+            if configurator_cls.is_required(compset):
+                required_configs.append(configurator_cls)
+        return required_configs
 
+    @classmethod
+    def get_ctor_signature(cls, configurator_cls):
+        sig = inspect.signature(configurator_cls.__init__)
+        args = [p.name for p in sig.parameters.values() if p.name != "self"]
+        required_args = [
+            p.name
+            for p in sig.parameters.values()
+            if p.name != "self" and p.default is inspect._empty
+        ]
 
-class ConfigParam(Param):
-    """
-    Base class for a single configuration parameter applied to a CESM/MOM6 case.
-    """
+        return args, required_args
 
-    def __init__(self, name: str, comment: Optional[str] = None):
-        super().__init__(name, comment)
-        self.value: Any = None
-        self.executed: bool = False
+    @classmethod
+    def get_user_args(cls, configurator_cls):
+        args, required_args = cls.get_ctor_signature(configurator_cls)
+        user_args = [arg for arg in required_args if not arg.startswith("case_")]
+        return user_args
 
-    def set_item(self, value: Any):
-        self.value = value
+    @classmethod
+    def return_missing_inputs(cls, configurator_cls, inputs):
+        _, required_args = cls.get_ctor_signature(configurator_cls)
+        missing = [arg for arg in required_args if arg not in inputs]
+        return missing
 
-    @abstractmethod
-    def apply(self):
-        """Apply the configuration change."""
-        pass
+    @classmethod
+    def instantiate_configurator(cls, configurator_cls, inputs):
+        args, _ = cls.get_ctor_signature(configurator_cls)
+        ctor_kwargs = {arg: inputs[arg] for arg in args if arg in inputs}
+        return configurator_cls(**ctor_kwargs)
 
+    def find_active_configurators(self, compset, inputs: dict):
 
-class UserNLConfigParam(ConfigParam):
-    """
-    Parameter written to a `user_nl_<component>` file (default: user_nl_mom).
-    """
+        required = self.find_required_configurators(compset)
+        valid = self.find_valid_configurators(compset)
 
-    def __init__(
-        self,
-        name: str,
-        user_nl_name: str = "mom",
-        comment: Optional[str] = None,
-    ):
-        super().__init__(name, comment)
-        self.user_nl_name = user_nl_name
+        for configurator_cls in self.registered_types:
+            name = configurator_cls.name
+            lname = name.lower()
+            if configurator_cls in required:
+                missing = self.return_missing_inputs(configurator_cls, inputs)
+                if missing:
+                    raise ValueError(
+                        f"[ERROR] Required configurator {name} missing args: {missing}"
+                    )
+                logger.info(f"[REQUIRED] Activating {name}")
+                self.active_configurators[lname] = self.instantiate_configurator(
+                    configurator_cls, inputs
+                )
+                continue  # We do not want to to be added twice with the valid configs
 
-    def apply(self):
-        if self.value is None:
-            raise ValueError(f"Value for parameter {self.name} has not been set.")
+            # --- OPTIONAL CONFIGURATORS ---
+            if configurator_cls not in valid:
+                logger.info(f"[SKIP] {name} incompatible with compset")
+                continue
 
-        param = [(self.name, self.value)]
-        append_user_nl(
-            self.user_nl_name,
-            param,
-            do_exec=True,
-            comment=self.comment,
-        )
-        self.executed = True
+            missing = self.return_missing_inputs(configurator_cls, inputs)
+            if missing:
+                logger.info(f"[SKIP] {name} missing args: {missing}")
+                continue
 
+            logger.info(f"[OPTIONAL] Activating {name}")
+            self.active_configurators[lname] = self.instantiate_configurator(
+                configurator_cls, inputs
+            )
 
-class XMLConfigParam(ConfigParam):
-    """
-    Parameter applied via xmlchange.
+    def run_configurators(self):
+        # Run Configurators
+        for configurator in self.active_configurators.values():
+            logger.info(f"Configuring {configurator.name}")
+            configurator.configure()
 
-    XML changes are permanent and do not save previous state.
-    """
+    def get_active_configurators(self):
+        return self.active_configurators.keys()
 
-    def __init__(
-        self,
-        name: str,
-        is_non_local: bool = False,
-        comment: Optional[str] = None,
-    ):
-        super().__init__(name, comment)
-        self.is_non_local = is_non_local
-
-    def apply(self):
-        if self.value is None:
-            raise ValueError(f"Value for parameter {self.name} has not been set.")
-
-        xmlchange(
-            self.name,
-            str(self.value),
-            is_non_local=self.is_non_local,
-        )
-        self.executed = True
+    def is_active(self, name: str) -> bool:
+        """Return True if a configurator with this name is active."""
+        return name.lower() in self.active_configurators
