@@ -58,6 +58,7 @@ def test_all_configurators_args_synced():
         config_class.check_input_params_synced()
         config_class.check_output_params_exist()
 
+
 def test_all_configurators_smoke(fake_param_case):
 
     ## Set up some dummy args

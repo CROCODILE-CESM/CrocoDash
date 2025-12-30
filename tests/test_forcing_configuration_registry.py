@@ -73,11 +73,13 @@ def test_serialize():
     assert obj_dict["name"] == "dummy1"
     assert obj_dict["inputs"]["dummy"] == "Bleh"
 
+
 def test_deserialize():
     obj_dict = {"name": "dummy1", "inputs": {"dummy": "Bleh"}}
     obj = Dummy1.deserialize(obj_dict)
     assert type(obj) == Dummy1
     assert obj.get_input_param("dummy") == "Bleh"
+
 
 def test_validate_compset_compatability():
     assert Dummy.validate_compset_compatibility("req")
