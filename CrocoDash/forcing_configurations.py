@@ -43,6 +43,14 @@ class ForcingConfigRegistry:
         self.find_active_configurators(self.compset, inputs)
 
     @classmethod
+    def deserialize(cls, obj_dict):
+        name = obj_dict["name"]
+        for thing in cls.registered_types:
+            if name == thing.name:
+                return thing.deserialize(obj_dict)
+        raise ValueError(f"Unknown configurator name: {name}")
+
+    @classmethod
     def find_valid_configurators(cls, compset):
         """Returns the valid configurations based on the compset in a list"""
         valid_configs = []
@@ -154,7 +162,11 @@ class Param(ABC):
         pass
 
 
-class InputValueParam(Param):
+class InputParam(Param):
+    pass
+
+
+class InputValueParam(InputParam):
     """
     Base class for a single value parameter in our forcing configurations.
     """
@@ -167,7 +179,7 @@ class InputValueParam(Param):
         self.value = item
 
 
-class InputFileParam(Param):
+class InputFileParam(InputParam):
     """
     Base class for a single file parameter in our forcing configurations.
     """
@@ -180,7 +192,7 @@ class InputFileParam(Param):
         self.value = filepath
 
 
-class ConfigParam(Param):
+class OutputParam(Param):
     """
     Base class for a single configuration parameter applied to a CESM/MOM6 case.
     """
@@ -198,8 +210,13 @@ class ConfigParam(Param):
         """Apply the configuration change."""
         pass
 
+    @abstractmethod
+    def inspect(cls, caseroot):
+        """Inspect the current value of this parameter in the case located at caseroot."""
+        pass
 
-class UserNLConfigParam(ConfigParam):
+
+class UserNLConfigParam(OutputParam):
     """
     Parameter written to a `user_nl_<component>` file (default: user_nl_mom).
     """
@@ -226,8 +243,26 @@ class UserNLConfigParam(ConfigParam):
         )
         self.executed = True
 
+    def inspect(self, caseroot):
+        if self.value is not None:
+            raise ValueError(f"Value for parameter {self.name} has already been set.")
+        # Using caseroot, get to user_nl
+        user_nl_path = Path(caseroot) / f"user_nl_{self.user_nl_name}"
+        if not user_nl_path.exists():
+            raise FileNotFoundError(f"{user_nls_path} does not exist.")
+        # parse user_nl to find the parameter value
+        with open(user_nl_path, "r") as f:
+            for line in f:
+                if line.strip().startswith(self.name):
+                    # extract the value
+                    _, value = line.split("=", 1)
+                    self.executed = True
+                    self.value = value.strip()
+                    return
+        raise KeyError(f"Parameter {self.name} not found in {user_nl_path }")
 
-class XMLConfigParam(ConfigParam):
+
+class XMLConfigParam(OutputParam):
     """
     Parameter applied via xmlchange.
 
@@ -254,6 +289,17 @@ class XMLConfigParam(ConfigParam):
         )
         self.executed = True
 
+    def inspect(self, caseroot):
+        if self.value is not None:
+            raise ValueError(f"Value for parameter {self.name} has already been set.")
+        # Using caseroot, query xml
+        cmd = f"./xmlquery {self.name}"
+        if self.is_non_local is True:
+            cmd += " --non-local"
+
+        runout = subprocess.run(cmd, shell=True, capture_output=True, cwd=caseroot)
+        self.set_item(runout.stdout.decode().strip())
+
 
 class BaseConfigurator(ABC):
     """Base class for all CrocoDash configurators."""
@@ -266,7 +312,7 @@ class BaseConfigurator(ABC):
     forbidden_compsets: List[str] = []
 
     input_params: List[Param]
-    output_params: List[ConfigParam]
+    output_params: List[OutputParam]
 
     def __getattr__(self, name):
         """
@@ -337,27 +383,54 @@ class BaseConfigurator(ABC):
             p.apply()
         pass
 
+    @classmethod
+    def inspect(cls, caseroot):
+        """Return an instance of the configurator with placeholder values for input and correct output params from case"""
+
+        placeholder_args = {}
+        for param in cls.input_params:
+            placeholder_args[param.name] = f"<{param.name}_value>"
+        obj = cls(**placeholder_args)
+        for param in cls.output_params:
+            param.inspect(caseroot)
+        return obj
+
+    @classmethod
+    def deserialize(cls, data: Dict[str, Any]):
+        input_kwargs = {}
+        for param in cls.input_params:
+            if param.name not in data["inputs"]:
+                raise KeyError(f"Input param '{param.name}' not found in data")
+            input_kwargs[param.name] = data["inputs"][param.name]
+
+        obj = cls(**input_kwargs)
+        for param in cls.output_params:
+            if param.name not in data["outputs"]:
+                raise KeyError(f"Output param '{param.name}' not found in data")
+            obj.set_output_param(param.name, data["outputs"][param.name])
+        return obj
+
     def serialize(self) -> Dict[str, Any]:
-        output_dict = {"inputs": {}, "outputs": {}}
+        output_dict = {"name": self.name, "inputs": {}, "outputs": {}}
         for param in self.input_params:
             output_dict["inputs"][param.name] = param.value
         for param in self.output_params:
             output_dict["outputs"][param.name] = param.value
         return output_dict
 
-    def get_input_param(self, name: str) -> ConfigParam:
+    def get_input_param(self, name: str) -> OutputParam:
         return self.get_input_param_object(name).value
 
-    def get_input_param_object(self, name: str) -> ConfigParam:
+    def get_input_param_object(self, name: str) -> OutputParam:
         try:
             return next(p for p in self.input_params if p.name == name)
         except StopIteration:
             raise KeyError(f"Input param '{name}' not found")
 
-    def get_output_param(self, name: str) -> ConfigParam:
+    def get_output_param(self, name: str) -> OutputParam:
         return self.get_output_param_object(name).value
 
-    def get_output_param_object(self, name: str) -> ConfigParam:
+    def get_output_param_object(self, name: str) -> OutputParam:
         try:
             return next(p for p in self.output_params if p.name == name)
         except StopIteration:

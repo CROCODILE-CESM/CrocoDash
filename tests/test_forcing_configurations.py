@@ -32,6 +32,18 @@ def test_user_nl_mom_apply(fake_param_case):
     assert "test = test" in contents
 
 
+def test_inspect_user_nl(fake_param_case):
+    path = fake_param_case
+    s = UserNLConfigParam("test")
+    s.set_item("42")
+    s.apply()
+
+    reciever = UserNLConfigParam("test")
+    reciever.inspect(caseroot=path)
+
+    assert reciever.value == "42"
+
+
 def test_xml_apply(fake_param_case):
     with pytest.raises(RuntimeError):  # This is not a real case
         s = XMLConfigParam("test")
