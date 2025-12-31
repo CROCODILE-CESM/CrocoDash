@@ -1456,7 +1456,7 @@ class Case:
 
                 product_info = ProductRegistry.get_product(self.forcing_product_name.lower()).marbl_var_names
                 for tracer_mom6_name in product_info:
-                    bgc_tracers += f',{tracer_mom6_name}=file:forcing_obc_segment_{seg_ix}.nc({product_info["tracer_var_names"][tracer_mom6_name]})'
+                    bgc_tracers += f',{tracer_mom6_name}=file:forcing_obc_segment_{seg_ix}.nc({product_info[tracer_mom6_name]})'
 
             tidal_data_str = lambda: (
                 f",Uamp=file:tu_segment_{seg_ix}.nc(uamp),"
