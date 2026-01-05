@@ -1,6 +1,6 @@
-name: Default Testing
+name: Derecho Testing
 
-on: [push, workflow_dispatch]
+on: [workflow_dispatch]
 
 permissions:
   contents: write
