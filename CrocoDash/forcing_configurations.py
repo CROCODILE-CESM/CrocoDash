@@ -12,6 +12,7 @@ from ProConPy.config_var import ConfigVar, cvars
 from mom6_bathy import mapping
 from typing import Optional, Any
 import copy
+import subprocess
 
 logger = setup_logger(__name__)
 
@@ -314,6 +315,15 @@ class BaseConfigurator(ABC):
     input_params: List[Param]
     output_params: List[OutputParam]
 
+    def __eq__(self, other):
+        if not isinstance(other, BaseConfigurator):
+            return NotImplemented
+        for param in self.output_params:
+            other_param = other.get_output_param_object(param.name)
+            if str(param.value) != str(other_param.value):
+                return False
+        return True
+
     def __getattr__(self, name):
         """
         Allow input params to be accessed as attributes:
@@ -389,9 +399,9 @@ class BaseConfigurator(ABC):
 
         placeholder_args = {}
         for param in cls.input_params:
-            placeholder_args[param.name] = f"<{param.name}_value>"
+            placeholder_args[param.name] = f""
         obj = cls(**placeholder_args)
-        for param in cls.output_params:
+        for param in obj.output_params:
             param.inspect(caseroot)
         return obj
 
@@ -520,12 +530,6 @@ class TidesConfigurator(BaseConfigurator):
             boundaries=boundaries,
         )
 
-        # Set the output params
-        self.set_output_param("TIDES", "True")
-        self.set_output_param("TIDE_M2", "True")
-        self.set_output_param("CD_TIDES", 0.0018)
-        self.set_output_param("TIDE_USE_EQ_PHASE", "True")
-
     def tidal_data_str(self, seg_ix):
         return (
             f",Uamp=file:tu_segment_{seg_ix}.nc(uamp),"
@@ -537,6 +541,11 @@ class TidesConfigurator(BaseConfigurator):
         )
 
     def configure(self):
+        # Set the output params
+        self.set_output_param("TIDES", "True")
+        self.set_output_param("TIDE_M2", "True")
+        self.set_output_param("CD_TIDES", 0.0018)
+        self.set_output_param("TIDE_USE_EQ_PHASE", "True")
         date_range = self.get_input_param("date_range")
         self.set_output_param(
             "TIDE_REF_DATE",
@@ -706,7 +715,7 @@ class BGCRiverNutrientsConfigurator(BaseConfigurator):
         )
 
     def validate_args(self, **kwargs):
-        if not kwargs["global_river_nutrients_filepath"].exists():
+        if not Path(kwargs["global_river_nutrients_filepath"]).exists():
             raise FileNotFoundError(
                 f"River Nutrients file {kwargs['global_river_nutrients_filepath']} does not exist."
             )
@@ -852,7 +861,7 @@ class ChlConfigurator(BaseConfigurator):
         )
 
     def validate_args(self, **kwargs):
-        if not kwargs["chl_processed_filepath"].exists():
+        if not Path(kwargs["chl_processed_filepath"]).exists():
             raise FileNotFoundError(
                 f"Chlorophyll file {kwargs['chl_processed_filepath']} does not exist."
             )
