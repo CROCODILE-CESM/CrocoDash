@@ -1,0 +1,21 @@
+name: Default Testing
+
+on: [push, workflow_dispatch]
+
+permissions:
+  contents: write
+
+jobs:
+  pytest:
+    runs-on: gha-runner-crocodash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          path: CrocoDash
+      - name: Run Pytest
+        run: |
+          cd CrocoDash
+          module load conda
+          source /glade/work/manishrv/conda-envs/CrocoDash_pint/bin/activate
+          pytest --ignore=CrocoDash/visualCaseGen -m "not workflow" -vv --capture=no --showlocals --tb=short
