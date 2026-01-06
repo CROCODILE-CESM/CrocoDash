@@ -40,16 +40,18 @@ class ForcingConfigRegistry:
     def __getitem__(self, key: str):
         return self.active_configurators[key.lower()]
 
-    def __init__(self, compset, inputs: dict, case):
+    def __init__(self, compset, inputs: dict, case = None):
         self.compset = compset
         self.active_configurators = {}
+        if case is not None:
+            self.case_info = {
+                f"case_{k}": v
+                for k, v in case.__dict__.items()
+                if not k.startswith("_") and is_serializable(v)
+            }
+            inputs = inputs | self.case_info
 
-        self.case_info = {
-            f"case_{k}": v
-            for k, v in case.__dict__.items()
-            if not k.startswith("_") and is_serializable(v)
-        }
-        inputs = inputs | self.case_info
+        
         self.find_active_configurators(self.compset, inputs)
 
     @classmethod
