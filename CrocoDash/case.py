@@ -839,17 +839,6 @@ class Case:
                 rmax=self.fcr["runoff"].rmax,
                 fold=self.fcr["runoff"].fold
             )
-
-            xmlchange(
-                "ROF2OCN_LIQ_RMAPNAME",
-                str(runoff_mapping_file_nnsm),
-                is_non_local=self.cc._is_non_local(),
-            )
-            xmlchange(
-                "ROF2OCN_ICE_RMAPNAME",
-                str(runoff_mapping_file_nnsm),
-                is_non_local=self.cc._is_non_local(),
-            )
         else:
             print(
                 f"Runoff mapping file {self.runoff_mapping_file_nnsm} already exists, reusing it."
