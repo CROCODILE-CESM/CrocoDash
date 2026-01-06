@@ -46,7 +46,7 @@ class ForcingConfigRegistry:
 
         self.case_info = {
             f"case_{k}": v
-            for k, v in self.__dict__.items()
+            for k, v in case.__dict__.items()
             if not k.startswith("_") and is_serializable(v)
         }
         inputs = inputs | self.case_info
