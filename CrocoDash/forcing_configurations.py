@@ -25,6 +25,10 @@ def register(cls):
     return cls
 
 
+def is_serializable(v):
+    return isinstance(v, (str, int, float, bool, type(None), Path, list, dict))
+
+
 class ForcingConfigRegistry:
     registered_types: List[type] = []
 
@@ -36,11 +40,16 @@ class ForcingConfigRegistry:
     def __getitem__(self, key: str):
         return self.active_configurators[key.lower()]
 
-    def __init__(self, compset, inputs: dict, case_info: dict = {}):
+    def __init__(self, compset, inputs: dict, case):
         self.compset = compset
         self.active_configurators = {}
-        self.case_info = case_info
-        inputs = inputs | case_info
+
+        self.case_info = {
+            f"case_{k}": v
+            for k, v in self.__dict__.items()
+            if not k.startswith("_") and is_serializable(v)
+        }
+        inputs = inputs | self.case_info
         self.find_active_configurators(self.compset, inputs)
 
     @classmethod
@@ -740,7 +749,7 @@ class RunoffConfigurator(BaseConfigurator):
         ),
         InputValueParam("case_grid_name", comment="Case grid name"),
         InputValueParam("case_session_id", comment="Case session identifier"),
-        InputValueParam("case_compset", comment="Case compset"),
+        InputValueParam("compset", comment="Case compset"),
         InputValueParam("case_inputdir", comment="Case input directory"),
         InputValueParam(
             "rmax", comment="Smoothing radius (in meters) for runoff mapping generation"
@@ -763,7 +772,7 @@ class RunoffConfigurator(BaseConfigurator):
         runoff_esmf_mesh_filepath,
         case_grid_name,
         case_session_id,
-        case_compset,
+        compset,
         case_inputdir,
         rmax=None,
         fold=None,
@@ -783,7 +792,7 @@ class RunoffConfigurator(BaseConfigurator):
             case_inputdir=case_inputdir,
             rmax=rmax,
             fold=fold,
-            case_compset=case_compset,
+            compset=compset,
         )
 
     def configure(self):
@@ -815,7 +824,7 @@ class RunoffConfigurator(BaseConfigurator):
         if (kwargs["rmax"] is None) != (kwargs["fold"] is None):
             raise ValueError("Both rmax and fold must be specified together.")
         if kwargs["rmax"] is not None:
-            assert "SROF" not in kwargs["case_compset"], (
+            assert "SROF" not in kwargs["compset"], (
                 "When rmax and fold are specified, "
                 "the compset must include an active or data runoff model."
             )
