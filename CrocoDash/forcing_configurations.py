@@ -13,6 +13,7 @@ from mom6_bathy import mapping
 from typing import Optional, Any
 import copy
 import subprocess
+import json 
 
 logger = setup_logger(__name__)
 
@@ -145,11 +146,24 @@ class ForcingConfigRegistry:
                 configurator_cls, inputs
             )
 
-    def run_configurators(self):
+    def run_configurators(self, config_path):
+
+
+        with open(config_path) as f:
+            general_config = json.load(f)
+
         # Run Configurators
         for configurator in self.active_configurators.values():
             logger.info(f"Configuring {configurator.name}")
             configurator.configure()
+            general_config[configurator.name] = configurator.serialize()
+
+        with open(config_path, "w") as f:
+            json.dump(general_config, f, indent=4)
+
+            
+
+
 
     def get_active_configurators(self):
         return self.active_configurators.keys()
@@ -434,9 +448,9 @@ class BaseConfigurator(ABC):
     def serialize(self) -> Dict[str, Any]:
         output_dict = {"name": self.name, "inputs": {}, "outputs": {}}
         for param in self.input_params:
-            output_dict["inputs"][param.name] = param.value
+            output_dict["inputs"][param.name] = str(param.value)
         for param in self.output_params:
-            output_dict["outputs"][param.name] = param.value
+            output_dict["outputs"][param.name] = str(param.value)
         return output_dict
 
     def get_input_param(self, name: str) -> OutputParam:
