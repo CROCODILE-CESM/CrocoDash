@@ -16,6 +16,5 @@ jobs:
       - name: Run Pytest
         run: |
           cd CrocoDash
-          module load conda
           source /glade/work/manishrv/conda-envs/CrocoDash_pint/bin/activate
           pytest --ignore=CrocoDash/visualCaseGen -m "not workflow" -vv --capture=no --showlocals --tb=short
