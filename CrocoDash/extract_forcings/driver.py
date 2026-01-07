@@ -7,7 +7,10 @@ sys.path.append(str(parent_dir / "code"))
 import merge_piecewise_dataset as mpd
 import get_dataset_piecewise as gdp
 import regrid_dataset_piecewise as rdp
-
+import process_bgc as bgc
+import proces_runoff as rof
+import process_tides as tides
+import process_chl as chl
 
 def test_driver():
     """Test that all the imports work"""
@@ -25,6 +28,7 @@ def main(
     get_dataset_piecewise=True,
     regrid_dataset_piecewise=True,
     merge_piecewise_dataset=True,
+    **kwargs
 ):
     """
     Driver file to run the large data workflow
@@ -87,6 +91,50 @@ def main(
             config["basic"]["general"]["run_boundary_conditions"],
             config["basic"]["general"]["preview"],
         )
+
+    for key in config.keys():
+        if key == "basic":
+            continue
+        elif key == "bgcic" and ("process_bgcic" not in kwargs or kwargs["process_bgcic"]):
+            bgc.process_bgc_ic(
+                file_path=config["bgcic"]["marbl_ic_filepath"] ,
+                output_path=config["bgcic"]["MARBL_TRACERS_IC_FILE"] ,
+            )
+        elif key == "bgcironforcing" and ("process_bgcironforcing" not in kwargs or kwargs["process_bgcironforcing"]):
+            bgc.process_bgc_iron_forcing(
+                nx=config["BGCIronForcing"]["nx"],
+                ny=config["BGCIronForcing"]["ny"],
+                MARBL_FESEDFLUX_FILE=config["BGCIronForcing"]["MARBL_FESEDFLUX_FILE"],
+                MARBL_FEVENTFLUX_FILE=config["BGCIronForcing"]["MARBL_FEVENTFLUX_FILE"],
+                inputdir=config["BGCIronForcing"]["inputdir"],
+            )
+        elif key == "bgcrivernutrients" and ("process_bgcrivernutrients" not in kwargs or kwargs["process_bgcrivernutrients"]):
+            bgc.process_bgc_river_nutrients(
+                nx=config["BGCRiverNutrients"]["nx"],
+                ny=config["BGCRiverNutrients"]["ny"],
+                ocn_grid=config["BGCRiverNutrients"]["ocn_grid"],
+                river_nutrients_nnsm_filepath=config["BGCRiverNutrients"]["river_nutrients_nnsm_filepath"],
+                ROF2OCN_LIQ_RMAPNAME=config["BGCRiverNutrients"]["ROF2OCN_LIQ_RMAPNAME"],)
+        elif key == "runoff" and ("process_runoff" not in kwargs or kwargs["process_runoff"]):
+            rof.generate_rof_ocn_map(
+                rof_grid_name=config["runoff"]["rof_grid_name"],
+                rof_esmf_mesh_filepath=config["runoff"]["rof_esmf_mesh_filepath"],
+                inputdir=config["basic"]["paths"]["output_path"],
+                grid_name=config["basic"]["forcing"]["information"]["grid_name"],
+                rmax=config["runoff"]["rmax"],
+                fold=config["runoff"]["fold"],
+                runoff_esmf_mesh_path=config["runoff"]["runoff_esmf_mesh_path"],
+            )
+        elif key == "tides" and ("process_tides" not in kwargs or kwargs["process_tides"]):
+            tides.process_tides(None
+            )
+        elif key == "chl" and ("process_chl" not in kwargs or kwargs["process_chl"]):
+            chl.interpolate_and_fill_seawifs(
+                ocn_grid = ocn_grid,
+                ocn_topo = ocn_topo,
+                chl_processed_filepath=config["chl"]["chl_processed_filepath"],
+                output_filepath=config["chl"]["output_filepath"],
+            )
     return
 
 

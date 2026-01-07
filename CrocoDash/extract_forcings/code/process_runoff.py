@@ -1,5 +1,5 @@
 from mom6_bathy import mapping
-def generate_rof_ocn_map(cime, rof_grid_name, rof_esmf_mesh_filepath, inputdir, grid_name, rmax, fold, runoff_esmf_mesh_path):
+def generate_rof_ocn_map(rof_grid_name, rof_esmf_mesh_filepath, inputdir, grid_name, rmax, fold, runoff_esmf_mesh_path):
     """Generate runoff to ocean mapping files if runoff is active in the compset."""
 
     assert rof_grid_name is not None, "Couldn't determine runoff grid name."
