@@ -127,5 +127,5 @@ def test_FCR_find_active_configurators_skip_if_no_args():
 
 def test_FCR_configure(fcr_add_dummy1):
     fcr = fcr_add_dummy1
-    fcr.run_configurators(None)
+    fcr.run_configurators()
     assert fcr["dummy1"].dummy1 == 1
