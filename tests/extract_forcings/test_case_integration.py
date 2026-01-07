@@ -40,7 +40,7 @@ def test_case_integration_config(get_CrocoDash_case):
     with open(large_data_workflow_path / "config.json", "r") as f:
         config = json.load(f)
     # Top-level keys
-    assert set(config.keys()) == {
+    assert set(config["basic"].keys()) == {
         "paths",
         "file_regex",
         "dates",
