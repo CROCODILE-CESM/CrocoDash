@@ -16,7 +16,7 @@ jobs:
 
           echo
           echo "Attempting to read:"
-          ls /glade | head -n 20
+          ls /glade/campaign/collections/gdex/data/d651077/cesmdata/inputdata/ocn/mom/croc | head -n 20
       - uses: actions/checkout@v4
         with:
           submodules: recursive
