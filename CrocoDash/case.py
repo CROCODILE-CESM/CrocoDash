@@ -420,11 +420,11 @@ class Case:
         if self.override is True:
             if self.extract_forcings_path.exists():
                 shutil.rmtree(self.extract_forcings_path)
-        self.extract_forcings_path.mkdir(exist_ok=True)
         # Copy extract_forcings folder there
         shutil.copytree(
             Path(__file__).parent / "extract_forcings",
             self.extract_forcings_path,
+            dirs_exist_ok=True
         )
 
         # Import Extract Forcings Workflow
@@ -532,9 +532,9 @@ class Case:
             "general": {
                 "boundary_number_conversion": {},
                 "step": "",
-                "preview": false,
-                "run_initial_condition": true,
-                "run_boundary_conditions": true
+                "preview": False,
+                "run_initial_condition": True,
+                "run_boundary_conditions": True
                 
             }
         }

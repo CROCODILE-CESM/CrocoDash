@@ -13,6 +13,7 @@ from mom6_bathy import mapping
 from typing import Optional, Any
 import copy
 import subprocess
+import json 
 
 logger = setup_logger(__name__)
 
@@ -447,9 +448,9 @@ class BaseConfigurator(ABC):
     def serialize(self) -> Dict[str, Any]:
         output_dict = {"name": self.name, "inputs": {}, "outputs": {}}
         for param in self.input_params:
-            output_dict["inputs"][param.name] = param.value
+            output_dict["inputs"][param.name] = str(param.value)
         for param in self.output_params:
-            output_dict["outputs"][param.name] = param.value
+            output_dict["outputs"][param.name] = str(param.value)
         return output_dict
 
     def get_input_param(self, name: str) -> OutputParam:
