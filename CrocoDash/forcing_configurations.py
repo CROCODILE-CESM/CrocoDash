@@ -148,9 +148,11 @@ class ForcingConfigRegistry:
 
     def run_configurators(self, config_path):
 
-
-        with open(config_path) as f:
-            general_config = json.load(f)
+        if config_path is not None:
+            with open(config_path) as f:
+                general_config = json.load(f)
+        else:
+            general_config = {}
 
         # Run Configurators
         for configurator in self.active_configurators.values():
@@ -158,8 +160,10 @@ class ForcingConfigRegistry:
             configurator.configure()
             general_config[configurator.name] = configurator.serialize()
 
-        with open(config_path, "w") as f:
-            json.dump(general_config, f, indent=4)
+        if config_path is not None:
+            with open(config_path, "w") as f:
+                json.dump(general_config, f, indent=4)
+        return general_config
 
             
 
