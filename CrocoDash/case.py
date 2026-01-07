@@ -412,21 +412,40 @@ class Case:
         --------
         process_forcings : Executes the actual boundary, initial condition, and tide setup based on the configuration.
         """
-        ProductRegistry.load()
-        self.forcing_product_name = product_name.lower()
-        if (
-            ProductRegistry.product_exists(product_name)
-            and ProductRegistry.product_is_of_type(product_name,ForcingProduct)
-        ):
-            self.configure_initial_and_boundary_conditions(
+
+        # Set up Forcings Folder
+        self.extract_forcings_path = (
+            self.inputdir / "extract_forcings"
+        )
+        if self.override is True:
+            if self.extract_forcings_path.exists():
+                shutil.rmtree(self.extract_forcings_path)
+        self.extract_forcings_path.mkdir(exist_ok=True)
+        # Copy extract_forcings folder there
+        shutil.copytree(
+            Path(__file__).parent / "extract_forcings",
+            self.extract_forcings_path,
+        )
+
+        # Import Extract Forcings Workflow
+        module_name = f"driver_{uuid.uuid4().hex}"
+        spec = importlib.util.spec_from_file_location(
+            module_name, self.extract_forcings_path / "driver.py"
+        )
+        self.driver = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(self.driver)
+
+
+        # Call the required initial and boundary condition configurator
+        self.configure_initial_and_boundary_conditions(
                 date_range=date_range,
                 boundaries=boundaries,
                 product_name=product_name,
                 function_name=function_name,
                 too_much_data=too_much_data,
             )
-        else:
-            raise ValueError("Product / Data Path is not supported quite yet")
+        # Call any optional configurators (e.g., tides) if specified
+
         
         inputs = kwargs | {
             "date_range": pd.to_datetime(date_range),
@@ -436,7 +455,7 @@ class Case:
         self.session_id = cvars["MB_ATTEMPT_ID"].value
         self.grid_name = self.ocn_grid.name
         self.fcr = ForcingConfigRegistry(self.compset_lname,inputs,self)
-        self.fcr.run_configurators()
+        self.fcr.run_configurators(self.extract_forcings_path / "config.json")
 
         self._update_forcing_variables()
         self._configure_forcings_called = True
@@ -449,7 +468,15 @@ class Case:
         function_name: str = "get_glorys_data_script_for_cli",
         too_much_data: bool = False,
     ):
+
+        ProductRegistry.load()
         self.forcing_product_name = product_name.lower()
+        if not (
+            ProductRegistry.product_exists(product_name)
+            and ProductRegistry.product_is_of_type(product_name,ForcingProduct)
+        ):
+            raise ValueError("Product / Data Path is not supported quite yet")
+        
         if not (
             isinstance(date_range, list)
             and all(isinstance(date, str) for date in date_range)
@@ -467,28 +494,10 @@ class Case:
         self._too_much_data = too_much_data
         self.date_range = pd.to_datetime(date_range)
         
-        # Create the forcing directory
-        forcing_dir_path = self.inputdir / self.forcing_product_name
-        if self.override is True:
-            if forcing_dir_path.exists():
-                shutil.rmtree(forcing_dir_path)
-        forcing_dir_path.mkdir(exist_ok=True)
-
-        # Create the OBC generation files
-        self.extract_forcings_path = (
-            self.inputdir / self.forcing_product_name / "extract_forcings"
-        )
-
-        # Copy large data workflow folder there
-        shutil.copytree(
-            Path(__file__).parent / "extract_forcings",
-            self.extract_forcings_path,
-        )
-
         # Set Vars for Config
         date_format = "%Y%m%d"
 
-        # Write Config File
+        # Write Config Dict for ic & bc forcings
 
         # Read in template
         if not self._too_much_data:
@@ -496,8 +505,39 @@ class Case:
         else:
             step = 5
 
-        with open(self.extract_forcings_path / "config.json", "r") as f:
-            config = json.load(f)
+        config = {
+            "paths": {
+                "raw_dataset_path": "",
+                "hgrid_path": "",
+                "vgrid_path": "",
+                "bathymetry_path": "",
+                "regridded_dataset_path": "",
+                "output_path": ""
+            },
+            "file_regex": {
+                "raw_dataset_pattern": "(north|east|south|west)_unprocessed\\.(\\d{8})_(\\d{8})\\.nc",
+                "regridded_dataset_pattern": "forcing_obc_segment_(\\d{3})_(\\d{8})_(\\d{8})\\.nc"
+            },
+            "dates": {
+                "start": "",
+                "end": "",
+                "format": ""
+            },
+            "forcing": {
+                "product_name": "",
+                "function_name": "",
+                "information": {}
+            },
+            
+            "general": {
+                "boundary_number_conversion": {},
+                "step": "",
+                "preview": false,
+                "run_initial_condition": true,
+                "run_boundary_conditions": true
+                
+            }
+        }
 
         # Paths
         config["paths"]["hgrid_path"] = self.supergrid_path
@@ -531,16 +571,11 @@ class Case:
         config["general"]["step"] = step
 
         # Write out
+        with open(self.extract_forcings_path / "config.json") as f:
+            general_config = json.load(f)
+        general_config["basic"] = config
         with open(self.extract_forcings_path / "config.json", "w") as f:
-            json.dump(config, f, indent=4)
-
-        # Import Extract Forcings Workflow
-        module_name = f"driver_{uuid.uuid4().hex}"
-        spec = importlib.util.spec_from_file_location(
-            module_name, self.extract_forcings_path / "driver.py"
-        )
-        self.driver = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(self.driver)
+            json.dump(general_config, f, indent=4)
 
         if not self._too_much_data:
             self.driver.main(

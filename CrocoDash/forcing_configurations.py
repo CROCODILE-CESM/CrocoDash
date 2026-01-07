@@ -145,11 +145,24 @@ class ForcingConfigRegistry:
                 configurator_cls, inputs
             )
 
-    def run_configurators(self):
+    def run_configurators(self, config_path):
+
+
+        with open(config_path) as f:
+            general_config = json.load(f)
+
         # Run Configurators
         for configurator in self.active_configurators.values():
             logger.info(f"Configuring {configurator.name}")
             configurator.configure()
+            general_config[configurator.name] = configurator.serialize()
+
+        with open(config_path, "w") as f:
+            json.dump(general_config, f, indent=4)
+
+            
+
+
 
     def get_active_configurators(self):
         return self.active_configurators.keys()
