@@ -20,4 +20,4 @@ jobs:
         uses: psf/black@stable
         with:
           options: "--check --verbose"
-          src: "CrocoDash/*.py CrocoDash/extract_forcings/* CrocoDash/raw_data_access"
+          src: "CrocoDash" # This isn't a recursive checkout, so rm6 and visualCasegen won't be checked
