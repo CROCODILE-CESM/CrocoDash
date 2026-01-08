@@ -1,8 +1,5 @@
-import bgc as bgc
-import runoff as rof
-import tides as tides
-import chlorophyll as chl
-import driver as dv
+from  CrocoDash.extract_forcings.code import bgc, runoff as rof, tides, chlorophyll as chl, driver as dv
+
 
 
 def test_process_chl():
