@@ -19,5 +19,5 @@ jobs:
       - name: Run black code formatter check
         uses: psf/black@stable
         with:
-          options: "--check --verbose"
+          options: "--check"
           src: "CrocoDash" # This isn't a recursive checkout, so rm6 and visualCasegen won't be checked
