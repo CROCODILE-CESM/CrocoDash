@@ -26,9 +26,10 @@ def test_driver():
 
 
 def main(
-    get_dataset_piecewise=True,
-    regrid_dataset_piecewise=True,
-    merge_piecewise_dataset=True,
+    get_dataset_piecewise=False,
+    regrid_dataset_piecewise=False,
+    merge_piecewise_dataset=False,
+    **kwargs,
 ):
     """
     Driver file to run the large data workflow
