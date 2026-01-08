@@ -9,6 +9,7 @@ import regional_mom6 as rmom6
 from CrocoDash.grid import Grid
 from CrocoDash.topo import Topo
 from CrocoDash.vgrid import VGrid
+from CrocoDash.forcing_configurations import ForcingConfigRegistry
 from CrocoDash.raw_data_access.registry import ProductRegistry
 from CrocoDash.raw_data_access.base import ForcingProduct
 from ProConPy.config_var import ConfigVar, cvars
@@ -162,6 +163,17 @@ class Case:
         )
 
         self._apply_final_xmlchanges(ntasks_ocn, job_queue, job_wallclock_time)
+
+        required_configurators = ForcingConfigRegistry.find_required_configurators(self.compset_lname)
+        
+        if len(required_configurators) > 0:
+            print("The following additional configuration options are required to run and must be provided with any listed arguments in configure_forcings:")
+            
+            for configurator in required_configurators:
+                user_args = ForcingConfigRegistry.get_user_args(configurator)
+                args_str = ", ".join(user_args) if user_args else "no arguments"
+                print(f"  - {configurator.name}: {args_str}")
+                    
 
     @property
     def cice_in_compset(self):
@@ -346,18 +358,10 @@ class Case:
         self,
         date_range: list[str],
         boundaries: list[str] = ["south", "north", "west", "east"],
-        tidal_constituents: list[str] | None = None,
-        tpxo_elevation_filepath: str | Path | None = None,
-        tpxo_velocity_filepath: str | Path | None = None,
         product_name: str = "GLORYS",
         function_name: str = "get_glorys_data_script_for_cli",
-        product_info: str | Path | dict = None,
         too_much_data: bool = False,
-        rmax: float | None = None,
-        fold: float | None = None,
-        chl_processed_filepath: str | Path | None = None,
-        global_river_nutrients_filepath: str | Path | None = None,
-        marbl_ic_filepath: str | Path | None = None,
+        **kwargs
     ):
         """
         Configure the boundary conditions and tides for the MOM6 case.
@@ -374,13 +378,6 @@ class Case:
         boundaries : list of str, optional
             List of open boundaries to process (e.g., ["south", "north"]).
             Default is ["south", "north", "west", "east"].
-        tidal_constituents : list of str, optional
-            List of tidal constituents (e.g., ["M2", "S2"]) to be used for tidal forcing.
-            If provided, both TPXO elevation and velocity file paths must also be provided.
-        tpxo_elevation_filepath : str or Path, optional
-            File path to the TPXO tidal elevation data file.
-        tpxo_velocity_filepath : str or Path, optional
-            File path to the TPXO tidal velocity data file.
         product_name : str, optional
             Name of the forcing data product to use. Default is "GLORYS".
         function_name : str, optional
@@ -393,18 +390,8 @@ class Case:
             If True, configures the large data workflow. In this case, data are not downloaded
             immediately, but a config file and workflow directory are created
             for external processing in the forcing directory, inside the input directory.
-        rmax : float, optional
-            If passed, specifies the smoothing radius (in meters) for runoff mapping generation.
-            If not provided, a suggested value based on the ocean grid will be used.
-        fold : float, optional
-            If passed, specifies the smoothing fold parameter for runoff mapping generation.
-            If not provided, a suggested value based on the ocean grid will be used.
-        chl_processed_filepath : Path
-            If passed, points to the processed global chlorophyll file for regional processing through mom6_bathy.chl
-        global_river_nutrients_filepath: str or Path, optional
-            If passed, points to the processed global river nutrients file for regional processing through mom6_bathy.mapping
-        marbl_ic_filepath: str or Path, optional
-            If passed, points to the processed MARBL initial condition file to be copied into the case input directory
+        kwargs : 
+            These are the configuration options (please see accepted arguments in the configuration classes)
         Raises
         ------
         TypeError
@@ -417,93 +404,61 @@ class Case:
 
         Notes
         -----
-        - Creates an `regional_mom6.experiment` instance with the specified domain and inputs.
         - Downloads forcing data (or creates a script) for each boundary and the initial condition unless the large data workflow is used.
         - In large data workflow mode, creates a folder structure and `config.json` file for later manual processing.
-        - Tidal forcing requires all of: `tidal_constituents`, `tpxo_elevation_filepath`, and `tpxo_velocity_filepath`.
         - This method must be called before `process_forcings()`.
 
         See Also
         --------
         process_forcings : Executes the actual boundary, initial condition, and tide setup based on the configuration.
         """
-        ProductRegistry.load()
-        self.forcing_product_name = product_name.lower()
-        if (
-            ProductRegistry.product_exists(product_name)
-            and ProductRegistry.product_is_of_type(product_name,ForcingProduct)
-        ):
-            self.configure_initial_and_boundary_conditions(
+
+        # Set up Forcings Folder
+        self.extract_forcings_path = (
+            self.inputdir / "extract_forcings"
+        )
+        if self.override is True:
+            if self.extract_forcings_path.exists():
+                shutil.rmtree(self.extract_forcings_path)
+        # Copy extract_forcings folder there
+        shutil.copytree(
+            Path(__file__).parent / "extract_forcings",
+            self.extract_forcings_path,
+            dirs_exist_ok=True
+        )
+
+        # Import Extract Forcings Workflow
+        module_name = f"driver_{uuid.uuid4().hex}"
+        spec = importlib.util.spec_from_file_location(
+            module_name, self.extract_forcings_path / "driver.py"
+        )
+        self.driver = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(self.driver)
+
+
+        # Call the required initial and boundary condition configurator
+        self.configure_initial_and_boundary_conditions(
                 date_range=date_range,
                 boundaries=boundaries,
                 product_name=product_name,
                 function_name=function_name,
                 too_much_data=too_much_data,
             )
-        else:
-            raise ValueError("Product / Data Path is not supported quite yet")
-        if tidal_constituents:
-            self.configured_tides = self.configure_tides(
-                tidal_constituents,
-                tpxo_elevation_filepath,
-                tpxo_velocity_filepath,
-                boundaries,
-            )
-        else:
-            self.configured_tides = False
+        # Call any optional configurators (e.g., tides) if specified
 
-        if (rmax is None) != (fold is None):
-            raise ValueError("Both rmax and fold must be specified together.")
-        if rmax is not None:
-            assert 'SROF' not in self.compset_lname, "When rmax and fold are specified, " \
-                "the compset must include an active or data runoff model."
-        self.rmax = rmax
-        self.fold = fold
+        
+        inputs = kwargs | {
+            "date_range": pd.to_datetime(date_range),
+            "boundaries":boundaries
+        }
 
-        if chl_processed_filepath:
-            self.configured_chl = self.configure_chl(chl_processed_filepath)
-        else:
-            self.configured_chl = False
-
-        if global_river_nutrients_filepath:
-            self.configured_river_nutrients = self.configure_river_nutrients(
-                global_river_nutrients_filepath
-            )
-        else:
-            self.configured_river_nutrients = False
-
-        if self.bgc_in_compset:
-            self.configure_bgc_ic(marbl_ic_filepath)
-            self.configured_bgc = self.configure_bgc_iron_forcing()
-        else:
-            self.configured_bgc = False
+        self.session_id = cvars["MB_ATTEMPT_ID"].value
+        self.grid_name = self.ocn_grid.name
+        self.fcr = ForcingConfigRegistry(self.compset_lname,inputs,self)
+        self.fcr.run_configurators(self.extract_forcings_path / "config.json")
 
         self._update_forcing_variables()
         self._configure_forcings_called = True
-
-    def configure_bgc_ic(self, marbl_ic_filepath: str | Path | None = None):
-        if marbl_ic_filepath is None:
-            raise ValueError("MARBL initial condition file path must be provided.")
-        if Path(marbl_ic_filepath).exists() is False:
-            raise FileNotFoundError(
-                f"MARBL initial condition file {marbl_ic_filepath} does not exist."
-            )
-        self.marbl_ic_filepath = Path(marbl_ic_filepath)
-        self.marbl_ic_filename = self.marbl_ic_filepath.name
-        return True
-
-    def configure_bgc_iron_forcing(self):
-        self.feventflux_filepath = (
-            self.inputdir
-            / "ocnice"
-            / f"feventflux_5gmol_{self.ocn_grid.name}_{cvars['MB_ATTEMPT_ID'].value}.nc"
-        )
-        self.fesedflux_filepath = (
-            self.inputdir
-            / "ocnice"
-            / f"fesedflux_total_reduce_oxic_{self.ocn_grid.name}_{cvars['MB_ATTEMPT_ID'].value}.nc"
-        )
-        return True
 
     def configure_initial_and_boundary_conditions(
         self,
@@ -513,7 +468,15 @@ class Case:
         function_name: str = "get_glorys_data_script_for_cli",
         too_much_data: bool = False,
     ):
+
+        ProductRegistry.load()
         self.forcing_product_name = product_name.lower()
+        if not (
+            ProductRegistry.product_exists(product_name)
+            and ProductRegistry.product_is_of_type(product_name,ForcingProduct)
+        ):
+            raise ValueError("Product / Data Path is not supported quite yet")
+        
         if not (
             isinstance(date_range, list)
             and all(isinstance(date, str) for date in date_range)
@@ -531,28 +494,10 @@ class Case:
         self._too_much_data = too_much_data
         self.date_range = pd.to_datetime(date_range)
         
-        # Create the forcing directory
-        forcing_dir_path = self.inputdir / self.forcing_product_name
-        if self.override is True:
-            if forcing_dir_path.exists():
-                shutil.rmtree(forcing_dir_path)
-        forcing_dir_path.mkdir(exist_ok=True)
-
-        # Create the OBC generation files
-        self.extract_forcings_path = (
-            self.inputdir / self.forcing_product_name / "extract_forcings"
-        )
-
-        # Copy large data workflow folder there
-        shutil.copytree(
-            Path(__file__).parent / "extract_forcings",
-            self.extract_forcings_path,
-        )
-
         # Set Vars for Config
         date_format = "%Y%m%d"
 
-        # Write Config File
+        # Write Config Dict for ic & bc forcings
 
         # Read in template
         if not self._too_much_data:
@@ -560,8 +505,39 @@ class Case:
         else:
             step = 5
 
-        with open(self.extract_forcings_path / "config.json", "r") as f:
-            config = json.load(f)
+        config = {
+            "paths": {
+                "raw_dataset_path": "",
+                "hgrid_path": "",
+                "vgrid_path": "",
+                "bathymetry_path": "",
+                "regridded_dataset_path": "",
+                "output_path": ""
+            },
+            "file_regex": {
+                "raw_dataset_pattern": "(north|east|south|west)_unprocessed\\.(\\d{8})_(\\d{8})\\.nc",
+                "regridded_dataset_pattern": "forcing_obc_segment_(\\d{3})_(\\d{8})_(\\d{8})\\.nc"
+            },
+            "dates": {
+                "start": "",
+                "end": "",
+                "format": ""
+            },
+            "forcing": {
+                "product_name": "",
+                "function_name": "",
+                "information": {}
+            },
+            
+            "general": {
+                "boundary_number_conversion": {},
+                "step": "",
+                "preview": False,
+                "run_initial_condition": True,
+                "run_boundary_conditions": True
+                
+            }
+        }
 
         # Paths
         config["paths"]["hgrid_path"] = self.supergrid_path
@@ -595,16 +571,11 @@ class Case:
         config["general"]["step"] = step
 
         # Write out
+        with open(self.extract_forcings_path / "config.json") as f:
+            general_config = json.load(f)
+        general_config["basic"] = config
         with open(self.extract_forcings_path / "config.json", "w") as f:
-            json.dump(config, f, indent=4)
-
-        # Import Extract Forcings Workflow
-        module_name = f"driver_{uuid.uuid4().hex}"
-        spec = importlib.util.spec_from_file_location(
-            module_name, self.extract_forcings_path / "driver.py"
-        )
-        self.driver = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(self.driver)
+            json.dump(general_config, f, indent=4)
 
         if not self._too_much_data:
             self.driver.main(
@@ -615,97 +586,28 @@ class Case:
                 f"Extract Forcings workflow was called, please go to the extract forcings path: {self.extract_forcings_path} and run the driver script there."
             )
 
-    def configure_river_nutrients(self, global_river_nutrients_filepath: str | Path):
-        if not (self.bgc_in_compset and self.runoff_in_compset):
-            raise ValueError(
-                "River Nutrients can only be turned on if both BGC and Runoff are in the compset!"
-            )
-        self.global_river_nutrients_filepath = Path(global_river_nutrients_filepath)
-        self.river_nutrients_nnsm_filepath = (
-            self.inputdir
-            / "ocnice"
-            / f"river_nutrients_{self.ocn_grid.name}_{cvars['MB_ATTEMPT_ID'].value}_nnsm.nc"
-        )
-        return True
-
-    def configure_tides(
-        self,
-        tidal_constituents: list[str] | None = None,
-        tpxo_elevation_filepath: str | Path | None = None,
-        tpxo_velocity_filepath: str | Path | None = None,
-        boundaries: list[str] = ["south", "north", "west", "east"],
-    ):
-        if tidal_constituents:
-            if not isinstance(tidal_constituents, list):
-                raise TypeError("tidal_constituents must be a list of strings.")
-            if not all(
-                isinstance(constituent, str) for constituent in tidal_constituents
-            ):
-                raise TypeError("tidal_constituents must be a list of strings.")
-
-        self.tidal_constituents = tidal_constituents
-        # all tidal arguments must be provided if any are provided
-        if any([tidal_constituents, tpxo_elevation_filepath, tpxo_velocity_filepath]):
-            if not all(
-                [tidal_constituents, tpxo_elevation_filepath, tpxo_velocity_filepath]
-            ):
-                raise ValueError(
-                    "If any tidal arguments are provided, all must be provided."
-                )
-        self.tidal_constituents = tidal_constituents
-        self.tpxo_elevation_filepath = (
-            Path(tpxo_elevation_filepath) if tpxo_elevation_filepath else None
-        )
-        self.tpxo_velocity_filepath = (
-            Path(tpxo_velocity_filepath) if tpxo_velocity_filepath else None
-        )
-
-        return True
-
-    def configure_chl(self, chl_processed_filepath: str | Path):
-        if self.bgc_in_compset:
-            raise ValueError(
-                "Chlorophyll configuration through MOM6 was requested, but cannot be used if BGC is in compset (chlorophyll is a part of BGC)"
-            )
-        self.chl_processed_filepath = (
-            Path(chl_processed_filepath) if chl_processed_filepath else None
-        )
-        self.regional_chl_file_path = (
-            self.inputdir / "ocnice" / f"seawifs-clim-1997-2010-{self.ocn_grid.name}.nc"
-        )
-        return True
-
     def process_forcings(
         self,
         process_initial_condition=True,
-        process_tides=True,
         process_velocity_tracers=True,
-        process_bgc=True,
-        process_chl=True,
-        process_river_nutrients=True,
+        **kwargs
     ):
         """
-        Process boundary conditions, initial conditions, and tides for a MOM6 case.
+        Process boundary conditions, initial conditions, and other forcings for a MOM6 case.
 
         This method configures a regional MOM6 case's ocean state boundaries and initial conditions
-        using previously downloaded data setup in configure_forcings. It also processes tidal boundary conditions
-        if tidal constituents are specified. Additionally, it generates runoff to ocean mapping files if necessary.
-        The method expects `configure_forcings()` to be
+        using previously downloaded data setup in configure_forcings. The method expects `configure_forcings()` to be
         called beforehand.
 
         Parameters
         ----------
         process_initial_condition : bool, optional
             Whether to process the initial condition file. Default is True.
-        process_tides : bool, optional
-            Whether to process tidal boundary conditions. Default is True.
-        process_chl : bool, optional
-            Whether to process chlorophyll data. Default is True.
         process_velocity_tracers : bool, optional
             Whether to process velocity and tracer boundary conditions. Default is True.
             This will be overridden and set to False if the large data workflow in configure_forcings is enabled.
-        process_bgc : bool, optional
-            Whether to process BGC data. Default is True.
+        kwargs : bool, optional
+            Whether to process the other forcings, of the form process_{configurator.name} = False 
 
         Raises
         ------
@@ -719,10 +621,9 @@ class Case:
         - This method uses variable name mappings specified in the forcing product configuration.
         - If the large data workflow has been enabled, velocity and tracer OBCs are not processed
           within this method and must be handled externally.
-        - If tidal constituents are configured, TPXO elevation and velocity files must be available.
         - Applies forcing-related namelist and XML updates at the end of the method.
 
-        See Also
+        See Also  
         --------
         configure_forcings : Must be called before this method to set up the environment.
         """
@@ -734,22 +635,24 @@ class Case:
         self.process_initial_and_boundary_conditions(
             process_initial_condition, process_velocity_tracers
         )
-        if self.configured_bgc and process_bgc:
+
+        
+        if self.fcr.is_active("bgc") and not (kwargs.get("process_bgc") == False):
             self.process_bgc_iron_forcing()
             self.process_bgc_ic()
-        if self.configured_tides and process_tides:
+        if self.fcr.is_active("tides") and not (kwargs.get("process_tides") == False):
             self.process_tides()
-        if self.configured_chl and process_chl:
+        if self.fcr.is_active("chl") and not (kwargs.get("process_chl") == False):
             self.process_chl()
-        if self.runoff_in_compset:
+        if self.fcr.is_active("runoff") and not (kwargs.get("process_runoff") == False):
             self.generate_rof_ocn_map()
-        if self.configured_river_nutrients and process_river_nutrients:
+        if self.fcr.is_active("BGCRiverNutrients") and not (kwargs.get("process_bgc_river_nutrients") == False):
             self.process_river_nutrients()
         print(f"Case is ready to be built: {self.caseroot}")
 
     def process_bgc_ic(self):
-        dest_path = self.inputdir / "ocnice" / Path(self.marbl_ic_filepath).name
-        shutil.copy(self.marbl_ic_filepath, dest_path)
+        dest_path = self.inputdir / "ocnice" / Path(self.fcr["bgc"].marbl_ic_filepath).name
+        shutil.copy(self.fcr["bgc"].marbl_ic_filepath, dest_path)
 
     def process_bgc_iron_forcing(self):
         # Create coordinate variables
@@ -785,53 +688,29 @@ class Case:
         ds.attrs = {
             "history": "Created with xarray (this file is empty)",
         }
-        ds.to_netcdf(self.fesedflux_filepath)
-        ds.to_netcdf(self.feventflux_filepath)
+        ds.to_netcdf(self.inputdir / "ocnice" /self.fcr["BGCIronForcing"].get_output_param("MARBL_FESEDFLUX_FILE"))
+        ds.to_netcdf(self.inputdir / "ocnice" /self.fcr["BGCIronForcing"].get_output_param("MARBL_FEVENTFLUX_FILE"))
 
     def process_tides(self):
-        # Process the tides
-        if self.tidal_constituents:
+        self.expt.setup_boundary_tides(
+            tpxo_elevation_filepath=self.fcr["tides"].tpxo_elevation_filepath,
+            tpxo_velocity_filepath=self.fcr["tides"].tpxo_velocity_filepath,
+            tidal_constituents=self.fcr["tides"].tidal_constituents,
+        )
 
-            # Process the tides
-            self.expt.setup_boundary_tides(
-                tpxo_elevation_filepath=self.tpxo_elevation_filepath,
-                tpxo_velocity_filepath=self.tpxo_velocity_filepath,
-                tidal_constituents=self.tidal_constituents,
-            )
-
-    def process_chl(self):
-        # Process the chlorophyll file if it is provided
-        if self.chl_processed_filepath is not None:
-            if not self.chl_processed_filepath.exists():
-                raise FileNotFoundError(
-                    f"Chlorophyll file {self.chl_processed_filepath} does not exist."
-                )
-
-            chl.interpolate_and_fill_seawifs(
-                self.ocn_grid,
-                self.ocn_topo,
-                self.chl_processed_filepath,
-                self.regional_chl_file_path,
-            )
+    def process_chl(self):       
+        chl.interpolate_and_fill_seawifs(
+            self.ocn_grid,
+            self.ocn_topo,
+            self.fcr["chl"].chl_processed_filepath,
+            self.fcr["chl"].get_output_param("CHL_FILE"),
+        )
 
     def process_river_nutrients(self):
-        if (
-            self.bgc_in_compset
-            and self.runoff_in_compset
-            and self.global_river_nutrients_filepath is not None
-        ):
-            if not self.global_river_nutrients_filepath.exists():
-                raise FileNotFoundError(
-                    f"River Nutrients file {self.global_river_nutrients_filepath} does not exist."
-                )
-            # Process the river nutrients file
-            self.river_nutrients_filepath = (
-                self.inputdir / "ocnice" / f"river-nutrients-{self.ocn_grid.name}.nc"
-            )
-
+           
             # Open Dataset & Create Regridder
             global_river_nutrients = xr.open_dataset(
-                self.global_river_nutrients_filepath
+                self.fcr["bgcrivernutrients"].global_river_nutrients_filepath
             )
             global_river_nutrients = global_river_nutrients.assign_coords(
                 lon=((global_river_nutrients.lon + 360) % 360)
@@ -851,7 +730,7 @@ class Case:
                 grid_t_points,
                 method="bilinear",
                 reuse_weights=True,
-                filename=self.runoff_mapping_file_nnsm,
+                filename=self.fcr["runoff"].get_output_param("ROF2OCN_LIQ_RMAPNAME"),
             )
 
             # Open Dataset & Unit Convert
@@ -960,7 +839,7 @@ class Case:
             }
 
             river_nutrients_remapped_cleaned.to_netcdf(
-                self.river_nutrients_nnsm_filepath,
+                self.fcr["bgcrivernutrients"].river_nutrients_nnsm_filepath,
                 encoding=encoding,
                 unlimited_dims=["time"],
             )
@@ -968,49 +847,32 @@ class Case:
     def generate_rof_ocn_map(self):
         """Generate runoff to ocean mapping files if runoff is active in the compset."""
 
-        assert self.runoff_in_compset, "Must have active or data runoff in compset to generate rof_to_ocn map."
-        assert self.esmf_mesh_path is not None, "MOM6 ESMF mesh path is not set."
-
-        if self.rmax is None:
-            self.rmax, self.fold = mapping.get_suggested_smoothing_params(self.esmf_mesh_path)
-
         rof_grid_name = cvars["CUSTOM_ROF_GRID"].value
         assert rof_grid_name is not None, "Couldn't determine runoff grid name."
         rof_esmf_mesh_filepath = self.cime.get_mesh_path("rof", rof_grid_name)
         assert rof_esmf_mesh_filepath != '', "Runoff ESMF mesh path could not be found."
 
-        ocn_grid_name = self.ocn_grid.name
+        ocn_grid_name = self.fcr["runoff"].grid_name
         mapping_file_prefix = f"{rof_grid_name}_to_{ocn_grid_name}_map"
         mapping_dir = self.inputdir / "mapping"
         mapping_dir.mkdir(exist_ok=False)
 
-        self.runoff_mapping_file_nnsm = mapping.get_smoothed_map_filepath(
+        runoff_mapping_file_nnsm = mapping.get_smoothed_map_filepath(
             mapping_file_prefix=mapping_file_prefix,
             output_dir=mapping_dir,
-            rmax=self.rmax,
-            fold=self.fold,
+            rmax=self.fcr["runoff"].rmax,
+            fold=self.fcr["runoff"].fold,
         )
 
-        if not self.runoff_mapping_file_nnsm.exists():
+        if not runoff_mapping_file_nnsm.exists():
             print("Creating runoff mapping file(s)...")
             mapping.gen_rof_maps(
                 rof_mesh_path=rof_esmf_mesh_filepath,
-                ocn_mesh_path=self.esmf_mesh_path,
+                ocn_mesh_path=self.fcr["runoff"].runoff_esmf_mesh_path,
                 output_dir=mapping_dir,
                 mapping_file_prefix=mapping_file_prefix,
-                rmax=self.rmax,
-                fold=self.fold
-            )
-
-            xmlchange(
-                "ROF2OCN_LIQ_RMAPNAME",
-                str(self.runoff_mapping_file_nnsm),
-                is_non_local=self.cc._is_non_local(),
-            )
-            xmlchange(
-                "ROF2OCN_ICE_RMAPNAME",
-                str(self.runoff_mapping_file_nnsm),
-                is_non_local=self.cc._is_non_local(),
+                rmax=self.fcr["runoff"].rmax,
+                fold=self.fcr["runoff"].fold
             )
         else:
             print(
@@ -1309,20 +1171,15 @@ class Case:
             ("TEMP_SALT_INIT_VERTICAL_REMAP_ONLY", True),
             ("DEPRESS_INITIAL_SURFACE", True),
             ("VELOCITY_CONFIG", "file"),
+            ("TEMP_SALT_Z_INIT_FILE", "init_tracers.nc"),
+            ("SURFACE_HEIGHT_IC_FILE", "init_eta.nc"),
+            ("VELOCITY_FILE", "init_vel.nc"),
+            ("Z_INIT_FILE_PTEMP_VAR", "temp"),
+            ("Z_INIT_FILE_SALT_VAR", "salt"),
+            ("SURFACE_HEIGHT_IC_VAR", "eta_t"),
+            ("U_IC_VAR", "u"),
+            ("V_IC_VAR", "v"),
         ]
-
-        ic_params.extend(
-            [
-                ("TEMP_SALT_Z_INIT_FILE", "init_tracers.nc"),
-                ("SURFACE_HEIGHT_IC_FILE", "init_eta.nc"),
-                ("VELOCITY_FILE", "init_vel.nc"),
-                ("Z_INIT_FILE_PTEMP_VAR", "temp"),
-                ("Z_INIT_FILE_SALT_VAR", "salt"),
-                ("SURFACE_HEIGHT_IC_VAR", "eta_t"),
-                ("U_IC_VAR", "u"),
-                ("V_IC_VAR", "v"),
-            ]
-        )
 
         append_user_nl(
             "mom",
@@ -1330,79 +1187,6 @@ class Case:
             do_exec=True,
             comment="Initial conditions",
         )
-
-        # BGC
-        if self.bgc_in_compset:
-            bgc_params = [
-                ("MAX_FIELDS", "200"),
-                ("MARBL_FESEDFLUX_FILE", self.fesedflux_filepath),
-                ("MARBL_FEVENTFLUX_FILE", self.feventflux_filepath),
-                ("MARBL_TRACERS_IC_FILE", self.marbl_ic_filename),
-            ]
-
-            # Runoff & River Fluxes
-            if self.configured_river_nutrients:
-                bgc_params.extend(
-                    [
-                        ("READ_RIV_FLUXES", "True"),
-                        ("RIV_FLUX_FILE", self.river_nutrients_nnsm_filepath),
-                    ]
-                )
-            else:
-                bgc_params.extend([("READ_RIV_FLUXES", "False")])
-            append_user_nl(
-                "mom",
-                bgc_params,
-                do_exec=True,
-                comment="BGC Params",
-                log_title=False,
-            )
-
-        # Tides
-        if self.configured_tides:
-            tidal_params = [
-                ("TIDES", "True"),
-                ("TIDE_M2", "True"),
-                ("CD_TIDES", 0.0018),
-                ("TIDE_USE_EQ_PHASE", "True"),
-                (
-                    "TIDE_REF_DATE",
-                    f"{self.date_range[0].year}, {self.date_range[0].month}, {self.date_range[0].day}",
-                ),
-                ("OBC_TIDE_ADD_EQ_PHASE", "True"),
-                ("OBC_TIDE_N_CONSTITUENTS", len(self.tidal_constituents)),
-                (
-                    "OBC_TIDE_CONSTITUENTS",
-                    '"' + ", ".join(self.tidal_constituents) + '"',
-                ),
-                (
-                    "OBC_TIDE_REF_DATE",
-                    f"{self.date_range[0].year}, {self.date_range[0].month}, {self.date_range[0].day}",
-                ),
-            ]
-            append_user_nl(
-                "mom",
-                tidal_params,
-                do_exec=True,
-                comment="Tides",
-                log_title=False,
-            )
-
-        # Chlorophyll
-        if self.configured_chl:
-            chl_params = [
-                ("CHL_FILE", Path(self.regional_chl_file_path).name),
-                ("CHL_FROM_FILE", "TRUE"),
-                ("VAR_PEN_SW", "TRUE"),
-                ("PEN_SW_NBANDS", 3),
-            ]
-            append_user_nl(
-                "mom",
-                chl_params,
-                do_exec=True,
-                comment="Chlorophyll Climatology",
-                log_title=False,
-            )
 
         # Open boundary conditions (OBC):
         obc_params = [
@@ -1452,25 +1236,18 @@ class Case:
                 f"TEMP=file:forcing_obc_segment_{seg_ix}.nc(temp),"
                 f"SALT=file:forcing_obc_segment_{seg_ix}.nc(salt)"
             )
-            if self.bgc_in_compset:
+            if self.fcr.is_active("bgc"):
 
                 product_info = ProductRegistry.get_product(self.forcing_product_name.lower()).marbl_var_names
                 for tracer_mom6_name in product_info:
                     bgc_tracers += f',{tracer_mom6_name}=file:forcing_obc_segment_{seg_ix}.nc({product_info[tracer_mom6_name]})'
 
-            tidal_data_str = lambda: (
-                f",Uamp=file:tu_segment_{seg_ix}.nc(uamp),"
-                f"Uphase=file:tu_segment_{seg_ix}.nc(uphase),"
-                f"Vamp=file:tu_segment_{seg_ix}.nc(vamp),"
-                f"Vphase=file:tu_segment_{seg_ix}.nc(vphase),"
-                f"SSHamp=file:tz_segment_{seg_ix}.nc(zamp),"
-                f"SSHphase=file:tz_segment_{seg_ix}.nc(zphase)"
-            )
-            if self.configured_tides:
+
+            if self.fcr.is_active("tides"):
                 obc_params.append(
                     (
                         seg_id + "_DATA",
-                        standard_data_str() + tidal_data_str() + bgc_tracers + '"',
+                        standard_data_str() +  self.fcr.active_configurators["tides"].tidal_data_str(seg_ix) + bgc_tracers + '"',
                     )
                 )
             else:
@@ -1485,20 +1262,7 @@ class Case:
             comment="Open boundary conditions",
             log_title=False,
         )
-        if self.cice_in_compset:
-            cice_param = [
-                ("ice_ic", "'UNSET'"),
-                ("ns_boundary_type", "'open'"),
-                ("ew_boundary_type", "'cyclic'"),
-                ("close_boundaries", ".false."),
-            ]
-            append_user_nl(
-                "cice",
-                cice_param,
-                do_exec=True,
-                comment="CICE options",
-                log_title=False,
-            )
+
 
         xmlchange(
             "RUN_STARTDATE",

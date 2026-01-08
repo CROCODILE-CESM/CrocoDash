@@ -1,6 +1,3 @@
-.. _CrocoDash:
-
-
 CrocoDash package
 =================
 
@@ -10,9 +7,9 @@ Subpackages
 .. toctree::
    :maxdepth: 4
 
+   CrocoDash.extract_forcings
    CrocoDash.raw_data_access
    CrocoDash.rm6
-   CrocoDash.extract_forcings
 
 Submodules
 ----------
@@ -25,10 +22,26 @@ CrocoDash.case module
    :undoc-members:
    :show-inheritance:
 
+CrocoDash.forcing\_configurations module
+----------------------------------------
+
+.. automodule:: CrocoDash.forcing_configurations
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 CrocoDash.grid module
 ---------------------
 
 .. automodule:: CrocoDash.grid
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+CrocoDash.logging module
+------------------------
+
+.. automodule:: CrocoDash.logging
    :members:
    :undoc-members:
    :show-inheritance:
@@ -45,14 +58,6 @@ CrocoDash.topo\_editor module
 -----------------------------
 
 .. automodule:: CrocoDash.topo_editor
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-CrocoDash.utils module
-----------------------
-
-.. automodule:: CrocoDash.utils
    :members:
    :undoc-members:
    :show-inheritance:
