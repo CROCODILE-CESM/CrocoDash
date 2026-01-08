@@ -770,7 +770,14 @@ class RunoffConfigurator(BaseConfigurator):
             "rmax", comment="Smoothing radius (in meters) for runoff mapping generation"
         ),
         InputValueParam(
+            "rof_grid_name", comment="Name of the runoff grid used in the case"
+        ),
+        InputValueParam(
             "fold", comment="Smoothing fold parameter for runoff mapping generation"
+        ),
+        InputFileParam(
+            "rof_esmf_mesh_filepath",
+            comment="ESMF mesh file for the runoff grid",
         ),
     ]
     output_params = [
@@ -789,6 +796,8 @@ class RunoffConfigurator(BaseConfigurator):
         case_session_id,
         compset,
         case_inputdir,
+        case_cime,
+        rof_grid_name,
         rmax=None,
         fold=None,
     ):
@@ -808,6 +817,8 @@ class RunoffConfigurator(BaseConfigurator):
             rmax=rmax,
             fold=fold,
             compset=compset,
+            rof_esmf_mesh_filepath=case_cime.get_mesh_path("rof", rof_grid_name),
+            rof_grid_name=rof_grid_name,
         )
 
     def configure(self):
