@@ -13,7 +13,6 @@ jobs:
           tests/check_glade_quality_control.sh
   check-black:
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
