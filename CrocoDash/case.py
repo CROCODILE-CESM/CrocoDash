@@ -164,16 +164,19 @@ class Case:
 
         self._apply_final_xmlchanges(ntasks_ocn, job_queue, job_wallclock_time)
 
-        required_configurators = ForcingConfigRegistry.find_required_configurators(self.compset_lname)
-        
+        required_configurators = ForcingConfigRegistry.find_required_configurators(
+            self.compset_lname
+        )
+
         if len(required_configurators) > 0:
-            print("The following additional configuration options are required to run and must be provided with any listed arguments in configure_forcings:")
-            
+            print(
+                "The following additional configuration options are required to run and must be provided with any listed arguments in configure_forcings:"
+            )
+
             for configurator in required_configurators:
                 user_args = ForcingConfigRegistry.get_user_args(configurator)
                 args_str = ", ".join(user_args) if user_args else "no arguments"
                 print(f"  - {configurator.name}: {args_str}")
-                    
 
     @property
     def cice_in_compset(self):
@@ -223,31 +226,34 @@ class Case:
             raise TypeError("ocn_vgrid must be a VGrid object.")
         if not isinstance(compset_lname, str) or len(compset_lname) == 0:
             raise TypeError("compset must be a non-empty string.")
-        assert compset_lname.count("_") >= 6, \
-            "compset must be a valid CESM compset long name or alias."
-        assert 'MOM6' in compset_lname, \
-            "In CrocoDash, only MOM6-based compsets are supported."
-        assert 'SLND' in compset_lname, \
-            "Currently, active or data land models are not supported by CrocoDash." \
+        assert (
+            compset_lname.count("_") >= 6
+        ), "compset must be a valid CESM compset long name or alias."
+        assert (
+            "MOM6" in compset_lname
+        ), "In CrocoDash, only MOM6-based compsets are supported."
+        assert "SLND" in compset_lname, (
+            "Currently, active or data land models are not supported by CrocoDash."
             "Please use a compset with SLND."
-        assert 'SGLC' in compset_lname, \
-            "Currently, active or data glacier models are not supported by CrocoDash." \
+        )
+        assert "SGLC" in compset_lname, (
+            "Currently, active or data glacier models are not supported by CrocoDash."
             "Please use a compset with SGLC."
-        assert 'SWAV' in compset_lname, \
-            "Currently, active or data wave models are not supported by CrocoDash." \
+        )
+        assert "SWAV" in compset_lname, (
+            "Currently, active or data wave models are not supported by CrocoDash."
             "Please use a compset with SWAV."
+        )
         if not isinstance(ocn_topo, Topo):
             raise TypeError("ocn_topo must be a Topo object.")
-        if atm_grid_name not in (
-            available_atm_grids := cime.domains["atm"].keys()
-        ):
+        if atm_grid_name not in (available_atm_grids := cime.domains["atm"].keys()):
             raise ValueError(f"atm_grid_name must be one of {available_atm_grids}.")
         if rof_grid_name is not None:
-            assert 'SROF' not in compset_lname, "When a runoff grid is specified, " \
+            assert "SROF" not in compset_lname, (
+                "When a runoff grid is specified, "
                 "the compset must include an active or data runoff model."
-            if rof_grid_name not in (
-                available_rof_grids := cime.domains["rof"].keys()
-            ):
+            )
+            if rof_grid_name not in (available_rof_grids := cime.domains["rof"].keys()):
                 raise ValueError(f"rof_grid_name must be one of {available_rof_grids}.")
         if ocn_grid.name is None:
             raise ValueError(
@@ -330,7 +336,9 @@ class Case:
         # CICE grid file (if needed)
         if self.cice_in_compset:
             self.cice_grid_path = (
-                inputdir / "ocnice" / f"cice_grid_{ocn_grid.name}_{cvars['MB_ATTEMPT_ID'].value}.nc"
+                inputdir
+                / "ocnice"
+                / f"cice_grid_{ocn_grid.name}_{cvars['MB_ATTEMPT_ID'].value}.nc"
             )
             self.ocn_topo.write_cice_grid(self.cice_grid_path)
 
@@ -361,7 +369,7 @@ class Case:
         product_name: str = "GLORYS",
         function_name: str = "get_glorys_data_script_for_cli",
         too_much_data: bool = False,
-        **kwargs
+        **kwargs,
     ):
         """
         Configure the boundary conditions and tides for the MOM6 case.
@@ -390,7 +398,7 @@ class Case:
             If True, configures the large data workflow. In this case, data are not downloaded
             immediately, but a config file and workflow directory are created
             for external processing in the forcing directory, inside the input directory.
-        kwargs : 
+        kwargs :
             These are the configuration options (please see accepted arguments in the configuration classes)
         Raises
         ------
@@ -414,9 +422,7 @@ class Case:
         """
 
         # Set up Forcings Folder
-        self.extract_forcings_path = (
-            self.inputdir / "extract_forcings"
-        )
+        self.extract_forcings_path = self.inputdir / "extract_forcings"
         if self.override is True:
             if self.extract_forcings_path.exists():
                 shutil.rmtree(self.extract_forcings_path)
@@ -424,7 +430,7 @@ class Case:
         shutil.copytree(
             Path(__file__).parent / "extract_forcings",
             self.extract_forcings_path,
-            dirs_exist_ok=True
+            dirs_exist_ok=True,
         )
 
         # Import Extract Forcings Workflow
@@ -435,26 +441,24 @@ class Case:
         self.driver = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(self.driver)
 
-
         # Call the required initial and boundary condition configurator
         self.configure_initial_and_boundary_conditions(
-                date_range=date_range,
-                boundaries=boundaries,
-                product_name=product_name,
-                function_name=function_name,
-                too_much_data=too_much_data,
-            )
+            date_range=date_range,
+            boundaries=boundaries,
+            product_name=product_name,
+            function_name=function_name,
+            too_much_data=too_much_data,
+        )
         # Call any optional configurators (e.g., tides) if specified
 
-        
         inputs = kwargs | {
             "date_range": pd.to_datetime(date_range),
-            "boundaries":boundaries
+            "boundaries": boundaries,
         }
 
         self.session_id = cvars["MB_ATTEMPT_ID"].value
         self.grid_name = self.ocn_grid.name
-        self.fcr = ForcingConfigRegistry(self.compset_lname,inputs,self)
+        self.fcr = ForcingConfigRegistry(self.compset_lname, inputs, self)
         self.fcr.run_configurators(self.extract_forcings_path / "config.json")
 
         self._update_forcing_variables()
@@ -473,10 +477,10 @@ class Case:
         self.forcing_product_name = product_name.lower()
         if not (
             ProductRegistry.product_exists(product_name)
-            and ProductRegistry.product_is_of_type(product_name,ForcingProduct)
+            and ProductRegistry.product_is_of_type(product_name, ForcingProduct)
         ):
             raise ValueError("Product / Data Path is not supported quite yet")
-        
+
         if not (
             isinstance(date_range, list)
             and all(isinstance(date, str) for date in date_range)
@@ -493,7 +497,7 @@ class Case:
         self.boundaries = boundaries
         self._too_much_data = too_much_data
         self.date_range = pd.to_datetime(date_range)
-        
+
         # Set Vars for Config
         date_format = "%Y%m%d"
 
@@ -512,31 +516,21 @@ class Case:
                 "vgrid_path": "",
                 "bathymetry_path": "",
                 "regridded_dataset_path": "",
-                "output_path": ""
+                "output_path": "",
             },
             "file_regex": {
                 "raw_dataset_pattern": "(north|east|south|west)_unprocessed\\.(\\d{8})_(\\d{8})\\.nc",
-                "regridded_dataset_pattern": "forcing_obc_segment_(\\d{3})_(\\d{8})_(\\d{8})\\.nc"
+                "regridded_dataset_pattern": "forcing_obc_segment_(\\d{3})_(\\d{8})_(\\d{8})\\.nc",
             },
-            "dates": {
-                "start": "",
-                "end": "",
-                "format": ""
-            },
-            "forcing": {
-                "product_name": "",
-                "function_name": "",
-                "information": {}
-            },
-            
+            "dates": {"start": "", "end": "", "format": ""},
+            "forcing": {"product_name": "", "function_name": "", "information": {}},
             "general": {
                 "boundary_number_conversion": {},
                 "step": "",
                 "preview": False,
                 "run_initial_condition": True,
-                "run_boundary_conditions": True
-                
-            }
+                "run_boundary_conditions": True,
+            },
         }
 
         # Paths
@@ -561,8 +555,9 @@ class Case:
         # Product Information
         config["forcing"]["product_name"] = self.forcing_product_name.upper()
         config["forcing"]["function_name"] = function_name
-        config["forcing"]["information"] = ProductRegistry.get_product(self.forcing_product_name.lower()).write_metadata(include_marbl_tracers=self.bgc_in_compset)
-        
+        config["forcing"]["information"] = ProductRegistry.get_product(
+            self.forcing_product_name.lower()
+        ).write_metadata(include_marbl_tracers=self.bgc_in_compset)
 
         # General
         config["general"]["boundary_number_conversion"] = {
@@ -587,10 +582,7 @@ class Case:
             )
 
     def process_forcings(
-        self,
-        process_initial_condition=True,
-        process_velocity_tracers=True,
-        **kwargs
+        self, process_initial_condition=True, process_velocity_tracers=True, **kwargs
     ):
         """
         Process boundary conditions, initial conditions, and other forcings for a MOM6 case.
@@ -607,7 +599,7 @@ class Case:
             Whether to process velocity and tracer boundary conditions. Default is True.
             This will be overridden and set to False if the large data workflow in configure_forcings is enabled.
         kwargs : bool, optional
-            Whether to process the other forcings, of the form process_{configurator.name} = False 
+            Whether to process the other forcings, of the form process_{configurator.name} = False
 
         Raises
         ------
@@ -623,7 +615,7 @@ class Case:
           within this method and must be handled externally.
         - Applies forcing-related namelist and XML updates at the end of the method.
 
-        See Also  
+        See Also
         --------
         configure_forcings : Must be called before this method to set up the environment.
         """
@@ -636,7 +628,6 @@ class Case:
             process_initial_condition, process_velocity_tracers
         )
 
-        
         if self.fcr.is_active("bgc") and not (kwargs.get("process_bgc") == False):
             self.process_bgc_iron_forcing()
             self.process_bgc_ic()
@@ -646,12 +637,16 @@ class Case:
             self.process_chl()
         if self.fcr.is_active("runoff") and not (kwargs.get("process_runoff") == False):
             self.generate_rof_ocn_map()
-        if self.fcr.is_active("BGCRiverNutrients") and not (kwargs.get("process_bgc_river_nutrients") == False):
+        if self.fcr.is_active("BGCRiverNutrients") and not (
+            kwargs.get("process_bgc_river_nutrients") == False
+        ):
             self.process_river_nutrients()
         print(f"Case is ready to be built: {self.caseroot}")
 
     def process_bgc_ic(self):
-        dest_path = self.inputdir / "ocnice" / Path(self.fcr["bgc"].marbl_ic_filepath).name
+        dest_path = (
+            self.inputdir / "ocnice" / Path(self.fcr["bgc"].marbl_ic_filepath).name
+        )
         shutil.copy(self.fcr["bgc"].marbl_ic_filepath, dest_path)
 
     def process_bgc_iron_forcing(self):
@@ -688,8 +683,16 @@ class Case:
         ds.attrs = {
             "history": "Created with xarray (this file is empty)",
         }
-        ds.to_netcdf(self.inputdir / "ocnice" /self.fcr["BGCIronForcing"].get_output_param("MARBL_FESEDFLUX_FILE"))
-        ds.to_netcdf(self.inputdir / "ocnice" /self.fcr["BGCIronForcing"].get_output_param("MARBL_FEVENTFLUX_FILE"))
+        ds.to_netcdf(
+            self.inputdir
+            / "ocnice"
+            / self.fcr["BGCIronForcing"].get_output_param("MARBL_FESEDFLUX_FILE")
+        )
+        ds.to_netcdf(
+            self.inputdir
+            / "ocnice"
+            / self.fcr["BGCIronForcing"].get_output_param("MARBL_FEVENTFLUX_FILE")
+        )
 
     def process_tides(self):
         self.expt.setup_boundary_tides(
@@ -698,7 +701,7 @@ class Case:
             tidal_constituents=self.fcr["tides"].tidal_constituents,
         )
 
-    def process_chl(self):       
+    def process_chl(self):
         chl.interpolate_and_fill_seawifs(
             self.ocn_grid,
             self.ocn_topo,
@@ -707,142 +710,140 @@ class Case:
         )
 
     def process_river_nutrients(self):
-           
-            # Open Dataset & Create Regridder
-            global_river_nutrients = xr.open_dataset(
-                self.fcr["bgcrivernutrients"].global_river_nutrients_filepath
-            )
-            global_river_nutrients = global_river_nutrients.assign_coords(
-                lon=((global_river_nutrients.lon + 360) % 360)
-            )
-            global_river_nutrients = global_river_nutrients.sortby("lon")
-            grid_t_points = xr.Dataset()
-            grid_t_points["lon"] = self.ocn_grid.tlon
-            grid_t_points["lat"] = self.ocn_grid.tlat
-            glofas_grid_t_points = xr.Dataset()
-            glofas_grid_t_points["lon"] = global_river_nutrients.lon
-            glofas_grid_t_points["lon"].attrs["units"] = "degrees"
-            glofas_grid_t_points["lat"] = global_river_nutrients.lat
-            glofas_grid_t_points["lat"].attrs["units"] = "degrees"
-            print("Creating regridder for river nutrients...")
-            regridder = xe.Regridder(
-                glofas_grid_t_points,
-                grid_t_points,
-                method="bilinear",
-                reuse_weights=True,
-                filename=self.fcr["runoff"].get_output_param("ROF2OCN_LIQ_RMAPNAME"),
-            )
 
-            # Open Dataset & Unit Convert
+        # Open Dataset & Create Regridder
+        global_river_nutrients = xr.open_dataset(
+            self.fcr["bgcrivernutrients"].global_river_nutrients_filepath
+        )
+        global_river_nutrients = global_river_nutrients.assign_coords(
+            lon=((global_river_nutrients.lon + 360) % 360)
+        )
+        global_river_nutrients = global_river_nutrients.sortby("lon")
+        grid_t_points = xr.Dataset()
+        grid_t_points["lon"] = self.ocn_grid.tlon
+        grid_t_points["lat"] = self.ocn_grid.tlat
+        glofas_grid_t_points = xr.Dataset()
+        glofas_grid_t_points["lon"] = global_river_nutrients.lon
+        glofas_grid_t_points["lon"].attrs["units"] = "degrees"
+        glofas_grid_t_points["lat"] = global_river_nutrients.lat
+        glofas_grid_t_points["lat"].attrs["units"] = "degrees"
+        print("Creating regridder for river nutrients...")
+        regridder = xe.Regridder(
+            glofas_grid_t_points,
+            grid_t_points,
+            method="bilinear",
+            reuse_weights=True,
+            filename=self.fcr["runoff"].get_output_param("ROF2OCN_LIQ_RMAPNAME"),
+        )
 
-            vars = [
-                "din_riv_flux",
-                "dip_riv_flux",
-                "don_riv_flux",
-                "don_riv_flux",
-                "dsi_riv_flux",
-                "dsi_riv_flux",
-                "dic_riv_flux",
-                "alk_riv_flux",
-                "doc_riv_flux",
-            ]
-            conversion_factor = 0.01  # nmol/cm^2/s -> mmol/m^2/s
-            for v in vars:
-                global_river_nutrients[v] = (
-                    global_river_nutrients[v] * conversion_factor
-                )
-                global_river_nutrients[v].attrs["units"] = "mmol/cm^2/s"
+        # Open Dataset & Unit Convert
 
-            print("Regridding river nutrients...")
-            river_nutrients_remapped = regridder(global_river_nutrients)
+        vars = [
+            "din_riv_flux",
+            "dip_riv_flux",
+            "don_riv_flux",
+            "don_riv_flux",
+            "dsi_riv_flux",
+            "dsi_riv_flux",
+            "dic_riv_flux",
+            "alk_riv_flux",
+            "doc_riv_flux",
+        ]
+        conversion_factor = 0.01  # nmol/cm^2/s -> mmol/m^2/s
+        for v in vars:
+            global_river_nutrients[v] = global_river_nutrients[v] * conversion_factor
+            global_river_nutrients[v].attrs["units"] = "mmol/cm^2/s"
 
-            # Write out
-            print("Writing out river nutrients...")
-            # new time value as cftime
-            new_time_val = cftime.DatetimeNoLeap(1900, 1, 1, 0, 0, 0)
+        print("Regridding river nutrients...")
+        river_nutrients_remapped = regridder(global_river_nutrients)
 
-            # select only variables that have 'time' as a dimension
-            vars_with_time = [
-                v
-                for v in river_nutrients_remapped.data_vars
-                if "time" in river_nutrients_remapped[v].dims
-            ]
+        # Write out
+        print("Writing out river nutrients...")
+        # new time value as cftime
+        new_time_val = cftime.DatetimeNoLeap(1900, 1, 1, 0, 0, 0)
 
-            # create new slice only for these
-            ref_slice_new = (
-                river_nutrients_remapped[vars_with_time]
-                .isel(time=0)
-                .expand_dims("time")
-                .copy()
-            )
-            ref_slice_new = ref_slice_new.assign_coords(time=[new_time_val])
+        # select only variables that have 'time' as a dimension
+        vars_with_time = [
+            v
+            for v in river_nutrients_remapped.data_vars
+            if "time" in river_nutrients_remapped[v].dims
+        ]
 
-            # concatenate along time
-            river_nutrients_remapped_time_added = xr.concat(
-                [ref_slice_new, river_nutrients_remapped[vars_with_time]], dim="time"
-            )
+        # create new slice only for these
+        ref_slice_new = (
+            river_nutrients_remapped[vars_with_time]
+            .isel(time=0)
+            .expand_dims("time")
+            .copy()
+        )
+        ref_slice_new = ref_slice_new.assign_coords(time=[new_time_val])
 
-            # assign the new time coordinate
-            river_nutrients_remapped_time_added = (
-                river_nutrients_remapped_time_added.assign_coords(
-                    time=np.concatenate(
-                        [[new_time_val], river_nutrients_remapped["time"].values]
-                    )
+        # concatenate along time
+        river_nutrients_remapped_time_added = xr.concat(
+            [ref_slice_new, river_nutrients_remapped[vars_with_time]], dim="time"
+        )
+
+        # assign the new time coordinate
+        river_nutrients_remapped_time_added = (
+            river_nutrients_remapped_time_added.assign_coords(
+                time=np.concatenate(
+                    [[new_time_val], river_nutrients_remapped["time"].values]
                 )
             )
+        )
 
-            # combine back with variables that don’t have time
-            vars_without_time = [
-                v
-                for v in river_nutrients_remapped.data_vars
-                if "time" not in river_nutrients_remapped[v].dims
-            ]
-            for v in vars_without_time:
-                river_nutrients_remapped_time_added[v] = river_nutrients_remapped[v]
+        # combine back with variables that don’t have time
+        vars_without_time = [
+            v
+            for v in river_nutrients_remapped.data_vars
+            if "time" not in river_nutrients_remapped[v].dims
+        ]
+        for v in vars_without_time:
+            river_nutrients_remapped_time_added[v] = river_nutrients_remapped[v]
 
-            # add units to all data vars
-            for var in vars:
-                river_nutrients_remapped_time_added[var].attrs["units"] = "mmol/cm^2/s"
-            time_units = "days since 0001-01-01 00:00:00"
-            time_calendar = "noleap"
-            time_num = cftime.date2num(
-                river_nutrients_remapped_time_added["time"].values,
-                units=time_units,
-                calendar=time_calendar,
+        # add units to all data vars
+        for var in vars:
+            river_nutrients_remapped_time_added[var].attrs["units"] = "mmol/cm^2/s"
+        time_units = "days since 0001-01-01 00:00:00"
+        time_calendar = "noleap"
+        time_num = cftime.date2num(
+            river_nutrients_remapped_time_added["time"].values,
+            units=time_units,
+            calendar=time_calendar,
+        )
+
+        # replace time coordinate with float64 numeric values
+        river_nutrients_remapped_cleaned = (
+            river_nutrients_remapped_time_added.assign_coords(
+                time=("time", np.array(time_num, dtype="float64"))
             )
+        )
 
-            # replace time coordinate with float64 numeric values
-            river_nutrients_remapped_cleaned = (
-                river_nutrients_remapped_time_added.assign_coords(
-                    time=("time", np.array(time_num, dtype="float64"))
-                )
-            )
+        # Change nx,ny to lon,lat
+        river_nutrients_remapped_cleaned = river_nutrients_remapped_cleaned.rename_dims(
+            {"nx": "lon", "ny": "lat"}
+        )
 
-            # Change nx,ny to lon,lat
-            river_nutrients_remapped_cleaned = (
-                river_nutrients_remapped_cleaned.rename_dims({"nx": "lon", "ny": "lat"})
-            )
-
-            # set CF-compliant attrs
-            river_nutrients_remapped_cleaned["time"].attrs.update(
-                {
-                    "units": time_units,
-                    "calendar": "noleap",
-                    "long_name": "time",
-                }
-            )
-
-            # encoding only for data vars
-            encoding = {
-                var: {"_FillValue": np.NaN}
-                for var in river_nutrients_remapped_cleaned.data_vars
+        # set CF-compliant attrs
+        river_nutrients_remapped_cleaned["time"].attrs.update(
+            {
+                "units": time_units,
+                "calendar": "noleap",
+                "long_name": "time",
             }
+        )
 
-            river_nutrients_remapped_cleaned.to_netcdf(
-                self.fcr["bgcrivernutrients"].river_nutrients_nnsm_filepath,
-                encoding=encoding,
-                unlimited_dims=["time"],
-            )
+        # encoding only for data vars
+        encoding = {
+            var: {"_FillValue": np.NaN}
+            for var in river_nutrients_remapped_cleaned.data_vars
+        }
+
+        river_nutrients_remapped_cleaned.to_netcdf(
+            self.fcr["bgcrivernutrients"].river_nutrients_nnsm_filepath,
+            encoding=encoding,
+            unlimited_dims=["time"],
+        )
 
     def generate_rof_ocn_map(self):
         """Generate runoff to ocean mapping files if runoff is active in the compset."""
@@ -850,7 +851,7 @@ class Case:
         rof_grid_name = cvars["CUSTOM_ROF_GRID"].value
         assert rof_grid_name is not None, "Couldn't determine runoff grid name."
         rof_esmf_mesh_filepath = self.cime.get_mesh_path("rof", rof_grid_name)
-        assert rof_esmf_mesh_filepath != '', "Runoff ESMF mesh path could not be found."
+        assert rof_esmf_mesh_filepath != "", "Runoff ESMF mesh path could not be found."
 
         ocn_grid_name = self.fcr["runoff"].grid_name
         mapping_file_prefix = f"{rof_grid_name}_to_{ocn_grid_name}_map"
@@ -872,7 +873,7 @@ class Case:
                 output_dir=mapping_dir,
                 mapping_file_prefix=mapping_file_prefix,
                 rmax=self.fcr["runoff"].rmax,
-                fold=self.fcr["runoff"].fold
+                fold=self.fcr["runoff"].fold,
             )
         else:
             print(
@@ -906,23 +907,25 @@ class Case:
     def name(self) -> str:
         return self.caseroot.name
 
-    @property 
+    @property
     def expt(self) -> rmom6.experiment:
-        
+
         if not hasattr(self, "date_range"):
             print("Date not found so using a dummy date of 1850-1851")
             date_range = ("1850-01-01 00:00:00", "1851-01-01 00:00:00")  # Dummy times
         else:
-            date_range = tuple(ts.strftime("%Y-%m-%d %H:%M:%S") for ts in self.date_range)
+            date_range = tuple(
+                ts.strftime("%Y-%m-%d %H:%M:%S") for ts in self.date_range
+            )
         if not hasattr(self, "boundaries"):
             print("Boundaries not found so using default")
-            self.boundaries =  ["north", "south", "east", "west"]
+            self.boundaries = ["north", "south", "east", "west"]
         if not hasattr(self, "tidal_constituents"):
             print("tidal_constituents not found so using only M2")
-            self.tidal_constituents =  ["M2"]
+            self.tidal_constituents = ["M2"]
 
         expt = rmom6.experiment(
-            date_range=date_range,  
+            date_range=date_range,
             resolution=None,
             number_vertical_layers=None,
             layer_thickness_ratio=None,
@@ -942,7 +945,6 @@ class Case:
         # expt.vgrid = self.ocn_vgrid.gen_vgrid_ds() # Not implemented yet
         return expt
 
-
     def _configure_case(self, atm_grid_name, rof_grid_name):
         """Using visualCaseGen's case configuration pipeline, set the variables for the case based
         on the provided arguments. This includes setting the compset, grid, and launch variables.
@@ -959,7 +961,6 @@ class Case:
 
         # 3. Launch
         self._configure_launch()
-
 
     def _configure_standard_compset(self, compset_alias: str):
         """Configure the case for a standard component set."""
@@ -1124,7 +1125,9 @@ class Case:
                     f"Based on the compset, the valid runoff grid name is {valid_rof_grid_name}, but got {rof_grid_name}."
                 )
         if Stage.active().title == "Runoff to Ocean Mapping":
-            cvars["ROF_OCN_MAPPING_STATUS"].value = "skip" # to be generated later in process_forcings
+            cvars["ROF_OCN_MAPPING_STATUS"].value = (
+                "skip"  # to be generated later in process_forcings
+            )
 
     def _configure_launch(self):
         """Assign the launch variables for the case."""
@@ -1138,7 +1141,9 @@ class Case:
         # Variables that are not included in a stage:
         cvars["NINST"].value = self.ninst
 
-    def _apply_final_xmlchanges(self, ntasks_ocn=None, job_queue=None, job_wallclock_time=None):
+    def _apply_final_xmlchanges(
+        self, ntasks_ocn=None, job_queue=None, job_wallclock_time=None
+    ):
         """Apply final XML changes after the case has been configured, and before the user
         configures the forcings."""
 
@@ -1238,16 +1243,20 @@ class Case:
             )
             if self.fcr.is_active("bgc"):
 
-                product_info = ProductRegistry.get_product(self.forcing_product_name.lower()).marbl_var_names
+                product_info = ProductRegistry.get_product(
+                    self.forcing_product_name.lower()
+                ).marbl_var_names
                 for tracer_mom6_name in product_info:
-                    bgc_tracers += f',{tracer_mom6_name}=file:forcing_obc_segment_{seg_ix}.nc({product_info[tracer_mom6_name]})'
-
+                    bgc_tracers += f",{tracer_mom6_name}=file:forcing_obc_segment_{seg_ix}.nc({product_info[tracer_mom6_name]})"
 
             if self.fcr.is_active("tides"):
                 obc_params.append(
                     (
                         seg_id + "_DATA",
-                        standard_data_str() +  self.fcr.active_configurators["tides"].tidal_data_str(seg_ix) + bgc_tracers + '"',
+                        standard_data_str()
+                        + self.fcr.active_configurators["tides"].tidal_data_str(seg_ix)
+                        + bgc_tracers
+                        + '"',
                     )
                 )
             else:
@@ -1262,7 +1271,6 @@ class Case:
             comment="Open boundary conditions",
             log_title=False,
         )
-
 
         xmlchange(
             "RUN_STARTDATE",

@@ -48,9 +48,13 @@ def main(
             hgrid_path=config["basic"]["paths"]["hgrid_path"],
             step_days=int(config["basic"]["general"]["step"]),
             output_dir=config["basic"]["paths"]["raw_dataset_path"],
-            boundary_number_conversion=config["basic"]["general"]["boundary_number_conversion"],
+            boundary_number_conversion=config["basic"]["general"][
+                "boundary_number_conversion"
+            ],
             run_initial_condition=config["basic"]["general"]["run_initial_condition"],
-            run_boundary_conditions=config["basic"]["general"]["run_boundary_conditions"],
+            run_boundary_conditions=config["basic"]["general"][
+                "run_boundary_conditions"
+            ],
             preview=config["basic"]["general"]["preview"],
         )
 
