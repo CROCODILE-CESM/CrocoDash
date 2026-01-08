@@ -348,16 +348,9 @@ document.write(`
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.case.Case.configure_initial_and_boundary_conditions"><code class="docutils literal notranslate"><span class="pre">Case.configure_initial_and_boundary_conditions()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.case.Case.expt"><code class="docutils literal notranslate"><span class="pre">Case.expt</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.case.Case.find_MOM6_rectangular_orientation"><code class="docutils literal notranslate"><span class="pre">Case.find_MOM6_rectangular_orientation()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.case.Case.generate_rof_ocn_map"><code class="docutils literal notranslate"><span class="pre">Case.generate_rof_ocn_map()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.case.Case.init_args_check"><code class="docutils literal notranslate"><span class="pre">Case.init_args_check()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.case.Case.name"><code class="docutils literal notranslate"><span class="pre">Case.name</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.case.Case.process_bgc_ic"><code class="docutils literal notranslate"><span class="pre">Case.process_bgc_ic()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.case.Case.process_bgc_iron_forcing"><code class="docutils literal notranslate"><span class="pre">Case.process_bgc_iron_forcing()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.case.Case.process_chl"><code class="docutils literal notranslate"><span class="pre">Case.process_chl()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.case.Case.process_forcings"><code class="docutils literal notranslate"><span class="pre">Case.process_forcings()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.case.Case.process_initial_and_boundary_conditions"><code class="docutils literal notranslate"><span class="pre">Case.process_initial_and_boundary_conditions()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.case.Case.process_river_nutrients"><code class="docutils literal notranslate"><span class="pre">Case.process_river_nutrients()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.case.Case.process_tides"><code class="docutils literal notranslate"><span class="pre">Case.process_tides()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.case.Case.runoff_in_compset"><code class="docutils literal notranslate"><span class="pre">Case.runoff_in_compset</span></code></a></li>
 </ul>
 </li>
@@ -702,12 +695,6 @@ for external processing in the forcing directory, inside the input directory.</p
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="CrocoDash.case.Case.generate_rof_ocn_map">
-<span class="sig-name descname"><span class="pre">generate_rof_ocn_map</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.case.Case.generate_rof_ocn_map" title="Link to this definition">#</a></dt>
-<dd><p>Generate runoff to ocean mapping files if runoff is active in the compset.</p>
-</dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.case.Case.init_args_check">
 <em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">init_args_check</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cime</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">caseroot</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputdir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ocn_grid</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Grid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ocn_topo</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#CrocoDash.topo.Topo" title="CrocoDash.topo.Topo"><span class="pre">Topo</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">ocn_vgrid</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">VGrid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compset_lname</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">atm_grid_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rof_grid_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ninst</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">machine</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">project</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">override</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ntasks_ocn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">job_queue</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">job_wallclock_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.case.Case.init_args_check" title="Link to this definition">#</a></dt>
 <dd><p>Perform sanity checks on the input arguments to ensure they are valid and consistent.</p>
@@ -716,21 +703,6 @@ for external processing in the forcing directory, inside the input directory.</p
 <dl class="py property">
 <dt class="sig sig-object py" id="CrocoDash.case.Case.name">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#CrocoDash.case.Case.name" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="CrocoDash.case.Case.process_bgc_ic">
-<span class="sig-name descname"><span class="pre">process_bgc_ic</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.case.Case.process_bgc_ic" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="CrocoDash.case.Case.process_bgc_iron_forcing">
-<span class="sig-name descname"><span class="pre">process_bgc_iron_forcing</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.case.Case.process_bgc_iron_forcing" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="CrocoDash.case.Case.process_chl">
-<span class="sig-name descname"><span class="pre">process_chl</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.case.Case.process_chl" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
@@ -771,21 +743,6 @@ within this method and must be handled externally.</p></li>
 </dl>
 </div>
 </dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="CrocoDash.case.Case.process_initial_and_boundary_conditions">
-<span class="sig-name descname"><span class="pre">process_initial_and_boundary_conditions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">process_initial_condition</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">process_velocity_tracers</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.case.Case.process_initial_and_boundary_conditions" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="CrocoDash.case.Case.process_river_nutrients">
-<span class="sig-name descname"><span class="pre">process_river_nutrients</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.case.Case.process_river_nutrients" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="CrocoDash.case.Case.process_tides">
-<span class="sig-name descname"><span class="pre">process_tides</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.case.Case.process_tides" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="CrocoDash.case.Case.runoff_in_compset">
@@ -1506,16 +1463,9 @@ within this method and must be handled externally.</p></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.case.Case.configure_initial_and_boundary_conditions"><code class="docutils literal notranslate"><span class="pre">Case.configure_initial_and_boundary_conditions()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.case.Case.expt"><code class="docutils literal notranslate"><span class="pre">Case.expt</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.case.Case.find_MOM6_rectangular_orientation"><code class="docutils literal notranslate"><span class="pre">Case.find_MOM6_rectangular_orientation()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.case.Case.generate_rof_ocn_map"><code class="docutils literal notranslate"><span class="pre">Case.generate_rof_ocn_map()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.case.Case.init_args_check"><code class="docutils literal notranslate"><span class="pre">Case.init_args_check()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.case.Case.name"><code class="docutils literal notranslate"><span class="pre">Case.name</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.case.Case.process_bgc_ic"><code class="docutils literal notranslate"><span class="pre">Case.process_bgc_ic()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.case.Case.process_bgc_iron_forcing"><code class="docutils literal notranslate"><span class="pre">Case.process_bgc_iron_forcing()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.case.Case.process_chl"><code class="docutils literal notranslate"><span class="pre">Case.process_chl()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.case.Case.process_forcings"><code class="docutils literal notranslate"><span class="pre">Case.process_forcings()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.case.Case.process_initial_and_boundary_conditions"><code class="docutils literal notranslate"><span class="pre">Case.process_initial_and_boundary_conditions()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.case.Case.process_river_nutrients"><code class="docutils literal notranslate"><span class="pre">Case.process_river_nutrients()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.case.Case.process_tides"><code class="docutils literal notranslate"><span class="pre">Case.process_tides()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.case.Case.runoff_in_compset"><code class="docutils literal notranslate"><span class="pre">Case.runoff_in_compset</span></code></a></li>
 </ul>
 </li>
