@@ -86,6 +86,7 @@ def test_all_configurators_smoke(fake_param_case):
                 ctor_args[a] = dummy_str
         instance = config_class(**ctor_args)
 
+
         # Smoke test
         if hasattr(instance, "output_params") and any(
             isinstance(x, XMLConfigParam) for x in instance.output_params
@@ -103,8 +104,7 @@ def test_all_configurators_smoke(fake_param_case):
         ser = instance.serialize()
         deser_instance = config_class.deserialize(ser)
         assert instance == deser_instance
-
-
+        
 """
 Configurators are only smoke tested because the individual parts of the process are tested above and in test_forcing_configuration_registry.
 The ONLY additional testing should be if any configuration has unique configuration that has additional complexity.

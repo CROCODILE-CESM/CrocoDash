@@ -8,7 +8,6 @@ import os
 import pytest
 from CrocoDash.grid import Grid
 
-
 @pytest.mark.slow
 def test_merge_piecewise_data_workflow(
     generate_piecewise_raw_data, tmp_path, dummy_mom6_obc_data_factory, get_rect_grid
@@ -22,7 +21,7 @@ def test_merge_piecewise_data_workflow(
 
     # Generate piecewise data
     piecewise_factory = generate_piecewise_raw_data
-    bounds = Grid.get_bounding_boxes_of_rectangular_grid(grid)
+    bounds =  Grid.get_bounding_boxes_of_rectangular_grid(grid)
     east = dummy_mom6_obc_data_factory(
         bounds["ic"]["lat_min"],
         bounds["ic"]["lat_max"],
@@ -81,7 +80,7 @@ def test_merge_piecewise_data_parsing(
 
     # Generate piecewise data
     piecewise_factory = generate_piecewise_raw_data
-    bounds = Grid.get_bounding_boxes_of_rectangular_grid(grid)
+    bounds =  Grid.get_bounding_boxes_of_rectangular_grid(grid)
     east = dummy_mom6_obc_data_factory(
         bounds["ic"]["lat_min"],
         bounds["ic"]["lat_max"],

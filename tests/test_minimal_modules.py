@@ -1,9 +1,7 @@
 """
 Test the modules that are minimal, and primarily just need to be checked for connection
 """
-
 import pytest
-
 
 def test_grid_connection():
     from CrocoDash.grid import Grid
@@ -27,7 +25,6 @@ def test_vgrid_connection():
     from CrocoDash.vgrid import VGrid
 
     assert VGrid is not None
-
 
 @pytest.mark.slow
 def test_topo_interpolate_from_file(
