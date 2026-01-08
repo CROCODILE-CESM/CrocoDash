@@ -13,7 +13,7 @@ from mom6_bathy import mapping
 from typing import Optional, Any
 import copy
 import subprocess
-import json 
+import json
 
 logger = setup_logger(__name__)
 
@@ -41,7 +41,7 @@ class ForcingConfigRegistry:
     def __getitem__(self, key: str):
         return self.active_configurators[key.lower()]
 
-    def __init__(self, compset, inputs: dict, case = None):
+    def __init__(self, compset, inputs: dict, case=None):
         self.compset = compset
         self.active_configurators = {}
         if case is not None:
@@ -52,7 +52,6 @@ class ForcingConfigRegistry:
             }
             inputs = inputs | self.case_info
 
-        
         self.find_active_configurators(self.compset, inputs)
 
     @classmethod
@@ -164,10 +163,6 @@ class ForcingConfigRegistry:
             with open(config_path, "w") as f:
                 json.dump(general_config, f, indent=4)
         return general_config
-
-            
-
-
 
     def get_active_configurators(self):
         return self.active_configurators.keys()

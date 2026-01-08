@@ -115,7 +115,7 @@ def merge_piecewise_dataset(
             folder / "init_tracers_filled.nc",
         ]
         for file_path in ic_files_to_copy:
-        # Remove "_filled" from filename
+            # Remove "_filled" from filename
             new_name = file_path.name.replace("_filled", "")
             shutil.copy(file_path, Path(output_folder) / new_name)
             logger.info(f"Saved {new_name} initial condition to {output_folder}")

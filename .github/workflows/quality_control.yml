@@ -1,6 +1,6 @@
 name: Quality Control
 
-on: [push]
+on: [pull_request]
 
 jobs:
   check-glade:
@@ -8,7 +8,16 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
       - name: Search for '/glade' in CrocoDash/, tests/, demos/
         run: |
           tests/check_glade_quality_control.sh
+  check-black:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Run black code formatter check
+        uses: psf/black@stable
+        with:
+          options: "--check"
+          src: "CrocoDash" # This isn't a recursive checkout, so rm6 and visualCasegen won't be checked
