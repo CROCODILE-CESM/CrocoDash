@@ -8,7 +8,16 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
       - name: Search for '/glade' in CrocoDash/, tests/, demos/
         run: |
           tests/check_glade_quality_control.sh
+  check-black:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Run black code formatter check
+        uses: psf/black@stable
+        with:
+          options: "--check --verbose"
+          src: "CrocoDash/*.py CrocoDash/extract_forcings/* CrocoDash/raw_data_access"
