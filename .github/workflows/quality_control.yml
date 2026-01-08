@@ -20,4 +20,4 @@ jobs:
         uses: psf/black@stable
         with:
           options: "--check"
-          src: "CrocoDash" # This isn't a recursive checkout, so rm6 and visualCasegen won't be checked
+          src: "CrocoDash tests" # This isn't a recursive checkout, so rm6 and visualCasegen won't be checked
