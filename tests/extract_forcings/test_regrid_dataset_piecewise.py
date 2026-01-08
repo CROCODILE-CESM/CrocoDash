@@ -6,6 +6,7 @@ import pytest
 from datetime import datetime
 from CrocoDash.grid import Grid
 
+
 @pytest.mark.slow
 def test_regrid_data_piecewise_workflow(
     generate_piecewise_raw_data,
@@ -24,7 +25,7 @@ def test_regrid_data_piecewise_workflow(
 
     # Generate piecewise data
     piecewise_factory = generate_piecewise_raw_data
-    bounds =  Grid.get_bounding_boxes_of_rectangular_grid(grid)
+    bounds = Grid.get_bounding_boxes_of_rectangular_grid(grid)
     ds = dummy_forcing_factory(
         bounds["ic"]["lat_min"],
         bounds["ic"]["lat_max"],
@@ -87,7 +88,7 @@ def test_regrid_data_piecewise_parsing(
 ):
 
     # Get Grids
-    grid,topo = get_rect_grid_and_topo
+    grid, topo = get_rect_grid_and_topo
     vgrid = get_vgrid
     vgrid_path = tmp_path / "vgrid.nc"
     hgrid_path = tmp_path / "hgrid.nc"
@@ -98,7 +99,7 @@ def test_regrid_data_piecewise_parsing(
 
     # Generate piecewise data
     piecewise_factory = generate_piecewise_raw_data
-    bounds =  Grid.get_bounding_boxes_of_rectangular_grid(grid)
+    bounds = Grid.get_bounding_boxes_of_rectangular_grid(grid)
     ds = dummy_forcing_factory(
         bounds["ic"]["lat_min"],
         bounds["ic"]["lat_max"],
