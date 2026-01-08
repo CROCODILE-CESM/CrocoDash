@@ -4,7 +4,7 @@ import os
 import regional_mom6 as rmom6
 import datetime as dt
 import os
-
+from CrocoDash.forcing_configurations import ForcingConfigRegistry
 
 def file_with_prefix_exists(directory, prefix):
     for filename in os.listdir(directory):
@@ -135,11 +135,8 @@ def test_configure_forcings(get_CrocoDash_case, tmp_path):
     )
 
     assert case.date_range[0].year == 2020
-    assert case.tidal_constituents == ["M2"]
+    assert case.fcr["tides"].tidal_constituents == ["M2"]
     assert case.boundaries == ["north", "south", "east"]
-
-    return
-
 
 def test_process_forcing(get_CrocoDash_case, tmp_path):
     """

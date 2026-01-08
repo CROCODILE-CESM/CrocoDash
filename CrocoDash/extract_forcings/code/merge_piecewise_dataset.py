@@ -1,6 +1,6 @@
 from datetime import datetime
 import xarray as xr
-from CrocoDash import utils
+from CrocoDash import logging
 from CrocoDash.extract_forcings.utils import (
     parse_dataset_folder,
     check_date_continuity,
@@ -9,7 +9,7 @@ from pathlib import Path
 from collections import defaultdict
 import shutil
 
-logger = utils.setup_logger(__name__)
+logger = logging.setup_logger(__name__)
 
 
 def merge_piecewise_dataset(
