@@ -1,4 +1,6 @@
 import regional_mom6 as rmom6
+
+
 def process_tides(
     ocn_topo,
     inputdir,

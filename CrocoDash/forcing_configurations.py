@@ -48,7 +48,7 @@ class ForcingConfigRegistry:
             self.case_info = {
                 f"case_{k}": v
                 for k, v in case.__dict__.items()
-                if not k.startswith("_") 
+                if not k.startswith("_")
             }
             inputs = inputs | self.case_info
         inputs["compset"] = compset
@@ -475,13 +475,15 @@ class BaseConfigurator(ABC):
         except StopIteration:
             raise KeyError(f"Output param '{name}' not found")
 
-    def set_output_param(self, name: str, value, is_non_local = None):
+    def set_output_param(self, name: str, value, is_non_local=None):
         if is_non_local is not None:
             param = self.get_output_param_object(name)
-            assert isinstance(param, XMLConfigParam), f"Expected XMLConfigParam, got {type(param)}"
+            assert isinstance(
+                param, XMLConfigParam
+            ), f"Expected XMLConfigParam, got {type(param)}"
             param.is_non_local = is_non_local
         self.get_output_param_object(name).set_item(value)
-    
+
     def set_input_param(self, name: str, value):
         self.get_input_param_object(name).set_item(value)
 
@@ -676,7 +678,8 @@ class BGCICConfigurator(BaseConfigurator):
 
     def configure(self):
         self.set_output_param(
-            "MARBL_TRACERS_IC_FILE",  Path(self.get_input_param("marbl_ic_filepath").value).name
+            "MARBL_TRACERS_IC_FILE",
+            Path(self.get_input_param("marbl_ic_filepath").value).name,
         )
         super().configure()
 
@@ -782,9 +785,7 @@ class RunoffConfigurator(BaseConfigurator):
         InputValueParam(
             "rof_grid_name", comment="Name of the runoff grid used in the case"
         ),
-         InputValueParam(
-            "case_is_non_local", comment="Case is non-local"
-        ),
+        InputValueParam("case_is_non_local", comment="Case is non-local"),
         InputValueParam(
             "fold", comment="Smoothing fold parameter for runoff mapping generation"
         ),
@@ -831,7 +832,9 @@ class RunoffConfigurator(BaseConfigurator):
             fold=fold,
             case_compset_lname=case_compset_lname,
             case_is_non_local=case_is_non_local,
-            rof_esmf_mesh_filepath=case_cime.get_mesh_path("rof", cvars["CUSTOM_ROF_GRID"].value),
+            rof_esmf_mesh_filepath=case_cime.get_mesh_path(
+                "rof", cvars["CUSTOM_ROF_GRID"].value
+            ),
             rof_grid_name=cvars["CUSTOM_ROF_GRID"].value,
         )
 
@@ -855,8 +858,16 @@ class RunoffConfigurator(BaseConfigurator):
             rmax=self.get_input_param("rmax"),
             fold=self.get_input_param("fold"),
         )
-        self.set_output_param("ROF2OCN_LIQ_RMAPNAME", self.runoff_mapping_file_nnsm, is_non_local=self.get_input_param("case_is_non_local"))
-        self.set_output_param("ROF2OCN_ICE_RMAPNAME", self.runoff_mapping_file_nnsm, is_non_local=self.get_input_param("case_is_non_local"))
+        self.set_output_param(
+            "ROF2OCN_LIQ_RMAPNAME",
+            self.runoff_mapping_file_nnsm,
+            is_non_local=self.get_input_param("case_is_non_local"),
+        )
+        self.set_output_param(
+            "ROF2OCN_ICE_RMAPNAME",
+            self.runoff_mapping_file_nnsm,
+            is_non_local=self.get_input_param("case_is_non_local"),
+        )
         super().configure()
 
     def validate_args(self, **kwargs):

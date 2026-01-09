@@ -542,9 +542,7 @@ class Case:
         config["paths"]["raw_dataset_path"] = str(
             self.extract_forcings_path / "raw_data"
         )
-        config["paths"]["input_dataset_path"] = str(
-            self.extract_forcings_path.parent
-        )
+        config["paths"]["input_dataset_path"] = str(self.extract_forcings_path.parent)
         config["paths"]["regridded_dataset_path"] = str(
             self.extract_forcings_path / "regridded_data"
         )

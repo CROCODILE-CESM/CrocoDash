@@ -47,8 +47,11 @@ def main(
         config["basic"]["paths"]["bathymetry_path"], decode_times=False
     )
 
-    ocn_topo = Topo.from_topo_file(ocn_grid,
-        config["basic"]["paths"]["bathymetry_path"],min_depth = topo.attrs["min_depth"])
+    ocn_topo = Topo.from_topo_file(
+        ocn_grid,
+        config["basic"]["paths"]["bathymetry_path"],
+        min_depth=topo.attrs["min_depth"],
+    )
 
     inputdir = Path(config["basic"]["paths"]["input_dataset_path"])
 
@@ -116,7 +119,9 @@ def main(
         ):
             bgc.process_bgc_ic(
                 file_path=config["bgcic"]["inputs"]["marbl_ic_filepath"],
-                output_path=inputdir/"ocnice"/config["bgcic"]["outputs"]["MARBL_TRACERS_IC_FILE"],
+                output_path=inputdir
+                / "ocnice"
+                / config["bgcic"]["outputs"]["MARBL_TRACERS_IC_FILE"],
             )
         elif key == "bgcironforcing" and (
             "process_bgcironforcing" not in kwargs or kwargs["process_bgcironforcing"]
@@ -124,37 +129,46 @@ def main(
             bgc.process_bgc_iron_forcing(
                 nx=ocn_grid.nx,
                 ny=ocn_grid.ny,
-                MARBL_FESEDFLUX_FILE=config["bgcironforcing"]["outputs"]["MARBL_FESEDFLUX_FILE"],
-                MARBL_FEVENTFLUX_FILE=config["bgcironforcing"]["outputs"]["MARBL_FEVENTFLUX_FILE"],
+                MARBL_FESEDFLUX_FILE=config["bgcironforcing"]["outputs"][
+                    "MARBL_FESEDFLUX_FILE"
+                ],
+                MARBL_FEVENTFLUX_FILE=config["bgcironforcing"]["outputs"][
+                    "MARBL_FEVENTFLUX_FILE"
+                ],
                 inputdir=inputdir,
             )
-        
+
         elif key == "runoff" and (
             "process_runoff" not in kwargs or kwargs["process_runoff"]
         ):
             rof.generate_rof_ocn_map(
                 rof_grid_name=config["runoff"]["inputs"]["rof_grid_name"],
-                rof_esmf_mesh_filepath=config["runoff"]["inputs"]["rof_esmf_mesh_filepath"],
+                rof_esmf_mesh_filepath=config["runoff"]["inputs"][
+                    "rof_esmf_mesh_filepath"
+                ],
                 inputdir=inputdir,
                 grid_name=config["runoff"]["inputs"]["case_grid_name"],
                 rmax=config["runoff"]["inputs"]["rmax"],
                 fold=config["runoff"]["inputs"]["fold"],
-                runoff_esmf_mesh_path=config["runoff"]["inputs"]["runoff_esmf_mesh_filepath"],
+                runoff_esmf_mesh_path=config["runoff"]["inputs"][
+                    "runoff_esmf_mesh_filepath"
+                ],
             )
             if "bgcrivernutrients" in config.keys() and (
-            "process_bgcrivernutrients" not in kwargs
-            or kwargs["process_bgcrivernutrients"]
+                "process_bgcrivernutrients" not in kwargs
+                or kwargs["process_bgcrivernutrients"]
             ):
                 bgc.process_river_nutrients(
                     ocn_grid=ocn_grid,
-                    global_river_nutrients_filepath=config["bgcrivernutrients"]["inputs"][
-                        "global_river_nutrients_filepath"
+                    global_river_nutrients_filepath=config["bgcrivernutrients"][
+                        "inputs"
+                    ]["global_river_nutrients_filepath"],
+                    ROF2OCN_LIQ_RMAPNAME=config["runoff"]["outputs"][
+                        "ROF2OCN_LIQ_RMAPNAME"
                     ],
-                    ROF2OCN_LIQ_RMAPNAME = config["runoff"]["outputs"][ "ROF2OCN_LIQ_RMAPNAME"],
-                    river_nutrients_nnsm_filepath = inputdir/"ocnice"/config["bgcrivernutrients"]["outputs"][
-                        "RIV_FLUX_FILE"
-                    ],
-
+                    river_nutrients_nnsm_filepath=inputdir
+                    / "ocnice"
+                    / config["bgcrivernutrients"]["outputs"]["RIV_FLUX_FILE"],
                 )
         elif key == "tides" and (
             "process_tides" not in kwargs or kwargs["process_tides"]
@@ -177,8 +191,10 @@ def main(
             chl.process_chl(
                 ocn_grid=ocn_grid,
                 ocn_topo=ocn_topo,
-                inputdir = inputdir,
-                chl_processed_filepath=config["chl"]["inputs"]["chl_processed_filepath"],
+                inputdir=inputdir,
+                chl_processed_filepath=config["chl"]["inputs"][
+                    "chl_processed_filepath"
+                ],
                 output_filepath=config["chl"]["outputs"]["CHL_FILE"],
             )
     return
