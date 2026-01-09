@@ -23,8 +23,8 @@ def generate_rof_ocn_map(
     runoff_mapping_file_nnsm = mapping.get_smoothed_map_filepath(
         mapping_file_prefix=mapping_file_prefix,
         output_dir=mapping_dir,
-        rmax=rmax,
-        fold=fold,
+        rmax=int(rmax),
+        fold=int(fold),
     )
 
     if not runoff_mapping_file_nnsm.exists():
@@ -34,8 +34,8 @@ def generate_rof_ocn_map(
             ocn_mesh_path=runoff_esmf_mesh_path,
             output_dir=mapping_dir,
             mapping_file_prefix=mapping_file_prefix,
-            rmax=rmax,
-            fold=fold,
+            rmax=int(rmax),
+            fold=int(fold),
         )
     else:
         print(

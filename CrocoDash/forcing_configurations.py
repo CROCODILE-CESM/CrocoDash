@@ -48,10 +48,10 @@ class ForcingConfigRegistry:
             self.case_info = {
                 f"case_{k}": v
                 for k, v in case.__dict__.items()
-                if not k.startswith("_") and is_serializable(v)
+                if not k.startswith("_") 
             }
             inputs = inputs | self.case_info
-
+        inputs["compset"] = compset
         self.find_active_configurators(self.compset, inputs)
 
     @classmethod
@@ -157,7 +157,7 @@ class ForcingConfigRegistry:
         for configurator in self.active_configurators.values():
             logger.info(f"Configuring {configurator.name}")
             configurator.configure()
-            general_config[configurator.name] = configurator.serialize()
+            general_config[configurator.name.lower()] = configurator.serialize()
 
         if config_path is not None:
             with open(config_path, "w") as f:
@@ -444,12 +444,17 @@ class BaseConfigurator(ABC):
             obj.set_output_param(param.name, data["outputs"][param.name])
         return obj
 
+    def make_serializable(self, obj):
+        if isinstance(obj, Path):
+            return str(obj)
+        return obj
+
     def serialize(self) -> Dict[str, Any]:
         output_dict = {"name": self.name, "inputs": {}, "outputs": {}}
         for param in self.input_params:
-            output_dict["inputs"][param.name] = str(param.value)
+            output_dict["inputs"][param.name] = self.make_serializable(param.value)
         for param in self.output_params:
-            output_dict["outputs"][param.name] = str(param.value)
+            output_dict["outputs"][param.name] = self.make_serializable(param.value)
         return output_dict
 
     def get_input_param(self, name: str) -> OutputParam:
@@ -470,8 +475,15 @@ class BaseConfigurator(ABC):
         except StopIteration:
             raise KeyError(f"Output param '{name}' not found")
 
-    def set_output_param(self, name: str, value):
+    def set_output_param(self, name: str, value, is_non_local = None):
+        if is_non_local is not None:
+            param = self.get_output_param_object(name)
+            assert isinstance(param, XMLConfigParam), f"Expected XMLConfigParam, got {type(param)}"
+            param.is_non_local = is_non_local
         self.get_output_param_object(name).set_item(value)
+    
+    def set_input_param(self, name: str, value):
+        self.get_input_param_object(name).set_item(value)
 
     # ---- compset logic ----
 
@@ -506,8 +518,8 @@ class TidesConfigurator(BaseConfigurator):
             comment="List of tidal constituents to include",
         ),
         InputValueParam(
-            "date_range",
-            comment="date_range for the simulation",
+            "start_date",
+            comment="start_date",
         ),
         InputValueParam(
             "boundaries",
@@ -550,7 +562,7 @@ class TidesConfigurator(BaseConfigurator):
             tpxo_elevation_filepath=tpxo_elevation_filepath,
             tpxo_velocity_filepath=tpxo_velocity_filepath,
             tidal_constituents=tidal_constituents,
-            date_range=date_range,
+            start_date=date_range[0].strftime("%Y, %m, %d"),
             boundaries=boundaries,
         )
 
@@ -570,10 +582,9 @@ class TidesConfigurator(BaseConfigurator):
         self.set_output_param("TIDE_M2", "True")
         self.set_output_param("CD_TIDES", 0.0018)
         self.set_output_param("TIDE_USE_EQ_PHASE", "True")
-        date_range = self.get_input_param("date_range")
         self.set_output_param(
             "TIDE_REF_DATE",
-            f"{date_range[0].year}, {date_range[0].month}, {date_range[0].day}",
+            self.get_input_param("start_date"),
         )
         self.set_output_param("OBC_TIDE_ADD_EQ_PHASE", "True")
         self.set_output_param(
@@ -586,7 +597,7 @@ class TidesConfigurator(BaseConfigurator):
         )
         self.set_output_param(
             "OBC_TIDE_REF_DATE",
-            f"{date_range[0].year}, {date_range[0].month}, {date_range[0].day}",
+            self.get_input_param("start_date"),
         )
         super().configure()
         # You also need to add the files to the OBC string, which is handled in the main case unfortunately
@@ -662,11 +673,10 @@ class BGCICConfigurator(BaseConfigurator):
 
     def __init__(self, marbl_ic_filepath):
         super().__init__(marbl_ic_filepath=marbl_ic_filepath)
-        self.marbl_ic_filename = Path(marbl_ic_filepath).name
 
     def configure(self):
         self.set_output_param(
-            "MARBL_TRACERS_IC_FILE", self.get_input_param("marbl_ic_filepath")
+            "MARBL_TRACERS_IC_FILE",  Path(self.get_input_param("marbl_ic_filepath").value).name
         )
         super().configure()
 
@@ -764,13 +774,16 @@ class RunoffConfigurator(BaseConfigurator):
         ),
         InputValueParam("case_grid_name", comment="Case grid name"),
         InputValueParam("case_session_id", comment="Case session identifier"),
-        InputValueParam("compset", comment="Case compset"),
+        InputValueParam("case_compset_lname", comment="Case compset"),
         InputValueParam("case_inputdir", comment="Case input directory"),
         InputValueParam(
             "rmax", comment="Smoothing radius (in meters) for runoff mapping generation"
         ),
         InputValueParam(
             "rof_grid_name", comment="Name of the runoff grid used in the case"
+        ),
+         InputValueParam(
+            "case_is_non_local", comment="Case is non-local"
         ),
         InputValueParam(
             "fold", comment="Smoothing fold parameter for runoff mapping generation"
@@ -794,10 +807,10 @@ class RunoffConfigurator(BaseConfigurator):
         runoff_esmf_mesh_filepath,
         case_grid_name,
         case_session_id,
-        compset,
+        case_compset_lname,
         case_inputdir,
+        case_is_non_local,
         case_cime,
-        rof_grid_name,
         rmax=None,
         fold=None,
     ):
@@ -816,14 +829,15 @@ class RunoffConfigurator(BaseConfigurator):
             case_inputdir=case_inputdir,
             rmax=rmax,
             fold=fold,
-            compset=compset,
-            rof_esmf_mesh_filepath=case_cime.get_mesh_path("rof", rof_grid_name),
-            rof_grid_name=rof_grid_name,
+            case_compset_lname=case_compset_lname,
+            case_is_non_local=case_is_non_local,
+            rof_esmf_mesh_filepath=case_cime.get_mesh_path("rof", cvars["CUSTOM_ROF_GRID"].value),
+            rof_grid_name=cvars["CUSTOM_ROF_GRID"].value,
         )
 
     def configure(self):
         runoff_mapping_file_nnsm = f"glofas_{self.get_input_param('case_grid_name')}_{self.get_input_param('case_session_id')}_nnsm.nc"
-        rof_case_grid_name = cvars["CUSTOM_ROF_GRID"].value
+        rof_case_grid_name = self.get_input_param("rof_grid_name")
         mapping_file_prefix = (
             f"{rof_case_grid_name}_to_{self.get_input_param('case_grid_name')}_map"
         )
@@ -833,16 +847,16 @@ class RunoffConfigurator(BaseConfigurator):
             rmax, fold = mapping.get_suggested_smoothing_params(
                 self.get_input_param("runoff_esmf_mesh_filepath")
             )
-            self.set_output_param("rmax", rmax)
-            self.set_output_param("fold", fold)
+            self.set_input_param("rmax", rmax)
+            self.set_input_param("fold", fold)
         self.runoff_mapping_file_nnsm = mapping.get_smoothed_map_filepath(
             mapping_file_prefix=mapping_file_prefix,
             output_dir=mapping_dir,
             rmax=self.get_input_param("rmax"),
             fold=self.get_input_param("fold"),
         )
-        self.set_output_param("ROF2OCN_LIQ_RMAPNAME", self.runoff_mapping_file_nnsm)
-        self.set_output_param("ROF2OCN_ICE_RMAPNAME", self.runoff_mapping_file_nnsm)
+        self.set_output_param("ROF2OCN_LIQ_RMAPNAME", self.runoff_mapping_file_nnsm, is_non_local=self.get_input_param("case_is_non_local"))
+        self.set_output_param("ROF2OCN_ICE_RMAPNAME", self.runoff_mapping_file_nnsm, is_non_local=self.get_input_param("case_is_non_local"))
         super().configure()
 
     def validate_args(self, **kwargs):

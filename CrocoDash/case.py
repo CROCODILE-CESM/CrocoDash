@@ -162,6 +162,8 @@ class Case:
             self.caseroot, non_local=self.cc._is_non_local()
         )
 
+        self.is_non_local = self.cc._is_non_local()
+
         self._apply_final_xmlchanges(ntasks_ocn, job_queue, job_wallclock_time)
 
         required_configurators = ForcingConfigRegistry.find_required_configurators(
@@ -539,6 +541,9 @@ class Case:
         config["paths"]["bathymetry_path"] = self.topo_path
         config["paths"]["raw_dataset_path"] = str(
             self.extract_forcings_path / "raw_data"
+        )
+        config["paths"]["input_dataset_path"] = str(
+            self.extract_forcings_path.parent
         )
         config["paths"]["regridded_dataset_path"] = str(
             self.extract_forcings_path / "regridded_data"

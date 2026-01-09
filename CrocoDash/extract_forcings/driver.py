@@ -11,6 +11,8 @@ import bgc
 import runoff as rof
 import tides
 import chlorophyll as chl
+from CrocoDash.topo import *
+from CrocoDash.grid import *
 
 
 def test_driver():
@@ -26,9 +28,9 @@ def test_driver():
 
 
 def main(
-    get_dataset_piecewise=False,
-    regrid_dataset_piecewise=False,
-    merge_piecewise_dataset=False,
+    get_dataset_piecewise=True,
+    regrid_dataset_piecewise=True,
+    merge_piecewise_dataset=True,
     **kwargs,
 ):
     """
@@ -40,6 +42,15 @@ def main(
     config_path = workflow_dir / "config.json"
     with open(config_path, "r") as f:
         config = json.load(f)
+    ocn_grid = Grid.from_supergrid(config["basic"]["paths"]["hgrid_path"])
+    topo = xr.open_dataset(
+        config["basic"]["paths"]["bathymetry_path"], decode_times=False
+    )
+
+    ocn_topo = Topo.from_topo_file(ocn_grid,
+        config["basic"]["paths"]["bathymetry_path"],min_depth = topo.attrs["min_depth"])
+
+    inputdir = Path(config["basic"]["paths"]["input_dataset_path"])
 
     # Call get_dataset_piecewise
     if get_dataset_piecewise:
@@ -104,56 +115,71 @@ def main(
             "process_bgcic" not in kwargs or kwargs["process_bgcic"]
         ):
             bgc.process_bgc_ic(
-                file_path=config["bgcic"]["marbl_ic_filepath"],
-                output_path=config["bgcic"]["MARBL_TRACERS_IC_FILE"],
+                file_path=config["bgcic"]["inputs"]["marbl_ic_filepath"],
+                output_path=inputdir/"ocnice"/config["bgcic"]["outputs"]["MARBL_TRACERS_IC_FILE"],
             )
         elif key == "bgcironforcing" and (
             "process_bgcironforcing" not in kwargs or kwargs["process_bgcironforcing"]
         ):
             bgc.process_bgc_iron_forcing(
-                nx=config["BGCIronForcing"]["nx"],
-                ny=config["BGCIronForcing"]["ny"],
-                MARBL_FESEDFLUX_FILE=config["BGCIronForcing"]["MARBL_FESEDFLUX_FILE"],
-                MARBL_FEVENTFLUX_FILE=config["BGCIronForcing"]["MARBL_FEVENTFLUX_FILE"],
-                inputdir=config["BGCIronForcing"]["inputdir"],
+                nx=ocn_grid.nx,
+                ny=ocn_grid.ny,
+                MARBL_FESEDFLUX_FILE=config["bgcironforcing"]["outputs"]["MARBL_FESEDFLUX_FILE"],
+                MARBL_FEVENTFLUX_FILE=config["bgcironforcing"]["outputs"]["MARBL_FEVENTFLUX_FILE"],
+                inputdir=inputdir,
             )
-        elif key == "bgcrivernutrients" and (
-            "process_bgcrivernutrients" not in kwargs
-            or kwargs["process_bgcrivernutrients"]
-        ):
-            bgc.process_bgc_river_nutrients(
-                nx=config["BGCRiverNutrients"]["nx"],
-                ny=config["BGCRiverNutrients"]["ny"],
-                ocn_grid=config["BGCRiverNutrients"]["ocn_grid"],
-                river_nutrients_nnsm_filepath=config["BGCRiverNutrients"][
-                    "river_nutrients_nnsm_filepath"
-                ],
-                ROF2OCN_LIQ_RMAPNAME=config["BGCRiverNutrients"][
-                    "ROF2OCN_LIQ_RMAPNAME"
-                ],
-            )
+        
         elif key == "runoff" and (
             "process_runoff" not in kwargs or kwargs["process_runoff"]
         ):
             rof.generate_rof_ocn_map(
-                rof_grid_name=config["runoff"]["rof_grid_name"],
-                rof_esmf_mesh_filepath=config["runoff"]["rof_esmf_mesh_filepath"],
-                inputdir=config["basic"]["paths"]["output_path"],
-                grid_name=config["basic"]["forcing"]["information"]["grid_name"],
-                rmax=config["runoff"]["rmax"],
-                fold=config["runoff"]["fold"],
-                runoff_esmf_mesh_path=config["runoff"]["runoff_esmf_mesh_path"],
+                rof_grid_name=config["runoff"]["inputs"]["rof_grid_name"],
+                rof_esmf_mesh_filepath=config["runoff"]["inputs"]["rof_esmf_mesh_filepath"],
+                inputdir=inputdir,
+                grid_name=config["runoff"]["inputs"]["case_grid_name"],
+                rmax=config["runoff"]["inputs"]["rmax"],
+                fold=config["runoff"]["inputs"]["fold"],
+                runoff_esmf_mesh_path=config["runoff"]["inputs"]["runoff_esmf_mesh_filepath"],
             )
+            if "bgcrivernutrients" in config.keys() and (
+            "process_bgcrivernutrients" not in kwargs
+            or kwargs["process_bgcrivernutrients"]
+            ):
+                bgc.process_river_nutrients(
+                    ocn_grid=ocn_grid,
+                    global_river_nutrients_filepath=config["bgcrivernutrients"]["inputs"][
+                        "global_river_nutrients_filepath"
+                    ],
+                    ROF2OCN_LIQ_RMAPNAME = config["runoff"]["outputs"][ "ROF2OCN_LIQ_RMAPNAME"],
+                    river_nutrients_nnsm_filepath = inputdir/"ocnice"/config["bgcrivernutrients"]["outputs"][
+                        "RIV_FLUX_FILE"
+                    ],
+
+                )
         elif key == "tides" and (
             "process_tides" not in kwargs or kwargs["process_tides"]
         ):
-            tides.process_tides(None)
+            tides.process_tides(
+                ocn_topo=ocn_topo,
+                inputdir=inputdir,
+                supergrid_path=config["basic"]["paths"]["hgrid_path"],
+                vgrid_path=config["basic"]["paths"]["vgrid_path"],
+                tidal_constituents=config["tides"]["inputs"]["tidal_constituents"],
+                boundaries=config["tides"]["inputs"]["boundaries"],
+                tpxo_elevation_filepath=config["tides"]["inputs"][
+                    "tpxo_elevation_filepath"
+                ],
+                tpxo_velocity_filepath=config["tides"]["inputs"][
+                    "tpxo_velocity_filepath"
+                ],
+            )
         elif key == "chl" and ("process_chl" not in kwargs or kwargs["process_chl"]):
-            chl.interpolate_and_fill_seawifs(
+            chl.process_chl(
                 ocn_grid=ocn_grid,
                 ocn_topo=ocn_topo,
-                chl_processed_filepath=config["chl"]["chl_processed_filepath"],
-                output_filepath=config["chl"]["output_filepath"],
+                inputdir = inputdir,
+                chl_processed_filepath=config["chl"]["inputs"]["chl_processed_filepath"],
+                output_filepath=config["chl"]["outputs"]["CHL_FILE"],
             )
     return
 

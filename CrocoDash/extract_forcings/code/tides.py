@@ -1,6 +1,6 @@
+import regional_mom6 as rmom6
 def process_tides(
     ocn_topo,
-    rundir,
     inputdir,
     supergrid_path,
     vgrid_path,
@@ -15,7 +15,7 @@ def process_tides(
         number_vertical_layers=None,
         layer_thickness_ratio=None,
         depth=ocn_topo.max_depth,
-        mom_run_dir=rundir,
+        mom_run_dir=inputdir,
         mom_input_dir=inputdir / "ocnice",
         hgrid_type="from_file",
         hgrid_path=supergrid_path,
