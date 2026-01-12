@@ -1,9 +1,8 @@
-from CrocoDash.extract_forcings.code import (
+from CrocoDash.extract_forcings import (
     bgc,
     runoff as rof,
     tides,
     chlorophyll as chl,
-    driver as dv,
 )
 
 
@@ -17,11 +16,3 @@ def test_process_chl():
         chl_processed_filepath=self.fcr["chl"].chl_processed_filepath,
         output_filepath=self.fcr["chl"].chl_output_filepath,
     )
-
-
-def test_driver_connections():
-    # Write full config for driver
-    config = {}
-    # copy this config into the test dir
-    # run the driver with this config
-    dv.main()

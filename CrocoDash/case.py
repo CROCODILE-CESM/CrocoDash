@@ -640,27 +640,25 @@ class Case:
             )
 
         if process_initial_condition or process_velocity_tracers:
-            self.driver.main(
+            self.driver.process_conditions(
                 get_dataset_piecewise=False,
                 regrid_dataset_piecewise=True,
                 merge_piecewise_dataset=True,
             )
 
         if self.fcr.is_active("bgc") and not (kwargs.get("process_bgc") == False):
-            self.driver.main(
-                process_bgcironforcing=True,
-                process_bgcic=True,
-            )
+            self.driver.process_bgcironforcing()
+            self.driver.process_bgcic()
         if self.fcr.is_active("tides") and not (kwargs.get("process_tides") == False):
-            self.driver.main(process_tides=True)
+            self.driver.process_tides()
         if self.fcr.is_active("chl") and not (kwargs.get("process_chl") == False):
-            self.driver.main(process_chl=True)
+            self.driver.process_chl()
         if self.fcr.is_active("runoff") and not (kwargs.get("process_runoff") == False):
-            self.driver.main(process_runoff=True)
+            self.driver.process_runoff()
         if self.fcr.is_active("BGCRiverNutrients") and not (
             kwargs.get("process_bgc_river_nutrients") == False
         ):
-            self.driver.main(process_bgcrivernutrients=True)
+            self.driver.process_bgcrivernutrients()
         print(f"Case is ready to be built: {self.caseroot}")
 
     @property

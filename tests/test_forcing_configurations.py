@@ -54,12 +54,11 @@ def test_xml_apply(fake_param_case):
 def test_all_configurators_args_synced():
 
     for config_class in ForcingConfigRegistry.registered_types:
-
         config_class.check_input_params_synced()
         config_class.check_output_params_exist()
 
 
-def test_all_configurators_smoke(fake_param_case):
+def test_all_configurators_smoke(fake_param_case, fake_cime):
 
     ## Set up some dummy args
     dummy_str = "123"
@@ -82,6 +81,8 @@ def test_all_configurators_smoke(fake_param_case):
                 ctor_args[a] = dummy_path
             elif "dir" in a:
                 ctor_args[a] = dummy_dir
+            elif "cime" in a:
+                ctor_args[a] = fake_cime
             else:
                 ctor_args[a] = dummy_str
         instance = config_class(**ctor_args)

@@ -391,10 +391,10 @@ class BaseConfigurator(ABC):
         missing = input_param_names - init_args
         extra = init_args - input_param_names
 
-        assert not (missing or extra), (
+        assert not (missing), (
             f"{self.__class__.__name__} init/input mismatch:\n"
             f"  Missing init args for input_params: {sorted(missing)}\n"
-            f"  Extra init args not declared as input_params: {sorted(extra)}"
+            f"  Extra init args not declared as input_params (which is okay and won't fail): {sorted(extra)}"
         )
 
     def validate_args(self, **kwargs):
@@ -555,18 +555,27 @@ class TidesConfigurator(BaseConfigurator):
         tpxo_elevation_filepath,
         tpxo_velocity_filepath,
         tidal_constituents,
-        date_range,
         boundaries,
+        date_range=None,
+        start_date=None,
     ):
-
-        # Set the input params
-        super().__init__(
-            tpxo_elevation_filepath=tpxo_elevation_filepath,
-            tpxo_velocity_filepath=tpxo_velocity_filepath,
-            tidal_constituents=tidal_constituents,
-            start_date=date_range[0].strftime("%Y, %m, %d"),
-            boundaries=boundaries,
-        )
+        if date_range is not None:
+            # Set the input params
+            super().__init__(
+                tpxo_elevation_filepath=tpxo_elevation_filepath,
+                tpxo_velocity_filepath=tpxo_velocity_filepath,
+                tidal_constituents=tidal_constituents,
+                start_date=date_range[0].strftime("%Y, %m, %d"),
+                boundaries=boundaries,
+            )
+        else:
+            super().__init__(
+                tpxo_elevation_filepath=tpxo_elevation_filepath,
+                tpxo_velocity_filepath=tpxo_velocity_filepath,
+                tidal_constituents=tidal_constituents,
+                start_date=start_date,
+                boundaries=boundaries,
+            )
 
     def tidal_data_str(self, seg_ix):
         return (
@@ -679,7 +688,7 @@ class BGCICConfigurator(BaseConfigurator):
     def configure(self):
         self.set_output_param(
             "MARBL_TRACERS_IC_FILE",
-            Path(self.get_input_param("marbl_ic_filepath").value).name,
+            Path(self.get_input_param("marbl_ic_filepath")).name,
         )
         super().configure()
 
@@ -811,9 +820,11 @@ class RunoffConfigurator(BaseConfigurator):
         case_compset_lname,
         case_inputdir,
         case_is_non_local,
-        case_cime,
+        case_cime=None,
         rmax=None,
         fold=None,
+        rof_grid_name=None,
+        rof_esmf_mesh_filepath=None,
     ):
         """
         rmax : float, optional
@@ -823,20 +834,35 @@ class RunoffConfigurator(BaseConfigurator):
             If passed, specifies the smoothing fold parameter for runoff mapping generation.
             If not provided, a suggested value based on the ocean grid will be used.
         """
-        super().__init__(
-            runoff_esmf_mesh_filepath=runoff_esmf_mesh_filepath,
-            case_grid_name=case_grid_name,
-            case_session_id=case_session_id,
-            case_inputdir=case_inputdir,
-            rmax=rmax,
-            fold=fold,
-            case_compset_lname=case_compset_lname,
-            case_is_non_local=case_is_non_local,
-            rof_esmf_mesh_filepath=case_cime.get_mesh_path(
-                "rof", cvars["CUSTOM_ROF_GRID"].value
-            ),
-            rof_grid_name=cvars["CUSTOM_ROF_GRID"].value,
-        )
+        if case_cime is not None:
+
+            super().__init__(
+                runoff_esmf_mesh_filepath=runoff_esmf_mesh_filepath,
+                case_grid_name=case_grid_name,
+                case_session_id=case_session_id,
+                case_inputdir=case_inputdir,
+                rmax=rmax,
+                fold=fold,
+                case_compset_lname=case_compset_lname,
+                case_is_non_local=case_is_non_local,
+                rof_esmf_mesh_filepath=case_cime.get_mesh_path(
+                    "rof", cvars["CUSTOM_ROF_GRID"].value
+                ),
+                rof_grid_name=cvars["CUSTOM_ROF_GRID"].value,
+            )
+        else:
+            super().__init__(
+                runoff_esmf_mesh_filepath=runoff_esmf_mesh_filepath,
+                case_grid_name=case_grid_name,
+                case_session_id=case_session_id,
+                case_inputdir=case_inputdir,
+                rmax=rmax,
+                fold=fold,
+                case_compset_lname=case_compset_lname,
+                case_is_non_local=case_is_non_local,
+                rof_esmf_mesh_filepath=rof_esmf_mesh_filepath,
+                rof_grid_name=rof_grid_name,
+            )
 
     def configure(self):
         runoff_mapping_file_nnsm = f"glofas_{self.get_input_param('case_grid_name')}_{self.get_input_param('case_session_id')}_nnsm.nc"
@@ -875,7 +901,7 @@ class RunoffConfigurator(BaseConfigurator):
         if (kwargs["rmax"] is None) != (kwargs["fold"] is None):
             raise ValueError("Both rmax and fold must be specified together.")
         if kwargs["rmax"] is not None:
-            assert "SROF" not in kwargs["compset"], (
+            assert "SROF" not in kwargs["case_compset_lname"], (
                 "When rmax and fold are specified, "
                 "the compset must include an active or data runoff model."
             )

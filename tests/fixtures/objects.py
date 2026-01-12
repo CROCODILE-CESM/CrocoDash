@@ -70,3 +70,12 @@ def get_CrocoDash_case(
         ninst=ninst,
     )
     return case
+
+
+@pytest.fixture
+def fake_cime():
+    class DummyCaseCIME:
+        def get_mesh_path(self, comp, grid):
+            return f"/dummy/meshes/{comp}/{grid}"
+
+    return DummyCaseCIME()

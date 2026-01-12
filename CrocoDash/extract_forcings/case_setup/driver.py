@@ -30,15 +30,7 @@ def test_driver():
     return
 
 
-def main(
-    get_dataset_piecewise=True,
-    regrid_dataset_piecewise=True,
-    merge_piecewise_dataset=True,
-    **kwargs,
-):
-    """
-    Driver file to run the large data workflow
-    """
+def get_config_info():
     workflow_dir = Path(__file__).parent
 
     # Read in config
@@ -57,6 +49,40 @@ def main(
     )
 
     inputdir = Path(config["basic"]["paths"]["input_dataset_path"])
+    return config, ocn_grid, ocn_topo, inputdir
+
+
+def process_bgcic():
+    config, ocn_grid, ocn_topo, inputdir = get_config_info()
+    bgc.process_bgc_ic(
+        file_path=config["bgcic"]["inputs"]["marbl_ic_filepath"],
+        output_path=inputdir
+        / "ocnice"
+        / config["bgcic"]["outputs"]["MARBL_TRACERS_IC_FILE"],
+    )
+
+
+def process_bgcironforcing():
+    config, ocn_grid, ocn_topo, inputdir = get_config_info()
+    bgc.process_bgc_iron_forcing(
+        nx=ocn_grid.nx,
+        ny=ocn_grid.ny,
+        MARBL_FESEDFLUX_FILE=config["bgcironforcing"]["outputs"][
+            "MARBL_FESEDFLUX_FILE"
+        ],
+        MARBL_FEVENTFLUX_FILE=config["bgcironforcing"]["outputs"][
+            "MARBL_FEVENTFLUX_FILE"
+        ],
+        inputdir=inputdir,
+    )
+
+
+def process_conditions(
+    get_dataset_piecewise=True,
+    regrid_dataset_piecewise=True,
+    merge_piecewise_dataset=True,
+):
+    config, ocn_grid, ocn_topo, inputdir = get_config_info()
 
     # Call get_dataset_piecewise
     if get_dataset_piecewise:
@@ -114,93 +140,104 @@ def main(
             config["basic"]["general"]["preview"],
         )
 
+
+def process_runoff():
+    config, ocn_grid, ocn_topo, inputdir = get_config_info()
+    rof.generate_rof_ocn_map(
+        rof_grid_name=config["runoff"]["inputs"]["rof_grid_name"],
+        rof_esmf_mesh_filepath=config["runoff"]["inputs"]["rof_esmf_mesh_filepath"],
+        inputdir=inputdir,
+        grid_name=config["runoff"]["inputs"]["case_grid_name"],
+        rmax=config["runoff"]["inputs"]["rmax"],
+        fold=config["runoff"]["inputs"]["fold"],
+        runoff_esmf_mesh_path=config["runoff"]["inputs"]["runoff_esmf_mesh_filepath"],
+    )
+
+
+def process_bgcrivernutrients():
+    config, ocn_grid, ocn_topo, inputdir = get_config_info()
+    bgc.process_river_nutrients(
+        ocn_grid=ocn_grid,
+        global_river_nutrients_filepath=config["bgcrivernutrients"]["inputs"][
+            "global_river_nutrients_filepath"
+        ],
+        ROF2OCN_LIQ_RMAPNAME=config["runoff"]["outputs"]["ROF2OCN_LIQ_RMAPNAME"],
+        river_nutrients_nnsm_filepath=inputdir
+        / "ocnice"
+        / config["bgcrivernutrients"]["outputs"]["RIV_FLUX_FILE"],
+    )
+
+
+def process_tides():
+    config, ocn_grid, ocn_topo, inputdir = get_config_info()
+    tides.process_tides(
+        ocn_topo=ocn_topo,
+        inputdir=inputdir,
+        supergrid_path=config["basic"]["paths"]["hgrid_path"],
+        vgrid_path=config["basic"]["paths"]["vgrid_path"],
+        tidal_constituents=config["tides"]["inputs"]["tidal_constituents"],
+        boundaries=config["tides"]["inputs"]["boundaries"],
+        tpxo_elevation_filepath=config["tides"]["inputs"]["tpxo_elevation_filepath"],
+        tpxo_velocity_filepath=config["tides"]["inputs"]["tpxo_velocity_filepath"],
+    )
+
+
+def main(
+    get_dataset_piecewise=True,
+    regrid_dataset_piecewise=True,
+    merge_piecewise_dataset=True,
+    **kwargs,
+):
+    """
+    Driver file to run the large data workflow
+    """
+    config, _, _, _ = get_config_info()
     for key in config.keys():
         if key == "basic":
-            continue
+            process_conditions(
+                get_dataset_piecewise, regrid_dataset_piecewise, merge_piecewise_dataset
+            )
+
         elif key == "bgcic" and (
             "process_bgcic" not in kwargs or kwargs["process_bgcic"]
         ):
-            bgc.process_bgc_ic(
-                file_path=config["bgcic"]["inputs"]["marbl_ic_filepath"],
-                output_path=inputdir
-                / "ocnice"
-                / config["bgcic"]["outputs"]["MARBL_TRACERS_IC_FILE"],
-            )
+            process_bgcic()
         elif key == "bgcironforcing" and (
             "process_bgcironforcing" not in kwargs or kwargs["process_bgcironforcing"]
         ):
-            bgc.process_bgc_iron_forcing(
-                nx=ocn_grid.nx,
-                ny=ocn_grid.ny,
-                MARBL_FESEDFLUX_FILE=config["bgcironforcing"]["outputs"][
-                    "MARBL_FESEDFLUX_FILE"
-                ],
-                MARBL_FEVENTFLUX_FILE=config["bgcironforcing"]["outputs"][
-                    "MARBL_FEVENTFLUX_FILE"
-                ],
-                inputdir=inputdir,
-            )
+            process_bgcironforcing()
 
         elif key == "runoff" and (
             "process_runoff" not in kwargs or kwargs["process_runoff"]
         ):
-            rof.generate_rof_ocn_map(
-                rof_grid_name=config["runoff"]["inputs"]["rof_grid_name"],
-                rof_esmf_mesh_filepath=config["runoff"]["inputs"][
-                    "rof_esmf_mesh_filepath"
-                ],
-                inputdir=inputdir,
-                grid_name=config["runoff"]["inputs"]["case_grid_name"],
-                rmax=config["runoff"]["inputs"]["rmax"],
-                fold=config["runoff"]["inputs"]["fold"],
-                runoff_esmf_mesh_path=config["runoff"]["inputs"][
-                    "runoff_esmf_mesh_filepath"
-                ],
-            )
+            process_runoff()
+
             if "bgcrivernutrients" in config.keys() and (
                 "process_bgcrivernutrients" not in kwargs
                 or kwargs["process_bgcrivernutrients"]
             ):
-                bgc.process_river_nutrients(
-                    ocn_grid=ocn_grid,
-                    global_river_nutrients_filepath=config["bgcrivernutrients"][
-                        "inputs"
-                    ]["global_river_nutrients_filepath"],
-                    ROF2OCN_LIQ_RMAPNAME=config["runoff"]["outputs"][
-                        "ROF2OCN_LIQ_RMAPNAME"
-                    ],
-                    river_nutrients_nnsm_filepath=inputdir
-                    / "ocnice"
-                    / config["bgcrivernutrients"]["outputs"]["RIV_FLUX_FILE"],
-                )
+                process_bgcrivernutrients()
+
         elif key == "tides" and (
             "process_tides" not in kwargs or kwargs["process_tides"]
         ):
-            tides.process_tides(
-                ocn_topo=ocn_topo,
-                inputdir=inputdir,
-                supergrid_path=config["basic"]["paths"]["hgrid_path"],
-                vgrid_path=config["basic"]["paths"]["vgrid_path"],
-                tidal_constituents=config["tides"]["inputs"]["tidal_constituents"],
-                boundaries=config["tides"]["inputs"]["boundaries"],
-                tpxo_elevation_filepath=config["tides"]["inputs"][
-                    "tpxo_elevation_filepath"
-                ],
-                tpxo_velocity_filepath=config["tides"]["inputs"][
-                    "tpxo_velocity_filepath"
-                ],
-            )
+            process_tides()
+
         elif key == "chl" and ("process_chl" not in kwargs or kwargs["process_chl"]):
-            chl.process_chl(
-                ocn_grid=ocn_grid,
-                ocn_topo=ocn_topo,
-                inputdir=inputdir,
-                chl_processed_filepath=config["chl"]["inputs"][
-                    "chl_processed_filepath"
-                ],
-                output_filepath=config["chl"]["outputs"]["CHL_FILE"],
-            )
+            process_chl()
+
     return
+
+
+def process_chl():
+    config, ocn_grid, ocn_topo, inputdir = get_config_info()
+    chl.process_chl(
+        ocn_grid=ocn_grid,
+        ocn_topo=ocn_topo,
+        inputdir=inputdir,
+        chl_processed_filepath=config["chl"]["inputs"]["chl_processed_filepath"],
+        output_filepath=config["chl"]["outputs"]["CHL_FILE"],
+    )
 
 
 if __name__ == "__main__":
