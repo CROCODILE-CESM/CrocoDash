@@ -576,7 +576,7 @@ class Case:
             json.dump(general_config, f, indent=4)
 
         if not self._too_much_data:
-            self.driver.main(
+            self.driver.process_conditions(
                 regrid_dataset_piecewise=False, merge_piecewise_dataset=False
             )
         else:
