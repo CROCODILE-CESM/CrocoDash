@@ -1,9 +1,9 @@
 import sys
 import json
 from pathlib import Path
+import argparse
 
-parent_dir = Path(__file__).parent
-sys.path.append(str(parent_dir / "code"))
+
 from CrocoDash.extract_forcings import (
     merge_piecewise_dataset as mpd,
     get_dataset_piecewise as gdp,
@@ -15,22 +15,20 @@ from CrocoDash.extract_forcings import (
     utils as utils,
 )
 
-from CrocoDash.topo import *
-from CrocoDash.grid import *
 
-config_path = Path(__file__).parent / "config.json"
+CONFIG_PATH = Path(__file__).parent / "config.json"
 
 
 def test_driver():
     """Test that all the imports work"""
     print("All Imports Work!")
-    config = utils.Config(config_path)
+    config = utils.Config(CONFIG_PATH)
     print("Config Loads!")
     return
 
 
 def process_bgcic():
-    config = utils.Config(config_path)
+    config = utils.Config(CONFIG_PATH)
     bgc.process_bgc_ic(
         file_path=config["bgcic"]["inputs"]["marbl_ic_filepath"],
         output_path=config.inputdir
@@ -40,7 +38,7 @@ def process_bgcic():
 
 
 def process_bgcironforcing():
-    config = utils.Config(config_path)
+    config = utils.Config(CONFIG_PATH)
     bgc.process_bgc_iron_forcing(
         nx=config.ocn_grid.nx,
         ny=config.ocn_grid.ny,
@@ -59,7 +57,7 @@ def process_conditions(
     regrid_dataset_piecewise=True,
     merge_piecewise_dataset=True,
 ):
-    config = utils.Config(config_path)
+    config = utils.Config(CONFIG_PATH)
 
     # Call get_dataset_piecewise
     if get_dataset_piecewise:
@@ -119,7 +117,7 @@ def process_conditions(
 
 
 def process_runoff():
-    config = utils.Config(config_path)
+    config = utils.Config(CONFIG_PATH)
     rof.generate_rof_ocn_map(
         rof_grid_name=config["runoff"]["inputs"]["rof_grid_name"],
         rof_esmf_mesh_filepath=config["runoff"]["inputs"]["rof_esmf_mesh_filepath"],
@@ -132,7 +130,7 @@ def process_runoff():
 
 
 def process_bgcrivernutrients():
-    config = utils.Config(config_path)
+    config = utils.Config(CONFIG_PATH)
     bgc.process_river_nutrients(
         ocn_grid=config.ocn_grid,
         global_river_nutrients_filepath=config["bgcrivernutrients"]["inputs"][
@@ -146,7 +144,7 @@ def process_bgcrivernutrients():
 
 
 def process_tides():
-    config = utils.Config(config_path)
+    config = utils.Config(CONFIG_PATH)
     tides.process_tides(
         ocn_topo=config.ocn_topo,
         inputdir=config.inputdir,
@@ -160,7 +158,7 @@ def process_tides():
 
 
 def process_chl():
-    config = utils.Config(config_path)
+    config = utils.Config(CONFIG_PATH)
     chl.process_chl(
         ocn_grid=config.ocn_grid,
         ocn_topo=config.ocn_topo,
@@ -170,56 +168,97 @@ def process_chl():
     )
 
 
-def main(
-    get_dataset_piecewise=True,
-    regrid_dataset_piecewise=True,
-    merge_piecewise_dataset=True,
-    **kwargs,
-):
-    """
-    Driver file to run the large data workflow
-    """
-    config = utils.Config(config_path)
-    for key in config.config.keys():
-        if key == "basic":
-            process_conditions(
-                get_dataset_piecewise, regrid_dataset_piecewise, merge_piecewise_dataset
-            )
+def should_run(name, args, cfg):
+    skip = set(args.skip or [])
+    skip = {s.lower() for s in (args.skip or [])}
+    not_skipped = name.lower() not in skip
+    requested = args.all or getattr(args, name)
+    exists = name in cfg.config.keys()
 
-        elif key == "bgcic" and (
-            "process_bgcic" not in kwargs or kwargs["process_bgcic"]
-        ):
-            process_bgcic()
-        elif key == "bgcironforcing" and (
-            "process_bgcironforcing" not in kwargs or kwargs["process_bgcironforcing"]
-        ):
-            process_bgcironforcing()
+    if requested and not exists:
+        print(f"[skip] '{name}' requested but not in config")
 
-        elif key == "runoff" and (
-            "process_runoff" not in kwargs or kwargs["process_runoff"]
-        ):
-            process_runoff()
+    if requested and not not_skipped:
+        print(f"[skip] '{name}' skipped via --skip")
 
-            if "bgcrivernutrients" in config.keys() and (
-                "process_bgcrivernutrients" not in kwargs
-                or kwargs["process_bgcrivernutrients"]
-            ):
-                process_bgcrivernutrients()
+    return requested and exists and not_skipped
 
-        elif key == "tides" and (
-            "process_tides" not in kwargs or kwargs["process_tides"]
-        ):
-            process_tides()
 
-        elif key == "chl" and ("process_chl" not in kwargs or kwargs["process_chl"]):
-            process_chl()
+def parse_args():
+    parser = argparse.ArgumentParser(description="CrocoDash forcing workflow driver")
 
-    return
+    # Top-level switches
+    parser.add_argument(
+        "--all",
+        action="store_true",
+        help="Run all configured components",
+    )
+
+    parser.add_argument("--conditions", action="store_true")
+    parser.add_argument("--bgcic", action="store_true")
+    parser.add_argument("--bgcironforcing", action="store_true")
+    parser.add_argument("--bgcrivernutrients", action="store_true")
+    parser.add_argument("--runoff", action="store_true")
+    parser.add_argument("--tides", action="store_true")
+    parser.add_argument("--chl", action="store_true")
+
+    # Conditions sub-controls
+    parser.add_argument("--no-get", action="store_true")
+    parser.add_argument("--no-regrid", action="store_true")
+    parser.add_argument("--no-merge", action="store_true")
+
+    parser.add_argument(
+        "--skip",
+        nargs="+",
+        metavar="COMPONENT",
+        help="Components to skip when using --all",
+    )
+
+    parser.add_argument(
+        "--test",
+        action="store_true",
+        help="Run import/config test only",
+    )
+
+    return parser.parse_args()
+
+
+def run_from_cli(args):
+    cfg = utils.Config(CONFIG_PATH)
+
+    if args.test:
+        test_driver()
+        return
+
+    # Conditions pipeline is special (comes from "basic")
+    if (args.all or args.conditions) and "conditions" not in (args.skip or []):
+        process_conditions(
+            get_dataset_piecewise=not args.no_get,
+            regrid_dataset_piecewise=not args.no_regrid,
+            merge_piecewise_dataset=not args.no_merge,
+        )
+
+    if should_run("bgcic", args, cfg):
+        process_bgcic()
+
+    if should_run("bgcironforcing", args, cfg):
+        process_bgcironforcing()
+
+    if should_run("runoff", args, cfg):
+        process_runoff()
+
+        # runoff-dependent product
+        if should_run("bgcrivernutrients", args, cfg):
+            process_bgcrivernutrients()
+
+    if should_run("tides", args, cfg):
+        process_tides()
+
+    if should_run("chl", args, cfg):
+        process_chl()
 
 
 if __name__ == "__main__":
 
-    if len(sys.argv) > 1 and sys.argv[1] == "test":
-        test_driver()
-    else:
-        main()
+    args = parse_args()
+    run_from_cli(args)

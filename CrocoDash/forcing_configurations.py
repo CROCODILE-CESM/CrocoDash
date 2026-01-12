@@ -871,7 +871,7 @@ class RunoffConfigurator(BaseConfigurator):
             f"{rof_case_grid_name}_to_{self.get_input_param('case_grid_name')}_map"
         )
         mapping_dir = Path(self.get_input_param("case_inputdir")) / "mapping"
-        mapping_dir.mkdir(exist_ok=False)
+
         if self.get_input_param("rmax") is None:
             rmax, fold = mapping.get_suggested_smoothing_params(
                 self.get_input_param("runoff_esmf_mesh_filepath")
