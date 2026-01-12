@@ -18,18 +18,13 @@ from CrocoDash.extract_forcings import (
 from CrocoDash.topo import *
 from CrocoDash.grid import *
 
-workflow_dir = Path(__file__).parent
-config_path = workflow_dir / "config.json"
+config_path = Path(__file__).parent / "config.json"
 
 
 def test_driver():
     """Test that all the imports work"""
     print("All Imports Work!")
-    # Test Config
-    workflow_dir = Path(__file__).parent
-    config_path = workflow_dir / "config.json"
-    with open(config_path, "r") as f:
-        config = json.load(f)
+    config = utils.Config(config_path)
     print("Config Loads!")
     return
 
@@ -164,6 +159,17 @@ def process_tides():
     )
 
 
+def process_chl():
+    config = utils.Config(config_path)
+    chl.process_chl(
+        ocn_grid=config.ocn_grid,
+        ocn_topo=config.ocn_topo,
+        inputdir=config.inputdir,
+        chl_processed_filepath=config["chl"]["inputs"]["chl_processed_filepath"],
+        output_filepath=config["chl"]["outputs"]["CHL_FILE"],
+    )
+
+
 def main(
     get_dataset_piecewise=True,
     regrid_dataset_piecewise=True,
@@ -173,8 +179,8 @@ def main(
     """
     Driver file to run the large data workflow
     """
-    config, _, _, _ = get_config_info()
-    for key in config.keys():
+    config = utils.Config(config_path)
+    for key in config.config.keys():
         if key == "basic":
             process_conditions(
                 get_dataset_piecewise, regrid_dataset_piecewise, merge_piecewise_dataset
@@ -209,17 +215,6 @@ def main(
             process_chl()
 
     return
-
-
-def process_chl():
-    config = utils.Config(config_path)
-    chl.process_chl(
-        ocn_grid=config.ocn_grid,
-        ocn_topo=config.ocn_topo,
-        inputdir=config.inputdir,
-        chl_processed_filepath=config["chl"]["inputs"]["chl_processed_filepath"],
-        output_filepath=config["chl"]["outputs"]["CHL_FILE"],
-    )
 
 
 if __name__ == "__main__":

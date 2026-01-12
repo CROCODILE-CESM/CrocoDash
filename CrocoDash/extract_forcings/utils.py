@@ -10,21 +10,24 @@ from CrocoDash.grid import *
 
 class Config:
 
-    def __init__(config_path: str = "config.json"):
+    def __init__(self, config_path: str = "config.json"):
 
         with open(config_path, "r", encoding="utf-8") as f:
             self.config = json.load(f)
-        self.ocn_grid = Grid.from_supergrid(config["basic"]["paths"]["hgrid_path"])
+        self.ocn_grid = Grid.from_supergrid(self.config["basic"]["paths"]["hgrid_path"])
         topo = xr.open_dataset(
-            config["basic"]["paths"]["bathymetry_path"], decode_times=False
+            self.config["basic"]["paths"]["bathymetry_path"], decode_times=False
         )
 
         self.ocn_topo = Topo.from_topo_file(
-            ocn_grid,
-            config["basic"]["paths"]["bathymetry_path"],
+            self.ocn_grid,
+            self.config["basic"]["paths"]["bathymetry_path"],
             min_depth=topo.attrs["min_depth"],
         )
-        self.inputdir = Path(config["basic"]["paths"]["input_dataset_path"])
+        self.inputdir = Path(self.config["basic"]["paths"]["input_dataset_path"])
+
+    def keys():
+        return self.config.keys()
 
     def __getitem__(self, key):
         return self.config[key]
