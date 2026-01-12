@@ -340,10 +340,9 @@ document.write(`
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#submodules">Submodules</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crocodash-extract-forcings-driver-module">CrocoDash.extract_forcings.driver module</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.extract_forcings.utils">CrocoDash.extract_forcings.utils module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.utils.Config"><code class="docutils literal notranslate"><span class="pre">Config</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.utils.check_date_continuity"><code class="docutils literal notranslate"><span class="pre">check_date_continuity()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.utils.load_config"><code class="docutils literal notranslate"><span class="pre">load_config()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.utils.parse_dataset_folder"><code class="docutils literal notranslate"><span class="pre">parse_dataset_folder()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.utils.write_config"><code class="docutils literal notranslate"><span class="pre">write_config()</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.extract_forcings">Module contents</a></li>
@@ -383,27 +382,16 @@ document.write(`
 </section>
 <section id="module-CrocoDash.extract_forcings.utils">
 <span id="crocodash-extract-forcings-utils-module"></span><h2>CrocoDash.extract_forcings.utils module<a class="headerlink" href="#module-CrocoDash.extract_forcings.utils" title="Link to this heading">#</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="CrocoDash.extract_forcings.utils.Config">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.utils.</span></span><span class="sig-name descname"><span class="pre">Config</span></span><a class="headerlink" href="#CrocoDash.extract_forcings.utils.Config" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="CrocoDash.extract_forcings.utils.check_date_continuity">
 <span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.utils.</span></span><span class="sig-name descname"><span class="pre">check_date_continuity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">boundary_file_list</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.extract_forcings.utils.check_date_continuity" title="Link to this definition">#</a></dt>
 <dd><p>Check for overlaps or missing dates between consecutive files.</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="CrocoDash.extract_forcings.utils.load_config">
-<span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.utils.</span></span><span class="sig-name descname"><span class="pre">load_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'config.json'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#CrocoDash.extract_forcings.utils.load_config" title="Link to this definition">#</a></dt>
-<dd><p>Load a JSON config file.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>config_path</strong> (<em>str</em><em>, </em><em>optional</em>) – Path to the JSON config file. Default is “config.json”.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The loaded configuration as a dictionary.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>dict</p>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -435,23 +423,6 @@ Example: <cite>“(north|east|south|west)_unprocessed.(d{8})_(d{8}).nc”</cite>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>dict</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="CrocoDash.extract_forcings.utils.write_config">
-<span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.utils.</span></span><span class="sig-name descname"><span class="pre">write_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'config.json'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#CrocoDash.extract_forcings.utils.write_config" title="Link to this definition">#</a></dt>
-<dd><p>Write or update a JSON config file.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>config</strong> (<em>dict</em>) – Configuration dictionary to save.</p></li>
-<li><p><strong>config_path</strong> (<em>str</em><em>, </em><em>optional</em>) – Path to the JSON config file. Default is “config.json”.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -511,10 +482,9 @@ Example: <cite>“(north|east|south|west)_unprocessed.(d{8})_(d{8}).nc”</cite>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#submodules">Submodules</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crocodash-extract-forcings-driver-module">CrocoDash.extract_forcings.driver module</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.extract_forcings.utils">CrocoDash.extract_forcings.utils module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.utils.Config"><code class="docutils literal notranslate"><span class="pre">Config</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.utils.check_date_continuity"><code class="docutils literal notranslate"><span class="pre">check_date_continuity()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.utils.load_config"><code class="docutils literal notranslate"><span class="pre">load_config()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.utils.parse_dataset_folder"><code class="docutils literal notranslate"><span class="pre">parse_dataset_folder()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.utils.write_config"><code class="docutils literal notranslate"><span class="pre">write_config()</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.extract_forcings">Module contents</a></li>
