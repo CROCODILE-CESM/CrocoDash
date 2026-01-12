@@ -430,7 +430,7 @@ class Case:
                 shutil.rmtree(self.extract_forcings_path)
         # Copy extract_forcings folder there
         shutil.copytree(
-            Path(__file__).parent / "extract_forcings",
+            Path(__file__).parent / "extract_forcings" / "case_setup",
             self.extract_forcings_path,
             dirs_exist_ok=True,
         )

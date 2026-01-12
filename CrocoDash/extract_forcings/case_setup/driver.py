@@ -4,13 +4,16 @@ from pathlib import Path
 
 parent_dir = Path(__file__).parent
 sys.path.append(str(parent_dir / "code"))
-import merge_piecewise_dataset as mpd
-import get_dataset_piecewise as gdp
-import regrid_dataset_piecewise as rdp
-import bgc
-import runoff as rof
-import tides
-import chlorophyll as chl
+from CrocoDash.extract_forcings import (
+    merge_piecewise_dataset as mpd,
+    get_dataset_piecewise as gdp,
+    regrid_dataset_piecewise as rdp,
+    bgc,
+    runoff as rof,
+    tides,
+    chlorophyll as chl,
+)
+
 from CrocoDash.topo import *
 from CrocoDash.grid import *
 
