@@ -12,10 +12,14 @@ from CrocoDash.extract_forcings import (
     runoff as rof,
     tides,
     chlorophyll as chl,
+    utils as utils,
 )
 
 from CrocoDash.topo import *
 from CrocoDash.grid import *
+
+workflow_dir = Path(__file__).parent
+config_path = workflow_dir / "config.json"
 
 
 def test_driver():
@@ -30,50 +34,28 @@ def test_driver():
     return
 
 
-def get_config_info():
-    workflow_dir = Path(__file__).parent
-
-    # Read in config
-    config_path = workflow_dir / "config.json"
-    with open(config_path, "r") as f:
-        config = json.load(f)
-    ocn_grid = Grid.from_supergrid(config["basic"]["paths"]["hgrid_path"])
-    topo = xr.open_dataset(
-        config["basic"]["paths"]["bathymetry_path"], decode_times=False
-    )
-
-    ocn_topo = Topo.from_topo_file(
-        ocn_grid,
-        config["basic"]["paths"]["bathymetry_path"],
-        min_depth=topo.attrs["min_depth"],
-    )
-
-    inputdir = Path(config["basic"]["paths"]["input_dataset_path"])
-    return config, ocn_grid, ocn_topo, inputdir
-
-
 def process_bgcic():
-    config, ocn_grid, ocn_topo, inputdir = get_config_info()
+    config = utils.Config(config_path)
     bgc.process_bgc_ic(
         file_path=config["bgcic"]["inputs"]["marbl_ic_filepath"],
-        output_path=inputdir
+        output_path=config.inputdir
         / "ocnice"
         / config["bgcic"]["outputs"]["MARBL_TRACERS_IC_FILE"],
     )
 
 
 def process_bgcironforcing():
-    config, ocn_grid, ocn_topo, inputdir = get_config_info()
+    config = utils.Config(config_path)
     bgc.process_bgc_iron_forcing(
-        nx=ocn_grid.nx,
-        ny=ocn_grid.ny,
+        nx=config.ocn_grid.nx,
+        ny=config.ocn_grid.ny,
         MARBL_FESEDFLUX_FILE=config["bgcironforcing"]["outputs"][
             "MARBL_FESEDFLUX_FILE"
         ],
         MARBL_FEVENTFLUX_FILE=config["bgcironforcing"]["outputs"][
             "MARBL_FEVENTFLUX_FILE"
         ],
-        inputdir=inputdir,
+        inputdir=config.inputdir,
     )
 
 
@@ -82,7 +64,7 @@ def process_conditions(
     regrid_dataset_piecewise=True,
     merge_piecewise_dataset=True,
 ):
-    config, ocn_grid, ocn_topo, inputdir = get_config_info()
+    config = utils.Config(config_path)
 
     # Call get_dataset_piecewise
     if get_dataset_piecewise:
@@ -142,11 +124,11 @@ def process_conditions(
 
 
 def process_runoff():
-    config, ocn_grid, ocn_topo, inputdir = get_config_info()
+    config = utils.Config(config_path)
     rof.generate_rof_ocn_map(
         rof_grid_name=config["runoff"]["inputs"]["rof_grid_name"],
         rof_esmf_mesh_filepath=config["runoff"]["inputs"]["rof_esmf_mesh_filepath"],
-        inputdir=inputdir,
+        inputdir=config.inputdir,
         grid_name=config["runoff"]["inputs"]["case_grid_name"],
         rmax=config["runoff"]["inputs"]["rmax"],
         fold=config["runoff"]["inputs"]["fold"],
@@ -155,24 +137,24 @@ def process_runoff():
 
 
 def process_bgcrivernutrients():
-    config, ocn_grid, ocn_topo, inputdir = get_config_info()
+    config = utils.Config(config_path)
     bgc.process_river_nutrients(
-        ocn_grid=ocn_grid,
+        ocn_grid=config.ocn_grid,
         global_river_nutrients_filepath=config["bgcrivernutrients"]["inputs"][
             "global_river_nutrients_filepath"
         ],
         ROF2OCN_LIQ_RMAPNAME=config["runoff"]["outputs"]["ROF2OCN_LIQ_RMAPNAME"],
-        river_nutrients_nnsm_filepath=inputdir
+        river_nutrients_nnsm_filepath=config.inputdir
         / "ocnice"
         / config["bgcrivernutrients"]["outputs"]["RIV_FLUX_FILE"],
     )
 
 
 def process_tides():
-    config, ocn_grid, ocn_topo, inputdir = get_config_info()
+    config = utils.Config(config_path)
     tides.process_tides(
-        ocn_topo=ocn_topo,
-        inputdir=inputdir,
+        ocn_topo=config.ocn_topo,
+        inputdir=config.inputdir,
         supergrid_path=config["basic"]["paths"]["hgrid_path"],
         vgrid_path=config["basic"]["paths"]["vgrid_path"],
         tidal_constituents=config["tides"]["inputs"]["tidal_constituents"],
@@ -230,11 +212,11 @@ def main(
 
 
 def process_chl():
-    config, ocn_grid, ocn_topo, inputdir = get_config_info()
+    config = utils.Config(config_path)
     chl.process_chl(
-        ocn_grid=ocn_grid,
-        ocn_topo=ocn_topo,
-        inputdir=inputdir,
+        ocn_grid=config.ocn_grid,
+        ocn_topo=config.ocn_topo,
+        inputdir=config.inputdir,
         chl_processed_filepath=config["chl"]["inputs"]["chl_processed_filepath"],
         output_filepath=config["chl"]["outputs"]["CHL_FILE"],
     )
