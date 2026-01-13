@@ -41,7 +41,7 @@ class MOM6_OUTPUT(ForcingProduct):
     eta_var_name = "SSH"
     time_units = "days since 1850-01-01"
     calendar = "noleap"
-    depth_coord = ["z_t"]
+    depth_coord = ["z_t","z_t_150m"]
     delimiter = "."
     tracer_var_names = {"temp": "TEMP", "salt": "SALT"}
     marbl_var_names = {
