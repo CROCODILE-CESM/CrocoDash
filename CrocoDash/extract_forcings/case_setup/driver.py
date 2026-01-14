@@ -203,9 +203,21 @@ def parse_args():
     parser.add_argument("--chl", action="store_true")
 
     # Conditions sub-controls
-    parser.add_argument("--no-get", action="store_true")
-    parser.add_argument("--no-regrid", action="store_true")
-    parser.add_argument("--no-merge", action="store_true")
+    parser.add_argument(
+        "--no-get",
+        action="store_true",
+        help="Subargument to conditions that does not get the raw_data",
+    )
+    parser.add_argument(
+        "--no-regrid",
+        action="store_true",
+        help="Subargument to conditions that does not regrid the raw_data",
+    )
+    parser.add_argument(
+        "--no-merge",
+        action="store_true",
+        help="Subargument to conditions that does not merge the regridded_data",
+    )
 
     parser.add_argument(
         "--skip",
@@ -219,6 +231,10 @@ def parse_args():
         action="store_true",
         help="Run import/config test only",
     )
+
+    if len(sys.argv) == 1:
+        parser.print_help()
+        sys.exit(0)
 
     return parser.parse_args()
 
