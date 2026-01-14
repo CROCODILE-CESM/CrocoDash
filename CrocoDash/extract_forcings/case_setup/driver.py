@@ -121,7 +121,7 @@ def process_runoff():
     rof.generate_rof_ocn_map(
         rof_grid_name=config["runoff"]["inputs"]["rof_grid_name"],
         rof_esmf_mesh_filepath=config["runoff"]["inputs"]["rof_esmf_mesh_filepath"],
-        ocn_mesh_filepath = config["runoff"]["inputs"]["case_esmf_mesh_path"],
+        ocn_mesh_filepath=config["runoff"]["inputs"]["case_esmf_mesh_path"],
         inputdir=config.inputdir,
         grid_name=config["runoff"]["inputs"]["case_grid_name"],
         rmax=config["runoff"]["inputs"]["rmax"],

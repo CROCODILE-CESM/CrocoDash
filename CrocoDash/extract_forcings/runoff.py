@@ -9,7 +9,7 @@ def generate_rof_ocn_map(
     grid_name,
     rmax,
     fold,
- ):
+):
     """Generate runoff to ocean mapping files if runoff is active in the compset."""
 
     assert rof_grid_name is not None, "Couldn't determine runoff grid name."

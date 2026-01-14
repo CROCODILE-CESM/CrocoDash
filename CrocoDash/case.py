@@ -356,7 +356,9 @@ class Case:
         if not self.caseroot.parent.exists():
             self.caseroot.parent.mkdir(parents=True, exist_ok=False)
 
-        self.cc = CaseCreator(self.cime, allow_xml_override=self.override, add_grids_to_ccs_config = True)
+        self.cc = CaseCreator(
+            self.cime, allow_xml_override=self.override, add_grids_to_ccs_config=True
+        )
 
         try:
             self.cc.create_case(do_exec=True)

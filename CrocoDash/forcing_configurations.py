@@ -794,13 +794,8 @@ class RunoffConfigurator(BaseConfigurator):
         InputValueParam(
             "fold", comment="Smoothing fold parameter for runoff mapping generation"
         ),
-        InputFileParam(
-            "rof_esmf_mesh_filepath", comment="Runoff ESMF Mesh File Path"
-        ),
-        InputFileParam(
-            "case_esmf_mesh_path", comment="Ocean ESMF Mesh File Path"
-        )
-
+        InputFileParam("rof_esmf_mesh_filepath", comment="Runoff ESMF Mesh File Path"),
+        InputFileParam("case_esmf_mesh_path", comment="Ocean ESMF Mesh File Path"),
     ]
     output_params = [
         XMLConfigParam(
