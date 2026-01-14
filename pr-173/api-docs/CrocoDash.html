@@ -705,7 +705,7 @@ The <cite>None</cite> option assumes the information is in raw_data_access/confi
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.case.Case.process_forcings">
 <span class="sig-name descname"><span class="pre">process_forcings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">process_initial_condition</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">process_velocity_tracers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.case.Case.process_forcings" title="Link to this definition">#</a></dt>
-<dd><p>Process boundary conditions, initial conditions, and other forcings for a MOM6 case.</p>
+<dd><p>Process boundary conditions, initial conditions, and other forcings for a MOM6 case. It’s a wrapper around extract_forcings/case_setup/driver.py</p>
 <p>This method configures a regional MOM6 case’s ocean state boundaries and initial conditions
 using previously downloaded data setup in configure_forcings. The method expects <cite>configure_forcings()</cite> to be
 called beforehand.</p>
