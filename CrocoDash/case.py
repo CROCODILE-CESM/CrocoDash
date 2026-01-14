@@ -139,7 +139,6 @@ class Case:
         self.compset_lname = compset_lname
         self.machine = machine or self.cime.machine
         self.project = project
-        self._too_much_data = False
 
         # Using visualCaseGen's configuration system, set the configuration variables for the case
         # based on the provided arguments. This includes setting the compset, grid, and launch variables.
@@ -372,7 +371,6 @@ class Case:
         boundaries: list[str] = ["south", "north", "west", "east"],
         product_name: str = "GLORYS",
         function_name: str = "get_glorys_data_script_for_cli",
-        too_much_data: bool = False,
         **kwargs,
     ):
         """
@@ -398,10 +396,6 @@ class Case:
         product_info: str | Path | dict, optional
             The equivalent MOM6 names to Product Names. Example:  xh -> lat time -> valid_time salinity -> salt, as well as any other information required for product parsing
             The `None` option assumes the information is in raw_data_access/config under {product_name}.json. Every other option is copied there.
-        too_much_data : bool, optional
-            If True, configures the large data workflow. In this case, data are not downloaded
-            immediately, but a config file and workflow directory are created
-            for external processing in the forcing directory, inside the input directory.
         kwargs :
             These are the configuration options (please see accepted arguments in the configuration classes)
         Raises
@@ -451,7 +445,6 @@ class Case:
             boundaries=boundaries,
             product_name=product_name,
             function_name=function_name,
-            too_much_data=too_much_data,
         )
         # Call any optional configurators (e.g., tides) if specified
 
@@ -474,7 +467,6 @@ class Case:
         boundaries: list[str] = ["south", "north", "west", "east"],
         product_name: str = "GLORYS",
         function_name: str = "get_glorys_data_script_for_cli",
-        too_much_data: bool = False,
     ):
 
         ProductRegistry.load()
@@ -499,7 +491,6 @@ class Case:
             raise TypeError("boundaries must be a list of strings.")
 
         self.boundaries = boundaries
-        self._too_much_data = too_much_data
         self.date_range = pd.to_datetime(date_range)
 
         # Set Vars for Config
@@ -507,11 +498,7 @@ class Case:
 
         # Write Config Dict for ic & bc forcings
 
-        # Read in template
-        if not self._too_much_data:
-            step = (self.date_range[1] - self.date_range[0]).days + 1
-        else:
-            step = 5
+        step = (self.date_range[1] - self.date_range[0]).days + 1
 
         config = {
             "paths": {
@@ -532,8 +519,6 @@ class Case:
                 "boundary_number_conversion": {},
                 "step": "",
                 "preview": False,
-                "run_initial_condition": True,
-                "run_boundary_conditions": True,
             },
         }
 
@@ -576,15 +561,6 @@ class Case:
         general_config["basic"] = config
         with open(self.extract_forcings_path / "config.json", "w") as f:
             json.dump(general_config, f, indent=4)
-
-        if not self._too_much_data:
-            self.driver.process_conditions(
-                regrid_dataset_piecewise=False, merge_piecewise_dataset=False
-            )
-        else:
-            print(
-                f"Extract Forcings workflow was called, please go to the extract forcings path: {self.extract_forcings_path} and run the driver script there."
-            )
 
     def process_forcings(
         self, process_initial_condition=True, process_velocity_tracers=True, **kwargs
@@ -629,23 +605,13 @@ class Case:
                 "configure_forcings() must be called before process_forcings()."
             )
 
-        if self._too_much_data and (
-            process_velocity_tracers or process_initial_condition
-        ):
-            process_velocity_tracers = False
-            process_initial_condition = False
-            print(
-                f"Large data workflow was called, so boundary & initial conditions will not be processed."
-            )
-            print(
-                f"Please make sure to execute large_data_workflow as described in {self.extract_forcings_path}"
-            )
-
         if process_initial_condition or process_velocity_tracers:
             self.driver.process_conditions(
                 get_dataset_piecewise=False,
                 regrid_dataset_piecewise=True,
                 merge_piecewise_dataset=True,
+                run_initial_condition=process_initial_condition,
+                run_boundary_conditions=process_velocity_tracers,
             )
 
         if self.fcr.is_active("bgc") and not (kwargs.get("process_bgc") == False):

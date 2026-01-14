@@ -56,6 +56,8 @@ def process_conditions(
     get_dataset_piecewise=True,
     regrid_dataset_piecewise=True,
     merge_piecewise_dataset=True,
+    run_initial_condition=True,
+    run_boundary_conditions=True,
 ):
     config = utils.Config(CONFIG_PATH)
 
@@ -74,10 +76,8 @@ def process_conditions(
             boundary_number_conversion=config["basic"]["general"][
                 "boundary_number_conversion"
             ],
-            run_initial_condition=config["basic"]["general"]["run_initial_condition"],
-            run_boundary_conditions=config["basic"]["general"][
-                "run_boundary_conditions"
-            ],
+            run_initial_condition=run_initial_conditions,
+            run_boundary_conditions=run_boundary_conditions,
             preview=config["basic"]["general"]["preview"],
         )
 
@@ -94,8 +94,8 @@ def process_conditions(
             config["basic"]["forcing"]["information"],
             config["basic"]["paths"]["regridded_dataset_path"],
             config["basic"]["general"]["boundary_number_conversion"],
-            config["basic"]["general"]["run_initial_condition"],
-            config["basic"]["general"]["run_boundary_conditions"],
+            run_initial_condition,
+            run_boundary_conditions,
             config["basic"]["paths"]["vgrid_path"],
             config["basic"]["general"]["preview"],
         )
@@ -110,8 +110,8 @@ def process_conditions(
             config["basic"]["dates"]["end"],
             config["basic"]["general"]["boundary_number_conversion"],
             config["basic"]["paths"]["output_path"],
-            config["basic"]["general"]["run_initial_condition"],
-            config["basic"]["general"]["run_boundary_conditions"],
+            run_initial_condition,
+            run_boundary_conditions,
             config["basic"]["general"]["preview"],
         )
 
@@ -184,53 +184,33 @@ def should_run(name, args, cfg):
     return requested and exists and not_skipped
 
 
+def resolve_icbcconditions(args):
+    if args.all:
+        return True, True
+    return args.ic, args.bc
+
+
 def parse_args():
     parser = argparse.ArgumentParser(description="CrocoDash forcing workflow driver")
 
-    # Top-level switches
-    parser.add_argument(
-        "--all",
-        action="store_true",
-        help="Run all configured components",
-    )
+    top = parser.add_argument_group("Top-level actions")
+    top.add_argument("--all", action="store_true", help="Run all components")
+    top.add_argument("--test", action="store_true", help="Run import/config test only")
 
-    parser.add_argument("--conditions", action="store_true")
-    parser.add_argument("--bgcic", action="store_true")
-    parser.add_argument("--bgcironforcing", action="store_true")
-    parser.add_argument("--bgcrivernutrients", action="store_true")
-    parser.add_argument("--runoff", action="store_true")
-    parser.add_argument("--tides", action="store_true")
-    parser.add_argument("--chl", action="store_true")
+    components = parser.add_argument_group("Forcing components")
+    components.add_argument("--ic", action="store_true", help="Run initial conditions")
+    components.add_argument("--bc", action="store_true", help="Run boundary conditions")
+    components.add_argument("--bgcic", action="store_true")
+    components.add_argument("--bgcironforcing", action="store_true")
+    components.add_argument("--bgcrivernutrients", action="store_true")
+    components.add_argument("--runoff", action="store_true")
+    components.add_argument("--tides", action="store_true")
+    components.add_argument("--chl", action="store_true")
 
-    # Conditions sub-controls
-    parser.add_argument(
-        "--no-get",
-        action="store_true",
-        help="Subargument to conditions that does not get the raw_data",
-    )
-    parser.add_argument(
-        "--no-regrid",
-        action="store_true",
-        help="Subargument to conditions that does not regrid the raw_data",
-    )
-    parser.add_argument(
-        "--no-merge",
-        action="store_true",
-        help="Subargument to conditions that does not merge the regridded_data",
-    )
-
-    parser.add_argument(
-        "--skip",
-        nargs="+",
-        metavar="COMPONENT",
-        help="Components to skip when using --all",
-    )
-
-    parser.add_argument(
-        "--test",
-        action="store_true",
-        help="Run import/config test only",
-    )
+    conditions_opts = parser.add_argument_group("Conditions options")
+    conditions_opts.add_argument("--no-get", action="store_true")
+    conditions_opts.add_argument("--no-regrid", action="store_true")
+    conditions_opts.add_argument("--no-merge", action="store_true")
 
     if len(sys.argv) == 1:
         parser.print_help()
@@ -246,12 +226,15 @@ def run_from_cli(args):
         test_driver()
         return
 
+    run_ic, run_bc = resolve_conditions(args)
     # Conditions pipeline is special (comes from "basic")
     if (args.all or args.conditions) and "conditions" not in (args.skip or []):
         process_conditions(
             get_dataset_piecewise=not args.no_get,
             regrid_dataset_piecewise=not args.no_regrid,
             merge_piecewise_dataset=not args.no_merge,
+            run_initial_condition=run_ic,
+            run_boundary_conditions=run_bc,
         )
 
     if should_run("bgcic", args, cfg):
