@@ -71,7 +71,7 @@ def process_bgc_iron_forcing(
 def process_river_nutrients(
     global_river_nutrients_filepath,
     ocn_grid,
-    ROF2OCN_LIQ_RMAPNAME,
+    mapping_file,
     river_nutrients_nnsm_filepath,
 ):
 
@@ -95,7 +95,7 @@ def process_river_nutrients(
         grid_t_points,
         method="bilinear",
         reuse_weights=True,
-        filename=ROF2OCN_LIQ_RMAPNAME,
+        filename=mapping_file,
     )
 
     # Open Dataset & Unit Convert

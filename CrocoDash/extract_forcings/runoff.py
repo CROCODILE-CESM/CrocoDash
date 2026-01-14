@@ -4,12 +4,12 @@ from mom6_bathy import mapping
 def generate_rof_ocn_map(
     rof_grid_name,
     rof_esmf_mesh_filepath,
+    ocn_mesh_filepath,
     inputdir,
     grid_name,
     rmax,
     fold,
-    runoff_esmf_mesh_path,
-):
+ ):
     """Generate runoff to ocean mapping files if runoff is active in the compset."""
 
     assert rof_grid_name is not None, "Couldn't determine runoff grid name."
@@ -29,9 +29,10 @@ def generate_rof_ocn_map(
 
     if not runoff_mapping_file_nnsm.exists():
         print("Creating runoff mapping file(s)...")
+        print(ocn_mesh_filepath)
         mapping.gen_rof_maps(
             rof_mesh_path=rof_esmf_mesh_filepath,
-            ocn_mesh_path=runoff_esmf_mesh_path,
+            ocn_mesh_path=ocn_mesh_filepath,
             output_dir=mapping_dir,
             mapping_file_prefix=mapping_file_prefix,
             rmax=int(rmax),

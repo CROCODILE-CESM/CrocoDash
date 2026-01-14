@@ -780,10 +780,6 @@ class RunoffConfigurator(BaseConfigurator):
     required_for_compsets = {"DROF"}
     allowed_compsets = {"DROF"}
     input_params = [
-        InputFileParam(
-            "runoff_esmf_mesh_filepath",
-            comment="ESMF mesh file for runoff mapping",
-        ),
         InputValueParam("case_grid_name", comment="Case grid name"),
         InputValueParam("case_session_id", comment="Case session identifier"),
         InputValueParam("case_compset_lname", comment="Case compset"),
@@ -799,9 +795,12 @@ class RunoffConfigurator(BaseConfigurator):
             "fold", comment="Smoothing fold parameter for runoff mapping generation"
         ),
         InputFileParam(
-            "rof_esmf_mesh_filepath",
-            comment="ESMF mesh file for the runoff grid",
+            "rof_esmf_mesh_filepath", comment="Runoff ESMF Mesh File Path"
         ),
+        InputFileParam(
+            "case_esmf_mesh_path", comment="Ocean ESMF Mesh File Path"
+        )
+
     ]
     output_params = [
         XMLConfigParam(
@@ -814,12 +813,12 @@ class RunoffConfigurator(BaseConfigurator):
 
     def __init__(
         self,
-        runoff_esmf_mesh_filepath,
         case_grid_name,
         case_session_id,
         case_compset_lname,
         case_inputdir,
         case_is_non_local,
+        case_esmf_mesh_path,
         case_cime=None,
         rmax=None,
         fold=None,
@@ -837,12 +836,12 @@ class RunoffConfigurator(BaseConfigurator):
         if case_cime is not None:
 
             super().__init__(
-                runoff_esmf_mesh_filepath=runoff_esmf_mesh_filepath,
                 case_grid_name=case_grid_name,
                 case_session_id=case_session_id,
                 case_inputdir=case_inputdir,
                 rmax=rmax,
                 fold=fold,
+                case_esmf_mesh_path=case_esmf_mesh_path,
                 case_compset_lname=case_compset_lname,
                 case_is_non_local=case_is_non_local,
                 rof_esmf_mesh_filepath=case_cime.get_mesh_path(
@@ -852,13 +851,13 @@ class RunoffConfigurator(BaseConfigurator):
             )
         else:
             super().__init__(
-                runoff_esmf_mesh_filepath=runoff_esmf_mesh_filepath,
                 case_grid_name=case_grid_name,
                 case_session_id=case_session_id,
                 case_inputdir=case_inputdir,
                 rmax=rmax,
                 fold=fold,
                 case_compset_lname=case_compset_lname,
+                case_esmf_mesh_path=case_esmf_mesh_path,
                 case_is_non_local=case_is_non_local,
                 rof_esmf_mesh_filepath=rof_esmf_mesh_filepath,
                 rof_grid_name=rof_grid_name,
@@ -874,7 +873,7 @@ class RunoffConfigurator(BaseConfigurator):
 
         if self.get_input_param("rmax") is None:
             rmax, fold = mapping.get_suggested_smoothing_params(
-                self.get_input_param("runoff_esmf_mesh_filepath")
+                self.get_input_param("rof_esmf_mesh_filepath")
             )
             self.set_input_param("rmax", rmax)
             self.set_input_param("fold", fold)

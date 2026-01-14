@@ -121,11 +121,11 @@ def process_runoff():
     rof.generate_rof_ocn_map(
         rof_grid_name=config["runoff"]["inputs"]["rof_grid_name"],
         rof_esmf_mesh_filepath=config["runoff"]["inputs"]["rof_esmf_mesh_filepath"],
+        ocn_mesh_filepath = config["runoff"]["inputs"]["case_esmf_mesh_path"],
         inputdir=config.inputdir,
         grid_name=config["runoff"]["inputs"]["case_grid_name"],
         rmax=config["runoff"]["inputs"]["rmax"],
         fold=config["runoff"]["inputs"]["fold"],
-        runoff_esmf_mesh_path=config["runoff"]["inputs"]["runoff_esmf_mesh_filepath"],
     )
 
 
@@ -136,7 +136,7 @@ def process_bgcrivernutrients():
         global_river_nutrients_filepath=config["bgcrivernutrients"]["inputs"][
             "global_river_nutrients_filepath"
         ],
-        ROF2OCN_LIQ_RMAPNAME=config["runoff"]["outputs"]["ROF2OCN_LIQ_RMAPNAME"],
+        mapping_file=config["runoff"]["outputs"]["ROF2OCN_LIQ_RMAPNAME"],
         river_nutrients_nnsm_filepath=config.inputdir
         / "ocnice"
         / config["bgcrivernutrients"]["outputs"]["RIV_FLUX_FILE"],
@@ -247,9 +247,9 @@ def run_from_cli(args):
     if should_run("runoff", args, cfg):
         process_runoff()
 
-        # runoff-dependent product
-        if should_run("bgcrivernutrients", args, cfg):
-            process_bgcrivernutrients()
+    # runoff-dependent product
+    if should_run("bgcrivernutrients", args, cfg):
+        process_bgcrivernutrients()
 
     if should_run("tides", args, cfg):
         process_tides()
