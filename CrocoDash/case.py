@@ -566,7 +566,7 @@ class Case:
         self, process_initial_condition=True, process_velocity_tracers=True, **kwargs
     ):
         """
-        Process boundary conditions, initial conditions, and other forcings for a MOM6 case.
+        Process boundary conditions, initial conditions, and other forcings for a MOM6 case. It's a wrapper around extract_forcings/case_setup/driver.py
 
         This method configures a regional MOM6 case's ocean state boundaries and initial conditions
         using previously downloaded data setup in configure_forcings. The method expects `configure_forcings()` to be
@@ -614,19 +614,24 @@ class Case:
                 run_boundary_conditions=process_velocity_tracers,
             )
 
-        if self.fcr.is_active("bgc") and not (kwargs.get("process_bgc") == False):
+        process_bgc = kwargs.get("process_bgc", True)
+        process_tides = kwargs.get("process_tides", True)
+        process_chl = kwargs.get("process_chl", True)
+        process_runoff = kwargs.get("process_runoff", True)
+        process_bgc_river_nutrients = kwargs.get("process_bgc_river_nutrients", True)
+
+        if self.fcr.is_active("bgc") and process_bgc:
             self.driver.process_bgcironforcing()
             self.driver.process_bgcic()
-        if self.fcr.is_active("tides") and not (kwargs.get("process_tides") == False):
+        if self.fcr.is_active("tides") and process_tides:
             self.driver.process_tides()
-        if self.fcr.is_active("chl") and not (kwargs.get("process_chl") == False):
+        if self.fcr.is_active("chl") and process_chl:
             self.driver.process_chl()
-        if self.fcr.is_active("runoff") and not (kwargs.get("process_runoff") == False):
+        if self.fcr.is_active("runoff") and process_runoff:
             self.driver.process_runoff()
-        if self.fcr.is_active("BGCRiverNutrients") and not (
-            kwargs.get("process_bgc_river_nutrients") == False
-        ):
+        if self.fcr.is_active("BGCRiverNutrients") and process_bgc_river_nutrients:
             self.driver.process_bgcrivernutrients()
+
         print(f"Case is ready to be built: {self.caseroot}")
 
     @property
