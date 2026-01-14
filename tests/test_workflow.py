@@ -54,7 +54,6 @@ def run_full_workflow(
     u.to_netcdf(tmp_path / "u.nc")
 
     # Forcing setup
-
     case.configure_forcings(
         date_range=["2020-01-01 00:00:00", "2020-02-01 00:00:00"],
         tidal_constituents=["M2"],
@@ -69,6 +68,7 @@ def run_full_workflow(
         bounds["ic"]["lon_min"],
         bounds["ic"]["lon_max"],
     )
+    (case.inputdir / "extract_forcings" / "raw_data").mkdir(exist_ok=True)
     ds.to_netcdf(case.inputdir / "extract_forcings" / "raw_data" / "ic_unprocessed.nc")
     ds.to_netcdf(
         case.inputdir
