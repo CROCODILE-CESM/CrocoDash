@@ -9,9 +9,7 @@ def test_case_integration_driver(get_CrocoDash_case, skip_if_not_glade):
         boundaries=["north", "south", "east"],
         too_much_data=True,
     )
-    large_data_workflow_path = (
-        case.inputdir / case.forcing_product_name / "extract_forcings"
-    )
+    large_data_workflow_path = case.inputdir / "extract_forcings"
     assert (large_data_workflow_path).exists()
     result = subprocess.run(
         ["python", large_data_workflow_path / "driver.py", "test"],
@@ -33,19 +31,15 @@ def test_case_integration_config(get_CrocoDash_case):
         product_name="GLORYS",
         function_name="get_glorys_data_script_for_cli",
     )
-    large_data_workflow_path = (
-        case.inputdir / case.forcing_product_name / "extract_forcings"
-    )
+    large_data_workflow_path = case.inputdir / "extract_forcings"
     assert (large_data_workflow_path).exists()
     with open(large_data_workflow_path / "config.json", "r") as f:
         config = json.load(f)
     # Top-level keys
-    assert set(config.keys()) == {
+    assert set(config["basic"].keys()) == {
         "paths",
         "file_regex",
         "dates",
         "forcing",
         "general",
     }
-
-    

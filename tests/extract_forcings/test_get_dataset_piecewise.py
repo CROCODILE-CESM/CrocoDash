@@ -37,16 +37,13 @@ def test_get_dataset_piecewise_workflow(tmp_path, get_rect_grid, skip_if_not_gla
             "tracer_y_coord": "latitude",
             "u_var_name": "uo",
             "v_var_name": "vo",
-            "u_y_coord":"latitude",
-            "u_x_coord":"longitude",
-            "v_x_coord":"longitude",
-            "v_y_coord":"latitude",
+            "u_y_coord": "latitude",
+            "u_x_coord": "longitude",
+            "v_x_coord": "longitude",
+            "v_y_coord": "latitude",
             "eta_var_name": "zos",
             "depth_coord": "depth",
-            "tracer_var_names": {
-                "temp": "thetao",
-                "salt": "so"
-            }
+            "tracer_var_names": {"temp": "thetao", "salt": "so"},
         },
         "%Y%m%d",
         "20200130",
@@ -74,16 +71,13 @@ def test_get_dataset_piecewise_parsing(tmp_path, get_rect_grid):
             "tracer_y_coord": "latitude",
             "u_var_name": "uo",
             "v_var_name": "vo",
-            "u_y_coord":"latitude",
-            "u_x_coord":"longitude",
-            "v_x_coord":"longitude",
-            "v_y_coord":"latitude",
+            "u_y_coord": "latitude",
+            "u_x_coord": "longitude",
+            "v_x_coord": "longitude",
+            "v_y_coord": "latitude",
             "eta_var_name": "zos",
             "depth_coord": "depth",
-            "tracer_var_names": {
-                "temp": "thetao",
-                "salt": "so"
-            }
+            "tracer_var_names": {"temp": "thetao", "salt": "so"},
         },
         "%Y%m%d",
         "20200101",

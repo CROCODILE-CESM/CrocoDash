@@ -1,6 +1,6 @@
 from datetime import datetime
 import xarray as xr
-from CrocoDash import utils
+from CrocoDash import logging
 from CrocoDash.extract_forcings.utils import (
     parse_dataset_folder,
     check_date_continuity,
@@ -9,7 +9,7 @@ from pathlib import Path
 from collections import defaultdict
 import shutil
 
-logger = utils.setup_logger(__name__)
+logger = logging.setup_logger(__name__)
 
 
 def merge_piecewise_dataset(
@@ -115,7 +115,7 @@ def merge_piecewise_dataset(
             folder / "init_tracers_filled.nc",
         ]
         for file_path in ic_files_to_copy:
-        # Remove "_filled" from filename
+            # Remove "_filled" from filename
             new_name = file_path.name.replace("_filled", "")
             shutil.copy(file_path, Path(output_folder) / new_name)
             logger.info(f"Saved {new_name} initial condition to {output_folder}")

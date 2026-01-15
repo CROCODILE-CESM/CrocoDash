@@ -1,12 +1,12 @@
 from pathlib import Path
-from CrocoDash import utils
+from CrocoDash import logging
 from CrocoDash.grid import *
 from CrocoDash.raw_data_access.registry import ProductRegistry
 import xarray as xr
 import pandas as pd
 from datetime import datetime, timedelta
 
-logger = utils.setup_logger(__name__)
+logger = logging.setup_logger(__name__)
 
 
 def get_dataset_piecewise(
@@ -70,8 +70,8 @@ def get_dataset_piecewise(
     ## Initialize PFD
     ProductRegistry.load()
     ProductRegistry.validate_function(product_name, function_name)
-    data_access_function = ProductRegistry.get_access_function(product_name,
-        function_name
+    data_access_function = ProductRegistry.get_access_function(
+        product_name, function_name
     )
 
     # Get lat,lon information for each boundary
@@ -149,8 +149,8 @@ def get_dataset_piecewise(
                         lon_max=latlon_info["lon_max"],
                         output_folder=output_dir,
                         output_filename=output_file,
-                        variables = phys_vars + extra_tracers,
-                        **extra_args
+                        variables=phys_vars + extra_tracers,
+                        **extra_args,
                     )
         if run_boundary_conditions:
             for boundary in boundary_number_conversion.keys():
@@ -164,20 +164,20 @@ def get_dataset_piecewise(
                 if not preview:
                     if (Path(output_dir) / output_file).exists():
                         logger.info(
-                        f"OBC file {output_file} already exists. Skipping download."
-                    )
+                            f"OBC file {output_file} already exists. Skipping download."
+                        )
                     else:
                         data_access_function(
-                        dates=[start_date_str, end_date_str],
-                        lat_min=latlon_info["lat_min"],
-                        lat_max=latlon_info["lat_max"],
-                        lon_min=latlon_info["lon_min"],
-                        lon_max=latlon_info["lon_max"],
-                        output_folder=output_dir,
-                        output_filename=output_file,
-                        variables = phys_vars+extra_tracers,
-                        **extra_args
-                    )
+                            dates=[start_date_str, end_date_str],
+                            lat_min=latlon_info["lat_min"],
+                            lat_max=latlon_info["lat_max"],
+                            lon_min=latlon_info["lon_min"],
+                            lon_max=latlon_info["lon_max"],
+                            output_folder=output_dir,
+                            output_filename=output_file,
+                            variables=phys_vars + extra_tracers,
+                            **extra_args,
+                        )
 
         start_date = end_date + timedelta(days=1)
 

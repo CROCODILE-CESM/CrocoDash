@@ -39,53 +39,57 @@ def main(
     # Call get_dataset_piecewise
     if get_dataset_piecewise:
         gdp.get_dataset_piecewise(
-            product_name=config["forcing"]["product_name"],
-            function_name=config["forcing"]["function_name"],
-            product_information=config["forcing"]["information"],
-            date_format=config["dates"]["format"],
-            start_date=config["dates"]["start"],
-            end_date=config["dates"]["end"],
-            hgrid_path=config["paths"]["hgrid_path"],
-            step_days=int(config["general"]["step"]),
-            output_dir=config["paths"]["raw_dataset_path"],
-            boundary_number_conversion=config["general"]["boundary_number_conversion"],
-            run_initial_condition=config["general"]["run_initial_condition"],
-            run_boundary_conditions=config["general"]["run_boundary_conditions"],
-            preview=config["general"]["preview"],
+            product_name=config["basic"]["forcing"]["product_name"],
+            function_name=config["basic"]["forcing"]["function_name"],
+            product_information=config["basic"]["forcing"]["information"],
+            date_format=config["basic"]["dates"]["format"],
+            start_date=config["basic"]["dates"]["start"],
+            end_date=config["basic"]["dates"]["end"],
+            hgrid_path=config["basic"]["paths"]["hgrid_path"],
+            step_days=int(config["basic"]["general"]["step"]),
+            output_dir=config["basic"]["paths"]["raw_dataset_path"],
+            boundary_number_conversion=config["basic"]["general"][
+                "boundary_number_conversion"
+            ],
+            run_initial_condition=config["basic"]["general"]["run_initial_condition"],
+            run_boundary_conditions=config["basic"]["general"][
+                "run_boundary_conditions"
+            ],
+            preview=config["basic"]["general"]["preview"],
         )
 
     # Call regrid_dataset_piecewise
     if regrid_dataset_piecewise:
         rdp.regrid_dataset_piecewise(
-            config["paths"]["raw_dataset_path"],
-            config["file_regex"]["raw_dataset_pattern"],
-            config["dates"]["format"],
-            config["dates"]["start"],
-            config["dates"]["end"],
-            config["paths"]["hgrid_path"],
-            config["paths"]["bathymetry_path"],
-            config["forcing"]["information"],
-            config["paths"]["regridded_dataset_path"],
-            config["general"]["boundary_number_conversion"],
-            config["general"]["run_initial_condition"],
-            config["general"]["run_boundary_conditions"],
-            config["paths"]["vgrid_path"],
-            config["general"]["preview"],
+            config["basic"]["paths"]["raw_dataset_path"],
+            config["basic"]["file_regex"]["raw_dataset_pattern"],
+            config["basic"]["dates"]["format"],
+            config["basic"]["dates"]["start"],
+            config["basic"]["dates"]["end"],
+            config["basic"]["paths"]["hgrid_path"],
+            config["basic"]["paths"]["bathymetry_path"],
+            config["basic"]["forcing"]["information"],
+            config["basic"]["paths"]["regridded_dataset_path"],
+            config["basic"]["general"]["boundary_number_conversion"],
+            config["basic"]["general"]["run_initial_condition"],
+            config["basic"]["general"]["run_boundary_conditions"],
+            config["basic"]["paths"]["vgrid_path"],
+            config["basic"]["general"]["preview"],
         )
 
     # Call merge_dataset_piecewise
     if merge_piecewise_dataset:
         mpd.merge_piecewise_dataset(
-            config["paths"]["regridded_dataset_path"],
-            config["file_regex"]["regridded_dataset_pattern"],
-            config["dates"]["format"],
-            config["dates"]["start"],
-            config["dates"]["end"],
-            config["general"]["boundary_number_conversion"],
-            config["paths"]["output_path"],
-            config["general"]["run_initial_condition"],
-            config["general"]["run_boundary_conditions"],
-            config["general"]["preview"],
+            config["basic"]["paths"]["regridded_dataset_path"],
+            config["basic"]["file_regex"]["regridded_dataset_pattern"],
+            config["basic"]["dates"]["format"],
+            config["basic"]["dates"]["start"],
+            config["basic"]["dates"]["end"],
+            config["basic"]["general"]["boundary_number_conversion"],
+            config["basic"]["paths"]["output_path"],
+            config["basic"]["general"]["run_initial_condition"],
+            config["basic"]["general"]["run_boundary_conditions"],
+            config["basic"]["general"]["preview"],
         )
     return
 
