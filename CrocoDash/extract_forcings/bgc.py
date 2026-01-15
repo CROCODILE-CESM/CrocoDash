@@ -77,9 +77,14 @@ def process_river_nutrients(
 
     # Open Dataset & Create Regridder
     global_river_nutrients = xr.open_dataset(global_river_nutrients_filepath)
+
+    # Convert to degrees east
     global_river_nutrients = global_river_nutrients.assign_coords(
         lon=((global_river_nutrients.lon + 360) % 360)
     )
+    global_river_nutrients["LON"] = (global_river_nutrients["LON"] + 360) % 360
+
+    # Rearrange to same shape as the GLOFAS file (GLOFAS goes 0 -> 360, River Nutrients goes -180 to 180)
     global_river_nutrients = global_river_nutrients.sortby("lon")
     grid_t_points = xr.Dataset()
     grid_t_points["lon"] = ocn_grid.tlon
@@ -118,10 +123,9 @@ def process_river_nutrients(
 
     print("Regridding river nutrients...")
     river_nutrients_remapped = regridder(global_river_nutrients)
-
     # Write out
     print("Writing out river nutrients...")
-    # new time value as cftime
+    # new time value as cftime - Required
     new_time_val = cftime.DatetimeNoLeap(1900, 1, 1, 0, 0, 0)
 
     # select only variables that have 'time' as a dimension
@@ -178,10 +182,12 @@ def process_river_nutrients(
         )
     )
 
-    # Change nx,ny to lon,lat
-    river_nutrients_remapped_cleaned = river_nutrients_remapped_cleaned.rename_dims(
-        {"nx": "lon", "ny": "lat"}
+    # Drop useless vars/broken ones
+    river_nutrients_remapped_cleaned = river_nutrients_remapped_cleaned.drop_vars(
+        ["LAT", "LON", "xc", "xv", "yc", "yv", "area"]
     )
+    river_nutrients_remapped_cleaned["lat"] = grid_t_points["lat"]
+    river_nutrients_remapped_cleaned["lon"] = grid_t_points["lon"]
 
     # set CF-compliant attrs
     river_nutrients_remapped_cleaned["time"].attrs.update(
