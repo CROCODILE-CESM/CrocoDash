@@ -1108,7 +1108,7 @@ segment. No horizontal chunking is done here, so big fat segments
 will process slowly.</p>
 <p>Data should be at daily temporal resolution, iterating upwards
 from the provided startdate. Function ignores the time metadata
-and puts it on Julian calendar.</p>
+and puts it on gregorian calendar.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>Only supports z-star (z*) vertical coordinate.</p>
@@ -1232,7 +1232,7 @@ Web<span class="w"> </span>Address:<span class="w"> </span>https://github.com/js
 
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.rm6.regional_mom6.regional_mom6.segment.regrid_velocity_tracers">
-<span class="sig-name descname"><span class="pre">regrid_velocity_tracers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">infile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">varnames:</span> <span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">arakawa_grid='A'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rotational_method=RotationMethod.EXPAND_GRID</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regridding_method='bilinear'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_units='days'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calendar='julian'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fill_method=&lt;function</span> <span class="pre">fill_missing_data&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.rm6.regional_mom6.regional_mom6.segment.regrid_velocity_tracers" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">regrid_velocity_tracers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">infile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">varnames:</span> <span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">arakawa_grid='A'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rotational_method=RotationMethod.EXPAND_GRID</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regridding_method='bilinear'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_units='days'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calendar='gregorian'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fill_method=&lt;function</span> <span class="pre">fill_missing_data&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.rm6.regional_mom6.regional_mom6.segment.regrid_velocity_tracers" title="Link to this definition">#</a></dt>
 <dd><p>Cut out and interpolate the velocities and tracers.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
