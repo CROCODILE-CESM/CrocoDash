@@ -1,3 +1,5 @@
+"This should only be run explicitly, it's not a unit test"
+
 import pytest
 from CrocoDash.grid import Grid
 from CrocoDash.topo import Topo
@@ -9,16 +11,17 @@ import logging
 import dask
 import shutil
 import json
+import subprocess
+import argparse
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 dask.config.set(num_workers=4)
 
-@pytest.mark.workflow
-def test_full_workflow_with_cirrus(
-    tmp_path,
-    skip_if_not_glade,
-    get_cesm_root_path,
+def full_workflow_with_cirrus(
+    case_path,
+    cesm_root_path,
+    machine = "derecho",
 ):
     """Tests if the full CrocoDash workflow runs successfully."""
 
@@ -32,15 +35,14 @@ def test_full_workflow_with_cirrus(
     vgrid = VGrid.from_file("/glade/campaign/cesm/cesmdata/cseg/inputdata/ocn/mom/croc/testing_data/panama-bgc/ocean_vgrid_panama1_5490e0.nc")
 
     # Find CESM Root
-    cesmroot = get_cesm_root_path
+    cesmroot = cesm_root_path
 
     # Set some defaults
-    caseroot, inputdir = tmp_path / "case", tmp_path / "inputdir"
+    caseroot, inputdir = case_path / "test_workflow_case", case_path / "test_workflow_case_inputdir"
     project_num = "NCGD0011"
     override = True
     compset = "1850_DATM%JRA_SLND_SICE_MOM6_SROF_SGLC_SWAV"
     atm_grid_name = "TL319"
-    machine = "derecho"
 
     # Setup Case
     case = Case(
@@ -57,7 +59,7 @@ def test_full_workflow_with_cirrus(
         atm_grid_name=atm_grid_name,
     )
     case.configure_forcings(
-        date_range=["2000-01-01 00:00:00", "2000-02-01 00:00:00"],
+        date_range=["2000-01-01 00:00:00", "2000-01-06 00:00:00"],
     )
 
     # Slide the raw data into the extract_forcings workflow from inputdata
@@ -68,21 +70,62 @@ def test_full_workflow_with_cirrus(
         if item.is_file():
             shutil.copy2(item, dst_dir / item.name)
     
+    # subprocess.run(
+    #     [ "./xmlchange", "NTASKS=10"],
+    #     cwd=caseroot,
+    #     check=True,
+    # )
 
-    # Open Config File change step to 5 -> what the raw data is at
-    config_path  = case.inputdir/"extract_forcings"/"config.json"
-    with config_path.open("r") as f:
-        config = json.load(f)
-
-    config["basic"]["general"]["step"] = 5
-    # write back to same destination
-    with config_path.open("w") as f:
-        json.dump(config, f, indent=2)
-
-
-    case.process_forcings()
+    # subprocess.run(
+    #     [ "./case.setup", "--reset"],
+    #     cwd=caseroot,
+    #     check=True,
+    # )
     
-    assert True
+    # subprocess.run(
+    #     ["./case.build"],
+    #     cwd=caseroot,
+    #     check=True,
+    # )
+
+    # subprocess.run(
+    #     ["./case.submit", "--no-batch"],
+    #     cwd=caseroot,
+    #     check=True,
+    # )
+    
 
 
 
+if __name__ == "__main__":
+
+    parser = argparse.ArgumentParser(
+        description="Run full CrocoDash workflow with cirrus (EXPLICIT ONLY)"
+    )
+    parser.add_argument(
+        "--case-path",
+        required=True,
+        type=Path,
+        help="Directory where the case and inputdir will be created",
+    )
+    parser.add_argument(
+        "--cesm-root",
+        required=True,
+        type=Path,
+        help="Path to CESM root directory",
+    )
+    parser.add_argument(
+        "--machine",
+        required=True,
+        type=str,
+        help="machine to run case",
+    )
+
+
+    args = parser.parse_args()
+
+    full_workflow_with_cirrus(
+        case_path=args.case_path,
+        cesm_root_path=args.cesm_root,
+        machine = args.machine
+    )

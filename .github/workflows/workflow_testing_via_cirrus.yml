@@ -1,4 +1,4 @@
-name: Default Testing
+name: Workflow testing on Derecho via CIRRUS
 
 on: [push, workflow_dispatch]
 
@@ -11,10 +11,18 @@ env:
   USER: ${{ github.actor }}
 jobs:
   pytest:
-    runs-on: ubuntu-latest
+    runs-on: gha-runner-crocodash
     container:
       image: ghcr.io/crocodile-cesm/crocodash:nightly
     steps:
+      - name: Check /glade access
+        run: |
+          echo "Listing /glade:"
+          ls -ld /glade || echo "/glade not accessible"
+
+          echo
+          echo "Attempting to read:"
+          ls /glade/campaign/collections/gdex/data/d651077/cesmdata/inputdata/ocn/mom/croc | head -n 20
       - uses: actions/checkout@v4
         with:
           submodules: recursive
@@ -42,4 +50,4 @@ jobs:
       - name: Run Pytest
         run: |
           cd $WORKDIR/CrocoDash
-          pytest --ignore=CrocoDash/visualCaseGen -m "not workflow" -vv --capture=no --showlocals --tb=short
+          python tests/test_workflow2.py --case-path $WORKDIR --cesm-root $CESM_ROOT --machine derecho
