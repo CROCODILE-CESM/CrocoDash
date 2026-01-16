@@ -1,0 +1,578 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>CrocoDash.rm6 package &#8212; CrocoDash  documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=eba8b062" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'api-docs/CrocoDash.rm6';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="CrocoDash.rm6.regional_mom6 package" href="CrocoDash.rm6.regional_mom6.html" />
+    <link rel="prev" title="CrocoDash.raw_data_access.datasets package" href="CrocoDash.raw_data_access.datasets.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../_static/crocodile.png" class="logo__image only-light" alt="CrocoDash  documentation - Home"/>
+    <script>document.write(`<img src="../_static/crocodile.png" class="logo__image only-dark" alt="CrocoDash  documentation - Home"/>`);</script>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../cesm_setup.html">CESM Setup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://crocodile-cesm.github.io/CrocoGallery/">Tutorials &amp; Gallery</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../structure.html">Understanding CrocoDash’s Structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../datasets.html">Accessing Raw Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../forcing_configurations.html">Forcing Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../available_compset_alias.html">Available Compset Aliases</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../additional_resources.html">Additional Resources</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../developers/index.html">Developer Information</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../developers/docs.html">Write Documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developers/adding_data_access.html">Adding Data to the Data Access Module</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="modules.html">API Documentation</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2 current active has-children"><a class="reference internal" href="CrocoDash.html">CrocoDash package</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l3 has-children"><a class="reference internal" href="CrocoDash.extract_forcings.html">CrocoDash.extract_forcings package</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.extract_forcings.code.html">CrocoDash.extract_forcings.code package</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="CrocoDash.raw_data_access.html">CrocoDash.raw_data_access package</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html">CrocoDash.raw_data_access.datasets package</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 current active has-children"><a class="current reference internal" href="#">CrocoDash.rm6 package</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html">CrocoDash.rm6.regional_mom6 package</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/CROCODILE-CESM/CrocoDash/discussions/84">Common Errors</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/api-docs/CrocoDash.rm6.rst" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.rst</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>CrocoDash.rm6 package</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#subpackages">Subpackages</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.rm6">Module contents</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="crocodash-rm6-package">
+<h1>CrocoDash.rm6 package<a class="headerlink" href="#crocodash-rm6-package" title="Link to this heading">#</a></h1>
+<section id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Link to this heading">#</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html">CrocoDash.rm6.regional_mom6 package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#module-CrocoDash.rm6.regional_mom6.MOM_parameter_tools">CrocoDash.rm6.regional_mom6.MOM_parameter_tools module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.MOM_parameter_tools.change_MOM_parameter"><code class="docutils literal notranslate"><span class="pre">change_MOM_parameter()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.MOM_parameter_tools.read_MOM_file_as_dict"><code class="docutils literal notranslate"><span class="pre">read_MOM_file_as_dict()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.MOM_parameter_tools.write_MOM_file"><code class="docutils literal notranslate"><span class="pre">write_MOM_file()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#module-CrocoDash.rm6.regional_mom6.config">CrocoDash.rm6.regional_mom6.config module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.config.Config"><code class="docutils literal notranslate"><span class="pre">Config</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.config.Config.load_from_json"><code class="docutils literal notranslate"><span class="pre">Config.load_from_json()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.config.Config.save_to_json"><code class="docutils literal notranslate"><span class="pre">Config.save_to_json()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.config.convert_string_to_value"><code class="docutils literal notranslate"><span class="pre">convert_string_to_value()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.config.convert_value_to_string"><code class="docutils literal notranslate"><span class="pre">convert_value_to_string()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#module-CrocoDash.rm6.regional_mom6.regional_mom6">CrocoDash.rm6.regional_mom6.regional_mom6 module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regional_mom6.experiment"><code class="docutils literal notranslate"><span class="pre">experiment</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regional_mom6.experiment.bathymetry"><code class="docutils literal notranslate"><span class="pre">experiment.bathymetry</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regional_mom6.experiment.bathymetry_path"><code class="docutils literal notranslate"><span class="pre">experiment.bathymetry_path</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regional_mom6.experiment.configure_cpu_layout"><code class="docutils literal notranslate"><span class="pre">experiment.configure_cpu_layout()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regional_mom6.experiment.create_empty"><code class="docutils literal notranslate"><span class="pre">experiment.create_empty()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regional_mom6.experiment.era5_paths"><code class="docutils literal notranslate"><span class="pre">experiment.era5_paths</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regional_mom6.experiment.find_MOM6_rectangular_orientation"><code class="docutils literal notranslate"><span class="pre">experiment.find_MOM6_rectangular_orientation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regional_mom6.experiment.get_glorys"><code class="docutils literal notranslate"><span class="pre">experiment.get_glorys()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regional_mom6.experiment.init_tracers"><code class="docutils literal notranslate"><span class="pre">experiment.init_tracers</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regional_mom6.experiment.init_velocities"><code class="docutils literal notranslate"><span class="pre">experiment.init_velocities</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regional_mom6.experiment.initial_condition_paths"><code class="docutils literal notranslate"><span class="pre">experiment.initial_condition_paths</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regional_mom6.experiment.ocean_state_boundary_paths"><code class="docutils literal notranslate"><span class="pre">experiment.ocean_state_boundary_paths</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regional_mom6.experiment.run_FRE_tools"><code class="docutils literal notranslate"><span class="pre">experiment.run_FRE_tools()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regional_mom6.experiment.setup_bathymetry"><code class="docutils literal notranslate"><span class="pre">experiment.setup_bathymetry()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regional_mom6.experiment.setup_boundary_tides"><code class="docutils literal notranslate"><span class="pre">experiment.setup_boundary_tides()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regional_mom6.experiment.setup_era5"><code class="docutils literal notranslate"><span class="pre">experiment.setup_era5()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regional_mom6.experiment.setup_initial_condition"><code class="docutils literal notranslate"><span class="pre">experiment.setup_initial_condition()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regional_mom6.experiment.setup_ocean_state_boundaries"><code class="docutils literal notranslate"><span class="pre">experiment.setup_ocean_state_boundaries()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regional_mom6.experiment.setup_run_directory"><code class="docutils literal notranslate"><span class="pre">experiment.setup_run_directory()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regional_mom6.experiment.setup_single_boundary"><code class="docutils literal notranslate"><span class="pre">experiment.setup_single_boundary()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regional_mom6.experiment.tides_boundary_paths"><code class="docutils literal notranslate"><span class="pre">experiment.tides_boundary_paths</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regional_mom6.experiment.tidy_bathymetry"><code class="docutils literal notranslate"><span class="pre">experiment.tidy_bathymetry()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regional_mom6.generate_rectangular_hgrid"><code class="docutils literal notranslate"><span class="pre">generate_rectangular_hgrid()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regional_mom6.get_glorys_data"><code class="docutils literal notranslate"><span class="pre">get_glorys_data()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regional_mom6.hyperbolictan_thickness_profile"><code class="docutils literal notranslate"><span class="pre">hyperbolictan_thickness_profile()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regional_mom6.longitude_slicer"><code class="docutils literal notranslate"><span class="pre">longitude_slicer()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regional_mom6.segment"><code class="docutils literal notranslate"><span class="pre">segment</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regional_mom6.segment.encode_tidal_files_and_output"><code class="docutils literal notranslate"><span class="pre">segment.encode_tidal_files_and_output()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regional_mom6.segment.regrid_tides"><code class="docutils literal notranslate"><span class="pre">segment.regrid_tides()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regional_mom6.segment.regrid_velocity_tracers"><code class="docutils literal notranslate"><span class="pre">segment.regrid_velocity_tracers()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#module-CrocoDash.rm6.regional_mom6.regridding">CrocoDash.rm6.regional_mom6.regridding module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regridding.add_or_update_time_dim"><code class="docutils literal notranslate"><span class="pre">add_or_update_time_dim()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regridding.add_secondary_dimension"><code class="docutils literal notranslate"><span class="pre">add_secondary_dimension()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regridding.coords"><code class="docutils literal notranslate"><span class="pre">coords()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regridding.create_regridder"><code class="docutils literal notranslate"><span class="pre">create_regridder()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regridding.fill_missing_data"><code class="docutils literal notranslate"><span class="pre">fill_missing_data()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regridding.generate_dz"><code class="docutils literal notranslate"><span class="pre">generate_dz()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regridding.generate_encoding"><code class="docutils literal notranslate"><span class="pre">generate_encoding()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regridding.generate_layer_thickness"><code class="docutils literal notranslate"><span class="pre">generate_layer_thickness()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regridding.get_boundary_mask"><code class="docutils literal notranslate"><span class="pre">get_boundary_mask()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regridding.get_hgrid_arakawa_c_points"><code class="docutils literal notranslate"><span class="pre">get_hgrid_arakawa_c_points()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regridding.mask_dataset"><code class="docutils literal notranslate"><span class="pre">mask_dataset()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regridding.vertical_coordinate_encoding"><code class="docutils literal notranslate"><span class="pre">vertical_coordinate_encoding()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#module-CrocoDash.rm6.regional_mom6.rotation">CrocoDash.rm6.regional_mom6.rotation module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.rotation.RotationMethod"><code class="docutils literal notranslate"><span class="pre">RotationMethod</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.rotation.RotationMethod.EXPAND_GRID"><code class="docutils literal notranslate"><span class="pre">RotationMethod.EXPAND_GRID</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.rotation.RotationMethod.GIVEN_ANGLE"><code class="docutils literal notranslate"><span class="pre">RotationMethod.GIVEN_ANGLE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.rotation.RotationMethod.NO_ROTATION"><code class="docutils literal notranslate"><span class="pre">RotationMethod.NO_ROTATION</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#id0"><code class="docutils literal notranslate"><span class="pre">RotationMethod.EXPAND_GRID</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#id3"><code class="docutils literal notranslate"><span class="pre">RotationMethod.GIVEN_ANGLE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#id4"><code class="docutils literal notranslate"><span class="pre">RotationMethod.NO_ROTATION</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.rotation.create_expanded_hgrid"><code class="docutils literal notranslate"><span class="pre">create_expanded_hgrid()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.rotation.get_rotation_angle"><code class="docutils literal notranslate"><span class="pre">get_rotation_angle()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.rotation.initialize_grid_rotation_angle"><code class="docutils literal notranslate"><span class="pre">initialize_grid_rotation_angle()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.rotation.initialize_grid_rotation_angles_using_expanded_hgrid"><code class="docutils literal notranslate"><span class="pre">initialize_grid_rotation_angles_using_expanded_hgrid()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.rotation.modulo_around_point"><code class="docutils literal notranslate"><span class="pre">modulo_around_point()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.rotation.mom6_angle_calculation_method"><code class="docutils literal notranslate"><span class="pre">mom6_angle_calculation_method()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#module-CrocoDash.rm6.regional_mom6.utils">CrocoDash.rm6.regional_mom6.utils module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.utils.angle_between"><code class="docutils literal notranslate"><span class="pre">angle_between()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.utils.ap2ep"><code class="docutils literal notranslate"><span class="pre">ap2ep()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.utils.ep2ap"><code class="docutils literal notranslate"><span class="pre">ep2ap()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.utils.find_files_by_pattern"><code class="docutils literal notranslate"><span class="pre">find_files_by_pattern()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.utils.get_edge"><code class="docutils literal notranslate"><span class="pre">get_edge()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.utils.is_rectilinear_hgrid"><code class="docutils literal notranslate"><span class="pre">is_rectilinear_hgrid()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.utils.latlon_to_cartesian"><code class="docutils literal notranslate"><span class="pre">latlon_to_cartesian()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.utils.quadrilateral_area"><code class="docutils literal notranslate"><span class="pre">quadrilateral_area()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.utils.quadrilateral_areas"><code class="docutils literal notranslate"><span class="pre">quadrilateral_areas()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.utils.rotate"><code class="docutils literal notranslate"><span class="pre">rotate()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.utils.rotate_complex"><code class="docutils literal notranslate"><span class="pre">rotate_complex()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.utils.setup_logger"><code class="docutils literal notranslate"><span class="pre">setup_logger()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.utils.try_pint_convert"><code class="docutils literal notranslate"><span class="pre">try_pint_convert()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.utils.vecdot"><code class="docutils literal notranslate"><span class="pre">vecdot()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html#module-CrocoDash.rm6.regional_mom6">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="module-CrocoDash.rm6">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-CrocoDash.rm6" title="Link to this heading">#</a></h2>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="CrocoDash.raw_data_access.datasets.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">CrocoDash.raw_data_access.datasets package</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="CrocoDash.rm6.regional_mom6.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">CrocoDash.rm6.regional_mom6 package</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#subpackages">Subpackages</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.rm6">Module contents</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By CROCODILE
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2024, CROCODILE.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>
