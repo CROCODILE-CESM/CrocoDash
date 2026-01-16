@@ -199,7 +199,7 @@ def test_update_forcing_variables(get_CrocoDash_case):
     case.configured_runoff = True
     case._update_forcing_variables()
 
-    with open(case.caseroot / "user_nl_mom_0001", "r", encoding="utf-8") as file:
+    with open(case.caseroot / "user_nl_mom", "r", encoding="utf-8") as file:
         for line in file:
             if search_string in line:
                 found_user_nl_mom_adjusted_var = True
