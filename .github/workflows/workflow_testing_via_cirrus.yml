@@ -10,7 +10,7 @@ env:
   CIME_OUTPUT_ROOT: /workspace
   USER: ${{ github.actor }}
 jobs:
-  pytest:
+  full_workflow:
     runs-on: gha-runner-crocodash
     container:
       image: ghcr.io/crocodile-cesm/crocodash:nightly
@@ -50,4 +50,4 @@ jobs:
       - name: Run Pytest
         run: |
           cd $WORKDIR/CrocoDash
-          python tests/test_workflow2.py --case-path $WORKDIR --cesm-root $CESM_ROOT --machine derecho
+          python tests/test_workflow2.py --case-path $WORKDIR --cesm-root $CESMROOT --machine derecho
