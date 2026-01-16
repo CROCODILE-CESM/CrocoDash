@@ -32,6 +32,7 @@ Get Started
    :maxdepth: 1
    :caption: Contents:
 
+   cesm_setup
    installation
    Tutorials & Gallery <https://crocodile-cesm.github.io/CrocoGallery/>
    structure
