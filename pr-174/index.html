@@ -41,12 +41,10 @@
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-    <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
-    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'index';</script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="CESM Setup" href="cesm_setup.html" />
+    <link rel="next" title="Installation" href="installation.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -160,9 +158,9 @@
     <div class="bd-toc-item navbar-nav active">
         <p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="cesm_setup.html">CESM Setup</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://crocodile-cesm.github.io/CrocoGallery/">Tutorials &amp; Gallery</a></li>
+<li class="toctree-l1"><a class="reference internal" href="input_params.html">Input Parameters</a></li>
 <li class="toctree-l1"><a class="reference internal" href="structure.html">Understanding CrocoDash’s Structure</a></li>
 <li class="toctree-l1"><a class="reference internal" href="datasets.html">Accessing Raw Data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="forcing_configurations.html">Forcing Configuration</a></li>
@@ -173,7 +171,7 @@
 <li class="toctree-l2"><a class="reference internal" href="developers/adding_data_access.html">Adding Data to the Data Access Module</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="api-docs/modules.html">API Documentation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="api-docs/modules.html">CrocoDash API Docs</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="api-docs/CrocoDash.html">CrocoDash package</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l3 has-children"><a class="reference internal" href="api-docs/CrocoDash.extract_forcings.html">CrocoDash.extract_forcings package</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l4"><a class="reference internal" href="api-docs/CrocoDash.extract_forcings.code.html">CrocoDash.extract_forcings.code package</a></li>
@@ -181,10 +179,6 @@
 </details></li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="api-docs/CrocoDash.raw_data_access.html">CrocoDash.raw_data_access package</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l4"><a class="reference internal" href="api-docs/CrocoDash.raw_data_access.datasets.html">CrocoDash.raw_data_access.datasets package</a></li>
-</ul>
-</details></li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="api-docs/CrocoDash.rm6.html">CrocoDash.rm6 package</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
-<li class="toctree-l4"><a class="reference internal" href="api-docs/CrocoDash.rm6.regional_mom6.html">CrocoDash.rm6.regional_mom6 package</a></li>
 </ul>
 </details></li>
 </ul>
@@ -371,23 +365,23 @@ CrocoDash is part of the CROCODILE project. Please see the <a class="reference e
 <section id="get-started">
 <h2>Get Started<a class="headerlink" href="#get-started" title="Link to this heading">#</a></h2>
 <ol class="arabic simple">
-<li><p>Please see the <a class="reference internal" href="installation.html#installation"><span class="std std-ref">Installation</span></a> page.</p></li>
+<li><p>Please see the <span class="xref std std-ref">installation</span> page.</p></li>
 <li><p>Walk through our <a class="reference external" href="https://crocodile-cesm.github.io/CrocoGallery/">tutorials</a> for an easy introduction</p></li>
 <li><p>Check out our <a class="reference internal" href="#hhttps://crocodile-cesm.github.io/CrocoGallery/notebooks/use_cases/index.html"><span class="xref myst">gallery of demos</span></a> for more use cases and cool features.</p></li>
 </ol>
 <div class="toctree-wrapper compound">
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="cesm_setup.html">CESM Setup</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://crocodile-cesm.github.io/CrocoGallery/">Tutorials &amp; Gallery</a></li>
+<li class="toctree-l1"><a class="reference internal" href="input_params.html">Input Parameters</a></li>
 <li class="toctree-l1"><a class="reference internal" href="structure.html">Understanding CrocoDash’s Structure</a></li>
 <li class="toctree-l1"><a class="reference internal" href="datasets.html">Accessing Raw Data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="forcing_configurations.html">Forcing Configuration</a></li>
 <li class="toctree-l1"><a class="reference internal" href="available_compset_alias.html">Available Compset Aliases</a></li>
 <li class="toctree-l1"><a class="reference internal" href="additional_resources.html">Additional Resources</a></li>
 <li class="toctree-l1"><a class="reference internal" href="developers/index.html">Developer Information</a></li>
-<li class="toctree-l1"><a class="reference internal" href="api-docs/modules.html">API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api-docs/modules.html">CrocoDash API Docs</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/CROCODILE-CESM/CrocoDash/discussions/84">Common Errors</a></li>
 </ul>
 </div>
@@ -407,11 +401,11 @@ CrocoDash is part of the CROCODILE project. Please see the <a class="reference e
                   
 <div class="prev-next-area">
     <a class="right-next"
-       href="cesm_setup.html"
+       href="installation.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">CESM Setup</p>
+        <p class="prev-next-title">Installation</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>

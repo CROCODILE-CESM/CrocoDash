@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>API Documentation &#8212; CrocoDash  documentation</title>
+    <title>CrocoDash API Docs &#8212; CrocoDash  documentation</title>
   
   
   
@@ -41,8 +41,6 @@
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-    <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
-    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'api-docs/modules';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -159,9 +157,9 @@
     <div class="bd-toc-item navbar-nav active">
         <p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="../cesm_setup.html">CESM Setup</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://crocodile-cesm.github.io/CrocoGallery/">Tutorials &amp; Gallery</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../input_params.html">Input Parameters</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../structure.html">Understanding CrocoDash’s Structure</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../datasets.html">Accessing Raw Data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../forcing_configurations.html">Forcing Configuration</a></li>
@@ -172,7 +170,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../developers/adding_data_access.html">Adding Data to the Data Access Module</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 current active has-children"><a class="current reference internal" href="#">API Documentation</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 current active has-children"><a class="current reference internal" href="#">CrocoDash API Docs</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="CrocoDash.html">CrocoDash package</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l3 has-children"><a class="reference internal" href="CrocoDash.extract_forcings.html">CrocoDash.extract_forcings package</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.extract_forcings.code.html">CrocoDash.extract_forcings.code package</a></li>
@@ -180,10 +178,6 @@
 </details></li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="CrocoDash.raw_data_access.html">CrocoDash.raw_data_access package</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html">CrocoDash.raw_data_access.datasets package</a></li>
-</ul>
-</details></li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="CrocoDash.rm6.html">CrocoDash.rm6 package</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
-<li class="toctree-l4"><a class="reference internal" href="CrocoDash.rm6.regional_mom6.html">CrocoDash.rm6.regional_mom6 package</a></li>
 </ul>
 </details></li>
 </ul>
@@ -327,7 +321,7 @@ document.write(`
               
 
 <div id="jb-print-docs-body" class="onlyprint">
-    <h1>API Documentation</h1>
+    <h1>CrocoDash API Docs</h1>
     <!-- Table of contents -->
     <div id="print-main-content">
         <div id="jb-print-toc">
@@ -341,8 +335,8 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="api-documentation">
-<h1>API Documentation<a class="headerlink" href="#api-documentation" title="Link to this heading">#</a></h1>
+  <section id="crocodash-api-docs">
+<h1>CrocoDash API Docs<a class="headerlink" href="#crocodash-api-docs" title="Link to this heading">#</a></h1>
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="CrocoDash.html">CrocoDash package</a><ul>
@@ -358,15 +352,10 @@ document.write(`
 <li class="toctree-l3"><a class="reference internal" href="CrocoDash.raw_data_access.html">CrocoDash.raw_data_access package</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.html#subpackages">Subpackages</a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.html#submodules">Submodules</a></li>
-<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.html#crocodash-raw-data-access-config-module">CrocoDash.raw_data_access.config module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.html#crocodash-raw-data-access-driver-module">CrocoDash.raw_data_access.driver module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.html#module-CrocoDash.raw_data_access.base">CrocoDash.raw_data_access.base module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.html#module-CrocoDash.raw_data_access.registry">CrocoDash.raw_data_access.registry module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.html#module-CrocoDash.raw_data_access.utils">CrocoDash.raw_data_access.utils module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.html#module-CrocoDash.raw_data_access">Module contents</a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="CrocoDash.rm6.html">CrocoDash.rm6 package</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="CrocoDash.rm6.html#subpackages">Subpackages</a></li>
-<li class="toctree-l4"><a class="reference internal" href="CrocoDash.rm6.html#module-CrocoDash.rm6">Module contents</a></li>
 </ul>
 </li>
 </ul>

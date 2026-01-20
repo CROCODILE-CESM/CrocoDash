@@ -156,9 +156,9 @@
     <div class="bd-toc-item navbar-nav active">
         <p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="cesm_setup.html">CESM Setup</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://crocodile-cesm.github.io/CrocoGallery/">Tutorials &amp; Gallery</a></li>
+<li class="toctree-l1"><a class="reference internal" href="input_params.html">Input Parameters</a></li>
 <li class="toctree-l1"><a class="reference internal" href="structure.html">Understanding CrocoDash’s Structure</a></li>
 <li class="toctree-l1"><a class="reference internal" href="datasets.html">Accessing Raw Data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="forcing_configurations.html">Forcing Configuration</a></li>
@@ -169,7 +169,7 @@
 <li class="toctree-l2"><a class="reference internal" href="developers/adding_data_access.html">Adding Data to the Data Access Module</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="api-docs/modules.html">API Documentation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="api-docs/modules.html">CrocoDash API Docs</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="api-docs/CrocoDash.html">CrocoDash package</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l3 has-children"><a class="reference internal" href="api-docs/CrocoDash.extract_forcings.html">CrocoDash.extract_forcings package</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l4"><a class="reference internal" href="api-docs/CrocoDash.extract_forcings.code.html">CrocoDash.extract_forcings.code package</a></li>
@@ -177,10 +177,6 @@
 </details></li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="api-docs/CrocoDash.raw_data_access.html">CrocoDash.raw_data_access package</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l4"><a class="reference internal" href="api-docs/CrocoDash.raw_data_access.datasets.html">CrocoDash.raw_data_access.datasets package</a></li>
-</ul>
-</details></li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="api-docs/CrocoDash.rm6.html">CrocoDash.rm6 package</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
-<li class="toctree-l4"><a class="reference internal" href="api-docs/CrocoDash.rm6.regional_mom6.html">CrocoDash.rm6.regional_mom6 package</a></li>
 </ul>
 </details></li>
 </ul>
@@ -301,14 +297,12 @@ document.write(`
  | <a href="#E"><strong>E</strong></a>
  | <a href="#F"><strong>F</strong></a>
  | <a href="#G"><strong>G</strong></a>
- | <a href="#H"><strong>H</strong></a>
  | <a href="#I"><strong>I</strong></a>
  | <a href="#L"><strong>L</strong></a>
  | <a href="#M"><strong>M</strong></a>
  | <a href="#N"><strong>N</strong></a>
  | <a href="#O"><strong>O</strong></a>
  | <a href="#P"><strong>P</strong></a>
- | <a href="#Q"><strong>Q</strong></a>
  | <a href="#R"><strong>R</strong></a>
  | <a href="#S"><strong>S</strong></a>
  | <a href="#T"><strong>T</strong></a>
@@ -316,14 +310,13 @@ document.write(`
  | <a href="#V"><strong>V</strong></a>
  | <a href="#W"><strong>W</strong></a>
  | <a href="#X"><strong>X</strong></a>
+ | <a href="#Z"><strong>Z</strong></a>
  
 </div>
 <h2 id="A">A</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regridding.add_or_update_time_dim">add_or_update_time_dim() (in module CrocoDash.rm6.regional_mom6.regridding)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regridding.add_secondary_dimension">add_secondary_dimension() (in module CrocoDash.rm6.regional_mom6.regridding)</a>
+      <li><a href="api-docs/CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.base.accessmethod">accessmethod() (in module CrocoDash.raw_data_access.base)</a>
 </li>
       <li><a href="api-docs/CrocoDash.html#CrocoDash.forcing_configurations.BaseConfigurator.allowed_compsets">allowed_compsets (CrocoDash.forcing_configurations.BaseConfigurator attribute)</a>
 
@@ -343,10 +336,6 @@ document.write(`
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.utils.angle_between">angle_between() (in module CrocoDash.rm6.regional_mom6.utils)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.utils.ap2ep">ap2ep() (in module CrocoDash.rm6.regional_mom6.utils)</a>
-</li>
       <li><a href="api-docs/CrocoDash.html#CrocoDash.forcing_configurations.OutputParam.apply">apply() (CrocoDash.forcing_configurations.OutputParam method)</a>
 
       <ul>
@@ -363,16 +352,14 @@ document.write(`
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api-docs/CrocoDash.html#CrocoDash.forcing_configurations.BaseConfigurator">BaseConfigurator (class in CrocoDash.forcing_configurations)</a>
 </li>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regional_mom6.experiment.bathymetry">bathymetry (CrocoDash.rm6.regional_mom6.regional_mom6.experiment property)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regional_mom6.experiment.bathymetry_path">bathymetry_path (CrocoDash.rm6.regional_mom6.regional_mom6.experiment property)</a>
+      <li><a href="api-docs/CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.base.BaseProduct">BaseProduct (class in CrocoDash.raw_data_access.base)</a>
 </li>
       <li><a href="api-docs/CrocoDash.html#CrocoDash.case.Case.bgc_in_compset">bgc_in_compset (CrocoDash.case.Case property)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api-docs/CrocoDash.html#CrocoDash.forcing_configurations.BGCConfigurator">BGCConfigurator (class in CrocoDash.forcing_configurations)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api-docs/CrocoDash.html#CrocoDash.forcing_configurations.BGCICConfigurator">BGCICConfigurator (class in CrocoDash.forcing_configurations)</a>
 </li>
       <li><a href="api-docs/CrocoDash.html#CrocoDash.forcing_configurations.BGCIronForcingConfigurator">BGCIronForcingConfigurator (class in CrocoDash.forcing_configurations)</a>
@@ -380,18 +367,26 @@ document.write(`
       <li><a href="api-docs/CrocoDash.html#CrocoDash.forcing_configurations.BGCRiverNutrientsConfigurator">BGCRiverNutrientsConfigurator (class in CrocoDash.forcing_configurations)</a>
 </li>
       <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.glorys.GLORYS.boundary_fill_method">boundary_fill_method (CrocoDash.raw_data_access.datasets.glorys.GLORYS attribute)</a>
+
+      <ul>
+        <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT.boundary_fill_method">(CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT attribute)</a>
 </li>
+      </ul></li>
   </ul></td>
 </tr></table>
 
 <h2 id="C">C</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT.calendar">calendar (CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT attribute)</a>
+</li>
+      <li><a href="api-docs/CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.registry.ProductRegistry.call">call() (CrocoDash.raw_data_access.registry.ProductRegistry class method)</a>
+</li>
       <li><a href="api-docs/CrocoDash.extract_forcings.code.html#CrocoDash.extract_forcings.code.regrid_dataset_piecewise.capture_fill_metadata">capture_fill_metadata() (in module CrocoDash.extract_forcings.code.regrid_dataset_piecewise)</a>
 </li>
       <li><a href="api-docs/CrocoDash.html#CrocoDash.case.Case">Case (class in CrocoDash.case)</a>
 </li>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.MOM_parameter_tools.change_MOM_parameter">change_MOM_parameter() (in module CrocoDash.rm6.regional_mom6.MOM_parameter_tools)</a>
+      <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.empty_products.CESMInputData">CESMInputData (class in CrocoDash.raw_data_access.datasets.empty_products)</a>
 </li>
       <li><a href="api-docs/CrocoDash.extract_forcings.html#CrocoDash.extract_forcings.utils.check_date_continuity">check_date_continuity() (in module CrocoDash.extract_forcings.utils)</a>
 </li>
@@ -404,8 +399,6 @@ document.write(`
       <li><a href="api-docs/CrocoDash.html#CrocoDash.case.Case.cice_in_compset">cice_in_compset (CrocoDash.case.Case property)</a>
 </li>
       <li><a href="api-docs/CrocoDash.html#CrocoDash.forcing_configurations.CICEConfigurator">CICEConfigurator (class in CrocoDash.forcing_configurations)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.config.Config">Config (class in CrocoDash.rm6.regional_mom6.config)</a>
 </li>
       <li><a href="api-docs/CrocoDash.html#CrocoDash.forcing_configurations.BaseConfigurator.configure">configure() (CrocoDash.forcing_configurations.BaseConfigurator method)</a>
 
@@ -427,27 +420,11 @@ document.write(`
         <li><a href="api-docs/CrocoDash.html#CrocoDash.forcing_configurations.TidesConfigurator.configure">(CrocoDash.forcing_configurations.TidesConfigurator method)</a>
 </li>
       </ul></li>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regional_mom6.experiment.configure_cpu_layout">configure_cpu_layout() (CrocoDash.rm6.regional_mom6.regional_mom6.experiment method)</a>
-</li>
       <li><a href="api-docs/CrocoDash.html#CrocoDash.case.Case.configure_forcings">configure_forcings() (CrocoDash.case.Case method)</a>
 </li>
       <li><a href="api-docs/CrocoDash.html#CrocoDash.case.Case.configure_initial_and_boundary_conditions">configure_initial_and_boundary_conditions() (CrocoDash.case.Case method)</a>
 </li>
       <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.utils.convert_lons_to_180_range">convert_lons_to_180_range() (in module CrocoDash.raw_data_access.datasets.utils)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.config.convert_string_to_value">convert_string_to_value() (in module CrocoDash.rm6.regional_mom6.config)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.config.convert_value_to_string">convert_value_to_string() (in module CrocoDash.rm6.regional_mom6.config)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regridding.coords">coords() (in module CrocoDash.rm6.regional_mom6.regridding)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regional_mom6.experiment.create_empty">create_empty() (CrocoDash.rm6.regional_mom6.regional_mom6.experiment class method)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.rotation.create_expanded_hgrid">create_expanded_hgrid() (in module CrocoDash.rm6.regional_mom6.rotation)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.tests.html#CrocoDash.rm6.tests.test_config_class.create_expt">create_expt() (in module CrocoDash.rm6.tests.test_config_class)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regridding.create_regridder">create_regridder() (in module CrocoDash.rm6.regional_mom6.regridding)</a>
 </li>
       <li>
     CrocoDash
@@ -505,6 +482,8 @@ document.write(`
         <li><a href="api-docs/CrocoDash.extract_forcings.html#module-CrocoDash.extract_forcings.driver">module</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     CrocoDash.extract_forcings.utils
 
@@ -533,13 +512,18 @@ document.write(`
         <li><a href="api-docs/CrocoDash.html#module-CrocoDash.logging">module</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     CrocoDash.raw_data_access
 
       <ul>
         <li><a href="api-docs/CrocoDash.raw_data_access.html#module-CrocoDash.raw_data_access">module</a>
+</li>
+      </ul></li>
+      <li>
+    CrocoDash.raw_data_access.base
+
+      <ul>
+        <li><a href="api-docs/CrocoDash.raw_data_access.html#module-CrocoDash.raw_data_access.base">module</a>
 </li>
       </ul></li>
       <li>
@@ -550,10 +534,38 @@ document.write(`
 </li>
       </ul></li>
       <li>
+    CrocoDash.raw_data_access.datasets.empty_products
+
+      <ul>
+        <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#module-CrocoDash.raw_data_access.datasets.empty_products">module</a>
+</li>
+      </ul></li>
+      <li>
+    CrocoDash.raw_data_access.datasets.gebco
+
+      <ul>
+        <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#module-CrocoDash.raw_data_access.datasets.gebco">module</a>
+</li>
+      </ul></li>
+      <li>
+    CrocoDash.raw_data_access.datasets.glofas
+
+      <ul>
+        <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#module-CrocoDash.raw_data_access.datasets.glofas">module</a>
+</li>
+      </ul></li>
+      <li>
     CrocoDash.raw_data_access.datasets.glorys
 
       <ul>
         <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#module-CrocoDash.raw_data_access.datasets.glorys">module</a>
+</li>
+      </ul></li>
+      <li>
+    CrocoDash.raw_data_access.datasets.mom6_output
+
+      <ul>
+        <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#module-CrocoDash.raw_data_access.datasets.mom6_output">module</a>
 </li>
       </ul></li>
       <li>
@@ -571,136 +583,17 @@ document.write(`
 </li>
       </ul></li>
       <li>
+    CrocoDash.raw_data_access.registry
+
+      <ul>
+        <li><a href="api-docs/CrocoDash.raw_data_access.html#module-CrocoDash.raw_data_access.registry">module</a>
+</li>
+      </ul></li>
+      <li>
     CrocoDash.raw_data_access.utils
 
       <ul>
         <li><a href="api-docs/CrocoDash.raw_data_access.html#module-CrocoDash.raw_data_access.utils">module</a>
-</li>
-      </ul></li>
-      <li>
-    CrocoDash.rm6
-
-      <ul>
-        <li><a href="api-docs/CrocoDash.rm6.html#module-CrocoDash.rm6">module</a>
-</li>
-      </ul></li>
-      <li>
-    CrocoDash.rm6.regional_mom6
-
-      <ul>
-        <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#module-CrocoDash.rm6.regional_mom6">module</a>
-</li>
-      </ul></li>
-      <li>
-    CrocoDash.rm6.regional_mom6.config
-
-      <ul>
-        <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#module-CrocoDash.rm6.regional_mom6.config">module</a>
-</li>
-      </ul></li>
-      <li>
-    CrocoDash.rm6.regional_mom6.MOM_parameter_tools
-
-      <ul>
-        <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#module-CrocoDash.rm6.regional_mom6.MOM_parameter_tools">module</a>
-</li>
-      </ul></li>
-      <li>
-    CrocoDash.rm6.regional_mom6.regional_mom6
-
-      <ul>
-        <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#module-CrocoDash.rm6.regional_mom6.regional_mom6">module</a>
-</li>
-      </ul></li>
-      <li>
-    CrocoDash.rm6.regional_mom6.regridding
-
-      <ul>
-        <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#module-CrocoDash.rm6.regional_mom6.regridding">module</a>
-</li>
-      </ul></li>
-      <li>
-    CrocoDash.rm6.regional_mom6.rotation
-
-      <ul>
-        <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#module-CrocoDash.rm6.regional_mom6.rotation">module</a>
-</li>
-      </ul></li>
-      <li>
-    CrocoDash.rm6.regional_mom6.utils
-
-      <ul>
-        <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#module-CrocoDash.rm6.regional_mom6.utils">module</a>
-</li>
-      </ul></li>
-      <li>
-    CrocoDash.rm6.tests
-
-      <ul>
-        <li><a href="api-docs/CrocoDash.rm6.tests.html#module-CrocoDash.rm6.tests">module</a>
-</li>
-      </ul></li>
-      <li>
-    CrocoDash.rm6.tests.conftest
-
-      <ul>
-        <li><a href="api-docs/CrocoDash.rm6.tests.html#module-CrocoDash.rm6.tests.conftest">module</a>
-</li>
-      </ul></li>
-      <li>
-    CrocoDash.rm6.tests.test_config_class
-
-      <ul>
-        <li><a href="api-docs/CrocoDash.rm6.tests.html#module-CrocoDash.rm6.tests.test_config_class">module</a>
-</li>
-      </ul></li>
-      <li>
-    CrocoDash.rm6.tests.test_expt_class
-
-      <ul>
-        <li><a href="api-docs/CrocoDash.rm6.tests.html#module-CrocoDash.rm6.tests.test_expt_class">module</a>
-</li>
-      </ul></li>
-      <li>
-    CrocoDash.rm6.tests.test_grid_generation
-
-      <ul>
-        <li><a href="api-docs/CrocoDash.rm6.tests.html#module-CrocoDash.rm6.tests.test_grid_generation">module</a>
-</li>
-      </ul></li>
-      <li>
-    CrocoDash.rm6.tests.test_parameter
-
-      <ul>
-        <li><a href="api-docs/CrocoDash.rm6.tests.html#module-CrocoDash.rm6.tests.test_parameter">module</a>
-</li>
-      </ul></li>
-      <li>
-    CrocoDash.rm6.tests.test_regridding
-
-      <ul>
-        <li><a href="api-docs/CrocoDash.rm6.tests.html#module-CrocoDash.rm6.tests.test_regridding">module</a>
-</li>
-      </ul></li>
-      <li>
-    CrocoDash.rm6.tests.test_rotation
-
-      <ul>
-        <li><a href="api-docs/CrocoDash.rm6.tests.html#module-CrocoDash.rm6.tests.test_rotation">module</a>
-</li>
-      </ul></li>
-      <li>
-    CrocoDash.rm6.tests.test_tides
-
-      <ul>
-        <li><a href="api-docs/CrocoDash.rm6.tests.html#module-CrocoDash.rm6.tests.test_tides">module</a>
-</li>
-      </ul></li>
-      <li>
-    CrocoDash.rm6.tests.test_utils
-
-      <ul>
-        <li><a href="api-docs/CrocoDash.rm6.tests.html#module-CrocoDash.rm6.tests.test_utils">module</a>
 </li>
       </ul></li>
       <li>
@@ -730,11 +623,29 @@ document.write(`
 <h2 id="D">D</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.glorys.GLORYS.depth_coord">depth_coord (CrocoDash.raw_data_access.datasets.glorys.GLORYS attribute)</a>
+      <li><a href="api-docs/CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.base.DatedBaseProduct">DatedBaseProduct (class in CrocoDash.raw_data_access.base)</a>
 </li>
-      <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.glorys.GLORYS.description">description (CrocoDash.raw_data_access.datasets.glorys.GLORYS attribute)</a>
+      <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT.delimiter">delimiter (CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT attribute)</a>
+</li>
+      <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.glorys.GLORYS.depth_coord">depth_coord (CrocoDash.raw_data_access.datasets.glorys.GLORYS attribute)</a>
 
       <ul>
+        <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT.depth_coord">(CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.empty_products.CESMInputData.description">description (CrocoDash.raw_data_access.datasets.empty_products.CESMInputData attribute)</a>
+
+      <ul>
+        <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.empty_products.TPXO.description">(CrocoDash.raw_data_access.datasets.empty_products.TPXO attribute)</a>
+</li>
+        <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.gebco.GEBCO.description">(CrocoDash.raw_data_access.datasets.gebco.GEBCO attribute)</a>
+</li>
+        <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.glofas.GLOFAS.description">(CrocoDash.raw_data_access.datasets.glofas.GLOFAS attribute)</a>
+</li>
+        <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.glorys.GLORYS.description">(CrocoDash.raw_data_access.datasets.glorys.GLORYS attribute)</a>
+</li>
+        <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT.description">(CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT attribute)</a>
+</li>
         <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.seawifs.SeaWIFS.description">(CrocoDash.raw_data_access.datasets.seawifs.SeaWIFS attribute)</a>
 </li>
       </ul></li>
@@ -746,9 +657,7 @@ document.write(`
         <li><a href="api-docs/CrocoDash.html#CrocoDash.forcing_configurations.ForcingConfigRegistry.deserialize">(CrocoDash.forcing_configurations.ForcingConfigRegistry class method)</a>
 </li>
       </ul></li>
-      <li><a href="api-docs/CrocoDash.rm6.tests.html#CrocoDash.rm6.tests.conftest.dummy_bathymetry_data">dummy_bathymetry_data() (in module CrocoDash.rm6.tests.conftest)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.tests.html#CrocoDash.rm6.tests.test_tides.dummy_tidal_data">dummy_tidal_data() (in module CrocoDash.rm6.tests.test_tides)</a>
+      <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.mom6_output.drop_extra_cftime_vars">drop_extra_cftime_vars() (in module CrocoDash.raw_data_access.datasets.mom6_output)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -756,20 +665,14 @@ document.write(`
 <h2 id="E">E</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regional_mom6.segment.encode_tidal_files_and_output">encode_tidal_files_and_output() (CrocoDash.rm6.regional_mom6.regional_mom6.segment method)</a>
+      <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.glorys.GLORYS.eta_var_name">eta_var_name (CrocoDash.raw_data_access.datasets.glorys.GLORYS attribute)</a>
+
+      <ul>
+        <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT.eta_var_name">(CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT attribute)</a>
 </li>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.utils.ep2ap">ep2ap() (in module CrocoDash.rm6.regional_mom6.utils)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regional_mom6.experiment.era5_paths">era5_paths (CrocoDash.rm6.regional_mom6.regional_mom6.experiment property)</a>
-</li>
+      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.glorys.GLORYS.eta_var_name">eta_var_name (CrocoDash.raw_data_access.datasets.glorys.GLORYS attribute)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.rotation.RotationMethod.EXPAND_GRID">EXPAND_GRID (CrocoDash.rm6.regional_mom6.rotation.RotationMethod attribute)</a>, <a href="api-docs/CrocoDash.rm6.regional_mom6.html#id0">[1]</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regional_mom6.experiment">experiment (class in CrocoDash.rm6.regional_mom6.regional_mom6)</a>
-</li>
       <li><a href="api-docs/CrocoDash.html#CrocoDash.case.Case.expt">expt (CrocoDash.case.Case property)</a>
 </li>
   </ul></td>
@@ -778,27 +681,21 @@ document.write(`
 <h2 id="F">F</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regridding.fill_missing_data">fill_missing_data() (in module CrocoDash.rm6.regional_mom6.regridding)</a>
-</li>
       <li><a href="api-docs/CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.utils.fill_template">fill_template() (in module CrocoDash.raw_data_access.utils)</a>
 </li>
       <li><a href="api-docs/CrocoDash.extract_forcings.code.html#CrocoDash.extract_forcings.code.regrid_dataset_piecewise.final_cleanliness_fill">final_cleanliness_fill() (in module CrocoDash.extract_forcings.code.regrid_dataset_piecewise)</a>
 </li>
       <li><a href="api-docs/CrocoDash.html#CrocoDash.forcing_configurations.ForcingConfigRegistry.find_active_configurators">find_active_configurators() (CrocoDash.forcing_configurations.ForcingConfigRegistry method)</a>
 </li>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.utils.find_files_by_pattern">find_files_by_pattern() (in module CrocoDash.rm6.regional_mom6.utils)</a>
-</li>
       <li><a href="api-docs/CrocoDash.html#CrocoDash.case.Case.find_MOM6_rectangular_orientation">find_MOM6_rectangular_orientation() (CrocoDash.case.Case method)</a>
-
-      <ul>
-        <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regional_mom6.experiment.find_MOM6_rectangular_orientation">(CrocoDash.rm6.regional_mom6.regional_mom6.experiment method)</a>
 </li>
-      </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api-docs/CrocoDash.html#CrocoDash.forcing_configurations.ForcingConfigRegistry.find_required_configurators">find_required_configurators() (CrocoDash.forcing_configurations.ForcingConfigRegistry class method)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api-docs/CrocoDash.html#CrocoDash.forcing_configurations.ForcingConfigRegistry.find_valid_configurators">find_valid_configurators() (CrocoDash.forcing_configurations.ForcingConfigRegistry class method)</a>
+</li>
+      <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.mom6_output.first_value">first_value() (in module CrocoDash.raw_data_access.datasets.mom6_output)</a>
 </li>
       <li><a href="api-docs/CrocoDash.html#CrocoDash.forcing_configurations.BaseConfigurator.forbidden_compsets">forbidden_compsets (CrocoDash.forcing_configurations.BaseConfigurator attribute)</a>
 
@@ -808,87 +705,65 @@ document.write(`
       </ul></li>
       <li><a href="api-docs/CrocoDash.html#CrocoDash.forcing_configurations.ForcingConfigRegistry">ForcingConfigRegistry (class in CrocoDash.forcing_configurations)</a>
 </li>
+      <li><a href="api-docs/CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.base.ForcingProduct">ForcingProduct (class in CrocoDash.raw_data_access.base)</a>
+</li>
   </ul></td>
 </tr></table>
 
 <h2 id="G">G</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regridding.generate_dz">generate_dz() (in module CrocoDash.rm6.regional_mom6.regridding)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regridding.generate_encoding">generate_encoding() (in module CrocoDash.rm6.regional_mom6.regridding)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regridding.generate_layer_thickness">generate_layer_thickness() (in module CrocoDash.rm6.regional_mom6.regridding)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regional_mom6.generate_rectangular_hgrid">generate_rectangular_hgrid() (in module CrocoDash.rm6.regional_mom6.regional_mom6)</a>
+      <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.gebco.GEBCO">GEBCO (class in CrocoDash.raw_data_access.datasets.gebco)</a>
 </li>
       <li><a href="api-docs/CrocoDash.html#CrocoDash.case.Case.generate_rof_ocn_map">generate_rof_ocn_map() (CrocoDash.case.Case method)</a>
 </li>
-      <li><a href="api-docs/CrocoDash.rm6.tests.html#CrocoDash.rm6.tests.conftest.generate_silly_coords">generate_silly_coords() (in module CrocoDash.rm6.tests.conftest)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.tests.html#CrocoDash.rm6.tests.conftest.generate_silly_ic_dataset">generate_silly_ic_dataset() (in module CrocoDash.rm6.tests.conftest)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.tests.html#CrocoDash.rm6.tests.conftest.generate_silly_vt_dataset">generate_silly_vt_dataset() (in module CrocoDash.rm6.tests.conftest)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.tests.html#CrocoDash.rm6.tests.conftest.generate_temperature_arrays">generate_temperature_arrays() (in module CrocoDash.rm6.tests.conftest)</a>
+      <li><a href="api-docs/CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.registry.ProductRegistry.get_access_function">get_access_function() (CrocoDash.raw_data_access.registry.ProductRegistry class method)</a>
 </li>
       <li><a href="api-docs/CrocoDash.html#CrocoDash.forcing_configurations.ForcingConfigRegistry.get_active_configurators">get_active_configurators() (CrocoDash.forcing_configurations.ForcingConfigRegistry method)</a>
 </li>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regridding.get_boundary_mask">get_boundary_mask() (in module CrocoDash.rm6.regional_mom6.regridding)</a>
-</li>
       <li><a href="api-docs/CrocoDash.html#CrocoDash.forcing_configurations.ForcingConfigRegistry.get_ctor_signature">get_ctor_signature() (CrocoDash.forcing_configurations.ForcingConfigRegistry class method)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.tests.html#CrocoDash.rm6.tests.conftest.get_curvilinear_hgrid">get_curvilinear_hgrid() (in module CrocoDash.rm6.tests.conftest)</a>
 </li>
       <li><a href="api-docs/CrocoDash.extract_forcings.code.html#CrocoDash.extract_forcings.code.get_dataset_piecewise.get_dataset_piecewise">get_dataset_piecewise() (in module CrocoDash.extract_forcings.code.get_dataset_piecewise)</a>
 </li>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.utils.get_edge">get_edge() (in module CrocoDash.rm6.regional_mom6.utils)</a>
+      <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.mom6_output.get_date_range_from_filename">get_date_range_from_filename() (in module CrocoDash.raw_data_access.datasets.mom6_output)</a>
+</li>
+      <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.gebco.GEBCO.get_gebco_data_script">get_gebco_data_script() (CrocoDash.raw_data_access.datasets.gebco.GEBCO static method)</a>
+</li>
+      <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.gebco.GEBCO.get_gebco_data_with_python">get_gebco_data_with_python() (CrocoDash.raw_data_access.datasets.gebco.GEBCO static method)</a>
+</li>
+      <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.glofas.GLOFAS.get_global_data_with_python">get_global_data_with_python() (CrocoDash.raw_data_access.datasets.glofas.GLOFAS static method)</a>
 </li>
       <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.seawifs.SeaWIFS.get_global_seawifs_script_for_cli">get_global_seawifs_script_for_cli() (CrocoDash.raw_data_access.datasets.seawifs.SeaWIFS static method)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regional_mom6.experiment.get_glorys">get_glorys() (CrocoDash.rm6.regional_mom6.regional_mom6.experiment method)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regional_mom6.get_glorys_data">get_glorys_data() (in module CrocoDash.rm6.regional_mom6.regional_mom6)</a>
-</li>
       <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.glorys.GLORYS.get_glorys_data_from_cds_api">get_glorys_data_from_cds_api() (CrocoDash.raw_data_access.datasets.glorys.GLORYS static method)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.glorys.GLORYS.get_glorys_data_from_rda">get_glorys_data_from_rda() (CrocoDash.raw_data_access.datasets.glorys.GLORYS static method)</a>
 </li>
       <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.glorys.GLORYS.get_glorys_data_script_for_cli">get_glorys_data_script_for_cli() (CrocoDash.raw_data_access.datasets.glorys.GLORYS static method)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regridding.get_hgrid_arakawa_c_points">get_hgrid_arakawa_c_points() (in module CrocoDash.rm6.regional_mom6.regridding)</a>
 </li>
       <li><a href="api-docs/CrocoDash.html#CrocoDash.forcing_configurations.BaseConfigurator.get_input_param">get_input_param() (CrocoDash.forcing_configurations.BaseConfigurator method)</a>
 </li>
       <li><a href="api-docs/CrocoDash.html#CrocoDash.forcing_configurations.BaseConfigurator.get_input_param_object">get_input_param_object() (CrocoDash.forcing_configurations.BaseConfigurator method)</a>
 </li>
+      <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT.get_mom6_data">get_mom6_data() (CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT static method)</a>
+</li>
       <li><a href="api-docs/CrocoDash.html#CrocoDash.forcing_configurations.BaseConfigurator.get_output_param">get_output_param() (CrocoDash.forcing_configurations.BaseConfigurator method)</a>
 </li>
       <li><a href="api-docs/CrocoDash.html#CrocoDash.forcing_configurations.BaseConfigurator.get_output_param_object">get_output_param_object() (CrocoDash.forcing_configurations.BaseConfigurator method)</a>
 </li>
+      <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.glofas.GLOFAS.get_processed_global_glofas_script_for_cli">get_processed_global_glofas_script_for_cli() (CrocoDash.raw_data_access.datasets.glofas.GLOFAS static method)</a>
+</li>
       <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.seawifs.SeaWIFS.get_processed_global_seawifs_script_for_cli">get_processed_global_seawifs_script_for_cli() (CrocoDash.raw_data_access.datasets.seawifs.SeaWIFS static method)</a>
 </li>
-      <li><a href="api-docs/CrocoDash.rm6.tests.html#CrocoDash.rm6.tests.conftest.get_rectilinear_hgrid">get_rectilinear_hgrid() (in module CrocoDash.rm6.tests.conftest)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.rotation.get_rotation_angle">get_rotation_angle() (in module CrocoDash.rm6.regional_mom6.rotation)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.tests.html#CrocoDash.rm6.tests.conftest.get_temperature_dataarrays">get_temperature_dataarrays() (in module CrocoDash.rm6.tests.conftest)</a>
+      <li><a href="api-docs/CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.registry.ProductRegistry.get_product">get_product() (CrocoDash.raw_data_access.registry.ProductRegistry class method)</a>
 </li>
       <li><a href="api-docs/CrocoDash.html#CrocoDash.forcing_configurations.ForcingConfigRegistry.get_user_args">get_user_args() (CrocoDash.forcing_configurations.ForcingConfigRegistry class method)</a>
 </li>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.rotation.RotationMethod.GIVEN_ANGLE">GIVEN_ANGLE (CrocoDash.rm6.regional_mom6.rotation.RotationMethod attribute)</a>, <a href="api-docs/CrocoDash.rm6.regional_mom6.html#id3">[1]</a>
+      <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.glofas.GLOFAS">GLOFAS (class in CrocoDash.raw_data_access.datasets.glofas)</a>
 </li>
       <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.glorys.GLORYS">GLORYS (class in CrocoDash.raw_data_access.datasets.glorys)</a>
-</li>
-  </ul></td>
-</tr></table>
-
-<h2 id="H">H</h2>
-<table style="width: 100%" class="indextable genindextable"><tr>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regional_mom6.hyperbolictan_thickness_profile">hyperbolictan_thickness_profile() (in module CrocoDash.rm6.regional_mom6.regional_mom6)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -897,16 +772,6 @@ document.write(`
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api-docs/CrocoDash.html#CrocoDash.case.Case.init_args_check">init_args_check() (CrocoDash.case.Case class method)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regional_mom6.experiment.init_tracers">init_tracers (CrocoDash.rm6.regional_mom6.regional_mom6.experiment property)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regional_mom6.experiment.init_velocities">init_velocities (CrocoDash.rm6.regional_mom6.regional_mom6.experiment property)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regional_mom6.experiment.initial_condition_paths">initial_condition_paths (CrocoDash.rm6.regional_mom6.regional_mom6.experiment property)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.rotation.initialize_grid_rotation_angle">initialize_grid_rotation_angle() (in module CrocoDash.rm6.regional_mom6.rotation)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.rotation.initialize_grid_rotation_angles_using_expanded_hgrid">initialize_grid_rotation_angles_using_expanded_hgrid() (in module CrocoDash.rm6.regional_mom6.rotation)</a>
 </li>
       <li><a href="api-docs/CrocoDash.html#CrocoDash.forcing_configurations.BaseConfigurator.input_params">input_params (CrocoDash.forcing_configurations.BaseConfigurator attribute)</a>
 
@@ -928,10 +793,10 @@ document.write(`
         <li><a href="api-docs/CrocoDash.html#CrocoDash.forcing_configurations.TidesConfigurator.input_params">(CrocoDash.forcing_configurations.TidesConfigurator attribute)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api-docs/CrocoDash.html#CrocoDash.forcing_configurations.InputFileParam">InputFileParam (class in CrocoDash.forcing_configurations)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api-docs/CrocoDash.html#CrocoDash.forcing_configurations.InputParam">InputParam (class in CrocoDash.forcing_configurations)</a>
 </li>
       <li><a href="api-docs/CrocoDash.html#CrocoDash.forcing_configurations.InputValueParam">InputValueParam (class in CrocoDash.forcing_configurations)</a>
@@ -952,8 +817,6 @@ document.write(`
 </li>
       <li><a href="api-docs/CrocoDash.html#CrocoDash.forcing_configurations.ForcingConfigRegistry.is_active">is_active() (CrocoDash.forcing_configurations.ForcingConfigRegistry method)</a>
 </li>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.utils.is_rectilinear_hgrid">is_rectilinear_hgrid() (in module CrocoDash.rm6.regional_mom6.utils)</a>
-</li>
       <li><a href="api-docs/CrocoDash.html#CrocoDash.forcing_configurations.BaseConfigurator.is_required">is_required() (CrocoDash.forcing_configurations.BaseConfigurator class method)</a>
 </li>
       <li><a href="api-docs/CrocoDash.html#CrocoDash.forcing_configurations.is_serializable">is_serializable() (in module CrocoDash.forcing_configurations)</a>
@@ -964,14 +827,30 @@ document.write(`
 <h2 id="L">L</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.utils.latlon_to_cartesian">latlon_to_cartesian() (in module CrocoDash.rm6.regional_mom6.utils)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.glorys.GLORYS.link">link (CrocoDash.raw_data_access.datasets.glorys.GLORYS attribute)</a>
+      <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.empty_products.CESMInputData.link">link (CrocoDash.raw_data_access.datasets.empty_products.CESMInputData attribute)</a>
 
       <ul>
+        <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.empty_products.TPXO.link">(CrocoDash.raw_data_access.datasets.empty_products.TPXO attribute)</a>
+</li>
+        <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.gebco.GEBCO.link">(CrocoDash.raw_data_access.datasets.gebco.GEBCO attribute)</a>
+</li>
+        <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.glofas.GLOFAS.link">(CrocoDash.raw_data_access.datasets.glofas.GLOFAS attribute)</a>
+</li>
+        <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.glorys.GLORYS.link">(CrocoDash.raw_data_access.datasets.glorys.GLORYS attribute)</a>
+</li>
+        <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT.link">(CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT attribute)</a>
+</li>
         <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.seawifs.SeaWIFS.link">(CrocoDash.raw_data_access.datasets.seawifs.SeaWIFS attribute)</a>
 </li>
       </ul></li>
+      <li><a href="api-docs/CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.registry.ProductRegistry.list_access_methods">list_access_methods() (CrocoDash.raw_data_access.registry.ProductRegistry class method)</a>
+</li>
+      <li><a href="api-docs/CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.registry.ProductRegistry.list_products">list_products() (CrocoDash.raw_data_access.registry.ProductRegistry class method)</a>
+</li>
+      <li><a href="api-docs/CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.registry.ProductRegistry.load">load() (CrocoDash.raw_data_access.registry.ProductRegistry class method)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.load_all_datasets">load_all_datasets() (in module CrocoDash.raw_data_access.datasets)</a>
 </li>
       <li><a href="api-docs/CrocoDash.extract_forcings.html#CrocoDash.extract_forcings.utils.load_config">load_config() (in module CrocoDash.extract_forcings.utils)</a>
@@ -980,18 +859,24 @@ document.write(`
         <li><a href="api-docs/CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.utils.load_config">(in module CrocoDash.raw_data_access.utils)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.config.Config.load_from_json">load_from_json() (CrocoDash.rm6.regional_mom6.config.Config static method)</a>
+      <li><a href="api-docs/CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.registry.ProductRegistry.loaded">loaded (CrocoDash.raw_data_access.registry.ProductRegistry attribute)</a>
 </li>
-      <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.glorys.GLORYS.logger">logger (CrocoDash.raw_data_access.datasets.glorys.GLORYS attribute)</a>
+      <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.empty_products.CESMInputData.logger">logger (CrocoDash.raw_data_access.datasets.empty_products.CESMInputData attribute)</a>
 
       <ul>
+        <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.empty_products.TPXO.logger">(CrocoDash.raw_data_access.datasets.empty_products.TPXO attribute)</a>
+</li>
+        <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.gebco.GEBCO.logger">(CrocoDash.raw_data_access.datasets.gebco.GEBCO attribute)</a>
+</li>
+        <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.glofas.GLOFAS.logger">(CrocoDash.raw_data_access.datasets.glofas.GLOFAS attribute)</a>
+</li>
+        <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.glorys.GLORYS.logger">(CrocoDash.raw_data_access.datasets.glorys.GLORYS attribute)</a>
+</li>
+        <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT.logger">(CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT attribute)</a>
+</li>
         <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.seawifs.SeaWIFS.logger">(CrocoDash.raw_data_access.datasets.seawifs.SeaWIFS attribute)</a>
 </li>
       </ul></li>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regional_mom6.longitude_slicer">longitude_slicer() (in module CrocoDash.rm6.regional_mom6.regional_mom6)</a>
-</li>
   </ul></td>
 </tr></table>
 
@@ -1002,7 +887,7 @@ document.write(`
 </li>
       <li><a href="api-docs/CrocoDash.extract_forcings.html#CrocoDash.extract_forcings.driver.main">main() (in module CrocoDash.extract_forcings.driver)</a>
 </li>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regridding.mask_dataset">mask_dataset() (in module CrocoDash.rm6.regional_mom6.regridding)</a>
+      <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT.marbl_var_names">marbl_var_names (CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT attribute)</a>
 </li>
       <li><a href="api-docs/CrocoDash.extract_forcings.code.html#CrocoDash.extract_forcings.code.merge_piecewise_dataset.merge_piecewise_dataset">merge_piecewise_dataset() (in module CrocoDash.extract_forcings.code.merge_piecewise_dataset)</a>
 </li>
@@ -1036,51 +921,27 @@ document.write(`
 </li>
         <li><a href="api-docs/CrocoDash.raw_data_access.html#module-CrocoDash.raw_data_access">CrocoDash.raw_data_access</a>
 </li>
+        <li><a href="api-docs/CrocoDash.raw_data_access.html#module-CrocoDash.raw_data_access.base">CrocoDash.raw_data_access.base</a>
+</li>
         <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#module-CrocoDash.raw_data_access.datasets">CrocoDash.raw_data_access.datasets</a>
 </li>
+        <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#module-CrocoDash.raw_data_access.datasets.empty_products">CrocoDash.raw_data_access.datasets.empty_products</a>
+</li>
+        <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#module-CrocoDash.raw_data_access.datasets.gebco">CrocoDash.raw_data_access.datasets.gebco</a>
+</li>
+        <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#module-CrocoDash.raw_data_access.datasets.glofas">CrocoDash.raw_data_access.datasets.glofas</a>
+</li>
         <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#module-CrocoDash.raw_data_access.datasets.glorys">CrocoDash.raw_data_access.datasets.glorys</a>
+</li>
+        <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#module-CrocoDash.raw_data_access.datasets.mom6_output">CrocoDash.raw_data_access.datasets.mom6_output</a>
 </li>
         <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#module-CrocoDash.raw_data_access.datasets.seawifs">CrocoDash.raw_data_access.datasets.seawifs</a>
 </li>
         <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#module-CrocoDash.raw_data_access.datasets.utils">CrocoDash.raw_data_access.datasets.utils</a>
 </li>
+        <li><a href="api-docs/CrocoDash.raw_data_access.html#module-CrocoDash.raw_data_access.registry">CrocoDash.raw_data_access.registry</a>
+</li>
         <li><a href="api-docs/CrocoDash.raw_data_access.html#module-CrocoDash.raw_data_access.utils">CrocoDash.raw_data_access.utils</a>
-</li>
-        <li><a href="api-docs/CrocoDash.rm6.html#module-CrocoDash.rm6">CrocoDash.rm6</a>
-</li>
-        <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#module-CrocoDash.rm6.regional_mom6">CrocoDash.rm6.regional_mom6</a>
-</li>
-        <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#module-CrocoDash.rm6.regional_mom6.config">CrocoDash.rm6.regional_mom6.config</a>
-</li>
-        <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#module-CrocoDash.rm6.regional_mom6.MOM_parameter_tools">CrocoDash.rm6.regional_mom6.MOM_parameter_tools</a>
-</li>
-        <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#module-CrocoDash.rm6.regional_mom6.regional_mom6">CrocoDash.rm6.regional_mom6.regional_mom6</a>
-</li>
-        <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#module-CrocoDash.rm6.regional_mom6.regridding">CrocoDash.rm6.regional_mom6.regridding</a>
-</li>
-        <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#module-CrocoDash.rm6.regional_mom6.rotation">CrocoDash.rm6.regional_mom6.rotation</a>
-</li>
-        <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#module-CrocoDash.rm6.regional_mom6.utils">CrocoDash.rm6.regional_mom6.utils</a>
-</li>
-        <li><a href="api-docs/CrocoDash.rm6.tests.html#module-CrocoDash.rm6.tests">CrocoDash.rm6.tests</a>
-</li>
-        <li><a href="api-docs/CrocoDash.rm6.tests.html#module-CrocoDash.rm6.tests.conftest">CrocoDash.rm6.tests.conftest</a>
-</li>
-        <li><a href="api-docs/CrocoDash.rm6.tests.html#module-CrocoDash.rm6.tests.test_config_class">CrocoDash.rm6.tests.test_config_class</a>
-</li>
-        <li><a href="api-docs/CrocoDash.rm6.tests.html#module-CrocoDash.rm6.tests.test_expt_class">CrocoDash.rm6.tests.test_expt_class</a>
-</li>
-        <li><a href="api-docs/CrocoDash.rm6.tests.html#module-CrocoDash.rm6.tests.test_grid_generation">CrocoDash.rm6.tests.test_grid_generation</a>
-</li>
-        <li><a href="api-docs/CrocoDash.rm6.tests.html#module-CrocoDash.rm6.tests.test_parameter">CrocoDash.rm6.tests.test_parameter</a>
-</li>
-        <li><a href="api-docs/CrocoDash.rm6.tests.html#module-CrocoDash.rm6.tests.test_regridding">CrocoDash.rm6.tests.test_regridding</a>
-</li>
-        <li><a href="api-docs/CrocoDash.rm6.tests.html#module-CrocoDash.rm6.tests.test_rotation">CrocoDash.rm6.tests.test_rotation</a>
-</li>
-        <li><a href="api-docs/CrocoDash.rm6.tests.html#module-CrocoDash.rm6.tests.test_tides">CrocoDash.rm6.tests.test_tides</a>
-</li>
-        <li><a href="api-docs/CrocoDash.rm6.tests.html#module-CrocoDash.rm6.tests.test_utils">CrocoDash.rm6.tests.test_utils</a>
 </li>
         <li><a href="api-docs/CrocoDash.html#module-CrocoDash.topo">CrocoDash.topo</a>
 </li>
@@ -1091,9 +952,7 @@ document.write(`
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.rotation.modulo_around_point">modulo_around_point() (in module CrocoDash.rm6.regional_mom6.rotation)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.rotation.mom6_angle_calculation_method">mom6_angle_calculation_method() (in module CrocoDash.rm6.regional_mom6.rotation)</a>
+      <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT">MOM6_OUTPUT (class in CrocoDash.raw_data_access.datasets.mom6_output)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -1124,19 +983,11 @@ document.write(`
 </li>
       </ul></li>
   </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.rotation.RotationMethod.NO_ROTATION">NO_ROTATION (CrocoDash.rm6.regional_mom6.rotation.RotationMethod attribute)</a>, <a href="api-docs/CrocoDash.rm6.regional_mom6.html#id4">[1]</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.tests.html#CrocoDash.rm6.tests.conftest.number_of_gridpoints">number_of_gridpoints() (in module CrocoDash.rm6.tests.conftest)</a>
-</li>
-  </ul></td>
 </tr></table>
 
 <h2 id="O">O</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regional_mom6.experiment.ocean_state_boundary_paths">ocean_state_boundary_paths (CrocoDash.rm6.regional_mom6.regional_mom6.experiment property)</a>
-</li>
       <li><a href="api-docs/CrocoDash.html#CrocoDash.forcing_configurations.BaseConfigurator.output_params">output_params (CrocoDash.forcing_configurations.BaseConfigurator attribute)</a>
 
       <ul>
@@ -1169,6 +1020,8 @@ document.write(`
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api-docs/CrocoDash.html#CrocoDash.forcing_configurations.Param">Param (class in CrocoDash.forcing_configurations)</a>
 </li>
+      <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.mom6_output.parse_dataset">parse_dataset() (in module CrocoDash.raw_data_access.datasets.mom6_output)</a>
+</li>
       <li><a href="api-docs/CrocoDash.extract_forcings.html#CrocoDash.extract_forcings.utils.parse_dataset_folder">parse_dataset_folder() (in module CrocoDash.extract_forcings.utils)</a>
 </li>
       <li><a href="api-docs/CrocoDash.html#CrocoDash.case.Case.process_bgc_ic">process_bgc_ic() (CrocoDash.case.Case method)</a>
@@ -1177,8 +1030,6 @@ document.write(`
 </li>
       <li><a href="api-docs/CrocoDash.html#CrocoDash.case.Case.process_chl">process_chl() (CrocoDash.case.Case method)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api-docs/CrocoDash.html#CrocoDash.case.Case.process_forcings">process_forcings() (CrocoDash.case.Case method)</a>
 </li>
       <li><a href="api-docs/CrocoDash.html#CrocoDash.case.Case.process_initial_and_boundary_conditions">process_initial_and_boundary_conditions() (CrocoDash.case.Case method)</a>
@@ -1187,23 +1038,31 @@ document.write(`
 </li>
       <li><a href="api-docs/CrocoDash.html#CrocoDash.case.Case.process_tides">process_tides() (CrocoDash.case.Case method)</a>
 </li>
-      <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.glorys.GLORYS.product_name">product_name (CrocoDash.raw_data_access.datasets.glorys.GLORYS attribute)</a>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api-docs/CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.registry.ProductRegistry.product_exists">product_exists() (CrocoDash.raw_data_access.registry.ProductRegistry class method)</a>
+</li>
+      <li><a href="api-docs/CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.registry.ProductRegistry.product_is_of_type">product_is_of_type() (CrocoDash.raw_data_access.registry.ProductRegistry class method)</a>
+</li>
+      <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.empty_products.CESMInputData.product_name">product_name (CrocoDash.raw_data_access.datasets.empty_products.CESMInputData attribute)</a>
 
       <ul>
+        <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.empty_products.TPXO.product_name">(CrocoDash.raw_data_access.datasets.empty_products.TPXO attribute)</a>
+</li>
+        <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.gebco.GEBCO.product_name">(CrocoDash.raw_data_access.datasets.gebco.GEBCO attribute)</a>
+</li>
+        <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.glofas.GLOFAS.product_name">(CrocoDash.raw_data_access.datasets.glofas.GLOFAS attribute)</a>
+</li>
+        <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.glorys.GLORYS.product_name">(CrocoDash.raw_data_access.datasets.glorys.GLORYS attribute)</a>
+</li>
+        <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT.product_name">(CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT attribute)</a>
+</li>
         <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.seawifs.SeaWIFS.product_name">(CrocoDash.raw_data_access.datasets.seawifs.SeaWIFS attribute)</a>
 </li>
       </ul></li>
-  </ul></td>
-</tr></table>
-
-<h2 id="Q">Q</h2>
-<table style="width: 100%" class="indextable genindextable"><tr>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.utils.quadrilateral_area">quadrilateral_area() (in module CrocoDash.rm6.regional_mom6.utils)</a>
+      <li><a href="api-docs/CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.registry.ProductRegistry">ProductRegistry (class in CrocoDash.raw_data_access.registry)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.utils.quadrilateral_areas">quadrilateral_areas() (in module CrocoDash.rm6.regional_mom6.utils)</a>
+      <li><a href="api-docs/CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.registry.ProductRegistry.products">products (CrocoDash.raw_data_access.registry.ProductRegistry attribute)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -1211,11 +1070,11 @@ document.write(`
 <h2 id="R">R</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.MOM_parameter_tools.read_MOM_file_as_dict">read_MOM_file_as_dict() (in module CrocoDash.rm6.regional_mom6.MOM_parameter_tools)</a>
-</li>
       <li><a href="api-docs/CrocoDash.html#CrocoDash.forcing_configurations.ForcingConfigRegistry.register">register() (CrocoDash.forcing_configurations.ForcingConfigRegistry class method)</a>
 
       <ul>
+        <li><a href="api-docs/CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.registry.ProductRegistry.register">(CrocoDash.raw_data_access.registry.ProductRegistry class method)</a>
+</li>
         <li><a href="api-docs/CrocoDash.html#CrocoDash.forcing_configurations.register">(in module CrocoDash.forcing_configurations)</a>
 </li>
       </ul></li>
@@ -1223,10 +1082,14 @@ document.write(`
 </li>
       <li><a href="api-docs/CrocoDash.extract_forcings.code.html#CrocoDash.extract_forcings.code.regrid_dataset_piecewise.regrid_dataset_piecewise">regrid_dataset_piecewise() (in module CrocoDash.extract_forcings.code.regrid_dataset_piecewise)</a>
 </li>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regional_mom6.segment.regrid_tides">regrid_tides() (CrocoDash.rm6.regional_mom6.regional_mom6.segment method)</a>
+      <li><a href="api-docs/CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.base.BaseProduct.required_args">required_args (CrocoDash.raw_data_access.base.BaseProduct attribute)</a>
+
+      <ul>
+        <li><a href="api-docs/CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.base.DatedBaseProduct.required_args">(CrocoDash.raw_data_access.base.DatedBaseProduct attribute)</a>
 </li>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regional_mom6.segment.regrid_velocity_tracers">regrid_velocity_tracers() (CrocoDash.rm6.regional_mom6.regional_mom6.segment method)</a>
+        <li><a href="api-docs/CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.base.ForcingProduct.required_args">(CrocoDash.raw_data_access.base.ForcingProduct attribute)</a>
 </li>
+      </ul></li>
       <li><a href="api-docs/CrocoDash.html#CrocoDash.forcing_configurations.BaseConfigurator.required_for_compsets">required_for_compsets (CrocoDash.forcing_configurations.BaseConfigurator attribute)</a>
 
       <ul>
@@ -1243,17 +1106,15 @@ document.write(`
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api-docs/CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.base.BaseProduct.required_metadata">required_metadata (CrocoDash.raw_data_access.base.BaseProduct attribute)</a>
+
+      <ul>
+        <li><a href="api-docs/CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.base.ForcingProduct.required_metadata">(CrocoDash.raw_data_access.base.ForcingProduct attribute)</a>
+</li>
+      </ul></li>
       <li><a href="api-docs/CrocoDash.html#CrocoDash.forcing_configurations.ForcingConfigRegistry.return_missing_inputs">return_missing_inputs() (CrocoDash.forcing_configurations.ForcingConfigRegistry class method)</a>
 </li>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.utils.rotate">rotate() (in module CrocoDash.rm6.regional_mom6.utils)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.utils.rotate_complex">rotate_complex() (in module CrocoDash.rm6.regional_mom6.utils)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.rotation.RotationMethod">RotationMethod (class in CrocoDash.rm6.regional_mom6.rotation)</a>
-</li>
       <li><a href="api-docs/CrocoDash.html#CrocoDash.forcing_configurations.ForcingConfigRegistry.run_configurators">run_configurators() (CrocoDash.forcing_configurations.ForcingConfigRegistry method)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regional_mom6.experiment.run_FRE_tools">run_FRE_tools() (CrocoDash.rm6.regional_mom6.regional_mom6.experiment method)</a>
 </li>
       <li><a href="api-docs/CrocoDash.html#CrocoDash.case.Case.runoff_in_compset">runoff_in_compset (CrocoDash.case.Case property)</a>
 </li>
@@ -1265,11 +1126,7 @@ document.write(`
 <h2 id="S">S</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.config.Config.save_to_json">save_to_json() (CrocoDash.rm6.regional_mom6.config.Config static method)</a>
-</li>
       <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.seawifs.SeaWIFS">SeaWIFS (class in CrocoDash.raw_data_access.datasets.seawifs)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regional_mom6.segment">segment (class in CrocoDash.rm6.regional_mom6.regional_mom6)</a>
 </li>
       <li><a href="api-docs/CrocoDash.html#CrocoDash.forcing_configurations.BaseConfigurator.serialize">serialize() (CrocoDash.forcing_configurations.BaseConfigurator method)</a>
 </li>
@@ -1283,31 +1140,19 @@ document.write(`
         <li><a href="api-docs/CrocoDash.html#CrocoDash.forcing_configurations.Param.set_item">(CrocoDash.forcing_configurations.Param method)</a>
 </li>
       </ul></li>
-      <li><a href="api-docs/CrocoDash.html#CrocoDash.forcing_configurations.BaseConfigurator.set_output_param">set_output_param() (CrocoDash.forcing_configurations.BaseConfigurator method)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regional_mom6.experiment.setup_bathymetry">setup_bathymetry() (CrocoDash.rm6.regional_mom6.regional_mom6.experiment method)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regional_mom6.experiment.setup_boundary_tides">setup_boundary_tides() (CrocoDash.rm6.regional_mom6.regional_mom6.experiment method)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regional_mom6.experiment.setup_era5">setup_era5() (CrocoDash.rm6.regional_mom6.regional_mom6.experiment method)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regional_mom6.experiment.setup_initial_condition">setup_initial_condition() (CrocoDash.rm6.regional_mom6.regional_mom6.experiment method)</a>
+      <li><a href="api-docs/CrocoDash.html#CrocoDash.forcing_configurations.BaseConfigurator.set_output_param">set_output_param() (CrocoDash.forcing_configurations.BaseConfigurator method)</a>
 </li>
       <li><a href="api-docs/CrocoDash.html#CrocoDash.logging.setup_logger">setup_logger() (in module CrocoDash.logging)</a>
 
       <ul>
         <li><a href="api-docs/CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.utils.setup_logger">(in module CrocoDash.raw_data_access.utils)</a>
 </li>
-        <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.utils.setup_logger">(in module CrocoDash.rm6.regional_mom6.utils)</a>
-</li>
       </ul></li>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regional_mom6.experiment.setup_ocean_state_boundaries">setup_ocean_state_boundaries() (CrocoDash.rm6.regional_mom6.regional_mom6.experiment method)</a>
+      <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.mom6_output.subset_dataset">subset_dataset() (in module CrocoDash.raw_data_access.datasets.mom6_output)</a>
 </li>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regional_mom6.experiment.setup_run_directory">setup_run_directory() (CrocoDash.rm6.regional_mom6.regional_mom6.experiment method)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regional_mom6.experiment.setup_single_boundary">setup_single_boundary() (CrocoDash.rm6.regional_mom6.regional_mom6.experiment method)</a>
+      <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.mom6_output.subtract_month">subtract_month() (in module CrocoDash.raw_data_access.datasets.mom6_output)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -1315,112 +1160,60 @@ document.write(`
 <h2 id="T">T</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api-docs/CrocoDash.rm6.tests.html#CrocoDash.rm6.tests.test_regridding.test_add_or_update_time_dim">test_add_or_update_time_dim() (in module CrocoDash.rm6.tests.test_regridding)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.tests.html#CrocoDash.rm6.tests.test_regridding.test_add_secondary_dimension">test_add_secondary_dimension() (in module CrocoDash.rm6.tests.test_regridding)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.tests.html#CrocoDash.rm6.tests.test_utils.test_angle_between">test_angle_between() (in module CrocoDash.rm6.tests.test_utils)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.tests.html#CrocoDash.rm6.tests.test_parameter.test_change_MOM_parameter">test_change_MOM_parameter() (in module CrocoDash.rm6.tests.test_parameter)</a>
-</li>
       <li><a href="api-docs/CrocoDash.extract_forcings.html#CrocoDash.extract_forcings.driver.test_driver">test_driver() (in module CrocoDash.extract_forcings.driver)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.tests.html#CrocoDash.rm6.tests.test_rotation.test_expanded_hgrid_generation">test_expanded_hgrid_generation() (in module CrocoDash.rm6.tests.test_rotation)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.tests.html#CrocoDash.rm6.tests.test_regridding.test_fill_missing_data">test_fill_missing_data() (in module CrocoDash.rm6.tests.test_regridding)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.tests.html#CrocoDash.rm6.tests.test_regridding.test_generate_dz">test_generate_dz() (in module CrocoDash.rm6.tests.test_regridding)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.tests.html#CrocoDash.rm6.tests.test_regridding.test_generate_encoding">test_generate_encoding() (in module CrocoDash.rm6.tests.test_regridding)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.tests.html#CrocoDash.rm6.tests.test_regridding.test_generate_layer_thickness">test_generate_layer_thickness() (in module CrocoDash.rm6.tests.test_regridding)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.tests.html#CrocoDash.rm6.tests.test_regridding.test_get_boundary_mask">test_get_boundary_mask() (in module CrocoDash.rm6.tests.test_regridding)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.tests.html#CrocoDash.rm6.tests.test_rotation.test_get_curvilinear_hgrid_fixture">test_get_curvilinear_hgrid_fixture() (in module CrocoDash.rm6.tests.test_rotation)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.tests.html#CrocoDash.rm6.tests.test_utils.test_get_edge">test_get_edge() (in module CrocoDash.rm6.tests.test_utils)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.tests.html#CrocoDash.rm6.tests.test_rotation.test_get_rotation_angle">test_get_rotation_angle() (in module CrocoDash.rm6.tests.test_rotation)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.tests.html#CrocoDash.rm6.tests.test_grid_generation.test_hyperbolictan_thickness_profile_equispaced">test_hyperbolictan_thickness_profile_equispaced() (in module CrocoDash.rm6.tests.test_grid_generation)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.tests.html#CrocoDash.rm6.tests.test_grid_generation.test_hyperbolictan_thickness_profile_symmetric">test_hyperbolictan_thickness_profile_symmetric() (in module CrocoDash.rm6.tests.test_grid_generation)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.tests.html#CrocoDash.rm6.tests.test_rotation.test_initialize_grid_rotation_angle">test_initialize_grid_rotation_angle() (in module CrocoDash.rm6.tests.test_rotation)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.tests.html#CrocoDash.rm6.tests.test_rotation.test_initialize_grid_rotation_angle_using_expanded_hgrid">test_initialize_grid_rotation_angle_using_expanded_hgrid() (in module CrocoDash.rm6.tests.test_rotation)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.tests.html#CrocoDash.rm6.tests.test_grid_generation.test_latlon_to_cartesian">test_latlon_to_cartesian() (in module CrocoDash.rm6.tests.test_grid_generation)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.tests.html#CrocoDash.rm6.tests.test_grid_generation.test_longitude_slicer">test_longitude_slicer() (in module CrocoDash.rm6.tests.test_grid_generation)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.tests.html#CrocoDash.rm6.tests.test_regridding.test_mask_dataset">test_mask_dataset() (in module CrocoDash.rm6.tests.test_regridding)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.tests.html#CrocoDash.rm6.tests.test_rotation.test_modulo_around_point">test_modulo_around_point() (in module CrocoDash.rm6.tests.test_rotation)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.tests.html#CrocoDash.rm6.tests.test_rotation.test_mom6_angle_calculation_method">test_mom6_angle_calculation_method() (in module CrocoDash.rm6.tests.test_rotation)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.tests.html#CrocoDash.rm6.tests.test_rotation.test_mom6_angle_calculation_method_simple_square_grids">test_mom6_angle_calculation_method_simple_square_grids() (in module CrocoDash.rm6.tests.test_rotation)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.tests.html#CrocoDash.rm6.tests.test_expt_class.test_ocean_forcing">test_ocean_forcing() (in module CrocoDash.rm6.tests.test_expt_class)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.tests.html#CrocoDash.rm6.tests.test_grid_generation.test_quadrilateral_area">test_quadrilateral_area() (in module CrocoDash.rm6.tests.test_grid_generation)</a>
-</li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api-docs/CrocoDash.rm6.tests.html#CrocoDash.rm6.tests.test_grid_generation.test_quadrilateral_area_exception">test_quadrilateral_area_exception() (in module CrocoDash.rm6.tests.test_grid_generation)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.tests.html#CrocoDash.rm6.tests.test_grid_generation.test_quadrilateral_areas">test_quadrilateral_areas() (in module CrocoDash.rm6.tests.test_grid_generation)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.tests.html#CrocoDash.rm6.tests.test_config_class.test_read_config">test_read_config() (in module CrocoDash.rm6.tests.test_config_class)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.tests.html#CrocoDash.rm6.tests.test_expt_class.test_rectangular_boundaries">test_rectangular_boundaries() (in module CrocoDash.rm6.tests.test_expt_class)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.tests.html#CrocoDash.rm6.tests.test_grid_generation.test_rectangular_hgrid">test_rectangular_hgrid() (in module CrocoDash.rm6.tests.test_grid_generation)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.tests.html#CrocoDash.rm6.tests.test_expt_class.test_setup_bathymetry">test_setup_bathymetry() (in module CrocoDash.rm6.tests.test_expt_class)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.tests.html#CrocoDash.rm6.tests.test_regridding.test_smoke_untested_funcs">test_smoke_untested_funcs() (in module CrocoDash.rm6.tests.test_regridding)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.tests.html#CrocoDash.rm6.tests.test_config_class.test_str_dump">test_str_dump() (in module CrocoDash.rm6.tests.test_config_class)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.tests.html#CrocoDash.rm6.tests.test_tides.test_tides">test_tides() (in module CrocoDash.rm6.tests.test_tides)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.tests.html#CrocoDash.rm6.tests.test_utils.test_vecdot">test_vecdot() (in module CrocoDash.rm6.tests.test_utils)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.tests.html#CrocoDash.rm6.tests.test_regridding.test_vertical_coordinate_encoding">test_vertical_coordinate_encoding() (in module CrocoDash.rm6.tests.test_regridding)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.tests.html#CrocoDash.rm6.tests.test_config_class.test_write_config">test_write_config() (in module CrocoDash.rm6.tests.test_config_class)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.rm6.tests.html#CrocoDash.rm6.tests.test_config_class.test_write_config_fail">test_write_config_fail() (in module CrocoDash.rm6.tests.test_config_class)</a>
 </li>
       <li><a href="api-docs/CrocoDash.html#CrocoDash.forcing_configurations.TidesConfigurator.tidal_data_str">tidal_data_str() (CrocoDash.forcing_configurations.TidesConfigurator method)</a>
 </li>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regional_mom6.experiment.tides_boundary_paths">tides_boundary_paths (CrocoDash.rm6.regional_mom6.regional_mom6.experiment property)</a>
-</li>
       <li><a href="api-docs/CrocoDash.html#CrocoDash.forcing_configurations.TidesConfigurator">TidesConfigurator (class in CrocoDash.forcing_configurations)</a>
 </li>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regional_mom6.experiment.tidy_bathymetry">tidy_bathymetry() (CrocoDash.rm6.regional_mom6.regional_mom6.experiment method)</a>
-</li>
       <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.glorys.GLORYS.time_units">time_units (CrocoDash.raw_data_access.datasets.glorys.GLORYS attribute)</a>
+
+      <ul>
+        <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT.time_units">(CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT attribute)</a>
 </li>
+      </ul></li>
       <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.glorys.GLORYS.time_var_name">time_var_name (CrocoDash.raw_data_access.datasets.glorys.GLORYS attribute)</a>
+
+      <ul>
+        <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT.time_var_name">(CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT attribute)</a>
 </li>
+      </ul></li>
       <li><a href="api-docs/CrocoDash.html#CrocoDash.topo.Topo">Topo (class in CrocoDash.topo)</a>
 </li>
+      <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.empty_products.TPXO">TPXO (class in CrocoDash.raw_data_access.datasets.empty_products)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.glorys.GLORYS.tracer_lat_coord">tracer_lat_coord (CrocoDash.raw_data_access.datasets.glorys.GLORYS attribute)</a>
+
+      <ul>
+        <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT.tracer_lat_coord">(CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT attribute)</a>
 </li>
+      </ul></li>
       <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.glorys.GLORYS.tracer_lon_coord">tracer_lon_coord (CrocoDash.raw_data_access.datasets.glorys.GLORYS attribute)</a>
+
+      <ul>
+        <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT.tracer_lon_coord">(CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT attribute)</a>
 </li>
+      </ul></li>
       <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.glorys.GLORYS.tracer_var_names">tracer_var_names (CrocoDash.raw_data_access.datasets.glorys.GLORYS attribute)</a>
+
+      <ul>
+        <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT.tracer_var_names">(CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT attribute)</a>
 </li>
+      </ul></li>
       <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.glorys.GLORYS.tracer_x_coord">tracer_x_coord (CrocoDash.raw_data_access.datasets.glorys.GLORYS attribute)</a>
+
+      <ul>
+        <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT.tracer_x_coord">(CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT attribute)</a>
 </li>
+      </ul></li>
       <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.glorys.GLORYS.tracer_y_coord">tracer_y_coord (CrocoDash.raw_data_access.datasets.glorys.GLORYS attribute)</a>
+
+      <ul>
+        <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT.tracer_y_coord">(CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT attribute)</a>
 </li>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.utils.try_pint_convert">try_pint_convert() (in module CrocoDash.rm6.regional_mom6.utils)</a>
-</li>
+      </ul></li>
   </ul></td>
 </tr></table>
 
@@ -1428,17 +1221,37 @@ document.write(`
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.glorys.GLORYS.u_lat_coord">u_lat_coord (CrocoDash.raw_data_access.datasets.glorys.GLORYS attribute)</a>
+
+      <ul>
+        <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT.u_lat_coord">(CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT attribute)</a>
 </li>
+      </ul></li>
       <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.glorys.GLORYS.u_lon_coord">u_lon_coord (CrocoDash.raw_data_access.datasets.glorys.GLORYS attribute)</a>
+
+      <ul>
+        <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT.u_lon_coord">(CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT attribute)</a>
 </li>
+      </ul></li>
       <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.glorys.GLORYS.u_var_name">u_var_name (CrocoDash.raw_data_access.datasets.glorys.GLORYS attribute)</a>
+
+      <ul>
+        <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT.u_var_name">(CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT attribute)</a>
 </li>
+      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.glorys.GLORYS.u_x_coord">u_x_coord (CrocoDash.raw_data_access.datasets.glorys.GLORYS attribute)</a>
+
+      <ul>
+        <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT.u_x_coord">(CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT attribute)</a>
 </li>
+      </ul></li>
       <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.glorys.GLORYS.u_y_coord">u_y_coord (CrocoDash.raw_data_access.datasets.glorys.GLORYS attribute)</a>
+
+      <ul>
+        <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT.u_y_coord">(CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT attribute)</a>
 </li>
+      </ul></li>
       <li><a href="api-docs/CrocoDash.html#CrocoDash.forcing_configurations.UserNLConfigParam">UserNLConfigParam (class in CrocoDash.forcing_configurations)</a>
 </li>
   </ul></td>
@@ -1448,15 +1261,37 @@ document.write(`
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.glorys.GLORYS.v_lat_coord">v_lat_coord (CrocoDash.raw_data_access.datasets.glorys.GLORYS attribute)</a>
+
+      <ul>
+        <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT.v_lat_coord">(CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT attribute)</a>
 </li>
+      </ul></li>
       <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.glorys.GLORYS.v_lon_coord">v_lon_coord (CrocoDash.raw_data_access.datasets.glorys.GLORYS attribute)</a>
+
+      <ul>
+        <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT.v_lon_coord">(CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT attribute)</a>
 </li>
+      </ul></li>
       <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.glorys.GLORYS.v_var_name">v_var_name (CrocoDash.raw_data_access.datasets.glorys.GLORYS attribute)</a>
+
+      <ul>
+        <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT.v_var_name">(CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT attribute)</a>
 </li>
+      </ul></li>
       <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.glorys.GLORYS.v_x_coord">v_x_coord (CrocoDash.raw_data_access.datasets.glorys.GLORYS attribute)</a>
+
+      <ul>
+        <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT.v_x_coord">(CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT attribute)</a>
 </li>
+      </ul></li>
       <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.glorys.GLORYS.v_y_coord">v_y_coord (CrocoDash.raw_data_access.datasets.glorys.GLORYS attribute)</a>
+
+      <ul>
+        <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT.v_y_coord">(CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT attribute)</a>
 </li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api-docs/CrocoDash.html#CrocoDash.forcing_configurations.BaseConfigurator.validate_args">validate_args() (CrocoDash.forcing_configurations.BaseConfigurator method)</a>
 
       <ul>
@@ -1467,14 +1302,20 @@ document.write(`
         <li><a href="api-docs/CrocoDash.html#CrocoDash.forcing_configurations.RunoffConfigurator.validate_args">(CrocoDash.forcing_configurations.RunoffConfigurator method)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api-docs/CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.base.BaseProduct.validate_call">validate_call() (CrocoDash.raw_data_access.base.BaseProduct class method)</a>
+</li>
       <li><a href="api-docs/CrocoDash.html#CrocoDash.forcing_configurations.BaseConfigurator.validate_compset_compatibility">validate_compset_compatibility() (CrocoDash.forcing_configurations.BaseConfigurator class method)</a>
 </li>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.utils.vecdot">vecdot() (in module CrocoDash.rm6.regional_mom6.utils)</a>
+      <li><a href="api-docs/CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.registry.ProductRegistry.validate_function">validate_function() (CrocoDash.raw_data_access.registry.ProductRegistry class method)</a>
 </li>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.regridding.vertical_coordinate_encoding">vertical_coordinate_encoding() (in module CrocoDash.rm6.regional_mom6.regridding)</a>
+      <li><a href="api-docs/CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.base.BaseProduct.validate_method">validate_method() (CrocoDash.raw_data_access.base.BaseProduct class method)</a>
+
+      <ul>
+        <li><a href="api-docs/CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.base.DatedBaseProduct.validate_method">(CrocoDash.raw_data_access.base.DatedBaseProduct class method)</a>
 </li>
+        <li><a href="api-docs/CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.base.ForcingProduct.validate_method">(CrocoDash.raw_data_access.base.ForcingProduct class method)</a>
+</li>
+      </ul></li>
   </ul></td>
 </tr></table>
 
@@ -1483,12 +1324,16 @@ document.write(`
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.utils.write_bash_curl_script">write_bash_curl_script() (in module CrocoDash.raw_data_access.datasets.utils)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api-docs/CrocoDash.extract_forcings.html#CrocoDash.extract_forcings.utils.write_config">write_config() (in module CrocoDash.extract_forcings.utils)</a>
 </li>
-      <li><a href="api-docs/CrocoDash.rm6.regional_mom6.html#CrocoDash.rm6.regional_mom6.MOM_parameter_tools.write_MOM_file">write_MOM_file() (in module CrocoDash.rm6.regional_mom6.MOM_parameter_tools)</a>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api-docs/CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.base.BaseProduct.write_metadata">write_metadata() (CrocoDash.raw_data_access.base.BaseProduct class method)</a>
+
+      <ul>
+        <li><a href="api-docs/CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.base.ForcingProduct.write_metadata">(CrocoDash.raw_data_access.base.ForcingProduct class method)</a>
 </li>
+      </ul></li>
   </ul></td>
 </tr></table>
 
@@ -1496,6 +1341,14 @@ document.write(`
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api-docs/CrocoDash.html#CrocoDash.forcing_configurations.XMLConfigParam">XMLConfigParam (class in CrocoDash.forcing_configurations)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="Z">Z</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT.z_unit_conversion">z_unit_conversion (CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT attribute)</a>
 </li>
   </ul></td>
 </tr></table>

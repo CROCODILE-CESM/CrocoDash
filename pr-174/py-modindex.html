@@ -159,9 +159,9 @@
     <div class="bd-toc-item navbar-nav active">
         <p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="cesm_setup.html">CESM Setup</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://crocodile-cesm.github.io/CrocoGallery/">Tutorials &amp; Gallery</a></li>
+<li class="toctree-l1"><a class="reference internal" href="input_params.html">Input Parameters</a></li>
 <li class="toctree-l1"><a class="reference internal" href="structure.html">Understanding CrocoDash’s Structure</a></li>
 <li class="toctree-l1"><a class="reference internal" href="datasets.html">Accessing Raw Data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="forcing_configurations.html">Forcing Configuration</a></li>
@@ -172,7 +172,7 @@
 <li class="toctree-l2"><a class="reference internal" href="developers/adding_data_access.html">Adding Data to the Data Access Module</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="api-docs/modules.html">API Documentation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="api-docs/modules.html">CrocoDash API Docs</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="api-docs/CrocoDash.html">CrocoDash package</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l3 has-children"><a class="reference internal" href="api-docs/CrocoDash.extract_forcings.html">CrocoDash.extract_forcings package</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l4"><a class="reference internal" href="api-docs/CrocoDash.extract_forcings.code.html">CrocoDash.extract_forcings.code package</a></li>
@@ -180,10 +180,6 @@
 </details></li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="api-docs/CrocoDash.raw_data_access.html">CrocoDash.raw_data_access package</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l4"><a class="reference internal" href="api-docs/CrocoDash.raw_data_access.datasets.html">CrocoDash.raw_data_access.datasets package</a></li>
-</ul>
-</details></li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="api-docs/CrocoDash.rm6.html">CrocoDash.rm6 package</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
-<li class="toctree-l4"><a class="reference internal" href="api-docs/CrocoDash.rm6.regional_mom6.html">CrocoDash.rm6.regional_mom6 package</a></li>
 </ul>
 </details></li>
 </ul>
@@ -373,12 +369,37 @@ document.write(`
      <tr class="cg-1">
        <td></td>
        <td>&#160;&#160;&#160;
+       <a href="api-docs/CrocoDash.raw_data_access.html#module-CrocoDash.raw_data_access.base"><code class="xref">CrocoDash.raw_data_access.base</code></a></td><td>
+       <em></em></td></tr>
+     <tr class="cg-1">
+       <td></td>
+       <td>&#160;&#160;&#160;
        <a href="api-docs/CrocoDash.raw_data_access.datasets.html#module-CrocoDash.raw_data_access.datasets"><code class="xref">CrocoDash.raw_data_access.datasets</code></a></td><td>
        <em></em></td></tr>
      <tr class="cg-1">
        <td></td>
        <td>&#160;&#160;&#160;
+       <a href="api-docs/CrocoDash.raw_data_access.datasets.html#module-CrocoDash.raw_data_access.datasets.empty_products"><code class="xref">CrocoDash.raw_data_access.datasets.empty_products</code></a></td><td>
+       <em></em></td></tr>
+     <tr class="cg-1">
+       <td></td>
+       <td>&#160;&#160;&#160;
+       <a href="api-docs/CrocoDash.raw_data_access.datasets.html#module-CrocoDash.raw_data_access.datasets.gebco"><code class="xref">CrocoDash.raw_data_access.datasets.gebco</code></a></td><td>
+       <em></em></td></tr>
+     <tr class="cg-1">
+       <td></td>
+       <td>&#160;&#160;&#160;
+       <a href="api-docs/CrocoDash.raw_data_access.datasets.html#module-CrocoDash.raw_data_access.datasets.glofas"><code class="xref">CrocoDash.raw_data_access.datasets.glofas</code></a></td><td>
+       <em></em></td></tr>
+     <tr class="cg-1">
+       <td></td>
+       <td>&#160;&#160;&#160;
        <a href="api-docs/CrocoDash.raw_data_access.datasets.html#module-CrocoDash.raw_data_access.datasets.glorys"><code class="xref">CrocoDash.raw_data_access.datasets.glorys</code></a></td><td>
+       <em></em></td></tr>
+     <tr class="cg-1">
+       <td></td>
+       <td>&#160;&#160;&#160;
+       <a href="api-docs/CrocoDash.raw_data_access.datasets.html#module-CrocoDash.raw_data_access.datasets.mom6_output"><code class="xref">CrocoDash.raw_data_access.datasets.mom6_output</code></a></td><td>
        <em></em></td></tr>
      <tr class="cg-1">
        <td></td>
@@ -393,97 +414,12 @@ document.write(`
      <tr class="cg-1">
        <td></td>
        <td>&#160;&#160;&#160;
+       <a href="api-docs/CrocoDash.raw_data_access.html#module-CrocoDash.raw_data_access.registry"><code class="xref">CrocoDash.raw_data_access.registry</code></a></td><td>
+       <em></em></td></tr>
+     <tr class="cg-1">
+       <td></td>
+       <td>&#160;&#160;&#160;
        <a href="api-docs/CrocoDash.raw_data_access.html#module-CrocoDash.raw_data_access.utils"><code class="xref">CrocoDash.raw_data_access.utils</code></a></td><td>
-       <em></em></td></tr>
-     <tr class="cg-1">
-       <td></td>
-       <td>&#160;&#160;&#160;
-       <a href="api-docs/CrocoDash.rm6.html#module-CrocoDash.rm6"><code class="xref">CrocoDash.rm6</code></a></td><td>
-       <em></em></td></tr>
-     <tr class="cg-1">
-       <td></td>
-       <td>&#160;&#160;&#160;
-       <a href="api-docs/CrocoDash.rm6.regional_mom6.html#module-CrocoDash.rm6.regional_mom6"><code class="xref">CrocoDash.rm6.regional_mom6</code></a></td><td>
-       <em></em></td></tr>
-     <tr class="cg-1">
-       <td></td>
-       <td>&#160;&#160;&#160;
-       <a href="api-docs/CrocoDash.rm6.regional_mom6.html#module-CrocoDash.rm6.regional_mom6.config"><code class="xref">CrocoDash.rm6.regional_mom6.config</code></a></td><td>
-       <em></em></td></tr>
-     <tr class="cg-1">
-       <td></td>
-       <td>&#160;&#160;&#160;
-       <a href="api-docs/CrocoDash.rm6.regional_mom6.html#module-CrocoDash.rm6.regional_mom6.MOM_parameter_tools"><code class="xref">CrocoDash.rm6.regional_mom6.MOM_parameter_tools</code></a></td><td>
-       <em></em></td></tr>
-     <tr class="cg-1">
-       <td></td>
-       <td>&#160;&#160;&#160;
-       <a href="api-docs/CrocoDash.rm6.regional_mom6.html#module-CrocoDash.rm6.regional_mom6.regional_mom6"><code class="xref">CrocoDash.rm6.regional_mom6.regional_mom6</code></a></td><td>
-       <em></em></td></tr>
-     <tr class="cg-1">
-       <td></td>
-       <td>&#160;&#160;&#160;
-       <a href="api-docs/CrocoDash.rm6.regional_mom6.html#module-CrocoDash.rm6.regional_mom6.regridding"><code class="xref">CrocoDash.rm6.regional_mom6.regridding</code></a></td><td>
-       <em></em></td></tr>
-     <tr class="cg-1">
-       <td></td>
-       <td>&#160;&#160;&#160;
-       <a href="api-docs/CrocoDash.rm6.regional_mom6.html#module-CrocoDash.rm6.regional_mom6.rotation"><code class="xref">CrocoDash.rm6.regional_mom6.rotation</code></a></td><td>
-       <em></em></td></tr>
-     <tr class="cg-1">
-       <td></td>
-       <td>&#160;&#160;&#160;
-       <a href="api-docs/CrocoDash.rm6.regional_mom6.html#module-CrocoDash.rm6.regional_mom6.utils"><code class="xref">CrocoDash.rm6.regional_mom6.utils</code></a></td><td>
-       <em></em></td></tr>
-     <tr class="cg-1">
-       <td></td>
-       <td>&#160;&#160;&#160;
-       <a href="api-docs/CrocoDash.rm6.tests.html#module-CrocoDash.rm6.tests"><code class="xref">CrocoDash.rm6.tests</code></a></td><td>
-       <em></em></td></tr>
-     <tr class="cg-1">
-       <td></td>
-       <td>&#160;&#160;&#160;
-       <a href="api-docs/CrocoDash.rm6.tests.html#module-CrocoDash.rm6.tests.conftest"><code class="xref">CrocoDash.rm6.tests.conftest</code></a></td><td>
-       <em></em></td></tr>
-     <tr class="cg-1">
-       <td></td>
-       <td>&#160;&#160;&#160;
-       <a href="api-docs/CrocoDash.rm6.tests.html#module-CrocoDash.rm6.tests.test_config_class"><code class="xref">CrocoDash.rm6.tests.test_config_class</code></a></td><td>
-       <em></em></td></tr>
-     <tr class="cg-1">
-       <td></td>
-       <td>&#160;&#160;&#160;
-       <a href="api-docs/CrocoDash.rm6.tests.html#module-CrocoDash.rm6.tests.test_expt_class"><code class="xref">CrocoDash.rm6.tests.test_expt_class</code></a></td><td>
-       <em></em></td></tr>
-     <tr class="cg-1">
-       <td></td>
-       <td>&#160;&#160;&#160;
-       <a href="api-docs/CrocoDash.rm6.tests.html#module-CrocoDash.rm6.tests.test_grid_generation"><code class="xref">CrocoDash.rm6.tests.test_grid_generation</code></a></td><td>
-       <em></em></td></tr>
-     <tr class="cg-1">
-       <td></td>
-       <td>&#160;&#160;&#160;
-       <a href="api-docs/CrocoDash.rm6.tests.html#module-CrocoDash.rm6.tests.test_parameter"><code class="xref">CrocoDash.rm6.tests.test_parameter</code></a></td><td>
-       <em></em></td></tr>
-     <tr class="cg-1">
-       <td></td>
-       <td>&#160;&#160;&#160;
-       <a href="api-docs/CrocoDash.rm6.tests.html#module-CrocoDash.rm6.tests.test_regridding"><code class="xref">CrocoDash.rm6.tests.test_regridding</code></a></td><td>
-       <em></em></td></tr>
-     <tr class="cg-1">
-       <td></td>
-       <td>&#160;&#160;&#160;
-       <a href="api-docs/CrocoDash.rm6.tests.html#module-CrocoDash.rm6.tests.test_rotation"><code class="xref">CrocoDash.rm6.tests.test_rotation</code></a></td><td>
-       <em></em></td></tr>
-     <tr class="cg-1">
-       <td></td>
-       <td>&#160;&#160;&#160;
-       <a href="api-docs/CrocoDash.rm6.tests.html#module-CrocoDash.rm6.tests.test_tides"><code class="xref">CrocoDash.rm6.tests.test_tides</code></a></td><td>
-       <em></em></td></tr>
-     <tr class="cg-1">
-       <td></td>
-       <td>&#160;&#160;&#160;
-       <a href="api-docs/CrocoDash.rm6.tests.html#module-CrocoDash.rm6.tests.test_utils"><code class="xref">CrocoDash.rm6.tests.test_utils</code></a></td><td>
        <em></em></td></tr>
      <tr class="cg-1">
        <td></td>
