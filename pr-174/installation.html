@@ -44,7 +44,7 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'installation';</script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Input Parameters" href="input_params.html" />
+    <link rel="next" title="User Information" href="for_users/index.html" />
     <link rel="prev" title="Welcome to the CrocoDash Documentation!" href="index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -159,15 +159,18 @@
 <ul class="current nav bd-sidenav">
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Installation</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://crocodile-cesm.github.io/CrocoGallery/">Tutorials &amp; Gallery</a></li>
-<li class="toctree-l1"><a class="reference internal" href="input_params.html">Input Parameters</a></li>
-<li class="toctree-l1"><a class="reference internal" href="structure.html">Understanding CrocoDash’s Structure</a></li>
-<li class="toctree-l1"><a class="reference internal" href="datasets.html">Accessing Raw Data</a></li>
-<li class="toctree-l1"><a class="reference internal" href="forcing_configurations.html">Forcing Configuration</a></li>
-<li class="toctree-l1"><a class="reference internal" href="available_compset_alias.html">Available Compset Aliases</a></li>
-<li class="toctree-l1"><a class="reference internal" href="additional_resources.html">Additional Resources</a></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="developers/index.html">Developer Information</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
-<li class="toctree-l2"><a class="reference internal" href="developers/docs.html">Write Documentation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="developers/adding_data_access.html">Adding Data to the Data Access Module</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="for_users/index.html">User Information</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="for_users/structure.html">Understanding CrocoDash’s Structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="for_users/datasets.html">Accessing Raw Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="for_users/available_compset_alias.html">Available Compset Aliases</a></li>
+<li class="toctree-l2"><a class="reference internal" href="for_users/input_params.html">Input Parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="for_users/forcing_configurations.html">Forcing Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="for_users/additional_resources.html">Additional Resources</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="for_developers/index.html">Developer Information</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="for_developers/docs.html">Write Documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="for_developers/adding_data_access.html">Adding Data to the Data Access Module</a></li>
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="api-docs/modules.html">CrocoDash API Docs</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
@@ -334,9 +337,6 @@ document.write(`
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#cesm-installation">CESM Installation</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-1-clone-the-repo">Step 1: Clone the repo</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-checkout-all-the-components">Step 2: Checkout all the components</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-3-done">Step 3: Done!</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crocodash-installation">CrocoDash Installation</a></li>
 </ul>
             </nav>
@@ -350,30 +350,26 @@ document.write(`
                 <article class="bd-article">
                   
   <section id="installation">
-<h1>Installation<a class="headerlink" href="#installation" title="Link to this heading">#</a></h1>
+<span id="id1"></span><h1>Installation<a class="headerlink" href="#installation" title="Link to this heading">#</a></h1>
 <p>To use CrocoDash, we need to install both the CESM and CrocoDash! See the steps below.</p>
 <section id="cesm-installation">
 <h2>CESM Installation<a class="headerlink" href="#cesm-installation" title="Link to this heading">#</a></h2>
 <p>The first step in running an ocean model inside the CESM is setting up the CESM! Here’s how to do it:</p>
-</section>
-<section id="step-1-clone-the-repo">
-<h2>Step 1: Clone the repo<a class="headerlink" href="#step-1-clone-the-repo" title="Link to this heading">#</a></h2>
+<ol class="arabic">
+<li><p>Clone the CESM Repo</p>
 <p>CROCODILE has its own fork of the CESM available here: <a class="github reference external" href="https://github.com/CROCODILE-CESM/CESM">CROCODILE-CESM/CESM</a>. Go ahead and clone it as shown below. I’m gonna call mine CROCESM.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/CROCODILE-CESM/CESM<span class="w"> </span>CROCESM<span class="w"> </span>-b<span class="w"> </span>workshop_2025
 </pre></div>
 </div>
-</section>
-<section id="step-2-checkout-all-the-components">
-<h2>Step 2: Checkout all the components<a class="headerlink" href="#step-2-checkout-all-the-components" title="Link to this heading">#</a></h2>
+</li>
+<li><p>Checkout all the components</p>
 <p>The original clone only clones the CESM code, we need to checkout all of the components as well, like the ocean model and the sea ice model. This will take some time.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>CROCESM
 ./bin/git-fleximod<span class="w"> </span>update
 </pre></div>
 </div>
-</section>
-<section id="step-3-done">
-<h2>Step 3: Done!<a class="headerlink" href="#step-3-done" title="Link to this heading">#</a></h2>
-<p>We’re done! Remember this path, and install CrocoDash!</p>
+</li>
+</ol>
 </section>
 <section id="crocodash-installation">
 <h2>CrocoDash Installation<a class="headerlink" href="#crocodash-installation" title="Link to this heading">#</a></h2>
@@ -424,11 +420,11 @@ pytest<span class="w"> </span>tests/test_installation.py<span class="w"> </span>
       </div>
     </a>
     <a class="right-next"
-       href="input_params.html"
+       href="for_users/index.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Input Parameters</p>
+        <p class="prev-next-title">User Information</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -449,9 +445,6 @@ pytest<span class="w"> </span>tests/test_installation.py<span class="w"> </span>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#cesm-installation">CESM Installation</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-1-clone-the-repo">Step 1: Clone the repo</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-checkout-all-the-components">Step 2: Checkout all the components</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-3-done">Step 3: Done!</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crocodash-installation">CrocoDash Installation</a></li>
 </ul>
   </nav></div>

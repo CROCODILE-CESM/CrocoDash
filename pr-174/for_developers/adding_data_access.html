@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Write Documentation &#8212; CrocoDash  documentation</title>
+    <title>Adding Data to the Data Access Module &#8212; CrocoDash  documentation</title>
   
   
   
@@ -41,11 +41,11 @@
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'developers/docs';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'for_developers/adding_data_access';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Adding Data to the Data Access Module" href="adding_data_access.html" />
-    <link rel="prev" title="Developer Information" href="index.html" />
+    <link rel="next" title="CrocoDash API Docs" href="../api-docs/modules.html" />
+    <link rel="prev" title="Write Documentation" href="docs.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -159,15 +159,18 @@
 <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://crocodile-cesm.github.io/CrocoGallery/">Tutorials &amp; Gallery</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../input_params.html">Input Parameters</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../structure.html">Understanding CrocoDash’s Structure</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../datasets.html">Accessing Raw Data</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../forcing_configurations.html">Forcing Configuration</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../available_compset_alias.html">Available Compset Aliases</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../additional_resources.html">Additional Resources</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../for_users/index.html">User Information</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../for_users/structure.html">Understanding CrocoDash’s Structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_users/datasets.html">Accessing Raw Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_users/available_compset_alias.html">Available Compset Aliases</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_users/input_params.html">Input Parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_users/forcing_configurations.html">Forcing Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_users/additional_resources.html">Additional Resources</a></li>
+</ul>
+</details></li>
 <li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">Developer Information</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
-<li class="toctree-l2 current active"><a class="current reference internal" href="#">Write Documentation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="adding_data_access.html">Adding Data to the Data Access Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="docs.html">Write Documentation</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Adding Data to the Data Access Module</a></li>
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../api-docs/modules.html">CrocoDash API Docs</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
@@ -239,7 +242,7 @@
       
       
       
-      <li><a href="../_sources/developers/docs.md" target="_blank"
+      <li><a href="../_sources/for_developers/adding_data_access.md" target="_blank"
    class="btn btn-sm btn-download-source-button dropdown-item"
    title="Download source file"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -321,7 +324,7 @@ document.write(`
               
 
 <div id="jb-print-docs-body" class="onlyprint">
-    <h1>Write Documentation</h1>
+    <h1>Adding Data to the Data Access Module</h1>
     <!-- Table of contents -->
     <div id="print-main-content">
         <div id="jb-print-toc">
@@ -335,31 +338,15 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="write-documentation">
-<h1>Write Documentation<a class="headerlink" href="#write-documentation" title="Link to this heading">#</a></h1>
-<p>We are using Sphinx to write and compile documentation. The documentation is written in markdown (myst) format. The documentation is located in the <code class="docutils literal notranslate"><span class="pre">docs</span></code> folder. The documentation is hosted on github-pages. Please follow the below steps to compile documentation.</p>
-<p>Steps:</p>
-<ol class="arabic">
-<li><p>Activate the environment</p></li>
-<li><p>Navigate to the docs folder</p></li>
-<li><p>Run the following command:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>make<span class="w"> </span>html
-</pre></div>
-</div>
-</li>
-<li><p>To reformulate the autodocs, which needs to be done when new modules &amp; submodules are created, run this step</p>
-<blockquote>
-<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sphinx-apidoc<span class="w"> </span>-o<span class="w"> </span>source/api-docs<span class="w"> </span>../CrocoDash
-</pre></div>
-</div>
-</div></blockquote>
-</li>
-<li><p>If you’re on a supercomputer, you can run this command to run a local server and see it on your computer:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>make<span class="w"> </span>serve
-</pre></div>
-</div>
-</li>
-</ol>
+  <section id="adding-data-to-the-data-access-module">
+<h1>Adding Data to the Data Access Module<a class="headerlink" href="#adding-data-to-the-data-access-module" title="Link to this heading">#</a></h1>
+<p>The Data Access Module is where we add methods to access all datasets used in CrocoDash.</p>
+<p>To add a new dataset:
+: 1. Create a new python file named after the product
+2. Add a function that takes in dates, lat &amp; lon min &amp; max, and any other parameters required
+3. Update the tables: data_access_registry with function names and data_product_registry with product name
+4. Write a test</p>
+<p>A good example of the changes needed is here: <a class="reference external" href="https://github.com/CROCODILE-CESM/CrocoDash/pull/63">PR #63</a></p>
 </section>
 
 
@@ -374,20 +361,20 @@ document.write(`
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="index.html"
+       href="docs.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Developer Information</p>
+        <p class="prev-next-title">Write Documentation</p>
       </div>
     </a>
     <a class="right-next"
-       href="adding_data_access.html"
+       href="../api-docs/modules.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Adding Data to the Data Access Module</p>
+        <p class="prev-next-title">CrocoDash API Docs</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
