@@ -29,9 +29,10 @@ CrocoDash also provides a variety of helper tools to help setup a case, for exam
 :caption: 'Contents:'
 :maxdepth: 1
 
-cesm_setup
+
 installation
 Tutorials & Gallery <https://crocodile-cesm.github.io/CrocoGallery/>
+input_params
 structure
 datasets
 forcing_configurations
