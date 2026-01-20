@@ -1,20 +1,21 @@
-Write Documentation
-====================
+# Write Documentation
 
 We are using Sphinx to write and compile documentation. The documentation is written in reStructuredText (reST) format. The documentation is located in the `docs` folder. The documentation is hosted on github-pages. Please follow the below steps to compile documentation.
 
-
 Steps:
 
-#. Activate the environment
-#. Navigate to the docs folder
-#. Run the following command:
+1. Activate the environment
 
-   .. code-block:: bash
+2. Navigate to the docs folder
 
-      make html
-#. To rekickstart the autodocs
+3. Run the following command:
 
-    .. code-block:: bash
-    
-        sphinx-apidoc -o source/api-docs ../CrocoDash
+   ```bash
+   make html
+   ```
+
+4. To rekickstart the autodocs
+
+   > ```bash
+   > sphinx-apidoc -o source/api-docs ../CrocoDash
+   > ```
