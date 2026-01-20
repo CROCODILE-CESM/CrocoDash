@@ -243,7 +243,7 @@
       
       
       
-      <li><a href="../_sources/developers/adding_data_access.rst" target="_blank"
+      <li><a href="../_sources/developers/adding_data_access.md" target="_blank"
    class="btn btn-sm btn-download-source-button dropdown-item"
    title="Download source file"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -253,7 +253,7 @@
 <span class="btn__icon-container">
   <i class="fas fa-file"></i>
   </span>
-<span class="btn__text-container">.rst</span>
+<span class="btn__text-container">.md</span>
 </a>
 </li>
       
@@ -342,15 +342,11 @@ document.write(`
   <section id="adding-data-to-the-data-access-module">
 <h1>Adding Data to the Data Access Module<a class="headerlink" href="#adding-data-to-the-data-access-module" title="Link to this heading">#</a></h1>
 <p>The Data Access Module is where we add methods to access all datasets used in CrocoDash.</p>
-<dl class="simple">
-<dt>To add a new dataset:</dt><dd><ol class="arabic simple">
-<li><p>Create a new python file named after the product</p></li>
-<li><p>Add a function that takes in dates, lat &amp; lon min &amp; max, and any other parameters required</p></li>
-<li><p>Update the tables: data_access_registry with function names and data_product_registry with product name</p></li>
-<li><p>Write a test</p></li>
-</ol>
-</dd>
-</dl>
+<p>To add a new dataset:
+: 1. Create a new python file named after the product
+2. Add a function that takes in dates, lat &amp; lon min &amp; max, and any other parameters required
+3. Update the tables: data_access_registry with function names and data_product_registry with product name
+4. Write a test</p>
 <p>A good example of the changes needed is here: <a class="reference external" href="https://github.com/CROCODILE-CESM/CrocoDash/pull/63">PR #63</a></p>
 </section>
 
