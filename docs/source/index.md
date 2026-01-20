@@ -1,8 +1,3 @@
-% CrocoDash Documentation master file, created by
-% sphinx-quickstart on Fri Oct 18 11:22:10 2024.
-% You can adapt this file completely to your liking, but it should at least
-% contain the root `toctree` directive.
-
 # Welcome to the CrocoDash Documentation!
 
 CrocoDash is a Python package designed to setup regional Modular Ocean Model 6 (MOM6) cases within the Community Earth System Model (CESM).
@@ -22,8 +17,8 @@ CrocoDash also provides a variety of helper tools to help setup a case, for exam
 ## Get Started
 
 1. Please see the {ref}`installation` page.
-2. Walk through our [tutorials](https://crocodile-cesm.github.io/CrocoGallery/) for an easy introduction
-3. Check out our [gallery of demos](hhttps://crocodile-cesm.github.io/CrocoGallery/notebooks/use_cases/index.html) for more use cases and cool features.
+2. Walk through our [tutorials](https://crocodile-cesm.github.io/CrocoGallery/latest/notebooks/tutorials/crocodash-tutorial/) for an easy introduction
+3. Check out our [gallery of demos](https://crocodile-cesm.github.io/CrocoGallery/latest/) for more use cases and cool features.
 
 ```{toctree}
 :caption: 'Contents:'
@@ -32,15 +27,8 @@ CrocoDash also provides a variety of helper tools to help setup a case, for exam
 
 installation
 Tutorials & Gallery <https://crocodile-cesm.github.io/CrocoGallery/>
-input_params
-structure
-datasets
-forcing_configurations
-available_compset_alias
-additional_resources
-developers/index
+for_users/index
+for_developers/index
 api-docs/modules
 Common Errors <https://github.com/CROCODILE-CESM/CrocoDash/discussions/84>
 ```
-
-You can also check out the Regional MOM6 documentation for more support information [here](https://regional-mom6.readthedocs.io/en/latest/)!
