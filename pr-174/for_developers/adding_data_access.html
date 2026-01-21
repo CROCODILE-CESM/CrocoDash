@@ -44,7 +44,7 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'for_developers/adding_data_access';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="CrocoDash API Docs" href="../api-docs/modules.html" />
+    <link rel="next" title="Adding Forcing Configurations" href="adding_forcing_configurations.html" />
     <link rel="prev" title="Write Documentation" href="docs.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -166,11 +166,16 @@
 <li class="toctree-l2"><a class="reference internal" href="../for_users/input_params.html">Input Parameters</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_users/forcing_configurations.html">Forcing Configuration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_users/additional_resources.html">Additional Resources</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_users/diagrams.html">Diagrams</a></li>
 </ul>
 </details></li>
 <li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">Developer Information</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="dev_environment.html">Setting Up Your Development Environment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="project_architecture.html">Project Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contributing.html">Contributing Guidelines</a></li>
 <li class="toctree-l2"><a class="reference internal" href="docs.html">Write Documentation</a></li>
 <li class="toctree-l2 current active"><a class="current reference internal" href="#">Adding Data to the Data Access Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="adding_forcing_configurations.html">Adding Forcing Configurations</a></li>
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../api-docs/modules.html">CrocoDash API Docs</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
@@ -313,7 +318,9 @@ document.write(`
   </button>
 `);
 </script>
-
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
 </div></div>
       
     </div>
@@ -329,6 +336,25 @@ document.write(`
     <div id="print-main-content">
         <div id="jb-print-toc">
             
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-overview">Module Overview</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#adding-a-new-dataset">Adding a New Dataset</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-1-create-a-new-dataset-file">Step 1: Create a New Dataset File</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-create-your-access-function">Step 2: Create your access function</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-3-register-the-dataset">Step 3: Register the Dataset</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-4-set-required-metadata">Step 4: Set required metadata.</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-5-validation-and-tests">Step 5: Validation and Tests</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#forcingproduct-base-class">ForcingProduct Base Class</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#error-handling-best-practices">Error Handling Best Practices</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#example-complete-implementation">Example: Complete Implementation</a></li>
+</ul>
+            </nav>
         </div>
     </div>
 </div>
@@ -340,13 +366,166 @@ document.write(`
                   
   <section id="adding-data-to-the-data-access-module">
 <h1>Adding Data to the Data Access Module<a class="headerlink" href="#adding-data-to-the-data-access-module" title="Link to this heading">#</a></h1>
-<p>The Data Access Module is where we add methods to access all datasets used in CrocoDash.</p>
-<p>To add a new dataset:
-: 1. Create a new python file named after the product
-2. Add a function that takes in dates, lat &amp; lon min &amp; max, and any other parameters required
-3. Update the tables: data_access_registry with function names and data_product_registry with product name
-4. Write a test</p>
-<p>A good example of the changes needed is here: <a class="reference external" href="https://github.com/CROCODILE-CESM/CrocoDash/pull/63">PR #63</a></p>
+<p>The Data Access Module provides access functions to raw datasets used in CrocoDash. This document explains how to add a new dataset to the module.</p>
+<section id="module-overview">
+<h2>Module Overview<a class="headerlink" href="#module-overview" title="Link to this heading">#</a></h2>
+<p>The data access module is located in <code class="docutils literal notranslate"><span class="pre">CrocoDash/raw_data_access/</span></code> and consists of:</p>
+<ul class="simple">
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">base.py</span></code></strong> - <code class="docutils literal notranslate"><span class="pre">ForcingProduct</span></code> and <code class="docutils literal notranslate"><span class="pre">BaseProduct</span></code> base classes that all data sources inherit from</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">registry.py</span></code></strong> - Central registry for data products and access functions</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">datasets/</span></code></strong> - Individual dataset implementations (one file per product)</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">utils.py</span></code></strong> - Utility functions for data handling</p></li>
+</ul>
+</section>
+<section id="adding-a-new-dataset">
+<h2>Adding a New Dataset<a class="headerlink" href="#adding-a-new-dataset" title="Link to this heading">#</a></h2>
+<section id="step-1-create-a-new-dataset-file">
+<h3>Step 1: Create a New Dataset File<a class="headerlink" href="#step-1-create-a-new-dataset-file" title="Link to this heading">#</a></h3>
+<p>Create a new Python file in <code class="docutils literal notranslate"><span class="pre">CrocoDash/raw_data_access/datasets/</span></code> named after your data product. See other data products for standards</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># CrocoDash/raw_data_access/datasets/my_dataset.py</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">xarray</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xr</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">CrocoDash.raw_data_access.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">ForcingProduct</span> <span class="c1"># Could be not a forcing product to.</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">MyDataset</span><span class="p">(</span><span class="n">ForcingProduct</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Access data from MyDataSource.</span>
+<span class="sd">    </span>
+<span class="sd">    This class downloads and caches data from MyDataSource for use in CrocoDash.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+
+
+</pre></div>
+</div>
+</section>
+<section id="step-2-create-your-access-function">
+<h3>Step 2: Create your access function<a class="headerlink" href="#step-2-create-your-access-function" title="Link to this heading">#</a></h3>
+<p>You can create an access function for your data by defining a function in your class (do not add cls or self variables). In <code class="docutils literal notranslate"><span class="pre">base.py</span></code>, there is the declared class you’ve inherited from. In it, it has required args. Your access function must implement these required args. For example, forcing product required args are here:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">ForcingProduct</span><span class="p">(</span><span class="n">DatedBaseProduct</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Specific enforcement needs for Forcing Products&quot;&quot;&quot;</span>
+
+    <span class="n">required_args</span> <span class="o">=</span> <span class="n">BaseProduct</span><span class="o">.</span><span class="n">required_args</span> <span class="o">+</span> <span class="p">[</span>
+        <span class="s2">&quot;variables&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;lon_max&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;lat_max&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;lon_min&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;lat_min&quot;</span><span class="p">,</span>
+    <span class="p">]</span>
+</pre></div>
+</div>
+</section>
+<section id="step-3-register-the-dataset">
+<h3>Step 3: Register the Dataset<a class="headerlink" href="#step-3-register-the-dataset" title="Link to this heading">#</a></h3>
+<p>You register the dataset by adding the accessmethod wrapper to your access function and inheriting from the base products, like ForcingProduct. This makes it a class method as well.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@accessmethod</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Gathers your data from what&quot;</span><span class="p">,</span>
+        <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;what type, python, script, etc...&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="step-4-set-required-metadata">
+<h2>Step 4: Set required metadata.<a class="headerlink" href="#step-4-set-required-metadata" title="Link to this heading">#</a></h2>
+<p>Each class has a certain amount of metadata that is required. Classes inherited from BaseProduct pretty much just need a name. Classes inherited from ForcingProduct require quite a bit of information, which can be seen in a file like GLORYS. You can see what is required by looking at the base.py file. Here is an example in ForcingProduct:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">ForcingProduct</span><span class="p">(</span><span class="n">DatedBaseProduct</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Specific enforcement needs for Forcing Products&quot;&quot;&quot;</span>
+
+    <span class="n">required_metadata</span> <span class="o">=</span> <span class="n">DatedBaseProduct</span><span class="o">.</span><span class="n">required_metadata</span> <span class="o">+</span> <span class="p">[</span>
+        <span class="s2">&quot;time_var_name&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;u_x_coord&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;u_y_coord&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;v_x_coord&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;v_y_coord&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;tracer_x_coord&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;tracer_y_coord&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;depth_coord&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;u_var_name&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;v_var_name&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;eta_var_name&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;tracer_var_names&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;boundary_fill_method&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;time_units&quot;</span><span class="p">,</span>
+    <span class="p">]</span>
+
+</pre></div>
+</div>
+</section>
+<section id="step-5-validation-and-tests">
+<h2>Step 5: Validation and Tests<a class="headerlink" href="#step-5-validation-and-tests" title="Link to this heading">#</a></h2>
+<p>When you test your class, it will automatically get registed with the registry and run validation. It will fail on import if you miss metadata or required args in your registed access function.</p>
+<p>Create a test file in <code class="docutils literal notranslate"><span class="pre">CrocoDash/tests/raw_data_access</span></code> to test your dataset:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># CrocoDash/tests/raw_data_access/test_my_dataset.py</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">pytest</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">CrocoDash.raw_data_access.datasets.my_dataset</span><span class="w"> </span><span class="kn">import</span> <span class="n">MyDataset</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">xarray</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xr</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_get_data_basic</span><span class="p">(</span><span class="n">my_dataset</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Test basic data retrieval.&quot;&quot;&quot;</span>
+
+</pre></div>
+</div>
+<p>Run your tests:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pytest<span class="w"> </span>tests/test_my_dataset.py<span class="w"> </span>-v
+</pre></div>
+</div>
+</section>
+<section id="forcingproduct-base-class">
+<h2>ForcingProduct Base Class<a class="headerlink" href="#forcingproduct-base-class" title="Link to this heading">#</a></h2>
+<p>The dataset classes for OBC and IC generation should inherit from <code class="docutils literal notranslate"><span class="pre">ForcingProduct</span></code>. Other things like tides or chlorophyll may only inherit from DatedBaseProduct or BaseProduct.</p>
+</section>
+<section id="error-handling-best-practices">
+<h2>Error Handling Best Practices<a class="headerlink" href="#error-handling-best-practices" title="Link to this heading">#</a></h2>
+<ol class="arabic">
+<li><p><strong>Validate inputs early:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="n">start_date</span> <span class="o">&gt;=</span> <span class="n">end_date</span><span class="p">:</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid date range&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+<li><p><strong>Handle network errors gracefully:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">try</span><span class="p">:</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span>
+    <span class="n">response</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
+<span class="k">except</span> <span class="n">requests</span><span class="o">.</span><span class="n">RequestException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to download data: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+<li><p><strong>Provide informative error messages:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Bad:</span>
+<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Error&quot;</span><span class="p">)</span>
+
+<span class="c1"># Good:</span>
+<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Data not available for dates </span><span class="si">{</span><span class="n">start_date</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">end_date</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+<li><p><strong>Log important events (each class comes with a logger variable):</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">myProduct</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Downloading data from </span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">myProduct</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Cache miss for </span><span class="si">{</span><span class="n">cache_file</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+</ol>
+</section>
+<section id="example-complete-implementation">
+<h2>Example: Complete Implementation<a class="headerlink" href="#example-complete-implementation" title="Link to this heading">#</a></h2>
+<p>See the glorys.py dataset for a complete example of adding a new dataset with:</p>
+<ul class="simple">
+<li><p>Dataset class implementation</p></li>
+<li><p>Registry updates</p></li>
+<li><p>Tests</p></li>
+<li><p>Documentation</p></li>
+</ul>
+</section>
 </section>
 
 
@@ -370,11 +549,11 @@ document.write(`
       </div>
     </a>
     <a class="right-next"
-       href="../api-docs/modules.html"
+       href="adding_forcing_configurations.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">CrocoDash API Docs</p>
+        <p class="prev-next-title">Adding Forcing Configurations</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -384,6 +563,32 @@ document.write(`
             </div>
             
             
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-overview">Module Overview</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#adding-a-new-dataset">Adding a New Dataset</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-1-create-a-new-dataset-file">Step 1: Create a New Dataset File</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-create-your-access-function">Step 2: Create your access function</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-3-register-the-dataset">Step 3: Register the Dataset</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-4-set-required-metadata">Step 4: Set required metadata.</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-5-validation-and-tests">Step 5: Validation and Tests</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#forcingproduct-base-class">ForcingProduct Base Class</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#error-handling-best-practices">Error Handling Best Practices</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#example-complete-implementation">Example: Complete Implementation</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
               
             
           </div>

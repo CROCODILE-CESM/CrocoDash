@@ -11,4 +11,5 @@ available_compset_alias
 input_params
 forcing_configurations
 additional_resources
+diagrams
 ```

@@ -45,7 +45,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Adding Data to the Data Access Module" href="adding_data_access.html" />
-    <link rel="prev" title="Developer Information" href="index.html" />
+    <link rel="prev" title="Contributing Guidelines" href="contributing.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -166,11 +166,16 @@
 <li class="toctree-l2"><a class="reference internal" href="../for_users/input_params.html">Input Parameters</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_users/forcing_configurations.html">Forcing Configuration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_users/additional_resources.html">Additional Resources</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_users/diagrams.html">Diagrams</a></li>
 </ul>
 </details></li>
 <li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">Developer Information</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="dev_environment.html">Setting Up Your Development Environment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="project_architecture.html">Project Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contributing.html">Contributing Guidelines</a></li>
 <li class="toctree-l2 current active"><a class="current reference internal" href="#">Write Documentation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="adding_data_access.html">Adding Data to the Data Access Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="adding_forcing_configurations.html">Adding Forcing Configurations</a></li>
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../api-docs/modules.html">CrocoDash API Docs</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
@@ -313,7 +318,9 @@ document.write(`
   </button>
 `);
 </script>
-
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
 </div></div>
       
     </div>
@@ -329,6 +336,35 @@ document.write(`
     <div id="print-main-content">
         <div id="jb-print-toc">
             
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">Overview</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#building-documentation">Building Documentation</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#basic-build">Basic Build</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#clean-build">Clean Build</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#regenerating-api-documentation">Regenerating API Documentation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#local-server-preview">Local Server Preview</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#myst-markdown-format">MyST Markdown Format</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#documentation-structure">Documentation Structure</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#sphinx-configuration">Sphinx Configuration</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#raw-data-access">Raw Data Access</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#diagrams">Diagrams</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#faqs">FAQs</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#publishing-documentation-this-is-important-read-this">Publishing Documentation (This is important! Read This!)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#troubleshooting">Troubleshooting</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#api-docs-not-appearing">API docs not appearing</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#documentation-not-updating-after-changes">Documentation not updating after changes</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#broken-cross-references">Broken cross-references</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#best-practices">Best Practices</a></li>
+</ul>
+            </nav>
         </div>
     </div>
 </div>
@@ -340,29 +376,175 @@ document.write(`
                   
   <section id="write-documentation">
 <h1>Write Documentation<a class="headerlink" href="#write-documentation" title="Link to this heading">#</a></h1>
-<p>We are using Sphinx to write and compile documentation. The documentation is written in markdown (myst) format. The documentation is located in the <code class="docutils literal notranslate"><span class="pre">docs</span></code> folder. The documentation is hosted on github-pages. Please follow the below steps to compile documentation.</p>
-<p>Steps:</p>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">#</a></h2>
+<p>CrocoDash documentation is built using <a class="reference external" href="https://www.sphinx-doc.org/">Sphinx</a> and written in <a class="reference external" href="https://myst-parser.readthedocs.io/">MyST (Markedly Structured Text)</a> Markdown format. The documentation lives in two places:</p>
+<ol class="arabic simple">
+<li><p>in the <code class="docutils literal notranslate"><span class="pre">docs/source</span></code> folder and is hosted on GitHub Pages.</p></li>
+<li><p>In a submodule and github repo called CrocoGallery, which hosts tutorials and a gallery for CrocoDash. This is also hosted on github pages, and is officially a Jupyter Book, which also runs in MyST. This is built and published similar to CrocoDash, but the frameowrk jupyter book is a bit different.</p></li>
+</ol>
+</section>
+<section id="building-documentation">
+<h2>Building Documentation<a class="headerlink" href="#building-documentation" title="Link to this heading">#</a></h2>
+<section id="basic-build">
+<h3>Basic Build<a class="headerlink" href="#basic-build" title="Link to this heading">#</a></h3>
 <ol class="arabic">
-<li><p>Activate the environment</p></li>
-<li><p>Navigate to the docs folder</p></li>
-<li><p>Run the following command:</p>
+<li><p>Activate the conda environment:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mamba<span class="w"> </span>activate<span class="w"> </span>CrocoDash
+</pre></div>
+</div>
+</li>
+<li><p>Navigate to the docs folder:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>docs
+</pre></div>
+</div>
+</li>
+<li><p>Build HTML documentation:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>make<span class="w"> </span>html
 </pre></div>
 </div>
-</li>
-<li><p>To reformulate the autodocs, which needs to be done when new modules &amp; submodules are created, run this step</p>
-<blockquote>
-<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sphinx-apidoc<span class="w"> </span>-o<span class="w"> </span>source/api-docs<span class="w"> </span>../CrocoDash
-</pre></div>
-</div>
-</div></blockquote>
-</li>
-<li><p>If you’re on a supercomputer, you can run this command to run a local server and see it on your computer:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>make<span class="w"> </span>serve
-</pre></div>
-</div>
+<p>This generates HTML files in <code class="docutils literal notranslate"><span class="pre">docs/build/html/</span></code>. Open <code class="docutils literal notranslate"><span class="pre">index.html</span></code> in your browser to view the built documentation. Pushing to a PR or main will build the docs online.</p>
 </li>
 </ol>
+</section>
+<section id="clean-build">
+<h3>Clean Build<a class="headerlink" href="#clean-build" title="Link to this heading">#</a></h3>
+<p>If documentation seems stale or you encounter build errors, perform a clean build:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>docs
+make<span class="w"> </span>clean
+make<span class="w"> </span>html
+</pre></div>
+</div>
+<p>This removes cached build files and rebuilds from scratch.</p>
+</section>
+</section>
+<section id="regenerating-api-documentation">
+<h2>Regenerating API Documentation<a class="headerlink" href="#regenerating-api-documentation" title="Link to this heading">#</a></h2>
+<p>When you add new modules or submodules to CrocoDash, you need to regenerate the auto-documentation from docstrings:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>docs
+sphinx-apidoc<span class="w"> </span>-o<span class="w"> </span>source/api-docs<span class="w"> </span>../CrocoDash<span class="w"> </span><span class="c1"># This reads the code of CrocoDash and loads it into source/apidocs</span>
+<span class="c1"># You may consider deleting the regional_mom6 api docs, regional_mom6 has its own docs (which is what I&#39;ve been doing.)</span>
+make<span class="w"> </span>html
+</pre></div>
+</div>
+<p><strong>Why this is needed:</strong> The API docs are auto-generated from your Python docstrings. When you add new modules, Sphinx needs to scan them and create <code class="docutils literal notranslate"><span class="pre">.rst</span></code> files documenting the public API.</p>
+<p><strong>When to do this:</strong></p>
+<ul class="simple">
+<li><p>You create a new module or submodule under <code class="docutils literal notranslate"><span class="pre">CrocoDash/</span></code></p></li>
+<li><p>You add new public classes or functions to existing modules</p></li>
+<li><p>You significantly restructure the package</p></li>
+</ul>
+<p><strong>Note:</strong> The <code class="docutils literal notranslate"><span class="pre">sphinx-apidoc</span></code> command creates/updates files in <code class="docutils literal notranslate"><span class="pre">source/api-docs/</span></code>. These are referenced in the main documentation structure.</p>
+</section>
+<section id="local-server-preview">
+<h2>Local Server Preview<a class="headerlink" href="#local-server-preview" title="Link to this heading">#</a></h2>
+<p>If you’re on a supercomputer or want to preview documentation in a browser:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>docs
+make<span class="w"> </span>serve
+</pre></div>
+</div>
+<p>This starts a local web server. The command will print a URL (typically <code class="docutils literal notranslate"><span class="pre">http://127.0.0.1:8080</span></code>) that you can access. Locally, just open the index.html file instead, don’t start a server.</p>
+</section>
+<section id="myst-markdown-format">
+<h2>MyST Markdown Format<a class="headerlink" href="#myst-markdown-format" title="Link to this heading">#</a></h2>
+<p>CrocoDash documentation uses MyST, which extends standard Markdown with Sphinx capabilities. It’s powerful and modern! Take full advantage, we don’t use RST for a reason.</p>
+</section>
+<section id="documentation-structure">
+<h2>Documentation Structure<a class="headerlink" href="#documentation-structure" title="Link to this heading">#</a></h2>
+<p>The documentation is organized as follows:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>docs/source/
+├── index.md                 # Main landing page
+├── installation.md          # Installation instructions
+├── for_users/               # User-focused documentation
+│   └── index.md
+├── for_developers/          # Developer documentation
+│   ├── index.md
+│   ├── docs.md              # This file
+│   └── ...
+├── api-docs/                # Auto-generated API documentation
+│   ├── modules.rst
+│   └── ...
+├── raw_data_access/         # See more about this below
+└── _static/                 # Static files (CSS, images, etc.)
+</pre></div>
+</div>
+</section>
+<section id="sphinx-configuration">
+<h2>Sphinx Configuration<a class="headerlink" href="#sphinx-configuration" title="Link to this heading">#</a></h2>
+<p>Sphinx configuration is in <code class="docutils literal notranslate"><span class="pre">docs/source/conf.py</span></code>. Key settings:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">extensions</span></code> - Sphinx extensions loaded (MyST, theme, etc.)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">html_theme</span></code> - The theme used</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">myst_enable_extensions</span></code> - MyST-specific extensions enabled</p></li>
+</ul>
+<p>Usually you don’t need to modify this, but consult it if you’re using advanced Sphinx features.</p>
+</section>
+<section id="raw-data-access">
+<h2>Raw Data Access<a class="headerlink" href="#raw-data-access" title="Link to this heading">#</a></h2>
+<p>Every night, there is a CI action (in raw_data_access_testing.yml) to check if the datasets are accessible. Those are then updated on a page in the documentation, https://crocodile-cesm.github.io/CrocoDash/reports/raw_data_status.html. The code to check the raw_data_access is in the raw_data_access subfolder of docs/source, called check_raw_data.py. There is also a script called generate_info.py that generates the two tables in the same folder which list the products and functions available. This is run when the docs are built.</p>
+</section>
+<section id="diagrams">
+<h2>Diagrams<a class="headerlink" href="#diagrams" title="Link to this heading">#</a></h2>
+<p>The diagrams are generated from the scripts in docs/source/diagrams. They run when the docs are built.</p>
+</section>
+<section id="faqs">
+<h2>FAQs<a class="headerlink" href="#faqs" title="Link to this heading">#</a></h2>
+<p>The FAQs link on the docs is just a Github Dicussion on CrocoDash! Feel free to add anything to that.</p>
+</section>
+<section id="publishing-documentation-this-is-important-read-this">
+<h2>Publishing Documentation (This is important! Read This!)<a class="headerlink" href="#publishing-documentation-this-is-important-read-this" title="Link to this heading">#</a></h2>
+<p>CrocoDash documentation is automatically published to GitHub Pages when you push to the main branch (via GitHub Actions or similar CI/CD). No manual steps are required, but ensure:</p>
+<ol class="arabic simple">
+<li><p>Your documentation builds locally without errors</p></li>
+<li><p>All cross-references are valid</p></li>
+<li><p>You’ve committed and pushed changes to GitHub</p></li>
+</ol>
+<p>How it is built is with a github action called deploy_sphinx_docs.yml. What it does is build the docs, and based on if its a PR or a push to main, pushes the files to a folder in the gh-pages branch in the repo. Github Settings Pages is setup to deploy everytime there is a push to gh_pages. This deploys <strong>everything</strong> in gh-pages. This means a subfolder called workshop, will show up under the link crocodile-cesm.github.io/CrocoDash/workshop, and one called “pr-28” will show up under the sublink /pr-28/. This is useful because of how we setup the docs.</p>
+<p>Old versions of the docs may be set under links workshop (which I’ve set up manually), the latest push to main is under the subfolder /latest/. Prs are in /pr-xx/. The main index page just reroutes to /latest/</p>
+</section>
+<section id="troubleshooting">
+<h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Link to this heading">#</a></h2>
+<section id="api-docs-not-appearing">
+<h3>API docs not appearing<a class="headerlink" href="#api-docs-not-appearing" title="Link to this heading">#</a></h3>
+<p>Check that:</p>
+<ol class="arabic simple">
+<li><p>You ran <code class="docutils literal notranslate"><span class="pre">sphinx-apidoc</span> <span class="pre">-o</span> <span class="pre">source/api-docs</span> <span class="pre">../CrocoDash</span></code></p></li>
+<li><p>The generated files exist in <code class="docutils literal notranslate"><span class="pre">source/api-docs/</span></code></p></li>
+<li><p>The <code class="docutils literal notranslate"><span class="pre">api-docs/modules</span></code> is referenced in <code class="docutils literal notranslate"><span class="pre">index.md</span></code> toctree</p></li>
+</ol>
+</section>
+<section id="documentation-not-updating-after-changes">
+<h3>Documentation not updating after changes<a class="headerlink" href="#documentation-not-updating-after-changes" title="Link to this heading">#</a></h3>
+<p>Try a clean build:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>make<span class="w"> </span>clean
+make<span class="w"> </span>html
+</pre></div>
+</div>
+<p>The HTML files are cached; cleaning removes stale caches.</p>
+</section>
+<section id="broken-cross-references">
+<h3>Broken cross-references<a class="headerlink" href="#broken-cross-references" title="Link to this heading">#</a></h3>
+<p>Ensure that:</p>
+<ol class="arabic simple">
+<li><p>The file path is correct (relative to the docs source)</p></li>
+<li><p>You use the correct Sphinx role syntax: <code class="docutils literal notranslate"><span class="pre">{py:class}</span></code>, <code class="docutils literal notranslate"><span class="pre">{py:func}</span></code>, etc.</p></li>
+<li><p>The Python object actually exists and is properly imported</p></li>
+</ol>
+</section>
+</section>
+<section id="best-practices">
+<h2>Best Practices<a class="headerlink" href="#best-practices" title="Link to this heading">#</a></h2>
+<ol class="arabic simple">
+<li><p><strong>Use Clear Headings</strong> - Organize content with proper heading hierarchy (# for main, ## for sections, etc.)</p></li>
+<li><p><strong>Write Docstrings</strong> - Add docstrings to all public functions, classes, and modules; API docs pull from these</p></li>
+<li><p><strong>Link to Code</strong> - Use cross-references to link documentation to actual code</p></li>
+<li><p><strong>Test Links</strong> - After building, check that internal and external links work</p></li>
+<li><p><strong>Keep It Updated</strong> - Update documentation when you change the API or add features</p></li>
+<li><p><strong>Use Admonitions</strong> - Highlight warnings, notes, and important information</p></li>
+<li><p><strong>Provide Examples</strong> - Include code examples where helpful</p></li>
+<li><p><strong>Review Locally</strong> - Always build and review documentation locally before pushing</p></li>
+</ol>
+</section>
 </section>
 
 
@@ -377,12 +559,12 @@ document.write(`
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="index.html"
+       href="contributing.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Developer Information</p>
+        <p class="prev-next-title">Contributing Guidelines</p>
       </div>
     </a>
     <a class="right-next"
@@ -400,6 +582,42 @@ document.write(`
             </div>
             
             
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">Overview</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#building-documentation">Building Documentation</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#basic-build">Basic Build</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#clean-build">Clean Build</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#regenerating-api-documentation">Regenerating API Documentation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#local-server-preview">Local Server Preview</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#myst-markdown-format">MyST Markdown Format</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#documentation-structure">Documentation Structure</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#sphinx-configuration">Sphinx Configuration</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#raw-data-access">Raw Data Access</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#diagrams">Diagrams</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#faqs">FAQs</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#publishing-documentation-this-is-important-read-this">Publishing Documentation (This is important! Read This!)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#troubleshooting">Troubleshooting</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#api-docs-not-appearing">API docs not appearing</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#documentation-not-updating-after-changes">Documentation not updating after changes</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#broken-cross-references">Broken cross-references</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#best-practices">Best Practices</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
               
             
           </div>
