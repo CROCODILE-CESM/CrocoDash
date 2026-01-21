@@ -8,6 +8,7 @@ env:
   CIME_MACHINE: ubuntu-latest
   DIN_LOC_ROOT: /workspace
   CIME_OUTPUT_ROOT: /workspace
+  SCRATCH: /workspace
   USER: ${{ github.actor }}
 jobs:
   full_workflow:
