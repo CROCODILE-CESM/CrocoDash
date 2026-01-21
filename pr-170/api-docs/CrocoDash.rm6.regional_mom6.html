@@ -2034,7 +2034,7 @@ sum of the areas gives us the total area of the sphere.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="CrocoDash.rm6.regional_mom6.utils.try_pint_convert">
-<span class="sig-prename descclassname"><span class="pre">CrocoDash.rm6.regional_mom6.utils.</span></span><span class="sig-name descname"><span class="pre">try_pint_convert</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">da</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_units</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">var_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.rm6.regional_mom6.utils.try_pint_convert" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.rm6.regional_mom6.utils.</span></span><span class="sig-name descname"><span class="pre">try_pint_convert</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">da</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_units</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">var_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.rm6.regional_mom6.utils.try_pint_convert" title="Link to this definition">#</a></dt>
 <dd><p>Attempt to quantify and convert an xarray DataArray using Pint.</p>
 <p>Steps:
 1. Check if the DataArray has a ‘units’ attribute.</p>
@@ -2059,6 +2059,7 @@ sum of the areas gives us the total area of the sphere.</p>
 <li><p><strong>da</strong> (<em>xarray.DataArray</em>) – The DataArray to quantify and/or convert.</p></li>
 <li><p><strong>target_units</strong> (<em>str</em>) – Units to convert the DataArray to.</p></li>
 <li><p><strong>var_name</strong> (<em>str</em><em>, </em><em>optional</em>) – Name of the variable (used for logging messages).</p></li>
+<li><p><strong>debug</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, print debug information about the error with subexceptions.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
