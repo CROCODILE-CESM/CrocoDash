@@ -26,13 +26,13 @@ def full_workflow_with_cirrus(
     """Tests if the full CrocoDash workflow runs successfully."""
 
     # Set Grid Info
-    grid = Grid.from_supergrid("/glade/campaign/cesm/cesmdata/cseg/inputdata/ocn/mom/croc/testing_data/panama-bgc/ocean_hgrid_panama1_5490e0.nc")
+    grid = Grid.from_supergrid("/glade/campaign/cesm/cesmdata/inputdata/ocn/mom/croc/testing_data/panama-bgc/ocean_hgrid_panama1_5490e0.nc")
     topo = Topo.from_topo_file(
         grid = grid,
-        topo_file_path="/glade/campaign/cesm/cesmdata/cseg/inputdata/ocn/mom/croc/testing_data/panama-bgc/ocean_topog_panama1_5490e0.nc",
+        topo_file_path="/glade/campaign/cesm/cesmdata/inputdata/ocn/mom/croc/testing_data/panama-bgc/ocean_topog_panama1_5490e0.nc",
         min_depth = 9.5,
     )
-    vgrid = VGrid.from_file("/glade/campaign/cesm/cesmdata/cseg/inputdata/ocn/mom/croc/testing_data/panama-bgc/ocean_vgrid_panama1_5490e0.nc")
+    vgrid = VGrid.from_file("/glade/campaign/cesm/cesmdata/inputdata/ocn/mom/croc/testing_data/panama-bgc/ocean_vgrid_panama1_5490e0.nc")
 
     # Find CESM Root
     cesmroot = cesm_root_path

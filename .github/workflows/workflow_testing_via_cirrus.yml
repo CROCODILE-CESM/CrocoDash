@@ -18,7 +18,7 @@ jobs:
       - name: Check /glade/campaign access
         run: |
           echo "Listing /glade/campaign:"
-          ls -ld /glade/campaign || echo "/glade/campaign not accessible"
+          ls -ld /glade/campaign/ || echo "/glade/campaign not accessible"
 
           echo
           echo "Attempting to read:"
@@ -48,7 +48,7 @@ jobs:
           echo "Environment changed! Rebuilding CrocoDash conda environment..."
           conda env remove -n CrocoDash --yes
           conda env create -f $WORKDIR/CrocoDash/environment.yml
-      - name: Run Pytest
+      - name: Run Workflow test
         run: |
           cd $WORKDIR/CrocoDash
           python tests/test_workflow2.py --case-path $WORKDIR --cesm-root $CESMROOT --machine derecho
