@@ -15,13 +15,14 @@ jobs:
     container:
       image: ghcr.io/crocodile-cesm/crocodash:nightly
     steps:
-      - name: Check /glade access
+      - name: Check /glade/campaign access
         run: |
-          echo "Listing /glade:"
-          ls -ld /glade || echo "/glade not accessible"
+          echo "Listing /glade/campaign:"
+          ls -ld /glade/campaign || echo "/glade/campaign not accessible"
 
           echo
           echo "Attempting to read:"
+          ls /glade/campaign/cesm/cesmdata/inputdata/ocn/mom/croc/testing_data | head -n 20
           ls /glade/campaign/collections/gdex/data/d651077/cesmdata/inputdata/ocn/mom/croc | head -n 20
       - uses: actions/checkout@v4
         with:
