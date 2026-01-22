@@ -15,7 +15,6 @@ from CrocoDash.extract_forcings import (
     utils as utils,
 )
 
-
 CONFIG_PATH = Path(__file__).parent / "config.json"
 
 
