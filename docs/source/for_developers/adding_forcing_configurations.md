@@ -350,5 +350,4 @@ Most basic testing is taken care of, and the registry will run available configu
 ## See Also
 
 - [Project Architecture](project_architecture.md) - Understanding the Case class and workflow
-- [Common Development Tasks](common_dev_tasks.md) - Writing tests for configurators
 - Example implementations in `CrocoDash/forcing_configurations.py`

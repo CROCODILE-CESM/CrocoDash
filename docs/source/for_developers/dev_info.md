@@ -1,4 +1,4 @@
-# Setting Up Your Development Environment
+# Get started developing!
 
 ## Prerequisites
 
@@ -63,31 +63,6 @@ When adding or modifying data access functions:
 4. Update the registries in `raw_data_access/registry.py`
 
 
-## Remote Development on Supercomputers
-
-CrocoDash is primarily developed on HPC systems like NCAR's Derecho or GLADE. Some specific considerations:
-
-### Module Loading
-
-Some systems require loading modules before Python/conda works properly:
-
-```bash
-module load conda  # if required on your system
-```
-
-Check your supercomputer's documentation for required modules.
-
-### Batch Job Development
-
-For computationally expensive development (like testing `extract_forcings`), you may need to submit batch jobs
-
-### Data Access on Supercomputers
-
-- Understand your system's data storage hierarchy (home, scratch, campaign directories)
-- Use scratch space for temporary data; clean up when done
-- Be aware of file retention policies (scratch is often cleaned periodically)
-- Use direct paths instead of symlinks when possible for better performance
-
 ## Debugging
 
 
@@ -126,9 +101,20 @@ git rebase upstream/main
 git push -f origin feature/my-feature-name
 ```
 
+
+
 ## Next Steps
 
-After setting up your development environment:
+After setting up your development environment, read the [Project Architecture](project_architecture.md) guide to understand the codebase
 
-1. Read the [Project Architecture](project_architecture.md) guide to understand the codebase
-3. Review [Contributing Guidelines](contributing.md) before submitting changes
+
+## Recognition and Appreciation
+
+All contributors are valued! We appreciate:
+- Code contributions
+- Bug reports and testing
+- Documentation and tutorials
+- Help with issues and discussions
+- Feature ideas and feedback
+
+Thank you for making CrocoDash better!

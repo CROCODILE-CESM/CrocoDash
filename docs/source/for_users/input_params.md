@@ -10,8 +10,7 @@ When you run case preview (or setup), CESM generates several MOM6 configuration 
 
 - **`MOM_input`** - Main namelist controlling MOM6 parameters
 - **`diag_table`** - Diagnostic output configuration
-- **`input.nml`** - Other component namelists
-- **`MOM_interface`** - Additional CESM-MOM6 coupling settings
+- **`others`** 
 
 These files are initially placed in the case's `CaseDocs` directory for reference.
 
@@ -20,9 +19,9 @@ These files are initially placed in the case's `CaseDocs` directory for referenc
 1. **MOM_interface** - CESM's bridge component for MOM6
    - Located in: `components/mom` in CESM sandboxes
    - Generates default files based on grid and component settings
-   - Called via `preview_namelists()` which validates and generates files
+   - Files generated via `preview_namelists()` which calls MOM_interface to validate and generate files
 
-2. **Default Recommendations** - CrocoDash provides tested defaults
+2. **Default Recommendations** - CrocoDash (and the %REGIONAL compset) provides tested defaults
    - Grid-aware settings (domain size, resolution)
    - Physics settings appropriate for regional domains
    - Diagnostic settings for common use cases
@@ -31,16 +30,15 @@ These files are initially placed in the case's `CaseDocs` directory for referenc
 
 There are two approaches to customizing MOM6 parameters:
 
-### 1. User Namelist Modifications (Recommended)
+### 1. User Namelist Modifications (What you should use!)
 
 Override specific parameters using `user_nl_mom`:
 
 ```bash
-# In your case directory
-cat >> user_nl_mom << 'EOF'
+# In your case directory user_nl_mom 
 DT_BAROCLINIC = 1800  ! Change timestep
-MOM_USE_WAVES = .true.  ! Enable wave coupling
-EOF
+TIDES = TRUE  ! Enable tides (internal)
+
 ```
 
 Then regenerate namelists:
@@ -129,7 +127,7 @@ For detailed information about MOM6 parameters:
 
 - **MOM6 Manual:** [https://mom6.readthedocs.io/](https://mom6.readthedocs.io/)
 - **MOM6 Parameters:** MOM_input file comments and MOM6 documentation
-- **CESM MOM_interface:** See CESM documentation for coupling parameters
+- **CESM MOM_interface:** See CESM documentation for default coupling parameters
 
 ## Integration with CrocoDash
 
@@ -144,10 +142,7 @@ For configuration of forcing-specific parameters (tides, BGC, rivers, etc.), see
 ## Tips and Best Practices
 
 - **Start with defaults** - CrocoDash provides tested defaults; modify only what you need
-- **Use preview_namelists frequently** - It validates your changes
 - **Document your changes** - Add comments to user_nl_mom explaining why you changed things
-- **Version control** - Keep track of parameter changes across experiments (Each case is a git repo)
-- **Test incrementally** - Change a few parameters, run a short test, then add more
 - **Check compatibility** - Some parameters interact; changing one may require changing others
 
 ## Troubleshooting
@@ -157,12 +152,6 @@ For configuration of forcing-specific parameters (tides, BGC, rivers, etc.), see
 - Ensure parameter names are spelled correctly
 - Look for duplicate parameter definitions
 
-**"Parameter not recognized"**
-- The parameter may have been renamed in your MOM6 version
-- Check MOM6 documentation for the current parameter name
-- Try using a more recent CESM version
 
-**"Changes not taking effect"**
-- Did you run `preview_namelists` after editing?
-- Did you rebuild the case (`case.build`)?
-- Are you editing the correct file (user_nl_mom vs SourceMods)?
+
+You do not need to rebuild your case with parameter changes!!!

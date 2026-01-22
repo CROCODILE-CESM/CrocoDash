@@ -112,9 +112,9 @@ Every night, there is a CI action (in raw_data_access_testing.yml) to check if t
 ## Diagrams
 The diagrams are generated from the scripts in docs/source/diagrams. They run when the docs are built.
 
-## FAQs
+## Common Errors
 
-The FAQs link on the docs is just a Github Dicussion on CrocoDash! Feel free to add anything to that.
+The Common Errors link on the docs is just a Github Dicussion on CrocoDash! Feel free to add anything to that.
 
 ## Publishing Documentation (This is important! Read This!)
 

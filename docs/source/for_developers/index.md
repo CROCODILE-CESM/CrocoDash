@@ -6,7 +6,7 @@ Welcome to the CrocoDash developer documentation! This section contains everythi
 
 If you're new to CrocoDash development, start here:
 
-1. [Development Environment Setup](dev_environment.md) - Set up your local development environment
+1. [Development Information](dev_info.md) - Read how to get started
 2. [Project Architecture](project_architecture.md) - Understand how CrocoDash is organized
 
 ## Development Guides
@@ -14,10 +14,8 @@ If you're new to CrocoDash development, start here:
 ```{toctree}
 :maxdepth: 1
 
-dev_environment
+dev_info
 project_architecture
-common_dev_tasks
-contributing
 docs
 adding_data_access
 adding_forcing_configurations
@@ -30,15 +28,6 @@ adding_forcing_configurations
 - [Adding Data Sources](adding_data_access.md) - How to add new data products to the data access module
 - [Adding Forcing Configurations](adding_forcing_configurations.md) - How to add new forcing configurations to configure_forcings
 - [Writing Documentation](docs.md) - How to write and build documentation
-
-### Code Standards and Practices
-
-See [Contributing Guidelines](contributing.md) for:
-- Code style and standards
-- Type hints and docstrings
-- Test requirements
-- Pull request process
-- Code review expectations
 
 ## Key Concepts
 
@@ -56,7 +45,7 @@ The `extract_forcings` module is designed to divorce computationally heavy proce
 
 ### Adding a New Feature
 1. Create a feature branch: `git checkout -b feature/my-feature`
-2. Set up development environment (if not done): [Dev Environment Setup](dev_environment.md)
+2. Set up development environment 
 3. Make your code changes with proper docstrings and type hints
 4. Write tests for your changes
 5. Build and test documentation: `cd docs && make html`
@@ -88,4 +77,3 @@ The `extract_forcings` module is designed to divorce computationally heavy proce
 
 - Check existing [GitHub Discussions](https://github.com/CROCODILE-CESM/CrocoDash/discussions)
 - Open a new discussion for questions
-- See [Contributing Guidelines](contributing.md#getting-help) for more support options
