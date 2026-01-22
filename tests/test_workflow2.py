@@ -70,29 +70,29 @@ def full_workflow_with_cirrus(
         if item.is_file():
             shutil.copy2(item, dst_dir / item.name)
     
-    # subprocess.run(
-    #     [ "./xmlchange", "NTASKS=10"],
-    #     cwd=caseroot,
-    #     check=True,
-    # )
+    subprocess.run(
+        [ "./xmlchange", "NTASKS=10"],
+        cwd=caseroot,
+        check=True,
+    )
 
-    # subprocess.run(
-    #     [ "./case.setup", "--reset"],
-    #     cwd=caseroot,
-    #     check=True,
-    # )
+    subprocess.run(
+        [ "./case.setup", "--reset"],
+        cwd=caseroot,
+        check=True,
+    )
     
-    # subprocess.run(
-    #     ["./case.build"],
-    #     cwd=caseroot,
-    #     check=True,
-    # )
+    subprocess.run(
+        ["./case.build"],
+        cwd=caseroot,
+        check=True,
+    )
 
-    # subprocess.run(
-    #     ["./case.submit", "--no-batch"],
-    #     cwd=caseroot,
-    #     check=True,
-    # )
+    subprocess.run(
+        ["./case.submit", "--no-batch"],
+        cwd=caseroot,
+        check=True,
+    )
     
 
 
