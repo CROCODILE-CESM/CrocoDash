@@ -1,0 +1,771 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Setting Up Your Development Environment &#8212; CrocoDash  documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=eba8b062" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'for_developers/dev_environment';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Project Architecture" href="project_architecture.html" />
+    <link rel="prev" title="Developer Information" href="index.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../_static/crocodile.png" class="logo__image only-light" alt="CrocoDash  documentation - Home"/>
+    <script>document.write(`<img src="../_static/crocodile.png" class="logo__image only-dark" alt="CrocoDash  documentation - Home"/>`);</script>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://crocodile-cesm.github.io/CrocoGallery/">Tutorials &amp; Gallery</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../for_users/index.html">User Information</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../for_users/structure.html">Understanding CrocoDash’s Structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_users/datasets.html">Accessing Raw Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_users/available_compset_alias.html">Available Compset Aliases</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_users/input_params.html">Input Parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_users/forcing_configurations.html">Forcing Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_users/additional_resources.html">Additional Resources</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">Developer Information</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Setting Up Your Development Environment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="project_architecture.html">Project Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="common_dev_tasks.html">Common Development Tasks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contributing.html">Contributing Guidelines</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../api-docs/modules.html">CrocoDash API Docs</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../api-docs/CrocoDash.html">CrocoDash package</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../api-docs/CrocoDash.extract_forcings.html">CrocoDash.extract_forcings package</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../api-docs/CrocoDash.extract_forcings.code.html">CrocoDash.extract_forcings.code package</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../api-docs/CrocoDash.raw_data_access.html">CrocoDash.raw_data_access package</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../api-docs/CrocoDash.raw_data_access.datasets.html">CrocoDash.raw_data_access.datasets package</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/CROCODILE-CESM/CrocoDash/discussions/84">Common Errors</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/for_developers/dev_environment.md" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.md</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Setting Up Your Development Environment</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#prerequisites">Prerequisites</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#initial-setup">Initial Setup</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#development-workflow">Development Workflow</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#making-code-changes">Making Code Changes</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#testing-during-development">Testing During Development</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#working-with-extract-forcings">Working with Extract Forcings</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#working-with-raw-data-access">Working with Raw Data Access</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#documentation-development">Documentation Development</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#building-documentation-locally">Building Documentation Locally</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#regenerating-api-documentation">Regenerating API Documentation</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#preview-documentation-on-a-supercomputer">Preview Documentation on a Supercomputer</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#documentation-troubleshooting">Documentation Troubleshooting</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#remote-development-on-supercomputers">Remote Development on Supercomputers</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#module-loading">Module Loading</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#batch-job-development">Batch Job Development</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#data-access-on-supercomputers">Data Access on Supercomputers</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#debugging">Debugging</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#using-print-statements">Using Print Statements</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#using-a-debugger">Using a Debugger</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#debugging-jupyter-notebooks">Debugging Jupyter Notebooks</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#common-issues-and-solutions">Common Issues and Solutions</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#issue-submodules-show-as-empty">Issue: Submodules show as empty</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#issue-import-errors-for-crocodash-modules">Issue: Import errors for CrocoDash modules</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#issue-tests-fail-due-to-missing-data">Issue: Tests fail due to missing data</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#issue-documentation-won-t-build">Issue: Documentation won’t build</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#keeping-your-fork-branch-updated">Keeping Your Fork/Branch Updated</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#next-steps">Next Steps</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="setting-up-your-development-environment">
+<h1>Setting Up Your Development Environment<a class="headerlink" href="#setting-up-your-development-environment" title="Link to this heading">#</a></h1>
+<section id="prerequisites">
+<h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p>Git and basic command-line familiarity</p></li>
+<li><p>Conda or Mamba package manager</p></li>
+<li><p>A CESM installation (if testing full case workflow)</p></li>
+<li><p>Access to the required data repositories (GDEX, CESM inputdata, etc.)</p></li>
+</ul>
+</section>
+<section id="initial-setup">
+<h2>Initial Setup<a class="headerlink" href="#initial-setup" title="Link to this heading">#</a></h2>
+<p>Follow the installation docs!</p>
+</section>
+<section id="development-workflow">
+<h2>Development Workflow<a class="headerlink" href="#development-workflow" title="Link to this heading">#</a></h2>
+<section id="making-code-changes">
+<h3>Making Code Changes<a class="headerlink" href="#making-code-changes" title="Link to this heading">#</a></h3>
+<ol class="arabic">
+<li><p><strong>Create a feature branch:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>checkout<span class="w"> </span>-b<span class="w"> </span>feature/my-feature-name
+</pre></div>
+</div>
+</li>
+<li><p><strong>Make your changes</strong> to the relevant files in the <code class="docutils literal notranslate"><span class="pre">CrocoDash/</span></code> directory</p></li>
+<li><p><strong>Run tests locally</strong> to ensure nothing broke:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pytest<span class="w"> </span>tests/
+</pre></div>
+</div>
+<p>Or run specific test files:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pytest<span class="w"> </span>tests/test_specific.py
+</pre></div>
+</div>
+</li>
+</ol>
+</section>
+<section id="testing-during-development">
+<h3>Testing During Development<a class="headerlink" href="#testing-during-development" title="Link to this heading">#</a></h3>
+<p>CrocoDash uses <code class="docutils literal notranslate"><span class="pre">pytest</span></code> for testing. Key testing practices:</p>
+<ul class="simple">
+<li><p><strong>Run full test suite:</strong> <code class="docutils literal notranslate"><span class="pre">pytest</span> <span class="pre">tests/</span></code></p></li>
+<li><p><strong>Run with verbose output:</strong> <code class="docutils literal notranslate"><span class="pre">pytest</span> <span class="pre">-v</span> <span class="pre">tests/</span></code></p></li>
+<li><p><strong>Run specific test:</strong> <code class="docutils literal notranslate"><span class="pre">pytest</span> <span class="pre">tests/test_file.py::test_function_name</span></code></p></li>
+<li><p><strong>Run and stop on first failure:</strong> <code class="docutils literal notranslate"><span class="pre">pytest</span> <span class="pre">-x</span> <span class="pre">tests/</span></code></p></li>
+<li><p><strong>Show print statements:</strong> <code class="docutils literal notranslate"><span class="pre">pytest</span> <span class="pre">-s</span> <span class="pre">tests/</span></code></p></li>
+</ul>
+<p>Always run tests after making changes to ensure you haven’t introduced regressions.</p>
+</section>
+<section id="working-with-extract-forcings">
+<h3>Working with Extract Forcings<a class="headerlink" href="#working-with-extract-forcings" title="Link to this heading">#</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">extract_forcings</span></code> module is computationally intensive and may involve large data transfers. When developing this module:</p>
+<ol class="arabic simple">
+<li><p>Use small test cases with limited date ranges</p></li>
+<li><p>Test with small spatial domains</p></li>
+<li><p>Consider using the <code class="docutils literal notranslate"><span class="pre">preview:</span> <span class="pre">true</span></code> option in configuration files to test without full computation</p></li>
+<li><p>Use the <code class="docutils literal notranslate"><span class="pre">--test-config</span></code> flag if available to validate configuration before running</p></li>
+</ol>
+</section>
+<section id="working-with-raw-data-access">
+<h3>Working with Raw Data Access<a class="headerlink" href="#working-with-raw-data-access" title="Link to this heading">#</a></h3>
+<p>When adding or modifying data access functions:</p>
+<ol class="arabic simple">
+<li><p>Ensure your function follows the <code class="docutils literal notranslate"><span class="pre">ForcingProduct</span></code> base class interface</p></li>
+<li><p>Test with real data if possible, or mock data if that’s not feasible</p></li>
+<li><p>Add proper error handling for network/file access failures</p></li>
+<li><p>Update the registries in <code class="docutils literal notranslate"><span class="pre">raw_data_access/registry.py</span></code></p></li>
+</ol>
+</section>
+</section>
+<section id="documentation-development">
+<h2>Documentation Development<a class="headerlink" href="#documentation-development" title="Link to this heading">#</a></h2>
+<section id="building-documentation-locally">
+<h3>Building Documentation Locally<a class="headerlink" href="#building-documentation-locally" title="Link to this heading">#</a></h3>
+<ol class="arabic">
+<li><p><strong>Navigate to the docs folder:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>docs
+</pre></div>
+</div>
+</li>
+<li><p><strong>Build HTML documentation:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>make<span class="w"> </span>html
+</pre></div>
+</div>
+<p>This generates HTML in <code class="docutils literal notranslate"><span class="pre">docs/build/html/</span></code>. Open <code class="docutils literal notranslate"><span class="pre">index.html</span></code> in your browser to view.</p>
+</li>
+<li><p><strong>Clean and rebuild</strong> (if docs seem stale):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>make<span class="w"> </span>clean
+make<span class="w"> </span>html
+</pre></div>
+</div>
+</li>
+</ol>
+</section>
+<section id="regenerating-api-documentation">
+<h3>Regenerating API Documentation<a class="headerlink" href="#regenerating-api-documentation" title="Link to this heading">#</a></h3>
+<p>When you add new modules or submodules to CrocoDash, regenerate the API documentation:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>docs
+sphinx-apidoc<span class="w"> </span>-o<span class="w"> </span>source/api-docs<span class="w"> </span>../CrocoDash
+make<span class="w"> </span>html
+</pre></div>
+</div>
+<p>This scans the CrocoDash package and auto-generates documentation from docstrings.</p>
+</section>
+<section id="preview-documentation-on-a-supercomputer">
+<h3>Preview Documentation on a Supercomputer<a class="headerlink" href="#preview-documentation-on-a-supercomputer" title="Link to this heading">#</a></h3>
+<p>If you’re on a supercomputer with restricted internet, you can still preview locally:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>docs
+make<span class="w"> </span>serve
+</pre></div>
+</div>
+<p>This starts a local server. Access it through your browser (the command will print the URL).</p>
+</section>
+<section id="documentation-troubleshooting">
+<h3>Documentation Troubleshooting<a class="headerlink" href="#documentation-troubleshooting" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong>“make: command not found”</strong> - Ensure you’ve activated the conda environment with <code class="docutils literal notranslate"><span class="pre">sphinx</span></code> installed</p></li>
+<li><p><strong>Docs not updating</strong> - Run <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">clean</span></code> before <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">html</span></code> to remove cached files</p></li>
+<li><p><strong>API docs missing new modules</strong> - Did you run <code class="docutils literal notranslate"><span class="pre">sphinx-apidoc</span></code>? Did you import the modules in <code class="docutils literal notranslate"><span class="pre">__init__.py</span></code>?</p></li>
+<li><p><strong>Sphinx errors about undefined references</strong> - Check that file paths and function names are correct in your markdown</p></li>
+</ul>
+</section>
+</section>
+<section id="remote-development-on-supercomputers">
+<h2>Remote Development on Supercomputers<a class="headerlink" href="#remote-development-on-supercomputers" title="Link to this heading">#</a></h2>
+<p>CrocoDash is primarily developed on HPC systems like NCAR’s Derecho or GLADE. Some specific considerations:</p>
+<section id="module-loading">
+<h3>Module Loading<a class="headerlink" href="#module-loading" title="Link to this heading">#</a></h3>
+<p>Some systems require loading modules before Python/conda works properly:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>module<span class="w"> </span>load<span class="w"> </span>conda<span class="w">  </span><span class="c1"># if required on your system</span>
+</pre></div>
+</div>
+<p>Check your supercomputer’s documentation for required modules.</p>
+</section>
+<section id="batch-job-development">
+<h3>Batch Job Development<a class="headerlink" href="#batch-job-development" title="Link to this heading">#</a></h3>
+<p>For computationally expensive development (like testing <code class="docutils literal notranslate"><span class="pre">extract_forcings</span></code>), you may need to submit batch jobs:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create a simple script to test your changes</span>
+cat<span class="w"> </span>&gt;<span class="w"> </span>test_job.sh<span class="w"> </span><span class="s">&lt;&lt; &#39;EOF&#39;</span>
+<span class="s">#!/bin/bash</span>
+<span class="s">#PBS -l select=1:ncpus=10:mem=50GB</span>
+<span class="s">#PBS -l walltime=01:00:00</span>
+<span class="s">#PBS -q queue_name</span>
+
+<span class="s">module load conda</span>
+<span class="s">mamba activate CrocoDash</span>
+<span class="s">cd /path/to/CrocoDash</span>
+
+<span class="s">pytest tests/test_extract_forcings.py</span>
+<span class="s">EOF</span>
+
+qsub<span class="w"> </span>test_job.sh
+</pre></div>
+</div>
+</section>
+<section id="data-access-on-supercomputers">
+<h3>Data Access on Supercomputers<a class="headerlink" href="#data-access-on-supercomputers" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p>Understand your system’s data storage hierarchy (home, scratch, campaign directories)</p></li>
+<li><p>Use scratch space for temporary data; clean up when done</p></li>
+<li><p>Be aware of file retention policies (scratch is often cleaned periodically)</p></li>
+<li><p>Use direct paths instead of symlinks when possible for better performance</p></li>
+</ul>
+</section>
+</section>
+<section id="debugging">
+<h2>Debugging<a class="headerlink" href="#debugging" title="Link to this heading">#</a></h2>
+<section id="using-print-statements">
+<h3>Using Print Statements<a class="headerlink" href="#using-print-statements" title="Link to this heading">#</a></h3>
+<p>For quick debugging, add print statements and run tests with <code class="docutils literal notranslate"><span class="pre">-s</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pytest<span class="w"> </span>-s<span class="w"> </span>tests/test_file.py::test_function_name
+</pre></div>
+</div>
+</section>
+<section id="using-a-debugger">
+<h3>Using a Debugger<a class="headerlink" href="#using-a-debugger" title="Link to this heading">#</a></h3>
+<p>For more complex debugging, use <code class="docutils literal notranslate"><span class="pre">pdb</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pdb</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">my_function</span><span class="p">():</span>
+    <span class="n">pdb</span><span class="o">.</span><span class="n">set_trace</span><span class="p">()</span>  <span class="c1"># Execution pauses here</span>
+    <span class="c1"># Debug commands: n (next), s (step), c (continue), p variable_name</span>
+</pre></div>
+</div>
+<p>Or use an IDE with built-in debugging (e.g., VS Code, PyCharm).</p>
+</section>
+<section id="debugging-jupyter-notebooks">
+<h3>Debugging Jupyter Notebooks<a class="headerlink" href="#debugging-jupyter-notebooks" title="Link to this heading">#</a></h3>
+<p>If working with notebooks in the <code class="docutils literal notranslate"><span class="pre">dev/</span></code> folder:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>jupyter<span class="w"> </span>notebook<span class="w"> </span>dev/my_notebook.ipynb
+</pre></div>
+</div>
+<p>Then use notebook cells to test code incrementally.</p>
+</section>
+</section>
+<section id="common-issues-and-solutions">
+<h2>Common Issues and Solutions<a class="headerlink" href="#common-issues-and-solutions" title="Link to this heading">#</a></h2>
+<section id="issue-submodules-show-as-empty">
+<h3>Issue: Submodules show as empty<a class="headerlink" href="#issue-submodules-show-as-empty" title="Link to this heading">#</a></h3>
+<p><strong>Solution:</strong> Run <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">submodule</span> <span class="pre">update</span> <span class="pre">--init</span> <span class="pre">--recursive</span></code></p>
+</section>
+<section id="issue-import-errors-for-crocodash-modules">
+<h3>Issue: Import errors for CrocoDash modules<a class="headerlink" href="#issue-import-errors-for-crocodash-modules" title="Link to this heading">#</a></h3>
+<p><strong>Solution:</strong> Ensure you’re in the correct directory and the conda environment is activated. You can also install in development mode:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.
+</pre></div>
+</div>
+<p>This allows imports from anywhere after installation.</p>
+</section>
+<section id="issue-tests-fail-due-to-missing-data">
+<h3>Issue: Tests fail due to missing data<a class="headerlink" href="#issue-tests-fail-due-to-missing-data" title="Link to this heading">#</a></h3>
+<p><strong>Solution:</strong> Some tests may require specific datasets. Check if there’s a test configuration or fixtures directory. You may need to download test data or mock it.</p>
+</section>
+<section id="issue-documentation-won-t-build">
+<h3>Issue: Documentation won’t build<a class="headerlink" href="#issue-documentation-won-t-build" title="Link to this heading">#</a></h3>
+<p><strong>Solution:</strong> Try the troubleshooting steps above. If persistent, check that all required Sphinx extensions are installed:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mamba<span class="w"> </span>install<span class="w"> </span>sphinx<span class="w"> </span>myst-parser<span class="w"> </span>sphinx-rtd-theme
+</pre></div>
+</div>
+</section>
+</section>
+<section id="keeping-your-fork-branch-updated">
+<h2>Keeping Your Fork/Branch Updated<a class="headerlink" href="#keeping-your-fork-branch-updated" title="Link to this heading">#</a></h2>
+<p>If working on a fork or long-running branch:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Fetch latest changes from upstream</span>
+git<span class="w"> </span>fetch<span class="w"> </span>upstream
+
+<span class="c1"># Rebase your branch on the latest main</span>
+git<span class="w"> </span>rebase<span class="w"> </span>upstream/main
+
+<span class="c1"># Force push to your branch (only if you&#39;re the sole contributor)</span>
+git<span class="w"> </span>push<span class="w"> </span>-f<span class="w"> </span>origin<span class="w"> </span>feature/my-feature-name
+</pre></div>
+</div>
+</section>
+<section id="next-steps">
+<h2>Next Steps<a class="headerlink" href="#next-steps" title="Link to this heading">#</a></h2>
+<p>After setting up your development environment:</p>
+<ol class="arabic simple">
+<li><p>Read the <a class="reference internal" href="project_architecture.html"><span class="std std-doc">Project Architecture</span></a> guide to understand the codebase</p></li>
+<li><p>Check out <a class="reference internal" href="common_dev_tasks.html"><span class="std std-doc">Common Development Tasks</span></a> for specific workflows</p></li>
+<li><p>Review <a class="reference internal" href="contributing.html"><span class="std std-doc">Contributing Guidelines</span></a> before submitting changes</p></li>
+</ol>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="index.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Developer Information</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="project_architecture.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Project Architecture</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#prerequisites">Prerequisites</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#initial-setup">Initial Setup</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#development-workflow">Development Workflow</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#making-code-changes">Making Code Changes</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#testing-during-development">Testing During Development</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#working-with-extract-forcings">Working with Extract Forcings</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#working-with-raw-data-access">Working with Raw Data Access</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#documentation-development">Documentation Development</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#building-documentation-locally">Building Documentation Locally</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#regenerating-api-documentation">Regenerating API Documentation</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#preview-documentation-on-a-supercomputer">Preview Documentation on a Supercomputer</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#documentation-troubleshooting">Documentation Troubleshooting</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#remote-development-on-supercomputers">Remote Development on Supercomputers</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#module-loading">Module Loading</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#batch-job-development">Batch Job Development</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#data-access-on-supercomputers">Data Access on Supercomputers</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#debugging">Debugging</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#using-print-statements">Using Print Statements</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#using-a-debugger">Using a Debugger</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#debugging-jupyter-notebooks">Debugging Jupyter Notebooks</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#common-issues-and-solutions">Common Issues and Solutions</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#issue-submodules-show-as-empty">Issue: Submodules show as empty</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#issue-import-errors-for-crocodash-modules">Issue: Import errors for CrocoDash modules</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#issue-tests-fail-due-to-missing-data">Issue: Tests fail due to missing data</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#issue-documentation-won-t-build">Issue: Documentation won’t build</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#keeping-your-fork-branch-updated">Keeping Your Fork/Branch Updated</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#next-steps">Next Steps</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By CROCODILE
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2024, CROCODILE.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>
