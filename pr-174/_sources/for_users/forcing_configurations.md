@@ -50,7 +50,7 @@ case.configure_forcings(
 
 ## How to Check What's Required
 
-Before calling `configure_forcings()`, you can check what configuration options are required for your compset:
+Before calling `configure_forcings()`, you can check what configuration options are required for your compset. It will also be printed on case initialization:
 
 ```python
 from CrocoDash.forcing_configurations import ForcingConfigRegistry
@@ -140,9 +140,7 @@ Your specific compset determines which forcing configurations are triggered.
 
 ## For Developers
 
-To add a new forcing configuration:
-- See [Adding Forcing Configurations](../for_developers/adding_forcing_configurations.md) in the developer documentation
-- Understand the [Forcing Configuration Framework](../for_developers/project_architecture.md#forcing-configuration-validation) architecture
+To add a new forcing configuration, See [Adding Forcing Configurations](../for_developers/adding_forcing_configurations.md) in the developer documentation
 
 ## See Also
 

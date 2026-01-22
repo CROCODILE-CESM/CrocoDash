@@ -170,9 +170,8 @@
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../for_developers/index.html">Developer Information</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
-<li class="toctree-l2"><a class="reference internal" href="../for_developers/dev_environment.html">Setting Up Your Development Environment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_developers/dev_info.html">Get started developing!</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_developers/project_architecture.html">Project Architecture</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../for_developers/contributing.html">Contributing Guidelines</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_developers/docs.html">Write Documentation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_developers/adding_data_access.html">Adding Data to the Data Access Module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_developers/adding_forcing_configurations.html">Adding Forcing Configurations</a></li>
@@ -344,7 +343,7 @@ document.write(`
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#generated-files">Generated Files</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#how-defaults-are-generated">How Defaults Are Generated</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#customizing-parameters">Customizing Parameters</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#user-namelist-modifications-recommended">1. User Namelist Modifications (Recommended)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#user-namelist-modifications-what-you-should-use">1. User Namelist Modifications (What you should use!)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sourcemods-overrides">2. SourceMods Overrides</a></li>
 </ul>
 </li>
@@ -379,8 +378,7 @@ document.write(`
 <ul class="simple">
 <li><p><strong><code class="docutils literal notranslate"><span class="pre">MOM_input</span></code></strong> - Main namelist controlling MOM6 parameters</p></li>
 <li><p><strong><code class="docutils literal notranslate"><span class="pre">diag_table</span></code></strong> - Diagnostic output configuration</p></li>
-<li><p><strong><code class="docutils literal notranslate"><span class="pre">input.nml</span></code></strong> - Other component namelists</p></li>
-<li><p><strong><code class="docutils literal notranslate"><span class="pre">MOM_interface</span></code></strong> - Additional CESM-MOM6 coupling settings</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">others</span></code></strong></p></li>
 </ul>
 <p>These files are initially placed in the case’s <code class="docutils literal notranslate"><span class="pre">CaseDocs</span></code> directory for reference.</p>
 </section>
@@ -391,10 +389,10 @@ document.write(`
 <ul class="simple">
 <li><p>Located in: <code class="docutils literal notranslate"><span class="pre">components/mom</span></code> in CESM sandboxes</p></li>
 <li><p>Generates default files based on grid and component settings</p></li>
-<li><p>Called via <code class="docutils literal notranslate"><span class="pre">preview_namelists()</span></code> which validates and generates files</p></li>
+<li><p>Files generated via <code class="docutils literal notranslate"><span class="pre">preview_namelists()</span></code> which calls MOM_interface to validate and generate files</p></li>
 </ul>
 </li>
-<li><p><strong>Default Recommendations</strong> - CrocoDash provides tested defaults</p>
+<li><p><strong>Default Recommendations</strong> - CrocoDash (and the %REGIONAL compset) provides tested defaults</p>
 <ul class="simple">
 <li><p>Grid-aware settings (domain size, resolution)</p></li>
 <li><p>Physics settings appropriate for regional domains</p></li>
@@ -406,14 +404,12 @@ document.write(`
 <section id="customizing-parameters">
 <h2>Customizing Parameters<a class="headerlink" href="#customizing-parameters" title="Link to this heading">#</a></h2>
 <p>There are two approaches to customizing MOM6 parameters:</p>
-<section id="user-namelist-modifications-recommended">
-<h3>1. User Namelist Modifications (Recommended)<a class="headerlink" href="#user-namelist-modifications-recommended" title="Link to this heading">#</a></h3>
+<section id="user-namelist-modifications-what-you-should-use">
+<h3>1. User Namelist Modifications (What you should use!)<a class="headerlink" href="#user-namelist-modifications-what-you-should-use" title="Link to this heading">#</a></h3>
 <p>Override specific parameters using <code class="docutils literal notranslate"><span class="pre">user_nl_mom</span></code>:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># In your case directory</span>
-cat<span class="w"> </span>&gt;&gt;<span class="w"> </span>user_nl_mom<span class="w"> </span><span class="s">&lt;&lt; &#39;EOF&#39;</span>
-<span class="s">DT_BAROCLINIC = 1800  ! Change timestep</span>
-<span class="s">MOM_USE_WAVES = .true.  ! Enable wave coupling</span>
-<span class="s">EOF</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># In your case directory user_nl_mom </span>
+<span class="nv">DT_BAROCLINIC</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">1800</span><span class="w">  </span>!<span class="w"> </span>Change<span class="w"> </span>timestep
+<span class="nv">TIDES</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>TRUE<span class="w">  </span>!<span class="w"> </span>Enable<span class="w"> </span>tides<span class="w"> </span><span class="o">(</span>internal<span class="o">)</span>
 </pre></div>
 </div>
 <p>Then regenerate namelists:</p>
@@ -508,7 +504,7 @@ cat<span class="w"> </span>CaseDocs/MOM_input
 <ul class="simple">
 <li><p><strong>MOM6 Manual:</strong> <a class="reference external" href="https://mom6.readthedocs.io/">https://mom6.readthedocs.io/</a></p></li>
 <li><p><strong>MOM6 Parameters:</strong> MOM_input file comments and MOM6 documentation</p></li>
-<li><p><strong>CESM MOM_interface:</strong> See CESM documentation for coupling parameters</p></li>
+<li><p><strong>CESM MOM_interface:</strong> See CESM documentation for default coupling parameters</p></li>
 </ul>
 </section>
 <section id="integration-with-crocodash">
@@ -525,10 +521,7 @@ cat<span class="w"> </span>CaseDocs/MOM_input
 <h2>Tips and Best Practices<a class="headerlink" href="#tips-and-best-practices" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><strong>Start with defaults</strong> - CrocoDash provides tested defaults; modify only what you need</p></li>
-<li><p><strong>Use preview_namelists frequently</strong> - It validates your changes</p></li>
 <li><p><strong>Document your changes</strong> - Add comments to user_nl_mom explaining why you changed things</p></li>
-<li><p><strong>Version control</strong> - Keep track of parameter changes across experiments (Each case is a git repo)</p></li>
-<li><p><strong>Test incrementally</strong> - Change a few parameters, run a short test, then add more</p></li>
 <li><p><strong>Check compatibility</strong> - Some parameters interact; changing one may require changing others</p></li>
 </ul>
 </section>
@@ -540,18 +533,7 @@ cat<span class="w"> </span>CaseDocs/MOM_input
 <li><p>Ensure parameter names are spelled correctly</p></li>
 <li><p>Look for duplicate parameter definitions</p></li>
 </ul>
-<p><strong>“Parameter not recognized”</strong></p>
-<ul class="simple">
-<li><p>The parameter may have been renamed in your MOM6 version</p></li>
-<li><p>Check MOM6 documentation for the current parameter name</p></li>
-<li><p>Try using a more recent CESM version</p></li>
-</ul>
-<p><strong>“Changes not taking effect”</strong></p>
-<ul class="simple">
-<li><p>Did you run <code class="docutils literal notranslate"><span class="pre">preview_namelists</span></code> after editing?</p></li>
-<li><p>Did you rebuild the case (<code class="docutils literal notranslate"><span class="pre">case.build</span></code>)?</p></li>
-<li><p>Are you editing the correct file (user_nl_mom vs SourceMods)?</p></li>
-</ul>
+<p>You do not need to rebuild your case with parameter changes!!!</p>
 </section>
 </section>
 
@@ -603,7 +585,7 @@ cat<span class="w"> </span>CaseDocs/MOM_input
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#generated-files">Generated Files</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#how-defaults-are-generated">How Defaults Are Generated</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#customizing-parameters">Customizing Parameters</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#user-namelist-modifications-recommended">1. User Namelist Modifications (Recommended)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#user-namelist-modifications-what-you-should-use">1. User Namelist Modifications (What you should use!)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sourcemods-overrides">2. SourceMods Overrides</a></li>
 </ul>
 </li>

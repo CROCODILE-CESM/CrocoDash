@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Setting Up Your Development Environment &#8212; CrocoDash  documentation</title>
+    <title>Get started developing! &#8212; CrocoDash  documentation</title>
   
   
   
@@ -41,7 +41,7 @@
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'for_developers/dev_environment';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'for_developers/dev_info';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Project Architecture" href="project_architecture.html" />
@@ -170,9 +170,8 @@
 </ul>
 </details></li>
 <li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">Developer Information</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
-<li class="toctree-l2 current active"><a class="current reference internal" href="#">Setting Up Your Development Environment</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Get started developing!</a></li>
 <li class="toctree-l2"><a class="reference internal" href="project_architecture.html">Project Architecture</a></li>
-<li class="toctree-l2"><a class="reference internal" href="contributing.html">Contributing Guidelines</a></li>
 <li class="toctree-l2"><a class="reference internal" href="docs.html">Write Documentation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="adding_data_access.html">Adding Data to the Data Access Module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="adding_forcing_configurations.html">Adding Forcing Configurations</a></li>
@@ -247,7 +246,7 @@
       
       
       
-      <li><a href="../_sources/for_developers/dev_environment.md" target="_blank"
+      <li><a href="../_sources/for_developers/dev_info.md" target="_blank"
    class="btn btn-sm btn-download-source-button dropdown-item"
    title="Download source file"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -331,7 +330,7 @@ document.write(`
               
 
 <div id="jb-print-docs-body" class="onlyprint">
-    <h1>Setting Up Your Development Environment</h1>
+    <h1>Get started developing!</h1>
     <!-- Table of contents -->
     <div id="print-main-content">
         <div id="jb-print-toc">
@@ -350,12 +349,6 @@ document.write(`
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#working-with-raw-data-access">Working with Raw Data Access</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#remote-development-on-supercomputers">Remote Development on Supercomputers</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#module-loading">Module Loading</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#batch-job-development">Batch Job Development</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#data-access-on-supercomputers">Data Access on Supercomputers</a></li>
-</ul>
-</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#debugging">Debugging</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#common-issues-and-solutions">Common Issues and Solutions</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#issue-submodules-show-as-empty">Issue: Submodules show as empty</a></li>
@@ -365,6 +358,7 @@ document.write(`
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#keeping-your-fork-branch-updated">Keeping Your Fork/Branch Updated</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#next-steps">Next Steps</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#recognition-and-appreciation">Recognition and Appreciation</a></li>
 </ul>
             </nav>
         </div>
@@ -376,8 +370,8 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="setting-up-your-development-environment">
-<h1>Setting Up Your Development Environment<a class="headerlink" href="#setting-up-your-development-environment" title="Link to this heading">#</a></h1>
+  <section id="get-started-developing">
+<h1>Get started developing!<a class="headerlink" href="#get-started-developing" title="Link to this heading">#</a></h1>
 <section id="prerequisites">
 <h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading">#</a></h2>
 <ul class="simple">
@@ -446,31 +440,6 @@ document.write(`
 </ol>
 </section>
 </section>
-<section id="remote-development-on-supercomputers">
-<h2>Remote Development on Supercomputers<a class="headerlink" href="#remote-development-on-supercomputers" title="Link to this heading">#</a></h2>
-<p>CrocoDash is primarily developed on HPC systems like NCAR’s Derecho or GLADE. Some specific considerations:</p>
-<section id="module-loading">
-<h3>Module Loading<a class="headerlink" href="#module-loading" title="Link to this heading">#</a></h3>
-<p>Some systems require loading modules before Python/conda works properly:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>module<span class="w"> </span>load<span class="w"> </span>conda<span class="w">  </span><span class="c1"># if required on your system</span>
-</pre></div>
-</div>
-<p>Check your supercomputer’s documentation for required modules.</p>
-</section>
-<section id="batch-job-development">
-<h3>Batch Job Development<a class="headerlink" href="#batch-job-development" title="Link to this heading">#</a></h3>
-<p>For computationally expensive development (like testing <code class="docutils literal notranslate"><span class="pre">extract_forcings</span></code>), you may need to submit batch jobs</p>
-</section>
-<section id="data-access-on-supercomputers">
-<h3>Data Access on Supercomputers<a class="headerlink" href="#data-access-on-supercomputers" title="Link to this heading">#</a></h3>
-<ul class="simple">
-<li><p>Understand your system’s data storage hierarchy (home, scratch, campaign directories)</p></li>
-<li><p>Use scratch space for temporary data; clean up when done</p></li>
-<li><p>Be aware of file retention policies (scratch is often cleaned periodically)</p></li>
-<li><p>Use direct paths instead of symlinks when possible for better performance</p></li>
-</ul>
-</section>
-</section>
 <section id="debugging">
 <h2>Debugging<a class="headerlink" href="#debugging" title="Link to this heading">#</a></h2>
 </section>
@@ -509,11 +478,19 @@ git<span class="w"> </span>push<span class="w"> </span>-f<span class="w"> </span
 </section>
 <section id="next-steps">
 <h2>Next Steps<a class="headerlink" href="#next-steps" title="Link to this heading">#</a></h2>
-<p>After setting up your development environment:</p>
-<ol class="arabic simple">
-<li><p>Read the <a class="reference internal" href="project_architecture.html"><span class="std std-doc">Project Architecture</span></a> guide to understand the codebase</p></li>
-<li><p>Review <a class="reference internal" href="contributing.html"><span class="std std-doc">Contributing Guidelines</span></a> before submitting changes</p></li>
-</ol>
+<p>After setting up your development environment, read the <a class="reference internal" href="project_architecture.html"><span class="std std-doc">Project Architecture</span></a> guide to understand the codebase</p>
+</section>
+<section id="recognition-and-appreciation">
+<h2>Recognition and Appreciation<a class="headerlink" href="#recognition-and-appreciation" title="Link to this heading">#</a></h2>
+<p>All contributors are valued! We appreciate:</p>
+<ul class="simple">
+<li><p>Code contributions</p></li>
+<li><p>Bug reports and testing</p></li>
+<li><p>Documentation and tutorials</p></li>
+<li><p>Help with issues and discussions</p></li>
+<li><p>Feature ideas and feedback</p></li>
+</ul>
+<p>Thank you for making CrocoDash better!</p>
 </section>
 </section>
 
@@ -571,12 +548,6 @@ git<span class="w"> </span>push<span class="w"> </span>-f<span class="w"> </span
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#working-with-raw-data-access">Working with Raw Data Access</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#remote-development-on-supercomputers">Remote Development on Supercomputers</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#module-loading">Module Loading</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#batch-job-development">Batch Job Development</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#data-access-on-supercomputers">Data Access on Supercomputers</a></li>
-</ul>
-</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#debugging">Debugging</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#common-issues-and-solutions">Common Issues and Solutions</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#issue-submodules-show-as-empty">Issue: Submodules show as empty</a></li>
@@ -586,6 +557,7 @@ git<span class="w"> </span>push<span class="w"> </span>-f<span class="w"> </span
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#keeping-your-fork-branch-updated">Keeping Your Fork/Branch Updated</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#next-steps">Next Steps</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#recognition-and-appreciation">Recognition and Appreciation</a></li>
 </ul>
   </nav></div>
 

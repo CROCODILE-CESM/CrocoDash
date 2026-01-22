@@ -8,18 +8,16 @@ CrocoDash wraps the `mom6_bathy` module to generate the horizontal and vertical 
 
 - **Supergrid** - Structured Arakawa C-grid (via `Grid` class)
 - **Vertical Grid** - Depth levels and layer thickness (via `VGrid` class)
-- **Bathymetry/Topography** - Seafloor depth interpolation and smoothing (via `Topo` class)
+- **Bathymetry/Topography** - Bathyemtry setting (via `Topo` class)
 
 Key features:
-- `interpolate_from_file()` - Wraps regional-mom6's `setup_bathymetry` for custom bathymetry
 - `TopoEditor` - Interactive bathymetry editing tool
-- Automatic grid rotation and coordinate handling for regional domains
 
-**Module:** `CrocoDash.grid`, `CrocoDash.vgrid`, `CrocoDash.topo`
+**Modules:** `CrocoDash.grid`, `CrocoDash.vgrid`, `CrocoDash.topo`, `CrocoDash.topo_editor`
 
 ## 2. Case Setup (CESM Interface)
 
-CrocoDash wraps `VisualCaseGen` (ProConPy-based) to create and configure CESM cases:
+CrocoDash wraps `VisualCaseGen` to create and configure CESM cases:
 
 - **Case Initialization** - Creates the case directory structure
 - **Component Setup** - Configures atmosphere, ocean, land, ice, runoff components
@@ -35,7 +33,7 @@ Key features:
 
 ## 3. Forcing File Generation
 
-CrocoDash uses the `extract_forcings` module to generate initial conditions and open boundary conditions (OBC) from source datasets:
+CrocoDash uses the `extract_forcings` module to generate forcings from source datasets:
 
 - **Data Access** - Unified interface to multiple forcing datasets (MOM6, TPXO, GLOFAS, etc.)
 - **Regridding** - Maps data from source grids to your custom regional grid
@@ -60,9 +58,9 @@ Key features:
    ↓
 4. Configure Forcing (validate compset, set options)
    ↓
-5. Extract Forcings (download, regrid, format data)
+5. Process Forcings (download, regrid, format data)
    ↓
-6. Setup Case (case.setup() and case.build())
+6. Build Case (case.build())
    ↓
 7. Submit Case (case.submit())
 ```
@@ -90,18 +88,15 @@ Key features:
 - **`raw_data_access.registry`** - Registry of available datasets
 - **`raw_data_access.datasets`** - Individual dataset implementations
 
-### Utilities
-- **`TopoEditor`** - Interactive bathymetry editing tool
-- **`logging`** - Consistent logging configuration
 
 ## Integration with External Tools
 
 CrocoDash ties together several specialized tools:
 
 - **[mom6_bathy](https://github.com/NCAR/mom6_bathy)** - Grid generation and bathymetry tools
-- **[regional-mom6](https://github.com/CROCODILE-CESM/regional-mom6)** - Regional MOM6 setup and OBC generation
-- **[VisualCaseGen](https://github.com/CROCODILE-CESM/VisualCaseGen)** - CESM case creation GUI framework (ProConPy-based)
-- **[CESM](https://github.com/CROCODILE-CESM/CESM)** - Community Earth System Model
+- **[regional-mom6](https://github.com/COSIMA/regional-mom6)** - Regional MOM6 setup and OBC generation
+- **[VisualCaseGen](https://github.com/ESMCI/VisualCaseGen)** - CESM case creation GUI framework (ProConPy-based)
+- **[CESM](https://github.com/ESCOMP/CESM)** - Community Earth System Model
 
 These are included as submodules in the CrocoDash repository.
 
@@ -110,5 +105,5 @@ These are included as submodules in the CrocoDash repository.
 For a detailed understanding of CrocoDash architecture:
 - See [Project Architecture](../for_developers/project_architecture.md) in the developer documentation
 - Understand the [Forcing Configuration Framework](../for_developers/adding_forcing_configurations.md) for extending configurations
-- Check [Development Environment Setup](../for_developers/dev_environment.md) to start contributing
+- Check [Development Information](../for_developers/dev_info.md) to start contributing
 
