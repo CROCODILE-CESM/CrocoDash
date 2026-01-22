@@ -1,0 +1,4 @@
+jupyter-book
+s3fs
+botocore==1.38.30
+copernicusmarine

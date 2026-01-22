@@ -1,0 +1,92 @@
+# Table of contents
+# Learn more at https://jupyterbook.org/customize/toc.html
+
+format: jb-book
+root: intro
+parts:
+    - caption: Introduction
+      chapters:
+      - file: notebooks/tutorials/walkthrough 
+        title: Basic CrocoDash Tutorial
+        sections:
+        - file: notebooks/tutorials/cesm_setup
+        - file: notebooks/tutorials/minimal_demo_rect
+        - file: notebooks/tutorials/input_params
+
+    - caption: Feature Tutorials
+      chapters:
+      - file: notebooks/features/coupling 
+        title: Coupling Tutorials
+        sections:
+        - file: notebooks/features/add_bgc
+        - file: notebooks/features/add_cice
+      - file: notebooks/features/custom_grid 
+        title: Grid Customization Tutorials
+        sections:
+        - file: notebooks/features/subset_global
+        - file: notebooks/features/add_grids
+      - file: notebooks/features/data_product
+        title: Data Product Tutorials
+        sections:
+        - file: notebooks/features/too_much_data
+        - file: notebooks/features/add_data_products
+      - file: notebooks/diagnostics/CUPiD_for_regional_MOM6
+        title: CUPiD Diagnostics Tutorial
+        sections:
+        - file: notebooks/diagnostics/CUPiD_intro
+          title: Installing CUPiD
+        - file: notebooks/diagnostics/standalone_CUPiD
+          title: Running a CUPiD Example
+        - file: notebooks/diagnostics/CUPiD_output
+          title: Output from CUPiD Example
+          sections:
+          - file: notebooks/diagnostics/cupid_output/Regional_Ocean_Report_Card
+          - file: notebooks/diagnostics/cupid_output/Regional_Ocean_Animations
+          - file: notebooks/diagnostics/cupid_output/Regional_Ocean_Atmospheric_Forcing
+          - file: notebooks/diagnostics/cupid_output/Regional_Ocean_OBC
+      - file: notebooks/features/add_components
+        title: Additional Component Tutorials
+        sections:
+        - file: notebooks/features/add_rof
+        - file: notebooks/features/add_runoff_product
+        - file: notebooks/features/add_chl
+        - file: notebooks/features/add_tides
+
+    - caption: 2025 CROCODILE Workshop Projects
+      chapters:
+        - file: notebooks/projects/CrocoDash
+        - file: notebooks/projects/sample_crocodash_projects/sample_crocodash_projects
+          title: Sample CrocoDash Projects
+          sections:
+            - file: notebooks/projects/sample_crocodash_projects/BGC
+            - file: notebooks/projects/sample_crocodash_projects/NWA
+            - file: notebooks/projects/sample_crocodash_projects/CICE_antarctica
+            - file: notebooks/projects/sample_crocodash_projects/CICE_arctic
+            - file: notebooks/projects/sample_crocodash_projects/DROF
+            - file: notebooks/projects/sample_crocodash_projects/Everything
+
+        - file: notebooks/projects/model-obs_comparison
+          title: Model-Observation Comparison Tutorials and Projects
+          sections:
+          - file: notebooks/projects/tutorial1_MOM6-CL-comparison
+          - file: notebooks/projects/tutorial2_MOM6-CL-comparison-float
+          - file: notebooks/projects/tutorial3_CrocoLake_map_temperature
+          - file: notebooks/projects/tutorial4_MOM6-WOD13-comparison
+          - file: notebooks/projects/model-obs_your_own_model
+        - file: notebooks/projects/CARIB12_EKE_TS
+          title: Calculate EKE for CARIB12
+        - file: notebooks/diagnostics/CUPiD_projects
+          title: Advanced CUPiD Tutorial
+          sections:
+          - file: notebooks/diagnostics/CUPiD_in_CESM_Workflow
+            title: Running CUPiD within CESM
+          - file: notebooks/diagnostics/contributing_to_CUPiD
+            title: Contributing to CUPiD
+    - caption: Use Cases
+      chapters:
+      - file: notebooks/use_cases/index 
+        title: Development Cases
+        sections:
+          - file: notebooks/use_cases/three_boundary_from_t232
+          - file: notebooks/use_cases/three_boundary
+          - file: notebooks/use_cases/mom6_cice_antarctica
