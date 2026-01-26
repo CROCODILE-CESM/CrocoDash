@@ -4,43 +4,33 @@ import re
 from pathlib import Path
 from collections import defaultdict
 from datetime import datetime, timedelta
+from CrocoDash.topo import *
+from CrocoDash.grid import *
 
 
-def load_config(config_path: str = "config.json") -> dict:
-    """
-    Load a JSON config file.
+class Config:
 
-    Parameters
-    ----------
-    config_path : str, optional
-        Path to the JSON config file. Default is "config.json".
+    def __init__(self, config_path: str = "config.json"):
 
-    Returns
-    -------
-    dict
-        The loaded configuration as a dictionary.
-    """
-    with open(config_path, "r", encoding="utf-8") as f:
-        return json.load(f)
+        with open(config_path, "r", encoding="utf-8") as f:
+            self.config = json.load(f)
+        self.ocn_grid = Grid.from_supergrid(self.config["basic"]["paths"]["hgrid_path"])
+        topo = xr.open_dataset(
+            self.config["basic"]["paths"]["bathymetry_path"], decode_times=False
+        )
 
+        self.ocn_topo = Topo.from_topo_file(
+            self.ocn_grid,
+            self.config["basic"]["paths"]["bathymetry_path"],
+            min_depth=topo.attrs["min_depth"],
+        )
+        self.inputdir = Path(self.config["basic"]["paths"]["input_dataset_path"])
 
-def write_config(config: dict, config_path: str = "config.json") -> None:
-    """
-    Write or update a JSON config file.
+    def keys():
+        return self.config.keys()
 
-    Parameters
-    ----------
-    config : dict
-        Configuration dictionary to save.
-    config_path : str, optional
-        Path to the JSON config file. Default is "config.json".
-
-    Returns
-    -------
-    None
-    """
-    with open(config_path, "w", encoding="utf-8") as f:
-        json.dump(config, f, indent=4, sort_keys=True)
+    def __getitem__(self, key):
+        return self.config[key]
 
 
 def parse_dataset_folder(

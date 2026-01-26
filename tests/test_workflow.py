@@ -17,16 +17,12 @@ dask.config.set(num_workers=4)
 
 
 @pytest.mark.workflow
-@pytest.mark.parametrize(
-    "too_much_data", [False]
-)  # Add True once Github CI has copernicusmarine credentials
 def test_full_workflow(
     tmp_path,
     get_CrocoDash_case,
     is_github_actions,
     dummy_tidal_data,
     dummy_forcing_factory,
-    too_much_data,
 ):
     """Tests if the full CrocoDash workflow runs successfully."""
 
@@ -41,13 +37,12 @@ def test_full_workflow(
         get_CrocoDash_case,
         dummy_tidal_data,
         dummy_forcing_factory,
-        too_much_data,
     )
     assert result
 
 
 def run_full_workflow(
-    tmp_path, get_CrocoDash_case, dummy_tidal_data, dummy_forcing_factory, too_much_data
+    tmp_path, get_CrocoDash_case, dummy_tidal_data, dummy_forcing_factory
 ):
     """Run the entire CrocoDash workflow (lightly)"""
 
@@ -59,57 +54,47 @@ def run_full_workflow(
     u.to_netcdf(tmp_path / "u.nc")
 
     # Forcing setup
+    case.configure_forcings(
+        date_range=["2020-01-01 00:00:00", "2020-02-01 00:00:00"],
+        tidal_constituents=["M2"],
+        tpxo_elevation_filepath=tmp_path / "h.nc",
+        tpxo_velocity_filepath=tmp_path / "u.nc",
+    )
+    # Create dummy forcings
+    bounds = Grid.get_bounding_boxes_of_rectangular_grid(case.ocn_grid)
+    ds = dummy_forcing_factory(
+        bounds["ic"]["lat_min"],
+        bounds["ic"]["lat_max"],
+        bounds["ic"]["lon_min"],
+        bounds["ic"]["lon_max"],
+    )
+    (case.inputdir / "extract_forcings" / "raw_data").mkdir(exist_ok=True)
+    ds.to_netcdf(case.inputdir / "extract_forcings" / "raw_data" / "ic_unprocessed.nc")
+    ds.to_netcdf(
+        case.inputdir
+        / "extract_forcings"
+        / "raw_data"
+        / "east_unprocessed.20200101_20200201.nc"
+    )
+    ds.to_netcdf(
+        case.inputdir
+        / "extract_forcings"
+        / "raw_data"
+        / "west_unprocessed.20200101_20200201.nc"
+    )
+    ds.to_netcdf(
+        case.inputdir
+        / "extract_forcings"
+        / "raw_data"
+        / "north_unprocessed.20200101_20200201.nc"
+    )
+    ds.to_netcdf(
+        case.inputdir
+        / "extract_forcings"
+        / "raw_data"
+        / "south_unprocessed.20200101_20200201.nc"
+    )
 
-    if not too_much_data:
-        case.configure_forcings(
-            date_range=["2020-01-01 00:00:00", "2020-02-01 00:00:00"],
-            tidal_constituents=["M2"],
-            tpxo_elevation_filepath=tmp_path / "h.nc",
-            tpxo_velocity_filepath=tmp_path / "u.nc",
-            too_much_data=too_much_data,
-        )
-        # Create dummy forcings
-        bounds = Grid.get_bounding_boxes_of_rectangular_grid(case.ocn_grid)
-        ds = dummy_forcing_factory(
-            bounds["ic"]["lat_min"],
-            bounds["ic"]["lat_max"],
-            bounds["ic"]["lon_min"],
-            bounds["ic"]["lon_max"],
-        )
-        ds.to_netcdf(
-            case.inputdir / "extract_forcings" / "raw_data" / "ic_unprocessed.nc"
-        )
-        ds.to_netcdf(
-            case.inputdir
-            / "extract_forcings"
-            / "raw_data"
-            / "east_unprocessed.20200101_20200201.nc"
-        )
-        ds.to_netcdf(
-            case.inputdir
-            / "extract_forcings"
-            / "raw_data"
-            / "west_unprocessed.20200101_20200201.nc"
-        )
-        ds.to_netcdf(
-            case.inputdir
-            / "extract_forcings"
-            / "raw_data"
-            / "north_unprocessed.20200101_20200201.nc"
-        )
-        ds.to_netcdf(
-            case.inputdir
-            / "extract_forcings"
-            / "raw_data"
-            / "south_unprocessed.20200101_20200201.nc"
-        )
-    else:
-        case.configure_forcings(
-            date_range=["2020-01-01 00:00:00", "2020-02-06 00:00:00"],
-            too_much_data=too_much_data,
-            function_name="get_glorys_data_from_cds_api",
-        )
-        subprocess.run(["python", str(case.inputdir / "extract_forcings/driver.py")])
     # Process Forcings
     case.process_forcings()
 
