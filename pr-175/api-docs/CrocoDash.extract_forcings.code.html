@@ -337,22 +337,10 @@ document.write(`
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#submodules">Submodules</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.extract_forcings.code.get_dataset_piecewise">CrocoDash.extract_forcings.code.get_dataset_piecewise module</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.code.get_dataset_piecewise.get_dataset_piecewise"><code class="docutils literal notranslate"><span class="pre">get_dataset_piecewise()</span></code></a></li>
-</ul>
-</li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.extract_forcings.code.merge_piecewise_dataset">CrocoDash.extract_forcings.code.merge_piecewise_dataset module</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.code.merge_piecewise_dataset.merge_piecewise_dataset"><code class="docutils literal notranslate"><span class="pre">merge_piecewise_dataset()</span></code></a></li>
-</ul>
-</li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.extract_forcings.code.regrid_dataset_piecewise">CrocoDash.extract_forcings.code.regrid_dataset_piecewise module</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.code.regrid_dataset_piecewise.capture_fill_metadata"><code class="docutils literal notranslate"><span class="pre">capture_fill_metadata()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.code.regrid_dataset_piecewise.final_cleanliness_fill"><code class="docutils literal notranslate"><span class="pre">final_cleanliness_fill()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.code.regrid_dataset_piecewise.m6b_fill_missing_data_wrapper"><code class="docutils literal notranslate"><span class="pre">m6b_fill_missing_data_wrapper()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.code.regrid_dataset_piecewise.regrid_dataset_piecewise"><code class="docutils literal notranslate"><span class="pre">regrid_dataset_piecewise()</span></code></a></li>
-</ul>
-</li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.extract_forcings.code">Module contents</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crocodash-extract-forcings-code-get-dataset-piecewise-module">CrocoDash.extract_forcings.code.get_dataset_piecewise module</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crocodash-extract-forcings-code-merge-piecewise-dataset-module">CrocoDash.extract_forcings.code.merge_piecewise_dataset module</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crocodash-extract-forcings-code-regrid-dataset-piecewise-module">CrocoDash.extract_forcings.code.regrid_dataset_piecewise module</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module contents</a></li>
 </ul>
             </nav>
         </div>
@@ -369,149 +357,17 @@ document.write(`
 <section id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading">#</a></h2>
 </section>
-<section id="module-CrocoDash.extract_forcings.code.get_dataset_piecewise">
-<span id="crocodash-extract-forcings-code-get-dataset-piecewise-module"></span><h2>CrocoDash.extract_forcings.code.get_dataset_piecewise module<a class="headerlink" href="#module-CrocoDash.extract_forcings.code.get_dataset_piecewise" title="Link to this heading">#</a></h2>
-<dl class="py function">
-<dt class="sig sig-object py" id="CrocoDash.extract_forcings.code.get_dataset_piecewise.get_dataset_piecewise">
-<span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.code.get_dataset_piecewise.</span></span><span class="sig-name descname"><span class="pre">get_dataset_piecewise</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">product_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">product_information</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date_format</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_date</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_date</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hgrid_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step_days</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundary_number_conversion</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">run_initial_condition</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">run_boundary_conditions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preview</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.extract_forcings.code.get_dataset_piecewise.get_dataset_piecewise" title="Link to this definition">#</a></dt>
-<dd><p>Retrieves and saves data in piecewise chunks for each boundary over a date range.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>product_name</strong> (<em>str</em>) – The name of the data product to retrieve.</p></li>
-<li><p><strong>function_name</strong> (<em>str</em>) – The function to call for retrieving data.</p></li>
-<li><p><strong>date_format</strong> (<em>str</em>) – The date format string (e.g., “%Y-%m-%d”).</p></li>
-<li><p><strong>start_date</strong> (<em>str</em>) – The start date in the specified format.</p></li>
-<li><p><strong>end_date</strong> (<em>str</em>) – The end date in the specified format.</p></li>
-<li><p><strong>hgrid_path</strong> (<em>str</em><em> or </em><em>Path</em>) – Path to the hgrid file containing the regional grid.</p></li>
-<li><p><strong>step_days</strong> (<em>int</em>) – The number of days in each data chunk.</p></li>
-<li><p><strong>output_dir</strong> (<em>str</em><em> or </em><em>Path</em>) – The directory to save the output NetCDF files.</p></li>
-<li><p><strong>boundary_number_conversion</strong> (<em>dict</em>) – Dictionary mapping boundaries to their numerical identifiers.</p></li>
-<li><p><strong>run_initial_condition</strong> (<em>bool</em>) – Whether or not to run the initial condition, default is true</p></li>
-<li><p><strong>run_boundary_conditions</strong> (<em>bool</em>) – Whether or not to run the boundary conditions, default is true</p></li>
-<li><p><strong>preview</strong> (<em>bool</em>) – Whether or not to preview the run, default is false</p></li>
-</ul>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If the product or function is not found in the registry.</p>
-</dd>
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Saves the retrieved data to the specified output directory.</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>None</p>
-</dd>
-</dl>
-</dd></dl>
-
+<section id="crocodash-extract-forcings-code-get-dataset-piecewise-module">
+<h2>CrocoDash.extract_forcings.code.get_dataset_piecewise module<a class="headerlink" href="#crocodash-extract-forcings-code-get-dataset-piecewise-module" title="Link to this heading">#</a></h2>
 </section>
-<section id="module-CrocoDash.extract_forcings.code.merge_piecewise_dataset">
-<span id="crocodash-extract-forcings-code-merge-piecewise-dataset-module"></span><h2>CrocoDash.extract_forcings.code.merge_piecewise_dataset module<a class="headerlink" href="#module-CrocoDash.extract_forcings.code.merge_piecewise_dataset" title="Link to this heading">#</a></h2>
-<dl class="py function">
-<dt class="sig sig-object py" id="CrocoDash.extract_forcings.code.merge_piecewise_dataset.merge_piecewise_dataset">
-<span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.code.merge_piecewise_dataset.</span></span><span class="sig-name descname"><span class="pre">merge_piecewise_dataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">folder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_dataset_regex</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date_format</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_date</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_date</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundary_number_conversion</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_folder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">run_initial_condition</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">run_boundary_conditions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preview</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.extract_forcings.code.merge_piecewise_dataset.merge_piecewise_dataset" title="Link to this definition">#</a></dt>
-<dd><p>Merges piecewise datasets from a folder into consolidated NetCDF files by boundary.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>folder</strong> (<em>str</em><em> or </em><em>Path</em>) – Path to the folder containing the regridded dataset files.</p></li>
-<li><p><strong>input_dataset_regex</strong> (<em>str</em>) – Regular expression pattern to match dataset files.</p></li>
-<li><p><strong>date_format</strong> (<em>str</em>) – Date format string used for parsing the dataset filenames.</p></li>
-<li><p><strong>start_date</strong> (<em>str</em>) – Start date in the specified format.</p></li>
-<li><p><strong>end_date</strong> (<em>str</em>) – End date in the specified format.</p></li>
-<li><p><strong>boundary_number_conversion</strong> (<em>dict</em>) – Dictionary mapping boundary segment numbers to their labels.</p></li>
-<li><p><strong>output_folder</strong> (<em>str</em><em> or </em><em>Path</em>) – Directory to save the merged NetCDF files.</p></li>
-<li><p><strong>run_initial_condition</strong> (<em>bool</em>) – Whether to run initial condition, default is true.</p></li>
-<li><p><strong>run_boundary_conditions</strong> (<em>bool</em>) – Whether to run boundary conditions, default is true.</p></li>
-<li><p><strong>preview</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to run in preview mode without saving (default is False).</p></li>
-</ul>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If a segment in <cite>boundary_number_conversion</cite> is not found in the dataset folder.</p>
-</dd>
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Saves the merged NetCDF files to the specified output folder.</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>None</p>
-</dd>
-</dl>
-</dd></dl>
-
+<section id="crocodash-extract-forcings-code-merge-piecewise-dataset-module">
+<h2>CrocoDash.extract_forcings.code.merge_piecewise_dataset module<a class="headerlink" href="#crocodash-extract-forcings-code-merge-piecewise-dataset-module" title="Link to this heading">#</a></h2>
 </section>
-<section id="module-CrocoDash.extract_forcings.code.regrid_dataset_piecewise">
-<span id="crocodash-extract-forcings-code-regrid-dataset-piecewise-module"></span><h2>CrocoDash.extract_forcings.code.regrid_dataset_piecewise module<a class="headerlink" href="#module-CrocoDash.extract_forcings.code.regrid_dataset_piecewise" title="Link to this heading">#</a></h2>
-<dl class="py function">
-<dt class="sig sig-object py" id="CrocoDash.extract_forcings.code.regrid_dataset_piecewise.capture_fill_metadata">
-<span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.code.regrid_dataset_piecewise.</span></span><span class="sig-name descname"><span class="pre">capture_fill_metadata</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.extract_forcings.code.regrid_dataset_piecewise.capture_fill_metadata" title="Link to this definition">#</a></dt>
-<dd><p>Return a dict mapping variable names → {‘_FillValue’: …, ‘missing_value’: …}
-Only stores attributes that exist.</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="CrocoDash.extract_forcings.code.regrid_dataset_piecewise.final_cleanliness_fill">
-<span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.code.regrid_dataset_piecewise.</span></span><span class="sig-name descname"><span class="pre">final_cleanliness_fill</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">var</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z_dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.extract_forcings.code.regrid_dataset_piecewise.final_cleanliness_fill" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="CrocoDash.extract_forcings.code.regrid_dataset_piecewise.m6b_fill_missing_data_wrapper">
-<span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.code.regrid_dataset_piecewise.</span></span><span class="sig-name descname"><span class="pre">m6b_fill_missing_data_wrapper</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xdim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zdim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fill</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.extract_forcings.code.regrid_dataset_piecewise.m6b_fill_missing_data_wrapper" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="CrocoDash.extract_forcings.code.regrid_dataset_piecewise.regrid_dataset_piecewise">
-<span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.code.regrid_dataset_piecewise.</span></span><span class="sig-name descname"><span class="pre">regrid_dataset_piecewise</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">folder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_dataset_regex</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date_format</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_date</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_date</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hgrid_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bathymetry</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset_varnames</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_folder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundary_number_conversion</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">run_initial_condition</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">run_boundary_conditions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vgrid_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preview</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.extract_forcings.code.regrid_dataset_piecewise.regrid_dataset_piecewise" title="Link to this definition">#</a></dt>
-<dd><p>Find the required files, set up the necessary data, and regrid the dataset.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>folder</strong> (<em>str</em><em> or </em><em>Path</em>) – Path to the folder containing the dataset files.</p></li>
-<li><p><strong>input_dataset_regex</strong> (<em>str</em>) – Regular expression pattern to match dataset files.</p></li>
-<li><p><strong>date_format</strong> (<em>str</em>) – Date format string used to parse dates in filenames (e.g., “%Y%m%d”).</p></li>
-<li><p><strong>start_date</strong> (<em>str</em>) – Start date of the dataset range in <cite>YYYYMMDD</cite> format.</p></li>
-<li><p><strong>end_date</strong> (<em>str</em>) – End date of the dataset range in <cite>YYYYMMDD</cite> format.</p></li>
-<li><p><strong>hgrid</strong> (<em>str</em><em> or </em><em>Path</em>) – Path to the horizontal grid file used for regridding.</p></li>
-<li><p><strong>dataset_varnames</strong> (<em>dict</em>) – <p>Mapping of variable names in the dataset to standardized names.
-Example:
-{</p>
-<blockquote>
-<div><p>”time”: “time”,
-“latitude”: “yh”,
-“longitude”: “xh”,
-“depth”: “zl”</p>
-</div></blockquote>
-<p>}</p>
-</p></li>
-<li><p><strong>output_folder</strong> (<em>str</em><em> or </em><em>Path</em>) – Path to the folder where the regridded dataset will be saved.</p></li>
-<li><p><strong>boundary_number_conversion</strong> (<em>dict</em>) – <p>Dictionary mapping boundary names to numerical IDs.
-Example:
-{</p>
-<blockquote>
-<div><p>”north”: 1,
-“east”: 2,
-“south”: 3,
-“west”: 4</p>
-</div></blockquote>
-<p>}</p>
-</p></li>
-<li><p><strong>run_initial_condition</strong> (<em>bool</em>) – Whether or not to run the initial condition, defaults to true</p></li>
-<li><p><strong>run_boundary_conditions</strong> (<em>bool</em>) – Whether or not to run the boundary conditions, defaults to true</p></li>
-<li><p><strong>vgrid_path</strong> (<em>str</em><em> or </em><em>Path</em>) – Path to the Vertical Coordinate required for the initial condition</p></li>
-<li><p><strong>preview</strong> (<em>bool</em>) – Whether or not to preview the run of this function, defaults to false</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The regridded dataset files are saved to the specified <cite>output_folder</cite>.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>None</p>
-</dd>
-</dl>
-</dd></dl>
-
+<section id="crocodash-extract-forcings-code-regrid-dataset-piecewise-module">
+<h2>CrocoDash.extract_forcings.code.regrid_dataset_piecewise module<a class="headerlink" href="#crocodash-extract-forcings-code-regrid-dataset-piecewise-module" title="Link to this heading">#</a></h2>
 </section>
-<section id="module-CrocoDash.extract_forcings.code">
-<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-CrocoDash.extract_forcings.code" title="Link to this heading">#</a></h2>
+<section id="module-contents">
+<h2>Module contents<a class="headerlink" href="#module-contents" title="Link to this heading">#</a></h2>
 </section>
 </section>
 
@@ -561,22 +417,10 @@ Example:
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#submodules">Submodules</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.extract_forcings.code.get_dataset_piecewise">CrocoDash.extract_forcings.code.get_dataset_piecewise module</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.code.get_dataset_piecewise.get_dataset_piecewise"><code class="docutils literal notranslate"><span class="pre">get_dataset_piecewise()</span></code></a></li>
-</ul>
-</li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.extract_forcings.code.merge_piecewise_dataset">CrocoDash.extract_forcings.code.merge_piecewise_dataset module</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.code.merge_piecewise_dataset.merge_piecewise_dataset"><code class="docutils literal notranslate"><span class="pre">merge_piecewise_dataset()</span></code></a></li>
-</ul>
-</li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.extract_forcings.code.regrid_dataset_piecewise">CrocoDash.extract_forcings.code.regrid_dataset_piecewise module</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.code.regrid_dataset_piecewise.capture_fill_metadata"><code class="docutils literal notranslate"><span class="pre">capture_fill_metadata()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.code.regrid_dataset_piecewise.final_cleanliness_fill"><code class="docutils literal notranslate"><span class="pre">final_cleanliness_fill()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.code.regrid_dataset_piecewise.m6b_fill_missing_data_wrapper"><code class="docutils literal notranslate"><span class="pre">m6b_fill_missing_data_wrapper()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.code.regrid_dataset_piecewise.regrid_dataset_piecewise"><code class="docutils literal notranslate"><span class="pre">regrid_dataset_piecewise()</span></code></a></li>
-</ul>
-</li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.extract_forcings.code">Module contents</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crocodash-extract-forcings-code-get-dataset-piecewise-module">CrocoDash.extract_forcings.code.get_dataset_piecewise module</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crocodash-extract-forcings-code-merge-piecewise-dataset-module">CrocoDash.extract_forcings.code.merge_piecewise_dataset module</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crocodash-extract-forcings-code-regrid-dataset-piecewise-module">CrocoDash.extract_forcings.code.regrid_dataset_piecewise module</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module contents</a></li>
 </ul>
   </nav></div>
 
