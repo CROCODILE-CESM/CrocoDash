@@ -364,7 +364,7 @@ document.write(`
 <section id="some-helper-functions">
 <h2>Some Helper Functions<a class="headerlink" href="#some-helper-functions" title="Link to this heading">#</a></h2>
 <p>Here are some useful helper functions to understand what you need for each configuration option and which configuration options you must provide.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">CrocoDash.forcing_configurations</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">CrocoDash.forcing_configurations.base</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
 
 <span class="c1"># Find required options</span>
 <span class="n">required_options</span> <span class="o">=</span> <span class="n">ForcingConfigRegistry</span><span class="o">.</span><span class="n">find_required_configurators</span><span class="p">(</span><span class="n">compset</span><span class="p">)</span>
