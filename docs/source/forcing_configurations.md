@@ -15,7 +15,7 @@ Forcing Configuration is handled by the `forcing_configurations.py` module.
 Here are some useful helper functions to understand what you need for each configuration option and which configuration options you must provide.
 
 ```python
-from CrocoDash.forcing_configurations import *
+from CrocoDash.forcing_configurations.base import *
 
 # Find required options
 required_options = ForcingConfigRegistry.find_required_configurators(compset)

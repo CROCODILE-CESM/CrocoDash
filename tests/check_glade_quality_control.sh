@@ -5,10 +5,7 @@ EXEMPTIONS=(
   "CrocoDash/raw_data_access/datasets/glorys.py"
   "CrocoDash/raw_data_access/datasets/mom6_output.py"
   "tests/fixtures/state.py"
-  "tests/extract_obc/test_parse_dataset.py"
-  "tests/extract_obc/test_format_dataset.py"
-  "tests/extract_obc/test_regrid_dataset.py"
-  "tests/extract_obc/test_subset_dataset.py"
+  "tests/extract_forcings/test_processes.py"
 )
 
 echo "Checking for hardcoded '/glade' paths..."

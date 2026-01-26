@@ -43,3 +43,25 @@ def test_case_integration_config(get_CrocoDash_case):
         "forcing",
         "general",
     }
+
+
+def test_driver_works(get_CrocoDash_case, tmp_path):
+    """
+    Test that the setup for the forcings works
+    """
+    case = get_CrocoDash_case
+    case.configure_forcings(
+        date_range=["2020-01-01 00:00:00", "2020-02-01 00:00:00"],
+        tidal_constituents=["M2"],
+        tpxo_elevation_filepath=tmp_path,
+        tpxo_velocity_filepath=tmp_path,
+        chl_processed_filepath=tmp_path,
+        boundaries=["north", "south", "east"],
+    )
+    large_data_workflow_path = case.inputdir / "extract_forcings"
+    assert (large_data_workflow_path).exists()
+    result = subprocess.run(
+        ["python", large_data_workflow_path / "driver.py", "--tides"],
+        capture_output=True,
+        text=True,
+    )
