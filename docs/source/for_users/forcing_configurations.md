@@ -138,7 +138,7 @@ Your specific compset determines which forcing configurations are triggered.
 - This is informational - the configuration isn't required, compatible, or requested with your compset
 - Only provide inputs for configurations you actually need
 
-## For Developers
+## Want to add more?
 
 To add a new forcing configuration, See [Adding Forcing Configurations](../for_developers/adding_forcing_configurations.md) in the developer documentation
 
