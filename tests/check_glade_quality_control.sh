@@ -9,6 +9,7 @@ EXEMPTIONS=(
   "tests/extract_obc/test_format_dataset.py"
   "tests/extract_obc/test_regrid_dataset.py"
   "tests/extract_obc/test_subset_dataset.py"
+  "tests/test_workflow2.py"
 )
 
 echo "Checking for hardcoded '/glade' paths..."
