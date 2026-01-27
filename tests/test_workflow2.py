@@ -114,14 +114,16 @@ def full_workflow_with_cirrus(
         subprocess.run(
             ["./case.submit", "--no-batch"],
             check=True,
-                cwd=caseroot,
-                capture_output=True,
-                text=True,
-            )
+            cwd=caseroot,
+            capture_output=True,
+            text=True,
+        )
     except subprocess.CalledProcessError as e:
         print("STDOUT:\n", e.stdout)
         print("STDERR:\n", e.stderr)
         raise
+
+
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(
