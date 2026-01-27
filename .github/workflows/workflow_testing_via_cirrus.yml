@@ -50,11 +50,14 @@ jobs:
           conda env remove -n CrocoDash --yes
           conda env create -f $WORKDIR/CrocoDash/environment.yml
 
-      - name: Configure git identity for CI (needed for case build, which does some git operations)
+      - name: Configure git identity for CI (needed for case build, which does some git operations) and create symlink from ubuntu-latest to derecho inputdata (accessible through CIRRUS)
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          mkdir -p /root/cesm
+          ln -sfn /glade/campaign/cesm/cesmdata/inputdata /root/cesm/inputdata
+
       - name: Run Workflow test
         run: |
           cd $WORKDIR/CrocoDash
-          python tests/test_workflow2.py --case-path $WORKDIR --cesm-root $CESMROOT --machine derecho
+          python tests/test_workflow2.py --case-path $WORKDIR --cesm-root $CESMROOT --machine ubuntu-latest
