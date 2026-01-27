@@ -187,7 +187,7 @@ class Param(ABC):
         pass
 
     def __repr__(self):
-        return f"Parameter: {self.name}"   
+        return f"Parameter: {self.name}"
 
 
 class InputParam(Param):
