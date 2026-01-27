@@ -18,27 +18,35 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 dask.config.set(num_workers=4)
 
+
 def full_workflow_with_cirrus(
     case_path,
     cesm_root_path,
-    machine = "derecho",
+    machine="derecho",
 ):
     """Tests if the full CrocoDash workflow runs successfully."""
 
     # Set Grid Info
-    grid = Grid.from_supergrid("/glade/campaign/cesm/cesmdata/inputdata/ocn/mom/croc/testing_data/panama-bgc/ocean_hgrid_panama1_5490e0.nc")
-    topo = Topo.from_topo_file(
-        grid = grid,
-        topo_file_path="/glade/campaign/cesm/cesmdata/inputdata/ocn/mom/croc/testing_data/panama-bgc/ocean_topog_panama1_5490e0.nc",
-        min_depth = 9.5,
+    grid = Grid.from_supergrid(
+        "/glade/campaign/cesm/cesmdata/inputdata/ocn/mom/croc/testing_data/panama-bgc/ocean_hgrid_panama1_5490e0.nc"
     )
-    vgrid = VGrid.from_file("/glade/campaign/cesm/cesmdata/inputdata/ocn/mom/croc/testing_data/panama-bgc/ocean_vgrid_panama1_5490e0.nc")
+    topo = Topo.from_topo_file(
+        grid=grid,
+        topo_file_path="/glade/campaign/cesm/cesmdata/inputdata/ocn/mom/croc/testing_data/panama-bgc/ocean_topog_panama1_5490e0.nc",
+        min_depth=9.5,
+    )
+    vgrid = VGrid.from_file(
+        "/glade/campaign/cesm/cesmdata/inputdata/ocn/mom/croc/testing_data/panama-bgc/ocean_vgrid_panama1_5490e0.nc"
+    )
 
     # Find CESM Root
     cesmroot = cesm_root_path
 
     # Set some defaults
-    caseroot, inputdir = case_path / "test_workflow_case", case_path / "test_workflow_case_inputdir"
+    caseroot, inputdir = (
+        case_path / "test_workflow_case",
+        case_path / "test_workflow_case_inputdir",
+    )
     project_num = "NCGD0011"
     override = True
     compset = "1850_DATM%JRA_SLND_SICE_MOM6_SROF_SGLC_SWAV"
@@ -63,40 +71,57 @@ def full_workflow_with_cirrus(
     )
 
     # Slide the raw data into the extract_forcings workflow from inputdata
-    dst_dir = case.inputdir/"extract_forcings"/"raw_data"
+    dst_dir = case.inputdir / "extract_forcings" / "raw_data"
     dst_dir.mkdir(exist_ok=True)
-    src = Path("/glade/campaign/cesm/cesmdata/inputdata/ocn/mom/croc/testing_data/panama-raw-data")
+    src = Path(
+        "/glade/campaign/cesm/cesmdata/inputdata/ocn/mom/croc/testing_data/panama-raw-data"
+    )
     for item in src.iterdir():
         if item.is_file():
             shutil.copy2(item, dst_dir / item.name)
-    
+
     subprocess.run(
-        [ "./xmlchange", "NTASKS=10"],
+        ["./xmlchange", "NTASKS=10"],
         cwd=caseroot,
         check=True,
     )
+    try:
+        subprocess.run(
+            ["./case.setup", "--reset"],
+            cwd=caseroot,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except subprocess.CalledProcessError as e:
+        print("STDOUT:\n", e.stdout)
+        print("STDERR:\n", e.stderr)
+        raise
 
-    subprocess.run(
-        [ "./case.setup", "--reset"],
-        cwd=caseroot,
-        check=True,
-    )
-    
-    subprocess.run(
-        ["./case.build"],
-        cwd=caseroot,
-        check=True,
-    )
-
-    subprocess.run(
-        ["./case.submit", "--no-batch"],
-        cwd=caseroot,
-        check=True,
-    )
-    
-
-
-
+    try:
+        subprocess.run(
+            ["./case.build"],
+            check=True,
+            cwd=caseroot,
+            capture_output=True,
+            text=True,
+        )
+    except subprocess.CalledProcessError as e:
+        print("STDOUT:\n", e.stdout)
+        print("STDERR:\n", e.stderr)
+        raise
+    try:
+        subprocess.run(
+            ["./case.submit", "--no-batch"],
+            check=True,
+                cwd=caseroot,
+                capture_output=True,
+                text=True,
+            )
+    except subprocess.CalledProcessError as e:
+        print("STDOUT:\n", e.stdout)
+        print("STDERR:\n", e.stderr)
+        raise
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(
@@ -121,11 +146,8 @@ if __name__ == "__main__":
         help="machine to run case",
     )
 
-
     args = parser.parse_args()
 
     full_workflow_with_cirrus(
-        case_path=args.case_path,
-        cesm_root_path=args.cesm_root,
-        machine = args.machine
+        case_path=args.case_path, cesm_root_path=args.cesm_root, machine=args.machine
     )
