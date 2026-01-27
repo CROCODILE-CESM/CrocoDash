@@ -49,6 +49,11 @@ jobs:
           echo "Environment changed! Rebuilding CrocoDash conda environment..."
           conda env remove -n CrocoDash --yes
           conda env create -f $WORKDIR/CrocoDash/environment.yml
+
+      - name: Configure git identity for CI (needed for case build, which does some git operations)
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
       - name: Run Workflow test
         run: |
           cd $WORKDIR/CrocoDash
