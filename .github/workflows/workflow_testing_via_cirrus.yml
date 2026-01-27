@@ -9,7 +9,7 @@ env:
   DIN_LOC_ROOT: /workspace
   CIME_OUTPUT_ROOT: /workspace
   SCRATCH: /workspace
-  CESMDATAROOT: /glade/campaign/cesm/cesmdata/inputdata
+  CESMDATAROOT: /glade/campaign/cesm/cesmdata
   USER: ${{ github.actor }}
 jobs:
   full_workflow:
