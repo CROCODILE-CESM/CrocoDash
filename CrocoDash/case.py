@@ -941,7 +941,7 @@ class Case:
             expt_name=self.caseroot.name,
             boundaries=self.boundaries,
         )
-        expt.hgrid = self.ocn_grid.gen_supergrid_ds()
+        expt.hgrid = self.ocn_grid.supergrid.to_ds()
         # expt.vgrid = self.ocn_vgrid.gen_vgrid_ds() # Not implemented yet
         return expt
 

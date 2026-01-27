@@ -242,7 +242,7 @@ def regrid_dataset_piecewise(
                 # ETA - no depth
                 file_path = output_folder / "init_eta.nc"
                 ds = xr.open_dataset(file_path, mask_and_scale=True)
-                ds["eta_t"][:] = m6b.aux.fill_missing_data(
+                ds["eta_t"][:] = m6b.utils.fill_missing_data(
                     ds["eta_t"].values, bathymetry.tmask.values
                 )
                 ds["eta_t"] = final_cleanliness_fill(ds["eta_t"], "nx", "ny")
@@ -258,10 +258,10 @@ def regrid_dataset_piecewise(
                 z_act = "zl"
 
                 for z_ind in range(ds[z_act].shape[0]):
-                    ds["u"][z_ind] = m6b.aux.fill_missing_data(
+                    ds["u"][z_ind] = m6b.utils.fill_missing_data(
                         ds["u"][z_ind].values, bathymetry.umask.values
                     )
-                    ds["v"][z_ind] = m6b.aux.fill_missing_data(
+                    ds["v"][z_ind] = m6b.utils.fill_missing_data(
                         ds["v"][z_ind].values, bathymetry.vmask.values
                     )
                 ds["v"] = final_cleanliness_fill(ds["v"], "nx", "nyp", "zl")
@@ -279,7 +279,7 @@ def regrid_dataset_piecewise(
                 for var in ["temp", "salt"]:
                     z_act = "zl"
                     for z_ind in range(ds[z_act].shape[0]):
-                        ds[var][z_ind] = m6b.aux.fill_missing_data(
+                        ds[var][z_ind] = m6b.utils.fill_missing_data(
                             ds[var][z_ind].values, bathymetry.tmask.values
                         )
                     ds[var] = final_cleanliness_fill(ds[var], "nx", "ny", "zl")
