@@ -57,4 +57,4 @@ jobs:
       - name: Run Workflow test
         run: |
           cd $WORKDIR/CrocoDash
-          python tests/test_workflow2.py --case-path $WORKDIR --cesm-root $CESMROOT --machine ubuntu-latest
+          python tests/test_workflow2.py --case-path $WORKDIR --cesm-root $CESMROOT --machine derecho
