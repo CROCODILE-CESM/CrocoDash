@@ -1,6 +1,6 @@
 # Adding Data to the Data Access Module
 
-The Data Access Module provides access functions to raw datasets used in CrocoDash. This document explains how to add a new dataset to the module.
+The Data Access Module is an expandible, verifyable, object-oriented module with access functions to raw datasets used in CrocoDash. This document explains what it is and what you can do to add more to it, if you would like to!
 
 ## Module Overview
 

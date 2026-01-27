@@ -17,9 +17,9 @@ New to CrocoDash? Start with these guides:
 
 structure
 datasets
+forcing_configurations
 available_compset_alias
 input_params
-forcing_configurations
 additional_resources
 diagrams
 ```
@@ -48,7 +48,7 @@ Check [Tutorials & Gallery](https://crocodile-cesm.github.io/CrocoGallery/) for 
 
 For more detailed information about how CrocoDash works internally:
 
-- [Project Architecture](../for_developers/project_architecture.md) - Technical overview of modules and design patterns
+- [Structure](structure.md) - Technical overview of modules and design patterns
 - [Adding Forcing Configurations](../for_developers/adding_forcing_configurations.md) - How to extend with new configurations
 - [Adding Data Sources](../for_developers/adding_data_access.md) - How to add new datasets
 

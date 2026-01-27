@@ -1,15 +1,8 @@
 # Get started developing!
 
-## Prerequisites
+## Installation
 
-- Git and basic command-line familiarity
-- Conda or Mamba package manager
-- A CESM installation (if testing full case workflow)
-- Access to the required data repositories (GDEX, CESM inputdata, etc.)
-
-## Initial Setup
-
-Follow the installation docs!
+[Follow the installation docs!](../installation.md)
 
 ## Development Workflow
 
@@ -61,51 +54,6 @@ When adding or modifying data access functions:
 2. Test with real data if possible, or mock data if that's not feasible
 3. Add proper error handling for network/file access failures
 4. Update the registries in `raw_data_access/registry.py`
-
-
-## Debugging
-
-
-## Common Issues and Solutions
-
-### Issue: Submodules show as empty
-
-**Solution:** Run `git submodule update --init --recursive`
-
-### Issue: Import errors for CrocoDash modules
-
-**Solution:** Ensure you're in the correct directory and the conda environment is activated. You can also install in development mode:
-
-```bash
-pip install -e .
-```
-
-This allows imports from anywhere after installation.
-
-### Issue: Tests fail due to missing data
-
-**Solution:** Some tests may require specific datasets. Check if there's a glade requirement
-
-## Keeping Your Fork/Branch Updated
-
-If working on a fork or long-running branch:
-
-```bash
-# Fetch latest changes from upstream
-git fetch upstream
-
-# Rebase your branch on the latest main
-git rebase upstream/main
-
-# Force push to your branch (only if you're the sole contributor)
-git push -f origin feature/my-feature-name
-```
-
-
-
-## Next Steps
-
-After setting up your development environment, read the [Project Architecture](project_architecture.md) guide to understand the codebase
 
 
 ## Recognition and Appreciation

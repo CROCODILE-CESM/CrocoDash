@@ -44,8 +44,8 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'for_users/datasets';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Available Compset Aliases" href="available_compset_alias.html" />
-    <link rel="prev" title="Understanding CrocoDash’s Structure" href="structure.html" />
+    <link rel="next" title="Forcing Configuration" href="forcing_configurations.html" />
+    <link rel="prev" title="How CrocoDash Is Organized" href="structure.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -160,18 +160,17 @@
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://crocodile-cesm.github.io/CrocoGallery/">Tutorials &amp; Gallery</a></li>
 <li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">User Information</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="structure.html">Understanding CrocoDash’s Structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="structure.html">How CrocoDash Is Organized</a></li>
 <li class="toctree-l2 current active"><a class="current reference internal" href="#">Accessing Raw Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="forcing_configurations.html">Forcing Configuration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="available_compset_alias.html">Available Compset Aliases</a></li>
 <li class="toctree-l2"><a class="reference internal" href="input_params.html">Input Parameters</a></li>
-<li class="toctree-l2"><a class="reference internal" href="forcing_configurations.html">Forcing Configuration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="additional_resources.html">Additional Resources</a></li>
 <li class="toctree-l2"><a class="reference internal" href="diagrams.html">Diagrams</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../for_developers/index.html">Developer Information</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../for_developers/index.html">Want to do more?</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../for_developers/dev_info.html">Get started developing!</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../for_developers/project_architecture.html">Project Architecture</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_developers/docs.html">Write Documentation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_developers/adding_data_access.html">Adding Data to the Data Access Module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_developers/adding_forcing_configurations.html">Adding Forcing Configurations</a></li>
@@ -341,6 +340,7 @@ document.write(`
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crocodash-data-access-module">CrocoDash Data Access Module</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#want-to-add-more">Want to add more?</a></li>
 </ul>
             </nav>
         </div>
@@ -354,7 +354,7 @@ document.write(`
                   
   <section id="accessing-raw-data">
 <h1>Accessing Raw Data<a class="headerlink" href="#accessing-raw-data" title="Link to this heading">#</a></h1>
-<p>CrocoDash uses several datasets to setup the model. Data can be gathered directly from public datasources (including the CESM inputdata svn repository) or through helper functions in the CrocoDash data_access module.</p>
+<p>CrocoDash uses several datasets to setup the model. Data can be gathered directly from public datasources (including the CESM inputdata svn repository) or through helper functions in the CrocoDash Raw Data Access module. The Raw Data Access Module is an expandible, verifyable, object-oriented module with access functions to raw datasets used in CrocoDash. This document explains what it is and what you can do to add more to it, if you would like to!</p>
 <p>Specific datasets can either be accessed directly through the data access module or be chosen by adding arguments to the case.configure_forcings function. Check out the demo
 <a class="reference external" href="https://crocodile-cesm.github.io/CrocoGallery/latest/notebooks/features/add-data-products/">here</a>.</p>
 <p>Users can check if datasets are accessible at this <a class="reference external" href="https://crocodile-cesm.github.io/CrocoDash/reports/raw_data_status.html">link</a>.</p>
@@ -466,6 +466,10 @@ document.write(`
 </table>
 </div>
 </section>
+<section id="want-to-add-more">
+<h2>Want to add more?<a class="headerlink" href="#want-to-add-more" title="Link to this heading">#</a></h2>
+<p>Interested in adding your own spin on a dataset? Maybe with alternative metadata? Check our our additional docs: <a class="reference internal" href="../for_developers/adding_data_access.html"><span class="std std-doc">Adding Raw Data Products</span></a></p>
+</section>
 </section>
 
 
@@ -485,15 +489,15 @@ document.write(`
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Understanding CrocoDash’s Structure</p>
+        <p class="prev-next-title">How CrocoDash Is Organized</p>
       </div>
     </a>
     <a class="right-next"
-       href="available_compset_alias.html"
+       href="forcing_configurations.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Available Compset Aliases</p>
+        <p class="prev-next-title">Forcing Configuration</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -514,6 +518,7 @@ document.write(`
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crocodash-data-access-module">CrocoDash Data Access Module</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#want-to-add-more">Want to add more?</a></li>
 </ul>
   </nav></div>
 

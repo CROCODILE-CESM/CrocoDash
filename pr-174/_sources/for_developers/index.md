@@ -1,4 +1,4 @@
-# Developer Information
+# Want to do more?
 
 Welcome to the CrocoDash developer documentation! This section contains everything you need to understand, develop, and contribute to CrocoDash.
 
@@ -15,7 +15,6 @@ If you're new to CrocoDash development, start here:
 :maxdepth: 1
 
 dev_info
-project_architecture
 docs
 adding_data_access
 adding_forcing_configurations
