@@ -54,10 +54,8 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          mkdir -p /root/cesm
-          ln -sfn /glade/campaign/cesm/cesmdata/inputdata /root/cesm/inputdata
 
       - name: Run Workflow test
         run: |
           cd $WORKDIR/CrocoDash
-          python tests/test_workflow2.py --case-path $WORKDIR --cesm-root $CESMROOT --machine ubuntu-latest
+          python tests/test_workflow2.py --case-path $WORKDIR --cesm-root $CESMROOT --machine derecho
