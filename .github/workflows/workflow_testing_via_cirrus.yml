@@ -60,8 +60,8 @@ jobs:
 
       - name: Install system deps
         run: |
-          sudo apt-get update
-          sudo apt-get install -y \
+          apt-get update
+          apt-get install -y \
             gfortran \
             mpich \
             libnetcdf-dev \
