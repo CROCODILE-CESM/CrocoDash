@@ -1,5 +1,6 @@
 from CrocoDash.case import *
 
+
 def identify_non_standard_case_information(caseroot):
 
     # 1. Read in where to find CrocoDash init args
@@ -7,7 +8,6 @@ def identify_non_standard_case_information(caseroot):
 
     # 2. Read in where to find CrocoDash forcing_config args
     identify_CrocoDashCase_forcing_config_args("Test")
-    
 
     # 3. Recreate the case
 
@@ -16,11 +16,12 @@ def identify_non_standard_case_information(caseroot):
 
     # 5. Find xmlchanges that aren't standard, Find user_nl changes that aren't standard
 
-    # 6. Find files that aren't standard. 
+    # 6. Find files that aren't standard.
 
     # 7. Print out all this information, and return as dict what needs to be added beyond CrocoDash information.
 
     pass
+
 
 def identify_CrocoDashCase_init_args(caseroot):
 
@@ -30,13 +31,15 @@ def identify_CrocoDashCase_init_args(caseroot):
 
     pass
 
+
 def identify_CrocoDashCase_forcing_config_args(caseroot):
-    
+
     # 1. Read in where to find CrocoDash forcing_config args
 
     # 2. Return as dict
 
     pass
+
 
 def diff_CESM_cases(caseroot_1, caseroot_2):
 
@@ -48,8 +51,9 @@ def diff_CESM_cases(caseroot_1, caseroot_2):
 
     pass
 
+
 def package_case_specific_info(caseroot):
-    
+
     # 1. Call the identify function
     identify_non_standard_case_information(caseroot)
 
@@ -58,6 +62,7 @@ def package_case_specific_info(caseroot):
     # 3. Zip and return the path to the zip file
 
     pass
+
 
 def read_from_case_package(zipfilepath):
 
@@ -71,6 +76,7 @@ def read_from_case_package(zipfilepath):
 
     pass
 
+
 def given_manifest_info_create_case(manifest_dict):
 
     # 1. Read in the manifest dict
@@ -79,15 +85,17 @@ def given_manifest_info_create_case(manifest_dict):
 
     pass
 
+
 def modify_manifest(manifest_dict):
 
     # 1. Read in the manifest dict
 
-    #2. Modify manifest as needed with FCR
+    # 2. Modify manifest as needed with FCR
 
     # 3. Return modified manifest
 
     pass
+
 
 def share_from_case(caseroot):
 
