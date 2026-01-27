@@ -13,6 +13,7 @@ import shutil
 import json
 import subprocess
 import argparse
+from visualCaseGen.custom_widget_types.case_tools import xmlchange
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -49,8 +50,8 @@ def full_workflow_with_cirrus(
     )
     project_num = "NCGD0011"
     override = True
-    compset = "1850_DATM%JRA_SLND_SICE_MOM6_SROF_SGLC_SWAV"
-    atm_grid_name = "TL319"
+    compset = "1850_DATM%NYF_SLND_SICE_MOM6_SROF_SGLC_SWAV"
+    atm_grid_name = "T62"
 
     # Setup Case
     case = Case(
@@ -80,11 +81,15 @@ def full_workflow_with_cirrus(
         if item.is_file():
             shutil.copy2(item, dst_dir / item.name)
 
-    subprocess.run(
-        ["./xmlchange", "NTASKS=10"],
-        cwd=caseroot,
-        check=True,
+    case.process_forcings()
+
+    xmlchange(
+        "NTASKS",
+        "1",
+        is_non_local=case._is_non_local(),
     )
+
+    # Run the case setup, build and submit
     try:
         subprocess.run(
             ["./case.setup", "--reset"],
