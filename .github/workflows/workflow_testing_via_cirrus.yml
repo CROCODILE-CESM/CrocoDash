@@ -10,6 +10,7 @@ env:
   CIME_OUTPUT_ROOT: /workspace
   SCRATCH: /workspace
   CESMDATAROOT: /glade/campaign/cesm/cesmdata
+  LMOD_ROOT: /glade/u/apps/casper/24.12/spack/opt/spack/lmod/8.7.37/gcc/12.4.0/diu3/lmod
   USER: ${{ github.actor }}
 jobs:
   full_workflow:
