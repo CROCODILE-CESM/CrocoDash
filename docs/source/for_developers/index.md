@@ -7,7 +7,7 @@ Welcome to the CrocoDash developer documentation! This section contains everythi
 If you're new to CrocoDash development, start here:
 
 1. [Development Information](dev_info.md) - Read how to get started
-2. [Project Architecture](project_architecture.md) - Understand how CrocoDash is organized
+2. [Project Architecture](../for_users/structure.md) - Understand how CrocoDash is organized
 
 ## Development Guides
 
@@ -15,7 +15,7 @@ If you're new to CrocoDash development, start here:
 :maxdepth: 1
 
 dev_info
-docs
+edit_docs
 adding_data_access
 adding_forcing_configurations
 ```
@@ -26,7 +26,7 @@ adding_forcing_configurations
 
 - [Adding Data Sources](adding_data_access.md) - How to add new data products to the data access module
 - [Adding Forcing Configurations](adding_forcing_configurations.md) - How to add new forcing configurations to configure_forcings
-- [Writing Documentation](docs.md) - How to write and build documentation
+- [Writing Documentation](edit_docs.md) - How to write and build documentation
 
 ## Key Concepts
 
