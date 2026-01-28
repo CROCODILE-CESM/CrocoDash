@@ -1,10 +1,30 @@
-(input-params)=
+# Extra CESM Case Information
 
-# Input Parameters
+
+## Available Compset Aliases
+
+Regional compsets are available by checking out the CROCODILE-CESM/CESM fork. You can always use the long names of the compsets instead.
+
+The only job of the %REGIONAL flag on MOM6 in the compset longnames below is to set an xml variable MOM6_DOMAIN_TYPE=REGIONAL, which shifts input parameters to regional defaults.
+
+| Alias | Long name | Description |
+|---|---|---|
+| CR_JRA | 1850_DATM%JRA_SLND_SICE_MOM6%REGIONAL_SROF_SGLC_SWAV | Standalone ocean with data atmosphere from JRA |
+| CR1850MARBL_JRA | 1850_DATM%JRA_SLND_SICE_MOM6%REGIONAL%MARBL-BIO_SROF_SGLC_SWAV | ocean coupled with MARBL BGC model with data atmosphere from JRA |
+| CR_JRA_GLOFAS | 1850_DATM%JRA_SLND_SICE_MOM6%REGIONAL_DROF%GLOFAS_SGLC_SWAV | Standalone ocean with data atmosphere from JRA and data runoff from GLOFAS |
+| CR1850MARBL_JRA_GLOFAS | 1850_DATM%JRA_SLND_SICE_MOM6%REGIONAL%MARBL-BIO_DROF%GLOFAS_SGLC_SWAV | ocean coupled with MARBL BGC model with data atmosphere from JRA and data runoff from GLOFAS|
+| GR_JRA | 1850_DATM%JRA_SLND_CICE_MOM6%REGIONAL_SROF_SGLC_SWAV | ocean coupled with CICE sea ice model with data atmosphere from JRA |
+| GR1850MARBL_JRA | 1850_DATM%JRA_SLND_CICE_MOM6%REGIONAL%MARBL-BIO_SROF_SGLC_SWAV | ocean coupled with MARBL BGC model and CICE sea ice model with data atmosphere from JRA |
+| GR_JRA_GLOFAS | 1850_DATM%JRA_SLND_CICE_MOM6%REGIONAL_DROF%GLOFAS_SGLC_SWAV | ocean coupled with CICE sea ice model with data atmosphere from JRA and data runoff from GLOFAS |
+| GR1850MARBL_JRA_GLOFAS | 1850_DATM%JRA_SLND_CICE_MOM6%REGIONAL%MARBL-BIO_DROF%GLOFAS_SGLC_SWAV | ocean coupled with MARBL BGC model and CICE sea ice model with data atmosphere from JRA and data runoff from GLOFAS|
+
+
+
+## Input Parameters
 
 MOM6 behavior is controlled through parameter files (namelists) and the diagnostic table. CrocoDash uses CESM's MOM_interface to generate these files with sensible defaults.
 
-## Generated Files
+### Generated Files
 
 When you run case preview (or setup), CESM generates several MOM6 configuration files:
 
@@ -14,7 +34,7 @@ When you run case preview (or setup), CESM generates several MOM6 configuration 
 
 These files are initially placed in the case's `CaseDocs` directory for reference.
 
-## How Defaults Are Generated
+### How Defaults Are Generated
 
 1. **MOM_interface** - CESM's bridge component for MOM6
    - Located in: `components/mom` in CESM sandboxes
@@ -26,11 +46,11 @@ These files are initially placed in the case's `CaseDocs` directory for referenc
    - Physics settings appropriate for regional domains
    - Diagnostic settings for common use cases
 
-## Customizing Parameters
+### Customizing Parameters
 
 There are two approaches to customizing MOM6 parameters:
 
-### 1. User Namelist Modifications (What you should use!)
+#### 1. User Namelist Modifications (What you should use!)
 
 Override specific parameters using `user_nl_mom`:
 
@@ -52,7 +72,7 @@ Then regenerate namelists:
 - Plays well with CESM workflows
 - Can be included in case scripts
 
-### 2. SourceMods Overrides
+#### 2. SourceMods Overrides (Not Recommended)
 
 For more extensive customization (whole file replacement):
 
@@ -75,13 +95,13 @@ For more extensive customization (whole file replacement):
 
 **Advantages:**
 - Complete control over file contents
-- Good for major parameter changes
+- Good for major parameter changes, or sharing parameters with other users outside of the CESM infrastructure
 
 **Disadvantages:**
 - Can miss updates to defaults
-- Less transparent about what changed
+- Much, much less transparent about what changed
 
-## Viewing Generated Files
+### Viewing/Verifying Generated Files
 
 After running `preview_namelists`, check:
 
@@ -95,33 +115,16 @@ cat user_nl_mom
 cat SourceMods/src.mom/MOM_input  # if using SourceMods
 ```
 
-## Common Customizations
+### Common Customizations
 
-### Change Model Timestep
+#### Change Model Timestep
 ```bash
 echo "DT_BAROCLINIC = 1800" >> user_nl_mom
 ```
 
-### Adjust Diagnostic Output Frequency
+#### Adjust Diagnostic Output Frequency
 Edit `diag_table` to change output intervals or variables.
 
-
-## Verifying Your Configuration
-
-After making changes, verify everything is correct:
-
-```bash
-# Check that preview passes
-./preview_namelists
-
-# Examine modified files in CaseDocs
-cat CaseDocs/MOM_input
-
-# Build to catch any compilation issues
-./case.build
-```
-
-## Parameter Documentation
 
 For detailed information about MOM6 parameters:
 
@@ -129,7 +132,7 @@ For detailed information about MOM6 parameters:
 - **MOM6 Parameters:** MOM_input file comments and MOM6 documentation
 - **CESM MOM_interface:** See CESM documentation for default coupling parameters
 
-## Integration with CrocoDash
+### Integration with CrocoDash
 
 When using CrocoDash, parameter customization happens after case creation:
 
@@ -155,3 +158,4 @@ For configuration of forcing-specific parameters (tides, BGC, rivers, etc.), see
 
 
 You do not need to rebuild your case with parameter changes!!!
+

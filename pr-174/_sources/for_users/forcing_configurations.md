@@ -1,4 +1,4 @@
-# Forcing Configuration
+# Forcing Configuration (case.configure_forcings)
 
 Forcing configuration handles setup of all forcing and boundary conditions for your regional MOM6 case, including tides, biogeochemistry, runoff, initial conditions, and more.
 
@@ -145,5 +145,5 @@ To add a new forcing configuration, See [Adding Forcing Configurations](../for_d
 ## See Also
 
 - [Available Datasets](datasets.md) - What data sources can be used
-- [Available Compsets](available_compset_alias.md) - Valid compset options
+- [Available Compsets](case_information.md) - Valid compset options
 - [Tutorials](https://crocodile-cesm.github.io/CrocoGallery/) - Working examples with real cases

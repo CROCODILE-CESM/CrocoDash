@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Forcing Configuration &#8212; CrocoDash  documentation</title>
+    <title>Forcing Configuration (case.configure_forcings) &#8212; CrocoDash  documentation</title>
   
   
   
@@ -44,8 +44,8 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'for_users/forcing_configurations';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Available Compset Aliases" href="available_compset_alias.html" />
-    <link rel="prev" title="Accessing Raw Data" href="datasets.html" />
+    <link rel="next" title="Extract Forcings (case.process_forcings)" href="extract_forcings.html" />
+    <link rel="prev" title="Accessing Raw Data (raw_data_access)" href="datasets.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -161,17 +161,17 @@
 <li class="toctree-l1"><a class="reference external" href="https://crocodile-cesm.github.io/CrocoGallery/">Tutorials &amp; Gallery</a></li>
 <li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">User Information</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="structure.html">How CrocoDash Is Organized</a></li>
-<li class="toctree-l2"><a class="reference internal" href="datasets.html">Accessing Raw Data</a></li>
-<li class="toctree-l2 current active"><a class="current reference internal" href="#">Forcing Configuration</a></li>
-<li class="toctree-l2"><a class="reference internal" href="available_compset_alias.html">Available Compset Aliases</a></li>
-<li class="toctree-l2"><a class="reference internal" href="input_params.html">Input Parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="grids.html">Grid Stuff (Supergrid, Bathymetry, Vgrid)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="datasets.html">Accessing Raw Data (raw_data_access)</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Forcing Configuration (case.configure_forcings)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="extract_forcings.html">Extract Forcings (case.process_forcings)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="case_information.html">Extra CESM Case Information</a></li>
 <li class="toctree-l2"><a class="reference internal" href="additional_resources.html">Additional Resources</a></li>
-<li class="toctree-l2"><a class="reference internal" href="diagrams.html">Diagrams</a></li>
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../for_developers/index.html">Want to do more?</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../for_developers/dev_info.html">Get started developing!</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../for_developers/docs.html">Write Documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_developers/edit_docs.html">Write Documentation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_developers/adding_data_access.html">Adding Data to the Data Access Module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_developers/adding_forcing_configurations.html">Adding Forcing Configurations</a></li>
 </ul>
@@ -329,7 +329,7 @@ document.write(`
               
 
 <div id="jb-print-docs-body" class="onlyprint">
-    <h1>Forcing Configuration</h1>
+    <h1>Forcing Configuration (case.configure_forcings)</h1>
     <!-- Table of contents -->
     <div id="print-main-content">
         <div id="jb-print-toc">
@@ -365,8 +365,8 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="forcing-configuration">
-<h1>Forcing Configuration<a class="headerlink" href="#forcing-configuration" title="Link to this heading">#</a></h1>
+  <section id="forcing-configuration-case-configure-forcings">
+<h1>Forcing Configuration (case.configure_forcings)<a class="headerlink" href="#forcing-configuration-case-configure-forcings" title="Link to this heading">#</a></h1>
 <p>Forcing configuration handles setup of all forcing and boundary conditions for your regional MOM6 case, including tides, biogeochemistry, runoff, initial conditions, and more.</p>
 <section id="overview">
 <h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">#</a></h2>
@@ -520,7 +520,7 @@ document.write(`
 <h2>See Also<a class="headerlink" href="#see-also" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="datasets.html"><span class="std std-doc">Available Datasets</span></a> - What data sources can be used</p></li>
-<li><p><a class="reference internal" href="available_compset_alias.html"><span class="std std-doc">Available Compsets</span></a> - Valid compset options</p></li>
+<li><p><a class="reference internal" href="case_information.html"><span class="std std-doc">Available Compsets</span></a> - Valid compset options</p></li>
 <li><p><a class="reference external" href="https://crocodile-cesm.github.io/CrocoGallery/">Tutorials</a> - Working examples with real cases</p></li>
 </ul>
 </section>
@@ -543,15 +543,15 @@ document.write(`
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Accessing Raw Data</p>
+        <p class="prev-next-title">Accessing Raw Data (raw_data_access)</p>
       </div>
     </a>
     <a class="right-next"
-       href="available_compset_alias.html"
+       href="extract_forcings.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Available Compset Aliases</p>
+        <p class="prev-next-title">Extract Forcings (case.process_forcings)</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>

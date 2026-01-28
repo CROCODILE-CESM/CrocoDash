@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Available Compset Aliases &#8212; CrocoDash  documentation</title>
+    <title>Grid Stuff (Supergrid, Bathymetry, Vgrid) &#8212; CrocoDash  documentation</title>
   
   
   
@@ -41,11 +41,11 @@
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'for_users/available_compset_alias';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'for_users/grids';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Input Parameters" href="input_params.html" />
-    <link rel="prev" title="Forcing Configuration" href="forcing_configurations.html" />
+    <link rel="next" title="Accessing Raw Data (raw_data_access)" href="datasets.html" />
+    <link rel="prev" title="How CrocoDash Is Organized" href="structure.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -161,17 +161,17 @@
 <li class="toctree-l1"><a class="reference external" href="https://crocodile-cesm.github.io/CrocoGallery/">Tutorials &amp; Gallery</a></li>
 <li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">User Information</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="structure.html">How CrocoDash Is Organized</a></li>
-<li class="toctree-l2"><a class="reference internal" href="datasets.html">Accessing Raw Data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="forcing_configurations.html">Forcing Configuration</a></li>
-<li class="toctree-l2 current active"><a class="current reference internal" href="#">Available Compset Aliases</a></li>
-<li class="toctree-l2"><a class="reference internal" href="input_params.html">Input Parameters</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Grid Stuff (Supergrid, Bathymetry, Vgrid)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="datasets.html">Accessing Raw Data (raw_data_access)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="forcing_configurations.html">Forcing Configuration (case.configure_forcings)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="extract_forcings.html">Extract Forcings (case.process_forcings)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="case_information.html">Extra CESM Case Information</a></li>
 <li class="toctree-l2"><a class="reference internal" href="additional_resources.html">Additional Resources</a></li>
-<li class="toctree-l2"><a class="reference internal" href="diagrams.html">Diagrams</a></li>
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../for_developers/index.html">Want to do more?</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../for_developers/dev_info.html">Get started developing!</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../for_developers/docs.html">Write Documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_developers/edit_docs.html">Write Documentation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_developers/adding_data_access.html">Adding Data to the Data Access Module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_developers/adding_forcing_configurations.html">Adding Forcing Configurations</a></li>
 </ul>
@@ -245,7 +245,7 @@
       
       
       
-      <li><a href="../_sources/for_users/available_compset_alias.md" target="_blank"
+      <li><a href="../_sources/for_users/grids.md" target="_blank"
    class="btn btn-sm btn-download-source-button dropdown-item"
    title="Download source file"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -327,7 +327,7 @@ document.write(`
               
 
 <div id="jb-print-docs-body" class="onlyprint">
-    <h1>Available Compset Aliases</h1>
+    <h1>Grid Stuff (Supergrid, Bathymetry, Vgrid)</h1>
     <!-- Table of contents -->
     <div id="print-main-content">
         <div id="jb-print-toc">
@@ -341,53 +341,9 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="available-compset-aliases">
-<h1>Available Compset Aliases<a class="headerlink" href="#available-compset-aliases" title="Link to this heading">#</a></h1>
-<p>Regional compsets are available by checking out the CROCODILE-CESM/CESM fork. You can always use the long names of the compsets instead.</p>
-<p>The only job of the %REGIONAL flag on MOM6 in the compset longnames below is that it sets an xml variable MOM6_DOMAIN_TYPE=REGIONAL, which shifts input parameters to regional defaults.</p>
-<div class="pst-scrollable-table-container"><table class="table">
-<thead>
-<tr class="row-odd"><th class="head"><p>Alias</p></th>
-<th class="head"><p>Long name</p></th>
-<th class="head"><p>Description</p></th>
-</tr>
-</thead>
-<tbody>
-<tr class="row-even"><td><p>CR_JRA</p></td>
-<td><p>1850_DATM%JRA_SLND_SICE_MOM6%REGIONAL_SROF_SGLC_SWAV</p></td>
-<td><p>Standalone ocean with data atmosphere from JRA</p></td>
-</tr>
-<tr class="row-odd"><td><p>CR1850MARBL_JRA</p></td>
-<td><p>1850_DATM%JRA_SLND_SICE_MOM6%REGIONAL%MARBL-BIO_SROF_SGLC_SWAV</p></td>
-<td><p>ocean coupled with MARBL BGC model with data atmosphere from JRA</p></td>
-</tr>
-<tr class="row-even"><td><p>CR_JRA_GLOFAS</p></td>
-<td><p>1850_DATM%JRA_SLND_SICE_MOM6%REGIONAL_DROF%GLOFAS_SGLC_SWAV</p></td>
-<td><p>Standalone ocean with data atmosphere from JRA and data runoff from GLOFAS</p></td>
-</tr>
-<tr class="row-odd"><td><p>CR1850MARBL_JRA_GLOFAS</p></td>
-<td><p>1850_DATM%JRA_SLND_SICE_MOM6%REGIONAL%MARBL-BIO_DROF%GLOFAS_SGLC_SWAV</p></td>
-<td><p>ocean coupled with MARBL BGC model with data atmosphere from JRA and data runoff from GLOFAS</p></td>
-</tr>
-<tr class="row-even"><td><p>GR_JRA</p></td>
-<td><p>1850_DATM%JRA_SLND_CICE_MOM6%REGIONAL_SROF_SGLC_SWAV</p></td>
-<td><p>ocean coupled with CICE sea ice model with data atmosphere from JRA</p></td>
-</tr>
-<tr class="row-odd"><td><p>GR1850MARBL_JRA</p></td>
-<td><p>1850_DATM%JRA_SLND_CICE_MOM6%REGIONAL%MARBL-BIO_SROF_SGLC_SWAV</p></td>
-<td><p>ocean coupled with MARBL BGC model and CICE sea ice model with data atmosphere from JRA</p></td>
-</tr>
-<tr class="row-even"><td><p>GR_JRA_GLOFAS</p></td>
-<td><p>1850_DATM%JRA_SLND_CICE_MOM6%REGIONAL_DROF%GLOFAS_SGLC_SWAV</p></td>
-<td><p>ocean coupled with CICE sea ice model with data atmosphere from JRA and data runoff from GLOFAS</p></td>
-</tr>
-<tr class="row-odd"><td><p>GR1850MARBL_JRA_GLOFAS</p></td>
-<td><p>1850_DATM%JRA_SLND_CICE_MOM6%REGIONAL%MARBL-BIO_DROF%GLOFAS_SGLC_SWAV</p></td>
-<td><p>ocean coupled with MARBL BGC model and CICE sea ice model with data atmosphere from JRA and data runoff from GLOFAS</p></td>
-</tr>
-</tbody>
-</table>
-</div>
+  <section id="grid-stuff-supergrid-bathymetry-vgrid">
+<h1>Grid Stuff (Supergrid, Bathymetry, Vgrid)<a class="headerlink" href="#grid-stuff-supergrid-bathymetry-vgrid" title="Link to this heading">#</a></h1>
+<p>In CrocoDash, the first step is grid generation. CrocoDash directly wraps, with no modifications, mom6_bathy. Please pursue the <a class="reference external" href="https://ncar.github.io/mom6_bathy/">mom6_bathy documentation</a> for all questions. There is no extra nuance to using CrocoDash grids, the only thing you need to is import the modules through CrocoDash.</p>
 </section>
 
 
@@ -402,20 +358,20 @@ document.write(`
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="forcing_configurations.html"
+       href="structure.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Forcing Configuration</p>
+        <p class="prev-next-title">How CrocoDash Is Organized</p>
       </div>
     </a>
     <a class="right-next"
-       href="input_params.html"
+       href="datasets.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Input Parameters</p>
+        <p class="prev-next-title">Accessing Raw Data (raw_data_access)</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>

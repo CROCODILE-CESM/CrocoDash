@@ -44,7 +44,7 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'for_users/structure';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Accessing Raw Data" href="datasets.html" />
+    <link rel="next" title="Grid Stuff (Supergrid, Bathymetry, Vgrid)" href="grids.html" />
     <link rel="prev" title="User Information" href="index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -161,17 +161,17 @@
 <li class="toctree-l1"><a class="reference external" href="https://crocodile-cesm.github.io/CrocoGallery/">Tutorials &amp; Gallery</a></li>
 <li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">User Information</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
 <li class="toctree-l2 current active"><a class="current reference internal" href="#">How CrocoDash Is Organized</a></li>
-<li class="toctree-l2"><a class="reference internal" href="datasets.html">Accessing Raw Data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="forcing_configurations.html">Forcing Configuration</a></li>
-<li class="toctree-l2"><a class="reference internal" href="available_compset_alias.html">Available Compset Aliases</a></li>
-<li class="toctree-l2"><a class="reference internal" href="input_params.html">Input Parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="grids.html">Grid Stuff (Supergrid, Bathymetry, Vgrid)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="datasets.html">Accessing Raw Data (raw_data_access)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="forcing_configurations.html">Forcing Configuration (case.configure_forcings)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="extract_forcings.html">Extract Forcings (case.process_forcings)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="case_information.html">Extra CESM Case Information</a></li>
 <li class="toctree-l2"><a class="reference internal" href="additional_resources.html">Additional Resources</a></li>
-<li class="toctree-l2"><a class="reference internal" href="diagrams.html">Diagrams</a></li>
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../for_developers/index.html">Want to do more?</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../for_developers/dev_info.html">Get started developing!</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../for_developers/docs.html">Write Documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_developers/edit_docs.html">Write Documentation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_developers/adding_data_access.html">Adding Data to the Data Access Module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_developers/adding_forcing_configurations.html">Adding Forcing Configurations</a></li>
 </ul>
@@ -361,6 +361,8 @@ document.write(`
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#design-philosophy-separation-of-concerns">Design Philosophy: Separation of Concerns</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#extending-crocodash">Extending CrocoDash</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#what-happens-when-you-run-your-case">What Happens When You Run Your Case</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow-diagram">Workflow Diagram</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-diagram">Module Diagram</a></li>
 </ul>
             </nav>
         </div>
@@ -561,6 +563,26 @@ document.write(`
 </ol>
 <p>You don’t need to understand all these details to use CrocoDash, but they’re here when you need them.</p>
 </section>
+<section id="workflow-diagram">
+<h2>Workflow Diagram<a class="headerlink" href="#workflow-diagram" title="Link to this heading">#</a></h2>
+<p>The following diagram illustrates the workflow of CrocoDash to set up a regional model:</p>
+<p>:::{figure} ../_static/workflow_diagram.png
+:align: center
+:alt: Workflow diagram showing the steps from CrocoDash to a regional model.
+:width: 80%</p>
+<p><strong>Workflow Diagram</strong>: This diagram shows the key steps involved in using CrocoDash to form a fully configured regional model.
+:::</p>
+</section>
+<section id="module-diagram">
+<h2>Module Diagram<a class="headerlink" href="#module-diagram" title="Link to this heading">#</a></h2>
+<p>The following diagram describes the connections between various modules and the <code class="docutils literal notranslate"><span class="pre">case.py</span></code> file:</p>
+<p>:::{figure} ../_static/module_diagram.svg
+:align: center
+:alt: Module diagram showing connections to case.py.
+:width: 80%</p>
+<p><strong>Module Diagram</strong>: This diagram highlights how different modules interact with the main workflow (<code class="docutils literal notranslate"><span class="pre">case.py</span></code>) file in CrocoDash.
+:::</p>
+</section>
 </section>
 
 
@@ -584,11 +606,11 @@ document.write(`
       </div>
     </a>
     <a class="right-next"
-       href="datasets.html"
+       href="grids.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Accessing Raw Data</p>
+        <p class="prev-next-title">Grid Stuff (Supergrid, Bathymetry, Vgrid)</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -630,6 +652,8 @@ document.write(`
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#design-philosophy-separation-of-concerns">Design Philosophy: Separation of Concerns</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#extending-crocodash">Extending CrocoDash</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#what-happens-when-you-run-your-case">What Happens When You Run Your Case</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow-diagram">Workflow Diagram</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-diagram">Module Diagram</a></li>
 </ul>
   </nav></div>
 

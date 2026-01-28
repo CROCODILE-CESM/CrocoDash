@@ -349,5 +349,5 @@ Most basic testing is taken care of, and the registry will run available configu
 
 ## See Also
 
-- [Project Architecture](project_architecture.md) - Understanding the Case class and workflow
+- [Project Architecture](../for_users/structure.md) - Understanding the Case class and workflow
 - Example implementations in `CrocoDash/forcing_configurations.py`

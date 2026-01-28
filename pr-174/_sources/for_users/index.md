@@ -16,12 +16,12 @@ New to CrocoDash? Start with these guides:
 :maxdepth: 1
 
 structure
+grids
 datasets
 forcing_configurations
-available_compset_alias
-input_params
+extract_forcings
+case_information
 additional_resources
-diagrams
 ```
 
 ## Frequently Needed Information
@@ -30,7 +30,7 @@ diagrams
 See [Tutorials & Gallery](https://crocodile-cesm.github.io/CrocoGallery/) for step-by-step examples.
 
 ### "What compsets are available?"
-Check [Available Compsets](available_compset_alias.md) for valid compset options.
+Check [Available Compsets](case_information.md) for valid compset options.
 
 ### "What forcing options do I need?"
 Read [Forcing Configuration](forcing_configurations.md) to understand what your compset requires.
@@ -39,7 +39,7 @@ Read [Forcing Configuration](forcing_configurations.md) to understand what your 
 See [Datasets](datasets.md) for available data sources (TPXO, GLORYS, GEBCO, etc.).
 
 ### "How do I customize MOM input parameters?"
-See [Input Parameters](input_params.md) for how to override default MOM6 settings.
+See [Input Parameters](case_information.md) for how to override default MOM6 settings.
 
 ### "Where can I see example workflows?"
 Check [Tutorials & Gallery](https://crocodile-cesm.github.io/CrocoGallery/) for working notebooks and demos.
