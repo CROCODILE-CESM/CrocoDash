@@ -15,6 +15,19 @@ def copy_user_nl_params_from_case(
     new_caseroot,
     usernlparams,
 ):
+    usernl = Path(old_caseroot) / "user_nl_mom"
+    with usernl.open() as f:
+        for line in f:
+            line = line.strip()
+
+            if not line.startswith("./xmlchange"):
+                continue
+
+            # ./xmlchange PARAM=VALUE
+            _, kv = line.split(None, 1)
+            param, value = kv.split("=", 1)
+            if param in xmlchange params:
+                append_user_nl( "mom", [(param,value)])
     pass
 
 
@@ -34,9 +47,23 @@ def copy_source_mods_from_case(
 
 def apply_xmlchanges_to_case(
     case,
+    old_caseroot,
     xmlchangeparams,
 ):
-    pass
+    # Copy old_caseroot replya.sh with that line on it and replay it verbatim with xmlchange()
+    replay = Path(old_caseroot) / "replay.sh"
+    with replay.open() as f:
+        for line in f:
+            line = line.strip()
+
+            if not line.startswith("./xmlchange"):
+                continue
+
+            # ./xmlchange PARAM=VALUE
+            _, kv = line.split(None, 1)
+            param, value = kv.split("=", 1)
+            if param in xmlchange params:
+                xmlchange(param, value)
 
 
 def copy_configurations_to_case(old_forcing_config, case, old_inputdir):

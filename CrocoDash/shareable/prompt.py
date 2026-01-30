@@ -38,11 +38,11 @@ def share(old_caseroot, cesmroot, machine, project_number, new_caseroot, new_inp
         manifest["forcing_config"], compset
     )
 
-    configure_forcing_args = build_configure_forcing_args(
+    configure_forcing_args = build_general_configure_forcing_args(
         manifest["forcing_config"], remove_configs
     )
 
-    configure_forcing_args = maybe_request_additional_forcing_args(
+    configure_forcing_args = request_any_additional_forcing_args_from_user(
         configure_forcing_args, requested_configs
     )
 
@@ -157,7 +157,7 @@ def resolve_forcing_configurations(forcing_config, compset):
 # -----------------------------------------------------------------------------
 
 
-def build_configure_forcing_args(forcing_config, remove_configs):
+def build_general_configure_forcing_args(forcing_config, remove_configs):
     basic = forcing_config["basic"]
 
     start_dt = datetime.strptime(basic["dates"]["start"], basic["dates"]["format"])
@@ -191,7 +191,7 @@ def build_configure_forcing_args(forcing_config, remove_configs):
 # -----------------------------------------------------------------------------
 
 
-def maybe_request_additional_forcing_args(args, requested_configs):
+def request_any_additional_forcing_args_from_user(args, requested_configs):
     if not requested_configs:
         return args
 
