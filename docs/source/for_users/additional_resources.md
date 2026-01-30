@@ -4,6 +4,6 @@ This page contains links to video presentations, tutorials, and other external m
 
 ```{csv-table}
 :header: Title, Link, Type, Date, Description
-:file: _static/resources.csv
+:file: ../_static/resources.csv
 :widths: 50, 30, 20, 20, 80
 :delim: ,

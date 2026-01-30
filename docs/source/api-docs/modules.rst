@@ -1,4 +1,4 @@
-API Documentation
+CrocoDash API Docs
 ===================
 
 .. toctree::

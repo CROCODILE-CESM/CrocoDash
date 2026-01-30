@@ -8,27 +8,6 @@
         "outputs": ["grid_obj"]
       },
       {
-        "id": "subset_grid",
-        "name": "Subset Grid",
-        "function": "Grid.subgrid_from_supergrid",
-        "dependencies": [],
-        "outputs": ["grid_obj"]
-      },
-      {
-        "id": "grid_from_file",
-        "name": "Grid From File",
-        "function": "Grid.from_file",
-        "dependencies": [],
-        "outputs": ["grid_obj"]
-      },
-      {
-        "id": "topo_from_file",
-        "name": "Topo From File",
-        "function": "Topo.set_depth_via_topog_file",
-        "dependencies": ["grid_obj","grid_from_file"],
-        "outputs": ["topo_obj"]
-      },
-      {
         "id": "topo_raw",
         "name": "Topo File Generation",
         "function": "From GEBCO Website",
@@ -42,7 +21,6 @@
         "dependencies": ["grid_obj","global_topo_file"],
         "outputs": ["topo_obj"]
       },
-
       {
         "id": "topo_editor",
         "name": "Topo Editor",
@@ -58,20 +36,6 @@
         "outputs": ["vgrid_obj"]
       },
       {
-        "id": "generate_vgrid_uniform",
-        "name": "Generate VGrid Uniform",
-        "function": "VGrid.uniform",
-        "dependencies": [],
-        "outputs": ["vgrid_obj"]
-      },
-      {
-        "id": "generate_vgrid_from_file",
-        "name": "Generate VGrid from file",
-        "function": "VGrid.from_file",
-        "dependencies": [],
-        "outputs": ["vgrid_obj"]
-      },
-      {
         "id": "make_case",
         "name": "Make Case",
         "function": "Case",
@@ -82,8 +46,8 @@
         "id": "configure_forcing",
         "name": "Configure Forcing",
         "function": "case.configure_forcings",
-        "dependencies": ["case", "data_access_function","global_tidal_file","global_chl_file"],
-        "outputs": ["forcing_config"]
+        "dependencies": ["case", "data_access_function"],
+        "outputs": ["forcing_config", "extract_forcings_workflow"]
       },
       {
         "id": "data_access",
@@ -93,37 +57,16 @@
         "outputs": ["data_access_function"]
       },
       {
-        "id": "chl",
-        "name": "Chlorophyll File Generation",
-        "function": "From CESM Inputdata",
-        "dependencies": [],
-        "outputs": ["global_chl_file"]
-      },
-            {
-        "id": "tides",
-        "name": "Tidal File Generation",
-        "function": "From TPXO Website",
-        "dependencies": [],
-        "outputs": ["global_tidal_file"]
-      },
-      {
         "id": "process_forcing",
         "name": "Process Forcing",
         "function": "case.process_forcings",
-        "dependencies": ["case","forcing_config"],
-        "outputs": ["forcing"]
-      },
-      {
-        "id": "large_data_process_forcing",
-        "name": "Large Data Process Forcing",
-        "function": "large_data_workflow.driver.main",
-        "dependencies": ["forcing_config"],
-        "outputs": ["forcing"]
+        "dependencies": ["case","forcing_config", "extract_forcings_workflow"],
+        "outputs": ["forcing_files"]
       }
     ],
     "requirements": {
-  "mandatory": ["grid_obj", "topo_obj", "vgrid_obj", "case", "forcing_config", "forcing"],
-  "optional": ["bgc_forcing","data_access_function", "global_tidal_file", "global_chl_file","global_topo_file"]
+  "mandatory": ["grid_obj", "topo_obj", "vgrid_obj", "case", "forcing_config", "forcing_files", "extract_forcings_workflow"],
+  "optional": ["data_access_function", "global_topo_file"]
     },
     "workflow": {
       "name": "CrocoDash Workflow",

@@ -9,12 +9,13 @@ from pathlib import Path
 sys.path.insert(0, os.path.abspath("../.."))
 
 
-output_path_module = Path("_static/module_diagram.svg")
-output_path_workflow = Path("_static/workflow_diagram.svg")
-if not output_path_module.exists():
-    subprocess.run(["bash", "diagrams/module_diagram.sh"], check=True)
-if not output_path_workflow.exists():
-    subprocess.run(["python", "diagrams/workflow_visualize.py"], check=True)
+# output_path_module = Path("_static/module_diagram.svg")
+# output_path_workflow = Path("_static/workflow_diagram.svg")
+# if not output_path_module.exists():
+#     subprocess.run(["bash", "diagrams/module_diagram.sh"], check=True)
+# if not output_path_workflow.exists():
+#     subprocess.run(["python", "diagrams/workflow_visualize.py"], check=True)
+# subprocess.run(["python", "raw_data_access/generate_info.py"], check=True)
 # Run the Bash script
 
 # -- Project information -----------------------------------------------------

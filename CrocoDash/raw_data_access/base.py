@@ -174,7 +174,7 @@ class DatedBaseProduct(BaseProduct):
 class ForcingProduct(DatedBaseProduct):
     """Specific enforcement needs for Forcing Products"""
 
-    required_metadata = BaseProduct.required_metadata + [
+    required_metadata = DatedBaseProduct.required_metadata + [
         "time_var_name",
         "u_x_coord",
         "u_y_coord",
@@ -191,7 +191,7 @@ class ForcingProduct(DatedBaseProduct):
         "time_units",
     ]
 
-    required_args = BaseProduct.required_args + [
+    required_args = DatedBaseProduct.required_args + [
         "variables",
         "lon_max",
         "lat_max",

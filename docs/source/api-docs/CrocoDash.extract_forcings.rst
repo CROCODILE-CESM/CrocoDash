@@ -17,21 +17,21 @@ CrocoDash.extract\_forcings.driver module
 
 .. automodule:: CrocoDash.extract_forcings.driver
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 CrocoDash.extract\_forcings.utils module
 ----------------------------------------
 
 .. automodule:: CrocoDash.extract_forcings.utils
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 Module contents
 ---------------
 
 .. automodule:: CrocoDash.extract_forcings
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:

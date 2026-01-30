@@ -186,6 +186,9 @@ class Param(ABC):
         """Bind a runtime value to this parameter."""
         pass
 
+    def __repr__(self):
+        return f"Parameter: {self.name}"
+
 
 class InputParam(Param):
     pass
