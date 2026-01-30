@@ -44,7 +44,14 @@ class ForcingConfigRegistry:
         self.find_active_configurators(self.compset, inputs)
 
     @classmethod
-    def deserialize(cls, obj_dict):
+    def get_configurator_from_name(cls, name):
+        for thing in cls.registered_types:
+            if name == thing.name:
+                return thing
+        raise ValueError("Configurator Not Found")
+
+    @classmethod
+    def get_configurator(cls, obj_dict):
         name = obj_dict["name"]
         for thing in cls.registered_types:
             if name == thing.name:
