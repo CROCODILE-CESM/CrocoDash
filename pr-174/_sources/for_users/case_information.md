@@ -148,12 +148,6 @@ For configuration of forcing-specific parameters (tides, BGC, rivers, etc.), see
 - **Document your changes** - Add comments to user_nl_mom explaining why you changed things
 - **Check compatibility** - Some parameters interact; changing one may require changing others
 
-## Troubleshooting
-
-**"preview_namelists failed"**
-- Check user_nl_mom syntax (must be valid Fortran namelist format)
-- Ensure parameter names are spelled correctly
-- Look for duplicate parameter definitions
 
 
 
