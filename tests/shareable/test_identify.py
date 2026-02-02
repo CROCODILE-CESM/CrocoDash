@@ -60,16 +60,10 @@ def test_identify_CrocoDashCase_init_args(get_CrocoDash_case):
     case = get_CrocoDash_case
     init_args = identify_CrocoDashCase_init_args(case.caseroot)
     print(init_args)
-    assert str(init_args["supergrid_path"]).startswith(
-        str(case.inputdir / "ocnice" / "ocean_hgrid_pana")
-    )
+    assert str(init_args["supergrid_path"]).startswith(str("ocean_hgrid_pana"))
 
-    assert str(init_args["topo_path"]).startswith(
-        str(case.inputdir / "ocnice" / "ocean_topog_pana")
-    )
+    assert str(init_args["topo_path"]).startswith(str("ocean_topog_pana"))
 
-    assert str(init_args["vgrid_path"]).startswith(
-        str(case.inputdir / "ocnice" / "ocean_vgrid_pana")
-    )
+    assert str(init_args["vgrid_path"]).startswith(str("ocean_vgrid_pana"))
 
     assert init_args["compset"] == "1850_DATM%JRA_SLND_SICE_MOM6_SROF_SGLC_SWAV"
