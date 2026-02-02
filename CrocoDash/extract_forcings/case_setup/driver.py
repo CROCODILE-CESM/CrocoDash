@@ -1,3 +1,20 @@
+"""nCrocoDash Forcing Extraction Driver
+
+This module orchestrates the forcing extraction workflow for a CrocoDash case.
+It coordinates multiple forcing data sources (tides, runoff, BGC, etc.) and processes them
+into MOM6-compatible file formats.
+
+The script can be run from the command line with various component flags to control which
+forcings are processed. It loads configuration from config.json and coordinates all extraction,
+regridding, and formatting operations.
+
+Typical usage:
+    python driver.py --all                  # Process all configured components
+    python driver.py --tides --bgcic        # Process only tides and BGC initial conditions
+    python driver.py --all --skip runoff    # Process all except runoff
+    python driver.py --ic --no-get          # Process IC but skip data download step
+"""
+
 import sys
 import json
 from pathlib import Path
@@ -27,6 +44,7 @@ def test_driver():
 
 
 def process_bgcic():
+    """Extract and copy BGC initial conditions from CESM MARBL inputdata."""
     config = utils.Config(CONFIG_PATH)
     bgc.process_bgc_ic(
         file_path=config["bgcic"]["inputs"]["marbl_ic_filepath"],
@@ -58,6 +76,21 @@ def process_conditions(
     run_initial_condition=True,
     run_boundary_conditions=True,
 ):
+    """
+    Process initial and/or boundary conditions through the three-step pipeline.
+
+    This function orchestrates the data extraction workflow:
+    1. get_dataset_piecewise: Download/retrieve raw data from source datasets
+    2. regrid_dataset_piecewise: Regrid data to your custom regional grid
+    3. merge_piecewise_dataset: Merge regridded data into final forcing files
+
+    Args:
+        get_dataset_piecewise: Whether to download raw data (can skip if already cached)
+        regrid_dataset_piecewise: Whether to regrid data to regional grid
+        merge_piecewise_dataset: Whether to merge data into final files
+        run_initial_condition: Whether to process initial conditions (t=0)
+        run_boundary_conditions: Whether to process boundary conditions (open boundaries)
+    """
     config = utils.Config(CONFIG_PATH)
 
     # Call get_dataset_piecewise
@@ -116,6 +149,7 @@ def process_conditions(
 
 
 def process_runoff():
+    """Generate runoff mapping files and interpolation weights."""
     config = utils.Config(CONFIG_PATH)
     rof.generate_rof_ocn_map(
         rof_grid_name=config["runoff"]["inputs"]["rof_grid_name"],
@@ -129,6 +163,7 @@ def process_runoff():
 
 
 def process_bgcrivernutrients():
+    """Process river nutrient inputs for BGC."""
     config = utils.Config(CONFIG_PATH)
     bgc.process_river_nutrients(
         ocn_grid=config.ocn_grid,
@@ -143,6 +178,7 @@ def process_bgcrivernutrients():
 
 
 def process_tides():
+    """Extract and process tidal forcing from TPXO database."""
     config = utils.Config(CONFIG_PATH)
     tides.process_tides(
         ocn_topo=config.ocn_topo,
@@ -157,6 +193,7 @@ def process_tides():
 
 
 def process_chl():
+    """Process satellite-derived chlorophyll data"""
     config = utils.Config(CONFIG_PATH)
     chl.process_chl(
         ocn_grid=config.ocn_grid,
@@ -191,12 +228,26 @@ def parse_args():
     components = parser.add_argument_group("Forcing components")
     components.add_argument("--ic", action="store_true", help="Run initial conditions")
     components.add_argument("--bc", action="store_true", help="Run boundary conditions")
-    components.add_argument("--bgcic", action="store_true")
-    components.add_argument("--bgcironforcing", action="store_true")
-    components.add_argument("--bgcrivernutrients", action="store_true")
-    components.add_argument("--runoff", action="store_true")
-    components.add_argument("--tides", action="store_true")
-    components.add_argument("--chl", action="store_true")
+    components.add_argument(
+        "--bgcic", action="store_true", help="Run BGC initial conditions"
+    )
+    components.add_argument(
+        "--bgcironforcing", action="store_true", help="Run BGC iron forcing"
+    )
+    components.add_argument(
+        "--bgcrivernutrients",
+        action="store_true",
+        help="Run BGC river nutrients (requires runoff)",
+    )
+    components.add_argument(
+        "--runoff", action="store_true", help="Run runoff mapping and interpolation"
+    )
+    components.add_argument(
+        "--tides", action="store_true", help="Run tidal forcing from TPXO"
+    )
+    components.add_argument(
+        "--chl", action="store_true", help="Run chlorophyll processing"
+    )
 
     conditions_opts = parser.add_argument_group("Conditions options")
     conditions_opts.add_argument("--no-get", action="store_true")
@@ -219,7 +270,24 @@ def parse_args():
 
 def resolve_components(args, cfg):
     """
-    This function resolves --all and --skip with available config information
+    Resolve which components should run based on CLI flags and config availability.
+
+    This function takes the parsed command-line arguments and the configuration, then
+    determines which forcing components should actually execute. It handles:
+    - --all: Enable all components that exist in config
+    - --skip: Disable specific components by name (case-insensitive)
+    - Individual flags: Enable only specified components
+    - Config validation: Skip components requested but not in config
+
+    The function modifies args in-place, setting each component flag to True/False
+    based on the resolution logic.
+
+    Args:
+        args: Parsed command-line arguments (from parse_args())
+        cfg: Config object with .config dict of available components
+
+    Returns:
+        Modified args object with all component flags resolved
     """
     components = {
         k: v
@@ -251,7 +319,18 @@ def resolve_components(args, cfg):
 
 
 def run_from_cli(args, cfg):
+    """
+    Execute the forcing extraction workflow based on CLI arguments.
 
+    This is the main entry point that coordinates the entire workflow:
+    1. Resolves which components to run
+    2. Executes the appropriate process_* functions
+    3. Maintains component dependencies (e.g., runoff before bgcrivernutrients)
+
+    Args:
+        args: Parsed and resolved command-line arguments
+        cfg: Config object from utils.Config(CONFIG_PATH)
+    """
     if args.test:
         test_driver()
         return
