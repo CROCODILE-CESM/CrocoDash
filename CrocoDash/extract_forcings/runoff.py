@@ -40,5 +40,5 @@ def generate_rof_ocn_map(
         )
     else:
         print(
-            f"Runoff mapping file {self.runoff_mapping_file_nnsm} already exists, reusing it."
+            f"Runoff mapping file {runoff_mapping_file_nnsm} already exists, reusing it."
         )
