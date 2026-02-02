@@ -47,7 +47,7 @@ def get_CrocoDash_case(
     override = True
     compset = "1850_DATM%JRA_SLND_SICE_MOM6_SROF_SGLC_SWAV"
     atm_grid_name = "TL319"
-    ninst = 2
+    ninst = 1
     glade_bool = is_glade_file_system
 
     if is_github_actions:

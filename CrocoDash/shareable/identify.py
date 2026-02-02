@@ -78,13 +78,13 @@ def identify_CrocoDashCase_init_args(caseroot):
         if "inputdir" in line:
             init_args["inputdir"] = Path(line.split("=")[1].strip())
         if "GRID_FILE" in line:
-            init_args["supergrid_file"] = Path(line.split("=")[1].strip())
+            init_args["supergrid_path"] = Path(line.split("=")[1].strip())
         if "ALE_COORDINATE_CONFIG" in line:
-            init_args["vgrid_file"] = Path(
+            init_args["vgrid_path"] = Path(
                 line.split("=")[1].strip().replace("FILE:", "").strip()
             )
         if "TOPO_FILE" in line:
-            init_args["topo_file"] = Path(line.split("=")[1].strip())
+            init_args["topo_path"] = Path(line.split("=")[1].strip())
 
     # Get compset
     with open(caseroot / "replay.sh", "r") as f:
@@ -94,7 +94,7 @@ def identify_CrocoDashCase_init_args(caseroot):
         if "--compset" in line:
             init_args["compset"] = line.split("--compset")[1].split()[0].strip()
 
-    required_keys = ["inputdir", "supergrid_file", "vgrid_file", "topo_file", "compset"]
+    required_keys = ["inputdir", "supergrid_path", "vgrid_path", "topo_path", "compset"]
     assert all(
         key in init_args for key in required_keys
     ), "Not all required init args found"
@@ -232,6 +232,7 @@ def extract_param(line: str, replay_sh=False):
     if replay_sh:
         if not line.startswith("./xmlchange"):
             return None
+        line = line[len("./xmlchange"):].strip()
     else:
         if not line or line.startswith("!"):
             return None
