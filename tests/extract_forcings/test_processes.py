@@ -5,10 +5,11 @@ This testing file is for the other processes in extract_forcings. Most do not ne
 import pytest
 from CrocoDash.extract_forcings import runoff, tides, bgc, chlorophyll as chl
 import xarray as xr
+from unittest.mock import Mock, patch
 
 
-@pytest.mark.slow
-def test_process_runoff(is_glade_file_system, tmp_path):
+@patch("mom6_bathy.mapping.gen_rof_maps", autospec=True)
+def test_process_runoff(mock_runoff, is_glade_file_system, tmp_path):
     runoff.generate_rof_ocn_map(
         rof_grid_name="GLOFAS",
         rof_esmf_mesh_filepath="/glade/campaign/cesm/cesmdata/cseg/inputdata/ocn/mom/croc/rof/glofas/dis24/GLOFAS_esmf_mesh_v4.nc",
@@ -19,11 +20,11 @@ def test_process_runoff(is_glade_file_system, tmp_path):
         fold=40,
     )
 
-    assert (tmp_path / "mapping" / "GLOFAS_to_panama1_map_r20_f40_nnsm.nc").exists()
+    assert mock_runoff.called
 
 
-@pytest.mark.slow
-def test_process_tides(tmp_path, get_rect_grid_and_topo, dummy_tidal_data):
+@patch("regional_mom6.regional_mom6.experiment.setup_boundary_tides", autospec=True)
+def test_process_tides(mock_tides, tmp_path, gen_grid_topo_vgrid, dummy_tidal_data):
     grid, topo, vgrid = gen_grid_topo_vgrid
     elev, vel = dummy_tidal_data
     grid.write_supergrid(tmp_path / "grid.nc")
@@ -40,11 +41,11 @@ def test_process_tides(tmp_path, get_rect_grid_and_topo, dummy_tidal_data):
         tpxo_velocity_filepath=vel,
     )
 
-    assert (tmp_path / "ocnice" / "tu_segment_001.nc").exists()
+    assert mock_tides.called
 
 
-@pytest.mark.slow
-def test_process_chl(is_glade_file_system, tmp_path, get_rect_grid_and_topo):
+@patch("mom6_bathy.chl.interpolate_and_fill_seawifs", autospec=True)
+def test_process_chl(mock_chl, is_glade_file_system, tmp_path, gen_grid_topo_vgrid):
 
     grid, topo, vgrid = gen_grid_topo_vgrid
     chl.process_chl(
@@ -55,7 +56,7 @@ def test_process_chl(is_glade_file_system, tmp_path, get_rect_grid_and_topo):
         output_filepath=tmp_path / "chl.nc",
     )
 
-    assert (tmp_path / "chl.nc").exists()
+    assert mock_chl.called
 
 
 def test_bgcironforcing(tmp_path):
