@@ -75,7 +75,7 @@ def process_conditions(
             boundary_number_conversion=config["basic"]["general"][
                 "boundary_number_conversion"
             ],
-            run_initial_condition=run_initial_conditions,
+            run_initial_condition=run_initial_condition,
             run_boundary_conditions=run_boundary_conditions,
             preview=config["basic"]["general"]["preview"],
         )
@@ -168,9 +168,7 @@ def process_chl():
 
 
 def should_run(name, args, cfg):
-    skip = set(args.skip or [])
-    skip = {s.lower() for s in (args.skip or [])}
-    not_skipped = name.lower() not in skip
+    not_skipped = name.lower() not in args.skip
     requested = args.all or getattr(args, name)
     exists = name in cfg.config.keys()
 
@@ -181,12 +179,6 @@ def should_run(name, args, cfg):
         print(f"[skip] '{name}' skipped via --skip")
 
     return requested and exists and not_skipped
-
-
-def resolve_icbcconditions(args):
-    if args.all:
-        return True, True
-    return args.ic, args.bc
 
 
 def parse_args():
@@ -211,6 +203,13 @@ def parse_args():
     conditions_opts.add_argument("--no-regrid", action="store_true")
     conditions_opts.add_argument("--no-merge", action="store_true")
 
+    top.add_argument(
+        "--skip",
+        nargs="*",
+        default=[],
+        help="Skip components by name (e.g. --skip tides runoff)",
+    )
+
     if len(sys.argv) == 1:
         parser.print_help()
         sys.exit(0)
@@ -218,45 +217,78 @@ def parse_args():
     return parser.parse_args()
 
 
-def run_from_cli(args):
-    cfg = utils.Config(CONFIG_PATH)
+def resolve_components(args, cfg):
+    """
+    This function resolves --all and --skip with available config information
+    """
+    components = {
+        k: v
+        for k, v in vars(args).items()
+        if isinstance(v, bool)
+        and k not in {"all", "test", "no_get", "no_regrid", "no_merge"}
+    }
+
+    skip = {s.lower() for s in args.skip}
+
+    for name in components:
+        requested = args.all or getattr(args, name)
+        if name != "ic" and name != "bc":
+            exists = name in cfg.config
+        else:
+            exists = True
+
+        should_run = requested and exists and name not in skip
+
+        if requested and not exists:
+            print(f"[skip] '{name}' requested but not in config")
+        elif requested and name in skip:
+            print(f"[skip] '{name}' skipped via --skip")
+
+        # overwrite args.<component>
+        setattr(args, name, should_run)
+
+    return args
+
+
+def run_from_cli(args, cfg):
 
     if args.test:
         test_driver()
         return
 
-    run_ic, run_bc = resolve_conditions(args)
-    # Conditions pipeline is special (comes from "basic")
-    if (args.all or args.conditions) and "conditions" not in (args.skip or []):
+    args = resolve_components(args, cfg)
+
+    if args.ic or args.bc:
         process_conditions(
             get_dataset_piecewise=not args.no_get,
             regrid_dataset_piecewise=not args.no_regrid,
             merge_piecewise_dataset=not args.no_merge,
-            run_initial_condition=run_ic,
-            run_boundary_conditions=run_bc,
+            run_initial_condition=args.ic,
+            run_boundary_conditions=args.bc,
         )
 
-    if should_run("bgcic", args, cfg):
+    if args.bgcic:
         process_bgcic()
 
-    if should_run("bgcironforcing", args, cfg):
+    if args.bgcironforcing:
         process_bgcironforcing()
 
-    if should_run("runoff", args, cfg):
+    if args.runoff:
         process_runoff()
 
     # runoff-dependent product
-    if should_run("bgcrivernutrients", args, cfg):
+    if args.bgcrivernutrients:
         process_bgcrivernutrients()
 
-    if should_run("tides", args, cfg):
+    if args.tides:
         process_tides()
 
-    if should_run("chl", args, cfg):
+    if args.chl:
         process_chl()
 
 
 if __name__ == "__main__":
 
     args = parse_args()
-    run_from_cli(args)
+    cfg = utils.Config(CONFIG_PATH)
+    run_from_cli(args, cfg)
