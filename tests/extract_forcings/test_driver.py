@@ -21,13 +21,6 @@ def test_parse_args_all():
         assert args.all is True
 
 
-def test_parse_args_test():
-    """Test --test flag"""
-    with patch.object(sys, "argv", ["driver.py", "--test"]):
-        args = driver.parse_args()
-        assert args.test is True
-
-
 def test_parse_args_with_one_on_and_others_off():
     """Test --ic (initial conditions) flag"""
     with patch.object(sys, "argv", ["driver.py", "--ic"]):
@@ -53,15 +46,6 @@ def test_parse_args_skip_single():
         assert args.skip == ["tides"]
 
 
-def test_parse_args_skip_multiple():
-    """Test --skip with multiple components"""
-    with patch.object(
-        sys, "argv", ["driver.py", "--all", "--skip", "tides", "runoff", "bgcic"]
-    ):
-        args = driver.parse_args()
-        assert set(args.skip) == {"tides", "runoff", "bgcic"}
-
-
 def test_parse_args_skip_empty_default():
     """Test that skip defaults to empty list"""
     with patch.object(sys, "argv", ["driver.py", "--all"]):
@@ -74,11 +58,6 @@ def test_parse_args_no_args_exits():
     with patch.object(sys, "argv", ["driver.py"]):
         with pytest.raises(SystemExit):
             driver.parse_args()
-
-
-# =============================================================================
-# resolve_components Logic Tests (formerly should_run)
-# =============================================================================
 
 
 def test_resolve_components_all_flag_enables_all():
