@@ -1,14 +1,23 @@
 from CrocoDash.shareable.identify import *
+import pytest
 
 
-def test_diff_CESM_cases(skip_if_not_glade):
-    print(
-        diff_CESM_cases(
-            "/glade/u/home/manishrv/croc_cases/smoke.sink.cesm.1",
-            "/glade/u/home/manishrv/croc_cases/smoke.sink.bgc.cesm.1",
-        )
+@pytest.fixture(scope="module")
+def two_cesm_cases(CrocoDash_case_factory, tmp_path_factory):
+    case1 = CrocoDash_case_factory(tmp_path_factory.mktemp("case1"))
+    case2 = CrocoDash_case_factory(tmp_path_factory.mktemp("case2"))
+    return case1, case2
+
+
+def test_diff_CESM_cases(skip_if_not_glade, two_cesm_cases, tmp_path):
+
+    case1, case2 = two_cesm_cases
+    output = diff_CESM_cases(
+        case1.caseroot,
+        case2.caseroot,
     )
-
-
-if __name__ == "__main__":
-    test_diff_CESM_cases("Ntohginwsodf")
+    assert isinstance(output["xml_files_missing_in_new"], list)
+    assert output["xml_files_missing_in_new"] == []
+    assert output["user_nl_missing_params"] == {}
+    assert output["source_mods_missing_files"] == []
+    assert output["xmlchanges_missing"] == []

@@ -4,7 +4,6 @@ Identify is inordinately hard-coded, and probably can't be changed. Robust testi
 
 from pathlib import Path
 import json
-from case import diff_CESM_cases
 import tempfile
 from mom6_bathy.grid import *
 from mom6_bathy.topo import *

@@ -19,7 +19,7 @@ def skip_if_not_glade(is_glade_file_system):
         pytest.skip(reason="Skipping test: Not running on the Glade file system.")
 
 
-@pytest.fixture()
+@pytest.fixture(scope="session")
 def is_github_actions():
     return os.getenv("GITHUB_ACTIONS") == "true"
 
