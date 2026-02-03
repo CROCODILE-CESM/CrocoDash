@@ -30,4 +30,8 @@ def get_cesm_root_path(is_glade_file_system):
     if is_glade_file_system:
         # TODO: this must be generalized in some way
         cesmroot = "/glade/u/home/manishrv/work/installs/CROCESM_workshop_2025"
+    elif cesmroot is None:
+
+        cesmroot = "/Users/manishrv/Documents/cesm"
+        os.environ["CIME_MACHINE"] = "ubuntu-latest" # macos has problems with VCG 
     return cesmroot

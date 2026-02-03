@@ -2,6 +2,7 @@ import pytest
 from CrocoDash.rm6 import regional_mom6 as rm6
 from CrocoDash.case import Case
 from pathlib import Path
+from uuid import uuid4
 
 
 @pytest.fixture(scope="session")
@@ -40,7 +41,7 @@ def get_CrocoDash_case(
     cesmroot = get_cesm_root_path
 
     # Set some defaults
-    caseroot, inputdir = tmp_path_factory.mktemp("case"), tmp_path_factory.mktemp(
+    caseroot, inputdir = tmp_path_factory.mktemp(f"case-{uuid4().hex}"), tmp_path_factory.mktemp(
         "inputdir"
     )
     project_num = "NCGD0011"
@@ -55,7 +56,7 @@ def get_CrocoDash_case(
     elif glade_bool:
         machine = "derecho"
     else:
-        machine = None
+        machine = "homebrew"
 
     # Setup Case
     case = Case(
@@ -102,7 +103,7 @@ def CrocoDash_case_factory(
         grid, topo, vgrid = gen_grid_topo_vgrid
 
         # Set paths
-        caseroot = directory / "case"
+        caseroot = directory / f"case-{uuid4().hex}"
         inputdir = directory / "inputdir"
 
         # Decide machine
@@ -111,7 +112,7 @@ def CrocoDash_case_factory(
         elif is_glade_file_system:
             machine = "derecho"
         else:
-            machine = None
+            machine = "homebrew"
 
         # Create the case
         case = Case(
