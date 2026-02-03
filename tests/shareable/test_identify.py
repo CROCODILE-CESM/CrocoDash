@@ -11,7 +11,7 @@ def two_cesm_cases(CrocoDash_case_factory, tmp_path_factory):
     return case1, case2
 
 
-def test_diff_CESM_cases_nodiff(skip_if_not_glade, two_cesm_cases):
+def test_diff_CESM_cases_nodiff(two_cesm_cases):
 
     case1, case2 = two_cesm_cases
     output = diff_CESM_cases(
@@ -24,7 +24,7 @@ def test_diff_CESM_cases_nodiff(skip_if_not_glade, two_cesm_cases):
     assert output["xmlchanges_missing"] == []
 
 
-def test_diff_CESM_cases_alldiff(skip_if_not_glade, two_cesm_cases):
+def test_diff_CESM_cases_alldiff(two_cesm_cases):
     case1, case2 = two_cesm_cases
     # add in a .xml file to case1.caseroot folder
     xml_file = Path(case1.caseroot) / "test.xml"
