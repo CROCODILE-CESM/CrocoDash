@@ -69,3 +69,16 @@ def test_identify_CrocoDashCase_init_args(get_CrocoDash_case):
     assert str(init_args["vgrid_path"]).startswith(str("ocean_vgrid_pana"))
 
     assert init_args["compset"] == "1850_DATM%JRA_SLND_SICE_MOM6_SROF_SGLC_SWAV"
+
+
+def test_identify_CrocoDashCase_forcing_config_args(CrocoDash_case_factory,tmp_path_factory):
+    case1 = CrocoDash_case_factory(tmp_path_factory.mktemp("forcing_config_args"))
+    case1.configure_forcings(   date_range = ["2020-01-01 00:00:00", "2020-01-09 00:00:00"],
+    tidal_constituents = ['M2'],
+    tpxo_elevation_filepath = "s3://crocodile-cesm/CrocoDash/data/tpxo/h_tpxo9.v1.zarr/",
+    tpxo_velocity_filepath = "s3://crocodile-cesm/CrocoDash/data/tpxo/u_tpxo9.v1.zarr/")
+    forcing_config = identify_CrocoDashCase_forcing_config_args(case1.caseroot)
+    # Since this just reads the forcing_config json file in input directory, I'll only check one thing in it
+    assert "tides" in forcing_config
+
+

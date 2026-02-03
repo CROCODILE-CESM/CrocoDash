@@ -86,7 +86,7 @@ def CrocoDash_case_factory(
     cesmroot = get_cesm_root_path
     project_num = "NCGD0011"
     override = True
-    ninst = 2
+    ninst = 1
 
     def _CrocoDash_case_factory(
         directory,
