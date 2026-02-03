@@ -10,7 +10,7 @@ def copy_xml_files_from_case(old_caseroot, new_caseroot, filenames):
         shutil.copy(old_caseroot / name, new_caseroot / name)
 
 
-def copy_user_nl_params_from_case(
+def copy_user_nl_mom_params_from_case(
     old_caseroot,
     usernlparams,
 ):
