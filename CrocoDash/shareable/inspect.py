@@ -8,8 +8,7 @@ import tempfile
 from mom6_bathy.grid import *
 from mom6_bathy.topo import *
 from mom6_bathy.vgrid import *
-import xarray as xr
-from CrocoDash.shareable.prompt import create_case
+from CrocoDash.shareable.fork import create_case
 from uuid import uuid4
 
 def identify_non_standard_case_information(caseroot, cesmroot, machine, project_number):

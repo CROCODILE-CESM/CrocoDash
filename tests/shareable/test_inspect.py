@@ -1,4 +1,4 @@
-from CrocoDash.shareable.identify import *
+from CrocoDash.shareable.inspect import *
 import pytest
 import subprocess
 from pathlib import Path

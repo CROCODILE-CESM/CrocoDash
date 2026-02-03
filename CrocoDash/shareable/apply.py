@@ -65,19 +65,19 @@ def apply_xmlchanges_to_case(
                 xmlchange(param, value)
 
 
-def copy_configurations_to_case(old_forcing_config, case, old_inputdir):
+def copy_configurations_to_case(old_forcing_config, case, inputdir_ocnice):
 
     # Copy forcing_obc_seg*
-    shutil.copy(old_inputdir / "ocnice" / "forcing_obc_seg*", case.inputdir / "ocnice")
+    shutil.copy(inputdir_ocnice / "forcing_obc_seg*", case.inputdir / "ocnice")
     # Copy init_*
-    shutil.copy(old_inputdir / "ocnice" / "init_*", case.inputdir / "ocnice")
+    shutil.copy(inputdir_ocnice / "init_*", case.inputdir / "ocnice")
 
     # Interate through outputs
     for key in old_forcing_config:
         if key == "basic" or key not in case.fcr.active_configurators.keys():
             continue
         for output in old_forcing_config[key]["outputs"]:
-            path = old_inputdir / "ocnice" / output
+            path = inputdir_ocnice / output
             if path.exists():
                 shutil.copy(path, case.inputdir / "ocnice")
     pass
