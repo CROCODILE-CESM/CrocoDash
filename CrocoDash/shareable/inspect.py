@@ -58,12 +58,14 @@ def identify_non_standard_case_information(caseroot, cesmroot, machine, project_
         differences = diff_CESM_cases(original=caseroot, new=caseroot_tmp)
 
     return {
+        "case_info": {
+            "caseroot": caseroot,
+            "inputdir": init_args["inputdir"]
+        },
         "differences": differences,
         "init_args": init_args,
         "forcing_config": forcing_config,
     }
-
-    pass
 
 
 def identify_CrocoDashCase_init_args(caseroot):

@@ -1,28 +1,29 @@
 from pathlib import Path
 from CrocoDash.forcing_configurations.base import *
-from CrocoDash.shareable.identify import *
-from CrocoDash.shareable.copy import *
+from CrocoDash.shareable.apply import *
 import json
 from datetime import datetime
 from CrocoDash.case import Case
 from CrocoDash.grid import Grid
 from CrocoDash.vgrid import VGrid
 from CrocoDash.topo import Topo
+import xarray as xr
 # -----------------------------------------------------------------------------
 # Top-level orchestration
 # -----------------------------------------------------------------------------
 
 
-def share(old_caseroot, cesmroot, machine, project_number, new_caseroot, new_inputdir):
+def share(bundle_location, cesmroot, machine, project_number, new_caseroot, new_inputdir):
     """
     Share a CESM case by inspecting an existing case, optionally copying
     non-standard components, resolving forcing configurations, and creating
     a new case with equivalent forcings.
     """
 
-    manifest = identify_non_standard_case_information(
-        old_caseroot, cesmroot, machine, project_number
-    )
+    json_file = Path(bundle_location) / "identify_output.json"
+    assert json_file.exists()
+    with open(json_file) as f:
+        manifest = json.load(f)
 
     copy_plan = ask_copy_questions(manifest)
     compset = resolve_compset(manifest)
@@ -51,12 +52,13 @@ def share(old_caseroot, cesmroot, machine, project_number, new_caseroot, new_inp
 
     case.configure_forcings(**configure_forcing_args)
 
-    apply_copy_plan(copy_plan, manifest, old_caseroot, new_caseroot, case)
+    apply_copy_plan(copy_plan, manifest, manifest["case_info"]["caseroot"], new_caseroot, case)
 
     print(
         "\nYou're ready! If you requested any additional forcings, remember to "
         "run them with your extract_forcings driver script."
     )
+    return case
 
 
 # -----------------------------------------------------------------------------
@@ -171,9 +173,9 @@ def build_general_configure_forcing_args(forcing_config, remove_configs):
             start_dt.strftime("%Y-%m-%d %H:%M:%S"),
             end_dt.strftime("%Y-%m-%d %H:%M:%S"),
         ],
-        "boundaries": basic["boundaries"],
-        "product_name": basic["product_name"],
-        "function_name": basic["function_name"],
+        "boundaries": list(basic["general"]["boundary_number_conversion"].keys()),
+        "product_name": basic["forcing"]["product_name"],
+        "function_name": basic["forcing"]["function_name"],
     }
 
     for cfg, cfg_data in forcing_config.items():
@@ -216,6 +218,11 @@ def request_any_additional_forcing_args_from_user(args, requested_configs):
 
     if not isinstance(new_args, dict):
         raise ValueError("Input must be a JSON object")
+    
+    for config in requested_configs:
+        for user_arg in  ForcingConfigRegistry.get_user_args(ForcingConfigRegistry.get_configurator_from_name(config)):
+            if user_arg not in new_args:
+                raise ValueError("Missing arg: "+ user_arg+ " for "+config)
 
     args.update(new_args)
     return args
@@ -346,7 +353,3 @@ def create_case(
         compset=compset,
     )
     return case
-
-
-if __name__ == "__main__":
-    share()
