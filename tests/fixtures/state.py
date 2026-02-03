@@ -33,5 +33,5 @@ def get_cesm_root_path(is_glade_file_system):
     elif cesmroot is None:
 
         cesmroot = "/Users/manishrv/Documents/cesm"
-        os.environ["CIME_MACHINE"] = "ubuntu-latest" # macos has problems with VCG 
+        os.environ["CIME_MACHINE"] = "ubuntu-latest"  # macos has problems with VCG
     return cesmroot

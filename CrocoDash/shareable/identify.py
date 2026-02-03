@@ -9,9 +9,8 @@ from mom6_bathy.grid import *
 from mom6_bathy.topo import *
 from mom6_bathy.vgrid import *
 import xarray as xr
-from CrocoDash.case import Case
-import difflib
-
+from CrocoDash.shareable.prompt import create_case
+from uuid import uuid4
 
 def identify_non_standard_case_information(caseroot, cesmroot, machine, project_number):
 
@@ -25,9 +24,9 @@ def identify_non_standard_case_information(caseroot, cesmroot, machine, project_
 
         tmp_path = Path(tmp_dir)
         print("Temporary directory:", tmp_path)
-        caseroot_tmp = tmp_path / "temp_case"
+        caseroot_tmp = tmp_path / f"temp_case-{uuid4().hex}"
         inputdir = tmp_path / "temp_inputdir"
-        case = create_case(init_args, caseroot_tmp, inputdir)
+        case = create_case(init_args, caseroot_tmp, inputdir, machine, project_number, cesmroot, compset=init_args["compset"])
 
         start_str = forcing_config["basic"]["dates"]["start"]  # e.g., "20000101"
         end_str = forcing_config["basic"]["dates"]["end"]  # e.g., "20000201"
@@ -43,9 +42,9 @@ def identify_non_standard_case_information(caseroot, cesmroot, machine, project_
 
         configure_forcing_args = {
             "date_range": date_range,
-            "boundaries": forcing_config["basic"]["boundaries"],
-            "product_name": forcing_config["basic"]["product_name"],
-            "function_name": forcing_config["basic"]["function_name"],
+            "boundaries": forcing_config["basic"]["general"]["boundary_number_conversion"].keys(),
+            "product_name": forcing_config["basic"]["forcing"]["product_name"],
+            "function_name": forcing_config["basic"]["forcing"]["function_name"],
         }
         for key in forcing_config:
             if key == "basic":
@@ -57,8 +56,10 @@ def identify_non_standard_case_information(caseroot, cesmroot, machine, project_
                     ]
 
         case.configure_forcings(**configure_forcing_args)
+        differences = diff_CESM_cases(original=caseroot, new=caseroot_tmp)
 
-    return diff_CESM_cases(original=caseroot, new=caseroot_tmp) | {
+    return {
+        "differences": differences,
         "init_args": init_args,
         "forcing_config": forcing_config,
     }

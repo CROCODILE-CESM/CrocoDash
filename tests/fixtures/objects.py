@@ -41,9 +41,9 @@ def get_CrocoDash_case(
     cesmroot = get_cesm_root_path
 
     # Set some defaults
-    caseroot, inputdir = tmp_path_factory.mktemp(f"case-{uuid4().hex}"), tmp_path_factory.mktemp(
-        "inputdir"
-    )
+    caseroot, inputdir = tmp_path_factory.mktemp(
+        f"case-{uuid4().hex}"
+    ), tmp_path_factory.mktemp("inputdir")
     project_num = "NCGD0011"
     override = True
     compset = "1850_DATM%JRA_SLND_SICE_MOM6_SROF_SGLC_SWAV"

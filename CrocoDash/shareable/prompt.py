@@ -4,7 +4,10 @@ from CrocoDash.shareable.identify import *
 from CrocoDash.shareable.copy import *
 import json
 from datetime import datetime
-
+from CrocoDash.case import Case
+from CrocoDash.grid import Grid
+from CrocoDash.vgrid import VGrid
+from CrocoDash.topo import Topo
 # -----------------------------------------------------------------------------
 # Top-level orchestration
 # -----------------------------------------------------------------------------
@@ -319,16 +322,16 @@ def create_case(
     init_args, caseroot, inputdir, machine, project_number, cesmroot, compset
 ):
     # Create Grids
-    grid = grid.from_supergrid(init_args["inputdir"] / init_args["supergrid_file"])
+    grid = Grid.from_supergrid(init_args["inputdir"] / init_args["supergrid_path"])
 
     # Read Topo
-    topo_ds = xr.open_dataset(init_args["inputdir"] / init_args["topo_file"])
+    topo_ds = xr.open_dataset(init_args["inputdir"] / init_args["topo_path"])
     topo = Topo.from_topo_file(
-        grid, init_args["inputdir"] / init_args["topo_file"], topo_ds.attrs["min_depth"]
+        grid, init_args["inputdir"] / init_args["topo_path"], topo_ds.attrs["min_depth"]
     )
 
     # Read Vgrid
-    vgrid = vgrid.from_vgrid_file(init_args["inputdir"] / init_args["vgrid_file"])
+    vgrid = VGrid.from_file(str(init_args["inputdir"] / init_args["vgrid_path"]))
 
     case = Case(
         cesmroot=cesmroot,
@@ -346,4 +349,4 @@ def create_case(
 
 
 if __name__ == "__main__":
-    main()
+    share()

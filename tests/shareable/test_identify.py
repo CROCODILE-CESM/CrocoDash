@@ -71,14 +71,69 @@ def test_identify_CrocoDashCase_init_args(get_CrocoDash_case):
     assert init_args["compset"] == "1850_DATM%JRA_SLND_SICE_MOM6_SROF_SGLC_SWAV"
 
 
-def test_identify_CrocoDashCase_forcing_config_args(CrocoDash_case_factory,tmp_path_factory):
+def test_identify_CrocoDashCase_forcing_config_args(
+    CrocoDash_case_factory, tmp_path_factory
+):
     case1 = CrocoDash_case_factory(tmp_path_factory.mktemp("forcing_config_args"))
-    case1.configure_forcings(   date_range = ["2020-01-01 00:00:00", "2020-01-09 00:00:00"],
-    tidal_constituents = ['M2'],
-    tpxo_elevation_filepath = "s3://crocodile-cesm/CrocoDash/data/tpxo/h_tpxo9.v1.zarr/",
-    tpxo_velocity_filepath = "s3://crocodile-cesm/CrocoDash/data/tpxo/u_tpxo9.v1.zarr/")
+    case1.configure_forcings(
+        date_range=["2020-01-01 00:00:00", "2020-01-09 00:00:00"],
+        tidal_constituents=["M2"],
+        tpxo_elevation_filepath="s3://crocodile-cesm/CrocoDash/data/tpxo/h_tpxo9.v1.zarr/",
+        tpxo_velocity_filepath="s3://crocodile-cesm/CrocoDash/data/tpxo/u_tpxo9.v1.zarr/",
+    )
     forcing_config = identify_CrocoDashCase_forcing_config_args(case1.caseroot)
     # Since this just reads the forcing_config json file in input directory, I'll only check one thing in it
     assert "tides" in forcing_config
 
 
+def test_identify_CrocoDashCase_forcing_config_args(
+    CrocoDash_case_factory, tmp_path_factory
+):
+    case1 = CrocoDash_case_factory(tmp_path_factory.mktemp("forcing_config_args"))
+    case1.configure_forcings(
+        date_range=["2020-01-01 00:00:00", "2020-01-09 00:00:00"],
+        tidal_constituents=["M2"],
+        tpxo_elevation_filepath="s3://crocodile-cesm/CrocoDash/data/tpxo/h_tpxo9.v1.zarr/",
+        tpxo_velocity_filepath="s3://crocodile-cesm/CrocoDash/data/tpxo/u_tpxo9.v1.zarr/",
+    )
+    forcing_config = identify_CrocoDashCase_forcing_config_args(case1.caseroot)
+    # Since this just reads the forcing_config json file in input directory, I'll only check one thing in it
+    assert "tides" in forcing_config
+
+
+def test_identify_non_standard_case_information(get_CrocoDash_case):
+    case1 = get_CrocoDash_case
+    # add in a .xml file to case1.caseroot folder
+    xml_file = Path(case1.caseroot) / "test.xml"
+    xml_file.write_text("<test>data</test>")
+
+    # run subprocess.run xmlchange in case1.caseroot folder for JOB_PRIORITY=premium with -N flag
+    subprocess.run(
+        ["./xmlchange", "JOB_PRIORITY=premium", "-N"],
+        cwd=case1.caseroot,
+    )
+
+    # add a file to case1.caseroot/SourceMods/src.mom called bleh.dummy
+    srcmods_dir = Path(case1.caseroot) / "SourceMods" / "src.mom"
+    dummy_file = srcmods_dir / "bleh.dummy"
+    dummy_file.write_text("dummy content")
+
+    # add a line to case1.caseroot/user_nl_mom with DEBUG=TRUE
+    user_nl_path = Path(case1.caseroot) / "user_nl_mom"
+    with open(user_nl_path, "a") as f:
+        f.write("\nDEBUG=TRUE\n")
+
+    case1.configure_forcings(
+        date_range=["2020-01-01 00:00:00", "2020-01-09 00:00:00"],
+        tidal_constituents=["M2"],
+        tpxo_elevation_filepath="s3://crocodile-cesm/CrocoDash/data/tpxo/h_tpxo9.v1.zarr/",
+        tpxo_velocity_filepath="s3://crocodile-cesm/CrocoDash/data/tpxo/u_tpxo9.v1.zarr/",
+    )
+
+    output = identify_non_standard_case_information(
+        case1.caseroot, case1.cime.cimeroot.parent, case1.machine, case1.project
+    )
+    assert output["differences"]["xml_files_missing_in_new"] == ["test.xml"]
+    assert output["differences"]["user_nl_missing_params"] == {"user_nl_mom": ["DEBUG"]}
+    assert output["differences"]["source_mods_missing_files"] == ["src.mom/bleh.dummy"]
+    assert output["differences"]["xmlchanges_missing"] == ["JOB_PRIORITY"]

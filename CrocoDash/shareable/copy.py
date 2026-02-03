@@ -12,7 +12,6 @@ def copy_xml_files_from_case(old_caseroot, new_caseroot, filenames):
 
 def copy_user_nl_params_from_case(
     old_caseroot,
-    new_caseroot,
     usernlparams,
 ):
     usernl = Path(old_caseroot) / "user_nl_mom"
@@ -26,7 +25,7 @@ def copy_user_nl_params_from_case(
             # ./xmlchange PARAM=VALUE
             _, kv = line.split(None, 1)
             param, value = kv.split("=", 1)
-            if param in xmlchange params:
+            if param in usernlparams:
                 append_user_nl( "mom", [(param,value)])
     pass
 
@@ -40,13 +39,13 @@ def copy_source_mods_from_case(
     new_caseroot = Path(new_caseroot)
     for path in filepaths:
         path = Path(path)
+        name = path.name
         shutil.copy(
             old_caseroot / "SourceMods" / name, new_caseroot / "SourceMods" / name
         )
 
 
 def apply_xmlchanges_to_case(
-    case,
     old_caseroot,
     xmlchangeparams,
 ):
@@ -62,7 +61,7 @@ def apply_xmlchanges_to_case(
             # ./xmlchange PARAM=VALUE
             _, kv = line.split(None, 1)
             param, value = kv.split("=", 1)
-            if param in xmlchange params:
+            if param in xmlchangeparams:
                 xmlchange(param, value)
 
 
@@ -74,11 +73,11 @@ def copy_configurations_to_case(old_forcing_config, case, old_inputdir):
     shutil.copy(old_inputdir / "ocnice" / "init_*", case.inputdir / "ocnice")
 
     # Interate through outputs
-    for key in forcing_config:
+    for key in old_forcing_config:
         if key == "basic" or key not in case.fcr.active_configurators.keys():
             continue
-        for output in forcing_config[key]["outputs"]:
-            path = inputdir / "ocnice" / output
+        for output in old_forcing_config[key]["outputs"]:
+            path = old_inputdir / "ocnice" / output
             if path.exists():
                 shutil.copy(path, case.inputdir / "ocnice")
     pass
