@@ -4,7 +4,7 @@ import os
 import regional_mom6 as rmom6
 import datetime as dt
 import os
-from CrocoDash.forcing_configurations import ForcingConfigRegistry
+from CrocoDash.forcing_configurations.base import ForcingConfigRegistry
 
 
 def file_with_prefix_exists(directory, prefix):
