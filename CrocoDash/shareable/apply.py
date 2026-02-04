@@ -22,11 +22,10 @@ def copy_user_nl_params_from_case(
                 if line.startswith("!"):
                     continue
 
-                #PARAM=VALUE
+                # PARAM=VALUE
                 param, value = line.split("=", 1)
                 if param in usernlparams[key]:
-                    append_user_nl(key, [(param.strip(),value.strip())])
-    
+                    append_user_nl(key, [(param.strip(), value.strip())])
 
 
 def copy_source_mods_from_case(

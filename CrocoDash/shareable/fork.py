@@ -8,12 +8,15 @@ from CrocoDash.grid import Grid
 from CrocoDash.vgrid import VGrid
 from CrocoDash.topo import Topo
 import xarray as xr
+
 # -----------------------------------------------------------------------------
 # Top-level orchestration
 # -----------------------------------------------------------------------------
 
 
-def share(bundle_location, cesmroot, machine, project_number, new_caseroot, new_inputdir):
+def share(
+    bundle_location, cesmroot, machine, project_number, new_caseroot, new_inputdir
+):
     """
     Share a CESM case by inspecting an existing case, optionally copying
     non-standard components, resolving forcing configurations, and creating
@@ -52,7 +55,9 @@ def share(bundle_location, cesmroot, machine, project_number, new_caseroot, new_
 
     case.configure_forcings(**configure_forcing_args)
 
-    apply_copy_plan(copy_plan, manifest, manifest["case_info"]["caseroot"], new_caseroot, case)
+    apply_copy_plan(
+        copy_plan, manifest, manifest["case_info"]["caseroot"], new_caseroot, case
+    )
 
     print(
         "\nYou're ready! If you requested any additional forcings, remember to "
@@ -218,11 +223,13 @@ def request_any_additional_forcing_args_from_user(args, requested_configs):
 
     if not isinstance(new_args, dict):
         raise ValueError("Input must be a JSON object")
-    
+
     for config in requested_configs:
-        for user_arg in  ForcingConfigRegistry.get_user_args(ForcingConfigRegistry.get_configurator_from_name(config)):
+        for user_arg in ForcingConfigRegistry.get_user_args(
+            ForcingConfigRegistry.get_configurator_from_name(config)
+        ):
             if user_arg not in new_args:
-                raise ValueError("Missing arg: "+ user_arg+ " for "+config)
+                raise ValueError("Missing arg: " + user_arg + " for " + config)
 
     args.update(new_args)
     return args
