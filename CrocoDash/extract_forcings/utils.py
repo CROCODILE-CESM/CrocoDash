@@ -26,7 +26,7 @@ class Config:
         )
         self.inputdir = Path(self.config["basic"]["paths"]["input_dataset_path"])
 
-    def keys(self):
+    def keys():
         return self.config.keys()
 
     def __getitem__(self, key):

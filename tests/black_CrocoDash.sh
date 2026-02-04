@@ -6,6 +6,7 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)" # Back out of tests
 
 black \
   "$REPO_ROOT/CrocoDash/extract_forcings" \
+  "$REPO_ROOT/CrocoDash/shareable" \
   "$REPO_ROOT/CrocoDash/raw_data_access" \
   "$REPO_ROOT/tests" \
   "$REPO_ROOT/CrocoDash/case.py" \
