@@ -1,0 +1,837 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Adding Forcing Configurations &#8212; CrocoDash  documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=eba8b062" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'for_developers/adding_forcing_configurations';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="CrocoDash API Docs" href="../api-docs/modules.html" />
+    <link rel="prev" title="Adding Data to the Data Access Module" href="adding_data_access.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../_static/crocodile.png" class="logo__image only-light" alt="CrocoDash  documentation - Home"/>
+    <script>document.write(`<img src="../_static/crocodile.png" class="logo__image only-dark" alt="CrocoDash  documentation - Home"/>`);</script>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://crocodile-cesm.github.io/CrocoGallery/">Tutorials &amp; Gallery</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../for_users/index.html">User Information</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../for_users/structure.html">How CrocoDash Is Organized</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_users/grids.html">Grid Stuff (Supergrid, Bathymetry, Vgrid)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_users/datasets.html">Accessing Raw Data (raw_data_access)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_users/forcing_configurations.html">Forcing Configuration (case.configure_forcings)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_users/extract_forcings.html">Extract Forcings (case.process_forcings)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_users/case_information.html">Extra CESM Case Information</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_users/additional_resources.html">Additional Resources</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">Want to do more?</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="dev_info.html">Get started developing!</a></li>
+<li class="toctree-l2"><a class="reference internal" href="edit_docs.html">Write Documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="adding_data_access.html">Adding Data to the Data Access Module</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Adding Forcing Configurations</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../api-docs/modules.html">CrocoDash API Docs</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../api-docs/CrocoDash.html">CrocoDash package</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../api-docs/CrocoDash.extract_forcings.html">CrocoDash.extract_forcings package</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../api-docs/CrocoDash.extract_forcings.code.html">CrocoDash.extract_forcings.code package</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../api-docs/CrocoDash.raw_data_access.html">CrocoDash.raw_data_access package</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../api-docs/CrocoDash.raw_data_access.datasets.html">CrocoDash.raw_data_access.datasets package</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/CROCODILE-CESM/CrocoDash/discussions/84">Common Errors</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/for_developers/adding_forcing_configurations.md" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.md</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Adding Forcing Configurations</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">Overview</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-1-create-your-configurator-class">Step 1: Create Your Configurator Class</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-define-input-parameters">Step 2: Define Input Parameters</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-3-define-output-parameters">Step 3: Define Output Parameters</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-4-implement-the-init-method">Step 4: Implement the <code class="docutils literal notranslate"><span class="pre">__init__</span></code> Method</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-5-implement-the-configure-method">Step 5: Implement the <code class="docutils literal notranslate"><span class="pre">configure</span></code> Method</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-6-add-compset-compatibility-logic-optional">Step 6: Add Compset Compatibility Logic (Optional)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#complete-example">Complete Example</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#important-considerations">Important Considerations</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#json-serialization">JSON Serialization</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#validation-strategy">Validation Strategy</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#accessing-case-information">Accessing Case Information</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#testing-your-configurator">Testing Your Configurator</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#see-also">See Also</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="adding-forcing-configurations">
+<h1>Adding Forcing Configurations<a class="headerlink" href="#adding-forcing-configurations" title="Link to this heading">#</a></h1>
+<p>This guide explains how to add a new forcing configuration to CrocoDash. Forcing configurations handle the setup of different components like tides, biogeochemistry, rivers, and more.</p>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">#</a></h2>
+<p>The forcing configuration framework in <code class="docutils literal notranslate"><span class="pre">forcing_configurations.py</span></code> uses a declarative, registry-based approach:</p>
+<ul class="simple">
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">BaseConfigurator</span></code></strong> - Abstract base class that all forcing configurations inherit from</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">&#64;register</span></code> decorator</strong> - Automatically registers configurators in <code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry</span></code></p></li>
+<li><p><strong>Input/Output Parameters</strong> - Declarative metadata that describe what data a configurator needs and what case parameters it modifies</p></li>
+</ul>
+<p>The workflow is:</p>
+<ol class="arabic simple">
+<li><p>User provides compset and configuration inputs (dates, file paths, options)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry</span></code> validates and instantiates active configurators based on compset</p></li>
+<li><p>Each configurator processes user and case inputs and generates outputs (xmlchange, user_nl modifications)</p></li>
+<li><p>Configuration is serialized to JSON for use by <code class="docutils literal notranslate"><span class="pre">extract_forcings</span></code> module</p></li>
+</ol>
+</section>
+<section id="step-1-create-your-configurator-class">
+<h2>Step 1: Create Your Configurator Class<a class="headerlink" href="#step-1-create-your-configurator-class" title="Link to this heading">#</a></h2>
+<p>Inherit from <code class="docutils literal notranslate"><span class="pre">BaseConfigurator</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">CrocoDash.forcing_configurations</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BaseConfigurator</span><span class="p">,</span>
+    <span class="n">register</span><span class="p">,</span>
+    <span class="n">InputFileParam</span><span class="p">,</span>
+    <span class="n">InputValueParam</span><span class="p">,</span>
+    <span class="n">UserNLConfigParam</span><span class="p">,</span>
+    <span class="n">XMLConfigParam</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="nd">@register</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MyConfigurator</span><span class="p">(</span><span class="n">BaseConfigurator</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Configure MyComponent for the case.&quot;&quot;&quot;</span>
+    
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;my_component&quot;</span>
+    <span class="n">required_for_compsets</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># e.g., [&quot;BGC&quot;] means required if &quot;BGC&quot; in compset</span>
+    <span class="n">allowed_compsets</span> <span class="o">=</span> <span class="p">[]</span>       <span class="c1"># e.g., [&quot;MOM6&quot;] means only allowed if &quot;MOM6&quot; in compset</span>
+    <span class="n">forbidden_compsets</span> <span class="o">=</span> <span class="p">[]</span>     <span class="c1"># e.g., [&quot;CICE&quot;] means incompatible if &quot;CICE&quot; in compset</span>
+</pre></div>
+</div>
+<p>The decorator automatically registers your class in <code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.registered_types</span></code>.</p>
+</section>
+<section id="step-2-define-input-parameters">
+<h2>Step 2: Define Input Parameters<a class="headerlink" href="#step-2-define-input-parameters" title="Link to this heading">#</a></h2>
+<p>Declare what inputs your configurator needs as class variables:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@register</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MyConfigurator</span><span class="p">(</span><span class="n">BaseConfigurator</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;my_component&quot;</span>
+    
+    <span class="n">input_params</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">InputFileParam</span><span class="p">(</span>
+            <span class="s2">&quot;data_filepath&quot;</span><span class="p">,</span>
+            <span class="n">comment</span><span class="o">=</span><span class="s2">&quot;Path to input data file&quot;</span>
+        <span class="p">),</span>
+        <span class="n">InputValueParam</span><span class="p">(</span>
+            <span class="s2">&quot;processing_mode&quot;</span><span class="p">,</span>
+            <span class="n">comment</span><span class="o">=</span><span class="s2">&quot;How to process data: &#39;fast&#39; or &#39;accurate&#39;&quot;</span>
+        <span class="p">),</span>
+    <span class="p">]</span>
+</pre></div>
+</div>
+<p><strong>Parameter Types:</strong></p>
+<ul class="simple">
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">InputValueParam</span></code></strong> - Simple values (strings, numbers, booleans)</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">InputFileParam</span></code></strong> - File paths (automatically validated as existing files)</p></li>
+</ul>
+<p><strong>Important:</strong> Input parameters must be <strong>JSON serializable</strong>. They’re serialized to pass configuration to the <code class="docutils literal notranslate"><span class="pre">extract_forcings</span></code> module for heavy computational work.</p>
+</section>
+<section id="step-3-define-output-parameters">
+<h2>Step 3: Define Output Parameters<a class="headerlink" href="#step-3-define-output-parameters" title="Link to this heading">#</a></h2>
+<p>Declare what CESM/MOM6 case parameters this configurator will modify:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@register</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MyConfigurator</span><span class="p">(</span><span class="n">BaseConfigurator</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;my_component&quot;</span>
+    
+    <span class="n">input_params</span> <span class="o">=</span> <span class="p">[</span><span class="o">...</span><span class="p">]</span>
+    
+    <span class="n">output_params</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">XMLConfigParam</span><span class="p">(</span>
+            <span class="s2">&quot;MY_COMPONENT_ENABLED&quot;</span><span class="p">,</span>
+            <span class="n">is_non_local</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">comment</span><span class="o">=</span><span class="s2">&quot;Enable MyComponent&quot;</span>
+        <span class="p">),</span>
+        <span class="n">UserNLConfigParam</span><span class="p">(</span>
+            <span class="s2">&quot;my_component_data_file&quot;</span><span class="p">,</span>
+            <span class="n">user_nl_name</span><span class="o">=</span><span class="s2">&quot;mom&quot;</span><span class="p">,</span>
+            <span class="n">comment</span><span class="o">=</span><span class="s2">&quot;Path to component data in user_nl_mom&quot;</span>
+        <span class="p">),</span>
+    <span class="p">]</span>
+</pre></div>
+</div>
+<p><strong>Parameter Types:</strong></p>
+<ul class="simple">
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">XMLConfigParam</span></code></strong> - CESM XML configuration (applied via <code class="docutils literal notranslate"><span class="pre">xmlchange</span></code>)</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">is_non_local=False</span></code> for regular XML settings</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">is_non_local=True</span></code> for non-local settings (experiment-specific)</p></li>
+</ul>
+</li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">UserNLConfigParam</span></code></strong> - Namelist parameters (written to <code class="docutils literal notranslate"><span class="pre">user_nl_&lt;component&gt;</span></code> files)</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">user_nl_name</span></code> specifies which component file (default: “mom”)</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="step-4-implement-the-init-method">
+<h2>Step 4: Implement the <code class="docutils literal notranslate"><span class="pre">__init__</span></code> Method<a class="headerlink" href="#step-4-implement-the-init-method" title="Link to this heading">#</a></h2>
+<p>Define what inputs your configurator accepts:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@register</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MyConfigurator</span><span class="p">(</span><span class="n">BaseConfigurator</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;my_component&quot;</span>
+    <span class="n">input_params</span> <span class="o">=</span> <span class="p">[</span><span class="o">...</span><span class="p">]</span>
+    <span class="n">output_params</span> <span class="o">=</span> <span class="p">[</span><span class="o">...</span><span class="p">]</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">data_filepath</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">processing_mode</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">case_caseroot</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># Optional: access Case object attributes</span>
+        <span class="n">case_inputdir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize configurator.</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        data_filepath : str</span>
+<span class="sd">            Path to input data file</span>
+<span class="sd">        processing_mode : str</span>
+<span class="sd">            Processing mode: &#39;fast&#39; or &#39;accurate&#39;</span>
+<span class="sd">        case_caseroot : str, optional</span>
+<span class="sd">            Case root directory (passed from Case object)</span>
+<span class="sd">        case_inputdir : str, optional</span>
+<span class="sd">            Case input directory (passed from Case object)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Validate inputs before passing to parent</span>
+        <span class="k">if</span> <span class="n">processing_mode</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;fast&quot;</span><span class="p">,</span> <span class="s2">&quot;accurate&quot;</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown processing_mode: </span><span class="si">{</span><span class="n">processing_mode</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        
+        <span class="c1"># Call parent constructor (handles input parameter binding)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">data_filepath</span><span class="o">=</span><span class="n">data_filepath</span><span class="p">,</span>
+            <span class="n">processing_mode</span><span class="o">=</span><span class="n">processing_mode</span><span class="p">,</span>
+            <span class="n">case_caseroot</span><span class="o">=</span><span class="n">case_caseroot</span><span class="p">,</span>
+            <span class="n">case_inputdir</span><span class="o">=</span><span class="n">case_inputdir</span><span class="p">,</span>
+        <span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Key Points:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">__init__</span></code> parameters must somehow fill <code class="docutils literal notranslate"><span class="pre">input_params</span></code> names</p></li>
+<li><p>Parameters starting with <code class="docutils literal notranslate"><span class="pre">case_</span></code> come from the <code class="docutils literal notranslate"><span class="pre">Case</span></code> object, the registry automatically injects these</p></li>
+<li><p>Other parameters are user-provided and required unless you have defaults</p></li>
+<li><p>Call <code class="docutils literal notranslate"><span class="pre">super().__init__(**kwargs)</span></code> to let the framework handle parameter binding</p></li>
+</ul>
+</section>
+<section id="step-5-implement-the-configure-method">
+<h2>Step 5: Implement the <code class="docutils literal notranslate"><span class="pre">configure</span></code> Method<a class="headerlink" href="#step-5-implement-the-configure-method" title="Link to this heading">#</a></h2>
+<p>This method processes inputs and sets output parameter values:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@register</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MyConfigurator</span><span class="p">(</span><span class="n">BaseConfigurator</span><span class="p">):</span>
+    <span class="c1"># ... class variables and __init__ ...</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">configure</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Process inputs and set output parameters.&quot;&quot;&quot;</span>
+        <span class="c1"># Access input values via attribute access</span>
+        <span class="n">data_file</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_filepath</span>  <span class="c1"># Accesses input parameter</span>
+        <span class="n">mode</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">processing_mode</span>
+        
+        <span class="c1"># Process/validate</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">Path</span><span class="p">(</span><span class="n">data_file</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Data file not found: </span><span class="si">{</span><span class="n">data_file</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        
+        <span class="c1"># Set output parameter values</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_output_param</span><span class="p">(</span><span class="s2">&quot;MY_COMPONENT_ENABLED&quot;</span><span class="p">,</span> <span class="s2">&quot;true&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_output_param</span><span class="p">(</span><span class="s2">&quot;my_component_data_file&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">data_file</span><span class="p">))</span>
+        
+        <span class="c1"># Apply all output parameters (writes to case)</span>
+        <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_params</span><span class="p">:</span>
+            <span class="n">param</span><span class="o">.</span><span class="n">apply</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="step-6-add-compset-compatibility-logic-optional">
+<h2>Step 6: Add Compset Compatibility Logic (Optional)<a class="headerlink" href="#step-6-add-compset-compatibility-logic-optional" title="Link to this heading">#</a></h2>
+<p>Define when your configurator is required or allowed:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@register</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MyConfigurator</span><span class="p">(</span><span class="n">BaseConfigurator</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;my_component&quot;</span>
+    <span class="n">required_for_compsets</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;MY_COMPONENT&quot;</span><span class="p">]</span>  <span class="c1"># Required if compset contains &quot;MY_COMPONENT&quot;</span>
+    <span class="n">allowed_compsets</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;MOM6&quot;</span><span class="p">]</span>               <span class="c1"># Only allowed if &quot;MOM6&quot; in compset</span>
+    <span class="n">forbidden_compsets</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;CICE&quot;</span><span class="p">]</span>             <span class="c1"># Never allowed if &quot;CICE&quot; in compset</span>
+    
+    <span class="c1"># ... rest of class ...</span>
+</pre></div>
+</div>
+<p>The registry uses these to:</p>
+<ul class="simple">
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">required_for_compsets</span></code></strong> - Throw error if compset matches but inputs are missing</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">allowed_compsets</span></code></strong> - Skip if compset doesn’t match all listed strings</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">forbidden_compsets</span></code></strong> - Skip if compset matches any forbidden string</p></li>
+</ul>
+</section>
+<section id="complete-example">
+<h2>Complete Example<a class="headerlink" href="#complete-example" title="Link to this heading">#</a></h2>
+<p>Here’s a complete example of adding a simple configurator:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">CrocoDash.forcing_configurations</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BaseConfigurator</span><span class="p">,</span>
+    <span class="n">register</span><span class="p">,</span>
+    <span class="n">InputFileParam</span><span class="p">,</span>
+    <span class="n">InputValueParam</span><span class="p">,</span>
+    <span class="n">UserNLConfigParam</span><span class="p">,</span>
+    <span class="n">XMLConfigParam</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="nd">@register</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">IceForcing</span><span class="p">(</span><span class="n">BaseConfigurator</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Configure ice boundary conditions.&quot;&quot;&quot;</span>
+    
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;ice_forcing&quot;</span>
+    <span class="n">required_for_compsets</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">allowed_compsets</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;SICE&quot;</span><span class="p">]</span>
+    <span class="n">forbidden_compsets</span> <span class="o">=</span> <span class="p">[]</span>
+    
+    <span class="n">input_params</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">InputFileParam</span><span class="p">(</span>
+            <span class="s2">&quot;ice_data_file&quot;</span><span class="p">,</span>
+            <span class="n">comment</span><span class="o">=</span><span class="s2">&quot;Path to ice initial conditions&quot;</span>
+        <span class="p">),</span>
+        <span class="n">InputValueParam</span><span class="p">(</span>
+            <span class="s2">&quot;ice_concentration_threshold&quot;</span><span class="p">,</span>
+            <span class="n">comment</span><span class="o">=</span><span class="s2">&quot;Minimum ice concentration to include&quot;</span>
+        <span class="p">),</span>
+    <span class="p">]</span>
+    
+    <span class="n">output_params</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">XMLConfigParam</span><span class="p">(</span>
+            <span class="s2">&quot;ICE_DATA_FILE&quot;</span><span class="p">,</span>
+            <span class="n">comment</span><span class="o">=</span><span class="s2">&quot;Ice data location in case&quot;</span>
+        <span class="p">),</span>
+        <span class="n">UserNLConfigParam</span><span class="p">(</span>
+            <span class="s2">&quot;ice_conc_min&quot;</span><span class="p">,</span>
+            <span class="n">user_nl_name</span><span class="o">=</span><span class="s2">&quot;cice&quot;</span><span class="p">,</span>
+            <span class="n">comment</span><span class="o">=</span><span class="s2">&quot;Ice concentration threshold&quot;</span>
+        <span class="p">),</span>
+    <span class="p">]</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">ice_data_file</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">ice_concentration_threshold</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">case_inputdir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize ice forcing configurator.&quot;&quot;&quot;</span>
+        <span class="c1"># Validate</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">threshold</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">ice_concentration_threshold</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">threshold</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Threshold must be between 0 and 1&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid ice_concentration_threshold: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">ice_data_file</span><span class="o">=</span><span class="n">ice_data_file</span><span class="p">,</span>
+            <span class="n">ice_concentration_threshold</span><span class="o">=</span><span class="n">ice_concentration_threshold</span><span class="p">,</span>
+            <span class="n">case_inputdir</span><span class="o">=</span><span class="n">case_inputdir</span><span class="p">,</span>
+        <span class="p">)</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">configure</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Configure ice boundary conditions.&quot;&quot;&quot;</span>
+        <span class="n">data_file</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ice_data_file</span>
+        <span class="n">threshold</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ice_concentration_threshold</span>
+        
+        <span class="c1"># Validate file exists</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">Path</span><span class="p">(</span><span class="n">data_file</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Ice data file not found: </span><span class="si">{</span><span class="n">data_file</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        
+        <span class="c1"># Copy to case input directory if provided</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">case_inputdir</span><span class="p">:</span>
+            <span class="n">dest</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">case_inputdir</span><span class="p">)</span> <span class="o">/</span> <span class="n">Path</span><span class="p">(</span><span class="n">data_file</span><span class="p">)</span><span class="o">.</span><span class="n">name</span>
+            <span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
+            <span class="n">shutil</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">data_file</span><span class="p">,</span> <span class="n">dest</span><span class="p">)</span>
+            <span class="n">data_file</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">dest</span><span class="p">)</span>
+        
+        <span class="c1"># Set outputs and apply</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_output_param</span><span class="p">(</span><span class="s2">&quot;ICE_DATA_FILE&quot;</span><span class="p">,</span> <span class="n">data_file</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_output_param</span><span class="p">(</span><span class="s2">&quot;ice_conc_min&quot;</span><span class="p">,</span> <span class="n">threshold</span><span class="p">)</span>
+        
+        <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_params</span><span class="p">:</span>
+            <span class="n">param</span><span class="o">.</span><span class="n">apply</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="important-considerations">
+<h2>Important Considerations<a class="headerlink" href="#important-considerations" title="Link to this heading">#</a></h2>
+<section id="json-serialization">
+<h3>JSON Serialization<a class="headerlink" href="#json-serialization" title="Link to this heading">#</a></h3>
+<p>Input and output parameters are serialized to JSON for the <code class="docutils literal notranslate"><span class="pre">extract_forcings</span></code> module:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># ✅ Good - JSON serializable</span>
+<span class="n">input_params</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">InputFileParam</span><span class="p">(</span><span class="s2">&quot;file_path&quot;</span><span class="p">),</span>           <span class="c1"># str</span>
+    <span class="n">InputValueParam</span><span class="p">(</span><span class="s2">&quot;threshold&quot;</span><span class="p">),</span>           <span class="c1"># str</span>
+<span class="p">]</span>
+
+<span class="c1"># ❌ Bad - Not JSON serializable</span>
+<span class="n">input_params</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">InputFileParam</span><span class="p">(</span><span class="s2">&quot;data_object&quot;</span><span class="p">),</span>          <span class="c1"># xarray.Dataset</span>
+    <span class="n">InputFileParam</span><span class="p">(</span><span class="s2">&quot;case_object&quot;</span><span class="p">),</span>          <span class="c1"># Case instance</span>
+<span class="p">]</span>
+</pre></div>
+</div>
+<p>If you need to pass complex objects to <code class="docutils literal notranslate"><span class="pre">extract_forcings</span></code>, store serializable references (paths, identifiers) instead.</p>
+</section>
+<section id="validation-strategy">
+<h3>Validation Strategy<a class="headerlink" href="#validation-strategy" title="Link to this heading">#</a></h3>
+<p>Validation should happen in <code class="docutils literal notranslate"><span class="pre">validate_args</span></code>, which is called from the base <strong>init</strong>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">validate_args</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">assert</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;true&quot;</span><span class="p">]</span>
+</pre></div>
+</div>
+</section>
+<section id="accessing-case-information">
+<h3>Accessing Case Information<a class="headerlink" href="#accessing-case-information" title="Link to this heading">#</a></h3>
+<p>To access Case object attributes, use the <code class="docutils literal notranslate"><span class="pre">case_</span></code> prefix:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">some_param</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">case_caseroot</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">case_compset</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="c1"># case_caseroot and case_compset are optional</span>
+    <span class="c1"># They&#39;re injected by ForcingConfigRegistry if available</span>
+    <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="n">some_param</span><span class="o">=</span><span class="n">some_param</span><span class="p">,</span>
+        <span class="n">case_caseroot</span><span class="o">=</span><span class="n">case_caseroot</span><span class="p">,</span>
+        <span class="n">case_compset</span><span class="o">=</span><span class="n">case_compset</span><span class="p">,</span>
+    <span class="p">)</span>
+</pre></div>
+</div>
+<p>Available case attributes are whatever objects are on the Case object.</p>
+</section>
+</section>
+<section id="testing-your-configurator">
+<h2>Testing Your Configurator<a class="headerlink" href="#testing-your-configurator" title="Link to this heading">#</a></h2>
+<p>Most basic testing is taken care of, and the registry will run available configurators. Only add additional tests if your configurator has unique configure/method behavior.</p>
+</section>
+<section id="see-also">
+<h2>See Also<a class="headerlink" href="#see-also" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p><a class="reference internal" href="../for_users/structure.html"><span class="std std-doc">Project Architecture</span></a> - Understanding the Case class and workflow</p></li>
+<li><p>Example implementations in <code class="docutils literal notranslate"><span class="pre">CrocoDash/forcing_configurations.py</span></code></p></li>
+</ul>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="adding_data_access.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Adding Data to the Data Access Module</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="../api-docs/modules.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">CrocoDash API Docs</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">Overview</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-1-create-your-configurator-class">Step 1: Create Your Configurator Class</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-define-input-parameters">Step 2: Define Input Parameters</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-3-define-output-parameters">Step 3: Define Output Parameters</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-4-implement-the-init-method">Step 4: Implement the <code class="docutils literal notranslate"><span class="pre">__init__</span></code> Method</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-5-implement-the-configure-method">Step 5: Implement the <code class="docutils literal notranslate"><span class="pre">configure</span></code> Method</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-6-add-compset-compatibility-logic-optional">Step 6: Add Compset Compatibility Logic (Optional)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#complete-example">Complete Example</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#important-considerations">Important Considerations</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#json-serialization">JSON Serialization</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#validation-strategy">Validation Strategy</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#accessing-case-information">Accessing Case Information</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#testing-your-configurator">Testing Your Configurator</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#see-also">See Also</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By CROCODILE
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2024, CROCODILE.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>
