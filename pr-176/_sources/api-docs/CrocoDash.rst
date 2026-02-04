@@ -9,7 +9,6 @@ Subpackages
 
    CrocoDash.extract_forcings
    CrocoDash.raw_data_access
-   CrocoDash.rm6
 
 Submodules
 ----------
@@ -19,61 +18,61 @@ CrocoDash.case module
 
 .. automodule:: CrocoDash.case
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 CrocoDash.forcing\_configurations module
 ----------------------------------------
 
 .. automodule:: CrocoDash.forcing_configurations
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 CrocoDash.grid module
 ---------------------
 
 .. automodule:: CrocoDash.grid
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 CrocoDash.logging module
 ------------------------
 
 .. automodule:: CrocoDash.logging
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 CrocoDash.topo module
 ---------------------
 
 .. automodule:: CrocoDash.topo
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 CrocoDash.topo\_editor module
 -----------------------------
 
 .. automodule:: CrocoDash.topo_editor
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 CrocoDash.vgrid module
 ----------------------
 
 .. automodule:: CrocoDash.vgrid
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 Module contents
 ---------------
 
 .. automodule:: CrocoDash
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
