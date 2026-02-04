@@ -25,27 +25,40 @@ def test_copy_xml_files_from_case(tmp_path):
     assert (new_caseroot / "config.xml").read_text() == "<xml>data2</xml>"
 
 
-def test_copy_user_nl_mom_params_from_case(tmp_path):
-    """Test copy_user_nl_params_from_case extracts and applies user_nl parameters."""
+def test_copy_user_nl_params_from_case(tmp_path):
+    """Test copy_user_nl_params_from_case extracts and applies user_nl parameters from multiple files."""
     old_caseroot = tmp_path / "old_case"
     old_caseroot.mkdir()
 
-    # Create user_nl_mom with xmlchange lines
-    user_nl = old_caseroot / "user_nl_mom"
-    user_nl.write_text(
+    # Create user_nl_mom with parameters
+    user_nl_mom = old_caseroot / "user_nl_mom"
+    user_nl_mom.write_text(
         "! This is a comment\n" "PARAM1=value1\n" "PARAM2=value2\n" "PARAM3=value3\n"
+    )
+
+    # Create user_nl_cice with parameters
+    user_nl_cice = old_caseroot / "user_nl_cice"
+    user_nl_cice.write_text(
+        "! CICE parameters\n" "CICE_PARAM1=cice_value1\n" "CICE_PARAM2=cice_value2\n"
     )
 
     # Mock append_user_nl to track calls
     with patch("CrocoDash.shareable.apply.append_user_nl") as mock_append:
-        copy_user_nl_mom_params_from_case(old_caseroot, {"PARAM1", "PARAM3"})
+        copy_user_nl_params_from_case(
+            old_caseroot, {"mom": {"PARAM1", "PARAM3"}, "cice": {"CICE_PARAM1"}}
+        )
 
-    # Verify that only PARAM1 and PARAM3 were appended
+    # Verify that only specified mom params were appended
     calls = [call[0] for call in mock_append.call_args_list]
     assert ("mom", [("PARAM1", "value1")]) in calls
     assert ("mom", [("PARAM3", "value3")]) in calls
     # PARAM2 should not have been called
     assert ("mom", [("PARAM2", "value2")]) not in calls
+
+    # Verify that only specified cice params were appended
+    assert ("cice", [("CICE_PARAM1", "cice_value1")]) in calls
+    # CICE_PARAM2 should not have been called
+    assert ("cice", [("CICE_PARAM2", "cice_value2")]) not in calls
 
 
 def test_copy_source_mods_from_case(tmp_path):

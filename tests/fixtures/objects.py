@@ -26,7 +26,7 @@ def setup_sample_rm6_expt(tmp_path):
     return expt
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def get_CrocoDash_case(
     tmp_path_factory,
     gen_grid_topo_vgrid,

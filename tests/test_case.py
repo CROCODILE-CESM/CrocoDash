@@ -5,6 +5,7 @@ import regional_mom6 as rmom6
 import datetime as dt
 import os
 from CrocoDash.forcing_configurations.base import ForcingConfigRegistry
+from uuid import uuid4
 
 
 def file_with_prefix_exists(directory, prefix):
@@ -29,7 +30,7 @@ def test_case_init(
     assert cesmroot is not None, "CESMROOT environment variable is not set"
 
     # Set some defaults
-    caseroot, inputdir = tmp_path / "case", tmp_path / "inputdir"
+
     project_num = "NCGD0011"
     override = True
     compsets = [
@@ -45,10 +46,11 @@ def test_case_init(
     elif glade_bool:
         machine = "derecho"
     else:
-        machine = None
+        machine = "homebrew"
 
     # Setup Case
     for c in compsets:
+        caseroot, inputdir = tmp_path / f"{uuid4().hex}-case", tmp_path / "inputdir"
         case = Case(
             cesmroot=cesmroot,
             caseroot=caseroot,

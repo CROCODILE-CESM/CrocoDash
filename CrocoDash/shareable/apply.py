@@ -10,38 +10,36 @@ def copy_xml_files_from_case(old_caseroot, new_caseroot, filenames):
         shutil.copy(old_caseroot / name, new_caseroot / name)
 
 
-def copy_user_nl_mom_params_from_case(
+def copy_user_nl_params_from_case(
     old_caseroot,
     usernlparams,
 ):
-    usernl = Path(old_caseroot) / "user_nl_mom"
-    with usernl.open() as f:
-        for line in f:
-            line = line.strip()
+    for key in usernlparams:
+        usernl = Path(old_caseroot) / f"user_nl_{key}"
+        with usernl.open() as f:
+            for line in f:
+                line = line.strip()
+                if line.startswith("!"):
+                    continue
 
-            if not line.startswith("./xmlchange"):
-                continue
-
-            # ./xmlchange PARAM=VALUE
-            _, kv = line.split(None, 1)
-            param, value = kv.split("=", 1)
-            if param in usernlparams:
-                append_user_nl( "mom", [(param,value)])
-    pass
+                #PARAM=VALUE
+                param, value = line.split("=", 1)
+                if param in usernlparams[key]:
+                    append_user_nl(key, [(param.strip(),value.strip())])
+    
 
 
 def copy_source_mods_from_case(
     old_caseroot,
     new_caseroot,
-    filepaths,
+    short_filepaths,
 ):
     old_caseroot = Path(old_caseroot)
     new_caseroot = Path(new_caseroot)
-    for path in filepaths:
+    for path in short_filepaths:
         path = Path(path)
-        name = path.name
         shutil.copy(
-            old_caseroot / "SourceMods" / name, new_caseroot / "SourceMods" / name
+            old_caseroot / "SourceMods" / path, new_caseroot / "SourceMods" / path
         )
 
 

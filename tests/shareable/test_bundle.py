@@ -1,13 +1,15 @@
 from CrocoDash.shareable.bundle import bundle_case_information
-from CrocoDash.shareable.inspect import identify_non_standard_case_information
 import json
 import zipfile
 from pathlib import Path
+from uuid import uuid4
 
 
-def test_compress_case_information_with_modifications(get_CrocoDash_case, tmp_path):
+def test_compress_case_information_with_modifications(
+    CrocoDash_case_factory, tmp_path_factory, tmp_path
+):
     """Test compress_case_information with XML files and sourceMods modifications."""
-    case = get_CrocoDash_case
+    case = CrocoDash_case_factory(tmp_path_factory.mktemp(f"case-{uuid4().hex}"))
 
     # Add modifications to the case
     # 1. Add an XML file
@@ -125,7 +127,7 @@ def test_compress_case_information_with_modifications(get_CrocoDash_case, tmp_pa
     assert "CUSTOM_PARAM=42" in user_nl_content
 
     # Verify zip file size is reasonable
-    zip_file = output_dir / "case_bundle.zip"
+    zip_file = output_dir / f"{case.caseroot.name}_case_bundle.zip"
     assert zip_file.exists()
     assert zip_file.stat().st_size > 0, "Zip file should not be empty"
 
