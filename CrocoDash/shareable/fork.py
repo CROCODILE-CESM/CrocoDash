@@ -335,17 +335,18 @@ def ask_yes_no(prompt: str) -> bool:
 def create_case(
     init_args, caseroot, inputdir, machine, project_number, cesmroot, compset
 ):
+    initial_inputdir = Path(init_args["inputdir"])
     # Create Grids
-    grid = Grid.from_supergrid(init_args["inputdir"] / init_args["supergrid_path"])
+    grid = Grid.from_supergrid(initial_inputdir / init_args["supergrid_path"])
 
     # Read Topo
-    topo_ds = xr.open_dataset(init_args["inputdir"] / init_args["topo_path"])
+    topo_ds = xr.open_dataset(initial_inputdir / init_args["topo_path"])
     topo = Topo.from_topo_file(
-        grid, init_args["inputdir"] / init_args["topo_path"], topo_ds.attrs["min_depth"]
+        grid, initial_inputdir / init_args["topo_path"], topo_ds.attrs["min_depth"]
     )
 
     # Read Vgrid
-    vgrid = VGrid.from_file(str(init_args["inputdir"] / init_args["vgrid_path"]))
+    vgrid = VGrid.from_file(str(initial_inputdir / init_args["vgrid_path"]))
 
     case = Case(
         cesmroot=cesmroot,
@@ -358,5 +359,6 @@ def create_case(
         override=True,
         machine=machine,
         compset=compset,
+        atm_grid_name = init_args["atm_grid_name"]
     )
     return case

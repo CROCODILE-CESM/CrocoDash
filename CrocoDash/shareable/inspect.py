@@ -10,6 +10,9 @@ from mom6_bathy.topo import *
 from mom6_bathy.vgrid import *
 from CrocoDash.shareable.fork import create_case
 from uuid import uuid4
+import subprocess
+from CrocoDash.logging import setup_logger
+logger = setup_logger(__name__)
 
 
 def identify_non_standard_case_information(caseroot, cesmroot, machine, project_number):
@@ -85,16 +88,15 @@ def identify_CrocoDashCase_init_args(caseroot):
 
     user_nl_mom_lines = read_user_nl_mom_lines(caseroot)
     for line in user_nl_mom_lines:
-        if "inputdir" in line:
-            init_args["inputdir"] = Path(line.split("=")[1].strip())
+        if "inputdir" in line.lower():
+            init_args["inputdir"] = line.split("=")[1].strip()
         if "GRID_FILE" in line:
-            init_args["supergrid_path"] = Path(line.split("=")[1].strip())
+            init_args["supergrid_path"] = line.split("=")[1].strip()
         if "ALE_COORDINATE_CONFIG" in line:
-            init_args["vgrid_path"] = Path(
-                line.split("=")[1].strip().replace("FILE:", "").strip()
-            )
+            init_args["vgrid_path"] =  line.split("=")[1].strip().replace("FILE:", "").strip()
+            
         if "TOPO_FILE" in line:
-            init_args["topo_path"] = Path(line.split("=")[1].strip())
+            init_args["topo_path"] = line.split("=")[1].strip()
 
     # Get compset
     with open(caseroot / "replay.sh", "r") as f:
@@ -107,7 +109,10 @@ def identify_CrocoDashCase_init_args(caseroot):
     required_keys = ["inputdir", "supergrid_path", "vgrid_path", "topo_path", "compset"]
     assert all(
         key in init_args for key in required_keys
-    ), "Not all required init args found"
+    ), "Not all required init args found: Required: " + str(required_keys) + "Found:"+ json.dumps(init_args)
+
+    # Run xmlquery in the caseroot with ATM_GRID
+    init_args["atm_grid_name"] = run_xmlquery(caseroot, "ATM_GRID")
 
     return init_args
 
@@ -120,9 +125,8 @@ def identify_CrocoDashCase_forcing_config_args(caseroot):
     user_nl_mom_lines = read_user_nl_mom_lines(caseroot)
 
     # Find the input directory
-    inputdir = None
     for line in user_nl_mom_lines:
-        if "inputdir" in line:
+        if "inputdir" in line.lower():
             inputdir = Path(line.split("=")[1].strip())
             break
 
@@ -250,3 +254,7 @@ def extract_param(line: str, replay_sh=False):
     if "=" in line:
         return line.split("=", 1)[0].strip()
     return None  # Ignore lines without '='
+
+def run_xmlquery(caseroot,param):
+    res = subprocess.run(["./xmlquery",param,"-N"],cwd=str(caseroot),capture_output=True)
+    return res.stdout.decode().strip().split(":")[1].strip()
