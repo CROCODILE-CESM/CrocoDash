@@ -1,0 +1,712 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>How CrocoDash Is Organized &#8212; CrocoDash  documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=eba8b062" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'for_users/structure';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Grid Stuff (Supergrid, Bathymetry, Vgrid)" href="grids.html" />
+    <link rel="prev" title="User Information" href="index.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../_static/crocodile.png" class="logo__image only-light" alt="CrocoDash  documentation - Home"/>
+    <script>document.write(`<img src="../_static/crocodile.png" class="logo__image only-dark" alt="CrocoDash  documentation - Home"/>`);</script>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://crocodile-cesm.github.io/CrocoGallery/">Tutorials &amp; Gallery</a></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">User Information</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">How CrocoDash Is Organized</a></li>
+<li class="toctree-l2"><a class="reference internal" href="grids.html">Grid Stuff (Supergrid, Bathymetry, Vgrid)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="datasets.html">Accessing Raw Data (raw_data_access)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="forcing_configurations.html">Forcing Configuration (case.configure_forcings)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="extract_forcings.html">Extract Forcings (case.process_forcings)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="case_information.html">Extra CESM Case Information</a></li>
+<li class="toctree-l2"><a class="reference internal" href="shareable.html">Shareable Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="additional_resources.html">Additional Resources</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../for_developers/index.html">Want to do more?</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../for_developers/dev_info.html">Get started developing!</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_developers/edit_docs.html">Write Documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_developers/adding_data_access.html">Adding Data to the Data Access Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_developers/adding_forcing_configurations.html">Adding Forcing Configurations</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../api-docs/modules.html">CrocoDash API Docs</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../api-docs/CrocoDash.html">CrocoDash package</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../api-docs/CrocoDash.extract_forcings.html">CrocoDash.extract_forcings package</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../api-docs/CrocoDash.extract_forcings.code.html">CrocoDash.extract_forcings.code package</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../api-docs/CrocoDash.raw_data_access.html">CrocoDash.raw_data_access package</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../api-docs/CrocoDash.raw_data_access.datasets.html">CrocoDash.raw_data_access.datasets package</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/CROCODILE-CESM/CrocoDash/discussions/84">Common Errors</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/for_users/structure.md" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.md</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>How CrocoDash Is Organized</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-three-phases-of-crocodash">The Three Phases of CrocoDash</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#phase-1-grid-definition">Phase 1: Grid Definition</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#phase-2-case-setup">Phase 2: Case Setup</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#phase-3-forcing-and-boundary-conditions">Phase 3: Forcing and Boundary Conditions</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-complete-workflow">The Complete Workflow</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#how-crocodash-organizes-its-code">How CrocoDash Organizes Its Code</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#grid-and-geometry-handling">Grid and Geometry Handling</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#case-management">Case Management</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#data-processing">Data Processing</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#supporting-infrastructure">Supporting Infrastructure</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-forcing-configuration-registry">The Forcing Configuration Registry</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-data-access-registry">The Data Access Registry</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#data-flow-case-setup-to-forcing-generation">Data Flow: Case Setup to Forcing Generation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#key-objects-you-ll-interact-with">Key Objects You’ll Interact With</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#integration-with-external-tools">Integration with External Tools</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#design-philosophy-separation-of-concerns">Design Philosophy: Separation of Concerns</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#extending-crocodash">Extending CrocoDash</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#what-happens-when-you-run-your-case">What Happens When You Run Your Case</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow-diagram">Workflow Diagram</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-diagram">Module Diagram</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="how-crocodash-is-organized">
+<h1>How CrocoDash Is Organized<a class="headerlink" href="#how-crocodash-is-organized" title="Link to this heading">#</a></h1>
+<p>CrocoDash manages the complete workflow from raw data sources to a fully configured regional MOM6 case within CESM. Understanding its structure helps you know where to find information, what each piece does, and how to extend it for your needs.</p>
+<section id="the-three-phases-of-crocodash">
+<h2>The Three Phases of CrocoDash<a class="headerlink" href="#the-three-phases-of-crocodash" title="Link to this heading">#</a></h2>
+<p>Everything in CrocoDash revolves around three main phases that happen sequentially:</p>
+<section id="phase-1-grid-definition">
+<h3>Phase 1: Grid Definition<a class="headerlink" href="#phase-1-grid-definition" title="Link to this heading">#</a></h3>
+<p>Before you can set up a case, you need to define the spatial domain. CrocoDash uses three grid objects to represent your domain:</p>
+<ul class="simple">
+<li><p><strong>Horizontal Grid</strong> (<code class="docutils literal notranslate"><span class="pre">Grid</span></code> class) - Your Arakawa C-grid specification (lat/lon coordinates, resolution, etc.)</p></li>
+<li><p><strong>Vertical Grid</strong> (<code class="docutils literal notranslate"><span class="pre">VGrid</span></code> class) - Depth levels and layer thickness for your domain</p></li>
+<li><p><strong>Bathymetry/Topography</strong> (<code class="docutils literal notranslate"><span class="pre">Topo</span></code> class) - Seafloor depths and land mask</p></li>
+</ul>
+<p>These classes are from <code class="docutils literal notranslate"><span class="pre">mom6_bathy</span></code>, and mom6_bathy provides an <strong>interactive bathymetry editor</strong> if you want to manually adjust seafloor features before setting up your case.</p>
+</section>
+<section id="phase-2-case-setup">
+<h3>Phase 2: Case Setup<a class="headerlink" href="#phase-2-case-setup" title="Link to this heading">#</a></h3>
+<p>Once you have grids defined, you create a <code class="docutils literal notranslate"><span class="pre">Case</span></code> object that represents your simulation. This phase:</p>
+<ul class="simple">
+<li><p>Creates the case directory structure in CESM</p></li>
+<li><p>Configures all model components (atmosphere, ocean, land, ice, runoff)</p></li>
+<li><p>Registers your custom MOM6 grid with CESM</p></li>
+<li><p>Sets options like compset, machine, queue, and other parameters</p></li>
+</ul>
+<p>The <code class="docutils literal notranslate"><span class="pre">Case</span></code> class is your main entry point for all case operations. It handles coordination with CESM behind the scenes using <code class="docutils literal notranslate"><span class="pre">VisualCaseGen</span></code> and CESM’s native configuration system.</p>
+</section>
+<section id="phase-3-forcing-and-boundary-conditions">
+<h3>Phase 3: Forcing and Boundary Conditions<a class="headerlink" href="#phase-3-forcing-and-boundary-conditions" title="Link to this heading">#</a></h3>
+<p>The final phase generates all the data files your simulation needs:</p>
+<ul class="simple">
+<li><p><strong>Data Access</strong> - Retrieves raw data from multiple sources (MOM6 output, TPXO tides, GLOFAS runoff, etc.) through a unified interface</p></li>
+<li><p><strong>Regridding</strong> - Maps data from source grids onto your custom regional grid</p></li>
+<li><p><strong>Format Conversion</strong> - Converts data to MOM6-compatible file formats</p></li>
+<li><p><strong>Boundary Extraction</strong> - Extracts open boundary conditions (OBC) for your domain edges (This is part of regridding)</p></li>
+</ul>
+<p>The actual processing is decoupled from the main Case workflow because it’s computationally intensive. You configure what you want in Phase 2, then CrocoDash handles the heavy lifting separately through the <code class="docutils literal notranslate"><span class="pre">extract_forcings</span></code> module.</p>
+</section>
+</section>
+<section id="the-complete-workflow">
+<h2>The Complete Workflow<a class="headerlink" href="#the-complete-workflow" title="Link to this heading">#</a></h2>
+<p>Here’s how you move through these phases in practice:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1. Define Grid (horizontal &amp; vertical)
+   ↓
+2. Define Bathymetry
+   ↓
+3. Create Case Object with grids
+   ↓
+4. Configure Forcing (specify what data you want)
+   ↓
+5. Process Forcings (download, regrid, format)
+   ↓
+6. Build Case
+   ↓
+7. Submit Case
+</pre></div>
+</div>
+</section>
+<section id="how-crocodash-organizes-its-code">
+<h2>How CrocoDash Organizes Its Code<a class="headerlink" href="#how-crocodash-organizes-its-code" title="Link to this heading">#</a></h2>
+<p>CrocoDash is structured so that each major task has its own module. Understanding this organization helps you know where to look when you need something:</p>
+<section id="grid-and-geometry-handling">
+<h3>Grid and Geometry Handling<a class="headerlink" href="#grid-and-geometry-handling" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">grid</span></code>, <code class="docutils literal notranslate"><span class="pre">vgrid</span></code>, <code class="docutils literal notranslate"><span class="pre">topo</span></code></strong> - Define and manage your horizontal grid, vertical grid, and bathymetry</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">topo_editor</span></code></strong> - Interactive tool for editing bathymetry before case creation</p></li>
+</ul>
+</section>
+<section id="case-management">
+<h3>Case Management<a class="headerlink" href="#case-management" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">case</span></code></strong> - The main <code class="docutils literal notranslate"><span class="pre">Case</span></code> class that orchestrates everything</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">forcing_configurations</span></code></strong> - Where you specify what forcing data your case needs. This module is “under-the-hood” of the configure_forcings function.</p></li>
+</ul>
+</section>
+<section id="data-processing">
+<h3>Data Processing<a class="headerlink" href="#data-processing" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">extract_forcings</span></code></strong> - The computational engine that generates all your forcing and boundary condition files</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">raw_data_access</span></code></strong> - Unified interface to get data from many different sources</p></li>
+</ul>
+</section>
+<section id="supporting-infrastructure">
+<h3>Supporting Infrastructure<a class="headerlink" href="#supporting-infrastructure" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">logging</span></code></strong> - Consistent logging setup across the package</p></li>
+</ul>
+</section>
+</section>
+<section id="the-forcing-configuration-registry">
+<h2>The Forcing Configuration Registry<a class="headerlink" href="#the-forcing-configuration-registry" title="Link to this heading">#</a></h2>
+<p>One key design pattern you’ll encounter is the <strong>configuration registry</strong>. Instead of editing configuration files by hand, CrocoDash uses Python classes to represent each type of forcing configuration (Tides, Biogeochemistry, Rivers, etc.).</p>
+<p>Why this approach? Because configurations aren’t just data—they involve validation logic. For example, “you can’t use BGC without the BGC component in your compset.” By using Python classes, CrocoDash can enforce these rules automatically and give you helpful error messages if something doesn’t make sense.</p>
+<p>This also makes CrocoDash extensible: if you want to add a new forcing type, <a class="reference internal" href="../for_developers/adding_forcing_configurations.html"><span class="std std-doc">you can create a new configuration class and register it</span></a>.</p>
+</section>
+<section id="the-data-access-registry">
+<h2>The Data Access Registry<a class="headerlink" href="#the-data-access-registry" title="Link to this heading">#</a></h2>
+<p>Similarly, CrocoDash provides a <strong>data registry</strong> that lets you access different datasets through a common interface. Under the hood, each dataset (MOM6, TPXO, GLOFAS) has its own implementation for downloading, caching, and loading data. But from your perspective, you just ask for the data you need and CrocoDash handles the details.</p>
+<p>This design makes it easy to:</p>
+<ul class="simple">
+<li><p>Add support for new datasets without changing core code <a class="reference internal" href="../for_developers/adding_data_access.html"><span class="std std-doc">(which you can do!)</span></a></p></li>
+<li><p>Swap out data sources if you want to use a different provider</p></li>
+<li><p>Cache data locally to avoid repeated downloads</p></li>
+</ul>
+</section>
+<section id="data-flow-case-setup-to-forcing-generation">
+<h2>Data Flow: Case Setup to Forcing Generation<a class="headerlink" href="#data-flow-case-setup-to-forcing-generation" title="Link to this heading">#</a></h2>
+<p>Here’s a detailed view of what happens at each step:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1. Initialize Grid, Topo, VGrid objects
+   ↓
+2. Create Case object with grid specifications and input/run folders
+   ↓
+3. Setup case via CESM integration (creates case directories)
+   ↓
+4. Configure forcing via the ForcingConfigRegistry from forcing_configurations.base:
+   - Specifies what datasets and configurations you want
+   - Validates that your choices are compatible
+   - Stores configuration in a JSON file for reproducibility
+   ↓
+5. Process forcings:
+   - raw_data_access gets data from sources (downloads if needed)
+   - extract_forcings regrids and reformats data
+   - Output files are placed in your input directories
+   ↓
+6. Build and submit case from CESM
+</pre></div>
+</div>
+</section>
+<section id="key-objects-you-ll-interact-with">
+<h2>Key Objects You’ll Interact With<a class="headerlink" href="#key-objects-you-ll-interact-with" title="Link to this heading">#</a></h2>
+<p>These are the main classes you’ll use when working with CrocoDash:</p>
+<ul class="simple">
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">Case</span></code></strong> - Represents your simulation. You create one, configure it, then build and submit it.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">Grid</span></code></strong> - Your horizontal grid specification</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">VGrid</span></code></strong> - Your vertical grid specification</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">Topo</span></code></strong> - Your bathymetry data</p></li>
+<li><p><strong>Forcing Configurators</strong> - Objects representing Tides, Biogeochemistry, Rivers, etc. that you specify in your case</p></li>
+</ul>
+</section>
+<section id="integration-with-external-tools">
+<h2>Integration with External Tools<a class="headerlink" href="#integration-with-external-tools" title="Link to this heading">#</a></h2>
+<p>CrocoDash doesn’t do everything itself—it orchestrates several specialized tools:</p>
+<ul class="simple">
+<li><p><strong><a class="reference external" href="https://github.com/NCAR/mom6_bathy">mom6_bathy</a></strong> - Grid generation and bathymetry tools</p></li>
+<li><p><strong><a class="reference external" href="https://github.com/COSIMA/regional-mom6">regional-mom6</a></strong> - Regional MOM6 setup and OBC generation</p></li>
+<li><p><strong><a class="reference external" href="https://github.com/ESMCI/VisualCaseGen">VisualCaseGen</a></strong> - CESM case creation interface</p></li>
+</ul>
+<p>These are included as submodules in the CrocoDash repository, so you have everything you need in one place.</p>
+</section>
+<section id="design-philosophy-separation-of-concerns">
+<h2>Design Philosophy: Separation of Concerns<a class="headerlink" href="#design-philosophy-separation-of-concerns" title="Link to this heading">#</a></h2>
+<p>CrocoDash separates tasks into focused modules so you can understand and work with each piece independently:</p>
+<ul class="simple">
+<li><p>The <strong><code class="docutils literal notranslate"><span class="pre">Case</span></code> class</strong> handles CESM case management—you don’t need to know the internals of CESM to use it</p></li>
+<li><p>The <strong><code class="docutils literal notranslate"><span class="pre">forcing_configurations</span></code></strong> handles forcing configuration logic separately from case setup</p></li>
+<li><p>The <strong><code class="docutils literal notranslate"><span class="pre">extract_forcings</span></code> module</strong> handles the computationally heavy work of processing data</p></li>
+<li><p>The <strong><code class="docutils literal notranslate"><span class="pre">raw_data_access</span></code> module</strong> handles data retrieval, insulating you from the differences between data sources</p></li>
+</ul>
+<p>This organization means:</p>
+<ul class="simple">
+<li><p>We can test or debug individual pieces without understanding the whole system</p></li>
+<li><p>Adding new functionality (like a new forcing type or data source) doesn’t require modifying existing code</p></li>
+<li><p>The learning curve is gentler because you can focus on the piece relevant to what you’re doing right now</p></li>
+</ul>
+</section>
+<section id="extending-crocodash">
+<h2>Extending CrocoDash<a class="headerlink" href="#extending-crocodash" title="Link to this heading">#</a></h2>
+<p>One benefit of this architecture is that CrocoDash is designed to be extended. You can:</p>
+<ul class="simple">
+<li><p><strong>Add new forcing configurations</strong> by creating a new configuration class and registering it (see <a class="reference internal" href="forcing_configurations.html"><span class="std std-doc">Forcing Configurations</span></a>)</p></li>
+<li><p><strong>Add new data sources</strong> by implementing a new data product class in the registry (see <a class="reference internal" href="../for_developers/adding_data_access.html"><span class="std std-doc">Adding Data Access</span></a>)</p></li>
+<li><p><strong>Customize bathymetry</strong> using the interactive TopoEditor</p></li>
+<li><p><strong>Create custom configurations</strong> by modifying JSON files or Python configuration objects</p></li>
+</ul>
+<p>None of these require modifying CrocoDash’s core code—the architecture is designed to support this kind of extension.</p>
+</section>
+<section id="what-happens-when-you-run-your-case">
+<h2>What Happens When You Run Your Case<a class="headerlink" href="#what-happens-when-you-run-your-case" title="Link to this heading">#</a></h2>
+<p>When you execute the workflow, here’s what’s actually happening behind the scenes:</p>
+<ol class="arabic simple">
+<li><p><strong>Grid Definition</strong> - You create Python objects representing your spatial domain</p></li>
+<li><p><strong>Case Creation</strong> - CrocoDash calls CESM’s case creation utilities to set up the directory structure</p></li>
+<li><p><strong>Forcing Configuration</strong> - Your specifications are validated and stored in JSON</p></li>
+<li><p><strong>Data Processing</strong> - CrocoDash queries remote datasets, downloads what’s needed, regrids to your grid, and formats for MOM6</p></li>
+<li><p><strong>Building</strong> - CESM builds the executable with your specific configuration</p></li>
+<li><p><strong>Submission</strong> - The case runs on the supercomputer</p></li>
+</ol>
+<p>You don’t need to understand all these details to use CrocoDash, but they’re here when you need them.</p>
+</section>
+<section id="workflow-diagram">
+<h2>Workflow Diagram<a class="headerlink" href="#workflow-diagram" title="Link to this heading">#</a></h2>
+<p>The following diagram illustrates the workflow of CrocoDash to set up a regional model:</p>
+<p>:::{figure} ../_static/workflow_diagram.png
+:align: center
+:alt: Workflow diagram showing the steps from CrocoDash to a regional model.
+:width: 80%</p>
+<p><strong>Workflow Diagram</strong>: This diagram shows the key steps involved in using CrocoDash to form a fully configured regional model.
+:::</p>
+</section>
+<section id="module-diagram">
+<h2>Module Diagram<a class="headerlink" href="#module-diagram" title="Link to this heading">#</a></h2>
+<p>The following diagram describes the connections between various modules and the <code class="docutils literal notranslate"><span class="pre">case.py</span></code> file:</p>
+<p>:::{figure} ../_static/module_diagram.svg
+:align: center
+:alt: Module diagram showing connections to case.py.
+:width: 80%</p>
+<p><strong>Module Diagram</strong>: This diagram highlights how different modules interact with the main workflow (<code class="docutils literal notranslate"><span class="pre">case.py</span></code>) file in CrocoDash.
+:::</p>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="index.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">User Information</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="grids.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Grid Stuff (Supergrid, Bathymetry, Vgrid)</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-three-phases-of-crocodash">The Three Phases of CrocoDash</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#phase-1-grid-definition">Phase 1: Grid Definition</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#phase-2-case-setup">Phase 2: Case Setup</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#phase-3-forcing-and-boundary-conditions">Phase 3: Forcing and Boundary Conditions</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-complete-workflow">The Complete Workflow</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#how-crocodash-organizes-its-code">How CrocoDash Organizes Its Code</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#grid-and-geometry-handling">Grid and Geometry Handling</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#case-management">Case Management</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#data-processing">Data Processing</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#supporting-infrastructure">Supporting Infrastructure</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-forcing-configuration-registry">The Forcing Configuration Registry</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-data-access-registry">The Data Access Registry</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#data-flow-case-setup-to-forcing-generation">Data Flow: Case Setup to Forcing Generation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#key-objects-you-ll-interact-with">Key Objects You’ll Interact With</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#integration-with-external-tools">Integration with External Tools</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#design-philosophy-separation-of-concerns">Design Philosophy: Separation of Concerns</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#extending-crocodash">Extending CrocoDash</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#what-happens-when-you-run-your-case">What Happens When You Run Your Case</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow-diagram">Workflow Diagram</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-diagram">Module Diagram</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By CROCODILE
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2024, CROCODILE.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>
