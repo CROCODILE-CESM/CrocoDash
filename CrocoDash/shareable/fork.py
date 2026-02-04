@@ -15,7 +15,7 @@ import xarray as xr
 # -----------------------------------------------------------------------------
 
 
-def fork(
+def fork_case_from_bundle(
     bundle_location, cesmroot, machine, project_number, new_caseroot, new_inputdir
 ):
     """
@@ -280,7 +280,7 @@ def apply_copy_plan(plan, manifest, old_caseroot, new_caseroot, case):
         )
 
     copy_configurations_to_case(
-        manifest["forcing_config"], case, Path(manifest["case_info"]["inputdir"])
+        manifest["forcing_config"], case, Path(manifest["case_info"]["inputdir_ocnice"])
     )
 
 
@@ -344,7 +344,7 @@ def ask_yes_no(prompt: str, default=True) -> bool:
 def create_case(
     init_args, caseroot, inputdir, machine, project_number, cesmroot, compset
 ):
-    initial_inputdir = Path(init_args["inputdir"])
+    initial_inputdir = Path(init_args["inputdir_ocnice"])
     # Create Grids
     grid = Grid.from_supergrid(initial_inputdir / init_args["supergrid_path"])
 

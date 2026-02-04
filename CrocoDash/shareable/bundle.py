@@ -13,7 +13,7 @@ def bundle_case_information(identify_output: dict, output_folder_location):
     output_folder_location = Path(output_folder_location)
     differences = identify_output["differences"]
     caseroot = Path(identify_output["case_info"]["caseroot"])
-    inputdir = Path(identify_output["case_info"]["inputdir"])
+    inputdir = Path(identify_output["case_info"]["inputdir_ocnice"])
 
     case_subfolder = output_folder_location / f"{caseroot.name}_case_bundle"
     case_subfolder.mkdir(parents=True, exist_ok=True)

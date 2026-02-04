@@ -222,6 +222,7 @@ def test_create_case(get_CrocoDash_case, tmp_path):
         "topo_path": original_case.topo_path,
         "vgrid_path": original_case.vgrid_path,
         "compset": original_case.compset_lname,
+        "atm_grid_name": "TL319",
     }
 
     new_caseroot = tmp_path / f"new_case-{uuid4().hex}"

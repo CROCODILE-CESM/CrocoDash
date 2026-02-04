@@ -84,7 +84,10 @@ def identify_non_standard_case_information(caseroot, cesmroot, machine, project_
         differences = diff_CESM_cases(original=caseroot, new=caseroot_tmp)
 
     return {
-        "case_info": {"caseroot": caseroot, "inputdir": init_args["inputdir"]},
+        "case_info": {
+            "caseroot": caseroot,
+            "inputdir_ocnice": init_args["inputdir_ocnice"],
+        },
         "differences": differences,
         "init_args": init_args,
         "forcing_config": forcing_config,
@@ -101,7 +104,7 @@ def identify_CrocoDashCase_init_args(caseroot):
     user_nl_mom_lines = read_user_nl_mom_lines(caseroot)
     for line in user_nl_mom_lines:
         if "inputdir" in line.lower():
-            init_args["inputdir"] = line.split("=")[1].strip()
+            init_args["inputdir_ocnice"] = line.split("=")[1].strip()
         if "GRID_FILE" in line:
             init_args["supergrid_path"] = line.split("=")[1].strip()
         if "ALE_COORDINATE_CONFIG" in line:
@@ -120,7 +123,13 @@ def identify_CrocoDashCase_init_args(caseroot):
         if "--compset" in line:
             init_args["compset"] = line.split("--compset")[1].split()[0].strip()
 
-    required_keys = ["inputdir", "supergrid_path", "vgrid_path", "topo_path", "compset"]
+    required_keys = [
+        "inputdir_ocnice",
+        "supergrid_path",
+        "vgrid_path",
+        "topo_path",
+        "compset",
+    ]
     assert all(key in init_args for key in required_keys), (
         "Not all required init args found: Required: "
         + str(required_keys)

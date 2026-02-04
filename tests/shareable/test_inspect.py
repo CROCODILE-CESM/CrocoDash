@@ -61,7 +61,7 @@ def test_identify_CrocoDashCase_init_args(get_CrocoDash_case):
     init_args = identify_CrocoDashCase_init_args(case.caseroot)
     print(init_args)
 
-    assert case.inputdir / "ocnice" == init_args["inputdir"]
+    assert str(case.inputdir / "ocnice") == str(init_args["inputdir_ocnice"])
     assert str(init_args["supergrid_path"]).startswith(str("ocean_hgrid_pana"))
 
     assert str(init_args["topo_path"]).startswith(str("ocean_topog_pana"))
