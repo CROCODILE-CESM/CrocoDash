@@ -12,34 +12,34 @@ Subpackages
 Submodules
 ----------
 
-CrocoDash.raw\_data\_access.config module
------------------------------------------
+CrocoDash.raw\_data\_access.base module
+---------------------------------------
 
-.. automodule:: CrocoDash.raw_data_access.config
+.. automodule:: CrocoDash.raw_data_access.base
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
-CrocoDash.raw\_data\_access.driver module
------------------------------------------
+CrocoDash.raw\_data\_access.registry module
+-------------------------------------------
 
-.. automodule:: CrocoDash.raw_data_access.driver
+.. automodule:: CrocoDash.raw_data_access.registry
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 CrocoDash.raw\_data\_access.utils module
 ----------------------------------------
 
 .. automodule:: CrocoDash.raw_data_access.utils
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 Module contents
 ---------------
 
 .. automodule:: CrocoDash.raw_data_access
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
