@@ -1,5 +1,5 @@
 from pathlib import Path
-from CrocoDash.extract_forcings.code import (
+from CrocoDash.extract_forcings import (
     merge_piecewise_dataset as md,
 )
 import xarray as xr

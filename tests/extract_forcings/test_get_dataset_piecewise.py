@@ -1,4 +1,4 @@
-from CrocoDash.extract_forcings.code import (
+from CrocoDash.extract_forcings import (
     get_dataset_piecewise as dp,
 )
 import os
