@@ -59,22 +59,31 @@ def apply_xmlchanges_to_case(
             _, kv = line.split(None, 1)
             param, value = kv.split("=", 1)
             if param in xmlchangeparams:
-                xmlchange(param, value)
+                xmlchange(param, value, is_non_local=True)
 
 
 def copy_configurations_to_case(old_forcing_config, case, inputdir_ocnice):
+    """
+    Copy forcing configurations from inputdir_ocnice to case.inputdir/ocnice.
+    """
 
-    # Copy forcing_obc_seg*
-    shutil.copy(inputdir_ocnice / "forcing_obc_seg*", case.inputdir / "ocnice")
-    # Copy init_*
-    shutil.copy(inputdir_ocnice / "init_*", case.inputdir / "ocnice")
+    case_ocnice = case.inputdir / "ocnice"
 
-    # Interate through outputs
+    # Copy forcing_obc_seg* files
+    for src in inputdir_ocnice.glob("forcing_obc_seg*"):
+        if src.is_file():
+            shutil.copy(src, case_ocnice)
+
+    # Copy init_* files
+    for src in inputdir_ocnice.glob("init_*"):
+        if src.is_file():
+            shutil.copy(src, case_ocnice)
+
+    # Iterate through old_forcing_config outputs
     for key in old_forcing_config:
         if key == "basic" or key not in case.fcr.active_configurators.keys():
             continue
-        for output in old_forcing_config[key]["outputs"]:
+        for output in old_forcing_config[key].get("outputs", []):
             path = inputdir_ocnice / output
-            if path.exists():
-                shutil.copy(path, case.inputdir / "ocnice")
-    pass
+            if path.exists() and path.is_file():
+                shutil.copy(path, case_ocnice)

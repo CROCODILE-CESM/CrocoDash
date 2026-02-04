@@ -1,5 +1,6 @@
 from pathlib import Path
-from CrocoDash.forcing_configurations.base import *
+import CrocoDash.forcing_configurations
+from CrocoDash.forcing_configurations import *
 from CrocoDash.shareable.apply import *
 import json
 from datetime import datetime
@@ -14,7 +15,7 @@ import xarray as xr
 # -----------------------------------------------------------------------------
 
 
-def share(
+def fork(
     bundle_location, cesmroot, machine, project_number, new_caseroot, new_inputdir
 ):
     """
@@ -28,7 +29,8 @@ def share(
     with open(json_file) as f:
         manifest = json.load(f)
 
-    copy_plan = ask_copy_questions(manifest)
+    copy_plan = ask_copy_questions(manifest["differences"])
+
     compset = resolve_compset(manifest)
 
     case = create_case(
@@ -56,7 +58,11 @@ def share(
     case.configure_forcings(**configure_forcing_args)
 
     apply_copy_plan(
-        copy_plan, manifest, manifest["case_info"]["caseroot"], new_caseroot, case
+        plan=copy_plan,
+        manifest=manifest,
+        old_caseroot=manifest["case_info"]["caseroot"],
+        new_caseroot=new_caseroot,
+        case=case,
     )
 
     print(
@@ -71,31 +77,31 @@ def share(
 # -----------------------------------------------------------------------------
 
 
-def ask_copy_questions(manifest):
+def ask_copy_questions(differences):
     plan = {}
 
-    if manifest.get("xml_files_missing_in_new"):
+    if differences.get("xml_files_missing_in_new"):
         plan["xml_files"] = ask_yes_no(
             f"The following non-default XML files are missing in the new case:\n"
-            f"{manifest['xml_files_missing_in_new']}\nCopy them over?"
+            f"{differences['xml_files_missing_in_new']}\nCopy them over?"
         )
 
-    if manifest.get("user_nl_missing_params"):
+    if differences.get("user_nl_missing_params"):
         plan["user_nl"] = ask_yes_no(
             f"Non-default user_nl parameters detected:\n"
-            f"{manifest['user_nl_missing_params']}\nCopy them over?"
+            f"{differences['user_nl_missing_params']}\nCopy them over?"
         )
 
-    if manifest.get("source_mods_missing_files"):
+    if differences.get("source_mods_missing_files"):
         plan["source_mods"] = ask_yes_no(
             f"The following source mods files exist in the old case:\n"
-            f"{manifest['source_mods_missing_files']}\nCopy them over?"
+            f"{differences['source_mods_missing_files']}\nCopy them over?"
         )
 
-    if manifest.get("xmlchanges_missing"):
+    if differences.get("xmlchanges_missing"):
         plan["xmlchanges"] = ask_yes_no(
             f"Non-default xmlchange parameters detected:\n"
-            f"{manifest['xmlchanges_missing']}\nApply them?"
+            f"{differences['xmlchanges_missing']}\nApply them?"
         )
 
     return plan
@@ -105,7 +111,7 @@ def resolve_compset(manifest):
     init_args = manifest["init_args"]
     current = init_args["compset"]
 
-    if ask_yes_no(f"Want to change compset? Current compset: {current}"):
+    if ask_yes_no(f"Want to change compset? Current compset: {current}", default=False):
         new_compset = ask_string("Enter the new compset")
         print(
             "Warning: Changing compset may have unintended consequences and "
@@ -128,7 +134,7 @@ def resolve_forcing_configurations(forcing_config, compset):
     # Required configurators
     required = ForcingConfigRegistry.find_required_configurators(compset)
     for cfg in required:
-        if cfg not in forcing_config:
+        if cfg.name.lower() not in forcing_config:
             print("Missing required configurator:", cfg)
             requested.append(cfg)
 
@@ -139,17 +145,22 @@ def resolve_forcing_configurations(forcing_config, compset):
     for cfg in forcing_config:
         if cfg == "basic":
             continue
-        if cfg not in valid:
+        config_class = ForcingConfigRegistry.get_configurator_from_name(cfg)
+        if config_class not in valid:
             print(f"Forcing config '{cfg}' is no longer valid for this compset")
         else:
-            already_ran.append(cfg)
-            valid.remove(cfg)
+            already_ran.append(config_class)
+            valid.remove(config_class)
 
     extra = ask_string(
-        f"Enter any other configurations you want " f"(comma-separated) from: {valid}"
+        f"Enter any other configurations you want "
+        f"(comma-separated) from: {[obj.name for obj in valid]}",
+        default="[]",
     )
     remove = ask_string(
-        f"Enter any configs you don't want " f"(comma-separated) from: {already_ran}"
+        f"Enter any configs you don't want "
+        f"(comma-separated) from: {[obj.name for obj in already_ran]}",
+        default="[]",
     )
 
     extra = {x.strip() for x in extra.split(",") if x.strip()}
@@ -245,33 +256,35 @@ def apply_copy_plan(plan, manifest, old_caseroot, new_caseroot, case):
         copy_xml_files_from_case(
             old_caseroot,
             new_caseroot,
-            manifest["xml_files_missing_in_new"],
+            manifest["differences"]["xml_files_missing_in_new"],
         )
 
     if plan.get("user_nl"):
         copy_user_nl_params_from_case(
             old_caseroot,
             new_caseroot,
-            manifest["user_nl_missing_params"],
+            manifest["differences"]["user_nl_missing_params"],
         )
 
     if plan.get("source_mods"):
         copy_source_mods_from_case(
             old_caseroot,
             new_caseroot,
-            manifest["source_mods_missing_files"],
+            manifest["differences"]["source_mods_missing_files"],
         )
 
     if plan.get("xmlchanges"):
         apply_xmlchanges_to_case(
-            case,
-            manifest["xmlchanges_missing"],
+            old_caseroot,
+            manifest["differences"]["xmlchanges_missing"],
         )
 
-    copy_configurations_to_case(manifest["forcing_config"], case)
+    copy_configurations_to_case(
+        manifest["forcing_config"], case, Path(manifest["case_info"]["inputdir"])
+    )
 
 
-def ask_string(prompt: str) -> str:
+def ask_string(prompt: str, default="") -> str:
     """
     Prompt the user for a string input and return it.
 
@@ -285,19 +298,18 @@ def ask_string(prompt: str) -> str:
     str
         The input string from the user.
     """
-    while True:
-        try:
-            response = input(prompt).strip()
-            if response:
-                return response
-            else:
-                print("Please enter a value.")
-        except EOFError:
-            print("\nNo input detected, returning empty string.")
-            return ""
+    try:
+        response = input(prompt).strip()
+        if response:
+            return response
+        else:
+            return default
+    except EOFError:
+        print("\nNo input detected, returning empty string.")
+        return ""
 
 
-def ask_yes_no(prompt: str) -> bool:
+def ask_yes_no(prompt: str, default=True) -> bool:
     """
     Prompt the user with a yes/no question and return True for 'yes' and False for 'no'.
 
@@ -313,23 +325,20 @@ def ask_yes_no(prompt: str) -> bool:
     bool
         True if the user answers 'yes', False if 'no'.
     """
-    while True:
-        # Print the prompt
-        print(prompt, end=" ")
-        # Read input
-        try:
-            answer = input("(yes/no): ").strip().lower()
-        except EOFError:
-            # If input is not available (e.g., script redirected), default to no
-            print("No input detected, assuming 'no'.")
-            return False
-        # Validate
-        if answer in ("yes", "y"):
-            return True
-        elif answer in ("no", "n"):
-            return False
-        else:
-            print("Please enter 'yes' or 'no'.")
+    # Read input
+    try:
+        answer = input(f"{prompt} (yes/no): ").strip().lower()
+    except EOFError:
+        # If input is not available (e.g., script redirected), default to no
+        print("No input available, assuming 'no'.")
+        return False
+    # Validate
+    if answer in ("yes", "y"):
+        return True
+    elif answer in ("no", "n"):
+        return False
+    else:
+        return default
 
 
 def create_case(
@@ -359,6 +368,6 @@ def create_case(
         override=True,
         machine=machine,
         compset=compset,
-        atm_grid_name = init_args["atm_grid_name"]
+        atm_grid_name=init_args["atm_grid_name"],
     )
     return case

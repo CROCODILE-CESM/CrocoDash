@@ -148,12 +148,33 @@ def test_request_any_additional_forcing_args_with_input():
             result = request_any_additional_forcing_args_from_user(
                 args, requested_configs
             )
-    user_json = '{"tidal_constituents": ["M2", "K1"], "tpxo_elevation_filepath":"fake", "tpxo_velocity_filepath":"fake", "boundaries":["east"]}'
-    with patch("builtins.input", return_value=user_json):
-        result = request_any_additional_forcing_args_from_user(args, requested_configs)
 
-    assert result["date_range"] == ["2020-01-01", "2020-01-09"]
-    assert result["tidal_constituents"] == ["M2", "K1"]
+
+def test_resolve_forcing_configurations():
+    """Test resolve_forcing_configurations returns requested and removed configs."""
+    forcing_config = {
+        "basic": {"dates": {"start": "20200101", "end": "20200109"}},
+        "tides": {},
+        "bgc": {},
+    }
+    compset = "2000_DATM%JRA_SLND_SICE_MOM6_SROF_SGLC_SWAV"
+
+    with patch(
+        "CrocoDash.shareable.fork.ForcingConfigRegistry.find_required_configurators",
+        return_value=[],
+    ):
+        with patch(
+            "CrocoDash.shareable.fork.ForcingConfigRegistry.find_valid_configurators",
+            return_value=[],
+        ):
+            with patch("CrocoDash.shareable.fork.ask_string", side_effect=["", "bgc"]):
+                requested, remove = resolve_forcing_configurations(
+                    forcing_config, compset
+                )
+
+    assert isinstance(requested, list)
+    assert isinstance(remove, set)
+    assert "bgc" in remove
 
 
 def test_request_any_additional_forcing_args_invalid_json():

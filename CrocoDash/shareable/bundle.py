@@ -55,7 +55,7 @@ def bundle_case_information(identify_output: dict, output_folder_location):
             shutil.copy(src, dst)
 
     # Zip the folder and place a copy at the same level as the case subfolder
-    zip_path = output_folder_location / f"{caseroot.name}_case_bundle.zip"
+    zip_path = case_subfolder / f"{caseroot.name}_case_bundle.zip"
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zipf:
         for root, dirs, files in os.walk(case_subfolder):
             for file in files:

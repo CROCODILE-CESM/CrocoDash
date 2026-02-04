@@ -11,6 +11,7 @@ from typing import Optional, Any
 import copy
 import subprocess
 import json
+from CrocoDash.forcing_configurations.configurations import *
 
 logger = setup_logger(__name__)
 
@@ -46,7 +47,7 @@ class ForcingConfigRegistry:
     @classmethod
     def get_configurator_from_name(cls, name):
         for thing in cls.registered_types:
-            if name == thing.name:
+            if name.lower() == thing.name.lower():
                 return thing
         raise ValueError("Configurator Not Found")
 

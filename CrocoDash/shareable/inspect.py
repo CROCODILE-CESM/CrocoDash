@@ -12,6 +12,9 @@ from CrocoDash.shareable.fork import create_case
 from uuid import uuid4
 import subprocess
 from CrocoDash.logging import setup_logger
+from contextlib import redirect_stdout, redirect_stderr
+import logging
+
 logger = setup_logger(__name__)
 
 
@@ -29,15 +32,18 @@ def identify_non_standard_case_information(caseroot, cesmroot, machine, project_
         print("Temporary directory:", tmp_path)
         caseroot_tmp = tmp_path / f"temp_case-{uuid4().hex}"
         inputdir = tmp_path / "temp_inputdir"
-        case = create_case(
-            init_args,
-            caseroot_tmp,
-            inputdir,
-            machine,
-            project_number,
-            cesmroot,
-            compset=init_args["compset"],
-        )
+        with open(os.devnull, "w") as devnull, redirect_stdout(
+            devnull
+        ), redirect_stderr(devnull):
+            case = create_case(
+                init_args,
+                caseroot_tmp,
+                inputdir,
+                machine,
+                project_number,
+                cesmroot,
+                compset=init_args["compset"],
+            )
 
         start_str = forcing_config["basic"]["dates"]["start"]  # e.g., "20000101"
         end_str = forcing_config["basic"]["dates"]["end"]  # e.g., "20000201"
@@ -67,8 +73,14 @@ def identify_non_standard_case_information(caseroot, cesmroot, machine, project_
                     configure_forcing_args[subkey] = forcing_config[key]["inputs"][
                         subkey
                     ]
+        with open(os.devnull, "w") as devnull, redirect_stdout(
+            devnull
+        ), redirect_stderr(devnull):
+            config_logger = logging.getLogger("CrocoDash.forcing_configurations.base")
+            config_logger.disabled = True
+            case.configure_forcings(**configure_forcing_args)
+            config_logger.disabled = False
 
-        case.configure_forcings(**configure_forcing_args)
         differences = diff_CESM_cases(original=caseroot, new=caseroot_tmp)
 
     return {
@@ -93,8 +105,10 @@ def identify_CrocoDashCase_init_args(caseroot):
         if "GRID_FILE" in line:
             init_args["supergrid_path"] = line.split("=")[1].strip()
         if "ALE_COORDINATE_CONFIG" in line:
-            init_args["vgrid_path"] =  line.split("=")[1].strip().replace("FILE:", "").strip()
-            
+            init_args["vgrid_path"] = (
+                line.split("=")[1].strip().replace("FILE:", "").strip()
+            )
+
         if "TOPO_FILE" in line:
             init_args["topo_path"] = line.split("=")[1].strip()
 
@@ -107,9 +121,12 @@ def identify_CrocoDashCase_init_args(caseroot):
             init_args["compset"] = line.split("--compset")[1].split()[0].strip()
 
     required_keys = ["inputdir", "supergrid_path", "vgrid_path", "topo_path", "compset"]
-    assert all(
-        key in init_args for key in required_keys
-    ), "Not all required init args found: Required: " + str(required_keys) + "Found:"+ json.dumps(init_args)
+    assert all(key in init_args for key in required_keys), (
+        "Not all required init args found: Required: "
+        + str(required_keys)
+        + "Found:"
+        + json.dumps(init_args)
+    )
 
     # Run xmlquery in the caseroot with ATM_GRID
     init_args["atm_grid_name"] = run_xmlquery(caseroot, "ATM_GRID")
@@ -255,6 +272,9 @@ def extract_param(line: str, replay_sh=False):
         return line.split("=", 1)[0].strip()
     return None  # Ignore lines without '='
 
-def run_xmlquery(caseroot,param):
-    res = subprocess.run(["./xmlquery",param,"-N"],cwd=str(caseroot),capture_output=True)
+
+def run_xmlquery(caseroot, param):
+    res = subprocess.run(
+        ["./xmlquery", param, "-N"], cwd=str(caseroot), capture_output=True
+    )
     return res.stdout.decode().strip().split(":")[1].strip()
