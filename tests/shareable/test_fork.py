@@ -217,7 +217,7 @@ def test_create_case(get_CrocoDash_case, tmp_path):
     original_case = get_CrocoDash_case
 
     init_args = {
-        "inputdir": original_case.inputdir,
+        "inputdir_ocnice": original_case.inputdir,
         "supergrid_path": original_case.supergrid_path,
         "topo_path": original_case.topo_path,
         "vgrid_path": original_case.vgrid_path,

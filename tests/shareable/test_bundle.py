@@ -55,7 +55,7 @@ def test_compress_case_information_with_modifications(
         "forcing_config": {},
         "case_info": {
             "caseroot": case.caseroot,
-            "inputdir": case.inputdir,
+            "inputdir_ocnice": case.inputdir,
         },
     }
 
