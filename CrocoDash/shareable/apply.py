@@ -1,6 +1,10 @@
 from visualCaseGen.custom_widget_types.case_tools import xmlchange, append_user_nl
 import shutil
 from pathlib import Path
+from CrocoDash.forcing_configurations import *
+from CrocoDash.logging import setup_logger
+
+logger = setup_logger(__name__)
 
 
 def copy_xml_files_from_case(old_caseroot, new_caseroot, filenames):

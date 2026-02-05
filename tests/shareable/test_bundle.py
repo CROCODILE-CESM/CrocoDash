@@ -1,4 +1,4 @@
-from CrocoDash.shareable.bundle import bundle_case_information
+from CrocoDash.shareable.bundle import bundle_case_information, compress_bundle
 import json
 import zipfile
 from pathlib import Path
@@ -37,6 +37,11 @@ def test_compress_case_information_with_modifications(
         tpxo_velocity_filepath="s3://crocodile-cesm/CrocoDash/data/tpxo/u_tpxo9.v1.zarr/",
     )
 
+    # Create fake files in ocnice directory
+    ocnice_dir = Path(case.inputdir) / "ocnice"
+    (ocnice_dir / "forcing_obc_Seg_fake.nc").touch()
+    (ocnice_dir / "tz_fake.nc").touch()
+
     # Create identify_output with modifications
     identify_output = {
         "differences": {
@@ -55,9 +60,11 @@ def test_compress_case_information_with_modifications(
         "forcing_config": {},
         "case_info": {
             "caseroot": case.caseroot,
-            "inputdir_ocnice": case.inputdir,
+            "inputdir_ocnice": case.inputdir / "ocnice",
         },
     }
+    with open(case.inputdir / "extract_forcings" / "config.json") as f:
+        identify_output["forcing_config"] = json.load(f)
 
     output_dir = tmp_path / "bundle_output_modified"
     output_dir.mkdir()
@@ -106,8 +113,8 @@ def test_compress_case_information_with_modifications(
     ocnice_dir = case_bundle / "ocnice"
     assert ocnice_dir.exists(), "ocnice directory should be copied from inputdir"
     # Verify ocnice has expected structure
-    ocnice_files = list(ocnice_dir.glob("*"))
-    assert len(ocnice_files) > 0, "ocnice directory should contain files"
+    assert (ocnice_dir / "forcing_obc_Seg_fake.nc").exists()
+    assert (ocnice_dir / "tz_fake.nc").exists()
 
     # Verify content of XML file
     with open(xml_files_dir / "custom_settings.xml") as f:

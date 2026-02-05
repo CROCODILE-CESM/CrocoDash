@@ -9,10 +9,9 @@ from CrocoDash.grid import Grid
 from CrocoDash.vgrid import VGrid
 from CrocoDash.topo import Topo
 import xarray as xr
+from CrocoDash.logging import setup_logger
 
-# -----------------------------------------------------------------------------
-# Top-level orchestration
-# -----------------------------------------------------------------------------
+logger = setup_logger(__name__)
 
 
 def fork_case_from_bundle(

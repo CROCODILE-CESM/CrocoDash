@@ -134,14 +134,25 @@ def test_copy_configurations_to_case(tmp_path):
     # Create forcing config
     forcing_config = {
         "basic": {"data": "basic_data"},
-        "tides": {"outputs": ["tides_data.nc"]},
-        "bgc": {"outputs": ["bgc_data.nc"]},
+        "tides": {"name": "tides", "outputs": ["tides_data.nc"]},
+        "bgc": {"name": "bgc", "outputs": ["bgc_data.nc"]},
     }
 
-    # Mock shutil.copy to track calls
-    with patch("CrocoDash.shareable.apply.shutil.copy") as mock_copy:
+    # Mock multiple functions to track calls
+    with patch("CrocoDash.shareable.apply.shutil.copy") as mock_copy, patch(
+        "CrocoDash.shareable.apply.ForcingConfigRegistry.get_configurator"
+    ) as mock_get_cfg, patch("CrocoDash.shareable.apply.Path.glob") as mock_glob:
+
+        # Setup mock configurator
+        mock_cfg = MagicMock()
+        mock_cfg.get_output_filepaths.return_value = ["tides_data.nc"]
+        mock_get_cfg.return_value = mock_cfg
+
+        # Setup mock glob to return test files
+        mock_glob.return_value = [inputdir_ocnice / "forcing_obc_seg_0001.nc"]
+
         copy_configurations_to_case(forcing_config, mock_case, inputdir_ocnice)
 
-    # Verify copy was called for forcing files
+    # Verify functions were called
     assert mock_copy.call_count > 0
-    # verify files copied
+    assert mock_get_cfg.called

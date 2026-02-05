@@ -4,6 +4,9 @@ from pathlib import Path
 import zipfile
 import os
 from CrocoDash.forcing_configurations.base import *
+from CrocoDash.logging import setup_logger
+
+logger = setup_logger(__name__)
 
 
 def bundle_case_information(identify_output: dict, output_folder_location):
@@ -20,10 +23,12 @@ def bundle_case_information(identify_output: dict, output_folder_location):
     case_subfolder.mkdir(parents=True, exist_ok=True)
 
     # From caseroot, copy all user_nls
+    logger.info("Copying user_nl files...")
     for user_nl_file in caseroot.glob("user_nl_*"):
         shutil.copy(user_nl_file, case_subfolder / user_nl_file.name)
 
     # From caseroot, copy replay.sh
+    logger.info("Copying replay.sh...")
     replay_sh = caseroot / "replay.sh"
     shutil.copy(replay_sh, case_subfolder / "replay.sh")
 
@@ -32,10 +37,10 @@ def bundle_case_information(identify_output: dict, output_folder_location):
     ocnice_target = case_subfolder / "ocnice"
     ocnice_target.mkdir(parents=False, exist_ok=True)
 
+    logger.info("Copying initial & boundary conditions...")
     for f in inputdir_ocnice.iterdir():
         if f.name.startswith(("forcing_", "init_")):
             shutil.copy(f, ocnice_target)
-
     # We'll get the configurations and copy into bundle ocnice
     for config in identify_output["forcing_config"]:
         if config == "basic":
@@ -46,19 +51,24 @@ def bundle_case_information(identify_output: dict, output_folder_location):
             identify_output["forcing_config"][config]
         )
         output_paths = configurator.get_output_filepaths(inputdir_ocnice)
-        print(config, output_paths)
+
         for path in output_paths:
+            logger.info(f"Copying {config} file: {path}...")
             shutil.copy(path, ocnice_target)
 
     # Write out identify_outputs
+    logger.info(f"Writing out inspect manifest...")
     with open(case_subfolder / "identify_output.json", "w") as f:
         json.dump(identify_output, f, indent=2, default=str)
 
     # From differences["xml_files"] and copy "sourceMods"
+
     xml_files_dir = case_subfolder / "xml_files"
     xml_files_dir.mkdir(exist_ok=True)
     for xml_file in differences["xml_files_missing_in_new"]:
+
         src = caseroot / xml_file
+        logger.info(f"Copying non-standard xml files {src}")
         if src.exists():
             shutil.copy(src, xml_files_dir / xml_file)
 
@@ -68,6 +78,7 @@ def bundle_case_information(identify_output: dict, output_folder_location):
     source_mods_dst.mkdir(exist_ok=True)
     for mod_file in differences["source_mods_missing_files"]:
         src = source_mods_orig / mod_file
+        logger.info(f"Copying SourceMods files {src}")
         if src.exists():
             dst = source_mods_dst / mod_file
             dst.parent.mkdir(parents=True, exist_ok=True)
