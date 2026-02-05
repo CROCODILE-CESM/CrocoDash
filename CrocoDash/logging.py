@@ -24,7 +24,7 @@ def setup_logger(name):
     """
     logger = logging.getLogger(name)
     logger.setLevel(logging.INFO)
-    if not logger.hasHandlers():
+    if not logger.handlers:
         # Create a handler to print to stdout (Jupyter captures stdout)
         handler = logging.StreamHandler(sys.stdout)
         handler.setLevel(logging.INFO)
