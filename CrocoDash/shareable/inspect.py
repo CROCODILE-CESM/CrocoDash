@@ -14,6 +14,7 @@ import subprocess
 from CrocoDash.logging import setup_logger
 from contextlib import redirect_stdout, redirect_stderr
 import logging
+from CrocoDash.forcing_configurations import *
 
 logger = setup_logger(__name__)
 
@@ -27,7 +28,8 @@ def identify_non_standard_case_information(caseroot, cesmroot, machine, project_
     forcing_config = identify_CrocoDashCase_forcing_config_args(caseroot)
 
     with tempfile.TemporaryDirectory() as tmp_dir:
-
+        logger.info("Create temporary case for comparison...")
+        logger.info("Init Args: " + json.dumps(init_args))
         tmp_path = Path(tmp_dir)
         print("Temporary directory:", tmp_path)
         caseroot_tmp = tmp_path / f"temp_case-{uuid4().hex}"
@@ -44,7 +46,7 @@ def identify_non_standard_case_information(caseroot, cesmroot, machine, project_
                 cesmroot,
                 compset=init_args["compset"],
             )
-
+        logger.info("Setup configuration arguments...")
         start_str = forcing_config["basic"]["dates"]["start"]  # e.g., "20000101"
         end_str = forcing_config["basic"]["dates"]["end"]  # e.g., "20000201"
         date_format = forcing_config["basic"]["dates"]["format"]  # e.g., "%Y%m%d"
@@ -68,11 +70,13 @@ def identify_non_standard_case_information(caseroot, cesmroot, machine, project_
         for key in forcing_config:
             if key == "basic":
                 continue
-            for subkey in forcing_config[key]["inputs"]:
-                if not key.startswith("case_"):
-                    configure_forcing_args[subkey] = forcing_config[key]["inputs"][
-                        subkey
-                    ]
+            user_args = ForcingConfigRegistry.get_user_args(
+                ForcingConfigRegistry.get_configurator_from_name(key)
+            )
+            for arg in user_args:
+                if not arg.startswith("case_"):
+                    configure_forcing_args[arg] = forcing_config[key]["inputs"][arg]
+        logger.info("Configuring temporary case...")
         with open(os.devnull, "w") as devnull, redirect_stdout(
             devnull
         ), redirect_stderr(devnull):
@@ -81,6 +85,7 @@ def identify_non_standard_case_information(caseroot, cesmroot, machine, project_
             case.configure_forcings(**configure_forcing_args)
             config_logger.disabled = False
 
+        logger.info("Taking the diff...")
         differences = diff_CESM_cases(original=caseroot, new=caseroot_tmp)
 
     return {
@@ -96,6 +101,7 @@ def identify_non_standard_case_information(caseroot, cesmroot, machine, project_
 
 def identify_CrocoDashCase_init_args(caseroot):
 
+    logger.info(f"Finding initialization arguments from {caseroot}")
     # 1. Read in where to find CrocoDash init args
     caseroot = Path(caseroot)
     # You need compset & grids at a minimum
@@ -145,6 +151,7 @@ def identify_CrocoDashCase_init_args(caseroot):
 
 def identify_CrocoDashCase_forcing_config_args(caseroot):
 
+    logger.info(f"Loading forcing configuration from {caseroot}")
     # The input directory is where the forcing config is.
 
     # Read in user_nl_mom
@@ -196,6 +203,7 @@ def diff_CESM_cases(original, new):
     }
 
     # --- 1. XML files missing in new ---
+    logger.info("Searching for unique xml files in original case")
     xml_orig = {f.name for f in original.glob("*.xml")}
     xml_new = {f.name for f in new.glob("*.xml")}
     diffs["xml_files_missing_in_new"] = sorted(
@@ -203,6 +211,7 @@ def diff_CESM_cases(original, new):
     )  # files in original not in new
 
     # --- 2. user_nl_* files ---
+    logger.info("Searching for unique user nl params in original case")
     user_nl_orig = {f.name: f for f in original.glob("user_nl_*")}
     user_nl_new = {f.name: f for f in new.glob("user_nl_*")}
 
@@ -220,6 +229,7 @@ def diff_CESM_cases(original, new):
             diffs["user_nl_missing_params"][fname] = missing_params
 
     # --- 3. SourceMods (files only, recursively) ---
+    logger.info("Searching for SourceMods in original case")
     src_orig = {
         f.relative_to(original / "SourceMods")
         for f in (original / "SourceMods").rglob("*")
@@ -235,7 +245,7 @@ def diff_CESM_cases(original, new):
     # --- 4. Parse replay.sh for missing xmlchange parameters ---
     replay_orig = original / "replay.sh"
     replay_new = new / "replay.sh"
-
+    logger.info("Searching for unique xml changes in original case")
     if replay_orig.exists():
         orig_lines = replay_orig.read_text().splitlines()
         new_lines = replay_new.read_text().splitlines() if replay_new.exists() else []

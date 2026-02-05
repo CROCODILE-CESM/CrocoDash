@@ -37,9 +37,9 @@ def bundle_case_information(identify_output: dict, output_folder_location):
     ocnice_target = case_subfolder / "ocnice"
     ocnice_target.mkdir(parents=False, exist_ok=True)
 
-    logger.info("Copying initial & boundary conditions...")
     for f in inputdir_ocnice.iterdir():
         if f.name.startswith(("forcing_", "init_")):
+            logger.info(f"Copying {f}")
             shutil.copy(f, ocnice_target)
     # We'll get the configurations and copy into bundle ocnice
     for config in identify_output["forcing_config"]:
@@ -94,6 +94,7 @@ def compress_bundle(bundle_location):
             for file in files:
                 file_path = Path(root) / file
                 arcname = file_path.relative_to(bundle_location)
+                logger.info(f"Zipping {file_path}")
                 zipf.write(file_path, arcname)
 
     return zip_path
