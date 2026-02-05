@@ -317,7 +317,9 @@ document.write(`
   </button>
 `);
 </script>
-
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
 </div></div>
       
     </div>
@@ -333,6 +335,14 @@ document.write(`
     <div id="print-main-content">
         <div id="jb-print-toc">
             
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#usage">Usage</a></li>
+</ul>
+            </nav>
         </div>
     </div>
 </div>
@@ -344,15 +354,57 @@ document.write(`
                   
   <section id="shareable-configuration">
 <h1>Shareable Configuration<a class="headerlink" href="#shareable-configuration" title="Link to this heading">#</a></h1>
-<p>Ever wanted to share your regional MOM6 setup? Get a summary of your unique changes? Let someone else easily run your model? This module is for you</p>
+<p>Ever wanted to share your regional MOM6 setup? Get a summary of your unique changes? Let someone else easily run your model? This module is for you!</p>
 <p>Importable through <code class="docutils literal notranslate"><span class="pre">CrocoDash.shareable</span></code>, we’ve got a whole host of tools to do the following:</p>
 <ol class="arabic simple">
-<li><p>Identify the unique information in your CESM case (init args, forcing config, xml files, SourceMods, parameter changes)</p></li>
-<li><p>Diff CrocoDash Cases</p></li>
-<li><p>Bundle your unique CESM case information into a small zip folder</p></li>
-<li><p>Interactively fork your CESM case bundle with different compset and configurations!</p></li>
+<li><p><strong>Inspect</strong> - Identify the unique information in your CESM case</p>
+<ul class="simple">
+<li><p>CrocoDash initialization arguments (grids, topography, vertical grid)</p></li>
+<li><p>Forcing configurations (tides,chlorophyll, etc..)</p></li>
+<li><p>Unique XML file</p></li>
+<li><p>SourceMods files</p></li>
+<li><p>Parameter changes in <code class="docutils literal notranslate"><span class="pre">user_nl_*</span></code> files</p></li>
+<li><p>Returns this information in a manifest dictionary</p></li>
+</ul>
+</li>
+<li><p><strong>Bundle</strong> - Package your unique case information into a folder &amp; portable zip file</p>
+<ul class="simple">
+<li><p>Automatically collects all modified files and configurations from the inspect manifest</p></li>
+<li><p>Includes forcing data files and ocean/ice inputs</p></li>
+</ul>
+</li>
+<li><p><strong>Fork</strong> - Create a new case from a bundled configuration</p>
+<ul class="simple">
+<li><p>Recreate your setup with user inputted different compsets or configurations</p></li>
+<li><p>Reuse the same grid, topography, and vertical structure</p></li>
+</ul>
+</li>
+<li><p><strong>Apply</strong> - Transfer unique settings from one case to another</p>
+<ul class="simple">
+<li><p>Propagate parts of your bundle to new experiments</p></li>
+<li><p>(Mostly is a helper module for Fork) (But savvy users can use these functions to!)</p></li>
+</ul>
+</li>
 </ol>
-<p>There is (or will be) a demo in the CrocoGallery for shareable configurations, please check it out!</p>
+<section id="usage">
+<h2>Usage<a class="headerlink" href="#usage" title="Link to this heading">#</a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">CrocoDash.shareable.inspect</span><span class="w"> </span><span class="kn">import</span> <span class="n">identify_non_standard_case_information</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">CrocoDash.shareable.bundle</span><span class="w"> </span><span class="kn">import</span> <span class="n">bundle_case_information</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">CrocoDash.shareable.fork</span><span class="w"> </span><span class="kn">import</span> <span class="n">fork</span>
+
+
+<span class="c1"># Identify what makes your case unique</span>
+<span class="n">case_info</span> <span class="o">=</span> <span class="n">identify_non_standard_case_information</span><span class="p">(</span><span class="n">caseroot</span><span class="p">,</span> <span class="n">cesmroot</span><span class="p">,</span> <span class="n">machine</span><span class="p">,</span> <span class="n">project</span><span class="p">)</span>
+
+<span class="c1"># Bundle it into a shareable format</span>
+<span class="n">bundle_path</span> <span class="o">=</span> <span class="n">bundle_case_information</span><span class="p">(</span><span class="n">case_info</span><span class="p">,</span> <span class="n">output_folder</span><span class="p">)</span>
+
+<span class="c1"># </span>
+
+</pre></div>
+</div>
+<p>Check out the CrocoGallery shareable demo if ya like!</p>
+</section>
 </section>
 
 
@@ -390,6 +442,21 @@ document.write(`
             </div>
             
             
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#usage">Usage</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
               
             
           </div>
