@@ -32,6 +32,7 @@ def fork_case_from_bundle(
 
     compset = resolve_compset(manifest)
 
+    logger.info(f"Creating new case...")
     case = create_case(
         manifest["init_args"],
         new_caseroot,
@@ -46,6 +47,7 @@ def fork_case_from_bundle(
         manifest["forcing_config"], compset
     )
 
+    logger.info(f"Building configuration args")
     configure_forcing_args = build_general_configure_forcing_args(
         manifest["forcing_config"], remove_configs
     )
@@ -56,6 +58,7 @@ def fork_case_from_bundle(
 
     case.configure_forcings(**configure_forcing_args)
 
+    logger.info(f"Copying items to new case based on user input")
     apply_copy_plan(
         plan=copy_plan,
         manifest=manifest,
