@@ -3,6 +3,7 @@ import json
 from pathlib import Path
 import zipfile
 import os
+from CrocoDash.forcing_configurations.base import *
 
 
 def bundle_case_information(identify_output: dict, output_folder_location):
@@ -13,7 +14,7 @@ def bundle_case_information(identify_output: dict, output_folder_location):
     output_folder_location = Path(output_folder_location)
     differences = identify_output["differences"]
     caseroot = Path(identify_output["case_info"]["caseroot"])
-    inputdir = Path(identify_output["case_info"]["inputdir_ocnice"])
+    inputdir_ocnice = Path(identify_output["case_info"]["inputdir_ocnice"])
 
     case_subfolder = output_folder_location / f"{caseroot.name}_case_bundle"
     case_subfolder.mkdir(parents=True, exist_ok=True)
@@ -26,10 +27,28 @@ def bundle_case_information(identify_output: dict, output_folder_location):
     replay_sh = caseroot / "replay.sh"
     shutil.copy(replay_sh, case_subfolder / "replay.sh")
 
-    # From inputdir, copy ocnice
-    ocnice_dir = inputdir / "ocnice"
-    if ocnice_dir.exists():
-        shutil.copytree(ocnice_dir, case_subfolder / "ocnice", dirs_exist_ok=True)
+    ## Copy Configuratorions
+    # From inputdir, copy ocnice forcing_* and init_*
+    ocnice_target = case_subfolder / "ocnice"
+    ocnice_target.mkdir(parents=False, exist_ok=True)
+
+    for f in inputdir_ocnice.iterdir():
+        if f.name.startswith(("forcing_", "init_")):
+            shutil.copy(f, ocnice_target)
+
+    # We'll get the configurations and copy into bundle ocnice
+    for config in identify_output["forcing_config"]:
+        if config == "basic":
+            continue
+        # Deserialize
+
+        configurator = ForcingConfigRegistry.get_configurator(
+            identify_output["forcing_config"][config]
+        )
+        output_paths = configurator.get_output_filepaths(inputdir_ocnice)
+        print(config, output_paths)
+        for path in output_paths:
+            shutil.copy(path, ocnice_target)
 
     # Write out identify_outputs
     with open(case_subfolder / "identify_output.json", "w") as f:
@@ -53,14 +72,17 @@ def bundle_case_information(identify_output: dict, output_folder_location):
             dst = source_mods_dst / mod_file
             dst.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy(src, dst)
+    return case_subfolder
 
-    # Zip the folder and place a copy at the same level as the case subfolder
-    zip_path = case_subfolder / f"{caseroot.name}_case_bundle.zip"
+
+def compress_bundle(bundle_location):
+    bundle_location = Path(bundle_location)
+    zip_path = bundle_location / f"{caseroot.name}_case_bundle.zip"
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zipf:
-        for root, dirs, files in os.walk(case_subfolder):
+        for root, dirs, files in os.walk(bundle_location):
             for file in files:
                 file_path = Path(root) / file
-                arcname = file_path.relative_to(case_subfolder)
+                arcname = file_path.relative_to(bundle_location)
                 zipf.write(file_path, arcname)
 
-    return case_subfolder
+    return zip_path

@@ -126,7 +126,8 @@ def test_compress_case_information_with_modifications(
         user_nl_content = f.read()
     assert "CUSTOM_PARAM=42" in user_nl_content
 
-    # Verify zip file size is reasonable
+    # Verify zip information
+    zip_file = compress_bundle(case_bundle)
     zip_file = case_bundle / f"{case.caseroot.name}_case_bundle.zip"
     assert zip_file.exists()
     assert zip_file.stat().st_size > 0, "Zip file should not be empty"

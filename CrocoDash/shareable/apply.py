@@ -83,7 +83,9 @@ def copy_configurations_to_case(old_forcing_config, case, inputdir_ocnice):
     for key in old_forcing_config:
         if key == "basic" or key not in case.fcr.active_configurators.keys():
             continue
-        for output in old_forcing_config[key].get("outputs", []):
-            path = inputdir_ocnice / output
-            if path.exists() and path.is_file():
-                shutil.copy(path, case_ocnice)
+        configurator = ForcingConfigRegistry.get_configurator(old_forcing_config[key])
+        for filepath in configurator.get_output_filepaths(
+            inputdir_ocnice
+        ):  # Get output Filepaths works as if this were a case, but this is a bundle
+            path = inputdir_ocnice / Path(filepath).name  # Get just the name
+            shutil.copy(path, case_ocnice)
