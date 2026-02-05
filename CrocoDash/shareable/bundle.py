@@ -88,7 +88,7 @@ def bundle_case_information(identify_output: dict, output_folder_location):
 
 def compress_bundle(bundle_location):
     bundle_location = Path(bundle_location)
-    zip_path = bundle_location / f"{caseroot.name}_case_bundle.zip"
+    zip_path = bundle_location / f"{bundle_location.name}.zip"
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zipf:
         for root, dirs, files in os.walk(bundle_location):
             for file in files:

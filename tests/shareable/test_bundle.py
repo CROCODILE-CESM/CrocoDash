@@ -148,8 +148,8 @@ def test_compress_case_information_with_modifications(
         assert "user_nl_mom" in zip_names
         assert "replay.sh" in zip_names
         assert any(
-            "ocean_hgrid" in name for name in zip_names
-        ), "Zip should contain ocnice files (such as hgrid)"
+            "forcing_" in name for name in zip_names
+        ), "Zip should contain ocnice files (such as forcing_)"
 
         # Verify JSON content in zip
         with zipf.open("identify_output.json") as zf:
