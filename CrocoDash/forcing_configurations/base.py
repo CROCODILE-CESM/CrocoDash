@@ -504,3 +504,10 @@ class BaseConfigurator(ABC):
                 if potential_file_path.exists():
                     potential_output_paths.append(potential_file_path)
         return potential_output_paths
+
+    def validate_output_filepaths(self, ocn_ice_directory):
+        output_paths = self.get_output_filepaths(ocn_ice_directory)
+        for path in output_paths:
+            if not Path(path).exists():
+                return False
+        return True

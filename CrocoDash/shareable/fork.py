@@ -67,6 +67,16 @@ def fork_case_from_bundle(
         case=case,
     )
 
+    # Function to validate the new configs using the FCR get_configurator() and BaseConfigurator validate_output_filepaths
+
+    for config in case.fcr.active_configurators.keys():
+        if not case.fcr.active_configurators[config].validate_output_filepaths(
+            case.inputdir / "ocnice"
+        ):
+            print(
+                f"{config} was not valid yet! Which means you need to process this forcing and generate the files using your cases extract_forcings module! {case.inputdir/'extract_forcings'}"
+            )
+
     print(
         "\nYou're ready! If you requested any additional forcings, remember to "
         "run them with your extract_forcings driver script."
