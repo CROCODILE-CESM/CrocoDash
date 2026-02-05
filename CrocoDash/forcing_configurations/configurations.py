@@ -119,6 +119,20 @@ class TidesConfigurator(BaseConfigurator):
         super().configure()
         # You also need to add the files to the OBC string, which is handled in the main case unfortunately
 
+    def get_output_filepaths(self, ocn_ice_directory):
+        # Search directory for tu_* and tz_* files
+        ocn_ice_directory = Path(ocn_ice_directory)
+
+        if not ocn_ice_directory.exists():
+            raise FileNotFoundError(f"{ocn_ice_directory} does not exist")
+
+        return [
+            str(p.resolve())
+            for pattern in ("tu_*", "tz_*")
+            for p in ocn_ice_directory.glob(pattern)
+            if p.is_file()
+        ]
+
 
 @register
 class BGCConfigurator(BaseConfigurator):
@@ -185,6 +199,7 @@ class BGCICConfigurator(BaseConfigurator):
             "MARBL_TRACERS_IC_FILE",
             comment="MARBL initial conditions file",
             user_nl_name="mom",
+            is_file=True,
         )
     ]
 
@@ -213,11 +228,13 @@ class BGCIronForcingConfigurator(BaseConfigurator):
             "MARBL_FESEDFLUX_FILE",
             comment="MARBL sedimentary iron flux file",
             user_nl_name="mom",
+            is_file=True,
         ),
         UserNLConfigParam(
             "MARBL_FEVENTFLUX_FILE",
             comment="MARBL event iron flux file",
             user_nl_name="mom",
+            is_file=True,
         ),
     ]
 
@@ -254,6 +271,7 @@ class BGCRiverNutrientsConfigurator(BaseConfigurator):
             "RIV_FLUX_FILE",
             comment="River nutrient flux file",
             user_nl_name="mom",
+            is_file=True,
         ),
     ]
 
@@ -305,10 +323,14 @@ class RunoffConfigurator(BaseConfigurator):
     ]
     output_params = [
         XMLConfigParam(
-            "ROF2OCN_LIQ_RMAPNAME", comment="Runoff to ocean liquid runoff mapping file"
+            "ROF2OCN_LIQ_RMAPNAME",
+            comment="Runoff to ocean liquid runoff mapping file",
+            is_file=True,
         ),
         XMLConfigParam(
-            "ROF2OCN_ICE_RMAPNAME", comment="Runoff to ocean ice runoff mapping file"
+            "ROF2OCN_ICE_RMAPNAME",
+            comment="Runoff to ocean ice runoff mapping file",
+            is_file=True,
         ),
     ]
 
@@ -406,6 +428,27 @@ class RunoffConfigurator(BaseConfigurator):
                 "the compset must include an active or data runoff model."
             )
 
+    def get_output_filepaths(self, ocn_ice_directory):
+        # Return just the xml file paths (Can be either direct path or in ocn_ice as well)
+        ocn_ice_directory = Path(ocn_ice_directory)
+
+        params = [
+            self.get_output_param("ROF2OCN_LIQ_RMAPNAME"),
+            self.get_output_param("ROF2OCN_LIQ_RMAPNAME"),
+        ]
+
+        valid_paths = []
+        for p in params:
+            if not p:
+                continue
+            p_path = Path(p)
+            if not p_path.exists():
+                p_path = ocn_ice_directory / p_path.name
+            if p_path.exists():
+                valid_paths.append(str(p_path.resolve()))
+
+        return valid_paths
+
 
 @register
 class ChlConfigurator(BaseConfigurator):
@@ -421,7 +464,10 @@ class ChlConfigurator(BaseConfigurator):
     ]
     output_params = [
         UserNLConfigParam(
-            "CHL_FILE", comment="Chlorophyll data file", user_nl_name="mom"
+            "CHL_FILE",
+            comment="Chlorophyll data file",
+            user_nl_name="mom",
+            is_file=True,
         ),
         UserNLConfigParam(
             "CHL_FROM_FILE", comment="Enable chlorophyll from file", user_nl_name="mom"
