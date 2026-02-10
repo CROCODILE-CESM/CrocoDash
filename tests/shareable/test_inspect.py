@@ -137,3 +137,14 @@ def test_identify_non_standard_case_information(get_CrocoDash_case):
     assert output["differences"]["user_nl_missing_params"] == {"user_nl_mom": ["DEBUG"]}
     assert output["differences"]["source_mods_missing_files"] == ["src.mom/bleh.dummy"]
     assert output["differences"]["xmlchanges_missing"] == ["JOB_PRIORITY"]
+
+
+def test_read_user_nl_mom_lines_as_obj(get_CrocoDash_case):
+    case = get_CrocoDash_case
+    user_nl_mom_obj = read_user_nl_mom_lines_as_obj(case.caseroot)
+    breakpoint()
+    assert user_nl_mom_obj.data["Global"]["INPUTDIR"]["value"] == str(case.inputdir)
+
+def test_get_case_obj(get_CrocoDash_case):
+    case = get_case_obj(get_CrocoDash_case.caseroot)
+    assert case.get_value("COMPSET") == get_CrocoDash_case.compset_lname+"_SESP"
