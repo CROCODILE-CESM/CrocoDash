@@ -38,7 +38,7 @@ case_info = identify_non_standard_case_information(caseroot, cesmroot, machine, 
 # Bundle it into a shareable format
 bundle_path = bundle_case_information(case_info, output_folder)
 
-# Fork your case
+# Fork your case to a new case
 fork(bundle_path, cesmroot, machine, project_number, caseroot, inputdir)
 
 ```
