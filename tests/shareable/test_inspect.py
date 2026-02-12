@@ -9,15 +9,33 @@ def two_cesm_cases(CrocoDash_case_factory, tmp_path_factory):
     case1 = CrocoDash_case_factory(tmp_path_factory.mktemp("case1"))
     case2 = CrocoDash_case_factory(tmp_path_factory.mktemp("case2"))
     return case1, case2
+@pytest.fixture
+def fake_RCC_filled_case():
+    case = ReadCrocoDashCase.__new__(ReadCrocoDashCase)
+
+    case.xmlfiles = {"a.xml", "b.xml"}
+    case.sourcemods = {"src.mom/foo.F90"}
+    case.xmlchanges = {"JOB_QUEUE": "regular"}
+    case.user_nl_objs = {
+        "mom": {
+            "DEBUG": {"value": "FALSE"},
+            "INPUTDIR": {"value": "/path"}
+        }
+    }
+
+    return case
+
+@pytest.fixture
+def fake_RCC_empty_case():
+    case = ReadCrocoDashCase.__new__(ReadCrocoDashCase)
+    return case
+
 
 
 def test_diff_CESM_cases_nodiff(two_cesm_cases):
 
     case1, case2 = two_cesm_cases
-    output = diff_CESM_cases(
-        case1.caseroot,
-        case2.caseroot,
-    )
+    output = ReadCrocoDashCase(case1).diff(ReadCrocoDashCase(case2))
     assert output["xml_files_missing_in_new"] == []
     assert output["user_nl_missing_params"] == {}
     assert output["source_mods_missing_files"] == []
@@ -46,19 +64,18 @@ def test_diff_CESM_cases_alldiff(two_cesm_cases):
     with open(user_nl_path, "a") as f:
         f.write("\nDEBUG=TRUE\n")
 
-    output = diff_CESM_cases(
-        case1.caseroot,
-        case2.caseroot,
-    )
+    output = ReadCrocoDashCase(case1).diff(ReadCrocoDashCase(case2))
     assert output["xml_files_missing_in_new"] == ["test.xml"]
     assert output["user_nl_missing_params"] == {"user_nl_mom": ["DEBUG"]}
     assert output["source_mods_missing_files"] == ["src.mom/bleh.dummy"]
     assert output["xmlchanges_missing"] == ["JOB_PRIORITY"]
 
 
-def test_identify_CrocoDashCase_init_args(get_CrocoDash_case):
+def test_identify_CrocoDashCase_init_args(get_CrocoDash_case,fake_RCC_filled_case):
     case = get_CrocoDash_case
-    init_args = identify_CrocoDashCase_init_args(case.caseroot)
+    rcc = fake_RCC_filled_case
+    rcc.caseroot = case.caseroot
+    init_args = rcc._identify_CrocoDashCase_init_args()
     print(init_args)
 
     assert str(case.inputdir / "ocnice") == str(init_args["inputdir_ocnice"])

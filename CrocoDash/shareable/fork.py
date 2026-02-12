@@ -69,13 +69,8 @@ class ForkCrocoDashBundle:
         requested_configs, remove_configs = self.resolve_forcing_configurations()
 
         logger.info(f"Building configuration args")
-        configure_forcing_args = self.build_general_configure_forcing_args(
-            self.forcing_config, remove_configs
-        )
 
-        configure_forcing_args = self.request_any_additional_forcing_args_from_user(
-            configure_forcing_args, requested_configs
-        )
+        configure_forcing_args = self.request_any_additional_forcing_args_from_user(self.forcing_config, remove_configs, requested_configs)
 
         self.case.configure_forcings(**configure_forcing_args)
 
@@ -176,35 +171,8 @@ class ForkCrocoDashBundle:
 
         return requested, remove
 
-    def build_general_configure_forcing_args(self, forcing_config, remove_configs):
-        basic = forcing_config["basic"]
-
-        start_dt = datetime.strptime(basic["dates"]["start"], basic["dates"]["format"])
-        end_dt = datetime.strptime(basic["dates"]["end"], basic["dates"]["format"])
-
-        args = {
-            "date_range": [
-                start_dt.strftime("%Y-%m-%d %H:%M:%S"),
-                end_dt.strftime("%Y-%m-%d %H:%M:%S"),
-            ],
-            "boundaries": list(basic["general"]["boundary_number_conversion"].keys()),
-            "product_name": basic["forcing"]["product_name"],
-            "function_name": basic["forcing"]["function_name"],
-        }
-
-        for cfg, cfg_data in forcing_config.items():
-            if cfg == "basic" or cfg in remove_configs:
-                continue
-            if cfg.startswith("case_"):
-                continue
-
-            for key, value in cfg_data["inputs"].items():
-                if not key.startswith("case_"):
-                    args[key] = value
-
-        return args
-
-    def request_any_additional_forcing_args_from_user(self, args, requested_configs):
+    def request_any_additional_forcing_args_from_user(self, forcing_config, remove_configs, requested_configs):
+        args = generate_configure_forcing_args(forcing_config, remove_configs)
         if not requested_configs:
             return args
 
@@ -358,3 +326,38 @@ def create_case(
         atm_grid_name=init_args["atm_grid_name"],
     )
     return case
+
+def generate_configure_forcing_args(forcing_config,remove_configs = [""]):
+        logger.info("Setup configuration arguments...")
+
+        start_str = forcing_config["basic"]["dates"]["start"]
+        end_str = forcing_config["basic"]["dates"]["end"]
+        date_format = forcing_config["basic"]["dates"]["format"]
+        start_dt = datetime.strptime(start_str, date_format)
+        end_dt = datetime.strptime(end_str, date_format)
+
+        date_range = [
+            start_dt.strftime("%Y-%m-%d %H:%M:%S"),
+            end_dt.strftime("%Y-%m-%d %H:%M:%S"),
+        ]
+
+        configure_forcing_args = {
+            "date_range": date_range,
+            "boundaries": forcing_config["basic"]["general"][
+                "boundary_number_conversion"
+            ].keys(),
+            "product_name": forcing_config["basic"]["forcing"]["product_name"],
+            "function_name": forcing_config["basic"]["forcing"]["function_name"],
+        }
+        for key in forcing_config:
+            if key == "basic" or key in remove_configs:
+                continue
+            user_args = ForcingConfigRegistry.get_user_args(
+                ForcingConfigRegistry.get_configurator_from_name(key)
+            )
+            for arg in user_args:
+                if not arg.startswith("case_"):
+                    configure_forcing_args[arg] = forcing_config[key]["inputs"][
+                        arg
+                    ]
+        return configure_forcing_args

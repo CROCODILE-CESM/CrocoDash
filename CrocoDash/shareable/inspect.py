@@ -215,40 +215,7 @@ class ReadCrocoDashCase:
 
         return diffs
 
-    def generate_configure_forcing_args(self):
-        logger.info("Setup configuration arguments...")
-
-        start_str = self.forcing_config["basic"]["dates"]["start"]
-        end_str = self.forcing_config["basic"]["dates"]["end"]
-        date_format = self.forcing_config["basic"]["dates"]["format"]
-        start_dt = datetime.strptime(start_str, date_format)
-        end_dt = datetime.strptime(end_str, date_format)
-
-        date_range = [
-            start_dt.strftime("%Y-%m-%d %H:%M:%S"),
-            end_dt.strftime("%Y-%m-%d %H:%M:%S"),
-        ]
-
-        configure_forcing_args = {
-            "date_range": date_range,
-            "boundaries": self.forcing_config["basic"]["general"][
-                "boundary_number_conversion"
-            ].keys(),
-            "product_name": self.forcing_config["basic"]["forcing"]["product_name"],
-            "function_name": self.forcing_config["basic"]["forcing"]["function_name"],
-        }
-        for key in self.forcing_config:
-            if key == "basic":
-                continue
-            user_args = ForcingConfigRegistry.get_user_args(
-                ForcingConfigRegistry.get_configurator_from_name(key)
-            )
-            for arg in user_args:
-                if not arg.startswith("case_"):
-                    configure_forcing_args[arg] = self.forcing_config[key]["inputs"][
-                        arg
-                    ]
-        return configure_forcing_args
+    
 
     def identify_non_standard_CrocoDash_case_information(
         self, cesmroot, machine, project_number
