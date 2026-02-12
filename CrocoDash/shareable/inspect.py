@@ -8,7 +8,7 @@ import tempfile
 from mom6_bathy.grid import *
 from mom6_bathy.topo import *
 from mom6_bathy.vgrid import *
-from CrocoDash.shareable.fork import create_case
+from CrocoDash.shareable.fork import create_case, generate_configure_forcing_args
 from uuid import uuid4
 import subprocess
 from CrocoDash.logging import setup_logger
@@ -39,19 +39,6 @@ class ReadCrocoDashCase:
         self._read_xmlchanges()
         self._read_xmlfiles()
         self._read_SourceMods()
-
-    @classmethod
-    def from_manifest(cls, manifest):
-        obj = cls.__new__(cls)  # bypass __init__
-        obj.caseroot = manifest["paths"]["casefiles"]
-        obj.case = None
-        obj.case_exists = False
-        obj.init_args = manifest["init_args"]
-        obj.forcing_config = manifest["forcing_config"]
-        obj.xmlchanges = manifest["xmlchanges"]
-        obj.sourcemods = manifest["sourcemods"]
-        obj.user_nl_objs = manifest["user_nl_info"]
-        return obj
 
     def generate_manifest(self):
         manifest = {
@@ -215,18 +202,14 @@ class ReadCrocoDashCase:
 
         return diffs
 
-    
-
     def identify_non_standard_CrocoDash_case_information(
         self, cesmroot, machine, project_number
     ):
 
-        og_case = ReadCrocoDashCase(self.caseroot)
-
         # Create fake "identical" case
         with tempfile.TemporaryDirectory() as tmp_dir:
             logger.info("Create temporary case for comparison...")
-            logger.info("Init Args: " + json.dumps(og_case.init_args))
+            logger.info("Init Args: " + json.dumps(self.init_args))
             tmp_path = Path(tmp_dir)
             logger.info("Temporary directory:", tmp_path)
             caseroot_tmp = tmp_path / f"temp_case-{uuid4().hex}"
@@ -235,13 +218,13 @@ class ReadCrocoDashCase:
                 devnull
             ), redirect_stderr(devnull):
                 case = create_case(
-                    og_case.init_args,
+                    self.init_args,
                     caseroot_tmp,
                     inputdir,
                     machine,
                     project_number,
                     cesmroot,
-                    compset=og_case.init_args["compset"],
+                    compset=self.init_args["compset"],
                 )
 
             # Configure the forcings
@@ -253,12 +236,14 @@ class ReadCrocoDashCase:
                     "CrocoDash.forcing_configurations.base"
                 )
                 config_logger.disabled = True
-                case.configure_forcings(**og_case.generate_configure_forcing_args())
+                case.configure_forcings(
+                    **generate_configure_forcing_args(self.forcing_config)
+                )
                 config_logger.disabled = False
 
             # Diff
             logger.info("Taking the diff...")
-            self.non_standard_case_info = og_case.diff(ReadCrocoDashCase(caseroot_tmp))
+            self.non_standard_case_info = self.diff(ReadCrocoDashCase(caseroot_tmp))
             return self.non_standard_case_info
 
     def bundle(self, output_folder_location):
