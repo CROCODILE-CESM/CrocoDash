@@ -1,5 +1,5 @@
 """
-Identify is inordinately hard-coded, and probably can't be changed. Robust testing is needed to ensure we are picking up the correct information
+Inspect is inordinately hard-coded, and probably can't be changed. Robust testing is needed to ensure we are picking up the correct information
 """
 
 from pathlib import Path
@@ -14,14 +14,15 @@ import subprocess
 from CrocoDash.logging import setup_logger
 from contextlib import redirect_stdout, redirect_stderr
 import logging
-from CrocoDash.forcing_configurations import *
+from CrocoDash.forcing_configurations.base import *
 import importlib
 import sys
+import shutil
 
 logger = setup_logger(__name__)
 
 
-class ReadCase:
+class ReadCrocoDashCase:
     """
     This class is a support case for reading CrocoDash-CESM Cases that uses CIME's case object
     This design started with individual functions, and got a bit too unwieldy!
@@ -31,6 +32,7 @@ class ReadCase:
         self.caseroot = Path(caseroot)
         self.case = get_case_obj(caseroot)
         self.case_exists = True
+        self._get_cesmroot()
         self._identify_CrocoDashCase_init_args()
         self._identify_CrocoDashCase_forcing_config_args()
         self._read_user_nls()
@@ -47,10 +49,8 @@ class ReadCase:
         obj.init_args = manifest["init_args"]
         obj.forcing_config = manifest["forcing_config"]
         obj.xmlchanges = manifest["xmlchanges"]
-        obj.SourceMods = manifest["SourceMods"]
+        obj.sourcemods = manifest["sourcemods"]
         obj.user_nl_objs = manifest["user_nl_info"]
-        for key in manifest["user_nl_info"]:
-            obj.user_nl_objs = ParamGen()
         return obj
 
     def generate_manifest(self):
@@ -62,7 +62,7 @@ class ReadCase:
             "user_nl_info": self.user_nl_objs,
             "init_args": self.init_args,
             "forcing_config": self.forcing_config,
-            "SourceMods": self.SourceMods,
+            "sourcemods": self.sourcemods,
             "xmlchanges": self.xmlchanges,
         }
         return manifest
@@ -111,17 +111,17 @@ class ReadCase:
         for model in models:
             model_str = model.lower()
             if not model_str.startswith("s"):  # Represents stub component
-                self.user_nl_objs[model_str] = read_user_nl_lines_as_obj(
-                    self.caseroot, model_str
+                self.user_nl_objs[model_str] = self._read_user_nl_lines_as_obj(
+                    model_str
                 )
 
     def _read_xmlfiles(self):
-        self.xmlfiles = {f.name for f in original.caseroot.glob("*.xml")}
+        self.xmlfiles = {f.name for f in self.caseroot.glob("*.xml")}
 
     def _read_SourceMods(self):
         self.sourcemods = {
-            f.relative_to(original.caseroot / "SourceMods")
-            for f in (original.caseroot / "SourceMods").rglob("*")
+            f.relative_to(self.caseroot / "SourceMods")
+            for f in (self.caseroot / "SourceMods").rglob("*")
             if f.is_file()
         }
 
@@ -157,6 +157,33 @@ class ReadCase:
             self.forcing_config = json.load(f)
         return self.forcing_config
 
+    def get_user_nl_value(self, component, param):
+        return self.user_nl_objs[component.lower()]["Global"][param.upper()]["value"]
+
+    def _read_user_nl_lines_as_obj(self, user_nl_comp="mom"):
+
+        if not hasattr(self, "user_nl_reader"):
+            # Import the CESM MOM_interface user_nl_mom reader
+            mod_path = (
+                self.cesmroot
+                / "components"
+                / "mom"
+                / "cime_config"
+                / "MOM_RPS"
+                / "FType_MOM_params.py"
+            )
+            spec = importlib.util.spec_from_file_location("FType_MOM_params", mod_path)
+            self.user_nl_reader = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(self.user_nl_reader)
+
+        return self.user_nl_reader.FType_MOM_params.from_MOM_input(
+            self.caseroot / f"user_nl_{user_nl_comp}"
+        )._data
+
+    def _get_cesmroot(self):
+        self.cesmroot = self.case.get_value("SRCROOT")
+        return self.cesmroot
+
     def diff(self, other_case):
         """
         Diff this case (as the original) against another ReadCase (which is assumed to have been initialized the same). The diff indicates what unique features in the original are not in the new
@@ -175,7 +202,7 @@ class ReadCase:
                 [str(f) for f in self.SourceMods - other_case.SourceMods]
             ),
             "xmlchanges_missing": sorted(
-                k for k in self.xmlchanges.keys() if k not in othercase.xmlchanges
+                k for k in self.xmlchanges.keys() if k not in other_case.xmlchanges
             ),
         }
         diffs["user_nl_missing_params"] = {}
@@ -183,7 +210,7 @@ class ReadCase:
             diffs["user_nl_missing_params"][key] = sorted(
                 k
                 for k in self.user_nl_objs[key].keys()
-                if k not in othercase.user_nl_objs[key]
+                if k not in other_case.user_nl_objs[key]
             )
 
         return diffs
@@ -223,11 +250,11 @@ class ReadCase:
                     ]
         return configure_forcing_args
 
-    def identify_non_standard_case_information_and_generate_manifest(
+    def identify_non_standard_CrocoDash_case_information(
         self, cesmroot, machine, project_number
     ):
 
-        og_case = ReadCase(self.caseroot)
+        og_case = ReadCrocoDashCase(self.caseroot)
 
         # Create fake "identical" case
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -264,38 +291,92 @@ class ReadCase:
 
             # Diff
             logger.info("Taking the diff...")
-            return og_case.diff(ReadCase(caseroot_tmp))
+            self.non_standard_case_info = og_case.diff(ReadCrocoDashCase(caseroot_tmp))
+            return self.non_standard_case_info
 
-    def bundle(self, differences):
-        pass
+    def bundle(self, output_folder_location):
+        assert hasattr(
+            self, "non_standard_case_info"
+        ), "To bundle your case, you need to indentify non-standard CrocoDash first."
+        ocnice_dir = self.get_user_nl_value("mom", "INPUTDIR")
+        case_subfolder = (
+            Path(output_folder_location) / f"{self.caseroot.name}_case_bundle"
+        )
+        case_subfolder.mkdir(parents=True, exist_ok=True)
 
+        # From caseroot, copy all user_nls
+        logger.info("Copying user_nl files...")
+        for user_nl_file in self.caseroot.glob("user_nl_*"):
+            shutil.copy(user_nl_file, case_subfolder / user_nl_file.name)
 
-def read_user_nl_lines_as_obj(caseroot, user_nl_comp="mom"):
+        # From caseroot, copy replay.sh (not necessarily used)
+        logger.info("Copying replay.sh...")
+        replay_sh = self.caseroot / "replay.sh"
+        shutil.copy(replay_sh, case_subfolder / "replay.sh")
 
-    # Import the CESM MOM_interface user_nl_mom reader
-    cesmroot = Path(get_cesmroot_from_caseroot(caseroot))
-    mod_path = (
-        cesmroot
-        / "components"
-        / "mom"
-        / "cime_config"
-        / "MOM_RPS"
-        / "FType_MOM_params.py"
-    )
-    spec = importlib.util.spec_from_file_location("FType_MOM_params", mod_path)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module.FType_MOM_params.from_MOM_input(
-        Path(caseroot) / f"user_nl_{user_nl_comp}"
-    )._data
+        ocnice_target = case_subfolder / "ocnice"
+        ocnice_target.mkdir(parents=False, exist_ok=True)
+
+        for f in ocnice_dir.iterdir():
+            if f.name.startswith(("forcing_", "init_")):
+                logger.info(f"Copying {f}")
+                shutil.copy(f, ocnice_target)
+        # We'll get the configurations and copy into bundle ocnice
+        for config, value in self.forcing_config.item():
+            if config == "basic":
+                continue
+            # Deserialize
+            configurator = ForcingConfigRegistry.get_configurator(value)
+            output_paths = configurator.get_output_filepaths(ocnice_dir)
+
+            for path in output_paths:
+                logger.info(f"Copying {config} file: {path}...")
+                shutil.copy(path, ocnice_target)
+
+        # Write out manifest
+        logger.info(f"Writing out ReadCrocoDashCase manifest...")
+        with open(case_subfolder / "manifest.json", "w") as f:
+            json.dump(self.generate_manifest(), f, indent=2, default=str)
+
+        # Write out differences
+        logger.info(f"Writing out non standard CrocoDash information...")
+        with open(case_subfolder / "non_standard_case_info.json", "w") as f:
+            json.dump(self.non_standard_case_info, f, indent=2, default=str)
+
+        # From differences["xml_files"] and copy "sourceMods"
+        xml_files_dir = case_subfolder / "xml_files"
+        xml_files_dir.mkdir(exist_ok=True)
+        for xml_file in self.non_standard_case_info["xml_files_missing_in_new"]:
+
+            src = self.caseroot / xml_file
+            logger.info(f"Copying non-standard xml files {src}")
+            if src.exists():
+                shutil.copy(src, xml_files_dir / xml_file)
+
+            # Copy sourceMods
+        source_mods_orig = self.caseroot / "SourceMods"
+        source_mods_dst = case_subfolder / "SourceMods"
+        source_mods_dst.mkdir(exist_ok=True)
+        for mod_file in self.non_standard_case_info["source_mods_missing_files"]:
+            src = source_mods_orig / mod_file
+            logger.info(f"Copying SourceMods files {src}")
+            if src.exists():
+                dst = source_mods_dst / mod_file
+                dst.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy(src, dst)
+        return case_subfolder
 
 
 def get_case_obj(caseroot):
-    res = subprocess.run(
-        ["./xmlquery", "CIMEROOT", "-N"], cwd=str(caseroot), capture_output=True
-    )
-    cimeroot = res.stdout.decode().strip().split(":")[1].strip()
+    cimeroot = run_xmlquery(caseroot, "CIMEROOT")
     sys.path.append(os.path.join(cimeroot, "CIME", "Tools"))
     from CIME.case import Case
 
     return Case(caseroot, read_only=True, non_local=True)
+
+
+def run_xmlquery(caseroot, param):
+    res = subprocess.run(
+        ["./xmlquery", param, "-N"], cwd=str(caseroot), capture_output=True
+    )
+    return res.stdout.decode().strip().split(":")[1].strip()

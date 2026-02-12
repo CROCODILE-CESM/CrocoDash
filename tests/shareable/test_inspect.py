@@ -145,6 +145,7 @@ def test_read_user_nl_mom_lines_as_obj(get_CrocoDash_case):
     breakpoint()
     assert user_nl_mom_obj.data["Global"]["INPUTDIR"]["value"] == str(case.inputdir)
 
+
 def test_get_case_obj(get_CrocoDash_case):
     case = get_case_obj(get_CrocoDash_case.caseroot)
-    assert case.get_value("COMPSET") == get_CrocoDash_case.compset_lname+"_SESP"
+    assert case.get_value("COMPSET") == get_CrocoDash_case.compset_lname + "_SESP"
