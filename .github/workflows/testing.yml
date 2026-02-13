@@ -42,7 +42,11 @@ jobs:
       - name: Run Pytest
         run: |
           cd $WORKDIR/CrocoDash
-          pytest --ignore=CrocoDash/visualCaseGen -m "not workflow" -vv --capture=no --showlocals --tb=short
+          pytest --ignore=CrocoDash/visualCaseGen -m "not workflow" -vv --capture=no --showlocals --tb=short --cov=CrocoDash --cov-report=xml --cov-branch
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+         token: ${{ secrets.CODECOV_TOKEN }}
       - name: Run Workflow Tests
         run: |
           cd $WORKDIR/CrocoDash
