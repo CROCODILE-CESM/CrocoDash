@@ -1040,3 +1040,14 @@ class Case:
                 "Invalid direction or segment number for MOM6 rectangular orientation"
             )
         return val
+
+    def validate_case(self):
+
+        # Ensure configurations are done
+        for config in case.fcr.active_configurators.keys():
+            if not case.fcr.active_configurators[config].validate_output_filepaths(
+                case.inputdir / "ocnice"
+            ):
+                print(
+                    f"{config} was not valid yet! Which means you need to process this forcing and generate the files using your cases extract_forcings module! {case.inputdir/'extract_forcings'}"
+                )
