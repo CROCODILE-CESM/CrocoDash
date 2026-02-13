@@ -70,7 +70,7 @@ class ForkCrocoDashBundle:
 
         logger.info(f"Building configuration args")
 
-        configure_forcing_args = self.request_any_additional_forcing_args_from_user(
+        configure_forcing_args = self.set_up_forcing_inputs(
             self.forcing_config, remove_configs, requested_configs
         )
 
@@ -173,9 +173,7 @@ class ForkCrocoDashBundle:
 
         return requested, remove
 
-    def request_any_additional_forcing_args_from_user(
-        self, forcing_config, remove_configs, requested_configs
-    ):
+    def set_up_forcing_inputs(self, forcing_config, remove_configs, requested_configs):
         args = generate_configure_forcing_args(forcing_config, remove_configs)
         if not requested_configs:
             return args

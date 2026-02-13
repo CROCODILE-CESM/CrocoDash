@@ -30,15 +30,21 @@ class ReadCrocoDashCase:
 
     def __init__(self, caseroot):
         self.caseroot = Path(caseroot)
-        self.case = get_case_obj(caseroot)
+        self._case = get_case_obj(caseroot)
         self.case_exists = True
         self._get_cesmroot()
+        self._read_user_nls()
         self._identify_CrocoDashCase_init_args()
         self._identify_CrocoDashCase_forcing_config_args()
-        self._read_user_nls()
         self._read_xmlchanges()
         self._read_xmlfiles()
         self._read_SourceMods()
+
+    @property
+    def case(self):
+        if self._case is None:
+            self._case = get_case_obj(self.caseroot)
+        return self._case
 
     def generate_manifest(self):
         manifest = {
@@ -90,17 +96,12 @@ class ReadCrocoDashCase:
     def _read_user_nls(self):
         self.user_nl_objs = {}
         # Read User_Nls
-        models = [
-            token.split("%", 1)[0]
-            for token in self.init_args["compset"].split("_")
-            if token.split("%", 1)[0]
-        ]
+        models = self.case.get_values("COMP_CLASSES")
         for model in models:
             model_str = model.lower()
-            if not model_str.startswith("s"):  # Represents stub component
-                self.user_nl_objs[model_str] = self._read_user_nl_lines_as_obj(
-                    model_str
-                )
+            compname = self.case.get_value("COMP_{}".format(model_str.upper()))
+            if not compname.startswith("s"):
+                self.user_nl_objs[compname] = self._read_user_nl_lines_as_obj(compname)
 
     def _read_xmlfiles(self):
         self.xmlfiles = {f.name for f in self.caseroot.glob("*.xml")}
@@ -117,12 +118,10 @@ class ReadCrocoDashCase:
         logger.info(f"Finding initialization arguments from {self.caseroot}")
 
         self.init_args = {
-            "inputdir_ocnice": self.user_nl_mom_obj["Global"]["INPUTDIR"]["value"],
-            "supergrid_path": self.user_nl_mom_obj["Global"]["GRID_FILE"]["value"],
-            "vgrid_path": self.user_nl_mom_obj["Global"]["ALE_COORDINATE_CONFIG"][
-                "value"
-            ],
-            "topo_path": self.user_nl_mom_obj["Global"]["TOPO_FILE"]["value"],
+            "inputdir_ocnice": self.get_user_nl_value("mom", "INPUTDIR"),
+            "supergrid_path": self.get_user_nl_value("mom", "GRID_FILE"),
+            "vgrid_path": self.get_user_nl_value("mom", "ALE_COORDINATE_CONFIG"),
+            "topo_path": self.get_user_nl_value("mom", "TOPO_FILE"),
             "compset": self.case.get_value("COMPSET"),
             "atm_grid_name": self.case.get_value("ATM_GRID"),
         }
@@ -135,7 +134,7 @@ class ReadCrocoDashCase:
         # The input directory is where the forcing config is.
 
         # Find the input directory
-        inputdir = self.user_nl_mom_obj["Global"]["INPUTDIR"]["value"]
+        inputdir = self.get_user_nl_value("mom", "INPUTDIR")
 
         # Read in forcing config file
         forcing_config_path = inputdir.parent / "extract_forcings" / "config.json"
@@ -168,7 +167,7 @@ class ReadCrocoDashCase:
         )._data
 
     def _get_cesmroot(self):
-        self.cesmroot = self.case.get_value("SRCROOT")
+        self.cesmroot = Path(self.case.get_value("SRCROOT"))
         return self.cesmroot
 
     def diff(self, other_case):

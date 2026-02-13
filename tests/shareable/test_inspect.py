@@ -28,13 +28,14 @@ def fake_RCC_filled_case():
 @pytest.fixture
 def fake_RCC_empty_case():
     case = ReadCrocoDashCase.__new__(ReadCrocoDashCase)
+    case._case = None
     return case
 
 
 def test_diff_CESM_cases_nodiff(two_cesm_cases):
 
     case1, case2 = two_cesm_cases
-    output = ReadCrocoDashCase(case1).diff(ReadCrocoDashCase(case2))
+    output = ReadCrocoDashCase(case1.caseroot).diff(ReadCrocoDashCase(case2.caseroot))
     assert output["xml_files_missing_in_new"] == []
     assert output["user_nl_missing_params"] == {}
     assert output["source_mods_missing_files"] == []
@@ -275,3 +276,15 @@ def test_bundle_with_modifications(CrocoDash_case_factory, tmp_path_factory, tmp
     assert "CUSTOM_PARAM=42" in user_nl_content
 
     # Verify zip contains all expected files
+
+
+def test_read_user_nls(fake_RCC_empty_case, get_CrocoDash_case):
+    rcc = fake_RCC_empty_case
+    rcc.caseroot = get_CrocoDash_case.caseroot
+    rcc._get_cesmroot()
+    rcc._read_user_nls()
+    assert "mom" in rcc.user_nl_objs.keys()
+    assert "datm" in rcc.user_nl_objs.keys()
+    assert rcc.get_user_nl_value("mom", "INPUTDIR") == str(
+        get_CrocoDash_case.inputdir / "ocnice"
+    )
