@@ -38,7 +38,15 @@ class ReadCrocoDashCase:
         self._identify_CrocoDashCase_forcing_config_args()
         self._read_xmlchanges()
         self._read_xmlfiles()
-        self._read_SourceMods()
+        self._read_sourcemods()
+
+    def reread(self):
+        self._read_user_nls()
+        self._identify_CrocoDashCase_init_args()
+        self._identify_CrocoDashCase_forcing_config_args()
+        self._read_xmlchanges()
+        self._read_xmlfiles()
+        self._read_sourcemods()
 
     @property
     def case(self):
@@ -106,10 +114,10 @@ class ReadCrocoDashCase:
     def _read_xmlfiles(self):
         self.xmlfiles = {f.name for f in self.caseroot.glob("*.xml")}
 
-    def _read_SourceMods(self):
+    def _read_sourcemods(self):
         self.sourcemods = {
-            f.relative_to(self.caseroot / "SourceMods")
-            for f in (self.caseroot / "SourceMods").rglob("*")
+            f.relative_to(self.caseroot / "sourcemods")
+            for f in (self.caseroot / "sourcemods").rglob("*")
             if f.is_file()
         }
 
@@ -137,14 +145,16 @@ class ReadCrocoDashCase:
         inputdir = self.get_user_nl_value("mom", "INPUTDIR")
 
         # Read in forcing config file
-        forcing_config_path = inputdir.parent / "extract_forcings" / "config.json"
+        forcing_config_path = Path(inputdir).parent / "extract_forcings" / "config.json"
 
         with open(forcing_config_path, "r") as f:
             self.forcing_config = json.load(f)
         return self.forcing_config
 
     def get_user_nl_value(self, component, param):
-        return self.user_nl_objs[component.lower()]["Global"][param.upper()]["value"]
+        return (
+            self.user_nl_objs[component.lower()]["Global"][param.upper()]["value"]
+        ).replace("FILE:", "")
 
     def _read_user_nl_lines_as_obj(self, user_nl_comp="mom"):
 
@@ -178,26 +188,27 @@ class ReadCrocoDashCase:
         - xmlchanges
         - xml files
         - user_nls
-        - SourceMods
+        - sourcemods
         """
         diffs = {
             "xml_files_missing_in_new": sorted(
                 list(self.xmlfiles - other_case.xmlfiles)
             ),
             "source_mods_missing_files": sorted(
-                [str(f) for f in self.SourceMods - other_case.SourceMods]
+                [str(f) for f in self.sourcemods - other_case.sourcemods]
             ),
             "xmlchanges_missing": sorted(
                 k for k in self.xmlchanges.keys() if k not in other_case.xmlchanges
             ),
         }
         diffs["user_nl_missing_params"] = {}
-        for key in self.user_nl_objs:
-            diffs["user_nl_missing_params"][key] = sorted(
-                k
-                for k in self.user_nl_objs[key].keys()
-                if k not in other_case.user_nl_objs[key]
-            )
+        for key, value in self.user_nl_objs.items():
+            diffs["user_nl_missing_params"][key] = []
+            for subkey, subvalue in value.items():
+                if isinstance(subvalue, dict):
+                    for subsubkey, subsubvalue in subvalue.items():
+                        if subsubkey not in other_case.user_nl_objs[key][subkey]:
+                            diffs["user_nl_missing_params"][key].append((subsubkey))
 
         return diffs
 
@@ -210,7 +221,7 @@ class ReadCrocoDashCase:
             logger.info("Create temporary case for comparison...")
             logger.info("Init Args: " + json.dumps(self.init_args))
             tmp_path = Path(tmp_dir)
-            logger.info("Temporary directory:", tmp_path)
+            logger.info("Temporary directory:" + str(tmp_path))
             caseroot_tmp = tmp_path / f"temp_case-{uuid4().hex}"
             inputdir = tmp_path / "temp_inputdir"
             with open(os.devnull, "w") as devnull, redirect_stdout(
@@ -268,12 +279,12 @@ class ReadCrocoDashCase:
         ocnice_target = case_subfolder / "ocnice"
         ocnice_target.mkdir(parents=False, exist_ok=True)
 
-        for f in ocnice_dir.iterdir():
+        for f in Path(ocnice_dir).iterdir():
             if f.name.startswith(("forcing_", "init_")):
                 logger.info(f"Copying {f}")
                 shutil.copy(f, ocnice_target)
         # We'll get the configurations and copy into bundle ocnice
-        for config, value in self.forcing_config.item():
+        for config, value in self.forcing_config.items():
             if config == "basic":
                 continue
             # Deserialize
@@ -305,12 +316,12 @@ class ReadCrocoDashCase:
                 shutil.copy(src, xml_files_dir / xml_file)
 
             # Copy sourceMods
-        source_mods_orig = self.caseroot / "SourceMods"
-        source_mods_dst = case_subfolder / "SourceMods"
+        source_mods_orig = self.caseroot / "sourcemods"
+        source_mods_dst = case_subfolder / "sourcemods"
         source_mods_dst.mkdir(exist_ok=True)
         for mod_file in self.non_standard_case_info["source_mods_missing_files"]:
             src = source_mods_orig / mod_file
-            logger.info(f"Copying SourceMods files {src}")
+            logger.info(f"Copying sourcemods files {src}")
             if src.exists():
                 dst = source_mods_dst / mod_file
                 dst.parent.mkdir(parents=True, exist_ok=True)

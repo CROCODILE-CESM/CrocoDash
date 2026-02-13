@@ -27,6 +27,13 @@ def setup_sample_rm6_expt(tmp_path):
 
 
 @pytest.fixture(scope="module")
+def get_case_with_cf(CrocoDash_case_factory, tmp_path_factory):
+    case = CrocoDash_case_factory(tmp_path_factory.mktemp("case"))
+    case.configure_forcings(date_range=["2020-01-01 00:00:00", "2020-02-01 00:00:00"])
+    return case
+
+
+@pytest.fixture(scope="module")
 def get_CrocoDash_case(
     tmp_path_factory,
     gen_grid_topo_vgrid,
@@ -89,6 +96,7 @@ def CrocoDash_case_factory(
 
     def _CrocoDash_case_factory(
         directory,
+        configure_forcings=False,
         compset: str = "1850_DATM%JRA_SLND_SICE_MOM6_SROF_SGLC_SWAV",
         atm_grid_name: str = "TL319",
     ):
@@ -128,6 +136,10 @@ def CrocoDash_case_factory(
             atm_grid_name=atm_grid_name,
             ninst=ninst,
         )
+        if configure_forcings:
+            case.configure_forcings(
+                date_range=["2020-01-01 00:00:00", "2020-02-01 00:00:00"]
+            )
         return case
 
     return _CrocoDash_case_factory
