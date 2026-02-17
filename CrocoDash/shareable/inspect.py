@@ -316,8 +316,8 @@ class ReadCrocoDashCase:
                 shutil.copy(src, xml_files_dir / xml_file)
 
             # Copy sourceMods
-        source_mods_orig = self.caseroot / "sourcemods"
-        source_mods_dst = case_subfolder / "sourcemods"
+        source_mods_orig = self.caseroot / "SourceMods"
+        source_mods_dst = case_subfolder / "SourceMods"
         source_mods_dst.mkdir(exist_ok=True)
         for mod_file in self.non_standard_case_info["source_mods_missing_files"]:
             src = source_mods_orig / mod_file
