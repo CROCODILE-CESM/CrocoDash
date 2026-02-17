@@ -34,15 +34,11 @@ def get_case_with_cf(CrocoDash_case_factory, tmp_path_factory):
 
 
 @pytest.fixture(scope="module")
-def get_CrocoDash_case(
-    CrocoDash_case_factory,
-    tmp_path_factory
-
-):
+def get_CrocoDash_case(CrocoDash_case_factory, tmp_path_factory):
 
     # Set some defaults
     caseroot = tmp_path_factory.mktemp(f"case-{uuid4().hex}")
-  
+
     return CrocoDash_case_factory(caseroot)
 
 

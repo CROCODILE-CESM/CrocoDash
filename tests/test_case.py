@@ -19,7 +19,6 @@ def test_case_init(CrocoDash_case_factory, tmp_path_factory):
 
     compsets = [
         "1850_DATM%JRA_SLND_SICE_MOM6_SROF_SGLC_SWAV",
-
     ]
 
     # Setup Case
