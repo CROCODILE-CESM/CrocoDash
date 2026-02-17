@@ -15,12 +15,12 @@ jobs:
     container:
       image: ghcr.io/crocodile-cesm/crocodash:nightly
     steps:
-      # - name: Install GPG (for CodeCoverage)
-      #   run: apt-get update && apt-get install -y gnupg git bash curl gpg
-      # - uses: actions/checkout@v4
-      #   with:
-      #     submodules: recursive
-      #     path: CrocoDash
+      - name: Install GPG (for CodeCoverage)
+        run: apt-get update && apt-get install -y gnupg git bash curl gpg
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          path: CrocoDash
       # - name: Check if environment.yml changed
       #   id: compare
       #   run: |
@@ -48,13 +48,13 @@ jobs:
 
       - name: Samp
         run: |
-          touch coverage.xml
+          touch CrocoDash/coverage.xml
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
          token: ${{ secrets.CODECOV_TOKEN }}
          slug: CROCODILE-CESM/CrocoDash
-         files: /workspace/CrocoDash/coverage.xml
+         files: CrocoDash/coverage.xml
       - name: Run Workflow Tests
         run: |
           cd $WORKDIR/CrocoDash
