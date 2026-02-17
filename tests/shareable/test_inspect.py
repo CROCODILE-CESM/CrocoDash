@@ -278,3 +278,31 @@ def test_read_user_nls(fake_RCC_empty_case, get_CrocoDash_case):
     assert rcc.get_user_nl_value("mom", "INPUTDIR") == str(
         get_CrocoDash_case.inputdir / "ocnice"
     )
+
+
+def test_read_sourcemods(fake_RCC_empty_case, tmp_path):
+    # Setup: create a fake caseroot with a sourcemods directory
+    caseroot = tmp_path / "case"
+    sourcemods_dir = caseroot / "sourcemods"
+    sourcemods_dir.mkdir(parents=True)
+
+    # Create some fake files
+    file1 = sourcemods_dir / "src.drv" / "file1.txt"
+    file2 = sourcemods_dir / "src.mom" / "file2.txt"
+    file2.parent.mkdir()
+    file1.parent.mkdir()
+    file1.write_text("test")
+    file2.write_text("hello")
+
+    # Create instance with caseroot
+    case = fake_RCC_empty_case
+    case.caseroot = caseroot
+
+    # Call the private method
+    case._read_sourcemods()
+
+    # Expected relative paths
+    expected = {Path("src.drv/file1.txt"), Path("src.mom/file2.txt")}
+
+    # Assert
+    assert case.sourcemods == expected
