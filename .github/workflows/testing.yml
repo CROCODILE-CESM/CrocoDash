@@ -44,13 +44,14 @@ jobs:
       - name: Run Pytest
         run: |
           cd $WORKDIR/CrocoDash
-          pytest --ignore=CrocoDash/visualCaseGen -m "not workflow" -vv --capture=no --showlocals --tb=short --cov=CrocoDash --cov-report=xml:${{ github.workspace }}/coverage.xml --cov-branch
+          pytest --ignore=CrocoDash/visualCaseGen -m "not workflow" -vv --showlocals --tb=short --cov=CrocoDash --cov-report=xml --cov-branch
+          cp $WORKDIR/CrocoDash/coverage.xml ${{ github.workspace }}/coverage.xml
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
          token: ${{ secrets.CODECOV_TOKEN }}
          slug: CROCODILE-CESM/CrocoDash
-         files: /home/runner/work/CrocoDash/CrocoDash/coverage.xml
+         files: ${{ github.workspace }}/coverage.xml
       - name: Run Workflow Tests
         run: |
           cd $WORKDIR/CrocoDash
