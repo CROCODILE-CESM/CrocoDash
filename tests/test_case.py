@@ -15,64 +15,27 @@ def file_with_prefix_exists(directory, prefix):
     return False
 
 
-def test_case_init(
-    gen_grid_topo_vgrid,
-    tmp_path,
-    is_github_actions,
-    get_cesm_root_path,
-    is_glade_file_system,
-):
-    # Set Grid Info
-    grid, topo, vgrid = gen_grid_topo_vgrid
+def test_case_init(CrocoDash_case_factory, tmp_path_factory):
 
-    # Find CESM Root
-    cesmroot = get_cesm_root_path
-    assert cesmroot is not None, "CESMROOT environment variable is not set"
-
-    # Set some defaults
-
-    project_num = "NCGD0011"
-    override = True
     compsets = [
         "1850_DATM%JRA_SLND_SICE_MOM6_SROF_SGLC_SWAV",
-        "1850_DATM%JRA_SLND_SICE_MOM6_DROF%GLOFAS_SGLC_SWAV",
-        "1850_DATM%JRA_SLND_CICE_MOM6_SROF_SGLC_SWAV",
+
     ]
-    atm_grid_name = "TL319"
-    ninst = 2
-    glade_bool = is_glade_file_system
-    if is_github_actions:
-        machine = "ubuntu-latest"
-    elif glade_bool:
-        machine = "derecho"
-    else:
-        machine = "homebrew"
 
     # Setup Case
     for c in compsets:
-        caseroot, inputdir = tmp_path / f"{uuid4().hex}-case", tmp_path / "inputdir"
-        case = Case(
-            cesmroot=cesmroot,
-            caseroot=caseroot,
-            inputdir=inputdir,
+        case = CrocoDash_case_factory(
+            tmp_path_factory.mktemp(f"case-{uuid4().hex}"),
+            configure_forcings=False,
             compset=c,
-            ocn_grid=grid,
-            ocn_vgrid=vgrid,
-            ocn_topo=topo,
-            project=project_num,
-            override=override,
-            machine=machine,
-            atm_grid_name=atm_grid_name,
-            ninst=ninst,
         )
 
-    # Check some basics
-    assert case is not None
-    assert os.path.exists(caseroot)
-    assert os.path.exists(inputdir)
-    assert case.ninst == ninst
-    assert file_with_prefix_exists(inputdir / "ocnice", "ocean_hgrid")
-    assert file_with_prefix_exists(caseroot, "README")
+        # Check some basics
+        assert case is not None
+        assert os.path.exists(case.caseroot)
+        assert os.path.exists(case.inputdir)
+        assert file_with_prefix_exists(case.inputdir / "ocnice", "ocean_hgrid")
+        assert file_with_prefix_exists(case.caseroot, "README")
 
 
 def test_create_grid_input(get_CrocoDash_case):

@@ -35,51 +35,15 @@ def get_case_with_cf(CrocoDash_case_factory, tmp_path_factory):
 
 @pytest.fixture(scope="module")
 def get_CrocoDash_case(
-    tmp_path_factory,
-    gen_grid_topo_vgrid,
-    is_github_actions,
-    get_cesm_root_path,
-    is_glade_file_system,
-):
-    # Set Grid Info
-    grid, topo, vgrid = gen_grid_topo_vgrid
+    CrocoDash_case_factory,
+    tmp_path_factory
 
-    # Find CESM Root
-    cesmroot = get_cesm_root_path
+):
 
     # Set some defaults
     caseroot = tmp_path_factory.mktemp(f"case-{uuid4().hex}")
-    inputdir = tmp_path_factory.mktemp(f"inputdir-{uuid4().hex}")
-    project_num = "NCGD0011"
-    override = True
-    compset = "1850_DATM%JRA_SLND_SICE_MOM6_SROF_SGLC_SWAV"
-    atm_grid_name = "TL319"
-    ninst = 1
-    glade_bool = is_glade_file_system
-
-    if is_github_actions:
-        machine = "ubuntu-latest"
-    elif glade_bool:
-        machine = "derecho"
-    else:
-        machine = "homebrew"
-
-    # Setup Case
-    case = Case(
-        cesmroot=cesmroot,
-        caseroot=caseroot,
-        inputdir=inputdir,
-        compset=compset,
-        ocn_grid=grid,
-        ocn_vgrid=vgrid,
-        ocn_topo=topo,
-        project=project_num,
-        override=override,
-        machine=machine,
-        atm_grid_name=atm_grid_name,
-        ninst=ninst,
-    )
-    return case
+  
+    return CrocoDash_case_factory(caseroot)
 
 
 @pytest.fixture(scope="session")
