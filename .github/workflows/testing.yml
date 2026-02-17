@@ -16,7 +16,7 @@ jobs:
       image: ghcr.io/crocodile-cesm/crocodash:nightly
     steps:
       - name: Install GPG (for CodeCoverage)
-        run: apt-get update && apt-get install -y gnupg
+        run: apt-get update && apt-get install -y gnupg git bash curl gpg
       - uses: actions/checkout@v4
         with:
           submodules: recursive
@@ -45,13 +45,13 @@ jobs:
         run: |
           cd $WORKDIR/CrocoDash
           pytest --ignore=CrocoDash/visualCaseGen -m "not workflow" -vv --showlocals --tb=short --cov=CrocoDash --cov-report=xml --cov-branch
-          cp coverage.xml ${{ github.workspace }}/coverage.xml
+
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
          token: ${{ secrets.CODECOV_TOKEN }}
          slug: CROCODILE-CESM/CrocoDash
-         files: ${{ github.workspace }}/coverage.xml
+         files: $WORKDIR/coverage.xml
       - name: Run Workflow Tests
         run: |
           cd $WORKDIR/CrocoDash
