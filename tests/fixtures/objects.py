@@ -5,7 +5,7 @@ from pathlib import Path
 from uuid import uuid4
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def setup_sample_rm6_expt(tmp_path):
     expt = rm6.experiment(
         longitude_extent=[10, 12],
@@ -26,14 +26,14 @@ def setup_sample_rm6_expt(tmp_path):
     return expt
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def get_case_with_cf(CrocoDash_case_factory, tmp_path_factory):
-    case = CrocoDash_case_factory(tmp_path_factory.mktemp("case"))
+    case = CrocoDash_case_factory(tmp_path_factory.mktemp(f"case-{uuid4().hex}"))
     case.configure_forcings(date_range=["2020-01-01 00:00:00", "2020-02-01 00:00:00"])
     return case
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def get_CrocoDash_case(
     tmp_path_factory,
     gen_grid_topo_vgrid,
