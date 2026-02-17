@@ -283,7 +283,7 @@ def test_read_user_nls(fake_RCC_empty_case, get_CrocoDash_case):
 def test_read_sourcemods(fake_RCC_empty_case, tmp_path):
     # Setup: create a fake caseroot with a sourcemods directory
     caseroot = tmp_path / "case"
-    sourcemods_dir = caseroot / "sourcemods"
+    sourcemods_dir = caseroot / "SourceMods"
     sourcemods_dir.mkdir(parents=True)
 
     # Create some fake files

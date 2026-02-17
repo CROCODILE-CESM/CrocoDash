@@ -116,8 +116,8 @@ class ReadCrocoDashCase:
 
     def _read_sourcemods(self):
         self.sourcemods = {
-            f.relative_to(self.caseroot / "sourcemods")
-            for f in (self.caseroot / "sourcemods").rglob("*")
+            f.relative_to(self.caseroot / "SourceMods")
+            for f in (self.caseroot / "SourceMods").rglob("*")
             if f.is_file()
         }
 
