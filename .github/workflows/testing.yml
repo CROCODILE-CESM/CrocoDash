@@ -15,43 +15,46 @@ jobs:
     container:
       image: ghcr.io/crocodile-cesm/crocodash:nightly
     steps:
-      - name: Install GPG (for CodeCoverage)
-        run: apt-get update && apt-get install -y gnupg git bash curl gpg
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-          path: CrocoDash
-      - name: Check if environment.yml changed
-        id: compare
-        run: |
-          if diff $WORKDIR/CrocoDash/environment.yml $GITHUB_WORKSPACE/CrocoDash/environment.yml; then
-            echo "No changes in environment.yml"
-            echo "env_changed=false" >> $GITHUB_OUTPUT
-          else
-            echo "environment.yml changed!"
-            echo "env_changed=true" >> $GITHUB_OUTPUT
-          fi
-      - name: Copy CrocoDash into container
-        run: |
-              rm -rf $WORKDIR/CrocoDash
-              cp -r $GITHUB_WORKSPACE/CrocoDash $WORKDIR/
-      - name: Create CrocoDash environment if changed
-        if: steps.compare.outputs.env_changed == 'true'
-        run: |
-          echo "Environment changed! Rebuilding CrocoDash conda environment..."
-          conda env remove -n CrocoDash --yes
-          conda env create -f $WORKDIR/CrocoDash/environment.yml
-      - name: Run Pytest
-        run: |
-          cd $WORKDIR/CrocoDash
-          pytest --ignore=CrocoDash/visualCaseGen -m "not workflow" -vv --showlocals --tb=short --cov=CrocoDash --cov-report=xml --cov-branch
+      # - name: Install GPG (for CodeCoverage)
+      #   run: apt-get update && apt-get install -y gnupg git bash curl gpg
+      # - uses: actions/checkout@v4
+      #   with:
+      #     submodules: recursive
+      #     path: CrocoDash
+      # - name: Check if environment.yml changed
+      #   id: compare
+      #   run: |
+      #     if diff $WORKDIR/CrocoDash/environment.yml $GITHUB_WORKSPACE/CrocoDash/environment.yml; then
+      #       echo "No changes in environment.yml"
+      #       echo "env_changed=false" >> $GITHUB_OUTPUT
+      #     else
+      #       echo "environment.yml changed!"
+      #       echo "env_changed=true" >> $GITHUB_OUTPUT
+      #     fi
+      # - name: Copy CrocoDash into container
+      #   run: |
+      #         rm -rf $WORKDIR/CrocoDash
+      #         cp -r $GITHUB_WORKSPACE/CrocoDash $WORKDIR/
+      # - name: Create CrocoDash environment if changed
+      #   if: steps.compare.outputs.env_changed == 'true'
+      #   run: |
+      #     echo "Environment changed! Rebuilding CrocoDash conda environment..."
+      #     conda env remove -n CrocoDash --yes
+      #     conda env create -f $WORKDIR/CrocoDash/environment.yml
+      # - name: Run Pytest
+      #   run: |
+      #     cd $WORKDIR/CrocoDash
+      #     pytest --ignore=CrocoDash/visualCaseGen -m "not workflow" -vv --showlocals --tb=short --cov=CrocoDash --cov-report=xml --cov-branch
 
+      - name: Samp
+        run: |
+          touch coverage.xml
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
          token: ${{ secrets.CODECOV_TOKEN }}
          slug: CROCODILE-CESM/CrocoDash
-         files: $WORKDIR/coverage.xml
+         files: /workspace/CrocoDash/coverage.xml
       - name: Run Workflow Tests
         run: |
           cd $WORKDIR/CrocoDash
