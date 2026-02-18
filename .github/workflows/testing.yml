@@ -15,8 +15,6 @@ jobs:
     container:
       image: ghcr.io/crocodile-cesm/crocodash:nightly
     steps:
-      - name: Install GPG (for CodeCoverage)
-        run: apt-get update && apt-get install -y gnupg git bash curl gpg
       - uses: actions/checkout@v4
         with:
           submodules: recursive
