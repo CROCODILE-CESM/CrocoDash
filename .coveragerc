@@ -1,0 +1,7 @@
+# .coveragerc
+[run]
+# Exclude these paths from coverage measurement
+omit =
+    CrocoDash/visualCaseGen/*
+    CrocoDash/rm6/*
+
