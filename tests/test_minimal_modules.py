@@ -2,6 +2,7 @@
 Test the modules that are minimal, and primarily just need to be checked for connection
 """
 
+
 def test_grid_connection():
     from CrocoDash.grid import Grid
 
