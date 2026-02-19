@@ -1,13 +1,16 @@
 import json
 from graphviz import Digraph
 from pathlib import Path
+
 # Muted colors
 MANDATORY_COLOR = "#66aa88"
 OPTIONAL_COLOR = "#cc6666"
 
+
 def load_workflow(json_file):
     with open(json_file, "r") as f:
         return json.load(f)
+
 
 def visualize_workflow(workflow):
     # Track completed steps
@@ -19,8 +22,8 @@ def visualize_workflow(workflow):
 
     dot = Digraph(format="png")
 
-    step_style = {'shape': 'box', 'style': 'filled', 'color': 'lightblue'}
-    output_style = {'shape': 'ellipse', 'style': 'filled', 'color': 'lightgray'}
+    step_style = {"shape": "box", "style": "filled", "color": "lightblue"}
+    output_style = {"shape": "ellipse", "style": "filled", "color": "lightgray"}
 
     # Add step nodes and output nodes
     for step in workflow["steps"]:
@@ -50,34 +53,47 @@ def visualize_workflow(workflow):
     optional = set(reqs.get("optional", []))
     for output in mandatory:
         if output in all_outputs:
-            dot.node(output, output, color=MANDATORY_COLOR, penwidth="2")  # highlight border
+            dot.node(
+                output, output, color=MANDATORY_COLOR, penwidth="2"
+            )  # highlight border
 
     for output in optional:
         if output in all_outputs:
             dot.node(output, output, color=OPTIONAL_COLOR, penwidth="2")
 
     # Create the graph
-    with dot.subgraph(name='cluster_legend') as legend:
-        legend.attr(label='Legend', fontsize='12', style='rounded', color='gray')
+    with dot.subgraph(name="cluster_legend") as legend:
+        legend.attr(label="Legend", fontsize="12", style="rounded", color="gray")
 
         # Dummy nodes for legend
-        legend.node('mandatory_legend', 'Mandatory Requirement',
-                    shape='oval', style='filled', color=MANDATORY_COLOR)
-        legend.node('optional_legend', 'Optional Requirement',
-                    shape='oval', style='filled', color=OPTIONAL_COLOR)
+        legend.node(
+            "mandatory_legend",
+            "Mandatory Requirement",
+            shape="oval",
+            style="filled",
+            color=MANDATORY_COLOR,
+        )
+        legend.node(
+            "optional_legend",
+            "Optional Requirement",
+            shape="oval",
+            style="filled",
+            color=OPTIONAL_COLOR,
+        )
 
         # Invisible edge to keep layout tidy
-        legend.edge('mandatory_legend', 'optional_legend', style='invis')
+        legend.edge("mandatory_legend", "optional_legend", style="invis")
     # Render
     script_dir = Path(__file__).parent.parent  # Get the directory of the current script
-    output_path = script_dir / "_static"/"workflow_diagram"
+    output_path = script_dir / "_static" / "workflow_diagram"
     dot.render(output_path)
 
 
 def main():
     script_dir = Path(__file__).parent
-    workflow = load_workflow(script_dir/'workflow_diagram.json')
+    workflow = load_workflow(script_dir / "workflow_diagram.json")
     visualize_workflow(workflow)
+
 
 if __name__ == "__main__":
     main()

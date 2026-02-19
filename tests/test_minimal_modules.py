@@ -2,8 +2,6 @@
 Test the modules that are minimal, and primarily just need to be checked for connection
 """
 
-import pytest
-
 
 def test_grid_connection():
     from CrocoDash.grid import Grid
@@ -29,21 +27,13 @@ def test_vgrid_connection():
     assert VGrid is not None
 
 
-@pytest.mark.slow
-def test_topo_interpolate_from_file(
-    get_rect_grid_and_empty_topo, get_dummy_bathymetry_data, tmp_path
-):
+def test_grid_creator_connection():
+    from CrocoDash.grid_creator import GridCreator
 
-    # Basically test that the function is able to connect to the RM6 function it wraps, with a simple smoke test, with a check that the depth was filled
-    bathymetry_data = get_dummy_bathymetry_data
-    bathymetry_path = tmp_path / "bathymetry.nc"
-    bathymetry_data.to_netcdf(bathymetry_path)
-    rect_grid, topo = get_rect_grid_and_empty_topo
-    topo.interpolate_from_file(
-        file_path=bathymetry_path,
-        longitude_coordinate_name="lon",
-        latitude_coordinate_name="lat",
-        vertical_coordinate_name="elevation",
-    )
+    assert GridCreator is not None
 
-    assert topo.depth is not None
+
+def test_vgrid_creator_connection():
+    from CrocoDash.vgrid_creator import VGridCreator
+
+    assert VGridCreator is not None

@@ -6,6 +6,7 @@ import sys
 import os
 import subprocess
 from pathlib import Path
+
 sys.path.insert(0, os.path.abspath("../.."))
 
 
@@ -28,7 +29,7 @@ author = "CROCODILE"
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
-extensions = ["sphinx.ext.autodoc", "sphinx.ext.napoleon","nbsphinx","myst_parser"]
+extensions = ["sphinx.ext.autodoc", "sphinx.ext.napoleon", "nbsphinx", "myst_parser"]
 
 templates_path = ["_templates"]
 exclude_patterns = []
@@ -39,5 +40,5 @@ exclude_patterns = []
 
 html_theme = "sphinx_book_theme"
 html_static_path = ["_static"]
-nbsphinx_execute="never"
+nbsphinx_execute = "never"
 html_logo = "_static/crocodile.png"
