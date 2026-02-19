@@ -5,4 +5,4 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)" # Get this script pat
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)" # Back out of tests
 
 black "$REPO_ROOT" \
-  --exclude 'CrocoDash/visualCaseGen|CrocoDash/rm6'
+  --exclude 'CrocoDash/visualCaseGen|CrocoDash/rm6|demos'
