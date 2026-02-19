@@ -4,7 +4,7 @@ from CrocoDash.topo import Topo
 from CrocoDash.vgrid import VGrid
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def get_rect_grid():
     grid = Grid(
         resolution=0.1,
@@ -17,7 +17,7 @@ def get_rect_grid():
     return grid
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def get_rect_grid_and_empty_topo(get_rect_grid):
     topo = Topo(
         grid=get_rect_grid,
@@ -26,7 +26,7 @@ def get_rect_grid_and_empty_topo(get_rect_grid):
     return get_rect_grid, topo
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def get_rect_grid_and_topo(get_rect_grid):
     topo = Topo(
         grid=get_rect_grid,
@@ -36,14 +36,14 @@ def get_rect_grid_and_topo(get_rect_grid):
     return get_rect_grid, topo
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def gen_grid_topo_vgrid(get_rect_grid_and_topo):
     grid, topo = get_rect_grid_and_topo
     vgrid = VGrid.hyperbolic(nk=75, depth=topo.max_depth, ratio=20.0)
     return grid, topo, vgrid
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def get_vgrid():
     vgrid = VGrid.hyperbolic(nk=75, depth=6000, ratio=20.0)
     return vgrid

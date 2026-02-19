@@ -11,6 +11,7 @@ from typing import Optional, Any
 import copy
 import subprocess
 import json
+from CrocoDash.forcing_configurations import *
 
 logger = setup_logger(__name__)
 
@@ -44,12 +45,15 @@ class ForcingConfigRegistry:
         self.find_active_configurators(self.compset, inputs)
 
     @classmethod
-    def deserialize(cls, obj_dict):
-        name = obj_dict["name"]
+    def get_configurator_from_name(cls, name):
         for thing in cls.registered_types:
-            if name == thing.name:
-                return thing.deserialize(obj_dict)
-        raise ValueError(f"Unknown configurator name: {name}")
+            if name.lower() == thing.name.lower():
+                return thing
+        raise ValueError("Configurator Not Found")
+
+    @classmethod
+    def get_configurator(cls, obj_dict):
+        return cls.get_configurator_from_name(obj_dict["name"]).deserialize(obj_dict)
 
     @classmethod
     def find_valid_configurators(cls, compset):
@@ -211,10 +215,11 @@ class OutputParam(Param):
     Base class for a single configuration parameter applied to a CESM/MOM6 case.
     """
 
-    def __init__(self, name: str, comment: Optional[str] = None):
+    def __init__(self, name: str, comment: Optional[str] = None, is_file: bool = False):
         super().__init__(name, comment)
         self.value: Any = None
         self.executed: bool = False
+        self.is_file = is_file
 
     def set_item(self, value: Any):
         self.value = value
@@ -240,8 +245,9 @@ class UserNLConfigParam(OutputParam):
         name: str,
         user_nl_name: str = "mom",
         comment: Optional[str] = None,
+        is_file: bool = False,
     ):
-        super().__init__(name, comment)
+        super().__init__(name, comment, is_file=is_file)
         self.user_nl_name = user_nl_name
 
     def apply(self):
@@ -288,8 +294,9 @@ class XMLConfigParam(OutputParam):
         name: str,
         is_non_local: bool = False,
         comment: Optional[str] = None,
+        is_file: bool = False,
     ):
-        super().__init__(name, comment)
+        super().__init__(name, comment, is_file=is_file)
         self.is_non_local = is_non_local
 
     def apply(self):
@@ -487,3 +494,20 @@ class BaseConfigurator(ABC):
         return all(sub in compset for sub in cls.allowed_compsets) and all(
             sub not in compset for sub in cls.forbidden_compsets
         )
+
+    def get_output_filepaths(self, ocn_ice_directory):
+        """Get output files from the output parameters"""
+        potential_output_paths = []
+        for output in self.output_params:
+            if output.is_file:
+                potential_file_path = Path(ocn_ice_directory) / str(output.value)
+                if potential_file_path.exists():
+                    potential_output_paths.append(potential_file_path)
+        return potential_output_paths
+
+    def validate_output_filepaths(self, ocn_ice_directory):
+        output_paths = self.get_output_filepaths(ocn_ice_directory)
+        for path in output_paths:
+            if not Path(path).exists():
+                return False
+        return True

@@ -1,6 +1,8 @@
 import pytest
 from CrocoDash.rm6 import regional_mom6 as rm6
 from CrocoDash.case import Case
+from pathlib import Path
+from uuid import uuid4
 
 
 @pytest.fixture(scope="session")
@@ -24,52 +26,83 @@ def setup_sample_rm6_expt(tmp_path):
     return expt
 
 
-@pytest.fixture
-def get_CrocoDash_case(
-    tmp_path,
+@pytest.fixture(scope="module")
+def get_case_with_cf(CrocoDash_case_factory, tmp_path_factory):
+    case = CrocoDash_case_factory(tmp_path_factory.mktemp(f"case-{uuid4().hex}"))
+    case.configure_forcings(date_range=["2020-01-01 00:00:00", "2020-02-01 00:00:00"])
+    return case
+
+
+@pytest.fixture(scope="module")
+def get_CrocoDash_case(CrocoDash_case_factory, tmp_path_factory):
+
+    # Set some defaults
+    caseroot = tmp_path_factory.mktemp(f"case-{uuid4().hex}")
+
+    return CrocoDash_case_factory(caseroot)
+
+
+@pytest.fixture(scope="session")
+def CrocoDash_case_factory(
     gen_grid_topo_vgrid,
     is_github_actions,
     get_cesm_root_path,
     is_glade_file_system,
 ):
-    # Set Grid Info
-    grid, topo, vgrid = gen_grid_topo_vgrid
-
-    # Find CESM Root
     cesmroot = get_cesm_root_path
-
-    # Set some defaults
-    caseroot, inputdir = tmp_path / "case", tmp_path / "inputdir"
     project_num = "NCGD0011"
     override = True
-    compset = "1850_DATM%JRA_SLND_SICE_MOM6_SROF_SGLC_SWAV"
-    atm_grid_name = "TL319"
-    ninst = 2
-    glade_bool = is_glade_file_system
+    ninst = 1
 
-    if is_github_actions:
-        machine = "ubuntu-latest"
-    elif glade_bool:
-        machine = "derecho"
-    else:
-        machine = None
+    def _CrocoDash_case_factory(
+        directory,
+        configure_forcings=False,
+        compset: str = "1850_DATM%JRA_SLND_SICE_MOM6_SROF_SGLC_SWAV",
+        atm_grid_name: str = "TL319",
+    ):
+        """
+        Factory function to create a CrocoDash Case object with sensible defaults.
+        Can be called from pytest fixtures or standalone scripts.
+        """
+        directory = Path(directory)
+        directory.mkdir(exist_ok=True)
+        # Set Grid Info
+        grid, topo, vgrid = gen_grid_topo_vgrid
 
-    # Setup Case
-    case = Case(
-        cesmroot=cesmroot,
-        caseroot=caseroot,
-        inputdir=inputdir,
-        compset=compset,
-        ocn_grid=grid,
-        ocn_vgrid=vgrid,
-        ocn_topo=topo,
-        project=project_num,
-        override=override,
-        machine=machine,
-        atm_grid_name=atm_grid_name,
-        ninst=ninst,
-    )
-    return case
+        # Set paths
+        caseroot = directory / f"case-{uuid4().hex}"
+        inputdir = directory / "inputdir"
+
+        # Decide machine
+        if is_github_actions:
+            machine = "ubuntu-latest"
+        elif is_glade_file_system:
+            machine = "derecho"
+        else:
+            machine = "homebrew"
+
+        # Create the case
+        case = Case(
+            cesmroot=cesmroot,
+            caseroot=caseroot,
+            inputdir=inputdir,
+            compset=compset,
+            ocn_grid=grid,
+            ocn_vgrid=vgrid,
+            ocn_topo=topo,
+            project=project_num,
+            override=override,
+            machine=machine,
+            atm_grid_name=atm_grid_name,
+            ninst=ninst,
+        )
+        if configure_forcings:
+            case.configure_forcings(
+                date_range=["2020-01-01 00:00:00", "2020-02-01 00:00:00"]
+            )
+        return case
+
+    return _CrocoDash_case_factory
 
 
 @pytest.fixture
