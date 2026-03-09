@@ -24,7 +24,7 @@ def copy_user_nl_params_from_case(
         with usernl.open() as f:
             for line in f:
                 line = line.strip()
-                if line.startswith("!"):
+                if line.startswith("!") or "=" not in line:
                     continue
 
                 # PARAM=VALUE
@@ -34,7 +34,7 @@ def copy_user_nl_params_from_case(
                     logger.info(
                         f"Adding {param.strip()}={value.strip()} into user_nl_{key}"
                     )
-                    append_user_nl(key, [(param.strip(), value.strip())])
+                    append_user_nl(key, [(param.strip(), value.strip())], do_exec=True)
 
 
 def copy_source_mods_from_case(

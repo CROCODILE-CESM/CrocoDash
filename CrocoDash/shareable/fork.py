@@ -97,7 +97,9 @@ class ForkCrocoDashBundle:
                 f"{self.differences['xml_files_missing_in_new']}\nCopy them over?"
             )
 
-        if self.differences.get("user_nl_missing_params"):
+        if self.differences.get("user_nl_missing_params") and any(
+            self.differences["user_nl_missing_params"].values()
+        ):
             self.plan["user_nl"] = ask_yes_no(
                 f"Non-default user_nl parameters detected:\n"
                 f"{self.differences['user_nl_missing_params']}\nCopy them over?"
@@ -212,7 +214,7 @@ class ForkCrocoDashBundle:
 
         if self.plan.get("xml_files"):
             copy_xml_files_from_case(
-                self.bundle_location,
+                self.bundle_location / "xml_files",
                 self.case.caseroot,
                 self.differences["xml_files_missing_in_new"],
             )
@@ -220,7 +222,6 @@ class ForkCrocoDashBundle:
         if self.plan.get("user_nl"):
             copy_user_nl_params_from_case(
                 self.bundle_location,
-                self.case.caseroot,
                 self.differences["user_nl_missing_params"],
             )
 
