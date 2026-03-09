@@ -29,7 +29,8 @@ def setup_sample_rm6_expt(tmp_path):
 @pytest.fixture(scope="module")
 def get_case_with_cf(CrocoDash_case_factory, tmp_path_factory):
     case = CrocoDash_case_factory(tmp_path_factory.mktemp(f"case-{uuid4().hex}"))
-    case.configure_forcings(date_range=["2020-01-01 00:00:00", "2020-02-01 00:00:00"])
+    case.configure_forcings(date_range=["2020-01-01 00:00:00", "2020-02-01 00:00:00"],
+                            boundaries= ["north","east"])
     return case
 
 
