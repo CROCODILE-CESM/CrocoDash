@@ -43,6 +43,7 @@ class ForkCrocoDashBundle:
         self.project_number = project_number
         self.caseroot = new_caseroot
         self.inputdir = new_inputdir
+        self.forcing_config = self.manifest["forcing_config"]
 
     def fork(self):
         """
@@ -346,9 +347,9 @@ def generate_configure_forcing_args(forcing_config, remove_configs=[""]):
 
     configure_forcing_args = {
         "date_range": date_range,
-        "boundaries": forcing_config["basic"]["general"][
-            "boundary_number_conversion"
-        ].keys(),
+        "boundaries": list(
+            forcing_config["basic"]["general"]["boundary_number_conversion"].keys()
+        ),
         "product_name": forcing_config["basic"]["forcing"]["product_name"],
         "function_name": forcing_config["basic"]["forcing"]["function_name"],
     }
