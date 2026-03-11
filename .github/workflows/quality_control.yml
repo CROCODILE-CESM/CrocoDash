@@ -10,7 +10,7 @@ jobs:
         uses: actions/checkout@v4
       - name: Search for '/glade' in CrocoDash/, tests/, demos/
         run: |
-          tests/check_glade_quality_control.sh
+          .github/scripts/check_glade_quality_control.sh
   check-black:
     runs-on: ubuntu-latest
     steps:
