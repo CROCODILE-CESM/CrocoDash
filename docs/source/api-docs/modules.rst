@@ -1,5 +1,5 @@
-CrocoDash API Docs
-===================
+CrocoDash
+=========
 
 .. toctree::
    :maxdepth: 4
