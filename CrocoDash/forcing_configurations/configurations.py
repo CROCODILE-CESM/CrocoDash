@@ -150,6 +150,7 @@ class BGCConfigurator(BaseConfigurator):
 
     Sets parameters required when using the MARBL biogeochemical model.
     """
+
     name = "BGC"
     required_for_compsets = ["MARBL"]
     allowed_compsets = ["MARBL"]
@@ -188,6 +189,7 @@ class CICEConfigurator(BaseConfigurator):
 
     Sets initial conditions and boundary conditions for CICE sea ice component.
     """
+
     name = "CICE"
     required_for_compsets = ["CICE"]
     allowed_compsets = ["CICE"]
@@ -229,6 +231,7 @@ class BGCICConfigurator(BaseConfigurator):
 
     Handles setup of initial conditions for the MARBL biogeochemical model.
     """
+
     name = "BGCIC"
     required_for_compsets = ["MARBL"]
     allowed_compsets = ["MARBL"]
@@ -281,6 +284,7 @@ class BGCIronForcingConfigurator(BaseConfigurator):
 
     Sets up iron flux forcing files for the MARBL biogeochemical model.
     """
+
     name = "BGCIronForcing"
     required_for_compsets = ["MARBL"]
     allowed_compsets = ["MARBL"]
@@ -338,6 +342,7 @@ class BGCRiverNutrientsConfigurator(BaseConfigurator):
 
     Handles setup of river nutrient fluxes for the MARBL biogeochemical model.
     """
+
     name = "BGCRiverNutrients"
     allowed_compsets = ["MARBL", "DROF"]
     input_params = [
@@ -430,6 +435,7 @@ class RunoffConfigurator(BaseConfigurator):
     Generates and applies runoff mapping files for converting runoff data from the
     runoff grid to the ocean grid using smoothed nearest-neighbor mapping.
     """
+
     name = "Runoff"
     required_for_compsets = {"DROF"}
     allowed_compsets = {"DROF"}
@@ -613,6 +619,7 @@ class ChlConfigurator(BaseConfigurator):
     Sets up chlorophyll data and variable light penetration for passive tracers
     (not used when MARBL biogeochemistry is active).
     """
+
     name = "Chl"
     forbidden_compsets = ["MARBL"]
     input_params = [

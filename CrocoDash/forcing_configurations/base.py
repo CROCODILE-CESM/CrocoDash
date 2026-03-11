@@ -358,7 +358,7 @@ class Param(ABC):
         None
         """
         pass
-    
+
     def __repr__(self):
         return f"{self.__class__.__name__}(name={self.name!r})"
 
@@ -369,6 +369,7 @@ class InputParam(Param):
 
     Input parameters represent values provided by users that drive the configuration process.
     """
+
     pass
 
 
