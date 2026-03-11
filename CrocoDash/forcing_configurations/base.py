@@ -724,6 +724,15 @@ class BaseConfigurator(ABC):
         List of output parameters for this configurator.
     """
 
+    name: str = ""
+
+    required_for_compsets: List[str] = []
+    allowed_compsets: List[str] = []
+    forbidden_compsets: List[str] = []
+
+    input_params: List[Param]
+    output_params: List[OutputParam]
+
     def __eq__(self, other):
         """
         Compare two configurator instances for equality.
