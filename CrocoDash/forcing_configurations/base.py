@@ -16,19 +16,6 @@ logger = setup_logger(__name__)
 
 
 def is_serializable(v):
-    """
-    Check if a value can be serialized to JSON.
-
-    Parameters
-    ----------
-    v : Any
-        Value to check for serializability.
-
-    Returns
-    -------
-    bool
-        True if the value is a JSON-serializable type, False otherwise.
-    """
     return isinstance(v, (str, int, float, bool, type(None), Path, list, dict))
 
 
@@ -37,18 +24,7 @@ class ForcingConfigRegistry:
 
     @classmethod
     def register(cls, configurator_cls: type):
-        """
-        Register a configurator class with the registry.
 
-        Parameters
-        ----------
-        configurator_cls : type
-            The configurator class to register.
-
-        Returns
-        -------
-        None
-        """
         cls.registered_types.append(configurator_cls)
 
     def __getitem__(self, key: str):
@@ -69,24 +45,6 @@ class ForcingConfigRegistry:
 
     @classmethod
     def deserialize(cls, obj_dict):
-        """
-        Deserialize a configurator from a dictionary representation.
-
-        Parameters
-        ----------
-        obj_dict : dict
-            Dictionary containing the configurator name and data.
-
-        Returns
-        -------
-        BaseConfigurator
-            An instance of the configurator class.
-
-        Raises
-        ------
-        ValueError
-            If the configurator name is not found in registered types.
-        """
         name = obj_dict["name"]
         for thing in cls.registered_types:
             if name == thing.name:
@@ -95,19 +53,7 @@ class ForcingConfigRegistry:
 
     @classmethod
     def find_valid_configurators(cls, compset):
-        """
-        Find all configurators valid for a given compset.
-
-        Parameters
-        ----------
-        compset : str
-            The component set string.
-
-        Returns
-        -------
-        list of type
-            List of configurator classes that are compatible with the compset.
-        """
+        """Returns the valid configurations based on the compset in a list"""
         valid_configs = []
         for configurator_cls in cls.registered_types:
             if configurator_cls.validate_compset_compatibility(compset):
@@ -116,19 +62,7 @@ class ForcingConfigRegistry:
 
     @classmethod
     def find_required_configurators(cls, compset):
-        """
-        Find all configurators required for a given compset.
-
-        Parameters
-        ----------
-        compset : str
-            The component set string.
-
-        Returns
-        -------
-        list of type
-            List of configurator classes that are required for the compset.
-        """
+        """Returns the required configurations based on the compset in a list"""
         required_configs = []
         for configurator_cls in cls.registered_types:
             if configurator_cls.is_required(compset):
@@ -137,19 +71,6 @@ class ForcingConfigRegistry:
 
     @classmethod
     def get_ctor_signature(cls, configurator_cls):
-        """
-        Extract constructor signature information from a configurator class.
-
-        Parameters
-        ----------
-        configurator_cls : type
-            The configurator class to inspect.
-
-        Returns
-        -------
-        tuple of (list, list)
-            First list contains all argument names, second list contains only required argument names.
-        """
         sig = inspect.signature(configurator_cls.__init__)
         args = [p.name for p in sig.parameters.values() if p.name != "self"]
         required_args = [
@@ -162,86 +83,24 @@ class ForcingConfigRegistry:
 
     @classmethod
     def get_user_args(cls, configurator_cls):
-        """
-        Get user-provided argument names for a configurator class.
-
-        Parameters
-        ----------
-        configurator_cls : type
-            The configurator class to inspect.
-
-        Returns
-        -------
-        list of str
-            Required argument names that don't start with 'case_'.
-        """
         args, required_args = cls.get_ctor_signature(configurator_cls)
         user_args = [arg for arg in required_args if not arg.startswith("case_")]
         return user_args
 
     @classmethod
     def return_missing_inputs(cls, configurator_cls, inputs):
-        """
-        Identify missing required inputs for a configurator class.
-
-        Parameters
-        ----------
-        configurator_cls : type
-            The configurator class to check.
-        inputs : dict
-            Dictionary of provided inputs.
-
-        Returns
-        -------
-        list of str
-            Names of required inputs that are missing.
-        """
         _, required_args = cls.get_ctor_signature(configurator_cls)
         missing = [arg for arg in required_args if arg not in inputs]
         return missing
 
     @classmethod
     def instantiate_configurator(cls, configurator_cls, inputs):
-        """
-        Instantiate a configurator class with provided inputs.
-
-        Parameters
-        ----------
-        configurator_cls : type
-            The configurator class to instantiate.
-        inputs : dict
-            Dictionary of inputs to pass to the constructor.
-
-        Returns
-        -------
-        BaseConfigurator
-            An instance of the configurator class.
-        """
         args, _ = cls.get_ctor_signature(configurator_cls)
         ctor_kwargs = {arg: inputs[arg] for arg in args if arg in inputs}
         return configurator_cls(**ctor_kwargs)
 
     def find_active_configurators(self, compset, inputs: dict):
-        """
-        Find and instantiate active configurators for a given compset and inputs.
 
-        Parameters
-        ----------
-        compset : str
-            The component set string.
-        inputs : dict
-            Dictionary of input values for configurators.
-
-        Returns
-        -------
-        None
-            Updates self.active_configurators in place.
-
-        Raises
-        ------
-        ValueError
-            If a required configurator is missing required arguments.
-        """
         required = self.find_required_configurators(compset)
         valid = self.find_valid_configurators(compset)
 
@@ -276,19 +135,7 @@ class ForcingConfigRegistry:
             )
 
     def run_configurators(self, config_path):
-        """
-        Execute all active configurators and save their configurations.
 
-        Parameters
-        ----------
-        config_path : str or Path or None
-            Path to save the configuration JSON file. If None, configurations are not saved.
-
-        Returns
-        -------
-        dict
-            Dictionary containing serialized configuration data for all active configurators.
-        """
         if config_path is not None:
             with open(config_path) as f:
                 general_config = json.load(f)
@@ -307,14 +154,6 @@ class ForcingConfigRegistry:
         return general_config
 
     def get_active_configurators(self):
-        """
-        Get names of all active configurators.
-
-        Returns
-        -------
-        dict_keys
-            Keys of active configurators.
-        """
         return self.active_configurators.keys()
 
     def is_active(self, name: str) -> bool:
@@ -324,39 +163,16 @@ class ForcingConfigRegistry:
 
 class Param(ABC):
     """
-    Base class for a single parameter in forcing configurations.
-
-    Parameters are either inputs (values provided by users) or outputs (configurations to apply).
+    Base class for a single parameter in our forcing configurations.
     """
 
     def __init__(self, name: str, comment: Optional[str] = None):
-        """
-        Initialize a parameter.
-
-        Parameters
-        ----------
-        name : str
-            Name of the parameter.
-        comment : str, optional
-            Comment to include when applying configuration.
-        """
         self.name = name
         self.comment = comment
 
     @abstractmethod
     def set_item(self, item: Any):
-        """
-        Bind a runtime value to this parameter.
-
-        Parameters
-        ----------
-        item : Any
-            The value to bind to the parameter.
-
-        Returns
-        -------
-        None
-        """
+        """Bind a runtime value to this parameter."""
         pass
 
     def __repr__(self):
@@ -364,175 +180,62 @@ class Param(ABC):
 
 
 class InputParam(Param):
-    """
-    Base class for input parameters in forcing configurations.
-
-    Input parameters represent values provided by users that drive the configuration process.
-    """
-
     pass
 
 
 class InputValueParam(InputParam):
     """
-    Parameter representing a single user-provided value.
-
-    Attributes
-    ----------
-    value : str or None
-        The bound value of the parameter.
+    Base class for a single value parameter in our forcing configurations.
     """
 
     def __init__(self, name: str, comment: Optional[str] = None):
-        """
-        Initialize an input value parameter.
-
-        Parameters
-        ----------
-        name : str
-            Name of the parameter.
-        comment : str, optional
-            Optional comment.
-        """
         super().__init__(name, comment)
         self.value: Optional[str] = None
 
     def set_item(self, item):
-        """
-        Bind a value to this parameter.
-
-        Parameters
-        ----------
-        item : Any
-            The value to bind.
-
-        Returns
-        -------
-        None
-        """
         self.value = item
 
 
 class InputFileParam(InputParam):
     """
-    Parameter representing a file path provided by the user.
-
-    Attributes
-    ----------
-    value : str or None
-        The bound file path.
+    Base class for a single file parameter in our forcing configurations.
     """
 
     def __init__(self, name: str, comment: Optional[str] = None):
-        """
-        Initialize an input file parameter.
-
-        Parameters
-        ----------
-        name : str
-            Name of the parameter.
-        comment : str, optional
-            Optional comment.
-        """
         super().__init__(name, comment)
         self.value: Optional[str] = None
 
     def set_item(self, filepath: str):
-        """
-        Bind a file path to this parameter.
-
-        Parameters
-        ----------
-        filepath : str
-            The file path to bind.
-
-        Returns
-        -------
-        None
-        """
         self.value = filepath
 
 
 class OutputParam(Param):
     """
-    Base class for configuration parameters applied to a CESM/MOM6 case.
-
-    Output parameters represent configurations that must be applied to the case.
-
-    Attributes
-    ----------
-    value : Any
-        The configuration value to apply.
-    executed : bool
-        Whether the configuration has been applied.
+    Base class for a single configuration parameter applied to a CESM/MOM6 case.
     """
 
     def __init__(self, name: str, comment: Optional[str] = None):
-        """
-        Initialize an output parameter.
-
-        Parameters
-        ----------
-        name : str
-            Name of the parameter.
-        comment : str, optional
-            Optional comment.
-        """
         super().__init__(name, comment)
         self.value: Any = None
         self.executed: bool = False
 
     def set_item(self, value: Any):
-        """
-        Set the value of this parameter.
-
-        Parameters
-        ----------
-        value : Any
-            The value to set.
-
-        Returns
-        -------
-        None
-        """
         self.value = value
 
     @abstractmethod
     def apply(self):
-        """
-        Apply the configuration change to the case.
-
-        Returns
-        -------
-        None
-        """
+        """Apply the configuration change."""
         pass
 
     @abstractmethod
     def inspect(cls, caseroot):
-        """
-        Inspect the current value of this parameter in the case.
-
-        Parameters
-        ----------
-        caseroot : str or Path
-            Path to the case root directory.
-
-        Returns
-        -------
-        None
-        """
+        """Inspect the current value of this parameter in the case located at caseroot."""
         pass
 
 
 class UserNLConfigParam(OutputParam):
     """
-    Parameter written to a user_nl_<component> file (default: user_nl_mom).
-
-    Attributes
-    ----------
-    user_nl_name : str
-        Component name for the user_nl file (default: 'mom').
+    Parameter written to a `user_nl_<component>` file (default: user_nl_mom).
     """
 
     def __init__(
@@ -541,34 +244,10 @@ class UserNLConfigParam(OutputParam):
         user_nl_name: str = "mom",
         comment: Optional[str] = None,
     ):
-        """
-        Initialize a user_nl configuration parameter.
-
-        Parameters
-        ----------
-        name : str
-            Name of the parameter.
-        user_nl_name : str, optional
-            Component name for the user_nl file (default: 'mom').
-        comment : str, optional
-            Optional comment.
-        """
         super().__init__(name, comment)
         self.user_nl_name = user_nl_name
 
     def apply(self):
-        """
-        Apply the parameter to the user_nl file.
-
-        Returns
-        -------
-        None
-
-        Raises
-        ------
-        ValueError
-            If the parameter value has not been set.
-        """
         if self.value is None:
             raise ValueError(f"Value for parameter {self.name} has not been set.")
 
@@ -582,27 +261,6 @@ class UserNLConfigParam(OutputParam):
         self.executed = True
 
     def inspect(self, caseroot):
-        """
-        Inspect and extract parameter value from the user_nl file in the case.
-
-        Parameters
-        ----------
-        caseroot : str or Path
-            Path to the case root directory.
-
-        Returns
-        -------
-        None
-
-        Raises
-        ------
-        ValueError
-            If the parameter value has already been set.
-        FileNotFoundError
-            If the user_nl file does not exist.
-        KeyError
-            If the parameter is not found in the user_nl file.
-        """
         if self.value is not None:
             raise ValueError(f"Value for parameter {self.name} has already been set.")
         # Using caseroot, get to user_nl
@@ -623,14 +281,9 @@ class UserNLConfigParam(OutputParam):
 
 class XMLConfigParam(OutputParam):
     """
-    Parameter applied via xmlchange command.
+    Parameter applied via xmlchange.
 
     XML changes are permanent and do not save previous state.
-
-    Attributes
-    ----------
-    is_non_local : bool
-        Whether the xmlchange is non-local.
     """
 
     def __init__(
@@ -639,34 +292,10 @@ class XMLConfigParam(OutputParam):
         is_non_local: bool = False,
         comment: Optional[str] = None,
     ):
-        """
-        Initialize an XML configuration parameter.
-
-        Parameters
-        ----------
-        name : str
-            Name of the XML parameter.
-        is_non_local : bool, optional
-            Whether the xmlchange is non-local (default: False).
-        comment : str, optional
-            Optional comment.
-        """
         super().__init__(name, comment)
         self.is_non_local = is_non_local
 
     def apply(self):
-        """
-        Apply the XML parameter change via xmlchange.
-
-        Returns
-        -------
-        None
-
-        Raises
-        ------
-        ValueError
-            If the parameter value has not been set.
-        """
         if self.value is None:
             raise ValueError(f"Value for parameter {self.name} has not been set.")
 
@@ -678,18 +307,6 @@ class XMLConfigParam(OutputParam):
         self.executed = True
 
     def inspect(self, caseroot):
-        """
-        Inspect and extract XML parameter value from the case.
-
-        Parameters
-        ----------
-        caseroot : str or Path
-            Path to the case root directory.
-
-        Returns
-        -------
-        None
-        """
         if self.value is not None:
             raise ValueError(f"Value for parameter {self.name} has already been set.")
         # Using caseroot, query xml
@@ -702,28 +319,9 @@ class XMLConfigParam(OutputParam):
 
 
 class BaseConfigurator(ABC):
-    """
-    Base class for all CrocoDash forcing configurators.
+    """Base class for all CrocoDash configurators."""
 
-    Configurators manage input parameters and output parameters that control
-    how forcing data is processed and applied to a case.
-
-    Class Attributes
-    ----------------
-    name : str
-        Name of the configurator.
-    required_for_compsets : list of str
-        List of compset substrings that require this configurator.
-    allowed_compsets : list of str
-        List of compset substrings for which this configurator is allowed.
-    forbidden_compsets : list of str
-        List of compset substrings for which this configurator is forbidden.
-    input_params : list of Param
-        List of input parameters for this configurator.
-    output_params : list of OutputParam
-        List of output parameters for this configurator.
-    """
-
+    # ---- class-level declarative metadata ----
     name: str = ""
 
     required_for_compsets: List[str] = []
@@ -734,21 +332,6 @@ class BaseConfigurator(ABC):
     output_params: List[OutputParam]
 
     def __eq__(self, other):
-        """
-        Compare two configurator instances for equality.
-
-        Two configurators are equal if all their output parameter values match.
-
-        Parameters
-        ----------
-        other : BaseConfigurator
-            Another configurator instance to compare.
-
-        Returns
-        -------
-        bool
-            True if all output parameters match, False otherwise.
-        """
         if not isinstance(other, BaseConfigurator):
             return NotImplemented
         for param in self.output_params:
@@ -759,25 +342,8 @@ class BaseConfigurator(ABC):
 
     def __getattr__(self, name):
         """
-        Allow accessing input parameter values as attributes.
-
-        Enables accessing input parameters via self.param_name instead of
-        self.get_input_param("param_name").
-
-        Parameters
-        ----------
-        name : str
-            The parameter name to access.
-
-        Returns
-        -------
-        Any
-            The value of the input parameter.
-
-        Raises
-        ------
-        AttributeError
-            If the parameter name does not correspond to an input parameter.
+        Allow input params to be accessed as attributes:
+        self.date_range -> self.get_input_param("date_range").value
         """
         try:
             param = self.get_input_param(name)
@@ -788,23 +354,6 @@ class BaseConfigurator(ABC):
         return param
 
     def __init__(self, **kwargs):
-        """
-        Initialize a configurator with input arguments.
-
-        Parameters
-        ----------
-        **kwargs
-            Keyword arguments matching the input parameters of this configurator.
-
-        Returns
-        -------
-        None
-
-        Raises
-        ------
-        ValueError
-            If required inputs are missing or unexpected inputs are provided.
-        """
         # Clone declared params for this instance
         self.input_params = [copy.copy(p) for p in self.__class__.input_params]
         self.output_params = [copy.copy(p) for p in self.__class__.output_params]
@@ -817,39 +366,13 @@ class BaseConfigurator(ABC):
 
     @classmethod
     def check_output_params_exist(cls):
-        """
-        Verify that output_params are defined on the class.
-
-        Returns
-        -------
-        None
-
-        Raises
-        ------
-        AssertionError
-            If output_params is not defined.
-        """
         assert hasattr(
             cls, "output_params"
         ), f"{cls.__name__} has no output_params defined."
 
     @classmethod
     def check_input_params_synced(cls):
-        """
-        Verify that __init__ arguments match input_params declaration.
-
-        This check ensures consistency between the constructor signature and
-        the declared input parameters.
-
-        Returns
-        -------
-        None
-
-        Raises
-        ------
-        AssertionError
-            If there are missing or extra arguments.
-        """
+        """Make sure the init args exactly match the input param names. This check is only run in testing"""
         sig = inspect.signature(cls.__init__)
         params = sig.parameters
 
@@ -867,23 +390,7 @@ class BaseConfigurator(ABC):
         )
 
     def validate_args(self, **kwargs):
-        """
-        Validate provided inputs against declared input_params.
-
-        Parameters
-        ----------
-        **kwargs
-            Keyword arguments to validate.
-
-        Returns
-        -------
-        None
-
-        Raises
-        ------
-        ValueError
-            If required inputs are missing or unexpected inputs are provided.
-        """
+        """Validate provided inputs against declared input_params."""
         expected = {p.name for p in self.input_params}
         provided = set(kwargs.keys())
 
@@ -897,38 +404,15 @@ class BaseConfigurator(ABC):
 
     @abstractmethod
     def configure(self):
-        """
-        Apply the configuration to the case.
-
-        This abstract method must bind input values to output parameters
-        and then apply them.
-
-        Returns
-        -------
-        None
-        """
+        """Bind input values to parameters and files."""
         for p in self.output_params:
             p.apply()
         pass
 
     @classmethod
     def inspect(cls, caseroot):
-        """
-        Inspect case configuration and return a configurator instance.
+        """Return an instance of the configurator with placeholder values for input and correct output params from case"""
 
-        Creates a configurator with placeholder input values and output
-        parameters extracted from the case.
-
-        Parameters
-        ----------
-        caseroot : str or Path
-            Path to the case root directory.
-
-        Returns
-        -------
-        BaseConfigurator
-            A configurator instance with values from the case.
-        """
         placeholder_args = {}
         for param in cls.input_params:
             placeholder_args[param.name] = f""
@@ -939,24 +423,6 @@ class BaseConfigurator(ABC):
 
     @classmethod
     def deserialize(cls, data: Dict[str, Any]):
-        """
-        Deserialize a configurator from a dictionary representation.
-
-        Parameters
-        ----------
-        data : dict
-            Dictionary with 'inputs' and 'outputs' keys containing parameter data.
-
-        Returns
-        -------
-        BaseConfigurator
-            A new configurator instance with restored state.
-
-        Raises
-        ------
-        KeyError
-            If required input or output parameters are missing.
-        """
         input_kwargs = {}
         for param in cls.input_params:
             if param.name not in data["inputs"]:
@@ -971,36 +437,11 @@ class BaseConfigurator(ABC):
         return obj
 
     def make_serializable(self, obj):
-        """
-        Convert an object to a JSON-serializable form.
-
-        Parameters
-        ----------
-        obj : Any
-            Object to convert.
-
-        Returns
-        -------
-        Any
-            A serializable representation of the object.
-        """
         if isinstance(obj, Path):
             return str(obj)
         return obj
 
     def serialize(self) -> Dict[str, Any]:
-        """
-        Serialize the configurator to a dictionary.
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        dict
-            Dictionary with 'name', 'inputs', and 'outputs' keys.
-        """
         output_dict = {"name": self.name, "inputs": {}, "outputs": {}}
         for param in self.input_params:
             output_dict["inputs"][param.name] = self.make_serializable(param.value)
@@ -1009,119 +450,24 @@ class BaseConfigurator(ABC):
         return output_dict
 
     def get_input_param(self, name: str) -> OutputParam:
-        """
-        Get the value of an input parameter.
-
-        Parameters
-        ----------
-        name : str
-            Name of the input parameter.
-
-        Returns
-        -------
-        Any
-            The value of the input parameter.
-
-        Raises
-        ------
-        KeyError
-            If the parameter name does not exist.
-        """
         return self.get_input_param_object(name).value
 
     def get_input_param_object(self, name: str) -> OutputParam:
-        """
-        Get an input parameter object by name.
-
-        Parameters
-        ----------
-        name : str
-            Name of the input parameter.
-
-        Returns
-        -------
-        Param
-            The input parameter object.
-
-        Raises
-        ------
-        KeyError
-            If the parameter name does not exist.
-        """
         try:
             return next(p for p in self.input_params if p.name == name)
         except StopIteration:
             raise KeyError(f"Input param '{name}' not found")
 
     def get_output_param(self, name: str) -> OutputParam:
-        """
-        Get the value of an output parameter.
-
-        Parameters
-        ----------
-        name : str
-            Name of the output parameter.
-
-        Returns
-        -------
-        Any
-            The value of the output parameter.
-
-        Raises
-        ------
-        KeyError
-            If the parameter name does not exist.
-        """
         return self.get_output_param_object(name).value
 
     def get_output_param_object(self, name: str) -> OutputParam:
-        """
-        Get an output parameter object by name.
-
-        Parameters
-        ----------
-        name : str
-            Name of the output parameter.
-
-        Returns
-        -------
-        OutputParam
-            The output parameter object.
-
-        Raises
-        ------
-        KeyError
-            If the parameter name does not exist.
-        """
         try:
             return next(p for p in self.output_params if p.name == name)
         except StopIteration:
             raise KeyError(f"Output param '{name}' not found")
 
     def set_output_param(self, name: str, value, is_non_local=None):
-        """
-        Set an output parameter value.
-
-        Parameters
-        ----------
-        name : str
-            Name of the output parameter.
-        value : Any
-            Value to set.
-        is_non_local : bool, optional
-            If provided and the parameter is XMLConfigParam, set is_non_local.
-
-        Returns
-        -------
-        None
-
-        Raises
-        ------
-        AssertionError
-            If is_non_local is provided but the parameter is not XMLConfigParam.
-        KeyError
-            If the parameter name does not exist.
-        """
         if is_non_local is not None:
             param = self.get_output_param_object(name)
             assert isinstance(
@@ -1131,64 +477,16 @@ class BaseConfigurator(ABC):
         self.get_output_param_object(name).set_item(value)
 
     def set_input_param(self, name: str, value):
-        """
-        Set an input parameter value.
-
-        Parameters
-        ----------
-        name : str
-            Name of the input parameter.
-        value : Any
-            Value to set.
-
-        Returns
-        -------
-        None
-
-        Raises
-        ------
-        KeyError
-            If the parameter name does not exist.
-        """
         self.get_input_param_object(name).set_item(value)
 
     # ---- compset logic ----
 
     @classmethod
     def is_required(cls, compset: str) -> bool:
-        """
-        Check if this configurator is required for a given compset.
-
-        Parameters
-        ----------
-        compset : str
-            The component set string.
-
-        Returns
-        -------
-        bool
-            True if any required_for_compsets substring is found in the compset.
-        """
         return any(sub in compset for sub in cls.required_for_compsets)
 
     @classmethod
     def validate_compset_compatibility(cls, compset: str) -> bool:
-        """
-        Check if this configurator is compatible with a given compset.
-
-        A configurator is compatible if all allowed_compsets substrings are present
-        and no forbidden_compsets substrings are present.
-
-        Parameters
-        ----------
-        compset : str
-            The component set string.
-
-        Returns
-        -------
-        bool
-            True if the configurator is compatible with the compset.
-        """
         return all(sub in compset for sub in cls.allowed_compsets) and all(
             sub not in compset for sub in cls.forbidden_compsets
         )
