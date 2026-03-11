@@ -84,6 +84,19 @@ class TidesConfigurator(BaseConfigurator):
             )
 
     def tidal_data_str(self, seg_ix):
+        """
+        Generate tidal data string for a given boundary segment.
+
+        Parameters
+        ----------
+        seg_ix : int
+            Segment index.
+
+        Returns
+        -------
+        str
+            String specifying tidal amplitude and phase files for the segment.
+        """
         return (
             f",Uamp=file:tu_segment_{seg_ix}.nc(uamp),"
             f"Uphase=file:tu_segment_{seg_ix}.nc(uphase),"
@@ -94,6 +107,16 @@ class TidesConfigurator(BaseConfigurator):
         )
 
     def configure(self):
+        """
+        Apply tidal forcing configuration to the case.
+
+        Sets all output parameters related to tidal forcing including
+        reference dates, constituent counts, and equilibrium phase settings.
+
+        Returns
+        -------
+        None
+        """
         # Set the output params
         self.set_output_param("TIDES", "True")
         self.set_output_param("TIDE_M2", "True")
@@ -122,6 +145,11 @@ class TidesConfigurator(BaseConfigurator):
 
 @register
 class BGCConfigurator(BaseConfigurator):
+    """
+    Configurator for BGC (Biogeochemical) MARBL setup.
+
+    Sets parameters required when using the MARBL biogeochemical model.
+    """
     name = "BGC"
     required_for_compsets = ["MARBL"]
     allowed_compsets = ["MARBL"]
@@ -133,18 +161,33 @@ class BGCConfigurator(BaseConfigurator):
         )
     ]
 
-    def __init__(
-        self,
-    ):
+    def __init__(self):
+        """
+        Initialize BGC configurator (no arguments required).
+        """
         super().__init__()
 
     def configure(self):
+        """
+        Apply BGC configuration to the case.
+
+        Sets the maximum number of tracer fields to accommodate MARBL tracers.
+
+        Returns
+        -------
+        None
+        """
         self.set_output_param("MAX_FIELDS", 200)
         super().configure()
 
 
 @register
 class CICEConfigurator(BaseConfigurator):
+    """
+    Configurator for CICE sea ice model setup.
+
+    Sets initial conditions and boundary conditions for CICE sea ice component.
+    """
     name = "CICE"
     required_for_compsets = ["CICE"]
     allowed_compsets = ["CICE"]
@@ -156,12 +199,22 @@ class CICEConfigurator(BaseConfigurator):
         UserNLConfigParam("close_boundaries", user_nl_name="cice"),
     ]
 
-    def __init__(
-        self,
-    ):
+    def __init__(self):
+        """
+        Initialize CICE configurator (no arguments required).
+        """
         super().__init__()
 
     def configure(self):
+        """
+        Apply CICE configuration to the case.
+
+        Sets boundary conditions and initial conditions for CICE.
+
+        Returns
+        -------
+        None
+        """
         self.set_output_param("ice_ic", "'UNSET'")
         self.set_output_param("ns_boundary_type", "'open'")
         self.set_output_param("ew_boundary_type", "'cyclic'")
@@ -171,6 +224,11 @@ class CICEConfigurator(BaseConfigurator):
 
 @register
 class BGCICConfigurator(BaseConfigurator):
+    """
+    Configurator for MARBL Biogeochemical Initial Conditions.
+
+    Handles setup of initial conditions for the MARBL biogeochemical model.
+    """
     name = "BGCIC"
     required_for_compsets = ["MARBL"]
     allowed_compsets = ["MARBL"]
@@ -189,9 +247,26 @@ class BGCICConfigurator(BaseConfigurator):
     ]
 
     def __init__(self, marbl_ic_filepath):
+        """
+        Initialize BGCIC configurator.
+
+        Parameters
+        ----------
+        marbl_ic_filepath : str or Path
+            Path to the MARBL initial conditions NetCDF file.
+        """
         super().__init__(marbl_ic_filepath=marbl_ic_filepath)
 
     def configure(self):
+        """
+        Apply MARBL initial conditions configuration to the case.
+
+        Sets the path to the MARBL initial conditions file.
+
+        Returns
+        -------
+        None
+        """
         self.set_output_param(
             "MARBL_TRACERS_IC_FILE",
             Path(self.get_input_param("marbl_ic_filepath")).name,
@@ -201,6 +276,11 @@ class BGCICConfigurator(BaseConfigurator):
 
 @register
 class BGCIronForcingConfigurator(BaseConfigurator):
+    """
+    Configurator for MARBL iron flux forcing.
+
+    Sets up iron flux forcing files for the MARBL biogeochemical model.
+    """
     name = "BGCIronForcing"
     required_for_compsets = ["MARBL"]
     allowed_compsets = ["MARBL"]
@@ -222,9 +302,28 @@ class BGCIronForcingConfigurator(BaseConfigurator):
     ]
 
     def __init__(self, case_session_id, case_grid_name):
+        """
+        Initialize BGCIronForcing configurator.
+
+        Parameters
+        ----------
+        case_session_id : str
+            Unique identifier for the case session.
+        case_grid_name : str
+            Name of the case grid.
+        """
         super().__init__(case_session_id=case_session_id, case_grid_name=case_grid_name)
 
     def configure(self):
+        """
+        Apply iron forcing configuration to the case.
+
+        Sets the paths to sedimentary and event iron flux files.
+
+        Returns
+        -------
+        None
+        """
         feventflux_filepath = f"feventflux_5gmol_{self.get_input_param('case_grid_name')}_{self.get_input_param('case_session_id')}.nc"
         fesedflux_filepath = f"fesedflux_total_reduce_oxic_{self.get_input_param('case_grid_name')}_{self.get_input_param('case_session_id')}.nc"
         self.set_output_param("MARBL_FESEDFLUX_FILE", fesedflux_filepath)
@@ -234,6 +333,11 @@ class BGCIronForcingConfigurator(BaseConfigurator):
 
 @register
 class BGCRiverNutrientsConfigurator(BaseConfigurator):
+    """
+    Configurator for MARBL river nutrient forcing.
+
+    Handles setup of river nutrient fluxes for the MARBL biogeochemical model.
+    """
     name = "BGCRiverNutrients"
     allowed_compsets = ["MARBL", "DROF"]
     input_params = [
@@ -260,6 +364,18 @@ class BGCRiverNutrientsConfigurator(BaseConfigurator):
     def __init__(
         self, global_river_nutrients_filepath, case_session_id, case_grid_name
     ):
+        """
+        Initialize BGCRiverNutrients configurator.
+
+        Parameters
+        ----------
+        global_river_nutrients_filepath : str or Path
+            Path to the global river nutrients NetCDF file.
+        case_session_id : str
+            Unique identifier for the case session.
+        case_grid_name : str
+            Name of the case grid.
+        """
         super().__init__(
             global_river_nutrients_filepath=global_river_nutrients_filepath,
             case_session_id=case_session_id,
@@ -267,12 +383,38 @@ class BGCRiverNutrientsConfigurator(BaseConfigurator):
         )
 
     def validate_args(self, **kwargs):
+        """
+        Validate that the river nutrients file exists.
+
+        Parameters
+        ----------
+        **kwargs
+            Keyword arguments including global_river_nutrients_filepath.
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        FileNotFoundError
+            If the river nutrients file does not exist.
+        """
         if not Path(kwargs["global_river_nutrients_filepath"]).exists():
             raise FileNotFoundError(
                 f"River Nutrients file {kwargs['global_river_nutrients_filepath']} does not exist."
             )
 
     def configure(self):
+        """
+        Apply river nutrients forcing configuration to the case.
+
+        Sets the river nutrient flux file and enables river fluxes.
+
+        Returns
+        -------
+        None
+        """
         river_nutrients_nnsm_filepath = f"river_nutrients_{self.get_input_param('case_grid_name')}_{self.get_input_param('case_session_id')}_nnsm.nc"
         self.set_output_param("READ_RIV_FLUXES", "True")
         self.set_output_param("RIV_FLUX_FILE", river_nutrients_nnsm_filepath)
@@ -282,6 +424,12 @@ class BGCRiverNutrientsConfigurator(BaseConfigurator):
 
 @register
 class RunoffConfigurator(BaseConfigurator):
+    """
+    Configurator for runoff/river discharge forcing.
+
+    Generates and applies runoff mapping files for converting runoff data from the
+    runoff grid to the ocean grid using smoothed nearest-neighbor mapping.
+    """
     name = "Runoff"
     required_for_compsets = {"DROF"}
     allowed_compsets = {"DROF"}
@@ -327,12 +475,34 @@ class RunoffConfigurator(BaseConfigurator):
         rof_esmf_mesh_filepath=None,
     ):
         """
+        Initialize RunoffConfigurator.
+
+        Parameters
+        ----------
+        case_grid_name : str
+            Name of the ocean case grid.
+        case_session_id : str
+            Unique identifier for the case session.
+        case_compset_lname : str
+            Case component set string.
+        case_inputdir : str or Path
+            Case input directory.
+        case_is_non_local : bool
+            Whether the case uses non-local xmlchange.
+        case_esmf_mesh_path : str or Path
+            Path to the ocean ESMF mesh file.
+        case_cime : object, optional
+            CIME case object for mesh path lookup.
         rmax : float, optional
-            If passed, specifies the smoothing radius (in meters) for runoff mapping generation.
-            If not provided, a suggested value based on the ocean grid will be used.
+            Smoothing radius (in meters) for runoff mapping. If not provided,
+            a suggested value based on the ocean grid will be used.
         fold : float, optional
-            If passed, specifies the smoothing fold parameter for runoff mapping generation.
-            If not provided, a suggested value based on the ocean grid will be used.
+            Smoothing fold parameter for runoff mapping. If not provided,
+            a suggested value based on the ocean grid will be used.
+        rof_grid_name : str, optional
+            Name of the runoff grid.
+        rof_esmf_mesh_filepath : str or Path, optional
+            Path to the runoff ESMF mesh file.
         """
         if case_cime is not None:
 
@@ -365,6 +535,16 @@ class RunoffConfigurator(BaseConfigurator):
             )
 
     def configure(self):
+        """
+        Apply runoff mapping configuration to the case.
+
+        Generates smoothed runoff-to-ocean mapping files and sets the appropriate
+        xmlchange parameters for both liquid and ice runoff mapping.
+
+        Returns
+        -------
+        None
+        """
         runoff_mapping_file_nnsm = f"glofas_{self.get_input_param('case_grid_name')}_{self.get_input_param('case_session_id')}_nnsm.nc"
         rof_case_grid_name = self.get_input_param("rof_grid_name")
         mapping_file_prefix = (
@@ -397,7 +577,25 @@ class RunoffConfigurator(BaseConfigurator):
         super().configure()
 
     def validate_args(self, **kwargs):
+        """
+        Validate runoff-specific arguments.
 
+        Parameters
+        ----------
+        **kwargs
+            Keyword arguments including rmax, fold, and case_compset_lname.
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        ValueError
+            If rmax and fold are not both specified or both unspecified.
+        AssertionError
+            If rmax/fold are specified but SROF is in the compset.
+        """
         if (kwargs["rmax"] is None) != (kwargs["fold"] is None):
             raise ValueError("Both rmax and fold must be specified together.")
         if kwargs["rmax"] is not None:
@@ -409,6 +607,12 @@ class RunoffConfigurator(BaseConfigurator):
 
 @register
 class ChlConfigurator(BaseConfigurator):
+    """
+    Configurator for chlorophyll data.
+
+    Sets up chlorophyll data and variable light penetration for passive tracers
+    (not used when MARBL biogeochemistry is active).
+    """
     name = "Chl"
     forbidden_compsets = ["MARBL"]
     input_params = [
@@ -439,7 +643,18 @@ class ChlConfigurator(BaseConfigurator):
     ]
 
     def __init__(self, chl_processed_filepath, case_grid_name, case_session_id):
+        """
+        Initialize Chl configurator.
 
+        Parameters
+        ----------
+        chl_processed_filepath : str or Path
+            Path to the processed chlorophyll NetCDF file.
+        case_grid_name : str
+            Name of the case grid.
+        case_session_id : str
+            Unique identifier for the case session.
+        """
         super().__init__(
             chl_processed_filepath=chl_processed_filepath,
             case_grid_name=case_grid_name,
@@ -447,12 +662,38 @@ class ChlConfigurator(BaseConfigurator):
         )
 
     def validate_args(self, **kwargs):
+        """
+        Validate that the chlorophyll file exists.
+
+        Parameters
+        ----------
+        **kwargs
+            Keyword arguments including chl_processed_filepath.
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        FileNotFoundError
+            If the chlorophyll file does not exist.
+        """
         if not Path(kwargs["chl_processed_filepath"]).exists():
             raise FileNotFoundError(
                 f"Chlorophyll file {kwargs['chl_processed_filepath']} does not exist."
             )
 
     def configure(self):
+        """
+        Apply chlorophyll configuration to the case.
+
+        Sets up chlorophyll data file and enables variable light penetration.
+
+        Returns
+        -------
+        None
+        """
         regional_chl_file_path = (
             f"seawifs-clim-1997-2010-{self.get_input_param('case_grid_name')}.nc"
         )
