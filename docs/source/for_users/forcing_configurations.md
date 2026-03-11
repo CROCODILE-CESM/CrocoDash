@@ -94,6 +94,11 @@ missing = ForcingConfigRegistry.return_missing_inputs(configurator_class, inputs
 is_compatible = configurator_class.validate_compset_compatibility(compset)
 ```
 
+## Helper Docs
+
+The [Forcing Configuration API Documentation](../api-docs/CrocoDash.forcing_configurations.rst) are a great way to look at all of the information provided in the helper functions.
+
+
 ## In the Case Workflow
 
 When you call `case.configure_forcings(**kwargs)`, CrocoDash automatically:
