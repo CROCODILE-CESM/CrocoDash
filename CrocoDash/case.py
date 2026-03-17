@@ -18,6 +18,7 @@ from ProConPy.dev_utils import ConstraintViolation
 from visualCaseGen.initialize import initialize as initialize_visualCaseGen
 from visualCaseGen.custom_widget_types.case_creator import CaseCreator, ERROR, RESET
 from visualCaseGen.custom_widget_types.case_tools import xmlchange, append_user_nl
+from mom6_diagnostics_manager import create_diag_table_ui
 from mom6_bathy import chl, mapping
 import xesmf as xe
 import xarray as xr
@@ -633,6 +634,16 @@ class Case:
             self.driver.process_bgcrivernutrients()
 
         print(f"Case is ready to be built: {self.caseroot}")
+
+    def manage_diags(self,path_to_available_diags: str | Path = None):
+        """Manage the diagnostics using the mom6_diagnostics_manager. https://github.com/anthony-meza/mom6_diagnostics_manager"""
+        path_to_output_diags = self.caseroot/"SourceMods"/"src.mom"/"diag_table"
+        if path_to_available_diags is None:
+            path_to_available_diags = Path(self._cime_case.get_values("RUNDIR")[0])/"available_diags.000000"
+        if Path(path_to_available_diags).exists():
+            self.diags_ui = create_diag_table_ui(str(path_to_available_diags), str(self.name), str(path_to_output_diags))
+        else:
+            raise ValueError(f"Couldn't find the available diagnostics file at {path_to_available_diags}.")
 
     @property
     def name(self) -> str:
