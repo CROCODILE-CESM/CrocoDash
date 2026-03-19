@@ -387,15 +387,19 @@ document.write(`
 <td><p><code class="docutils literal notranslate"><span class="pre">extract_forcings/regrid_dataset_piecewise.py</span></code></p></td>
 <td><p>Creates a boundary segment object for regridding ocean state forcings</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">rm6.regridding.fill_missing_data</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">rm6.segment(...).regrid_velocity_tracers</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">extract_forcings/regrid_dataset_piecewise.py</span></code></p></td>
+<td><p>Most important function for regridding OBCs</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">rm6.regridding.fill_missing_data</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">extract_forcings/regrid_dataset_piecewise.py</span></code></p></td>
 <td><p>Passed as the fill method when regridding boundary forcing datasets</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">rm6.rotation.RotationMethod.EXPAND_GRID</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">rm6.rotation.RotationMethod.EXPAND_GRID</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">extract_forcings/regrid_dataset_piecewise.py</span></code></p></td>
 <td><p>Specifies the rotation method used when processing boundary segments</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">rm6.get_glorys_data(...)</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">rm6.get_glorys_data(...)</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">raw_data_access/datasets/glorys.py</span></code></p></td>
 <td><p>Downloads GLORYS ocean reanalysis data for use as initial/boundary conditions</p></td>
 </tr>
@@ -445,9 +449,13 @@ document.write(`
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">mapping.get_smoothed_map_filepath(...)</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">extract_forcings/runoff.py</span></code>, <code class="docutils literal notranslate"><span class="pre">forcing_configurations/configurations.py</span></code></p></td>
+<td><p>Generates smoothed runoff-to-ocean mapping file names</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">mapping.&lt;the_mapping_function&gt;</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">extract_forcings/runoff.py</span></code>, <code class="docutils literal notranslate"><span class="pre">forcing_configurations/configurations.py</span></code></p></td>
 <td><p>Generates smoothed runoff-to-ocean mapping files</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">utils.fill_missing_data(...)</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">utils.fill_missing_data(...)</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">extract_forcings/regrid_dataset_piecewise.py</span></code></p></td>
 <td><p>Fills missing values in ocean state fields during piecewise regridding</p></td>
 </tr>
@@ -473,7 +481,7 @@ document.write(`
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">CaseCreator</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">case.py</span></code></p></td>
-<td><p>Jupyter widget that drives interactive CESM case creation</p></td>
+<td><p>Class that drives interactive CESM case creation</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ERROR</span></code>, <code class="docutils literal notranslate"><span class="pre">RESET</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">case.py</span></code></p></td>
