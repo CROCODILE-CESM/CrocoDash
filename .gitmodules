@@ -7,6 +7,6 @@
 [submodule "demos"]
 	path = demos
 	url = https://github.com/CROCODILE-CESM/CrocoGallery
-[submodule "CrocoDash/mom6_diagnostics_manager"]
-	path = CrocoDash/mom6_diagnostics_manager
+[submodule "CrocoDash/diag_manager"]
+	path = CrocoDash/diag_manager
 	url = https://github.com/CROCODILE-CESM/mom6_diagnostics_manager
