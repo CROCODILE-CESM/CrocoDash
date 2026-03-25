@@ -635,15 +635,21 @@ class Case:
 
         print(f"Case is ready to be built: {self.caseroot}")
 
-    def manage_diags(self,path_to_available_diags: str | Path = None):
+    def manage_diags(self, path_to_available_diags: str | Path = None):
         """Manage the diagnostics using the mom6_diagnostics_manager. https://github.com/anthony-meza/mom6_diagnostics_manager"""
-        path_to_output_diags = self.caseroot/"SourceMods"/"src.mom"/"diag_table"
+        path_to_output_diags = self.caseroot / "SourceMods" / "src.mom" / "diag_table"
         if path_to_available_diags is None:
-            path_to_available_diags = Path(self._cime_case.get_values("RUNDIR")[0])/"available_diags.000000"
+            path_to_available_diags = (
+                Path(self._cime_case.get_values("RUNDIR")[0]) / "available_diags.000000"
+            )
         if Path(path_to_available_diags).exists():
-            self.diags_ui = create_diag_table_ui(str(path_to_available_diags), str(self.name), str(path_to_output_diags))
+            self.diags_ui = create_diag_table_ui(
+                str(path_to_available_diags), str(self.name), str(path_to_output_diags)
+            )
         else:
-            raise ValueError(f"Couldn't find the available diagnostics file at {path_to_available_diags}.")
+            raise ValueError(
+                f"Couldn't find the available diagnostics file at {path_to_available_diags}."
+            )
 
     @property
     def name(self) -> str:
