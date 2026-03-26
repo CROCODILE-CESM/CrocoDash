@@ -10,6 +10,3 @@
 [submodule "CrocoDash/diag_manager"]
 	path = CrocoDash/diag_manager
 	url = https://github.com/CROCODILE-CESM/mom6_diagnostics_manager
-[submodule "CrocoDash/CrocoDash/diag_manager"]
-	path = CrocoDash/CrocoDash/diag_manager
-	url = https://github.com/CROCODILE-CESM/mom6_diagnostics_manager
