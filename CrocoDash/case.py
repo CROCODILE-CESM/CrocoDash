@@ -24,6 +24,7 @@ import xesmf as xe
 import xarray as xr
 import numpy as np
 import cftime
+import subprocess
 
 
 class Case:
@@ -636,20 +637,37 @@ class Case:
         print(f"Case is ready to be built: {self.caseroot}")
 
     def manage_diags(self, path_to_available_diags: str | Path = None):
-        """Manage the diagnostics using the mom6_diagnostics_manager. https://github.com/anthony-meza/mom6_diagnostics_manager"""
+        """Manage diagnostics using mom6_diagnostics_manager. https://github.com/anthony-meza/mom6_diagnostics_manager"""
         path_to_output_diags = self.caseroot / "SourceMods" / "src.mom" / "diag_table"
+
         if path_to_available_diags is None:
             path_to_available_diags = (
                 Path(self._cime_case.get_values("RUNDIR")[0]) / "available_diags.000000"
             )
-        if Path(path_to_available_diags).exists():
-            self.diags_ui = create_diag_table_ui(
-                str(path_to_available_diags), str(self.name), str(path_to_output_diags)
-            )
         else:
-            raise ValueError(
-                f"Couldn't find the available diagnostics file at {path_to_available_diags}."
+            path_to_available_diags = Path(path_to_available_diags)
+
+        # Find an existing diag_table to use as starting point
+        path_to_diag_table = path_to_output_diags
+        if not path_to_diag_table.exists():
+            path_to_diag_table = self.caseroot / "CaseDocs" / "diag_table"
+        if not path_to_diag_table.exists():
+            subprocess.run(
+                ["./preview_namelists", "--component ocn"], cwd=self.caseroot
             )
+
+        if not path_to_diag_table.exists():
+            raise ValueError("Diags Manager could not be created — no diag_table found")
+
+        self.ui = create_diag_table_ui(
+            input_diag_table=path_to_diag_table,
+            available_diags_file=(
+                path_to_available_diags if path_to_available_diags.exists() else None
+            ),
+            case_name=self.name,
+            output_diag_default=path_to_output_diags,
+        )
+        return self.ui
 
     @property
     def name(self) -> str:
