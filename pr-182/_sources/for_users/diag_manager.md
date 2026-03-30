@@ -1,6 +1,6 @@
 # Managing Diagnostics (case.manage_diags)
 
-MOM6 diagnostics are controlled via a `diag_table` file that specifies which variables to output, at what frequency, and in what format. CrocoDash provides `case.manage_diags` to give you an interactive UI for editing this file without having to hand-edit a complex text format. You can see the official diag_table docs (they are very good) here: https://mom6.readthedocs.io/en/dev-gfdl/api/generated/pages/Diagnostics.html
+MOM6 diagnostics are controlled via a `diag_table` file that specifies which variables to output, at what frequency, and in what format. CrocoDash provides `case.manage_diags` to give you an interactive UI for editing this file without having to hand-edit a complex text format. You can see the official diag_table docs (they are very good) here: [MOM6 Diagnostic Docs](https://mom6.readthedocs.io/en/dev-gfdl/api/generated/pages/Diagnostics.html)
 
 ## Overview
 
