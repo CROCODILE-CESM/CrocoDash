@@ -20,6 +20,7 @@ grids
 datasets
 forcing_configurations
 extract_forcings
+diag_manager
 case_information
 additional_resources
 ```
