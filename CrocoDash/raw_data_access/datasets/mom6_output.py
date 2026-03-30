@@ -249,7 +249,7 @@ def subset_dataset(
             continue
 
         # Load the dataset for the variable
-        ds = xr.open_mfdataset(file_paths)
+        ds = xr.open_mfdataset(file_paths, decode_timedelta=False)
         dataset_is_degrees_east_longitude = False
         if ds[lon_name].max() > 180:
             dataset_is_degrees_east_longitude = True
