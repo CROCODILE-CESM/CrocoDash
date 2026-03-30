@@ -19,7 +19,7 @@ dependencies:
     - -e ./CrocoDash/visualCaseGen/external/ipyfilechooser/
     - -e ./CrocoDash/visualCaseGen/external/mom6_bathy/
     - -e ./CrocoDash/visualCaseGen/
-    - -e ./CrocoDash/mom6_diagnostics_manager/
+    - -e ./CrocoDash/diag_manager/
     - myst_parser>=4.0.0,<4.1.0
     - sphinx-book-theme>=1.1.4,<1.2.0
     - -e ./
