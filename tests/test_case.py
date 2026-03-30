@@ -233,5 +233,3 @@ def test_manage_diags_uses_casedocs_fallback(get_CrocoDash_case, tmp_path):
     assert call_kwargs["case_name"] == case.name
     expected_output = case.caseroot / "SourceMods" / "src.mom" / "diag_table"
     assert call_kwargs["output_diag_default"] == expected_output
-
-
