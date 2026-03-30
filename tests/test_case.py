@@ -4,6 +4,7 @@ import os
 import regional_mom6 as rmom6
 import datetime as dt
 import os
+from unittest.mock import MagicMock, patch
 from CrocoDash.forcing_configurations.base import ForcingConfigRegistry
 
 
@@ -205,3 +206,30 @@ def test_update_forcing_variables(get_CrocoDash_case):
                 found_user_nl_mom_adjusted_var = True
                 break
     return found_user_nl_mom_adjusted_var
+
+
+def test_manage_diags_uses_casedocs_fallback(get_CrocoDash_case, tmp_path):
+    """manage_diags falls back to CaseDocs/diag_table when SourceMods one doesn't exist."""
+    case = get_CrocoDash_case
+
+    # Write a diag_table into CaseDocs (the fallback location)
+    casedocs_dir = case.caseroot / "CaseDocs"
+    casedocs_dir.mkdir(parents=True, exist_ok=True)
+    diag_table_path = casedocs_dir / "diag_table"
+    diag_table_path.write_text("# diag_table\n")
+
+    # Provide a real available_diags file so the branch is exercised
+    available_diags = tmp_path / "available_diags.000000"
+    available_diags.write_text("")
+
+    mock_ui = MagicMock()
+    with patch("CrocoDash.case.create_diag_table_ui", return_value=mock_ui) as mock_fn:
+        ui = case.manage_diags(path_to_available_diags=available_diags)
+
+    assert ui is mock_ui
+    call_kwargs = mock_fn.call_args.kwargs
+    assert call_kwargs["input_diag_table"] == diag_table_path
+    assert call_kwargs["available_diags_file"] == available_diags
+    assert call_kwargs["case_name"] == case.name
+    expected_output = case.caseroot / "SourceMods" / "src.mom" / "diag_table"
+    assert call_kwargs["output_diag_default"] == expected_output
