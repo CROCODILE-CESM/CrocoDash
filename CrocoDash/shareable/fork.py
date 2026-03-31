@@ -65,7 +65,8 @@ class ForkCrocoDashBundle:
 
         if missing:
             raise FileNotFoundError(
-                "Bundle is incomplete. Missing files:\n" + "\n".join(f"  {f}" for f in missing)
+                "Bundle is incomplete. Missing files:\n"
+                + "\n".join(f"  {f}" for f in missing)
             )
 
     def fork(
@@ -105,7 +106,9 @@ class ForkCrocoDashBundle:
         self.compset = self.resolve_compset(compset)
 
         logger.info(f"Creating new case...")
-        self.manifest["init_args"]["inputdir_ocnice"] = str(self.bundle_location / "ocnice") # Get new grid location from bundle
+        self.manifest["init_args"]["inputdir_ocnice"] = str(
+            self.bundle_location / "ocnice"
+        )  # Get new grid location from bundle
         self.case = create_case(
             self.manifest["init_args"],
             self.caseroot,
@@ -123,7 +126,10 @@ class ForkCrocoDashBundle:
         logger.info(f"Building configuration args")
 
         configure_forcing_args = self.set_up_forcing_inputs(
-            self.forcing_config, resolved_remove, requested_configs, extra_forcing_args_path
+            self.forcing_config,
+            resolved_remove,
+            requested_configs,
+            extra_forcing_args_path,
         )
 
         self.case.configure_forcings(**configure_forcing_args)
@@ -236,7 +242,13 @@ class ForkCrocoDashBundle:
 
         return requested, remove
 
-    def set_up_forcing_inputs(self, forcing_config, remove_configs, requested_configs, extra_forcing_args_path=None):
+    def set_up_forcing_inputs(
+        self,
+        forcing_config,
+        remove_configs,
+        requested_configs,
+        extra_forcing_args_path=None,
+    ):
         args = generate_configure_forcing_args(forcing_config, remove_configs)
         if not requested_configs:
             return args
@@ -255,7 +267,9 @@ class ForkCrocoDashBundle:
         ]
         if extra_forcing_args_path is None:
             print(f"Provide the following arguments in a JSON file: {required_args}")
-            extra_forcing_args_path = ask_string("Enter path to JSON file with the required arguments: ")
+            extra_forcing_args_path = ask_string(
+                "Enter path to JSON file with the required arguments: "
+            )
         with open(extra_forcing_args_path) as f:
             new_args = json.load(f)
 
@@ -263,7 +277,11 @@ class ForkCrocoDashBundle:
             for user_arg in ForcingConfigRegistry.get_user_args(
                 ForcingConfigRegistry.get_configurator_from_name(config)
             ):
-                if not user_arg.startswith("case_") and user_arg not in args and user_arg not in new_args:
+                if (
+                    not user_arg.startswith("case_")
+                    and user_arg not in args
+                    and user_arg not in new_args
+                ):
                     raise ValueError(f"Missing arg: '{user_arg}' for {config}")
 
         args.update(new_args)

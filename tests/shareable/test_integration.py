@@ -32,4 +32,3 @@ def test_pass_from_inspect_to_fork_no_change(get_case_with_cf, tmp_path):
         )
         fcb.fork()
         assert fcb
-
