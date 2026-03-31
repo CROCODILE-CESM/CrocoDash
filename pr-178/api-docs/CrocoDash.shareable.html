@@ -448,25 +448,40 @@ a new case with equivalent forcings.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.shareable.fork.ForkCrocoDashBundle.fork">
-<span class="sig-name descname"><span class="pre">fork</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.shareable.fork.ForkCrocoDashBundle.fork" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">fork</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">plan</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_configs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">remove_configs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_forcing_args_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.shareable.fork.ForkCrocoDashBundle.fork" title="Link to this definition">#</a></dt>
 <dd><p>Share a CESM case by inspecting an existing case, optionally copying
 non-standard components, resolving forcing configurations, and creating
 a new case with equivalent forcings.</p>
+<p>All parameters are optional. When provided they bypass the interactive
+prompts; when omitted the user is asked interactively.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>plan</strong> (<em>dict</em><em>, </em><em>optional</em>) – Which non-standard items to copy, e.g.
+<code class="docutils literal notranslate"><span class="pre">{&quot;xml_files&quot;:</span> <span class="pre">True,</span> <span class="pre">&quot;user_nl&quot;:</span> <span class="pre">False,</span> <span class="pre">&quot;source_mods&quot;:</span> <span class="pre">True,</span> <span class="pre">&quot;xmlchanges&quot;:</span> <span class="pre">True}</span></code>.</p></li>
+<li><p><strong>compset</strong> (<em>str</em><em>, </em><em>optional</em>) – Override the compset from the bundle. If not provided and differs
+from the bundle compset, the user is asked interactively.</p></li>
+<li><p><strong>extra_configs</strong> (<em>list</em><em>, </em><em>optional</em>) – Additional forcing configuration names to add beyond the bundle.</p></li>
+<li><p><strong>remove_configs</strong> (<em>list</em><em>, </em><em>optional</em>) – Forcing configuration names from the bundle to drop.</p></li>
+<li><p><strong>extra_forcing_args_path</strong> (<em>str</em><em> or </em><em>Path</em><em>, </em><em>optional</em>) – Path to a JSON file supplying arguments for any new forcing configs.</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.shareable.fork.ForkCrocoDashBundle.resolve_compset">
-<span class="sig-name descname"><span class="pre">resolve_compset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.shareable.fork.ForkCrocoDashBundle.resolve_compset" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">resolve_compset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">compset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.shareable.fork.ForkCrocoDashBundle.resolve_compset" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.shareable.fork.ForkCrocoDashBundle.resolve_forcing_configurations">
-<span class="sig-name descname"><span class="pre">resolve_forcing_configurations</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.shareable.fork.ForkCrocoDashBundle.resolve_forcing_configurations" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">resolve_forcing_configurations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">extra_configs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">remove_configs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.shareable.fork.ForkCrocoDashBundle.resolve_forcing_configurations" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.shareable.fork.ForkCrocoDashBundle.set_up_forcing_inputs">
-<span class="sig-name descname"><span class="pre">set_up_forcing_inputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">forcing_config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">remove_configs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">requested_configs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.shareable.fork.ForkCrocoDashBundle.set_up_forcing_inputs" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">set_up_forcing_inputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">forcing_config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">remove_configs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">requested_configs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_forcing_args_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.shareable.fork.ForkCrocoDashBundle.set_up_forcing_inputs" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
