@@ -4,6 +4,7 @@ import subprocess
 from pathlib import Path
 import pytest
 
+
 @pytest.mark.slow
 def test_pass_from_inspect_to_fork_no_change(get_case_with_cf, tmp_path):
     case = get_case_with_cf
@@ -33,6 +34,7 @@ def test_pass_from_inspect_to_fork_no_change(get_case_with_cf, tmp_path):
         )
         fcb.fork()
         assert fcb
+
 
 @pytest.mark.slow
 def test_pass_from_inspect_to_fork_with_changes(get_case_with_cf, tmp_path):
