@@ -2,10 +2,11 @@ import argparse
 import json
 
 
-
-
 def _read(args):
-    from CrocoDash.shareable.inspect import ReadCrocoDashCase # Makes loading faster when not used
+    from CrocoDash.shareable.inspect import (
+        ReadCrocoDashCase,
+    )  # Makes loading faster when not used
+
     case = ReadCrocoDashCase(args.caseroot)
     case.identify_non_standard_CrocoDash_case_information(
         cesmroot=args.cesmroot,
@@ -19,6 +20,7 @@ def _read(args):
 def _fork(args):
 
     from CrocoDash.shareable.fork import ForkCrocoDashBundle
+
     plan = json.loads(args.plan) if args.plan else None
     extra_configs = (
         [x.strip() for x in args.extra_configs.split(",") if x.strip()]
