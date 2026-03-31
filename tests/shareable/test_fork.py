@@ -149,15 +149,22 @@ def test_set_up_forcing_inputs_with_json_file(
 
     # Write required args to a temp file
     args_file = tmp_path / "forcing_args.json"
-    args_file.write_text(json.dumps({
-        "tidal_constituents": ["M2", "K1"],
-        "tpxo_elevation_filepath": "elev.nc",
-        "tpxo_velocity_filepath": "vel.nc",
-        "boundaries": ["north"],
-    }))
+    args_file.write_text(
+        json.dumps(
+            {
+                "tidal_constituents": ["M2", "K1"],
+                "tpxo_elevation_filepath": "elev.nc",
+                "tpxo_velocity_filepath": "vel.nc",
+                "boundaries": ["north"],
+            }
+        )
+    )
 
     result = fcb.set_up_forcing_inputs(
-        sample_forcing_config, {}, requested_configs, extra_forcing_args_path=str(args_file)
+        sample_forcing_config,
+        {},
+        requested_configs,
+        extra_forcing_args_path=str(args_file),
     )
 
     assert result["tidal_constituents"] == ["M2", "K1"]
