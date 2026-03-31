@@ -44,19 +44,68 @@ class ForkCrocoDashBundle:
         self.caseroot = new_caseroot
         self.inputdir = new_inputdir
         self.forcing_config = self.manifest["forcing_config"]
+        self._validate_bundle()
 
-    def fork(self):
+    def _validate_bundle(self):
+        missing = []
+        ocnice = self.bundle_location / "ocnice"
+
+        for f in self.differences.get("xml_files_missing_in_new", []):
+            path = self.bundle_location / "xml_files" / f
+            if not path.exists():
+                missing.append(str(path))
+
+        for f in self.differences.get("source_mods_missing_files", []):
+            path = self.bundle_location / "SourceMods" / f
+            if not path.exists():
+                missing.append(str(path))
+
+        if not ocnice.exists():
+            missing.append(str(ocnice))
+
+        if missing:
+            raise FileNotFoundError(
+                "Bundle is incomplete. Missing files:\n" + "\n".join(f"  {f}" for f in missing)
+            )
+
+    def fork(
+        self,
+        plan=None,
+        compset=None,
+        extra_configs=None,
+        remove_configs=None,
+        extra_forcing_args_path=None,
+    ):
         """
         Share a CESM case by inspecting an existing case, optionally copying
         non-standard components, resolving forcing configurations, and creating
         a new case with equivalent forcings.
+
+        All parameters are optional. When provided they bypass the interactive
+        prompts; when omitted the user is asked interactively.
+
+        Parameters
+        ----------
+        plan : dict, optional
+            Which non-standard items to copy, e.g.
+            ``{"xml_files": True, "user_nl": False, "source_mods": True, "xmlchanges": True}``.
+        compset : str, optional
+            Override the compset from the bundle. If not provided and differs
+            from the bundle compset, the user is asked interactively.
+        extra_configs : list, optional
+            Additional forcing configuration names to add beyond the bundle.
+        remove_configs : list, optional
+            Forcing configuration names from the bundle to drop.
+        extra_forcing_args_path : str or Path, optional
+            Path to a JSON file supplying arguments for any new forcing configs.
         """
 
-        self.plan = self.ask_copy_questions()
+        self.plan = plan if plan is not None else self.ask_copy_questions()
 
-        self.compset = self.resolve_compset()
+        self.compset = self.resolve_compset(compset)
 
         logger.info(f"Creating new case...")
+        self.manifest["init_args"]["inputdir_ocnice"] = str(self.bundle_location / "ocnice") # Get new grid location from bundle
         self.case = create_case(
             self.manifest["init_args"],
             self.caseroot,
@@ -67,12 +116,14 @@ class ForkCrocoDashBundle:
             cesmroot=self.cesmroot,
         )
 
-        requested_configs, remove_configs = self.resolve_forcing_configurations()
+        requested_configs, resolved_remove = self.resolve_forcing_configurations(
+            extra_configs, remove_configs
+        )
 
         logger.info(f"Building configuration args")
 
         configure_forcing_args = self.set_up_forcing_inputs(
-            self.forcing_config, remove_configs, requested_configs
+            self.forcing_config, resolved_remove, requested_configs, extra_forcing_args_path
         )
 
         self.case.configure_forcings(**configure_forcing_args)
@@ -119,9 +170,15 @@ class ForkCrocoDashBundle:
 
         return self.plan
 
-    def resolve_compset(self):
+    def resolve_compset(self, compset=None):
         self.compset = self.manifest["init_args"]["compset"]
-        if ask_yes_no(
+        if compset is not None:
+            self.compset = compset
+            print(
+                "Warning: Changing compset may have unintended consequences and "
+                "may require additional data."
+            )
+        elif ask_yes_no(
             f"Want to change compset? Current compset: {self.compset}", default=False
         ):
             self.compset = ask_string("Enter the new compset")
@@ -132,7 +189,7 @@ class ForkCrocoDashBundle:
 
         return self.compset
 
-    def resolve_forcing_configurations(self):
+    def resolve_forcing_configurations(self, extra_configs=None, remove_configs=None):
         requested = []
 
         # Required configurators
@@ -156,19 +213,22 @@ class ForkCrocoDashBundle:
                 already_ran.append(config_class)
                 valid.remove(config_class)
 
-        extra = ask_string(
-            f"Enter any other configurations you want "
-            f"(comma-separated) from: {[obj.name for obj in valid]}",
-            default="[]",
-        )
-        remove = ask_string(
-            f"Enter any configs you don't want "
-            f"(comma-separated) from: {[obj.name for obj in already_ran]}",
-            default="[]",
-        )
-
-        extra = {x.strip() for x in extra.split(",") if x.strip()}
-        remove = {x.strip() for x in remove.split(",") if x.strip()}
+        if extra_configs is not None:
+            extra = set(extra_configs)
+            remove = set(remove_configs) if remove_configs is not None else set()
+        else:
+            extra_str = ask_string(
+                f"Enter any other configurations you want "
+                f"(comma-separated) from: {[obj.name for obj in valid]}",
+                default="[]",
+            )
+            remove_str = ask_string(
+                f"Enter any configs you don't want "
+                f"(comma-separated) from: {[obj.name for obj in already_ran]}",
+                default="[]",
+            )
+            extra = {x.strip() for x in extra_str.split(",") if x.strip()}
+            remove = {x.strip() for x in remove_str.split(",") if x.strip()}
 
         for thing in ForcingConfigRegistry.registered_types:
             if thing.name in extra:
@@ -176,7 +236,7 @@ class ForkCrocoDashBundle:
 
         return requested, remove
 
-    def set_up_forcing_inputs(self, forcing_config, remove_configs, requested_configs):
+    def set_up_forcing_inputs(self, forcing_config, remove_configs, requested_configs, extra_forcing_args_path=None):
         args = generate_configure_forcing_args(forcing_config, remove_configs)
         if not requested_configs:
             return args
@@ -185,27 +245,26 @@ class ForkCrocoDashBundle:
             "\nYou requested or are required to add the following configurations:",
             requested_configs,
         )
-        print("Provide additional arguments as a JSON dict (or press Enter to skip).")
-        print('Example: {"tides_file": "ne30", "tides": true}')
-
-        user_input = input("> ").strip()
-        if not user_input:
-            return args
-
-        try:
-            new_args = json.loads(user_input)
-        except json.JSONDecodeError as e:
-            raise ValueError(f"Invalid JSON: {e}") from None
-
-        if not isinstance(new_args, dict):
-            raise ValueError("Input must be a JSON object")
+        required_args = [
+            user_arg
+            for config in requested_configs
+            for user_arg in ForcingConfigRegistry.get_user_args(
+                ForcingConfigRegistry.get_configurator_from_name(config)
+            )
+            if not user_arg.startswith("case_") and user_arg not in args
+        ]
+        if extra_forcing_args_path is None:
+            print(f"Provide the following arguments in a JSON file: {required_args}")
+            extra_forcing_args_path = ask_string("Enter path to JSON file with the required arguments: ")
+        with open(extra_forcing_args_path) as f:
+            new_args = json.load(f)
 
         for config in requested_configs:
             for user_arg in ForcingConfigRegistry.get_user_args(
                 ForcingConfigRegistry.get_configurator_from_name(config)
             ):
-                if user_arg not in new_args:
-                    raise ValueError("Missing arg: " + user_arg + " for " + config)
+                if not user_arg.startswith("case_") and user_arg not in args and user_arg not in new_args:
+                    raise ValueError(f"Missing arg: '{user_arg}' for {config}")
 
         args.update(new_args)
         return args

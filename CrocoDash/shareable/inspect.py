@@ -259,7 +259,7 @@ class ReadCrocoDashCase:
     def bundle(self, output_folder_location):
         assert hasattr(
             self, "non_standard_case_info"
-        ), "To bundle your case, you need to indentify non-standard CrocoDash first."
+        ), "To bundle your case, you need to identify non-standard CrocoDash first."
         ocnice_dir = self.get_user_nl_value("mom", "INPUTDIR")
         case_subfolder = (
             Path(output_folder_location) / f"{self.caseroot.name}_case_bundle"
@@ -294,6 +294,13 @@ class ReadCrocoDashCase:
             for path in output_paths:
                 logger.info(f"Copying {config} file: {path}...")
                 shutil.copy(path, ocnice_target)
+
+        # Copy grid files needed to reconstruct the case
+        for key in ("supergrid_path", "topo_path", "vgrid_path"):
+            src = Path(ocnice_dir) / self.init_args[key]
+            if src.exists():
+                logger.info(f"Copying grid file: {src}")
+                shutil.copy(src, ocnice_target / src.name)
 
         # Write out manifest
         logger.info(f"Writing out ReadCrocoDashCase manifest...")
