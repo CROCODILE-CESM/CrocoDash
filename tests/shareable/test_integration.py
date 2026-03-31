@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 import pytest
 
+
 @pytest.mark.slow
 def test_pass_from_inspect_to_fork_no_change(get_case_with_cf, tmp_path):
     case = get_case_with_cf
@@ -87,4 +88,3 @@ def test_pass_from_inspect_to_fork_with_changes(get_case_with_cf, tmp_path):
         with open(path_to_case / "replay.sh") as f:
             replay_content = f.read()
             assert "./xmlchange JOB_PRIORITY=premium" in replay_content
-
