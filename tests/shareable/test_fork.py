@@ -1,4 +1,5 @@
 from CrocoDash.shareable.fork import *
+import json
 import pytest
 from unittest.mock import patch
 from uuid import uuid4
@@ -139,19 +140,47 @@ def test_set_up_forcing_inputs_no_configs(fake_fcb_empty_case, sample_forcing_co
     }
 
 
-def test_request_any_additional_forcing_args_with_input(
-    fake_fcb_empty_case, sample_forcing_config
+def test_set_up_forcing_inputs_with_json_file(
+    fake_fcb_empty_case, sample_forcing_config, tmp_path
 ):
+    """Test that set_up_forcing_inputs loads args from a JSON file path."""
     fcb = fake_fcb_empty_case
-    """Test that function updates args with user JSON input."""
     requested_configs = ["tides"]
-    user_json = '{"tidal_constituents": ["M2", "K1"]}'
 
-    with pytest.raises(ValueError):  # Fails because correct user_args are given
-        with patch("builtins.input", return_value=user_json):
-            result = fcb.set_up_forcing_inputs(
-                sample_forcing_config, {}, requested_configs
-            )
+    # Write required args to a temp file
+    args_file = tmp_path / "forcing_args.json"
+    args_file.write_text(json.dumps({
+        "tidal_constituents": ["M2", "K1"],
+        "tpxo_elevation_filepath": "elev.nc",
+        "tpxo_velocity_filepath": "vel.nc",
+        "boundaries": ["north"],
+    }))
+
+    result = fcb.set_up_forcing_inputs(
+        sample_forcing_config, {}, requested_configs, extra_forcing_args_path=str(args_file)
+    )
+
+    assert result["tidal_constituents"] == ["M2", "K1"]
+
+
+def test_set_up_forcing_inputs_missing_required_arg(
+    fake_fcb_empty_case, sample_forcing_config, tmp_path
+):
+    """Test that set_up_forcing_inputs raises ValueError when required args are missing."""
+    fcb = fake_fcb_empty_case
+    requested_configs = ["tides"]
+
+    # File is missing tpxo_elevation_filepath and tpxo_velocity_filepath
+    args_file = tmp_path / "incomplete_args.json"
+    args_file.write_text(json.dumps({"tidal_constituents": ["M2"]}))
+
+    with pytest.raises(ValueError, match="Missing arg"):
+        fcb.set_up_forcing_inputs(
+            sample_forcing_config,
+            {"tides"},  # remove tides so its args aren't pre-populated
+            requested_configs,
+            extra_forcing_args_path=str(args_file),
+        )
 
 
 def test_resolve_forcing_configurations(fake_fcb_empty_case, sample_forcing_config):
