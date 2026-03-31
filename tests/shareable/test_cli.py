@@ -6,6 +6,7 @@ from unittest.mock import patch, MagicMock
 def run_main(argv):
     with patch.object(sys, "argv", ["crocodash"] + argv):
         from CrocoDash.cli import main
+
         main()
 
 
@@ -14,14 +15,21 @@ def test_read_cli(tmp_path):
     mock_case.bundle.return_value = tmp_path / "bundle"
 
     with patch("CrocoDash.cli.ReadCrocoDashCase", return_value=mock_case) as mock_cls:
-        run_main([
-            "read",
-            "--caseroot", "/some/case",
-            "--output-dir", str(tmp_path),
-            "--cesmroot", "/some/cesm",
-            "--machine", "derecho",
-            "--project", "PROJ123",
-        ])
+        run_main(
+            [
+                "read",
+                "--caseroot",
+                "/some/case",
+                "--output-dir",
+                str(tmp_path),
+                "--cesmroot",
+                "/some/cesm",
+                "--machine",
+                "derecho",
+                "--project",
+                "PROJ123",
+            ]
+        )
 
     mock_cls.assert_called_once_with("/some/case")
     mock_case.identify_non_standard_CrocoDash_case_information.assert_called_once_with(
@@ -34,24 +42,42 @@ def test_read_cli(tmp_path):
 
 def test_fork_cli(tmp_path):
     mock_forker = MagicMock()
-    plan = {"xml_files": True, "user_nl": False, "source_mods": True, "xmlchanges": True}
+    plan = {
+        "xml_files": True,
+        "user_nl": False,
+        "source_mods": True,
+        "xmlchanges": True,
+    }
     args_file = tmp_path / "args.json"
 
     with patch("CrocoDash.cli.ForkCrocoDashBundle", return_value=mock_forker):
-        run_main([
-            "fork",
-            "--bundle", str(tmp_path / "bundle"),
-            "--caseroot", str(tmp_path / "new_case"),
-            "--inputdir", str(tmp_path / "inputdir"),
-            "--cesmroot", "/some/cesm",
-            "--machine", "derecho",
-            "--project", "PROJ123",
-            "--plan", json.dumps(plan),
-            "--compset", "GOMOM6",
-            "--extra-configs", "tides,bgc",
-            "--remove-configs", "runoff",
-            "--extra-forcing-args", str(args_file),
-        ])
+        run_main(
+            [
+                "fork",
+                "--bundle",
+                str(tmp_path / "bundle"),
+                "--caseroot",
+                str(tmp_path / "new_case"),
+                "--inputdir",
+                str(tmp_path / "inputdir"),
+                "--cesmroot",
+                "/some/cesm",
+                "--machine",
+                "derecho",
+                "--project",
+                "PROJ123",
+                "--plan",
+                json.dumps(plan),
+                "--compset",
+                "GOMOM6",
+                "--extra-configs",
+                "tides,bgc",
+                "--remove-configs",
+                "runoff",
+                "--extra-forcing-args",
+                str(args_file),
+            ]
+        )
 
     mock_forker.fork.assert_called_once_with(
         plan=plan,
