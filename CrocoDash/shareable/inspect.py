@@ -338,7 +338,7 @@ class ReadCrocoDashCase:
 
 def get_case_obj(caseroot):
     cimeroot = run_xmlquery(caseroot, "CIMEROOT")
-    sys.path.append(os.path.join(cimeroot, "CIME", "Tools"))
+    sys.path.append(cimeroot)
     from CIME.case import Case
 
     return Case(caseroot, read_only=True, non_local=True)
