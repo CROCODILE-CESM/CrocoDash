@@ -41,9 +41,8 @@ jobs:
       - name: Create CI case
         run: |
           cd $WORKDIR/CrocoDash/demos
-          conda run -n CrocoDash jupyter nbconvert --to notebook --execute --inplace \
+          HDF5_USE_FILE_LOCKING=FALSE conda run -n CrocoDash jupyter nbconvert --to notebook --execute --inplace \
             --ExecutePreprocessor.timeout=600 \
-            --ExecutePreprocessor.kernel_cwd=$WORKDIR/CrocoDash/demos \
             code/ci_case_setup.ipynb
 
       - name: Run CrocoDash notebooks
@@ -53,10 +52,9 @@ jobs:
             ! -path "*/.ipynb_checkpoints/*" \
             ! -name "BGC.ipynb" \
             | sort \
-            | xargs -I {} conda run -n CrocoDash \
+            | xargs -I {} HDF5_USE_FILE_LOCKING=FALSE conda run -n CrocoDash \
                 jupyter nbconvert --to notebook --execute --inplace \
                 --ExecutePreprocessor.timeout=600 \
-                --ExecutePreprocessor.kernel_cwd=$WORKDIR/CrocoDash/demos \
                 --TagRemovePreprocessor.enabled=True \
                 --TagRemovePreprocessor.remove_cell_tags='["ci-skip"]' \
                 {}
