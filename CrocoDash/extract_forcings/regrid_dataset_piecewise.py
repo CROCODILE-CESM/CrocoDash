@@ -10,7 +10,7 @@ import os
 from collections import defaultdict
 from datetime import datetime
 import xarray as xr
-import mom6_bathy as m6b
+import mom6_forge as m6b
 import numpy as np
 from CrocoDash.topo import Topo
 from CrocoDash.grid import Grid
@@ -138,7 +138,7 @@ def regrid_dataset_piecewise(
     # Determine fill method
     fill_method = rm6.regridding.fill_missing_data
     if "boundary_fill_method" in dataset_varnames:
-        if dataset_varnames["boundary_fill_method"] == "mom6_bathy":
+        if dataset_varnames["boundary_fill_method"] == "mom6_forge":
             raise ValueError("This is not quite supported yet")
             fill_method = m6b_fill_missing_data_wrapper
         elif dataset_varnames["boundary_fill_method"] != "regional_mom6":
@@ -228,7 +228,7 @@ def regrid_dataset_piecewise(
                 )
             else:
                 # Add the M6b Fill method onto the initial conditions
-                logger.info("Start mom6_bathy fill...")
+                logger.info("Start mom6_forge fill...")
                 # Read in bathymetry
                 grid = Grid.from_supergrid(hgrid_path)
 
@@ -292,7 +292,7 @@ def regrid_dataset_piecewise(
                 ds.to_netcdf(
                     output_folder / "init_tracers_filled.nc", encoding=encoding
                 )
-                logger.info("...end mom6_bathy fill.")
+                logger.info("...end mom6_forge fill.")
         output_file_names.append("init_eta_filled.nc")
         output_file_names.append("init_vel_filled.nc")
         output_file_names.append("init_tracers_filled.nc")

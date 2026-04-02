@@ -1,7 +1,7 @@
 from CrocoDash.forcing_configurations.base import *
 from pathlib import Path
 from ProConPy.config_var import ConfigVar, cvars
-from mom6_bathy import mapping
+from mom6_forge import mapping
 
 
 def register(cls):
