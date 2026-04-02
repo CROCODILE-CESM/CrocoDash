@@ -5,9 +5,9 @@ Inspect is inordinately hard-coded, and probably can't be changed. Robust testin
 from pathlib import Path
 import json
 import tempfile
-from mom6_bathy.grid import *
-from mom6_bathy.topo import *
-from mom6_bathy.vgrid import *
+from mom6_forge.grid import *
+from mom6_forge.topo import *
+from mom6_forge.vgrid import *
 from CrocoDash.shareable.fork import create_case, generate_configure_forcing_args
 from uuid import uuid4
 import subprocess
