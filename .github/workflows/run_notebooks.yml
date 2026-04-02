@@ -48,11 +48,12 @@ jobs:
       - name: Run CrocoDash notebooks
         run: |
           cd $WORKDIR/CrocoDash/demos
+          export HDF5_USE_FILE_LOCKING=FALSE
           find gallery/notebooks/CrocoDash -name "*.ipynb" \
             ! -path "*/.ipynb_checkpoints/*" \
             ! -name "BGC.ipynb" \
             | sort \
-            | xargs -I {} HDF5_USE_FILE_LOCKING=FALSE conda run -n CrocoDash \
+            | xargs -I {} conda run -n CrocoDash \
                 jupyter nbconvert --to notebook --execute --inplace \
                 --ExecutePreprocessor.timeout=600 \
                 --TagRemovePreprocessor.enabled=True \
