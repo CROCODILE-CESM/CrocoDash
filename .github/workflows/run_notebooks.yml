@@ -1,0 +1,44 @@
+name: Run CrocoDash Notebooks
+
+on:
+  workflow_dispatch:
+  push:
+  schedule:
+    - cron: '0 6 * * *'
+
+jobs:
+  run_notebooks:
+    runs-on: gha-runner-crocodash
+    container:
+      image: ghcr.io/crocodile-cesm/crocodash:nightly
+    steps:
+      - name: Configure Git Identity
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          path: CrocoDash
+
+      - name: Copy CrocoDash into container workdir
+        run: |
+          rm -rf $WORKDIR/CrocoDash
+          cp -r $GITHUB_WORKSPACE/CrocoDash $WORKDIR/
+
+      - name: Inject paths into notebooks
+        run: |
+          cd $WORKDIR/CrocoDash/demos
+          conda run -n CrocoDash python code/inject_paths_into_notebooks.py
+
+      - name: Run CrocoDash notebooks
+        run: |
+          cd $WORKDIR/CrocoDash/demos
+          find gallery/notebooks/CrocoDash -name "*.ipynb" \
+            ! -path "*/.ipynb_checkpoints/*" \
+            ! -name "BGC.ipynb" \
+            | sort \
+            | xargs -I {} conda run -n CrocoDash \
+                jupyter nbconvert --to notebook --execute --inplace \
+                --ExecutePreprocessor.timeout=600 {}
