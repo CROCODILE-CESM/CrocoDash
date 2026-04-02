@@ -6,7 +6,7 @@ channels:
   
 dependencies:
   - python>=3.11.10,<3.12
-  - esmpy>=8.6.1,<8.7.0
+  - esmpy>=8.6.1,<8.7.0 
   - pydeps>=3.0.01,<3.1.0
   - graphviz>=12.2.1,<12.3.0
   - python-graphviz>=0.20.3,<0.21.0
