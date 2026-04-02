@@ -11,6 +11,7 @@ jobs:
     runs-on: gha-runner-crocodash
     container:
       image: ghcr.io/crocodile-cesm/crocodash:nightly
+      options: --pull always
     steps:
       - name: Configure Git Identity
         run: |
