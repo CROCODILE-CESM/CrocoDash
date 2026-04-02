@@ -14,7 +14,7 @@ def test_read_cli(tmp_path):
     mock_case = MagicMock()
     mock_case.bundle.return_value = tmp_path / "bundle"
 
-    with patch("CrocoDash.cli.ReadCrocoDashCase", return_value=mock_case) as mock_cls:
+    with patch("CrocoDash.shareable.inspect.ReadCrocoDashCase", return_value=mock_case) as mock_cls:
         run_main(
             [
                 "read",
@@ -50,7 +50,7 @@ def test_fork_cli(tmp_path):
     }
     args_file = tmp_path / "args.json"
 
-    with patch("CrocoDash.cli.ForkCrocoDashBundle", return_value=mock_forker):
+    with patch("CrocoDash.shareable.fork.ForkCrocoDashBundle", return_value=mock_forker):
         run_main(
             [
                 "fork",
