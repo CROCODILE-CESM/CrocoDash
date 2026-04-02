@@ -17,6 +17,8 @@ jobs:
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
+      - name: Show package versions                                                                                                                                                           
+        run: conda run -n CrocoDash conda list    
 
       - uses: actions/checkout@v4
         with:
