@@ -1,4 +1,4 @@
-name: Run CrocoDash Notebooks
+name: Run CrocoDash Notebooks (New)
 
 on:
   workflow_dispatch:
