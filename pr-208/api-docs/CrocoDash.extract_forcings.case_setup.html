@@ -341,7 +341,21 @@ document.write(`
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#submodules">Submodules</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crocodash-extract-forcings-case-setup-driver-module">CrocoDash.extract_forcings.case_setup.driver module</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.extract_forcings.case_setup.driver">CrocoDash.extract_forcings.case_setup.driver module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.case_setup.driver.parse_args"><code class="docutils literal notranslate"><span class="pre">parse_args()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.case_setup.driver.process_bgcic"><code class="docutils literal notranslate"><span class="pre">process_bgcic()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.case_setup.driver.process_bgcironforcing"><code class="docutils literal notranslate"><span class="pre">process_bgcironforcing()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.case_setup.driver.process_bgcrivernutrients"><code class="docutils literal notranslate"><span class="pre">process_bgcrivernutrients()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.case_setup.driver.process_chl"><code class="docutils literal notranslate"><span class="pre">process_chl()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.case_setup.driver.process_conditions"><code class="docutils literal notranslate"><span class="pre">process_conditions()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.case_setup.driver.process_runoff"><code class="docutils literal notranslate"><span class="pre">process_runoff()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.case_setup.driver.process_tides"><code class="docutils literal notranslate"><span class="pre">process_tides()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.case_setup.driver.resolve_components"><code class="docutils literal notranslate"><span class="pre">resolve_components()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.case_setup.driver.run_from_cli"><code class="docutils literal notranslate"><span class="pre">run_from_cli()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.case_setup.driver.should_run"><code class="docutils literal notranslate"><span class="pre">should_run()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.case_setup.driver.test_driver"><code class="docutils literal notranslate"><span class="pre">test_driver()</span></code></a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.extract_forcings.case_setup">Module contents</a></li>
 </ul>
             </nav>
@@ -359,8 +373,137 @@ document.write(`
 <section id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading">#</a></h2>
 </section>
-<section id="crocodash-extract-forcings-case-setup-driver-module">
-<h2>CrocoDash.extract_forcings.case_setup.driver module<a class="headerlink" href="#crocodash-extract-forcings-case-setup-driver-module" title="Link to this heading">#</a></h2>
+<section id="module-CrocoDash.extract_forcings.case_setup.driver">
+<span id="crocodash-extract-forcings-case-setup-driver-module"></span><h2>CrocoDash.extract_forcings.case_setup.driver module<a class="headerlink" href="#module-CrocoDash.extract_forcings.case_setup.driver" title="Link to this heading">#</a></h2>
+<p>nCrocoDash Forcing Extraction Driver</p>
+<p>This module orchestrates the forcing extraction workflow for a CrocoDash case.
+It coordinates multiple forcing data sources (tides, runoff, BGC, etc.) and processes them
+into MOM6-compatible file formats.</p>
+<p>The script can be run from the command line with various component flags to control which
+forcings are processed. It loads configuration from config.json and coordinates all extraction,
+regridding, and formatting operations.</p>
+<dl class="simple">
+<dt>Typical usage:</dt><dd><p>python driver.py –all                  # Process all configured components
+python driver.py –tides –bgcic        # Process only tides and BGC initial conditions
+python driver.py –all –skip runoff    # Process all except runoff
+python driver.py –ic –no-get          # Process IC but skip data download step</p>
+</dd>
+</dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.extract_forcings.case_setup.driver.parse_args">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.case_setup.driver.</span></span><span class="sig-name descname"><span class="pre">parse_args</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.extract_forcings.case_setup.driver.parse_args" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.extract_forcings.case_setup.driver.process_bgcic">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.case_setup.driver.</span></span><span class="sig-name descname"><span class="pre">process_bgcic</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.extract_forcings.case_setup.driver.process_bgcic" title="Link to this definition">#</a></dt>
+<dd><p>Extract and copy BGC initial conditions from CESM MARBL inputdata.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.extract_forcings.case_setup.driver.process_bgcironforcing">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.case_setup.driver.</span></span><span class="sig-name descname"><span class="pre">process_bgcironforcing</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.extract_forcings.case_setup.driver.process_bgcironforcing" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.extract_forcings.case_setup.driver.process_bgcrivernutrients">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.case_setup.driver.</span></span><span class="sig-name descname"><span class="pre">process_bgcrivernutrients</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.extract_forcings.case_setup.driver.process_bgcrivernutrients" title="Link to this definition">#</a></dt>
+<dd><p>Process river nutrient inputs for BGC.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.extract_forcings.case_setup.driver.process_chl">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.case_setup.driver.</span></span><span class="sig-name descname"><span class="pre">process_chl</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.extract_forcings.case_setup.driver.process_chl" title="Link to this definition">#</a></dt>
+<dd><p>Process satellite-derived chlorophyll data</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.extract_forcings.case_setup.driver.process_conditions">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.case_setup.driver.</span></span><span class="sig-name descname"><span class="pre">process_conditions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">get_dataset_piecewise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regrid_dataset_piecewise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">merge_piecewise_dataset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">run_initial_condition</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">run_boundary_conditions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.extract_forcings.case_setup.driver.process_conditions" title="Link to this definition">#</a></dt>
+<dd><p>Process initial and/or boundary conditions through the three-step pipeline.</p>
+<p>This function orchestrates the data extraction workflow:
+1. get_dataset_piecewise: Download/retrieve raw data from source datasets
+2. regrid_dataset_piecewise: Regrid data to your custom regional grid
+3. merge_piecewise_dataset: Merge regridded data into final forcing files</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>get_dataset_piecewise</strong> – Whether to download raw data (can skip if already cached)</p></li>
+<li><p><strong>regrid_dataset_piecewise</strong> – Whether to regrid data to regional grid</p></li>
+<li><p><strong>merge_piecewise_dataset</strong> – Whether to merge data into final files</p></li>
+<li><p><strong>run_initial_condition</strong> – Whether to process initial conditions (t=0)</p></li>
+<li><p><strong>run_boundary_conditions</strong> – Whether to process boundary conditions (open boundaries)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.extract_forcings.case_setup.driver.process_runoff">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.case_setup.driver.</span></span><span class="sig-name descname"><span class="pre">process_runoff</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.extract_forcings.case_setup.driver.process_runoff" title="Link to this definition">#</a></dt>
+<dd><p>Generate runoff mapping files and interpolation weights.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.extract_forcings.case_setup.driver.process_tides">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.case_setup.driver.</span></span><span class="sig-name descname"><span class="pre">process_tides</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.extract_forcings.case_setup.driver.process_tides" title="Link to this definition">#</a></dt>
+<dd><p>Extract and process tidal forcing from TPXO database.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.extract_forcings.case_setup.driver.resolve_components">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.case_setup.driver.</span></span><span class="sig-name descname"><span class="pre">resolve_components</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cfg</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.extract_forcings.case_setup.driver.resolve_components" title="Link to this definition">#</a></dt>
+<dd><p>Resolve which components should run based on CLI flags and config availability.</p>
+<p>This function takes the parsed command-line arguments and the configuration, then
+determines which forcing components should actually execute. It handles:
+- –all: Enable all components that exist in config
+- –skip: Disable specific components by name (case-insensitive)
+- Individual flags: Enable only specified components
+- Config validation: Skip components requested but not in config</p>
+<p>The function modifies args in-place, setting each component flag to True/False
+based on the resolution logic.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>args</strong> – Parsed command-line arguments (from parse_args())</p></li>
+<li><p><strong>cfg</strong> – Config object with .config dict of available components</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Modified args object with all component flags resolved</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.extract_forcings.case_setup.driver.run_from_cli">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.case_setup.driver.</span></span><span class="sig-name descname"><span class="pre">run_from_cli</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cfg</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.extract_forcings.case_setup.driver.run_from_cli" title="Link to this definition">#</a></dt>
+<dd><p>Execute the forcing extraction workflow based on CLI arguments.</p>
+<p>This is the main entry point that coordinates the entire workflow:
+1. Resolves which components to run
+2. Executes the appropriate process_* functions
+3. Maintains component dependencies (e.g., runoff before bgcrivernutrients)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>args</strong> – Parsed and resolved command-line arguments</p></li>
+<li><p><strong>cfg</strong> – Config object from utils.Config(CONFIG_PATH)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.extract_forcings.case_setup.driver.should_run">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.case_setup.driver.</span></span><span class="sig-name descname"><span class="pre">should_run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cfg</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.extract_forcings.case_setup.driver.should_run" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.extract_forcings.case_setup.driver.test_driver">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.case_setup.driver.</span></span><span class="sig-name descname"><span class="pre">test_driver</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.extract_forcings.case_setup.driver.test_driver" title="Link to this definition">#</a></dt>
+<dd><p>Test that all the imports work</p>
+</dd></dl>
+
 </section>
 <section id="module-CrocoDash.extract_forcings.case_setup">
 <span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-CrocoDash.extract_forcings.case_setup" title="Link to this heading">#</a></h2>
@@ -413,7 +556,21 @@ document.write(`
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#submodules">Submodules</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crocodash-extract-forcings-case-setup-driver-module">CrocoDash.extract_forcings.case_setup.driver module</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.extract_forcings.case_setup.driver">CrocoDash.extract_forcings.case_setup.driver module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.case_setup.driver.parse_args"><code class="docutils literal notranslate"><span class="pre">parse_args()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.case_setup.driver.process_bgcic"><code class="docutils literal notranslate"><span class="pre">process_bgcic()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.case_setup.driver.process_bgcironforcing"><code class="docutils literal notranslate"><span class="pre">process_bgcironforcing()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.case_setup.driver.process_bgcrivernutrients"><code class="docutils literal notranslate"><span class="pre">process_bgcrivernutrients()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.case_setup.driver.process_chl"><code class="docutils literal notranslate"><span class="pre">process_chl()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.case_setup.driver.process_conditions"><code class="docutils literal notranslate"><span class="pre">process_conditions()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.case_setup.driver.process_runoff"><code class="docutils literal notranslate"><span class="pre">process_runoff()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.case_setup.driver.process_tides"><code class="docutils literal notranslate"><span class="pre">process_tides()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.case_setup.driver.resolve_components"><code class="docutils literal notranslate"><span class="pre">resolve_components()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.case_setup.driver.run_from_cli"><code class="docutils literal notranslate"><span class="pre">run_from_cli()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.case_setup.driver.should_run"><code class="docutils literal notranslate"><span class="pre">should_run()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.case_setup.driver.test_driver"><code class="docutils literal notranslate"><span class="pre">test_driver()</span></code></a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.extract_forcings.case_setup">Module contents</a></li>
 </ul>
   </nav></div>

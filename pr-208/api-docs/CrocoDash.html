@@ -342,17 +342,32 @@ document.write(`
                 <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#subpackages">Subpackages</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#submodules">Submodules</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crocodash-case-module">CrocoDash.case module</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crocodash-grid-module">CrocoDash.grid module</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crocodash-grid-creator-module">CrocoDash.grid_creator module</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.case">CrocoDash.case module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.case.Case"><code class="docutils literal notranslate"><span class="pre">Case</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.case.Case.bgc_in_compset"><code class="docutils literal notranslate"><span class="pre">Case.bgc_in_compset</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.case.Case.cice_in_compset"><code class="docutils literal notranslate"><span class="pre">Case.cice_in_compset</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.case.Case.configure_forcings"><code class="docutils literal notranslate"><span class="pre">Case.configure_forcings()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.case.Case.configure_initial_and_boundary_conditions"><code class="docutils literal notranslate"><span class="pre">Case.configure_initial_and_boundary_conditions()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.case.Case.expt"><code class="docutils literal notranslate"><span class="pre">Case.expt</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.case.Case.find_MOM6_rectangular_orientation"><code class="docutils literal notranslate"><span class="pre">Case.find_MOM6_rectangular_orientation()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.case.Case.init_args_check"><code class="docutils literal notranslate"><span class="pre">Case.init_args_check()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.case.Case.name"><code class="docutils literal notranslate"><span class="pre">Case.name</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.case.Case.process_forcings"><code class="docutils literal notranslate"><span class="pre">Case.process_forcings()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.case.Case.runoff_in_compset"><code class="docutils literal notranslate"><span class="pre">Case.runoff_in_compset</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.grid">CrocoDash.grid module</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.grid_creator">CrocoDash.grid_creator module</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.logging">CrocoDash.logging module</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.logging.setup_logger"><code class="docutils literal notranslate"><span class="pre">setup_logger()</span></code></a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crocodash-topo-module">CrocoDash.topo module</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crocodash-topo-editor-module">CrocoDash.topo_editor module</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crocodash-vgrid-module">CrocoDash.vgrid module</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crocodash-vgrid-creator-module">CrocoDash.vgrid_creator module</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.topo">CrocoDash.topo module</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.topo_editor">CrocoDash.topo_editor module</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.vgrid">CrocoDash.vgrid module</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.vgrid_creator">CrocoDash.vgrid_creator module</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash">Module contents</a></li>
 </ul>
             </nav>
@@ -375,7 +390,7 @@ document.write(`
 <li class="toctree-l2"><a class="reference internal" href="CrocoDash.extract_forcings.html#subpackages">Subpackages</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="CrocoDash.extract_forcings.case_setup.html">CrocoDash.extract_forcings.case_setup package</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.extract_forcings.case_setup.html#submodules">Submodules</a></li>
-<li class="toctree-l4"><a class="reference internal" href="CrocoDash.extract_forcings.case_setup.html#crocodash-extract-forcings-case-setup-driver-module">CrocoDash.extract_forcings.case_setup.driver module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.extract_forcings.case_setup.html#module-CrocoDash.extract_forcings.case_setup.driver">CrocoDash.extract_forcings.case_setup.driver module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.extract_forcings.case_setup.html#module-CrocoDash.extract_forcings.case_setup">Module contents</a></li>
 </ul>
 </li>
@@ -388,24 +403,198 @@ document.write(`
 <li class="toctree-l3"><a class="reference internal" href="CrocoDash.extract_forcings.html#CrocoDash.extract_forcings.bgc.process_river_nutrients"><code class="docutils literal notranslate"><span class="pre">process_river_nutrients()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="CrocoDash.extract_forcings.html#crocodash-extract-forcings-chlorophyll-module">CrocoDash.extract_forcings.chlorophyll module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="CrocoDash.extract_forcings.html#crocodash-extract-forcings-get-dataset-piecewise-module">CrocoDash.extract_forcings.get_dataset_piecewise module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="CrocoDash.extract_forcings.html#crocodash-extract-forcings-merge-piecewise-dataset-module">CrocoDash.extract_forcings.merge_piecewise_dataset module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="CrocoDash.extract_forcings.html#crocodash-extract-forcings-regrid-dataset-piecewise-module">CrocoDash.extract_forcings.regrid_dataset_piecewise module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="CrocoDash.extract_forcings.html#crocodash-extract-forcings-runoff-module">CrocoDash.extract_forcings.runoff module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="CrocoDash.extract_forcings.html#module-CrocoDash.extract_forcings.chlorophyll">CrocoDash.extract_forcings.chlorophyll module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.extract_forcings.html#CrocoDash.extract_forcings.chlorophyll.process_chl"><code class="docutils literal notranslate"><span class="pre">process_chl()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="CrocoDash.extract_forcings.html#module-CrocoDash.extract_forcings.get_dataset_piecewise">CrocoDash.extract_forcings.get_dataset_piecewise module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.extract_forcings.html#CrocoDash.extract_forcings.get_dataset_piecewise.get_dataset_piecewise"><code class="docutils literal notranslate"><span class="pre">get_dataset_piecewise()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="CrocoDash.extract_forcings.html#module-CrocoDash.extract_forcings.merge_piecewise_dataset">CrocoDash.extract_forcings.merge_piecewise_dataset module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.extract_forcings.html#CrocoDash.extract_forcings.merge_piecewise_dataset.merge_piecewise_dataset"><code class="docutils literal notranslate"><span class="pre">merge_piecewise_dataset()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="CrocoDash.extract_forcings.html#module-CrocoDash.extract_forcings.regrid_dataset_piecewise">CrocoDash.extract_forcings.regrid_dataset_piecewise module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.extract_forcings.html#CrocoDash.extract_forcings.regrid_dataset_piecewise.capture_fill_metadata"><code class="docutils literal notranslate"><span class="pre">capture_fill_metadata()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.extract_forcings.html#CrocoDash.extract_forcings.regrid_dataset_piecewise.final_cleanliness_fill"><code class="docutils literal notranslate"><span class="pre">final_cleanliness_fill()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.extract_forcings.html#CrocoDash.extract_forcings.regrid_dataset_piecewise.m6b_fill_missing_data_wrapper"><code class="docutils literal notranslate"><span class="pre">m6b_fill_missing_data_wrapper()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.extract_forcings.html#CrocoDash.extract_forcings.regrid_dataset_piecewise.regrid_dataset_piecewise"><code class="docutils literal notranslate"><span class="pre">regrid_dataset_piecewise()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="CrocoDash.extract_forcings.html#module-CrocoDash.extract_forcings.runoff">CrocoDash.extract_forcings.runoff module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.extract_forcings.html#CrocoDash.extract_forcings.runoff.generate_rof_ocn_map"><code class="docutils literal notranslate"><span class="pre">generate_rof_ocn_map()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="CrocoDash.extract_forcings.html#module-CrocoDash.extract_forcings.tides">CrocoDash.extract_forcings.tides module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="CrocoDash.extract_forcings.html#CrocoDash.extract_forcings.tides.process_tides"><code class="docutils literal notranslate"><span class="pre">process_tides()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="CrocoDash.extract_forcings.html#crocodash-extract-forcings-utils-module">CrocoDash.extract_forcings.utils module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="CrocoDash.extract_forcings.html#module-CrocoDash.extract_forcings.utils">CrocoDash.extract_forcings.utils module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.extract_forcings.html#CrocoDash.extract_forcings.utils.Config"><code class="docutils literal notranslate"><span class="pre">Config</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.extract_forcings.html#CrocoDash.extract_forcings.utils.Config.keys"><code class="docutils literal notranslate"><span class="pre">Config.keys()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.extract_forcings.html#CrocoDash.extract_forcings.utils.check_date_continuity"><code class="docutils literal notranslate"><span class="pre">check_date_continuity()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.extract_forcings.html#CrocoDash.extract_forcings.utils.parse_dataset_folder"><code class="docutils literal notranslate"><span class="pre">parse_dataset_folder()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="CrocoDash.extract_forcings.html#module-CrocoDash.extract_forcings">Module contents</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="CrocoDash.forcing_configurations.html">CrocoDash.forcing_configurations package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="CrocoDash.forcing_configurations.html#submodules">Submodules</a></li>
-<li class="toctree-l2"><a class="reference internal" href="CrocoDash.forcing_configurations.html#crocodash-forcing-configurations-base-module">CrocoDash.forcing_configurations.base module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="CrocoDash.forcing_configurations.html#crocodash-forcing-configurations-configurations-module">CrocoDash.forcing_configurations.configurations module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="CrocoDash.forcing_configurations.html#module-contents">Module contents</a></li>
+<li class="toctree-l2"><a class="reference internal" href="CrocoDash.forcing_configurations.html#module-CrocoDash.forcing_configurations.base">CrocoDash.forcing_configurations.base module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.BaseConfigurator"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.BaseConfigurator.allowed_compsets"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.allowed_compsets</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.BaseConfigurator.check_input_params_synced"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.check_input_params_synced()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.BaseConfigurator.check_output_params_exist"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.check_output_params_exist()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.BaseConfigurator.configure"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.configure()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.BaseConfigurator.deserialize"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.deserialize()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.BaseConfigurator.forbidden_compsets"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.forbidden_compsets</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.BaseConfigurator.get_input_param"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.get_input_param()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.BaseConfigurator.get_input_param_object"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.get_input_param_object()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.BaseConfigurator.get_output_param"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.get_output_param()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.BaseConfigurator.get_output_param_object"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.get_output_param_object()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.BaseConfigurator.input_params"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.input_params</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.BaseConfigurator.inspect"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.inspect()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.BaseConfigurator.is_required"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.is_required()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.BaseConfigurator.make_serializable"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.make_serializable()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.BaseConfigurator.name"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.BaseConfigurator.output_params"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.output_params</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.BaseConfigurator.required_for_compsets"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.required_for_compsets</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.BaseConfigurator.serialize"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.serialize()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.BaseConfigurator.set_input_param"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.set_input_param()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.BaseConfigurator.set_output_param"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.set_output_param()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.BaseConfigurator.validate_args"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.validate_args()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.BaseConfigurator.validate_compset_compatibility"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.validate_compset_compatibility()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.ForcingConfigRegistry"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.ForcingConfigRegistry.deserialize"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.deserialize()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.ForcingConfigRegistry.find_active_configurators"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.find_active_configurators()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.ForcingConfigRegistry.find_required_configurators"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.find_required_configurators()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.ForcingConfigRegistry.find_valid_configurators"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.find_valid_configurators()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.ForcingConfigRegistry.get_active_configurators"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.get_active_configurators()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.ForcingConfigRegistry.get_ctor_signature"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.get_ctor_signature()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.ForcingConfigRegistry.get_user_args"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.get_user_args()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.ForcingConfigRegistry.instantiate_configurator"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.instantiate_configurator()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.ForcingConfigRegistry.is_active"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.is_active()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.ForcingConfigRegistry.register"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.register()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.ForcingConfigRegistry.registered_types"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.registered_types</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.ForcingConfigRegistry.return_missing_inputs"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.return_missing_inputs()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.ForcingConfigRegistry.run_configurators"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.run_configurators()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.InputFileParam"><code class="docutils literal notranslate"><span class="pre">InputFileParam</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.InputFileParam.set_item"><code class="docutils literal notranslate"><span class="pre">InputFileParam.set_item()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.InputParam"><code class="docutils literal notranslate"><span class="pre">InputParam</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.InputValueParam"><code class="docutils literal notranslate"><span class="pre">InputValueParam</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.InputValueParam.set_item"><code class="docutils literal notranslate"><span class="pre">InputValueParam.set_item()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.OutputParam"><code class="docutils literal notranslate"><span class="pre">OutputParam</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.OutputParam.apply"><code class="docutils literal notranslate"><span class="pre">OutputParam.apply()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.OutputParam.inspect"><code class="docutils literal notranslate"><span class="pre">OutputParam.inspect()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.OutputParam.set_item"><code class="docutils literal notranslate"><span class="pre">OutputParam.set_item()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.Param"><code class="docutils literal notranslate"><span class="pre">Param</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.Param.set_item"><code class="docutils literal notranslate"><span class="pre">Param.set_item()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.UserNLConfigParam"><code class="docutils literal notranslate"><span class="pre">UserNLConfigParam</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.UserNLConfigParam.apply"><code class="docutils literal notranslate"><span class="pre">UserNLConfigParam.apply()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.UserNLConfigParam.inspect"><code class="docutils literal notranslate"><span class="pre">UserNLConfigParam.inspect()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.XMLConfigParam"><code class="docutils literal notranslate"><span class="pre">XMLConfigParam</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.XMLConfigParam.apply"><code class="docutils literal notranslate"><span class="pre">XMLConfigParam.apply()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.XMLConfigParam.inspect"><code class="docutils literal notranslate"><span class="pre">XMLConfigParam.inspect()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.is_serializable"><code class="docutils literal notranslate"><span class="pre">is_serializable()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="CrocoDash.forcing_configurations.html#module-CrocoDash.forcing_configurations.configurations">CrocoDash.forcing_configurations.configurations module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.configurations.BGCConfigurator"><code class="docutils literal notranslate"><span class="pre">BGCConfigurator</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.configurations.BGCConfigurator.allowed_compsets"><code class="docutils literal notranslate"><span class="pre">BGCConfigurator.allowed_compsets</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.configurations.BGCConfigurator.configure"><code class="docutils literal notranslate"><span class="pre">BGCConfigurator.configure()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.configurations.BGCConfigurator.input_params"><code class="docutils literal notranslate"><span class="pre">BGCConfigurator.input_params</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.configurations.BGCConfigurator.name"><code class="docutils literal notranslate"><span class="pre">BGCConfigurator.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.configurations.BGCConfigurator.output_params"><code class="docutils literal notranslate"><span class="pre">BGCConfigurator.output_params</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.configurations.BGCConfigurator.required_for_compsets"><code class="docutils literal notranslate"><span class="pre">BGCConfigurator.required_for_compsets</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.configurations.BGCICConfigurator"><code class="docutils literal notranslate"><span class="pre">BGCICConfigurator</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.configurations.BGCICConfigurator.allowed_compsets"><code class="docutils literal notranslate"><span class="pre">BGCICConfigurator.allowed_compsets</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.configurations.BGCICConfigurator.configure"><code class="docutils literal notranslate"><span class="pre">BGCICConfigurator.configure()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.configurations.BGCICConfigurator.input_params"><code class="docutils literal notranslate"><span class="pre">BGCICConfigurator.input_params</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.configurations.BGCICConfigurator.name"><code class="docutils literal notranslate"><span class="pre">BGCICConfigurator.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.configurations.BGCICConfigurator.output_params"><code class="docutils literal notranslate"><span class="pre">BGCICConfigurator.output_params</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.configurations.BGCICConfigurator.required_for_compsets"><code class="docutils literal notranslate"><span class="pre">BGCICConfigurator.required_for_compsets</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.configurations.BGCIronForcingConfigurator"><code class="docutils literal notranslate"><span class="pre">BGCIronForcingConfigurator</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.configurations.BGCIronForcingConfigurator.allowed_compsets"><code class="docutils literal notranslate"><span class="pre">BGCIronForcingConfigurator.allowed_compsets</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.configurations.BGCIronForcingConfigurator.configure"><code class="docutils literal notranslate"><span class="pre">BGCIronForcingConfigurator.configure()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.configurations.BGCIronForcingConfigurator.input_params"><code class="docutils literal notranslate"><span class="pre">BGCIronForcingConfigurator.input_params</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.configurations.BGCIronForcingConfigurator.name"><code class="docutils literal notranslate"><span class="pre">BGCIronForcingConfigurator.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.configurations.BGCIronForcingConfigurator.output_params"><code class="docutils literal notranslate"><span class="pre">BGCIronForcingConfigurator.output_params</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.configurations.BGCIronForcingConfigurator.required_for_compsets"><code class="docutils literal notranslate"><span class="pre">BGCIronForcingConfigurator.required_for_compsets</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.configurations.BGCRiverNutrientsConfigurator"><code class="docutils literal notranslate"><span class="pre">BGCRiverNutrientsConfigurator</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.configurations.BGCRiverNutrientsConfigurator.allowed_compsets"><code class="docutils literal notranslate"><span class="pre">BGCRiverNutrientsConfigurator.allowed_compsets</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.configurations.BGCRiverNutrientsConfigurator.configure"><code class="docutils literal notranslate"><span class="pre">BGCRiverNutrientsConfigurator.configure()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.configurations.BGCRiverNutrientsConfigurator.input_params"><code class="docutils literal notranslate"><span class="pre">BGCRiverNutrientsConfigurator.input_params</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.configurations.BGCRiverNutrientsConfigurator.name"><code class="docutils literal notranslate"><span class="pre">BGCRiverNutrientsConfigurator.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.configurations.BGCRiverNutrientsConfigurator.output_params"><code class="docutils literal notranslate"><span class="pre">BGCRiverNutrientsConfigurator.output_params</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.configurations.BGCRiverNutrientsConfigurator.validate_args"><code class="docutils literal notranslate"><span class="pre">BGCRiverNutrientsConfigurator.validate_args()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.configurations.CICEConfigurator"><code class="docutils literal notranslate"><span class="pre">CICEConfigurator</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.configurations.CICEConfigurator.allowed_compsets"><code class="docutils literal notranslate"><span class="pre">CICEConfigurator.allowed_compsets</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.configurations.CICEConfigurator.configure"><code class="docutils literal notranslate"><span class="pre">CICEConfigurator.configure()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.configurations.CICEConfigurator.input_params"><code class="docutils literal notranslate"><span class="pre">CICEConfigurator.input_params</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.configurations.CICEConfigurator.name"><code class="docutils literal notranslate"><span class="pre">CICEConfigurator.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.configurations.CICEConfigurator.output_params"><code class="docutils literal notranslate"><span class="pre">CICEConfigurator.output_params</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.configurations.CICEConfigurator.required_for_compsets"><code class="docutils literal notranslate"><span class="pre">CICEConfigurator.required_for_compsets</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.configurations.ChlConfigurator"><code class="docutils literal notranslate"><span class="pre">ChlConfigurator</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.configurations.ChlConfigurator.configure"><code class="docutils literal notranslate"><span class="pre">ChlConfigurator.configure()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.configurations.ChlConfigurator.forbidden_compsets"><code class="docutils literal notranslate"><span class="pre">ChlConfigurator.forbidden_compsets</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.configurations.ChlConfigurator.input_params"><code class="docutils literal notranslate"><span class="pre">ChlConfigurator.input_params</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.configurations.ChlConfigurator.name"><code class="docutils literal notranslate"><span class="pre">ChlConfigurator.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.configurations.ChlConfigurator.output_params"><code class="docutils literal notranslate"><span class="pre">ChlConfigurator.output_params</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.configurations.ChlConfigurator.validate_args"><code class="docutils literal notranslate"><span class="pre">ChlConfigurator.validate_args()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.configurations.RunoffConfigurator"><code class="docutils literal notranslate"><span class="pre">RunoffConfigurator</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.configurations.RunoffConfigurator.allowed_compsets"><code class="docutils literal notranslate"><span class="pre">RunoffConfigurator.allowed_compsets</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.configurations.RunoffConfigurator.configure"><code class="docutils literal notranslate"><span class="pre">RunoffConfigurator.configure()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.configurations.RunoffConfigurator.input_params"><code class="docutils literal notranslate"><span class="pre">RunoffConfigurator.input_params</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.configurations.RunoffConfigurator.name"><code class="docutils literal notranslate"><span class="pre">RunoffConfigurator.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.configurations.RunoffConfigurator.output_params"><code class="docutils literal notranslate"><span class="pre">RunoffConfigurator.output_params</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.configurations.RunoffConfigurator.required_for_compsets"><code class="docutils literal notranslate"><span class="pre">RunoffConfigurator.required_for_compsets</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.configurations.RunoffConfigurator.validate_args"><code class="docutils literal notranslate"><span class="pre">RunoffConfigurator.validate_args()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.configurations.TidesConfigurator"><code class="docutils literal notranslate"><span class="pre">TidesConfigurator</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.configurations.TidesConfigurator.configure"><code class="docutils literal notranslate"><span class="pre">TidesConfigurator.configure()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.configurations.TidesConfigurator.input_params"><code class="docutils literal notranslate"><span class="pre">TidesConfigurator.input_params</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.configurations.TidesConfigurator.name"><code class="docutils literal notranslate"><span class="pre">TidesConfigurator.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.configurations.TidesConfigurator.output_params"><code class="docutils literal notranslate"><span class="pre">TidesConfigurator.output_params</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.configurations.TidesConfigurator.tidal_data_str"><code class="docutils literal notranslate"><span class="pre">TidesConfigurator.tidal_data_str()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.configurations.register"><code class="docutils literal notranslate"><span class="pre">register()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="CrocoDash.forcing_configurations.html#module-CrocoDash.forcing_configurations">Module contents</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="CrocoDash.raw_data_access.html">CrocoDash.raw_data_access package</a><ul>
@@ -482,14 +671,152 @@ document.write(`
 <section id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading">#</a></h2>
 </section>
-<section id="crocodash-case-module">
-<h2>CrocoDash.case module<a class="headerlink" href="#crocodash-case-module" title="Link to this heading">#</a></h2>
+<section id="module-CrocoDash.case">
+<span id="crocodash-case-module"></span><h2>CrocoDash.case module<a class="headerlink" href="#module-CrocoDash.case" title="Link to this heading">#</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="CrocoDash.case.Case">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.case.</span></span><span class="sig-name descname"><span class="pre">Case</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">cesmroot</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">caseroot</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputdir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ocn_grid</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Grid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ocn_topo</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Topo</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ocn_vgrid</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">VGrid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">atm_grid_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'TL319'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rof_grid_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ninst</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">machine</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">project</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">override</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ntasks_ocn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">job_queue</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">job_wallclock_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.case.Case" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>This class represents a regional MOM6 case within the CESM framework. It is similar to the
+Experiment class in the regional_mom6 package, but with modifications to work within the CESM framework.</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="CrocoDash.case.Case.bgc_in_compset">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">bgc_in_compset</span></span><a class="headerlink" href="#CrocoDash.case.Case.bgc_in_compset" title="Link to this definition">#</a></dt>
+<dd><p>Check if BGC is included in the compset.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="CrocoDash.case.Case.cice_in_compset">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">cice_in_compset</span></span><a class="headerlink" href="#CrocoDash.case.Case.cice_in_compset" title="Link to this definition">#</a></dt>
+<dd><p>Check if CICE is included in the compset.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.case.Case.configure_forcings">
+<span class="sig-name descname"><span class="pre">configure_forcings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">date_range</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundaries</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">['south',</span> <span class="pre">'north',</span> <span class="pre">'west',</span> <span class="pre">'east']</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">product_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'GLORYS'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'get_glorys_data_script_for_cli'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.case.Case.configure_forcings" title="Link to this definition">#</a></dt>
+<dd><p>Configure the boundary conditions and tides for the MOM6 case.</p>
+<p>Sets up initial and boundary condition forcing data for MOM6 using a specified product
+and download function. Optionally configures tidal constituents if specified. Supports
+a large data workflow mode that defers data download and processing to an external script.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>date_range</strong> (<em>list</em><em> of </em><em>str</em>) – Start and end dates for the forcing data, formatted as strings.
+Must contain exactly two elements.</p></li>
+<li><p><strong>boundaries</strong> (<em>list</em><em> of </em><em>str</em><em>, </em><em>optional</em>) – List of open boundaries to process (e.g., [“south”, “north”]).
+Default is [“south”, “north”, “west”, “east”].</p></li>
+<li><p><strong>product_name</strong> (<em>str</em><em>, </em><em>optional</em>) – Name of the forcing data product to use. Default is “GLORYS”.</p></li>
+<li><p><strong>function_name</strong> (<em>str</em><em>, </em><em>optional</em>) – Name of the function to call for downloading the forcing data.
+Default is “get_glorys_data_script_for_cli”.</p></li>
+<li><p><strong>product_info</strong> (<em>str</em><em> | </em><em>Path</em><em> | </em><em>dict</em><em>, </em><em>optional</em>) – The equivalent MOM6 names to Product Names. Example:  xh -&gt; lat time -&gt; valid_time salinity -&gt; salt, as well as any other information required for product parsing
+The <cite>None</cite> option assumes the information is in raw_data_access/config under {product_name}.json. Every other option is copied there.</p></li>
+<li><p><strong>kwargs</strong> – These are the configuration options (please see accepted arguments in the configuration classes)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>TypeError</strong> – If inputs such as <cite>date_range</cite>, <cite>boundaries</cite>, or <cite>tidal_constituents</cite> are not lists of strings.</p></li>
+<li><p><strong>ValueError</strong> – If <cite>date_range</cite> does not have exactly two elements, or if tidal arguments are inconsistently specified.
+    Also raised if an invalid product or function is provided.</p></li>
+<li><p><strong>AssertionError</strong> – If the selected data product is not categorized as a forcing product.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>Downloads forcing data (or creates a script) for each boundary and the initial condition unless the large data workflow is used.</p></li>
+<li><p>In large data workflow mode, creates a folder structure and <cite>config.json</cite> file for later manual processing.</p></li>
+<li><p>This method must be called before <cite>process_forcings()</cite>.</p></li>
+</ul>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><a class="reference internal" href="#CrocoDash.case.Case.process_forcings" title="CrocoDash.case.Case.process_forcings"><code class="xref py py-obj docutils literal notranslate"><span class="pre">process_forcings</span></code></a></dt><dd><p>Executes the actual boundary, initial condition, and tide setup based on the configuration.</p>
+</dd>
+</dl>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.case.Case.configure_initial_and_boundary_conditions">
+<span class="sig-name descname"><span class="pre">configure_initial_and_boundary_conditions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">date_range</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundaries</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">['south',</span> <span class="pre">'north',</span> <span class="pre">'west',</span> <span class="pre">'east']</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">product_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'GLORYS'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'get_glorys_data_script_for_cli'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.case.Case.configure_initial_and_boundary_conditions" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="CrocoDash.case.Case.expt">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">expt</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">experiment</span></em><a class="headerlink" href="#CrocoDash.case.Case.expt" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.case.Case.find_MOM6_rectangular_orientation">
+<span class="sig-name descname"><span class="pre">find_MOM6_rectangular_orientation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.case.Case.find_MOM6_rectangular_orientation" title="Link to this definition">#</a></dt>
+<dd><p>Convert between MOM6 boundary and the specific segment number needed, or the inverse.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.case.Case.init_args_check">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">init_args_check</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">cime</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">caseroot</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputdir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ocn_grid</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Grid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ocn_topo</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Topo</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ocn_vgrid</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">VGrid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compset_lname</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">atm_grid_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rof_grid_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ninst</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">machine</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">project</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">override</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ntasks_ocn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">job_queue</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">job_wallclock_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.case.Case.init_args_check" title="Link to this definition">#</a></dt>
+<dd><p>Perform sanity checks on the input arguments to ensure they are valid and consistent.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="CrocoDash.case.Case.name">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#CrocoDash.case.Case.name" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.case.Case.process_forcings">
+<span class="sig-name descname"><span class="pre">process_forcings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">process_initial_condition</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">process_velocity_tracers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.case.Case.process_forcings" title="Link to this definition">#</a></dt>
+<dd><p>Process boundary conditions, initial conditions, and other forcings for a MOM6 case. It’s a wrapper around extract_forcings/case_setup/driver.py</p>
+<p>This method configures a regional MOM6 case’s ocean state boundaries and initial conditions
+using previously downloaded data setup in configure_forcings. The method expects <cite>configure_forcings()</cite> to be
+called beforehand.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>process_initial_condition</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to process the initial condition file. Default is True.</p></li>
+<li><p><strong>process_velocity_tracers</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to process velocity and tracer boundary conditions. Default is True.
+This will be overridden and set to False if the large data workflow in configure_forcings is enabled.</p></li>
+<li><p><strong>kwargs</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to process the other forcings, of the form process_{configurator.name} = False</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>RuntimeError</strong> – If <cite>configure_forcings()</cite> was not called before this method.</p></li>
+<li><p><strong>FileNotFoundError</strong> – If required unprocessed files are missing in the expected directories.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>This method uses variable name mappings specified in the forcing product configuration.</p></li>
+<li><p>If the large data workflow has been enabled, velocity and tracer OBCs are not processed
+within this method and must be handled externally.</p></li>
+<li><p>Applies forcing-related namelist and XML updates at the end of the method.</p></li>
+</ul>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><a class="reference internal" href="#CrocoDash.case.Case.configure_forcings" title="CrocoDash.case.Case.configure_forcings"><code class="xref py py-obj docutils literal notranslate"><span class="pre">configure_forcings</span></code></a></dt><dd><p>Must be called before this method to set up the environment.</p>
+</dd>
+</dl>
+</div>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="CrocoDash.case.Case.runoff_in_compset">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">runoff_in_compset</span></span><a class="headerlink" href="#CrocoDash.case.Case.runoff_in_compset" title="Link to this definition">#</a></dt>
+<dd><p>Check if runoff is included in the compset.</p>
+</dd></dl>
+
+</dd></dl>
+
 </section>
-<section id="crocodash-grid-module">
-<h2>CrocoDash.grid module<a class="headerlink" href="#crocodash-grid-module" title="Link to this heading">#</a></h2>
+<section id="module-CrocoDash.grid">
+<span id="crocodash-grid-module"></span><h2>CrocoDash.grid module<a class="headerlink" href="#module-CrocoDash.grid" title="Link to this heading">#</a></h2>
 </section>
-<section id="crocodash-grid-creator-module">
-<h2>CrocoDash.grid_creator module<a class="headerlink" href="#crocodash-grid-creator-module" title="Link to this heading">#</a></h2>
+<section id="module-CrocoDash.grid_creator">
+<span id="crocodash-grid-creator-module"></span><h2>CrocoDash.grid_creator module<a class="headerlink" href="#module-CrocoDash.grid_creator" title="Link to this heading">#</a></h2>
 </section>
 <section id="module-CrocoDash.logging">
 <span id="crocodash-logging-module"></span><h2>CrocoDash.logging module<a class="headerlink" href="#module-CrocoDash.logging" title="Link to this heading">#</a></h2>
@@ -512,17 +839,17 @@ document.write(`
 </dd></dl>
 
 </section>
-<section id="crocodash-topo-module">
-<h2>CrocoDash.topo module<a class="headerlink" href="#crocodash-topo-module" title="Link to this heading">#</a></h2>
+<section id="module-CrocoDash.topo">
+<span id="crocodash-topo-module"></span><h2>CrocoDash.topo module<a class="headerlink" href="#module-CrocoDash.topo" title="Link to this heading">#</a></h2>
 </section>
-<section id="crocodash-topo-editor-module">
-<h2>CrocoDash.topo_editor module<a class="headerlink" href="#crocodash-topo-editor-module" title="Link to this heading">#</a></h2>
+<section id="module-CrocoDash.topo_editor">
+<span id="crocodash-topo-editor-module"></span><h2>CrocoDash.topo_editor module<a class="headerlink" href="#module-CrocoDash.topo_editor" title="Link to this heading">#</a></h2>
 </section>
-<section id="crocodash-vgrid-module">
-<h2>CrocoDash.vgrid module<a class="headerlink" href="#crocodash-vgrid-module" title="Link to this heading">#</a></h2>
+<section id="module-CrocoDash.vgrid">
+<span id="crocodash-vgrid-module"></span><h2>CrocoDash.vgrid module<a class="headerlink" href="#module-CrocoDash.vgrid" title="Link to this heading">#</a></h2>
 </section>
-<section id="crocodash-vgrid-creator-module">
-<h2>CrocoDash.vgrid_creator module<a class="headerlink" href="#crocodash-vgrid-creator-module" title="Link to this heading">#</a></h2>
+<section id="module-CrocoDash.vgrid_creator">
+<span id="crocodash-vgrid-creator-module"></span><h2>CrocoDash.vgrid_creator module<a class="headerlink" href="#module-CrocoDash.vgrid_creator" title="Link to this heading">#</a></h2>
 </section>
 <section id="module-CrocoDash">
 <span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-CrocoDash" title="Link to this heading">#</a></h2>
@@ -576,17 +903,32 @@ document.write(`
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#subpackages">Subpackages</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#submodules">Submodules</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crocodash-case-module">CrocoDash.case module</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crocodash-grid-module">CrocoDash.grid module</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crocodash-grid-creator-module">CrocoDash.grid_creator module</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.case">CrocoDash.case module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.case.Case"><code class="docutils literal notranslate"><span class="pre">Case</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.case.Case.bgc_in_compset"><code class="docutils literal notranslate"><span class="pre">Case.bgc_in_compset</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.case.Case.cice_in_compset"><code class="docutils literal notranslate"><span class="pre">Case.cice_in_compset</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.case.Case.configure_forcings"><code class="docutils literal notranslate"><span class="pre">Case.configure_forcings()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.case.Case.configure_initial_and_boundary_conditions"><code class="docutils literal notranslate"><span class="pre">Case.configure_initial_and_boundary_conditions()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.case.Case.expt"><code class="docutils literal notranslate"><span class="pre">Case.expt</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.case.Case.find_MOM6_rectangular_orientation"><code class="docutils literal notranslate"><span class="pre">Case.find_MOM6_rectangular_orientation()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.case.Case.init_args_check"><code class="docutils literal notranslate"><span class="pre">Case.init_args_check()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.case.Case.name"><code class="docutils literal notranslate"><span class="pre">Case.name</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.case.Case.process_forcings"><code class="docutils literal notranslate"><span class="pre">Case.process_forcings()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.case.Case.runoff_in_compset"><code class="docutils literal notranslate"><span class="pre">Case.runoff_in_compset</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.grid">CrocoDash.grid module</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.grid_creator">CrocoDash.grid_creator module</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.logging">CrocoDash.logging module</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.logging.setup_logger"><code class="docutils literal notranslate"><span class="pre">setup_logger()</span></code></a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crocodash-topo-module">CrocoDash.topo module</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crocodash-topo-editor-module">CrocoDash.topo_editor module</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crocodash-vgrid-module">CrocoDash.vgrid module</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crocodash-vgrid-creator-module">CrocoDash.vgrid_creator module</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.topo">CrocoDash.topo module</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.topo_editor">CrocoDash.topo_editor module</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.vgrid">CrocoDash.vgrid module</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.vgrid_creator">CrocoDash.vgrid_creator module</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash">Module contents</a></li>
 </ul>
   </nav></div>
