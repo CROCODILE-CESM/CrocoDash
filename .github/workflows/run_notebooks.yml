@@ -61,14 +61,13 @@ jobs:
       - name: Create CI case
         run: |
           cd $WORKDIR/CrocoDash/demos
-          HDF5_USE_FILE_LOCKING=FALSE conda run -n CrocoDash jupyter nbconvert --to notebook --execute --inplace \
+          conda run -n CrocoDash jupyter nbconvert --to notebook --execute --inplace \
             --ExecutePreprocessor.timeout=600 \
             code/ci_case_setup.ipynb
 
       - name: Run CrocoDash notebooks
         run: |
           cd $WORKDIR/CrocoDash/demos
-          export HDF5_USE_FILE_LOCKING=FALSE
           find gallery/notebooks/CrocoDash -name "*.ipynb" \
             ! -path "*/.ipynb_checkpoints/*" \
             ! -name "BGC.ipynb" \
