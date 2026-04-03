@@ -5,7 +5,12 @@ on:
   push:
   schedule:
     - cron: '0 6 * * *'
-
+  env:
+    CIME_MACHINE: ubuntu-latest
+    DIN_LOC_ROOT: /workspace
+    SCRATCH: /workspace
+    CIME_OUTPUT_ROOT: /workspace
+    USER: ${{ github.actor }}
 jobs:
   resolve-image:
     runs-on: ubuntu-latest
