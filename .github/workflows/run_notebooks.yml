@@ -54,8 +54,9 @@ jobs:
 
       - name: Set CI case paths
         run: |
-          sed -i "s|<inputdir>|$WORKDIR/ci_input|g" $WORKDIR/CrocoDash/demos/ci_code/ci_case_setup.ipynb
-          sed -i "s|<casedir>|$WORKDIR/ci_cases|g" $WORKDIR/CrocoDash/demos/ci_code/ci_case_setup.ipynb
+          sed -i "s|\"fill_in_id\"|\"$WORKDIR/ci_input\"|g" $WORKDIR/CrocoDash/demos/ci_code/path_to_datasets.json
+          sed -i "s|\"fill_in_cd\"|\"$WORKDIR/ci_cases\"|g" $WORKDIR/CrocoDash/demos/ci_code/path_to_datasets.json
+          sed -i "s|\"Checkout\"|\"$CESMROOT\"|g" $WORKDIR/CrocoDash/demos/ci_code/path_to_datasets.json
           sed -i "s|\"Checkout\"|\"$CESMROOT\"|g" $WORKDIR/CrocoDash/demos/ci_code/path_to_datasets.json
 
       - name: Inject paths into notebooks
