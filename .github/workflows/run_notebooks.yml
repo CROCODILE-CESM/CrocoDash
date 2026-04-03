@@ -54,21 +54,21 @@ jobs:
 
       - name: Set CI case paths
         run: |
-          sed -i "s|<inputdir>|$WORKDIR/ci_input|g" $WORKDIR/CrocoDash/demos/code/ci_case_setup.ipynb
-          sed -i "s|<casedir>|$WORKDIR/ci_cases|g" $WORKDIR/CrocoDash/demos/code/ci_case_setup.ipynb
-          sed -i "s|\"Checkout\"|\"$CESMROOT\"|g" $WORKDIR/CrocoDash/demos/code/path_to_datasets.json
+          sed -i "s|<inputdir>|$WORKDIR/ci_input|g" $WORKDIR/CrocoDash/demos/ci_code/ci_case_setup.ipynb
+          sed -i "s|<casedir>|$WORKDIR/ci_cases|g" $WORKDIR/CrocoDash/demos/ci_code/ci_case_setup.ipynb
+          sed -i "s|\"Checkout\"|\"$CESMROOT\"|g" $WORKDIR/CrocoDash/demos/ci_code/path_to_datasets.json
 
       - name: Inject paths into notebooks
         run: |
           cd $WORKDIR/CrocoDash/demos
-          conda run -n CrocoDash python code/inject_paths_into_notebooks.py
+          conda run -n CrocoDash python ci_code/inject_paths_into_notebooks.py
 
       - name: Create CI case
         run: |
           cd $WORKDIR/CrocoDash/demos
           conda run -n CrocoDash jupyter nbconvert --to notebook --execute --inplace \
             --ExecutePreprocessor.timeout=600 \
-            code/ci_case_setup.ipynb
+            ci_code/ci_case_setup.ipynb
 
       - name: Run CrocoDash notebooks
         run: |
