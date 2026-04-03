@@ -7,10 +7,28 @@ on:
     - cron: '0 6 * * *'
 
 jobs:
+  resolve-image:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: read
+    outputs:
+      tag: ${{ steps.get-tag.outputs.tag }}
+    steps:
+      - name: Get latest immutable nightly tag
+        id: get-tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG=$(gh api /orgs/crocodile-cesm/packages/container/crocodash/versions \
+            --jq '[.[] | select(.metadata.container.tags[] | startswith("nightly-"))] | sort_by(.created_at) | last | .metadata.container.tags[] | select(startswith("nightly-"))' \
+            | head -1)
+          echo "tag=ghcr.io/crocodile-cesm/crocodash:$TAG" >> $GITHUB_OUTPUT
+
   run_notebooks:
+    needs: resolve-image
     runs-on: gha-runner-crocodash
     container:
-      image: ghcr.io/crocodile-cesm/crocodash:nightly
+      image: ${{ needs.resolve-image.outputs.tag }}
       options: --pull always
     steps:
       - name: Configure Git Identity
