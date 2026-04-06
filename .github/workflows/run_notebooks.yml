@@ -85,7 +85,7 @@ jobs:
           cd $WORKDIR/CrocoDash/demos
           find gallery/notebooks/CrocoDash -name "*.ipynb" \
             ! -path "*/.ipynb_checkpoints/*" \
-            ! -name "BGC.ipynb" \ 
+            ! -name "BGC.ipynb" \
             | sort \
             | xargs -I {} conda run -n CrocoDash \
                 jupyter nbconvert --to notebook --execute --inplace \
