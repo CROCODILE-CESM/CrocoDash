@@ -11,6 +11,16 @@ jobs:
       - name: Search for '/glade' in CrocoDash/, tests/, demos/
         run: |
           .github/scripts/check_glade_quality_control.sh
+  check-notebook-coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Check all notebooks (except BGC.ipynb) are in run_notebooks.yml matrix
+        run: |
+          bash dev_tools/check_notebook_coverage.sh
   check-black:
     runs-on: ubuntu-latest
     steps:

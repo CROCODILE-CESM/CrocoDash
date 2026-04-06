@@ -51,14 +51,17 @@ jobs:
           - gallery/notebooks/CrocoDash/features/coupling/add_cice.ipynb
           - gallery/notebooks/CrocoDash/features/data_handling/add_data_products.ipynb
           - gallery/notebooks/CrocoDash/features/data_handling/too_much_data.ipynb
+          - gallery/notebooks/CrocoDash/features/add_chl.ipynb
+          - gallery/notebooks/CrocoDash/features/add_rof.ipynb
+          - gallery/notebooks/CrocoDash/features/add_runoff_product.ipynb
+          - gallery/notebooks/CrocoDash/features/add_tides.ipynb
+          - gallery/notebooks/CrocoDash/use_cases/three_boundary.ipynb
+          - gallery/notebooks/CrocoDash/use_cases/three_boundary_from_t232.ipynb
     steps:
       - name: Configure Git Identity
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
-
-      - name: Show package versions
-        run: conda run -n CrocoDash conda list
 
       - uses: actions/checkout@v4
         with:
