@@ -8,12 +8,15 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 NOTEBOOK_DIR="$REPO_ROOT/demos/gallery/notebooks/CrocoDash"
 WORKFLOW_FILE="$REPO_ROOT/.github/workflows/run_notebooks.yml"
 
-# Find all notebooks, excluding .ipynb_checkpoints and BGC.ipynb
+# Find all notebooks, excluding .ipynb_checkpoints and others
+# No BGC because data is not on inputdata
+# Exclude three_boundary.ipynb since it's expensive to run and we have three_boundary_from_t232.ipynb 
 mapfile -t ALL_NOTEBOOKS < <(
   find "$NOTEBOOK_DIR" -name "*.ipynb" \
     -not -path "*/.ipynb_checkpoints/*" \
     -not -name "BGC.ipynb" \
-    -not -name "add_bgc.ipynb" \
+    -not -name "add_bgc.ipynb" \ 
+    -not -name "three_boundary.ipynb" \ 
     | sort
 )
 
