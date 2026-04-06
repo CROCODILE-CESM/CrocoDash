@@ -69,7 +69,16 @@ jobs:
           conda run -n CrocoDash jupyter nbconvert --to notebook --execute --inplace \
             --ExecutePreprocessor.timeout=600 \
             ci_code/ci_case_setup.ipynb
-
+      - name: Clear CrocoDash notebook outputs
+        run: |
+          cd $WORKDIR/CrocoDash/demos
+          find gallery/notebooks/CrocoDash -name "*.ipynb" \
+            ! -path "*/.ipynb_checkpoints/*" \
+            ! -name "BGC.ipynb" \
+            | sort \
+            | xargs -I {} conda run -n CrocoDash \
+                jupyter nbconvert --clear-output --inplace \
+                {}
         # BGC isn't run cuz it uses data on GDEX that isn't accessible on the GHCR runner. We should consider adding a test BGC dataset to the inputdata in the future so we can run those tests here too.
       - name: Run CrocoDash notebooks
         run: |
