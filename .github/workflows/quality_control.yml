@@ -20,7 +20,7 @@ jobs:
           submodules: recursive
       - name: Check all notebooks (except exclusions) are in run_notebooks.yml matrix
         run: |
-          bash dev_tools/check_notebook_coverage.sh
+          bash .github/scripts/check_notebook_coverage.sh
   check-black:
     runs-on: ubuntu-latest
     steps:
