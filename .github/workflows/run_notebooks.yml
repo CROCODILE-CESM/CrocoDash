@@ -35,13 +35,31 @@ jobs:
     container:
       image: ${{ needs.resolve-image.outputs.tag }}
       options: --pull always
+    strategy:
+      fail-fast: false
+      matrix:
+        notebook:
+          - gallery/notebooks/CrocoDash/projects/CrocoDash.ipynb
+          - gallery/notebooks/CrocoDash/projects/sample_crocodash_projects/CICE_antarctica.ipynb
+          - gallery/notebooks/CrocoDash/projects/sample_crocodash_projects/CICE_arctic.ipynb
+          - gallery/notebooks/CrocoDash/projects/sample_crocodash_projects/DROF.ipynb
+          - gallery/notebooks/CrocoDash/projects/sample_crocodash_projects/NWA.ipynb
+          - gallery/notebooks/CrocoDash/tutorials/crocodash_tutorial.ipynb
+          - gallery/notebooks/CrocoDash/use_cases/mom6_cice_antarctica.ipynb
+          - gallery/notebooks/CrocoDash/features/grids/add_grids.ipynb
+          - gallery/notebooks/CrocoDash/features/grids/subset_global.ipynb
+          - gallery/notebooks/CrocoDash/features/coupling/add_cice.ipynb
+          - gallery/notebooks/CrocoDash/features/data_handling/add_data_products.ipynb
+          - gallery/notebooks/CrocoDash/features/data_handling/too_much_data.ipynb
     steps:
       - name: Configure Git Identity
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
-      - name: Show package versions                                                                                                                                                           
-        run: conda run -n CrocoDash conda list    
+
+      - name: Show package versions
+        run: conda run -n CrocoDash conda list
+
       - uses: actions/checkout@v4
         with:
           submodules: recursive
@@ -69,27 +87,22 @@ jobs:
           conda run -n CrocoDash jupyter nbconvert --to notebook --execute --inplace \
             --ExecutePreprocessor.timeout=600 \
             ci_code/ci_case_setup.ipynb
-      - name: Clear CrocoDash notebook outputs
+
+      - name: Clear notebook outputs
         run: |
           cd $WORKDIR/CrocoDash/demos
-          find gallery/notebooks/CrocoDash -name "*.ipynb" \
-            ! -path "*/.ipynb_checkpoints/*" \
-            ! -name "BGC.ipynb" \
-            | sort \
-            | xargs -I {} conda run -n CrocoDash \
-                jupyter nbconvert --clear-output --inplace \
-                {}
-        # BGC isn't run cuz it uses data on GDEX that isn't accessible on the GHCR runner. We should consider adding a test BGC dataset to the inputdata in the future so we can run those tests here too.
-      - name: Run CrocoDash notebooks
+          conda run -n CrocoDash \
+              jupyter nbconvert --clear-output --inplace \
+              ${{ matrix.notebook }}
+
+      - name: Run notebook
+        # BGC isn't run as it uses data on GDEX that isn't accessible on the GHCR runner.
+        # Consider adding a test BGC dataset to inputdata in the future.
         run: |
           cd $WORKDIR/CrocoDash/demos
-          find gallery/notebooks/CrocoDash -name "*.ipynb" \
-            ! -path "*/.ipynb_checkpoints/*" \
-            ! -name "BGC.ipynb" \
-            | sort \
-            | xargs -I {} conda run -n CrocoDash \
-                jupyter nbconvert --to notebook --execute --inplace \
-                --ExecutePreprocessor.timeout=600 \
-                --TagRemovePreprocessor.enabled=True \
-                --TagRemovePreprocessor.remove_cell_tags='["ci-skip"]' \
-                {}
+          conda run -n CrocoDash \
+              jupyter nbconvert --to notebook --execute --inplace \
+              --ExecutePreprocessor.timeout=600 \
+              --TagRemovePreprocessor.enabled=True \
+              --TagRemovePreprocessor.remove_cell_tags='["ci-skip"]' \
+              ${{ matrix.notebook }}
