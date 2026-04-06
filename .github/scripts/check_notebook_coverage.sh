@@ -15,8 +15,8 @@ mapfile -t ALL_NOTEBOOKS < <(
   find "$NOTEBOOK_DIR" -name "*.ipynb" \
     -not -path "*/.ipynb_checkpoints/*" \
     -not -name "BGC.ipynb" \
-    -not -name "add_bgc.ipynb" \ 
-    -not -name "three_boundary.ipynb" \ 
+    -not -name "add_bgc.ipynb" \
+    -not -name "three_boundary.ipynb" \
     | sort
 )
 
