@@ -57,7 +57,6 @@ jobs:
           sed -i "s|\"fill_in_id\"|\"$WORKDIR/ci_input\"|g" $WORKDIR/CrocoDash/demos/ci_code/path_to_datasets.json
           sed -i "s|\"fill_in_cd\"|\"$WORKDIR/ci_cases\"|g" $WORKDIR/CrocoDash/demos/ci_code/path_to_datasets.json
           sed -i "s|\"Checkout\"|\"$CESMROOT\"|g" $WORKDIR/CrocoDash/demos/ci_code/path_to_datasets.json
-          sed -i "s|\"Checkout\"|\"$CESMROOT\"|g" $WORKDIR/CrocoDash/demos/ci_code/path_to_datasets.json
 
       - name: Inject paths into notebooks
         run: |
@@ -71,12 +70,13 @@ jobs:
             --ExecutePreprocessor.timeout=600 \
             ci_code/ci_case_setup.ipynb
 
+        # BGC isn't run cuz it uses data on GDEX that isn't accessible on the GHCR runner. We should consider adding a test BGC dataset to the inputdata in the future so we can run those tests here too.
       - name: Run CrocoDash notebooks
         run: |
           cd $WORKDIR/CrocoDash/demos
           find gallery/notebooks/CrocoDash -name "*.ipynb" \
             ! -path "*/.ipynb_checkpoints/*" \
-            ! -name "BGC.ipynb" \
+            ! -name "BGC.ipynb" \ 
             | sort \
             | xargs -I {} conda run -n CrocoDash \
                 jupyter nbconvert --to notebook --execute --inplace \
