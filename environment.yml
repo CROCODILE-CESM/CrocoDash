@@ -16,10 +16,9 @@ dependencies:
   - h5netcdf>=1.7.3,<1.8.0
   - pip>=24.2,<24.3
   - pip:
+    - -e ./CrocoDash/visualCaseGen/external/mom6_forge/ # We need to install this first because it is a dependency of rm6 (and we need it at a newer version for CrocoDash)
     - -e ./CrocoDash/rm6/
     - -e ./CrocoDash/visualCaseGen/external/ipyfilechooser/
-    - -e ./CrocoDash/visualCaseGen/external/mom6_forge/
     - -e ./CrocoDash/visualCaseGen/
     - myst_parser>=4.0.0,<4.1.0
     - sphinx-book-theme>=1.1.4,<1.2.0
-    - -e ./
