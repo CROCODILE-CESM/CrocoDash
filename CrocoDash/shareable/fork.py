@@ -178,13 +178,13 @@ class ForkCrocoDashBundle:
 
     def resolve_compset(self, compset=None):
         self.compset = self.manifest["init_args"]["compset"]
-        if compset is not None:
+        if compset is not None and compset != self.compset:
             self.compset = compset
             print(
                 "Warning: Changing compset may have unintended consequences and "
                 "may require additional data."
             )
-        elif ask_yes_no(
+        elif compset is None and ask_yes_no(
             f"Want to change compset? Current compset: {self.compset}", default=False
         ):
             self.compset = ask_string("Enter the new compset")
