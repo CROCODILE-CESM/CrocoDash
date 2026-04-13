@@ -4,11 +4,16 @@ Inspect is inordinately hard-coded, and probably can't be changed. Robust testin
 
 from pathlib import Path
 import json
+import os
 import tempfile
 from mom6_forge.grid import *
 from mom6_forge.topo import *
 from mom6_forge.vgrid import *
-from CrocoDash.shareable.fork import create_case, generate_configure_forcing_args
+from CrocoDash.shareable.fork import (
+    create_case,
+    generate_configure_forcing_args,
+    ForkCrocoDashBundle,
+)
 from uuid import uuid4
 import subprocess
 from CrocoDash.logging import setup_logger
@@ -33,6 +38,8 @@ class ReadCrocoDashCase:
         self._case = get_case_obj(caseroot)
         self.case_exists = True
         self._get_cesmroot()
+        self._get_case_machine()
+        self._get_case_project()
         self._read_user_nls()
         self._identify_CrocoDashCase_init_args()
         self._identify_CrocoDashCase_forcing_config_args()
@@ -180,6 +187,15 @@ class ReadCrocoDashCase:
         self.cesmroot = Path(self.case.get_value("SRCROOT"))
         return self.cesmroot
 
+    def _get_case_machine(self):
+        self.case_machine = self.case.get_value("MACH")
+        return self.case_machine
+
+    def _get_case_project(self):
+        project = self.case.get_value("PROJECT", subgroup="case.run")
+        self.case_project = project if project else None
+        return self.case_project
+
     def diff(self, other_case):
         """
         Diff this case (as the original) against another ReadCase (which is assumed to have been initialized the same). The diff indicates what unique features in the original are not in the new
@@ -256,10 +272,13 @@ class ReadCrocoDashCase:
             self.non_standard_case_info = self.diff(ReadCrocoDashCase(caseroot_tmp))
             return self.non_standard_case_info
 
-    def bundle(self, output_folder_location):
-        assert hasattr(
-            self, "non_standard_case_info"
-        ), "To bundle your case, you need to identify non-standard CrocoDash first."
+    def bundle(self, output_folder_location, machine=None, project=None):
+        if not hasattr(self, "non_standard_case_info"):
+            self.identify_non_standard_CrocoDash_case_information(
+                self.cesmroot,
+                machine if machine is not None else self.case_machine,
+                project if project is not None else self.case_project,
+            )
         ocnice_dir = self.get_user_nl_value("mom", "INPUTDIR")
         case_subfolder = (
             Path(output_folder_location) / f"{self.caseroot.name}_case_bundle"
@@ -334,6 +353,60 @@ class ReadCrocoDashCase:
                 dst.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy(src, dst)
         return case_subfolder
+
+    def clone(self, new_caseroot, new_inputdir, bundle_dir=None):
+        return clone(self.caseroot, new_caseroot, new_inputdir, bundle_dir=bundle_dir)
+
+
+def clone(caseroot, new_caseroot, new_inputdir, bundle_dir=None):
+    """
+    Clone a CrocoDash case to a new location. Machine, project, and cesmroot
+    are read automatically from the original caseroot.
+
+    Parameters
+    ----------
+    caseroot : str or Path
+        Path to the existing case to clone.
+    new_caseroot : str or Path
+        Path for the new case.
+    new_inputdir : str or Path
+        Path for the new input directory.
+    bundle_dir : str or Path, optional
+        Where to write the intermediate bundle. Defaults to inside
+        new_caseroot and is cleaned up automatically.
+    """
+    rcc = ReadCrocoDashCase(caseroot)
+
+    plan = {
+        "xml_files": True,
+        "user_nl": True,
+        "source_mods": True,
+        "xmlchanges": True,
+    }
+
+    with tempfile.TemporaryDirectory() as tmp:
+        loc = rcc.bundle(tmp)
+        fcb = ForkCrocoDashBundle(
+            loc,
+            rcc.cesmroot,
+            rcc.case_machine,
+            rcc.case_project,
+            new_caseroot,
+            new_inputdir,
+        )
+        result = fcb.fork(
+            plan=plan,
+            compset=rcc.init_args["compset"],
+            extra_configs=[],
+            remove_configs=[],
+        )
+        dest = Path(new_caseroot) / loc.name
+        if bundle_dir is None:
+            shutil.copytree(loc, dest)
+        else:
+            shutil.copytree(loc, Path(bundle_dir) / loc.name)
+
+    return result
 
 
 def get_case_obj(caseroot):
