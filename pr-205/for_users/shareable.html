@@ -347,11 +347,13 @@ document.write(`
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#non-interactive-fork">Non-interactive fork</a></li>
 </ul>
 </li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#clone-one-step-shortcut">Clone (one-step shortcut)</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#command-line">Command Line</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#read">Read</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#fork">Fork</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#clone">Clone</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#what-gets-diffed">What gets diffed?</a></li>
@@ -375,6 +377,7 @@ document.write(`
 <li><p><strong>Read</strong> - Inspect an existing CESM case and identify what makes it unique</p></li>
 <li><p><strong>Bundle</strong> - Package that unique information into a portable folder</p></li>
 <li><p><strong>Fork</strong> - Recreate a case from a bundle, with optional modifications</p></li>
+<li><p><strong>Clone</strong> - One-step shortcut to copy a case to a new location, reading machine/project/cesmroot automatically from the original</p></li>
 </ol>
 <hr class="docutils" />
 <section id="workflow">
@@ -385,15 +388,12 @@ document.write(`
 
 <span class="n">case</span> <span class="o">=</span> <span class="n">ReadCrocoDashCase</span><span class="p">(</span><span class="s2">&quot;/path/to/caseroot&quot;</span><span class="p">)</span>
 
-<span class="c1"># Diff against a fresh standard case to find non-standard changes</span>
-<span class="k">case</span><span class="o">.</span><span class="n">identify_non_standard_CrocoDash_case_information</span><span class="p">(</span>
-    <span class="n">cesmroot</span><span class="o">=</span><span class="s2">&quot;/path/to/cesm&quot;</span><span class="p">,</span>
-    <span class="n">machine</span><span class="o">=</span><span class="s2">&quot;derecho&quot;</span><span class="p">,</span>
-    <span class="n">project_number</span><span class="o">=</span><span class="s2">&quot;PROJ123&quot;</span><span class="p">,</span>
-<span class="p">)</span>
-
-<span class="c1"># Write the bundle</span>
+<span class="c1"># Write the bundle — automatically diffs against a standard case first</span>
 <span class="n">bundle_path</span> <span class="o">=</span> <span class="n">case</span><span class="o">.</span><span class="n">bundle</span><span class="p">(</span><span class="s2">&quot;/path/to/output_dir&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>If you need to override the machine or project used for the diff (e.g. generating a bundle on a different machine than the original), pass them explicitly:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">bundle_path</span> <span class="o">=</span> <span class="n">case</span><span class="o">.</span><span class="n">bundle</span><span class="p">(</span><span class="s2">&quot;/path/to/output_dir&quot;</span><span class="p">,</span> <span class="n">machine</span><span class="o">=</span><span class="s2">&quot;derecho&quot;</span><span class="p">,</span> <span class="n">project</span><span class="o">=</span><span class="s2">&quot;PROJ123&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>The bundle folder contains:</p>
@@ -436,6 +436,28 @@ document.write(`
 </div>
 <p>Any argument left as <code class="docutils literal notranslate"><span class="pre">None</span></code> (the default) will still prompt interactively, so you can pre-supply only some of them.</p>
 </section>
+</section>
+<section id="clone-one-step-shortcut">
+<h3>Clone (one-step shortcut)<a class="headerlink" href="#clone-one-step-shortcut" title="Link to this heading">#</a></h3>
+<p>If you just want an exact copy of an existing case without any modifications, use <code class="docutils literal notranslate"><span class="pre">clone</span></code>. It reads machine, project, and cesmroot directly from the original caseroot — no extra arguments needed.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">CrocoDash.shareable.inspect</span><span class="w"> </span><span class="kn">import</span> <span class="n">clone</span>
+
+<span class="n">new_case</span> <span class="o">=</span> <span class="n">clone</span><span class="p">(</span>
+    <span class="n">caseroot</span><span class="o">=</span><span class="s2">&quot;/path/to/existing_case&quot;</span><span class="p">,</span>
+    <span class="n">new_caseroot</span><span class="o">=</span><span class="s2">&quot;/path/to/new_case&quot;</span><span class="p">,</span>
+    <span class="n">new_inputdir</span><span class="o">=</span><span class="s2">&quot;/path/to/new_inputdir&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>The bundle is written into <code class="docutils literal notranslate"><span class="pre">new_caseroot</span></code> and kept there after cloning. You can also specify a custom location:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">new_case</span> <span class="o">=</span> <span class="n">clone</span><span class="p">(</span>
+    <span class="n">caseroot</span><span class="o">=</span><span class="s2">&quot;/path/to/existing_case&quot;</span><span class="p">,</span>
+    <span class="n">new_caseroot</span><span class="o">=</span><span class="s2">&quot;/path/to/new_case&quot;</span><span class="p">,</span>
+    <span class="n">new_inputdir</span><span class="o">=</span><span class="s2">&quot;/path/to/new_inputdir&quot;</span><span class="p">,</span>
+    <span class="n">bundle_dir</span><span class="o">=</span><span class="s2">&quot;/path/to/bundle&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
 </section>
 </section>
 <hr class="docutils" />
@@ -480,6 +502,23 @@ crocodash<span class="w"> </span>fork<span class="w"> </span><span class="se">\<
 </pre></div>
 </div>
 <p>All <code class="docutils literal notranslate"><span class="pre">fork</span></code> flags beyond the six required ones are optional and only needed to bypass the interactive prompts.</p>
+</section>
+<section id="clone">
+<h3>Clone<a class="headerlink" href="#clone" title="Link to this heading">#</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>crocodash<span class="w"> </span>clone<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--clone<span class="w"> </span>/path/to/existing_case<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--case<span class="w"> </span>/path/to/new_case<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--inputdir<span class="w"> </span>/path/to/new_inputdir
+</pre></div>
+</div>
+<p>Machine, project, and cesmroot are read automatically from the original case. Optionally specify where to keep the bundle:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>crocodash<span class="w"> </span>clone<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--clone<span class="w"> </span>/path/to/existing_case<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--case<span class="w"> </span>/path/to/new_case<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--inputdir<span class="w"> </span>/path/to/new_inputdir<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--bundle-dir<span class="w"> </span>/path/to/bundle
+</pre></div>
+</div>
 </section>
 </section>
 <hr class="docutils" />
@@ -560,11 +599,13 @@ crocodash<span class="w"> </span>fork<span class="w"> </span><span class="se">\<
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#non-interactive-fork">Non-interactive fork</a></li>
 </ul>
 </li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#clone-one-step-shortcut">Clone (one-step shortcut)</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#command-line">Command Line</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#read">Read</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#fork">Fork</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#clone">Clone</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#what-gets-diffed">What gets diffed?</a></li>
