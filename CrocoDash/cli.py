@@ -17,6 +17,18 @@ def _read(args):
     print(f"Bundle written to: {bundle_path}")
 
 
+def _clone(args):
+    from CrocoDash.shareable.inspect import clone
+
+    new_case = clone(
+        caseroot=args.clone,
+        new_caseroot=args.case,
+        new_inputdir=args.inputdir,
+        bundle_dir=args.bundle_dir,
+    )
+    print(f"Cloned case created at: {new_case.caseroot}")
+
+
 def _fork(args):
 
     from CrocoDash.shareable.fork import ForkCrocoDashBundle
@@ -75,6 +87,33 @@ def main():
     )
     read_parser.add_argument("--project", required=True, help="Project/account number.")
     read_parser.set_defaults(func=_read)
+
+    # --- clone ---
+    clone_parser = subparsers.add_parser(
+        "clone", help="Clone an existing CrocoDash case to a new location."
+    )
+    clone_parser.add_argument(
+        "--clone",
+        required=True,
+        help="Path to the existing CESM caseroot to clone from.",
+    )
+    clone_parser.add_argument(
+        "--case",
+        required=True,
+        help="Path for the new cloned caseroot.",
+    )
+    clone_parser.add_argument(
+        "--inputdir",
+        required=True,
+        help="Path for the new input directory.",
+    )
+    clone_parser.add_argument(
+        "--bundle-dir",
+        default=None,
+        dest="bundle_dir",
+        help="Where to keep the bundle (default: inside new caseroot).",
+    )
+    clone_parser.set_defaults(func=_clone)
 
     # --- fork ---
     fork_parser = subparsers.add_parser(

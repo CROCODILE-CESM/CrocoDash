@@ -90,3 +90,29 @@ def test_fork_cli(tmp_path):
         remove_configs=["runoff"],
         extra_forcing_args_path=str(args_file),
     )
+
+
+def test_clone_cli(tmp_path):
+    mock_case = MagicMock()
+
+    with patch(
+        "CrocoDash.shareable.inspect.clone", return_value=mock_case
+    ) as mock_clone:
+        run_main(
+            [
+                "clone",
+                "--clone",
+                "/some/existing/case",
+                "--case",
+                str(tmp_path / "new_case"),
+                "--inputdir",
+                str(tmp_path / "inputdir"),
+            ]
+        )
+
+    mock_clone.assert_called_once_with(
+        caseroot="/some/existing/case",
+        new_caseroot=str(tmp_path / "new_case"),
+        new_inputdir=str(tmp_path / "inputdir"),
+        bundle_dir=None,
+    )
