@@ -370,6 +370,7 @@ document.write(`
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.inspect.ReadCrocoDashCase"><code class="docutils literal notranslate"><span class="pre">ReadCrocoDashCase</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.inspect.ReadCrocoDashCase.bundle"><code class="docutils literal notranslate"><span class="pre">ReadCrocoDashCase.bundle()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.inspect.ReadCrocoDashCase.case"><code class="docutils literal notranslate"><span class="pre">ReadCrocoDashCase.case</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.inspect.ReadCrocoDashCase.clone"><code class="docutils literal notranslate"><span class="pre">ReadCrocoDashCase.clone()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.inspect.ReadCrocoDashCase.diff"><code class="docutils literal notranslate"><span class="pre">ReadCrocoDashCase.diff()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.inspect.ReadCrocoDashCase.generate_manifest"><code class="docutils literal notranslate"><span class="pre">ReadCrocoDashCase.generate_manifest()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.inspect.ReadCrocoDashCase.get_user_nl_value"><code class="docutils literal notranslate"><span class="pre">ReadCrocoDashCase.get_user_nl_value()</span></code></a></li>
@@ -377,6 +378,7 @@ document.write(`
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.inspect.ReadCrocoDashCase.reread"><code class="docutils literal notranslate"><span class="pre">ReadCrocoDashCase.reread()</span></code></a></li>
 </ul>
 </li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.inspect.clone"><code class="docutils literal notranslate"><span class="pre">clone()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.inspect.get_case_obj"><code class="docutils literal notranslate"><span class="pre">get_case_obj()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.inspect.run_xmlquery"><code class="docutils literal notranslate"><span class="pre">run_xmlquery()</span></code></a></li>
 </ul>
@@ -549,12 +551,17 @@ from the bundle compset, the user is asked interactively.</p></li>
 This design started with individual functions, and got a bit too unwieldy!</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.shareable.inspect.ReadCrocoDashCase.bundle">
-<span class="sig-name descname"><span class="pre">bundle</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_folder_location</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.shareable.inspect.ReadCrocoDashCase.bundle" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">bundle</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_folder_location</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">machine</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">project</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.shareable.inspect.ReadCrocoDashCase.bundle" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="CrocoDash.shareable.inspect.ReadCrocoDashCase.case">
 <em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">case</span></span><a class="headerlink" href="#CrocoDash.shareable.inspect.ReadCrocoDashCase.case" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.shareable.inspect.ReadCrocoDashCase.clone">
+<span class="sig-name descname"><span class="pre">clone</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">new_caseroot</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_inputdir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bundle_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.shareable.inspect.ReadCrocoDashCase.clone" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
@@ -588,6 +595,24 @@ This design started with individual functions, and got a bit too unwieldy!</p>
 <span class="sig-name descname"><span class="pre">reread</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.shareable.inspect.ReadCrocoDashCase.reread" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.shareable.inspect.clone">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.shareable.inspect.</span></span><span class="sig-name descname"><span class="pre">clone</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">caseroot</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_caseroot</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_inputdir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bundle_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.shareable.inspect.clone" title="Link to this definition">#</a></dt>
+<dd><p>Clone a CrocoDash case to a new location. Machine, project, and cesmroot
+are read automatically from the original caseroot.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>caseroot</strong> (<em>str</em><em> or </em><em>Path</em>) – Path to the existing case to clone.</p></li>
+<li><p><strong>new_caseroot</strong> (<em>str</em><em> or </em><em>Path</em>) – Path for the new case.</p></li>
+<li><p><strong>new_inputdir</strong> (<em>str</em><em> or </em><em>Path</em>) – Path for the new input directory.</p></li>
+<li><p><strong>bundle_dir</strong> (<em>str</em><em> or </em><em>Path</em><em>, </em><em>optional</em>) – Where to write the intermediate bundle. Defaults to inside
+new_caseroot and is cleaned up automatically.</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -662,6 +687,7 @@ This design started with individual functions, and got a bit too unwieldy!</p>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.inspect.ReadCrocoDashCase"><code class="docutils literal notranslate"><span class="pre">ReadCrocoDashCase</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.inspect.ReadCrocoDashCase.bundle"><code class="docutils literal notranslate"><span class="pre">ReadCrocoDashCase.bundle()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.inspect.ReadCrocoDashCase.case"><code class="docutils literal notranslate"><span class="pre">ReadCrocoDashCase.case</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.inspect.ReadCrocoDashCase.clone"><code class="docutils literal notranslate"><span class="pre">ReadCrocoDashCase.clone()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.inspect.ReadCrocoDashCase.diff"><code class="docutils literal notranslate"><span class="pre">ReadCrocoDashCase.diff()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.inspect.ReadCrocoDashCase.generate_manifest"><code class="docutils literal notranslate"><span class="pre">ReadCrocoDashCase.generate_manifest()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.inspect.ReadCrocoDashCase.get_user_nl_value"><code class="docutils literal notranslate"><span class="pre">ReadCrocoDashCase.get_user_nl_value()</span></code></a></li>
@@ -669,6 +695,7 @@ This design started with individual functions, and got a bit too unwieldy!</p>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.inspect.ReadCrocoDashCase.reread"><code class="docutils literal notranslate"><span class="pre">ReadCrocoDashCase.reread()</span></code></a></li>
 </ul>
 </li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.inspect.clone"><code class="docutils literal notranslate"><span class="pre">clone()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.inspect.get_case_obj"><code class="docutils literal notranslate"><span class="pre">get_case_obj()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.inspect.run_xmlquery"><code class="docutils literal notranslate"><span class="pre">run_xmlquery()</span></code></a></li>
 </ul>
