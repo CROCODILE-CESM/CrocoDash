@@ -4,6 +4,7 @@ from unittest.mock import patch
 import subprocess
 from pathlib import Path
 import pytest
+import pytest
 
 
 @pytest.mark.slow
