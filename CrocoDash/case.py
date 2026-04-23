@@ -185,6 +185,11 @@ class Case:
         return "CICE" in self.compset_lname
 
     @property
+    def ww3_in_compset(self):
+        """Check if WW3 is included in the compset."""
+        return "WW3" in self.compset_lname
+
+    @property
     def runoff_in_compset(self):
         """Check if runoff is included in the compset."""
         return "SROF" not in self.compset_lname
@@ -241,9 +246,9 @@ class Case:
             "Currently, active or data glacier models are not supported by CrocoDash."
             "Please use a compset with SGLC."
         )
-        assert "SWAV" in compset_lname, (
-            "Currently, active or data wave models are not supported by CrocoDash."
-            "Please use a compset with SWAV."
+        assert "DWAV" not in ompset_lname, (
+           "Currently, data wave models are not supported by CrocoDash."
+           "Please use a compset with SWAV."
         )
         if not isinstance(ocn_topo, Topo):
             raise TypeError("ocn_topo must be a Topo object.")
@@ -296,52 +301,40 @@ class Case:
                 shutil.rmtree(inputdir)
 
         inputdir.mkdir(parents=True, exist_ok=False)
-        (inputdir / "ocnice").mkdir()
+
+        ocnice = inputdir / "ocnice"
+        ocnice.mkdir()
 
         # suffix for the MOM6 grid files
         session_id = cvars["MB_ATTEMPT_ID"].value
-        self.supergrid_path = str(
-            self.inputdir
-            / "ocnice"
-            / f"ocean_hgrid_{self.ocn_grid.name}_{session_id}.nc"
-        )
-        self.vgrid_path = str(
-            self.inputdir
-            / "ocnice"
-            / f"ocean_vgrid_{self.ocn_grid.name}_{session_id}.nc"
-        )
-        self.topo_path = str(
-            inputdir / "ocnice" / f"ocean_topog_{ocn_grid.name}_{session_id}.nc"
-        )
-        self.scrip_grid_path = (
-            inputdir / "ocnice" / f"scrip_{ocn_grid.name}_{session_id}.nc"
-        )
-        self.esmf_mesh_path = (
-            inputdir / "ocnice" / f"ESMF_mesh_{ocn_grid.name}_{session_id}.nc"
-        )
+        suffix = f"{ocn_grid.name}_{session_id}"
+
         # MOM6 supergrid file
+        self.supergrid_path = str(ocnice / f"ocean_hgrid_{suffix}.nc")
         ocn_grid.write_supergrid(self.supergrid_path)
 
         # MOM6 topography file
+        self.topo_path = str(ocnice / f"ocean_topog_{suffix}.nc")
         ocn_topo.write_topo(self.topo_path)
 
         # MOM6 vertical grid file
+        self.vgrid_path = str(ocnice / f"ocean_vgrid_{suffix}.nc")
         ocn_vgrid.write(self.vgrid_path)
 
         # SCRIP grid file (needed for runoff remapping)
-        ocn_topo.write_scrip_grid(self.scrip_grid_path)
+        ocn_topo.write_scrip_grid(ocnice / f"scrip_{suffix}.nc")
 
         # ESMF mesh file:
+        self.esmf_mesh_path = str(ocnice / f"ESMF_mesh_{suffix}.nc")
         ocn_topo.write_esmf_mesh(self.esmf_mesh_path)
 
         # CICE grid file (if needed)
         if self.cice_in_compset:
-            self.cice_grid_path = (
-                inputdir
-                / "ocnice"
-                / f"cice_grid_{ocn_grid.name}_{cvars['MB_ATTEMPT_ID'].value}.nc"
-            )
-            self.ocn_topo.write_cice_grid(self.cice_grid_path)
+            self.ocn_topo.write_cice_grid(ocnice / f"cice_grid_{suffix}.nc")
+
+        # WW3 grid file (if needed)
+        if self.ww3_in_compset:
+            self.ocn_topo.write_ww3_input(ocnice, grid_alias=ocn_grid.name)
 
     def _create_newcase(self):
         """Create the case instance."""
@@ -607,7 +600,7 @@ class Case:
 
         if process_initial_condition or process_velocity_tracers:
             self.driver.process_conditions(
-                get_dataset_piecewise=False,
+                get_dataset_piecewise=True,
                 regrid_dataset_piecewise=True,
                 merge_piecewise_dataset=True,
                 run_initial_condition=process_initial_condition,
