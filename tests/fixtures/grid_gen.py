@@ -18,19 +18,21 @@ def get_rect_grid():
 
 
 @pytest.fixture
-def get_rect_grid_and_empty_topo(get_rect_grid):
+def get_rect_grid_and_empty_topo(get_rect_grid, tmp_path):
     topo = Topo(
         grid=get_rect_grid,
         min_depth=9.5,
+        version_control_dir=tmp_path / "TopoLibrary",
     )
     return get_rect_grid, topo
 
 
 @pytest.fixture
-def get_rect_grid_and_topo(get_rect_grid):
+def get_rect_grid_and_topo(get_rect_grid, tmp_path):
     topo = Topo(
         grid=get_rect_grid,
         min_depth=9.5,
+        version_control_dir=tmp_path / "TopoLibrary",
     )
     topo.depth = 10
     return get_rect_grid, topo

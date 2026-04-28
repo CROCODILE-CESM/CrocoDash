@@ -200,7 +200,7 @@ def process_river_nutrients(
 
     # encoding only for data vars
     encoding = {
-        var: {"_FillValue": np.NaN}
+        var: {"_FillValue": np.nan}
         for var in river_nutrients_remapped_cleaned.data_vars
     }
 

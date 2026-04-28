@@ -204,20 +204,6 @@ def process_chl():
     )
 
 
-def should_run(name, args, cfg):
-    not_skipped = name.lower() not in args.skip
-    requested = args.all or getattr(args, name)
-    exists = name in cfg.config.keys()
-
-    if requested and not exists:
-        print(f"[skip] '{name}' requested but not in config")
-
-    if requested and not not_skipped:
-        print(f"[skip] '{name}' skipped via --skip")
-
-    return requested and exists and not_skipped
-
-
 def parse_args():
     parser = argparse.ArgumentParser(description="CrocoDash forcing workflow driver")
 
