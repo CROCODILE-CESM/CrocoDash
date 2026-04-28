@@ -576,7 +576,7 @@ document.write(`
 7. The ProductRegistry holds all of that.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.base.BaseProduct">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.base.</span></span><span class="sig-name descname"><span class="pre">BaseProduct</span></span><a class="headerlink" href="#CrocoDash.raw_data_access.base.BaseProduct" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.base.</span></span><span class="sig-name descname"><span class="pre">BaseProduct</span></span><a class="headerlink" href="#CrocoDash.raw_data_access.base.BaseProduct" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Base class for all raw data products. It enforces the metadata on the product as well as the function args.</p>
 <dl class="py attribute">
@@ -591,19 +591,19 @@ document.write(`
 
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.base.BaseProduct.validate_call">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">validate_call</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">method_name</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.base.BaseProduct.validate_call" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">validate_call</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">method_name</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.base.BaseProduct.validate_call" title="Link to this definition">#</a></dt>
 <dd><p>Validate that a call to an access method has correct arguments.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.base.BaseProduct.validate_method">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">validate_method</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">method_name</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.base.BaseProduct.validate_method" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">validate_method</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">method_name</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.base.BaseProduct.validate_method" title="Link to this definition">#</a></dt>
 <dd><p>Default validation just makes a toy call with a temporary directory.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.base.BaseProduct.write_metadata">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">write_metadata</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#CrocoDash.raw_data_access.base.BaseProduct.write_metadata" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">write_metadata</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#CrocoDash.raw_data_access.base.BaseProduct.write_metadata" title="Link to this definition">#</a></dt>
 <dd><p>Return a dict of the class metadata fields and their values, writes a file if a filepath is specified.</p>
 </dd></dl>
 
@@ -611,7 +611,7 @@ document.write(`
 
 <dl class="py class">
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.base.DatedBaseProduct">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.base.</span></span><span class="sig-name descname"><span class="pre">DatedBaseProduct</span></span><a class="headerlink" href="#CrocoDash.raw_data_access.base.DatedBaseProduct" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.base.</span></span><span class="sig-name descname"><span class="pre">DatedBaseProduct</span></span><a class="headerlink" href="#CrocoDash.raw_data_access.base.DatedBaseProduct" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#CrocoDash.raw_data_access.base.BaseProduct" title="CrocoDash.raw_data_access.base.BaseProduct"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseProduct</span></code></a></p>
 <p>Specific enforcement needs for Dated Products</p>
 <dl class="py attribute">
@@ -621,7 +621,7 @@ document.write(`
 
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.base.DatedBaseProduct.validate_method">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">validate_method</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">method_name</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.base.DatedBaseProduct.validate_method" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">validate_method</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">method_name</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.base.DatedBaseProduct.validate_method" title="Link to this definition">#</a></dt>
 <dd><p>Default validation just makes a toy call with a temporary directory.</p>
 </dd></dl>
 
@@ -629,7 +629,7 @@ document.write(`
 
 <dl class="py class">
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.base.ForcingProduct">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.base.</span></span><span class="sig-name descname"><span class="pre">ForcingProduct</span></span><a class="headerlink" href="#CrocoDash.raw_data_access.base.ForcingProduct" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.base.</span></span><span class="sig-name descname"><span class="pre">ForcingProduct</span></span><a class="headerlink" href="#CrocoDash.raw_data_access.base.ForcingProduct" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#CrocoDash.raw_data_access.base.DatedBaseProduct" title="CrocoDash.raw_data_access.base.DatedBaseProduct"><code class="xref py py-class docutils literal notranslate"><span class="pre">DatedBaseProduct</span></code></a></p>
 <p>Specific enforcement needs for Forcing Products</p>
 <dl class="py attribute">
@@ -644,13 +644,13 @@ document.write(`
 
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.base.ForcingProduct.validate_method">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">validate_method</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">method_name</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.base.ForcingProduct.validate_method" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">validate_method</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">method_name</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.base.ForcingProduct.validate_method" title="Link to this definition">#</a></dt>
 <dd><p>Default validation just makes a toy call with a temporary directory.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.base.ForcingProduct.write_metadata">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">write_metadata</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_marbl_tracers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#CrocoDash.raw_data_access.base.ForcingProduct.write_metadata" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">write_metadata</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_marbl_tracers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#CrocoDash.raw_data_access.base.ForcingProduct.write_metadata" title="Link to this definition">#</a></dt>
 <dd><p>Return a dict of the class metadata fields and their values, writes a file if a filepath is specified.</p>
 </dd></dl>
 
@@ -658,7 +658,7 @@ document.write(`
 
 <dl class="py function">
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.base.accessmethod">
-<span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.base.</span></span><span class="sig-name descname"><span class="pre">accessmethod</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.base.accessmethod" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.base.</span></span><span class="sig-name descname"><span class="pre">accessmethod</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.base.accessmethod" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 </section>
@@ -666,38 +666,38 @@ document.write(`
 <span id="crocodash-raw-data-access-registry-module"></span><h2>CrocoDash.raw_data_access.registry module<a class="headerlink" href="#module-CrocoDash.raw_data_access.registry" title="Link to this heading">#</a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.registry.ProductRegistry">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.registry.</span></span><span class="sig-name descname"><span class="pre">ProductRegistry</span></span><a class="headerlink" href="#CrocoDash.raw_data_access.registry.ProductRegistry" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.registry.</span></span><span class="sig-name descname"><span class="pre">ProductRegistry</span></span><a class="headerlink" href="#CrocoDash.raw_data_access.registry.ProductRegistry" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Static registry that tracks all products and provides driver-like introspection.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.registry.ProductRegistry.call">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">call</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">product_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method_name</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.registry.ProductRegistry.call" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">call</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">product_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method_name</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.registry.ProductRegistry.call" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.registry.ProductRegistry.get_access_function">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_access_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">product_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.registry.ProductRegistry.get_access_function" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_access_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">product_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.registry.ProductRegistry.get_access_function" title="Link to this definition">#</a></dt>
 <dd><p>Return the raw function (unbound), even if staticmethod.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.registry.ProductRegistry.get_product">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_product</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.registry.ProductRegistry.get_product" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_product</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.registry.ProductRegistry.get_product" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.registry.ProductRegistry.list_access_methods">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">list_access_methods</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.registry.ProductRegistry.list_access_methods" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">list_access_methods</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.registry.ProductRegistry.list_access_methods" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.registry.ProductRegistry.list_products">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">list_products</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.registry.ProductRegistry.list_products" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">list_products</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.registry.ProductRegistry.list_products" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.registry.ProductRegistry.load">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.registry.ProductRegistry.load" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.registry.ProductRegistry.load" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -707,12 +707,12 @@ document.write(`
 
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.registry.ProductRegistry.product_exists">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">product_exists</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.registry.ProductRegistry.product_exists" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">product_exists</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.registry.ProductRegistry.product_exists" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.registry.ProductRegistry.product_is_of_type">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">product_is_of_type</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">the_class</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.registry.ProductRegistry.product_is_of_type" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">product_is_of_type</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">the_class</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.registry.ProductRegistry.product_is_of_type" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -722,13 +722,13 @@ document.write(`
 
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.registry.ProductRegistry.register">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">register</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">product_cls</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.registry.ProductRegistry.register" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">register</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">product_cls</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.registry.ProductRegistry.register" title="Link to this definition">#</a></dt>
 <dd><p>Register a product class.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.registry.ProductRegistry.validate_function">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">validate_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">product_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.registry.ProductRegistry.validate_function" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">validate_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">product_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.registry.ProductRegistry.validate_function" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
