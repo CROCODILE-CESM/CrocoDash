@@ -32,3 +32,11 @@ for_developers/index
 api-docs/modules
 Common Errors <https://github.com/CROCODILE-CESM/CrocoDash/discussions/84>
 ```
+
+## License
+
+CrocoDash is released under the [Apache 2.0 License](https://github.com/CROCODILE-CESM/CrocoDash/blob/main/LICENSE).
+
+## Citation
+
+If you use CrocoDash in your research, please cite it! A `CITATION.cff` file is included in the repository. You can also cite it directly from GitHub using the "Cite this repository" button on the [CrocoDash GitHub page](https://github.com/CROCODILE-CESM/CrocoDash).
