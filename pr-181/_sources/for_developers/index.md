@@ -19,6 +19,7 @@ edit_docs
 adding_data_access
 adding_forcing_configurations
 submodule_api_usage
+Semi-Official ChangeLog <https://github.com/CROCODILE-CESM/CrocoDash/discussions/138>
 ```
 
 ## Detailed Topics
