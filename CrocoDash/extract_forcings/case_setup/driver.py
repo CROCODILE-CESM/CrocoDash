@@ -352,7 +352,7 @@ def run_from_cli(args, cfg):
         process_chl()
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
 
     args = parse_args()
     cfg = utils.Config(CONFIG_PATH)

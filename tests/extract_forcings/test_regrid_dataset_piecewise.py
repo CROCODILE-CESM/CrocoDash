@@ -269,200 +269,29 @@ def test_m6b_fill_missing_data_wrapper_raises():
 # =============================================================================
 
 
-def _standard_varnames():
-    return {
-        "time": "time",
-        "yh": "latitude",
-        "xh": "longitude",
-        "zl": "depth",
-        "eta": "zos",
-        "u": "uo",
-        "v": "vo",
-        "tracers": {"salt": "so", "temp": "thetao"},
-    }
+STANDARD_VARNAMES = {
+    "time": "time",
+    "yh": "latitude",
+    "xh": "longitude",
+    "zl": "depth",
+    "eta": "zos",
+    "u": "uo",
+    "v": "vo",
+    "tracers": {"salt": "so", "temp": "thetao"},
+}
 
 
-def test_regrid_raises_if_vgrid_missing(tmp_path, get_rect_grid_and_topo):
-    """run_initial_condition=True with non-existent vgrid_path must raise."""
-    grid, topo = get_rect_grid_and_topo
-    hgrid_path = tmp_path / "hgrid.nc"
-    topo_path = tmp_path / "topo.nc"
-    grid.write_supergrid(hgrid_path)
-    topo.write_topo(topo_path)
-
-    output_folder = tmp_path / "output"
-    # Intentionally don't create output_folder; function should create it.
-    with pytest.raises(FileNotFoundError):
-        rb.regrid_dataset_piecewise(
-            folder=tmp_path,
-            input_dataset_regex="(east)_(\\d{8})_(\\d{8})\\.nc",
-            date_format="%Y%m%d",
-            start_date="20200101",
-            end_date="20200106",
-            hgrid_path=hgrid_path,
-            bathymetry=topo_path,
-            dataset_varnames=_standard_varnames(),
-            output_folder=output_folder,
-            boundary_number_conversion={"east": 1},
-            run_initial_condition=True,
-            run_boundary_conditions=False,
-            vgrid_path=tmp_path / "nonexistent_vgrid.nc",
-            preview=True,
-        )
-
-
-def test_regrid_returns_early_if_boundary_not_in_conversion(
+@pytest.fixture
+def regrid_setup(
     tmp_path,
     get_rect_grid_and_topo,
     dummy_forcing_factory,
     generate_piecewise_raw_data,
 ):
-    """Boundary present in files but missing from boundary_number_conversion -> early return."""
-    grid, topo = get_rect_grid_and_topo
-    hgrid_path = tmp_path / "hgrid.nc"
-    topo_path = tmp_path / "topo.nc"
-    grid.write_supergrid(hgrid_path)
-    topo.write_topo(topo_path)
+    """Shared setup for regrid error-path tests.
 
-    bounds = Grid.get_bounding_boxes_of_rectangular_grid(grid)
-    ds = dummy_forcing_factory(
-        bounds["ic"]["lat_min"],
-        bounds["ic"]["lat_max"],
-        bounds["ic"]["lon_min"],
-        bounds["ic"]["lon_max"],
-    )
-    raw = Path(
-        generate_piecewise_raw_data(ds, "2020-01-01", "2020-01-06", "east_unprocessed_")
-    )
-
-    output_folder = tmp_path / "output"
-    output_folder.mkdir()
-
-    # Conversion dict is missing 'east' -> function should log error and return None.
-    result = rb.regrid_dataset_piecewise(
-        folder=raw,
-        input_dataset_regex="(east)_unprocessed_(\\d{8})_(\\d{8})\\.nc",
-        date_format="%Y%m%d",
-        start_date="20200101",
-        end_date="20200106",
-        hgrid_path=hgrid_path,
-        bathymetry=topo_path,
-        dataset_varnames=_standard_varnames(),
-        output_folder=output_folder,
-        boundary_number_conversion={"west": 1},  # deliberately wrong
-        run_initial_condition=False,
-        run_boundary_conditions=True,
-        preview=True,
-    )
-    assert result is None
-
-
-def test_regrid_raises_on_mom6_forge_fill_method(
-    tmp_path,
-    get_rect_grid_and_topo,
-    dummy_forcing_factory,
-    generate_piecewise_raw_data,
-):
-    """boundary_fill_method == 'mom6_forge' is marked not-yet-supported and must raise."""
-    grid, topo = get_rect_grid_and_topo
-    hgrid_path = tmp_path / "hgrid.nc"
-    topo_path = tmp_path / "topo.nc"
-    grid.write_supergrid(hgrid_path)
-    topo.write_topo(topo_path)
-
-    bounds = Grid.get_bounding_boxes_of_rectangular_grid(grid)
-    ds = dummy_forcing_factory(
-        bounds["ic"]["lat_min"],
-        bounds["ic"]["lat_max"],
-        bounds["ic"]["lon_min"],
-        bounds["ic"]["lon_max"],
-    )
-    raw = Path(
-        generate_piecewise_raw_data(ds, "2020-01-01", "2020-01-06", "east_unprocessed_")
-    )
-
-    varnames = _standard_varnames()
-    varnames["boundary_fill_method"] = "mom6_forge"
-
-    output_folder = tmp_path / "output"
-    output_folder.mkdir()
-
-    with pytest.raises(ValueError):
-        rb.regrid_dataset_piecewise(
-            folder=raw,
-            input_dataset_regex="(east)_unprocessed_(\\d{8})_(\\d{8})\\.nc",
-            date_format="%Y%m%d",
-            start_date="20200101",
-            end_date="20200106",
-            hgrid_path=hgrid_path,
-            bathymetry=topo_path,
-            dataset_varnames=varnames,
-            output_folder=output_folder,
-            boundary_number_conversion={"east": 1},
-            run_initial_condition=False,
-            run_boundary_conditions=True,
-            preview=True,
-        )
-
-
-def test_regrid_raises_on_unknown_fill_method(
-    tmp_path,
-    get_rect_grid_and_topo,
-    dummy_forcing_factory,
-    generate_piecewise_raw_data,
-):
-    """Unknown boundary_fill_method values must raise."""
-    grid, topo = get_rect_grid_and_topo
-    hgrid_path = tmp_path / "hgrid.nc"
-    topo_path = tmp_path / "topo.nc"
-    grid.write_supergrid(hgrid_path)
-    topo.write_topo(topo_path)
-
-    bounds = Grid.get_bounding_boxes_of_rectangular_grid(grid)
-    ds = dummy_forcing_factory(
-        bounds["ic"]["lat_min"],
-        bounds["ic"]["lat_max"],
-        bounds["ic"]["lon_min"],
-        bounds["ic"]["lon_max"],
-    )
-    raw = Path(
-        generate_piecewise_raw_data(ds, "2020-01-01", "2020-01-06", "east_unprocessed_")
-    )
-
-    varnames = _standard_varnames()
-    varnames["boundary_fill_method"] = "not_a_real_method"
-
-    output_folder = tmp_path / "output"
-    output_folder.mkdir()
-
-    with pytest.raises(ValueError):
-        rb.regrid_dataset_piecewise(
-            folder=raw,
-            input_dataset_regex="(east)_unprocessed_(\\d{8})_(\\d{8})\\.nc",
-            date_format="%Y%m%d",
-            start_date="20200101",
-            end_date="20200106",
-            hgrid_path=hgrid_path,
-            bathymetry=topo_path,
-            dataset_varnames=varnames,
-            output_folder=output_folder,
-            boundary_number_conversion={"east": 1},
-            run_initial_condition=False,
-            run_boundary_conditions=True,
-            preview=True,
-        )
-
-
-def test_regrid_skips_existing_obc_segment(
-    tmp_path,
-    get_rect_grid_and_topo,
-    dummy_forcing_factory,
-    generate_piecewise_raw_data,
-):
-    """If output file already exists, regridding should be skipped for that boundary file.
-
-    We pre-create the expected output file with dates and confirm rm6.segment is never
-    instantiated (if the skip branch works, there's nothing to regrid).
+    Writes hgrid, topo, and one east-boundary raw data file, and returns a
+    dict of common paths/kwargs so each test only overrides what it cares about.
     """
     grid, topo = get_rect_grid_and_topo
     hgrid_path = tmp_path / "hgrid.nc"
@@ -483,28 +312,102 @@ def test_regrid_skips_existing_obc_segment(
 
     output_folder = tmp_path / "output"
     output_folder.mkdir()
-    # Pre-create the file that the regridder would otherwise write.
-    (output_folder / "forcing_obc_segment_001_20200101_20200106.nc").write_text("x")
 
+    base_kwargs = dict(
+        folder=raw,
+        input_dataset_regex="(east)_unprocessed_(\\d{8})_(\\d{8})\\.nc",
+        date_format="%Y%m%d",
+        start_date="20200101",
+        end_date="20200106",
+        hgrid_path=hgrid_path,
+        bathymetry=topo_path,
+        dataset_varnames=dict(STANDARD_VARNAMES),
+        output_folder=output_folder,
+        boundary_number_conversion={"east": 1},
+        run_initial_condition=False,
+        run_boundary_conditions=True,
+        preview=True,
+    )
+    return {
+        "tmp_path": tmp_path,
+        "hgrid_path": hgrid_path,
+        "topo_path": topo_path,
+        "raw": raw,
+        "output_folder": output_folder,
+        "base_kwargs": base_kwargs,
+    }
+
+
+@pytest.mark.parametrize(
+    "case_id,overrides,expected_exc",
+    [
+        # Missing vgrid file with run_initial_condition=True.
+        (
+            "vgrid_missing",
+            lambda ctx: {
+                "input_dataset_regex": "(east)_(\\d{8})_(\\d{8})\\.nc",
+                "folder": ctx["tmp_path"],
+                "run_initial_condition": True,
+                "run_boundary_conditions": False,
+                "vgrid_path": ctx["tmp_path"] / "nonexistent_vgrid.nc",
+            },
+            FileNotFoundError,
+        ),
+        # boundary_fill_method == 'mom6_forge' is explicitly unsupported.
+        (
+            "mom6_forge_fill",
+            lambda ctx: {
+                "dataset_varnames": {
+                    **STANDARD_VARNAMES,
+                    "boundary_fill_method": "mom6_forge",
+                }
+            },
+            ValueError,
+        ),
+        # Any other unknown boundary_fill_method.
+        (
+            "unknown_fill",
+            lambda ctx: {
+                "dataset_varnames": {
+                    **STANDARD_VARNAMES,
+                    "boundary_fill_method": "not_a_real_method",
+                }
+            },
+            ValueError,
+        ),
+    ],
+    ids=lambda x: x if isinstance(x, str) else None,
+)
+def test_regrid_raises_on_bad_inputs(regrid_setup, case_id, overrides, expected_exc):
+    """Parametrized error-path checks for regrid_dataset_piecewise."""
+    kwargs = {**regrid_setup["base_kwargs"], **overrides(regrid_setup)}
+    with pytest.raises(expected_exc):
+        rb.regrid_dataset_piecewise(**kwargs)
+
+
+def test_regrid_returns_early_if_boundary_not_in_conversion(regrid_setup):
+    """Boundary present in files but missing from boundary_number_conversion -> early return (None)."""
+    kwargs = {
+        **regrid_setup["base_kwargs"],
+        "boundary_number_conversion": {"west": 1},  # deliberately wrong
+    }
+    assert rb.regrid_dataset_piecewise(**kwargs) is None
+
+
+def test_regrid_skips_existing_obc_segment(regrid_setup):
+    """If output file already exists, regridding should be skipped for that boundary file.
+
+    We pre-create the expected output file with dates and confirm rm6.segment is
+    never instantiated (if the skip branch works, there's nothing to regrid).
+    """
+    out = regrid_setup["output_folder"]
+    (out / "forcing_obc_segment_001_20200101_20200106.nc").write_text("x")
+
+    kwargs = {**regrid_setup["base_kwargs"], "preview": False}
     with patch(
         "CrocoDash.extract_forcings.regrid_dataset_piecewise.rm6.segment"
     ) as mock_seg:
-        rb.regrid_dataset_piecewise(
-            folder=raw,
-            input_dataset_regex="(east)_unprocessed_(\\d{8})_(\\d{8})\\.nc",
-            date_format="%Y%m%d",
-            start_date="20200101",
-            end_date="20200106",
-            hgrid_path=hgrid_path,
-            bathymetry=topo_path,
-            dataset_varnames=_standard_varnames(),
-            output_folder=output_folder,
-            boundary_number_conversion={"east": 1},
-            run_initial_condition=False,
-            run_boundary_conditions=True,
-            preview=False,
-        )
-    # Skip branch hit: segment should never be constructed.
+        rb.regrid_dataset_piecewise(**kwargs)
     assert mock_seg.call_count == 0
 
 
@@ -605,7 +508,7 @@ def test_regrid_ic_pipeline_mocked(
             end_date="20200106",
             hgrid_path=hgrid_path,
             bathymetry=topo_path,
-            dataset_varnames=_standard_varnames(),
+            dataset_varnames=dict(STANDARD_VARNAMES),
             output_folder=output_folder,
             boundary_number_conversion={"east": 1},
             run_initial_condition=True,
@@ -671,7 +574,7 @@ def test_regrid_ic_pipeline_mocked_skips_existing(
             end_date="20200106",
             hgrid_path=hgrid_path,
             bathymetry=topo_path,
-            dataset_varnames=_standard_varnames(),
+            dataset_varnames=dict(STANDARD_VARNAMES),
             output_folder=output_folder,
             boundary_number_conversion={"east": 1},
             run_initial_condition=True,

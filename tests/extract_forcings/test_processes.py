@@ -271,3 +271,42 @@ def test_bgcrivernutrients_mocked(tmp_path, monkeypatch):
     assert "lat" in out.coords or "lat" in out.data_vars
     assert "lon" in out.coords or "lon" in out.data_vars
     out.close()
+
+
+# =============================================================================
+# Small direct-call tests that cover one-liner branches
+# =============================================================================
+
+
+def test_process_bgc_ic_copies_file(tmp_path):
+    """process_bgc_ic is a thin shutil.copy wrapper; confirm it copies bytes."""
+    src = tmp_path / "src.nc"
+    src.write_bytes(b"hello")
+    dst = tmp_path / "out" / "dst.nc"
+    dst.parent.mkdir()
+    bgc.process_bgc_ic(str(src), str(dst))
+    assert dst.read_bytes() == b"hello"
+
+
+@patch("mom6_forge.mapping.gen_rof_maps", autospec=True)
+@patch("mom6_forge.mapping.get_smoothed_map_filepath")
+def test_generate_rof_ocn_map_reuses_existing(
+    mock_get_filepath, mock_gen_maps, tmp_path
+):
+    """If the smoothed-map file already exists, gen_rof_maps must not be called."""
+    existing = tmp_path / "mapping" / "EXISTING_map.nc"
+    existing.parent.mkdir(parents=True, exist_ok=False)
+    existing.write_text("x")
+    mock_get_filepath.return_value = existing
+
+    runoff.generate_rof_ocn_map(
+        rof_grid_name="GLOFAS",
+        rof_esmf_mesh_filepath="/fake/rof_mesh.nc",
+        ocn_mesh_filepath="/fake/ocn_mesh.nc",
+        inputdir=tmp_path,
+        grid_name="fake_grid",
+        rmax=20,
+        fold=40,
+    )
+    # The "already exists, reusing it" branch should be taken.
+    mock_gen_maps.assert_not_called()
