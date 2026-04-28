@@ -18,7 +18,7 @@ def generate_rof_ocn_map(
     ocn_grid_name = grid_name
     mapping_file_prefix = f"{rof_grid_name}_to_{ocn_grid_name}_map"
     mapping_dir = inputdir / "mapping"
-    mapping_dir.mkdir(exist_ok=False)
+    mapping_dir.mkdir(exist_ok=True)
 
     runoff_mapping_file_nnsm = mapping.get_smoothed_map_filepath(
         mapping_file_prefix=mapping_file_prefix,
