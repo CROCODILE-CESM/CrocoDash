@@ -387,12 +387,7 @@ document.write(`
 </li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.raw_data_access.utils">CrocoDash.raw_data_access.utils module</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.utils.fill_template"><code class="docutils literal notranslate"><span class="pre">fill_template()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.utils.load_config"><code class="docutils literal notranslate"><span class="pre">load_config()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.utils.setup_logger"><code class="docutils literal notranslate"><span class="pre">setup_logger()</span></code></a></li>
-</ul>
-</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crocodash-raw-data-access-utils-module">CrocoDash.raw_data_access.utils module</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.raw_data_access">Module contents</a></li>
 </ul>
             </nav>
@@ -735,58 +730,8 @@ document.write(`
 </dd></dl>
 
 </section>
-<section id="module-CrocoDash.raw_data_access.utils">
-<span id="crocodash-raw-data-access-utils-module"></span><h2>CrocoDash.raw_data_access.utils module<a class="headerlink" href="#module-CrocoDash.raw_data_access.utils" title="Link to this heading">#</a></h2>
-<dl class="py function">
-<dt class="sig sig-object py" id="CrocoDash.raw_data_access.utils.fill_template">
-<span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.utils.</span></span><span class="sig-name descname"><span class="pre">fill_template</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">template_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_path</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.utils.fill_template" title="Link to this definition">#</a></dt>
-<dd><p>Reads a template file, fills it with the provided arguments,
-and writes the filled content to a new file.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>template_path</strong> (<em>str</em>) – Path to the template file.</p></li>
-<li><p><strong>output_path</strong> (<em>str</em>) – Path to save the filled template.</p></li>
-<li><p><strong>**kwargs</strong> – Key-value pairs for substitution in the template.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="CrocoDash.raw_data_access.utils.load_config">
-<span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.utils.</span></span><span class="sig-name descname"><span class="pre">load_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'config.json'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#CrocoDash.raw_data_access.utils.load_config" title="Link to this definition">#</a></dt>
-<dd><p>Load a JSON config file.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>config_path</strong> (<em>str</em><em>, </em><em>optional</em>) – Path to the JSON config file. Default is “config.json”.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The loaded configuration as a dictionary.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>dict</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="CrocoDash.raw_data_access.utils.setup_logger">
-<span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.utils.</span></span><span class="sig-name descname"><span class="pre">setup_logger</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.utils.setup_logger" title="Link to this definition">#</a></dt>
-<dd><p>This function sets up a logger format for the package. It attaches logger output to stdout (if a handler doesn’t already exist) and formats it in a pretty way!</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>name</strong> (<em>str</em>) – The name of the logger.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The logger</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>logging.Logger</p>
-</dd>
-</dl>
-</dd></dl>
-
+<section id="crocodash-raw-data-access-utils-module">
+<h2>CrocoDash.raw_data_access.utils module<a class="headerlink" href="#crocodash-raw-data-access-utils-module" title="Link to this heading">#</a></h2>
 </section>
 <section id="module-CrocoDash.raw_data_access">
 <span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-CrocoDash.raw_data_access" title="Link to this heading">#</a></h2>
@@ -882,12 +827,7 @@ and writes the filled content to a new file.</p>
 </li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.raw_data_access.utils">CrocoDash.raw_data_access.utils module</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.utils.fill_template"><code class="docutils literal notranslate"><span class="pre">fill_template()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.utils.load_config"><code class="docutils literal notranslate"><span class="pre">load_config()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.utils.setup_logger"><code class="docutils literal notranslate"><span class="pre">setup_logger()</span></code></a></li>
-</ul>
-</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crocodash-raw-data-access-utils-module">CrocoDash.raw_data_access.utils module</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.raw_data_access">Module contents</a></li>
 </ul>
   </nav></div>
