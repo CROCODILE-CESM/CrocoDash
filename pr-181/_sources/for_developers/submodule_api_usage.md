@@ -1,6 +1,6 @@
 # Submodule API Usage
 
-CrocoDash depends on three submodules — `regional-mom6`, `mom6_bathy`, and `visualCaseGen` — which are developed and versioned independently. This page records exactly which functions and classes from each submodule CrocoDash calls. The purpose is to give developers a clear reference when those upstream repos change: if a function listed here is renamed, removed, or has its signature altered, CrocoDash will break. Keeping this record up to date makes it easy to catch those breaking changes before they land.
+CrocoDash depends on three submodules — `regional-mom6`, `mom6_forge`, and `visualCaseGen` — which are developed and versioned independently. This page records exactly which functions and classes from each submodule CrocoDash calls. The purpose is to give developers a clear reference when those upstream repos change: if a function listed here is renamed, removed, or has its signature altered, CrocoDash will break. Keeping this record up to date makes it easy to catch those breaking changes before they land.
 
 ---
 
@@ -21,18 +21,18 @@ Imported as `import regional_mom6 as rmom6` / `rm6`.
 
 ---
 
-## mom6_bathy
+## mom6_forge
 
-Imported as `from mom6_bathy import ...` / `import mom6_bathy as m6b`.
+Imported as `from mom6_forge import ...` / `import mom6_forge as m6b`.
 
 | Function / Class | Called in | What CrocoDash uses it for |
 |---|---|---|
-| `Grid` (via `from mom6_bathy.grid import *`) | `grid.py` | Re-exported directly — CrocoDash exposes mom6_bathy's horizontal grid class as its own |
-| `Topo` (via `from mom6_bathy.topo import *`) | `topo.py` | Re-exported directly — CrocoDash exposes mom6_bathy's bathymetry class as its own |
-| `VGrid` (via `from mom6_bathy.vgrid import *`) | `vgrid.py` | Re-exported directly — CrocoDash exposes mom6_bathy's vertical grid class as its own |
-| `GridCreator` (via `from mom6_bathy.grid_creator import *`) | `grid_creator.py` | Re-exported directly — interactive grid creation widget |
-| `TopoEditor` (via `from mom6_bathy.topo_editor import *`) | `topo_editor.py` | Re-exported directly — interactive bathymetry editing widget |
-| `VGridCreator` (via `from mom6_bathy.vgrid_creator import *`) | `vgrid_creator.py` | Re-exported directly — interactive vertical grid creation widget |
+| `Grid` (via `from mom6_forge.grid import *`) | `grid.py` | Re-exported directly — CrocoDash exposes mom6_forge's horizontal grid class as its own |
+| `Topo` (via `from mom6_forge.topo import *`) | `topo.py` | Re-exported directly — CrocoDash exposes mom6_forge's bathymetry class as its own |
+| `VGrid` (via `from mom6_forge.vgrid import *`) | `vgrid.py` | Re-exported directly — CrocoDash exposes mom6_forge's vertical grid class as its own |
+| `GridCreator` (via `from mom6_forge.grid_creator import *`) | `grid_creator.py` | Re-exported directly — interactive grid creation widget |
+| `TopoEditor` (via `from mom6_forge.topo_editor import *`) | `topo_editor.py` | Re-exported directly — interactive bathymetry editing widget |
+| `VGridCreator` (via `from mom6_forge.vgrid_creator import *`) | `vgrid_creator.py` | Re-exported directly — interactive vertical grid creation widget |
 | `chl.interpolate_and_fill_seawifs(...)` | `extract_forcings/chlorophyll.py` | Interpolates and fills SeaWiFS chlorophyll data onto the ocean grid |
 | `mapping.get_smoothed_map_filepath(...)` | `extract_forcings/runoff.py`, `forcing_configurations/configurations.py` | Generates smoothed runoff-to-ocean mapping file names |
 | `mapping.<the_mapping_function>` | `extract_forcings/runoff.py`, `forcing_configurations/configurations.py` | Generates smoothed runoff-to-ocean mapping files |

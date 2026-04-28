@@ -8,7 +8,7 @@ CrocoDash is part of the CROCODILE project. Please see the [project description]
 
 CrocoDash brings regional MOM6 inside the CESM. It is a lightweight package that ties together each part of the MOM6 in CESM setup process into one package.
 
-1. Grid Generation (Through [mom6_bathy](https://github.com/NCAR/mom6_bathy) and [regional-mom6](https://github.com/CROCODILE-CESM/regional-mom6))
+1. Grid Generation (Through [mom6_forge](https://github.com/NCAR/mom6_forge) and [regional-mom6](https://github.com/CROCODILE-CESM/regional-mom6))
 2. CESM Setup (Through [VisualCaseGen](https://github.com/CROCODILE-CESM/VisualCaseGen))
 3. Forcing + OBC Setup (Through [CESM](https://github.com/CROCODILE-CESM/CESM) & [regional-mom6](https://github.com/CROCODILE-CESM/regional-mom6))
 

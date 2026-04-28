@@ -14,7 +14,7 @@ Before you can set up a case, you need to define the spatial domain. CrocoDash u
 - **Vertical Grid** (`VGrid` class) - Depth levels and layer thickness for your domain
 - **Bathymetry/Topography** (`Topo` class) - Seafloor depths and land mask
 
-These classes are from `mom6_bathy`, and mom6_bathy provides an **interactive bathymetry editor** if you want to manually adjust seafloor features before setting up your case.
+These classes are from `mom6_forge`, and mom6_forge provides an **interactive bathymetry editor** if you want to manually adjust seafloor features before setting up your case.
 
 ### Phase 2: Case Setup
 
@@ -131,7 +131,7 @@ These are the main classes you'll use when working with CrocoDash:
 
 CrocoDash doesn't do everything itself—it orchestrates several specialized tools:
 
-- **[mom6_bathy](https://github.com/NCAR/mom6_bathy)** - Grid generation and bathymetry tools
+- **[mom6_forge](https://github.com/NCAR/mom6_forge)** - Grid generation and bathymetry tools
 - **[regional-mom6](https://github.com/COSIMA/regional-mom6)** - Regional MOM6 setup and OBC generation
 - **[VisualCaseGen](https://github.com/ESMCI/VisualCaseGen)** - CESM case creation interface
 
