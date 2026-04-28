@@ -44,13 +44,6 @@ See [Input Parameters](case_information.md) for how to override default MOM6 set
 ### "Where can I see example workflows?"
 Check [Tutorials & Gallery](https://crocodile-cesm.github.io/CrocoGallery/) for working notebooks and demos.
 
-## Advanced Topics
-
-For more detailed information about how CrocoDash works internally:
-
-- [Structure](structure.md) - Technical overview of modules and design patterns
-- [Adding Forcing Configurations](../for_developers/adding_forcing_configurations.md) - How to extend with new configurations
-- [Adding Data Sources](../for_developers/adding_data_access.md) - How to add new datasets
 
 ## Community and Help
 
