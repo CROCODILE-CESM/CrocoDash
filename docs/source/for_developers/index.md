@@ -29,7 +29,7 @@ Semi-Official ChangeLog <https://github.com/CROCODILE-CESM/CrocoDash/discussions
 - [Adding Data Sources](adding_data_access.md) - How to add new data products to the data access module
 - [Adding Forcing Configurations](adding_forcing_configurations.md) - How to add new forcing configurations to configure_forcings
 - [Writing Documentation](edit_docs.md) - How to write and build documentation
-- [Submodule API Usage](submodule_api_usage.md) - Which functions CrocoDash calls from regional-mom6, mom6_bathy, and visualCaseGen
+- [Submodule API Usage](submodule_api_usage.md) - Which functions CrocoDash calls from regional-mom6, mom6_forge, and visualCaseGen
 
 ## Key Concepts
 

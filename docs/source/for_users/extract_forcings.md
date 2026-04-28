@@ -78,7 +78,7 @@ CrocoDash deliberately **doesn't do all the processing itself**. Instead, it lev
 | Task | Tool | Used By |
 |------|------|---------|
 | Regridding & OBC extraction | [regional-mom6](https://github.com/COSIMA/regional-mom6) | `regrid_dataset_piecewise.py` & Various Modules |
-| Minor processing (fill, mapping, Chlorophyll) | [mom6_bathy](https://github.com/NCAR/mom6_bathy) | Various modules |
+| Minor processing (fill, mapping, Chlorophyll) | [mom6_forge](https://github.com/NCAR/mom6_forge) | Various modules |
 | Data formatting | `netCDF4`, `xarray` | Throughout |
 
 If you want to modify how regridding or initial/boundary conditions are processed, the main place to look is `CrocoDash.extract_forcings.regrid_dataset_piecewise`, which calls `regional-mom6` under the hood. You can look at [regional_mom6 documentation](https://regional-mom6.readthedocs.io/en/latest/index.html) for more information, allthrough it may be difficult to tease out how we use regional_mom6 without looking into the code a bit more.
