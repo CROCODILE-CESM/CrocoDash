@@ -164,7 +164,7 @@ def test_process_forcing(get_CrocoDash_case, tmp_path):
     with pytest.raises(FileNotFoundError):
         case.process_forcings()
 
-    # Test CHL processing raises error in mom6_bathy.chl, so we know the connection works
+    # Test CHL processing raises error in mom6_forge.chl, so we know the connection works
     with pytest.raises(
         ValueError,
         match="did not find a match in any of xarray's currently installed IO backends",

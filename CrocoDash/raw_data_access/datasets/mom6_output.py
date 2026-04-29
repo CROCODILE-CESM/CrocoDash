@@ -137,7 +137,9 @@ class MOM6_OUTPUT(ForcingProduct):
             print(
                 f"Merging the files since output file is specified, into {Path(output_folder)/output_filename}"
             )
-            merged = xr.open_mfdataset(paths, combine="by_coords", parallel=True)
+            merged = xr.open_mfdataset(
+                paths, combine="by_coords", parallel=True, decode_timedelta=False
+            )
             merged.to_netcdf(Path(output_folder) / output_filename)
 
         return paths
@@ -249,7 +251,7 @@ def subset_dataset(
             continue
 
         # Load the dataset for the variable
-        ds = xr.open_mfdataset(file_paths)
+        ds = xr.open_mfdataset(file_paths, decode_timedelta=False)
         dataset_is_degrees_east_longitude = False
         if ds[lon_name].max() > 180:
             dataset_is_degrees_east_longitude = True

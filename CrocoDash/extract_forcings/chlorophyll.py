@@ -1,4 +1,4 @@
-from mom6_bathy import chl
+from mom6_forge import chl
 
 
 def process_chl(ocn_grid, ocn_topo, inputdir, chl_processed_filepath, output_filepath):

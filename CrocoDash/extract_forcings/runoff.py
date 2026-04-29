@@ -1,4 +1,4 @@
-from mom6_bathy import mapping
+from mom6_forge import mapping
 
 
 def generate_rof_ocn_map(
