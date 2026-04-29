@@ -1,6 +1,29 @@
-# Extract Forcings (case.process_forcings)
+# 3b. Process Forcings (`case.process_forcings`)
 
-The final part of the CrocoDash workflow is extracting and processing all the forcing data your simulation needs. This includes initial conditions, boundary conditions, tidal forcings, biogeochemistry data, and more. You process all of this data through the `case.process_forcings` call. `case.process_forcings` wraps a submodule of CrocoDash called extract_forcings. Extract_forcings is a set of scripts to process each forcing, like initial/boundary conditions, tides, etc... extract_forcings also holds a subdirectory called case_setup. This has a driver and config file. This holds all of the specific case information to run the processing scripts. When you run the workflow, this case_setup folder gets copied into your input directory. `case.process_forcings` goes into this subfolder and runs the driver. You can also run the driver yourself through the command-line.
+This is the final step of the CrocoDash workflow: actually generating all the
+forcing files your simulation needs (initial conditions, boundary conditions,
+tides, BGC fields, runoff mappings, chlorophyll, …).
+
+## What this module does
+
+`case.process_forcings` wraps the `extract_forcings` submodule. `extract_forcings`
+is a collection of scripts — one per forcing type — that regrid and format data
+for MOM6.
+
+## How it integrates with `configure_forcings`
+
+Under `extract_forcings/` there's a `case_setup/` directory containing a
+`driver.py` and a `config.json`. The `config.json` is written by
+[`case.configure_forcings`](3a_configure_forcings.md); it stores every path,
+date, and option your case needs. The `driver.py` reads that config and
+dispatches to the right processing scripts.
+
+When you call `case.configure_forcings(...)`, CrocoDash **copies the whole
+`case_setup/` directory into your case's `inputdir/extract_forcings/`**. That
+copy is fully standalone: you can submit it as a batch job without going through the workflow again.
+
+`case.process_forcings` just shells into that directory and runs the driver —
+which means you can also run the driver yourself from the command line.
 
 ## Workflow Overview
 
@@ -98,3 +121,10 @@ Here's a typical workflow for an HPC system with job queues:
    cd /path/to/case/input_directory/extract_forcings
    # Activate CrocoDash environment and submit to batch system!
    ```
+
+## See also
+
+- [3a. Configure Forcings](3a_configure_forcings.md) — the step that writes the `config.json` this driver consumes
+- [Datasets](datasets.md) — the raw data sources the driver downloads from
+- [Architecture](../for_developers/architecture.md) — where `extract_forcings` lives in the code and how to extend it
+- [Submodule API Usage](../for_developers/submodule_api_usage.md) — exact `regional-mom6` / `mom6_forge` functions called during processing

@@ -1,53 +1,85 @@
-# User Information
+# User Guide
 
-Welcome! This section contains documentation for using CrocoDash to set up regional MOM6 cases. Whether you're just getting started or diving into specific features, you'll find helpful information here.
+The CrocoDash workflow has four steps. Each step maps onto one module of the
+package, so you can read the docs in the same order you'd actually run the code.
 
-## Getting Started
+## The workflow at a glance
 
-New to CrocoDash? Start with these guides:
+```text
+  ┌──────────────────┐    ┌──────────────┐    ┌───────────────────────┐    ┌──────────────────────┐
+  │  1.  Grids       │    │  2.  Case    │    │  3a. Configure        │    │  3b. Process         │
+  │                  │    │      setup   │    │      forcings         │    │      forcings        │
+  │  hgrid  (Grid)   │ →  │  Case(...)   │ →  │  case.configure_      │ →  │  case.process_       │
+  │  topo   (Topo)   │    │              │    │    forcings(...)      │    │    forcings(...)     │
+  │  vgrid  (VGrid)  │    │              │    │                       │    │                      │
+  └──────────────────┘    └──────────────┘    └───────────────────────┘    └──────────────────────┘
+       mom6_forge         visualCaseGen     forcing_configurations         extract_forcings
+```
 
-1. **[Structure](structure.md)** - Understand how CrocoDash is organized and what each component does
-2. **[Forcing Configuration](forcing_configurations.md)** - Learn how to configure forcing and boundary conditions
-3. **[Available Datasets](datasets.md)** - See what data sources are available
+1. **[Grids](1_grids.md)** — build the horizontal grid, bathymetry, and vertical
+   grid for your domain (using [mom6_forge](https://ncar.github.io/mom6_forge/)).
+2. **[Case setup](2_case_setup.md)** — create a `Case` object that ties your
+   grid to a CESM regional MOM6 case (using
+   [VisualCaseGen](https://github.com/ESMCI/VisualCaseGen) under the hood).
+3. **Forcings.** This step is split in two because the configuration is
+   lightweight but the processing is HPC-scale:
+   - **[3a. Configure forcings](3a_configure_forcings.md)** — declare which
+     forcings your case needs (tides, BGC, runoff, …) and validate the choices.
+   - **[3b. Process forcings](3b_process_forcings.md)** — run the extraction,
+     regridding, and formatting. Submittable as a standalone batch job.
 
-## Documentation by Topic
+## Reference pages
+
+These are not part of the linear workflow but you'll reach for them often:
+
+- **[Compsets & Inputs](compsets_and_inputs.md)** — available CESM compsets, and how to customize MOM6 parameters via `user_nl_mom`.
+- **[Datasets](datasets.md)** — which raw datasets CrocoDash can download, and how the `raw_data_access` registry works.
+- **[Additional resources](additional_resources.md)** — talks, videos, and external tutorials.
 
 ```{toctree}
+:caption: Workflow
 :maxdepth: 1
 
-structure
-grids
+1_grids
+2_case_setup
+3a_configure_forcings
+3b_process_forcings
+```
+
+```{toctree}
+:caption: Reference
+:maxdepth: 1
+
+compsets_and_inputs
 datasets
-forcing_configurations
-extract_forcings
-case_information
 additional_resources
 ```
 
-## Frequently Needed Information
+## Frequently needed info
 
 ### "How do I set up a regional MOM6 case?"
-See [Tutorials & Gallery](https://crocodile-cesm.github.io/CrocoGallery/) for step-by-step examples.
+Follow the four workflow pages in order, or see the [Tutorials & Gallery](https://crocodile-cesm.github.io/CrocoGallery/) for worked examples.
 
-### "What compsets are available?"
-Check [Available Compsets](case_information.md) for valid compset options.
+### "What compset should I use?"
+See [Compsets & Inputs](compsets_and_inputs.md) for the aliases CrocoDash ships with.
 
-### "What forcing options do I need?"
-Read [Forcing Configuration](forcing_configurations.md) to understand what your compset requires.
+### "What forcing options does my compset require?"
+After you instantiate your `Case`, CrocoDash prints the required configurators.
+You can also query the registry directly — see [Configure Forcings](3a_configure_forcings.md).
 
-### "What datasets can I use?"
-See [Datasets](datasets.md) for available data sources (TPXO, GLORYS, GEBCO, etc.).
+### "What raw datasets are available?"
+See [Datasets](datasets.md).
 
-### "How do I customize MOM input parameters?"
-See [Input Parameters](case_information.md) for how to override default MOM6 settings.
+### "How do I change a MOM6 input parameter?"
+See the `user_nl_mom` section of [Compsets & Inputs](compsets_and_inputs.md).
 
-### "Where can I see example workflows?"
-Check [Tutorials & Gallery](https://crocodile-cesm.github.io/CrocoGallery/) for working notebooks and demos.
+### "Where are the working examples?"
+[CrocoGallery](https://crocodile-cesm.github.io/CrocoGallery/) — notebooks and
+end-to-end demos.
 
+## Community & help
 
-## Community and Help
-
-- **Issues:** Report bugs or request features on [GitHub](https://github.com/CROCODILE-CESM/CrocoDash/issues)
-- **Discussions:** Ask questions in [GitHub Discussions](https://github.com/CROCODILE-CESM/CrocoDash/discussions)
-- **Videos & Tutorials:** See [Additional Resources](additional_resources.md)
-- **External Links:** [CROCODILE Project](https://github.com/CROCODILE-CESM), [Gallery](https://crocodile-cesm.github.io/CrocoGallery/)
+- **Issues:** [GitHub Issues](https://github.com/CROCODILE-CESM/CrocoDash/issues)
+- **Questions & discussion:** [GitHub Discussions](https://github.com/CROCODILE-CESM/CrocoDash/discussions)
+- **Common errors:** [discussion thread](https://github.com/CROCODILE-CESM/CrocoDash/discussions/84)
+- **Want to extend CrocoDash?** See the [developer docs](../for_developers/index.md).
