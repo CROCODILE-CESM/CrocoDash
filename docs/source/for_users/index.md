@@ -26,11 +26,11 @@ flowchart LR
    grid to a CESM regional MOM6 case (using
    [VisualCaseGen](https://github.com/ESMCI/VisualCaseGen) under the hood).
 3. **Forcings.** This step is split in two because the configuration is
-   lightweight but the processing is HPC-scale:
-   - **[3a. Configure forcings](3a_configure_forcings.md)** — declare which
-     forcings your case needs (tides, BGC, runoff, …) and validate the choices.
-   - **[3b. Process forcings](3b_process_forcings.md)** — run the extraction,
-     regridding, and formatting. Submittable as a standalone batch job.
+   lightweight but the processing is HPC-scale.
+    - **[3a. Configure forcings](3a_configure_forcings.md)** — declare which
+      forcings your case needs (tides, BGC, runoff, …) and validate the choices.
+    - **[3b. Process forcings](3b_process_forcings.md)** — run the extraction,
+      regridding, and formatting. Submittable as a standalone batch job.
 
 ## Reference pages
 
