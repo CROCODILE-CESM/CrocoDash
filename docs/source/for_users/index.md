@@ -7,15 +7,10 @@ package, so you can read the docs in the same order you'd actually run the code.
 
 ```{mermaid}
 flowchart LR
-    subgraph S1["1. Grids<br/><i>mom6_forge</i>"]
-        direction TB
-        HG["hgrid<br/>(Grid)"]
-        TP["topo<br/>(Topo)"]
-        VG["vgrid<br/>(VGrid)"]
-    end
-    S2["2. Case setup<br/><code>Case(...)</code><br/><i>visualCaseGen</i>"]
-    S3a["3a. Configure forcings<br/><code>case.configure_forcings(...)</code><br/><i>forcing_configurations</i>"]
-    S3b["3b. Process forcings<br/><code>case.process_forcings(...)</code><br/><i>extract_forcings</i>"]
+    S1["Step 1: Grids<br/>hgrid, topo, vgrid<br/>mom6_forge"]
+    S2["Step 2: Case setup<br/>Case(...)<br/>visualCaseGen"]
+    S3a["Step 3a: Configure forcings<br/>case.configure_forcings(...)<br/>forcing_configurations"]
+    S3b["Step 3b: Process forcings<br/>case.process_forcings(...)<br/>extract_forcings"]
 
     S1 --> S2 --> S3a --> S3b
 ```
