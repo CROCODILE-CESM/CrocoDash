@@ -149,6 +149,7 @@ To add a new forcing configuration, See [Adding Forcing Configurations](../for_d
 
 ## See Also
 
-- [Available Datasets](datasets.md) - What data sources can be used
-- [Available Compsets](case_information.md) - Valid compset options
-- [Tutorials](https://crocodile-cesm.github.io/CrocoGallery/) - Working examples with real cases
+- **Next step:** [3b. Process Forcings](3b_process_forcings.md) — actually generate the forcing files
+- [Datasets](datasets.md) — what data sources can be used
+- [Compsets & Inputs](compsets_and_inputs.md) — valid compset options
+- [Tutorials](https://crocodile-cesm.github.io/CrocoGallery/) — working examples with real cases

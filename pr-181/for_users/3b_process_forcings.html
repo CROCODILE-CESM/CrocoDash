@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Extract Forcings (case.process_forcings) &#8212; CrocoDash  documentation</title>
+    <title>3b. Process Forcings (case.process_forcings) &#8212; CrocoDash  documentation</title>
   
   
   
@@ -41,12 +41,12 @@
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'for_users/extract_forcings';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'for_users/3b_process_forcings';</script>
     <link rel="icon" href="../_static/crocodile.png"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Extra CESM Case Information" href="case_information.html" />
-    <link rel="prev" title="Forcing Configuration (case.configure_forcings)" href="forcing_configurations.html" />
+    <link rel="next" title="Extra CESM Case Information" href="compsets_and_inputs.html" />
+    <link rel="prev" title="Forcing Configuration (case.configure_forcings)" href="3a_configure_forcings.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -160,22 +160,22 @@
 <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://crocodile-cesm.github.io/CrocoGallery/">Tutorials &amp; Gallery</a></li>
-<li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">User Information</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="structure.html">How CrocoDash Is Organized</a></li>
-<li class="toctree-l2"><a class="reference internal" href="grids.html">Grid Stuff (Supergrid, Bathymetry, Vgrid)</a></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">User Guide</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="1_grids.html">1. Grids (hgrid · topo · vgrid)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="2_case_setup.html">Case Setup (<code class="docutils literal notranslate"><span class="pre">Case</span></code> object)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="3a_configure_forcings.html">Forcing Configuration (case.configure_forcings)</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">3b. Process Forcings (<code class="docutils literal notranslate"><span class="pre">case.process_forcings</span></code>)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="compsets_and_inputs.html">Extra CESM Case Information</a></li>
 <li class="toctree-l2"><a class="reference internal" href="datasets.html">Accessing Raw Data (raw_data_access)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="forcing_configurations.html">Forcing Configuration (case.configure_forcings)</a></li>
-<li class="toctree-l2 current active"><a class="current reference internal" href="#">Extract Forcings (case.process_forcings)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="case_information.html">Extra CESM Case Information</a></li>
 <li class="toctree-l2"><a class="reference internal" href="additional_resources.html">Additional Resources</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../for_developers/index.html">Want to do more?</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
-<li class="toctree-l2"><a class="reference internal" href="../for_developers/dev_info.html">Get started developing!</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../for_developers/edit_docs.html">Write Documentation</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../for_developers/index.html">Developer Guide</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../for_developers/architecture.html">Architecture</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_developers/adding_data_access.html">Adding Data to the Data Access Module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_developers/adding_forcing_configurations.html">Adding Forcing Configurations</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_developers/submodule_api_usage.html">Submodule API Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_developers/edit_docs.html">Write Documentation</a></li>
 <li class="toctree-l2"><a class="reference external" href="https://github.com/CROCODILE-CESM/CrocoDash/discussions/138">Semi-Official ChangeLog</a></li>
 </ul>
 </details></li>
@@ -249,7 +249,7 @@
       
       
       
-      <li><a href="../_sources/for_users/extract_forcings.md" target="_blank"
+      <li><a href="../_sources/for_users/3b_process_forcings.md" target="_blank"
    class="btn btn-sm btn-download-source-button dropdown-item"
    title="Download source file"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -333,7 +333,7 @@ document.write(`
               
 
 <div id="jb-print-docs-body" class="onlyprint">
-    <h1>Extract Forcings (case.process_forcings)</h1>
+    <h1>3b. Process Forcings (case.process_forcings)</h1>
     <!-- Table of contents -->
     <div id="print-main-content">
         <div id="jb-print-toc">
@@ -343,12 +343,15 @@ document.write(`
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#what-this-module-does">What this module does</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#how-it-integrates-with-configure-forcings">How it integrates with <code class="docutils literal notranslate"><span class="pre">configure_forcings</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow-overview">Workflow Overview</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#directory-structure">Directory Structure</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#command-line-options">Command-Line Options</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-processing-pipeline">The Processing Pipeline</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#design-philosophy">Design Philosophy</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#example-running-forcings-on-your-hpc-system">Example: Running Forcings on Your HPC System</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#see-also">See also</a></li>
 </ul>
             </nav>
         </div>
@@ -360,9 +363,30 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="extract-forcings-case-process-forcings">
-<h1>Extract Forcings (case.process_forcings)<a class="headerlink" href="#extract-forcings-case-process-forcings" title="Link to this heading">#</a></h1>
-<p>The final part of the CrocoDash workflow is extracting and processing all the forcing data your simulation needs. This includes initial conditions, boundary conditions, tidal forcings, biogeochemistry data, and more. You process all of this data through the <code class="docutils literal notranslate"><span class="pre">case.process_forcings</span></code> call. <code class="docutils literal notranslate"><span class="pre">case.process_forcings</span></code> wraps a submodule of CrocoDash called extract_forcings. Extract_forcings is a set of scripts to process each forcing, like initial/boundary conditions, tides, etc… extract_forcings also holds a subdirectory called case_setup. This has a driver and config file. This holds all of the specific case information to run the processing scripts. When you run the workflow, this case_setup folder gets copied into your input directory. <code class="docutils literal notranslate"><span class="pre">case.process_forcings</span></code> goes into this subfolder and runs the driver. You can also run the driver yourself through the command-line.</p>
+  <section id="b-process-forcings-case-process-forcings">
+<h1>3b. Process Forcings (<code class="docutils literal notranslate"><span class="pre">case.process_forcings</span></code>)<a class="headerlink" href="#b-process-forcings-case-process-forcings" title="Link to this heading">#</a></h1>
+<p>This is the final step of the CrocoDash workflow: actually generating all the
+forcing files your simulation needs (initial conditions, boundary conditions,
+tides, BGC fields, runoff mappings, chlorophyll, …).</p>
+<section id="what-this-module-does">
+<h2>What this module does<a class="headerlink" href="#what-this-module-does" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">case.process_forcings</span></code> wraps the <code class="docutils literal notranslate"><span class="pre">extract_forcings</span></code> submodule. <code class="docutils literal notranslate"><span class="pre">extract_forcings</span></code>
+is a collection of scripts — one per forcing type — that regrid and format data
+for MOM6.</p>
+</section>
+<section id="how-it-integrates-with-configure-forcings">
+<h2>How it integrates with <code class="docutils literal notranslate"><span class="pre">configure_forcings</span></code><a class="headerlink" href="#how-it-integrates-with-configure-forcings" title="Link to this heading">#</a></h2>
+<p>Under <code class="docutils literal notranslate"><span class="pre">extract_forcings/</span></code> there’s a <code class="docutils literal notranslate"><span class="pre">case_setup/</span></code> directory containing a
+<code class="docutils literal notranslate"><span class="pre">driver.py</span></code> and a <code class="docutils literal notranslate"><span class="pre">config.json</span></code>. The <code class="docutils literal notranslate"><span class="pre">config.json</span></code> is written by
+<a class="reference internal" href="3a_configure_forcings.html"><span class="std std-doc"><code class="docutils literal notranslate"><span class="pre">case.configure_forcings</span></code></span></a>; it stores every path,
+date, and option your case needs. The <code class="docutils literal notranslate"><span class="pre">driver.py</span></code> reads that config and
+dispatches to the right processing scripts.</p>
+<p>When you call <code class="docutils literal notranslate"><span class="pre">case.configure_forcings(...)</span></code>, CrocoDash <strong>copies the whole
+<code class="docutils literal notranslate"><span class="pre">case_setup/</span></code> directory into your case’s <code class="docutils literal notranslate"><span class="pre">inputdir/extract_forcings/</span></code></strong>. That
+copy is fully standalone: you can submit it as a batch job without going through the workflow again.</p>
+<p><code class="docutils literal notranslate"><span class="pre">case.process_forcings</span></code> just shells into that directory and runs the driver —
+which means you can also run the driver yourself from the command line.</p>
+</section>
 <section id="workflow-overview">
 <h2>Workflow Overview<a class="headerlink" href="#workflow-overview" title="Link to this heading">#</a></h2>
 <p>When you run the CrocoDash workflow, configure_forcings and process_forcings:</p>
@@ -476,6 +500,15 @@ python<span class="w"> </span>driver.py<span class="w"> </span>--all<span class=
 </li>
 </ol>
 </section>
+<section id="see-also">
+<h2>See also<a class="headerlink" href="#see-also" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p><a class="reference internal" href="3a_configure_forcings.html"><span class="std std-doc">3a. Configure Forcings</span></a> — the step that writes the <code class="docutils literal notranslate"><span class="pre">config.json</span></code> this driver consumes</p></li>
+<li><p><a class="reference internal" href="datasets.html"><span class="std std-doc">Datasets</span></a> — the raw data sources the driver downloads from</p></li>
+<li><p><a class="reference internal" href="../for_developers/architecture.html"><span class="std std-doc">Architecture</span></a> — where <code class="docutils literal notranslate"><span class="pre">extract_forcings</span></code> lives in the code and how to extend it</p></li>
+<li><p><a class="reference internal" href="../for_developers/submodule_api_usage.html"><span class="std std-doc">Submodule API Usage</span></a> — exact <code class="docutils literal notranslate"><span class="pre">regional-mom6</span></code> / <code class="docutils literal notranslate"><span class="pre">mom6_forge</span></code> functions called during processing</p></li>
+</ul>
+</section>
 </section>
 
 
@@ -490,7 +523,7 @@ python<span class="w"> </span>driver.py<span class="w"> </span>--all<span class=
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="forcing_configurations.html"
+       href="3a_configure_forcings.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
@@ -499,7 +532,7 @@ python<span class="w"> </span>driver.py<span class="w"> </span>--all<span class=
       </div>
     </a>
     <a class="right-next"
-       href="case_information.html"
+       href="compsets_and_inputs.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
@@ -523,12 +556,15 @@ python<span class="w"> </span>driver.py<span class="w"> </span>--all<span class=
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#what-this-module-does">What this module does</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#how-it-integrates-with-configure-forcings">How it integrates with <code class="docutils literal notranslate"><span class="pre">configure_forcings</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow-overview">Workflow Overview</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#directory-structure">Directory Structure</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#command-line-options">Command-Line Options</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-processing-pipeline">The Processing Pipeline</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#design-philosophy">Design Philosophy</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#example-running-forcings-on-your-hpc-system">Example: Running Forcings on Your HPC System</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#see-also">See also</a></li>
 </ul>
   </nav></div>
 

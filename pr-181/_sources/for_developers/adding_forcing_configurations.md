@@ -349,5 +349,6 @@ Most basic testing is taken care of, and the registry will run available configu
 
 ## See Also
 
-- [Project Architecture](../for_users/structure.md) - Understanding the Case class and workflow
+- [Architecture](architecture.md) — how `forcing_configurations` fits into the rest of CrocoDash
+- [Submodule API Usage](submodule_api_usage.md) — external entry points used by configurators
 - Example implementations in `CrocoDash/forcing_configurations.py`

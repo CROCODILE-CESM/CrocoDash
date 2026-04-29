@@ -161,22 +161,22 @@
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://crocodile-cesm.github.io/CrocoGallery/">Tutorials &amp; Gallery</a></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="for_users/index.html">User Information</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
-<li class="toctree-l2"><a class="reference internal" href="for_users/structure.html">How CrocoDash Is Organized</a></li>
-<li class="toctree-l2"><a class="reference internal" href="for_users/grids.html">Grid Stuff (Supergrid, Bathymetry, Vgrid)</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="for_users/index.html">User Guide</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="for_users/1_grids.html">1. Grids (hgrid · topo · vgrid)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="for_users/2_case_setup.html">Case Setup (<code class="docutils literal notranslate"><span class="pre">Case</span></code> object)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="for_users/3a_configure_forcings.html">Forcing Configuration (case.configure_forcings)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="for_users/3b_process_forcings.html">3b. Process Forcings (<code class="docutils literal notranslate"><span class="pre">case.process_forcings</span></code>)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="for_users/compsets_and_inputs.html">Extra CESM Case Information</a></li>
 <li class="toctree-l2"><a class="reference internal" href="for_users/datasets.html">Accessing Raw Data (raw_data_access)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="for_users/forcing_configurations.html">Forcing Configuration (case.configure_forcings)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="for_users/extract_forcings.html">Extract Forcings (case.process_forcings)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="for_users/case_information.html">Extra CESM Case Information</a></li>
 <li class="toctree-l2"><a class="reference internal" href="for_users/additional_resources.html">Additional Resources</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="for_developers/index.html">Want to do more?</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
-<li class="toctree-l2"><a class="reference internal" href="for_developers/dev_info.html">Get started developing!</a></li>
-<li class="toctree-l2"><a class="reference internal" href="for_developers/edit_docs.html">Write Documentation</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="for_developers/index.html">Developer Guide</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="for_developers/architecture.html">Architecture</a></li>
 <li class="toctree-l2"><a class="reference internal" href="for_developers/adding_data_access.html">Adding Data to the Data Access Module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="for_developers/adding_forcing_configurations.html">Adding Forcing Configurations</a></li>
 <li class="toctree-l2"><a class="reference internal" href="for_developers/submodule_api_usage.html">Submodule API Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="for_developers/edit_docs.html">Write Documentation</a></li>
 <li class="toctree-l2"><a class="reference external" href="https://github.com/CROCODILE-CESM/CrocoDash/discussions/138">Semi-Official ChangeLog</a></li>
 </ul>
 </details></li>
@@ -345,7 +345,7 @@ document.write(`
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#description">Description</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#get-started">Get Started</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#get-started">Get started</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#license">License</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#citation">Citation</a></li>
 </ul>
@@ -366,28 +366,32 @@ CrocoDash takes advantage and integrates several MOM6 and CESM tools into an uni
 CrocoDash is part of the CROCODILE project. Please see the <a class="reference external" href="https://github.com/CROCODILE-CESM">project description</a> for scientific motivation.</p>
 <section id="description">
 <h2>Description<a class="headerlink" href="#description" title="Link to this heading">#</a></h2>
-<p>CrocoDash brings regional MOM6 inside the CESM. It is a lightweight package that ties together each part of the MOM6 in CESM setup process into one package.</p>
+<p>CrocoDash brings regional MOM6 inside CESM. It’s a lightweight package that
+orchestrates four steps, one module per step:</p>
 <ol class="arabic simple">
-<li><p>Grid Generation (Through <a class="reference external" href="https://github.com/NCAR/mom6_forge">mom6_forge</a> and <a class="reference external" href="https://github.com/CROCODILE-CESM/regional-mom6">regional-mom6</a>)</p></li>
-<li><p>CESM Setup (Through <a class="reference external" href="https://github.com/CROCODILE-CESM/VisualCaseGen">VisualCaseGen</a>)</p></li>
-<li><p>Forcing + OBC Setup (Through <a class="reference external" href="https://github.com/CROCODILE-CESM/CESM">CESM</a> &amp; <a class="reference external" href="https://github.com/CROCODILE-CESM/regional-mom6">regional-mom6</a>)</p></li>
+<li><p><strong>Grids</strong> — horizontal grid, bathymetry, and vertical grid (via <a class="reference external" href="https://github.com/NCAR/mom6_forge">mom6_forge</a>)</p></li>
+<li><p><strong>Case setup</strong> — create a CESM regional MOM6 case (via <a class="reference external" href="https://github.com/CROCODILE-CESM/VisualCaseGen">VisualCaseGen</a>)</p></li>
+<li><p><strong>Configure forcings</strong> — declare tides, BGC, rivers, ICs, etc. for your case</p></li>
+<li><p><strong>Process forcings</strong> — download, regrid, and format the actual data (via <a class="reference external" href="https://github.com/CROCODILE-CESM/regional-mom6">regional-mom6</a>)</p></li>
 </ol>
-<p>CrocoDash also provides a variety of helper tools to help setup a case, for example, a tool to edit bathymetry (TopoEditor) or a tool to download public datasets simply (raw_data_access module).</p>
+<p>CrocoDash also ships helpers like an interactive <code class="docutils literal notranslate"><span class="pre">TopoEditor</span></code> for bathymetry
+editing and a <code class="docutils literal notranslate"><span class="pre">raw_data_access</span></code> registry for downloading public datasets.</p>
 </section>
 <section id="get-started">
-<h2>Get Started<a class="headerlink" href="#get-started" title="Link to this heading">#</a></h2>
+<h2>Get started<a class="headerlink" href="#get-started" title="Link to this heading">#</a></h2>
 <ol class="arabic simple">
-<li><p>Please see the <a class="reference internal" href="installation.html#installation"><span class="std std-ref">Installation</span></a> page.</p></li>
-<li><p>Walk through our <a class="reference external" href="https://crocodile-cesm.github.io/CrocoGallery/latest/notebooks/tutorials/crocodash-tutorial/">tutorials</a> for an easy introduction</p></li>
-<li><p>Check out our <a class="reference external" href="https://crocodile-cesm.github.io/CrocoGallery/latest/">gallery of demos</a> for more use cases and cool features.</p></li>
+<li><p>Install — see the <a class="reference internal" href="installation.html"><span class="std std-doc">installation</span></a> page.</p></li>
+<li><p>Walk through the <a class="reference external" href="https://crocodile-cesm.github.io/CrocoGallery/latest/notebooks/tutorials/crocodash-tutorial/">tutorials</a> for an easy introduction.</p></li>
+<li><p>Browse the <a class="reference external" href="https://crocodile-cesm.github.io/CrocoGallery/latest/">gallery of demos</a> for more use cases.</p></li>
+<li><p>Read the <a class="reference internal" href="for_users/index.html"><span class="std std-doc">user guide</span></a> for step-by-step docs.</p></li>
 </ol>
 <div class="toctree-wrapper compound">
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://crocodile-cesm.github.io/CrocoGallery/">Tutorials &amp; Gallery</a></li>
-<li class="toctree-l1"><a class="reference internal" href="for_users/index.html">User Information</a></li>
-<li class="toctree-l1"><a class="reference internal" href="for_developers/index.html">Want to do more?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="for_users/index.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="for_developers/index.html">Developer Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api-docs/modules.html">CrocoDash API Docs</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/CROCODILE-CESM/CrocoDash/discussions/84">Common Errors</a></li>
 </ul>
@@ -440,7 +444,7 @@ CrocoDash is part of the CROCODILE project. Please see the <a class="reference e
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#description">Description</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#get-started">Get Started</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#get-started">Get started</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#license">License</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#citation">Citation</a></li>
 </ul>
