@@ -373,6 +373,14 @@ document.write(`
   <section id="a-configure-forcings-case-configure-forcings">
 <h1>3a. Configure Forcings (case.configure_forcings)<a class="headerlink" href="#a-configure-forcings-case-configure-forcings" title="Link to this heading">#</a></h1>
 <p>Forcing configuration handles setup of all forcing and boundary conditions for your regional MOM6 case, including tides, biogeochemistry, runoff, initial conditions, and more.</p>
+<div class="tip admonition">
+<p class="admonition-title">Need to find a dataset?</p>
+<p>Most arguments to <code class="docutils literal notranslate"><span class="pre">configure_forcings()</span></code> are file paths to raw data (TPXO tides,
+GLORYS ICs, GLOFAS runoff, GEBCO bathymetry, …). See
+<strong><a class="reference internal" href="datasets.html"><span class="std std-doc">Datasets</span></a></strong> for the full list of built-in data products, and
+the <a class="reference internal" href="datasets.html#crocodash-data-access-module"><span class="std std-ref">Accessing Raw Data page</span></a> for the
+<code class="docutils literal notranslate"><span class="pre">raw_data_access</span></code> helpers that can download them for you.</p>
+</div>
 <section id="overview">
 <h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">#</a></h2>
 <p>Forcing configuration is managed by the <code class="docutils literal notranslate"><span class="pre">forcing_configurations.py</span></code> module through a registry-based system:</p>
