@@ -384,15 +384,10 @@ package, so you can read the docs in the same order you’d actually run the cod
 <h2>The workflow at a glance<a class="headerlink" href="#the-workflow-at-a-glance" title="Link to this heading">#</a></h2>
 <pre  class="mermaid">
         flowchart LR
-    subgraph S1[&quot;1. Grids&lt;br/&gt;&lt;i&gt;mom6_forge&lt;/i&gt;&quot;]
-        direction TB
-        HG[&quot;hgrid&lt;br/&gt;(Grid)&quot;]
-        TP[&quot;topo&lt;br/&gt;(Topo)&quot;]
-        VG[&quot;vgrid&lt;br/&gt;(VGrid)&quot;]
-    end
-    S2[&quot;2. Case setup&lt;br/&gt;&lt;code&gt;Case(...)&lt;/code&gt;&lt;br/&gt;&lt;i&gt;visualCaseGen&lt;/i&gt;&quot;]
-    S3a[&quot;3a. Configure forcings&lt;br/&gt;&lt;code&gt;case.configure_forcings(...)&lt;/code&gt;&lt;br/&gt;&lt;i&gt;forcing_configurations&lt;/i&gt;&quot;]
-    S3b[&quot;3b. Process forcings&lt;br/&gt;&lt;code&gt;case.process_forcings(...)&lt;/code&gt;&lt;br/&gt;&lt;i&gt;extract_forcings&lt;/i&gt;&quot;]
+    S1[&quot;Step 1: Grids&lt;br/&gt;hgrid, topo, vgrid&lt;br/&gt;mom6_forge&quot;]
+    S2[&quot;Step 2: Case setup&lt;br/&gt;Case(...)&lt;br/&gt;visualCaseGen&quot;]
+    S3a[&quot;Step 3a: Configure forcings&lt;br/&gt;case.configure_forcings(...)&lt;br/&gt;forcing_configurations&quot;]
+    S3b[&quot;Step 3b: Process forcings&lt;br/&gt;case.process_forcings(...)&lt;br/&gt;extract_forcings&quot;]
 
     S1 --&gt; S2 --&gt; S3a --&gt; S3b
     </pre><ol class="arabic simple">
