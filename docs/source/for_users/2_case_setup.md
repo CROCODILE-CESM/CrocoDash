@@ -40,6 +40,14 @@ That one call:
 - Prints a summary of any **required** forcing configurations you still owe
   (these become your arguments to `configure_forcings` in step 3a)
 
+:::{admonition} Picking a compset
+:class: tip
+Not sure which `compset=` to pass? See the
+**[regional compsets table in Compsets & Inputs](compsets_and_inputs.md#available-compset-aliases)**
+for the aliases CrocoDash ships with (`CR_JRA`, `CR1850MARBL_JRA_GLOFAS`, `GR_JRA`, …)
+and which model components each activates.
+:::
+
 ## Required arguments
 
 | Argument | Type | Meaning |

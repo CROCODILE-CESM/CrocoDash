@@ -2,6 +2,15 @@
 
 Forcing configuration handles setup of all forcing and boundary conditions for your regional MOM6 case, including tides, biogeochemistry, runoff, initial conditions, and more.
 
+:::{admonition} Need to find a dataset?
+:class: tip
+Most arguments to `configure_forcings()` are file paths to raw data (TPXO tides,
+GLORYS ICs, GLOFAS runoff, GEBCO bathymetry, …). See
+**[Datasets](datasets.md)** for the full list of built-in data products, and
+the [Accessing Raw Data page](datasets.md#crocodash-data-access-module) for the
+`raw_data_access` helpers that can download them for you.
+:::
+
 ## Overview
 
 Forcing configuration is managed by the `forcing_configurations.py` module through a registry-based system:
