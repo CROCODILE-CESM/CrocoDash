@@ -2,12 +2,12 @@ import pytest
 from unittest.mock import DEFAULT, Mock, MagicMock, patch
 import sys
 import subprocess
-import json
-import tempfile
 from pathlib import Path
 from argparse import Namespace
 
 from CrocoDash.extract_forcings.case_setup import driver
+
+_DRIVER_MODULE = "CrocoDash.extract_forcings.case_setup.driver"
 
 # =============================================================================
 # Argument Parsing Tests
@@ -122,9 +122,9 @@ def test_resolve_components(arg_overrides, config_keys, expected):
 
 
 # Some simple dry runs
-@patch("CrocoDash.extract_forcings.case_setup.driver.process_runoff")
-@patch("CrocoDash.extract_forcings.case_setup.driver.process_tides")
-@patch("CrocoDash.extract_forcings.case_setup.driver.process_conditions")
+@patch(f"{_DRIVER_MODULE}.process_runoff")
+@patch(f"{_DRIVER_MODULE}.process_tides")
+@patch(f"{_DRIVER_MODULE}.process_conditions")
 def test_run_from_cli_integration(
     mock_cond, mock_tides, mock_runoff, gen_grid_topo_vgrid, tmp_path
 ):
@@ -192,16 +192,18 @@ def test_driver_subprocess_help():
 
 def _make_mock_config(config_dict=None, inputdir=None, ocn_grid=None, ocn_topo=None):
     """Build a MagicMock that behaves like utils.Config for the driver module."""
+    cfg_dict = config_dict or {}
     cfg = MagicMock()
-    cfg.config = config_dict or {}
-    cfg.__getitem__.side_effect = lambda k: cfg.config[k]
+    cfg.config = cfg_dict
+    # Delegate item access straight to the underlying dict — no lambda needed.
+    cfg.__getitem__.side_effect = cfg_dict.__getitem__
     cfg.inputdir = inputdir or Path("/tmp/cfg_inputdir")
     cfg.ocn_grid = ocn_grid or MagicMock(nx=10, ny=12)
     cfg.ocn_topo = ocn_topo or MagicMock()
     return cfg
 
 
-@patch("CrocoDash.extract_forcings.case_setup.driver.utils.Config")
+@patch(f"{_DRIVER_MODULE}.utils.Config")
 def test_test_driver_prints(mock_Config, capsys):
     """test_driver() should load config and print confirmation lines."""
     mock_Config.return_value = _make_mock_config()
@@ -211,28 +213,37 @@ def test_test_driver_prints(mock_Config, capsys):
     assert "Config Loads!" in captured.out
 
 
-@pytest.mark.parametrize(
-    "driver_fn_name,underlying_patch,config_dict,kwarg_checks",
-    [
-        pytest.param(
-            "process_bgcic",
-            "CrocoDash.extract_forcings.case_setup.driver.bgc.process_bgc_ic",
-            {
+@pytest.fixture
+def process_wrapper_cases(tmp_path):
+    """Test data for every driver.process_* wrapper.
+
+    To add a new forcing test, add one entry to the returned dict. Each entry:
+
+    - driver_fn       : name of the wrapper function on `driver` to call
+    - underlying      : dotted path to patch (the thing the wrapper forwards to)
+    - config          : dict the mocked utils.Config should expose
+    - expected_kwargs : kwargs the underlying call must receive. Values can use
+                        `tmp_path` directly since this is a fixture.
+    """
+    return {
+        "bgcic": dict(
+            driver_fn="process_bgcic",
+            underlying=f"{_DRIVER_MODULE}.bgc.process_bgc_ic",
+            config={
                 "bgcic": {
                     "inputs": {"marbl_ic_filepath": "/some/path.nc"},
                     "outputs": {"MARBL_TRACERS_IC_FILE": "tracers_ic.nc"},
                 }
             },
-            lambda kw, tmp_path: (
-                kw["file_path"] == "/some/path.nc"
-                and kw["output_path"] == tmp_path / "ocnice" / "tracers_ic.nc"
-            ),
-            id="bgcic",
+            expected_kwargs={
+                "file_path": "/some/path.nc",
+                "output_path": tmp_path / "ocnice" / "tracers_ic.nc",
+            },
         ),
-        pytest.param(
-            "process_bgcironforcing",
-            "CrocoDash.extract_forcings.case_setup.driver.bgc.process_bgc_iron_forcing",
-            {
+        "bgcironforcing": dict(
+            driver_fn="process_bgcironforcing",
+            underlying=f"{_DRIVER_MODULE}.bgc.process_bgc_iron_forcing",
+            config={
                 "bgcironforcing": {
                     "outputs": {
                         "MARBL_FESEDFLUX_FILE": "fesed.nc",
@@ -240,19 +251,18 @@ def test_test_driver_prints(mock_Config, capsys):
                     }
                 }
             },
-            lambda kw, tmp_path: (
-                kw["nx"] == 10
-                and kw["ny"] == 12
-                and kw["MARBL_FESEDFLUX_FILE"] == "fesed.nc"
-                and kw["MARBL_FEVENTFLUX_FILE"] == "fevent.nc"
-                and kw["inputdir"] == tmp_path
-            ),
-            id="bgcironforcing",
+            expected_kwargs={
+                "nx": 10,
+                "ny": 12,
+                "MARBL_FESEDFLUX_FILE": "fesed.nc",
+                "MARBL_FEVENTFLUX_FILE": "fevent.nc",
+                "inputdir": tmp_path,
+            },
         ),
-        pytest.param(
-            "process_runoff",
-            "CrocoDash.extract_forcings.case_setup.driver.rof.generate_rof_ocn_map",
-            {
+        "runoff": dict(
+            driver_fn="process_runoff",
+            underlying=f"{_DRIVER_MODULE}.rof.generate_rof_ocn_map",
+            config={
                 "runoff": {
                     "inputs": {
                         "rof_grid_name": "GLOFAS",
@@ -264,40 +274,34 @@ def test_test_driver_prints(mock_Config, capsys):
                     }
                 }
             },
-            lambda kw, tmp_path: (
-                kw["rof_grid_name"] == "GLOFAS"
-                and kw["rmax"] == 20
-                and kw["fold"] == 40
-            ),
-            id="runoff",
+            expected_kwargs={
+                "rof_grid_name": "GLOFAS",
+                "rmax": 20,
+                "fold": 40,
+            },
         ),
-        pytest.param(
-            "process_bgcrivernutrients",
-            "CrocoDash.extract_forcings.case_setup.driver.bgc.process_river_nutrients",
-            {
+        "bgcrivernutrients": dict(
+            driver_fn="process_bgcrivernutrients",
+            underlying=f"{_DRIVER_MODULE}.bgc.process_river_nutrients",
+            config={
                 "bgcrivernutrients": {
                     "inputs": {"global_river_nutrients_filepath": "/rn.nc"},
                     "outputs": {"RIV_FLUX_FILE": "riv_flux.nc"},
                 },
                 "runoff": {"outputs": {"ROF2OCN_LIQ_RMAPNAME": "/map.nc"}},
             },
-            lambda kw, tmp_path: (
-                kw["global_river_nutrients_filepath"] == "/rn.nc"
-                and kw["mapping_file"] == "/map.nc"
-                and kw["river_nutrients_nnsm_filepath"]
-                == tmp_path / "ocnice" / "riv_flux.nc"
-            ),
-            id="bgcrivernutrients",
+            expected_kwargs={
+                "global_river_nutrients_filepath": "/rn.nc",
+                "mapping_file": "/map.nc",
+                "river_nutrients_nnsm_filepath": tmp_path / "ocnice" / "riv_flux.nc",
+            },
         ),
-        pytest.param(
-            "process_tides",
-            "CrocoDash.extract_forcings.case_setup.driver.tides.process_tides",
-            {
+        "tides": dict(
+            driver_fn="process_tides",
+            underlying=f"{_DRIVER_MODULE}.tides.process_tides",
+            config={
                 "basic": {
-                    "paths": {
-                        "hgrid_path": "/hgrid.nc",
-                        "vgrid_path": "/vgrid.nc",
-                    }
+                    "paths": {"hgrid_path": "/hgrid.nc", "vgrid_path": "/vgrid.nc"}
                 },
                 "tides": {
                     "inputs": {
@@ -308,72 +312,104 @@ def test_test_driver_prints(mock_Config, capsys):
                     }
                 },
             },
-            lambda kw, tmp_path: (
-                kw["tidal_constituents"] == ["M2"] and kw["boundaries"] == ["east"]
-            ),
-            id="tides",
+            expected_kwargs={
+                "tidal_constituents": ["M2"],
+                "boundaries": ["east"],
+            },
         ),
-        pytest.param(
-            "process_chl",
-            "CrocoDash.extract_forcings.case_setup.driver.chl.process_chl",
-            {
+        "chl": dict(
+            driver_fn="process_chl",
+            underlying=f"{_DRIVER_MODULE}.chl.process_chl",
+            config={
                 "chl": {
                     "inputs": {"chl_processed_filepath": "/chl_raw.nc"},
                     "outputs": {"CHL_FILE": "/chl_out.nc"},
                 }
             },
-            lambda kw, tmp_path: (
-                kw["chl_processed_filepath"] == "/chl_raw.nc"
-                and kw["output_filepath"] == "/chl_out.nc"
-            ),
-            id="chl",
+            expected_kwargs={
+                "chl_processed_filepath": "/chl_raw.nc",
+                "output_filepath": "/chl_out.nc",
+            },
         ),
-    ],
-)
-def test_process_wrapper_invokes_underlying(
-    driver_fn_name, underlying_patch, config_dict, kwarg_checks, tmp_path
-):
-    """Each driver.process_* wrapper loads Config and forwards kwargs to its underlying function."""
-    with patch(
-        "CrocoDash.extract_forcings.case_setup.driver.utils.Config"
-    ) as mock_Config, patch(underlying_patch) as mock_underlying:
+    }
+
+
+# IDs for the parametrize below must be known at collection time. Keep this list
+# in sync with the keys in the `process_wrapper_cases` fixture above.
+PROCESS_WRAPPER_IDS = [
+    "bgcic",
+    "bgcironforcing",
+    "runoff",
+    "bgcrivernutrients",
+    "tides",
+    "chl",
+]
+
+
+@pytest.mark.parametrize("case_id", PROCESS_WRAPPER_IDS, ids=PROCESS_WRAPPER_IDS)
+def test_process_wrapper_invokes_underlying(case_id, tmp_path, process_wrapper_cases):
+    """Each driver.process_* wrapper loads Config and forwards the right kwargs."""
+    case = process_wrapper_cases[case_id]
+    with patch(f"{_DRIVER_MODULE}.utils.Config") as mock_Config, patch(
+        case["underlying"]
+    ) as mock_underlying:
         mock_Config.return_value = _make_mock_config(
-            config_dict=config_dict, inputdir=tmp_path
+            config_dict=case["config"], inputdir=tmp_path
         )
-        getattr(driver, driver_fn_name)()
+        getattr(driver, case["driver_fn"])()
 
     mock_underlying.assert_called_once()
-    _, kwargs = mock_underlying.call_args
-    assert kwarg_checks(kwargs, tmp_path), f"kwargs failed expectations: {kwargs}"
+    _, actual_kwargs = mock_underlying.call_args
+    for key, expected in case["expected_kwargs"].items():
+        assert actual_kwargs[key] == expected, (
+            f"[{case_id}] kwarg {key!r}: expected {expected!r}, "
+            f"got {actual_kwargs.get(key)!r}"
+        )
 
 
-_FULL_CONDITIONS_CFG = {
-    "basic": {
-        "forcing": {
-            "product_name": "GLORYS",
-            "function_name": "download",
-            "information": {},
-        },
-        "dates": {"format": "%Y%m%d", "start": "20200101", "end": "20200106"},
-        "paths": {
-            "hgrid_path": "/h.nc",
-            "bathymetry_path": "/b.nc",
-            "raw_dataset_path": "/raw",
-            "regridded_dataset_path": "/regrid",
-            "output_path": "/out",
-            "vgrid_path": "/v.nc",
-        },
-        "general": {
-            "step": "5",
-            "boundary_number_conversion": {"east": 1},
-            "preview": True,
-        },
-        "file_regex": {
-            "raw_dataset_pattern": "pat1",
-            "regridded_dataset_pattern": "pat2",
-        },
+def test_process_wrapper_ids_match_fixture(process_wrapper_cases):
+    """Guardrail: PROCESS_WRAPPER_IDS must match the fixture's dict keys.
+
+    If you add/rename/remove an entry in the `process_wrapper_cases` fixture,
+    update PROCESS_WRAPPER_IDS to match. This test fails loudly if they drift.
+    """
+    assert set(PROCESS_WRAPPER_IDS) == set(process_wrapper_cases), (
+        "PROCESS_WRAPPER_IDS out of sync with process_wrapper_cases fixture. "
+        f"In list only: {set(PROCESS_WRAPPER_IDS) - set(process_wrapper_cases)}; "
+        f"in fixture only: {set(process_wrapper_cases) - set(PROCESS_WRAPPER_IDS)}"
+    )
+
+
+@pytest.fixture
+def full_conditions_cfg():
+    """A fully populated config dict with every key process_conditions reads."""
+    return {
+        "basic": {
+            "forcing": {
+                "product_name": "GLORYS",
+                "function_name": "download",
+                "information": {},
+            },
+            "dates": {"format": "%Y%m%d", "start": "20200101", "end": "20200106"},
+            "paths": {
+                "hgrid_path": "/h.nc",
+                "bathymetry_path": "/b.nc",
+                "raw_dataset_path": "/raw",
+                "regridded_dataset_path": "/regrid",
+                "output_path": "/out",
+                "vgrid_path": "/v.nc",
+            },
+            "general": {
+                "step": "5",
+                "boundary_number_conversion": {"east": 1},
+                "preview": True,
+            },
+            "file_regex": {
+                "raw_dataset_pattern": "pat1",
+                "regridded_dataset_pattern": "pat2",
+            },
+        }
     }
-}
 
 
 @pytest.mark.parametrize(
@@ -399,18 +435,18 @@ _FULL_CONDITIONS_CFG = {
         ),
     ],
 )
-def test_process_conditions_respects_stage_flags(stage_flags, expect_called):
+def test_process_conditions_respects_stage_flags(
+    stage_flags, expect_called, full_conditions_cfg
+):
     """process_conditions invokes each of gdp/rdp/mpd iff the matching flag is True."""
-    with patch(
-        "CrocoDash.extract_forcings.case_setup.driver.utils.Config"
-    ) as mock_Config, patch(
-        "CrocoDash.extract_forcings.case_setup.driver.gdp.get_dataset_piecewise"
+    with patch(f"{_DRIVER_MODULE}.utils.Config") as mock_Config, patch(
+        f"{_DRIVER_MODULE}.gdp.get_dataset_piecewise"
     ) as mock_gdp, patch(
-        "CrocoDash.extract_forcings.case_setup.driver.rdp.regrid_dataset_piecewise"
+        f"{_DRIVER_MODULE}.rdp.regrid_dataset_piecewise"
     ) as mock_rdp, patch(
-        "CrocoDash.extract_forcings.case_setup.driver.mpd.merge_piecewise_dataset"
+        f"{_DRIVER_MODULE}.mpd.merge_piecewise_dataset"
     ) as mock_mpd:
-        mock_Config.return_value = _make_mock_config(config_dict=_FULL_CONDITIONS_CFG)
+        mock_Config.return_value = _make_mock_config(config_dict=full_conditions_cfg)
         driver.process_conditions(**stage_flags)
 
     for m in (mock_gdp, mock_rdp, mock_mpd):
@@ -438,13 +474,13 @@ def mock_all_process_fns():
         "process_chl",
     ]
     with patch.multiple(
-        "CrocoDash.extract_forcings.case_setup.driver",
+        _DRIVER_MODULE,
         **{n: DEFAULT for n in names},
     ) as mocks:
         yield mocks
 
 
-@patch("CrocoDash.extract_forcings.case_setup.driver.test_driver")
+@patch(f"{_DRIVER_MODULE}.test_driver")
 def test_run_from_cli_test_flag_short_circuits(mock_test_driver):
     """--test should call test_driver and exit early without touching any components."""
     args = _args_ns(test=True, all=True)  # 'all' should be ignored
