@@ -171,7 +171,7 @@ window.addEventListener("load", () => mermaid.run());
 <li class="toctree-l1 current active has-children"><a class="current reference internal" href="#">User Guide</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="1_grids.html">1. Grids (hgrid · topo · vgrid)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="2_case_setup.html">2. Case Setup (<code class="docutils literal notranslate"><span class="pre">Case</span></code> object)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="3a_configure_forcings.html">3a. Configure Forcings (forcing_configurations)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="3a_configure_forcings.html">3a. Configure Forcings (case.configure_forcings)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="3b_process_forcings.html">3b. Process Forcings (<code class="docutils literal notranslate"><span class="pre">case.process_forcings</span></code>)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="compsets_and_inputs.html">Regional Compsets &amp; Input Parameters</a></li>
 <li class="toctree-l2"><a class="reference internal" href="datasets.html">Accessing Raw Data (raw_data_access)</a></li>
@@ -402,7 +402,7 @@ grid for your domain (using <a class="reference external" href="https://ncar.git
 grid to a CESM regional MOM6 case (using
 <a class="reference external" href="https://github.com/ESMCI/VisualCaseGen">VisualCaseGen</a> under the hood).</p></li>
 <li><p><strong>Forcings.</strong> This step is split in two because the configuration is
-lightweight but the processing is HPC-scale:</p>
+lightweight but the processing is HPC-scale.</p>
 <ul class="simple">
 <li><p><strong><a class="reference internal" href="3a_configure_forcings.html"><span class="std std-doc">3a. Configure forcings</span></a></strong> — declare which
 forcings your case needs (tides, BGC, runoff, …) and validate the choices.</p></li>
@@ -425,7 +425,7 @@ regridding, and formatting. Submittable as a standalone batch job.</p></li>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="1_grids.html">1. Grids (hgrid · topo · vgrid)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="2_case_setup.html">2. Case Setup (<code class="docutils literal notranslate"><span class="pre">Case</span></code> object)</a></li>
-<li class="toctree-l1"><a class="reference internal" href="3a_configure_forcings.html">3a. Configure Forcings (forcing_configurations)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="3a_configure_forcings.html">3a. Configure Forcings (case.configure_forcings)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="3b_process_forcings.html">3b. Process Forcings (<code class="docutils literal notranslate"><span class="pre">case.process_forcings</span></code>)</a></li>
 </ul>
 </div>

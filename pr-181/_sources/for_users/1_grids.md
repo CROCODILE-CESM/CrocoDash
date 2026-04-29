@@ -3,6 +3,13 @@
 The first step of any CrocoDash workflow is defining the spatial domain: a
 horizontal grid (`Grid`), a bathymetry (`Topo`), and a vertical grid (`VGrid`).
 
+```{mermaid}
+flowchart LR
+    HG["hgrid<br/>(Grid)"] --> C["Case(...)"]
+    TP["topo<br/>(Topo)"] --> C
+    VG["vgrid<br/>(VGrid)"] --> C
+```
+
 CrocoDash re-exports these objects from [mom6_forge](https://github.com/NCAR/mom6_forge)
 **with no modifications**, so all the details — class methods, creation
 patterns, file formats — live in the
