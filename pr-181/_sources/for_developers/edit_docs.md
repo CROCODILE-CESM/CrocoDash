@@ -42,23 +42,42 @@ This removes cached build files and rebuilds from scratch.
 
 ## Regenerating API Documentation
 
-When you add new modules or submodules to CrocoDash, you need to regenerate the auto-documentation from docstrings:
+When you add new modules or submodules to CrocoDash, you need to regenerate the
+auto-documentation from docstrings. Use **exactly** this command — it matches
+what CI runs, so its output is what will be compared against your commit:
 
 ```bash
 cd docs
-sphinx-apidoc -o source/api-docs ../CrocoDash # This reads the code of CrocoDash and loads it into source/apidocs
-# You may consider deleting the regional_mom6 api docs, regional_mom6 has its own docs (which is what I've been doing.)
+sphinx-apidoc \
+  -o source/api-docs \
+  -H "CrocoDash API Docs" \
+  --force \
+  ../CrocoDash \
+  ../CrocoDash/rm6 \
+  ../CrocoDash/visualCaseGen
 make html
 ```
 
-**Why this is needed:** The API docs are auto-generated from your Python docstrings. When you add new modules, Sphinx needs to scan them and create `.rst` files documenting the public API.
+**Why these flags:**
+
+- `-H "CrocoDash API Docs"` — sets the top-level heading (otherwise each regen
+  overwrites any hand-edited title).
+- `../CrocoDash/rm6` and `../CrocoDash/visualCaseGen` — exclude vendored
+  submodules that ship their own documentation.
+
+**Why this is needed:** The API docs are auto-generated from your Python
+docstrings. When you add new modules, Sphinx needs to scan them and create
+`.rst` files documenting the public API.
 
 **When to do this:**
 - You create a new module or submodule under `CrocoDash/`
 - You add new public classes or functions to existing modules
 - You significantly restructure the package
 
-**Note:** The `sphinx-apidoc` command creates/updates files in `source/api-docs/`. These are referenced in the main documentation structure.
+**CI enforcement:** The `Deploy Sphinx Documentation` workflow re-runs the same
+`sphinx-apidoc` invocation on every push and PR and fails if the committed
+`source/api-docs/` differs from the generated output. If you see that failure,
+run the command above locally and commit the result.
 
 ## Local Server Preview
 

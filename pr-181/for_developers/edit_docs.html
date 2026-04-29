@@ -162,10 +162,10 @@
 <li class="toctree-l1"><a class="reference external" href="https://crocodile-cesm.github.io/CrocoGallery/">Tutorials &amp; Gallery</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../for_users/index.html">User Guide</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../for_users/1_grids.html">1. Grids (hgrid · topo · vgrid)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../for_users/2_case_setup.html">Case Setup (<code class="docutils literal notranslate"><span class="pre">Case</span></code> object)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../for_users/3a_configure_forcings.html">Forcing Configuration (case.configure_forcings)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_users/2_case_setup.html">2. Case Setup (<code class="docutils literal notranslate"><span class="pre">Case</span></code> object)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_users/3a_configure_forcings.html">3a. Configure Forcings (forcing_configurations)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_users/3b_process_forcings.html">3b. Process Forcings (<code class="docutils literal notranslate"><span class="pre">case.process_forcings</span></code>)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../for_users/compsets_and_inputs.html">Extra CESM Case Information</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_users/compsets_and_inputs.html">Regional Compsets &amp; Input Parameters</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_users/datasets.html">Accessing Raw Data (raw_data_access)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_users/additional_resources.html">Additional Resources</a></li>
 </ul>
@@ -422,21 +422,40 @@ make<span class="w"> </span>html
 </section>
 <section id="regenerating-api-documentation">
 <h2>Regenerating API Documentation<a class="headerlink" href="#regenerating-api-documentation" title="Link to this heading">#</a></h2>
-<p>When you add new modules or submodules to CrocoDash, you need to regenerate the auto-documentation from docstrings:</p>
+<p>When you add new modules or submodules to CrocoDash, you need to regenerate the
+auto-documentation from docstrings. Use <strong>exactly</strong> this command — it matches
+what CI runs, so its output is what will be compared against your commit:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>docs
-sphinx-apidoc<span class="w"> </span>-o<span class="w"> </span>source/api-docs<span class="w"> </span>../CrocoDash<span class="w"> </span><span class="c1"># This reads the code of CrocoDash and loads it into source/apidocs</span>
-<span class="c1"># You may consider deleting the regional_mom6 api docs, regional_mom6 has its own docs (which is what I&#39;ve been doing.)</span>
+sphinx-apidoc<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-o<span class="w"> </span>source/api-docs<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;CrocoDash API Docs&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--force<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>../CrocoDash<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>../CrocoDash/rm6<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>../CrocoDash/visualCaseGen
 make<span class="w"> </span>html
 </pre></div>
 </div>
-<p><strong>Why this is needed:</strong> The API docs are auto-generated from your Python docstrings. When you add new modules, Sphinx needs to scan them and create <code class="docutils literal notranslate"><span class="pre">.rst</span></code> files documenting the public API.</p>
+<p><strong>Why these flags:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">-H</span> <span class="pre">&quot;CrocoDash</span> <span class="pre">API</span> <span class="pre">Docs&quot;</span></code> — sets the top-level heading (otherwise each regen
+overwrites any hand-edited title).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">../CrocoDash/rm6</span></code> and <code class="docutils literal notranslate"><span class="pre">../CrocoDash/visualCaseGen</span></code> — exclude vendored
+submodules that ship their own documentation.</p></li>
+</ul>
+<p><strong>Why this is needed:</strong> The API docs are auto-generated from your Python
+docstrings. When you add new modules, Sphinx needs to scan them and create
+<code class="docutils literal notranslate"><span class="pre">.rst</span></code> files documenting the public API.</p>
 <p><strong>When to do this:</strong></p>
 <ul class="simple">
 <li><p>You create a new module or submodule under <code class="docutils literal notranslate"><span class="pre">CrocoDash/</span></code></p></li>
 <li><p>You add new public classes or functions to existing modules</p></li>
 <li><p>You significantly restructure the package</p></li>
 </ul>
-<p><strong>Note:</strong> The <code class="docutils literal notranslate"><span class="pre">sphinx-apidoc</span></code> command creates/updates files in <code class="docutils literal notranslate"><span class="pre">source/api-docs/</span></code>. These are referenced in the main documentation structure.</p>
+<p><strong>CI enforcement:</strong> The <code class="docutils literal notranslate"><span class="pre">Deploy</span> <span class="pre">Sphinx</span> <span class="pre">Documentation</span></code> workflow re-runs the same
+<code class="docutils literal notranslate"><span class="pre">sphinx-apidoc</span></code> invocation on every push and PR and fails if the committed
+<code class="docutils literal notranslate"><span class="pre">source/api-docs/</span></code> differs from the generated output. If you see that failure,
+run the command above locally and commit the result.</p>
 </section>
 <section id="local-server-preview">
 <h2>Local Server Preview<a class="headerlink" href="#local-server-preview" title="Link to this heading">#</a></h2>

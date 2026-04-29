@@ -1,4 +1,4 @@
-# Extra CESM Case Information
+# Regional Compsets & Input Parameters
 
 
 ## Available Compset Aliases

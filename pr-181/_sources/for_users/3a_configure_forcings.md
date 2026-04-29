@@ -1,4 +1,4 @@
-# Forcing Configuration (case.configure_forcings)
+# 3a. Configure Forcings (forcing_configurations)
 
 Forcing configuration handles setup of all forcing and boundary conditions for your regional MOM6 case, including tides, biogeochemistry, runoff, initial conditions, and more.
 

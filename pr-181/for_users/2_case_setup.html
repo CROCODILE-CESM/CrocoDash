@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Case Setup (Case object) &#8212; CrocoDash  documentation</title>
+    <title>2. Case Setup (Case object) &#8212; CrocoDash  documentation</title>
   
   
   
@@ -41,11 +41,19 @@
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/mermaid@11.2.0/dist/mermaid.esm.min.mjs"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@mermaid-js/layout-elk@0.1.4/dist/mermaid-layout-elk.esm.min.mjs"></script>
+    <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.2.0/dist/mermaid.esm.min.mjs";import elkLayouts from "https://cdn.jsdelivr.net/npm/@mermaid-js/layout-elk@0.1.4/dist/mermaid-layout-elk.esm.min.mjs";mermaid.registerLayoutLoaders(elkLayouts);mermaid.initialize({startOnLoad:false});</script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+    <script type="module">
+import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.2.0/dist/mermaid.esm.min.mjs";
+window.addEventListener("load", () => mermaid.run());
+</script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'for_users/2_case_setup';</script>
     <link rel="icon" href="../_static/crocodile.png"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Forcing Configuration (case.configure_forcings)" href="3a_configure_forcings.html" />
+    <link rel="next" title="3a. Configure Forcings (forcing_configurations)" href="3a_configure_forcings.html" />
     <link rel="prev" title="1. Grids (hgrid · topo · vgrid)" href="1_grids.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -162,10 +170,10 @@
 <li class="toctree-l1"><a class="reference external" href="https://crocodile-cesm.github.io/CrocoGallery/">Tutorials &amp; Gallery</a></li>
 <li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">User Guide</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="1_grids.html">1. Grids (hgrid · topo · vgrid)</a></li>
-<li class="toctree-l2 current active"><a class="current reference internal" href="#">Case Setup (<code class="docutils literal notranslate"><span class="pre">Case</span></code> object)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="3a_configure_forcings.html">Forcing Configuration (case.configure_forcings)</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">2. Case Setup (<code class="docutils literal notranslate"><span class="pre">Case</span></code> object)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="3a_configure_forcings.html">3a. Configure Forcings (forcing_configurations)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="3b_process_forcings.html">3b. Process Forcings (<code class="docutils literal notranslate"><span class="pre">case.process_forcings</span></code>)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="compsets_and_inputs.html">Extra CESM Case Information</a></li>
+<li class="toctree-l2"><a class="reference internal" href="compsets_and_inputs.html">Regional Compsets &amp; Input Parameters</a></li>
 <li class="toctree-l2"><a class="reference internal" href="datasets.html">Accessing Raw Data (raw_data_access)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="additional_resources.html">Additional Resources</a></li>
 </ul>
@@ -333,7 +341,7 @@ document.write(`
               
 
 <div id="jb-print-docs-body" class="onlyprint">
-    <h1>Case Setup (Case object)</h1>
+    <h1>2. Case Setup (Case object)</h1>
     <!-- Table of contents -->
     <div id="print-main-content">
         <div id="jb-print-toc">
@@ -364,7 +372,7 @@ document.write(`
                 <article class="bd-article">
                   
   <section id="case-setup-case-object">
-<h1>Case Setup (<code class="docutils literal notranslate"><span class="pre">Case</span></code> object)<a class="headerlink" href="#case-setup-case-object" title="Link to this heading">#</a></h1>
+<h1>2. Case Setup (<code class="docutils literal notranslate"><span class="pre">Case</span></code> object)<a class="headerlink" href="#case-setup-case-object" title="Link to this heading">#</a></h1>
 <p>Once you have your grids ready, the next step is creating a <code class="docutils literal notranslate"><span class="pre">Case</span></code> object. The
 <code class="docutils literal notranslate"><span class="pre">Case</span></code> is CrocoDash’s main orchestration object: it wraps a CESM regional MOM6
 case, ties your grid definition into CESM’s machinery, and gives you the three
@@ -498,19 +506,17 @@ regional-MOM6 constraints</p></li>
 </section>
 <section id="what-case-init-does-in-order">
 <h2>What <code class="docutils literal notranslate"><span class="pre">Case.__init__</span></code> does, in order<a class="headerlink" href="#what-case-init-does-in-order" title="Link to this heading">#</a></h2>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>  Case(...)
-     │
-     ├─► Initialize VisualCaseGen + CIME
-     ├─► Resolve compset alias → longname
-     ├─► Validate arguments  (Case.init_args_check)
-     ├─► Configure VCG variables  (compset, grid, launch)
-     ├─► Write grid input files  (hgrid, topo, vgrid, mesh)
-     ├─► create_newcase
-     ├─► Apply ntasks / queue / wallclock via xmlchange
-     └─► Report required forcing configurators
-</pre></div>
-</div>
-<p>You don’t need to call any of these individually — instantiating <code class="docutils literal notranslate"><span class="pre">Case</span></code> runs the
+<pre  class="mermaid">
+        flowchart TD
+    A[&quot;Case(...)&quot;] --&gt; B[&quot;Initialize VisualCaseGen + CIME&quot;]
+    B --&gt; C[&quot;Resolve compset alias → longname&quot;]
+    C --&gt; D[&quot;Validate arguments&lt;br/&gt;(Case.init_args_check)&quot;]
+    D --&gt; E[&quot;Configure VCG variables&lt;br/&gt;(compset, grid, launch)&quot;]
+    E --&gt; F[&quot;Write grid input files&lt;br/&gt;(hgrid, topo, vgrid, mesh)&quot;]
+    F --&gt; G[&quot;create_newcase&quot;]
+    G --&gt; H[&quot;Apply ntasks / queue / wallclock&lt;br/&gt;via xmlchange&quot;]
+    H --&gt; I[&quot;Report required&lt;br/&gt;forcing configurators&quot;]
+    </pre><p>You don’t need to call any of these individually — instantiating <code class="docutils literal notranslate"><span class="pre">Case</span></code> runs the
 whole sequence.</p>
 </section>
 <section id="reading-the-required-configurators-message">
@@ -560,7 +566,7 @@ configurators use internally to decide which configurators are compatible.</p>
 <h2>Common pitfalls<a class="headerlink" href="#common-pitfalls" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><strong><code class="docutils literal notranslate"><span class="pre">Given</span> <span class="pre">caseroot</span> <span class="pre">...</span> <span class="pre">already</span> <span class="pre">exists!</span></code></strong> — pass <code class="docutils literal notranslate"><span class="pre">override=True</span></code> <em>or</em> pick a fresh path. <code class="docutils literal notranslate"><span class="pre">override=True</span></code> is safe for iteration but will remove the prior case directory.</p></li>
-<li><p><strong><code class="docutils literal notranslate"><span class="pre">compset</span> <span class="pre">must</span> <span class="pre">be</span> <span class="pre">a</span> <span class="pre">valid</span> <span class="pre">CESM</span> <span class="pre">compset</span> <span class="pre">long</span> <span class="pre">name</span> <span class="pre">or</span> <span class="pre">alias.</span></code></strong> — aliases are resolved against your CESM checkout’s compset list. If the alias isn’t in <code class="docutils literal notranslate"><span class="pre">self.cime.compsets</span></code>, you either have the wrong <code class="docutils literal notranslate"><span class="pre">cesmroot</span></code> or your CESM checkout doesn’t include the CROCODILE compset fork.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">compset</span> <span class="pre">must</span> <span class="pre">be</span> <span class="pre">a</span> <span class="pre">valid</span> <span class="pre">CESM</span> <span class="pre">compset</span> <span class="pre">long</span> <span class="pre">name</span> <span class="pre">or</span> <span class="pre">alias.</span></code></strong> — aliases are resolved against your CESM checkout’s compset list. If the alias isn’t in the avialable compsets, you either have the wrong <code class="docutils literal notranslate"><span class="pre">cesmroot</span></code> or your CESM checkout doesn’t include the CROCODILE compset fork.</p></li>
 <li><p><strong>Only MOM6-based compsets are supported.</strong> CrocoDash enforces <code class="docutils literal notranslate"><span class="pre">MOM6</span></code>, <code class="docutils literal notranslate"><span class="pre">SLND</span></code>, <code class="docutils literal notranslate"><span class="pre">SGLC</span></code>, and <code class="docutils literal notranslate"><span class="pre">SWAV</span></code> in the compset longname. Active land/glacier/wave models are not supported.</p></li>
 <li><p><strong>Machine requires a project.</strong> If your machine has accounting, <code class="docutils literal notranslate"><span class="pre">project=</span></code> is not optional.</p></li>
 </ul>
@@ -606,7 +612,7 @@ configurators use internally to decide which configurators are compatible.</p>
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Forcing Configuration (case.configure_forcings)</p>
+        <p class="prev-next-title">3a. Configure Forcings (forcing_configurations)</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
