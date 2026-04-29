@@ -21,6 +21,11 @@ jobs:
         # in docs/source/for_developers/edit_docs.md. If anything changes, the
         # committed API docs are stale — fail the job with a helpful hint.
         run: |
+          # actions/checkout inside a container can leave the workspace as an
+          # "unsafe" git repo for the runner user; mark it safe so `git diff`
+          # works.
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
           sphinx-apidoc \
             -o docs/source/api-docs \
             -H "CrocoDash API Docs" \
@@ -28,12 +33,13 @@ jobs:
             CrocoDash \
             CrocoDash/rm6 \
             CrocoDash/visualCaseGen
-          if ! git diff --quiet docs/source/api-docs/; then
+
+          if ! git diff --quiet -- docs/source/api-docs/; then
             echo "::error::API docs are out of date. Run this locally and commit the result:"
             echo "  cd docs && sphinx-apidoc -o source/api-docs -H 'CrocoDash API Docs' --force ../CrocoDash ../CrocoDash/rm6 ../CrocoDash/visualCaseGen"
             echo ""
             echo "--- diff ---"
-            git --no-pager diff docs/source/api-docs/
+            git --no-pager diff -- docs/source/api-docs/
             exit 1
           fi
         shell: bash
