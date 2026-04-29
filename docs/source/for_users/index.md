@@ -5,15 +5,19 @@ package, so you can read the docs in the same order you'd actually run the code.
 
 ## The workflow at a glance
 
-```text
-  ┌──────────────────┐    ┌──────────────┐    ┌───────────────────────┐    ┌──────────────────────┐
-  │  1.  Grids       │    │  2.  Case    │    │  3a. Configure        │    │  3b. Process         │
-  │                  │    │      setup   │    │      forcings         │    │      forcings        │
-  │  hgrid  (Grid)   │ →  │  Case(...)   │ →  │  case.configure_      │ →  │  case.process_       │
-  │  topo   (Topo)   │    │              │    │    forcings(...)      │    │    forcings(...)     │
-  │  vgrid  (VGrid)  │    │              │    │                       │    │                      │
-  └──────────────────┘    └──────────────┘    └───────────────────────┘    └──────────────────────┘
-       mom6_forge         visualCaseGen     forcing_configurations         extract_forcings
+```{mermaid}
+flowchart LR
+    subgraph S1["1. Grids<br/><i>mom6_forge</i>"]
+        direction TB
+        HG["hgrid<br/>(Grid)"]
+        TP["topo<br/>(Topo)"]
+        VG["vgrid<br/>(VGrid)"]
+    end
+    S2["2. Case setup<br/><code>Case(...)</code><br/><i>visualCaseGen</i>"]
+    S3a["3a. Configure forcings<br/><code>case.configure_forcings(...)</code><br/><i>forcing_configurations</i>"]
+    S3b["3b. Process forcings<br/><code>case.process_forcings(...)</code><br/><i>extract_forcings</i>"]
+
+    S1 --> S2 --> S3a --> S3b
 ```
 
 1. **[Grids](1_grids.md)** — build the horizontal grid, bathymetry, and vertical

@@ -16,6 +16,27 @@ jobs:
       - uses: actions/checkout@v4
         with:
             submodules: recursive
+      - name: Check API docs are up to date
+        # Regenerates docs/source/api-docs/ with the same invocation documented
+        # in docs/source/for_developers/edit_docs.md. If anything changes, the
+        # committed API docs are stale — fail the job with a helpful hint.
+        run: |
+          sphinx-apidoc \
+            -o docs/source/api-docs \
+            -H "CrocoDash API Docs" \
+            --force \
+            CrocoDash \
+            CrocoDash/rm6 \
+            CrocoDash/visualCaseGen
+          if ! git diff --quiet docs/source/api-docs/; then
+            echo "::error::API docs are out of date. Run this locally and commit the result:"
+            echo "  cd docs && sphinx-apidoc -o source/api-docs -H 'CrocoDash API Docs' --force ../CrocoDash ../CrocoDash/rm6 ../CrocoDash/visualCaseGen"
+            echo ""
+            echo "--- diff ---"
+            git --no-pager diff docs/source/api-docs/
+            exit 1
+          fi
+        shell: bash
       - name: Sphinx build
         run: |
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then

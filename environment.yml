@@ -11,6 +11,7 @@ dependencies:
   - graphviz>=12.2.1,<12.3.0
   - python-graphviz>=0.20.3,<0.21.0
   - nbsphinx>=0.9.6,<0.10.0
+  - sphinxcontrib-mermaid>=1.0.0,<1.1.0
   - cdsapi>=0.7.6,<0.8.0
   - pytest-cov>=7.0.0,<7.1.0
   - h5netcdf>=1.7.3,<1.8.0

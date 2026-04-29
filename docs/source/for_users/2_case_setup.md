@@ -1,4 +1,4 @@
-# Case Setup (`Case` object)
+# 2. Case Setup (`Case` object)
 
 Once you have your grids ready, the next step is creating a `Case` object. The
 `Case` is CrocoDash's main orchestration object: it wraps a CESM regional MOM6
@@ -68,17 +68,16 @@ That one call:
 
 ## What `Case.__init__` does, in order
 
-```text
-  Case(...)
-     │
-     ├─► Initialize VisualCaseGen + CIME
-     ├─► Resolve compset alias → longname
-     ├─► Validate arguments  (Case.init_args_check)
-     ├─► Configure VCG variables  (compset, grid, launch)
-     ├─► Write grid input files  (hgrid, topo, vgrid, mesh)
-     ├─► create_newcase
-     ├─► Apply ntasks / queue / wallclock via xmlchange
-     └─► Report required forcing configurators
+```{mermaid}
+flowchart TD
+    A["Case(...)"] --> B["Initialize VisualCaseGen + CIME"]
+    B --> C["Resolve compset alias → longname"]
+    C --> D["Validate arguments<br/>(Case.init_args_check)"]
+    D --> E["Configure VCG variables<br/>(compset, grid, launch)"]
+    E --> F["Write grid input files<br/>(hgrid, topo, vgrid, mesh)"]
+    F --> G["create_newcase"]
+    G --> H["Apply ntasks / queue / wallclock<br/>via xmlchange"]
+    H --> I["Report required<br/>forcing configurators"]
 ```
 
 You don't need to call any of these individually — instantiating `Case` runs the
@@ -122,7 +121,7 @@ configurators use internally to decide which configurators are compatible.
 ## Common pitfalls
 
 - **`Given caseroot ... already exists!`** — pass `override=True` *or* pick a fresh path. `override=True` is safe for iteration but will remove the prior case directory.
-- **`compset must be a valid CESM compset long name or alias.`** — aliases are resolved against your CESM checkout's compset list. If the alias isn't in `self.cime.compsets`, you either have the wrong `cesmroot` or your CESM checkout doesn't include the CROCODILE compset fork.
+- **`compset must be a valid CESM compset long name or alias.`** — aliases are resolved against your CESM checkout's compset list. If the alias isn't in the avialable compsets, you either have the wrong `cesmroot` or your CESM checkout doesn't include the CROCODILE compset fork.
 - **Only MOM6-based compsets are supported.** CrocoDash enforces `MOM6`, `SLND`, `SGLC`, and `SWAV` in the compset longname. Active land/glacier/wave models are not supported.
 - **Machine requires a project.** If your machine has accounting, `project=` is not optional.
 
