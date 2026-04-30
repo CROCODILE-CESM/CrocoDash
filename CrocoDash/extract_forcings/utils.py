@@ -19,10 +19,16 @@ class Config:
             self.config["basic"]["paths"]["bathymetry_path"], decode_times=False
         )
 
+        # Co-locate the TopoLibrary version-control dir alongside the case's config
+        # file instead of letting it default to the caller's cwd (which pollutes
+        # the repository root during tests).
+        topo_library_dir = Path(config_path).resolve().parent / "TopoLibrary"
+
         self.ocn_topo = Topo.from_topo_file(
             self.ocn_grid,
             self.config["basic"]["paths"]["bathymetry_path"],
             min_depth=topo.attrs["min_depth"],
+            version_control_dir=topo_library_dir,
         )
         self.inputdir = Path(self.config["basic"]["paths"]["input_dataset_path"])
 

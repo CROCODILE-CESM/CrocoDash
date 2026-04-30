@@ -12,11 +12,12 @@ def test_case_integration_driver(get_CrocoDash_case, skip_if_not_glade):
     large_data_workflow_path = case.inputdir / "extract_forcings"
     assert (large_data_workflow_path).exists()
     result = subprocess.run(
-        ["python", large_data_workflow_path / "driver.py", "test"],
+        ["python", large_data_workflow_path / "driver.py", "--test"],
         capture_output=True,
         text=True,
     )
     print(result.stdout)  # Output of the script
+
     assert result.returncode == 0
 
     return

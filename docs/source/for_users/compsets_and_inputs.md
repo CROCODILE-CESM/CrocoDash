@@ -1,4 +1,4 @@
-# Extra CESM Case Information
+# Regional Compsets & Input Parameters
 
 
 ## Available Compset Aliases
@@ -140,7 +140,7 @@ When using CrocoDash, parameter customization happens after case creation:
 2. **You customize parameters beyond CrocoDash** via user_nl_mom or SourceMods
 3. **You build and run the case** with modified parameters
 
-For configuration of forcing-specific parameters (tides, BGC, rivers, etc.), see [Forcing Configuration](forcing_configurations.md) instead.
+For configuration of forcing-specific parameters (tides, BGC, rivers, etc.), see [Configure Forcings](3a_configure_forcings.md) instead.
 
 ## Tips and Best Practices
 

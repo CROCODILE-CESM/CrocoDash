@@ -6,19 +6,23 @@ CrocoDash is part of the CROCODILE project. Please see the [project description]
 
 ## Description
 
-CrocoDash brings regional MOM6 inside the CESM. It is a lightweight package that ties together each part of the MOM6 in CESM setup process into one package.
+CrocoDash brings regional MOM6 inside CESM. It's a lightweight package that
+orchestrates four steps, one module per step:
 
-1. Grid Generation (Through [mom6_bathy](https://github.com/NCAR/mom6_bathy) and [regional-mom6](https://github.com/CROCODILE-CESM/regional-mom6))
-2. CESM Setup (Through [VisualCaseGen](https://github.com/CROCODILE-CESM/VisualCaseGen))
-3. Forcing + OBC Setup (Through [CESM](https://github.com/CROCODILE-CESM/CESM) & [regional-mom6](https://github.com/CROCODILE-CESM/regional-mom6))
+1. **Grids** — horizontal grid, bathymetry, and vertical grid (via [mom6_forge](https://github.com/NCAR/mom6_forge))
+2. **Case setup** — create a CESM regional MOM6 case (via [VisualCaseGen](https://github.com/CROCODILE-CESM/VisualCaseGen))
+3. **Configure forcings** — declare tides, BGC, rivers, ICs, etc. for your case
+4. **Process forcings** — download, regrid, and format the actual data (via [regional-mom6](https://github.com/CROCODILE-CESM/regional-mom6))
 
-CrocoDash also provides a variety of helper tools to help setup a case, for example, a tool to edit bathymetry (TopoEditor) or a tool to download public datasets simply (raw_data_access module).
+CrocoDash also ships helpers like an interactive `TopoEditor` for bathymetry
+editing and a `raw_data_access` registry for downloading public datasets.
 
-## Get Started
+## Get started
 
-1. Please see the {ref}`installation` page.
-2. Walk through our [tutorials](https://crocodile-cesm.github.io/CrocoGallery/latest/notebooks/tutorials/crocodash-tutorial/) for an easy introduction
-3. Check out our [gallery of demos](https://crocodile-cesm.github.io/CrocoGallery/latest/) for more use cases and cool features.
+1. Install — see the [installation](installation.md) page.
+2. Walk through the [tutorials](https://crocodile-cesm.github.io/CrocoGallery/latest/notebooks/tutorials/crocodash-tutorial/) for an easy introduction.
+3. Browse the [gallery of demos](https://crocodile-cesm.github.io/CrocoGallery/latest/) for more use cases.
+4. Read the [user guide](for_users/index.md) for step-by-step docs.
 
 ```{toctree}
 :caption: 'Contents:'
@@ -32,3 +36,11 @@ for_developers/index
 api-docs/modules
 Common Errors <https://github.com/CROCODILE-CESM/CrocoDash/discussions/84>
 ```
+
+## License
+
+CrocoDash is released under the [Apache 2.0 License](https://github.com/CROCODILE-CESM/CrocoDash/blob/main/LICENSE).
+
+## Citation
+
+If you use CrocoDash in your research, please cite it! A `CITATION.cff` file is included in the repository. You can also cite it directly from GitHub using the "Cite this repository" button on the [CrocoDash GitHub page](https://github.com/CROCODILE-CESM/CrocoDash).

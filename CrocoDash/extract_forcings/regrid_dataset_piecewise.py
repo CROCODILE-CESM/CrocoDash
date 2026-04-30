@@ -360,7 +360,7 @@ def m6b_fill_missing_data_wrapper(ds, xdim, zdim, fill):
         return fill_missing_data(ds.values, np.ones_like(ds.values))
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     print(
         "This is the regrid of the extract forcings workflow, don't run this directly!"
     )

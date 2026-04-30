@@ -21,7 +21,7 @@ How it was solved:
 from .registry import ProductRegistry
 import inspect
 import json
-from ..logging import setup_logger
+from CrocoDash.logging import setup_logger
 import tempfile
 import shutil
 
