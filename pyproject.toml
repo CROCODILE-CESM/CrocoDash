@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "CrocoDash"
+version = "0.1.0"
+
+[tool.setuptools]
+# This maps your submodule folders to the names you want to import
+packages = ["CrocoDash", "visualCaseGen", "mom6_forge", "ipyfilechooser"]
+
+[tool.setuptools.package-dir]
+"CrocoDash" = "CrocoDash"
+"visualCaseGen" = "CrocoDash/visualCaseGen/visualCaseGen"
+"mom6_forge" = "CrocoDash/visualCaseGen/external/mom6_forge"
+"ipyfilechooser" = "CrocoDash/visualCaseGen/external/ipyfilechooser"
