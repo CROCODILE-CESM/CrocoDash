@@ -8,6 +8,7 @@ from CrocoDash.extract_forcings.utils import (
 from pathlib import Path
 from collections import defaultdict
 import shutil
+import regional_mom6 as rm6
 
 logger = logging.setup_logger(__name__)
 
@@ -20,6 +21,7 @@ def merge_piecewise_dataset(
     end_date: str,
     boundary_number_conversion: dict,
     output_folder: str | Path,
+    bgc_tracer_names: dict = None,
     run_initial_condition: bool = True,
     run_boundary_conditions: bool = True,
     preview: bool = False,
@@ -107,6 +109,12 @@ def merge_piecewise_dataset(
                 ds.to_netcdf(output_path)
                 ds.close()
                 logger.info(f"Saved {boundary} boundary at {output_path}")
+
+        if bgc_tracer_names is not None:
+            expt = rm6.experiment.create_empty()
+            expt.boundaries = boundary_list
+            expt.mom_input_dir = output_path
+            expt.reformat_bgc_tracers_into_files(bgc_tracer_names)
     # Copy Initial Condition
     if run_initial_condition:
         ic_files_to_copy = [

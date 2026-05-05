@@ -145,6 +145,7 @@ def process_conditions(
             config["basic"]["dates"]["end"],
             config["basic"]["general"]["boundary_number_conversion"],
             config["basic"]["paths"]["output_path"],
+            config["basic"]["forcing"]["information"].get("marbl_var_names", None),
             run_initial_condition,
             run_boundary_conditions,
             config["basic"]["general"]["preview"],

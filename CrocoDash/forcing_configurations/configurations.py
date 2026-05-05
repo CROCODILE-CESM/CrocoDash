@@ -235,7 +235,7 @@ class BGCIronForcingConfigurator(BaseConfigurator):
         fesedfluxred_filepath = f"fesedfluxred_{self.get_input_param('case_grid_name')}_{self.get_input_param('case_session_id')}.nc"
         self.set_output_param("MARBL_FESEDFLUX_FILE", fesedflux_filepath)
         self.set_output_param("MARBL_FEVENTFLUX_FILE", feventflux_filepath)
-        self.set_output_param("MARBL_FESEDFLUXRED_FILE",fesedfluxred_filepath)
+        self.set_output_param("MARBL_FESEDFLUXRED_FILE", fesedfluxred_filepath)
         super().configure()
 
 
