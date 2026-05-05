@@ -65,6 +65,9 @@ def process_bgcironforcing():
         MARBL_FEVENTFLUX_FILE=config["bgcironforcing"]["outputs"][
             "MARBL_FEVENTFLUX_FILE"
         ],
+        MARBL_FESEDFLUXRED_FILE=config["bgcironforcing"]["outputs"][
+            "MARBL_FESEDFLUXRED_FILE"
+        ],
         inputdir=config.inputdir,
     )
 
@@ -142,6 +145,7 @@ def process_conditions(
             config["basic"]["dates"]["end"],
             config["basic"]["general"]["boundary_number_conversion"],
             config["basic"]["paths"]["output_path"],
+            config["basic"]["forcing"]["information"].get("marbl_var_names", None),
             run_initial_condition,
             run_boundary_conditions,
             config["basic"]["general"]["preview"],
