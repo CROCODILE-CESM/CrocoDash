@@ -3,6 +3,7 @@ import xesmf as xe
 import xarray as xr
 import cftime
 import numpy as np
+from netCDF4 import default_fillvals
 
 
 def process_bgc_ic(file_path, output_path):
@@ -206,7 +207,7 @@ def process_river_nutrients(
 
     # encoding only for data vars
     encoding = {
-        var: {"_FillValue": np.NaN}
+        var: {"_FillValue": default_fillvals["f8"]}
         for var in river_nutrients_remapped_cleaned.data_vars
     }
 
