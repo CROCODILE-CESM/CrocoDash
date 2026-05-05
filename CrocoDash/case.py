@@ -977,7 +977,10 @@ class Case:
                     self.forcing_product_name.lower()
                 ).marbl_var_names
                 for tracer_mom6_name in product_info:
-                    obc_params.append(f"OBC_DATA_{tracer_mom6_name}",f"{tracer_mom6_name}_obc_segment.nc({product_info[tracer_mom6_name]})")
+                    obc_params.append(
+                        f"OBC_DATA_{tracer_mom6_name}",
+                        f"{tracer_mom6_name}_obc_segment.nc({product_info[tracer_mom6_name]})",
+                    )
 
             if self.fcr.is_active("tides"):
                 obc_params.append(
