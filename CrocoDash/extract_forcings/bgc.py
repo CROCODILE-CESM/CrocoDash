@@ -210,6 +210,10 @@ def process_river_nutrients(
         var: {"_FillValue": default_fillvals["f8"]}
         for var in river_nutrients_remapped_cleaned.data_vars
     }
+    river_nutrients_remapped_cleaned["nx"] = river_nutrients_remapped_cleaned.nx
+    river_nutrients_remapped_cleaned["nx"].attrs["cartesian_axis"] = "X"
+    river_nutrients_remapped_cleaned["ny"] = river_nutrients_remapped_cleaned.ny
+    river_nutrients_remapped_cleaned["ny"].attrs["cartesian_axis"] = "Y"
 
     river_nutrients_remapped_cleaned.to_netcdf(
         river_nutrients_nnsm_filepath,
