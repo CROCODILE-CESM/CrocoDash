@@ -21,7 +21,7 @@ def process_bgc_ic(file_path, output_path):
 
 
 def process_bgc_iron_forcing(
-    nx, ny, MARBL_FESEDFLUX_FILE, MARBL_FEVENTFLUX_FILE, inputdir
+    nx, ny, MARBL_FESEDFLUX_FILE, MARBL_FEVENTFLUX_FILE,MARBL_FESEDFLUXRED_FILE, inputdir
 ):
     """
     Create dummy iron forcing files for MARBL.
@@ -66,6 +66,8 @@ def process_bgc_iron_forcing(
     }
     ds.to_netcdf(inputdir / "ocnice" / MARBL_FESEDFLUX_FILE)
     ds.to_netcdf(inputdir / "ocnice" / MARBL_FEVENTFLUX_FILE)
+    ds.to_netcdf(inputdir / "ocnice" / MARBL_FESEDFLUXRED_FILE)
+
 
 
 def process_river_nutrients(

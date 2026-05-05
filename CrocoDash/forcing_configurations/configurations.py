@@ -219,6 +219,11 @@ class BGCIronForcingConfigurator(BaseConfigurator):
             comment="MARBL event iron flux file",
             user_nl_name="mom",
         ),
+        UserNLConfigParam(
+            "MARBL_FESEDFLUXRED_FILE",
+            comment="MARBL event iron flux reduced file",
+            user_nl_name="mom",
+        ),
     ]
 
     def __init__(self, case_session_id, case_grid_name):
@@ -227,8 +232,10 @@ class BGCIronForcingConfigurator(BaseConfigurator):
     def configure(self):
         feventflux_filepath = f"feventflux_5gmol_{self.get_input_param('case_grid_name')}_{self.get_input_param('case_session_id')}.nc"
         fesedflux_filepath = f"fesedflux_total_reduce_oxic_{self.get_input_param('case_grid_name')}_{self.get_input_param('case_session_id')}.nc"
+        fesedfluxred_filepath = f"fesedfluxred_{self.get_input_param('case_grid_name')}_{self.get_input_param('case_session_id')}.nc"
         self.set_output_param("MARBL_FESEDFLUX_FILE", fesedflux_filepath)
         self.set_output_param("MARBL_FEVENTFLUX_FILE", feventflux_filepath)
+        self.set_output_param("MARBL_FESEDFLUXRED_FILE",fesedfluxred_filepath)
         super().configure()
 
 
