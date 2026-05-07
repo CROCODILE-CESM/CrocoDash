@@ -992,9 +992,7 @@ class Case:
                     )
                 )
             else:
-                obc_params.append(
-                    (seg_id + "_DATA", standard_data_str() + '"')
-                )
+                obc_params.append((seg_id + "_DATA", standard_data_str() + '"'))
 
         append_user_nl(
             "mom",
