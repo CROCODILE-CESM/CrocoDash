@@ -42,3 +42,4 @@ jobs:
           push: true
           tags: |
             ghcr.io/crocodile-cesm/crocodash:nightly
+            ghcr.io/crocodile-cesm/crocodash:nightly-${{ github.run_number }}
