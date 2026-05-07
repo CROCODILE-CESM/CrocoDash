@@ -993,7 +993,7 @@ class Case:
                 )
             else:
                 obc_params.append(
-                    (seg_id + "_DATA", standard_data_str() + bgc_tracers + '"')
+                    (seg_id + "_DATA", standard_data_str() + '"')
                 )
 
         append_user_nl(
