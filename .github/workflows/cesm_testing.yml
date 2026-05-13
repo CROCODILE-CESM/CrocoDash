@@ -33,6 +33,5 @@ jobs:
             --bind /glade/campaign/cesm/cesmdata/inputdata:/root/cesm/inputdata \
             --bind /glade/derecho/scratch/manishrv:/root/cesm/scratch \
             --bind /glade/campaign/cesm/cesmdata/inputdata/ocn/mom/croc/bundles/bundle:/workspace/bundle \
-            --bind ${{ github.workspace }}/run_case.sh:/workspace/run_case.sh \
             workspace_sandbox/ \
             /bin/bash /workspace/run_case.sh
