@@ -1,0 +1,18 @@
+name: Run CESM Crocontainer
+
+on:
+  push:
+
+
+jobs:
+  run_cesm:
+    runs-on: gha-runner-crocodash
+    steps:
+      - name: Run CESM container
+        run: |
+          podman run --rm \
+            -v /glade/campaign/cesm/cesmdata/inputdata:/root/cesm/inputdata \
+            -v /glade/derecho/scratch/manishrv:/root/cesm/scratch \
+            -v /glade/campaign/cesm/cesmdata/inputdata/ocn/mom/croc/bundles/bundle:/workspace/bundle \
+            ghcr.io/crocodile-cesm/crocontainer:amd64 \
+            /bin/bash /workspace/run_case.sh
