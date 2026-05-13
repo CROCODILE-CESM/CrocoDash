@@ -8,15 +8,23 @@ jobs:
   run_cesm:
     runs-on: gha-runner-crocodash
     steps:
-      - name: Install Podman
+      - name: Install Apptainer
         run: |
           sudo apt-get update
-          sudo apt-get install -y podman
-      - name: Run CESM container
+          sudo apt-get install -y apptainer
+
+      - name: Build sandbox
         run: |
-          podman run --rm \
-            -v /glade/campaign/cesm/cesmdata/inputdata:/root/cesm/inputdata \
-            -v /glade/derecho/scratch/manishrv:/root/cesm/scratch \
-            -v /glade/campaign/cesm/cesmdata/inputdata/ocn/mom/croc/bundles/bundle:/workspace/bundle \
-            ghcr.io/crocodile-cesm/crocontainer:amd64 \
+          apptainer build --sandbox workspace_sandbox/ \
+            docker://ghcr.io/crocodile-cesm/crocontainer:amd64
+
+      - name: Run CESM
+        run: |
+          apptainer exec \
+            --writable \
+            --bind /glade/campaign/cesm/cesmdata/inputdata:/root/cesm/inputdata \
+            --bind /glade/derecho/scratch/manishrv:/root/cesm/scratch \
+            --bind /glade/campaign/cesm/cesmdata/inputdata/ocn/mom/croc/bundles/bundle:/workspace/bundle \
+            --bind ${{ github.workspace }}/run_case.sh:/workspace/run_case.sh \
+            workspace_sandbox/ \
             /bin/bash /workspace/run_case.sh
