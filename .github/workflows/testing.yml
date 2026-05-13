@@ -54,9 +54,10 @@ jobs:
           conda env remove -n CrocoDash --yes
           conda env create -f $WORKDIR/CrocoDash/environment.yml
       - name: Run Pytest
+      # Force a login bash shell to natively enable conda profile utilities
+        shell: bash -l {0}
         run: |
           cd $WORKDIR/CrocoDash
-          source /opt/conda/etc/profile.d/conda.sh 
           conda activate CrocoDash
           pytest --ignore=CrocoDash/visualCaseGen -m "not workflow" -vv --showlocals --tb=short --cov=CrocoDash --cov-report=xml --cov-branch
           cp $WORKDIR/CrocoDash/coverage.xml $GITHUB_WORKSPACE/CrocoDash
