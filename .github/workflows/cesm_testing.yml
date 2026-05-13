@@ -7,6 +7,9 @@ on:
 jobs:
   run_cesm:
     runs-on: gha-runner-crocodash
+    permissions:
+      contents: read     # Allows checking out code
+      packages: write    # Crucial: Allows authenticating with GHCR
     steps:
       - name: Install Apptainer
         run: |
@@ -15,7 +18,10 @@ jobs:
           sudo apt update
           sudo apt-get install -y apptainer
 
-      - name: Build sandbox
+      - name: Build Sandbox Container
+        env:
+          APPTAINER_DOCKER_USERNAME: ${{ github.actor }}
+          APPTAINER_DOCKER_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
         run: |
           apptainer build --sandbox workspace_sandbox/ \
             docker://ghcr.io/crocodile-cesm/crocontainer:amd64
