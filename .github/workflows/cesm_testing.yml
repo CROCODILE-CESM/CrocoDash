@@ -28,10 +28,11 @@ jobs:
 
       - name: Run CESM
         run: |
+          mkdir ${{ github.workspace }}/cesm_scratch
           apptainer exec \
             --writable \
             --bind /glade/campaign/cesm/cesmdata/inputdata:/root/cesm/inputdata \
-            --bind /tmp/cesm_scratch:/root/cesm/scratch \
+            --bind ${{ github.workspace }}/cesm_scratch:/root/cesm/scratch \
             --bind /glade/campaign/cesm/cesmdata/inputdata/ocn/mom/croc/bundles/bundle:/workspace/bundle \
             workspace_sandbox/ \
             /bin/bash /workspace/run_case.sh
