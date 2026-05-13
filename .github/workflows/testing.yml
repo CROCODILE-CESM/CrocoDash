@@ -56,6 +56,7 @@ jobs:
       - name: Run Pytest
         run: |
           cd $WORKDIR/CrocoDash
+          conda activate CrocoDash
           pytest --ignore=CrocoDash/visualCaseGen -m "not workflow" -vv --showlocals --tb=short --cov=CrocoDash --cov-report=xml --cov-branch
           cp $WORKDIR/CrocoDash/coverage.xml $GITHUB_WORKSPACE/CrocoDash
       - name: Upload coverage to Codecov
