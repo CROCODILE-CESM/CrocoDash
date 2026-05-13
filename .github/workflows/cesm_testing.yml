@@ -24,7 +24,7 @@ jobs:
           APPTAINER_DOCKER_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
         run: |
           apptainer build --sandbox workspace_sandbox/ \
-            docker://ghcr.io/crocodile-cesm/crocontainer:amd64
+            docker://ghcr.io/crocodile-cesm/crocontainer:amd64-2
 
       - name: Run CESM
         run: |
