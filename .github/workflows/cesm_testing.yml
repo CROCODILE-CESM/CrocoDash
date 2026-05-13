@@ -31,6 +31,10 @@ jobs:
           mkdir ${{ github.workspace }}/cesm_scratch
           apptainer exec \
             --writable \
+            --env GIT_AUTHOR_NAME="${{ github.actor }}" \
+            --env GIT_AUTHOR_EMAIL="${{ github.actor_id }}+${{ github.actor }}@github.com" \
+            --env GIT_COMMITTER_NAME="${{ github.actor }}" \
+            --env GIT_COMMITTER_EMAIL="${{ github.actor_id }}+${{ github.actor }}@github.com" \
             --bind /glade/campaign/cesm/cesmdata/inputdata:/root/cesm/inputdata \
             --bind ${{ github.workspace }}/cesm_scratch:/root/cesm/scratch \
             --bind /glade/campaign/cesm/cesmdata/inputdata/ocn/mom/croc/bundles/bundle:/workspace/bundle \
