@@ -9,6 +9,7 @@ env:
   DIN_LOC_ROOT: /workspace
   CIME_OUTPUT_ROOT: /workspace
   USER: ${{ github.actor }}
+  WORKDIR: /workspace
 jobs:
   pytest:
     runs-on: ubuntu-latest
