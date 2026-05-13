@@ -8,6 +8,7 @@ jobs:
   run_cesm:
     runs-on: gha-runner-crocodash
     steps:
+      - uses: gacts/install-podman@v1
       - name: Run CESM container
         run: |
           podman run --rm \
