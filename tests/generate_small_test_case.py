@@ -266,9 +266,11 @@ def main() -> None:
     )
 
     # Get the raw data fast through AWS
-    output_dir = case.extract_forcings_path/ "raw_data"
+    output_dir = case.extract_forcings_path / "raw_data"
     os.makedirs(output_dir, exist_ok=True)
-    base_url = "https://crocodile-cesm.s3.us-east-1.amazonaws.com/CrocoDash/data/testing_data"
+    base_url = (
+        "https://crocodile-cesm.s3.us-east-1.amazonaws.com/CrocoDash/data/testing_data"
+    )
     files = [
         "east_unprocessed.20200101_20200105.nc",
         "ic_unprocessed.nc",

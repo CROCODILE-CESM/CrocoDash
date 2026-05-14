@@ -94,6 +94,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: cli_start_share
+          submodules: recursive
           path: CrocoDash-bundle
       - name: Install cli_start_share into existing env
         shell: bash -l {0}
