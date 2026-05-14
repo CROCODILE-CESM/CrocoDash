@@ -142,8 +142,12 @@ class Case:
 
         # Using visualCaseGen's configuration system, set the configuration variables for the case
         # based on the provided arguments. This includes setting the compset, grid, and launch variables.
-        self._configure_case(atm_grid_name, rof_grid_name)
-
+        try:
+            self._configure_case(atm_grid_name, rof_grid_name)
+        except Exception as e:
+            print(f"\n{ERROR}Case Configuration Error:{RESET}")
+            print(f"  {str(e)}")
+            return
 
         # Before creating the case, we need to create the grid input files (except for mapping files,
         # which will be created later in process_forcings if needed).
