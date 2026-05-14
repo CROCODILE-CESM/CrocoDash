@@ -47,12 +47,12 @@ jobs:
         run: |
               rm -rf $WORKDIR/CrocoDash
               cp -r $GITHUB_WORKSPACE/CrocoDash $WORKDIR/
-      # - name: Create CrocoDash environment if changed
-      #   if: steps.compare.outputs.env_changed == 'true'
-      #   run: |
-      #     echo "Environment changed! Rebuilding CrocoDash conda environment..."
-      #     conda env remove -n CrocoDash --yes
-      #     conda env create -f $WORKDIR/CrocoDash/environment.yml
+      - name: Create CrocoDash environment if changed
+        if: steps.compare.outputs.env_changed == 'true'
+        run: |
+          echo "Environment changed! Rebuilding CrocoDash conda environment..."
+          conda env remove -n CrocoDash --yes
+          conda env create -f $WORKDIR/CrocoDash/environment.yml
       # - name: Run Pytest
       # # Force a login bash shell to natively enable conda profile utilities
       #   shell: bash -l {0}
@@ -68,7 +68,7 @@ jobs:
       #    token: ${{ secrets.CODECOV_TOKEN }}
       #    slug: CROCODILE-CESM/CrocoDash
       #    files: CrocoDash/coverage.xml
-      # # Create the CrocoDash Bundle
+      # Create the CrocoDash Bundle
       - name: Download GEBCO subset
         run: wget https://crocodile-cesm.s3.amazonaws.com/CrocoDash/data/gebco/gebco_2026_n20.0_s0.0_w-90.0_e-70.0.nc -O $GITHUB_WORKSPACE/gebco.nc
       - name: Run setup_case.py
