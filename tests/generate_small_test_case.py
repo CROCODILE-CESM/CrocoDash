@@ -10,7 +10,8 @@ import argparse
 import os
 import sys
 from pathlib import Path
-
+import os
+import subprocess
 from CrocoDash.grid import Grid
 from CrocoDash.topo import Topo
 from CrocoDash.vgrid import VGrid
@@ -263,6 +264,24 @@ def main() -> None:
         date_range=[args.date_start, args.date_end],
         function_name=args.forcing_fn,
     )
+
+    # Get the raw data fast through AWS
+    output_dir = case.extract_forcings_path/ "raw_data"
+    os.makedirs(output_dir, exist_ok=True)
+    base_url = "https://crocodile-cesm.s3.us-east-1.amazonaws.com/CrocoDash/data/testing_data"
+    files = [
+        "east_unprocessed.20200101_20200105.nc",
+        "ic_unprocessed.nc",
+        "north_unprocessed.20200101_20200105.nc",
+        "south_unprocessed.20200101_20200105.nc",
+        "west_unprocessed.20200101_20200105.nc",
+    ]
+
+    for f in files:
+        url = f"{base_url}/{f}"
+        dest = os.path.join(output_dir, f)
+        print(f"Downloading {f}...")
+        subprocess.run(["wget", "-O", dest, url], check=True)
     case.process_forcings()
     print("\nDone.")
 
