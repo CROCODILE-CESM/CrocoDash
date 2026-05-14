@@ -150,6 +150,11 @@ jobs:
           apptainer build --sandbox workspace_sandbox/ \
             docker://ghcr.io/crocodile-cesm/crocontainer:amd64-3
 
+      - name: Debug with upterm
+        uses: lhotari/action-upterm@v1
+        with:
+          wait-timeout-minutes: 15
+
       - name: Run CESM
         run: |
           mkdir ${{ github.workspace }}/cesm_scratch
