@@ -185,7 +185,7 @@ def get_bathymetry(args: argparse.Namespace) -> Path:
     bathy = Path("GEBCO.nc")
     print(f"No --bathymetry-path provided. Downloading GEBCO data → {bathy}")
     GEBCO.get_gebco_data_with_python("bathy_dir", bathy)
-    bathy = "bathy_dir"/bathy
+    bathy = "bathy_dir" / bathy
 
     if not bathy.exists():
         raise FileNotFoundError(

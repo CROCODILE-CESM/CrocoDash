@@ -69,6 +69,8 @@ jobs:
          slug: CROCODILE-CESM/CrocoDash
          files: CrocoDash/coverage.xml
       # Create the CrocoDash Bundle
+      - name: Download GEBCO subset
+        run: wget https://crocodile-cesm.s3.amazonaws.com/CrocoDash/data/gebco/gebco_2026_n20.0_s0.0_w-90.0_e-70.0.nc -O $GITHUB_WORKSPACE/gebco.nc
       - name: Run setup_case.py
         shell: bash -l {0}
         run: |
@@ -81,6 +83,7 @@ jobs:
             --casename ${{ github.run_id }} \
             --machine ubuntu-latest \
             --project PLACEHOLDER
+            --bathymetry-path $GITHUB_WORKSPACE/gebco.nc
       - name: Checkout cli_start_share into container
         uses: actions/checkout@v4
         with:
