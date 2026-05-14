@@ -76,6 +76,9 @@ jobs:
         run: |
           source /opt/conda/etc/profile.d/conda.sh
           conda activate CrocoDash
+          copernicusmarine login \
+            --username ${{ secrets.GLORYS_USERNAME }} \
+            --password ${{ secrets.GLORYS_PASSWORD }}
           mkdir -p /workspace/croc_cases
           mkdir -p /workspace/croc_input
           python $GITHUB_WORKSPACE/CrocoDash/tests/generate_small_test_case.py \
