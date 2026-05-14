@@ -76,6 +76,8 @@ jobs:
         run: |
           source /opt/conda/etc/profile.d/conda.sh
           conda activate CrocoDash
+          mkdir -p /workspace/croc_cases
+          mkdir -p /workspace/croc_input
           python $GITHUB_WORKSPACE/CrocoDash/tests/generate_small_test_case.py \
             --cesmroot /workspace/CESM \
             --caseroot /workspace/croc_cases \
