@@ -82,7 +82,7 @@ jobs:
             --inputdir /workspace/croc_input/${{ github.run_id }} \
             --casename ${{ github.run_id }} \
             --machine ubuntu-latest \
-            --project PLACEHOLDER
+            --project PLACEHOLDER \
             --bathymetry-path $GITHUB_WORKSPACE/gebco.nc
       - name: Checkout cli_start_share into container
         uses: actions/checkout@v4
