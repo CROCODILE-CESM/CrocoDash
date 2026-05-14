@@ -141,7 +141,9 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: cesm-bundle-actions_case
-          path: bundle_output
+          path: ${{ github.workspace }}/bundle_output
+      - name: Verify artifact
+        run: ls -la ${{ github.workspace }}/bundle_output/
       - name: Build Sandbox Container
         env:
           APPTAINER_DOCKER_USERNAME: ${{ github.actor }}
@@ -150,10 +152,10 @@ jobs:
           apptainer build --sandbox workspace_sandbox/ \
             docker://ghcr.io/crocodile-cesm/crocontainer:amd64-3
 
-      - name: Debug with upterm
-        uses: lhotari/action-upterm@v1
-        with:
-          wait-timeout-minutes: 15
+      # - name: Debug with upterm
+      #   uses: lhotari/action-upterm@v1
+      #   with:
+      #     wait-timeout-minutes: 15
 
       - name: Run CESM
         run: |
@@ -166,6 +168,6 @@ jobs:
             --env GIT_COMMITTER_EMAIL="${{ github.actor_id }}+${{ github.actor }}@github.com" \
             --bind /glade/campaign/cesm/cesmdata/inputdata:/root/cesm/inputdata \
             --bind ${{ github.workspace }}/cesm_scratch:/root/cesm/scratch \
-            --bind bundle_output:/workspace/bundle \
+            --bind ${{ github.workspace }}/bundle_output:/workspace/bundle \
             workspace_sandbox/ \
             /bin/bash /workspace/run_case.sh
