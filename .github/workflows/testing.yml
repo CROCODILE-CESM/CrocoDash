@@ -76,13 +76,11 @@ jobs:
         run: |
           source /opt/conda/etc/profile.d/conda.sh
           conda activate CrocoDash
-          mkdir -p /workspace/croc_cases
-          mkdir -p /workspace/croc_input
           python $GITHUB_WORKSPACE/CrocoDash/tests/generate_small_test_case.py \
             --cesmroot /workspace/CESM \
-            --caseroot /workspace/croc_cases/${{ github.run_id }} \
-            --inputdir /workspace/croc_input/${{ github.run_id }} \
-            --casename ${{ github.run_id }} \
+            --caseroot /workspace/croc_cases \
+            --inputdir /workspace/croc_input \
+            --casename actions_case \
             --machine ubuntu-latest \
             --project PLACEHOLDER \
             --bathymetry-path $GITHUB_WORKSPACE/gebco.nc
@@ -107,7 +105,7 @@ jobs:
           conda activate CrocoDash
           mkdir -p $GITHUB_WORKSPACE/bundle_output
           crocodash read \
-            --caseroot /workspace/croc_cases/${{ github.run_id }} \
+            --caseroot /workspace/croc_cases/actions_case \
             --output-dir $GITHUB_WORKSPACE/bundle_output \
             --cesmroot /workspace/CESM \
             --machine ubuntu-latest \
@@ -115,7 +113,7 @@ jobs:
       - name: Upload bundle artifact
         uses: actions/upload-artifact@v4
         with:
-          name: cesm-bundle-${{ github.run_id }}
+          name: cesm-bundle-actions_case
           path: ${{ github.workspace }}/bundle_output
           retention-days: 1
   run_cesm_crocontainer:
@@ -135,7 +133,7 @@ jobs:
       - name: Download bundle artifact
         uses: actions/download-artifact@v4
         with:
-          name: cesm-bundle-${{ github.run_id }}
+          name: cesm-bundle-actions_case
           path: ${{ github.workspace }}/bundle_output
       - name: Build Sandbox Container
         env:
