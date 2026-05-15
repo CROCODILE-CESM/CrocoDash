@@ -150,8 +150,8 @@ jobs:
           APPTAINER_DOCKER_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
         run: |
           apptainer build --sandbox workspace_sandbox/ \
-            docker://ghcr.io/crocodile-cesm/crocontainer:amd64-3
-            
+            docker://ghcr.io/crocodile-cesm/crocontainer:latest-amd64 
+        # This is warning that CIRRUS runners may not pull the most up-to-date image from crocontainer, you may need a new tag name. 
       - name: Run CESM
         run: |
           mkdir ${{ github.workspace }}/cesm_scratch
@@ -166,3 +166,11 @@ jobs:
             --bind ${{ github.workspace }}/bundle_output/actions_case_case_bundle:/workspace/bundle \
             workspace_sandbox/ \
             /bin/bash /workspace/run_case.sh
+      - name: Upload CESM logs/data
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cesm-${{ github.run_id }}
+          path: |
+            /home/runner/cesm/scratch/case/run/*.log*
+            /home/runner/cesm/archive/case/
