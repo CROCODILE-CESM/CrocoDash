@@ -607,7 +607,7 @@ class Case:
 
         if process_initial_condition or process_velocity_tracers:
             self.driver.process_conditions(
-                get_dataset_piecewise=False,
+                get_dataset_piecewise=True,
                 regrid_dataset_piecewise=True,
                 merge_piecewise_dataset=True,
                 run_initial_condition=process_initial_condition,
