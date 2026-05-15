@@ -32,10 +32,6 @@ jobs:
       - name: Check if environment.yml changed
         id: compare
         run: |
-          echo "=== ENVIRONMENT VARIABLES ==="
-          echo "WORKDIR value: '${{ env.WORKDIR }}' (or literal: $WORKDIR)"
-          echo "GITHUB_WORKSPACE value: '${{ github.workspace }}'"
-          echo "Current working directory (pwd): $(pwd)"
           if diff $WORKDIR/CrocoDash/environment.yml $GITHUB_WORKSPACE/CrocoDash/environment.yml; then
             echo "No changes in environment.yml"
             echo "env_changed=false" >> $GITHUB_OUTPUT
