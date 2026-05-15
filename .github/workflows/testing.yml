@@ -172,5 +172,5 @@ jobs:
         with:
           name: cesm-${{ github.run_id }}
           path: |
-            /home/runner/cesm/scratch/case/run/*.log*
+            /home/runner/cesm/scratch/case/run/
             /home/runner/cesm/archive/case/
