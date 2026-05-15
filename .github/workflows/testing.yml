@@ -122,6 +122,7 @@ jobs:
   run_cesm_crocontainer:
     needs: pytest
     runs-on: gha-runner-crocodash
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
     permissions:
       contents: read     # Allows checking out code
       packages: write    # Crucial: Allows authenticating with GHCR
