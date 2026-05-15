@@ -14,7 +14,7 @@ jobs:
   pytest:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/crocodile-cesm/crocontainer:amd64
+      image: ghcr.io/crocodile-cesm/crocontainer:latest-amd64
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
