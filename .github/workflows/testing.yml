@@ -53,21 +53,21 @@ jobs:
           echo "Environment changed! Rebuilding CrocoDash conda environment..."
           conda env remove -n CrocoDash --yes
           conda env create -f $WORKDIR/CrocoDash/environment.yml
-      # - name: Run Pytest
-      # # Force a login bash shell to natively enable conda profile utilities
-      #   shell: bash -l {0}
-      #   run: |
-      #     cd $WORKDIR/CrocoDash
-      #     source /opt/conda/etc/profile.d/conda.sh
-      #     conda activate CrocoDash
-      #     pytest --ignore=CrocoDash/visualCaseGen -m "not workflow" -vv --showlocals --tb=short --cov=CrocoDash --cov-report=xml --cov-branch
-      #     cp $WORKDIR/CrocoDash/coverage.xml $GITHUB_WORKSPACE/CrocoDash
-      # - name: Upload coverage to Codecov
-      #   uses: codecov/codecov-action@v5
-      #   with:
-      #    token: ${{ secrets.CODECOV_TOKEN }}
-      #    slug: CROCODILE-CESM/CrocoDash
-      #    files: CrocoDash/coverage.xml
+      - name: Run Pytest
+      # Force a login bash shell to natively enable conda profile utilities
+        shell: bash -l {0}
+        run: |
+          cd $WORKDIR/CrocoDash
+          source /opt/conda/etc/profile.d/conda.sh
+          conda activate CrocoDash
+          pytest --ignore=CrocoDash/visualCaseGen -m "not workflow" -vv --showlocals --tb=short --cov=CrocoDash --cov-report=xml --cov-branch
+          cp $WORKDIR/CrocoDash/coverage.xml $GITHUB_WORKSPACE/CrocoDash
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+         token: ${{ secrets.CODECOV_TOKEN }}
+         slug: CROCODILE-CESM/CrocoDash
+         files: CrocoDash/coverage.xml
       # Create the CrocoDash Bundle
       - name: Download GEBCO subset
         run: wget https://crocodile-cesm.s3.us-east-1.amazonaws.com/CrocoDash/data/testing_data/gebco_2026_n20.0_s0.0_w-90.0_e-70.0.nc -O $GITHUB_WORKSPACE/gebco.nc
@@ -151,12 +151,7 @@ jobs:
         run: |
           apptainer build --sandbox workspace_sandbox/ \
             docker://ghcr.io/crocodile-cesm/crocontainer:amd64-3
-
-      # - name: Debug with upterm
-      #   uses: lhotari/action-upterm@v1
-      #   with:
-      #     wait-timeout-minutes: 15
-
+            
       - name: Run CESM
         run: |
           mkdir ${{ github.workspace }}/cesm_scratch
@@ -168,6 +163,6 @@ jobs:
             --env GIT_COMMITTER_EMAIL="${{ github.actor_id }}+${{ github.actor }}@github.com" \
             --bind /glade/campaign/cesm/cesmdata/inputdata:/root/cesm/inputdata \
             --bind ${{ github.workspace }}/cesm_scratch:/root/cesm/scratch \
-            --bind ${{ github.workspace }}/bundle_output:/workspace/bundle \
+            --bind ${{ github.workspace }}/bundle_output/actions_case_case_bundle:/workspace/bundle \
             workspace_sandbox/ \
             /bin/bash /workspace/run_case.sh
