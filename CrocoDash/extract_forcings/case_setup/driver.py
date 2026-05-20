@@ -250,7 +250,20 @@ def resolve_components(args, cfg):
     return args
 
 
-def run_from_cli(args, cfg, client=None):
+def run_from_cli(args, cfg, client):
+    """
+    Execute the forcing extraction workflow based on CLI arguments.
+
+    This is the main entry point that coordinates the entire workflow:
+    1. Resolves which components to run
+    2. Executes the appropriate process_* functions
+    3. Maintains component dependencies (e.g., runoff before bgcrivernutrients)
+
+    Args:
+        args: Parsed and resolved command-line arguments
+        cfg: Config object from utils.Config(CONFIG_PATH)
+        client: The dask client (which can run singly-threaded)
+    """
     if args.test:
         test_driver()
         return
