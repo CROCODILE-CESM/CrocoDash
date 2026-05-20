@@ -455,8 +455,22 @@ based on the resolution logic.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="CrocoDash.extract_forcings.case_setup.driver.run_from_cli">
-<span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.case_setup.driver.</span></span><span class="sig-name descname"><span class="pre">run_from_cli</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cfg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">client</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.extract_forcings.case_setup.driver.run_from_cli" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.case_setup.driver.</span></span><span class="sig-name descname"><span class="pre">run_from_cli</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cfg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">client</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.extract_forcings.case_setup.driver.run_from_cli" title="Link to this definition">#</a></dt>
+<dd><p>Execute the forcing extraction workflow based on CLI arguments.</p>
+<p>This is the main entry point that coordinates the entire workflow:
+1. Resolves which components to run
+2. Executes the appropriate process_* functions
+3. Maintains component dependencies (e.g., runoff before bgcrivernutrients)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>args</strong> – Parsed and resolved command-line arguments</p></li>
+<li><p><strong>cfg</strong> – Config object from utils.Config(CONFIG_PATH)</p></li>
+<li><p><strong>client</strong> – The dask client (which can run singly-threaded)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="CrocoDash.extract_forcings.case_setup.driver.should_run">
