@@ -1,18 +1,21 @@
 """
-Inspect is inordinately hard-coded, and probably can't be changed. Robust testing is needed to ensure we are picking up the correct information
+Bundle is inordinately hard-coded, and probably can't be changed. Robust testing is needed to ensure we are picking up the correct information
 """
 
 from pathlib import Path
+import dataclasses
 import json
 import os
 import tempfile
-from mom6_forge.grid import *
-from mom6_forge.topo import *
-from mom6_forge.vgrid import *
+from CrocoDash.grid import *
+from CrocoDash.topo import *
+from CrocoDash.vgrid import *
 from CrocoDash.shareable.fork import (
     create_case,
     generate_configure_forcing_args,
     ForkCrocoDashBundle,
+    BundleManifest,
+    BundleDifferences,
 )
 from uuid import uuid4
 import subprocess
@@ -27,7 +30,7 @@ import shutil
 logger = setup_logger(__name__)
 
 
-class ReadCrocoDashCase:
+class BundleCrocoDashCase:
     """
     This class is a support case for reading CrocoDash-CESM Cases that uses CIME's case object
     This design started with individual functions, and got a bit too unwieldy!
@@ -61,19 +64,18 @@ class ReadCrocoDashCase:
             self._case = get_case_obj(self.caseroot)
         return self._case
 
-    def generate_manifest(self):
-        manifest = {
-            "paths": {
-                "casefiles": self.caseroot,
+    def generate_manifest(self) -> BundleManifest:
+        return BundleManifest(
+            paths={
+                "casefiles": str(self.caseroot),
                 "inputfiles": self.init_args["inputdir_ocnice"],
             },
-            "user_nl_info": self.user_nl_objs,
-            "init_args": self.init_args,
-            "forcing_config": self.forcing_config,
-            "sourcemods": self.sourcemods,
-            "xmlchanges": self.xmlchanges,
-        }
-        return manifest
+            user_nl_info=self.user_nl_objs,
+            init_args=self.init_args,
+            forcing_config=self.forcing_config,
+            sourcemods=[str(f) for f in self.sourcemods],
+            xmlchanges=self.xmlchanges,
+        )
 
     def _read_xmlchanges(self):
         replay_path = self.caseroot / "replay.sh"
@@ -132,11 +134,14 @@ class ReadCrocoDashCase:
 
         logger.info(f"Finding initialization arguments from {self.caseroot}")
 
+        inputdir_ocnice = self.get_user_nl_value("mom", "INPUTDIR")
+        esmf_file = next(Path(inputdir_ocnice).glob("ESMF_mesh_*.nc"), None)
         self.init_args = {
-            "inputdir_ocnice": self.get_user_nl_value("mom", "INPUTDIR"),
+            "inputdir_ocnice": inputdir_ocnice,
             "supergrid_path": self.get_user_nl_value("mom", "GRID_FILE"),
             "vgrid_path": self.get_user_nl_value("mom", "ALE_COORDINATE_CONFIG"),
             "topo_path": self.get_user_nl_value("mom", "TOPO_FILE"),
+            "esmf_mesh_path": esmf_file.name if esmf_file else None,
             "compset": self.case.get_value("COMPSET"),
             "atm_grid_name": self.case.get_value("ATM_GRID"),
         }
@@ -206,27 +211,25 @@ class ReadCrocoDashCase:
         - user_nls
         - sourcemods
         """
-        diffs = {
-            "xml_files_missing_in_new": sorted(
-                list(self.xmlfiles - other_case.xmlfiles)
-            ),
-            "source_mods_missing_files": sorted(
-                [str(f) for f in self.sourcemods - other_case.sourcemods]
-            ),
-            "xmlchanges_missing": sorted(
-                k for k in self.xmlchanges.keys() if k not in other_case.xmlchanges
-            ),
-        }
-        diffs["user_nl_missing_params"] = {}
+        user_nl_missing = {}
         for key, value in self.user_nl_objs.items():
-            diffs["user_nl_missing_params"][key] = []
+            user_nl_missing[key] = []
             for subkey, subvalue in value.items():
                 if isinstance(subvalue, dict):
-                    for subsubkey, subsubvalue in subvalue.items():
+                    for subsubkey in subvalue:
                         if subsubkey not in other_case.user_nl_objs[key][subkey]:
-                            diffs["user_nl_missing_params"][key].append((subsubkey))
+                            user_nl_missing[key].append(subsubkey)
 
-        return diffs
+        return BundleDifferences(
+            xml_files_missing_in_new=sorted(list(self.xmlfiles - other_case.xmlfiles)),
+            source_mods_missing_files=sorted(
+                [str(f) for f in self.sourcemods - other_case.sourcemods]
+            ),
+            xmlchanges_missing=sorted(
+                k for k in self.xmlchanges if k not in other_case.xmlchanges
+            ),
+            user_nl_missing_params=user_nl_missing,
+        )
 
     def identify_non_standard_CrocoDash_case_information(
         self, cesmroot, machine, project_number
@@ -269,7 +272,7 @@ class ReadCrocoDashCase:
 
             # Diff
             logger.info("Taking the diff...")
-            self.non_standard_case_info = self.diff(ReadCrocoDashCase(caseroot_tmp))
+            self.non_standard_case_info = self.diff(BundleCrocoDashCase(caseroot_tmp))
             return self.non_standard_case_info
 
     def bundle(self, output_folder_location, machine=None, project=None):
@@ -314,38 +317,45 @@ class ReadCrocoDashCase:
                 logger.info(f"Copying {config} file: {path}...")
                 shutil.copy(path, ocnice_target)
 
-        # Copy grid files needed to reconstruct the case
-        for key in ("supergrid_path", "topo_path", "vgrid_path"):
-            src = Path(ocnice_dir) / self.init_args[key]
-            if src.exists():
-                logger.info(f"Copying grid file: {src}")
-                shutil.copy(src, ocnice_target / src.name)
+        # Copy grid files needed to reconstruct the case exactly
+        for key in ("supergrid_path", "topo_path", "vgrid_path", "esmf_mesh_path"):
+            filename = self.init_args.get(key)
+            if filename:
+                src = Path(ocnice_dir) / filename
+                if src.exists():
+                    logger.info(f"Copying grid file: {src}")
+                    shutil.copy(src, ocnice_target / src.name)
 
         # Write out manifest
-        logger.info(f"Writing out ReadCrocoDashCase manifest...")
+        logger.info(f"Writing out BundleCrocoDashCase manifest...")
         with open(case_subfolder / "manifest.json", "w") as f:
-            json.dump(self.generate_manifest(), f, indent=2, default=str)
+            json.dump(
+                dataclasses.asdict(self.generate_manifest()), f, indent=2, default=str
+            )
 
         # Write out differences
         logger.info(f"Writing out non standard CrocoDash information...")
         with open(case_subfolder / "non_standard_case_info.json", "w") as f:
-            json.dump(self.non_standard_case_info, f, indent=2, default=str)
+            json.dump(
+                dataclasses.asdict(self.non_standard_case_info),
+                f,
+                indent=2,
+                default=str,
+            )
 
-        # From differences["xml_files"] and copy "sourceMods"
+        # Copy non-standard xml files and sourceMods
         xml_files_dir = case_subfolder / "xml_files"
         xml_files_dir.mkdir(exist_ok=True)
-        for xml_file in self.non_standard_case_info["xml_files_missing_in_new"]:
-
+        for xml_file in self.non_standard_case_info.xml_files_missing_in_new:
             src = self.caseroot / xml_file
             logger.info(f"Copying non-standard xml files {src}")
             if src.exists():
                 shutil.copy(src, xml_files_dir / xml_file)
 
-            # Copy sourceMods
         source_mods_orig = self.caseroot / "SourceMods"
         source_mods_dst = case_subfolder / "SourceMods"
         source_mods_dst.mkdir(exist_ok=True)
-        for mod_file in self.non_standard_case_info["source_mods_missing_files"]:
+        for mod_file in self.non_standard_case_info.source_mods_missing_files:
             src = source_mods_orig / mod_file
             logger.info(f"Copying sourcemods files {src}")
             if src.exists():
@@ -375,7 +385,7 @@ def clone(caseroot, new_caseroot, new_inputdir, bundle_dir=None):
         Where to write the intermediate bundle. Defaults to inside
         new_caseroot and is cleaned up automatically.
     """
-    rcc = ReadCrocoDashCase(caseroot)
+    rcc = BundleCrocoDashCase(caseroot)
 
     plan = {
         "xml_files": True,
@@ -386,15 +396,13 @@ def clone(caseroot, new_caseroot, new_inputdir, bundle_dir=None):
 
     with tempfile.TemporaryDirectory() as tmp:
         loc = rcc.bundle(tmp)
-        fcb = ForkCrocoDashBundle(
-            loc,
+        fcb = ForkCrocoDashBundle(loc)
+        result = fcb.fork(
             rcc.cesmroot,
             rcc.case_machine,
             rcc.case_project,
             new_caseroot,
             new_inputdir,
-        )
-        result = fcb.fork(
             plan=plan,
             compset=rcc.init_args["compset"],
             extra_configs=[],

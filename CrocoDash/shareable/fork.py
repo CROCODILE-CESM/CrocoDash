@@ -2,7 +2,9 @@ from pathlib import Path
 from CrocoDash.forcing_configurations.base import *
 from CrocoDash.shareable.apply import *
 import json
+import shutil
 from datetime import datetime
+from dataclasses import dataclass, field
 from CrocoDash.case import Case
 from CrocoDash.grid import Grid
 from CrocoDash.vgrid import VGrid
@@ -13,6 +15,24 @@ from CrocoDash.logging import setup_logger
 logger = setup_logger(__name__)
 
 
+@dataclass
+class BundleManifest:
+    forcing_config: dict
+    init_args: dict
+    paths: dict = field(default_factory=dict)
+    user_nl_info: dict = field(default_factory=dict)
+    sourcemods: list = field(default_factory=list)
+    xmlchanges: dict = field(default_factory=dict)
+
+
+@dataclass
+class BundleDifferences:
+    xml_files_missing_in_new: list = field(default_factory=list)
+    user_nl_missing_params: dict = field(default_factory=dict)
+    source_mods_missing_files: list = field(default_factory=list)
+    xmlchanges_missing: list = field(default_factory=list)
+
+
 class ForkCrocoDashBundle:
     """
     Share a CESM case by inspecting an existing CrocoDash bundle, optionally copying
@@ -20,42 +40,31 @@ class ForkCrocoDashBundle:
     a new case with equivalent forcings.
     """
 
-    def __init__(
-        self,
-        bundle_location,
-        cesmroot,
-        machine,
-        project_number,
-        new_caseroot,
-        new_inputdir,
-    ):
+    def __init__(self, bundle_location):
         self.bundle_location = Path(bundle_location)
-        json_file = Path(bundle_location) / "manifest.json"
+
+        json_file = self.bundle_location / "manifest.json"
         assert json_file.exists()
         with open(json_file) as f:
-            self.manifest = json.load(f)
-        json_file = Path(bundle_location) / "non_standard_case_info.json"
+            self.manifest = BundleManifest(**json.load(f))
+
+        json_file = self.bundle_location / "non_standard_case_info.json"
         assert json_file.exists()
         with open(json_file) as f:
-            self.differences = json.load(f)
-        self.cesmroot = cesmroot
-        self.machine = machine
-        self.project_number = project_number
-        self.caseroot = new_caseroot
-        self.inputdir = new_inputdir
-        self.forcing_config = self.manifest["forcing_config"]
+            self.differences = BundleDifferences(**json.load(f))
+
         self._validate_bundle()
 
     def _validate_bundle(self):
         missing = []
         ocnice = self.bundle_location / "ocnice"
 
-        for f in self.differences.get("xml_files_missing_in_new", []):
+        for f in self.differences.xml_files_missing_in_new:
             path = self.bundle_location / "xml_files" / f
             if not path.exists():
                 missing.append(str(path))
 
-        for f in self.differences.get("source_mods_missing_files", []):
+        for f in self.differences.source_mods_missing_files:
             path = self.bundle_location / "SourceMods" / f
             if not path.exists():
                 missing.append(str(path))
@@ -71,6 +80,11 @@ class ForkCrocoDashBundle:
 
     def fork(
         self,
+        cesmroot,
+        machine,
+        project_number,
+        new_caseroot,
+        new_inputdir,
         plan=None,
         compset=None,
         extra_configs=None,
@@ -78,21 +92,28 @@ class ForkCrocoDashBundle:
         extra_forcing_args_path=None,
     ):
         """
-        Share a CESM case by inspecting an existing case, optionally copying
+        Share a CESM case by inspecting an existing bundle, optionally copying
         non-standard components, resolving forcing configurations, and creating
         a new case with equivalent forcings.
 
-        All parameters are optional. When provided they bypass the interactive
-        prompts; when omitted the user is asked interactively.
-
         Parameters
         ----------
+        cesmroot : str or Path
+            Path to the CESM root.
+        machine : str
+            Machine name.
+        project_number : str
+            Project/account number.
+        new_caseroot : str or Path
+            Path for the new case root.
+        new_inputdir : str or Path
+            Path for input data.
         plan : dict, optional
             Which non-standard items to copy, e.g.
             ``{"xml_files": True, "user_nl": False, "source_mods": True, "xmlchanges": True}``.
+            When omitted the user is asked interactively.
         compset : str, optional
-            Override the compset from the bundle. If not provided and differs
-            from the bundle compset, the user is asked interactively.
+            Override the compset from the bundle. When omitted the user is asked interactively.
         extra_configs : list, optional
             Additional forcing configuration names to add beyond the bundle.
         remove_configs : list, optional
@@ -101,40 +122,40 @@ class ForkCrocoDashBundle:
             Path to a JSON file supplying arguments for any new forcing configs.
         """
 
-        self.plan = plan if plan is not None else self.ask_copy_questions()
+        # Phase 1: gather all decisions (prompting interactively where params are None)
+        self._gather_inputs(
+            plan, compset, extra_configs, remove_configs, extra_forcing_args_path
+        )
 
-        self.compset = self.resolve_compset(compset)
-
-        logger.info(f"Creating new case...")
-        self.manifest["init_args"]["inputdir_ocnice"] = str(
+        # Phase 2: pure execution — no prompts below this point
+        logger.info("Creating new case...")
+        self.manifest.init_args["inputdir_ocnice"] = str(
             self.bundle_location / "ocnice"
-        )  # Get new grid location from bundle
+        )
         self.case = create_case(
-            self.manifest["init_args"],
-            self.caseroot,
-            self.inputdir,
+            self.manifest.init_args,
+            new_caseroot,
+            new_inputdir,
             compset=self.compset,
-            machine=self.machine,
-            project_number=self.project_number,
-            cesmroot=self.cesmroot,
+            machine=machine,
+            project_number=project_number,
+            cesmroot=cesmroot,
         )
 
-        requested_configs, resolved_remove = self.resolve_forcing_configurations(
-            extra_configs, remove_configs
-        )
+        logger.info("Copying exact grid files from bundle...")
+        bundle_ocnice = self.bundle_location / "ocnice"
+        for key in ("supergrid_path", "topo_path", "vgrid_path", "esmf_mesh_path"):
+            src_name = self.manifest.init_args.get(key)
+            dst = getattr(self.case, key, None)
+            if src_name and dst is not None:
+                src = bundle_ocnice / src_name
+                if src.exists():
+                    shutil.copy(src, dst)
 
-        logger.info(f"Building configuration args")
+        logger.info("Building configuration args")
+        self.case.configure_forcings(**self.configure_forcing_args)
 
-        configure_forcing_args = self.set_up_forcing_inputs(
-            self.forcing_config,
-            resolved_remove,
-            requested_configs,
-            extra_forcing_args_path,
-        )
-
-        self.case.configure_forcings(**configure_forcing_args)
-
-        logger.info(f"Copying items to new case based on user input")
+        logger.info("Copying items to new case based on user input")
         self.apply_copy_plan()
 
         self.case.validate_case()
@@ -145,39 +166,49 @@ class ForkCrocoDashBundle:
         )
         return self.case
 
-    def ask_copy_questions(self):
-        self.plan = {}
+    def _gather_inputs(
+        self, plan, compset, extra_configs, remove_configs, extra_forcing_args_path
+    ):
+        """Gather all decisions before execution, prompting interactively where params are None."""
+        self._resolve_copy_plan(plan)
+        self._resolve_compset(compset)
+        self._resolve_forcing_configurations(extra_configs, remove_configs)
+        self._resolve_forcing_args(extra_forcing_args_path)
 
-        if self.differences.get("xml_files_missing_in_new"):
+    def _resolve_copy_plan(self, plan):
+        if plan is not None:
+            self.plan = plan
+            return
+
+        self.plan = {}
+        if self.differences.xml_files_missing_in_new:
             self.plan["xml_files"] = ask_yes_no(
                 f"The following non-default XML files are missing in the new case:\n"
-                f"{self.differences['xml_files_missing_in_new']}\nCopy them over?"
+                f"{self.differences.xml_files_missing_in_new}\nCopy them over?"
             )
 
-        if self.differences.get("user_nl_missing_params") and any(
-            self.differences["user_nl_missing_params"].values()
+        if self.differences.user_nl_missing_params and any(
+            self.differences.user_nl_missing_params.values()
         ):
             self.plan["user_nl"] = ask_yes_no(
                 f"Non-default user_nl parameters detected:\n"
-                f"{self.differences['user_nl_missing_params']}\nCopy them over?"
+                f"{self.differences.user_nl_missing_params}\nCopy them over?"
             )
 
-        if self.differences.get("source_mods_missing_files"):
+        if self.differences.source_mods_missing_files:
             self.plan["source_mods"] = ask_yes_no(
                 f"The following source mods files exist in the old case:\n"
-                f"{self.differences['source_mods_missing_files']}\nCopy them over?"
+                f"{self.differences.source_mods_missing_files}\nCopy them over?"
             )
 
-        if self.differences.get("xmlchanges_missing"):
+        if self.differences.xmlchanges_missing:
             self.plan["xmlchanges"] = ask_yes_no(
                 f"Non-default xmlchange parameters detected:\n"
-                f"{self.differences['xmlchanges_missing']}\nApply them?"
+                f"{self.differences.xmlchanges_missing}\nApply them?"
             )
 
-        return self.plan
-
-    def resolve_compset(self, compset=None):
-        self.compset = self.manifest["init_args"]["compset"]
+    def _resolve_compset(self, compset):
+        self.compset = self.manifest.init_args["compset"]
         if compset is not None and compset != self.compset:
             self.compset = compset
             print(
@@ -193,23 +224,19 @@ class ForkCrocoDashBundle:
                 "may require additional data."
             )
 
-        return self.compset
+    def _resolve_forcing_configurations(self, extra_configs, remove_configs):
+        self.requested_configs = []
 
-    def resolve_forcing_configurations(self, extra_configs=None, remove_configs=None):
-        requested = []
-
-        # Required configurators
         required = ForcingConfigRegistry.find_required_configurators(self.compset)
         for cfg in required:
-            if cfg.name.lower() not in self.forcing_config:
+            if cfg.name.lower() not in self.manifest.forcing_config:
                 print("Missing required configurator:", cfg)
-                requested.append(cfg)
+                self.requested_configs.append(cfg)
 
-        # Valid configurators
         valid = ForcingConfigRegistry.find_valid_configurators(self.compset)
         already_ran = []
 
-        for cfg in self.forcing_config:
+        for cfg in self.manifest.forcing_config:
             if cfg == "basic":
                 continue
             config_class = ForcingConfigRegistry.get_configurator_from_name(cfg)
@@ -221,7 +248,9 @@ class ForkCrocoDashBundle:
 
         if extra_configs is not None:
             extra = set(extra_configs)
-            remove = set(remove_configs) if remove_configs is not None else set()
+            self.resolved_remove = (
+                set(remove_configs) if remove_configs is not None else set()
+            )
         else:
             extra_str = ask_string(
                 f"Enter any other configurations you want "
@@ -234,36 +263,33 @@ class ForkCrocoDashBundle:
                 default="[]",
             )
             extra = {x.strip() for x in extra_str.split(",") if x.strip()}
-            remove = {x.strip() for x in remove_str.split(",") if x.strip()}
+            self.resolved_remove = {
+                x.strip() for x in remove_str.split(",") if x.strip()
+            }
 
         for thing in ForcingConfigRegistry.registered_types:
             if thing.name in extra:
-                requested.append(thing.name)
+                self.requested_configs.append(thing.name)
 
-        return requested, remove
-
-    def set_up_forcing_inputs(
-        self,
-        forcing_config,
-        remove_configs,
-        requested_configs,
-        extra_forcing_args_path=None,
-    ):
-        args = generate_configure_forcing_args(forcing_config, remove_configs)
-        if not requested_configs:
-            return args
+    def _resolve_forcing_args(self, extra_forcing_args_path):
+        self.configure_forcing_args = generate_configure_forcing_args(
+            self.manifest.forcing_config, self.resolved_remove
+        )
+        if not self.requested_configs:
+            return
 
         print(
             "\nYou requested or are required to add the following configurations:",
-            requested_configs,
+            self.requested_configs,
         )
         required_args = [
             user_arg
-            for config in requested_configs
+            for config in self.requested_configs
             for user_arg in ForcingConfigRegistry.get_user_args(
                 ForcingConfigRegistry.get_configurator_from_name(config)
             )
-            if not user_arg.startswith("case_") and user_arg not in args
+            if not user_arg.startswith("case_")
+            and user_arg not in self.configure_forcing_args
         ]
         if extra_forcing_args_path is None:
             print(f"Provide the following arguments in a JSON file: {required_args}")
@@ -273,50 +299,48 @@ class ForkCrocoDashBundle:
         with open(extra_forcing_args_path) as f:
             new_args = json.load(f)
 
-        for config in requested_configs:
+        for config in self.requested_configs:
             for user_arg in ForcingConfigRegistry.get_user_args(
                 ForcingConfigRegistry.get_configurator_from_name(config)
             ):
                 if (
                     not user_arg.startswith("case_")
-                    and user_arg not in args
+                    and user_arg not in self.configure_forcing_args
                     and user_arg not in new_args
                 ):
                     raise ValueError(f"Missing arg: '{user_arg}' for {config}")
 
-        args.update(new_args)
-        return args
+        self.configure_forcing_args.update(new_args)
 
     def apply_copy_plan(self):
-
         if self.plan.get("xml_files"):
             copy_xml_files_from_case(
                 self.bundle_location / "xml_files",
                 self.case.caseroot,
-                self.differences["xml_files_missing_in_new"],
+                self.differences.xml_files_missing_in_new,
             )
 
         if self.plan.get("user_nl"):
             copy_user_nl_params_from_case(
                 self.bundle_location,
-                self.differences["user_nl_missing_params"],
+                self.differences.user_nl_missing_params,
             )
 
         if self.plan.get("source_mods"):
             copy_source_mods_from_case(
                 self.bundle_location,
                 self.case.caseroot,
-                self.differences["source_mods_missing_files"],
+                self.differences.source_mods_missing_files,
             )
 
         if self.plan.get("xmlchanges"):
             apply_xmlchanges_to_case(
                 self.bundle_location,
-                self.differences["xmlchanges_missing"],
+                self.differences.xmlchanges_missing,
             )
 
         copy_configurations_to_case(
-            self.manifest["forcing_config"], self.case, self.bundle_location / "ocnice"
+            self.manifest.forcing_config, self.case, self.bundle_location / "ocnice"
         )
 
 
@@ -361,14 +385,11 @@ def ask_yes_no(prompt: str, default=True) -> bool:
     bool
         True if the user answers 'yes', False if 'no'.
     """
-    # Read input
     try:
         answer = input(f"{prompt} (yes/no): ").strip().lower()
     except EOFError:
-        # If input is not available (e.g., script redirected), default to no
         print("No input available, assuming 'no'.")
         return False
-    # Validate
     if answer in ("yes", "y"):
         return True
     elif answer in ("no", "n"):
