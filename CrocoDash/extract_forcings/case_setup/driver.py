@@ -18,7 +18,8 @@ Typical usage:
 import sys
 from pathlib import Path
 import argparse
-
+import dask
+from dask.distributed import as_completed
 
 from CrocoDash.extract_forcings import (
     bgc,
@@ -26,9 +27,11 @@ from CrocoDash.extract_forcings import (
     tides,
     chlorophyll as chl,
     utils as utils,
-    dask_helpers as dh,
+    initial_condition as initial_condition,
 )
-from CrocoDash.extract_forcings.obc_orchestrator import process_conditions
+from CrocoDash.extract_forcings.obc import (
+    process_obc_conditions as process_obc,
+)
 
 CONFIG_PATH = Path(__file__).parent / "config.json"
 
@@ -123,6 +126,11 @@ def process_chl():
     )
 
 
+def _after(_, fn):
+    """Run fn() after a dependency task completes. The dependency result is ignored."""
+    return fn()
+
+
 def should_run(name, args, cfg):
     not_skipped = name.lower() not in args.skip
     requested = args.all or getattr(args, name)
@@ -190,7 +198,13 @@ def parse_args():
         "--n-workers",
         type=int,
         default=1,
-        help="Number of dask-jobqueue workers to request",
+        help="Number of dask workers (processes). Increase for more parallelism.",
+    )
+    parser.add_argument(
+        "--threads-per-worker",
+        type=int,
+        default=1,
+        help="Threads per worker. Keep at 1 — xESMF/ESMF is not thread-safe.",
     )
 
     if len(sys.argv) == 1:
@@ -250,19 +264,129 @@ def resolve_components(args, cfg):
     return args
 
 
+def run_workflow(
+    ic=False,
+    bc=False,
+    bgcic=False,
+    bgcironforcing=False,
+    tides=False,
+    chl=False,
+    runoff=False,
+    bgcrivernutrients=False,
+    skip_get=False,
+    skip_regrid=False,
+    skip_merge=False,
+    preview=False,
+    cfg=None,
+    client=None,
+):
+    """
+    Execute the forcing extraction workflow.
+
+    This is the shared core used by both run_from_cli and case.py's process_forcings.
+    Each boolean flag enables the corresponding component. If client is None, a
+    LocalCluster with n_workers=1 is created and closed on exit.
+
+    Args:
+        ic:                  Run initial conditions
+        bc:                  Run boundary conditions (OBC)
+        bgcic:               Run BGC initial conditions
+        bgcironforcing:      Run BGC iron forcing
+        tides:               Run tidal forcing
+        chl:                 Run chlorophyll processing
+        runoff:              Run runoff mapping
+        bgcrivernutrients:   Run BGC river nutrients (requires runoff first)
+        skip_get:            Skip raw data download step
+        skip_regrid:         Skip regridding step
+        skip_merge:          Skip merge step
+        preview:             Preview task graph without executing
+        cfg:                 Config object; loaded from CONFIG_PATH if None
+        client:              Dask client; a LocalCluster client is created if None
+    """
+    if cfg is None:
+        cfg = utils.Config(CONFIG_PATH)
+
+    own_client = client is None
+    if own_client:
+        client = utils.make_client(n_workers=1)
+
+    try:
+        if bc:
+            process_obc(
+                config_path=CONFIG_PATH,
+                skip_get=skip_get,
+                skip_regrid=skip_regrid,
+                skip_merge=skip_merge,
+                client=client,
+                preview=preview,
+            )
+
+        tasks = []
+
+        if ic:
+            tasks.append(
+                dask.delayed(initial_condition.process_initial_condition)(
+                    product_name=cfg["basic"]["forcing"]["product_name"],
+                    function_name=cfg["basic"]["forcing"]["function_name"],
+                    product_information=cfg["basic"]["forcing"]["information"],
+                    date_format=cfg["basic"]["dates"]["format"],
+                    start_date=cfg["basic"]["dates"]["start"],
+                    hgrid_path=cfg["basic"]["paths"]["hgrid_path"],
+                    vgrid_path=cfg["basic"]["paths"]["vgrid_path"],
+                    dataset_varnames=cfg["basic"]["forcing"]["information"],
+                    raw_data_dir=cfg["basic"]["paths"]["raw_dataset_path"],
+                    output_data_dir=cfg["basic"]["paths"]["output_path"],
+                    bathymetry_path=cfg["basic"]["paths"]["bathymetry_path"],
+                    preview=preview,
+                )
+            )
+
+        if bgcic:
+            tasks.append(dask.delayed(process_bgcic)())
+
+        if bgcironforcing:
+            tasks.append(dask.delayed(process_bgcironforcing)())
+
+        if tides:
+            tasks.append(dask.delayed(process_tides)())
+
+        if chl:
+            tasks.append(dask.delayed(process_chl)())
+
+        if runoff:
+            runoff_task = dask.delayed(process_runoff)()
+            if bgcrivernutrients:
+                tasks.append(
+                    dask.delayed(_after)(runoff_task, process_bgcrivernutrients)
+                )
+            else:
+                tasks.append(runoff_task)
+        elif bgcrivernutrients:
+            tasks.append(dask.delayed(process_bgcrivernutrients)())
+
+        if not tasks:
+            if not bc:
+                print("No components selected.")
+            return
+
+        futures = client.compute(tasks)
+        for future in as_completed(futures):
+            exc = future.exception()
+            if exc:
+                raise exc
+    finally:
+        if own_client:
+            client.close()
+
+
 def run_from_cli(args, cfg, client):
     """
     Execute the forcing extraction workflow based on CLI arguments.
 
-    This is the main entry point that coordinates the entire workflow:
-    1. Resolves which components to run
-    2. Executes the appropriate process_* functions
-    3. Maintains component dependencies (e.g., runoff before bgcrivernutrients)
-
     Args:
         args: Parsed and resolved command-line arguments
         cfg: Config object from utils.Config(CONFIG_PATH)
-        client: The dask client (which can run singly-threaded)
+        client: Dask client
     """
     if args.test:
         test_driver()
@@ -270,57 +394,28 @@ def run_from_cli(args, cfg, client):
 
     args = resolve_components(args, cfg)
 
-    import dask
-    from dask.distributed import as_completed
-
-    tasks = []
-
-    if args.ic or args.bc:
-        process_conditions(
-            config_path=CONFIG_PATH,
-            get_dataset_piecewise=not args.no_get,
-            regrid_dataset_piecewise=not args.no_regrid,
-            merge_piecewise_dataset=not args.no_merge,
-            run_initial_condition=args.ic,
-            run_boundary_conditions=args.bc,
-            client=client,
-        )
-
-    if args.bgcic:
-        tasks.append(dask.delayed(process_bgcic)())
-
-    if args.bgcironforcing:
-        tasks.append(dask.delayed(process_bgcironforcing)())
-
-    if args.tides:
-        tasks.append(dask.delayed(process_tides)())
-
-    if args.chl:
-        tasks.append(dask.delayed(process_chl)())
-
-    if args.runoff:
-        runoff_task = dask.delayed(process_runoff)()
-        if args.bgcrivernutrients:
-            tasks.append(dask.delayed(_after)(runoff_task, process_bgcrivernutrients))
-        else:
-            tasks.append(runoff_task)
-    elif args.bgcrivernutrients:
-        tasks.append(dask.delayed(process_bgcrivernutrients)())
-
-    if not tasks:
-        print("No components selected.")
-        return
-
-    futures = client.compute(tasks)
-    for future in as_completed(futures):
-        exc = future.exception()
-        if exc:
-            raise exc
+    run_workflow(
+        ic=args.ic,
+        bc=args.bc,
+        bgcic=args.bgcic,
+        bgcironforcing=args.bgcironforcing,
+        tides=args.tides,
+        chl=args.chl,
+        runoff=args.runoff,
+        bgcrivernutrients=args.bgcrivernutrients,
+        skip_get=args.no_get,
+        skip_regrid=args.no_regrid,
+        skip_merge=args.no_merge,
+        preview=cfg["basic"]["general"].get("preview", False),
+        cfg=cfg,
+        client=client,
+    )
 
 
 if __name__ == "__main__":
     args = parse_args()
     cfg = utils.Config(CONFIG_PATH)
-    client = dh.make_client(args.scheduler, args.n_workers)
+    client = utils.make_client(args.scheduler, args.n_workers, args.threads_per_worker)
+    print(f"Dask dashboard: {client.dashboard_link}")
     run_from_cli(args, cfg, client=client)
     client.close()

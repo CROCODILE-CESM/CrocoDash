@@ -605,32 +605,23 @@ class Case:
                 "configure_forcings() must be called before process_forcings()."
             )
 
-        if process_initial_condition or process_velocity_tracers:
-            self.driver.process_conditions(
-                get_dataset_piecewise=True,
-                regrid_dataset_piecewise=True,
-                merge_piecewise_dataset=True,
-                run_initial_condition=process_initial_condition,
-                run_boundary_conditions=process_velocity_tracers,
-            )
-
         process_bgc = kwargs.get("process_bgc", True)
         process_tides = kwargs.get("process_tides", True)
         process_chl = kwargs.get("process_chl", True)
         process_runoff = kwargs.get("process_runoff", True)
         process_bgc_river_nutrients = kwargs.get("process_bgc_river_nutrients", True)
 
-        if self.fcr.is_active("bgc") and process_bgc:
-            self.driver.process_bgcironforcing()
-            self.driver.process_bgcic()
-        if self.fcr.is_active("tides") and process_tides:
-            self.driver.process_tides()
-        if self.fcr.is_active("chl") and process_chl:
-            self.driver.process_chl()
-        if self.fcr.is_active("runoff") and process_runoff:
-            self.driver.process_runoff()
-        if self.fcr.is_active("BGCRiverNutrients") and process_bgc_river_nutrients:
-            self.driver.process_bgcrivernutrients()
+        self.driver.run_workflow(
+            ic=process_initial_condition,
+            bc=process_velocity_tracers,
+            bgcic=process_bgc and self.fcr.is_active("bgc"),
+            bgcironforcing=process_bgc and self.fcr.is_active("bgc"),
+            tides=process_tides and self.fcr.is_active("tides"),
+            chl=process_chl and self.fcr.is_active("chl"),
+            runoff=process_runoff and self.fcr.is_active("runoff"),
+            bgcrivernutrients=process_bgc_river_nutrients
+            and self.fcr.is_active("BGCRiverNutrients"),
+        )
 
         print(f"Case is ready to be built: {self.caseroot}")
 
