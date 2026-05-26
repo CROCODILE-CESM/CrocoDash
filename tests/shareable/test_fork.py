@@ -86,21 +86,18 @@ def test_resolve_copy_plan_with_provided_plan(fake_fcb_empty_case):
 def test_resolve_compset(fake_fcb_empty_case):
     """Test _resolve_compset sets compset on self."""
     fcb = fake_fcb_empty_case
+    bundle_compset = "1850_DATM%JRA_SLND_SICE_MOM6_SROF_SGLC_SWAV"
     fcb.manifest = BundleManifest(
         forcing_config={},
-        init_args={"compset": "1850_DATM%JRA_SLND_SICE_MOM6_SROF_SGLC_SWAV"},
+        init_args={"compset": bundle_compset},
     )
 
-    with patch("CrocoDash.shareable.fork.ask_yes_no", return_value=False):
-        fcb._resolve_compset(None)
+    fcb._resolve_compset(None)
 
-    assert fcb.compset == "1850_DATM%JRA_SLND_SICE_MOM6_SROF_SGLC_SWAV"
+    assert fcb.compset == bundle_compset
 
     new_compset = "2000_DATM%JRA_SLND_SICE_MOM6_SROF_SGLC_SWAV"
-
-    with patch("CrocoDash.shareable.fork.ask_yes_no", return_value=True):
-        with patch("CrocoDash.shareable.fork.ask_string", return_value=new_compset):
-            fcb._resolve_compset(None)
+    fcb._resolve_compset(new_compset)
 
     assert fcb.compset == new_compset
 
