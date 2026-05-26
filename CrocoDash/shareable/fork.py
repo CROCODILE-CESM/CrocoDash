@@ -215,14 +215,6 @@ class ForkCrocoDashBundle:
                 "Warning: Changing compset may have unintended consequences and "
                 "may require additional data."
             )
-        elif compset is None and ask_yes_no(
-            f"Want to change compset? Current compset: {self.compset}", default=False
-        ):
-            self.compset = ask_string("Enter the new compset")
-            print(
-                "Warning: Changing compset may have unintended consequences and "
-                "may require additional data."
-            )
 
     def _resolve_forcing_configurations(self, extra_configs, remove_configs):
         self.requested_configs = []
