@@ -34,11 +34,11 @@ def test_diff_CESM_cases_nodiff(two_cesm_cases):
     output = BundleCrocoDashCase(case1.caseroot).diff(
         BundleCrocoDashCase(case2.caseroot)
     )
-    assert output["xml_files_missing_in_new"] == []
-    for key, value in output["user_nl_missing_params"].items():
+    assert output.xml_files_missing_in_new == []
+    for key, value in output.user_nl_missing_params.items():
         assert value == []
-    assert output["source_mods_missing_files"] == []
-    assert output["xmlchanges_missing"] == []
+    assert output.source_mods_missing_files == []
+    assert output.xmlchanges_missing == []
 
 
 def test_diff_CESM_cases_alldiff(two_cesm_cases):
@@ -66,10 +66,10 @@ def test_diff_CESM_cases_alldiff(two_cesm_cases):
     output = BundleCrocoDashCase(case1.caseroot).diff(
         BundleCrocoDashCase(case2.caseroot)
     )
-    assert output["xml_files_missing_in_new"] == ["test.xml"]
-    assert output["user_nl_missing_params"]["mom"] == ["DEBUG"]
-    assert output["source_mods_missing_files"] == ["src.mom/bleh.dummy"]
-    assert output["xmlchanges_missing"] == ["JOB_PRIORITY"]
+    assert output.xml_files_missing_in_new == ["test.xml"]
+    assert output.user_nl_missing_params["mom"] == ["DEBUG"]
+    assert output.source_mods_missing_files == ["src.mom/bleh.dummy"]
+    assert output.xmlchanges_missing == ["JOB_PRIORITY"]
 
 
 def test_identify_CrocoDashCase_init_args(get_case_with_cf, fake_RCC_empty_case):
@@ -142,10 +142,10 @@ def test_identify_non_standard_case_information(get_CrocoDash_case):
     output = rcc.identify_non_standard_CrocoDash_case_information(
         case1.cime.cimeroot.parent, case1.machine, case1.project
     )
-    assert output["xml_files_missing_in_new"] == ["test.xml"]
-    assert output["user_nl_missing_params"]["mom"] == ["DEBUG"]
-    assert output["source_mods_missing_files"] == ["src.mom/bleh.dummy"]
-    assert output["xmlchanges_missing"] == ["JOB_PRIORITY"]
+    assert output.xml_files_missing_in_new == ["test.xml"]
+    assert output.user_nl_missing_params["mom"] == ["DEBUG"]
+    assert output.source_mods_missing_files == ["src.mom/bleh.dummy"]
+    assert output.xmlchanges_missing == ["JOB_PRIORITY"]
 
 
 def test_read_user_nl_mom_lines_as_obj(get_CrocoDash_case, fake_RCC_empty_case):
