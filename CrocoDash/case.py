@@ -459,6 +459,12 @@ class Case:
         self.fcr.run_configurators(self.extract_forcings_path / "config.json")
 
         self._update_forcing_variables()
+
+        start, end = pd.to_datetime(date_range[0]), pd.to_datetime(date_range[1])
+        dates = pd.date_range(start, end, freq="D")
+        if any((d.month == 2 and d.day == 29) for d in dates):
+            xmlchange("CALENDAR", "gregorian", is_non_local=self.cc._is_non_local())
+
         self._configure_forcings_called = True
 
     def configure_initial_and_boundary_conditions(
