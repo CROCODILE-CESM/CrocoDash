@@ -221,7 +221,7 @@ class BGCIronForcingConfigurator(BaseConfigurator):
         ),
         UserNLConfigParam(
             "MARBL_FESEDFLUXRED_FILE",
-            comment="MARBL event iron flux reduced file",
+            comment="MARBL sediment iron flux (reduced) file",
             user_nl_name="mom",
         ),
     ]

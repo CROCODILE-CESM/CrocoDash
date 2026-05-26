@@ -113,7 +113,7 @@ def merge_piecewise_dataset(
         if bgc_tracer_names is not None:
             expt = rm6.experiment.create_empty()
             expt.boundaries = boundary_list
-            expt.mom_input_dir = output_path
+            expt.mom_input_dir = Path(output_folder)
             expt.reformat_bgc_tracers_into_files(bgc_tracer_names)
     # Copy Initial Condition
     if run_initial_condition:
