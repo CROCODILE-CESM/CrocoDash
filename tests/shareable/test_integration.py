@@ -1,5 +1,5 @@
-from CrocoDash.shareable import inspect, fork
-from CrocoDash.shareable.inspect import clone
+from CrocoDash.shareable import bundle, fork
+from CrocoDash.shareable.bundle import clone
 from unittest.mock import patch
 import subprocess
 from pathlib import Path
@@ -24,7 +24,7 @@ def test_clone(get_case_with_cf, tmp_path):
 @pytest.mark.slow
 def test_pass_from_inspect_to_fork_no_change(get_case_with_cf, tmp_path):
     case = get_case_with_cf
-    rcc = inspect.ReadCrocoDashCase(case.caseroot)
+    rcc = bundle.BundleCrocoDashCase(case.caseroot)
     rcc.identify_non_standard_CrocoDash_case_information(
         rcc.cesmroot, case.machine, case.project
     )
@@ -40,15 +40,14 @@ def test_pass_from_inspect_to_fork_no_change(get_case_with_cf, tmp_path):
     ), patch(
         "CrocoDash.shareable.fork.copy_configurations_to_case"
     ):
-        fcb = fork.ForkCrocoDashBundle(
-            loc,
+        fcb = fork.ForkCrocoDashBundle(loc)
+        fcb.fork(
             rcc.cesmroot,
             case.machine,
             case.project,
             tmp_path / "caseroot",
             tmp_path / "inputdir",
         )
-        fcb.fork()
         assert fcb
 
 
@@ -74,26 +73,23 @@ def test_pass_from_inspect_to_fork_with_changes(get_case_with_cf, tmp_path):
     user_nl_path = Path(case.caseroot) / "user_nl_mom"
     with open(user_nl_path, "a") as f:
         f.write("\nDEBUG=TRUE\n")
-    rcc = inspect.ReadCrocoDashCase(case.caseroot)
+    rcc = bundle.BundleCrocoDashCase(case.caseroot)
     rcc.identify_non_standard_CrocoDash_case_information(
         rcc.cesmroot, case.machine, case.project
     )
     loc = rcc.bundle(tmp_path)
     with patch("CrocoDash.shareable.fork.ask_yes_no", return_value=True), patch(
         "CrocoDash.shareable.fork.ask_string", return_value=""
-    ), patch(
-        "CrocoDash.shareable.fork.ForkCrocoDashBundle.resolve_compset",
-        return_value=case.compset_lname,
     ):
-        fcb = fork.ForkCrocoDashBundle(
-            loc,
+        fcb = fork.ForkCrocoDashBundle(loc)
+        fcb.fork(
             rcc.cesmroot,
             case.machine,
             case.project,
             tmp_path / "caseroot",
             tmp_path / "inputdir",
+            compset=case.compset_lname,
         )
-        fcb.fork()
         path_to_case = fcb.case.caseroot
         assert (path_to_case / "test.xml").exists()
         assert (path_to_case / "SourceMods" / "src.mom" / "bleh.dummy").exists()

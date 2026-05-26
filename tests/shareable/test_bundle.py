@@ -1,4 +1,4 @@
-from CrocoDash.shareable.inspect import *
+from CrocoDash.shareable.bundle import *
 import pytest
 import subprocess
 from pathlib import Path
@@ -17,26 +17,28 @@ def two_cesm_cases(CrocoDash_case_factory, tmp_path_factory):
 
 @pytest.fixture
 def fake_RCC_empty_case():
-    case = ReadCrocoDashCase.__new__(ReadCrocoDashCase)
+    case = BundleCrocoDashCase.__new__(BundleCrocoDashCase)
     case._case = None
     return case
 
 
 def test_RCC_init(get_case_with_cf):
     case = get_case_with_cf
-    rcc = ReadCrocoDashCase(case.caseroot)
+    rcc = BundleCrocoDashCase(case.caseroot)
     assert rcc
 
 
 def test_diff_CESM_cases_nodiff(two_cesm_cases):
 
     case1, case2 = two_cesm_cases
-    output = ReadCrocoDashCase(case1.caseroot).diff(ReadCrocoDashCase(case2.caseroot))
-    assert output["xml_files_missing_in_new"] == []
-    for key, value in output["user_nl_missing_params"].items():
+    output = BundleCrocoDashCase(case1.caseroot).diff(
+        BundleCrocoDashCase(case2.caseroot)
+    )
+    assert output.xml_files_missing_in_new == []
+    for key, value in output.user_nl_missing_params.items():
         assert value == []
-    assert output["source_mods_missing_files"] == []
-    assert output["xmlchanges_missing"] == []
+    assert output.source_mods_missing_files == []
+    assert output.xmlchanges_missing == []
 
 
 def test_diff_CESM_cases_alldiff(two_cesm_cases):
@@ -61,11 +63,13 @@ def test_diff_CESM_cases_alldiff(two_cesm_cases):
     with open(user_nl_path, "a") as f:
         f.write("\nDEBUG=TRUE\n")
 
-    output = ReadCrocoDashCase(case1.caseroot).diff(ReadCrocoDashCase(case2.caseroot))
-    assert output["xml_files_missing_in_new"] == ["test.xml"]
-    assert output["user_nl_missing_params"]["mom"] == ["DEBUG"]
-    assert output["source_mods_missing_files"] == ["src.mom/bleh.dummy"]
-    assert output["xmlchanges_missing"] == ["JOB_PRIORITY"]
+    output = BundleCrocoDashCase(case1.caseroot).diff(
+        BundleCrocoDashCase(case2.caseroot)
+    )
+    assert output.xml_files_missing_in_new == ["test.xml"]
+    assert output.user_nl_missing_params["mom"] == ["DEBUG"]
+    assert output.source_mods_missing_files == ["src.mom/bleh.dummy"]
+    assert output.xmlchanges_missing == ["JOB_PRIORITY"]
 
 
 def test_identify_CrocoDashCase_init_args(get_case_with_cf, fake_RCC_empty_case):
@@ -134,14 +138,14 @@ def test_identify_non_standard_case_information(get_CrocoDash_case):
     user_nl_path = Path(case1.caseroot) / "user_nl_mom"
     with open(user_nl_path, "a") as f:
         f.write("\nDEBUG=TRUE\n")
-    rcc = ReadCrocoDashCase(case1.caseroot)
+    rcc = BundleCrocoDashCase(case1.caseroot)
     output = rcc.identify_non_standard_CrocoDash_case_information(
         case1.cime.cimeroot.parent, case1.machine, case1.project
     )
-    assert output["xml_files_missing_in_new"] == ["test.xml"]
-    assert output["user_nl_missing_params"]["mom"] == ["DEBUG"]
-    assert output["source_mods_missing_files"] == ["src.mom/bleh.dummy"]
-    assert output["xmlchanges_missing"] == ["JOB_PRIORITY"]
+    assert output.xml_files_missing_in_new == ["test.xml"]
+    assert output.user_nl_missing_params["mom"] == ["DEBUG"]
+    assert output.source_mods_missing_files == ["src.mom/bleh.dummy"]
+    assert output.xmlchanges_missing == ["JOB_PRIORITY"]
 
 
 def test_read_user_nl_mom_lines_as_obj(get_CrocoDash_case, fake_RCC_empty_case):
@@ -202,7 +206,7 @@ def test_bundle_with_modifications(CrocoDash_case_factory, tmp_path_factory, tmp
     output_dir = tmp_path / "bundle_output_modified"
     output_dir.mkdir()
 
-    rcc = ReadCrocoDashCase(case.caseroot)
+    rcc = BundleCrocoDashCase(case.caseroot)
     rcc.identify_non_standard_CrocoDash_case_information(
         case.cime.cimeroot.parent, case.machine, case.project
     )

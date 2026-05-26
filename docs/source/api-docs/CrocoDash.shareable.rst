@@ -20,10 +20,10 @@ CrocoDash.shareable.fork module
    :undoc-members:
    :show-inheritance:
 
-CrocoDash.shareable.inspect module
-----------------------------------
+CrocoDash.shareable.bundle module
+---------------------------------
 
-.. automodule:: CrocoDash.shareable.inspect
+.. automodule:: CrocoDash.shareable.bundle
    :members:
    :undoc-members:
    :show-inheritance:

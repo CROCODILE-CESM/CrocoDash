@@ -357,7 +357,12 @@ class RunoffConfigurator(BaseConfigurator):
             If not provided, a suggested value based on the ocean grid will be used.
         """
         if case_cime is not None:
-
+            if rof_esmf_mesh_filepath is None:
+                rof_esmf_mesh_filepath = case_cime.get_mesh_path(
+                    "rof", cvars["CUSTOM_ROF_GRID"].value
+                )
+            if rof_grid_name is None:
+                rof_grid_name = cvars["CUSTOM_ROF_GRID"].value
             super().__init__(
                 case_grid_name=case_grid_name,
                 case_session_id=case_session_id,
@@ -367,10 +372,8 @@ class RunoffConfigurator(BaseConfigurator):
                 case_esmf_mesh_path=case_esmf_mesh_path,
                 case_compset_lname=case_compset_lname,
                 case_is_non_local=case_is_non_local,
-                rof_esmf_mesh_filepath=case_cime.get_mesh_path(
-                    "rof", cvars["CUSTOM_ROF_GRID"].value
-                ),
-                rof_grid_name=cvars["CUSTOM_ROF_GRID"].value,
+                rof_esmf_mesh_filepath=rof_esmf_mesh_filepath,
+                rof_grid_name=rof_grid_name,
             )
         else:
             super().__init__(
@@ -434,7 +437,7 @@ class RunoffConfigurator(BaseConfigurator):
 
         params = [
             self.get_output_param("ROF2OCN_LIQ_RMAPNAME"),
-            self.get_output_param("ROF2OCN_LIQ_RMAPNAME"),
+            self.get_output_param("ROF2OCN_ICE_RMAPNAME"),
         ]
 
         valid_paths = []

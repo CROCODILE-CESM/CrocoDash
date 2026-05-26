@@ -44,63 +44,69 @@ def sample_forcing_config():
     return forcing_config
 
 
-def test_ask_copy_questions_all_missing(fake_fcb_empty_case):
-    """Test ask_copy_questions returns correct plan when all differences exist."""
+def test_resolve_copy_plan_all_missing(fake_fcb_empty_case):
+    """Test _resolve_copy_plan sets correct plan when all differences exist."""
     fcb = fake_fcb_empty_case
-    fcb.differences = {
-        "xml_files_missing_in_new": ["custom.xml"],
-        "user_nl_missing_params": {"user_nl_mom": ["PARAM1"]},
-        "source_mods_missing_files": ["src.mom/file.F90"],
-        "xmlchanges_missing": ["JOB_PRIORITY"],
-    }
+    fcb.differences = BundleDifferences(
+        xml_files_missing_in_new=["custom.xml"],
+        user_nl_missing_params={"user_nl_mom": ["PARAM1"]},
+        source_mods_missing_files=["src.mom/file.F90"],
+        xmlchanges_missing=["JOB_PRIORITY"],
+    )
 
     with patch("CrocoDash.shareable.fork.ask_yes_no", return_value=True):
-        plan = fcb.ask_copy_questions()
+        fcb._resolve_copy_plan(None)
 
-    assert plan.get("xml_files") is True
-    assert plan.get("user_nl") is True
-    assert plan.get("source_mods") is True
-    assert plan.get("xmlchanges") is True
+    assert fcb.plan.get("xml_files") is True
+    assert fcb.plan.get("user_nl") is True
+    assert fcb.plan.get("source_mods") is True
+    assert fcb.plan.get("xmlchanges") is True
 
 
-def test_ask_copy_questions_no_differences(fake_fcb_empty_case):
-    """Test ask_copy_questions returns empty plan when no differences."""
+def test_resolve_copy_plan_no_differences(fake_fcb_empty_case):
+    """Test _resolve_copy_plan sets empty plan when no differences."""
     fcb = fake_fcb_empty_case
-    fcb.differences = {
-        "xml_files_missing_in_new": [],
-        "user_nl_missing_params": {},
-        "source_mods_missing_files": [],
-        "xmlchanges_missing": [],
-    }
+    fcb.differences = BundleDifferences()
 
-    plan = fcb.ask_copy_questions()
+    fcb._resolve_copy_plan(None)
 
-    assert len(plan) == 0
+    assert len(fcb.plan) == 0
+
+
+def test_resolve_copy_plan_with_provided_plan(fake_fcb_empty_case):
+    """Test _resolve_copy_plan uses provided plan without prompting."""
+    fcb = fake_fcb_empty_case
+    provided = {"xml_files": False, "user_nl": True}
+
+    fcb._resolve_copy_plan(provided)
+
+    assert fcb.plan is provided
 
 
 def test_resolve_compset(fake_fcb_empty_case):
-    """Test resolve_compset returns current compset when user doesn't want to change."""
+    """Test _resolve_compset sets compset on self."""
     fcb = fake_fcb_empty_case
-    fcb.manifest = {
-        "init_args": {"compset": "1850_DATM%JRA_SLND_SICE_MOM6_SROF_SGLC_SWAV"}
-    }
+    fcb.manifest = BundleManifest(
+        forcing_config={},
+        init_args={"compset": "1850_DATM%JRA_SLND_SICE_MOM6_SROF_SGLC_SWAV"},
+    )
 
     with patch("CrocoDash.shareable.fork.ask_yes_no", return_value=False):
-        result = fcb.resolve_compset()
+        fcb._resolve_compset(None)
 
-    assert result == "1850_DATM%JRA_SLND_SICE_MOM6_SROF_SGLC_SWAV"
+    assert fcb.compset == "1850_DATM%JRA_SLND_SICE_MOM6_SROF_SGLC_SWAV"
 
     new_compset = "2000_DATM%JRA_SLND_SICE_MOM6_SROF_SGLC_SWAV"
 
     with patch("CrocoDash.shareable.fork.ask_yes_no", return_value=True):
         with patch("CrocoDash.shareable.fork.ask_string", return_value=new_compset):
-            result = fcb.resolve_compset()
+            fcb._resolve_compset(None)
 
-    assert result == new_compset
+    assert fcb.compset == new_compset
 
 
 def test_build_general_configure_forcing_args(sample_forcing_config):
-    """Test build_general_configure_forcing_args creates correct argument dict."""
+    """Test generate_configure_forcing_args creates correct argument dict."""
     forcing_config = sample_forcing_config
 
     remove_configs = set()
@@ -122,13 +128,16 @@ def test_build_general_configure_forcing_args(sample_forcing_config):
     assert "marbl_ic_filepath" in args
 
 
-def test_set_up_forcing_inputs_no_configs(fake_fcb_empty_case, sample_forcing_config):
-    """Test that function returns args unchanged when no configs requested."""
+def test_resolve_forcing_args_no_configs(fake_fcb_empty_case, sample_forcing_config):
+    """Test _resolve_forcing_args sets configure_forcing_args unchanged when no configs requested."""
     fcb = fake_fcb_empty_case
+    fcb.manifest = BundleManifest(forcing_config=sample_forcing_config, init_args={})
+    fcb.resolved_remove = {}
+    fcb.requested_configs = []
 
-    result = fcb.set_up_forcing_inputs(sample_forcing_config, {}, [])
+    fcb._resolve_forcing_args(None)
 
-    assert result == {
+    assert fcb.configure_forcing_args == {
         "date_range": ["2020-01-01 00:00:00", "2020-01-09 00:00:00"],
         "boundaries": ["north"],
         "product_name": "GLORYS",
@@ -140,14 +149,15 @@ def test_set_up_forcing_inputs_no_configs(fake_fcb_empty_case, sample_forcing_co
     }
 
 
-def test_set_up_forcing_inputs_with_json_file(
+def test_resolve_forcing_args_with_json_file(
     fake_fcb_empty_case, sample_forcing_config, tmp_path
 ):
-    """Test that set_up_forcing_inputs loads args from a JSON file path."""
+    """Test that _resolve_forcing_args loads extra args from a JSON file path."""
     fcb = fake_fcb_empty_case
-    requested_configs = ["tides"]
+    fcb.manifest = BundleManifest(forcing_config=sample_forcing_config, init_args={})
+    fcb.resolved_remove = {}
+    fcb.requested_configs = ["tides"]
 
-    # Write required args to a temp file
     args_file = tmp_path / "forcing_args.json"
     args_file.write_text(
         json.dumps(
@@ -160,40 +170,31 @@ def test_set_up_forcing_inputs_with_json_file(
         )
     )
 
-    result = fcb.set_up_forcing_inputs(
-        sample_forcing_config,
-        {},
-        requested_configs,
-        extra_forcing_args_path=str(args_file),
-    )
+    fcb._resolve_forcing_args(str(args_file))
 
-    assert result["tidal_constituents"] == ["M2", "K1"]
+    assert fcb.configure_forcing_args["tidal_constituents"] == ["M2", "K1"]
 
 
-def test_set_up_forcing_inputs_missing_required_arg(
+def test_resolve_forcing_args_missing_required_arg(
     fake_fcb_empty_case, sample_forcing_config, tmp_path
 ):
-    """Test that set_up_forcing_inputs raises ValueError when required args are missing."""
+    """Test that _resolve_forcing_args raises ValueError when required args are missing."""
     fcb = fake_fcb_empty_case
-    requested_configs = ["tides"]
+    fcb.manifest = BundleManifest(forcing_config=sample_forcing_config, init_args={})
+    fcb.resolved_remove = {"tides"}  # remove tides so its args aren't pre-populated
+    fcb.requested_configs = ["tides"]
 
-    # File is missing tpxo_elevation_filepath and tpxo_velocity_filepath
     args_file = tmp_path / "incomplete_args.json"
     args_file.write_text(json.dumps({"tidal_constituents": ["M2"]}))
 
     with pytest.raises(ValueError, match="Missing arg"):
-        fcb.set_up_forcing_inputs(
-            sample_forcing_config,
-            {"tides"},  # remove tides so its args aren't pre-populated
-            requested_configs,
-            extra_forcing_args_path=str(args_file),
-        )
+        fcb._resolve_forcing_args(str(args_file))
 
 
 def test_resolve_forcing_configurations(fake_fcb_empty_case, sample_forcing_config):
-    """Test resolve_forcing_configurations returns requested and removed configs."""
+    """Test _resolve_forcing_configurations sets requested and removed configs on self."""
     fcb = fake_fcb_empty_case
-    fcb.forcing_config = sample_forcing_config
+    fcb.manifest = BundleManifest(forcing_config=sample_forcing_config, init_args={})
     fcb.compset = "2000_DATM%JRA_SLND_SICE_MOM6_SROF_SGLC_SWAV"
 
     with patch(
@@ -205,11 +206,11 @@ def test_resolve_forcing_configurations(fake_fcb_empty_case, sample_forcing_conf
             return_value=[],
         ):
             with patch("CrocoDash.shareable.fork.ask_string", side_effect=["", "bgc"]):
-                requested, remove = fcb.resolve_forcing_configurations()
+                fcb._resolve_forcing_configurations(None, None)
 
-    assert isinstance(requested, list)
-    assert isinstance(remove, set)
-    assert "bgc" in remove
+    assert isinstance(fcb.requested_configs, list)
+    assert isinstance(fcb.resolved_remove, set)
+    assert "bgc" in fcb.resolved_remove
 
 
 def test_ask_input_response():

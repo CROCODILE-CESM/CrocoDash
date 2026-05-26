@@ -607,7 +607,7 @@ class Case:
 
         if process_initial_condition or process_velocity_tracers:
             self.driver.process_conditions(
-                get_dataset_piecewise=False,
+                get_dataset_piecewise=True,
                 regrid_dataset_piecewise=True,
                 merge_piecewise_dataset=True,
                 run_initial_condition=process_initial_condition,
@@ -1049,5 +1049,5 @@ class Case:
                 self.inputdir / "ocnice"
             ):
                 print(
-                    f"{config} was not valid yet! Which means you need to process this forcing and generate the files using your cases extract_forcings module! {case.inputdir/'extract_forcings'}"
+                    f"{config} was not valid yet! Which means you need to process this forcing and generate the files using your cases extract_forcings module! {self.inputdir/'extract_forcings'}"
                 )
