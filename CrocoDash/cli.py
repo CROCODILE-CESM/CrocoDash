@@ -2,12 +2,12 @@ import argparse
 import json
 
 
-def _read(args):
-    from CrocoDash.shareable.inspect import (
-        ReadCrocoDashCase,
+def _bundle(args):
+    from CrocoDash.shareable.bundle import (
+        BundleCrocoDashCase,
     )  # Makes loading faster when not used
 
-    case = ReadCrocoDashCase(args.caseroot)
+    case = BundleCrocoDashCase(args.caseroot)
     case.identify_non_standard_CrocoDash_case_information(
         cesmroot=args.cesmroot,
         machine=args.machine,
@@ -18,7 +18,7 @@ def _read(args):
 
 
 def _clone(args):
-    from CrocoDash.shareable.inspect import clone
+    from CrocoDash.shareable.bundle import clone
 
     new_case = clone(
         caseroot=args.clone,
@@ -45,15 +45,13 @@ def _fork(args):
         else None
     )
 
-    forker = ForkCrocoDashBundle(
-        bundle_location=args.bundle,
+    forker = ForkCrocoDashBundle(args.bundle)
+    forker.fork(
         cesmroot=args.cesmroot,
         machine=args.machine,
         project_number=args.project,
         new_caseroot=args.caseroot,
         new_inputdir=args.inputdir,
-    )
-    forker.fork(
         plan=plan,
         compset=args.compset,
         extra_configs=extra_configs,
@@ -66,27 +64,30 @@ def main():
     parser = argparse.ArgumentParser(prog="crocodash")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    # --- read ---
-    read_parser = subparsers.add_parser(
-        "read", help="Read an existing CrocoDash case and produce a shareable bundle."
+    # --- bundle ---
+    bundle_parser = subparsers.add_parser(
+        "bundle",
+        help="Read an existing CrocoDash case and produce a shareable bundle.",
     )
-    read_parser.add_argument(
+    bundle_parser.add_argument(
         "--caseroot", required=True, help="Path to the existing CESM caseroot."
     )
-    read_parser.add_argument(
+    bundle_parser.add_argument(
         "--output-dir",
         required=True,
         dest="output_dir",
         help="Directory to write the bundle into.",
     )
-    read_parser.add_argument(
+    bundle_parser.add_argument(
         "--cesmroot", required=True, help="Path to the CESM source root."
     )
-    read_parser.add_argument(
+    bundle_parser.add_argument(
         "--machine", required=True, help="Machine name (e.g. derecho)."
     )
-    read_parser.add_argument("--project", required=True, help="Project/account number.")
-    read_parser.set_defaults(func=_read)
+    bundle_parser.add_argument(
+        "--project", required=True, help="Project/account number."
+    )
+    bundle_parser.set_defaults(func=_bundle)
 
     # --- clone ---
     clone_parser = subparsers.add_parser(

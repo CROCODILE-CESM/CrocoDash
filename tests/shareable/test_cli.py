@@ -10,16 +10,16 @@ def run_main(argv):
         main()
 
 
-def test_read_cli(tmp_path):
+def test_bundle_cli(tmp_path):
     mock_case = MagicMock()
     mock_case.bundle.return_value = tmp_path / "bundle"
 
     with patch(
-        "CrocoDash.shareable.inspect.ReadCrocoDashCase", return_value=mock_case
+        "CrocoDash.shareable.bundle.BundleCrocoDashCase", return_value=mock_case
     ) as mock_cls:
         run_main(
             [
-                "read",
+                "bundle",
                 "--caseroot",
                 "/some/case",
                 "--output-dir",
@@ -84,6 +84,11 @@ def test_fork_cli(tmp_path):
         )
 
     mock_forker.fork.assert_called_once_with(
+        cesmroot="/some/cesm",
+        machine="derecho",
+        project_number="PROJ123",
+        new_caseroot=str(tmp_path / "new_case"),
+        new_inputdir=str(tmp_path / "inputdir"),
         plan=plan,
         compset="GOMOM6",
         extra_configs=["tides", "bgc"],
@@ -96,7 +101,7 @@ def test_clone_cli(tmp_path):
     mock_case = MagicMock()
 
     with patch(
-        "CrocoDash.shareable.inspect.clone", return_value=mock_case
+        "CrocoDash.shareable.bundle.clone", return_value=mock_case
     ) as mock_clone:
         run_main(
             [
