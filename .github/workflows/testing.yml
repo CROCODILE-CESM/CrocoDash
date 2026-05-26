@@ -101,13 +101,13 @@ jobs:
           cp -r $GITHUB_WORKSPACE/CrocoDash-bundle $WORKDIR/CrocoDash
           pip install -e $WORKDIR/CrocoDash
 
-      - name: Bundle case with crocodash read
+      - name: Bundle case with crocodash bundle
         shell: bash -l {0}
         run: |
           source /opt/conda/etc/profile.d/conda.sh
           conda activate CrocoDash
           mkdir -p $GITHUB_WORKSPACE/bundle_output
-          crocodash read \
+          crocodash bundle \
             --caseroot /workspace/croc_cases/actions_case \
             --output-dir $GITHUB_WORKSPACE/bundle_output \
             --cesmroot /workspace/CESM \

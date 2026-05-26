@@ -10,7 +10,6 @@ import argparse
 import os
 import sys
 from pathlib import Path
-import os
 import subprocess
 from CrocoDash.grid import Grid
 from CrocoDash.topo import Topo
@@ -96,21 +95,20 @@ def parse_args() -> argparse.Namespace:
     case.add_argument(
         "--cesmroot",
         type=Path,
-        default=Path("/home/manishrv/CROCESM"),
+        default=None,
         help="Path to CESM source root",
     )
     case.add_argument(
         "--inputdir",
         type=Path,
         default=None,
-        help="Directory for CESM input files "
-        "(default: /home/manishrv/croc_input/<casename>)",
+        help="Directory for CESM input files (default: ~/croc_input/<casename>)",
     )
     case.add_argument(
         "--caseroot",
         type=Path,
         default=None,
-        help="CESM case directory " "(default: /home/manishrv/croc_cases/<casename>)",
+        help="CESM case directory (default: ~/croc_cases/<casename>)",
     )
     case.add_argument(
         "--project", type=str, default="CESM0030", help="HPC project/account code"
@@ -164,9 +162,9 @@ def parse_args() -> argparse.Namespace:
 def resolve_paths(args: argparse.Namespace) -> argparse.Namespace:
     """Fill in derived default paths that depend on --casename."""
     if args.inputdir is None:
-        args.inputdir = Path(f"/home/manishrv/croc_input/{args.casename}")
+        args.inputdir = Path.home() / "croc_input" / args.casename
     if args.caseroot is None:
-        args.caseroot = Path(f"/home/manishrv/croc_cases/{args.casename}")
+        args.caseroot = Path.home() / "croc_cases" / args.casename
     return args
 
 
@@ -183,10 +181,13 @@ def get_bathymetry(args: argparse.Namespace) -> Path:
         return bathy
 
     # Default: download GEBCO alongside this script
+    bathy_dir = Path("bathy_dir")
     bathy = Path("GEBCO.nc")
-    print(f"No --bathymetry-path provided. Downloading GEBCO data → {bathy}")
-    GEBCO.get_gebco_data_with_python("bathy_dir", bathy)
-    bathy = "bathy_dir" / bathy
+    print(
+        f"No --bathymetry-path provided. Downloading GEBCO data → {bathy_dir / bathy}"
+    )
+    GEBCO.get_gebco_data_with_python(bathy_dir, bathy)
+    bathy = bathy_dir / bathy
 
     if not bathy.exists():
         raise FileNotFoundError(
