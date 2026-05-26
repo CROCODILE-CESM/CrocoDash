@@ -409,7 +409,9 @@ def create_case(
     return case
 
 
-def generate_configure_forcing_args(forcing_config, remove_configs=[""]):
+def generate_configure_forcing_args(forcing_config, remove_configs=None):
+    if remove_configs is None:
+        remove_configs = []
     logger.info("Setup configuration arguments...")
 
     start_str = forcing_config["basic"]["dates"]["start"]

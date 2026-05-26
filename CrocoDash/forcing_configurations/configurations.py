@@ -437,7 +437,7 @@ class RunoffConfigurator(BaseConfigurator):
 
         params = [
             self.get_output_param("ROF2OCN_LIQ_RMAPNAME"),
-            self.get_output_param("ROF2OCN_LIQ_RMAPNAME"),
+            self.get_output_param("ROF2OCN_ICE_RMAPNAME"),
         ]
 
         valid_paths = []

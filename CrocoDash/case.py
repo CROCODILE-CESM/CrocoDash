@@ -1049,5 +1049,5 @@ class Case:
                 self.inputdir / "ocnice"
             ):
                 print(
-                    f"{config} was not valid yet! Which means you need to process this forcing and generate the files using your cases extract_forcings module! {case.inputdir/'extract_forcings'}"
+                    f"{config} was not valid yet! Which means you need to process this forcing and generate the files using your cases extract_forcings module! {self.inputdir/'extract_forcings'}"
                 )
