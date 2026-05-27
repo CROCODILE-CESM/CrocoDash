@@ -2,32 +2,55 @@ package:
   name: crocodash
   version: "0.1.0"
 
+# Each dependency is pinned to the exact git commit that the CrocoDash
+# submodule pointers currently reference. Update git_rev here to change
+# which version of a dependency gets bundled.
 source:
-  path: ../CrocoDash  # Relative path to your local source
+  - path: .
+
+  - git_url: https://github.com/NCAR/mom6_forge.git
+    git_rev: 410308310889e3ae5a26b18fa54ee88782bde9df
+    folder: _deps/mom6_forge
+
+  - git_url: https://github.com/alperaltuntas/ipyfilechooser.git
+    git_rev: 67edea7fd41e4c8c31101a27fdcaa924dd2b8a21
+    folder: _deps/ipyfilechooser
+
+  - git_url: https://github.com/ESMCI/visualCaseGen.git
+    git_rev: e70fe52d8c442709bc733d613d5b6760aef8885f
+    folder: _deps/visualCaseGen
+
+  - git_url: https://github.com/CROCODILE-CESM/regional-mom6.git
+    git_rev: 786aa4b144158bf332ac3c23be384a919ed989a9
+    folder: _deps/regional_mom6
 
 build:
   number: 0
-  # The script installs your package without trying to fetch deps from PyPI
-  script: {{ PYTHON }} -m pip install . --no-deps --ignore-installed -vv
+  # build.sh installs pinned deps first, then CrocoDash itself, all --no-deps
+  # because transitive deps are declared in the run requirements below.
 
 requirements:
   host:
     - python >=3.11.10,<3.12
     - pip
-    - setuptools
+    - setuptools >=69.0
+    - setuptools_scm  # regional-mom6 uses dynamic versioning via setuptools_scm
   run:
     - python >=3.11.10,<3.12
-    - regional-mom6  # Added from your list
+    # CrocoDash-specific
     - esmpy >=8.6.1,<8.7.0
+    - cdsapi >=0.7.6,<0.8.0
+    - h5netcdf >=1.7.3,<1.8.0
     - pydeps >=3.0.1,<3.1.0
     - graphviz >=12.2.1,<12.3.0
     - python-graphviz >=0.20.3,<0.21.0
-    - nbsphinx >=0.9.8,<0.10.0  # Kept the stricter pin
-    - cdsapi >=0.7.6,<0.8.0
-    - pytest-cov >=7.1.0,<7.2.0  # Merged/updated versions
-    - h5netcdf >=1.7.3,<1.8.0
-    - myst-parser >=4.0.0,<4.1.0
-    - sphinx-book-theme >=1.1.4,<1.2.0
+    # regional-mom6
+    - bottleneck
+    - dask >=2026.3.0,<2026.4.0
+    - f90nml >=1.4.1
+    - copernicusmarine >=2.0.0,<2.1.0
+    - pint-xarray
+    # mom6_forge
     - setuptools >=69.0,<82.1
     - numpy >=1.26,<2.5.0
     - xarray >=2023.12,<2026.3.0
@@ -37,13 +60,17 @@ requirements:
     - jupyterlab >=4.0,<4.6.0
     - ipympl >=0.9.4,<0.11.0
     - ipywidgets >=8.1.1,<8.2.0
-    - sphinx >=8.1,<9.2.0
-    - sphinx_rtd_theme >=3.0,<3.2.0
-    - black >=24.1,<26.4.0
-    - pytest >=8.0,<9.1.0
     - gitpython >=3.1,<3.2.0
     - cartopy >=0.23,<0.30
     - xesmf >=0.8.10,<1.0.0
+    - regionmask >=0.13.0,<0.14.0
+    # visualCaseGen
+    - ipykernel >=6.29,<7.3.0
+    - ipython >=8.2,<9.13
+    - jupyterlab_server >=2.25,<2.29.0
+    - pyyaml >=6.0,<6.1.0
+    - z3-solver >=4.12.3,<4.17.0
+    - networkx >=3.3,<3.7.0
 
 test:
   imports:
