@@ -1,3 +1,26 @@
+"""OBC (Open Boundary Condition) forcing extraction for CrocoDash.
+
+Processes boundary conditions through a three-step Dask-parallelised pipeline:
+
+1. **Get** — download raw data per (boundary, time-chunk) in parallel.
+2. **Regrid** — regrid each chunk to MOM6 segment format. Tasks within a
+   boundary run serially (to avoid weight-file write races); tasks across
+   boundaries run in parallel.
+3. **Merge** — concatenate all time chunks per boundary into a single
+   ``forcing_obc_segment_NNN.nc`` file.
+
+The main entry point is :func:`process_obc_conditions`. Pass a Dask
+:class:`~dask.distributed.Client` for distributed execution, or omit it to run
+with ``dask.compute`` (sequential, no cluster overhead).
+
+Create a client with the helpers in :mod:`CrocoDash.extract_forcings.utils`:
+
+- :func:`~CrocoDash.extract_forcings.utils.make_local_cluster` — local
+  multi-process cluster, useful for workstations and interactive nodes.
+- :func:`~CrocoDash.extract_forcings.utils.make_pbs_cluster` — PBS cluster via
+  ``dask-jobqueue``, for HPC batch jobs.
+"""
+
 import os
 from collections import defaultdict
 from datetime import datetime, timedelta
@@ -158,23 +181,17 @@ def _merge_single_boundary(
     return output_path
 
 
-def _print_phase1_graph(
+def _log_phase1_graph(
     boundaries, bnc, date_pairs, date_format, get_tasks, regrid_tasks
 ):
-    """Print a text summary of the Phase 1 task graph to stdout."""
-    print(
-        f"\nPhase 1 task graph  ({len(boundaries)} boundary(ies), {len(date_pairs)} chunk(s))"
+    """Log a summary of the Phase 1 task graph."""
+    logger.info(
+        "Phase 1 task graph  (%d boundary(ies), %d chunk(s))",
+        len(boundaries),
+        len(date_pairs),
     )
-    print(f"  GET tasks run fully in parallel across all boundaries and chunks.")
-    print(f"  REGRID chunk 0 for each boundary runs first and writes the weights file.")
-    print(
-        f"  REGRID chunks 1+ for the same boundary wait for chunk 0, then run in parallel."
-    )
-    print(f"  REGRID tasks across different boundaries are always independent.")
-    print()
     for boundary in boundaries:
         seg_label = f"{bnc[boundary]:03d}"
-        print(f"  {boundary} (seg {seg_label}):")
         for i, (start, end) in enumerate(date_pairs):
             has_get = (boundary, i) in get_tasks
             has_regrid = (boundary, i) in regrid_tasks
@@ -182,15 +199,18 @@ def _print_phase1_graph(
             if has_get:
                 steps.append("get")
             if has_regrid:
-                if i == 0:
-                    steps.append("regrid (writes weights)")
-                else:
-                    steps.append("regrid (waits for chunk 0 weights, then parallel)")
+                steps.append("regrid (writes weights)" if i == 0 else "regrid")
             if not steps:
                 steps.append("skipped")
             date_range = f"{start.strftime(date_format)} -> {end.strftime(date_format)}"
-            print(f"    chunk {i}  [{date_range}]  {' -> '.join(steps)}")
-    print()
+            logger.info(
+                "  %s (seg %s) chunk %d  [%s]  %s",
+                boundary,
+                seg_label,
+                i,
+                date_range,
+                " -> ".join(steps),
+            )
 
 
 def process_obc_conditions(
@@ -200,6 +220,7 @@ def process_obc_conditions(
     skip_merge: bool = False,
     client=None,
     preview: bool = False,
+    visualize: bool = False,
 ):
     """
     Process boundary conditions through the three-step pipeline using Dask.
@@ -227,8 +248,13 @@ def process_obc_conditions(
         skip_get: Skip download; use existing raw files on disk.
         skip_regrid: Skip regridding; use existing regridded files on disk.
         skip_merge: Skip the merge step.
-        client: Dask distributed Client. Falls back to dask.compute if None.
+        client: Dask distributed Client. Falls back to ``dask.compute``
+                (sequential) if None. Create one with
+                :func:`~CrocoDash.extract_forcings.utils.make_local_cluster`
+                or :func:`~CrocoDash.extract_forcings.utils.make_pbs_cluster`.
         preview: Return a dict describing what would run, without executing.
+        visualize: Save task graph PNGs (phase1_graph.png, phase2_graph.png).
+                   Requires graphviz. Disabled by default.
     """
     config = utils.Config(config_path)
 
@@ -478,12 +504,10 @@ def process_obc_conditions(
     else:
         phase1_submit = []
 
-    _print_phase1_graph(
-        boundaries, bnc, date_pairs, date_format, get_tasks, regrid_tasks
-    )
-    if phase1_submit:
+    _log_phase1_graph(boundaries, bnc, date_pairs, date_format, get_tasks, regrid_tasks)
+    if visualize and phase1_submit:
         dask.visualize(*phase1_submit, filename="phase1_graph.png")
-        print("  Task graph image saved to phase1_graph.png")
+        logger.info("Task graph image saved to phase1_graph.png")
 
     # Execute Phase 1.
     # client.compute() submits all tasks to the cluster and returns futures immediately.
@@ -524,15 +548,19 @@ def process_obc_conditions(
         for seg_label, paths in regridded_inputs.items()
     ]
 
-    print(f"\nPhase 2 task graph  ({len(merge_tasks)} merge task(s), all independent)")
+    logger.info(
+        "Phase 2 task graph  (%d merge task(s), all independent)", len(merge_tasks)
+    )
     for seg_label, paths in regridded_inputs.items():
-        print(
-            f"  seg {seg_label}: merge {len(paths)} chunk(s) -> forcing_obc_segment_{seg_label}.nc"
+        logger.info(
+            "  seg %s: merge %d chunk(s) -> forcing_obc_segment_%s.nc",
+            seg_label,
+            len(paths),
+            seg_label,
         )
-    print()
-    if merge_tasks:
+    if visualize and merge_tasks:
         dask.visualize(*merge_tasks, filename="phase2_graph.png")
-        print("  Task graph image saved to phase2_graph.png")
+        logger.info("Task graph image saved to phase2_graph.png")
 
     if merge_tasks:
         if client is not None:

@@ -30,24 +30,25 @@ def process_initial_condition(
     """
     Process the initial condition (t=0) through the data retrieval pipeline.
 
-    This function orchestrates the data extraction workflow for the initial condition:
-    1. get_dataset_piecewise: Download/retrieve raw data from source datasets
-
     Args:
         product_name: The name of the data product to retrieve.
         function_name: The function to call for retrieving data.
-        date_format: The date format string (e.g., "%Y-%m-%d").
-        start_date: The start date in the specified format.
-        hgrid_path: Path to the hgrid file containing the regional grid.
-        output_dir: The directory to save the output NetCDF files.
-        boundary_number_conversion: Dictionary mapping boundaries to their numerical identifiers.
-        preview: Whether or not to preview the run, default is false
+        product_information: Variable name mappings and metadata for the forcing product.
+        date_format: The date format string (e.g., "%Y%m%d").
+        start_date: The start date (string or datetime).
+        hgrid_path: Path to the hgrid supergrid file.
+        vgrid_path: Path to the vertical grid file.
+        dataset_varnames: Variable name mappings passed to rm6 regridding.
+        raw_data_dir: Directory for raw downloaded data.
+        output_data_dir: Directory for final MOM6-ready output files.
+        bathymetry_path: Path to the bathymetry file.
+        preview: Return metadata dict without executing, default False.
     """
     if isinstance(start_date, str):
         start_date = datetime.strptime(start_date, date_format)
 
     ProductRegistry.load()
-    # ProductRegistry.validate_function(product_name, function_name)
+    ProductRegistry.validate_function(product_name, function_name)
     data_access_function = ProductRegistry.get_access_function(
         product_name, function_name
     )
@@ -56,7 +57,7 @@ def process_initial_condition(
     hgrid = xr.open_dataset(hgrid_path)
     boundary_info = Grid.get_bounding_boxes_of_rectangular_grid(hgrid)
     latlon_info = boundary_info["ic"]
-    output_file = f"ic_unprocessed.nc"
+    output_file = "ic_unprocessed.nc"
     end_ic_date = start_date + timedelta(days=1)
     end_ic_date_str = end_ic_date.strftime(date_format)
     start_date_str = start_date.strftime(date_format)
@@ -200,7 +201,7 @@ def _download_initial_condition(
     variables: list[str],
     extra_args: dict,
 ):
-    output_file = f"ic_unprocessed.nc"
+    output_file = "ic_unprocessed.nc"
     raw_data_dir = Path(raw_data_dir)
     if (raw_data_dir / output_file).exists():
         logger.info(
@@ -231,6 +232,6 @@ def final_cleanliness_fill(var, x_dim, y_dim, z_dim=None):
         .ffill(y_dim)  # fill along y
         .bfill(y_dim)
     )
-    if z_dim != None:
+    if z_dim is not None:
         var = var.ffill(z_dim)
     return var
