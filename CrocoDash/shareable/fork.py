@@ -223,7 +223,7 @@ class ForkCrocoDashBundle:
         for cfg in required:
             if cfg.name.lower() not in self.manifest.forcing_config:
                 print("Missing required configurator:", cfg)
-                self.requested_configs.append(cfg)
+                self.requested_configs.append(cfg.name.lower())
 
         valid = ForcingConfigRegistry.find_valid_configurators(self.compset)
         already_ran = []
