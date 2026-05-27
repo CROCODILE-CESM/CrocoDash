@@ -40,17 +40,22 @@ python driver.py --all
 # Run only specific forcings
 python driver.py --tides
 python driver.py --runoff
-python driver.py --bgc
+python driver.py --bc        # boundary conditions (OBC)
+python driver.py --ic        # initial conditions
 
 # Run multiple forcings
-python driver.py --tides --runoff --bgc
+python driver.py --tides --runoff --bgcic
 
 # Run all except certain forcings
 python driver.py --all --skip bgcic
-python driver.py --all --skip conditions bgcic
+python driver.py --all --skip tides bgcic
 
-# Skip entire processing phases
-python driver.py --all --skip conditions
+# Skip raw data download (use files already on disk)
+python driver.py --bc --no-get
+python driver.py --ic --no-get
+
+# Parallel OBC processing with a local cluster
+python driver.py --bc --n-workers 4
 ```
 
 This flexibility is intentional—you might want to:
@@ -71,30 +76,96 @@ Here's what happens internally when the driver runs:
 3. Outputs all the data to ocnice
 ```
 
+## Parallelism
+
+OBC (boundary condition) processing is parallelised internally with [Dask](https://dask.org).
+By default the driver runs sequentially. There are three ways to add parallelism:
+
+### 1. Local cluster (workstation or interactive node)
+
+Pass `--n-workers N` on the CLI:
+
+```bash
+python driver.py --bc --n-workers 4
+```
+
+Or from Python:
+
+```python
+from CrocoDash.extract_forcings.utils import make_local_cluster
+from CrocoDash.extract_forcings.case_setup.driver import run_workflow
+
+client = make_local_cluster(n_workers=4)
+run_workflow(bc=True, ic=True, client=client)
+client.close()
+```
+
+### 2. PBS cluster (HPC batch system)
+
+Create a client with `make_pbs_cluster` and pass it to `run_workflow` directly
+from Python (the CLI does not support HPC schedulers — cluster config is too
+site-specific for flags):
+
+```python
+from CrocoDash.extract_forcings.utils import make_pbs_cluster
+from CrocoDash.extract_forcings.case_setup.driver import run_workflow
+
+client = make_pbs_cluster(
+    n_workers=8,
+    queue="regular",
+    walltime="02:00:00",
+    memory="8GiB",
+)
+run_workflow(bc=True, ic=True, client=client)
+client.close()
+```
+
+> **Note:** `make_pbs_cluster` requires `dask-jobqueue` (`pip install dask-jobqueue`).
+
+### 3. Sequential (default)
+
+Omit `--n-workers` and don't pass a client. OBC tasks run one at a time via
+`dask.compute`. This is safe and requires no cluster setup — it's the right
+choice for small domains or quick tests.
+
 ## Design Philosophy
 
 CrocoDash deliberately **doesn't do all the processing itself**. Instead, it leverages packages:
 
-| Task | Tool | Used By |
-|------|------|---------|
-| Regridding & OBC extraction | [regional-mom6](https://github.com/COSIMA/regional-mom6) | `regrid_dataset_piecewise.py` & Various Modules |
-| Minor processing (fill, mapping, Chlorophyll) | [mom6_bathy](https://github.com/NCAR/mom6_bathy) | Various modules |
+| Task | Tool | Module |
+|------|------|--------|
+| OBC regridding | [regional-mom6](https://github.com/COSIMA/regional-mom6) | `obc.py` |
+| Initial condition regridding | [regional-mom6](https://github.com/COSIMA/regional-mom6) | `initial_condition.py` |
+| IC land-fill | [mom6_forge](https://github.com/NCAR/mom6_forge) | `initial_condition.py` |
+| Chlorophyll, fill, mapping | [mom6_forge](https://github.com/NCAR/mom6_forge) | Various modules |
 | Data formatting | `netCDF4`, `xarray` | Throughout |
 
-If you want to modify how regridding or initial/boundary conditions are processed, the main place to look is `CrocoDash.extract_forcings.regrid_dataset_piecewise`, which calls `regional-mom6` under the hood. You can look at [regional_mom6 documentation](https://regional-mom6.readthedocs.io/en/latest/index.html) for more information, allthrough it may be difficult to tease out how we use regional_mom6 without looking into the code a bit more.
+For more detail on OBC regridding, see the
+[regional-mom6 documentation](https://regional-mom6.readthedocs.io/en/latest/index.html).
 
 ## Example: Running Forcings on Your HPC System
 
-Here's a typical workflow for an HPC system with job queues:
+Here's a typical workflow for an HPC system with PBS:
 
-1. **Set up your case locally (or on login node):**
+1. **Set up your case locally (or on a login node):**
    ```python
    case = Case(...)
-   case.configure_forcings(...)  # Sets up all configuration
+   case.configure_forcings(...)  # writes config.json into the case input dir
    ```
 
-3. **Submit extraction as a batch job:**
+2. **Run extraction — option A: submit the driver as a batch script:**
    ```bash
    cd /path/to/case/input_directory/extract_forcings
-   # Activate CrocoDash environment and submit to batch system!
+   conda activate CrocoDash
+   python driver.py --all --n-workers 4
+   ```
+
+3. **Run extraction — option B: use `make_pbs_cluster` for full HPC parallelism:**
+   ```python
+   from CrocoDash.extract_forcings.utils import make_pbs_cluster
+   from CrocoDash.extract_forcings.case_setup.driver import run_workflow
+
+   client = make_pbs_cluster(n_workers=8, queue="regular", walltime="02:00:00")
+   run_workflow(bc=True, ic=True, client=client)
+   client.close()
    ```

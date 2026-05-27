@@ -344,6 +344,12 @@ document.write(`
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#directory-structure">Directory Structure</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#command-line-options">Command-Line Options</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-processing-pipeline">The Processing Pipeline</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#parallelism">Parallelism</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#local-cluster-workstation-or-interactive-node">1. Local cluster (workstation or interactive node)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pbs-cluster-hpc-batch-system">2. PBS cluster (HPC batch system)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sequential-default">3. Sequential (default)</a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#design-philosophy">Design Philosophy</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#example-running-forcings-on-your-hpc-system">Example: Running Forcings on Your HPC System</a></li>
 </ul>
@@ -395,17 +401,22 @@ python<span class="w"> </span>driver.py<span class="w"> </span>--all
 <span class="c1"># Run only specific forcings</span>
 python<span class="w"> </span>driver.py<span class="w"> </span>--tides
 python<span class="w"> </span>driver.py<span class="w"> </span>--runoff
-python<span class="w"> </span>driver.py<span class="w"> </span>--bgc
+python<span class="w"> </span>driver.py<span class="w"> </span>--bc<span class="w">        </span><span class="c1"># boundary conditions (OBC)</span>
+python<span class="w"> </span>driver.py<span class="w"> </span>--ic<span class="w">        </span><span class="c1"># initial conditions</span>
 
 <span class="c1"># Run multiple forcings</span>
-python<span class="w"> </span>driver.py<span class="w"> </span>--tides<span class="w"> </span>--runoff<span class="w"> </span>--bgc
+python<span class="w"> </span>driver.py<span class="w"> </span>--tides<span class="w"> </span>--runoff<span class="w"> </span>--bgcic
 
 <span class="c1"># Run all except certain forcings</span>
 python<span class="w"> </span>driver.py<span class="w"> </span>--all<span class="w"> </span>--skip<span class="w"> </span>bgcic
-python<span class="w"> </span>driver.py<span class="w"> </span>--all<span class="w"> </span>--skip<span class="w"> </span>conditions<span class="w"> </span>bgcic
+python<span class="w"> </span>driver.py<span class="w"> </span>--all<span class="w"> </span>--skip<span class="w"> </span>tides<span class="w"> </span>bgcic
 
-<span class="c1"># Skip entire processing phases</span>
-python<span class="w"> </span>driver.py<span class="w"> </span>--all<span class="w"> </span>--skip<span class="w"> </span>conditions
+<span class="c1"># Skip raw data download (use files already on disk)</span>
+python<span class="w"> </span>driver.py<span class="w"> </span>--bc<span class="w"> </span>--no-get
+python<span class="w"> </span>driver.py<span class="w"> </span>--ic<span class="w"> </span>--no-get
+
+<span class="c1"># Parallel OBC processing with a local cluster</span>
+python<span class="w"> </span>driver.py<span class="w"> </span>--bc<span class="w"> </span>--n-workers<span class="w"> </span><span class="m">4</span>
 </pre></div>
 </div>
 <p>This flexibility is intentional—you might want to:</p>
@@ -427,6 +438,55 @@ python<span class="w"> </span>driver.py<span class="w"> </span>--all<span class=
 </pre></div>
 </div>
 </section>
+<section id="parallelism">
+<h2>Parallelism<a class="headerlink" href="#parallelism" title="Link to this heading">#</a></h2>
+<p>OBC (boundary condition) processing is parallelised internally with <a class="reference external" href="https://dask.org">Dask</a>.
+By default the driver runs sequentially. There are three ways to add parallelism:</p>
+<section id="local-cluster-workstation-or-interactive-node">
+<h3>1. Local cluster (workstation or interactive node)<a class="headerlink" href="#local-cluster-workstation-or-interactive-node" title="Link to this heading">#</a></h3>
+<p>Pass <code class="docutils literal notranslate"><span class="pre">--n-workers</span> <span class="pre">N</span></code> on the CLI:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>driver.py<span class="w"> </span>--bc<span class="w"> </span>--n-workers<span class="w"> </span><span class="m">4</span>
+</pre></div>
+</div>
+<p>Or from Python:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">CrocoDash.extract_forcings.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_local_cluster</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">CrocoDash.extract_forcings.case_setup.driver</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_workflow</span>
+
+<span class="n">client</span> <span class="o">=</span> <span class="n">make_local_cluster</span><span class="p">(</span><span class="n">n_workers</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+<span class="n">run_workflow</span><span class="p">(</span><span class="n">bc</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ic</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">)</span>
+<span class="n">client</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="pbs-cluster-hpc-batch-system">
+<h3>2. PBS cluster (HPC batch system)<a class="headerlink" href="#pbs-cluster-hpc-batch-system" title="Link to this heading">#</a></h3>
+<p>Create a client with <code class="docutils literal notranslate"><span class="pre">make_pbs_cluster</span></code> and pass it to <code class="docutils literal notranslate"><span class="pre">run_workflow</span></code> directly
+from Python (the CLI does not support HPC schedulers — cluster config is too
+site-specific for flags):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">CrocoDash.extract_forcings.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_pbs_cluster</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">CrocoDash.extract_forcings.case_setup.driver</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_workflow</span>
+
+<span class="n">client</span> <span class="o">=</span> <span class="n">make_pbs_cluster</span><span class="p">(</span>
+    <span class="n">n_workers</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+    <span class="n">queue</span><span class="o">=</span><span class="s2">&quot;regular&quot;</span><span class="p">,</span>
+    <span class="n">walltime</span><span class="o">=</span><span class="s2">&quot;02:00:00&quot;</span><span class="p">,</span>
+    <span class="n">memory</span><span class="o">=</span><span class="s2">&quot;8GiB&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">run_workflow</span><span class="p">(</span><span class="n">bc</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ic</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">)</span>
+<span class="n">client</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</pre></div>
+</div>
+<blockquote>
+<div><p><strong>Note:</strong> <code class="docutils literal notranslate"><span class="pre">make_pbs_cluster</span></code> requires <code class="docutils literal notranslate"><span class="pre">dask-jobqueue</span></code> (<code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">dask-jobqueue</span></code>).</p>
+</div></blockquote>
+</section>
+<section id="sequential-default">
+<h3>3. Sequential (default)<a class="headerlink" href="#sequential-default" title="Link to this heading">#</a></h3>
+<p>Omit <code class="docutils literal notranslate"><span class="pre">--n-workers</span></code> and don’t pass a client. OBC tasks run one at a time via
+<code class="docutils literal notranslate"><span class="pre">dask.compute</span></code>. This is safe and requires no cluster setup — it’s the right
+choice for small domains or quick tests.</p>
+</section>
+</section>
 <section id="design-philosophy">
 <h2>Design Philosophy<a class="headerlink" href="#design-philosophy" title="Link to this heading">#</a></h2>
 <p>CrocoDash deliberately <strong>doesn’t do all the processing itself</strong>. Instead, it leverages packages:</p>
@@ -434,16 +494,24 @@ python<span class="w"> </span>driver.py<span class="w"> </span>--all<span class=
 <thead>
 <tr class="row-odd"><th class="head"><p>Task</p></th>
 <th class="head"><p>Tool</p></th>
-<th class="head"><p>Used By</p></th>
+<th class="head"><p>Module</p></th>
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p>Regridding &amp; OBC extraction</p></td>
+<tr class="row-even"><td><p>OBC regridding</p></td>
 <td><p><a class="reference external" href="https://github.com/COSIMA/regional-mom6">regional-mom6</a></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">regrid_dataset_piecewise.py</span></code> &amp; Various Modules</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">obc.py</span></code></p></td>
 </tr>
-<tr class="row-odd"><td><p>Minor processing (fill, mapping, Chlorophyll)</p></td>
-<td><p><a class="reference external" href="https://github.com/NCAR/mom6_bathy">mom6_bathy</a></p></td>
+<tr class="row-odd"><td><p>Initial condition regridding</p></td>
+<td><p><a class="reference external" href="https://github.com/COSIMA/regional-mom6">regional-mom6</a></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">initial_condition.py</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p>IC land-fill</p></td>
+<td><p><a class="reference external" href="https://github.com/NCAR/mom6_forge">mom6_forge</a></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">initial_condition.py</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>Chlorophyll, fill, mapping</p></td>
+<td><p><a class="reference external" href="https://github.com/NCAR/mom6_forge">mom6_forge</a></p></td>
 <td><p>Various modules</p></td>
 </tr>
 <tr class="row-even"><td><p>Data formatting</p></td>
@@ -453,21 +521,33 @@ python<span class="w"> </span>driver.py<span class="w"> </span>--all<span class=
 </tbody>
 </table>
 </div>
-<p>If you want to modify how regridding or initial/boundary conditions are processed, the main place to look is <code class="docutils literal notranslate"><span class="pre">CrocoDash.extract_forcings.regrid_dataset_piecewise</span></code>, which calls <code class="docutils literal notranslate"><span class="pre">regional-mom6</span></code> under the hood. You can look at <a class="reference external" href="https://regional-mom6.readthedocs.io/en/latest/index.html">regional_mom6 documentation</a> for more information, allthrough it may be difficult to tease out how we use regional_mom6 without looking into the code a bit more.</p>
+<p>For more detail on OBC regridding, see the
+<a class="reference external" href="https://regional-mom6.readthedocs.io/en/latest/index.html">regional-mom6 documentation</a>.</p>
 </section>
 <section id="example-running-forcings-on-your-hpc-system">
 <h2>Example: Running Forcings on Your HPC System<a class="headerlink" href="#example-running-forcings-on-your-hpc-system" title="Link to this heading">#</a></h2>
-<p>Here’s a typical workflow for an HPC system with job queues:</p>
+<p>Here’s a typical workflow for an HPC system with PBS:</p>
 <ol class="arabic">
-<li><p><strong>Set up your case locally (or on login node):</strong></p>
+<li><p><strong>Set up your case locally (or on a login node):</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">case</span> <span class="o">=</span> <span class="n">Case</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
-<span class="k">case</span><span class="o">.</span><span class="n">configure_forcings</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>  <span class="c1"># Sets up all configuration</span>
+<span class="k">case</span><span class="o">.</span><span class="n">configure_forcings</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>  <span class="c1"># writes config.json into the case input dir</span>
 </pre></div>
 </div>
 </li>
-<li><p><strong>Submit extraction as a batch job:</strong></p>
+<li><p><strong>Run extraction — option A: submit the driver as a batch script:</strong></p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>/path/to/case/input_directory/extract_forcings
-<span class="c1"># Activate CrocoDash environment and submit to batch system!</span>
+conda<span class="w"> </span>activate<span class="w"> </span>CrocoDash
+python<span class="w"> </span>driver.py<span class="w"> </span>--all<span class="w"> </span>--n-workers<span class="w"> </span><span class="m">4</span>
+</pre></div>
+</div>
+</li>
+<li><p><strong>Run extraction — option B: use <code class="docutils literal notranslate"><span class="pre">make_pbs_cluster</span></code> for full HPC parallelism:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">CrocoDash.extract_forcings.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_pbs_cluster</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">CrocoDash.extract_forcings.case_setup.driver</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_workflow</span>
+
+<span class="n">client</span> <span class="o">=</span> <span class="n">make_pbs_cluster</span><span class="p">(</span><span class="n">n_workers</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">queue</span><span class="o">=</span><span class="s2">&quot;regular&quot;</span><span class="p">,</span> <span class="n">walltime</span><span class="o">=</span><span class="s2">&quot;02:00:00&quot;</span><span class="p">)</span>
+<span class="n">run_workflow</span><span class="p">(</span><span class="n">bc</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ic</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">)</span>
+<span class="n">client</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 </pre></div>
 </div>
 </li>
@@ -524,6 +604,12 @@ python<span class="w"> </span>driver.py<span class="w"> </span>--all<span class=
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#directory-structure">Directory Structure</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#command-line-options">Command-Line Options</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-processing-pipeline">The Processing Pipeline</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#parallelism">Parallelism</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#local-cluster-workstation-or-interactive-node">1. Local cluster (workstation or interactive node)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pbs-cluster-hpc-batch-system">2. PBS cluster (HPC batch system)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sequential-default">3. Sequential (default)</a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#design-philosophy">Design Philosophy</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#example-running-forcings-on-your-hpc-system">Example: Running Forcings on Your HPC System</a></li>
 </ul>
