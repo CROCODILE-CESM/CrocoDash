@@ -10,17 +10,22 @@ regridding, and formatting operations.
 
 OBC processing (``--bc``) is parallelised internally with Dask. By default it
 runs sequentially on the local machine. Pass ``--n-workers N`` to launch a
-``LocalCluster`` with N workers instead. For HPC clusters (PBS, SLURM), create
-a client with :func:`~CrocoDash.extract_forcings.utils.make_pbs_cluster` and
-pass it to :func:`run_workflow` directly from Python.
+``LocalCluster`` with N workers. For PBS clusters, add ``--pbs`` along with
+optional ``--queue``, ``--walltime``, ``--memory``, ``--cores``, and
+``--resource-spec`` flags (requires ``dask-jobqueue``). For full Python control
+(e.g. SLURM), create a client with
+:func:`~CrocoDash.extract_forcings.utils.make_pbs_cluster` and pass it to
+:func:`run_workflow` directly.
 
 Typical CLI usage::
 
-    python driver.py --all                     # all components, sequential OBC
-    python driver.py --bc --n-workers 4        # OBC with 4 parallel workers
-    python driver.py --tides --bgcic           # tides and BGC IC only
-    python driver.py --all --skip runoff       # all except runoff
-    python driver.py --ic --no-get             # IC, skip raw data download
+    python driver.py --all                          # all components, sequential OBC
+    python driver.py --bc --n-workers 4             # OBC with 4 local workers
+    python driver.py --bc --n-workers 8 --pbs \
+        --queue regular --walltime 02:00:00         # OBC with 8 PBS jobs
+    python driver.py --tides --bgcic                # tides and BGC IC only
+    python driver.py --all --skip runoff            # all except runoff
+    python driver.py --ic --no-get                  # IC, skip raw data download
 
 Typical Python usage (HPC power users)::
 
@@ -198,11 +203,46 @@ def parse_args():
         help="Skip components by name (e.g. --skip tides runoff)",
     )
 
-    parser.add_argument(
+    cluster_opts = parser.add_argument_group(
+        "Cluster options",
+        "Parallelism for OBC processing. Omit --n-workers to run sequentially.",
+    )
+    cluster_opts.add_argument(
         "--n-workers",
         type=int,
         default=None,
-        help="Workers for OBC parallel processing. Omit to run without a distributed cluster.",
+        help="Number of workers. With --pbs, submits N PBS jobs; otherwise starts a LocalCluster.",
+    )
+    cluster_opts.add_argument(
+        "--pbs",
+        action="store_true",
+        help="Use a PBS cluster instead of a local cluster (requires dask-jobqueue).",
+    )
+    cluster_opts.add_argument(
+        "--queue",
+        default=None,
+        help="PBS queue/partition (e.g. 'regular'). Site-specific.",
+    )
+    cluster_opts.add_argument(
+        "--walltime",
+        default="01:00:00",
+        help="Walltime per PBS job (default: 01:00:00).",
+    )
+    cluster_opts.add_argument(
+        "--memory",
+        default="4GiB",
+        help="Memory per PBS job (default: 4GiB).",
+    )
+    cluster_opts.add_argument(
+        "--cores",
+        type=int,
+        default=1,
+        help="CPU cores per PBS job (default: 1).",
+    )
+    cluster_opts.add_argument(
+        "--resource-spec",
+        default=None,
+        help="Raw PBS -l resource string (e.g. 'select=1:ncpus=4:mem=4gb'). Overrides --cores/--memory.",
     )
 
     if len(sys.argv) == 1:
@@ -237,7 +277,7 @@ def resolve_components(args, cfg):
         k: v
         for k, v in vars(args).items()
         if isinstance(v, bool)
-        and k not in {"all", "test", "no_get", "no_regrid", "no_merge"}
+        and k not in {"all", "test", "no_get", "no_regrid", "no_merge", "pbs"}
     }
 
     skip = {s.lower() for s in args.skip}
@@ -379,24 +419,43 @@ def run_from_cli(args, cfg):
         test_driver()
         return
 
+    if args.pbs and args.n_workers is None:
+        raise ValueError("--pbs requires --n-workers")
+
     args = resolve_components(args, cfg)
 
-    run_workflow(
-        ic=args.ic,
-        bc=args.bc,
-        bgcic=args.bgcic,
-        bgcironforcing=args.bgcironforcing,
-        tides=args.tides,
-        chl=args.chl,
-        runoff=args.runoff,
-        bgcrivernutrients=args.bgcrivernutrients,
-        skip_get=args.no_get,
-        skip_regrid=args.no_regrid,
-        skip_merge=args.no_merge,
-        preview=cfg["basic"]["general"].get("preview", False),
-        cfg=cfg,
-        n_workers=args.n_workers,
-    )
+    client = None
+    if args.pbs:
+        client = utils.make_pbs_cluster(
+            n_workers=args.n_workers,
+            cores=args.cores,
+            memory=args.memory,
+            walltime=args.walltime,
+            queue=args.queue,
+            resource_spec=args.resource_spec,
+        )
+
+    try:
+        run_workflow(
+            ic=args.ic,
+            bc=args.bc,
+            bgcic=args.bgcic,
+            bgcironforcing=args.bgcironforcing,
+            tides=args.tides,
+            chl=args.chl,
+            runoff=args.runoff,
+            bgcrivernutrients=args.bgcrivernutrients,
+            skip_get=args.no_get,
+            skip_regrid=args.no_regrid,
+            skip_merge=args.no_merge,
+            preview=cfg["basic"]["general"].get("preview", False),
+            cfg=cfg,
+            client=client,
+            n_workers=args.n_workers if not args.pbs else None,
+        )
+    finally:
+        if client is not None:
+            client.close()
 
 
 if __name__ == "__main__":
