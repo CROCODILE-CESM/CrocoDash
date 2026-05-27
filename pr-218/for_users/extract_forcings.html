@@ -417,6 +417,10 @@ python<span class="w"> </span>driver.py<span class="w"> </span>--ic<span class="
 
 <span class="c1"># Parallel OBC processing with a local cluster</span>
 python<span class="w"> </span>driver.py<span class="w"> </span>--bc<span class="w"> </span>--n-workers<span class="w"> </span><span class="m">4</span>
+
+<span class="c1"># Parallel OBC processing with a PBS cluster</span>
+python<span class="w"> </span>driver.py<span class="w"> </span>--bc<span class="w"> </span>--n-workers<span class="w"> </span><span class="m">8</span><span class="w"> </span>--pbs<span class="w"> </span>--queue<span class="w"> </span>regular<span class="w"> </span>--walltime<span class="w"> </span><span class="m">02</span>:00:00
+python<span class="w"> </span>driver.py<span class="w"> </span>--bc<span class="w"> </span>--n-workers<span class="w"> </span><span class="m">8</span><span class="w"> </span>--pbs<span class="w"> </span>--queue<span class="w"> </span>regular<span class="w"> </span>--walltime<span class="w"> </span><span class="m">02</span>:00:00<span class="w"> </span>--memory<span class="w"> </span>8GiB<span class="w"> </span>--cores<span class="w"> </span><span class="m">2</span>
 </pre></div>
 </div>
 <p>This flexibility is intentional—you might want to:</p>
@@ -460,9 +464,14 @@ By default the driver runs sequentially. There are three ways to add parallelism
 </section>
 <section id="pbs-cluster-hpc-batch-system">
 <h3>2. PBS cluster (HPC batch system)<a class="headerlink" href="#pbs-cluster-hpc-batch-system" title="Link to this heading">#</a></h3>
-<p>Create a client with <code class="docutils literal notranslate"><span class="pre">make_pbs_cluster</span></code> and pass it to <code class="docutils literal notranslate"><span class="pre">run_workflow</span></code> directly
-from Python (the CLI does not support HPC schedulers — cluster config is too
-site-specific for flags):</p>
+<p>Pass <code class="docutils literal notranslate"><span class="pre">--pbs</span></code> along with <code class="docutils literal notranslate"><span class="pre">--n-workers</span></code> on the CLI:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>driver.py<span class="w"> </span>--bc<span class="w"> </span>--n-workers<span class="w"> </span><span class="m">8</span><span class="w"> </span>--pbs<span class="w"> </span>--queue<span class="w"> </span>regular<span class="w"> </span>--walltime<span class="w"> </span><span class="m">02</span>:00:00
+python<span class="w"> </span>driver.py<span class="w"> </span>--bc<span class="w"> </span>--n-workers<span class="w"> </span><span class="m">8</span><span class="w"> </span>--pbs<span class="w"> </span>--queue<span class="w"> </span>regular<span class="w"> </span>--walltime<span class="w"> </span><span class="m">02</span>:00:00<span class="w"> </span>--memory<span class="w"> </span>8GiB<span class="w"> </span>--cores<span class="w"> </span><span class="m">2</span>
+<span class="c1"># Low-level resource override:</span>
+python<span class="w"> </span>driver.py<span class="w"> </span>--bc<span class="w"> </span>--n-workers<span class="w"> </span><span class="m">8</span><span class="w"> </span>--pbs<span class="w"> </span>--resource-spec<span class="w"> </span><span class="s2">&quot;select=1:ncpus=4:mem=4gb&quot;</span>
+</pre></div>
+</div>
+<p>Or from Python with full control:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">CrocoDash.extract_forcings.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_pbs_cluster</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">CrocoDash.extract_forcings.case_setup.driver</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_workflow</span>
 

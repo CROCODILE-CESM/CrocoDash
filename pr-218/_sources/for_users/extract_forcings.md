@@ -56,6 +56,10 @@ python driver.py --ic --no-get
 
 # Parallel OBC processing with a local cluster
 python driver.py --bc --n-workers 4
+
+# Parallel OBC processing with a PBS cluster
+python driver.py --bc --n-workers 8 --pbs --queue regular --walltime 02:00:00
+python driver.py --bc --n-workers 8 --pbs --queue regular --walltime 02:00:00 --memory 8GiB --cores 2
 ```
 
 This flexibility is intentional—you might want to:
@@ -102,9 +106,16 @@ client.close()
 
 ### 2. PBS cluster (HPC batch system)
 
-Create a client with `make_pbs_cluster` and pass it to `run_workflow` directly
-from Python (the CLI does not support HPC schedulers — cluster config is too
-site-specific for flags):
+Pass `--pbs` along with `--n-workers` on the CLI:
+
+```bash
+python driver.py --bc --n-workers 8 --pbs --queue regular --walltime 02:00:00
+python driver.py --bc --n-workers 8 --pbs --queue regular --walltime 02:00:00 --memory 8GiB --cores 2
+# Low-level resource override:
+python driver.py --bc --n-workers 8 --pbs --resource-spec "select=1:ncpus=4:mem=4gb"
+```
+
+Or from Python with full control:
 
 ```python
 from CrocoDash.extract_forcings.utils import make_pbs_cluster
