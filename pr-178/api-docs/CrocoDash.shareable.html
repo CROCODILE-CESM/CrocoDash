@@ -382,15 +382,15 @@ document.write(`
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.bundle.BundleCrocoDashCase"><code class="docutils literal notranslate"><span class="pre">BundleCrocoDashCase</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.bundle.BundleCrocoDashCase.bundle"><code class="docutils literal notranslate"><span class="pre">BundleCrocoDashCase.bundle()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.bundle.BundleCrocoDashCase.case"><code class="docutils literal notranslate"><span class="pre">BundleCrocoDashCase.case</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.bundle.BundleCrocoDashCase.clone"><code class="docutils literal notranslate"><span class="pre">BundleCrocoDashCase.clone()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.bundle.BundleCrocoDashCase.diff"><code class="docutils literal notranslate"><span class="pre">BundleCrocoDashCase.diff()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.bundle.BundleCrocoDashCase.duplicate_case"><code class="docutils literal notranslate"><span class="pre">BundleCrocoDashCase.duplicate_case()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.bundle.BundleCrocoDashCase.generate_manifest"><code class="docutils literal notranslate"><span class="pre">BundleCrocoDashCase.generate_manifest()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.bundle.BundleCrocoDashCase.get_user_nl_value"><code class="docutils literal notranslate"><span class="pre">BundleCrocoDashCase.get_user_nl_value()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.bundle.BundleCrocoDashCase.identify_non_standard_CrocoDash_case_information"><code class="docutils literal notranslate"><span class="pre">BundleCrocoDashCase.identify_non_standard_CrocoDash_case_information()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.bundle.BundleCrocoDashCase.reread"><code class="docutils literal notranslate"><span class="pre">BundleCrocoDashCase.reread()</span></code></a></li>
 </ul>
 </li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.bundle.clone"><code class="docutils literal notranslate"><span class="pre">clone()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.bundle.duplicate_case"><code class="docutils literal notranslate"><span class="pre">duplicate_case()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.bundle.get_case_obj"><code class="docutils literal notranslate"><span class="pre">get_case_obj()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.bundle.run_xmlquery"><code class="docutils literal notranslate"><span class="pre">run_xmlquery()</span></code></a></li>
 </ul>
@@ -617,11 +617,6 @@ This design started with individual functions, and got a bit too unwieldy!</p>
 <dd></dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="CrocoDash.shareable.bundle.BundleCrocoDashCase.clone">
-<span class="sig-name descname"><span class="pre">clone</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">new_caseroot</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_inputdir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bundle_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.shareable.bundle.BundleCrocoDashCase.clone" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.shareable.bundle.BundleCrocoDashCase.diff">
 <span class="sig-name descname"><span class="pre">diff</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other_case</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.shareable.bundle.BundleCrocoDashCase.diff" title="Link to this definition">#</a></dt>
 <dd><p>Diff this case (as the original) against another ReadCase (which is assumed to have been initialized the same). The diff indicates what unique features in the original are not in the new</p>
@@ -631,6 +626,11 @@ This design started with individual functions, and got a bit too unwieldy!</p>
 - user_nls
 - sourcemods</p>
 </dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.shareable.bundle.BundleCrocoDashCase.duplicate_case">
+<span class="sig-name descname"><span class="pre">duplicate_case</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">new_caseroot</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_inputdir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bundle_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.shareable.bundle.BundleCrocoDashCase.duplicate_case" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.shareable.bundle.BundleCrocoDashCase.generate_manifest">
@@ -655,14 +655,14 @@ This design started with individual functions, and got a bit too unwieldy!</p>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="CrocoDash.shareable.bundle.clone">
-<span class="sig-prename descclassname"><span class="pre">CrocoDash.shareable.bundle.</span></span><span class="sig-name descname"><span class="pre">clone</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">caseroot</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_caseroot</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_inputdir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bundle_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.shareable.bundle.clone" title="Link to this definition">#</a></dt>
-<dd><p>Clone a CrocoDash case to a new location. Machine, project, and cesmroot
+<dt class="sig sig-object py" id="CrocoDash.shareable.bundle.duplicate_case">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.shareable.bundle.</span></span><span class="sig-name descname"><span class="pre">duplicate_case</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">caseroot</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_caseroot</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_inputdir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bundle_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.shareable.bundle.duplicate_case" title="Link to this definition">#</a></dt>
+<dd><p>Duplicate a CrocoDash case to a new location. Machine, project, and cesmroot
 are read automatically from the original caseroot.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>caseroot</strong> (<em>str</em><em> or </em><em>Path</em>) – Path to the existing case to clone.</p></li>
+<li><p><strong>caseroot</strong> (<em>str</em><em> or </em><em>Path</em>) – Path to the existing case to duplicate.</p></li>
 <li><p><strong>new_caseroot</strong> (<em>str</em><em> or </em><em>Path</em>) – Path for the new case.</p></li>
 <li><p><strong>new_inputdir</strong> (<em>str</em><em> or </em><em>Path</em>) – Path for the new input directory.</p></li>
 <li><p><strong>bundle_dir</strong> (<em>str</em><em> or </em><em>Path</em><em>, </em><em>optional</em>) – Where to write the intermediate bundle. Defaults to inside
@@ -756,15 +756,15 @@ new_caseroot and is cleaned up automatically.</p></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.bundle.BundleCrocoDashCase"><code class="docutils literal notranslate"><span class="pre">BundleCrocoDashCase</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.bundle.BundleCrocoDashCase.bundle"><code class="docutils literal notranslate"><span class="pre">BundleCrocoDashCase.bundle()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.bundle.BundleCrocoDashCase.case"><code class="docutils literal notranslate"><span class="pre">BundleCrocoDashCase.case</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.bundle.BundleCrocoDashCase.clone"><code class="docutils literal notranslate"><span class="pre">BundleCrocoDashCase.clone()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.bundle.BundleCrocoDashCase.diff"><code class="docutils literal notranslate"><span class="pre">BundleCrocoDashCase.diff()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.bundle.BundleCrocoDashCase.duplicate_case"><code class="docutils literal notranslate"><span class="pre">BundleCrocoDashCase.duplicate_case()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.bundle.BundleCrocoDashCase.generate_manifest"><code class="docutils literal notranslate"><span class="pre">BundleCrocoDashCase.generate_manifest()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.bundle.BundleCrocoDashCase.get_user_nl_value"><code class="docutils literal notranslate"><span class="pre">BundleCrocoDashCase.get_user_nl_value()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.bundle.BundleCrocoDashCase.identify_non_standard_CrocoDash_case_information"><code class="docutils literal notranslate"><span class="pre">BundleCrocoDashCase.identify_non_standard_CrocoDash_case_information()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.bundle.BundleCrocoDashCase.reread"><code class="docutils literal notranslate"><span class="pre">BundleCrocoDashCase.reread()</span></code></a></li>
 </ul>
 </li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.bundle.clone"><code class="docutils literal notranslate"><span class="pre">clone()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.bundle.duplicate_case"><code class="docutils literal notranslate"><span class="pre">duplicate_case()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.bundle.get_case_obj"><code class="docutils literal notranslate"><span class="pre">get_case_obj()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.bundle.run_xmlquery"><code class="docutils literal notranslate"><span class="pre">run_xmlquery()</span></code></a></li>
 </ul>
