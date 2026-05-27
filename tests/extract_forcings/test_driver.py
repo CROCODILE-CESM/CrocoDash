@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, Mock, patch
 import sys
 import subprocess
 import json
@@ -175,9 +175,12 @@ def test_resolve_components_individual_component_flag():
 # Some simple dry runs
 @patch("CrocoDash.extract_forcings.case_setup.driver.process_runoff")
 @patch("CrocoDash.extract_forcings.case_setup.driver.process_tides")
-@patch("CrocoDash.extract_forcings.case_setup.driver.process_conditions")
+@patch("CrocoDash.extract_forcings.case_setup.driver.process_obc")
+@patch(
+    "CrocoDash.extract_forcings.case_setup.driver.initial_condition.process_initial_condition"
+)
 def test_run_from_cli_integration(
-    mock_cond, mock_tides, mock_runoff, gen_grid_topo_vgrid, tmp_path
+    mock_ic, mock_cond, mock_tides, mock_runoff, gen_grid_topo_vgrid, tmp_path
 ):
     grid, topo, vgrid = gen_grid_topo_vgrid
     grid.write_supergrid(tmp_path / "grid.nc")
@@ -187,23 +190,39 @@ def test_run_from_cli_integration(
     with patch.object(sys, "argv", ["driver.py", "--all", "--skip", "runoff"]):
         args = driver.parse_args()
 
-    config = Mock()
-    config.config = {
+    config_data = {
         "tides": {},
         "conditions": {},
         "runoff": {},
         "basic": {
+            "general": {},
+            "forcing": {
+                "product_name": "dummy",
+                "function_name": "dummy",
+                "information": {},
+            },
+            "dates": {
+                "format": "%Y-%m-%d",
+                "start": "2000-01-01",
+            },
             "paths": {
                 "hgrid_path": tmp_path / "grid.nc",
                 "topo_path": tmp_path / "topo.nc",
                 "vgrid_path": tmp_path / "vgrid.nc",
-            }
+                "raw_dataset_path": tmp_path / "raw",
+                "output_path": tmp_path / "output",
+                "bathymetry_path": tmp_path / "topo.nc",
+            },
         },
     }
+    config = MagicMock()
+    config.config = config_data
+    config.__getitem__ = MagicMock(side_effect=lambda k: config_data[k])
 
     driver.run_from_cli(args, config)  # Real execution, but process_* are mocked
 
     # Verify which functions were called
+    assert mock_ic.called
     assert mock_tides.called
     assert mock_cond.called
     assert mock_runoff.call_count == 0  # skipped
