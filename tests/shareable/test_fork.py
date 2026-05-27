@@ -1,6 +1,7 @@
 from CrocoDash.shareable.fork import *
 import json
 import pytest
+from types import SimpleNamespace
 from unittest.mock import patch
 from uuid import uuid4
 
@@ -208,6 +209,29 @@ def test_resolve_forcing_configurations(fake_fcb_empty_case, sample_forcing_conf
     assert isinstance(fcb.requested_configs, list)
     assert isinstance(fcb.resolved_remove, set)
     assert "bgc" in fcb.resolved_remove
+
+
+def test_resolve_forcing_configurations_required_missing(
+    fake_fcb_empty_case, sample_forcing_config
+):
+    """Test that a required configurator absent from the manifest is added to requested_configs."""
+    fcb = fake_fcb_empty_case
+    # manifest has no "bgc" entry
+    fcb.manifest = BundleManifest(forcing_config={"basic": {}}, init_args={})
+    fcb.compset = "2000_DATM%JRA_SLND_SICE_MOM6_SROF_SGLC_SWAV"
+
+    mock_required = SimpleNamespace(name="BGC")
+
+    with patch(
+        "CrocoDash.shareable.fork.ForcingConfigRegistry.find_required_configurators",
+        return_value=[mock_required],
+    ), patch(
+        "CrocoDash.shareable.fork.ForcingConfigRegistry.find_valid_configurators",
+        return_value=[],
+    ):
+        fcb._resolve_forcing_configurations(extra_configs=[], remove_configs=[])
+
+    assert "bgc" in fcb.requested_configs
 
 
 def test_ask_input_response():
