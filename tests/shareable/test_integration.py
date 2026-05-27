@@ -1,5 +1,5 @@
 from CrocoDash.shareable import bundle, fork
-from CrocoDash.shareable.bundle import clone
+from CrocoDash.shareable.bundle import duplicate_case
 from unittest.mock import patch
 import subprocess
 from pathlib import Path
@@ -14,7 +14,7 @@ def test_clone(get_case_with_cf, tmp_path):
     new_inputdir = tmp_path / "cloned_inputdir"
 
     with patch("CrocoDash.shareable.fork.copy_configurations_to_case"):
-        new_case = clone(case.caseroot, new_caseroot, new_inputdir)
+        new_case = duplicate_case(case.caseroot, new_caseroot, new_inputdir)
 
     assert new_case is not None
     assert new_caseroot.exists()

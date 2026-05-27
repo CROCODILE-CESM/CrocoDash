@@ -97,16 +97,16 @@ def test_fork_cli(tmp_path):
     )
 
 
-def test_clone_cli(tmp_path):
+def test_duplicate_case_cli(tmp_path):
     mock_case = MagicMock()
 
     with patch(
-        "CrocoDash.shareable.bundle.clone", return_value=mock_case
-    ) as mock_clone:
+        "CrocoDash.shareable.bundle.duplicate_case", return_value=mock_case
+    ) as mock_duplicate:
         run_main(
             [
-                "clone",
-                "--clone",
+                "duplicate",
+                "--source",
                 "/some/existing/case",
                 "--case",
                 str(tmp_path / "new_case"),
@@ -115,7 +115,7 @@ def test_clone_cli(tmp_path):
             ]
         )
 
-    mock_clone.assert_called_once_with(
+    mock_duplicate.assert_called_once_with(
         caseroot="/some/existing/case",
         new_caseroot=str(tmp_path / "new_case"),
         new_inputdir=str(tmp_path / "inputdir"),

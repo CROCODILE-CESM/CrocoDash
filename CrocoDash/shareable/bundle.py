@@ -17,6 +17,7 @@ from CrocoDash.shareable.fork import (
     BundleManifest,
     BundleDifferences,
 )
+from CrocoDash.shareable.apply import INPUTDIR_FILE_PREFIXES
 from uuid import uuid4
 import subprocess
 from CrocoDash.logging import setup_logger
@@ -302,7 +303,7 @@ class BundleCrocoDashCase:
         ocnice_target.mkdir(parents=False, exist_ok=True)
 
         for f in Path(ocnice_dir).iterdir():
-            if f.name.startswith(("forcing_", "init_")):
+            if f.name.startswith(INPUTDIR_FILE_PREFIXES):
                 logger.info(f"Copying {f}")
                 shutil.copy(f, ocnice_target)
         # We'll get the configurations and copy into bundle ocnice
@@ -364,19 +365,21 @@ class BundleCrocoDashCase:
                 shutil.copy(src, dst)
         return case_subfolder
 
-    def clone(self, new_caseroot, new_inputdir, bundle_dir=None):
-        return clone(self.caseroot, new_caseroot, new_inputdir, bundle_dir=bundle_dir)
+    def duplicate_case(self, new_caseroot, new_inputdir, bundle_dir=None):
+        return duplicate_case(
+            self.caseroot, new_caseroot, new_inputdir, bundle_dir=bundle_dir
+        )
 
 
-def clone(caseroot, new_caseroot, new_inputdir, bundle_dir=None):
+def duplicate_case(caseroot, new_caseroot, new_inputdir, bundle_dir=None):
     """
-    Clone a CrocoDash case to a new location. Machine, project, and cesmroot
+    Duplicate a CrocoDash case to a new location. Machine, project, and cesmroot
     are read automatically from the original caseroot.
 
     Parameters
     ----------
     caseroot : str or Path
-        Path to the existing case to clone.
+        Path to the existing case to duplicate.
     new_caseroot : str or Path
         Path for the new case.
     new_inputdir : str or Path

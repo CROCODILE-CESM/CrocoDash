@@ -17,16 +17,16 @@ def _bundle(args):
     print(f"Bundle written to: {bundle_path}")
 
 
-def _clone(args):
-    from CrocoDash.shareable.bundle import clone
+def _duplicate_case(args):
+    from CrocoDash.shareable.bundle import duplicate_case
 
-    new_case = clone(
-        caseroot=args.clone,
+    new_case = duplicate_case(
+        caseroot=args.source,
         new_caseroot=args.case,
         new_inputdir=args.inputdir,
         bundle_dir=args.bundle_dir,
     )
-    print(f"Cloned case created at: {new_case.caseroot}")
+    print(f"Duplicated case created at: {new_case.caseroot}")
 
 
 def _fork(args):
@@ -89,32 +89,32 @@ def main():
     )
     bundle_parser.set_defaults(func=_bundle)
 
-    # --- clone ---
-    clone_parser = subparsers.add_parser(
-        "clone", help="Clone an existing CrocoDash case to a new location."
+    # --- duplicate ---
+    duplicate_parser = subparsers.add_parser(
+        "duplicate", help="Duplicate an existing CrocoDash case to a new location."
     )
-    clone_parser.add_argument(
-        "--clone",
+    duplicate_parser.add_argument(
+        "--source",
         required=True,
-        help="Path to the existing CESM caseroot to clone from.",
+        help="Path to the existing CESM caseroot to duplicate from.",
     )
-    clone_parser.add_argument(
+    duplicate_parser.add_argument(
         "--case",
         required=True,
-        help="Path for the new cloned caseroot.",
+        help="Path for the new duplicated caseroot.",
     )
-    clone_parser.add_argument(
+    duplicate_parser.add_argument(
         "--inputdir",
         required=True,
         help="Path for the new input directory.",
     )
-    clone_parser.add_argument(
+    duplicate_parser.add_argument(
         "--bundle-dir",
         default=None,
         dest="bundle_dir",
         help="Where to keep the bundle (default: inside new caseroot).",
     )
-    clone_parser.set_defaults(func=_clone)
+    duplicate_parser.set_defaults(func=_duplicate_case)
 
     # --- fork ---
     fork_parser = subparsers.add_parser(

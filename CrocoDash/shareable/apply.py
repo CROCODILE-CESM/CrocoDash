@@ -6,6 +6,8 @@ from CrocoDash.logging import setup_logger
 
 logger = setup_logger(__name__)
 
+INPUTDIR_FILE_PREFIXES = ("forcing_obc_segment_", "init_")
+
 
 def copy_xml_files_from_case(old_caseroot, new_caseroot, filenames):
     old_caseroot = Path(old_caseroot)
@@ -29,12 +31,12 @@ def copy_user_nl_params_from_case(
 
                 # PARAM=VALUE
                 param, value = line.split("=", 1)
-
+                param = param.split()[
+                    0
+                ]  # Get just the param name without any trailing comments
                 if param in usernlparams[key]:
-                    logger.info(
-                        f"Adding {param.strip()}={value.strip()} into user_nl_{key}"
-                    )
-                    append_user_nl(key, [(param.strip(), value.strip())], do_exec=True)
+                    logger.info(f"Adding {param}={value} into user_nl_{key}")
+                    append_user_nl(key, [(param, value)], do_exec=True)
 
 
 def copy_source_mods_from_case(
@@ -80,15 +82,8 @@ def copy_configurations_to_case(old_forcing_config, case, inputdir_ocnice):
 
     case_ocnice = case.inputdir / "ocnice"
 
-    # Copy forcing_obc_seg* files
-    for src in inputdir_ocnice.glob("forcing_obc_seg*"):
-        if src.is_file():
-            logger.info(f"Copying {src} to new case")
-            shutil.copy(src, case_ocnice)
-
-    # Copy init_* files
-    for src in inputdir_ocnice.glob("init_*"):
-        if src.is_file():
+    for src in inputdir_ocnice.iterdir():
+        if src.is_file() and src.name.startswith(INPUTDIR_FILE_PREFIXES):
             logger.info(f"Copying {src} to new case")
             shutil.copy(src, case_ocnice)
 
