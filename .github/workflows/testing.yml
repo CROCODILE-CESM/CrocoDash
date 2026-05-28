@@ -86,13 +86,13 @@ jobs:
             --project PLACEHOLDER \
             --bathymetry-path $GITHUB_WORKSPACE/gebco.nc \
             --forcing-fn get_glorys_data_script_for_cli
-      - name: Checkout cli_start_share into container
+      - name: Checkout shareable_2 into container
         uses: actions/checkout@v4
         with:
-          ref: cli_start_share
+          ref: shareable_2
           submodules: recursive
           path: CrocoDash-bundle
-      - name: Install cli_start_share into existing env
+      - name: Install shareable_2 into existing env
         shell: bash -l {0}
         run: |
           source /opt/conda/etc/profile.d/conda.sh
