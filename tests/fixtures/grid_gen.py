@@ -32,7 +32,7 @@ def get_rect_grid_and_topo(get_rect_grid):
         grid=get_rect_grid,
         min_depth=9.5,
     )
-    topo.depth.set_flat(10)
+    topo.set_flat(10)
     return get_rect_grid, topo
 
 
