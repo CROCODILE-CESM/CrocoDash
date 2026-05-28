@@ -26,12 +26,13 @@ import tempfile
 import shutil
 
 
-def accessmethod(func=None, *, description=None, type=None):
+def accessmethod(func=None, *, description=None, type=None, how_to_use=None):
     def decorator(f):
         f = staticmethod(f)
         f._is_access_method = True
         f._description = description
         f._type = type
+        f._how_to_use = how_to_use
         return f
 
     # Case 1: decorator used WITHOUT args: @accessmethod

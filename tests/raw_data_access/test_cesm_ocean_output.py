@@ -1,4 +1,4 @@
-from CrocoDash.raw_data_access.datasets import mom6_output as co
+from CrocoDash.raw_data_access.datasets import cesm_ocean_output as co
 import xarray as xr
 import pytest
 import numpy as np
@@ -14,7 +14,7 @@ def test_get_mom6_data(skip_if_not_glade, tmp_path):
     lat_max = 31
     lon_min = 289
     lon_max = 290
-    paths = co.MOM6_OUTPUT.get_mom6_data(
+    paths = co.CESM_OCEAN_OUTPUT.get_mom6_data(
         dates,
         lat_min,
         lat_max,
@@ -46,7 +46,36 @@ def test_get_mom6_data(skip_if_not_glade, tmp_path):
 @pytest.mark.slow
 def test_get_mom6_data_validation(skip_if_not_glade, tmp_path):
 
-    assert ProductRegistry.validate_function("mom6_output", "get_mom6_data")
+    assert ProductRegistry.validate_function("cesm_ocean_output", "get_mom6_data")
+
+
+def test_get_cesm2_lens_data(skip_if_not_glade, tmp_path):
+    dates = ["2000-01", "2000-03"]
+    lat_min = 30
+    lat_max = 31
+    lon_min = 289
+    lon_max = 290
+    paths = co.CESM_OCEAN_OUTPUT.get_cesm2_lens_data(
+        dates,
+        lat_min,
+        lat_max,
+        lon_min,
+        lon_max,
+        tmp_path,
+        variables=["SSH"],
+    )
+    dataset = xr.open_dataset(paths[0])
+
+    assert np.abs(dataset.TLAT.values[-1, 0] - lat_max) <= 4
+    assert np.abs(dataset.TLAT.values[0, 0] - lat_min) <= 4
+    assert np.abs(dataset.TLONG.values[0, -1] - lon_max) <= 4
+    assert np.abs(dataset.TLONG.values[0, 0] - lon_min) <= 4
+
+
+@pytest.mark.slow
+def test_get_cesm2_lens_data_validation(skip_if_not_glade, tmp_path):
+
+    assert ProductRegistry.validate_function("cesm_ocean_output", "get_cesm2_lens_data")
 
 
 def test_parse_dataset(tmp_path, dummy_forcing_factory):
