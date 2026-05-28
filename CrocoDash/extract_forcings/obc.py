@@ -385,11 +385,7 @@ def process_obc_conditions(
         if k not in ("temp", "salt")
     ]
     variables = phys_vars + extra_tracers
-    extra_args = {
-        k: product_info[k]
-        for k in ("dataset_path", "date_format", "regex", "delimiter")
-        if k in product_info
-    }
+    extra_args = config["basic"]["forcing"].get("function_default_args", {})
 
     fill_method = rm6.regridding.fill_missing_data
     if product_info.get("boundary_fill_method", "regional_mom6") != "regional_mom6":

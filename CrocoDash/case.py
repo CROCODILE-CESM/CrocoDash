@@ -548,6 +548,9 @@ class Case:
         config["forcing"]["information"] = ProductRegistry.get_product(
             self.forcing_product_name.lower()
         ).write_metadata(include_marbl_tracers=self.bgc_in_compset)
+        config["forcing"]["function_default_args"] = ProductRegistry.get_function_default_args(
+            self.forcing_product_name.lower(), function_name
+        )
 
         # General
         config["general"]["boundary_number_conversion"] = {
