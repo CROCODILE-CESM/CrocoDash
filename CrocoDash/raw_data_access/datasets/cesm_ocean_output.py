@@ -1,5 +1,5 @@
 """
-Data Access Module -> CESM output
+Data Access Module -> CESM ocean output (CESM-HR FOSI and CESM2-LENS2)
 """
 
 import xarray as xr
@@ -17,9 +17,9 @@ import pandas as pd
 from CrocoDash.raw_data_access.base import *
 
 
-class MOM6_OUTPUT(ForcingProduct):
-    product_name = "mom6_output"
-    description = "CESM had old runs that can be used for IC and OBC"
+class CESM_OCEAN_OUTPUT(ForcingProduct):
+    product_name = "cesm_ocean_output"
+    description = "CESM ocean output (POP2 grid) for use as IC and OBC, including CESM-HR FOSI and CESM2 Large Ensemble (LENS2)"
     link = "https://gdex.ucar.edu/datasets/d267000/"
     time_var_name = "time"
     boundary_fill_method = "regional_mom6"
@@ -87,6 +87,7 @@ class MOM6_OUTPUT(ForcingProduct):
     @accessmethod(
         description="Gets MOM6 Data from a given path (by default a POP-MARBL run)",
         type="python",
+        how_to_use="Requires access to the `dataset_path` directory containing CESM/MOM6 output NetCDF files. On GLADE, the default path points to a CESM-HR FOSI-BGC run — ensure it exists and files match the expected naming pattern.",
     )
     def get_mom6_data(
         dates: list,
@@ -137,6 +138,77 @@ class MOM6_OUTPUT(ForcingProduct):
             print(
                 f"Merging the files since output file is specified, into {Path(output_folder)/output_filename}"
             )
+            merged = xr.open_mfdataset(
+                paths, combine="by_coords", parallel=True, decode_timedelta=False
+            )
+            merged.to_netcdf(Path(output_folder) / output_filename)
+
+        return paths
+
+    @accessmethod(
+        description="Gets CESM2-LENS2 monthly ocean data from GDEX GLADE path",
+        type="python",
+        how_to_use=(
+            "Requires read access to /gdex/data/d651056/CESM2-LE/ on GLADE. "
+            "Use the `member` parameter to select a specific ensemble member (default: LE2-1001.001)."
+        ),
+    )
+    def get_cesm2_lens_data(
+        dates: list,
+        lat_min,
+        lat_max,
+        lon_min,
+        lon_max,
+        output_folder=Path(""),
+        output_filename=None,
+        variables=["SSH", "TEMP", "SALT", "VVEL", "UVEL"],
+        dataset_path="/gdex/data/d651056/CESM2-LE/ocn/proc/tseries/month_1",
+        member="LE2-1001.001",
+        date_format: str = "%Y%m",
+        regex=r"(\d{6})-(\d{6})",
+        delimiter=".",
+        preview=False,
+    ):
+        if not Path(dataset_path).exists():
+            raise FileNotFoundError(
+                f"Provided dataset path {dataset_path} does not exist."
+            )
+
+        dates = (
+            pd.date_range(start=dates[0], end=dates[1], freq="MS")
+            .to_pydatetime()
+            .tolist()
+        )
+        # parse_dataset uses dateutil internally, so pass full ISO dates
+        variable_info = parse_dataset(
+            variables,
+            dataset_path,
+            dates[0].strftime("%Y-%m-%d"),
+            dates[-1].strftime("%Y-%m-%d"),
+            date_format=date_format,
+            regex=regex,
+            space_character=delimiter,
+        )
+
+        # Filter to the requested ensemble member
+        for var in variable_info:
+            variable_info[var] = [f for f in variable_info[var] if member in f]
+
+        paths = subset_dataset(
+            variable_info=variable_info,
+            output_path=output_folder,
+            lat_min=lat_min - 1.5,
+            lat_max=lat_max + 1.5,
+            lon_min=lon_min - 1.5,
+            lon_max=lon_max + 1.5,
+            lat_name="TLAT",
+            lon_name="TLONG",
+            dates=(dates[0].strftime(date_format), dates[-1].strftime(date_format)),
+            preview=preview,
+        )
+
+        if output_filename is not None:
+            print(f"Merging files into {Path(output_folder) / output_filename}")
             merged = xr.open_mfdataset(
                 paths, combine="by_coords", parallel=True, decode_timedelta=False
             )
