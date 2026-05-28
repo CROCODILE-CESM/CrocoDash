@@ -218,9 +218,15 @@ class Case:
         """Perform sanity checks on the input arguments to ensure they are valid and consistent."""
 
         if Path(caseroot).exists() and not override:
-            raise ValueError(f"Given caseroot {caseroot} already exists!")
+            raise ValueError(
+                f"Given caseroot {caseroot} already exists! "
+                "To overwrite it, use override=True."
+            )
         if Path(inputdir).exists() and not override:
-            raise ValueError(f"Given inputdir {inputdir} already exists!")
+            raise ValueError(
+                f"Given inputdir {inputdir} already exists! "
+                "To overwrite it, use override=True."
+            )
         if not isinstance(ocn_grid, Grid):
             raise TypeError("ocn_grid must be a Grid object.")
         if not isinstance(ocn_vgrid, VGrid):
@@ -261,7 +267,11 @@ class Case:
                 "ocn_grid must have a name. Please set it using the 'name' attribute."
             )
         if ocn_grid.name in cime.domains["ocnice"] and not override:
-            raise ValueError(f"ocn_grid name {ocn_grid.name} is already in use.")
+            raise ValueError(
+                f"ocn_grid name '{ocn_grid.name}' is already registered in CESM's grid config. "
+                "This happens when a previous case with this grid was deleted without using override=True. "
+                "To recreate the case, use override=True."
+            )
         if not isinstance(ninst, int):
             raise TypeError("ninst must be an integer.")
         if machine is None:
@@ -759,7 +769,7 @@ class Case:
         # Stage: Component Physics Options (i.e., modifiers for the physics, e.g. %JRA, %MARBL-BIO, etc.)
         if Stage.active().title.startswith("Component Options"):
             for comp_class, phys in components.items():
-                opt = phys.split("%")[1] if "%" in phys else None
+                opt = "%".join(phys.split("%")[1:]) if "%" in phys else None
                 if opt is not None:
                     cvars[f"COMP_{comp_class}_OPTION"].value = opt
                 else:
