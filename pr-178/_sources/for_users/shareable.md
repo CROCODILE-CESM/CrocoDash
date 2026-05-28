@@ -6,7 +6,7 @@ Importable through `CrocoDash.shareable`, the module lets you:
 
 1. **Bundle** - Inspect an existing CESM case, identify what makes it unique, and package it into a portable folder
 2. **Fork** - Recreate a case from a bundle, with optional modifications
-3. **Clone** - One-step shortcut to copy a case to a new location, reading machine/project/cesmroot automatically from the original
+3. **Duplicate** - One-step shortcut to copy a case to a new location, reading machine/project/cesmroot automatically from the original
 
 ---
 
@@ -75,24 +75,24 @@ case = forker.fork(
 
 Any argument left as `None` (the default) will still prompt interactively, so you can pre-supply only some of them.
 
-### Clone (one-step shortcut)
+### Duplicate (one-step shortcut)
 
-If you just want an exact copy of an existing case without any modifications, use `clone`. It reads machine, project, and cesmroot directly from the original caseroot — no extra arguments needed.
+If you just want an exact copy of an existing case without any modifications, use `duplicate_case`. It reads machine, project, and cesmroot directly from the original caseroot — no extra arguments needed.
 
 ```python
-from CrocoDash.shareable.bundle import clone
+from CrocoDash.shareable.bundle import duplicate_case
 
-new_case = clone(
+new_case = duplicate_case(
     caseroot="/path/to/existing_case",
     new_caseroot="/path/to/new_case",
     new_inputdir="/path/to/new_inputdir",
 )
 ```
 
-The bundle is written into `new_caseroot` and kept there after cloning. You can also specify a custom location:
+The bundle is written into `new_caseroot` and kept there after duplicating. You can also specify a custom location:
 
 ```python
-new_case = clone(
+new_case = duplicate_case(
     caseroot="/path/to/existing_case",
     new_caseroot="/path/to/new_case",
     new_inputdir="/path/to/new_inputdir",
@@ -146,11 +146,11 @@ crocodash fork \
 
 All `fork` flags beyond the six required ones are optional and only needed to bypass the interactive prompts.
 
-### Clone
+### Duplicate
 
 ```bash
-crocodash clone \
-  --clone /path/to/existing_case \
+crocodash duplicate \
+  --source /path/to/existing_case \
   --case /path/to/new_case \
   --inputdir /path/to/new_inputdir
 ```
@@ -158,8 +158,8 @@ crocodash clone \
 Machine, project, and cesmroot are read automatically from the original case. Optionally specify where to keep the bundle:
 
 ```bash
-crocodash clone \
-  --clone /path/to/existing_case \
+crocodash duplicate \
+  --source /path/to/existing_case \
   --case /path/to/new_case \
   --inputdir /path/to/new_inputdir \
   --bundle-dir /path/to/bundle
