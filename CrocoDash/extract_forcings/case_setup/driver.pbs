@@ -14,8 +14,8 @@
 # 1. All components, sequential OBC (no extra workers):
 #      python driver.py --all
 #
-# 2. OBC only, with 8 PBS dask workers for parallelism:
-#      python driver.py --bc --n-workers 8 --pbs --queue main --walltime 01:00:00
+# 2. OBC only
+#      python driver.py
 #
 # 3. All components, skip tides:
 #      python driver.py --all --skip tides
