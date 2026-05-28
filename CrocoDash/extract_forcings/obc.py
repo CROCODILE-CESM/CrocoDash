@@ -35,9 +35,45 @@ from CrocoDash import logging
 from CrocoDash.extract_forcings import utils
 from CrocoDash.extract_forcings.utils import parse_dataset_folder
 from CrocoDash.grid import Grid
+from CrocoDash.topo import Topo
 from CrocoDash.raw_data_access.registry import ProductRegistry
 
 logger = logging.setup_logger(__name__)
+
+
+def _ocean_bbox_for_boundary(hgrid, tmask, boundary: str) -> dict:
+    """Return a lat/lon bounding box covering only the ocean cells on a boundary edge.
+
+    Uses tmask (shape ny×nx) to exclude land cells, giving a tighter download bbox
+    than the full supergrid extent. Falls back to the full edge extent if all cells
+    are land.
+    """
+    # T-cell centers are at every other supergrid node starting at index 1
+    tcell_lon = hgrid.x.values[1::2, 1::2]  # (ny, nx)
+    tcell_lat = hgrid.y.values[1::2, 1::2]
+
+    tmask_arr = tmask.values.astype(bool) if hasattr(tmask, "values") else tmask.astype(bool)
+
+    if boundary == "north":
+        edge_lon, edge_lat, mask = tcell_lon[-1, :], tcell_lat[-1, :], tmask_arr[-1, :]
+    elif boundary == "south":
+        edge_lon, edge_lat, mask = tcell_lon[0, :], tcell_lat[0, :], tmask_arr[0, :]
+    elif boundary == "east":
+        edge_lon, edge_lat, mask = tcell_lon[:, -1], tcell_lat[:, -1], tmask_arr[:, -1]
+    elif boundary == "west":
+        edge_lon, edge_lat, mask = tcell_lon[:, 0], tcell_lat[:, 0], tmask_arr[:, 0]
+    else:
+        raise ValueError(f"Unknown boundary '{boundary}'")
+
+    ocean_lon = edge_lon[mask] if mask.any() else edge_lon
+    ocean_lat = edge_lat[mask] if mask.any() else edge_lat
+
+    return {
+        "lat_min": float(ocean_lat.min()),
+        "lat_max": float(ocean_lat.max()),
+        "lon_min": float(ocean_lon.min()),
+        "lon_max": float(ocean_lon.max()),
+    }
 
 
 def _get_single_chunk(
@@ -45,7 +81,7 @@ def _get_single_chunk(
     start_date: datetime,
     end_date: datetime,
     date_format: str,
-    hgrid_path,
+    latlon: dict,
     output_dir,
     product_name: str,
     function_name: str,
@@ -72,9 +108,6 @@ def _get_single_chunk(
     # Workers run in separate processes -load registry inside each call
     ProductRegistry.load()
     data_access_fn = ProductRegistry.get_access_function(product_name, function_name)
-
-    hgrid = xr.open_dataset(hgrid_path)
-    latlon = Grid.get_bounding_boxes_of_rectangular_grid(hgrid)[boundary]
 
     # copernicusmarine opens S3-backed zarr and calls dask.compute() internally
     # during to_netcdf(). Without this, that compute() routes to the distributed
@@ -391,6 +424,26 @@ def process_obc_conditions(
         if k in product_info
     }
 
+    # Compute per-boundary download bboxes using the bathymetry tmask so we only
+    # request data over ocean cells (tighter than the full supergrid edge extent).
+    bathymetry_path = config["basic"]["paths"].get("bathymetry_path")
+    hgrid_ds = xr.open_dataset(hgrid_path)
+    if bathymetry_path:
+        grid_obj = Grid.from_supergrid(hgrid_path)
+        with xr.open_dataset(bathymetry_path) as bds:
+            min_depth = bds.attrs.get("min_depth")
+        topo = Topo.from_topo_file(
+            grid=grid_obj, topo_file_path=bathymetry_path, min_depth=min_depth, git=False
+        )
+        boundary_bboxes = {
+            b: _ocean_bbox_for_boundary(hgrid_ds, topo.tmask, b) for b in boundaries
+        }
+        logger.info("Using tmask-derived bounding boxes for OBC data download.")
+    else:
+        full_bboxes = Grid.get_bounding_boxes_of_rectangular_grid(hgrid_ds)
+        boundary_bboxes = {b: full_bboxes[b] for b in boundaries}
+        logger.info("No bathymetry_path in config; using full supergrid bounding boxes.")
+
     fill_method = rm6.regridding.fill_missing_data
     if product_info.get("boundary_fill_method", "regional_mom6") != "regional_mom6":
         raise ValueError(
@@ -445,7 +498,7 @@ def process_obc_conditions(
                     start_date=start,
                     end_date=end,
                     date_format=date_format,
-                    hgrid_path=str(hgrid_path),
+                    latlon=boundary_bboxes[boundary],
                     output_dir=str(raw_path),
                     product_name=product_name,
                     function_name=function_name,
