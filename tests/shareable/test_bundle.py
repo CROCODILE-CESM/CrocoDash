@@ -200,7 +200,7 @@ def test_bundle_with_modifications(CrocoDash_case_factory, tmp_path_factory, tmp
 
     # Create fake files in ocnice directory
     ocnice_dir = Path(case.inputdir) / "ocnice"
-    (ocnice_dir / "forcing_obc_Seg_fake.nc").touch()
+    (ocnice_dir / "forcing_obc_segment_fake.nc").touch()
     (ocnice_dir / "tz_fake.nc").touch()
 
     output_dir = tmp_path / "bundle_output_modified"
@@ -251,7 +251,7 @@ def test_bundle_with_modifications(CrocoDash_case_factory, tmp_path_factory, tmp
     ocnice_dir = case_bundle / "ocnice"
     assert ocnice_dir.exists(), "ocnice directory should be copied from inputdir"
     # Verify ocnice has expected structure
-    assert (ocnice_dir / "forcing_obc_Seg_fake.nc").exists()
+    assert (ocnice_dir / "forcing_obc_segment_fake.nc").exists()
     assert (ocnice_dir / "tz_fake.nc").exists()
 
     # Verify content of XML file
