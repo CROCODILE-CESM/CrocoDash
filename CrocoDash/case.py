@@ -768,12 +768,6 @@ class Case:
         # Confirm successful configuration of custom component set
         assert Stage.active().title == "2. Grid"
 
-        # VCG's Z3 solver cannot handle multi-select option values (e.g., "REGIONAL%MARBL-BIO")
-        # as assignment assertions, so only the first modifier was set above. Directly assign
-        # the full correct COMPSET_LNAME now that the options stage is complete and its
-        # options assertions have been cleared.
-        cvars["COMPSET_LNAME"].value = compset_lname
-
     def _configure_custom_grid(self, atm_grid_name, rof_grid_name):
         """Assign the custom grid variables for the case."""
 
