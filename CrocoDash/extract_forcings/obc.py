@@ -220,7 +220,7 @@ def process_obc_conditions(
     skip_merge: bool = False,
     client=None,
     preview: bool = False,
-    visualize: bool = False,
+    visualize: bool = True,
 ):
     """
     Process boundary conditions through the three-step pipeline using Dask.
