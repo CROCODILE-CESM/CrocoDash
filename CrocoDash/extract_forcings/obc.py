@@ -120,7 +120,7 @@ def _regrid_single_chunk(
 
     if dated_output.exists():
         logger.info(f"Output file {dated_output.name} already exists. Skipping.")
-        return dated_output
+        return dated_output, None
 
     (output_folder / "weights").mkdir(exist_ok=True)
 
