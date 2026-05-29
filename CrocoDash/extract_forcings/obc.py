@@ -52,7 +52,9 @@ def _ocean_bbox_for_boundary(hgrid, tmask, boundary: str) -> dict:
     tcell_lon = hgrid.x.values[1::2, 1::2]  # (ny, nx)
     tcell_lat = hgrid.y.values[1::2, 1::2]
 
-    tmask_arr = tmask.values.astype(bool) if hasattr(tmask, "values") else tmask.astype(bool)
+    tmask_arr = (
+        tmask.values.astype(bool) if hasattr(tmask, "values") else tmask.astype(bool)
+    )
 
     if boundary == "north":
         edge_lon, edge_lat, mask = tcell_lon[-1, :], tcell_lat[-1, :], tmask_arr[-1, :]
@@ -391,7 +393,10 @@ def process_obc_conditions(
         with xr.open_dataset(bathymetry_path) as bds:
             min_depth = bds.attrs.get("min_depth")
         topo = Topo.from_topo_file(
-            grid=grid_obj, topo_file_path=bathymetry_path, min_depth=min_depth, git=False
+            grid=grid_obj,
+            topo_file_path=bathymetry_path,
+            min_depth=min_depth,
+            git=False,
         )
         boundary_bboxes = {
             b: _ocean_bbox_for_boundary(hgrid_ds, topo.tmask, b) for b in boundaries
@@ -400,7 +405,9 @@ def process_obc_conditions(
     else:
         full_bboxes = Grid.get_bounding_boxes_of_rectangular_grid(hgrid_ds)
         boundary_bboxes = {b: full_bboxes[b] for b in boundaries}
-        logger.info("No bathymetry_path in config; using full supergrid bounding boxes.")
+        logger.info(
+            "No bathymetry_path in config; using full supergrid bounding boxes."
+        )
 
     fill_method = rm6.regridding.fill_missing_data
     if product_info.get("boundary_fill_method", "regional_mom6") != "regional_mom6":
