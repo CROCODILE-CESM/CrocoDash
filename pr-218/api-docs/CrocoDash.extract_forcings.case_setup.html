@@ -382,12 +382,15 @@ into MOM6-compatible file formats.</p>
 <p>The script can be run from the command line with various component flags to control which
 forcings are processed. It loads configuration from config.json and coordinates all extraction,
 regridding, and formatting operations.</p>
-<p>OBC processing (<code class="docutils literal notranslate"><span class="pre">--bc</span></code>) is parallelised internally with Dask. By default it
-runs sequentially on the local machine. Pass <code class="docutils literal notranslate"><span class="pre">--n-workers</span> <span class="pre">N</span></code> to launch a
-<code class="docutils literal notranslate"><span class="pre">LocalCluster</span></code> with N workers. For PBS clusters, add <code class="docutils literal notranslate"><span class="pre">--pbs</span></code> along with
-optional <code class="docutils literal notranslate"><span class="pre">--queue</span></code>, <code class="docutils literal notranslate"><span class="pre">--walltime</span></code>, <code class="docutils literal notranslate"><span class="pre">--memory</span></code>, <code class="docutils literal notranslate"><span class="pre">--cores</span></code>, and
-<code class="docutils literal notranslate"><span class="pre">--resource-spec</span></code> flags (requires <code class="docutils literal notranslate"><span class="pre">dask-jobqueue</span></code>). For full Python control
-(e.g. SLURM), create a client with
+<p>OBC processing (<code class="docutils literal notranslate"><span class="pre">--bc</span></code>) uses Dask for the <strong>GET</strong> (download) and <strong>MERGE</strong>
+(concatenate) steps. <strong>REGRID</strong> always runs sequentially in the main process —
+xESMF/ESMF cannot initialize its parallel environment in subprocess workers on
+PBS/HPC systems (see <code class="xref py py-mod docutils literal notranslate"><span class="pre">CrocoDash.extract_forcings.obc</span></code>).</p>
+<p>By default everything runs without a cluster (sequential <code class="docutils literal notranslate"><span class="pre">dask.compute</span></code>). Pass
+<code class="docutils literal notranslate"><span class="pre">--n-workers</span> <span class="pre">N</span></code> to launch a <code class="docutils literal notranslate"><span class="pre">LocalCluster</span></code> that parallelises GET and MERGE.
+For PBS clusters, add <code class="docutils literal notranslate"><span class="pre">--pbs</span></code> along with optional <code class="docutils literal notranslate"><span class="pre">--queue</span></code>, <code class="docutils literal notranslate"><span class="pre">--walltime</span></code>,
+<code class="docutils literal notranslate"><span class="pre">--memory</span></code>, <code class="docutils literal notranslate"><span class="pre">--cores</span></code>, and <code class="docutils literal notranslate"><span class="pre">--resource-spec</span></code> flags (requires
+<code class="docutils literal notranslate"><span class="pre">dask-jobqueue</span></code>). For full Python control (e.g. SLURM), create a client with
 <a class="reference internal" href="CrocoDash.extract_forcings.html#CrocoDash.extract_forcings.utils.make_pbs_cluster" title="CrocoDash.extract_forcings.utils.make_pbs_cluster"><code class="xref py py-func docutils literal notranslate"><span class="pre">make_pbs_cluster()</span></code></a> and pass it to
 <a class="reference internal" href="#CrocoDash.extract_forcings.case_setup.driver.run_workflow" title="CrocoDash.extract_forcings.case_setup.driver.run_workflow"><code class="xref py py-func docutils literal notranslate"><span class="pre">run_workflow()</span></code></a> directly.</p>
 <p>Typical CLI usage:</p>
@@ -525,9 +528,10 @@ parallelism is handled internally by individual components (e.g., OBC uses Dask)
 <li><p><strong>client</strong> – Dask distributed Client (power users). Caller owns lifecycle.
 Create one with <a class="reference internal" href="CrocoDash.extract_forcings.html#CrocoDash.extract_forcings.utils.make_pbs_cluster" title="CrocoDash.extract_forcings.utils.make_pbs_cluster"><code class="xref py py-func docutils literal notranslate"><span class="pre">make_pbs_cluster()</span></code></a>
 or <a class="reference internal" href="CrocoDash.extract_forcings.html#CrocoDash.extract_forcings.utils.make_local_cluster" title="CrocoDash.extract_forcings.utils.make_local_cluster"><code class="xref py py-func docutils literal notranslate"><span class="pre">make_local_cluster()</span></code></a>.</p></li>
-<li><p><strong>n_workers</strong> – Spin up a LocalCluster with this many workers. Ignored if
-client is provided. If neither is set, OBC falls back to
-dask.compute (sequential, no cluster overhead).</p></li>
+<li><p><strong>n_workers</strong> – Spin up a LocalCluster with this many workers for GET and
+MERGE. REGRID always runs sequentially in the main process.
+Ignored if client is already provided. If neither is set,
+OBC uses <code class="docutils literal notranslate"><span class="pre">dask.compute</span></code> with no cluster overhead.</p></li>
 <li><p><strong>visualize</strong> – If True and a Dask client is active, print the Dask
 dashboard link so progress can be monitored in a browser.
 When <code class="docutils literal notranslate"><span class="pre">pbs=True</span></code>, also prints a ready-to-run SSH tunnel
