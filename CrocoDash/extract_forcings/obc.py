@@ -108,6 +108,7 @@ def _regrid_single_chunk(
     output_folder,
     dataset_varnames: dict,
     fill_method,
+    regridders=None,
 ) -> Path:
     """Regrid one (boundary, time_chunk) raw file. Always called from the main process."""
     output_folder = Path(output_folder)
@@ -143,9 +144,10 @@ def _regrid_single_chunk(
         infile=Path(raw_file_path),
         varnames=dataset_varnames,
         arakawa_grid=None,
-        rotational_method=rm6.rotation.RotationMethod.EXPAND_GRID,
+        rotational_method=rm6.regional_mom6.RotationMethod.EXPAND_GRID,
         regridding_method="bilinear",
         fill_method=fill_method,
+        regridders=regridders,
         **kwargs,
     )
 
@@ -153,7 +155,7 @@ def _regrid_single_chunk(
     temp_path = output_folder / f"forcing_obc_segment_{seg_id:03d}.nc"
     os.rename(temp_path, dated_output)
     logger.info(f"Saved regridded file as {dated_output.name}")
-    return dated_output
+    return dated_output, seg.regridders
 
 
 def _merge_single_boundary(
@@ -456,10 +458,12 @@ def process_obc_conditions(
     # raw_inputs paths are deterministic (derived from config dates/boundary
     # names), so regrid can read them directly after GET has written them.
     # -------------------------------------------------------------------------
+
     if not skip_regrid:
         logger.info("Regridding sequentially in main process...")
         for boundary in boundaries:
             seg_id = bnc[boundary]
+            regridders = None
             for i, (start, end) in enumerate(date_pairs):
                 raw_arg = raw_inputs.get((boundary, i))
                 if raw_arg is None:
@@ -467,7 +471,8 @@ def process_obc_conditions(
                         "No raw file for %s chunk %d, skipping regrid.", boundary, i
                     )
                     continue
-                _regrid_single_chunk(
+
+                dated_ouput, regridders = _regrid_single_chunk(
                     boundary=boundary,
                     seg_id=seg_id,
                     file_start=start,
@@ -478,6 +483,7 @@ def process_obc_conditions(
                     output_folder=str(regridded_path),
                     dataset_varnames=product_info,
                     fill_method=fill_method,
+                    regridders=regridders,
                 )
 
     if skip_merge:
