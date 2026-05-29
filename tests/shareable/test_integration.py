@@ -8,10 +8,10 @@ import pytest
 
 
 @pytest.mark.slow
-def test_clone(get_case_with_cf, tmp_path):
+def test_duplicate_case(get_case_with_cf, tmp_path):
     case = get_case_with_cf
-    new_caseroot = tmp_path / "cloned_case"
-    new_inputdir = tmp_path / "cloned_inputdir"
+    new_caseroot = tmp_path / "duplicated_case"
+    new_inputdir = tmp_path / "duplicated_inputdir"
 
     with patch("CrocoDash.shareable.fork.copy_configurations_to_case"):
         new_case = duplicate_case(case.caseroot, new_caseroot, new_inputdir)
