@@ -8,12 +8,16 @@ The script can be run from the command line with various component flags to cont
 forcings are processed. It loads configuration from config.json and coordinates all extraction,
 regridding, and formatting operations.
 
-OBC processing (``--bc``) is parallelised internally with Dask. By default it
-runs sequentially on the local machine. Pass ``--n-workers N`` to launch a
-``LocalCluster`` with N workers. For PBS clusters, add ``--pbs`` along with
-optional ``--queue``, ``--walltime``, ``--memory``, ``--cores``, and
-``--resource-spec`` flags (requires ``dask-jobqueue``). For full Python control
-(e.g. SLURM), create a client with
+OBC processing (``--bc``) uses Dask for the **GET** (download) step only.
+**REGRID** and **MERGE** always run sequentially in the main process — xESMF/ESMF
+cannot initialize its parallel environment in subprocess workers on PBS/HPC
+systems (see :mod:`CrocoDash.extract_forcings.obc`).
+
+By default everything runs without a cluster (sequential ``dask.compute``). Pass
+``--n-workers N`` to launch a ``LocalCluster`` that parallelises GET. For PBS
+clusters, add ``--pbs`` along with optional ``--queue``, ``--walltime``,
+``--memory``, ``--cores``, and ``--resource-spec`` flags (requires
+``dask-jobqueue``). For full Python control (e.g. SLURM), create a client with
 :func:`~CrocoDash.extract_forcings.utils.make_pbs_cluster` and pass it to
 :func:`run_workflow` directly.
 
@@ -23,6 +27,8 @@ Typical CLI usage::
     python driver.py --bc --n-workers 4             # OBC with 4 local workers
     python driver.py --bc --n-workers 8 --pbs \
         --queue regular --walltime 02:00:00         # OBC with 8 PBS jobs
+    python driver.py --bc --n-workers 8 --pbs \
+        --queue regular --visualize                 # same, plus Dask dashboard link
     python driver.py --tides --bgcic                # tides and BGC IC only
     python driver.py --all --skip runoff            # all except runoff
     python driver.py --ic --no-get                  # IC, skip raw data download
@@ -33,12 +39,23 @@ Typical Python usage (HPC power users)::
     from CrocoDash.extract_forcings.case_setup.driver import run_workflow
 
     client = make_pbs_cluster(n_workers=8, queue="regular", walltime="02:00:00")
-    run_workflow(bc=True, ic=True, client=client)
+    run_workflow(bc=True, ic=True, client=client, visualize=True)
     client.close()
+
+.. note::
+
+    On HPC systems (PBS/SLURM), the Dask dashboard runs on an internal compute
+    node that is not directly reachable from your laptop. When ``--visualize``
+    is used with ``--pbs``, the driver prints a ready-to-run SSH tunnel command.
+    Run it on your laptop to forward the port, then open ``http://localhost:<port>/status``
+    in a browser::
+
+        ssh -L 8787:<compute-node>:8787 <login-node>
 """
 
 import sys
 from pathlib import Path
+from urllib.parse import urlparse
 import argparse
 
 from CrocoDash.extract_forcings import (
@@ -205,7 +222,9 @@ def parse_args():
 
     cluster_opts = parser.add_argument_group(
         "Cluster options",
-        "Parallelism for OBC processing. Omit --n-workers to run sequentially.",
+        "Parallelise OBC GET (download) step. REGRID and MERGE always run "
+        "sequentially in the main process. Omit --n-workers to skip cluster "
+        "setup entirely.",
     )
     cluster_opts.add_argument(
         "--n-workers",
@@ -244,6 +263,11 @@ def parse_args():
         default=None,
         help="Raw PBS -l resource string (e.g. 'select=1:ncpus=4:mem=4gb'). Overrides --cores/--memory.",
     )
+    cluster_opts.add_argument(
+        "--visualize",
+        action="store_true",
+        help="Print the Dask dashboard link when a cluster is active (requires --n-workers or --pbs).",
+    )
 
     if len(sys.argv) == 1:
         parser.print_help()
@@ -277,7 +301,8 @@ def resolve_components(args, cfg):
         k: v
         for k, v in vars(args).items()
         if isinstance(v, bool)
-        and k not in {"all", "test", "no_get", "no_regrid", "no_merge", "pbs"}
+        and k
+        not in {"all", "test", "no_get", "no_regrid", "no_merge", "pbs", "visualize"}
     }
 
     skip = {s.lower() for s in args.skip}
@@ -318,6 +343,8 @@ def run_workflow(
     cfg=None,
     client=None,
     n_workers=None,
+    visualize=False,
+    pbs=False,
 ):
     """
     Execute the forcing extraction workflow.
@@ -343,9 +370,16 @@ def run_workflow(
         client:              Dask distributed Client (power users). Caller owns lifecycle.
                              Create one with :func:`~CrocoDash.extract_forcings.utils.make_pbs_cluster`
                              or :func:`~CrocoDash.extract_forcings.utils.make_local_cluster`.
-        n_workers:           Spin up a LocalCluster with this many workers. Ignored if
-                             client is provided. If neither is set, OBC falls back to
-                             dask.compute (sequential, no cluster overhead).
+        n_workers:           Spin up a LocalCluster with this many workers for GET.
+                             REGRID and MERGE always run sequentially in the main
+                             process. Ignored if client is already provided. If neither
+                             is set, OBC uses ``dask.compute`` with no cluster overhead.
+        visualize:           If True and a Dask client is active, print the Dask
+                             dashboard link so progress can be monitored in a browser.
+                             When ``pbs=True``, also prints a ready-to-run SSH tunnel
+                             command for reaching the dashboard from outside the cluster.
+        pbs:                 Set to True when the client was created with a PBS cluster.
+                             Only affects the extra SSH hint printed by ``visualize``.
     """
     if cfg is None:
         cfg = utils.Config(CONFIG_PATH)
@@ -357,6 +391,24 @@ def run_workflow(
     own_client = client is None and n_workers is not None
     if own_client:
         client = utils.make_local_cluster(n_workers=n_workers)
+
+    if visualize:
+        if client is not None:
+            print(f"[dask] Dashboard: {client.dashboard_link}")
+            if pbs:
+                parsed = urlparse(client.dashboard_link)
+                host = parsed.hostname or "<compute-node>"
+                port = parsed.port or 8787
+                print(
+                    f"[dask] PBS/HPC tunnel (run on your laptop): "
+                    f"ssh -L {port}:{host}:{port} <login-node>"
+                )
+                print(f"[dask]   then open: http://localhost:{port}/status")
+        else:
+            print(
+                "[dask] --visualize requested but no Dask client is active "
+                "(pass --n-workers or --pbs to enable a cluster)."
+            )
 
     try:
         if bc:
@@ -453,6 +505,8 @@ def run_from_cli(args, cfg):
             cfg=cfg,
             client=client,
             n_workers=args.n_workers if not args.pbs else None,
+            visualize=args.visualize,
+            pbs=args.pbs,
         )
     finally:
         if client is not None:
