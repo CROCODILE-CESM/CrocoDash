@@ -767,7 +767,9 @@ called beforehand.</p>
 <li><p><strong>process_initial_condition</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to process the initial condition file. Default is True.</p></li>
 <li><p><strong>process_velocity_tracers</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to process velocity and tracer boundary conditions. Default is True.
 This will be overridden and set to False if the large data workflow in configure_forcings is enabled.</p></li>
-<li><p><strong>kwargs</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to process the other forcings, of the form process_{configurator.name} = False</p></li>
+<li><p><strong>kwargs</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to process the other forcings, of the form process_{configurator.name} = False.
+Also accepts <code class="docutils literal notranslate"><span class="pre">visualize=True</span></code> to print the Dask dashboard link when a cluster is active
+(see <a class="reference internal" href="CrocoDash.extract_forcings.case_setup.html#CrocoDash.extract_forcings.case_setup.driver.run_workflow" title="CrocoDash.extract_forcings.case_setup.driver.run_workflow"><code class="xref py py-func docutils literal notranslate"><span class="pre">run_workflow()</span></code></a>).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>

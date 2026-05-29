@@ -508,9 +508,10 @@ Returns:
 <dt class="sig sig-object py" id="CrocoDash.extract_forcings.utils.make_local_cluster">
 <span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.utils.</span></span><span class="sig-name descname"><span class="pre">make_local_cluster</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_workers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threads_per_worker</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.extract_forcings.utils.make_local_cluster" title="Link to this definition">#</a></dt>
 <dd><p>Create a Dask Client backed by a LocalCluster.</p>
-<p>Each worker runs in a separate process, which is required for xESMF/ESMF
-safety — ESMF uses global C-level state that is not safe to share across
-threads. Parallelism comes from n_workers (processes), not threads.</p>
+<p>Workers are used for the GET (download) step only. REGRID and MERGE always
+run sequentially in the main process — ESMF’s VM fails to initialize in
+subprocess workers on PBS/HPC systems (<code class="docutils literal notranslate"><span class="pre">ESMCI::VM::getCurrent()</span></code> rc=545).</p>
+<p>For HPC batch jobs, see <a class="reference internal" href="#CrocoDash.extract_forcings.utils.make_pbs_cluster" title="CrocoDash.extract_forcings.utils.make_pbs_cluster"><code class="xref py py-func docutils literal notranslate"><span class="pre">make_pbs_cluster()</span></code></a>.</p>
 <p>Typical usage:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">CrocoDash.extract_forcings.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_local_cluster</span>
 <span class="n">client</span> <span class="o">=</span> <span class="n">make_local_cluster</span><span class="p">(</span><span class="n">n_workers</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
@@ -521,8 +522,8 @@ threads. Parallelism comes from n_workers (processes), not threads.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>n_workers</strong> – Number of worker processes.</p></li>
-<li><p><strong>threads_per_worker</strong> – Threads per worker. Keep at 1 for xESMF safety.</p></li>
+<li><p><strong>n_workers</strong> – Number of worker processes (used for GET/MERGE).</p></li>
+<li><p><strong>threads_per_worker</strong> – Threads per worker.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
