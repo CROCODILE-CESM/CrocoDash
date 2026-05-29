@@ -1,22 +1,23 @@
 """OBC (Open Boundary Condition) forcing extraction for CrocoDash.
 
-Processes boundary conditions through a three-step Dask-parallelised pipeline:
+Processes boundary conditions through a three-step pipeline:
 
-1. **Get** — download raw data per (boundary, time-chunk) in parallel.
-2. **Regrid** — regrid each chunk to MOM6 segment format. Tasks within a
-   boundary run serially (to avoid weight-file write races); tasks across
-   boundaries run in parallel.
+1. **Get** — download raw data per (boundary, time-chunk) in parallel via Dask.
+2. **Regrid** — regrid each chunk to MOM6 segment format. Runs sequentially in
+   the main process. xESMF/ESMF cannot initialize its VM in subprocess workers
+   on PBS/HPC systems (``ESMCI::VM::getCurrent()`` rc=545), so regridding is
+   always serial regardless of whether a Dask client is provided.
 3. **Merge** — concatenate all time chunks per boundary into a single
-   ``forcing_obc_segment_NNN.nc`` file.
+   ``forcing_obc_segment_NNN.nc`` file, in parallel via Dask.
 
 The main entry point is :func:`process_obc_conditions`. Pass a Dask
-:class:`~dask.distributed.Client` for distributed execution, or omit it to run
-with ``dask.compute`` (sequential, no cluster overhead).
+:class:`~dask.distributed.Client` to parallelize GET and MERGE, or omit it to
+run everything sequentially with ``dask.compute``.
 
 Create a client with the helpers in :mod:`CrocoDash.extract_forcings.utils`:
 
 - :func:`~CrocoDash.extract_forcings.utils.make_local_cluster` — local
-  multi-process cluster, useful for workstations and interactive nodes.
+  multi-process cluster (GET/MERGE only; regrid always runs in main process).
 - :func:`~CrocoDash.extract_forcings.utils.make_pbs_cluster` — PBS cluster via
   ``dask-jobqueue``, for HPC batch jobs.
 """
@@ -107,13 +108,8 @@ def _regrid_single_chunk(
     output_folder,
     dataset_varnames: dict,
     fill_method,
-    _sentinel=None,
 ) -> Path:
-    """Regrid one (boundary, time_chunk) raw file.
-
-    _sentinel is accepted but ignored; pass the previous chunk's task here to
-    enforce serial ordering within a boundary (avoids weight-file write races).
-    """
+    """Regrid one (boundary, time_chunk) raw file. Always called from the main process."""
     output_folder = Path(output_folder)
     start_str = file_start.strftime(date_format)
     end_str = file_end.strftime(date_format)
@@ -223,25 +219,26 @@ def process_obc_conditions(
     visualize: bool = True,
 ):
     """
-    Process boundary conditions through the three-step pipeline using Dask.
+    Process boundary conditions through the three-step pipeline.
 
-    The pipeline has two execution phases:
+    Execution model:
 
-    Phase 1 - Get + Regrid (submitted together as one Dask graph):
-      - GET tasks download one raw file per (boundary, time-chunk) pair.
-        All GET tasks are fully independent and run in parallel.
-      - REGRID tasks convert each raw file to MOM6 segment format.
-        REGRID tasks across different boundaries run in parallel.
-        REGRID tasks for the same boundary run one-at-a-time (serial)
-        because regional_mom6 caches weight files per boundary orientation
-        and concurrent writes to the same weight file would corrupt them.
-      - Each REGRID task automatically depends on its matching GET task,
-        so Dask runs GET first, then REGRID, without needing extra wiring.
+    Phase 1a — GET (parallel via Dask):
+      Download one raw file per (boundary, time-chunk) pair. All GET tasks
+      are fully independent and run in parallel. Blocks until all downloads
+      are complete before proceeding.
 
-    Phase 2 - Merge (submitted after Phase 1 completes):
-      - One MERGE task per boundary concatenates all time chunks into a
-        single final forcing file. Merge tasks run in parallel across
-        boundaries. Phase 2 only starts after ALL of Phase 1 is done.
+    Phase 1b — REGRID (sequential in main process):
+      Convert each raw file to MOM6 segment format. Always runs in the calling
+      process — one chunk at a time, in boundary/chunk order. xESMF/ESMF cannot
+      initialize its VM in subprocess workers on PBS/HPC systems
+      (``ESMCI::VM::getCurrent()`` rc=545), so regridding is always serial
+      regardless of whether a Dask client is provided.
+
+    Phase 2 — MERGE (parallel via Dask):
+      One task per boundary concatenates all time-chunk files into a single
+      final forcing file. All merge tasks are independent and run in parallel.
+      Starts only after Phase 1 is fully complete.
 
     Args:
         config_path: Path to the config JSON file.
@@ -402,37 +399,10 @@ def process_obc_conditions(
     output_path.mkdir(exist_ok=True)
 
     # -------------------------------------------------------------------------
-    # Phase 1 task graph: Get + Regrid
+    # Phase 1a task graph: Get
     #
-    # dask.delayed() does NOT run anything. It just records the function call
-    # and its arguments as a node in a graph. Nothing executes until we call
-    # client.compute() or dask.compute() at the end of this section.
-    #
-    # The graph we are building looks like this for two boundaries (N chunks each):
-    #
-    #   get(north,0)  get(north,1)  get(north,2) ... get(north,N)
-    #       |              |              |                |
-    #   regrid(north,0)    |              |                |   <- writes weights file
-    #       |    \_________|______________|                |
-    #       |              |              |                |   <- chunks 1..N all wait
-    #   regrid(north,1) regrid(north,2) ...          regrid(north,N)   for chunk 0,
-    #                                                           then run in parallel
-    #
-    #   get(east,0)   get(east,1)  ... get(east,N)   <- fully parallel with north
-    #       |              |                |
-    #   regrid(east,0)     |                |         <- same fan-out pattern
-    #       |    \_________|                |
-    #   regrid(east,1)              regrid(east,N)
-    #
-    # Key points:
-    #   - GET tasks across all boundaries and chunks run fully in parallel.
-    #   - REGRID chunk 0 for each boundary runs first and writes the weights file.
-    #   - REGRID chunks 1..N for the same boundary all depend on chunk 0
-    #     (via _sentinel=weight_writer) and then run in parallel with each other.
-    #     This ensures the weights file exists before any other chunk tries to read it.
-    #   - REGRID tasks across different boundaries are fully independent.
-    #   - Each REGRID task implicitly depends on its GET task because it receives
-    #     the GET result (a file path) as its raw_file_path argument.
+    # GET tasks are fully independent across all (boundary, chunk) pairs and
+    # run in parallel via Dask workers.
     # -------------------------------------------------------------------------
 
     # get_tasks[(boundary, chunk_index)] = delayed call to _get_single_chunk
@@ -453,31 +423,51 @@ def process_obc_conditions(
                     extra_args=extra_args,
                 )
 
-    # regrid_tasks[(boundary, chunk_index)] = delayed call to _regrid_single_chunk
+    # regrid_tasks is a plain dict used only for logging — regridding runs
+    # sequentially in the main process (see Phase 1b below).
     regrid_tasks = {}
     if not skip_regrid:
         for boundary in boundaries:
+            for i in range(len(date_pairs)):
+                if raw_inputs.get((boundary, i)) is not None:
+                    regrid_tasks[(boundary, i)] = True
+
+    _log_phase1_graph(boundaries, bnc, date_pairs, date_format, get_tasks, regrid_tasks)
+
+    # Execute Phase 1a: GET in parallel.
+    if not skip_get and get_tasks:
+        if visualize:
+            dask.visualize(*get_tasks.values(), filename="phase1_get_graph.png")
+            logger.info("Task graph image saved to phase1_get_graph.png")
+        if client is not None:
+            futures = client.compute(list(get_tasks.values()))
+            client.gather(futures)
+        else:
+            dask.compute(*get_tasks.values())
+
+    # -------------------------------------------------------------------------
+    # Phase 1b: Regrid sequentially in the main process.
+    #
+    # xESMF/ESMF cannot initialize its VM (parallel environment) in subprocess
+    # workers on PBS/HPC systems — ESMCI::VM::getCurrent() returns
+    # "Could not determine current VM" (rc=545) in any child process.
+    # Running regridding in the main process avoids this entirely.
+    #
+    # raw_inputs paths are deterministic (derived from config dates/boundary
+    # names), so regrid can read them directly after GET has written them.
+    # -------------------------------------------------------------------------
+    if not skip_regrid:
+        logger.info("Regridding sequentially in main process...")
+        for boundary in boundaries:
             seg_id = bnc[boundary]
-            # weight_writer is the task for the first chunk of this boundary.
-            # The first chunk writes the weights file; all subsequent chunks
-            # depend on it via _sentinel= so they wait for the weights to exist
-            # before starting. After that they run in parallel with each other.
-            weight_writer = None
             for i, (start, end) in enumerate(date_pairs):
-                # raw_arg is either a concrete Path (skip_get) or a delayed GET task.
-                # If it is a delayed GET task, Dask automatically treats it as a
-                # dependency and runs GET before this REGRID task.
-                raw_arg = (
-                    raw_inputs.get((boundary, i))
-                    if skip_get
-                    else get_tasks.get((boundary, i))
-                )
+                raw_arg = raw_inputs.get((boundary, i))
                 if raw_arg is None:
                     logger.warning(
-                        f"No raw file for {boundary} chunk {i}, skipping regrid."
+                        "No raw file for %s chunk %d, skipping regrid.", boundary, i
                     )
                     continue
-                task = dask.delayed(_regrid_single_chunk)(
+                _regrid_single_chunk(
                     boundary=boundary,
                     seg_id=seg_id,
                     file_start=start,
@@ -488,38 +478,7 @@ def process_obc_conditions(
                     output_folder=str(regridded_path),
                     dataset_varnames=product_info,
                     fill_method=fill_method,
-                    _sentinel=weight_writer,  # None for chunk 0; chunk 0's task for all others
                 )
-                regrid_tasks[(boundary, i)] = task
-                if weight_writer is None:
-                    weight_writer = task  # set once; all later chunks fan out from here
-
-    # Decide what to submit. If regrid tasks exist, they already encode the
-    # get dependencies inside them, so we only need to submit the regrid tasks
-    # and Dask will automatically run the get tasks they depend on.
-    if not skip_regrid:
-        phase1_submit = list(regrid_tasks.values())
-    elif not skip_get:
-        phase1_submit = list(get_tasks.values())
-    else:
-        phase1_submit = []
-
-    _log_phase1_graph(boundaries, bnc, date_pairs, date_format, get_tasks, regrid_tasks)
-    if visualize and phase1_submit:
-        dask.visualize(*phase1_submit, filename="phase1_graph.png")
-        logger.info("Task graph image saved to phase1_graph.png")
-
-    # Execute Phase 1.
-    # client.compute() submits all tasks to the cluster and returns futures immediately.
-    # client.gather() blocks until every future is done, then returns the results
-    # as a list in the same order as phase1_submit. It raises if any task failed.
-    # If no client was provided, dask.compute() runs everything locally in order.
-    if phase1_submit:
-        if client is not None:
-            futures = client.compute(phase1_submit)
-            client.gather(futures)
-        else:
-            dask.compute(*phase1_submit)
 
     if skip_merge:
         return

@@ -129,9 +129,14 @@ def make_local_cluster(n_workers=1, threads_per_worker=1):
     """
     Create a Dask Client backed by a LocalCluster.
 
-    Each worker runs in a separate process, which is required for xESMF/ESMF
-    safety — ESMF uses global C-level state that is not safe to share across
-    threads. Parallelism comes from n_workers (processes), not threads.
+    Workers are used for GET and MERGE steps. ESMF-based regridding (xESMF)
+    cannot run in LocalCluster workers on PBS/HPC systems — ESMF's VM
+    (internal parallel environment) fails to initialize in subprocess workers
+    when the PBS MPI environment is active (``ESMCI::VM::getCurrent()``
+    returns "Could not determine current VM", rc=545). Regridding always runs
+    sequentially in the main process regardless of whether a client is provided.
+
+    For HPC batch jobs, see :func:`make_pbs_cluster`.
 
     Typical usage::
 
@@ -141,8 +146,8 @@ def make_local_cluster(n_workers=1, threads_per_worker=1):
         client.close()
 
     Args:
-        n_workers:          Number of worker processes.
-        threads_per_worker: Threads per worker. Keep at 1 for xESMF safety.
+        n_workers:          Number of worker processes (used for GET/MERGE).
+        threads_per_worker: Threads per worker.
 
     Returns:
         dask.distributed.Client connected to the LocalCluster.
