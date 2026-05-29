@@ -86,20 +86,6 @@ jobs:
             --project PLACEHOLDER \
             --bathymetry-path $GITHUB_WORKSPACE/gebco.nc \
             --forcing-fn get_glorys_data_script_for_cli
-      - name: Checkout shareable_2 into container
-        uses: actions/checkout@v4
-        with:
-          ref: shareable_2
-          submodules: recursive
-          path: CrocoDash-bundle
-      - name: Install shareable_2 into existing env
-        shell: bash -l {0}
-        run: |
-          source /opt/conda/etc/profile.d/conda.sh
-          conda activate CrocoDash
-          rm -rf $WORKDIR/CrocoDash
-          cp -r $GITHUB_WORKSPACE/CrocoDash-bundle $WORKDIR/CrocoDash
-          pip install -e $WORKDIR/CrocoDash
 
       - name: Bundle case with crocodash bundle
         shell: bash -l {0}
