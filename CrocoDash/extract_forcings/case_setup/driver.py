@@ -8,14 +8,14 @@ The script can be run from the command line with various component flags to cont
 forcings are processed. It loads configuration from config.json and coordinates all extraction,
 regridding, and formatting operations.
 
-OBC processing (``--bc``) uses Dask for the **GET** (download) and **MERGE**
-(concatenate) steps. **REGRID** always runs sequentially in the main process —
-xESMF/ESMF cannot initialize its parallel environment in subprocess workers on
-PBS/HPC systems (see :mod:`CrocoDash.extract_forcings.obc`).
+OBC processing (``--bc``) uses Dask for the **GET** (download) step only.
+**REGRID** and **MERGE** always run sequentially in the main process — xESMF/ESMF
+cannot initialize its parallel environment in subprocess workers on PBS/HPC
+systems (see :mod:`CrocoDash.extract_forcings.obc`).
 
 By default everything runs without a cluster (sequential ``dask.compute``). Pass
-``--n-workers N`` to launch a ``LocalCluster`` that parallelises GET and MERGE.
-For PBS clusters, add ``--pbs`` along with optional ``--queue``, ``--walltime``,
+``--n-workers N`` to launch a ``LocalCluster`` that parallelises GET. For PBS
+clusters, add ``--pbs`` along with optional ``--queue``, ``--walltime``,
 ``--memory``, ``--cores``, and ``--resource-spec`` flags (requires
 ``dask-jobqueue``). For full Python control (e.g. SLURM), create a client with
 :func:`~CrocoDash.extract_forcings.utils.make_pbs_cluster` and pass it to
@@ -222,9 +222,9 @@ def parse_args():
 
     cluster_opts = parser.add_argument_group(
         "Cluster options",
-        "Parallelise OBC GET and MERGE steps. REGRID always runs sequentially "
-        "in the main process (ESMF/xESMF limitation). Omit --n-workers to skip "
-        "cluster setup entirely.",
+        "Parallelise OBC GET (download) step. REGRID and MERGE always run "
+        "sequentially in the main process. Omit --n-workers to skip cluster "
+        "setup entirely.",
     )
     cluster_opts.add_argument(
         "--n-workers",
@@ -370,10 +370,10 @@ def run_workflow(
         client:              Dask distributed Client (power users). Caller owns lifecycle.
                              Create one with :func:`~CrocoDash.extract_forcings.utils.make_pbs_cluster`
                              or :func:`~CrocoDash.extract_forcings.utils.make_local_cluster`.
-        n_workers:           Spin up a LocalCluster with this many workers for GET and
-                             MERGE. REGRID always runs sequentially in the main process.
-                             Ignored if client is already provided. If neither is set,
-                             OBC uses ``dask.compute`` with no cluster overhead.
+        n_workers:           Spin up a LocalCluster with this many workers for GET.
+                             REGRID and MERGE always run sequentially in the main
+                             process. Ignored if client is already provided. If neither
+                             is set, OBC uses ``dask.compute`` with no cluster overhead.
         visualize:           If True and a Dask client is active, print the Dask
                              dashboard link so progress can be monitored in a browser.
                              When ``pbs=True``, also prints a ready-to-run SSH tunnel

@@ -129,12 +129,9 @@ def make_local_cluster(n_workers=1, threads_per_worker=1):
     """
     Create a Dask Client backed by a LocalCluster.
 
-    Workers are used for GET and MERGE steps. ESMF-based regridding (xESMF)
-    cannot run in LocalCluster workers on PBS/HPC systems — ESMF's VM
-    (internal parallel environment) fails to initialize in subprocess workers
-    when the PBS MPI environment is active (``ESMCI::VM::getCurrent()``
-    returns "Could not determine current VM", rc=545). Regridding always runs
-    sequentially in the main process regardless of whether a client is provided.
+    Workers are used for the GET (download) step only. REGRID and MERGE always
+    run sequentially in the main process — ESMF's VM fails to initialize in
+    subprocess workers on PBS/HPC systems (``ESMCI::VM::getCurrent()`` rc=545).
 
     For HPC batch jobs, see :func:`make_pbs_cluster`.
 

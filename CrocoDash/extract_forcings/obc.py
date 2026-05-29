@@ -3,21 +3,20 @@
 Processes boundary conditions through a three-step pipeline:
 
 1. **Get** — download raw data per (boundary, time-chunk) in parallel via Dask.
-2. **Regrid** — regrid each chunk to MOM6 segment format. Runs sequentially in
-   the main process. xESMF/ESMF cannot initialize its VM in subprocess workers
-   on PBS/HPC systems (``ESMCI::VM::getCurrent()`` rc=545), so regridding is
-   always serial regardless of whether a Dask client is provided.
+2. **Regrid** — regrid each chunk to MOM6 segment format. Always sequential in
+   the main process — xESMF/ESMF cannot initialize its VM in subprocess workers
+   on PBS/HPC systems (``ESMCI::VM::getCurrent()`` rc=545).
 3. **Merge** — concatenate all time chunks per boundary into a single
-   ``forcing_obc_segment_NNN.nc`` file, in parallel via Dask.
+   ``forcing_obc_segment_NNN.nc`` file. Sequential in the main process.
 
 The main entry point is :func:`process_obc_conditions`. Pass a Dask
-:class:`~dask.distributed.Client` to parallelize GET and MERGE, or omit it to
-run everything sequentially with ``dask.compute``.
+:class:`~dask.distributed.Client` to parallelize GET, or omit it to run
+everything sequentially.
 
 Create a client with the helpers in :mod:`CrocoDash.extract_forcings.utils`:
 
 - :func:`~CrocoDash.extract_forcings.utils.make_local_cluster` — local
-  multi-process cluster (GET/MERGE only; regrid always runs in main process).
+  multi-process cluster (GET only; regrid and merge always run in main process).
 - :func:`~CrocoDash.extract_forcings.utils.make_pbs_cluster` — PBS cluster via
   ``dask-jobqueue``, for HPC batch jobs.
 """
@@ -179,38 +178,6 @@ def _merge_single_boundary(
     return output_path
 
 
-def _log_phase1_graph(
-    boundaries, bnc, date_pairs, date_format, get_tasks, regrid_tasks
-):
-    """Log a summary of the Phase 1 task graph."""
-    logger.info(
-        "Phase 1 task graph  (%d boundary(ies), %d chunk(s))",
-        len(boundaries),
-        len(date_pairs),
-    )
-    for boundary in boundaries:
-        seg_label = f"{bnc[boundary]:03d}"
-        for i, (start, end) in enumerate(date_pairs):
-            has_get = (boundary, i) in get_tasks
-            has_regrid = (boundary, i) in regrid_tasks
-            steps = []
-            if has_get:
-                steps.append("get")
-            if has_regrid:
-                steps.append("regrid (writes weights)" if i == 0 else "regrid")
-            if not steps:
-                steps.append("skipped")
-            date_range = f"{start.strftime(date_format)} -> {end.strftime(date_format)}"
-            logger.info(
-                "  %s (seg %s) chunk %d  [%s]  %s",
-                boundary,
-                seg_label,
-                i,
-                date_range,
-                " -> ".join(steps),
-            )
-
-
 def process_obc_conditions(
     config_path,
     skip_get: bool = False,
@@ -218,7 +185,6 @@ def process_obc_conditions(
     skip_merge: bool = False,
     client=None,
     preview: bool = False,
-    visualize: bool = True,
 ):
     """
     Process boundary conditions through the three-step pipeline.
@@ -237,23 +203,20 @@ def process_obc_conditions(
       (``ESMCI::VM::getCurrent()`` rc=545), so regridding is always serial
       regardless of whether a Dask client is provided.
 
-    Phase 2 — MERGE (parallel via Dask):
-      One task per boundary concatenates all time-chunk files into a single
-      final forcing file. All merge tasks are independent and run in parallel.
-      Starts only after Phase 1 is fully complete.
+    Phase 2 — MERGE (sequential in main process):
+      One call per boundary concatenates all time-chunk files into a single
+      final forcing file. Runs after Phase 1 is complete.
 
     Args:
         config_path: Path to the config JSON file.
         skip_get: Skip download; use existing raw files on disk.
         skip_regrid: Skip regridding; use existing regridded files on disk.
         skip_merge: Skip the merge step.
-        client: Dask distributed Client. Falls back to ``dask.compute``
-                (sequential) if None. Create one with
+        client: Dask distributed Client for parallelising GET. If None, GET
+                runs sequentially via ``dask.compute``. Create one with
                 :func:`~CrocoDash.extract_forcings.utils.make_local_cluster`
                 or :func:`~CrocoDash.extract_forcings.utils.make_pbs_cluster`.
         preview: Return a dict describing what would run, without executing.
-        visualize: Save task graph PNGs (phase1_graph.png, phase2_graph.png).
-                   Requires graphviz. Disabled by default.
     """
     config = utils.Config(config_path)
 
@@ -286,10 +249,6 @@ def process_obc_conditions(
         date_pairs.append((chunk_start, chunk_end))
         chunk_start = chunk_end + timedelta(days=1)
     boundaries = list(bnc.keys())
-
-    logger.info(
-        f"Step size {step_days} days -> {len(date_pairs)} chunk(s) x {len(boundaries)} boundary(ies)."
-    )
 
     start_dt = datetime.strptime(start_date_str, date_format)
     end_dt = datetime.strptime(end_date_str, date_format)
@@ -425,22 +384,21 @@ def process_obc_conditions(
                     extra_args=extra_args,
                 )
 
-    # regrid_tasks is a plain dict used only for logging — regridding runs
-    # sequentially in the main process (see Phase 1b below).
-    regrid_tasks = {}
-    if not skip_regrid:
-        for boundary in boundaries:
-            for i in range(len(date_pairs)):
-                if raw_inputs.get((boundary, i)) is not None:
-                    regrid_tasks[(boundary, i)] = True
-
-    _log_phase1_graph(boundaries, bnc, date_pairs, date_format, get_tasks, regrid_tasks)
+    if client is not None:
+        logger.info(
+            "Dask client active — GET will run in parallel (%d boundary(ies), %d chunk(s)).",
+            len(boundaries),
+            len(date_pairs),
+        )
+    else:
+        logger.info(
+            "No Dask client — running sequentially (%d boundary(ies), %d chunk(s)).",
+            len(boundaries),
+            len(date_pairs),
+        )
 
     # Execute Phase 1a: GET in parallel.
     if not skip_get and get_tasks:
-        if visualize:
-            dask.visualize(*get_tasks.values(), filename="phase1_get_graph.png")
-            logger.info("Task graph image saved to phase1_get_graph.png")
         if client is not None:
             futures = client.compute(list(get_tasks.values()))
             client.gather(futures)
@@ -501,37 +459,11 @@ def process_obc_conditions(
     # client.gather / dask.compute before building these tasks).
     # -------------------------------------------------------------------------
 
-    # regridded_inputs was built upfront: either scanned from disk (skip_regrid)
-    # or derived from the expected regrid output paths. Both cases are resolved
-    # before the preview check, so we reuse the same variable here.
-    merge_tasks = [
-        dask.delayed(_merge_single_boundary)(
+    for seg_label, paths in regridded_inputs.items():
+        _merge_single_boundary(
             boundary_label=seg_label,
             regridded_file_paths=paths,
             output_folder=str(output_path),
         )
-        for seg_label, paths in regridded_inputs.items()
-    ]
-
-    logger.info(
-        "Phase 2 task graph  (%d merge task(s), all independent)", len(merge_tasks)
-    )
-    for seg_label, paths in regridded_inputs.items():
-        logger.info(
-            "  seg %s: merge %d chunk(s) -> forcing_obc_segment_%s.nc",
-            seg_label,
-            len(paths),
-            seg_label,
-        )
-    if visualize and merge_tasks:
-        dask.visualize(*merge_tasks, filename="phase2_graph.png")
-        logger.info("Task graph image saved to phase2_graph.png")
-
-    if merge_tasks:
-        if client is not None:
-            futures = client.compute(merge_tasks)
-            client.gather(futures)
-        else:
-            dask.compute(*merge_tasks)
 
     logger.info("OBC processing complete.")
