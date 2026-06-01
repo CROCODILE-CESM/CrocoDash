@@ -54,6 +54,7 @@ Typical Python usage (HPC power users)::
 """
 
 import sys
+import time
 from pathlib import Path
 from urllib.parse import urlparse
 import argparse
@@ -302,7 +303,15 @@ def resolve_components(args, cfg):
         for k, v in vars(args).items()
         if isinstance(v, bool)
         and k
-        not in {"all", "test", "no_get", "no_regrid", "no_merge", "pbs", "visualize"}
+        not in {
+            "all",
+            "test",
+            "no_get",
+            "no_regrid",
+            "no_merge",
+            "pbs",
+            "visualize",
+        }
     }
 
     skip = {s.lower() for s in args.skip}
@@ -410,8 +419,10 @@ def run_workflow(
                 "(pass --n-workers or --pbs to enable a cluster)."
             )
 
+    timings = {}
     try:
         if bc:
+            _t = time.perf_counter()
             process_obc(
                 config_path=CONFIG_PATH,
                 skip_get=skip_get,
@@ -420,8 +431,10 @@ def run_workflow(
                 client=client,
                 preview=preview,
             )
+            timings["bc"] = time.perf_counter() - _t
 
         if ic:
+            _t = time.perf_counter()
             initial_condition.process_initial_condition(
                 product_name=cfg["basic"]["forcing"]["product_name"],
                 function_name=cfg["basic"]["forcing"]["function_name"],
@@ -436,27 +449,47 @@ def run_workflow(
                 bathymetry_path=cfg["basic"]["paths"]["bathymetry_path"],
                 preview=preview,
             )
+            timings["ic"] = time.perf_counter() - _t
 
         if bgcic:
+            _t = time.perf_counter()
             process_bgcic()
+            timings["bgcic"] = time.perf_counter() - _t
 
         if bgcironforcing:
+            _t = time.perf_counter()
             process_bgcironforcing()
+            timings["bgcironforcing"] = time.perf_counter() - _t
 
         if tides:
+            _t = time.perf_counter()
             process_tides()
+            timings["tides"] = time.perf_counter() - _t
 
         if chl:
+            _t = time.perf_counter()
             process_chl()
+            timings["chl"] = time.perf_counter() - _t
 
         if runoff:
+            _t = time.perf_counter()
             process_runoff()
+            timings["runoff"] = time.perf_counter() - _t
 
         if bgcrivernutrients:
+            _t = time.perf_counter()
             process_bgcrivernutrients()
+            timings["bgcrivernutrients"] = time.perf_counter() - _t
     finally:
         if own_client:
             client.close()
+
+    if timings:
+        parts = [f"{k}: {v:.1f}s" for k, v in timings.items()]
+        parts.append(f"total: {sum(timings.values()):.1f}s")
+        print("[timing] " + "  ".join(parts))
+
+    return timings
 
 
 def run_from_cli(args, cfg):
@@ -487,26 +520,28 @@ def run_from_cli(args, cfg):
             resource_spec=args.resource_spec,
         )
 
+    workflow_kwargs = dict(
+        ic=args.ic,
+        bc=args.bc,
+        bgcic=args.bgcic,
+        bgcironforcing=args.bgcironforcing,
+        tides=args.tides,
+        chl=args.chl,
+        runoff=args.runoff,
+        bgcrivernutrients=args.bgcrivernutrients,
+        skip_get=args.no_get,
+        skip_regrid=args.no_regrid,
+        skip_merge=args.no_merge,
+        preview=cfg["basic"]["general"].get("preview", False),
+        cfg=cfg,
+        client=client,
+        n_workers=args.n_workers if not args.pbs else None,
+        visualize=args.visualize,
+        pbs=args.pbs,
+    )
+
     try:
-        run_workflow(
-            ic=args.ic,
-            bc=args.bc,
-            bgcic=args.bgcic,
-            bgcironforcing=args.bgcironforcing,
-            tides=args.tides,
-            chl=args.chl,
-            runoff=args.runoff,
-            bgcrivernutrients=args.bgcrivernutrients,
-            skip_get=args.no_get,
-            skip_regrid=args.no_regrid,
-            skip_merge=args.no_merge,
-            preview=cfg["basic"]["general"].get("preview", False),
-            cfg=cfg,
-            client=client,
-            n_workers=args.n_workers if not args.pbs else None,
-            visualize=args.visualize,
-            pbs=args.pbs,
-        )
+        run_workflow(**workflow_kwargs)
     finally:
         if client is not None:
             client.close()
