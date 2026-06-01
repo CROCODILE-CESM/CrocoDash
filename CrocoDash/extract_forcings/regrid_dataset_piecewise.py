@@ -191,7 +191,7 @@ def regrid_dataset_piecewise(
                             infile=file_path,  # location of raw boundary
                             varnames=dataset_varnames,
                             arakawa_grid=None,  # Already organized into the correct mapping format
-                            rotational_method=rm6.rotation.RotationMethod.EXPAND_GRID,
+                            rotational_method=rm6.regional_mom6.RotationMethod.EXPAND_GRID,
                             regridding_method="bilinear",
                             fill_method=fill_method,
                             **kwargs,  # Only passes time info if it exists
