@@ -1,0 +1,39 @@
+name: Check Submodule Bumps
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  check-submodule-bumps:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for accidental submodule bumps
+        env:
+          LABEL_NAMES: ${{ toJson(github.event.pull_request.labels.*.name) }}
+        run: |
+          if echo "$LABEL_NAMES" | grep -q "submodule-bump"; then
+            echo "Label 'submodule-bump' found — skipping submodule check."
+            exit 0
+          fi
+
+          git fetch origin main
+
+          CHANGED=$(git diff origin/main HEAD -- rm6 visualCaseGen)
+
+          if [ -n "$CHANGED" ]; then
+            echo "ERROR: Submodule pointer(s) changed in this PR."
+            echo ""
+            echo "Changed submodule(s):"
+            git diff origin/main HEAD -- rm6 visualCaseGen | grep "^[-+]Subproject" || true
+            echo ""
+            echo "If this is intentional, add the 'submodule-bump' label to this PR."
+            exit 1
+          fi
+
+          echo "No accidental submodule bumps detected."
