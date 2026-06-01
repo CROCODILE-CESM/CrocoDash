@@ -24,13 +24,13 @@ jobs:
 
           git fetch origin main
 
-          CHANGED=$(git diff origin/main HEAD -- rm6 visualCaseGen)
+          CHANGED=$(git diff origin/main HEAD -- rm6 visualCaseGen demos)
 
           if [ -n "$CHANGED" ]; then
             echo "ERROR: Submodule pointer(s) changed in this PR."
             echo ""
             echo "Changed submodule(s):"
-            git diff origin/main HEAD -- rm6 visualCaseGen | grep "^[-+]Subproject" || true
+            git diff origin/main HEAD -- rm6 visualCaseGen demos | grep "^[-+]Subproject" || true
             echo ""
             echo "If this is intentional, add the 'submodule-bump' label to this PR."
             exit 1
