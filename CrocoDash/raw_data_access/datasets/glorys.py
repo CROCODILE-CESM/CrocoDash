@@ -12,7 +12,7 @@ from CrocoDash.raw_data_access.utils import fill_template
 import pandas as pd
 from .utils import convert_lons_to_180_range
 from CrocoDash.raw_data_access.base import *
-from mom6_forge._source_bathy import longitude_slicer
+from mom6_forge.utils import longitude_slicer
 
 class GLORYS(ForcingProduct):
     product_name = "glorys"
