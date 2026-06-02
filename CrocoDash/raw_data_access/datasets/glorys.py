@@ -12,7 +12,7 @@ from CrocoDash.raw_data_access.utils import fill_template
 import pandas as pd
 from .utils import convert_lons_to_180_range
 from CrocoDash.raw_data_access.base import *
-
+from mom6_forge._source_bathy import longitude_slicer
 
 class GLORYS(ForcingProduct):
     product_name = "glorys"
@@ -75,9 +75,6 @@ class GLORYS(ForcingProduct):
         ds_in_files = []
         date_strings = [date.strftime("%Y%m%d") for date in dates]
 
-        # Adjust lat lon inputs to make sure they are in the correct range of -180 to 180
-        lon_min, lon_max = convert_lons_to_180_range(lon_min, lon_max)
-
         for date in date_strings:
             pattern = os.path.join(ds_in_path, "**", f"*_{date}_*.nc")
             ds_in_files.extend(glob.glob(pattern, recursive=True))
@@ -87,30 +84,9 @@ class GLORYS(ForcingProduct):
             ds_in_files, decode_times=False, engine="h5netcdf", parallel=True
         )[variables]
 
-        if lon_min * lon_max > 0:
-            dataset = ds.sel(
-                latitude=slice(lat_min - 1, lat_max + 1),
-                longitude=slice(lon_min - 1, lon_max + 1),
-            )
-        else:
-            dataset = xr.concat(
-                [
-                    ds.sel(
-                        latitude=slice(lat_min - 1, lat_max + 1),
-                        **{"longitude": slice(lon_min - 1, 360)},
-                    ),
-                    ds.sel(
-                        latitude=slice(lat_min - 1, lat_max + 1),
-                        **{"longitude": slice(-180, lon_max + 1)},
-                    ),
-                ],
-                dim="longitude",
-            )
+        buf = 1.0  # buffer in degrees to ensure we have enough data for interpolation at the boundaries
 
-            # convert longitude from degree west to degree east
-            dataset["longitude"] = (360 - dataset["longitude"]) % 360
-            dataset = dataset.sortby("longitude")
-
+        dataset = longitude_slicer(ds,[lon_min-buf, lon_max+buf], longitude_coords = "longitude")
         dataset.to_netcdf(path)
         return path
 
