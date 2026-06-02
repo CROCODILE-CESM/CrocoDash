@@ -14,6 +14,7 @@ from .utils import convert_lons_to_180_range
 from CrocoDash.raw_data_access.base import *
 from mom6_forge.utils import longitude_slicer
 
+
 class GLORYS(ForcingProduct):
     product_name = "glorys"
     description = "GLORYS (Global Ocean Physics Reanalysis) is a public dataset provided through the copernicus marine service."
@@ -86,7 +87,9 @@ class GLORYS(ForcingProduct):
 
         buf = 1.0  # buffer in degrees to ensure we have enough data for interpolation at the boundaries
 
-        dataset = longitude_slicer(ds,[lon_min-buf, lon_max+buf], longitude_coords = "longitude")
+        dataset = longitude_slicer(
+            ds, [lon_min - buf, lon_max + buf], longitude_coords="longitude"
+        )
         dataset.to_netcdf(path)
         return path
 
