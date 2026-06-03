@@ -4,6 +4,7 @@ import shutil
 from datetime import datetime
 import json
 import importlib.util
+import math
 import pandas as pd
 import regional_mom6 as rmom6
 from CrocoDash.grid import Grid
@@ -860,6 +861,29 @@ class Case:
                 "skip"  # to be generated later in process_forcings
             )
 
+    def _compute_pecount(self):
+        """Compute the CIME pecount tier based on active ocean points and compset.
+
+        Uses target pts/core ratios derived from tx2_3v3 benchmarks:
+          - without MARBL: ~170 pts/core
+          - with MARBL:    ~60  pts/core
+
+        MOM6 is allocated full Derecho nodes (128 cores each). The tier string
+        maps nodes_needed to CIME --pecount keyword.
+        """
+        TASKS_PER_NODE = 128
+        pts_per_core = 60 if self.bgc_in_compset else 170
+        ocean_pts = int(self.ocn_topo.tmask.sum())
+        nodes_needed = math.ceil(ocean_pts / (pts_per_core * TASKS_PER_NODE))
+        if nodes_needed < 1:
+            return "XS"
+        elif nodes_needed == 1:
+            return "S"
+        elif nodes_needed <= 3:
+            return "M"
+        else:
+            return "L"
+
     def _configure_launch(self):
         """Assign the launch variables for the case."""
 
@@ -871,6 +895,7 @@ class Case:
 
         # Variables that are not included in a stage:
         cvars["NINST"].value = self.ninst
+        cvars["PECOUNT"].value = self._compute_pecount()
 
     def _apply_final_xmlchanges(
         self, ntasks_ocn=None, job_queue=None, job_wallclock_time=None
