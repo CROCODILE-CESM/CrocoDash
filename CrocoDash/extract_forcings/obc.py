@@ -33,11 +33,23 @@ import xarray as xr
 
 from CrocoDash import logging
 from CrocoDash.extract_forcings import utils
-from CrocoDash.extract_forcings.utils import parse_dataset_folder
 from CrocoDash.grid import Grid
 from CrocoDash.raw_data_access.registry import ProductRegistry
 
 logger = logging.setup_logger(__name__)
+
+
+_NETCDF_MAGIC = (b"\x89HDF", b"CDF\x01", b"CDF\x02")
+
+
+def _is_valid_netcdf(path: Path) -> bool:
+    """Return True if path starts with a recognised NetCDF/HDF5 magic header."""
+    try:
+        with open(path, "rb") as f:
+            header = f.read(4)
+        return any(header.startswith(m) for m in _NETCDF_MAGIC)
+    except OSError:
+        return False
 
 
 def _get_single_chunk(
@@ -59,13 +71,11 @@ def _get_single_chunk(
     output_file = output_dir / f"{boundary}_unprocessed.{start_str}_{end_str}.nc"
 
     if output_file.exists():
-        try:
-            xr.open_dataset(output_file).close()
-        except Exception as e:
+        if not _is_valid_netcdf(output_file):
             raise RuntimeError(
-                f"OBC file {output_file} exists but is corrupt: {e}. "
+                f"OBC file {output_file} exists but is not a valid NetCDF file. "
                 "Delete it manually and re-run."
-            ) from e
+            )
         logger.info(f"OBC file {output_file.name} already exists. Skipping download.")
         return output_file
 
@@ -166,6 +176,10 @@ def _merge_single_boundary(
     output_folder = Path(output_folder)
     output_path = output_folder / f"forcing_obc_segment_{boundary_label}.nc"
 
+    if output_path.exists():
+        logger.info(f"Merged file {output_path.name} already exists. Skipping.")
+        return output_path
+
     ds = xr.open_mfdataset(
         [str(p) for p in regridded_file_paths],
         combine="nested",
@@ -180,38 +194,38 @@ def _merge_single_boundary(
 
 def process_obc_conditions(
     config_path,
-    skip_get: bool = False,
-    skip_regrid: bool = False,
-    skip_merge: bool = False,
     client=None,
     preview: bool = False,
 ):
     """
     Process boundary conditions through the three-step pipeline.
 
+    Each step is idempotent: existing output files are detected and skipped
+    automatically, so the pipeline can be safely re-run after a partial failure.
+
     Execution model:
 
     Phase 1a — GET (parallel via Dask):
       Download one raw file per (boundary, time-chunk) pair. All GET tasks
       are fully independent and run in parallel. Blocks until all downloads
-      are complete before proceeding.
+      are complete before proceeding. Skips any chunk whose output file already
+      exists and passes the magic-bytes check.
 
     Phase 1b — REGRID (sequential in main process):
       Convert each raw file to MOM6 segment format. Always runs in the calling
       process — one chunk at a time, in boundary/chunk order. xESMF/ESMF cannot
       initialize its VM in subprocess workers on PBS/HPC systems
       (``ESMCI::VM::getCurrent()`` rc=545), so regridding is always serial
-      regardless of whether a Dask client is provided.
+      regardless of whether a Dask client is provided. Skips chunks whose
+      regridded output already exists.
 
     Phase 2 — MERGE (sequential in main process):
       One call per boundary concatenates all time-chunk files into a single
-      final forcing file. Runs after Phase 1 is complete.
+      final forcing file. Runs after Phase 1 is complete. Skips boundaries
+      whose merged output already exists.
 
     Args:
         config_path: Path to the config JSON file.
-        skip_get: Skip download; use existing raw files on disk.
-        skip_regrid: Skip regridding; use existing regridded files on disk.
-        skip_merge: Skip the merge step.
         client: Dask distributed Client for parallelising GET. If None, GET
                 runs sequentially via ``dask.compute``. Create one with
                 :func:`~CrocoDash.extract_forcings.utils.make_local_cluster`
@@ -268,20 +282,8 @@ def process_obc_conditions(
         for i, (start, end) in enumerate(date_pairs)
     }
 
-    # Raw inputs consumed by regrid: scan disk if get was skipped, otherwise
-    # the expected get outputs are what regrid will read
-    raw_inputs = {}
-    if skip_get:
-        raw_regex = config["basic"]["file_regex"]["raw_dataset_pattern"]
-        raw_file_list = parse_dataset_folder(raw_path, raw_regex, date_format)
-        for boundary in boundaries:
-            idx = 0
-            for fs, fe, fp in sorted(raw_file_list.get(boundary, [])):
-                if fs <= end_dt and fe >= start_dt:
-                    raw_inputs[(boundary, idx)] = Path(fp)
-                    idx += 1
-    else:
-        raw_inputs = dict(get_outputs)
+    # Raw inputs consumed by regrid: always derived from the expected get outputs
+    raw_inputs = dict(get_outputs)
 
     # Expected output path for each (boundary, chunk) regrid task
     regrid_outputs = {
@@ -289,27 +291,14 @@ def process_obc_conditions(
         / f"forcing_obc_segment_{bnc[boundary]:03d}_{start.strftime(date_format)}_{end.strftime(date_format)}.nc"
         for boundary in boundaries
         for i, (start, end) in enumerate(date_pairs)
-        if (boundary, i) in raw_inputs
     }
 
-    # Regridded inputs consumed by merge: scan disk if regrid was skipped,
-    # otherwise derive from the expected regrid output paths
+    # Regridded inputs consumed by merge: always derived from expected regrid output paths
     regridded_inputs = defaultdict(list)
-    if skip_regrid:
-        regridded_regex = config["basic"]["file_regex"]["regridded_dataset_pattern"]
-        regridded_file_list = parse_dataset_folder(
-            regridded_path, regridded_regex, date_format
-        )
-        for boundary, seg_id in bnc.items():
-            seg_label = f"{seg_id:03d}"
-            for fs, fe, fp in sorted(regridded_file_list.get(seg_label, [])):
-                if fs <= end_dt and fe >= start_dt:
-                    regridded_inputs[seg_label].append(Path(fp))
-    else:
-        for (boundary, i), path in regrid_outputs.items():
-            regridded_inputs[f"{bnc[boundary]:03d}"].append(path)
-        for seg_label in regridded_inputs:
-            regridded_inputs[seg_label].sort()
+    for (boundary, i), path in regrid_outputs.items():
+        regridded_inputs[f"{bnc[boundary]:03d}"].append(path)
+    for seg_label in regridded_inputs:
+        regridded_inputs[seg_label].sort()
 
     # Expected merge output for each boundary segment
     merge_outputs = {
@@ -368,21 +357,20 @@ def process_obc_conditions(
 
     # get_tasks[(boundary, chunk_index)] = delayed call to _get_single_chunk
     get_tasks = {}
-    if not skip_get:
-        for boundary in boundaries:
-            for i, (start, end) in enumerate(date_pairs):
-                get_tasks[(boundary, i)] = dask.delayed(_get_single_chunk)(
-                    boundary=boundary,
-                    start_date=start,
-                    end_date=end,
-                    date_format=date_format,
-                    hgrid_path=str(hgrid_path),
-                    output_dir=str(raw_path),
-                    product_name=product_name,
-                    function_name=function_name,
-                    variables=variables,
-                    extra_args=extra_args,
-                )
+    for boundary in boundaries:
+        for i, (start, end) in enumerate(date_pairs):
+            get_tasks[(boundary, i)] = dask.delayed(_get_single_chunk)(
+                boundary=boundary,
+                start_date=start,
+                end_date=end,
+                date_format=date_format,
+                hgrid_path=str(hgrid_path),
+                output_dir=str(raw_path),
+                product_name=product_name,
+                function_name=function_name,
+                variables=variables,
+                extra_args=extra_args,
+            )
 
     if client is not None:
         logger.info(
@@ -398,7 +386,7 @@ def process_obc_conditions(
         )
 
     # Execute Phase 1a: GET in parallel.
-    if not skip_get and get_tasks:
+    if get_tasks:
         if client is not None:
             futures = client.compute(list(get_tasks.values()))
             client.gather(futures)
@@ -417,35 +405,31 @@ def process_obc_conditions(
     # names), so regrid can read them directly after GET has written them.
     # -------------------------------------------------------------------------
 
-    if not skip_regrid:
-        logger.info("Regridding sequentially in main process...")
-        for boundary in boundaries:
-            seg_id = bnc[boundary]
-            regridders = None
-            for i, (start, end) in enumerate(date_pairs):
-                raw_arg = raw_inputs.get((boundary, i))
-                if raw_arg is None:
-                    logger.warning(
-                        "No raw file for %s chunk %d, skipping regrid.", boundary, i
-                    )
-                    continue
-
-                dated_ouput, regridders = _regrid_single_chunk(
-                    boundary=boundary,
-                    seg_id=seg_id,
-                    file_start=start,
-                    file_end=end,
-                    date_format=date_format,
-                    raw_file_path=raw_arg,
-                    hgrid_path=str(hgrid_path),
-                    output_folder=str(regridded_path),
-                    dataset_varnames=product_info,
-                    fill_method=fill_method,
-                    regridders=regridders,
+    logger.info("Regridding sequentially in main process...")
+    for boundary in boundaries:
+        seg_id = bnc[boundary]
+        regridders = None
+        for i, (start, end) in enumerate(date_pairs):
+            raw_arg = raw_inputs.get((boundary, i))
+            if raw_arg is None:
+                logger.warning(
+                    "No raw file for %s chunk %d, skipping regrid.", boundary, i
                 )
+                continue
 
-    if skip_merge:
-        return
+            dated_ouput, regridders = _regrid_single_chunk(
+                boundary=boundary,
+                seg_id=seg_id,
+                file_start=start,
+                file_end=end,
+                date_format=date_format,
+                raw_file_path=raw_arg,
+                hgrid_path=str(hgrid_path),
+                output_folder=str(regridded_path),
+                dataset_varnames=product_info,
+                fill_method=fill_method,
+                regridders=regridders,
+            )
 
     # -------------------------------------------------------------------------
     # Phase 2 task graph: Merge

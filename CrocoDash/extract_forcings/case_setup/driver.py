@@ -31,7 +31,6 @@ Typical CLI usage::
         --queue regular --visualize                 # same, plus Dask dashboard link
     python driver.py --tides --bgcic                # tides and BGC IC only
     python driver.py --all --skip runoff            # all except runoff
-    python driver.py --ic --no-get                  # IC, skip raw data download
 
 Typical Python usage (HPC power users)::
 
@@ -209,11 +208,6 @@ def parse_args():
         "--chl", action="store_true", help="Run chlorophyll processing"
     )
 
-    conditions_opts = parser.add_argument_group("Conditions options")
-    conditions_opts.add_argument("--no-get", action="store_true")
-    conditions_opts.add_argument("--no-regrid", action="store_true")
-    conditions_opts.add_argument("--no-merge", action="store_true")
-
     top.add_argument(
         "--skip",
         nargs="*",
@@ -306,9 +300,6 @@ def resolve_components(args, cfg):
         not in {
             "all",
             "test",
-            "no_get",
-            "no_regrid",
-            "no_merge",
             "pbs",
             "visualize",
         }
@@ -345,9 +336,6 @@ def run_workflow(
     chl=False,
     runoff=False,
     bgcrivernutrients=False,
-    skip_get=False,
-    skip_regrid=False,
-    skip_merge=False,
     preview=False,
     cfg=None,
     client=None,
@@ -371,9 +359,6 @@ def run_workflow(
         chl:                 Run chlorophyll processing
         runoff:              Run runoff mapping
         bgcrivernutrients:   Run BGC river nutrients (always runs after runoff)
-        skip_get:            Skip raw data download step (OBC/IC)
-        skip_regrid:         Skip regridding step (OBC)
-        skip_merge:          Skip merge step (OBC)
         preview:             Preview task graph without executing
         cfg:                 Config object; loaded from CONFIG_PATH if None
         client:              Dask distributed Client (power users). Caller owns lifecycle.
@@ -425,9 +410,6 @@ def run_workflow(
             _t = time.perf_counter()
             process_obc(
                 config_path=CONFIG_PATH,
-                skip_get=skip_get,
-                skip_regrid=skip_regrid,
-                skip_merge=skip_merge,
                 client=client,
                 preview=preview,
             )
@@ -529,9 +511,6 @@ def run_from_cli(args, cfg):
         chl=args.chl,
         runoff=args.runoff,
         bgcrivernutrients=args.bgcrivernutrients,
-        skip_get=args.no_get,
-        skip_regrid=args.no_regrid,
-        skip_merge=args.no_merge,
         preview=cfg["basic"]["general"].get("preview", False),
         cfg=cfg,
         client=client,
