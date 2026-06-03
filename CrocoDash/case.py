@@ -869,7 +869,7 @@ class Case:
           - with MARBL:    ~60  pts/core
 
         MOM6 is allocated full Derecho nodes (128 cores each). The tier string
-        maps nodes_needed → CIME --pecount keyword.
+        maps nodes_needed to CIME --pecount keyword.
         """
         TASKS_PER_NODE = 128
         pts_per_core = 60 if self.bgc_in_compset else 170
