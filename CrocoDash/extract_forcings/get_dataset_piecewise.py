@@ -120,66 +120,78 @@ def get_dataset_piecewise(
     for key in ["dataset_path", "date_format", "regex", "delimiter"]:
         if key in product_information:
             extra_args[key] = product_information[key]
-    # Retrieve and save data piecewise
-    for ind in range(len(dates) - 1):
-        end_date = dates[ind + 1]
+
+    ### Retrieve and save data piecewise
+    
+    # Set Initial Condition
+    if run_initial_condition:
+        latlon_info = boundary_info["ic"]
+        output_file = f"ic_unprocessed.nc"
+        output_file_names.append(output_file)
+        end_ic_date = start_date + timedelta(days=1)
+        end_ic_date_str = end_ic_date.strftime(date_format)
         start_date_str = start_date.strftime(date_format)
-        end_date_str = end_date.strftime(date_format)
 
-        # Set Initial Condition
-        if run_initial_condition and ind == 0:
-            latlon_info = boundary_info["ic"]
-            output_file = f"ic_unprocessed.nc"
-            output_file_names.append(output_file)
-            end_ic_date = start_date + timedelta(days=1)
-            end_ic_date_str = end_ic_date.strftime(date_format)
-
-            # Execute the data retrieval function
-            if not preview:
-                if (Path(output_dir) / output_file).exists():
-                    logger.info(
-                        f"Initial condition file {output_file} already exists. Skipping download."
-                    )
-                else:
-                    data_access_function(
-                        dates=[start_date_str, end_ic_date_str],
-                        lat_min=latlon_info["lat_min"],
-                        lat_max=latlon_info["lat_max"],
-                        lon_min=latlon_info["lon_min"],
-                        lon_max=latlon_info["lon_max"],
-                        output_folder=output_dir,
-                        output_filename=output_file,
-                        variables=phys_vars + extra_tracers,
-                        **extra_args,
-                    )
-        if run_boundary_conditions:
-            for boundary in boundary_number_conversion.keys():
-
-                latlon_info = boundary_info[boundary]
-                output_file = (
-                    f"{boundary}_unprocessed.{start_date_str}_{end_date_str}.nc"
+        # Execute the data retrieval function
+        if not preview:
+            if (Path(output_dir) / output_file).exists():
+                logger.info(
+                    f"Initial condition file {output_file} already exists. Skipping download."
                 )
-                output_file_names.append(output_file)
-                # Execute the data retrieval function
-                if not preview:
-                    if (Path(output_dir) / output_file).exists():
-                        logger.info(
-                            f"OBC file {output_file} already exists. Skipping download."
-                        )
-                    else:
-                        data_access_function(
-                            dates=[start_date_str, end_date_str],
-                            lat_min=latlon_info["lat_min"],
-                            lat_max=latlon_info["lat_max"],
-                            lon_min=latlon_info["lon_min"],
-                            lon_max=latlon_info["lon_max"],
-                            output_folder=output_dir,
-                            output_filename=output_file,
-                            variables=phys_vars + extra_tracers,
-                            **extra_args,
-                        )
+            else:
+                data_access_function(
+                    dates=[start_date_str, end_ic_date_str],
+                    lat_min=latlon_info["lat_min"],
+                    lat_max=latlon_info["lat_max"],
+                    lon_min=latlon_info["lon_min"],
+                    lon_max=latlon_info["lon_max"],
+                    output_folder=output_dir,
+                    output_filename=output_file,
+                    variables=phys_vars + extra_tracers,
+                    **extra_args,
+                )
 
-        start_date = end_date + timedelta(days=1)
+    # Do not call ThreadPoolExecutor if there is only one file to download
+    if run_boundary_conditions:
+        if not len(dates) > 2:
+            process_boundary_conditions(
+                start_date,
+                dates[1],
+                boundary_number_conversion,
+                boundary_info,
+                preview,
+                output_dir,
+                phys_vars,
+                extra_tracers,
+                extra_args
+            )
+
+        # Parallelize access
+        else:
+            from concurrent.futures import ThreadPoolExecutor
+
+            end_dates = dates[1:]
+            start_dates = [dates[0]] + [d + timedelta(days=1) for d in dates[1:-1]]
+
+            with ThreadPoolExecutor() as executor:
+                futures = [
+                    executor.submit(
+                        process_boundary_conditions,
+                        start_dates[w],
+                        end_dates[w],
+                        boundary_number_conversion,
+                        boundary_info,
+                        preview,
+                        output_dir,
+                        phys_vars,
+                        extra_tracers,
+                        extra_args
+                    )
+                    for w in range(len(start_dates))
+                ]
+
+                for future in as_completed(futures):
+                    print(future.result())
 
     if not preview:
         logger.info(
@@ -192,6 +204,50 @@ def get_dataset_piecewise(
             "output_folder": output_dir,
         }
 
+def process_boundary_conditions(
+        start_date,
+        end_date,
+        boundary_number_conversion,
+        boundary_info,
+        preview,
+        output_dir,
+        phys_vars,
+        extra_tracers,
+        extra_args
+):
+
+    start_date_str = start_date.strftime(date_format)
+    end_date_str = end_date.strftime(date_format)
+
+    for boundary in boundary_number_conversion.keys():
+
+        latlon_info = boundary_info[boundary]
+        output_file = (
+            f"{boundary}_unprocessed.{start_date_str}_{end_date_str}.nc"
+        )
+        output_file_names.append(output_file)
+        # Execute the data retrieval function
+        if not preview:
+            if (Path(output_dir) / output_file).exists():
+                logger.info(
+                    f"OBC file {output_file} already exists. Skipping download."
+                )
+            else:
+                data_access_function(
+                    dates=[start_date_str, end_date_str],
+                    lat_min=latlon_info["lat_min"],
+                    lat_max=latlon_info["lat_max"],
+                    lon_min=latlon_info["lon_min"],
+                    lon_max=latlon_info["lon_max"],
+                    output_folder=output_dir,
+                    output_filename=output_file,
+                    variables=phys_vars + extra_tracers,
+                    **extra_args,
+                )
+
+    start_date = end_date + timedelta(days=1)
+
+    return
 
 if __name__ == "__main__":
     print("This is the raw dataset accessor of the workflow, don't run this directly! ")
