@@ -1,4 +1,5 @@
 from datetime import datetime
+import threading
 import xarray as xr
 from CrocoDash import logging
 from CrocoDash.extract_forcings.utils import (
@@ -103,6 +104,8 @@ def merge_piecewise_dataset(
                     combine="nested",
                     concat_dim="time",
                     coords="minimal",
+                    parallel=False,
+                    lock=threading.Lock(),
                 )
                 ds.to_netcdf(output_path)
                 ds.close()
