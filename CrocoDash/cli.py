@@ -29,6 +29,47 @@ def _duplicate_case(args):
     print(f"Duplicated case created at: {new_case.caseroot}")
 
 
+def _template(args):
+    import sys
+    import nbformat
+    from pathlib import Path
+
+    demos_tools = Path(__file__).parent.parent / "demos" / "tools"
+    sys.path.insert(0, str(demos_tools))
+    from inject_paths import load_paths, inject_into_text
+
+    paths = (
+        load_paths(demos_tools / "known_paths.json", args.machine)
+        if args.machine
+        else {}
+    )
+    output = Path(args.output)
+
+    nb_path = (
+        demos_tools.parent
+        / "gallery"
+        / "notebooks"
+        / "CrocoDash"
+        / "tutorials"
+        / "crocodash_tutorial.ipynb"
+    )
+    nb = nbformat.read(nb_path, as_version=4)
+
+    if output.suffix == ".ipynb":
+        for cell in nb.cells:
+            if cell.cell_type == "code":
+                cell.source = inject_into_text(cell.source, paths)
+        nbformat.write(nb, output)
+    else:
+        code_cells = [cell.source for cell in nb.cells if cell.cell_type == "code"]
+        text = "\n\n# %%\n".join(code_cells)
+        output.write_text(inject_into_text(text, paths))
+
+    print(f"Template written to: {output}")
+    if not args.machine:
+        print("Tip: rerun with --machine derecho to pre-fill known dataset paths.")
+
+
 def _fork(args):
 
     from CrocoDash.shareable.fork import ForkCrocoDashBundle
@@ -164,6 +205,23 @@ def main():
         help="Path to JSON file with extra forcing arguments.",
     )
     fork_parser.set_defaults(func=_fork)
+
+    # --- template ---
+    template_parser = subparsers.add_parser(
+        "template",
+        help="Write a starter CrocoDash case script or notebook.",
+    )
+    template_parser.add_argument(
+        "--output",
+        required=True,
+        help="Output path. Use .ipynb for a notebook or .py for a Python script.",
+    )
+    template_parser.add_argument(
+        "--machine",
+        default=None,
+        help="Pre-fill known dataset paths for this machine (e.g. derecho). Omit to leave <KEY> placeholders.",
+    )
+    template_parser.set_defaults(func=_template)
 
     args = parser.parse_args()
     args.func(args)
