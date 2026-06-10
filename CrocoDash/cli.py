@@ -30,23 +30,17 @@ def _duplicate_case(args):
 
 
 def _template(args):
-    import sys
     import nbformat
+    from importlib.resources import files
     from pathlib import Path
+    from crocogallery import load_paths, inject_into_text
 
-    demos_tools = Path(__file__).parent.parent / "demos" / "tools"
-    sys.path.insert(0, str(demos_tools))
-    from inject_paths import load_paths, inject_into_text
-
-    paths = (
-        load_paths(demos_tools / "known_paths.json", args.machine)
-        if args.machine
-        else {}
-    )
+    paths = load_paths(args.machine) if args.machine else {}
     output = Path(args.output)
 
+    # gallery/notebooks/ is a sibling of the installed crocogallery package dir
     nb_path = (
-        demos_tools.parent
+        files("crocogallery").parent
         / "gallery"
         / "notebooks"
         / "CrocoDash"
