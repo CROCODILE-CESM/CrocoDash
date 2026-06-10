@@ -44,7 +44,7 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'for_users/case_information';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Case Templates" href="template.html" />
+    <link rel="next" title="Command Line Interface" href="cli.html" />
     <link rel="prev" title="Extract Forcings (case.process_forcings)" href="extract_forcings.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -166,6 +166,7 @@
 <li class="toctree-l2"><a class="reference internal" href="forcing_configurations.html">Forcing Configuration (case.configure_forcings)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="extract_forcings.html">Extract Forcings (case.process_forcings)</a></li>
 <li class="toctree-l2 current active"><a class="current reference internal" href="#">Extra CESM Case Information</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html">Command Line Interface</a></li>
 <li class="toctree-l2"><a class="reference internal" href="template.html">Case Templates</a></li>
 <li class="toctree-l2"><a class="reference internal" href="shareable.html">Shareable Configuration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="additional_resources.html">Additional Resources</a></li>
@@ -342,6 +343,7 @@ document.write(`
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#case-state-file">Case State File</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#available-compset-aliases">Available Compset Aliases</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#input-parameters">Input Parameters</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#generated-files">Generated Files</a></li>
@@ -374,6 +376,26 @@ document.write(`
                   
   <section id="extra-cesm-case-information">
 <h1>Extra CESM Case Information<a class="headerlink" href="#extra-cesm-case-information" title="Link to this heading">#</a></h1>
+<section id="case-state-file">
+<h2>Case State File<a class="headerlink" href="#case-state-file" title="Link to this heading">#</a></h2>
+<p>At the end of <code class="docutils literal notranslate"><span class="pre">Case.__init__</span></code>, CrocoDash writes a <code class="docutils literal notranslate"><span class="pre">crocodash_state.json</span></code> file into the caseroot. It records the construction parameters needed to reconstruct or inspect the case later:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;inputdir&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/path/to/croc_input/mycase&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;cesmroot&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/path/to/CROCESM&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;supergrid_path&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/path/to/.../ocean_hgrid_mygrid_abc123.nc&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;topo_path&quot;</span><span class="p">:</span><span class="w">      </span><span class="s2">&quot;/path/to/.../ocean_topog_mygrid_abc123.nc&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;vgrid_path&quot;</span><span class="p">:</span><span class="w">     </span><span class="s2">&quot;/path/to/.../ocean_vgrid_mygrid_abc123.nc&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;grid_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;mygrid&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;session_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;abc123&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;compset_lname&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;1850_DATM%JRA_SLND_SICE_MOM6%REGIONAL_SROF_SGLC_SWAV&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;machine&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;derecho&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;project&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;NCGD0011&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;atm_grid_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;TL319&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>This file is read by <code class="docutils literal notranslate"><span class="pre">crocodash</span> <span class="pre">dump</span></code> to reconstruct a YAML config, and by <code class="docutils literal notranslate"><span class="pre">bundle</span></code>/<code class="docutils literal notranslate"><span class="pre">fork</span></code>/<code class="docutils literal notranslate"><span class="pre">duplicate</span></code> to avoid re-parsing CIME. It is the paired counterpart to <code class="docutils literal notranslate"><span class="pre">inputdir/extract_forcings/config.json</span></code>, which records forcing configuration written by <code class="docutils literal notranslate"><span class="pre">configure_forcings</span></code>.</p>
+</section>
 <section id="available-compset-aliases">
 <h2>Available Compset Aliases<a class="headerlink" href="#available-compset-aliases" title="Link to this heading">#</a></h2>
 <p>Regional compsets are available by checking out the CROCODILE-CESM/CESM fork. You can always use the long names of the compsets instead.</p>
@@ -586,11 +608,11 @@ cat<span class="w"> </span>SourceMods/src.mom/MOM_input<span class="w">  </span>
       </div>
     </a>
     <a class="right-next"
-       href="template.html"
+       href="cli.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Case Templates</p>
+        <p class="prev-next-title">Command Line Interface</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -610,6 +632,7 @@ cat<span class="w"> </span>SourceMods/src.mom/MOM_input<span class="w">  </span>
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#case-state-file">Case State File</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#available-compset-aliases">Available Compset Aliases</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#input-parameters">Input Parameters</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#generated-files">Generated Files</a></li>

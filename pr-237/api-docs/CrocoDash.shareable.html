@@ -166,6 +166,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../for_users/forcing_configurations.html">Forcing Configuration (case.configure_forcings)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_users/extract_forcings.html">Extract Forcings (case.process_forcings)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_users/case_information.html">Extra CESM Case Information</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_users/cli.html">Command Line Interface</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_users/template.html">Case Templates</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_users/shareable.html">Shareable Configuration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_users/additional_resources.html">Additional Resources</a></li>
@@ -376,7 +377,6 @@ document.write(`
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.fork.ask_string"><code class="docutils literal notranslate"><span class="pre">ask_string()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.fork.ask_yes_no"><code class="docutils literal notranslate"><span class="pre">ask_yes_no()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.fork.create_case"><code class="docutils literal notranslate"><span class="pre">create_case()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.fork.generate_configure_forcing_args"><code class="docutils literal notranslate"><span class="pre">generate_configure_forcing_args()</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.shareable.bundle">CrocoDash.shareable.bundle module</a><ul class="nav section-nav flex-column">
@@ -385,7 +385,6 @@ document.write(`
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.bundle.BundleCrocoDashCase.case"><code class="docutils literal notranslate"><span class="pre">BundleCrocoDashCase.case</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.bundle.BundleCrocoDashCase.diff"><code class="docutils literal notranslate"><span class="pre">BundleCrocoDashCase.diff()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.bundle.BundleCrocoDashCase.duplicate_case"><code class="docutils literal notranslate"><span class="pre">BundleCrocoDashCase.duplicate_case()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.bundle.BundleCrocoDashCase.generate_manifest"><code class="docutils literal notranslate"><span class="pre">BundleCrocoDashCase.generate_manifest()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.bundle.BundleCrocoDashCase.get_user_nl_value"><code class="docutils literal notranslate"><span class="pre">BundleCrocoDashCase.get_user_nl_value()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.bundle.BundleCrocoDashCase.identify_non_standard_CrocoDash_case_information"><code class="docutils literal notranslate"><span class="pre">BundleCrocoDashCase.identify_non_standard_CrocoDash_case_information()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.bundle.BundleCrocoDashCase.reread"><code class="docutils literal notranslate"><span class="pre">BundleCrocoDashCase.reread()</span></code></a></li>
@@ -520,25 +519,22 @@ a new case with equivalent forcings.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.shareable.fork.ForkCrocoDashBundle.fork">
-<span class="sig-name descname"><span class="pre">fork</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cesmroot</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">machine</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">project_number</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_caseroot</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_inputdir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plan</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_configs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">remove_configs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_forcing_args_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.shareable.fork.ForkCrocoDashBundle.fork" title="Link to this definition">#</a></dt>
-<dd><p>Share a CESM case by inspecting an existing bundle, optionally copying
-non-standard components, resolving forcing configurations, and creating
-a new case with equivalent forcings.</p>
+<span class="sig-name descname"><span class="pre">fork</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cesmroot</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">machine</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">project_number</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_caseroot</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_inputdir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plan</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.shareable.fork.ForkCrocoDashBundle.fork" title="Link to this definition">#</a></dt>
+<dd><p>Create a new case from a bundle, guiding the user through YAML modifications.</p>
+<p>Prompts the user to update destination paths and machine settings, then
+optionally opens $EDITOR for deeper edits. After confirmation, creates the
+case and copies non-standard CESM state per the plan.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>cesmroot</strong> (<em>str</em><em> or </em><em>Path</em>) – Path to the CESM root.</p></li>
-<li><p><strong>machine</strong> (<em>str</em>) – Machine name.</p></li>
-<li><p><strong>project_number</strong> (<em>str</em>) – Project/account number.</p></li>
+<li><p><strong>cesmroot</strong> (<em>str</em><em> or </em><em>Path</em>) – Path to the CESM root for the new case.</p></li>
+<li><p><strong>machine</strong> (<em>str</em>) – Machine name for the new case.</p></li>
+<li><p><strong>project_number</strong> (<em>str</em>) – Project/account number for the new case.</p></li>
 <li><p><strong>new_caseroot</strong> (<em>str</em><em> or </em><em>Path</em>) – Path for the new case root.</p></li>
-<li><p><strong>new_inputdir</strong> (<em>str</em><em> or </em><em>Path</em>) – Path for input data.</p></li>
+<li><p><strong>new_inputdir</strong> (<em>str</em><em> or </em><em>Path</em>) – Path for the new input directory.</p></li>
 <li><p><strong>plan</strong> (<em>dict</em><em>, </em><em>optional</em>) – Which non-standard items to copy, e.g.
 <code class="docutils literal notranslate"><span class="pre">{&quot;xml_files&quot;:</span> <span class="pre">True,</span> <span class="pre">&quot;user_nl&quot;:</span> <span class="pre">False,</span> <span class="pre">&quot;source_mods&quot;:</span> <span class="pre">True,</span> <span class="pre">&quot;xmlchanges&quot;:</span> <span class="pre">True}</span></code>.
 When omitted the user is asked interactively.</p></li>
-<li><p><strong>compset</strong> (<em>str</em><em>, </em><em>optional</em>) – Override the compset from the bundle. When omitted the user is asked interactively.</p></li>
-<li><p><strong>extra_configs</strong> (<em>list</em><em>, </em><em>optional</em>) – Additional forcing configuration names to add beyond the bundle.</p></li>
-<li><p><strong>remove_configs</strong> (<em>list</em><em>, </em><em>optional</em>) – Forcing configuration names from the bundle to drop.</p></li>
-<li><p><strong>extra_forcing_args_path</strong> (<em>str</em><em> or </em><em>Path</em><em>, </em><em>optional</em>) – Path to a JSON file supplying arguments for any new forcing configs.</p></li>
 </ul>
 </dd>
 </dl>
@@ -592,15 +588,9 @@ When omitted the user is asked interactively.</p></li>
 <span class="sig-prename descclassname"><span class="pre">CrocoDash.shareable.fork.</span></span><span class="sig-name descname"><span class="pre">create_case</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">init_args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">caseroot</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputdir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">machine</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">project_number</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cesmroot</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compset</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.shareable.fork.create_case" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
-<dl class="py function">
-<dt class="sig sig-object py" id="CrocoDash.shareable.fork.generate_configure_forcing_args">
-<span class="sig-prename descclassname"><span class="pre">CrocoDash.shareable.fork.</span></span><span class="sig-name descname"><span class="pre">generate_configure_forcing_args</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">forcing_config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">remove_configs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.shareable.fork.generate_configure_forcing_args" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
 </section>
 <section id="module-CrocoDash.shareable.bundle">
 <span id="crocodash-shareable-bundle-module"></span><h2>CrocoDash.shareable.bundle module<a class="headerlink" href="#module-CrocoDash.shareable.bundle" title="Link to this heading">#</a></h2>
-<p>Bundle is inordinately hard-coded, and probably can’t be changed. Robust testing is needed to ensure we are picking up the correct information</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="CrocoDash.shareable.bundle.BundleCrocoDashCase">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.shareable.bundle.</span></span><span class="sig-name descname"><span class="pre">BundleCrocoDashCase</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">caseroot</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.shareable.bundle.BundleCrocoDashCase" title="Link to this definition">#</a></dt>
@@ -634,11 +624,6 @@ This design started with individual functions, and got a bit too unwieldy!</p>
 <dd></dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="CrocoDash.shareable.bundle.BundleCrocoDashCase.generate_manifest">
-<span class="sig-name descname"><span class="pre">generate_manifest</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#CrocoDash.shareable.fork.BundleManifest" title="CrocoDash.shareable.fork.BundleManifest"><span class="pre">BundleManifest</span></a></span></span><a class="headerlink" href="#CrocoDash.shareable.bundle.BundleCrocoDashCase.generate_manifest" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.shareable.bundle.BundleCrocoDashCase.get_user_nl_value">
 <span class="sig-name descname"><span class="pre">get_user_nl_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">component</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">param</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.shareable.bundle.BundleCrocoDashCase.get_user_nl_value" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
@@ -659,15 +644,14 @@ This design started with individual functions, and got a bit too unwieldy!</p>
 <dt class="sig sig-object py" id="CrocoDash.shareable.bundle.duplicate_case">
 <span class="sig-prename descclassname"><span class="pre">CrocoDash.shareable.bundle.</span></span><span class="sig-name descname"><span class="pre">duplicate_case</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">caseroot</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_caseroot</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_inputdir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bundle_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.shareable.bundle.duplicate_case" title="Link to this definition">#</a></dt>
 <dd><p>Duplicate a CrocoDash case to a new location. Machine, project, and cesmroot
-are read automatically from the original caseroot.</p>
+are read automatically from the original caseroot’s crocodash_state.json.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>caseroot</strong> (<em>str</em><em> or </em><em>Path</em>) – Path to the existing case to duplicate.</p></li>
 <li><p><strong>new_caseroot</strong> (<em>str</em><em> or </em><em>Path</em>) – Path for the new case.</p></li>
 <li><p><strong>new_inputdir</strong> (<em>str</em><em> or </em><em>Path</em>) – Path for the new input directory.</p></li>
-<li><p><strong>bundle_dir</strong> (<em>str</em><em> or </em><em>Path</em><em>, </em><em>optional</em>) – Where to write the intermediate bundle. Defaults to inside
-new_caseroot and is cleaned up automatically.</p></li>
+<li><p><strong>bundle_dir</strong> (<em>str</em><em> or </em><em>Path</em><em>, </em><em>optional</em>) – Where to copy the bundle for reference. If None, no bundle is saved.</p></li>
 </ul>
 </dd>
 </dl>
@@ -750,7 +734,6 @@ new_caseroot and is cleaned up automatically.</p></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.fork.ask_string"><code class="docutils literal notranslate"><span class="pre">ask_string()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.fork.ask_yes_no"><code class="docutils literal notranslate"><span class="pre">ask_yes_no()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.fork.create_case"><code class="docutils literal notranslate"><span class="pre">create_case()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.fork.generate_configure_forcing_args"><code class="docutils literal notranslate"><span class="pre">generate_configure_forcing_args()</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.shareable.bundle">CrocoDash.shareable.bundle module</a><ul class="nav section-nav flex-column">
@@ -759,7 +742,6 @@ new_caseroot and is cleaned up automatically.</p></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.bundle.BundleCrocoDashCase.case"><code class="docutils literal notranslate"><span class="pre">BundleCrocoDashCase.case</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.bundle.BundleCrocoDashCase.diff"><code class="docutils literal notranslate"><span class="pre">BundleCrocoDashCase.diff()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.bundle.BundleCrocoDashCase.duplicate_case"><code class="docutils literal notranslate"><span class="pre">BundleCrocoDashCase.duplicate_case()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.bundle.BundleCrocoDashCase.generate_manifest"><code class="docutils literal notranslate"><span class="pre">BundleCrocoDashCase.generate_manifest()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.bundle.BundleCrocoDashCase.get_user_nl_value"><code class="docutils literal notranslate"><span class="pre">BundleCrocoDashCase.get_user_nl_value()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.bundle.BundleCrocoDashCase.identify_non_standard_CrocoDash_case_information"><code class="docutils literal notranslate"><span class="pre">BundleCrocoDashCase.identify_non_standard_CrocoDash_case_information()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.bundle.BundleCrocoDashCase.reread"><code class="docutils literal notranslate"><span class="pre">BundleCrocoDashCase.reread()</span></code></a></li>

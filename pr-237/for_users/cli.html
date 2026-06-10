@@ -1,0 +1,583 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Command Line Interface &#8212; CrocoDash  documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=eba8b062" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'for_users/cli';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Case Templates" href="template.html" />
+    <link rel="prev" title="Extra CESM Case Information" href="case_information.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../_static/crocodile.png" class="logo__image only-light" alt="CrocoDash  documentation - Home"/>
+    <script>document.write(`<img src="../_static/crocodile.png" class="logo__image only-dark" alt="CrocoDash  documentation - Home"/>`);</script>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://crocodile-cesm.github.io/CrocoGallery/">Tutorials &amp; Gallery</a></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">User Information</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="structure.html">How CrocoDash Is Organized</a></li>
+<li class="toctree-l2"><a class="reference internal" href="grids.html">Grid Stuff (Supergrid, Bathymetry, Vgrid)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="datasets.html">Accessing Raw Data (raw_data_access)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="forcing_configurations.html">Forcing Configuration (case.configure_forcings)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="extract_forcings.html">Extract Forcings (case.process_forcings)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="case_information.html">Extra CESM Case Information</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Command Line Interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="template.html">Case Templates</a></li>
+<li class="toctree-l2"><a class="reference internal" href="shareable.html">Shareable Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="additional_resources.html">Additional Resources</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../for_developers/index.html">Want to do more?</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../for_developers/dev_info.html">Get started developing!</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_developers/edit_docs.html">Write Documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_developers/adding_data_access.html">Adding Data to the Data Access Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_developers/adding_forcing_configurations.html">Adding Forcing Configurations</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../api-docs/modules.html">CrocoDash API Docs</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../api-docs/CrocoDash.html">CrocoDash package</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../api-docs/CrocoDash.extract_forcings.html">CrocoDash.extract_forcings package</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../api-docs/CrocoDash.extract_forcings.case_setup.html">CrocoDash.extract_forcings.case_setup package</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3"><a class="reference internal" href="../api-docs/CrocoDash.forcing_configurations.html">CrocoDash.forcing_configurations package</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../api-docs/CrocoDash.raw_data_access.html">CrocoDash.raw_data_access package</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../api-docs/CrocoDash.raw_data_access.datasets.html">CrocoDash.raw_data_access.datasets package</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/CROCODILE-CESM/CrocoDash/discussions/84">Common Errors</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/for_users/cli.md" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.md</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Command Line Interface</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#quick-reference">Quick reference</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crocodash-create"><code class="docutils literal notranslate"><span class="pre">crocodash</span> <span class="pre">create</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#yaml-config-schema">YAML config schema</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crocodash-dump"><code class="docutils literal notranslate"><span class="pre">crocodash</span> <span class="pre">dump</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crocodash-bundle-fork-duplicate"><code class="docutils literal notranslate"><span class="pre">crocodash</span> <span class="pre">bundle</span></code>, <code class="docutils literal notranslate"><span class="pre">fork</span></code>, <code class="docutils literal notranslate"><span class="pre">duplicate</span></code></a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="command-line-interface">
+<h1>Command Line Interface<a class="headerlink" href="#command-line-interface" title="Link to this heading">#</a></h1>
+<p>CrocoDash ships a <code class="docutils literal notranslate"><span class="pre">crocodash</span></code> command (installed automatically with <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-e</span> <span class="pre">.</span></code>) that lets you run the full case setup workflow from a YAML config file and inspect or share existing cases — no Python scripting required.</p>
+<section id="quick-reference">
+<h2>Quick reference<a class="headerlink" href="#quick-reference" title="Link to this heading">#</a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">crocodash</span> <span class="n">create</span>   <span class="o">--</span><span class="n">config</span> <span class="n">mycase</span><span class="o">.</span><span class="n">yaml</span> <span class="p">[</span><span class="o">--</span><span class="n">override</span><span class="p">]</span>
+<span class="n">crocodash</span> <span class="n">dump</span>     <span class="o">--</span><span class="n">caseroot</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">case</span>
+<span class="n">crocodash</span> <span class="n">bundle</span>   <span class="o">--</span><span class="n">caseroot</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">case</span> <span class="o">--</span><span class="n">output</span><span class="o">-</span><span class="nb">dir</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">bundle_dir</span> <span class="o">...</span>
+<span class="n">crocodash</span> <span class="n">fork</span>     <span class="o">--</span><span class="n">bundle</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">bundle</span> <span class="o">--</span><span class="n">caseroot</span> <span class="o">...</span> <span class="o">--</span><span class="n">inputdir</span> <span class="o">...</span> <span class="o">--</span><span class="n">cesmroot</span> <span class="o">...</span> <span class="o">--</span><span class="n">machine</span> <span class="o">...</span> <span class="o">--</span><span class="n">project</span> <span class="o">...</span>
+<span class="n">crocodash</span> <span class="n">duplicate</span> <span class="o">--</span><span class="n">source</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">case</span> <span class="o">--</span><span class="n">case</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">new_case</span> <span class="o">--</span><span class="n">inputdir</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">new_inputdir</span>
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="crocodash-create">
+<h2><code class="docutils literal notranslate"><span class="pre">crocodash</span> <span class="pre">create</span></code><a class="headerlink" href="#crocodash-create" title="Link to this heading">#</a></h2>
+<p>Creates a new CrocoDash case end-to-end from a YAML config file. Equivalent to calling <code class="docutils literal notranslate"><span class="pre">workflow.create_case_from_yaml()</span></code>.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>crocodash<span class="w"> </span>create<span class="w"> </span>--config<span class="w"> </span>mycase.yaml
+crocodash<span class="w"> </span>create<span class="w"> </span>--config<span class="w"> </span>mycase.yaml<span class="w"> </span>--override<span class="w">   </span><span class="c1"># overwrite existing caseroot/inputdir</span>
+</pre></div>
+</div>
+<section id="yaml-config-schema">
+<h3>YAML config schema<a class="headerlink" href="#yaml-config-schema" title="Link to this heading">#</a></h3>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># --- Horizontal grid ---</span>
+<span class="nt">grid</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">lenx</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10.0</span><span class="w">           </span><span class="c1"># domain width in degrees</span>
+<span class="w">  </span><span class="nt">leny</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10.0</span><span class="w">           </span><span class="c1"># domain height in degrees</span>
+<span class="w">  </span><span class="nt">xstart</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">-60.0</span><span class="w">        </span><span class="c1"># western edge longitude</span>
+<span class="w">  </span><span class="nt">ystart</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30.0</span><span class="w">         </span><span class="c1"># southern edge latitude</span>
+<span class="w">  </span><span class="nt">resolution</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0</span><span class="w">      </span><span class="c1"># degrees per cell (or use nx/ny instead)</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;mygrid&quot;</span>
+
+<span class="c1"># --- Bathymetry ---</span>
+<span class="nt">topo</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">min_depth</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10.0</span><span class="w">      </span><span class="c1"># columns shallower than this are masked</span>
+<span class="w">  </span><span class="nt">source</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;flat&quot;</span><span class="w">           </span><span class="c1"># flat | dataset | from_file</span>
+<span class="w">    </span><span class="nt">depth</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1000.0</span><span class="w">          </span><span class="c1"># for type: flat — constant depth in metres</span>
+
+<span class="w">    </span><span class="c1"># type: dataset — interpolate from a real bathymetry file (e.g. GEBCO)</span>
+<span class="w">    </span><span class="c1"># bathymetry_path: &quot;/path/to/gebco.nc&quot;</span>
+<span class="w">    </span><span class="c1"># longitude_coordinate_name: &quot;lon&quot;</span>
+<span class="w">    </span><span class="c1"># latitude_coordinate_name: &quot;lat&quot;</span>
+<span class="w">    </span><span class="c1"># vertical_coordinate_name: &quot;elevation&quot;</span>
+<span class="w">    </span><span class="c1"># is_input_positive_below_msl: false</span>
+<span class="w">    </span><span class="c1"># fill_channels: false</span>
+
+<span class="w">    </span><span class="c1"># type: from_file — reuse an existing topog.nc</span>
+<span class="w">    </span><span class="c1"># topo_file_path: &quot;/path/to/ocean_topog.nc&quot;</span>
+
+<span class="c1"># --- Vertical grid ---</span>
+<span class="nt">vgrid</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;uniform&quot;</span><span class="w">      </span><span class="c1"># uniform | hyperbolic | from_file</span>
+<span class="w">  </span><span class="nt">nk</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span><span class="w">               </span><span class="c1"># number of layers</span>
+<span class="w">  </span><span class="c1"># depth omitted → uses topo.max_depth automatically</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;myvgrid&quot;</span>
+
+<span class="w">  </span><span class="c1"># type: hyperbolic — surface-intensified levels</span>
+<span class="w">  </span><span class="c1"># nk: 75</span>
+<span class="w">  </span><span class="c1"># depth: 5000.0</span>
+<span class="w">  </span><span class="c1"># ratio: 20.0</span>
+
+<span class="w">  </span><span class="c1"># type: from_file — reuse an existing vgrid.nc</span>
+<span class="w">  </span><span class="c1"># filename: &quot;/path/to/ocean_vgrid.nc&quot;</span>
+
+<span class="c1"># --- CESM case ---</span>
+<span class="nt">case</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">cesmroot</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/path/to/CROCESM&quot;</span>
+<span class="w">  </span><span class="nt">caseroot</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/path/to/cases/mycase&quot;</span>
+<span class="w">  </span><span class="nt">inputdir</span><span class="p">:</span><span class="w">  </span><span class="s">&quot;/path/to/croc_input/mycase&quot;</span>
+<span class="w">  </span><span class="nt">compset</span><span class="p">:</span><span class="w">   </span><span class="s">&quot;CR_JRA&quot;</span><span class="w">          </span><span class="c1"># alias or full long name</span>
+<span class="w">  </span><span class="nt">machine</span><span class="p">:</span><span class="w">   </span><span class="s">&quot;derecho&quot;</span>
+<span class="w">  </span><span class="nt">project</span><span class="p">:</span><span class="w">   </span><span class="s">&quot;NCGD0011&quot;</span>
+<span class="w">  </span><span class="nt">atm_grid_name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;TL319&quot;</span><span class="w">       </span><span class="c1"># optional, default TL319</span>
+
+<span class="c1"># --- Forcings (optional — skip section to stop after case creation) ---</span>
+<span class="nt">forcings</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">date_range</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;2020-01-01</span><span class="nv"> </span><span class="s">00:00:00&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;2020-02-01</span><span class="nv"> </span><span class="s">00:00:00&quot;</span><span class="p p-Indicator">]</span>
+<span class="w">  </span><span class="nt">boundaries</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;south&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;east&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;west&quot;</span><span class="p p-Indicator">]</span>
+<span class="w">  </span><span class="nt">product_name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;GLORYS&quot;</span>
+<span class="w">  </span><span class="nt">function_name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;get_glorys_data_from_rda&quot;</span>
+
+<span class="w">  </span><span class="c1"># Any extra kwargs are forwarded directly to configure_forcings:</span>
+<span class="w">  </span><span class="c1"># tidal_constituents: [&quot;M2&quot;, &quot;S2&quot;]</span>
+<span class="w">  </span><span class="c1"># tpxo_elevation_filepath: &quot;/path/to/TPXO_elevation.nc&quot;</span>
+<span class="w">  </span><span class="c1"># tpxo_velocity_filepath:  &quot;/path/to/TPXO_velocity.nc&quot;</span>
+</pre></div>
+</div>
+<p>After <code class="docutils literal notranslate"><span class="pre">create</span></code> completes the caseroot contains a <code class="docutils literal notranslate"><span class="pre">crocodash_state.json</span></code> recording all construction parameters, and (if forcings were configured) <code class="docutils literal notranslate"><span class="pre">inputdir/extract_forcings/config.json</span></code> recording the forcing setup. These files are the source of truth for <code class="docutils literal notranslate"><span class="pre">dump</span></code>, <code class="docutils literal notranslate"><span class="pre">bundle</span></code>, and <code class="docutils literal notranslate"><span class="pre">fork</span></code>.</p>
+</section>
+</section>
+<hr class="docutils" />
+<section id="crocodash-dump">
+<h2><code class="docutils literal notranslate"><span class="pre">crocodash</span> <span class="pre">dump</span></code><a class="headerlink" href="#crocodash-dump" title="Link to this heading">#</a></h2>
+<p>Prints a YAML representation of an existing case to stdout. The output can be saved, edited, and passed back to <code class="docutils literal notranslate"><span class="pre">create</span></code> — making <code class="docutils literal notranslate"><span class="pre">dump</span></code> the exact inverse of <code class="docutils literal notranslate"><span class="pre">create</span></code>.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># View the config for an existing case</span>
+crocodash<span class="w"> </span>dump<span class="w"> </span>--caseroot<span class="w"> </span>~/croc_cases/mycase
+
+<span class="c1"># Save it to a file and edit before re-creating</span>
+crocodash<span class="w"> </span>dump<span class="w"> </span>--caseroot<span class="w"> </span>~/croc_cases/mycase<span class="w"> </span>&gt;<span class="w"> </span>mycase_copy.yaml
+<span class="c1"># ... edit paths, dates, machine, etc. ...</span>
+crocodash<span class="w"> </span>create<span class="w"> </span>--config<span class="w"> </span>mycase_copy.yaml<span class="w"> </span>--override
+</pre></div>
+</div>
+<p>The dumped YAML uses <code class="docutils literal notranslate"><span class="pre">supergrid_path</span></code>/<code class="docutils literal notranslate"><span class="pre">from_file</span></code> references pointing at the existing grid/topo/vgrid files. To create a fully independent copy, either update those paths or re-generate the grid from parameters.</p>
+</section>
+<hr class="docutils" />
+<section id="crocodash-bundle-fork-duplicate">
+<h2><code class="docutils literal notranslate"><span class="pre">crocodash</span> <span class="pre">bundle</span></code>, <code class="docutils literal notranslate"><span class="pre">fork</span></code>, <code class="docutils literal notranslate"><span class="pre">duplicate</span></code><a class="headerlink" href="#crocodash-bundle-fork-duplicate" title="Link to this heading">#</a></h2>
+<p>For sharing cases with others, see <a class="reference internal" href="shareable.html"><span class="std std-doc">Shareable Configuration</span></a>.</p>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="case_information.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Extra CESM Case Information</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="template.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Case Templates</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#quick-reference">Quick reference</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crocodash-create"><code class="docutils literal notranslate"><span class="pre">crocodash</span> <span class="pre">create</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#yaml-config-schema">YAML config schema</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crocodash-dump"><code class="docutils literal notranslate"><span class="pre">crocodash</span> <span class="pre">dump</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crocodash-bundle-fork-duplicate"><code class="docutils literal notranslate"><span class="pre">crocodash</span> <span class="pre">bundle</span></code>, <code class="docutils literal notranslate"><span class="pre">fork</span></code>, <code class="docutils literal notranslate"><span class="pre">duplicate</span></code></a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By CROCODILE
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2024, CROCODILE.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>
