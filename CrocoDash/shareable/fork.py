@@ -10,6 +10,7 @@ from CrocoDash.grid import Grid
 from CrocoDash.vgrid import VGrid
 from CrocoDash.topo import Topo
 import xarray as xr
+import yaml
 from CrocoDash.logging import setup_logger
 
 logger = setup_logger(__name__)
@@ -43,13 +44,30 @@ class ForkCrocoDashBundle:
     def __init__(self, bundle_location):
         self.bundle_location = Path(bundle_location)
 
-        json_file = self.bundle_location / "manifest.json"
-        assert json_file.exists()
-        with open(json_file) as f:
-            self.manifest = BundleManifest(**json.load(f))
+        yaml_file = self.bundle_location / "crocodash_case.yaml"
+        assert yaml_file.exists(), f"Bundle is missing crocodash_case.yaml: {yaml_file}"
+        with open(yaml_file) as f:
+            self.bundle_yaml = yaml.safe_load(f)
+
+        # Populate a minimal manifest for backwards-compatible apply_copy_plan usage
+        state = self.bundle_yaml
+        case_cfg = state.get("case", {})
+        inputdir_ocnice = str(
+            Path(state.get("grid", {}).get("supergrid_path", "")).parent
+        )
+        self.manifest = BundleManifest(
+            forcing_config={},
+            init_args={
+                "inputdir_ocnice": inputdir_ocnice,
+                "compset": case_cfg.get("compset", ""),
+                "atm_grid_name": case_cfg.get("atm_grid_name", "TL319"),
+            },
+        )
 
         json_file = self.bundle_location / "non_standard_case_info.json"
-        assert json_file.exists()
+        assert (
+            json_file.exists()
+        ), f"Bundle is missing non_standard_case_info.json: {json_file}"
         with open(json_file) as f:
             self.differences = BundleDifferences(**json.load(f))
 
@@ -86,94 +104,155 @@ class ForkCrocoDashBundle:
         new_caseroot,
         new_inputdir,
         plan=None,
-        compset=None,
-        extra_configs=None,
-        remove_configs=None,
-        extra_forcing_args_path=None,
     ):
         """
-        Share a CESM case by inspecting an existing bundle, optionally copying
-        non-standard components, resolving forcing configurations, and creating
-        a new case with equivalent forcings.
+        Create a new case from a bundle, guiding the user through YAML modifications.
+
+        Prompts the user to update destination paths and machine settings, then
+        optionally opens $EDITOR for deeper edits. After confirmation, creates the
+        case and copies non-standard CESM state per the plan.
 
         Parameters
         ----------
         cesmroot : str or Path
-            Path to the CESM root.
+            Path to the CESM root for the new case.
         machine : str
-            Machine name.
+            Machine name for the new case.
         project_number : str
-            Project/account number.
+            Project/account number for the new case.
         new_caseroot : str or Path
             Path for the new case root.
         new_inputdir : str or Path
-            Path for input data.
+            Path for the new input directory.
         plan : dict, optional
             Which non-standard items to copy, e.g.
             ``{"xml_files": True, "user_nl": False, "source_mods": True, "xmlchanges": True}``.
             When omitted the user is asked interactively.
-        compset : str, optional
-            Override the compset from the bundle. When omitted the user is asked interactively.
-        extra_configs : list, optional
-            Additional forcing configuration names to add beyond the bundle.
-        remove_configs : list, optional
-            Forcing configuration names from the bundle to drop.
-        extra_forcing_args_path : str or Path, optional
-            Path to a JSON file supplying arguments for any new forcing configs.
         """
+        from CrocoDash.workflow import create_case_from_yaml
 
-        # Phase 1: gather all decisions (prompting interactively where params are None)
-        self._gather_inputs(
-            plan, compset, extra_configs, remove_configs, extra_forcing_args_path
+        # Phase 1: build patched YAML with new destination values
+        config = self._patch_yaml_for_fork(
+            cesmroot, machine, project_number, new_caseroot, new_inputdir
         )
 
-        # Phase 2: pure execution — no prompts below this point
-        logger.info("Creating new case...")
-        self.manifest.init_args["inputdir_ocnice"] = str(
-            self.bundle_location / "ocnice"
-        )
-        self.case = create_case(
-            self.manifest.init_args,
-            new_caseroot,
-            new_inputdir,
-            compset=self.compset,
-            machine=machine,
-            project_number=project_number,
-            cesmroot=cesmroot,
-        )
+        # Phase 2: guided YAML review — prompt for each key field, offer editor
+        config = self._guide_yaml_review(config)
 
-        logger.info("Copying exact grid files from bundle...")
+        # Phase 3: resolve which non-standard CESM items to copy
+        self._resolve_copy_plan(plan)
+
+        # Phase 4: create the case
+        logger.info("Creating new case from YAML...")
+        self.case = create_case_from_yaml(config, override=True)
+
+        # Phase 5: copy bundle ocnice files then apply non-standard CESM state
+        logger.info("Copying forcing files from bundle...")
         bundle_ocnice = self.bundle_location / "ocnice"
-        for key in ("supergrid_path", "topo_path", "vgrid_path", "esmf_mesh_path"):
-            src_name = self.manifest.init_args.get(key)
-            dst = getattr(self.case, key, None)
-            if src_name and dst is not None:
-                src = bundle_ocnice / src_name
-                if src.exists():
-                    shutil.copy(src, dst)
+        for src in bundle_ocnice.iterdir():
+            dst = Path(self.case.inputdir) / "ocnice" / src.name
+            if not dst.exists():
+                shutil.copy(src, dst)
 
-        logger.info("Building configuration args")
-        self.case.configure_forcings(**self.configure_forcing_args)
-
-        logger.info("Copying items to new case based on user input")
+        logger.info("Applying non-standard CESM state per plan...")
         self.apply_copy_plan()
 
         self.case.validate_case()
 
         print(
-            "\nYou're ready! If you requested any additional forcings, remember to "
-            "run them with your extract_forcings driver script."
+            "\nYou're ready! Remember to run the extract_forcings driver to "
+            "regenerate any forcing files for the new domain."
         )
         return self.case
 
-    def _gather_inputs(
-        self, plan, compset, extra_configs, remove_configs, extra_forcing_args_path
+    def _patch_yaml_for_fork(
+        self, cesmroot, machine, project_number, new_caseroot, new_inputdir
     ):
-        """Gather all decisions before execution, prompting interactively where params are None."""
-        self._resolve_copy_plan(plan)
-        self._resolve_compset(compset)
-        self._resolve_forcing_configurations(extra_configs, remove_configs)
-        self._resolve_forcing_args(extra_forcing_args_path)
+        """Return a copy of bundle_yaml with destination fields patched."""
+        import copy
+
+        config = copy.deepcopy(self.bundle_yaml)
+        config["case"]["cesmroot"] = str(cesmroot)
+        config["case"]["machine"] = machine
+        config["case"]["project"] = project_number
+        config["case"]["caseroot"] = str(new_caseroot)
+        config["case"]["inputdir"] = str(new_inputdir)
+        # Point grid/topo/vgrid at bundle ocnice copies
+        bundle_ocnice = str(self.bundle_location / "ocnice")
+        if "supergrid_path" in config.get("grid", {}):
+            config["grid"]["supergrid_path"] = str(
+                self.bundle_location
+                / "ocnice"
+                / Path(config["grid"]["supergrid_path"]).name
+            )
+        if config.get("topo", {}).get("source", {}).get("type") == "from_file":
+            config["topo"]["source"]["topo_file_path"] = str(
+                self.bundle_location
+                / "ocnice"
+                / Path(config["topo"]["source"]["topo_file_path"]).name
+            )
+        if config.get("vgrid", {}).get("type") == "from_file":
+            config["vgrid"]["filename"] = str(
+                self.bundle_location / "ocnice" / Path(config["vgrid"]["filename"]).name
+            )
+        return config
+
+    def _guide_yaml_review(self, config):
+        """Walk the user through key YAML fields and offer $EDITOR for deeper edits."""
+        import copy
+        import os
+        import subprocess
+        import tempfile
+
+        print("\n=== Fork: Review Case Configuration ===")
+        print(
+            "The following fields have been pre-filled. Press Enter to keep each value.\n"
+        )
+
+        fields = [
+            ("case.caseroot", ["case", "caseroot"]),
+            ("case.inputdir", ["case", "inputdir"]),
+            ("case.cesmroot", ["case", "cesmroot"]),
+            ("case.machine", ["case", "machine"]),
+            ("case.project", ["case", "project"]),
+            ("case.compset", ["case", "compset"]),
+        ]
+        if "forcings" in config:
+            fields += [
+                ("forcings.date_range", ["forcings", "date_range"]),
+                ("forcings.boundaries", ["forcings", "boundaries"]),
+            ]
+
+        for label, keys in fields:
+            obj = config
+            for k in keys[:-1]:
+                obj = obj[k]
+            current = obj[keys[-1]]
+            response = ask_string(f"  {label} [{current}]: ", default=str(current))
+            if response != str(current):
+                if keys[-1] in ("date_range", "boundaries"):
+                    obj[keys[-1]] = yaml.safe_load(response)
+                else:
+                    obj[keys[-1]] = response
+
+        editor = os.environ.get("EDITOR", "")
+        if editor and ask_yes_no("\nOpen $EDITOR for full YAML review?", default=False):
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".yaml", delete=False
+            ) as tmp:
+                yaml.dump(config, tmp, default_flow_style=False, sort_keys=False)
+                tmp_path = tmp.name
+            subprocess.call([editor, tmp_path])
+            with open(tmp_path) as f:
+                config = yaml.safe_load(f)
+            Path(tmp_path).unlink()
+
+        print("\nFinal configuration:")
+        print(yaml.dump(config, default_flow_style=False, sort_keys=False))
+        if not ask_yes_no("Proceed with this configuration?", default=True):
+            raise RuntimeError("Fork cancelled by user.")
+
+        return config
 
     def _resolve_copy_plan(self, plan):
         if plan is not None:
@@ -207,103 +286,6 @@ class ForkCrocoDashBundle:
                 f"{self.differences.xmlchanges_missing}\nApply them?"
             )
 
-    def _resolve_compset(self, compset):
-        self.compset = self.manifest.init_args["compset"]
-        if compset is not None and compset != self.compset:
-            self.compset = compset
-            print(
-                "Warning: Changing compset may have unintended consequences and "
-                "may require additional data."
-            )
-
-    def _resolve_forcing_configurations(self, extra_configs, remove_configs):
-        self.requested_configs = []
-
-        required = ForcingConfigRegistry.find_required_configurators(self.compset)
-        for cfg in required:
-            if cfg.name.lower() not in self.manifest.forcing_config:
-                print("Missing required configurator:", cfg)
-                self.requested_configs.append(cfg.name.lower())
-
-        valid = ForcingConfigRegistry.find_valid_configurators(self.compset)
-        already_ran = []
-
-        for cfg in self.manifest.forcing_config:
-            if cfg == "basic":
-                continue
-            config_class = ForcingConfigRegistry.get_configurator_from_name(cfg)
-            if config_class not in valid:
-                print(f"Forcing config '{cfg}' is no longer valid for this compset")
-            else:
-                already_ran.append(config_class)
-                valid.remove(config_class)
-
-        if extra_configs is not None:
-            extra = set(extra_configs)
-            self.resolved_remove = (
-                set(remove_configs) if remove_configs is not None else set()
-            )
-        else:
-            extra_str = ask_string(
-                f"Enter any other configurations you want "
-                f"(comma-separated) from: {[obj.name for obj in valid]}",
-                default="[]",
-            )
-            remove_str = ask_string(
-                f"Enter any configs you don't want "
-                f"(comma-separated) from: {[obj.name for obj in already_ran]}",
-                default="[]",
-            )
-            extra = {x.strip() for x in extra_str.split(",") if x.strip()}
-            self.resolved_remove = {
-                x.strip() for x in remove_str.split(",") if x.strip()
-            }
-
-        for thing in ForcingConfigRegistry.registered_types:
-            if thing.name in extra:
-                self.requested_configs.append(thing.name)
-
-    def _resolve_forcing_args(self, extra_forcing_args_path):
-        self.configure_forcing_args = generate_configure_forcing_args(
-            self.manifest.forcing_config, self.resolved_remove
-        )
-        if not self.requested_configs:
-            return
-
-        print(
-            "\nYou requested or are required to add the following configurations:",
-            self.requested_configs,
-        )
-        required_args = [
-            user_arg
-            for config in self.requested_configs
-            for user_arg in ForcingConfigRegistry.get_user_args(
-                ForcingConfigRegistry.get_configurator_from_name(config)
-            )
-            if not user_arg.startswith("case_")
-            and user_arg not in self.configure_forcing_args
-        ]
-        if extra_forcing_args_path is None:
-            print(f"Provide the following arguments in a JSON file: {required_args}")
-            extra_forcing_args_path = ask_string(
-                "Enter path to JSON file with the required arguments: "
-            )
-        with open(extra_forcing_args_path) as f:
-            new_args = json.load(f)
-
-        for config in self.requested_configs:
-            for user_arg in ForcingConfigRegistry.get_user_args(
-                ForcingConfigRegistry.get_configurator_from_name(config)
-            ):
-                if (
-                    not user_arg.startswith("case_")
-                    and user_arg not in self.configure_forcing_args
-                    and user_arg not in new_args
-                ):
-                    raise ValueError(f"Missing arg: '{user_arg}' for {config}")
-
-        self.configure_forcing_args.update(new_args)
-
     def apply_copy_plan(self):
         if self.plan.get("xml_files"):
             copy_xml_files_from_case(
@@ -331,9 +313,7 @@ class ForkCrocoDashBundle:
                 self.differences.xmlchanges_missing,
             )
 
-        copy_configurations_to_case(
-            self.manifest.forcing_config, self.case, self.bundle_location / "ocnice"
-        )
+        # Forcing files are copied in fork() before apply_copy_plan is called.
 
 
 def ask_string(prompt: str, default="") -> str:

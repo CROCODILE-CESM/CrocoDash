@@ -1,7 +1,3 @@
-"""
-Bundle is inordinately hard-coded, and probably can't be changed. Robust testing is needed to ensure we are picking up the correct information
-"""
-
 from pathlib import Path
 import dataclasses
 import json
@@ -27,6 +23,7 @@ from CrocoDash.forcing_configurations.base import *
 import importlib
 import sys
 import shutil
+import yaml
 
 logger = setup_logger(__name__)
 
@@ -45,16 +42,14 @@ class BundleCrocoDashCase:
         self._get_case_machine()
         self._get_case_project()
         self._read_user_nls()
-        self._identify_CrocoDashCase_init_args()
-        self._identify_CrocoDashCase_forcing_config_args()
+        self._load_state_from_crocodash()
         self._read_xmlchanges()
         self._read_xmlfiles()
         self._read_sourcemods()
 
     def reread(self):
         self._read_user_nls()
-        self._identify_CrocoDashCase_init_args()
-        self._identify_CrocoDashCase_forcing_config_args()
+        self._load_state_from_crocodash()
         self._read_xmlchanges()
         self._read_xmlfiles()
         self._read_sourcemods()
@@ -64,19 +59,6 @@ class BundleCrocoDashCase:
         if self._case is None:
             self._case = get_case_obj(self.caseroot)
         return self._case
-
-    def generate_manifest(self) -> BundleManifest:
-        return BundleManifest(
-            paths={
-                "casefiles": str(self.caseroot),
-                "inputfiles": self.init_args["inputdir_ocnice"],
-            },
-            user_nl_info=self.user_nl_objs,
-            init_args=self.init_args,
-            forcing_config=self.forcing_config,
-            sourcemods=[str(f) for f in self.sourcemods],
-            xmlchanges=self.xmlchanges,
-        )
 
     def _read_xmlchanges(self):
         replay_path = self.caseroot / "replay.sh"
@@ -131,38 +113,39 @@ class BundleCrocoDashCase:
             if f.is_file()
         }
 
-    def _identify_CrocoDashCase_init_args(self):
+    def _load_state_from_crocodash(self):
+        """Load case parameters from crocodash_state.json and extract_forcings/config.json."""
+        from CrocoDash.workflow import case_to_yaml
 
-        logger.info(f"Finding initialization arguments from {self.caseroot}")
+        logger.info(f"Loading CrocoDash state from {self.caseroot}")
+        self.case_yaml = case_to_yaml(self.caseroot)
 
-        inputdir_ocnice = self.get_user_nl_value("mom", "INPUTDIR")
+        # Populate init_args in the legacy format for identify_non_standard / fork compatibility
+        state_path = self.caseroot / "crocodash_state.json"
+        with open(state_path) as f:
+            state = json.load(f)
+        inputdir_ocnice = str(Path(state["inputdir"]) / "ocnice")
         esmf_file = next(Path(inputdir_ocnice).glob("ESMF_mesh_*.nc"), None)
         self.init_args = {
             "inputdir_ocnice": inputdir_ocnice,
-            "supergrid_path": self.get_user_nl_value("mom", "GRID_FILE"),
-            "vgrid_path": self.get_user_nl_value("mom", "ALE_COORDINATE_CONFIG"),
-            "topo_path": self.get_user_nl_value("mom", "TOPO_FILE"),
+            "supergrid_path": Path(state["supergrid_path"]).name,
+            "vgrid_path": Path(state["vgrid_path"]).name,
+            "topo_path": Path(state["topo_path"]).name,
             "esmf_mesh_path": esmf_file.name if esmf_file else None,
-            "compset": self.case.get_value("COMPSET"),
-            "atm_grid_name": self.case.get_value("ATM_GRID"),
+            "compset": state["compset_lname"],
+            "atm_grid_name": state.get("atm_grid_name", "TL319"),
         }
 
+        forcing_config_path = (
+            Path(state["inputdir"]) / "extract_forcings" / "config.json"
+        )
+        if forcing_config_path.exists():
+            with open(forcing_config_path) as f:
+                self.forcing_config = json.load(f)
+        else:
+            self.forcing_config = {}
+
         return self.init_args
-
-    def _identify_CrocoDashCase_forcing_config_args(self):
-
-        logger.info(f"Loading forcing configuration from {self.caseroot}")
-        # The input directory is where the forcing config is.
-
-        # Find the input directory
-        inputdir = self.get_user_nl_value("mom", "INPUTDIR")
-
-        # Read in forcing config file
-        forcing_config_path = Path(inputdir).parent / "extract_forcings" / "config.json"
-
-        with open(forcing_config_path, "r") as f:
-            self.forcing_config = json.load(f)
-        return self.forcing_config
 
     def get_user_nl_value(self, component, param):
         return (
@@ -327,12 +310,10 @@ class BundleCrocoDashCase:
                     logger.info(f"Copying grid file: {src}")
                     shutil.copy(src, ocnice_target / src.name)
 
-        # Write out manifest
-        logger.info(f"Writing out BundleCrocoDashCase manifest...")
-        with open(case_subfolder / "manifest.json", "w") as f:
-            json.dump(
-                dataclasses.asdict(self.generate_manifest()), f, indent=2, default=str
-            )
+        # Write YAML (replaces manifest.json — init_args + forcing_config in human-readable form)
+        logger.info("Writing out crocodash_case.yaml...")
+        with open(case_subfolder / "crocodash_case.yaml", "w") as f:
+            yaml.dump(self.case_yaml, f, default_flow_style=False, sort_keys=False)
 
         # Write out differences
         logger.info(f"Writing out non standard CrocoDash information...")
@@ -374,7 +355,7 @@ class BundleCrocoDashCase:
 def duplicate_case(caseroot, new_caseroot, new_inputdir, bundle_dir=None):
     """
     Duplicate a CrocoDash case to a new location. Machine, project, and cesmroot
-    are read automatically from the original caseroot.
+    are read automatically from the original caseroot's crocodash_state.json.
 
     Parameters
     ----------
@@ -385,37 +366,57 @@ def duplicate_case(caseroot, new_caseroot, new_inputdir, bundle_dir=None):
     new_inputdir : str or Path
         Path for the new input directory.
     bundle_dir : str or Path, optional
-        Where to write the intermediate bundle. Defaults to inside
-        new_caseroot and is cleaned up automatically.
+        Where to copy the bundle for reference. If None, no bundle is saved.
     """
+    from CrocoDash.workflow import case_to_yaml, create_case_from_yaml
+    from CrocoDash.shareable.apply import (
+        copy_xml_files_from_case,
+        copy_user_nl_params_from_case,
+        copy_source_mods_from_case,
+        apply_xmlchanges_to_case,
+        copy_configurations_to_case,
+    )
+
     rcc = BundleCrocoDashCase(caseroot)
+    rcc.identify_non_standard_CrocoDash_case_information(
+        rcc.cesmroot, rcc.case_machine, rcc.case_project
+    )
 
-    plan = {
-        "xml_files": True,
-        "user_nl": True,
-        "source_mods": True,
-        "xmlchanges": True,
-    }
+    # Patch paths in the YAML for the new location
+    config = rcc.case_yaml.copy()
+    config["case"] = config["case"].copy()
+    config["case"]["caseroot"] = str(new_caseroot)
+    config["case"]["inputdir"] = str(new_inputdir)
 
-    with tempfile.TemporaryDirectory() as tmp:
-        loc = rcc.bundle(tmp)
-        fcb = ForkCrocoDashBundle(loc)
-        result = fcb.fork(
-            rcc.cesmroot,
-            rcc.case_machine,
-            rcc.case_project,
-            new_caseroot,
-            new_inputdir,
-            plan=plan,
-            compset=rcc.init_args["compset"],
-            extra_configs=[],
-            remove_configs=[],
+    result = create_case_from_yaml(config, override=True)
+
+    # Copy all non-standard CESM state (full plan)
+    if rcc.non_standard_case_info.xml_files_missing_in_new:
+        copy_xml_files_from_case(
+            rcc.caseroot,
+            result.caseroot,
+            rcc.non_standard_case_info.xml_files_missing_in_new,
         )
-        dest = Path(new_caseroot) / loc.name
-        if bundle_dir is None:
-            shutil.copytree(loc, dest)
-        else:
-            shutil.copytree(loc, Path(bundle_dir) / loc.name)
+    if rcc.non_standard_case_info.user_nl_missing_params and any(
+        rcc.non_standard_case_info.user_nl_missing_params.values()
+    ):
+        copy_user_nl_params_from_case(
+            rcc.caseroot, rcc.non_standard_case_info.user_nl_missing_params
+        )
+    if rcc.non_standard_case_info.source_mods_missing_files:
+        copy_source_mods_from_case(
+            rcc.caseroot,
+            result.caseroot,
+            rcc.non_standard_case_info.source_mods_missing_files,
+        )
+    if rcc.non_standard_case_info.xmlchanges_missing:
+        apply_xmlchanges_to_case(
+            rcc.caseroot, rcc.non_standard_case_info.xmlchanges_missing
+        )
+
+    # Optionally save a bundle alongside the new case
+    if bundle_dir is not None:
+        rcc.bundle(bundle_dir)
 
     return result
 

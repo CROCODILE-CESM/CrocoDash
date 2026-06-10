@@ -125,11 +125,13 @@ class Case:
         )
 
         # Set instance attributes
+        self.cesmroot = Path(cesmroot)
         self.caseroot = Path(caseroot)
         self.inputdir = Path(inputdir)
         self.ocn_grid = ocn_grid
         self.ocn_topo = ocn_topo
         self.ocn_vgrid = ocn_vgrid
+        self.atm_grid_name = atm_grid_name
         self.ninst = ninst
         self.override = override
         self.ProductRegistry = ProductRegistry
@@ -164,6 +166,8 @@ class Case:
         self.is_non_local = self.cc._is_non_local()
 
         self._apply_final_xmlchanges(ntasks_ocn, job_queue, job_wallclock_time)
+
+        self._write_state()
 
         required_configurators = ForcingConfigRegistry.find_required_configurators(
             self.compset_lname
@@ -871,6 +875,24 @@ class Case:
 
         # Variables that are not included in a stage:
         cvars["NINST"].value = self.ninst
+
+    def _write_state(self):
+        """Write case creation parameters to crocodash_state.json in caseroot."""
+        state = {
+            "inputdir": str(self.inputdir),
+            "cesmroot": str(self.cesmroot),
+            "supergrid_path": self.supergrid_path,
+            "topo_path": self.topo_path,
+            "vgrid_path": self.vgrid_path,
+            "grid_name": self.ocn_grid.name,
+            "session_id": cvars["MB_ATTEMPT_ID"].value,
+            "compset_lname": self.compset_lname,
+            "machine": self.machine,
+            "project": self.project,
+            "atm_grid_name": self.atm_grid_name,
+        }
+        with open(self.caseroot / "crocodash_state.json", "w") as f:
+            json.dump(state, f, indent=2)
 
     def _apply_final_xmlchanges(
         self, ntasks_ocn=None, job_queue=None, job_wallclock_time=None

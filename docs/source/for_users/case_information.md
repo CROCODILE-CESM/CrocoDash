@@ -1,5 +1,26 @@
 # Extra CESM Case Information
 
+## Case State File
+
+At the end of `Case.__init__`, CrocoDash writes a `crocodash_state.json` file into the caseroot. It records the construction parameters needed to reconstruct or inspect the case later:
+
+```json
+{
+  "inputdir": "/path/to/croc_input/mycase",
+  "cesmroot": "/path/to/CROCESM",
+  "supergrid_path": "/path/to/.../ocean_hgrid_mygrid_abc123.nc",
+  "topo_path":      "/path/to/.../ocean_topog_mygrid_abc123.nc",
+  "vgrid_path":     "/path/to/.../ocean_vgrid_mygrid_abc123.nc",
+  "grid_name": "mygrid",
+  "session_id": "abc123",
+  "compset_lname": "1850_DATM%JRA_SLND_SICE_MOM6%REGIONAL_SROF_SGLC_SWAV",
+  "machine": "derecho",
+  "project": "NCGD0011",
+  "atm_grid_name": "TL319"
+}
+```
+
+This file is read by `crocodash dump` to reconstruct a YAML config, and by `bundle`/`fork`/`duplicate` to avoid re-parsing CIME. It is the paired counterpart to `inputdir/extract_forcings/config.json`, which records forcing configuration written by `configure_forcings`.
 
 ## Available Compset Aliases
 
