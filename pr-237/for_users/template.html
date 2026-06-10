@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>User Information &#8212; CrocoDash  documentation</title>
+    <title>Case Templates &#8212; CrocoDash  documentation</title>
   
   
   
@@ -41,11 +41,11 @@
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'for_users/index';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'for_users/template';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="How CrocoDash Is Organized" href="structure.html" />
-    <link rel="prev" title="Installation" href="../installation.html" />
+    <link rel="next" title="Shareable Configuration" href="shareable.html" />
+    <link rel="prev" title="Extra CESM Case Information" href="case_information.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -159,14 +159,14 @@
 <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://crocodile-cesm.github.io/CrocoGallery/">Tutorials &amp; Gallery</a></li>
-<li class="toctree-l1 current active has-children"><a class="current reference internal" href="#">User Information</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">User Information</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="structure.html">How CrocoDash Is Organized</a></li>
 <li class="toctree-l2"><a class="reference internal" href="grids.html">Grid Stuff (Supergrid, Bathymetry, Vgrid)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="datasets.html">Accessing Raw Data (raw_data_access)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="forcing_configurations.html">Forcing Configuration (case.configure_forcings)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="extract_forcings.html">Extract Forcings (case.process_forcings)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="case_information.html">Extra CESM Case Information</a></li>
-<li class="toctree-l2"><a class="reference internal" href="template.html">Case Templates</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Case Templates</a></li>
 <li class="toctree-l2"><a class="reference internal" href="shareable.html">Shareable Configuration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="additional_resources.html">Additional Resources</a></li>
 </ul>
@@ -248,7 +248,7 @@
       
       
       
-      <li><a href="../_sources/for_users/index.md" target="_blank"
+      <li><a href="../_sources/for_users/template.md" target="_blank"
    class="btn btn-sm btn-download-source-button dropdown-item"
    title="Download source file"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -332,7 +332,7 @@ document.write(`
               
 
 <div id="jb-print-docs-body" class="onlyprint">
-    <h1>User Information</h1>
+    <h1>Case Templates</h1>
     <!-- Table of contents -->
     <div id="print-main-content">
         <div id="jb-print-toc">
@@ -342,19 +342,9 @@ document.write(`
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#getting-started">Getting Started</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#documentation-by-topic">Documentation by Topic</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#frequently-needed-information">Frequently Needed Information</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#how-do-i-set-up-a-regional-mom6-case">“How do I set up a regional MOM6 case?”</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#what-compsets-are-available">“What compsets are available?”</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#what-forcing-options-do-i-need">“What forcing options do I need?”</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#what-datasets-can-i-use">“What datasets can I use?”</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#how-do-i-customize-mom-input-parameters">“How do I customize MOM input parameters?”</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#where-can-i-see-example-workflows">“Where can I see example workflows?”</a></li>
-</ul>
-</li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#advanced-topics">Advanced Topics</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#community-and-help">Community and Help</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#usage">Usage</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#available-machines">Available machines</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#what-gets-filled-in">What gets filled in</a></li>
 </ul>
             </nav>
         </div>
@@ -366,78 +356,71 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="user-information">
-<h1>User Information<a class="headerlink" href="#user-information" title="Link to this heading">#</a></h1>
-<p>Welcome! This section contains documentation for using CrocoDash to set up regional MOM6 cases. Whether you’re just getting started or diving into specific features, you’ll find helpful information here.</p>
-<section id="getting-started">
-<h2>Getting Started<a class="headerlink" href="#getting-started" title="Link to this heading">#</a></h2>
-<p>New to CrocoDash? Start with these guides:</p>
-<ol class="arabic simple">
-<li><p><strong><a class="reference internal" href="structure.html"><span class="std std-doc">Structure</span></a></strong> - Understand how CrocoDash is organized and what each component does</p></li>
-<li><p><strong><a class="reference internal" href="forcing_configurations.html"><span class="std std-doc">Forcing Configuration</span></a></strong> - Learn how to configure forcing and boundary conditions</p></li>
-<li><p><strong><a class="reference internal" href="datasets.html"><span class="std std-doc">Available Datasets</span></a></strong> - See what data sources are available</p></li>
-</ol>
+  <section id="case-templates">
+<h1>Case Templates<a class="headerlink" href="#case-templates" title="Link to this heading">#</a></h1>
+<p>The <code class="docutils literal notranslate"><span class="pre">crocodash</span> <span class="pre">template</span></code> command writes a ready-to-use CrocoDash case file sourced from the gallery tutorial notebook. Use it as a starting point instead of writing from scratch.</p>
+<hr class="docutils" />
+<section id="usage">
+<h2>Usage<a class="headerlink" href="#usage" title="Link to this heading">#</a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Jupyter notebook with &lt;KEY&gt; placeholders for manual editing</span>
+crocodash<span class="w"> </span>template<span class="w"> </span>--output<span class="w"> </span>my_case.ipynb
+
+<span class="c1"># Jupyter notebook with Derecho/GLADE paths pre-filled</span>
+crocodash<span class="w"> </span>template<span class="w"> </span>--output<span class="w"> </span>my_case.ipynb<span class="w"> </span>--machine<span class="w"> </span>derecho
+
+<span class="c1"># Python script with Derecho paths pre-filled</span>
+crocodash<span class="w"> </span>template<span class="w"> </span>--output<span class="w"> </span>my_case.py<span class="w"> </span>--machine<span class="w"> </span>derecho
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">--machine</span></code> flag replaces <code class="docutils literal notranslate"><span class="pre">&lt;KEY&gt;</span></code> placeholders (e.g. <code class="docutils literal notranslate"><span class="pre">&lt;GEBCO&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;CESM&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;inputdir&gt;</span></code>) with real paths for the given machine. Omit it to leave placeholders and fill them in manually.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">.py</span></code> output extracts code cells directly from the gallery tutorial notebook — no separate template file to maintain. Cell boundaries are marked with <code class="docutils literal notranslate"><span class="pre">#</span> <span class="pre">%%</span></code>, making the file compatible with Jupytext and VS Code interactive Python.</p>
 </section>
-<section id="documentation-by-topic">
-<h2>Documentation by Topic<a class="headerlink" href="#documentation-by-topic" title="Link to this heading">#</a></h2>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="structure.html">How CrocoDash Is Organized</a></li>
-<li class="toctree-l1"><a class="reference internal" href="grids.html">Grid Stuff (Supergrid, Bathymetry, Vgrid)</a></li>
-<li class="toctree-l1"><a class="reference internal" href="datasets.html">Accessing Raw Data (raw_data_access)</a></li>
-<li class="toctree-l1"><a class="reference internal" href="forcing_configurations.html">Forcing Configuration (case.configure_forcings)</a></li>
-<li class="toctree-l1"><a class="reference internal" href="extract_forcings.html">Extract Forcings (case.process_forcings)</a></li>
-<li class="toctree-l1"><a class="reference internal" href="case_information.html">Extra CESM Case Information</a></li>
-<li class="toctree-l1"><a class="reference internal" href="template.html">Case Templates</a></li>
-<li class="toctree-l1"><a class="reference internal" href="shareable.html">Shareable Configuration</a></li>
-<li class="toctree-l1"><a class="reference internal" href="additional_resources.html">Additional Resources</a></li>
-</ul>
+<hr class="docutils" />
+<section id="available-machines">
+<h2>Available machines<a class="headerlink" href="#available-machines" title="Link to this heading">#</a></h2>
+<p>Machine path registries are defined in <code class="docutils literal notranslate"><span class="pre">crocogallery/known_paths.json</span></code> inside the CrocoGallery repo. To add a new environment (e.g. <code class="docutils literal notranslate"><span class="pre">&quot;casper&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;local&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;manish&quot;</span></code>), add a new top-level key with the relevant path mappings — no Python changes needed.</p>
+<p>Passing an unknown machine name prints the available options:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="ne">KeyError</span><span class="p">:</span> <span class="n">Unknown</span> <span class="n">machine</span> <span class="s1">&#39;bogus&#39;</span><span class="o">.</span> <span class="n">Available</span><span class="p">:</span> <span class="n">derecho</span>
+</pre></div>
 </div>
 </section>
-<section id="frequently-needed-information">
-<h2>Frequently Needed Information<a class="headerlink" href="#frequently-needed-information" title="Link to this heading">#</a></h2>
-<section id="how-do-i-set-up-a-regional-mom6-case">
-<h3>“How do I set up a regional MOM6 case?”<a class="headerlink" href="#how-do-i-set-up-a-regional-mom6-case" title="Link to this heading">#</a></h3>
-<p>See <a class="reference external" href="https://crocodile-cesm.github.io/CrocoGallery/">Tutorials &amp; Gallery</a> for step-by-step examples.</p>
-</section>
-<section id="what-compsets-are-available">
-<h3>“What compsets are available?”<a class="headerlink" href="#what-compsets-are-available" title="Link to this heading">#</a></h3>
-<p>Check <a class="reference internal" href="case_information.html"><span class="std std-doc">Available Compsets</span></a> for valid compset options.</p>
-</section>
-<section id="what-forcing-options-do-i-need">
-<h3>“What forcing options do I need?”<a class="headerlink" href="#what-forcing-options-do-i-need" title="Link to this heading">#</a></h3>
-<p>Read <a class="reference internal" href="forcing_configurations.html"><span class="std std-doc">Forcing Configuration</span></a> to understand what your compset requires.</p>
-</section>
-<section id="what-datasets-can-i-use">
-<h3>“What datasets can I use?”<a class="headerlink" href="#what-datasets-can-i-use" title="Link to this heading">#</a></h3>
-<p>See <a class="reference internal" href="datasets.html"><span class="std std-doc">Datasets</span></a> for available data sources (TPXO, GLORYS, GEBCO, etc.).</p>
-</section>
-<section id="how-do-i-customize-mom-input-parameters">
-<h3>“How do I customize MOM input parameters?”<a class="headerlink" href="#how-do-i-customize-mom-input-parameters" title="Link to this heading">#</a></h3>
-<p>See <a class="reference internal" href="case_information.html"><span class="std std-doc">Input Parameters</span></a> for how to override default MOM6 settings.</p>
-</section>
-<section id="where-can-i-see-example-workflows">
-<h3>“Where can I see example workflows?”<a class="headerlink" href="#where-can-i-see-example-workflows" title="Link to this heading">#</a></h3>
-<p>Check <a class="reference external" href="https://crocodile-cesm.github.io/CrocoGallery/">Tutorials &amp; Gallery</a> for working notebooks and demos.</p>
-</section>
-</section>
-<section id="advanced-topics">
-<h2>Advanced Topics<a class="headerlink" href="#advanced-topics" title="Link to this heading">#</a></h2>
-<p>For more detailed information about how CrocoDash works internally:</p>
-<ul class="simple">
-<li><p><a class="reference internal" href="structure.html"><span class="std std-doc">Structure</span></a> - Technical overview of modules and design patterns</p></li>
-<li><p><a class="reference internal" href="../for_developers/adding_forcing_configurations.html"><span class="std std-doc">Adding Forcing Configurations</span></a> - How to extend with new configurations</p></li>
-<li><p><a class="reference internal" href="../for_developers/adding_data_access.html"><span class="std std-doc">Adding Data Sources</span></a> - How to add new datasets</p></li>
-</ul>
-</section>
-<section id="community-and-help">
-<h2>Community and Help<a class="headerlink" href="#community-and-help" title="Link to this heading">#</a></h2>
-<ul class="simple">
-<li><p><strong>Issues:</strong> Report bugs or request features on <a class="reference external" href="https://github.com/CROCODILE-CESM/CrocoDash/issues">GitHub</a></p></li>
-<li><p><strong>Discussions:</strong> Ask questions in <a class="reference external" href="https://github.com/CROCODILE-CESM/CrocoDash/discussions">GitHub Discussions</a></p></li>
-<li><p><strong>Videos &amp; Tutorials:</strong> See <a class="reference internal" href="additional_resources.html"><span class="std std-doc">Additional Resources</span></a></p></li>
-<li><p><strong>External Links:</strong> <a class="reference external" href="https://github.com/CROCODILE-CESM">CROCODILE Project</a>, <a class="reference external" href="https://crocodile-cesm.github.io/CrocoGallery/">Gallery</a></p></li>
-</ul>
+<hr class="docutils" />
+<section id="what-gets-filled-in">
+<h2>What gets filled in<a class="headerlink" href="#what-gets-filled-in" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Placeholder</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">&lt;GEBCO&gt;</span></code></p></td>
+<td><p>GEBCO bathymetry file</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">&lt;TPXO_H&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;TPXO_U&gt;</span></code></p></td>
+<td><p>TPXO tidal constituent files</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">&lt;CESM&gt;</span></code></p></td>
+<td><p>Path to CESM source checkout</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">&lt;inputdir&gt;</span></code></p></td>
+<td><p>Directory for model input files</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">&lt;casedir&gt;</span></code></p></td>
+<td><p>Directory for the CESM case</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">&lt;CHL&gt;</span></code></p></td>
+<td><p>Chlorophyll data file</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">&lt;MARBL_IC&gt;</span></code></p></td>
+<td><p>MARBL BGC initial condition</p></td>
+</tr>
+<tr class="row-odd"><td><p>…</p></td>
+<td><p>Other dataset paths in known_paths.json</p></td>
+</tr>
+</tbody>
+</table>
+</div>
 </section>
 </section>
 
@@ -453,20 +436,20 @@ document.write(`
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="../installation.html"
+       href="case_information.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Installation</p>
+        <p class="prev-next-title">Extra CESM Case Information</p>
       </div>
     </a>
     <a class="right-next"
-       href="structure.html"
+       href="shareable.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">How CrocoDash Is Organized</p>
+        <p class="prev-next-title">Shareable Configuration</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -486,19 +469,9 @@ document.write(`
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#getting-started">Getting Started</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#documentation-by-topic">Documentation by Topic</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#frequently-needed-information">Frequently Needed Information</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#how-do-i-set-up-a-regional-mom6-case">“How do I set up a regional MOM6 case?”</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#what-compsets-are-available">“What compsets are available?”</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#what-forcing-options-do-i-need">“What forcing options do I need?”</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#what-datasets-can-i-use">“What datasets can I use?”</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#how-do-i-customize-mom-input-parameters">“How do I customize MOM input parameters?”</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#where-can-i-see-example-workflows">“Where can I see example workflows?”</a></li>
-</ul>
-</li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#advanced-topics">Advanced Topics</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#community-and-help">Community and Help</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#usage">Usage</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#available-machines">Available machines</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#what-gets-filled-in">What gets filled in</a></li>
 </ul>
   </nav></div>
 

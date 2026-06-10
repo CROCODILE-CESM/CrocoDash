@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Shareable Configuration &amp; Templates &#8212; CrocoDash  documentation</title>
+    <title>Shareable Configuration &#8212; CrocoDash  documentation</title>
   
   
   
@@ -45,7 +45,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Additional Resources" href="additional_resources.html" />
-    <link rel="prev" title="Extra CESM Case Information" href="case_information.html" />
+    <link rel="prev" title="Case Templates" href="template.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -166,7 +166,8 @@
 <li class="toctree-l2"><a class="reference internal" href="forcing_configurations.html">Forcing Configuration (case.configure_forcings)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="extract_forcings.html">Extract Forcings (case.process_forcings)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="case_information.html">Extra CESM Case Information</a></li>
-<li class="toctree-l2 current active"><a class="current reference internal" href="#">Shareable Configuration &amp; Templates</a></li>
+<li class="toctree-l2"><a class="reference internal" href="template.html">Case Templates</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Shareable Configuration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="additional_resources.html">Additional Resources</a></li>
 </ul>
 </details></li>
@@ -331,7 +332,7 @@ document.write(`
               
 
 <div id="jb-print-docs-body" class="onlyprint">
-    <h1>Shareable Configuration & Templates</h1>
+    <h1>Shareable Configuration</h1>
     <!-- Table of contents -->
     <div id="print-main-content">
         <div id="jb-print-toc">
@@ -341,8 +342,6 @@ document.write(`
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#templates">Templates</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#shareable-cases">Shareable Cases</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow">Workflow</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-1-bundle">Step 1 — Bundle</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-fork">Step 2 — Fork</a><ul class="nav section-nav flex-column">
@@ -371,41 +370,15 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="shareable-configuration-templates">
-<h1>Shareable Configuration &amp; Templates<a class="headerlink" href="#shareable-configuration-templates" title="Link to this heading">#</a></h1>
+  <section id="shareable-configuration">
+<h1>Shareable Configuration<a class="headerlink" href="#shareable-configuration" title="Link to this heading">#</a></h1>
 <p>Ever wanted to share your regional MOM6 setup? Get a summary of your unique changes? Let someone else easily run your model? This module is for you!</p>
-<p>This page covers two things:</p>
-<ul class="simple">
-<li><p><strong>Templates</strong> — generate a starter script or notebook pre-filled with dataset paths for your machine</p></li>
-<li><p><strong>Shareable cases</strong> — bundle, fork, and duplicate existing CESM cases</p></li>
-</ul>
-<hr class="docutils" />
-<section id="templates">
-<h2>Templates<a class="headerlink" href="#templates" title="Link to this heading">#</a></h2>
-<p>The <code class="docutils literal notranslate"><span class="pre">crocodash</span> <span class="pre">template</span></code> command writes a ready-to-use CrocoDash case file sourced from the gallery tutorial notebook. Pass <code class="docutils literal notranslate"><span class="pre">--machine</span></code> to pre-fill known dataset paths (e.g. GEBCO, TPXO) for your machine; omit it to leave <code class="docutils literal notranslate"><span class="pre">&lt;KEY&gt;</span></code> placeholders for manual editing.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Jupyter notebook with placeholders</span>
-crocodash<span class="w"> </span>template<span class="w"> </span>--output<span class="w"> </span>my_case.ipynb
-
-<span class="c1"># Jupyter notebook with Derecho/GLADE paths pre-filled</span>
-crocodash<span class="w"> </span>template<span class="w"> </span>--output<span class="w"> </span>my_case.ipynb<span class="w"> </span>--machine<span class="w"> </span>derecho
-
-<span class="c1"># Python script with Derecho paths pre-filled</span>
-crocodash<span class="w"> </span>template<span class="w"> </span>--output<span class="w"> </span>my_case.py<span class="w"> </span>--machine<span class="w"> </span>derecho
-</pre></div>
-</div>
-<p>The <code class="docutils literal notranslate"><span class="pre">.py</span></code> output extracts the code cells from the tutorial notebook directly (no separate template file to maintain). Both formats use <code class="docutils literal notranslate"><span class="pre">#</span> <span class="pre">%%</span></code> cell separators, making the <code class="docutils literal notranslate"><span class="pre">.py</span></code> file compatible with Jupytext and VS Code interactive Python.</p>
-<p>Known machine keys are defined in <code class="docutils literal notranslate"><span class="pre">crocogallery/known_paths.json</span></code> inside the CrocoGallery repo. To add a new machine (e.g. <code class="docutils literal notranslate"><span class="pre">&quot;casper&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;local&quot;</span></code>), add a new top-level key to that file — no Python changes needed.</p>
-</section>
-<hr class="docutils" />
-<section id="shareable-cases">
-<h2>Shareable Cases<a class="headerlink" href="#shareable-cases" title="Link to this heading">#</a></h2>
 <p>Importable through <code class="docutils literal notranslate"><span class="pre">CrocoDash.shareable</span></code>, the module lets you:</p>
 <ol class="arabic simple">
 <li><p><strong>Bundle</strong> - Inspect an existing CESM case, identify what makes it unique, and package it into a portable folder</p></li>
 <li><p><strong>Fork</strong> - Recreate a case from a bundle, with optional modifications</p></li>
 <li><p><strong>Duplicate</strong> - One-step shortcut to copy a case to a new location, reading machine/project/cesmroot automatically from the original</p></li>
 </ol>
-</section>
 <hr class="docutils" />
 <section id="workflow">
 <h2>Workflow<a class="headerlink" href="#workflow" title="Link to this heading">#</a></h2>
@@ -591,12 +564,12 @@ crocodash<span class="w"> </span>fork<span class="w"> </span><span class="se">\<
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="case_information.html"
+       href="template.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Extra CESM Case Information</p>
+        <p class="prev-next-title">Case Templates</p>
       </div>
     </a>
     <a class="right-next"
@@ -624,8 +597,6 @@ crocodash<span class="w"> </span>fork<span class="w"> </span><span class="se">\<
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#templates">Templates</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#shareable-cases">Shareable Cases</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow">Workflow</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-1-bundle">Step 1 — Bundle</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-fork">Step 2 — Fork</a><ul class="nav section-nav flex-column">
