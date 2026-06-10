@@ -21,6 +21,7 @@ datasets
 forcing_configurations
 extract_forcings
 case_information
+template
 shareable
 additional_resources
 ```

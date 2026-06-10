@@ -1,36 +1,6 @@
-# Shareable Configuration & Templates
+# Shareable Configuration
 
 Ever wanted to share your regional MOM6 setup? Get a summary of your unique changes? Let someone else easily run your model? This module is for you!
-
-This page covers two things:
-
-- **Templates** — generate a starter script or notebook pre-filled with dataset paths for your machine
-- **Shareable cases** — bundle, fork, and duplicate existing CESM cases
-
----
-
-## Templates
-
-The `crocodash template` command writes a ready-to-use CrocoDash case file sourced from the gallery tutorial notebook. Pass `--machine` to pre-fill known dataset paths (e.g. GEBCO, TPXO) for your machine; omit it to leave `<KEY>` placeholders for manual editing.
-
-```bash
-# Jupyter notebook with placeholders
-crocodash template --output my_case.ipynb
-
-# Jupyter notebook with Derecho/GLADE paths pre-filled
-crocodash template --output my_case.ipynb --machine derecho
-
-# Python script with Derecho paths pre-filled
-crocodash template --output my_case.py --machine derecho
-```
-
-The `.py` output extracts the code cells from the tutorial notebook directly (no separate template file to maintain). Both formats use `# %%` cell separators, making the `.py` file compatible with Jupytext and VS Code interactive Python.
-
-Known machine keys are defined in `crocogallery/known_paths.json` inside the CrocoGallery repo. To add a new machine (e.g. `"casper"`, `"local"`), add a new top-level key to that file — no Python changes needed.
-
----
-
-## Shareable Cases
 
 Importable through `CrocoDash.shareable`, the module lets you:
 
