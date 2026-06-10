@@ -45,3 +45,33 @@ def test_template_unknown_machine(tmp_path):
     output = tmp_path / "out.ipynb"
     with pytest.raises(KeyError, match="Unknown machine 'bogus'"):
         run_main(["template", "--output", str(output), "--machine", "bogus"])
+
+
+def test_template_yaml_no_machine(tmp_path):
+    import yaml
+
+    output = tmp_path / "out.yaml"
+    run_main(["template", "--output", str(output)])
+    assert output.exists()
+    text = output.read_text()
+    assert "<CESM>" in text, "Placeholders should remain when --machine is not set"
+    config = yaml.safe_load(text)
+    assert isinstance(config, dict)
+
+
+def test_template_yaml_with_machine(tmp_path):
+    import yaml
+
+    output = tmp_path / "out.yaml"
+    run_main(["template", "--output", str(output), "--machine", "derecho"])
+    assert output.exists()
+    text = output.read_text()
+    assert "<CESM>" not in text, "Placeholders should be replaced with --machine"
+    config = yaml.safe_load(text)
+    assert isinstance(config, dict)
+
+
+def test_template_yaml_unknown_machine(tmp_path):
+    output = tmp_path / "out.yaml"
+    with pytest.raises(KeyError, match="Unknown machine 'bogus'"):
+        run_main(["template", "--output", str(output), "--machine", "bogus"])

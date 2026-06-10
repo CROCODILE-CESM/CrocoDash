@@ -1,5 +1,21 @@
 import argparse
 import json
+import sys
+
+
+def _create(args):
+    from CrocoDash.workflow import load_config, create_case_from_yaml
+
+    config = load_config(args.config)
+    create_case_from_yaml(config, override=args.override)
+
+
+def _dump(args):
+    from CrocoDash.workflow import case_to_yaml
+    import yaml
+
+    config = case_to_yaml(args.caseroot)
+    yaml.dump(config, sys.stdout, default_flow_style=False, sort_keys=False)
 
 
 def _bundle(args):
@@ -30,34 +46,53 @@ def _duplicate_case(args):
 
 
 def _template(args):
-    import nbformat
-    from importlib.resources import files
     from pathlib import Path
-    from crocogallery import load_paths, inject_into_text
 
-    paths = load_paths(args.machine) if args.machine else {}
     output = Path(args.output)
 
-    # gallery/notebooks/ is a sibling of the installed crocogallery package dir
-    nb_path = (
-        files("crocogallery").parent
-        / "gallery"
-        / "notebooks"
-        / "CrocoDash"
-        / "tutorials"
-        / "crocodash_tutorial.ipynb"
-    )
-    nb = nbformat.read(nb_path, as_version=4)
+    if output.suffix in (".yaml", ".yml"):
+        from importlib.resources import files
+        from crocogallery import inject_into_text, load_paths
 
-    if output.suffix == ".ipynb":
-        for cell in nb.cells:
-            if cell.cell_type == "code":
-                cell.source = inject_into_text(cell.source, paths)
-        nbformat.write(nb, output)
+        yaml_path = (
+            files("crocogallery").parent
+            / "gallery"
+            / "notebooks"
+            / "CrocoDash"
+            / "tutorials"
+            / "starter_case.yaml"
+        )
+        template_text = yaml_path.read_text()
+        if args.machine:
+            template_text = inject_into_text(template_text, load_paths(args.machine))
+        output.write_text(template_text)
     else:
-        code_cells = [cell.source for cell in nb.cells if cell.cell_type == "code"]
-        text = "\n\n# %%\n".join(code_cells)
-        output.write_text(inject_into_text(text, paths))
+        import nbformat
+        from importlib.resources import files
+        from crocogallery import inject_into_text, load_paths
+
+        paths = load_paths(args.machine) if args.machine else {}
+
+        # gallery/notebooks/ is a sibling of the installed crocogallery package dir
+        nb_path = (
+            files("crocogallery").parent
+            / "gallery"
+            / "notebooks"
+            / "CrocoDash"
+            / "tutorials"
+            / "crocodash_tutorial.ipynb"
+        )
+        nb = nbformat.read(nb_path, as_version=4)
+
+        if output.suffix == ".ipynb":
+            for cell in nb.cells:
+                if cell.cell_type == "code":
+                    cell.source = inject_into_text(cell.source, paths)
+            nbformat.write(nb, output)
+        else:
+            code_cells = [cell.source for cell in nb.cells if cell.cell_type == "code"]
+            text = "\n\n# %%\n".join(code_cells)
+            output.write_text(inject_into_text(text, paths))
 
     print(f"Template written to: {output}")
     if not args.machine:
@@ -65,20 +100,9 @@ def _template(args):
 
 
 def _fork(args):
-
     from CrocoDash.shareable.fork import ForkCrocoDashBundle
 
     plan = json.loads(args.plan) if args.plan else None
-    extra_configs = (
-        [x.strip() for x in args.extra_configs.split(",") if x.strip()]
-        if args.extra_configs
-        else None
-    )
-    remove_configs = (
-        [x.strip() for x in args.remove_configs.split(",") if x.strip()]
-        if args.remove_configs
-        else None
-    )
 
     forker = ForkCrocoDashBundle(args.bundle)
     forker.fork(
@@ -88,16 +112,38 @@ def _fork(args):
         new_caseroot=args.caseroot,
         new_inputdir=args.inputdir,
         plan=plan,
-        compset=args.compset,
-        extra_configs=extra_configs,
-        remove_configs=remove_configs,
-        extra_forcing_args_path=args.extra_forcing_args,
     )
 
 
 def main():
     parser = argparse.ArgumentParser(prog="crocodash")
     subparsers = parser.add_subparsers(dest="command", required=True)
+
+    # --- create ---
+    create_parser = subparsers.add_parser(
+        "create",
+        help="Create a new CrocoDash case from a YAML config file.",
+    )
+    create_parser.add_argument(
+        "--config", required=True, help="Path to the YAML case config file."
+    )
+    create_parser.add_argument(
+        "--override",
+        action="store_true",
+        default=False,
+        help="Overwrite existing caseroot and inputdir if they exist.",
+    )
+    create_parser.set_defaults(func=_create)
+
+    # --- dump ---
+    dump_parser = subparsers.add_parser(
+        "dump",
+        help="Print a YAML representation of an existing CrocoDash case to stdout.",
+    )
+    dump_parser.add_argument(
+        "--caseroot", required=True, help="Path to the existing CESM caseroot."
+    )
+    dump_parser.set_defaults(func=_dump)
 
     # --- bundle ---
     bundle_parser = subparsers.add_parser(
@@ -171,32 +217,10 @@ def main():
         "--machine", required=True, help="Machine name (e.g. derecho)."
     )
     fork_parser.add_argument("--project", required=True, help="Project/account number.")
-    # optional bypass flags
-    fork_parser.add_argument(
-        "--compset", default=None, help="Override the compset from the bundle."
-    )
     fork_parser.add_argument(
         "--plan",
         default=None,
-        help='JSON object controlling what to copy, e.g. \'{"xml_files": true, "user_nl": true, "source_mods": false, "xmlchanges": true}\'.',
-    )
-    fork_parser.add_argument(
-        "--extra-configs",
-        default=None,
-        dest="extra_configs",
-        help="Comma-separated forcing configs to add.",
-    )
-    fork_parser.add_argument(
-        "--remove-configs",
-        default=None,
-        dest="remove_configs",
-        help="Comma-separated forcing configs to drop.",
-    )
-    fork_parser.add_argument(
-        "--extra-forcing-args",
-        default=None,
-        dest="extra_forcing_args",
-        help="Path to JSON file with extra forcing arguments.",
+        help='JSON object controlling what non-standard CESM state to copy, e.g. \'{"xml_files": true, "user_nl": true, "source_mods": false, "xmlchanges": true}\'.',
     )
     fork_parser.set_defaults(func=_fork)
 
@@ -208,7 +232,7 @@ def main():
     template_parser.add_argument(
         "--output",
         required=True,
-        help="Output path. Use .ipynb for a notebook or .py for a Python script.",
+        help="Output path. Use .yaml for a config, .ipynb for a notebook, .py for a script.",
     )
     template_parser.add_argument(
         "--machine",

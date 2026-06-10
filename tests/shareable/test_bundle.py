@@ -1,6 +1,7 @@
 from CrocoDash.shareable.bundle import *
 import pytest
 import subprocess
+import yaml
 from pathlib import Path
 
 
@@ -72,27 +73,20 @@ def test_diff_CESM_cases_alldiff(two_cesm_cases):
     assert output.xmlchanges_missing == ["JOB_PRIORITY"]
 
 
-def test_identify_CrocoDashCase_init_args(get_case_with_cf, fake_RCC_empty_case):
+def test_load_state_from_crocodash_init_args(get_case_with_cf):
     case = get_case_with_cf
-    rcc = fake_RCC_empty_case
-    rcc.caseroot = case.caseroot
-    rcc._get_cesmroot()
-    rcc._read_user_nls()
-    init_args = rcc._identify_CrocoDashCase_init_args()
-    print(init_args)
+    rcc = BundleCrocoDashCase(case.caseroot)
+    init_args = rcc.init_args
 
     assert str(case.inputdir / "ocnice") == str(init_args["inputdir_ocnice"])
-    assert str(init_args["supergrid_path"]).startswith(str("ocean_hgrid_pana"))
-
-    assert str(init_args["topo_path"]).startswith(str("ocean_topog_pana"))
-
-    assert str(init_args["vgrid_path"]).startswith(str("ocean_vgrid_pana"))
-
-    assert init_args["compset"] == "1850_DATM%JRA_SLND_SICE_MOM6_SROF_SGLC_SWAV_SESP"
+    assert str(init_args["supergrid_path"]).startswith("ocean_hgrid_pana")
+    assert str(init_args["topo_path"]).startswith("ocean_topog_pana")
+    assert str(init_args["vgrid_path"]).startswith("ocean_vgrid_pana")
+    assert "compset" in init_args
 
 
-def test_identify_CrocoDashCase_forcing_config_args(
-    CrocoDash_case_factory, tmp_path_factory, fake_RCC_empty_case
+def test_load_state_from_crocodash_forcing_config(
+    CrocoDash_case_factory, tmp_path_factory
 ):
     case1 = CrocoDash_case_factory(tmp_path_factory.mktemp("forcing_config_args"))
     case1.configure_forcings(
@@ -101,13 +95,8 @@ def test_identify_CrocoDashCase_forcing_config_args(
         tpxo_elevation_filepath="s3://crocodile-cesm/CrocoDash/data/tpxo/h_tpxo9.v1.zarr/",
         tpxo_velocity_filepath="s3://crocodile-cesm/CrocoDash/data/tpxo/u_tpxo9.v1.zarr/",
     )
-    rcc = fake_RCC_empty_case
-    rcc.caseroot = case1.caseroot
-    rcc._get_cesmroot()
-    rcc._read_user_nls()
-    forcing_config = rcc._identify_CrocoDashCase_forcing_config_args()
-    # Since this just reads the forcing_config json file in input directory, I'll only check one thing in it
-    assert "tides" in forcing_config
+    rcc = BundleCrocoDashCase(case1.caseroot)
+    assert "tides" in rcc.forcing_config
 
 
 def test_identify_non_standard_case_information(get_CrocoDash_case):
@@ -234,16 +223,17 @@ def test_bundle_with_modifications(CrocoDash_case_factory, tmp_path_factory, tmp
     replay_sh_path = case_bundle / "replay.sh"
     assert replay_sh_path.exists()
 
-    # Check that manifest.json was written
-    json_file = case_bundle / "manifest.json"
-    assert json_file.exists()
-    with open(json_file) as f:
-        saved_output = json.load(f)
+    # Check that crocodash_case.yaml was written (replaces the old manifest.json)
+    yaml_file = case_bundle / "crocodash_case.yaml"
+    assert yaml_file.exists()
+    with open(yaml_file) as f:
+        saved_yaml = yaml.safe_load(f)
     json_file = case_bundle / "non_standard_case_info.json"
     with open(json_file) as f:
         differences = json.load(f)
-    assert "init_args" in saved_output
-    assert "forcing_config" in saved_output
+    assert "case" in saved_yaml
+    assert "grid" in saved_yaml
+    assert "forcings" in saved_yaml
     assert differences["xml_files_missing_in_new"] == ["custom_settings.xml"]
     assert differences["source_mods_missing_files"] == ["src.mom/custom_module.F90"]
 

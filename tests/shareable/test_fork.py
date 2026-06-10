@@ -1,7 +1,7 @@
 from CrocoDash.shareable.fork import *
 import json
 import pytest
-from types import SimpleNamespace
+from pathlib import Path
 from unittest.mock import patch
 from uuid import uuid4
 
@@ -84,23 +84,51 @@ def test_resolve_copy_plan_with_provided_plan(fake_fcb_empty_case):
     assert fcb.plan is provided
 
 
-def test_resolve_compset(fake_fcb_empty_case):
-    """Test _resolve_compset sets compset on self."""
+def test_patch_yaml_for_fork(fake_fcb_empty_case, tmp_path):
+    """Test _patch_yaml_for_fork correctly patches destination fields."""
     fcb = fake_fcb_empty_case
-    bundle_compset = "1850_DATM%JRA_SLND_SICE_MOM6_SROF_SGLC_SWAV"
-    fcb.manifest = BundleManifest(
-        forcing_config={},
-        init_args={"compset": bundle_compset},
+    fcb.bundle_location = tmp_path / "bundle"
+    (fcb.bundle_location / "ocnice").mkdir(parents=True)
+
+    bundle_yaml = {
+        "case": {
+            "cesmroot": "/old/cesm",
+            "machine": "old_machine",
+            "project": "OLD123",
+            "caseroot": "/old/case",
+            "inputdir": "/old/inputdir",
+            "compset": "1850_DATM%JRA_SLND_SICE_MOM6_SROF_SGLC_SWAV",
+        },
+        "grid": {"supergrid_path": "/old/ocnice/ocean_hgrid.nc"},
+        "topo": {
+            "source": {
+                "type": "from_file",
+                "topo_file_path": "/old/ocnice/ocean_topog.nc",
+            }
+        },
+        "vgrid": {"type": "from_file", "filename": "/old/ocnice/ocean_vgrid.nc"},
+    }
+    fcb.bundle_yaml = bundle_yaml
+
+    config = fcb._patch_yaml_for_fork(
+        cesmroot="/new/cesm",
+        machine="new_machine",
+        project_number="NEW123",
+        new_caseroot="/new/case",
+        new_inputdir="/new/inputdir",
     )
 
-    fcb._resolve_compset(None)
-
-    assert fcb.compset == bundle_compset
-
-    new_compset = "2000_DATM%JRA_SLND_SICE_MOM6_SROF_SGLC_SWAV"
-    fcb._resolve_compset(new_compset)
-
-    assert fcb.compset == new_compset
+    assert config["case"]["cesmroot"] == "/new/cesm"
+    assert config["case"]["machine"] == "new_machine"
+    assert config["case"]["project"] == "NEW123"
+    assert config["case"]["caseroot"] == "/new/case"
+    assert config["case"]["inputdir"] == "/new/inputdir"
+    # Original must be unchanged
+    assert bundle_yaml["case"]["cesmroot"] == "/old/cesm"
+    # Grid/topo/vgrid paths are redirected to bundle ocnice
+    assert "ocean_hgrid.nc" in config["grid"]["supergrid_path"]
+    assert "ocean_topog.nc" in config["topo"]["source"]["topo_file_path"]
+    assert "ocean_vgrid.nc" in config["vgrid"]["filename"]
 
 
 def test_build_general_configure_forcing_args(sample_forcing_config):
@@ -124,114 +152,6 @@ def test_build_general_configure_forcing_args(sample_forcing_config):
 
     assert "tidal_constituents" not in args
     assert "marbl_ic_filepath" in args
-
-
-def test_resolve_forcing_args_no_configs(fake_fcb_empty_case, sample_forcing_config):
-    """Test _resolve_forcing_args sets configure_forcing_args unchanged when no configs requested."""
-    fcb = fake_fcb_empty_case
-    fcb.manifest = BundleManifest(forcing_config=sample_forcing_config, init_args={})
-    fcb.resolved_remove = {}
-    fcb.requested_configs = []
-
-    fcb._resolve_forcing_args(None)
-
-    assert fcb.configure_forcing_args == {
-        "date_range": ["2020-01-01 00:00:00", "2020-01-09 00:00:00"],
-        "boundaries": ["north"],
-        "product_name": "GLORYS",
-        "function_name": "get_glorys_data_script_for_cli",
-        "tpxo_elevation_filepath": "ASd",
-        "tpxo_velocity_filepath": "ASd",
-        "tidal_constituents": ["M2", "K1"],
-        "marbl_ic_filepath": "qwreqwre",
-    }
-
-
-def test_resolve_forcing_args_with_json_file(
-    fake_fcb_empty_case, sample_forcing_config, tmp_path
-):
-    """Test that _resolve_forcing_args loads extra args from a JSON file path."""
-    fcb = fake_fcb_empty_case
-    fcb.manifest = BundleManifest(forcing_config=sample_forcing_config, init_args={})
-    fcb.resolved_remove = {}
-    fcb.requested_configs = ["tides"]
-
-    args_file = tmp_path / "forcing_args.json"
-    args_file.write_text(
-        json.dumps(
-            {
-                "tidal_constituents": ["M2", "K1"],
-                "tpxo_elevation_filepath": "elev.nc",
-                "tpxo_velocity_filepath": "vel.nc",
-                "boundaries": ["north"],
-            }
-        )
-    )
-
-    fcb._resolve_forcing_args(str(args_file))
-
-    assert fcb.configure_forcing_args["tidal_constituents"] == ["M2", "K1"]
-
-
-def test_resolve_forcing_args_missing_required_arg(
-    fake_fcb_empty_case, sample_forcing_config, tmp_path
-):
-    """Test that _resolve_forcing_args raises ValueError when required args are missing."""
-    fcb = fake_fcb_empty_case
-    fcb.manifest = BundleManifest(forcing_config=sample_forcing_config, init_args={})
-    fcb.resolved_remove = {"tides"}  # remove tides so its args aren't pre-populated
-    fcb.requested_configs = ["tides"]
-
-    args_file = tmp_path / "incomplete_args.json"
-    args_file.write_text(json.dumps({"tidal_constituents": ["M2"]}))
-
-    with pytest.raises(ValueError, match="Missing arg"):
-        fcb._resolve_forcing_args(str(args_file))
-
-
-def test_resolve_forcing_configurations(fake_fcb_empty_case, sample_forcing_config):
-    """Test _resolve_forcing_configurations sets requested and removed configs on self."""
-    fcb = fake_fcb_empty_case
-    fcb.manifest = BundleManifest(forcing_config=sample_forcing_config, init_args={})
-    fcb.compset = "2000_DATM%JRA_SLND_SICE_MOM6_SROF_SGLC_SWAV"
-
-    with patch(
-        "CrocoDash.shareable.fork.ForcingConfigRegistry.find_required_configurators",
-        return_value=[],
-    ):
-        with patch(
-            "CrocoDash.shareable.fork.ForcingConfigRegistry.find_valid_configurators",
-            return_value=[],
-        ):
-            with patch("CrocoDash.shareable.fork.ask_string", side_effect=["", "bgc"]):
-                fcb._resolve_forcing_configurations(None, None)
-
-    assert isinstance(fcb.requested_configs, list)
-    assert isinstance(fcb.resolved_remove, set)
-    assert "bgc" in fcb.resolved_remove
-
-
-def test_resolve_forcing_configurations_required_missing(
-    fake_fcb_empty_case, sample_forcing_config
-):
-    """Test that a required configurator absent from the manifest is added to requested_configs."""
-    fcb = fake_fcb_empty_case
-    # manifest has no "bgc" entry
-    fcb.manifest = BundleManifest(forcing_config={"basic": {}}, init_args={})
-    fcb.compset = "2000_DATM%JRA_SLND_SICE_MOM6_SROF_SGLC_SWAV"
-
-    mock_required = SimpleNamespace(name="BGC")
-
-    with patch(
-        "CrocoDash.shareable.fork.ForcingConfigRegistry.find_required_configurators",
-        return_value=[mock_required],
-    ), patch(
-        "CrocoDash.shareable.fork.ForcingConfigRegistry.find_valid_configurators",
-        return_value=[],
-    ):
-        fcb._resolve_forcing_configurations(extra_configs=[], remove_configs=[])
-
-    assert "bgc" in fcb.requested_configs
 
 
 def test_ask_input_response():

@@ -50,7 +50,6 @@ def test_fork_cli(tmp_path):
         "source_mods": True,
         "xmlchanges": True,
     }
-    args_file = tmp_path / "args.json"
 
     with patch(
         "CrocoDash.shareable.fork.ForkCrocoDashBundle", return_value=mock_forker
@@ -72,14 +71,6 @@ def test_fork_cli(tmp_path):
                 "PROJ123",
                 "--plan",
                 json.dumps(plan),
-                "--compset",
-                "GOMOM6",
-                "--extra-configs",
-                "tides,bgc",
-                "--remove-configs",
-                "runoff",
-                "--extra-forcing-args",
-                str(args_file),
             ]
         )
 
@@ -90,10 +81,6 @@ def test_fork_cli(tmp_path):
         new_caseroot=str(tmp_path / "new_case"),
         new_inputdir=str(tmp_path / "inputdir"),
         plan=plan,
-        compset="GOMOM6",
-        extra_configs=["tides", "bgc"],
-        remove_configs=["runoff"],
-        extra_forcing_args_path=str(args_file),
     )
 
 
