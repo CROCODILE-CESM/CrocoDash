@@ -1,17 +1,23 @@
-from pathlib import Path
-from CrocoDash.forcing_configurations.base import *
-from CrocoDash.shareable.apply import *
+import copy
 import json
+import os
 import shutil
-from datetime import datetime
+import subprocess
+import tempfile
 from dataclasses import dataclass, field
-from CrocoDash.case import Case
-from CrocoDash.grid import Grid
-from CrocoDash.vgrid import VGrid
-from CrocoDash.topo import Topo
+from datetime import datetime
+from pathlib import Path
+
 import xarray as xr
 import yaml
+from CrocoDash.case import Case
+from CrocoDash.forcing_configurations.base import *
+from CrocoDash.grid import Grid
 from CrocoDash.logging import setup_logger
+from CrocoDash.shareable.apply import *
+from CrocoDash.topo import Topo
+from CrocoDash.vgrid import VGrid
+from CrocoDash.workflow import create_case_from_yaml, generate_configure_forcing_args
 
 logger = setup_logger(__name__)
 
@@ -129,8 +135,6 @@ class ForkCrocoDashBundle:
             ``{"xml_files": True, "user_nl": False, "source_mods": True, "xmlchanges": True}``.
             When omitted the user is asked interactively.
         """
-        from CrocoDash.workflow import create_case_from_yaml
-
         # Phase 1: build patched YAML with new destination values
         config = self._patch_yaml_for_fork(
             cesmroot, machine, project_number, new_caseroot, new_inputdir
@@ -169,8 +173,6 @@ class ForkCrocoDashBundle:
         self, cesmroot, machine, project_number, new_caseroot, new_inputdir
     ):
         """Return a copy of bundle_yaml with destination fields patched."""
-        import copy
-
         config = copy.deepcopy(self.bundle_yaml)
         config["case"]["cesmroot"] = str(cesmroot)
         config["case"]["machine"] = machine
@@ -199,11 +201,6 @@ class ForkCrocoDashBundle:
 
     def _guide_yaml_review(self, config):
         """Walk the user through key YAML fields and offer $EDITOR for deeper edits."""
-        import copy
-        import os
-        import subprocess
-        import tempfile
-
         print("\n=== Fork: Review Case Configuration ===")
         print(
             "The following fields have been pre-filled. Press Enter to keep each value.\n"
@@ -400,39 +397,3 @@ def create_case(
         atm_grid_name=init_args["atm_grid_name"],
     )
     return case
-
-
-def generate_configure_forcing_args(forcing_config, remove_configs=None):
-    if remove_configs is None:
-        remove_configs = []
-    logger.info("Setup configuration arguments...")
-
-    start_str = forcing_config["basic"]["dates"]["start"]
-    end_str = forcing_config["basic"]["dates"]["end"]
-    date_format = forcing_config["basic"]["dates"]["format"]
-    start_dt = datetime.strptime(start_str, date_format)
-    end_dt = datetime.strptime(end_str, date_format)
-
-    date_range = [
-        start_dt.strftime("%Y-%m-%d %H:%M:%S"),
-        end_dt.strftime("%Y-%m-%d %H:%M:%S"),
-    ]
-
-    configure_forcing_args = {
-        "date_range": date_range,
-        "boundaries": list(
-            forcing_config["basic"]["general"]["boundary_number_conversion"].keys()
-        ),
-        "product_name": forcing_config["basic"]["forcing"]["product_name"],
-        "function_name": forcing_config["basic"]["forcing"]["function_name"],
-    }
-    for key in forcing_config:
-        if key == "basic" or key in remove_configs:
-            continue
-        user_args = ForcingConfigRegistry.get_user_args(
-            ForcingConfigRegistry.get_configurator_from_name(key)
-        )
-        for arg in user_args:
-            if not arg.startswith("case_"):
-                configure_forcing_args[arg] = forcing_config[key]["inputs"][arg]
-    return configure_forcing_args

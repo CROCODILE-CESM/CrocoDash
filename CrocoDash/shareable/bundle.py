@@ -1,29 +1,40 @@
-from pathlib import Path
 import dataclasses
+import importlib
 import json
+import logging
 import os
+import shutil
+import subprocess
+import sys
 import tempfile
+from contextlib import redirect_stdout, redirect_stderr
+from pathlib import Path
+from uuid import uuid4
+
+import yaml
+from CrocoDash.forcing_configurations.base import *
 from CrocoDash.grid import *
+from CrocoDash.logging import setup_logger
+from CrocoDash.shareable.apply import (
+    INPUTDIR_FILE_PREFIXES,
+    apply_xmlchanges_to_case,
+    copy_source_mods_from_case,
+    copy_user_nl_params_from_case,
+    copy_xml_files_from_case,
+)
+from CrocoDash.shareable.fork import (
+    BundleDifferences,
+    BundleManifest,
+    ForkCrocoDashBundle,
+    create_case,
+)
 from CrocoDash.topo import *
 from CrocoDash.vgrid import *
-from CrocoDash.shareable.fork import (
-    create_case,
+from CrocoDash.workflow import (
+    case_to_yaml,
+    create_case_from_yaml,
     generate_configure_forcing_args,
-    ForkCrocoDashBundle,
-    BundleManifest,
-    BundleDifferences,
 )
-from CrocoDash.shareable.apply import INPUTDIR_FILE_PREFIXES
-from uuid import uuid4
-import subprocess
-from CrocoDash.logging import setup_logger
-from contextlib import redirect_stdout, redirect_stderr
-import logging
-from CrocoDash.forcing_configurations.base import *
-import importlib
-import sys
-import shutil
-import yaml
 
 logger = setup_logger(__name__)
 
@@ -115,8 +126,6 @@ class BundleCrocoDashCase:
 
     def _load_state_from_crocodash(self):
         """Load case parameters from crocodash_state.json and extract_forcings/config.json."""
-        from CrocoDash.workflow import case_to_yaml
-
         logger.info(f"Loading CrocoDash state from {self.caseroot}")
         self.case_yaml = case_to_yaml(self.caseroot)
 
@@ -368,15 +377,6 @@ def duplicate_case(caseroot, new_caseroot, new_inputdir, bundle_dir=None):
     bundle_dir : str or Path, optional
         Where to copy the bundle for reference. If None, no bundle is saved.
     """
-    from CrocoDash.workflow import case_to_yaml, create_case_from_yaml
-    from CrocoDash.shareable.apply import (
-        copy_xml_files_from_case,
-        copy_user_nl_params_from_case,
-        copy_source_mods_from_case,
-        apply_xmlchanges_to_case,
-        copy_configurations_to_case,
-    )
-
     rcc = BundleCrocoDashCase(caseroot)
     rcc.identify_non_standard_CrocoDash_case_information(
         rcc.cesmroot, rcc.case_machine, rcc.case_project

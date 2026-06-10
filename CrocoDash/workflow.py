@@ -1,13 +1,18 @@
 import json
+from datetime import datetime
 from pathlib import Path
 
 import xarray as xr
 import yaml
 
 from CrocoDash.case import Case
+from CrocoDash.forcing_configurations.base import ForcingConfigRegistry
 from CrocoDash.grid import Grid
 from CrocoDash.topo import Topo
 from CrocoDash.vgrid import VGrid
+from CrocoDash.logging import setup_logger
+
+logger = setup_logger(__name__)
 
 
 def load_config(path):
@@ -200,6 +205,43 @@ def create_case_from_yaml(config, override=False):
     return case
 
 
+def generate_configure_forcing_args(forcing_config, remove_configs=None):
+    """Convert a config.json forcing_config dict into configure_forcings kwargs."""
+    if remove_configs is None:
+        remove_configs = []
+    logger.info("Setup configuration arguments...")
+
+    start_str = forcing_config["basic"]["dates"]["start"]
+    end_str = forcing_config["basic"]["dates"]["end"]
+    date_format = forcing_config["basic"]["dates"]["format"]
+    start_dt = datetime.strptime(start_str, date_format)
+    end_dt = datetime.strptime(end_str, date_format)
+
+    date_range = [
+        start_dt.strftime("%Y-%m-%d %H:%M:%S"),
+        end_dt.strftime("%Y-%m-%d %H:%M:%S"),
+    ]
+
+    configure_forcing_args = {
+        "date_range": date_range,
+        "boundaries": list(
+            forcing_config["basic"]["general"]["boundary_number_conversion"].keys()
+        ),
+        "product_name": forcing_config["basic"]["forcing"]["product_name"],
+        "function_name": forcing_config["basic"]["forcing"]["function_name"],
+    }
+    for key in forcing_config:
+        if key == "basic" or key in remove_configs:
+            continue
+        user_args = ForcingConfigRegistry.get_user_args(
+            ForcingConfigRegistry.get_configurator_from_name(key)
+        )
+        for arg in user_args:
+            if not arg.startswith("case_"):
+                configure_forcing_args[arg] = forcing_config[key]["inputs"][arg]
+    return configure_forcing_args
+
+
 def case_to_yaml(caseroot):
     """
     Reconstruct a YAML config dict from an existing case's state files.
@@ -252,8 +294,6 @@ def case_to_yaml(caseroot):
 
     forcing_config_path = Path(state["inputdir"]) / "extract_forcings" / "config.json"
     if forcing_config_path.exists():
-        from CrocoDash.shareable.fork import generate_configure_forcing_args
-
         with open(forcing_config_path) as f:
             forcing_config = json.load(f)
         config["forcings"] = generate_configure_forcing_args(forcing_config)
