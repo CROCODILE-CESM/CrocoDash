@@ -25,13 +25,22 @@ jobs:
 
           git fetch origin main
 
-          CHANGED=$(git diff origin/main HEAD -- CrocoDash/rm6 CrocoDash/visualCaseGen demos)
+          SUBMODULES="CrocoDash/rm6 CrocoDash/visualCaseGen demos"
+          CHANGED_MODULES=""
 
-          if [ -n "$CHANGED" ]; then
+          for sm in $SUBMODULES; do
+            if [ -n "$(git diff origin/main HEAD -- "$sm")" ]; then
+              OLD=$(git show origin/main:"$sm" 2>/dev/null | head -1 || echo "unknown")
+              NEW=$(git show HEAD:"$sm" 2>/dev/null | head -1 || echo "unknown")
+              CHANGED_MODULES="$CHANGED_MODULES\n  - $sm: $OLD -> $NEW"
+            fi
+          done
+
+          if [ -n "$CHANGED_MODULES" ]; then
             echo "ERROR: Submodule pointer(s) changed in this PR."
             echo ""
             echo "Changed submodule(s):"
-            git diff origin/main HEAD -- CrocoDash/rm6 CrocoDash/visualCaseGen demos | grep "^[-+]Subproject" || true
+            printf "$CHANGED_MODULES\n"
             echo ""
             echo "If this is intentional, add the 'submodule-bump' label to this PR."
             exit 1
