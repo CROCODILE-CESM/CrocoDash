@@ -50,6 +50,12 @@ MINIMAL_VALID_CONFIG = {
         "compset": "CR_JRA",
         "machine": "derecho",
     },
+    "forcings": {
+        "date_range": ["2020-01-01 00:00:00", "2020-12-31 00:00:00"],
+        "boundaries": ["north", "south", "east", "west"],
+        "product_name": "GLORYS",
+        "function_name": "get_glorys_data_from_rda",
+    },
 }
 
 
@@ -81,6 +87,12 @@ def test_validate_missing_case_key(missing_key):
             for k in ("cesmroot", "caseroot", "inputdir", "compset", "machine")
             if k != missing_key
         },
+        "forcings": {
+            "date_range": ["2020-01-01", "2020-02-01"],
+            "boundaries": ["north"],
+            "product_name": "GLORYS",
+            "function_name": "get_glorys",
+        },
     }
     with pytest.raises(ValueError, match=f"case\\.{missing_key}"):
         validate_config_structure(config)
@@ -96,19 +108,6 @@ def test_validate_invalid_vgrid_type():
     config = {**MINIMAL_VALID_CONFIG, "vgrid": {"type": "bogus"}}
     with pytest.raises(ValueError, match="vgrid\\.type"):
         validate_config_structure(config)
-
-
-def test_validate_forcings_section_valid():
-    config = {
-        **MINIMAL_VALID_CONFIG,
-        "forcings": {
-            "date_range": ["2020-01-01", "2020-02-01"],
-            "boundaries": ["north", "east"],
-            "product_name": "GLORYS",
-            "function_name": "get_glorys",
-        },
-    }
-    validate_config_structure(config)
 
 
 @pytest.mark.parametrize(
@@ -368,9 +367,9 @@ def test_case_to_yaml_with_forcings(get_case_with_cf):
 # ---------------------------------------------------------------------------
 
 
-def test_case_to_yaml_round_trip_is_valid_config(get_CrocoDash_case):
+def test_case_to_yaml_round_trip_is_valid_config(get_case_with_cf):
     """case_to_yaml output must pass validate_config_structure without error."""
-    case = get_CrocoDash_case
+    case = get_case_with_cf
     config = case_to_yaml(case.caseroot)
     validate_config_structure(config)
 
@@ -382,9 +381,9 @@ def test_case_to_yaml_round_trip_with_forcings_is_valid(get_case_with_cf):
     validate_config_structure(config)
 
 
-def test_case_to_yaml_round_trip_yaml_serializable(get_CrocoDash_case, tmp_path):
+def test_case_to_yaml_round_trip_yaml_serializable(get_case_with_cf, tmp_path):
     """case_to_yaml output can be written to YAML and reloaded identically."""
-    case = get_CrocoDash_case
+    case = get_case_with_cf
     config = case_to_yaml(case.caseroot)
 
     yaml_path = tmp_path / "round_trip.yaml"
