@@ -30,8 +30,8 @@ jobs:
 
           for sm in $SUBMODULES; do
             if [ -n "$(git diff origin/main HEAD -- "$sm")" ]; then
-              OLD=$(git show origin/main:"$sm" 2>/dev/null | head -1 || echo "unknown")
-              NEW=$(git show HEAD:"$sm" 2>/dev/null | head -1 || echo "unknown")
+              OLD=$(git ls-tree origin/main "$sm" | awk '{print $3}')
+              NEW=$(git ls-tree HEAD "$sm" | awk '{print $3}')
               CHANGED_MODULES="$CHANGED_MODULES\n  - $sm: $OLD -> $NEW"
             fi
           done
