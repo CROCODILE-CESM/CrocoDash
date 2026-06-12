@@ -99,15 +99,9 @@ def test_load_state_from_crocodash_forcing_config(
     assert "tides" in rcc.forcing_config
 
 
-def test_identify_non_standard_case_information(get_CrocoDash_case):
+def test_identify_non_standard_case_information(get_shareable_CrocoDash_case):
 
-    case1 = get_CrocoDash_case
-    case1.configure_forcings(
-        date_range=["2020-01-01 00:00:00", "2020-01-09 00:00:00"],
-        tidal_constituents=["M2"],
-        tpxo_elevation_filepath="s3://crocodile-cesm/CrocoDash/data/tpxo/h_tpxo9.v1.zarr/",
-        tpxo_velocity_filepath="s3://crocodile-cesm/CrocoDash/data/tpxo/u_tpxo9.v1.zarr/",
-    )
+    case1 = get_shareable_CrocoDash_case
 
     xml_file = Path(case1.caseroot) / "test.xml"
     xml_file.write_text("<test>data</test>")
@@ -296,7 +290,7 @@ def test_read_sourcemods(fake_RCC_empty_case, tmp_path):
     case._read_sourcemods()
 
     # Expected relative paths
-    expected = {Path("src.drv/file1.txt"), Path("src.mom/file2.txt")}
+    expected = {"src.drv/file1.txt", "src.mom/file2.txt"}
 
     # Assert
     assert case.sourcemods == expected
