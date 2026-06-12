@@ -119,7 +119,7 @@ class BundleCrocoDashCase:
 
     def _read_sourcemods(self):
         self.sourcemods = {
-            f.relative_to(self.caseroot / "SourceMods")
+            str(f.relative_to(self.caseroot / "SourceMods"))
             for f in (self.caseroot / "SourceMods").rglob("*")
             if f.is_file()
         }
@@ -165,7 +165,7 @@ class BundleCrocoDashCase:
 
         if not hasattr(self, "user_nl_reader"):
             # Import the CESM MOM_interface user_nl_mom reader
-            mod_path = (
+            mod_path = str(
                 self.cesmroot
                 / "components"
                 / "mom"
@@ -178,7 +178,7 @@ class BundleCrocoDashCase:
             spec.loader.exec_module(self.user_nl_reader)
 
         return self.user_nl_reader.FType_MOM_params.from_MOM_input(
-            self.caseroot / f"user_nl_{user_nl_comp}"
+            str(self.caseroot / f"user_nl_{user_nl_comp}")
         )._data
 
     def _get_cesmroot(self):
@@ -215,9 +215,7 @@ class BundleCrocoDashCase:
 
         return BundleDifferences(
             xml_files_missing_in_new=sorted(list(self.xmlfiles - other_case.xmlfiles)),
-            source_mods_missing_files=sorted(
-                [str(f) for f in self.sourcemods - other_case.sourcemods]
-            ),
+            source_mods_missing_files=sorted(self.sourcemods - other_case.sourcemods),
             xmlchanges_missing=sorted(
                 k for k in self.xmlchanges if k not in other_case.xmlchanges
             ),
