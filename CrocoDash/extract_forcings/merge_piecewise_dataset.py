@@ -106,7 +106,7 @@ def merge_piecewise_dataset(
                     combine="nested",
                     concat_dim="time",
                     coords="minimal",
-                    parallel = False,
+                    parallel=False,
                     lock=threading.Lock(),
                 )
                 ds.to_netcdf(output_path)
