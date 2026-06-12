@@ -99,12 +99,14 @@ def merge_piecewise_dataset(
             output_path = Path(output_folder) / output_file_name
             output_file_names.append(output_file_name)
             if not preview:
+                # lock: netCDF4/HDF5 reads are not thread-safe; this serializes
+                # reads when dask's threaded scheduler computes the output.
                 ds = xr.open_mfdataset(
                     matching_files[boundary],
                     combine="nested",
                     concat_dim="time",
                     coords="minimal",
-                    parallel=False,
+                    parallel = False,
                     lock=threading.Lock(),
                 )
                 ds.to_netcdf(output_path)
