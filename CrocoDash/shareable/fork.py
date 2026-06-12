@@ -136,7 +136,7 @@ class ForkCrocoDashBundle:
             When omitted the user is asked interactively.
         """
         # Phase 1: build patched YAML with new destination values
-        config = self._patch_yaml_for_fork(
+        config = self._configure_yaml_for_forked_case_args(
             cesmroot, machine, project_number, new_caseroot, new_inputdir
         )
 
@@ -169,10 +169,10 @@ class ForkCrocoDashBundle:
         )
         return self.case
 
-    def _patch_yaml_for_fork(
+    def _configure_yaml_for_forked_case_args(
         self, cesmroot, machine, project_number, new_caseroot, new_inputdir
     ):
-        """Return a copy of bundle_yaml with destination fields patched."""
+        """Return a copy of bundle_yaml with destination fields configured for the forked case."""
         config = copy.deepcopy(self.bundle_yaml)
         config["case"]["cesmroot"] = str(cesmroot)
         config["case"]["machine"] = machine

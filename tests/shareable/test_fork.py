@@ -84,8 +84,8 @@ def test_resolve_copy_plan_with_provided_plan(fake_fcb_empty_case):
     assert fcb.plan is provided
 
 
-def test_patch_yaml_for_fork(fake_fcb_empty_case, tmp_path):
-    """Test _patch_yaml_for_fork correctly patches destination fields."""
+def test_configure_yaml_for_forked_case_args(fake_fcb_empty_case, tmp_path):
+    """Test _configure_yaml_for_forked_case_args correctly patches destination fields."""
     fcb = fake_fcb_empty_case
     fcb.bundle_location = tmp_path / "bundle"
     (fcb.bundle_location / "ocnice").mkdir(parents=True)
@@ -110,7 +110,7 @@ def test_patch_yaml_for_fork(fake_fcb_empty_case, tmp_path):
     }
     fcb.bundle_yaml = bundle_yaml
 
-    config = fcb._patch_yaml_for_fork(
+    config = fcb._configure_yaml_for_forked_case_args(
         cesmroot="/new/cesm",
         machine="new_machine",
         project_number="NEW123",

@@ -25,7 +25,7 @@ def load_config(path):
 
 def validate_config_structure(config):
     """Fast pre-flight structural checks on a config dict before any expensive work."""
-    required_top = {"grid", "topo", "vgrid", "case"}
+    required_top = {"grid", "topo", "vgrid", "case", "forcings"}
     missing = required_top - set(config.keys())
     if missing:
         raise ValueError(f"Config missing required top-level sections: {missing}")
@@ -46,28 +46,23 @@ def validate_config_structure(config):
     if vgrid_cfg.get("type") not in valid_vgrid_types:
         raise ValueError(f"vgrid.type must be one of {valid_vgrid_types}")
 
-    if "forcings" in config:
-        forcings_cfg = config["forcings"]
-        for key in ("date_range", "boundaries", "product_name", "function_name"):
-            if key not in forcings_cfg:
+    forcings_cfg = config["forcings"]
+    for key in ("date_range", "boundaries", "product_name", "function_name"):
+        if key not in forcings_cfg:
+            raise ValueError(f"forcings.{key} is required")
+    dr = forcings_cfg["date_range"]
+    if not (isinstance(dr, list) and len(dr) == 2):
+        raise ValueError("forcings.date_range must be a list of exactly 2 date strings")
+    valid_boundaries = {"north", "south", "east", "west"}
+    bad = set(forcings_cfg["boundaries"]) - valid_boundaries
+    if bad:
+        raise ValueError(f"Invalid boundary values: {bad}")
+    if "tidal_constituents" in forcings_cfg:
+        for tide_key in ("tpxo_elevation_filepath", "tpxo_velocity_filepath"):
+            if tide_key not in forcings_cfg:
                 raise ValueError(
-                    f"forcings.{key} is required when the forcings section is present"
+                    f"forcings.{tide_key} is required when tidal_constituents is set"
                 )
-        dr = forcings_cfg["date_range"]
-        if not (isinstance(dr, list) and len(dr) == 2):
-            raise ValueError(
-                "forcings.date_range must be a list of exactly 2 date strings"
-            )
-        valid_boundaries = {"north", "south", "east", "west"}
-        bad = set(forcings_cfg["boundaries"]) - valid_boundaries
-        if bad:
-            raise ValueError(f"Invalid boundary values: {bad}")
-        if "tidal_constituents" in forcings_cfg:
-            for tide_key in ("tpxo_elevation_filepath", "tpxo_velocity_filepath"):
-                if tide_key not in forcings_cfg:
-                    raise ValueError(
-                        f"forcings.{tide_key} is required when tidal_constituents is set"
-                    )
 
 
 def build_grid(grid_cfg):
@@ -201,6 +196,7 @@ def create_case_from_yaml(config, override=False):
             function_name=forcings_cfg["function_name"],
             **extra_kwargs,
         )
+        case.process_forcings()
 
     return case
 
