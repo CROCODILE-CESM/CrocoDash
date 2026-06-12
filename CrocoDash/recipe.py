@@ -14,6 +14,25 @@ from CrocoDash.logging import setup_logger
 
 logger = setup_logger(__name__)
 
+_TOPO_SOURCE_TYPES = {"flat", "dataset", "from_file"}
+_VGRID_TYPES = {"uniform", "hyperbolic", "from_file"}
+
+# State keys that are derived/resolved at init time and cannot be passed straight back
+# to Case.__init__ — handled explicitly in case_to_yaml's "case" section.
+_STATE_DERIVED_KEYS = frozenset(
+    {
+        "inputdir",
+        "cesmroot",
+        "supergrid_path",
+        "topo_path",
+        "vgrid_path",
+        "grid_name",
+        "session_id",
+        "compset_lname",
+        "machine",
+    }
+)
+
 
 def load_config(path):
     """Read a YAML case config file, validate its structure, and return the config dict."""
@@ -37,26 +56,25 @@ def validate_config_structure(config):
 
     topo_cfg = config.get("topo", {})
     source_cfg = topo_cfg.get("source", {})
-    valid_topo_types = {"flat", "dataset", "from_file"}
-    if "source" in topo_cfg and source_cfg.get("type") not in valid_topo_types:
-        raise ValueError(f"topo.source.type must be one of {valid_topo_types}")
+    if "source" in topo_cfg and source_cfg.get("type") not in _TOPO_SOURCE_TYPES:
+        raise ValueError(f"topo.source.type must be one of {_TOPO_SOURCE_TYPES}")
 
     vgrid_cfg = config.get("vgrid", {})
-    valid_vgrid_types = {"uniform", "hyperbolic", "from_file"}
-    if vgrid_cfg.get("type") not in valid_vgrid_types:
-        raise ValueError(f"vgrid.type must be one of {valid_vgrid_types}")
+    vgrid_type = vgrid_cfg.get("type")
+    if vgrid_type is not None and vgrid_type not in _VGRID_TYPES:
+        raise ValueError(f"vgrid.type must be one of {_VGRID_TYPES}")
 
     forcings_cfg = config["forcings"]
-    for key in ("date_range", "boundaries", "product_name", "function_name"):
-        if key not in forcings_cfg:
-            raise ValueError(f"forcings.{key} is required")
+    if "date_range" not in forcings_cfg:
+        raise ValueError("forcings.date_range is required")
     dr = forcings_cfg["date_range"]
     if not (isinstance(dr, list) and len(dr) == 2):
         raise ValueError("forcings.date_range must be a list of exactly 2 date strings")
-    valid_boundaries = {"north", "south", "east", "west"}
-    bad = set(forcings_cfg["boundaries"]) - valid_boundaries
-    if bad:
-        raise ValueError(f"Invalid boundary values: {bad}")
+    if "boundaries" in forcings_cfg:
+        valid_boundaries = {"north", "south", "east", "west"}
+        bad = set(forcings_cfg["boundaries"]) - valid_boundaries
+        if bad:
+            raise ValueError(f"Invalid boundary values: {bad}")
     if "tidal_constituents" in forcings_cfg:
         for tide_key in ("tpxo_elevation_filepath", "tpxo_velocity_filepath"):
             if tide_key not in forcings_cfg:
@@ -72,18 +90,7 @@ def build_grid(grid_cfg):
         if grid_cfg.get("name"):
             grid.name = grid_cfg["name"]
         return grid
-    return Grid(
-        lenx=grid_cfg["lenx"],
-        leny=grid_cfg["leny"],
-        nx=grid_cfg.get("nx"),
-        ny=grid_cfg.get("ny"),
-        resolution=grid_cfg.get("resolution"),
-        xstart=grid_cfg.get("xstart", 0.0),
-        ystart=grid_cfg.get("ystart"),
-        cyclic_x=grid_cfg.get("cyclic_x", False),
-        name=grid_cfg.get("name"),
-        type=grid_cfg.get("type", "uniform_spherical"),
-    )
+    return Grid(**grid_cfg)
 
 
 def build_topo(topo_cfg, grid):
@@ -93,27 +100,14 @@ def build_topo(topo_cfg, grid):
     source_type = source.get("type", "flat")
 
     if source_type == "from_file":
-        return Topo.from_topo_file(
-            grid, source["topo_file_path"], min_depth=min_depth, git=False
-        )
+        return Topo.from_topo_file(grid, source["topo_file_path"], min_depth=min_depth)
 
-    topo = Topo(grid, min_depth, git=False)
+    topo = Topo(grid, min_depth)
 
     if source_type == "flat":
         topo.set_flat(source["depth"])
     elif source_type == "dataset":
-        topo.set_from_dataset(
-            bathymetry_path=source["bathymetry_path"],
-            longitude_coordinate_name=source.get("longitude_coordinate_name", "lon"),
-            latitude_coordinate_name=source.get("latitude_coordinate_name", "lat"),
-            vertical_coordinate_name=source.get(
-                "vertical_coordinate_name", "elevation"
-            ),
-            fill_channels=source.get("fill_channels", False),
-            is_input_positive_below_msl=source.get(
-                "is_input_positive_below_msl", False
-            ),
-        )
+        topo.set_from_dataset(**{k: v for k, v in source.items() if k != "type"})
     else:
         raise ValueError(f"Unknown topo.source.type: '{source_type}'")
 
@@ -125,28 +119,16 @@ def build_vgrid(vgrid_cfg, topo):
     vgrid_type = vgrid_cfg.get("type", "uniform")
 
     if vgrid_type == "from_file":
-        return VGrid.from_file(
-            filename=vgrid_cfg["filename"],
-            variable_name=vgrid_cfg.get("variable_name", "dz"),
-            variable_type=vgrid_cfg.get("variable_type", "layer_thickness"),
-            name=vgrid_cfg.get("name"),
-        )
+        return VGrid.from_file(**{k: v for k, v in vgrid_cfg.items() if k != "type"})
 
     depth = vgrid_cfg.get("depth") or topo.max_depth
+    kwargs = {k: v for k, v in vgrid_cfg.items() if k not in ("type", "depth")}
+    kwargs["depth"] = depth
 
     if vgrid_type == "uniform":
-        return VGrid.uniform(
-            nk=vgrid_cfg["nk"],
-            depth=depth,
-            name=vgrid_cfg.get("name"),
-        )
+        return VGrid.uniform(**kwargs)
     elif vgrid_type == "hyperbolic":
-        return VGrid.hyperbolic(
-            nk=vgrid_cfg["nk"],
-            depth=depth,
-            ratio=vgrid_cfg["ratio"],
-            name=vgrid_cfg.get("name"),
-        )
+        return VGrid.hyperbolic(**kwargs)
     else:
         raise ValueError(f"Unknown vgrid.type: '{vgrid_type}'")
 
@@ -155,48 +137,24 @@ def create_case_from_yaml(config, override=False):
     """
     Run the full case creation workflow from a config dict.
 
-    Builds Grid, Topo, and VGrid objects, creates the CESM case, and (if a
-    forcings section is present) calls configure_forcings. Returns the Case.
+    Builds Grid, Topo, and VGrid objects, creates the CESM case, then calls
+    configure_forcings and process_forcings. A forcings section is required.
+    Returns the Case.
     """
     grid = build_grid(config["grid"])
     topo = build_topo(config["topo"], grid)
     vgrid = build_vgrid(config["vgrid"], topo)
 
-    case_cfg = config["case"]
     case = Case(
-        cesmroot=case_cfg["cesmroot"],
-        caseroot=case_cfg["caseroot"],
-        inputdir=case_cfg["inputdir"],
-        compset=case_cfg["compset"],
         ocn_grid=grid,
         ocn_topo=topo,
         ocn_vgrid=vgrid,
-        atm_grid_name=case_cfg.get("atm_grid_name", "TL319"),
-        rof_grid_name=case_cfg.get("rof_grid_name"),
-        ninst=case_cfg.get("ninst", 1),
-        machine=case_cfg["machine"],
-        project=case_cfg.get("project"),
         override=override,
-        ntasks_ocn=case_cfg.get("ntasks_ocn"),
-        job_queue=case_cfg.get("job_queue"),
-        job_wallclock_time=case_cfg.get("job_wallclock_time"),
+        **config["case"],
     )
 
-    if "forcings" in config:
-        forcings_cfg = config["forcings"]
-        extra_kwargs = {
-            k: v
-            for k, v in forcings_cfg.items()
-            if k not in ("date_range", "boundaries", "product_name", "function_name")
-        }
-        case.configure_forcings(
-            date_range=forcings_cfg["date_range"],
-            boundaries=forcings_cfg["boundaries"],
-            product_name=forcings_cfg["product_name"],
-            function_name=forcings_cfg["function_name"],
-            **extra_kwargs,
-        )
-        case.process_forcings()
+    case.configure_forcings(**config["forcings"])
+    case.process_forcings()
 
     return case
 
@@ -278,13 +236,15 @@ def case_to_yaml(caseroot):
             "filename": state["vgrid_path"],
         },
         "case": {
+            # Derived/resolved fields — require explicit mapping from state keys
             "cesmroot": state["cesmroot"],
             "caseroot": str(caseroot),
             "inputdir": state["inputdir"],
             "compset": state["compset_lname"],
             "machine": state["machine"],
-            "project": state.get("project"),
-            "atm_grid_name": state.get("atm_grid_name", "TL319"),
+            # Scalar init args stored verbatim by Case._init_args — pull dynamically
+            # so new Case.__init__ params flow through without touching this function.
+            **{k: v for k, v in state.items() if k not in _STATE_DERIVED_KEYS},
         },
     }
 

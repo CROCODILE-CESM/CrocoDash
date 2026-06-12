@@ -93,6 +93,27 @@ class Case:
             Must be in the form hh:mm:ss. If None, defaults to the CESM defaults
         """
 
+        # Capture scalar init args for state serialization before any local vars are added.
+        # Excludes: objects (stored as paths), args resolved to derived values, and ephemeral flags.
+        _locals = locals()
+        _SERIALIZABLE_EXCLUDE = frozenset(
+            {
+                "self",
+                "ocn_grid",
+                "ocn_topo",
+                "ocn_vgrid",
+                "compset",
+                "machine",
+                "cesmroot",
+                "caseroot",
+                "inputdir",
+                "override",
+            }
+        )
+        self._init_args = {
+            k: v for k, v in _locals.items() if k not in _SERIALIZABLE_EXCLUDE
+        }
+
         # Initialize visualCaseGen system and get the CIME interface
         self.cime = initialize_visualCaseGen(cesmroot)
 
@@ -141,6 +162,10 @@ class Case:
         self.compset_lname = compset_lname
         self.machine = machine or self.cime.machine
         self.project = project
+        self.rof_grid_name = rof_grid_name
+        self.ntasks_ocn = ntasks_ocn
+        self.job_queue = job_queue
+        self.job_wallclock_time = job_wallclock_time
 
         # Using visualCaseGen's configuration system, set the configuration variables for the case
         # based on the provided arguments. This includes setting the compset, grid, and launch variables.
@@ -879,6 +904,7 @@ class Case:
     def _write_state(self):
         """Write case creation parameters to crocodash_state.json in caseroot."""
         state = {
+            # Derived / resolved fields that can't come from init args directly
             "inputdir": str(self.inputdir),
             "cesmroot": str(self.cesmroot),
             "supergrid_path": self.supergrid_path,
@@ -888,8 +914,8 @@ class Case:
             "session_id": cvars["MB_ATTEMPT_ID"].value,
             "compset_lname": self.compset_lname,
             "machine": self.machine,
-            "project": self.project,
-            "atm_grid_name": self.atm_grid_name,
+            # Scalar init args captured at construction time
+            **self._init_args,
         }
         with open(self.caseroot / "crocodash_state.json", "w") as f:
             json.dump(state, f, indent=2)

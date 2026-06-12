@@ -78,8 +78,8 @@ def test_create_grid_input(get_CrocoDash_case):
         assert len(files) > 0
 
 
-def test_case_expt_smoke(get_CrocoDash_case, tmp_path):
-    case = get_CrocoDash_case
+def test_configure_forcings(CrocoDash_case_factory, tmp_path_factory, tmp_path):
+    case = CrocoDash_case_factory(tmp_path_factory.mktemp(f"case-{uuid4().hex}"))
     case.configure_forcings(
         date_range=["2020-01-01 00:00:00", "2020-02-01 00:00:00"],
         tidal_constituents=["M2"],
@@ -88,33 +88,15 @@ def test_case_expt_smoke(get_CrocoDash_case, tmp_path):
         chl_processed_filepath=tmp_path,
         boundaries=["north", "south", "east"],
     )
+
     assert case.expt is not None
-
-
-def test_configure_forcings(get_CrocoDash_case, tmp_path):
-    """
-    Test that the setup for the forcings works
-    """
-    case = get_CrocoDash_case
-    case.configure_forcings(
-        date_range=["2020-01-01 00:00:00", "2020-02-01 00:00:00"],
-        tidal_constituents=["M2"],
-        tpxo_elevation_filepath=tmp_path,
-        tpxo_velocity_filepath=tmp_path,
-        chl_processed_filepath=tmp_path,
-        boundaries=["north", "south", "east"],
-    )
-
     assert case.date_range[0].year == 2020
     assert case.fcr["tides"].tidal_constituents == ["M2"]
     assert case.boundaries == ["north", "south", "east"]
 
 
-def test_process_forcing(get_CrocoDash_case, tmp_path):
-    """
-    Test that the setup for the forcings works
-    """
-    case = get_CrocoDash_case
+def test_process_forcing(CrocoDash_case_factory, tmp_path_factory, tmp_path):
+    case = CrocoDash_case_factory(tmp_path_factory.mktemp(f"case-{uuid4().hex}"))
     case.configure_forcings(
         date_range=["2020-01-01 00:00:00", "2020-02-01 00:00:00"],
         tidal_constituents=["M2"],
@@ -140,8 +122,8 @@ def test_process_forcing(get_CrocoDash_case, tmp_path):
         )
 
 
-def test_update_forcing_variables(get_CrocoDash_case):
-    case = get_CrocoDash_case
+def test_update_forcing_variables(CrocoDash_case_factory, tmp_path_factory):
+    case = CrocoDash_case_factory(tmp_path_factory.mktemp(f"case-{uuid4().hex}"))
 
     search_string = "OBC_NUMBER_OF_SEGMENTS"
     found_user_nl_mom_adjusted_var = False

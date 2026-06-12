@@ -30,7 +30,7 @@ from CrocoDash.shareable.fork import (
 )
 from CrocoDash.topo import *
 from CrocoDash.vgrid import *
-from CrocoDash.workflow import (
+from CrocoDash.recipe import (
     case_to_yaml,
     create_case_from_yaml,
     generate_configure_forcing_args,

@@ -26,7 +26,7 @@ def setup_sample_rm6_expt(tmp_path):
     return expt
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def get_case_with_cf(CrocoDash_case_factory, tmp_path_factory):
     case = CrocoDash_case_factory(tmp_path_factory.mktemp(f"case-{uuid4().hex}"))
     case.configure_forcings(
@@ -36,7 +36,7 @@ def get_case_with_cf(CrocoDash_case_factory, tmp_path_factory):
     return case
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def get_CrocoDash_case(CrocoDash_case_factory, tmp_path_factory):
 
     # Set some defaults
