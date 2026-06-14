@@ -246,7 +246,7 @@ class Case:
             "Currently, active or data glacier models are not supported by CrocoDash."
             "Please use a compset with SGLC."
         )
-        assert "DWAV" not in ompset_lname, (
+        assert "DWAV" not in compset_lname, (
            "Currently, data wave models are not supported by CrocoDash."
            "Please use a compset with SWAV."
         )
