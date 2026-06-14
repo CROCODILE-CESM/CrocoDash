@@ -2,7 +2,7 @@ FROM continuumio/miniconda3:25.3.1-1
 
 # System packages
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    git make curl build-essential && \
+    git make curl build-essential gnupg && \
     rm -rf /var/lib/apt/lists/*
 
 ENV WORKDIR=/workspace
