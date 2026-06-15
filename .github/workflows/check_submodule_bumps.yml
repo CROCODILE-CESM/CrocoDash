@@ -1,0 +1,49 @@
+name: Check Submodule Bumps
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, labeled]
+
+jobs:
+  check-submodule-bumps:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for accidental submodule bumps
+        env:
+          LABEL_NAMES: ${{ toJson(github.event.pull_request.labels.*.name) }}
+        run: |
+          if echo "$LABEL_NAMES" | grep -q "submodule-bump"; then
+            echo "Label 'submodule-bump' found — skipping submodule check."
+            exit 0
+          fi
+
+          git fetch origin main
+
+          SUBMODULES="CrocoDash/rm6 CrocoDash/visualCaseGen demos"
+          CHANGED_MODULES=""
+
+          for sm in $SUBMODULES; do
+            if [ -n "$(git diff origin/main HEAD -- "$sm")" ]; then
+              OLD=$(git ls-tree origin/main "$sm" | awk '{print $3}')
+              NEW=$(git ls-tree HEAD "$sm" | awk '{print $3}')
+              CHANGED_MODULES="$CHANGED_MODULES\n  - $sm: $OLD -> $NEW"
+            fi
+          done
+
+          if [ -n "$CHANGED_MODULES" ]; then
+            echo "ERROR: Submodule pointer(s) changed in this PR."
+            echo ""
+            echo "Changed submodule(s):"
+            printf "$CHANGED_MODULES\n"
+            echo ""
+            echo "If this is intentional, add the 'submodule-bump' label to this PR."
+            exit 1
+          fi
+
+          echo "No accidental submodule bumps detected."
