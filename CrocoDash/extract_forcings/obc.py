@@ -185,8 +185,8 @@ def _merge_single_boundary(
         combine="nested",
         concat_dim="time",
         coords="minimal",
-        parallel = False,
-        lock = threading.Lock(),  
+        parallel=False,
+        lock=threading.Lock(),
     )
     ds.to_netcdf(output_path)
     ds.close()
