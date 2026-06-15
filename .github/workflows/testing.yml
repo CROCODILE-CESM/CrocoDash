@@ -75,7 +75,7 @@ jobs:
             --password ${{ secrets.GLORYS_PASSWORD }}
           mkdir -p /workspace/croc_cases
           mkdir -p /workspace/croc_input
-          python $GITHUB_WORKSPACE/CrocoDash/tests/generate_small_test_case.py \
+          python -u $GITHUB_WORKSPACE/CrocoDash/tests/generate_small_test_case.py \
             --cesmroot /workspace/CESM \
             --caseroot /workspace/croc_cases \
             --inputdir /workspace/croc_input \
