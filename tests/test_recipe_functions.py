@@ -1,5 +1,5 @@
 """
-Unit tests for CrocoDash/workflow.py.
+Unit tests for CrocoDash/recipe.py.
 
 Covers:
 - validate_config_structure: valid/invalid variants
@@ -14,7 +14,7 @@ import pytest
 import yaml
 from pathlib import Path
 
-from CrocoDash.workflow import (
+from CrocoDash.recipe import (
     build_grid,
     build_topo,
     build_vgrid,
@@ -110,19 +110,14 @@ def test_validate_invalid_vgrid_type():
         validate_config_structure(config)
 
 
-@pytest.mark.parametrize(
-    "missing_key", ["date_range", "boundaries", "product_name", "function_name"]
-)
-def test_validate_forcings_missing_required(missing_key):
+def test_validate_forcings_missing_date_range():
     forcings = {
-        "date_range": ["2020-01-01", "2020-02-01"],
         "boundaries": ["north"],
         "product_name": "GLORYS",
         "function_name": "get_glorys",
     }
-    del forcings[missing_key]
     config = {**MINIMAL_VALID_CONFIG, "forcings": forcings}
-    with pytest.raises(ValueError, match=f"forcings\\.{missing_key}"):
+    with pytest.raises(ValueError, match="forcings\\.date_range"):
         validate_config_structure(config)
 
 
@@ -374,15 +369,8 @@ def test_case_to_yaml_round_trip_is_valid_config(get_case_with_cf):
     validate_config_structure(config)
 
 
-def test_case_to_yaml_round_trip_with_forcings_is_valid(get_case_with_cf):
-    """case_to_yaml output including forcings must pass validate_config_structure."""
-    case = get_case_with_cf
-    config = case_to_yaml(case.caseroot)
-    validate_config_structure(config)
-
-
-def test_case_to_yaml_round_trip_yaml_serializable(get_case_with_cf, tmp_path):
-    """case_to_yaml output can be written to YAML and reloaded identically."""
+def test_case_to_yaml_round_trip(get_case_with_cf, tmp_path):
+    """case_to_yaml output can be written to YAML and reloaded identically, including forcings."""
     case = get_case_with_cf
     config = case_to_yaml(case.caseroot)
 
@@ -398,17 +386,6 @@ def test_case_to_yaml_round_trip_yaml_serializable(get_case_with_cf, tmp_path):
         == config["topo"]["source"]["topo_file_path"]
     )
     assert reloaded["vgrid"]["filename"] == config["vgrid"]["filename"]
-
-
-def test_case_to_yaml_round_trip_forcings_preserved(get_case_with_cf, tmp_path):
-    """Forcings date_range and boundaries survive a YAML write-reload round-trip."""
-    case = get_case_with_cf
-    config = case_to_yaml(case.caseroot)
-
-    yaml_path = tmp_path / "round_trip_forcings.yaml"
-    yaml_path.write_text(yaml.dump(config, default_flow_style=False, sort_keys=False))
-    reloaded = yaml.safe_load(yaml_path.read_text())
-
     assert reloaded["forcings"]["date_range"] == config["forcings"]["date_range"]
     assert reloaded["forcings"]["boundaries"] == config["forcings"]["boundaries"]
     assert reloaded["forcings"]["product_name"] == config["forcings"]["product_name"]

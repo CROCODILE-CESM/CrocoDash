@@ -17,7 +17,7 @@ from CrocoDash.logging import setup_logger
 from CrocoDash.shareable.apply import *
 from CrocoDash.topo import Topo
 from CrocoDash.vgrid import VGrid
-from CrocoDash.workflow import create_case_from_yaml, generate_configure_forcing_args
+from CrocoDash.recipe import create_case_from_yaml, generate_configure_forcing_args
 
 logger = setup_logger(__name__)
 

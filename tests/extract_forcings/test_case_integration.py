@@ -2,8 +2,8 @@ import subprocess
 import json
 
 
-def test_case_integration_driver(get_CrocoDash_case, skip_if_not_glade):
-    case = get_CrocoDash_case
+def test_case_integration_driver(CrocoDash_case_factory, tmp_path, skip_if_not_glade):
+    case = CrocoDash_case_factory(tmp_path)
     case.configure_forcings(
         date_range=["2020-01-01 00:00:00", "2020-01-02 00:00:00"],
         boundaries=["north", "south", "east"],
@@ -22,8 +22,8 @@ def test_case_integration_driver(get_CrocoDash_case, skip_if_not_glade):
     return
 
 
-def test_case_integration_config(get_CrocoDash_case):
-    case = get_CrocoDash_case
+def test_case_integration_config(CrocoDash_case_factory, tmp_path):
+    case = CrocoDash_case_factory(tmp_path)
     case.configure_forcings(
         date_range=["2020-01-01 00:00:00", "2020-02-01 00:00:00"],
         boundaries=["north", "south", "east"],
@@ -45,11 +45,11 @@ def test_case_integration_config(get_CrocoDash_case):
     }
 
 
-def test_driver_works(get_CrocoDash_case, tmp_path):
+def test_driver_works(CrocoDash_case_factory, tmp_path):
     """
     Test that the setup for the forcings works
     """
-    case = get_CrocoDash_case
+    case = CrocoDash_case_factory(tmp_path / "case")
     case.configure_forcings(
         date_range=["2020-01-01 00:00:00", "2020-02-01 00:00:00"],
         tidal_constituents=["M2"],

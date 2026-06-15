@@ -4,14 +4,14 @@ import sys
 
 
 def _create(args):
-    from CrocoDash.workflow import load_config, create_case_from_yaml
+    from CrocoDash.recipe import load_config, create_case_from_yaml
 
     config = load_config(args.config)
     create_case_from_yaml(config, override=args.override)
 
 
 def _dump(args):
-    from CrocoDash.workflow import case_to_yaml
+    from CrocoDash.recipe import case_to_yaml
     import yaml
 
     config = case_to_yaml(args.caseroot)
