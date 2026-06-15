@@ -376,7 +376,7 @@ document.write(`
 <hr class="docutils" />
 <section id="crocodash-create">
 <h2><code class="docutils literal notranslate"><span class="pre">crocodash</span> <span class="pre">create</span></code><a class="headerlink" href="#crocodash-create" title="Link to this heading">#</a></h2>
-<p>Creates a new CrocoDash case end-to-end from a YAML config file. Equivalent to calling <code class="docutils literal notranslate"><span class="pre">workflow.create_case_from_yaml()</span></code>.</p>
+<p>Creates a new CrocoDash case end-to-end from a YAML config file. Equivalent to calling <code class="docutils literal notranslate"><span class="pre">recipe.create_case_from_yaml()</span></code>.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>crocodash<span class="w"> </span>create<span class="w"> </span>--config<span class="w"> </span>mycase.yaml
 crocodash<span class="w"> </span>create<span class="w"> </span>--config<span class="w"> </span>mycase.yaml<span class="w"> </span>--override<span class="w">   </span><span class="c1"># overwrite existing caseroot/inputdir</span>
 </pre></div>
@@ -435,7 +435,7 @@ crocodash<span class="w"> </span>create<span class="w"> </span>--config<span cla
 <span class="w">  </span><span class="nt">project</span><span class="p">:</span><span class="w">   </span><span class="s">&quot;NCGD0011&quot;</span>
 <span class="w">  </span><span class="nt">atm_grid_name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;TL319&quot;</span><span class="w">       </span><span class="c1"># optional, default TL319</span>
 
-<span class="c1"># --- Forcings (optional — skip section to stop after case creation) ---</span>
+<span class="c1"># --- Forcings (required) ---</span>
 <span class="nt">forcings</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">date_range</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;2020-01-01</span><span class="nv"> </span><span class="s">00:00:00&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;2020-02-01</span><span class="nv"> </span><span class="s">00:00:00&quot;</span><span class="p p-Indicator">]</span>
 <span class="w">  </span><span class="nt">boundaries</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;south&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;east&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;west&quot;</span><span class="p p-Indicator">]</span>
@@ -448,7 +448,7 @@ crocodash<span class="w"> </span>create<span class="w"> </span>--config<span cla
 <span class="w">  </span><span class="c1"># tpxo_velocity_filepath:  &quot;/path/to/TPXO_velocity.nc&quot;</span>
 </pre></div>
 </div>
-<p>After <code class="docutils literal notranslate"><span class="pre">create</span></code> completes the caseroot contains a <code class="docutils literal notranslate"><span class="pre">crocodash_state.json</span></code> recording all construction parameters, and (if forcings were configured) <code class="docutils literal notranslate"><span class="pre">inputdir/extract_forcings/config.json</span></code> recording the forcing setup. These files are the source of truth for <code class="docutils literal notranslate"><span class="pre">dump</span></code>, <code class="docutils literal notranslate"><span class="pre">bundle</span></code>, and <code class="docutils literal notranslate"><span class="pre">fork</span></code>.</p>
+<p>After <code class="docutils literal notranslate"><span class="pre">create</span></code> completes the caseroot contains a <code class="docutils literal notranslate"><span class="pre">crocodash_state.json</span></code> recording all construction parameters, and <code class="docutils literal notranslate"><span class="pre">inputdir/extract_forcings/config.json</span></code> recording the forcing setup. These files are the source of truth for <code class="docutils literal notranslate"><span class="pre">dump</span></code>, <code class="docutils literal notranslate"><span class="pre">bundle</span></code>, and <code class="docutils literal notranslate"><span class="pre">fork</span></code>.</p>
 </section>
 </section>
 <hr class="docutils" />
