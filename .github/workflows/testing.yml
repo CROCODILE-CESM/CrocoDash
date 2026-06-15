@@ -64,9 +64,7 @@ jobs:
          token: ${{ secrets.CODECOV_TOKEN }}
          slug: CROCODILE-CESM/CrocoDash
          files: CrocoDash/coverage.xml
-      # Create the CrocoDash Bundle
-      - name: Download GEBCO subset
-        run: wget https://crocodile-cesm.s3.us-east-1.amazonaws.com/CrocoDash/data/testing_data/gebco_2026_n20.0_s0.0_w-90.0_e-70.0.nc -O $GITHUB_WORKSPACE/gebco.nc
+
       - name: Run setup_case.py
         shell: bash -l {0}
         run: |
@@ -84,7 +82,6 @@ jobs:
             --casename actions_case \
             --machine ubuntu-latest \
             --project PLACEHOLDER \
-            --bathymetry-path $GITHUB_WORKSPACE/gebco.nc \
             --forcing-fn get_glorys_data_script_for_cli
 
       - name: Bundle case with crocodash bundle

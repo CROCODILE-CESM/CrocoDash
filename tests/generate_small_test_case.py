@@ -181,13 +181,10 @@ def get_bathymetry(args: argparse.Namespace) -> Path:
         return bathy
 
     # Default: download GEBCO alongside this script
-    bathy_dir = Path("bathy_dir")
-    bathy = Path("GEBCO.nc")
-    print(
-        f"No --bathymetry-path provided. Downloading GEBCO data → {bathy_dir / bathy}"
-    )
-    GEBCO.get_gebco_data_with_python(bathy_dir, bathy)
-    bathy = bathy_dir / bathy
+    bathy = Path("gebco_regional.nc")
+    s3_path = "https://crocodile-cesm.s3.us-east-1.amazonaws.com/CrocoDash/data/testing_data/gebco_2026_n20.0_s0.0_w-90.0_e-70.0.nc"
+    print(f"No --bathymetry-path provided. Downloading GEBCO data → {bathy}")
+    subprocess.run(["wget", "-O", str(bathy), s3_path], check=True)
 
     if not bathy.exists():
         raise FileNotFoundError(
