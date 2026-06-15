@@ -11,7 +11,7 @@ jobs:
   docs:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/crocodile-cesm/crocodash:nightly
+      image: ghcr.io/crocodile-cesm/crocontainer:latest-amd64
     steps:
       - uses: actions/checkout@v4
         with:
@@ -45,6 +45,8 @@ jobs:
         shell: bash
       - name: Sphinx build
         run: |
+          source /opt/conda/etc/profile.d/conda.sh 
+          conda activate CrocoDash
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
             sphinx-build docs/source _build/pr-${{ github.event.number }}
           else
