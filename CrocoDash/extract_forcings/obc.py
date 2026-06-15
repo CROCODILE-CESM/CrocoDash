@@ -30,7 +30,7 @@ import dask
 import pandas as pd
 import regional_mom6 as rm6
 import xarray as xr
-
+import threading
 from CrocoDash import logging
 from CrocoDash.extract_forcings import utils
 from CrocoDash.grid import Grid
@@ -153,7 +153,7 @@ def _regrid_single_chunk(
         infile=Path(raw_file_path),
         varnames=dataset_varnames,
         arakawa_grid=None,
-        rotational_method=rm6.regional_mom6.RotationMethod.EXPAND_GRID,
+        rotational_method=rm6.rotation.RotationMethod.EXPAND_GRID,
         regridding_method="bilinear",
         fill_method=fill_method,
         regridders=regridders,
@@ -185,6 +185,8 @@ def _merge_single_boundary(
         combine="nested",
         concat_dim="time",
         coords="minimal",
+        parallel = False,
+        lock = threading.Lock(),  
     )
     ds.to_netcdf(output_path)
     ds.close()
