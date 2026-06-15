@@ -247,8 +247,8 @@ class Case:
             "Please use a compset with SGLC."
         )
         assert "DWAV" not in compset_lname, (
-           "Currently, data wave models are not supported by CrocoDash."
-           "Please use a compset with SWAV."
+            "Currently, data wave models (DWAV) are not supported by CrocoDash. "
+            "Please use a compset with SWAV or WW3."
         )
         if not isinstance(ocn_topo, Topo):
             raise TypeError("ocn_topo must be a Topo object.")
@@ -1037,10 +1037,10 @@ class Case:
     def validate_case(self):
 
         # Ensure configurations are done
-        for config in self.fcr.active_configurators.keys():
-            if not self.fcr.active_configurators[config].validate_output_filepaths(
-                self.inputdir / "ocnice"
-            ):
+        for name, configurator in self.fcr.active_configurators.items():
+            if not configurator.validate_output_filepaths(self.inputdir / "ocnice"):
                 print(
-                    f"{config} was not valid yet! Which means you need to process this forcing and generate the files using your cases extract_forcings module! {self.inputdir/'extract_forcings'}"
+                    f"{name} is not valid yet — process this forcing and generate "
+                    f"the files using your case's extract_forcings module: "
+                    f"{self.inputdir / 'extract_forcings'}"
                 )
