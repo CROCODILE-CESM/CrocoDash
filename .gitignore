@@ -2,7 +2,8 @@
 *_temp/
 .DS_Store
 .vscode/
-
+TopoLibrary/
+*.nc
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
