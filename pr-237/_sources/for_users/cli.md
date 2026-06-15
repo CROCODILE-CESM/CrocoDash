@@ -16,7 +16,7 @@ crocodash duplicate --source /path/to/case --case /path/to/new_case --inputdir /
 
 ## `crocodash create`
 
-Creates a new CrocoDash case end-to-end from a YAML config file. Equivalent to calling `workflow.create_case_from_yaml()`.
+Creates a new CrocoDash case end-to-end from a YAML config file. Equivalent to calling `recipe.create_case_from_yaml()`.
 
 ```bash
 crocodash create --config mycase.yaml
@@ -78,7 +78,7 @@ case:
   project:   "NCGD0011"
   atm_grid_name: "TL319"       # optional, default TL319
 
-# --- Forcings (optional — skip section to stop after case creation) ---
+# --- Forcings (required) ---
 forcings:
   date_range: ["2020-01-01 00:00:00", "2020-02-01 00:00:00"]
   boundaries: ["south", "east", "west"]
@@ -91,7 +91,7 @@ forcings:
   # tpxo_velocity_filepath:  "/path/to/TPXO_velocity.nc"
 ```
 
-After `create` completes the caseroot contains a `crocodash_state.json` recording all construction parameters, and (if forcings were configured) `inputdir/extract_forcings/config.json` recording the forcing setup. These files are the source of truth for `dump`, `bundle`, and `fork`.
+After `create` completes the caseroot contains a `crocodash_state.json` recording all construction parameters, and `inputdir/extract_forcings/config.json` recording the forcing setup. These files are the source of truth for `dump`, `bundle`, and `fork`.
 
 ---
 
