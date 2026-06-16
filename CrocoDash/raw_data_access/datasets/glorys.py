@@ -140,8 +140,8 @@ class GLORYS(ForcingProduct):
             start_datetime=start_datetime,
             end_datetime=end_datetime,
             variables=variables,
-            output_folderectory=output_folder,
-            output_filenamename=output_filename,
+            output_directory=output_folder,
+            output_filename=output_filename,
         )
         return Path(output_folder) / output_filename
 
