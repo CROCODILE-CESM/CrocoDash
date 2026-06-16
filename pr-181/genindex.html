@@ -40,14 +40,442 @@
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-    <script type="module" src="https://cdn.jsdelivr.net/npm/mermaid@11.2.0/dist/mermaid.esm.min.mjs"></script>
-    <script type="module" src="https://cdn.jsdelivr.net/npm/@mermaid-js/layout-elk@0.1.4/dist/mermaid-layout-elk.esm.min.mjs"></script>
-    <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.2.0/dist/mermaid.esm.min.mjs";import elkLayouts from "https://cdn.jsdelivr.net/npm/@mermaid-js/layout-elk@0.1.4/dist/mermaid-layout-elk.esm.min.mjs";mermaid.registerLayoutLoaders(elkLayouts);mermaid.initialize({startOnLoad:false});</script>
     <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
-    <script type="module">
-import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.2.0/dist/mermaid.esm.min.mjs";
-window.addEventListener("load", () => mermaid.run());
-</script>
+    <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
+
+
+
+const initStyles = () => {
+    const defaultStyle = document.createElement('style');
+    defaultStyle.textContent = `pre.mermaid {
+    /* Same as .mermaid-container > pre */
+    display: block;
+    width: 100%;
+}
+
+pre.mermaid > svg {
+    /* Same as .mermaid-container > pre > svg */
+    height: 500px;
+    width: 100%;
+    max-width: 100% !important;
+}`;
+    document.head.appendChild(defaultStyle);
+
+    const fullscreenStyle = document.createElement('style');
+    fullscreenStyle.textContent = `.mermaid-container {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+}
+
+.mermaid-container > pre {
+    display: block;
+    width: 100%;
+}
+
+.mermaid-container > pre > svg {
+    height: 500px;
+    width: 100%;
+    max-width: 100% !important;
+}
+
+.mermaid-fullscreen-btn {
+    width: 28px;
+    height: 28px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    font-size: 14px;
+    line-height: 1;
+    padding: 0;
+    color: #333;
+}
+
+.mermaid-fullscreen-btn:hover {
+    opacity: 100% !important;
+    background: rgba(255, 255, 255, 1);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+    transform: scale(1.1);
+}
+
+.mermaid-fullscreen-btn.dark-theme {
+    background: rgba(50, 50, 50, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #e0e0e0;
+}
+
+.mermaid-fullscreen-btn.dark-theme:hover {
+    background: rgba(60, 60, 60, 1);
+    box-shadow: 0 3px 10px rgba(255, 255, 255, 0.2);
+}
+
+.mermaid-fullscreen-modal {
+    display: none;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 95vw;
+    height: 100vh;
+    background: rgba(255, 255, 255, 0.98);
+    z-index: 9999;
+    padding: 20px;
+    overflow: auto;
+}
+
+.mermaid-fullscreen-modal.dark-theme {
+    background: rgba(0, 0, 0, 0.98);
+}
+
+.mermaid-fullscreen-modal.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen {
+    position: relative;
+    width: 95vw;
+    height: 90vh;
+    max-width: 95vw;
+    max-height: 90vh;
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    overflow: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen.dark-theme {
+    background: #1a1a1a;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+}
+
+.mermaid-container-fullscreen pre.mermaid {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen .mermaid svg {
+    height: 100% !important;
+    width: 100% !important;
+    cursor: grab;
+}
+
+.mermaid-fullscreen-close {
+    position: fixed !important;
+    top: 20px !important;
+    right: 20px !important;
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transition: all 0.2s;
+    font-size: 24px;
+    line-height: 1;
+    color: #333;
+}
+
+.mermaid-fullscreen-close:hover {
+    background: white;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+    transform: scale(1.1);
+}
+
+.mermaid-fullscreen-close.dark-theme {
+    background: rgba(50, 50, 50, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #e0e0e0;
+}
+
+.mermaid-fullscreen-close.dark-theme:hover {
+    background: rgba(60, 60, 60, 1);
+    box-shadow: 0 6px 16px rgba(255, 255, 255, 0.2);
+}
+
+.mermaid-fullscreen-modal .mermaid-fullscreen-btn {
+    display: none !important;
+}`;
+    document.head.appendChild(fullscreenStyle);
+}
+
+// Detect if page has dark background
+const isDarkTheme = () => {
+    // We use a set of heuristics:
+    // 1. Check for common dark mode classes or attributes
+    // 2. Check computed background color brightness
+    if (document.documentElement.classList.contains('dark') ||
+        document.documentElement.getAttribute('data-theme') === 'dark' ||
+        document.body.classList.contains('dark') ||
+        document.body.getAttribute('data-theme') === 'dark') {
+        // console.log("Dark theme detected via class/attribute");
+        return true;
+    }
+    if (document.documentElement.classList.contains('light') ||
+        document.documentElement.getAttribute('data-theme') === 'light' ||
+        document.body.classList.contains('light') ||
+        document.body.getAttribute('data-theme') === 'light') {
+        // console.log("Light theme detected via class/attribute");
+        return false;
+    }
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        // console.log("Dark theme detected via prefers-color-scheme");
+        return true;
+    }
+    const bgColor = window.getComputedStyle(document.body).backgroundColor;
+    const match = bgColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)/);
+    if (match) {
+        const r = parseInt(match[1]);
+        const g = parseInt(match[2]);
+        const b = parseInt(match[3]);
+        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        // console.log("Background color brightness:", brightness);
+        return brightness < 128;
+    }
+    // console.log("No dark or light theme detected, defaulting to light theme");
+    return false;
+};
+
+let darkTheme = isDarkTheme();
+let modal = null;
+let modalContent = null;
+let previousScrollOffset = [window.scrollX, window.scrollY];
+
+const runMermaid = async (rerun) => {
+    console.log("Running mermaid diagrams, rerun =", rerun);
+    // clear all existing mermaid charts
+    let all_mermaids = document.querySelectorAll(".mermaid");
+
+    if (rerun) {
+        all_mermaids.forEach((el) => {
+            if(!el.hasAttribute("data-original-code")) {
+                // store original code
+                // console.log(`Storing original code for first run: `, el.innerHTML);
+                el.setAttribute('data-original-code', el.innerHTML);
+            }
+            if(el.getAttribute("data-processed") === "true") {
+                // remove and restore original
+                el.removeAttribute("data-processed");
+                // console.log(`Restoring original code for re-run: `, el.getAttribute('data-original-code'));
+                el.innerHTML = el.getAttribute('data-original-code');
+            } else {
+                // store original code
+                // console.log(`Storing original code for re-run: `, el.innerHTML);
+                el.setAttribute('data-original-code', el.innerHTML);
+            }
+        });
+        await mermaid.run();
+    }
+
+    all_mermaids = document.querySelectorAll(".mermaid");
+    const mermaids_processed = document.querySelectorAll(".mermaid[data-processed='true']");
+
+    if ("False" === "True") {
+        const mermaids_to_add_zoom = -1 === -1 ? all_mermaids.length : -1;
+        if(mermaids_to_add_zoom > 0) {
+            var svgs = d3.selectAll("");
+            if(all_mermaids.length !== mermaids_processed.length) {
+                setTimeout(() => runMermaid(false), 200);
+                return;
+            } else if(svgs.size() !== mermaids_to_add_zoom) {
+                setTimeout(() => runMermaid(false), 200);
+                return;
+            } else {
+                svgs.each(function() {
+                    var svg = d3.select(this);
+                    svg.html("<g class='wrapper'>" + svg.html() + "</g>");
+                    var inner = svg.select("g");
+                    var zoom = d3.zoom().on("zoom", function(event) {
+                        inner.attr("transform", event.transform);
+                    });
+                    svg.call(zoom);
+                });
+            }
+        }
+    } else if(all_mermaids.length !== mermaids_processed.length) {
+        // Wait for mermaid to process all diagrams
+        setTimeout(() => runMermaid(false), 200);
+        return;
+    }
+
+    // Stop here if not adding fullscreen capability
+    if ("True" !== "True") return;
+
+    if (modal !== null ) {
+        // Destroy existing modal
+        modal.remove();
+        modal = null;
+        modalContent = null;
+    }
+
+    modal = document.createElement('div');
+    modal.className = 'mermaid-fullscreen-modal' + (darkTheme ? ' dark-theme' : '');
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-label', 'Fullscreen diagram viewer');
+    modal.innerHTML = `
+        <button class="mermaid-fullscreen-close${darkTheme ? ' dark-theme' : ''}" aria-label="Close fullscreen">✕</button>
+        <div class="mermaid-container-fullscreen${darkTheme ? ' dark-theme' : ''}"></div>
+    `;
+    document.body.appendChild(modal);
+
+    modalContent = modal.querySelector('.mermaid-container-fullscreen');
+    const closeBtn = modal.querySelector('.mermaid-fullscreen-close');
+
+    const closeModal = () => {
+        modal.classList.remove('active');
+        modalContent.innerHTML = '';
+        document.body.style.overflow = ''
+        window.scrollTo({left: previousScrollOffset[0], top: previousScrollOffset[1], behavior: 'instant'});
+    };
+
+    closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.classList.contains('active')) {
+            closeModal();
+        }
+    });
+
+    document.querySelectorAll('.mermaid').forEach((mermaidDiv) => {
+        if (mermaidDiv.parentNode.classList.contains('mermaid-container') ||
+            mermaidDiv.closest('.mermaid-fullscreen-modal')) {
+            // Already processed, adjust button class if needed
+            const existingBtn = mermaidDiv.parentNode.querySelector('.mermaid-fullscreen-btn');
+            if (existingBtn) {
+                existingBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+            }
+            return;
+        }
+
+        const container = document.createElement('div');
+        container.className = 'mermaid-container';
+        mermaidDiv.parentNode.insertBefore(container, mermaidDiv);
+        container.appendChild(mermaidDiv);
+
+        const fullscreenBtn = document.createElement('button');
+        fullscreenBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+        fullscreenBtn.setAttribute('aria-label', 'View diagram in fullscreen');
+        fullscreenBtn.textContent = '⛶';
+        fullscreenBtn.style.opacity = '50%';
+
+        // Calculate dynamic position based on diagram's margin and padding
+        const diagramStyle = window.getComputedStyle(mermaidDiv);
+        const marginTop = parseFloat(diagramStyle.marginTop) || 0;
+        const marginRight = parseFloat(diagramStyle.marginRight) || 0;
+        const paddingTop = parseFloat(diagramStyle.paddingTop) || 0;
+        const paddingRight = parseFloat(diagramStyle.paddingRight) || 0;
+        fullscreenBtn.style.top = `${marginTop + paddingTop + 4}px`;
+        fullscreenBtn.style.right = `${marginRight + paddingRight + 4}px`;
+
+        fullscreenBtn.addEventListener('click', () => {
+            previousScrollOffset = [window.scroll, window.scrollY];
+            const clone = mermaidDiv.cloneNode(true);
+            modalContent.innerHTML = '';
+            modalContent.appendChild(clone);
+
+            const svg = clone.querySelector('svg');
+            if (svg) {
+                svg.removeAttribute('width');
+                svg.removeAttribute('height');
+                svg.style.width = '100%';
+                svg.style.height = 'auto';
+                svg.style.maxWidth = '100%';
+                svg.style.sdisplay = 'block';
+
+                if ("False" === "True") {
+                    setTimeout(() => {
+                        const g = svg.querySelector('g');
+                        if (g) {
+                            var svgD3 = d3.select(svg);
+                            svgD3.html("<g class='wrapper'>" + svgD3.html() + "</g>");
+                            var inner = svgD3.select("g");
+                            var zoom = d3.zoom().on("zoom", function(event) {
+                                inner.attr("transform", event.transform);
+                            });
+                            svgD3.call(zoom);
+                        }
+                    }, 100);
+                }
+            }
+
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+        container.appendChild(fullscreenBtn);
+    });
+};
+
+const load = async () => {
+    initStyles();
+
+    await runMermaid(true);
+
+    const reRunIfThemeChanges = async () => {
+        const newDarkTheme = isDarkTheme();
+        if (newDarkTheme !== darkTheme) {
+            darkTheme = newDarkTheme;
+            console.log("Theme change detected, re-running mermaid with", darkTheme ? "dark" : "default", "theme");
+            await mermaid.initialize(
+                {...JSON.parse(
+                    `{"startOnLoad": false}`
+                ),
+                ...{ darkMode: darkTheme, theme: darkTheme ? 'dark' : 'default' },
+                }
+            );
+            await runMermaid(true);
+        }
+    };
+
+    // Update theme classes when theme changes
+    const themeObserver = new MutationObserver(reRunIfThemeChanges);
+    themeObserver.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+    themeObserver.observe(document.body, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+};
+
+
+
+
+
+console.log("Initializing mermaid with", darkTheme ? "dark" : "default", "theme");
+mermaid.initialize(
+    {...JSON.parse(
+        `{"startOnLoad": false}`
+    ),
+    ...{ darkMode: darkTheme, theme: darkTheme ? 'dark' : 'default' },
+    }
+);
+
+window.addEventListener("load", load);
+window.runMermaid = runMermaid;</script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'genindex';</script>
     <link rel="icon" href="_static/crocodile.png"/>
     <link rel="index" title="Index" href="#" />
@@ -174,6 +602,7 @@ window.addEventListener("load", () => mermaid.run());
 <li class="toctree-l2"><a class="reference internal" href="for_users/3b_process_forcings.html">3b. Process Forcings (<code class="docutils literal notranslate"><span class="pre">case.process_forcings</span></code>)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="for_users/compsets_and_inputs.html">Regional Compsets &amp; Input Parameters</a></li>
 <li class="toctree-l2"><a class="reference internal" href="for_users/datasets.html">Accessing Raw Data (raw_data_access)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="for_users/shareable.html">Shareable Configuration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="for_users/additional_resources.html">Additional Resources</a></li>
 </ul>
 </details></li>
@@ -197,6 +626,7 @@ window.addEventListener("load", () => mermaid.run());
 <li class="toctree-l4"><a class="reference internal" href="api-docs/CrocoDash.raw_data_access.datasets.html">CrocoDash.raw_data_access.datasets package</a></li>
 </ul>
 </details></li>
+<li class="toctree-l3"><a class="reference internal" href="api-docs/CrocoDash.shareable.html">CrocoDash.shareable package</a></li>
 </ul>
 </details></li>
 </ul>
@@ -363,6 +793,14 @@ document.write(`
         <li><a href="api-docs/CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.XMLConfigParam.apply">(CrocoDash.forcing_configurations.base.XMLConfigParam method)</a>
 </li>
       </ul></li>
+      <li><a href="api-docs/CrocoDash.shareable.html#CrocoDash.shareable.fork.ForkCrocoDashBundle.apply_copy_plan">apply_copy_plan() (CrocoDash.shareable.fork.ForkCrocoDashBundle method)</a>
+</li>
+      <li><a href="api-docs/CrocoDash.shareable.html#CrocoDash.shareable.apply.apply_xmlchanges_to_case">apply_xmlchanges_to_case() (in module CrocoDash.shareable.apply)</a>
+</li>
+      <li><a href="api-docs/CrocoDash.shareable.html#CrocoDash.shareable.fork.ask_string">ask_string() (in module CrocoDash.shareable.fork)</a>
+</li>
+      <li><a href="api-docs/CrocoDash.shareable.html#CrocoDash.shareable.fork.ask_yes_no">ask_yes_no() (in module CrocoDash.shareable.fork)</a>
+</li>
   </ul></td>
 </tr></table>
 
@@ -377,12 +815,12 @@ document.write(`
 </li>
       <li><a href="api-docs/CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.configurations.BGCConfigurator">BGCConfigurator (class in CrocoDash.forcing_configurations.configurations)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api-docs/CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.configurations.BGCICConfigurator">BGCICConfigurator (class in CrocoDash.forcing_configurations.configurations)</a>
 </li>
       <li><a href="api-docs/CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.configurations.BGCIronForcingConfigurator">BGCIronForcingConfigurator (class in CrocoDash.forcing_configurations.configurations)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api-docs/CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.configurations.BGCRiverNutrientsConfigurator">BGCRiverNutrientsConfigurator (class in CrocoDash.forcing_configurations.configurations)</a>
 </li>
       <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.glorys.GLORYS.boundary_fill_method">boundary_fill_method (CrocoDash.raw_data_access.datasets.glorys.GLORYS attribute)</a>
@@ -391,6 +829,14 @@ document.write(`
         <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT.boundary_fill_method">(CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT attribute)</a>
 </li>
       </ul></li>
+      <li><a href="api-docs/CrocoDash.shareable.html#CrocoDash.shareable.bundle.BundleCrocoDashCase.bundle">bundle() (CrocoDash.shareable.bundle.BundleCrocoDashCase method)</a>
+</li>
+      <li><a href="api-docs/CrocoDash.shareable.html#CrocoDash.shareable.bundle.BundleCrocoDashCase">BundleCrocoDashCase (class in CrocoDash.shareable.bundle)</a>
+</li>
+      <li><a href="api-docs/CrocoDash.shareable.html#CrocoDash.shareable.fork.BundleDifferences">BundleDifferences (class in CrocoDash.shareable.fork)</a>
+</li>
+      <li><a href="api-docs/CrocoDash.shareable.html#CrocoDash.shareable.fork.BundleManifest">BundleManifest (class in CrocoDash.shareable.fork)</a>
+</li>
   </ul></td>
 </tr></table>
 
@@ -404,6 +850,8 @@ document.write(`
       <li><a href="api-docs/CrocoDash.extract_forcings.html#CrocoDash.extract_forcings.regrid_dataset_piecewise.capture_fill_metadata">capture_fill_metadata() (in module CrocoDash.extract_forcings.regrid_dataset_piecewise)</a>
 </li>
       <li><a href="api-docs/CrocoDash.html#CrocoDash.case.Case">Case (class in CrocoDash.case)</a>
+</li>
+      <li><a href="api-docs/CrocoDash.shareable.html#CrocoDash.shareable.bundle.BundleCrocoDashCase.case">case (CrocoDash.shareable.bundle.BundleCrocoDashCase property)</a>
 </li>
       <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.empty_products.CESMInputData">CESMInputData (class in CrocoDash.raw_data_access.datasets.empty_products)</a>
 </li>
@@ -447,6 +895,16 @@ document.write(`
 </li>
       <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.utils.convert_lons_to_180_range">convert_lons_to_180_range() (in module CrocoDash.raw_data_access.datasets.utils)</a>
 </li>
+      <li><a href="api-docs/CrocoDash.shareable.html#CrocoDash.shareable.apply.copy_configurations_to_case">copy_configurations_to_case() (in module CrocoDash.shareable.apply)</a>
+</li>
+      <li><a href="api-docs/CrocoDash.shareable.html#CrocoDash.shareable.apply.copy_source_mods_from_case">copy_source_mods_from_case() (in module CrocoDash.shareable.apply)</a>
+</li>
+      <li><a href="api-docs/CrocoDash.shareable.html#CrocoDash.shareable.apply.copy_user_nl_params_from_case">copy_user_nl_params_from_case() (in module CrocoDash.shareable.apply)</a>
+</li>
+      <li><a href="api-docs/CrocoDash.shareable.html#CrocoDash.shareable.apply.copy_xml_files_from_case">copy_xml_files_from_case() (in module CrocoDash.shareable.apply)</a>
+</li>
+      <li><a href="api-docs/CrocoDash.shareable.html#CrocoDash.shareable.fork.create_case">create_case() (in module CrocoDash.shareable.fork)</a>
+</li>
       <li>
     CrocoDash
 
@@ -459,6 +917,13 @@ document.write(`
 
       <ul>
         <li><a href="api-docs/CrocoDash.html#module-CrocoDash.case">module</a>
+</li>
+      </ul></li>
+      <li>
+    CrocoDash.cli
+
+      <ul>
+        <li><a href="api-docs/CrocoDash.html#module-CrocoDash.cli">module</a>
 </li>
       </ul></li>
       <li>
@@ -660,6 +1125,34 @@ document.write(`
 </li>
       </ul></li>
       <li>
+    CrocoDash.shareable
+
+      <ul>
+        <li><a href="api-docs/CrocoDash.shareable.html#module-CrocoDash.shareable">module</a>
+</li>
+      </ul></li>
+      <li>
+    CrocoDash.shareable.apply
+
+      <ul>
+        <li><a href="api-docs/CrocoDash.shareable.html#module-CrocoDash.shareable.apply">module</a>
+</li>
+      </ul></li>
+      <li>
+    CrocoDash.shareable.bundle
+
+      <ul>
+        <li><a href="api-docs/CrocoDash.shareable.html#module-CrocoDash.shareable.bundle">module</a>
+</li>
+      </ul></li>
+      <li>
+    CrocoDash.shareable.fork
+
+      <ul>
+        <li><a href="api-docs/CrocoDash.shareable.html#module-CrocoDash.shareable.fork">module</a>
+</li>
+      </ul></li>
+      <li>
     CrocoDash.topo
 
       <ul>
@@ -722,13 +1215,17 @@ document.write(`
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api-docs/CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.BaseConfigurator.deserialize">deserialize() (CrocoDash.forcing_configurations.base.BaseConfigurator class method)</a>
-
-      <ul>
-        <li><a href="api-docs/CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.ForcingConfigRegistry.deserialize">(CrocoDash.forcing_configurations.base.ForcingConfigRegistry class method)</a>
 </li>
-      </ul></li>
+      <li><a href="api-docs/CrocoDash.shareable.html#CrocoDash.shareable.bundle.BundleCrocoDashCase.diff">diff() (CrocoDash.shareable.bundle.BundleCrocoDashCase method)</a>
+</li>
       <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.mom6_output.drop_extra_cftime_vars">drop_extra_cftime_vars() (in module CrocoDash.raw_data_access.datasets.mom6_output)</a>
 </li>
+      <li><a href="api-docs/CrocoDash.shareable.html#CrocoDash.shareable.bundle.BundleCrocoDashCase.duplicate_case">duplicate_case() (CrocoDash.shareable.bundle.BundleCrocoDashCase method)</a>
+
+      <ul>
+        <li><a href="api-docs/CrocoDash.shareable.html#CrocoDash.shareable.bundle.duplicate_case">(in module CrocoDash.shareable.bundle)</a>
+</li>
+      </ul></li>
   </ul></td>
 </tr></table>
 
@@ -761,19 +1258,25 @@ document.write(`
 </li>
       <li><a href="api-docs/CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.ForcingConfigRegistry.find_valid_configurators">find_valid_configurators() (CrocoDash.forcing_configurations.base.ForcingConfigRegistry class method)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.mom6_output.first_value">first_value() (in module CrocoDash.raw_data_access.datasets.mom6_output)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api-docs/CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.BaseConfigurator.forbidden_compsets">forbidden_compsets (CrocoDash.forcing_configurations.base.BaseConfigurator attribute)</a>
 
       <ul>
         <li><a href="api-docs/CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.configurations.ChlConfigurator.forbidden_compsets">(CrocoDash.forcing_configurations.configurations.ChlConfigurator attribute)</a>
 </li>
       </ul></li>
+      <li><a href="api-docs/CrocoDash.shareable.html#CrocoDash.shareable.fork.BundleManifest.forcing_config">forcing_config (CrocoDash.shareable.fork.BundleManifest attribute)</a>
+</li>
       <li><a href="api-docs/CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.ForcingConfigRegistry">ForcingConfigRegistry (class in CrocoDash.forcing_configurations.base)</a>
 </li>
       <li><a href="api-docs/CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.base.ForcingProduct">ForcingProduct (class in CrocoDash.raw_data_access.base)</a>
+</li>
+      <li><a href="api-docs/CrocoDash.shareable.html#CrocoDash.shareable.fork.ForkCrocoDashBundle.fork">fork() (CrocoDash.shareable.fork.ForkCrocoDashBundle method)</a>
+</li>
+      <li><a href="api-docs/CrocoDash.shareable.html#CrocoDash.shareable.fork.ForkCrocoDashBundle">ForkCrocoDashBundle (class in CrocoDash.shareable.fork)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -783,11 +1286,21 @@ document.write(`
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.gebco.GEBCO">GEBCO (class in CrocoDash.raw_data_access.datasets.gebco)</a>
 </li>
+      <li><a href="api-docs/CrocoDash.shareable.html#CrocoDash.shareable.fork.generate_configure_forcing_args">generate_configure_forcing_args() (in module CrocoDash.shareable.fork)</a>
+</li>
+      <li><a href="api-docs/CrocoDash.shareable.html#CrocoDash.shareable.bundle.BundleCrocoDashCase.generate_manifest">generate_manifest() (CrocoDash.shareable.bundle.BundleCrocoDashCase method)</a>
+</li>
       <li><a href="api-docs/CrocoDash.extract_forcings.html#CrocoDash.extract_forcings.runoff.generate_rof_ocn_map">generate_rof_ocn_map() (in module CrocoDash.extract_forcings.runoff)</a>
 </li>
       <li><a href="api-docs/CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.registry.ProductRegistry.get_access_function">get_access_function() (CrocoDash.raw_data_access.registry.ProductRegistry class method)</a>
 </li>
       <li><a href="api-docs/CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.ForcingConfigRegistry.get_active_configurators">get_active_configurators() (CrocoDash.forcing_configurations.base.ForcingConfigRegistry method)</a>
+</li>
+      <li><a href="api-docs/CrocoDash.shareable.html#CrocoDash.shareable.bundle.get_case_obj">get_case_obj() (in module CrocoDash.shareable.bundle)</a>
+</li>
+      <li><a href="api-docs/CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.ForcingConfigRegistry.get_configurator">get_configurator() (CrocoDash.forcing_configurations.base.ForcingConfigRegistry class method)</a>
+</li>
+      <li><a href="api-docs/CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.ForcingConfigRegistry.get_configurator_from_name">get_configurator_from_name() (CrocoDash.forcing_configurations.base.ForcingConfigRegistry class method)</a>
 </li>
       <li><a href="api-docs/CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.ForcingConfigRegistry.get_ctor_signature">get_ctor_signature() (CrocoDash.forcing_configurations.base.ForcingConfigRegistry class method)</a>
 </li>
@@ -817,6 +1330,14 @@ document.write(`
 </li>
       <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT.get_mom6_data">get_mom6_data() (CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT static method)</a>
 </li>
+      <li><a href="api-docs/CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.BaseConfigurator.get_output_filepaths">get_output_filepaths() (CrocoDash.forcing_configurations.base.BaseConfigurator method)</a>
+
+      <ul>
+        <li><a href="api-docs/CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.configurations.RunoffConfigurator.get_output_filepaths">(CrocoDash.forcing_configurations.configurations.RunoffConfigurator method)</a>
+</li>
+        <li><a href="api-docs/CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.configurations.TidesConfigurator.get_output_filepaths">(CrocoDash.forcing_configurations.configurations.TidesConfigurator method)</a>
+</li>
+      </ul></li>
       <li><a href="api-docs/CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.BaseConfigurator.get_output_param">get_output_param() (CrocoDash.forcing_configurations.base.BaseConfigurator method)</a>
 </li>
       <li><a href="api-docs/CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.BaseConfigurator.get_output_param_object">get_output_param_object() (CrocoDash.forcing_configurations.base.BaseConfigurator method)</a>
@@ -829,6 +1350,8 @@ document.write(`
 </li>
       <li><a href="api-docs/CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.ForcingConfigRegistry.get_user_args">get_user_args() (CrocoDash.forcing_configurations.base.ForcingConfigRegistry class method)</a>
 </li>
+      <li><a href="api-docs/CrocoDash.shareable.html#CrocoDash.shareable.bundle.BundleCrocoDashCase.get_user_nl_value">get_user_nl_value() (CrocoDash.shareable.bundle.BundleCrocoDashCase method)</a>
+</li>
       <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.glofas.GLOFAS">GLOFAS (class in CrocoDash.raw_data_access.datasets.glofas)</a>
 </li>
       <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.glorys.GLORYS">GLORYS (class in CrocoDash.raw_data_access.datasets.glorys)</a>
@@ -839,6 +1362,10 @@ document.write(`
 <h2 id="I">I</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api-docs/CrocoDash.shareable.html#CrocoDash.shareable.bundle.BundleCrocoDashCase.identify_non_standard_CrocoDash_case_information">identify_non_standard_CrocoDash_case_information() (CrocoDash.shareable.bundle.BundleCrocoDashCase method)</a>
+</li>
+      <li><a href="api-docs/CrocoDash.shareable.html#CrocoDash.shareable.fork.BundleManifest.init_args">init_args (CrocoDash.shareable.fork.BundleManifest attribute)</a>
+</li>
       <li><a href="api-docs/CrocoDash.html#CrocoDash.case.Case.init_args_check">init_args_check() (CrocoDash.case.Case class method)</a>
 </li>
       <li><a href="api-docs/CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.BaseConfigurator.input_params">input_params (CrocoDash.forcing_configurations.base.BaseConfigurator attribute)</a>
@@ -953,6 +1480,8 @@ document.write(`
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api-docs/CrocoDash.extract_forcings.html#CrocoDash.extract_forcings.regrid_dataset_piecewise.m6b_fill_missing_data_wrapper">m6b_fill_missing_data_wrapper() (in module CrocoDash.extract_forcings.regrid_dataset_piecewise)</a>
 </li>
+      <li><a href="api-docs/CrocoDash.html#CrocoDash.cli.main">main() (in module CrocoDash.cli)</a>
+</li>
       <li><a href="api-docs/CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.BaseConfigurator.make_serializable">make_serializable() (CrocoDash.forcing_configurations.base.BaseConfigurator method)</a>
 </li>
       <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT.marbl_var_names">marbl_var_names (CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT attribute)</a>
@@ -966,6 +1495,8 @@ document.write(`
         <li><a href="api-docs/CrocoDash.html#module-CrocoDash">CrocoDash</a>
 </li>
         <li><a href="api-docs/CrocoDash.html#module-CrocoDash.case">CrocoDash.case</a>
+</li>
+        <li><a href="api-docs/CrocoDash.html#module-CrocoDash.cli">CrocoDash.cli</a>
 </li>
         <li><a href="api-docs/CrocoDash.extract_forcings.html#module-CrocoDash.extract_forcings">CrocoDash.extract_forcings</a>
 </li>
@@ -1022,6 +1553,14 @@ document.write(`
         <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#module-CrocoDash.raw_data_access.datasets.utils">CrocoDash.raw_data_access.datasets.utils</a>
 </li>
         <li><a href="api-docs/CrocoDash.raw_data_access.html#module-CrocoDash.raw_data_access.registry">CrocoDash.raw_data_access.registry</a>
+</li>
+        <li><a href="api-docs/CrocoDash.shareable.html#module-CrocoDash.shareable">CrocoDash.shareable</a>
+</li>
+        <li><a href="api-docs/CrocoDash.shareable.html#module-CrocoDash.shareable.apply">CrocoDash.shareable.apply</a>
+</li>
+        <li><a href="api-docs/CrocoDash.shareable.html#module-CrocoDash.shareable.bundle">CrocoDash.shareable.bundle</a>
+</li>
+        <li><a href="api-docs/CrocoDash.shareable.html#module-CrocoDash.shareable.fork">CrocoDash.shareable.fork</a>
 </li>
         <li><a href="api-docs/CrocoDash.html#module-CrocoDash.topo">CrocoDash.topo</a>
 </li>
@@ -1108,6 +1647,8 @@ document.write(`
 </li>
       <li><a href="api-docs/CrocoDash.extract_forcings.html#CrocoDash.extract_forcings.utils.parse_dataset_folder">parse_dataset_folder() (in module CrocoDash.extract_forcings.utils)</a>
 </li>
+      <li><a href="api-docs/CrocoDash.shareable.html#CrocoDash.shareable.fork.BundleManifest.paths">paths (CrocoDash.shareable.fork.BundleManifest attribute)</a>
+</li>
       <li><a href="api-docs/CrocoDash.extract_forcings.html#CrocoDash.extract_forcings.bgc.process_bgc_ic">process_bgc_ic() (in module CrocoDash.extract_forcings.bgc)</a>
 </li>
       <li><a href="api-docs/CrocoDash.extract_forcings.html#CrocoDash.extract_forcings.bgc.process_bgc_iron_forcing">process_bgc_iron_forcing() (in module CrocoDash.extract_forcings.bgc)</a>
@@ -1128,10 +1669,10 @@ document.write(`
 </li>
       <li><a href="api-docs/CrocoDash.html#CrocoDash.case.Case.process_forcings">process_forcings() (CrocoDash.case.Case method)</a>
 </li>
-      <li><a href="api-docs/CrocoDash.extract_forcings.html#CrocoDash.extract_forcings.bgc.process_river_nutrients">process_river_nutrients() (in module CrocoDash.extract_forcings.bgc)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api-docs/CrocoDash.extract_forcings.html#CrocoDash.extract_forcings.bgc.process_river_nutrients">process_river_nutrients() (in module CrocoDash.extract_forcings.bgc)</a>
+</li>
       <li><a href="api-docs/CrocoDash.extract_forcings.case_setup.html#CrocoDash.extract_forcings.case_setup.driver.process_runoff">process_runoff() (in module CrocoDash.extract_forcings.case_setup.driver)</a>
 </li>
       <li><a href="api-docs/CrocoDash.extract_forcings.case_setup.html#CrocoDash.extract_forcings.case_setup.driver.process_tides">process_tides() (in module CrocoDash.extract_forcings.case_setup.driver)</a>
@@ -1212,6 +1753,8 @@ document.write(`
         <li><a href="api-docs/CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.base.ForcingProduct.required_metadata">(CrocoDash.raw_data_access.base.ForcingProduct attribute)</a>
 </li>
       </ul></li>
+      <li><a href="api-docs/CrocoDash.shareable.html#CrocoDash.shareable.bundle.BundleCrocoDashCase.reread">reread() (CrocoDash.shareable.bundle.BundleCrocoDashCase method)</a>
+</li>
       <li><a href="api-docs/CrocoDash.extract_forcings.case_setup.html#CrocoDash.extract_forcings.case_setup.driver.resolve_components">resolve_components() (in module CrocoDash.extract_forcings.case_setup.driver)</a>
 </li>
       <li><a href="api-docs/CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.ForcingConfigRegistry.return_missing_inputs">return_missing_inputs() (CrocoDash.forcing_configurations.base.ForcingConfigRegistry class method)</a>
@@ -1219,6 +1762,8 @@ document.write(`
       <li><a href="api-docs/CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.ForcingConfigRegistry.run_configurators">run_configurators() (CrocoDash.forcing_configurations.base.ForcingConfigRegistry method)</a>
 </li>
       <li><a href="api-docs/CrocoDash.extract_forcings.case_setup.html#CrocoDash.extract_forcings.case_setup.driver.run_from_cli">run_from_cli() (in module CrocoDash.extract_forcings.case_setup.driver)</a>
+</li>
+      <li><a href="api-docs/CrocoDash.shareable.html#CrocoDash.shareable.bundle.run_xmlquery">run_xmlquery() (in module CrocoDash.shareable.bundle)</a>
 </li>
       <li><a href="api-docs/CrocoDash.html#CrocoDash.case.Case.runoff_in_compset">runoff_in_compset (CrocoDash.case.Case property)</a>
 </li>
@@ -1251,6 +1796,10 @@ document.write(`
       <li><a href="api-docs/CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.BaseConfigurator.set_output_param">set_output_param() (CrocoDash.forcing_configurations.base.BaseConfigurator method)</a>
 </li>
       <li><a href="api-docs/CrocoDash.html#CrocoDash.logging.setup_logger">setup_logger() (in module CrocoDash.logging)</a>
+</li>
+      <li><a href="api-docs/CrocoDash.shareable.html#CrocoDash.shareable.fork.BundleDifferences.source_mods_missing_files">source_mods_missing_files (CrocoDash.shareable.fork.BundleDifferences attribute)</a>
+</li>
+      <li><a href="api-docs/CrocoDash.shareable.html#CrocoDash.shareable.fork.BundleManifest.sourcemods">sourcemods (CrocoDash.shareable.fork.BundleManifest attribute)</a>
 </li>
       <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.mom6_output.subset_dataset">subset_dataset() (in module CrocoDash.raw_data_access.datasets.mom6_output)</a>
 </li>
@@ -1352,6 +1901,10 @@ document.write(`
         <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT.u_y_coord">(CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT attribute)</a>
 </li>
       </ul></li>
+      <li><a href="api-docs/CrocoDash.shareable.html#CrocoDash.shareable.fork.BundleManifest.user_nl_info">user_nl_info (CrocoDash.shareable.fork.BundleManifest attribute)</a>
+</li>
+      <li><a href="api-docs/CrocoDash.shareable.html#CrocoDash.shareable.fork.BundleDifferences.user_nl_missing_params">user_nl_missing_params (CrocoDash.shareable.fork.BundleDifferences attribute)</a>
+</li>
       <li><a href="api-docs/CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.UserNLConfigParam">UserNLConfigParam (class in CrocoDash.forcing_configurations.base)</a>
 </li>
   </ul></td>
@@ -1390,8 +1943,6 @@ document.write(`
         <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT.v_y_coord">(CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT attribute)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api-docs/CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.BaseConfigurator.validate_args">validate_args() (CrocoDash.forcing_configurations.base.BaseConfigurator method)</a>
 
       <ul>
@@ -1402,7 +1953,11 @@ document.write(`
         <li><a href="api-docs/CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.configurations.RunoffConfigurator.validate_args">(CrocoDash.forcing_configurations.configurations.RunoffConfigurator method)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api-docs/CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.base.BaseProduct.validate_call">validate_call() (CrocoDash.raw_data_access.base.BaseProduct class method)</a>
+</li>
+      <li><a href="api-docs/CrocoDash.html#CrocoDash.case.Case.validate_case">validate_case() (CrocoDash.case.Case method)</a>
 </li>
       <li><a href="api-docs/CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.BaseConfigurator.validate_compset_compatibility">validate_compset_compatibility() (CrocoDash.forcing_configurations.base.BaseConfigurator class method)</a>
 </li>
@@ -1416,6 +1971,8 @@ document.write(`
         <li><a href="api-docs/CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.base.ForcingProduct.validate_method">(CrocoDash.raw_data_access.base.ForcingProduct class method)</a>
 </li>
       </ul></li>
+      <li><a href="api-docs/CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.BaseConfigurator.validate_output_filepaths">validate_output_filepaths() (CrocoDash.forcing_configurations.base.BaseConfigurator method)</a>
+</li>
   </ul></td>
 </tr></table>
 
@@ -1438,6 +1995,14 @@ document.write(`
 <h2 id="X">X</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api-docs/CrocoDash.shareable.html#CrocoDash.shareable.fork.BundleDifferences.xml_files_missing_in_new">xml_files_missing_in_new (CrocoDash.shareable.fork.BundleDifferences attribute)</a>
+</li>
+      <li><a href="api-docs/CrocoDash.shareable.html#CrocoDash.shareable.fork.BundleManifest.xmlchanges">xmlchanges (CrocoDash.shareable.fork.BundleManifest attribute)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api-docs/CrocoDash.shareable.html#CrocoDash.shareable.fork.BundleDifferences.xmlchanges_missing">xmlchanges_missing (CrocoDash.shareable.fork.BundleDifferences attribute)</a>
+</li>
       <li><a href="api-docs/CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.XMLConfigParam">XMLConfigParam (class in CrocoDash.forcing_configurations.base)</a>
 </li>
   </ul></td>

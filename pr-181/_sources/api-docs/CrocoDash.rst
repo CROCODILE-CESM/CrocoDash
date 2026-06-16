@@ -10,6 +10,7 @@ Subpackages
    CrocoDash.extract_forcings
    CrocoDash.forcing_configurations
    CrocoDash.raw_data_access
+   CrocoDash.shareable
 
 Submodules
 ----------
@@ -18,6 +19,14 @@ CrocoDash.case module
 ---------------------
 
 .. automodule:: CrocoDash.case
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+CrocoDash.cli module
+--------------------
+
+.. automodule:: CrocoDash.cli
    :members:
    :show-inheritance:
    :undoc-members:
