@@ -21,6 +21,9 @@ jobs:
         # in docs/source/for_developers/edit_docs.md. If anything changes, the
         # committed API docs are stale — fail the job with a helpful hint.
         run: |
+          source /opt/conda/etc/profile.d/conda.sh
+          conda activate CrocoDash
+
           # actions/checkout inside a container can leave the workspace as an
           # "unsafe" git repo for the runner user; mark it safe so `git diff`
           # works.

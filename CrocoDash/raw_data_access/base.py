@@ -18,7 +18,7 @@ How it was solved:
 7. The ProductRegistry holds all of that.
 """
 
-from .registry import ProductRegistry
+from CrocoDash.raw_data_access.registry import ProductRegistry
 import inspect
 import json
 from CrocoDash.logging import setup_logger

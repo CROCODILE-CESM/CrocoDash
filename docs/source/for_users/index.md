@@ -51,9 +51,6 @@ These are not part of the linear workflow but you'll reach for them often:
 
 compsets_and_inputs
 datasets
-forcing_configurations
-extract_forcings
-case_information
 shareable
 additional_resources
 ```
