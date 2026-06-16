@@ -59,7 +59,7 @@ jobs:
       - name: Copy CrocoDash into container
         run: |
               rm -rf $WORKDIR/CrocoDash
-              cp -r $GITHUB_WORKSPACE/CrocoDash $WORKDIR/
+              cp -r $GITHUB_WORKSPACE/ $WORKDIR/
       - name: Create CrocoDash environment if changed
         if: steps.compare.outputs.env_changed == 'true'
         run: |
