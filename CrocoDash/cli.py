@@ -47,42 +47,23 @@ def _duplicate_case(args):
 
 def _template(args):
     from pathlib import Path
+    from crocogallery import get_notebook_path, inject_into_text, load_paths
 
     output = Path(args.output)
+    notebook_id = args.notebook
 
     if output.suffix in (".yaml", ".yml"):
-        from importlib.resources import files
-        from crocogallery import inject_into_text, load_paths
-
-        yaml_path = (
-            files("crocogallery").parent
-            / "gallery"
-            / "notebooks"
-            / "CrocoDash"
-            / "tutorials"
-            / "starter_case.yaml"
-        )
+        # YAML starter lives alongside the default tutorial notebook
+        yaml_path = get_notebook_path(notebook_id).parent / "starter_case.yaml"
         template_text = yaml_path.read_text()
         if args.machine:
             template_text = inject_into_text(template_text, load_paths(args.machine))
         output.write_text(template_text)
     else:
         import nbformat
-        from importlib.resources import files
-        from crocogallery import inject_into_text, load_paths
 
         paths = load_paths(args.machine) if args.machine else {}
-
-        # gallery/notebooks/ is a sibling of the installed crocogallery package dir
-        nb_path = (
-            files("crocogallery").parent
-            / "gallery"
-            / "notebooks"
-            / "CrocoDash"
-            / "tutorials"
-            / "crocodash_tutorial.ipynb"
-        )
-        nb = nbformat.read(nb_path, as_version=4)
+        nb = nbformat.read(get_notebook_path(notebook_id), as_version=4)
 
         if output.suffix == ".ipynb":
             for cell in nb.cells:
@@ -91,7 +72,7 @@ def _template(args):
             nbformat.write(nb, output)
         else:
             code_cells = [cell.source for cell in nb.cells if cell.cell_type == "code"]
-            text = "\n\n# %%\n".join(code_cells)
+            text = "# %%\n" + "\n\n# %%\n".join(code_cells)
             output.write_text(inject_into_text(text, paths))
 
     print(f"Template written to: {output}")
@@ -238,6 +219,16 @@ def main():
         "--machine",
         default=None,
         help="Pre-fill known dataset paths for this machine (e.g. derecho). Omit to leave <KEY> placeholders.",
+    )
+    template_parser.add_argument(
+        "--notebook",
+        default="crocodash.tutorials.crocodash_tutorial",
+        help=(
+            "Gallery notebook ID to use as the template source "
+            "(default: crocodash.tutorials.crocodash_tutorial). "
+            "Run `python -c 'from crocogallery import list_notebooks; print(*list_notebooks(), sep=\"\\n\")'` "
+            "to see all available IDs."
+        ),
     )
     template_parser.set_defaults(func=_template)
 
