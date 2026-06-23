@@ -17,6 +17,7 @@ def run_main(argv):
 
 # --- notebook output ---
 
+
 def test_template_notebook_no_machine(tmp_path):
     output = tmp_path / "out.ipynb"
     run_main(["template", "--output", str(output)])
@@ -35,12 +36,13 @@ def test_template_notebook_with_machine(tmp_path):
     assert "<GEBCO>" not in code, "Placeholders should be replaced with --machine"
     # Assert *a* known path was injected (load from source rather than hardcoding)
     derecho_paths = load_paths("derecho")
-    assert any(v in code for v in derecho_paths.values()), (
-        "Expected at least one derecho path value to appear in output"
-    )
+    assert any(
+        v in code for v in derecho_paths.values()
+    ), "Expected at least one derecho path value to appear in output"
 
 
 # --- .py output ---
+
 
 def test_template_python_no_machine(tmp_path):
     output = tmp_path / "out.py"
@@ -64,6 +66,7 @@ def test_template_python_with_machine(tmp_path):
 
 
 # --- YAML output ---
+
 
 def test_template_yaml_no_machine(tmp_path):
     import yaml
@@ -91,6 +94,7 @@ def test_template_yaml_with_machine(tmp_path):
 
 # --- error handling ---
 
+
 def test_template_unknown_machine(tmp_path):
     output = tmp_path / "out.ipynb"
     with pytest.raises(KeyError, match="Unknown machine 'bogus'"):
@@ -105,12 +109,14 @@ def test_template_yaml_unknown_machine(tmp_path):
 
 # --- --notebook flag ---
 
+
 def test_template_custom_notebook(tmp_path):
     """Any gallery notebook can be used as the template source."""
     notebooks = list_notebooks()
     # pick a notebook other than the default
     alt_id = next(
-        nid for nid in sorted(notebooks)
+        nid
+        for nid in sorted(notebooks)
         if nid != "crocodash.tutorials.crocodash_tutorial"
         and notebooks[nid].suffix == ".ipynb"
     )
@@ -124,4 +130,6 @@ def test_template_custom_notebook(tmp_path):
 def test_template_unknown_notebook(tmp_path):
     output = tmp_path / "out.ipynb"
     with pytest.raises(KeyError, match="Unknown notebook"):
-        run_main(["template", "--output", str(output), "--notebook", "no.such.notebook"])
+        run_main(
+            ["template", "--output", str(output), "--notebook", "no.such.notebook"]
+        )
