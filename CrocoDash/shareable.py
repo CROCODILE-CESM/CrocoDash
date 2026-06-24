@@ -694,8 +694,8 @@ def ask_string(prompt: str, default="") -> str:
         response = input(prompt).strip()
         return response if response else default
     except EOFError:
-        print("\nNo input detected, returning empty string.")
-        return ""
+        print(f"\nNo input detected, using default: {default!r}")
+        return default
 
 
 def ask_yes_no(prompt: str, default=True) -> bool:
@@ -728,4 +728,8 @@ def _run_xmlquery(caseroot, param):
     res = subprocess.run(
         ["./xmlquery", param, "-N"], cwd=str(caseroot), capture_output=True
     )
+    if res.returncode != 0:
+        raise RuntimeError(
+            f"xmlquery {param} failed in {caseroot}:\n{res.stderr.decode().strip()}"
+        )
     return res.stdout.decode().strip().split(":")[1].strip()

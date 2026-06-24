@@ -169,6 +169,11 @@ def create_case_from_yaml(config, override=False, configure_only=False):
         **config["case"],
     )
 
+    if "forcings" not in config:
+        raise ValueError(
+            "Cannot recreate a case without a forcings configuration. "
+            "The original case must have configure_forcings() called before sharing."
+        )
     case.configure_forcings(**config["forcings"])
     if not configure_only:
         case.process_forcings()

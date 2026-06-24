@@ -1,4 +1,5 @@
 from CrocoDash.shareable import *
+from CrocoDash.shareable import _get_case_obj
 import pytest
 import subprocess
 import yaml
@@ -17,9 +18,32 @@ def two_cesm_cases(CrocoDash_case_factory, tmp_path_factory):
 
 
 @pytest.fixture
-def fake_RCC_empty_case():
+def fake_RCC_empty_case(get_CrocoDash_case):
+    from unittest.mock import MagicMock
+
     case = CaseBundle.__new__(CaseBundle)
-    case._case = None
+    comp_map = {
+        "COMP_ATM": "datm",
+        "COMP_LND": "slnd",
+        "COMP_ICE": "sice",
+        "COMP_OCN": "mom",
+        "COMP_ROF": "srof",
+        "COMP_GLC": "sglc",
+        "COMP_WAV": "swav",
+    }
+    mock_cime = MagicMock()
+    mock_cime.get_values.return_value = [
+        "ATM",
+        "LND",
+        "ICE",
+        "OCN",
+        "ROF",
+        "GLC",
+        "WAV",
+    ]
+    mock_cime.get_value.side_effect = comp_map.get
+    case._case = mock_cime
+    case.cesmroot = get_CrocoDash_case.cesmroot
     return case
 
 
@@ -126,9 +150,9 @@ def test_identify_non_standard_case_information(get_shareable_CrocoDash_case):
     assert output.xmlchanges_missing == ["JOB_PRIORITY"]
 
 
-def test_read_user_nl_mom_lines_as_obj(get_CrocoDash_case, fake_RCC_empty_case):
+def test_read_user_nl_mom_lines_as_obj(get_CrocoDash_case):
     case = get_CrocoDash_case
-    rcc = fake_RCC_empty_case
+    rcc = CaseBundle(case.caseroot)
     rcc.caseroot = case.caseroot
     user_nl_mom_obj = rcc._read_user_nl_lines_as_obj("mom")
     assert user_nl_mom_obj["Global"]["INPUTDIR"]["value"] == str(

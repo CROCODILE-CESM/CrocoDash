@@ -13,8 +13,7 @@ def test_duplicate_case(get_case_with_cf, tmp_path):
     new_caseroot = tmp_path / "duplicated_case"
     new_inputdir = tmp_path / "duplicated_inputdir"
 
-    with patch("CrocoDash.shareable.copy_configurations_to_case"):
-        new_case = duplicate_case(case.caseroot, new_caseroot, new_inputdir)
+    new_case = duplicate_case(case.caseroot, new_caseroot, new_inputdir)
 
     assert new_case is not None
     assert new_caseroot.exists()
@@ -35,8 +34,6 @@ def test_pass_from_inspect_to_fork_no_change(get_case_with_cf, tmp_path):
         "CrocoDash.shareable.copy_source_mods_from_case"
     ), patch(
         "CrocoDash.shareable.apply_xmlchanges_to_case"
-    ), patch(
-        "CrocoDash.shareable.copy_configurations_to_case"
     ):
         fcb = ForkBundle(loc)
         fcb.fork(
