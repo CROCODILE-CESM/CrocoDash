@@ -9,10 +9,42 @@ Covers:
 - Round-trip: case_to_yaml output is a valid input for create_case_from_yaml
 """
 
-import json
 import pytest
 import yaml
-from pathlib import Path
+
+
+@pytest.fixture(scope="session")
+def sample_forcing_config():
+    forcing_config = {
+        "basic": {
+            "dates": {
+                "start": "20200101",
+                "end": "20200109",
+                "format": "%Y%m%d",
+            },
+            "forcing": {
+                "product_name": "GLORYS",
+                "function_name": "get_glorys_data_script_for_cli",
+            },
+            "general": {"boundary_number_conversion": {"north": 1}},
+        },
+        "tides": {
+            "inputs": {
+                "tidal_constituents": ["M2", "K1"],
+                "boundaries": ["north"],
+                "tpxo_elevation_filepath": "ASd",
+                "tpxo_velocity_filepath": "ASd",
+                "case_specific_param": "asdsd",
+            }
+        },
+        "bgcic": {
+            "inputs": {
+                "marbl_ic_filepath": "qwreqwre",
+            }
+        },
+    }
+    return forcing_config
+
 
 from CrocoDash.recipe import (
     build_grid,

@@ -1,4 +1,3 @@
-
 import os
 import datetime as dt
 import os
@@ -71,4 +70,3 @@ def test_configure_forcings(get_case_with_cf):
                 found_user_nl_mom_adjusted_var = True
                 break
     assert found_user_nl_mom_adjusted_var
-
