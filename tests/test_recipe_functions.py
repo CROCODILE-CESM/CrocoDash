@@ -47,6 +47,7 @@ def sample_forcing_config():
 
 
 from CrocoDash.recipe import (
+    _check_state_schema_version,
     build_grid,
     build_topo,
     build_vgrid,
@@ -55,6 +56,7 @@ from CrocoDash.recipe import (
     validate_config_structure,
     generate_configure_forcing_args,
 )
+from CrocoDash.case import STATE_SCHEMA_VERSION
 from CrocoDash.grid import Grid
 from CrocoDash.topo import Topo
 from CrocoDash.vgrid import VGrid
@@ -338,6 +340,34 @@ def test_build_vgrid_unknown_type_raises(get_rect_grid_and_topo):
     _, topo = get_rect_grid_and_topo
     with pytest.raises(ValueError, match="Unknown vgrid\\.type"):
         build_vgrid({"type": "bogus", "nk": 5}, topo)
+
+
+# ---------------------------------------------------------------------------
+# _check_state_schema_version
+# ---------------------------------------------------------------------------
+
+FAKE_PATH = "/some/case/crocodash_state.json"
+
+_major, _minor, _patch = STATE_SCHEMA_VERSION.split(".")
+
+
+@pytest.mark.parametrize(
+    "state, raises, match",
+    [
+        ({"schema_version": STATE_SCHEMA_VERSION}, None, None),
+        ({"schema_version": f"{_major}.{_minor}.99"}, None, None),
+        ({}, None, None),
+        ({"schema_version": f"{_major}.{int(_minor) + 1}.{_patch}"}, ValueError, "schema version"),
+        ({"schema_version": f"{int(_major) + 1}.{_minor}.{_patch}"}, ValueError, "schema version"),
+        ({"schema_version": "not-a-version"}, ValueError, "Invalid schema_version"),
+    ],
+)
+def test_check_state_schema_version(state, raises, match):
+    if raises:
+        with pytest.raises(raises, match=match):
+            _check_state_schema_version(state, FAKE_PATH)
+    else:
+        _check_state_schema_version(state, FAKE_PATH)
 
 
 # ---------------------------------------------------------------------------
