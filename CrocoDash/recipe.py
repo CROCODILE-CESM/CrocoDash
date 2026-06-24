@@ -14,7 +14,8 @@ from pathlib import Path
 import xarray as xr
 import yaml
 
-from CrocoDash.case import Case, STATE_SCHEMA_VERSION
+from CrocoDash.case import Case
+from CrocoDash import case_state
 from CrocoDash.forcing_configurations.base import ForcingConfigRegistry
 from CrocoDash.grid import Grid
 from CrocoDash.topo import Topo
@@ -25,22 +26,6 @@ logger = setup_logger(__name__)
 
 _TOPO_SOURCE_TYPES = {"flat", "dataset", "from_file"}
 _VGRID_TYPES = {"uniform", "hyperbolic", "from_file"}
-
-# State keys that are derived/resolved at init time and cannot be passed straight back
-# to Case.__init__ — handled explicitly in case_to_yaml's "case" section.
-_STATE_DERIVED_KEYS = frozenset(
-    {
-        "inputdir",
-        "cesmroot",
-        "supergrid_path",
-        "topo_path",
-        "vgrid_path",
-        "grid_name",
-        "session_id",
-        "compset_lname",
-        "machine",
-    }
-)
 
 
 def load_config(path):
@@ -218,29 +203,6 @@ def generate_configure_forcing_args(forcing_config, remove_configs=None):
     return configure_forcing_args
 
 
-def _check_state_schema_version(state, state_path):
-    version = state.get("schema_version")
-    if version is None:
-        logger.warning(
-            f"{state_path}: no schema_version found; this case was created before "
-            "state versioning was introduced. Compatibility is not guaranteed."
-        )
-        return
-    try:
-        parts = version.split(".")
-        major, minor = int(parts[0]), int(parts[1])
-    except (ValueError, IndexError):
-        raise ValueError(f"Invalid schema_version {version!r} in {state_path}.")
-    sup_parts = STATE_SCHEMA_VERSION.split(".")
-    sup_major, sup_minor = int(sup_parts[0]), int(sup_parts[1])
-    if (major, minor) != (sup_major, sup_minor):
-        raise ValueError(
-            f"{state_path} has schema version {version!r} but this version of "
-            f"CrocoDash supports {sup_major}.{sup_minor}.x. "
-            "Recreate the case with the current version of CrocoDash."
-        )
-
-
 def case_to_yaml(caseroot):
     """
     Reconstruct a YAML config dict from an existing case's state files.
@@ -251,16 +213,7 @@ def case_to_yaml(caseroot):
     to a YAML file with yaml.dump().
     """
     caseroot = Path(caseroot)
-    state_path = caseroot / "crocodash_state.json"
-    if not state_path.exists():
-        raise FileNotFoundError(
-            f"No crocodash_state.json found in {caseroot}. "
-            "This case may not have been created with a recent version of CrocoDash."
-        )
-    with open(state_path) as f:
-        state = json.load(f)
-
-    _check_state_schema_version(state, state_path)
+    state = case_state.read(caseroot)
 
     topo_ds = xr.open_dataset(state["topo_path"])
     min_depth = float(topo_ds.attrs.get("min_depth", 0.0))
@@ -291,7 +244,7 @@ def case_to_yaml(caseroot):
             "machine": state["machine"],
             # Scalar init args stored verbatim by Case._init_args — pull dynamically
             # so new Case.__init__ params flow through without touching this function.
-            **{k: v for k, v in state.items() if k not in _STATE_DERIVED_KEYS},
+            **{k: v for k, v in state.items() if k not in case_state.DERIVED_KEYS},
         },
     }
 

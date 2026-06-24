@@ -24,7 +24,7 @@ import xarray as xr
 import numpy as np
 import cftime
 
-STATE_SCHEMA_VERSION = "1.0.0"
+from CrocoDash import case_state
 
 
 class Case:
@@ -96,24 +96,9 @@ class Case:
         """
 
         # Capture scalar init args for state serialization before any local vars are added.
-        # Excludes: objects (stored as paths), args resolved to derived values, and ephemeral flags.
         _locals = locals()
-        _SERIALIZABLE_EXCLUDE = frozenset(
-            {
-                "self",
-                "ocn_grid",
-                "ocn_topo",
-                "ocn_vgrid",
-                "compset",
-                "machine",
-                "cesmroot",
-                "caseroot",
-                "inputdir",
-                "override",
-            }
-        )
         self._init_args = {
-            k: v for k, v in _locals.items() if k not in _SERIALIZABLE_EXCLUDE
+            k: v for k, v in _locals.items() if k not in case_state.INIT_ARGS_EXCLUDE
         }
 
         # Initialize visualCaseGen system and get the CIME interface
@@ -909,23 +894,23 @@ class Case:
 
     def _write_state(self):
         """Write case creation parameters to crocodash_state.json in caseroot."""
-        state = {
-            "schema_version": STATE_SCHEMA_VERSION,
-            # Derived / resolved fields that can't come from init args directly
-            "inputdir": str(self.inputdir),
-            "cesmroot": str(self.cesmroot),
-            "supergrid_path": self.supergrid_path,
-            "topo_path": self.topo_path,
-            "vgrid_path": self.vgrid_path,
-            "grid_name": self.ocn_grid.name,
-            "session_id": cvars["MB_ATTEMPT_ID"].value,
-            "compset_lname": self.compset_lname,
-            "machine": self.machine,
-            # Scalar init args captured at construction time
-            **self._init_args,
-        }
-        with open(self.caseroot / "crocodash_state.json", "w") as f:
-            json.dump(state, f, indent=2)
+        case_state.write(
+            self.caseroot,
+            {
+                # Derived / resolved fields that can't come from init args directly
+                "inputdir": str(self.inputdir),
+                "cesmroot": str(self.cesmroot),
+                "supergrid_path": self.supergrid_path,
+                "topo_path": self.topo_path,
+                "vgrid_path": self.vgrid_path,
+                "grid_name": self.ocn_grid.name,
+                "session_id": cvars["MB_ATTEMPT_ID"].value,
+                "compset_lname": self.compset_lname,
+                "machine": self.machine,
+                # Scalar init args captured at construction time
+                **self._init_args,
+            },
+        )
 
     def _apply_final_xmlchanges(
         self, ntasks_ocn=None, job_queue=None, job_wallclock_time=None

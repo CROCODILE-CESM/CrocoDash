@@ -47,7 +47,6 @@ def sample_forcing_config():
 
 
 from CrocoDash.recipe import (
-    _check_state_schema_version,
     build_grid,
     build_topo,
     build_vgrid,
@@ -56,7 +55,8 @@ from CrocoDash.recipe import (
     validate_config_structure,
     generate_configure_forcing_args,
 )
-from CrocoDash.case import STATE_SCHEMA_VERSION
+from CrocoDash.case_state import check_version as _check_state_schema_version
+from CrocoDash.case_state import SCHEMA_VERSION as STATE_SCHEMA_VERSION
 from CrocoDash.grid import Grid
 from CrocoDash.topo import Topo
 from CrocoDash.vgrid import VGrid
@@ -357,8 +357,16 @@ _major, _minor, _patch = STATE_SCHEMA_VERSION.split(".")
         ({"schema_version": STATE_SCHEMA_VERSION}, None, None),
         ({"schema_version": f"{_major}.{_minor}.99"}, None, None),
         ({}, None, None),
-        ({"schema_version": f"{_major}.{int(_minor) + 1}.{_patch}"}, ValueError, "schema version"),
-        ({"schema_version": f"{int(_major) + 1}.{_minor}.{_patch}"}, ValueError, "schema version"),
+        (
+            {"schema_version": f"{_major}.{int(_minor) + 1}.{_patch}"},
+            ValueError,
+            "schema version",
+        ),
+        (
+            {"schema_version": f"{int(_major) + 1}.{_minor}.{_patch}"},
+            ValueError,
+            "schema version",
+        ),
         ({"schema_version": "not-a-version"}, ValueError, "Invalid schema_version"),
     ],
 )
