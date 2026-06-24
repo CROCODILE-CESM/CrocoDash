@@ -40,6 +40,7 @@ from CrocoDash.forcing_configurations.base import *
 from CrocoDash.forcing_configurations import *
 from CrocoDash.logging import setup_logger
 from CrocoDash.recipe import case_to_yaml, create_case_from_yaml
+from CrocoDash import case_state
 
 logger = setup_logger(__name__)
 
@@ -155,9 +156,7 @@ class CaseBundle:
         self.case_project = self.case_yaml["case"].get("project")
 
         # init_args needed for bundle() grid-file copying (esmf_mesh via glob)
-        state_path = self.caseroot / "crocodash_state.json"
-        with open(state_path) as f:
-            state = json.load(f)
+        state = case_state.read(self.caseroot)
         inputdir_ocnice = str(Path(state["inputdir"]) / "ocnice")
         esmf_file = next(Path(inputdir_ocnice).glob("ESMF_mesh_*.nc"), None)
         self.init_args = {
