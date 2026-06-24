@@ -131,9 +131,6 @@ def test_configure_yaml_for_forked_case_args(fake_fcb_empty_case, tmp_path):
     assert "ocean_vgrid.nc" in config["vgrid"]["filename"]
 
 
-
-
-
 def test_ask_input_response():
     """Test ask_yes_no returns True for yes/y response."""
     with patch("builtins.input", return_value="yes"):

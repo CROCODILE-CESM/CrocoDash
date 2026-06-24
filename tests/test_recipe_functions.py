@@ -21,7 +21,7 @@ from CrocoDash.recipe import (
     case_to_yaml,
     load_config,
     validate_config_structure,
-    generate_configure_forcing_args
+    generate_configure_forcing_args,
 )
 from CrocoDash.grid import Grid
 from CrocoDash.topo import Topo
