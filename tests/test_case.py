@@ -1,10 +1,7 @@
-import pytest
-from CrocoDash.case import Case
+
 import os
-import regional_mom6 as rmom6
 import datetime as dt
 import os
-from CrocoDash.forcing_configurations.base import ForcingConfigRegistry
 from uuid import uuid4
 
 
@@ -93,33 +90,6 @@ def test_configure_forcings(CrocoDash_case_factory, tmp_path_factory, tmp_path):
     assert case.date_range[0].year == 2020
     assert case.fcr["tides"].tidal_constituents == ["M2"]
     assert case.boundaries == ["north", "south", "east"]
-
-
-def test_process_forcing(CrocoDash_case_factory, tmp_path_factory, tmp_path):
-    case = CrocoDash_case_factory(tmp_path_factory.mktemp(f"case-{uuid4().hex}"))
-    case.configure_forcings(
-        date_range=["2020-01-01 00:00:00", "2020-02-01 00:00:00"],
-        tidal_constituents=["M2"],
-        tpxo_elevation_filepath=tmp_path,
-        tpxo_velocity_filepath=tmp_path,
-        chl_processed_filepath=tmp_path,
-        boundaries=["north"],
-    )
-    path = case.inputdir / "glorys" / "large_data_workflow" / "raw_data"
-    filenames = ["ic_unprocessed.nc", "north_unprocessed.nc"]
-    with pytest.raises(FileNotFoundError):
-        case.process_forcings()
-
-    # Test CHL processing raises error in mom6_forge.chl, so we know the connection works
-    with pytest.raises(
-        ValueError,
-        match="did not find a match in any of xarray's currently installed IO backends",
-    ):
-        case.process_forcings(
-            process_tides=False,
-            process_initial_condition=False,
-            process_velocity_tracers=False,
-        )
 
 
 def test_update_forcing_variables(CrocoDash_case_factory, tmp_path_factory):

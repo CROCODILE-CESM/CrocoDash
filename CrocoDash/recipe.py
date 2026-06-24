@@ -1,3 +1,12 @@
+"""
+recipe.py — Creating a Case directly from a YAML config dict or file.
+
+Built on top of case.py, which handles the actual case creation through API calls,
+This module adds the layer for creating a case from a yaml file, which is a convenient way to create a case without having to write a script. 
+The YAML file can be generated from an existing case using the case_to_yaml function, which reads the case's state files and reconstructs a config dict suitable for passing to create_case_from_yaml.
+
+"""
+
 import json
 from datetime import datetime
 from pathlib import Path

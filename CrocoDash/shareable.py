@@ -99,23 +99,6 @@ def apply_xmlchanges_to_case(old_caseroot, xmlchangeparams):
                 xmlchange(param, value, is_non_local=True)
 
 
-def copy_configurations_to_case(old_forcing_config, case, inputdir_ocnice):
-    """Copy forcing configurations from inputdir_ocnice to case.inputdir/ocnice."""
-    case_ocnice = case.inputdir / "ocnice"
-    for src in inputdir_ocnice.iterdir():
-        if src.is_file() and src.name.startswith(INPUTDIR_FILE_PREFIXES):
-            logger.info(f"Copying {src} to new case")
-            shutil.copy(src, case_ocnice)
-    for key in old_forcing_config:
-        if key == "basic" or key not in case.fcr.active_configurators.keys():
-            continue
-        configurator = ForcingConfigRegistry.get_configurator(old_forcing_config[key])
-        for filepath in configurator.get_output_filepaths(inputdir_ocnice):
-            path = inputdir_ocnice / Path(filepath).name
-            logger.info(f"Copying {path} to new case")
-            shutil.copy(path, case_ocnice)
-
-
 # ---------------------------------------------------------------------------
 # Data structures
 # ---------------------------------------------------------------------------
@@ -410,7 +393,7 @@ def duplicate_case(caseroot, new_caseroot, new_inputdir, bundle_dir=None):
     config["case"]["caseroot"] = str(new_caseroot)
     config["case"]["inputdir"] = str(new_inputdir)
 
-    result = create_case_from_yaml(config, override=True)
+    result = create_case_from_yaml(config, override=True, configure_only=True)
 
     if rcc.non_standard_case_info.xml_files_missing_in_new:
         copy_xml_files_from_case(
@@ -562,10 +545,6 @@ class ForkBundle:
 
         self.case.validate_case()
 
-        print(
-            "\nYou're ready! Remember to run the extract_forcings driver to "
-            "regenerate any forcing files for the new domain."
-        )
         return self.case
 
     def _configure_yaml_for_forked_case_args(
