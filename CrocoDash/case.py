@@ -24,7 +24,7 @@ import xarray as xr
 import numpy as np
 import cftime
 
-STATE_SCHEMA_VERSION = "1.0"
+STATE_SCHEMA_VERSION = "1.0.0"
 
 
 class Case:
