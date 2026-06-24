@@ -53,6 +53,7 @@ jobs:
       # Force a login bash shell to natively enable conda profile utilities
         shell: bash -l {0}
         run: |
+          set -eo pipefail
           cd $WORKDIR/CrocoDash
           source /opt/conda/etc/profile.d/conda.sh
           conda activate CrocoDash
