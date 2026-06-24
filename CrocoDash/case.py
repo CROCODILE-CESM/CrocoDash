@@ -145,7 +145,7 @@ class Case:
             job_wallclock_time=job_wallclock_time,
         )
 
-        # Set instance attributes
+        # Set instance attributes from arguments, in argument order
         self.cesmroot = Path(cesmroot)
         self.caseroot = Path(caseroot)
         self.inputdir = Path(inputdir)
@@ -153,19 +153,23 @@ class Case:
         self.ocn_topo = ocn_topo
         self.ocn_vgrid = ocn_vgrid
         self.atm_grid_name = atm_grid_name
+        self.rof_grid_name = rof_grid_name
         self.ninst = ninst
-        self.override = override
-        self.ProductRegistry = ProductRegistry
-        self.forcing_product_name = None
-        self._configure_forcings_called = False
-        self.compset_alias = compset_alias
-        self.compset_lname = compset_lname
         self.machine = machine or self.cime.machine
         self.project = project
-        self.rof_grid_name = rof_grid_name
+        self.override = override
         self.ntasks_ocn = ntasks_ocn
         self.job_queue = job_queue
         self.job_wallclock_time = job_wallclock_time
+
+        # Derived from compset argument
+        self.compset_alias = compset_alias
+        self.compset_lname = compset_lname
+
+        # Internal state (not from arguments)
+        self.ProductRegistry = ProductRegistry
+        self.forcing_product_name = None
+        self._configure_forcings_called = False
 
         # Using visualCaseGen's configuration system, set the configuration variables for the case
         # based on the provided arguments. This includes setting the compset, grid, and launch variables.

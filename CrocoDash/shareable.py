@@ -395,6 +395,15 @@ def duplicate_case(caseroot, new_caseroot, new_inputdir, bundle_dir=None):
 
     result = create_case_from_yaml(config, override=True, configure_only=True)
 
+    old_ocnice = Path(rcc.init_args["inputdir_ocnice"])
+    if old_ocnice.exists():
+        new_ocnice = Path(new_inputdir) / "ocnice"
+        new_ocnice.mkdir(parents=True, exist_ok=True)
+        for src in old_ocnice.iterdir():
+            dst = new_ocnice / src.name
+            if not dst.exists():
+                shutil.copy(src, dst)
+
     if rcc.non_standard_case_info.xml_files_missing_in_new:
         copy_xml_files_from_case(
             rcc.caseroot,
