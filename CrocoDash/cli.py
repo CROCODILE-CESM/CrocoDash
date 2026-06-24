@@ -19,12 +19,10 @@ def _dump(args):
 
 
 def _bundle(args):
-    from CrocoDash.shareable.bundle import (
-        BundleCrocoDashCase,
-    )  # Makes loading faster when not used
+    from CrocoDash.shareable import CaseBundle  # lazy import for faster startup
 
-    case = BundleCrocoDashCase(args.caseroot)
-    case.identify_non_standard_CrocoDash_case_information(
+    case = CaseBundle(args.caseroot)
+    case.identify_non_standard_case_info(
         cesmroot=args.cesmroot,
         machine=args.machine,
         project_number=args.project,
@@ -34,7 +32,7 @@ def _bundle(args):
 
 
 def _duplicate_case(args):
-    from CrocoDash.shareable.bundle import duplicate_case
+    from CrocoDash.shareable import duplicate_case
 
     new_case = duplicate_case(
         caseroot=args.source,
@@ -46,11 +44,11 @@ def _duplicate_case(args):
 
 
 def _fork(args):
-    from CrocoDash.shareable.fork import ForkCrocoDashBundle
+    from CrocoDash.shareable import ForkBundle
 
     plan = json.loads(args.plan) if args.plan else None
 
-    forker = ForkCrocoDashBundle(args.bundle)
+    forker = ForkBundle(args.bundle)
     forker.fork(
         cesmroot=args.cesmroot,
         machine=args.machine,

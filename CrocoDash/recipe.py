@@ -133,13 +133,20 @@ def build_vgrid(vgrid_cfg, topo):
         raise ValueError(f"Unknown vgrid.type: '{vgrid_type}'")
 
 
-def create_case_from_yaml(config, override=False):
+def create_case_from_yaml(config, override=False, configure_only=False):
     """
     Run the full case creation workflow from a config dict.
 
     Builds Grid, Topo, and VGrid objects, creates the CESM case, then calls
     configure_forcings and process_forcings. A forcings section is required.
     Returns the Case.
+
+    Parameters
+    ----------
+    configure_only : bool
+        If True, skip process_forcings. Useful when you only need the case
+        configured (e.g. to diff against a reference case) without running
+        the expensive forcing extraction step.
     """
     grid = build_grid(config["grid"])
     topo = build_topo(config["topo"], grid)
@@ -154,7 +161,8 @@ def create_case_from_yaml(config, override=False):
     )
 
     case.configure_forcings(**config["forcings"])
-    case.process_forcings()
+    if not configure_only:
+        case.process_forcings()
 
     return case
 

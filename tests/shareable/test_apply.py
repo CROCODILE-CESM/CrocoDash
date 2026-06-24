@@ -1,4 +1,4 @@
-from CrocoDash.shareable.apply import *
+from CrocoDash.shareable import *
 from unittest.mock import patch, MagicMock
 
 
@@ -43,7 +43,7 @@ def test_copy_user_nl_params_from_case(tmp_path):
     )
 
     # Mock append_user_nl to track calls
-    with patch("CrocoDash.shareable.apply.append_user_nl") as mock_append:
+    with patch("CrocoDash.shareable.append_user_nl") as mock_append:
         copy_user_nl_params_from_case(
             old_caseroot, {"mom": {"PARAM1", "PARAM3"}, "cice": {"CICE_PARAM1"}}
         )
@@ -105,7 +105,7 @@ def test_apply_xmlchanges_to_case(tmp_path):
     )
 
     # Mock xmlchange to track calls
-    with patch("CrocoDash.shareable.apply.xmlchange") as mock_xmlchange:
+    with patch("CrocoDash.shareable.xmlchange") as mock_xmlchange:
         apply_xmlchanges_to_case(old_caseroot, {"JOB_PRIORITY", "CONTINUE_RUN"})
 
     # Verify that only specified params were applied
@@ -139,9 +139,9 @@ def test_copy_configurations_to_case(tmp_path):
     }
 
     # Mock multiple functions to track calls
-    with patch("CrocoDash.shareable.apply.shutil.copy") as mock_copy, patch(
-        "CrocoDash.shareable.apply.ForcingConfigRegistry.get_configurator"
-    ) as mock_get_cfg, patch("CrocoDash.shareable.apply.Path.glob") as mock_glob:
+    with patch("CrocoDash.shareable.shutil.copy") as mock_copy, patch(
+        "CrocoDash.shareable.ForcingConfigRegistry.get_configurator"
+    ) as mock_get_cfg, patch("CrocoDash.shareable.Path.glob") as mock_glob:
 
         # Setup mock configurator
         mock_cfg = MagicMock()

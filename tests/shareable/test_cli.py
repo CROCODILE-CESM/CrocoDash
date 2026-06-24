@@ -15,7 +15,7 @@ def test_bundle_cli(tmp_path):
     mock_case.bundle.return_value = tmp_path / "bundle"
 
     with patch(
-        "CrocoDash.shareable.bundle.BundleCrocoDashCase", return_value=mock_case
+        "CrocoDash.shareable.CaseBundle", return_value=mock_case
     ) as mock_cls:
         run_main(
             [
@@ -34,7 +34,7 @@ def test_bundle_cli(tmp_path):
         )
 
     mock_cls.assert_called_once_with("/some/case")
-    mock_case.identify_non_standard_CrocoDash_case_information.assert_called_once_with(
+    mock_case.identify_non_standard_case_info.assert_called_once_with(
         cesmroot="/some/cesm",
         machine="derecho",
         project_number="PROJ123",
@@ -52,7 +52,7 @@ def test_fork_cli(tmp_path):
     }
 
     with patch(
-        "CrocoDash.shareable.fork.ForkCrocoDashBundle", return_value=mock_forker
+        "CrocoDash.shareable.ForkBundle", return_value=mock_forker
     ):
         run_main(
             [
@@ -88,7 +88,7 @@ def test_duplicate_case_cli(tmp_path):
     mock_case = MagicMock()
 
     with patch(
-        "CrocoDash.shareable.bundle.duplicate_case", return_value=mock_case
+        "CrocoDash.shareable.duplicate_case", return_value=mock_case
     ) as mock_duplicate:
         run_main(
             [

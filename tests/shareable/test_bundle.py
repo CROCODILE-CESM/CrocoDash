@@ -1,4 +1,4 @@
-from CrocoDash.shareable.bundle import *
+from CrocoDash.shareable import *
 import pytest
 import subprocess
 import yaml
@@ -18,22 +18,22 @@ def two_cesm_cases(CrocoDash_case_factory, tmp_path_factory):
 
 @pytest.fixture
 def fake_RCC_empty_case():
-    case = BundleCrocoDashCase.__new__(BundleCrocoDashCase)
+    case = CaseBundle.__new__(CaseBundle)
     case._case = None
     return case
 
 
 def test_RCC_init(get_case_with_cf):
     case = get_case_with_cf
-    rcc = BundleCrocoDashCase(case.caseroot)
+    rcc = CaseBundle(case.caseroot)
     assert rcc
 
 
 def test_diff_CESM_cases_nodiff(two_cesm_cases):
 
     case1, case2 = two_cesm_cases
-    output = BundleCrocoDashCase(case1.caseroot).diff(
-        BundleCrocoDashCase(case2.caseroot)
+    output = CaseBundle(case1.caseroot).diff(
+        CaseBundle(case2.caseroot)
     )
     assert output.xml_files_missing_in_new == []
     for key, value in output.user_nl_missing_params.items():
@@ -64,8 +64,8 @@ def test_diff_CESM_cases_alldiff(two_cesm_cases):
     with open(user_nl_path, "a") as f:
         f.write("\nDEBUG=TRUE\n")
 
-    output = BundleCrocoDashCase(case1.caseroot).diff(
-        BundleCrocoDashCase(case2.caseroot)
+    output = CaseBundle(case1.caseroot).diff(
+        CaseBundle(case2.caseroot)
     )
     assert output.xml_files_missing_in_new == ["test.xml"]
     assert output.user_nl_missing_params["mom"] == ["DEBUG"]
@@ -75,7 +75,7 @@ def test_diff_CESM_cases_alldiff(two_cesm_cases):
 
 def test_load_state_from_crocodash_init_args(get_case_with_cf):
     case = get_case_with_cf
-    rcc = BundleCrocoDashCase(case.caseroot)
+    rcc = CaseBundle(case.caseroot)
     init_args = rcc.init_args
 
     assert str(case.inputdir / "ocnice") == str(init_args["inputdir_ocnice"])
@@ -95,7 +95,7 @@ def test_load_state_from_crocodash_forcing_config(
         tpxo_elevation_filepath="s3://crocodile-cesm/CrocoDash/data/tpxo/h_tpxo9.v1.zarr/",
         tpxo_velocity_filepath="s3://crocodile-cesm/CrocoDash/data/tpxo/u_tpxo9.v1.zarr/",
     )
-    rcc = BundleCrocoDashCase(case1.caseroot)
+    rcc = CaseBundle(case1.caseroot)
     assert "tides" in rcc.forcing_config
 
 
@@ -121,8 +121,8 @@ def test_identify_non_standard_case_information(get_shareable_CrocoDash_case):
     user_nl_path = Path(case1.caseroot) / "user_nl_mom"
     with open(user_nl_path, "a") as f:
         f.write("\nDEBUG=TRUE\n")
-    rcc = BundleCrocoDashCase(case1.caseroot)
-    output = rcc.identify_non_standard_CrocoDash_case_information(
+    rcc = CaseBundle(case1.caseroot)
+    output = rcc.identify_non_standard_case_info(
         case1.cime.cimeroot.parent, case1.machine, case1.project
     )
     assert output.xml_files_missing_in_new == ["test.xml"]
@@ -189,8 +189,8 @@ def test_bundle_with_modifications(CrocoDash_case_factory, tmp_path_factory, tmp
     output_dir = tmp_path / "bundle_output_modified"
     output_dir.mkdir()
 
-    rcc = BundleCrocoDashCase(case.caseroot)
-    rcc.identify_non_standard_CrocoDash_case_information(
+    rcc = CaseBundle(case.caseroot)
+    rcc.identify_non_standard_case_info(
         case.cime.cimeroot.parent, case.machine, case.project
     )
     # Run the function

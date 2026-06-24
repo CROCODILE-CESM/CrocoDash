@@ -1,4 +1,4 @@
-from CrocoDash.shareable.fork import *
+from CrocoDash.shareable import *
 import json
 import pytest
 from pathlib import Path
@@ -8,7 +8,7 @@ from uuid import uuid4
 
 @pytest.fixture
 def fake_fcb_empty_case():
-    fcb = ForkCrocoDashBundle.__new__(ForkCrocoDashBundle)
+    fcb = ForkBundle.__new__(ForkBundle)
     return fcb
 
 
@@ -55,7 +55,7 @@ def test_resolve_copy_plan_all_missing(fake_fcb_empty_case):
         xmlchanges_missing=["JOB_PRIORITY"],
     )
 
-    with patch("CrocoDash.shareable.fork.ask_yes_no", return_value=True):
+    with patch("CrocoDash.shareable.ask_yes_no", return_value=True):
         fcb._resolve_copy_plan(None)
 
     assert fcb.plan.get("xml_files") is True
@@ -170,36 +170,3 @@ def test_ask_input_response():
     assert result == "test input"
 
 
-def test_create_case(get_CrocoDash_case, tmp_path):
-    """Test create_case properly constructs a Case object from bundle data."""
-    original_case = get_CrocoDash_case
-
-    init_args = {
-        "inputdir_ocnice": original_case.inputdir,
-        "supergrid_path": original_case.supergrid_path,
-        "topo_path": original_case.topo_path,
-        "vgrid_path": original_case.vgrid_path,
-        "compset": original_case.compset_lname,
-        "atm_grid_name": "TL319",
-    }
-
-    new_caseroot = tmp_path / f"new_case-{uuid4().hex}"
-    new_inputdir = tmp_path / f"new_inputdir-{uuid4().hex}"
-    new_inputdir.mkdir()
-
-    case = create_case(
-        init_args,
-        new_caseroot,
-        new_inputdir,
-        machine=original_case.machine,
-        project_number=original_case.project,
-        cesmroot=original_case.cime.cimeroot.parent,
-        compset=original_case.compset_lname,
-    )
-
-    assert case.caseroot == new_caseroot
-    assert case.inputdir == new_inputdir
-    assert case.ocn_grid is not None
-    assert case.ocn_topo is not None
-    assert case.ocn_vgrid is not None
-    assert case.machine == original_case.machine
