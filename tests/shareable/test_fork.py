@@ -168,5 +168,3 @@ def test_ask_input_response():
         result = ask_string("Enter something: ")
 
     assert result == "test input"
-
-

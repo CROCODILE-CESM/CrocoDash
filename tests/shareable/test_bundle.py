@@ -32,9 +32,7 @@ def test_RCC_init(get_case_with_cf):
 def test_diff_CESM_cases_nodiff(two_cesm_cases):
 
     case1, case2 = two_cesm_cases
-    output = CaseBundle(case1.caseroot).diff(
-        CaseBundle(case2.caseroot)
-    )
+    output = CaseBundle(case1.caseroot).diff(CaseBundle(case2.caseroot))
     assert output.xml_files_missing_in_new == []
     for key, value in output.user_nl_missing_params.items():
         assert value == []
@@ -64,9 +62,7 @@ def test_diff_CESM_cases_alldiff(two_cesm_cases):
     with open(user_nl_path, "a") as f:
         f.write("\nDEBUG=TRUE\n")
 
-    output = CaseBundle(case1.caseroot).diff(
-        CaseBundle(case2.caseroot)
-    )
+    output = CaseBundle(case1.caseroot).diff(CaseBundle(case2.caseroot))
     assert output.xml_files_missing_in_new == ["test.xml"]
     assert output.user_nl_missing_params["mom"] == ["DEBUG"]
     assert output.source_mods_missing_files == ["src.mom/bleh.dummy"]

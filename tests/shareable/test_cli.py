@@ -14,9 +14,7 @@ def test_bundle_cli(tmp_path):
     mock_case = MagicMock()
     mock_case.bundle.return_value = tmp_path / "bundle"
 
-    with patch(
-        "CrocoDash.shareable.CaseBundle", return_value=mock_case
-    ) as mock_cls:
+    with patch("CrocoDash.shareable.CaseBundle", return_value=mock_case) as mock_cls:
         run_main(
             [
                 "bundle",
@@ -51,9 +49,7 @@ def test_fork_cli(tmp_path):
         "xmlchanges": True,
     }
 
-    with patch(
-        "CrocoDash.shareable.ForkBundle", return_value=mock_forker
-    ):
+    with patch("CrocoDash.shareable.ForkBundle", return_value=mock_forker):
         run_main(
             [
                 "fork",

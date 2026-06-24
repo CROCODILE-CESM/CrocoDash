@@ -19,6 +19,7 @@ This module adds the layer for sharing a configured case with another user:
 The bundle folder is the artifact that crosses the user boundary.
 duplicate_case() is a convenience for copying a case within the same user context.
 """
+
 import copy
 import dataclasses
 import importlib

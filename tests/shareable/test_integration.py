@@ -25,9 +25,7 @@ def test_duplicate_case(get_case_with_cf, tmp_path):
 def test_pass_from_inspect_to_fork_no_change(get_case_with_cf, tmp_path):
     case = get_case_with_cf
     rcc = CaseBundle(case.caseroot)
-    rcc.identify_non_standard_case_info(
-        rcc.cesmroot, case.machine, case.project
-    )
+    rcc.identify_non_standard_case_info(rcc.cesmroot, case.machine, case.project)
     loc = rcc.bundle(tmp_path)
     with patch("CrocoDash.shareable.ask_yes_no", return_value=False), patch(
         "CrocoDash.shareable.ask_string", return_value=""
@@ -74,9 +72,7 @@ def test_pass_from_inspect_to_fork_with_changes(get_case_with_cf, tmp_path):
     with open(user_nl_path, "a") as f:
         f.write("\nDEBUG=TRUE\n")
     rcc = CaseBundle(case.caseroot)
-    rcc.identify_non_standard_case_info(
-        rcc.cesmroot, case.machine, case.project
-    )
+    rcc.identify_non_standard_case_info(rcc.cesmroot, case.machine, case.project)
     loc = rcc.bundle(tmp_path)
     with patch("CrocoDash.shareable.ask_yes_no", return_value=True), patch(
         "CrocoDash.shareable.ask_string", return_value=""
