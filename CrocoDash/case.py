@@ -24,6 +24,8 @@ import xarray as xr
 import numpy as np
 import cftime
 
+STATE_SCHEMA_VERSION = "1.0"
+
 
 class Case:
     """This class represents a regional MOM6 case within the CESM framework. It is similar to the
@@ -908,6 +910,7 @@ class Case:
     def _write_state(self):
         """Write case creation parameters to crocodash_state.json in caseroot."""
         state = {
+            "schema_version": STATE_SCHEMA_VERSION,
             # Derived / resolved fields that can't come from init args directly
             "inputdir": str(self.inputdir),
             "cesmroot": str(self.cesmroot),

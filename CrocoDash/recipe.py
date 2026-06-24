@@ -14,7 +14,7 @@ from pathlib import Path
 import xarray as xr
 import yaml
 
-from CrocoDash.case import Case
+from CrocoDash.case import Case, STATE_SCHEMA_VERSION
 from CrocoDash.forcing_configurations.base import ForcingConfigRegistry
 from CrocoDash.grid import Grid
 from CrocoDash.topo import Topo
@@ -218,6 +218,27 @@ def generate_configure_forcing_args(forcing_config, remove_configs=None):
     return configure_forcing_args
 
 
+def _check_state_schema_version(state, state_path):
+    version = state.get("schema_version")
+    if version is None:
+        logger.warning(
+            f"{state_path}: no schema_version found; this case was created before "
+            "state versioning was introduced. Compatibility is not guaranteed."
+        )
+        return
+    try:
+        major = int(version.split(".")[0])
+    except (ValueError, IndexError):
+        raise ValueError(f"Invalid schema_version {version!r} in {state_path}.")
+    supported_major = int(STATE_SCHEMA_VERSION.split(".")[0])
+    if major != supported_major:
+        raise ValueError(
+            f"{state_path} has schema version {version!r} but this version of "
+            f"CrocoDash supports major version {supported_major}. "
+            "Recreate the case with the current version of CrocoDash."
+        )
+
+
 def case_to_yaml(caseroot):
     """
     Reconstruct a YAML config dict from an existing case's state files.
@@ -236,6 +257,8 @@ def case_to_yaml(caseroot):
         )
     with open(state_path) as f:
         state = json.load(f)
+
+    _check_state_schema_version(state, state_path)
 
     topo_ds = xr.open_dataset(state["topo_path"])
     min_depth = float(topo_ds.attrs.get("min_depth", 0.0))
