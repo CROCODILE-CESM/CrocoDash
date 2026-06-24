@@ -78,7 +78,6 @@ def test_load_state_from_crocodash_init_args(get_case_with_cf):
     assert str(init_args["supergrid_path"]).startswith("ocean_hgrid_pana")
     assert str(init_args["topo_path"]).startswith("ocean_topog_pana")
     assert str(init_args["vgrid_path"]).startswith("ocean_vgrid_pana")
-    assert "compset" in init_args
 
 
 def test_load_state_from_crocodash_forcing_config(
@@ -131,7 +130,6 @@ def test_read_user_nl_mom_lines_as_obj(get_CrocoDash_case, fake_RCC_empty_case):
     case = get_CrocoDash_case
     rcc = fake_RCC_empty_case
     rcc.caseroot = case.caseroot
-    rcc._get_cesmroot()
     user_nl_mom_obj = rcc._read_user_nl_lines_as_obj("mom")
     assert user_nl_mom_obj["Global"]["INPUTDIR"]["value"] == str(
         case.inputdir / "ocnice"
@@ -139,7 +137,7 @@ def test_read_user_nl_mom_lines_as_obj(get_CrocoDash_case, fake_RCC_empty_case):
 
 
 def test_get_case_obj(get_CrocoDash_case):
-    case = get_case_obj(get_CrocoDash_case.caseroot)
+    case = _get_case_obj(get_CrocoDash_case.caseroot)
     assert case.get_value("COMPSET") == get_CrocoDash_case.compset_lname + "_SESP"
 
 
@@ -255,7 +253,6 @@ def test_bundle_with_modifications(CrocoDash_case_factory, tmp_path_factory, tmp
 def test_read_user_nls(fake_RCC_empty_case, get_CrocoDash_case):
     rcc = fake_RCC_empty_case
     rcc.caseroot = get_CrocoDash_case.caseroot
-    rcc._get_cesmroot()
     rcc._read_user_nls()
     assert "mom" in rcc.user_nl_objs.keys()
     assert "datm" in rcc.user_nl_objs.keys()

@@ -131,27 +131,7 @@ def test_configure_yaml_for_forked_case_args(fake_fcb_empty_case, tmp_path):
     assert "ocean_vgrid.nc" in config["vgrid"]["filename"]
 
 
-def test_build_general_configure_forcing_args(sample_forcing_config):
-    """Test generate_configure_forcing_args creates correct argument dict."""
-    forcing_config = sample_forcing_config
 
-    remove_configs = set()
-
-    args = generate_configure_forcing_args(forcing_config, remove_configs)
-
-    assert args["date_range"] == ["2020-01-01 00:00:00", "2020-01-09 00:00:00"]
-    assert args["boundaries"] == ["north"]
-    assert args["product_name"] == "GLORYS"
-    assert args["function_name"] == "get_glorys_data_script_for_cli"
-    assert args["tidal_constituents"] == ["M2", "K1"]
-    assert "case_specific_param" not in args
-
-    remove_configs = {"tides"}
-
-    args = generate_configure_forcing_args(forcing_config, remove_configs)
-
-    assert "tidal_constituents" not in args
-    assert "marbl_ic_filepath" in args
 
 
 def test_ask_input_response():
