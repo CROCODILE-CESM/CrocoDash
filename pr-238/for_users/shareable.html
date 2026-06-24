@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Shareable Configuration &#8212; CrocoDash  documentation</title>
+    <title>Sharing Cases &#8212; CrocoDash  documentation</title>
   
   
   
@@ -167,7 +167,7 @@
 <li class="toctree-l2"><a class="reference internal" href="extract_forcings.html">Extract Forcings (case.process_forcings)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="case_information.html">Extra CESM Case Information</a></li>
 <li class="toctree-l2"><a class="reference internal" href="cli.html">Command Line Interface</a></li>
-<li class="toctree-l2 current active"><a class="current reference internal" href="#">Shareable Configuration</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Sharing Cases</a></li>
 <li class="toctree-l2"><a class="reference internal" href="additional_resources.html">Additional Resources</a></li>
 </ul>
 </details></li>
@@ -332,7 +332,7 @@ document.write(`
               
 
 <div id="jb-print-docs-body" class="onlyprint">
-    <h1>Shareable Configuration</h1>
+    <h1>Sharing Cases</h1>
     <!-- Table of contents -->
     <div id="print-main-content">
         <div id="jb-print-toc">
@@ -342,22 +342,19 @@ document.write(`
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow">Workflow</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-1-bundle">Step 1 — Bundle</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-fork">Step 2 — Fork</a><ul class="nav section-nav flex-column">
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#non-interactive-fork">Non-interactive fork</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-model-sender-and-recipient">The model: sender and recipient</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#sender-casebundle">Sender: CaseBundle</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#recipient-forkbundle">Recipient: ForkBundle</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#non-interactive-fork">Non-interactive fork</a></li>
 </ul>
 </li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#duplicate-one-step-shortcut">Duplicate (one-step shortcut)</a></li>
-</ul>
-</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#duplicate-same-user-shortcut">Duplicate (same-user shortcut)</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#command-line">Command Line</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#bundle">Bundle</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#fork">Fork</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#duplicate">Duplicate</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#what-gets-diffed">What gets diffed?</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#apply-helpers">Apply helpers</a></li>
 </ul>
             </nav>
@@ -370,45 +367,96 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="shareable-configuration">
-<h1>Shareable Configuration<a class="headerlink" href="#shareable-configuration" title="Link to this heading">#</a></h1>
-<p>Ever wanted to share your regional MOM6 setup? Get a summary of your unique changes? Let someone else easily run your model? This module is for you!</p>
-<p>Importable through <code class="docutils literal notranslate"><span class="pre">CrocoDash.shareable</span></code>, the module lets you:</p>
-<ol class="arabic simple">
-<li><p><strong>Bundle</strong> - Inspect an existing CESM case, identify what makes it unique, and package it into a portable folder</p></li>
-<li><p><strong>Fork</strong> - Recreate a case from a bundle, guided through any changes via an interactive YAML review</p></li>
-<li><p><strong>Duplicate</strong> - One-step shortcut to copy a case to a new location, reading machine/project/cesmroot automatically from the original</p></li>
-</ol>
-<p>The shareable workflow is built on top of the <a class="reference internal" href="cli.html"><span class="std std-doc"><code class="docutils literal notranslate"><span class="pre">create</span></code>/<code class="docutils literal notranslate"><span class="pre">dump</span></code> primitives</span></a>: <code class="docutils literal notranslate"><span class="pre">bundle</span></code> uses <code class="docutils literal notranslate"><span class="pre">dump</span></code> internally to write the case config as <code class="docutils literal notranslate"><span class="pre">crocodash_case.yaml</span></code>, and <code class="docutils literal notranslate"><span class="pre">fork</span></code> uses <code class="docutils literal notranslate"><span class="pre">create</span></code> internally to build the new case from (a modified copy of) that YAML.</p>
+  <section id="sharing-cases">
+<h1>Sharing Cases<a class="headerlink" href="#sharing-cases" title="Link to this heading">#</a></h1>
+<p>The <code class="docutils literal notranslate"><span class="pre">CrocoDash.shareable</span></code> module lets you share a configured regional ocean case
+with another user — across machines, institutions, or just between collaborators.</p>
+<p>It sits on top of <a class="reference internal" href="cli.html"><span class="std std-doc">recipe.py</span></a>, which handles programmatic case creation
+from YAML. The shareable layer adds case inspection, bundling, and an interactive
+guided review for the recipient.</p>
 <hr class="docutils" />
-<section id="workflow">
-<h2>Workflow<a class="headerlink" href="#workflow" title="Link to this heading">#</a></h2>
-<section id="step-1-bundle">
-<h3>Step 1 — Bundle<a class="headerlink" href="#step-1-bundle" title="Link to this heading">#</a></h3>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">CrocoDash.shareable.bundle</span><span class="w"> </span><span class="kn">import</span> <span class="n">BundleCrocoDashCase</span>
-
-<span class="n">case</span> <span class="o">=</span> <span class="n">BundleCrocoDashCase</span><span class="p">(</span><span class="s2">&quot;/path/to/caseroot&quot;</span><span class="p">)</span>
-
-<span class="c1"># Write the bundle — automatically diffs against a standard case first</span>
-<span class="n">bundle_path</span> <span class="o">=</span> <span class="n">case</span><span class="o">.</span><span class="n">bundle</span><span class="p">(</span><span class="s2">&quot;/path/to/output_dir&quot;</span><span class="p">)</span>
+<section id="the-model-sender-and-recipient">
+<h2>The model: sender and recipient<a class="headerlink" href="#the-model-sender-and-recipient" title="Link to this heading">#</a></h2>
+<p>The <strong>bundle folder</strong> is the artifact that crosses the user boundary.</p>
+<p><strong>Sender</strong> (Person A, has a working case):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>CaseBundle(caseroot)
+  → identify_non_standard_case_info()   # what makes this case unique?
+  → bundle(output_dir)                  # package everything up
 </pre></div>
 </div>
-<p>The bundle folder contains:</p>
+<p><strong>Recipient</strong> (Person B, gets the bundle folder):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>ForkBundle(bundle_dir)
+  → fork(cesmroot, machine, ...)        # guided recreation on their machine
+</pre></div>
+</div>
+<p>The recipient can change the compset or forcing configuration during <code class="docutils literal notranslate"><span class="pre">fork()</span></code> —
+everything else (grid, bathymetry, vertical grid, non-standard CESM state) is
+carried over from the bundle.</p>
+</section>
+<hr class="docutils" />
+<section id="sender-casebundle">
+<h2>Sender: CaseBundle<a class="headerlink" href="#sender-casebundle" title="Link to this heading">#</a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">CrocoDash.shareable</span><span class="w"> </span><span class="kn">import</span> <span class="n">CaseBundle</span>
+
+<span class="n">bundle</span> <span class="o">=</span> <span class="n">CaseBundle</span><span class="p">(</span><span class="s2">&quot;/path/to/caseroot&quot;</span><span class="p">)</span>
+
+<span class="c1"># Optionally inspect the diff before bundling</span>
+<span class="n">diff</span> <span class="o">=</span> <span class="n">bundle</span><span class="o">.</span><span class="n">identify_non_standard_case_info</span><span class="p">(</span>
+    <span class="n">cesmroot</span><span class="o">=</span><span class="s2">&quot;/path/to/cesm&quot;</span><span class="p">,</span>
+    <span class="n">machine</span><span class="o">=</span><span class="s2">&quot;derecho&quot;</span><span class="p">,</span>
+    <span class="n">project_number</span><span class="o">=</span><span class="s2">&quot;PROJ123&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">diff</span><span class="o">.</span><span class="n">xmlchanges_missing</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">diff</span><span class="o">.</span><span class="n">source_mods_missing_files</span><span class="p">)</span>
+
+<span class="c1"># Package everything into a portable folder</span>
+<span class="n">bundle_path</span> <span class="o">=</span> <span class="n">bundle</span><span class="o">.</span><span class="n">bundle</span><span class="p">(</span><span class="s2">&quot;/path/to/output_dir&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">identify_non_standard_case_info()</span></code> creates a temporary reference case using
+recipe.py (with <code class="docutils literal notranslate"><span class="pre">configure_only=True</span></code> so forcings are not re-processed), then
+diffs your case against it. The diff captures everything you added on top of
+what CrocoDash sets up by default:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Category</p></th>
+<th class="head"><p>What’s captured</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">xml_files_missing_in_new</span></code></p></td>
+<td><p>Extra <code class="docutils literal notranslate"><span class="pre">.xml</span></code> files in your caseroot</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">user_nl_missing_params</span></code></p></td>
+<td><p>Parameters added to <code class="docutils literal notranslate"><span class="pre">user_nl_*</span></code> files</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">source_mods_missing_files</span></code></p></td>
+<td><p>Files in <code class="docutils literal notranslate"><span class="pre">SourceMods/</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">xmlchanges_missing</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">xmlchange</span></code> calls in <code class="docutils literal notranslate"><span class="pre">replay.sh</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">bundle()</span></code> calls <code class="docutils literal notranslate"><span class="pre">identify_non_standard_case_info()</span></code> automatically if you haven’t
+already. The bundle folder contains:</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">crocodash_case.yaml</span></code> — complete case config (grid, topo, vgrid, case, forcings)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">non_standard_case_info.json</span></code> — diff against a standard case (user_nl, xmlchanges, xml_files, SourceMods)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">ocnice/</span></code> — ocean/ice input files plus grid files</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">user_nl_*</span></code> files, <code class="docutils literal notranslate"><span class="pre">replay.sh</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">crocodash_case.yaml</span></code> — the full recipe (grid, topo, vgrid, case, forcings)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">non_standard_case_info.json</span></code> — the diff</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ocnice/</span></code> — all ocean/ice input files and grid files</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">user_nl_*</span></code>, <code class="docutils literal notranslate"><span class="pre">replay.sh</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">xml_files/</span></code> and <code class="docutils literal notranslate"><span class="pre">SourceMods/</span></code> — any non-standard modifications</p></li>
 </ul>
 </section>
-<section id="step-2-fork">
-<h3>Step 2 — Fork<a class="headerlink" href="#step-2-fork" title="Link to this heading">#</a></h3>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">CrocoDash.shareable.fork</span><span class="w"> </span><span class="kn">import</span> <span class="n">ForkCrocoDashBundle</span>
+<hr class="docutils" />
+<section id="recipient-forkbundle">
+<h2>Recipient: ForkBundle<a class="headerlink" href="#recipient-forkbundle" title="Link to this heading">#</a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">CrocoDash.shareable</span><span class="w"> </span><span class="kn">import</span> <span class="n">ForkBundle</span>
 
-<span class="n">forker</span> <span class="o">=</span> <span class="n">ForkCrocoDashBundle</span><span class="p">(</span><span class="s2">&quot;/path/to/bundle&quot;</span><span class="p">)</span>
+<span class="n">fork</span> <span class="o">=</span> <span class="n">ForkBundle</span><span class="p">(</span><span class="s2">&quot;/path/to/bundle&quot;</span><span class="p">)</span>
 
-<span class="n">case</span> <span class="o">=</span> <span class="n">forker</span><span class="o">.</span><span class="n">fork</span><span class="p">(</span>
+<span class="n">case</span> <span class="o">=</span> <span class="n">fork</span><span class="o">.</span><span class="n">fork</span><span class="p">(</span>
     <span class="n">cesmroot</span><span class="o">=</span><span class="s2">&quot;/path/to/cesm&quot;</span><span class="p">,</span>
     <span class="n">machine</span><span class="o">=</span><span class="s2">&quot;derecho&quot;</span><span class="p">,</span>
     <span class="n">project_number</span><span class="o">=</span><span class="s2">&quot;PROJ123&quot;</span><span class="p">,</span>
@@ -417,16 +465,23 @@ document.write(`
 <span class="p">)</span>
 </pre></div>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">fork()</span></code> guides you through the key fields interactively:</p>
+<p><code class="docutils literal notranslate"><span class="pre">fork()</span></code> walks the recipient through an interactive review:</p>
 <ol class="arabic simple">
-<li><p><strong>Path and machine review</strong> — prompts for <code class="docutils literal notranslate"><span class="pre">caseroot</span></code>, <code class="docutils literal notranslate"><span class="pre">inputdir</span></code>, <code class="docutils literal notranslate"><span class="pre">cesmroot</span></code>, <code class="docutils literal notranslate"><span class="pre">machine</span></code>, <code class="docutils literal notranslate"><span class="pre">project</span></code>, <code class="docutils literal notranslate"><span class="pre">compset</span></code>, and (if forcings were configured) <code class="docutils literal notranslate"><span class="pre">date_range</span></code> and <code class="docutils literal notranslate"><span class="pre">boundaries</span></code>. Press Enter to keep the pre-filled value.</p></li>
-<li><p><strong>EDITOR</strong> — if <code class="docutils literal notranslate"><span class="pre">$EDITOR</span></code> is set, offers to open the full YAML for deeper modifications (changing forcing kwargs, compset modifiers, etc.).</p></li>
+<li><p><strong>Field review</strong> — prompts for <code class="docutils literal notranslate"><span class="pre">caseroot</span></code>, <code class="docutils literal notranslate"><span class="pre">inputdir</span></code>, <code class="docutils literal notranslate"><span class="pre">cesmroot</span></code>, <code class="docutils literal notranslate"><span class="pre">machine</span></code>,
+<code class="docutils literal notranslate"><span class="pre">project</span></code>, <code class="docutils literal notranslate"><span class="pre">compset</span></code>, and (if the case has forcings) <code class="docutils literal notranslate"><span class="pre">date_range</span></code> and
+<code class="docutils literal notranslate"><span class="pre">boundaries</span></code>. Press Enter to keep the pre-filled value from the bundle.</p></li>
+<li><p><strong>EDITOR</strong> — if <code class="docutils literal notranslate"><span class="pre">$EDITOR</span></code> is set, offers to open the full YAML for deeper
+changes (e.g. swapping compset modifiers, adjusting forcing kwargs).</p></li>
 <li><p><strong>Confirmation</strong> — shows the final config and asks to proceed.</p></li>
-<li><p><strong>Plan</strong> — asks interactively which non-standard CESM state to copy (XML files, user_nl params, SourceMods, xmlchanges). Pass <code class="docutils literal notranslate"><span class="pre">plan=</span></code> to skip the prompts.</p></li>
+<li><p><strong>Plan</strong> — asks whether to transfer each category of non-standard CESM state
+(XML files, user_nl params, SourceMods, xmlchanges).</p></li>
 </ol>
+<p>After confirmation, <code class="docutils literal notranslate"><span class="pre">fork()</span></code> recreates the case via recipe.py and applies the
+non-standard state per the plan.</p>
 <section id="non-interactive-fork">
-<h4>Non-interactive fork<a class="headerlink" href="#non-interactive-fork" title="Link to this heading">#</a></h4>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">case</span> <span class="o">=</span> <span class="n">forker</span><span class="o">.</span><span class="n">fork</span><span class="p">(</span>
+<h3>Non-interactive fork<a class="headerlink" href="#non-interactive-fork" title="Link to this heading">#</a></h3>
+<p>Pass <code class="docutils literal notranslate"><span class="pre">plan=</span></code> to skip the CESM-state copy prompts (the YAML review still runs):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">case</span> <span class="o">=</span> <span class="n">fork</span><span class="o">.</span><span class="n">fork</span><span class="p">(</span>
     <span class="n">cesmroot</span><span class="o">=</span><span class="s2">&quot;/path/to/cesm&quot;</span><span class="p">,</span>
     <span class="n">machine</span><span class="o">=</span><span class="s2">&quot;derecho&quot;</span><span class="p">,</span>
     <span class="n">project_number</span><span class="o">=</span><span class="s2">&quot;PROJ123&quot;</span><span class="p">,</span>
@@ -436,12 +491,15 @@ document.write(`
 <span class="p">)</span>
 </pre></div>
 </div>
-<p>To change forcings, compset, or other parameters: run <code class="docutils literal notranslate"><span class="pre">crocodash</span> <span class="pre">dump</span></code> on the bundle’s YAML, edit it, and pass it to <code class="docutils literal notranslate"><span class="pre">crocodash</span> <span class="pre">create</span></code> directly — no need to use fork for that.</p>
 </section>
 </section>
-<section id="duplicate-one-step-shortcut">
-<h3>Duplicate (one-step shortcut)<a class="headerlink" href="#duplicate-one-step-shortcut" title="Link to this heading">#</a></h3>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">CrocoDash.shareable.bundle</span><span class="w"> </span><span class="kn">import</span> <span class="n">duplicate_case</span>
+<hr class="docutils" />
+<section id="duplicate-same-user-shortcut">
+<h2>Duplicate (same-user shortcut)<a class="headerlink" href="#duplicate-same-user-shortcut" title="Link to this heading">#</a></h2>
+<p>For copying a case within your own environment — same machine, new paths — use
+<code class="docutils literal notranslate"><span class="pre">duplicate_case()</span></code>. It reads <code class="docutils literal notranslate"><span class="pre">cesmroot</span></code>, <code class="docutils literal notranslate"><span class="pre">machine</span></code>, and <code class="docutils literal notranslate"><span class="pre">project</span></code> directly from
+the original case’s <code class="docutils literal notranslate"><span class="pre">crocodash_state.json</span></code>, so no arguments are needed for those:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">CrocoDash.shareable</span><span class="w"> </span><span class="kn">import</span> <span class="n">duplicate_case</span>
 
 <span class="n">new_case</span> <span class="o">=</span> <span class="n">duplicate_case</span><span class="p">(</span>
     <span class="n">caseroot</span><span class="o">=</span><span class="s2">&quot;/path/to/existing_case&quot;</span><span class="p">,</span>
@@ -450,7 +508,7 @@ document.write(`
 <span class="p">)</span>
 </pre></div>
 </div>
-<p>Reads machine, project, and cesmroot from <code class="docutils literal notranslate"><span class="pre">crocodash_state.json</span></code> in the original case. Pass <code class="docutils literal notranslate"><span class="pre">bundle_dir=</span></code> to save the bundle for reference:</p>
+<p>Pass <code class="docutils literal notranslate"><span class="pre">bundle_dir=</span></code> to also save a bundle as a side effect:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">new_case</span> <span class="o">=</span> <span class="n">duplicate_case</span><span class="p">(</span>
     <span class="n">caseroot</span><span class="o">=</span><span class="s2">&quot;/path/to/existing_case&quot;</span><span class="p">,</span>
     <span class="n">new_caseroot</span><span class="o">=</span><span class="s2">&quot;/path/to/new_case&quot;</span><span class="p">,</span>
@@ -459,7 +517,6 @@ document.write(`
 <span class="p">)</span>
 </pre></div>
 </div>
-</section>
 </section>
 <hr class="docutils" />
 <section id="command-line">
@@ -477,7 +534,7 @@ document.write(`
 </section>
 <section id="fork">
 <h3>Fork<a class="headerlink" href="#fork" title="Link to this heading">#</a></h3>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Interactive (guided YAML review)</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Interactive (guided YAML review + plan prompts)</span>
 crocodash<span class="w"> </span>fork<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--bundle<span class="w"> </span>/path/to/bundle<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--caseroot<span class="w"> </span>/path/to/new_case<span class="w"> </span><span class="se">\</span>
@@ -486,7 +543,7 @@ crocodash<span class="w"> </span>fork<span class="w"> </span><span class="se">\<
 <span class="w">  </span>--machine<span class="w"> </span>derecho<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--project<span class="w"> </span>PROJ123
 
-<span class="c1"># Non-interactive (skip CESM-state copy prompts)</span>
+<span class="c1"># Non-interactive plan (YAML review still runs)</span>
 crocodash<span class="w"> </span>fork<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--bundle<span class="w"> </span>/path/to/bundle<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--caseroot<span class="w"> </span>/path/to/new_case<span class="w"> </span><span class="se">\</span>
@@ -509,21 +566,11 @@ crocodash<span class="w"> </span>fork<span class="w"> </span><span class="se">\<
 </section>
 </section>
 <hr class="docutils" />
-<section id="what-gets-diffed">
-<h2>What gets diffed?<a class="headerlink" href="#what-gets-diffed" title="Link to this heading">#</a></h2>
-<p><code class="docutils literal notranslate"><span class="pre">identify_non_standard_CrocoDash_case_information</span></code> creates a temporary standard case with the same grid, topo, and forcing configuration, then diffs your case against it. The diff captures:</p>
-<ul class="simple">
-<li><p>XML files present in your case but not in the standard one</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">user_nl_*</span></code> parameters added on top of defaults</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">xmlchange</span></code> commands in <code class="docutils literal notranslate"><span class="pre">replay.sh</span></code> not present by default</p></li>
-<li><p>Files in <code class="docutils literal notranslate"><span class="pre">SourceMods/</span></code></p></li>
-</ul>
-</section>
-<hr class="docutils" />
 <section id="apply-helpers">
 <h2>Apply helpers<a class="headerlink" href="#apply-helpers" title="Link to this heading">#</a></h2>
-<p><code class="docutils literal notranslate"><span class="pre">CrocoDash.shareable.apply</span></code> contains the low-level functions used by Fork internally. Savvy users can call these directly to transfer individual pieces of one case to another:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">CrocoDash.shareable.apply</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<p>The low-level transfer functions used by <code class="docutils literal notranslate"><span class="pre">ForkBundle</span></code> internally are importable
+directly for fine-grained control:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">CrocoDash.shareable</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">copy_xml_files_from_case</span><span class="p">,</span>
     <span class="n">copy_user_nl_params_from_case</span><span class="p">,</span>
     <span class="n">copy_source_mods_from_case</span><span class="p">,</span>
@@ -580,22 +627,19 @@ crocodash<span class="w"> </span>fork<span class="w"> </span><span class="se">\<
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow">Workflow</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-1-bundle">Step 1 — Bundle</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#step-2-fork">Step 2 — Fork</a><ul class="nav section-nav flex-column">
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#non-interactive-fork">Non-interactive fork</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-model-sender-and-recipient">The model: sender and recipient</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#sender-casebundle">Sender: CaseBundle</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#recipient-forkbundle">Recipient: ForkBundle</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#non-interactive-fork">Non-interactive fork</a></li>
 </ul>
 </li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#duplicate-one-step-shortcut">Duplicate (one-step shortcut)</a></li>
-</ul>
-</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#duplicate-same-user-shortcut">Duplicate (same-user shortcut)</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#command-line">Command Line</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#bundle">Bundle</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#fork">Fork</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#duplicate">Duplicate</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#what-gets-diffed">What gets diffed?</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#apply-helpers">Apply helpers</a></li>
 </ul>
   </nav></div>
