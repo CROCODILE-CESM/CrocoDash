@@ -227,14 +227,16 @@ def _check_state_schema_version(state, state_path):
         )
         return
     try:
-        major = int(version.split(".")[0])
+        parts = version.split(".")
+        major, minor = int(parts[0]), int(parts[1])
     except (ValueError, IndexError):
         raise ValueError(f"Invalid schema_version {version!r} in {state_path}.")
-    supported_major = int(STATE_SCHEMA_VERSION.split(".")[0])
-    if major != supported_major:
+    sup_parts = STATE_SCHEMA_VERSION.split(".")
+    sup_major, sup_minor = int(sup_parts[0]), int(sup_parts[1])
+    if (major, minor) != (sup_major, sup_minor):
         raise ValueError(
             f"{state_path} has schema version {version!r} but this version of "
-            f"CrocoDash supports major version {supported_major}. "
+            f"CrocoDash supports {sup_major}.{sup_minor}.x. "
             "Recreate the case with the current version of CrocoDash."
         )
 
