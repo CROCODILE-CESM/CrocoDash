@@ -591,8 +591,6 @@ class Case:
             This will be overridden and set to False if the large data workflow in configure_forcings is enabled.
         kwargs : bool, optional
             Whether to process the other forcings, of the form process_{configurator.name} = False.
-            Also accepts ``visualize=True`` to print the Dask dashboard link when a cluster is active
-            (see :func:`~CrocoDash.extract_forcings.case_setup.driver.run_workflow`).
 
         Raises
         ------
@@ -622,7 +620,6 @@ class Case:
         process_chl = kwargs.get("process_chl", True)
         process_runoff = kwargs.get("process_runoff", True)
         process_bgc_river_nutrients = kwargs.get("process_bgc_river_nutrients", True)
-        visualize = kwargs.get("visualize", False)
 
         self.driver.run_workflow(
             ic=process_initial_condition,
@@ -634,7 +631,6 @@ class Case:
             runoff=process_runoff and self.fcr.is_active("runoff"),
             bgcrivernutrients=process_bgc_river_nutrients
             and self.fcr.is_active("BGCRiverNutrients"),
-            visualize=visualize,
         )
 
         print(f"Case is ready to be built: {self.caseroot}")
