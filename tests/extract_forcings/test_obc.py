@@ -7,7 +7,7 @@ from pathlib import Path
 
 from CrocoDash.extract_forcings.obc import (
     process_obc_conditions,
-    _merge_single_boundary,
+    _merge_boundary,
 )
 from CrocoDash.grid import Grid
 
@@ -46,7 +46,8 @@ def obc_config(tmp_path, get_rect_grid):
                 "end": "20200115",
             },
             "general": {
-                "step": "5",
+                "get_step": None,
+                "regrid_step": 5,
                 "boundary_number_conversion": {"east": 1, "south": 2},
                 "preview": False,
             },
@@ -89,7 +90,7 @@ def obc_config(tmp_path, get_rect_grid):
 
 
 # ---------------------------------------------------------------------------
-# Preview: get step -tests date parsing and output file naming
+# Preview: verify get_pairs and regrid_pairs are computed correctly
 # ---------------------------------------------------------------------------
 
 
@@ -97,35 +98,31 @@ def test_preview_get_outputs(obc_config):
     config_path, tmp_path = obc_config
     preview = process_obc_conditions(config_path, preview=True)
 
-    # Date range: 20200101-20200115, step=5 -> chunks (01->06), (07->11), (12->15)
-    assert preview["date_pairs"][0][0] == datetime.strptime("20200101", "%Y%m%d")
-    assert preview["date_pairs"][-1][1] == datetime.strptime("20200115", "%Y%m%d")
-    assert len(preview["date_pairs"]) == 3
+    # get_step=None → one pair covering the full range
+    assert len(preview["get_pairs"]) == 1
+    assert preview["get_pairs"][0][0] == datetime.strptime("20200101", "%Y%m%d")
+    assert preview["get_pairs"][0][1] == datetime.strptime("20200115", "%Y%m%d")
 
-    # Each boundary x chunk should have a named output file (non-overlapping dates)
-    assert (
-        preview["get_outputs"][("east", 0)].name
-        == "east_unprocessed.20200101_20200106.nc"
+    # regrid_step=5 → three 5-day chunks: (01-05), (06-10), (11-15)
+    assert len(preview["regrid_pairs"]) == 3
+    assert preview["regrid_pairs"][0] == (
+        datetime.strptime("20200101", "%Y%m%d"),
+        datetime.strptime("20200105", "%Y%m%d"),
     )
-    assert (
-        preview["get_outputs"][("south", 0)].name
-        == "south_unprocessed.20200101_20200106.nc"
+    assert preview["regrid_pairs"][1] == (
+        datetime.strptime("20200106", "%Y%m%d"),
+        datetime.strptime("20200110", "%Y%m%d"),
     )
-    assert (
-        preview["get_outputs"][("east", 1)].name
-        == "east_unprocessed.20200107_20200111.nc"
-    )
-    assert (
-        preview["get_outputs"][("east", 2)].name
-        == "east_unprocessed.20200112_20200115.nc"
+    assert preview["regrid_pairs"][2] == (
+        datetime.strptime("20200111", "%Y%m%d"),
+        datetime.strptime("20200115", "%Y%m%d"),
     )
 
-    # When not skip_get, raw_inputs mirrors get_outputs
-    assert preview["raw_inputs"] == preview["get_outputs"]
+    assert set(preview["boundaries"]) == {"east", "south"}
 
 
 # ---------------------------------------------------------------------------
-# Unit test: _merge_single_boundary -tests merge without any external data
+# Unit test: _merge_boundary - tests merge without any external data
 # ---------------------------------------------------------------------------
 
 
@@ -153,7 +150,7 @@ def test_merge_single_boundary(
     chunk_files = sorted(regridded_dir.glob("forcing_obc_segment_001_*.nc"))
     assert len(chunk_files) > 0
 
-    result = _merge_single_boundary("001", chunk_files, output_dir)
+    result = _merge_boundary("001", chunk_files, output_dir)
 
     assert result.exists()
     assert result.name == "forcing_obc_segment_001.nc"
@@ -183,13 +180,15 @@ def test_obc_regrid_workflow(
         bounds["ic"]["lon_min"],
         bounds["ic"]["lon_max"],
     )
+    # get_step=None → one file covering the full range
     generate_piecewise_raw_data(ds, "2020-01-01", "2020-01-15", "east_unprocessed.")
     generate_piecewise_raw_data(ds, "2020-01-01", "2020-01-15", "south_unprocessed.")
 
     process_obc_conditions(config_path)
 
-    assert (regridded_dir / "forcing_obc_segment_001_20200101_20200106.nc").exists()
-    assert (regridded_dir / "forcing_obc_segment_002_20200101_20200106.nc").exists()
+    # regrid_step=5 → first chunk is 20200101-20200105
+    assert (regridded_dir / "forcing_obc_segment_001_20200101_20200105.nc").exists()
+    assert (regridded_dir / "forcing_obc_segment_002_20200101_20200105.nc").exists()
 
 
 @pytest.mark.slow
@@ -219,21 +218,16 @@ def test_obc_merge_workflow(
         "002",
         6,
     )
-    # Pre-place raw files so GET existence check skips download
+    # get_step=None → one raw file per boundary covering the full range
     for boundary, ds in [("east", east), ("south", south)]:
-        for fname in [
-            f"{boundary}_unprocessed.20200101_20200106.nc",
-            f"{boundary}_unprocessed.20200107_20200111.nc",
-            f"{boundary}_unprocessed.20200112_20200115.nc",
-        ]:
-            ds.to_netcdf(raw_dir / fname)
+        ds.to_netcdf(raw_dir / f"{boundary}_unprocessed.20200101_20200115.nc")
 
-    # Pre-place regridded files so REGRID existence check skips regridding
+    # regrid_step=5 → three regridded chunks per boundary
     for seg, ds in [("001", east), ("002", south)]:
         for fname in [
-            f"forcing_obc_segment_{seg}_20200101_20200106.nc",
-            f"forcing_obc_segment_{seg}_20200107_20200111.nc",
-            f"forcing_obc_segment_{seg}_20200112_20200115.nc",
+            f"forcing_obc_segment_{seg}_20200101_20200105.nc",
+            f"forcing_obc_segment_{seg}_20200106_20200110.nc",
+            f"forcing_obc_segment_{seg}_20200111_20200115.nc",
         ]:
             ds.to_netcdf(regridded_dir / fname)
 

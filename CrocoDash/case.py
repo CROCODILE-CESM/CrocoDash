@@ -508,8 +508,6 @@ class Case:
 
         # Write Config Dict for ic & bc forcings
 
-        step = (self.date_range[1] - self.date_range[0]).days + 1
-
         config = {
             "paths": {
                 "raw_dataset_path": "",
@@ -527,7 +525,8 @@ class Case:
             "forcing": {"product_name": "", "function_name": "", "information": {}},
             "general": {
                 "boundary_number_conversion": {},
-                "step": "",
+                "get_step": None,
+                "regrid_step": 30,
                 "preview": False,
             },
         }
@@ -563,7 +562,8 @@ class Case:
         config["general"]["boundary_number_conversion"] = {
             item: idx + 1 for idx, item in enumerate(self.boundaries)
         }
-        config["general"]["step"] = step
+        config["general"]["get_step"] = None
+        config["general"]["regrid_step"] = 30
 
         # Write out
         with open(self.extract_forcings_path / "config.json") as f:
