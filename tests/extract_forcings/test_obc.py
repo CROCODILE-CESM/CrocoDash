@@ -125,73 +125,6 @@ def test_preview_get_outputs(obc_config):
 
 
 # ---------------------------------------------------------------------------
-# Preview: regrid step -tests raw file discovery and regrid output naming
-# ---------------------------------------------------------------------------
-
-
-def test_preview_regrid_finds_raw_files(obc_config):
-    config_path, tmp_path = obc_config
-    raw_dir = tmp_path / "raw"
-
-    # Date pairs for step=5, 20200101-20200115: (01->06), (07->11), (12->15) -non-overlapping
-    # Put two raw files on disk for east boundary matching those pairs
-    (raw_dir / "east_unprocessed.20200101_20200106.nc").touch()
-    (raw_dir / "east_unprocessed.20200107_20200111.nc").touch()
-
-    preview = process_obc_conditions(config_path, skip_get=True, preview=True)
-
-    # Should find the two east files
-    assert ("east", 0) in preview["raw_inputs"]
-    assert ("east", 1) in preview["raw_inputs"]
-    assert (
-        preview["raw_inputs"][("east", 0)].name
-        == "east_unprocessed.20200101_20200106.nc"
-    )
-
-    # Should NOT find south (no south files on disk)
-    assert ("south", 0) not in preview["raw_inputs"]
-
-    # Regrid outputs should be named correctly for found inputs
-    assert (
-        preview["regrid_outputs"][("east", 0)].name
-        == "forcing_obc_segment_001_20200101_20200106.nc"
-    )
-    assert (
-        preview["regrid_outputs"][("east", 1)].name
-        == "forcing_obc_segment_001_20200107_20200111.nc"
-    )
-
-
-# ---------------------------------------------------------------------------
-# Preview: merge step -tests regridded file discovery and merge output naming
-# ---------------------------------------------------------------------------
-
-
-def test_preview_merge_finds_regridded_files(obc_config):
-    config_path, tmp_path = obc_config
-    regridded_dir = tmp_path / "regridded"
-
-    # Put regridded files on disk for both boundaries
-    (regridded_dir / "forcing_obc_segment_001_20200101_20200106.nc").touch()
-    (regridded_dir / "forcing_obc_segment_001_20200107_20200111.nc").touch()
-    (regridded_dir / "forcing_obc_segment_002_20200101_20200106.nc").touch()
-
-    preview = process_obc_conditions(
-        config_path, skip_get=True, skip_regrid=True, preview=True
-    )
-
-    # Should discover both boundaries
-    assert "001" in preview["regridded_inputs"]
-    assert "002" in preview["regridded_inputs"]
-    assert len(preview["regridded_inputs"]["001"]) == 2
-    assert len(preview["regridded_inputs"]["002"]) == 1
-
-    # Merge outputs should be named correctly
-    assert preview["merge_outputs"]["001"].name == "forcing_obc_segment_001.nc"
-    assert preview["merge_outputs"]["002"].name == "forcing_obc_segment_002.nc"
-
-
-# ---------------------------------------------------------------------------
 # Unit test: _merge_single_boundary -tests merge without any external data
 # ---------------------------------------------------------------------------
 
@@ -235,19 +168,6 @@ def test_merge_single_boundary(
 
 
 @pytest.mark.slow
-def test_obc_get_workflow(obc_config, skip_if_not_glade):
-    config_path, tmp_path = obc_config
-    raw_dir = tmp_path / "raw"
-    process_obc_conditions(
-        config_path,
-        skip_regrid=True,
-        skip_merge=True,
-    )
-    assert (raw_dir / "east_unprocessed.20200101_20200106.nc").exists()
-    assert (raw_dir / "south_unprocessed.20200101_20200106.nc").exists()
-
-
-@pytest.mark.slow
 def test_obc_regrid_workflow(
     obc_config, generate_piecewise_raw_data, dummy_forcing_factory, skip_if_not_glade
 ):
@@ -266,7 +186,7 @@ def test_obc_regrid_workflow(
     generate_piecewise_raw_data(ds, "2020-01-01", "2020-01-15", "east_unprocessed.")
     generate_piecewise_raw_data(ds, "2020-01-01", "2020-01-15", "south_unprocessed.")
 
-    process_obc_conditions(config_path, skip_get=True, skip_merge=True)
+    process_obc_conditions(config_path)
 
     assert (regridded_dir / "forcing_obc_segment_001_20200101_20200106.nc").exists()
     assert (regridded_dir / "forcing_obc_segment_002_20200101_20200106.nc").exists()
@@ -279,6 +199,7 @@ def test_obc_merge_workflow(
     config_path, tmp_path = obc_config
     grid = get_rect_grid
     bounds = Grid.get_bounding_boxes_of_rectangular_grid(grid)
+    raw_dir = tmp_path / "raw"
     regridded_dir = tmp_path / "regridded"
     output_dir = tmp_path / "output"
 
@@ -298,14 +219,25 @@ def test_obc_merge_workflow(
         "002",
         6,
     )
-    generate_piecewise_raw_data(
-        east, "2020-01-01", "2020-01-15", "forcing_obc_segment_001_"
-    )
-    generate_piecewise_raw_data(
-        south, "2020-01-01", "2020-01-15", "forcing_obc_segment_002_"
-    )
+    # Pre-place raw files so GET existence check skips download
+    for boundary, ds in [("east", east), ("south", south)]:
+        for fname in [
+            f"{boundary}_unprocessed.20200101_20200106.nc",
+            f"{boundary}_unprocessed.20200107_20200111.nc",
+            f"{boundary}_unprocessed.20200112_20200115.nc",
+        ]:
+            ds.to_netcdf(raw_dir / fname)
 
-    process_obc_conditions(config_path, skip_get=True, skip_regrid=True)
+    # Pre-place regridded files so REGRID existence check skips regridding
+    for seg, ds in [("001", east), ("002", south)]:
+        for fname in [
+            f"forcing_obc_segment_{seg}_20200101_20200106.nc",
+            f"forcing_obc_segment_{seg}_20200107_20200111.nc",
+            f"forcing_obc_segment_{seg}_20200112_20200115.nc",
+        ]:
+            ds.to_netcdf(regridded_dir / fname)
+
+    process_obc_conditions(config_path)
 
     for seg in ["001", "002"]:
         out = output_dir / f"forcing_obc_segment_{seg}.nc"

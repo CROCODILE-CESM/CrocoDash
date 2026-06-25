@@ -31,7 +31,6 @@ Typical CLI usage::
         --queue regular --visualize                 # same, plus Dask dashboard link
     python driver.py --tides --bgcic                # tides and BGC IC only
     python driver.py --all --skip runoff            # all except runoff
-    python driver.py --ic --no-get                  # IC, skip raw data download
 
 Typical Python usage (HPC power users)::
 
@@ -54,6 +53,7 @@ Typical Python usage (HPC power users)::
 """
 
 import sys
+import time
 from pathlib import Path
 from urllib.parse import urlparse
 import argparse
@@ -208,11 +208,6 @@ def parse_args():
         "--chl", action="store_true", help="Run chlorophyll processing"
     )
 
-    conditions_opts = parser.add_argument_group("Conditions options")
-    conditions_opts.add_argument("--no-get", action="store_true")
-    conditions_opts.add_argument("--no-regrid", action="store_true")
-    conditions_opts.add_argument("--no-merge", action="store_true")
-
     top.add_argument(
         "--skip",
         nargs="*",
@@ -302,7 +297,12 @@ def resolve_components(args, cfg):
         for k, v in vars(args).items()
         if isinstance(v, bool)
         and k
-        not in {"all", "test", "no_get", "no_regrid", "no_merge", "pbs", "visualize"}
+        not in {
+            "all",
+            "test",
+            "pbs",
+            "visualize",
+        }
     }
 
     skip = {s.lower() for s in args.skip}
@@ -336,9 +336,6 @@ def run_workflow(
     chl=False,
     runoff=False,
     bgcrivernutrients=False,
-    skip_get=False,
-    skip_regrid=False,
-    skip_merge=False,
     preview=False,
     cfg=None,
     client=None,
@@ -362,9 +359,6 @@ def run_workflow(
         chl:                 Run chlorophyll processing
         runoff:              Run runoff mapping
         bgcrivernutrients:   Run BGC river nutrients (always runs after runoff)
-        skip_get:            Skip raw data download step (OBC/IC)
-        skip_regrid:         Skip regridding step (OBC)
-        skip_merge:          Skip merge step (OBC)
         preview:             Preview task graph without executing
         cfg:                 Config object; loaded from CONFIG_PATH if None
         client:              Dask distributed Client (power users). Caller owns lifecycle.
@@ -410,18 +404,19 @@ def run_workflow(
                 "(pass --n-workers or --pbs to enable a cluster)."
             )
 
+    timings = {}
     try:
         if bc:
+            _t = time.perf_counter()
             process_obc(
                 config_path=CONFIG_PATH,
-                skip_get=skip_get,
-                skip_regrid=skip_regrid,
-                skip_merge=skip_merge,
                 client=client,
                 preview=preview,
             )
+            timings["bc"] = time.perf_counter() - _t
 
         if ic:
+            _t = time.perf_counter()
             initial_condition.process_initial_condition(
                 product_name=cfg["basic"]["forcing"]["product_name"],
                 function_name=cfg["basic"]["forcing"]["function_name"],
@@ -436,27 +431,47 @@ def run_workflow(
                 bathymetry_path=cfg["basic"]["paths"]["bathymetry_path"],
                 preview=preview,
             )
+            timings["ic"] = time.perf_counter() - _t
 
         if bgcic:
+            _t = time.perf_counter()
             process_bgcic()
+            timings["bgcic"] = time.perf_counter() - _t
 
         if bgcironforcing:
+            _t = time.perf_counter()
             process_bgcironforcing()
+            timings["bgcironforcing"] = time.perf_counter() - _t
 
         if tides:
+            _t = time.perf_counter()
             process_tides()
+            timings["tides"] = time.perf_counter() - _t
 
         if chl:
+            _t = time.perf_counter()
             process_chl()
+            timings["chl"] = time.perf_counter() - _t
 
         if runoff:
+            _t = time.perf_counter()
             process_runoff()
+            timings["runoff"] = time.perf_counter() - _t
 
         if bgcrivernutrients:
+            _t = time.perf_counter()
             process_bgcrivernutrients()
+            timings["bgcrivernutrients"] = time.perf_counter() - _t
     finally:
         if own_client:
             client.close()
+
+    if timings:
+        parts = [f"{k}: {v:.1f}s" for k, v in timings.items()]
+        parts.append(f"total: {sum(timings.values()):.1f}s")
+        print("[timing] " + "  ".join(parts))
+
+    return timings
 
 
 def run_from_cli(args, cfg):
@@ -487,26 +502,25 @@ def run_from_cli(args, cfg):
             resource_spec=args.resource_spec,
         )
 
+    workflow_kwargs = dict(
+        ic=args.ic,
+        bc=args.bc,
+        bgcic=args.bgcic,
+        bgcironforcing=args.bgcironforcing,
+        tides=args.tides,
+        chl=args.chl,
+        runoff=args.runoff,
+        bgcrivernutrients=args.bgcrivernutrients,
+        preview=cfg["basic"]["general"].get("preview", False),
+        cfg=cfg,
+        client=client,
+        n_workers=args.n_workers if not args.pbs else None,
+        visualize=args.visualize,
+        pbs=args.pbs,
+    )
+
     try:
-        run_workflow(
-            ic=args.ic,
-            bc=args.bc,
-            bgcic=args.bgcic,
-            bgcironforcing=args.bgcironforcing,
-            tides=args.tides,
-            chl=args.chl,
-            runoff=args.runoff,
-            bgcrivernutrients=args.bgcrivernutrients,
-            skip_get=args.no_get,
-            skip_regrid=args.no_regrid,
-            skip_merge=args.no_merge,
-            preview=cfg["basic"]["general"].get("preview", False),
-            cfg=cfg,
-            client=client,
-            n_workers=args.n_workers if not args.pbs else None,
-            visualize=args.visualize,
-            pbs=args.pbs,
-        )
+        run_workflow(**workflow_kwargs)
     finally:
         if client is not None:
             client.close()
