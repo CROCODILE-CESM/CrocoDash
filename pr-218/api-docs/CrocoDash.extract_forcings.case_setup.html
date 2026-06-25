@@ -383,45 +383,17 @@ into MOM6-compatible file formats.</p>
 <p>The script can be run from the command line with various component flags to control which
 forcings are processed. It loads configuration from config.json and coordinates all extraction,
 regridding, and formatting operations.</p>
-<p>OBC processing (<code class="docutils literal notranslate"><span class="pre">--bc</span></code>) uses Dask for the <strong>GET</strong> (download) step only.
-<strong>REGRID</strong> and <strong>MERGE</strong> always run sequentially in the main process — xESMF/ESMF
-cannot initialize its parallel environment in subprocess workers on PBS/HPC
-systems (see <code class="xref py py-mod docutils literal notranslate"><span class="pre">CrocoDash.extract_forcings.obc</span></code>).</p>
-<p>By default everything runs without a cluster (sequential <code class="docutils literal notranslate"><span class="pre">dask.compute</span></code>). Pass
-<code class="docutils literal notranslate"><span class="pre">--n-workers</span> <span class="pre">N</span></code> to launch a <code class="docutils literal notranslate"><span class="pre">LocalCluster</span></code> that parallelises GET. For PBS
-clusters, add <code class="docutils literal notranslate"><span class="pre">--pbs</span></code> along with optional <code class="docutils literal notranslate"><span class="pre">--queue</span></code>, <code class="docutils literal notranslate"><span class="pre">--walltime</span></code>,
-<code class="docutils literal notranslate"><span class="pre">--memory</span></code>, <code class="docutils literal notranslate"><span class="pre">--cores</span></code>, and <code class="docutils literal notranslate"><span class="pre">--resource-spec</span></code> flags (requires
-<code class="docutils literal notranslate"><span class="pre">dask-jobqueue</span></code>). For full Python control (e.g. SLURM), create a client with
-<a class="reference internal" href="CrocoDash.extract_forcings.html#CrocoDash.extract_forcings.utils.make_pbs_cluster" title="CrocoDash.extract_forcings.utils.make_pbs_cluster"><code class="xref py py-func docutils literal notranslate"><span class="pre">make_pbs_cluster()</span></code></a> and pass it to
-<a class="reference internal" href="#CrocoDash.extract_forcings.case_setup.driver.run_workflow" title="CrocoDash.extract_forcings.case_setup.driver.run_workflow"><code class="xref py py-func docutils literal notranslate"><span class="pre">run_workflow()</span></code></a> directly.</p>
 <p>Typical CLI usage:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">driver</span><span class="o">.</span><span class="n">py</span> <span class="o">--</span><span class="nb">all</span>                          <span class="c1"># all components, sequential OBC</span>
-<span class="n">python</span> <span class="n">driver</span><span class="o">.</span><span class="n">py</span> <span class="o">--</span><span class="n">bc</span> <span class="o">--</span><span class="n">n</span><span class="o">-</span><span class="n">workers</span> <span class="mi">4</span>             <span class="c1"># OBC with 4 local workers</span>
-<span class="n">python</span> <span class="n">driver</span><span class="o">.</span><span class="n">py</span> <span class="o">--</span><span class="n">bc</span> <span class="o">--</span><span class="n">n</span><span class="o">-</span><span class="n">workers</span> <span class="mi">8</span> <span class="o">--</span><span class="n">pbs</span>         <span class="o">--</span><span class="n">queue</span> <span class="n">regular</span> <span class="o">--</span><span class="n">walltime</span> <span class="mi">02</span><span class="p">:</span><span class="mi">00</span><span class="p">:</span><span class="mi">00</span>         <span class="c1"># OBC with 8 PBS jobs</span>
-<span class="n">python</span> <span class="n">driver</span><span class="o">.</span><span class="n">py</span> <span class="o">--</span><span class="n">bc</span> <span class="o">--</span><span class="n">n</span><span class="o">-</span><span class="n">workers</span> <span class="mi">8</span> <span class="o">--</span><span class="n">pbs</span>         <span class="o">--</span><span class="n">queue</span> <span class="n">regular</span> <span class="o">--</span><span class="n">visualize</span>                 <span class="c1"># same, plus Dask dashboard link</span>
-<span class="n">python</span> <span class="n">driver</span><span class="o">.</span><span class="n">py</span> <span class="o">--</span><span class="n">tides</span> <span class="o">--</span><span class="n">bgcic</span>                <span class="c1"># tides and BGC IC only</span>
-<span class="n">python</span> <span class="n">driver</span><span class="o">.</span><span class="n">py</span> <span class="o">--</span><span class="nb">all</span> <span class="o">--</span><span class="n">skip</span> <span class="n">runoff</span>            <span class="c1"># all except runoff</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">driver</span><span class="o">.</span><span class="n">py</span> <span class="o">--</span><span class="nb">all</span>
+<span class="n">python</span> <span class="n">driver</span><span class="o">.</span><span class="n">py</span> <span class="o">--</span><span class="n">bc</span>
+<span class="n">python</span> <span class="n">driver</span><span class="o">.</span><span class="n">py</span> <span class="o">--</span><span class="n">tides</span> <span class="o">--</span><span class="n">bgcic</span>
+<span class="n">python</span> <span class="n">driver</span><span class="o">.</span><span class="n">py</span> <span class="o">--</span><span class="nb">all</span> <span class="o">--</span><span class="n">skip</span> <span class="n">runoff</span>
 </pre></div>
 </div>
-<p>Typical Python usage (HPC power users):</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">CrocoDash.extract_forcings.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_pbs_cluster</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">CrocoDash.extract_forcings.case_setup.driver</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_workflow</span>
-
-<span class="n">client</span> <span class="o">=</span> <span class="n">make_pbs_cluster</span><span class="p">(</span><span class="n">n_workers</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">queue</span><span class="o">=</span><span class="s2">&quot;regular&quot;</span><span class="p">,</span> <span class="n">walltime</span><span class="o">=</span><span class="s2">&quot;02:00:00&quot;</span><span class="p">)</span>
-<span class="n">run_workflow</span><span class="p">(</span><span class="n">bc</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ic</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span> <span class="n">visualize</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="n">client</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+<p>Typical Python usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">CrocoDash.extract_forcings.case_setup.driver</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_workflow</span>
+<span class="n">run_workflow</span><span class="p">(</span><span class="n">bc</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ic</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
-</div>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>On HPC systems (PBS/SLURM), the Dask dashboard runs on an internal compute
-node that is not directly reachable from your laptop. When <code class="docutils literal notranslate"><span class="pre">--visualize</span></code>
-is used with <code class="docutils literal notranslate"><span class="pre">--pbs</span></code>, the driver prints a ready-to-run SSH tunnel command.
-Run it on your laptop to forward the port, then open <code class="docutils literal notranslate"><span class="pre">http://localhost:&lt;port&gt;/status</span></code>
-in a browser:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ssh</span> <span class="o">-</span><span class="n">L</span> <span class="mi">8787</span><span class="p">:</span><span class="o">&lt;</span><span class="n">compute</span><span class="o">-</span><span class="n">node</span><span class="o">&gt;</span><span class="p">:</span><span class="mi">8787</span> <span class="o">&lt;</span><span class="n">login</span><span class="o">-</span><span class="n">node</span><span class="o">&gt;</span>
-</pre></div>
-</div>
 </div>
 <dl class="py function">
 <dt class="sig sig-object py" id="CrocoDash.extract_forcings.case_setup.driver.parse_args">
@@ -504,16 +476,15 @@ based on the resolution logic.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="CrocoDash.extract_forcings.case_setup.driver.run_workflow">
-<span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.case_setup.driver.</span></span><span class="sig-name descname"><span class="pre">run_workflow</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ic</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bgcic</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bgcironforcing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tides</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chl</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">runoff</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bgcrivernutrients</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preview</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cfg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">client</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_workers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">visualize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pbs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.extract_forcings.case_setup.driver.run_workflow" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.case_setup.driver.</span></span><span class="sig-name descname"><span class="pre">run_workflow</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ic</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bgcic</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bgcironforcing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tides</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chl</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">runoff</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bgcrivernutrients</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preview</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cfg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.extract_forcings.case_setup.driver.run_workflow" title="Link to this definition">#</a></dt>
 <dd><p>Execute the forcing extraction workflow.</p>
 <p>This is the shared core used by both run_from_cli and case.py’s process_forcings.
-Each boolean flag enables the corresponding component. Components run sequentially;
-parallelism is handled internally by individual components (e.g., OBC uses Dask).</p>
+Each boolean flag enables the corresponding component. All steps run sequentially.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>ic</strong> – Run initial conditions</p></li>
-<li><p><strong>bc</strong> – Run boundary conditions (OBC; parallel internally via Dask)</p></li>
+<li><p><strong>bc</strong> – Run boundary conditions (OBC)</p></li>
 <li><p><strong>bgcic</strong> – Run BGC initial conditions</p></li>
 <li><p><strong>bgcironforcing</strong> – Run BGC iron forcing</p></li>
 <li><p><strong>tides</strong> – Run tidal forcing</p></li>
@@ -522,19 +493,6 @@ parallelism is handled internally by individual components (e.g., OBC uses Dask)
 <li><p><strong>bgcrivernutrients</strong> – Run BGC river nutrients (always runs after runoff)</p></li>
 <li><p><strong>preview</strong> – Preview task graph without executing</p></li>
 <li><p><strong>cfg</strong> – Config object; loaded from CONFIG_PATH if None</p></li>
-<li><p><strong>client</strong> – Dask distributed Client (power users). Caller owns lifecycle.
-Create one with <a class="reference internal" href="CrocoDash.extract_forcings.html#CrocoDash.extract_forcings.utils.make_pbs_cluster" title="CrocoDash.extract_forcings.utils.make_pbs_cluster"><code class="xref py py-func docutils literal notranslate"><span class="pre">make_pbs_cluster()</span></code></a>
-or <a class="reference internal" href="CrocoDash.extract_forcings.html#CrocoDash.extract_forcings.utils.make_local_cluster" title="CrocoDash.extract_forcings.utils.make_local_cluster"><code class="xref py py-func docutils literal notranslate"><span class="pre">make_local_cluster()</span></code></a>.</p></li>
-<li><p><strong>n_workers</strong> – Spin up a LocalCluster with this many workers for GET.
-REGRID and MERGE always run sequentially in the main
-process. Ignored if client is already provided. If neither
-is set, OBC uses <code class="docutils literal notranslate"><span class="pre">dask.compute</span></code> with no cluster overhead.</p></li>
-<li><p><strong>visualize</strong> – If True and a Dask client is active, print the Dask
-dashboard link so progress can be monitored in a browser.
-When <code class="docutils literal notranslate"><span class="pre">pbs=True</span></code>, also prints a ready-to-run SSH tunnel
-command for reaching the dashboard from outside the cluster.</p></li>
-<li><p><strong>pbs</strong> – Set to True when the client was created with a PBS cluster.
-Only affects the extra SSH hint printed by <code class="docutils literal notranslate"><span class="pre">visualize</span></code>.</p></li>
 </ul>
 </dd>
 </dl>
