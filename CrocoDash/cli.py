@@ -1,6 +1,7 @@
 import argparse
 import json
 import sys
+from pathlib import Path
 
 
 def _create(args):
@@ -16,6 +17,33 @@ def _dump(args):
 
     config = case_to_yaml(args.caseroot)
     yaml.dump(config, sys.stdout, default_flow_style=False, sort_keys=False)
+
+
+def _extract_forcings(args):
+    from CrocoDash import case_state
+    from CrocoDash.extract_forcings.driver import run_workflow, resolve_components
+
+    caseroot = Path(args.caseroot) if args.caseroot else Path.cwd()
+    state = case_state.read(caseroot)
+    config_path = Path(state["inputdir"]) / "extract_forcings" / "config.json"
+
+    with open(config_path) as f:
+        config = json.load(f)
+
+    args = resolve_components(args, config)
+
+    run_workflow(
+        config_path=config_path,
+        ic=args.ic,
+        bc=args.bc,
+        bgcic=args.bgcic,
+        bgcironforcing=args.bgcironforcing,
+        tides=args.tides,
+        chl_=args.chl,
+        runoff=args.runoff,
+        bgcrivernutrients=args.bgcrivernutrients,
+        preview=config["conditions"]["general"].get("preview", False),
+    )
 
 
 def _bundle(args):
@@ -88,6 +116,32 @@ def main():
         "--caseroot", required=True, help="Path to the existing CESM caseroot."
     )
     dump_parser.set_defaults(func=_dump)
+
+    # --- extract-forcings ---
+    ef_parser = subparsers.add_parser(
+        "extract-forcings",
+        help="Run the forcing extraction workflow for an existing CrocoDash case.",
+    )
+    ef_parser.add_argument(
+        "--caseroot",
+        default=None,
+        help="Path to the CESM caseroot. Defaults to the current working directory.",
+    )
+    ef_top = ef_parser.add_argument_group("Top-level actions")
+    ef_top.add_argument("--all", action="store_true", help="Run all components")
+    ef_components = ef_parser.add_argument_group("Forcing components")
+    ef_components.add_argument("--ic", action="store_true", help="Run initial conditions")
+    ef_components.add_argument("--bc", action="store_true", help="Run boundary conditions")
+    ef_components.add_argument("--bgcic", action="store_true", help="Run BGC initial conditions")
+    ef_components.add_argument("--bgcironforcing", action="store_true", help="Run BGC iron forcing")
+    ef_components.add_argument("--bgcrivernutrients", action="store_true", help="Run BGC river nutrients")
+    ef_components.add_argument("--runoff", action="store_true", help="Run runoff mapping")
+    ef_components.add_argument("--tides", action="store_true", help="Run tidal forcing")
+    ef_components.add_argument("--chl", action="store_true", help="Run chlorophyll processing")
+    ef_top.add_argument(
+        "--skip", nargs="*", default=[], help="Skip components by name (e.g. --skip tides runoff)"
+    )
+    ef_parser.set_defaults(func=_extract_forcings)
 
     # --- bundle ---
     bundle_parser = subparsers.add_parser(

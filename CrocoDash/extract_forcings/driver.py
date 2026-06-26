@@ -1,0 +1,274 @@
+"""CrocoDash Forcing Extraction Driver
+
+Orchestrates the forcing extraction workflow for a CrocoDash case. Reads
+``config.json`` (written by ``Case.configure_forcings``) and derives all paths
+from the case state file via ``case_state.read``.
+
+This module exposes ``run_workflow`` as the Python API. The CLI entry point is
+``crocodash extract-forcings`` (see ``CrocoDash.cli``).
+
+Typical Python usage::
+
+    from CrocoDash.extract_forcings.driver import run_workflow
+
+    run_workflow(config_path="~/croc_input/mycase/extract_forcings/config.json", bc=True, ic=True)
+
+OBC processing (``bc``) uses Dask for the **GET** step only. **REGRID** and
+**MERGE** always run sequentially in the main process — ESMF cannot initialise
+in subprocess workers on PBS/HPC systems.
+"""
+
+import json
+import time
+from pathlib import Path
+
+from CrocoDash import case_state
+from CrocoDash.extract_forcings import (
+    bgc,
+    runoff as rof,
+    tides as tides_mod,
+    chlorophyll as chl,
+)
+from CrocoDash.extract_forcings.get_dataset_piecewise import get_dataset_piecewise
+from CrocoDash.extract_forcings.regrid_dataset_piecewise import regrid_dataset_piecewise
+from CrocoDash.extract_forcings.merge_piecewise_dataset import merge_piecewise_dataset
+from CrocoDash.grid import Grid
+from CrocoDash.topo import Topo
+
+
+def _load(config_path):
+    """Load config.json, read case state, and derive common paths."""
+    with open(config_path) as f:
+        config = json.load(f)
+    caseroot = config["caseroot"]
+    state = case_state.read(caseroot)
+    inputdir = Path(state["inputdir"])
+    return config, state, inputdir
+
+
+def run_workflow(
+    config_path,
+    ic=False,
+    bc=False,
+    bgcic=False,
+    bgcironforcing=False,
+    tides=False,
+    chl_=False,
+    runoff=False,
+    bgcrivernutrients=False,
+    preview=False,
+):
+    """
+    Execute the forcing extraction workflow.
+
+    Parameters
+    ----------
+    config_path : str or Path
+        Path to the ``config.json`` written by ``Case.configure_forcings``.
+    ic : bool
+        Run initial conditions.
+    bc : bool
+        Run boundary conditions.
+    bgcic : bool
+        Run BGC initial conditions.
+    bgcironforcing : bool
+        Run BGC iron forcing.
+    tides : bool
+        Run tidal forcing.
+    chl_ : bool
+        Run chlorophyll processing.
+    runoff : bool
+        Run runoff mapping.
+    bgcrivernutrients : bool
+        Run BGC river nutrients (always runs after runoff).
+    preview : bool
+        Preview task graph without executing.
+    """
+    config_path = Path(config_path)
+    config, state, inputdir = _load(config_path)
+    conditions = config["conditions"]
+
+    supergrid_path = state["supergrid_path"]
+    vgrid_path = state["vgrid_path"]
+    topo_path = state["topo_path"]
+    extract_forcings_dir = inputdir / "extract_forcings"
+    raw_data_dir = extract_forcings_dir / "raw_data"
+    regridded_data_dir = extract_forcings_dir / "regridded_data"
+    output_path = inputdir / "ocnice"
+
+    if not any([ic, bc, bgcic, bgcironforcing, tides, chl_, runoff, bgcrivernutrients]):
+        print("No components selected.")
+        return
+
+    timings = {}
+    try:
+        raw_dataset_pattern = r"(north|east|south|west)_unprocessed\.(\d{8})_(\d{8})\.nc"
+        regridded_dataset_pattern = r"forcing_obc_segment_(\d{3})_(\d{8})_(\d{8})\.nc"
+
+        if ic or bc:
+            _t = time.perf_counter()
+            get_dataset_piecewise(
+                product_name=conditions["forcing"]["product_name"],
+                function_name=conditions["forcing"]["function_name"],
+                product_information=conditions["forcing"]["information"],
+                date_format=conditions["dates"]["format"],
+                start_date=conditions["dates"]["start"],
+                end_date=conditions["dates"]["end"],
+                hgrid_path=supergrid_path,
+                step_days=int(conditions["general"]["step"]),
+                output_dir=raw_data_dir,
+                boundary_number_conversion=conditions["general"]["boundary_number_conversion"],
+                run_initial_condition=ic,
+                run_boundary_conditions=bc,
+                preview=preview,
+            )
+            regrid_dataset_piecewise(
+                folder=raw_data_dir,
+                input_dataset_regex=raw_dataset_pattern,
+                date_format=conditions["dates"]["format"],
+                start_date=conditions["dates"]["start"],
+                end_date=conditions["dates"]["end"],
+                hgrid_path=supergrid_path,
+                bathymetry=topo_path,
+                dataset_varnames=conditions["forcing"]["information"],
+                output_folder=regridded_data_dir,
+                boundary_number_conversion=conditions["general"]["boundary_number_conversion"],
+                run_initial_condition=ic,
+                run_boundary_conditions=bc,
+                vgrid_path=vgrid_path,
+                preview=preview,
+            )
+            merge_piecewise_dataset(
+                folder=regridded_data_dir,
+                input_dataset_regex=regridded_dataset_pattern,
+                date_format=conditions["dates"]["format"],
+                start_date=conditions["dates"]["start"],
+                end_date=conditions["dates"]["end"],
+                boundary_number_conversion=conditions["general"]["boundary_number_conversion"],
+                output_folder=output_path,
+                run_initial_condition=ic,
+                run_boundary_conditions=bc,
+                preview=preview,
+            )
+            timings["ic/bc"] = time.perf_counter() - _t
+
+        if bgcic:
+            _t = time.perf_counter()
+            bgc.process_bgc_ic(
+                file_path=config["bgcic"]["inputs"]["marbl_ic_filepath"],
+                output_path=output_path / config["bgcic"]["outputs"]["MARBL_TRACERS_IC_FILE"],
+            )
+            timings["bgcic"] = time.perf_counter() - _t
+
+        if bgcironforcing:
+            _t = time.perf_counter()
+            grid = Grid.from_supergrid(supergrid_path)
+            bgc.process_bgc_iron_forcing(
+                nx=grid.nx,
+                ny=grid.ny,
+                MARBL_FESEDFLUX_FILE=config["bgcironforcing"]["outputs"]["MARBL_FESEDFLUX_FILE"],
+                MARBL_FEVENTFLUX_FILE=config["bgcironforcing"]["outputs"]["MARBL_FEVENTFLUX_FILE"],
+                inputdir=inputdir,
+            )
+            timings["bgcironforcing"] = time.perf_counter() - _t
+
+        if tides:
+            _t = time.perf_counter()
+            import xarray as xr
+
+            topo_ds = xr.open_dataset(topo_path, decode_times=False)
+            grid = Grid.from_supergrid(supergrid_path)
+            ocn_topo = Topo.from_topo_file(
+                grid, topo_path, min_depth=topo_ds.attrs["min_depth"], git=False
+            )
+            tides_mod.process_tides(
+                ocn_topo=ocn_topo,
+                inputdir=inputdir,
+                supergrid_path=supergrid_path,
+                vgrid_path=vgrid_path,
+                tidal_constituents=config["tides"]["inputs"]["tidal_constituents"],
+                boundaries=config["tides"]["inputs"]["boundaries"],
+                tpxo_elevation_filepath=config["tides"]["inputs"]["tpxo_elevation_filepath"],
+                tpxo_velocity_filepath=config["tides"]["inputs"]["tpxo_velocity_filepath"],
+            )
+            timings["tides"] = time.perf_counter() - _t
+
+        if chl_:
+            _t = time.perf_counter()
+            import xarray as xr
+
+            topo_ds = xr.open_dataset(topo_path, decode_times=False)
+            grid = Grid.from_supergrid(supergrid_path)
+            ocn_topo = Topo.from_topo_file(
+                grid, topo_path, min_depth=topo_ds.attrs["min_depth"], git=False
+            )
+            chl.process_chl(
+                ocn_grid=grid,
+                ocn_topo=ocn_topo,
+                inputdir=inputdir,
+                chl_processed_filepath=config["chl"]["inputs"]["chl_processed_filepath"],
+                output_filepath=config["chl"]["outputs"]["CHL_FILE"],
+            )
+            timings["chl"] = time.perf_counter() - _t
+
+        if runoff:
+            _t = time.perf_counter()
+            rof.generate_rof_ocn_map(
+                rof_grid_name=config["runoff"]["inputs"]["rof_grid_name"],
+                rof_esmf_mesh_filepath=config["runoff"]["inputs"]["rof_esmf_mesh_filepath"],
+                ocn_mesh_filepath=config["runoff"]["inputs"]["case_esmf_mesh_path"],
+                inputdir=inputdir,
+                grid_name=config["runoff"]["inputs"]["case_grid_name"],
+                rmax=config["runoff"]["inputs"]["rmax"],
+                fold=config["runoff"]["inputs"]["fold"],
+            )
+            timings["runoff"] = time.perf_counter() - _t
+
+        if bgcrivernutrients:
+            _t = time.perf_counter()
+            grid = Grid.from_supergrid(supergrid_path)
+            bgc.process_river_nutrients(
+                ocn_grid=grid,
+                global_river_nutrients_filepath=config["bgcrivernutrients"]["inputs"][
+                    "global_river_nutrients_filepath"
+                ],
+                mapping_file=config["runoff"]["outputs"]["ROF2OCN_LIQ_RMAPNAME"],
+                river_nutrients_nnsm_filepath=output_path
+                / config["bgcrivernutrients"]["outputs"]["RIV_FLUX_FILE"],
+            )
+            timings["bgcrivernutrients"] = time.perf_counter() - _t
+
+    finally:
+        pass
+
+    if timings:
+        parts = [f"{k}: {v:.1f}s" for k, v in timings.items()]
+        parts.append(f"total: {sum(timings.values()):.1f}s")
+        print("[timing] " + "  ".join(parts))
+
+    return timings
+
+
+def resolve_components(args, config):
+    """Resolve which components to run based on CLI args and config availability."""
+    components = {
+        k: v
+        for k, v in vars(args).items()
+        if isinstance(v, bool)
+        and k not in {"all", "pbs", "visualize"}
+    }
+    skip = {s.lower() for s in args.skip}
+
+    for name in components:
+        requested = args.all or getattr(args, name)
+        exists = name in {"ic", "bc"} or name in config
+        should = requested and exists and name not in skip
+
+        if requested and not exists:
+            print(f"[skip] '{name}' requested but not in config")
+        elif requested and name in skip:
+            print(f"[skip] '{name}' skipped via --skip")
+
+        setattr(args, name, should)
+
+    return args

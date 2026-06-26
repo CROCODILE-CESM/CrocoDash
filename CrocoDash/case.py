@@ -3,7 +3,6 @@ import uuid
 import shutil
 from datetime import datetime
 import json
-import importlib.util
 import pandas as pd
 import regional_mom6 as rmom6
 from CrocoDash.grid import Grid
@@ -339,6 +338,7 @@ class Case:
         self.esmf_mesh_path = (
             inputdir / "ocnice" / f"ESMF_mesh_{ocn_grid.name}_{session_id}.nc"
         )
+
         # MOM6 supergrid file
         ocn_grid.write_supergrid(self.supergrid_path)
 
@@ -444,20 +444,7 @@ class Case:
         if self.override is True:
             if self.extract_forcings_path.exists():
                 shutil.rmtree(self.extract_forcings_path)
-        # Copy extract_forcings folder there
-        shutil.copytree(
-            Path(__file__).parent / "extract_forcings" / "case_setup",
-            self.extract_forcings_path,
-            dirs_exist_ok=True,
-        )
-
-        # Import Extract Forcings Workflow
-        module_name = f"driver_{uuid.uuid4().hex}"
-        spec = importlib.util.spec_from_file_location(
-            module_name, self.extract_forcings_path / "driver.py"
-        )
-        self.driver = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(self.driver)
+        self.extract_forcings_path.mkdir(parents=True, exist_ok=True)
 
         # Call the required initial and boundary condition configurator
         self.configure_initial_and_boundary_conditions(
@@ -520,66 +507,37 @@ class Case:
 
         step = (self.date_range[1] - self.date_range[0]).days + 1
 
-        config = {
-            "paths": {
-                "raw_dataset_path": "",
-                "hgrid_path": "",
-                "vgrid_path": "",
-                "bathymetry_path": "",
-                "regridded_dataset_path": "",
-                "output_path": "",
+        conditions = {
+            "dates": {
+                "start": self.date_range[0].strftime(date_format),
+                "end": self.date_range[1].strftime(date_format),
+                "format": date_format,
             },
-            "file_regex": {
-                "raw_dataset_pattern": "(north|east|south|west)_unprocessed\\.(\\d{8})_(\\d{8})\\.nc",
-                "regridded_dataset_pattern": "forcing_obc_segment_(\\d{3})_(\\d{8})_(\\d{8})\\.nc",
+            "forcing": {
+                "product_name": self.forcing_product_name.upper(),
+                "function_name": function_name,
+                "information": ProductRegistry.get_product(
+                    self.forcing_product_name.lower()
+                ).write_metadata(include_marbl_tracers=self.bgc_in_compset),
             },
-            "dates": {"start": "", "end": "", "format": ""},
-            "forcing": {"product_name": "", "function_name": "", "information": {}},
             "general": {
-                "boundary_number_conversion": {},
-                "step": "",
+                "boundary_number_conversion": {
+                    item: idx + 1 for idx, item in enumerate(self.boundaries)
+                },
+                "step": step,
                 "preview": False,
             },
         }
 
-        # Paths
-        config["paths"]["hgrid_path"] = self.supergrid_path
-        config["paths"]["vgrid_path"] = self.vgrid_path
-        config["paths"]["bathymetry_path"] = self.topo_path
-        config["paths"]["raw_dataset_path"] = str(
-            self.extract_forcings_path / "raw_data"
-        )
-        config["paths"]["input_dataset_path"] = str(self.extract_forcings_path.parent)
-        config["paths"]["regridded_dataset_path"] = str(
-            self.extract_forcings_path / "regridded_data"
-        )
-        config["paths"]["output_path"] = str(self.inputdir / "ocnice")
-
-        # Regex never changes!
-
-        # Dates
-        config["dates"]["start"] = self.date_range[0].strftime(date_format)
-        config["dates"]["end"] = self.date_range[1].strftime(date_format)
-        config["dates"]["format"] = date_format
-
-        # Product Information
-        config["forcing"]["product_name"] = self.forcing_product_name.upper()
-        config["forcing"]["function_name"] = function_name
-        config["forcing"]["information"] = ProductRegistry.get_product(
-            self.forcing_product_name.lower()
-        ).write_metadata(include_marbl_tracers=self.bgc_in_compset)
-
-        # General
-        config["general"]["boundary_number_conversion"] = {
-            item: idx + 1 for idx, item in enumerate(self.boundaries)
-        }
-        config["general"]["step"] = step
-
-        # Write out
-        with open(self.extract_forcings_path / "config.json") as f:
-            general_config = json.load(f)
-        general_config["basic"] = config
-        with open(self.extract_forcings_path / "config.json", "w") as f:
+        config_path = self.extract_forcings_path / "config.json"
+        if config_path.exists():
+            with open(config_path) as f:
+                general_config = json.load(f)
+        else:
+            general_config = {}
+        general_config["caseroot"] = str(self.caseroot)
+        general_config["conditions"] = conditions
+        with open(config_path, "w") as f:
             json.dump(general_config, f, indent=4)
 
     def process_forcings(
@@ -625,32 +583,27 @@ class Case:
                 "configure_forcings() must be called before process_forcings()."
             )
 
-        if process_initial_condition or process_velocity_tracers:
-            self.driver.process_conditions(
-                get_dataset_piecewise=True,
-                regrid_dataset_piecewise=True,
-                merge_piecewise_dataset=True,
-                run_initial_condition=process_initial_condition,
-                run_boundary_conditions=process_velocity_tracers,
-            )
-
         process_bgc = kwargs.get("process_bgc", True)
         process_tides = kwargs.get("process_tides", True)
         process_chl = kwargs.get("process_chl", True)
         process_runoff = kwargs.get("process_runoff", True)
         process_bgc_river_nutrients = kwargs.get("process_bgc_river_nutrients", True)
 
-        if self.fcr.is_active("bgc") and process_bgc:
-            self.driver.process_bgcironforcing()
-            self.driver.process_bgcic()
-        if self.fcr.is_active("tides") and process_tides:
-            self.driver.process_tides()
-        if self.fcr.is_active("chl") and process_chl:
-            self.driver.process_chl()
-        if self.fcr.is_active("runoff") and process_runoff:
-            self.driver.process_runoff()
-        if self.fcr.is_active("BGCRiverNutrients") and process_bgc_river_nutrients:
-            self.driver.process_bgcrivernutrients()
+        from CrocoDash.extract_forcings.driver import run_workflow
+
+        run_workflow(
+            config_path=self.extract_forcings_path / "config.json",
+            ic=process_initial_condition,
+            bc=process_velocity_tracers,
+            bgcic=process_bgc and self.fcr.is_active("bgc"),
+            bgcironforcing=process_bgc and self.fcr.is_active("bgc"),
+            tides=process_tides and self.fcr.is_active("tides"),
+            chl_=process_chl and self.fcr.is_active("chl"),
+            runoff=process_runoff and self.fcr.is_active("runoff"),
+            bgcrivernutrients=process_bgc_river_nutrients
+            and self.fcr.is_active("BGCRiverNutrients"),
+            visualize=visualize,
+        )
 
         print(f"Case is ready to be built: {self.caseroot}")
 
