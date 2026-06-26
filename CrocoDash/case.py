@@ -602,7 +602,6 @@ class Case:
             runoff=process_runoff and self.fcr.is_active("runoff"),
             bgcrivernutrients=process_bgc_river_nutrients
             and self.fcr.is_active("BGCRiverNutrients"),
-            visualize=visualize,
         )
 
         print(f"Case is ready to be built: {self.caseroot}")
