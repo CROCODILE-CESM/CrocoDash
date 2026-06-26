@@ -37,6 +37,12 @@ def _process(args):
         state = case_state.read(Path.cwd())
         config_path = Path(state["inputdir"]) / "extract_forcings" / "config.json"
 
+    if not config_path.exists():
+        raise FileNotFoundError(
+            f"Forcing configuration not found at {config_path}\n"
+            "Run case.configure_forcings() before calling 'crocodash process'."
+        )
+
     with open(config_path) as f:
         config = json.load(f)
 

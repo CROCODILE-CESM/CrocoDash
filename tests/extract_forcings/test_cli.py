@@ -84,6 +84,26 @@ def test_process_all_args_available():
 
 
 # =============================================================================
+# Error handling
+# =============================================================================
+
+
+@patch("CrocoDash.case_state.read")
+def test_process_missing_config_raises_helpful_error(mock_read, tmp_path):
+    """Clear error when configure_forcings hasn't been run yet."""
+    caseroot = tmp_path / "mycase"
+    caseroot.mkdir()
+    inputdir = tmp_path / "input"
+    inputdir.mkdir()
+    # extract_forcings/ dir does NOT exist — configure_forcings never ran
+
+    mock_read.return_value = {"inputdir": str(inputdir)}
+
+    with pytest.raises(FileNotFoundError, match="configure_forcings"):
+        run_main(["process", "--caseroot", str(caseroot), "--all"])
+
+
+# =============================================================================
 # _process integration (mock run_workflow)
 # =============================================================================
 
