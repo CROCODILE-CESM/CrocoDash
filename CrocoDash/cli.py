@@ -23,9 +23,19 @@ def _extract_forcings(args):
     from CrocoDash import case_state
     from CrocoDash.extract_forcings.driver import run_workflow, resolve_components
 
-    caseroot = Path(args.caseroot) if args.caseroot else Path.cwd()
-    state = case_state.read(caseroot)
-    config_path = Path(state["inputdir"]) / "extract_forcings" / "config.json"
+    if args.config:
+        config_path = Path(args.config)
+    elif args.caseroot:
+        caseroot = Path(args.caseroot)
+        state = case_state.read(caseroot)
+        config_path = Path(state["inputdir"]) / "extract_forcings" / "config.json"
+    elif (Path.cwd() / "config.json").exists():
+        # Ran directly from inside the extract_forcings/ directory
+        config_path = Path.cwd() / "config.json"
+    else:
+        # Default: treat cwd as caseroot
+        state = case_state.read(Path.cwd())
+        config_path = Path(state["inputdir"]) / "extract_forcings" / "config.json"
 
     with open(config_path) as f:
         config = json.load(f)
@@ -121,6 +131,11 @@ def main():
     ef_parser = subparsers.add_parser(
         "extract-forcings",
         help="Run the forcing extraction workflow for an existing CrocoDash case.",
+    )
+    ef_parser.add_argument(
+        "--config",
+        default=None,
+        help="Direct path to config.json. Takes precedence over --caseroot.",
     )
     ef_parser.add_argument(
         "--caseroot",

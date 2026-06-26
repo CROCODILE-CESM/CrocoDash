@@ -255,7 +255,7 @@ def resolve_components(args, config):
         k: v
         for k, v in vars(args).items()
         if isinstance(v, bool)
-        and k not in {"all", "pbs", "visualize"}
+        and k not in {"all"}
     }
     skip = {s.lower() for s in args.skip}
 

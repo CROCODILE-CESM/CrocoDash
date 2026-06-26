@@ -1,74 +1,20 @@
-import pytest
-from unittest.mock import Mock, patch
-import sys
-import subprocess
 import json
-import tempfile
-from pathlib import Path
+import pytest
+from unittest.mock import patch, MagicMock, call
 from argparse import Namespace
+from pathlib import Path
 
-from CrocoDash.extract_forcings.case_setup import driver
+from CrocoDash.extract_forcings.driver import resolve_components, run_workflow, _load
+
 
 # =============================================================================
-# Argument Parsing Tests
+# resolve_components
 # =============================================================================
 
 
-def test_parse_args_all():
-    """Test --all flag"""
-    with patch.object(sys, "argv", ["driver.py", "--all"]):
-        args = driver.parse_args()
-        assert args.all is True
-
-
-def test_parse_args_with_one_on_and_others_off():
-    """Test --ic (initial conditions) flag"""
-    with patch.object(sys, "argv", ["driver.py", "--ic"]):
-        args = driver.parse_args()
-        assert args.ic is True
-        assert args.bc is False
-
-
-def test_parse_args_component_flags():
-    """Test individual component flags"""
-    with patch.object(sys, "argv", ["driver.py", "--bgcic", "--tides", "--runoff"]):
-        args = driver.parse_args()
-        assert args.bgcic is True
-        assert args.tides is True
-        assert args.runoff is True
-        assert args.chl is False
-
-
-def test_parse_args_skip_single():
-    """Test --skip with single component"""
-    with patch.object(sys, "argv", ["driver.py", "--all", "--skip", "tides"]):
-        args = driver.parse_args()
-        assert args.skip == ["tides"]
-
-
-def test_parse_args_skip_empty_default():
-    """Test that skip defaults to empty list"""
-    with patch.object(sys, "argv", ["driver.py", "--all"]):
-        args = driver.parse_args()
-        assert args.skip == []
-
-
-def test_parse_args_no_args_exits():
-    """Test that no arguments prints help and exits"""
-    with patch.object(sys, "argv", ["driver.py"]):
-        with pytest.raises(SystemExit):
-            driver.parse_args()
-
-
-def test_resolve_components_all_flag_enables_all():
-    """--all should enable all components that exist in config"""
-    args = Namespace(
-        all=True,
-        test=False,
-        no_get=False,
-        no_regrid=False,
-        no_merge=False,
-        skip=[],
+def _make_args(**overrides):
+    defaults = dict(
+        all=False,
         ic=False,
         bc=False,
         bgcic=False,
@@ -77,160 +23,229 @@ def test_resolve_components_all_flag_enables_all():
         bgcrivernutrients=False,
         tides=False,
         chl=False,
+        skip=[],
     )
-    config = Mock()
-    config.config = {"tides": {}, "runoff": {}, "bgcic": {}}
+    defaults.update(overrides)
+    return Namespace(**defaults)
 
-    resolved = driver.resolve_components(args, config)
 
+def test_resolve_components_all_enables_configured_components():
+    args = _make_args(all=True)
+    config = {"tides": {}, "runoff": {}, "bgcic": {}, "caseroot": "/x", "conditions": {}}
+    resolved = resolve_components(args, config)
     assert resolved.tides is True
     assert resolved.runoff is True
     assert resolved.bgcic is True
     assert resolved.chl is False  # not in config
 
 
-def test_resolve_components_skip_respects_case_insensitive():
-    """Skip list should be case-insensitive"""
-    args = Namespace(
-        all=True,
-        test=False,
-        no_get=False,
-        no_regrid=False,
-        no_merge=False,
-        skip=["TIDES", "Runoff"],
-        ic=False,
-        bc=False,
-        bgcic=False,
-        bgcironforcing=False,
-        runoff=False,
-        bgcrivernutrients=False,
-        tides=False,
-        chl=False,
-    )
-    config = Mock()
-    config.config = {"tides": {}, "runoff": {}, "bgcic": {}}
+def test_resolve_components_ic_bc_always_available():
+    """ic and bc are valid even when not explicit config keys."""
+    args = _make_args(all=True)
+    config = {"caseroot": "/x", "conditions": {}}
+    resolved = resolve_components(args, config)
+    assert resolved.ic is True
+    assert resolved.bc is True
 
-    resolved = driver.resolve_components(args, config)
 
-    assert resolved.tides is False  # skipped (case-insensitive)
-    assert resolved.runoff is False  # skipped (case-insensitive)
+def test_resolve_components_skip_case_insensitive():
+    args = _make_args(all=True, skip=["TIDES", "Runoff"])
+    config = {"tides": {}, "runoff": {}, "bgcic": {}}
+    resolved = resolve_components(args, config)
+    assert resolved.tides is False
+    assert resolved.runoff is False
     assert resolved.bgcic is True
 
 
-def test_resolve_components_missing_in_config():
-    """Components requested but not in config should be disabled"""
-    args = Namespace(
-        all=False,
-        test=False,
-        no_get=False,
-        no_regrid=False,
-        no_merge=False,
-        skip=[],
-        ic=False,
-        bc=False,
-        bgcic=True,
-        bgcironforcing=False,
-        runoff=True,
-        bgcrivernutrients=False,
-        tides=False,
-        chl=False,
-    )
-    config = Mock()
-    config.config = {"bgcic": {}}  # only bgcic exists
-
-    resolved = driver.resolve_components(args, config)
-
-    assert resolved.bgcic is True  # requested and exists
-    assert resolved.runoff is False  # requested but doesn't exist
+def test_resolve_components_missing_in_config_disabled():
+    args = _make_args(bgcic=True, runoff=True)
+    config = {"bgcic": {}}  # runoff not configured
+    resolved = resolve_components(args, config)
+    assert resolved.bgcic is True
+    assert resolved.runoff is False
 
 
-def test_resolve_components_individual_component_flag():
-    """Individual component flags should work without --all"""
-    args = Namespace(
-        all=False,
-        test=False,
-        no_get=False,
-        no_regrid=False,
-        no_merge=False,
-        skip=[],
-        ic=False,
-        bc=False,
-        bgcic=True,
-        bgcironforcing=False,
-        runoff=False,
-        bgcrivernutrients=False,
-        tides=True,
-        chl=False,
-    )
-    config = Mock()
-    config.config = {"bgcic": {}, "tides": {}, "runoff": {}}
-
-    resolved = driver.resolve_components(args, config)
-
+def test_resolve_components_individual_flags_no_all():
+    args = _make_args(bgcic=True, tides=True)
+    config = {"bgcic": {}, "tides": {}, "runoff": {}}
+    resolved = resolve_components(args, config)
     assert resolved.bgcic is True
     assert resolved.tides is True
     assert resolved.runoff is False  # not explicitly requested
 
 
-# Some simple dry runs
-@patch("CrocoDash.extract_forcings.case_setup.driver.process_runoff")
-@patch("CrocoDash.extract_forcings.case_setup.driver.process_tides")
-@patch("CrocoDash.extract_forcings.case_setup.driver.process_conditions")
-def test_run_from_cli_integration(
-    mock_cond, mock_tides, mock_runoff, gen_grid_topo_vgrid, tmp_path
-):
-    grid, topo, vgrid = gen_grid_topo_vgrid
-    grid.write_supergrid(tmp_path / "grid.nc")
-    topo.write_topo(tmp_path / "topo.nc")
-    vgrid.write(tmp_path / "vgrid.nc")
-    # Real parsing and resolution
-    with patch.object(sys, "argv", ["driver.py", "--all", "--skip", "runoff"]):
-        args = driver.parse_args()
+def test_resolve_components_skip_empty_default():
+    args = _make_args(all=True)
+    config = {"tides": {}}
+    resolved = resolve_components(args, config)
+    assert resolved.skip == []
 
-    config = Mock()
-    config.config = {
-        "tides": {},
-        "conditions": {},
-        "runoff": {},
-        "basic": {
-            "paths": {
-                "hgrid_path": tmp_path / "grid.nc",
-                "topo_path": tmp_path / "topo.nc",
-                "vgrid_path": tmp_path / "vgrid.nc",
-            }
+
+# =============================================================================
+# _load
+# =============================================================================
+
+
+def test_load_reads_config_and_state(tmp_path):
+    caseroot = tmp_path / "mycase"
+    caseroot.mkdir()
+    state = {
+        "inputdir": str(tmp_path / "input"),
+        "supergrid_path": str(tmp_path / "grid.nc"),
+        "topo_path": str(tmp_path / "topo.nc"),
+        "vgrid_path": str(tmp_path / "vgrid.nc"),
+    }
+    config = {"caseroot": str(caseroot), "conditions": {"general": {}}}
+    config_path = tmp_path / "config.json"
+    config_path.write_text(json.dumps(config))
+
+    with patch("CrocoDash.extract_forcings.driver.case_state") as mock_cs:
+        mock_cs.read.return_value = state
+        loaded_config, loaded_state, inputdir = _load(config_path)
+
+    mock_cs.read.assert_called_once_with(str(caseroot))
+    assert loaded_config == config
+    assert loaded_state == state
+    assert inputdir == Path(tmp_path / "input")
+
+
+# =============================================================================
+# run_workflow
+# =============================================================================
+
+
+def _make_config(caseroot="/case", extra_keys=None):
+    cfg = {
+        "caseroot": caseroot,
+        "conditions": {
+            "dates": {"start": "20200101", "end": "20200109", "format": "%Y%m%d"},
+            "forcing": {
+                "product_name": "GLORYS",
+                "function_name": "get_glorys_data_from_rda",
+                "information": {},
+            },
+            "general": {
+                "boundary_number_conversion": {"north": 1, "south": 2},
+                "step": "7",
+                "preview": False,
+            },
         },
     }
-
-    driver.run_from_cli(args, config)  # Real execution, but process_* are mocked
-
-    # Verify which functions were called
-    assert mock_tides.called
-    assert mock_cond.called
-    assert mock_runoff.call_count == 0  # skipped
+    if extra_keys:
+        cfg.update(extra_keys)
+    return cfg
 
 
-def test_driver_subprocess_help():
-    """
-    Real subprocess test: actually run driver.py --help
-    Verifies the script can be invoked from command line
-    """
-    driver_path = (
-        Path(__file__).parent.parent.parent
-        / "CrocoDash"
-        / "extract_forcings"
-        / "case_setup"
-        / "driver.py"
+def _make_state(tmp_path):
+    return {
+        "inputdir": str(tmp_path),
+        "supergrid_path": str(tmp_path / "grid.nc"),
+        "topo_path": str(tmp_path / "topo.nc"),
+        "vgrid_path": str(tmp_path / "vgrid.nc"),
+    }
+
+
+@patch("CrocoDash.extract_forcings.driver.merge_piecewise_dataset")
+@patch("CrocoDash.extract_forcings.driver.regrid_dataset_piecewise")
+@patch("CrocoDash.extract_forcings.driver.get_dataset_piecewise")
+@patch("CrocoDash.extract_forcings.driver.case_state")
+def test_run_workflow_ic_bc_calls_piecewise_triple(
+    mock_cs, mock_get, mock_regrid, mock_merge, tmp_path
+):
+    config = _make_config()
+    state = _make_state(tmp_path)
+    mock_cs.read.return_value = state
+    config_path = tmp_path / "config.json"
+    config_path.write_text(json.dumps(config))
+
+    run_workflow(config_path=config_path, ic=True, bc=True)
+
+    assert mock_get.called
+    assert mock_regrid.called
+    assert mock_merge.called
+
+
+@patch("CrocoDash.extract_forcings.driver.merge_piecewise_dataset")
+@patch("CrocoDash.extract_forcings.driver.regrid_dataset_piecewise")
+@patch("CrocoDash.extract_forcings.driver.get_dataset_piecewise")
+@patch("CrocoDash.extract_forcings.driver.case_state")
+def test_run_workflow_no_components_returns_early(
+    mock_cs, mock_get, mock_regrid, mock_merge, tmp_path, capsys
+):
+    config = _make_config()
+    state = _make_state(tmp_path)
+    mock_cs.read.return_value = state
+    config_path = tmp_path / "config.json"
+    config_path.write_text(json.dumps(config))
+
+    result = run_workflow(config_path=config_path)
+
+    assert result is None
+    assert not mock_get.called
+    captured = capsys.readouterr()
+    assert "No components selected" in captured.out
+
+
+@patch("CrocoDash.extract_forcings.driver.bgc")
+@patch("CrocoDash.extract_forcings.driver.case_state")
+def test_run_workflow_bgcic_calls_bgc_module(mock_cs, mock_bgc, tmp_path):
+    config = _make_config(
+        extra_keys={
+            "bgcic": {
+                "inputs": {"marbl_ic_filepath": "/some/file.nc"},
+                "outputs": {"MARBL_TRACERS_IC_FILE": "marbl_ic.nc"},
+            }
+        }
     )
+    state = _make_state(tmp_path)
+    mock_cs.read.return_value = state
+    config_path = tmp_path / "config.json"
+    config_path.write_text(json.dumps(config))
 
-    # Run: python driver.py --help
-    result = subprocess.run(
-        [sys.executable, str(driver_path), "--help"],
-        capture_output=True,
-        text=True,
+    run_workflow(config_path=config_path, bgcic=True)
+
+    mock_bgc.process_bgc_ic.assert_called_once()
+
+
+@patch("CrocoDash.extract_forcings.driver.rof")
+@patch("CrocoDash.extract_forcings.driver.case_state")
+def test_run_workflow_runoff_calls_rof_module(mock_cs, mock_rof, tmp_path):
+    config = _make_config(
+        extra_keys={
+            "runoff": {
+                "inputs": {
+                    "rof_grid_name": "r05",
+                    "rof_esmf_mesh_filepath": "/m.nc",
+                    "case_esmf_mesh_path": "/c.nc",
+                    "case_grid_name": "mygrid",
+                    "rmax": 0.1,
+                    "fold": False,
+                }
+            }
+        }
     )
+    state = _make_state(tmp_path)
+    mock_cs.read.return_value = state
+    config_path = tmp_path / "config.json"
+    config_path.write_text(json.dumps(config))
 
-    # Should exit successfully and output help
-    assert result.returncode == 0
-    assert "CrocoDash forcing workflow driver" in result.stdout
-    assert "--all" in result.stdout
-    assert "--skip" in result.stdout
+    run_workflow(config_path=config_path, runoff=True)
+
+    mock_rof.generate_rof_ocn_map.assert_called_once()
+
+
+@patch("CrocoDash.extract_forcings.driver.merge_piecewise_dataset")
+@patch("CrocoDash.extract_forcings.driver.regrid_dataset_piecewise")
+@patch("CrocoDash.extract_forcings.driver.get_dataset_piecewise")
+@patch("CrocoDash.extract_forcings.driver.case_state")
+def test_run_workflow_returns_timings(mock_cs, mock_get, mock_regrid, mock_merge, tmp_path):
+    config = _make_config()
+    state = _make_state(tmp_path)
+    mock_cs.read.return_value = state
+    config_path = tmp_path / "config.json"
+    config_path.write_text(json.dumps(config))
+
+    result = run_workflow(config_path=config_path, ic=True)
+
+    assert isinstance(result, dict)
+    assert "ic/bc" in result

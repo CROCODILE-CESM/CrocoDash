@@ -1,100 +1,97 @@
-# Extract Forcings (case.process_forcings)
+# Extract Forcings
 
-The final part of the CrocoDash workflow is extracting and processing all the forcing data your simulation needs. This includes initial conditions, boundary conditions, tidal forcings, biogeochemistry data, and more. You process all of this data through the `case.process_forcings` call. `case.process_forcings` wraps a submodule of CrocoDash called extract_forcings. Extract_forcings is a set of scripts to process each forcing, like initial/boundary conditions, tides, etc... extract_forcings also holds a subdirectory called case_setup. This has a driver and config file. This holds all of the specific case information to run the processing scripts. When you run the workflow, this case_setup folder gets copied into your input directory. `case.process_forcings` goes into this subfolder and runs the driver. You can also run the driver yourself through the command-line.
+The final step of the CrocoDash workflow is extracting and processing all forcing data for your simulation: initial conditions, boundary conditions, tides, biogeochemistry, and more. You trigger this from Python via `case.process_forcings()`, or from the shell via `crocodash extract-forcings`.
 
 ## Workflow Overview
 
-When you run the CrocoDash workflow, configure_forcings and process_forcings:
-1. copies a ready-to-run forcing extraction system into your case directories (from `case.configure_forcings`)
-2. Runs it to download data from external sources
-3. Regrids data to your custom domain
-4. Formats everything for MOM6
+1. `case.configure_forcings(...)` — writes `inputdir/extract_forcings/config.json` with your case-specific forcing setup
+2. `case.process_forcings(...)` — reads that config and runs the extraction pipeline
+3. Outputs land in `inputdir/ocnice/`
 
-The key insight: **you don't have to run this from a Jupyter notebook**. You get a complete, standalone extraction system that you can submit to your supercomputer's job queue.
+The key insight: **you don't have to run this from a Jupyter notebook**. After `configure_forcings` completes you can submit the extraction as a batch job using the CLI:
+
+```bash
+crocodash extract-forcings --caseroot ~/croc_cases/mycase --all
+```
 
 ## Directory Structure
 
-When CrocoDash sets up your case, it creates an `extract_forcings` directory in your input folder:
-
 ```
-input_directory/
+inputdir/
 ├── extract_forcings/
-│   ├── driver.py              # Main script that orchestrates everything
-│   ├── config.json            # Your case-specific configuration
-└── ocnice/                    # Output goes here
-    ├── initial_conditions.nc
-    ├── boundary_conditions/
-    ├── tides/
+│   └── config.json        # Written by case.configure_forcings
+└── ocnice/                # Output goes here
+    ├── init_eta_filled.nc
+    ├── init_vel_filled.nc
+    ├── init_tracers_filled.nc
+    ├── forcing_obc_segment_001.nc
     └── ...
 ```
 
+## Command-Line Interface
 
-## Command-Line Options
-
-The driver script accepts several options for fine-grained control:
+See [CLI reference](cli.md#crocodash-extract-forcings) for full flag documentation.
 
 ```bash
 # Run all forcing extractions
-python driver.py --all
+crocodash extract-forcings --caseroot ~/croc_cases/mycase --all
 
-# Run only specific forcings
-python driver.py --tides
-python driver.py --runoff
-python driver.py --bgc
+# Run only initial + boundary conditions
+crocodash extract-forcings --caseroot ~/croc_cases/mycase --ic --bc
 
-# Run multiple forcings
-python driver.py --tides --runoff --bgc
+# Run all but skip tides and runoff
+crocodash extract-forcings --caseroot ~/croc_cases/mycase --all --skip tides runoff
 
-# Run all except certain forcings
-python driver.py --all --skip bgcic
-python driver.py --all --skip conditions bgcic
-
-# Skip entire processing phases
-python driver.py --all --skip conditions
+# Ran from inside the extract_forcings/ directory — no --caseroot needed
+cd ~/scratch/croc_input/mycase/extract_forcings
+crocodash extract-forcings --all
 ```
 
-This flexibility is intentional—you might want to:
+This flexibility lets you:
 - Test individual components without running everything
 - Re-run one forcing type if your source data changed
-- Run on a supercomputer queue while iterating elsewhere
-- Resume after an interrupted run
+- Submit to a batch queue and re-run from the CLI after a failure
+- Resume a partially-completed run
+
+## Python API
+
+You can also call the driver directly from Python:
+
+```python
+from CrocoDash.extract_forcings.driver import run_workflow
+
+run_workflow(
+    config_path="~/scratch/croc_input/mycase/extract_forcings/config.json",
+    ic=True,
+    bc=True,
+    tides=True,
+)
+```
 
 ## The Processing Pipeline
 
-Here's what happens internally when the driver runs:
-
 ```
-1. Load config.json with your case specifications
-   ↓
-2. Calls an extract_forcing script
-   ↓
-3. Outputs all the data to ocnice
+config.json + crocodash_state.json
+    ↓
+get_dataset_piecewise     (download raw OBC/IC data in time-stepped chunks)
+    ↓
+regrid_dataset_piecewise  (regrid to model grid, fill missing data)
+    ↓
+merge_piecewise_dataset   (concatenate chunks into final OBC files)
+    ↓
+[tides / bgc / runoff / chl modules run independently]
+    ↓
+inputdir/ocnice/
 ```
 
 ## Design Philosophy
 
-CrocoDash deliberately **doesn't do all the processing itself**. Instead, it leverages packages:
+CrocoDash delegates heavy lifting to specialist packages:
 
 | Task | Tool | Used By |
 |------|------|---------|
-| Regridding & OBC extraction | [regional-mom6](https://github.com/COSIMA/regional-mom6) | `regrid_dataset_piecewise.py` & Various Modules |
-| Minor processing (fill, mapping, Chlorophyll) | [mom6_bathy](https://github.com/NCAR/mom6_bathy) | Various modules |
+| Regridding & OBC extraction | [regional-mom6](https://github.com/COSIMA/regional-mom6) | `regrid_dataset_piecewise.py` |
+| Fill & grid utilities | [mom6_forge](https://github.com/NCAR/mom6_forge) | `regrid_dataset_piecewise.py`, BGC modules |
 | Data formatting | `netCDF4`, `xarray` | Throughout |
 
-If you want to modify how regridding or initial/boundary conditions are processed, the main place to look is `CrocoDash.extract_forcings.regrid_dataset_piecewise`, which calls `regional-mom6` under the hood. You can look at [regional_mom6 documentation](https://regional-mom6.readthedocs.io/en/latest/index.html) for more information, allthrough it may be difficult to tease out how we use regional_mom6 without looking into the code a bit more.
-
-## Example: Running Forcings on Your HPC System
-
-Here's a typical workflow for an HPC system with job queues:
-
-1. **Set up your case locally (or on login node):**
-   ```python
-   case = Case(...)
-   case.configure_forcings(...)  # Sets up all configuration
-   ```
-
-3. **Submit extraction as a batch job:**
-   ```bash
-   cd /path/to/case/input_directory/extract_forcings
-   # Activate CrocoDash environment and submit to batch system!
-   ```
+If you want to modify how regridding or initial/boundary conditions are processed, the main file to look at is `CrocoDash/extract_forcings/regrid_dataset_piecewise.py`, which calls `regional-mom6` under the hood.

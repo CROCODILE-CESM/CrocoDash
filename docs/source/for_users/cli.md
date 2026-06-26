@@ -5,11 +5,12 @@ CrocoDash ships a `crocodash` command (installed automatically with `pip install
 ## Quick reference
 
 ```
-crocodash create   --config mycase.yaml [--override]
-crocodash dump     --caseroot /path/to/case
-crocodash bundle   --caseroot /path/to/case --output-dir /path/to/bundle_dir ...
-crocodash fork     --bundle /path/to/bundle --caseroot ... --inputdir ... --cesmroot ... --machine ... --project ...
-crocodash duplicate --source /path/to/case --case /path/to/new_case --inputdir /path/to/new_inputdir
+crocodash create            --config mycase.yaml [--override]
+crocodash dump              --caseroot /path/to/case
+crocodash extract-forcings  [--caseroot /path/to/case] [--all | --ic --bc ...]  [--skip ...]
+crocodash bundle            --caseroot /path/to/case --output-dir /path/to/bundle_dir ...
+crocodash fork              --bundle /path/to/bundle --caseroot ... --inputdir ... --cesmroot ... --machine ... --project ...
+crocodash duplicate         --source /path/to/case --case /path/to/new_case --inputdir /path/to/new_inputdir
 ```
 
 ---
@@ -110,6 +111,50 @@ crocodash create --config mycase_copy.yaml --override
 ```
 
 The dumped YAML uses `supergrid_path`/`from_file` references pointing at the existing grid/topo/vgrid files. To create a fully independent copy, either update those paths or re-generate the grid from parameters.
+
+---
+
+---
+
+## `crocodash extract-forcings`
+
+Runs the forcing extraction workflow for an existing CrocoDash case. This is equivalent to calling `case.process_forcings()` from Python, but can be invoked from any shell — including inside an HPC batch script.
+
+```bash
+# Run all configured forcing components
+crocodash extract-forcings --caseroot ~/croc_cases/mycase --all
+
+# Run only specific components
+crocodash extract-forcings --caseroot ~/croc_cases/mycase --ic --bc
+
+# Skip components even when running --all
+crocodash extract-forcings --caseroot ~/croc_cases/mycase --all --skip tides runoff
+
+# Run from inside the extract_forcings/ directory — no --caseroot needed
+cd ~/scratch/croc_input/mycase/extract_forcings
+crocodash extract-forcings --all
+```
+
+### Flags
+
+| Flag | Description |
+|------|-------------|
+| `--config PATH` | Direct path to `config.json`. Takes precedence over `--caseroot`. |
+| `--caseroot PATH` | Path to the CESM caseroot. Defaults to cwd if omitted. |
+| `--all` | Enable all components that are present in `config.json`. |
+| `--ic` | Initial conditions. |
+| `--bc` | Boundary conditions. |
+| `--bgcic` | BGC initial conditions (requires BGC forcing configured). |
+| `--bgcironforcing` | BGC iron forcing. |
+| `--bgcrivernutrients` | BGC river nutrients. |
+| `--runoff` | Runoff-to-ocean mapping. |
+| `--tides` | Tidal forcing. |
+| `--chl` | Chlorophyll processing. |
+| `--skip NAME...` | Skip one or more components by name (case-insensitive). |
+
+### Auto-detection
+
+If you `cd` into `inputdir/extract_forcings/` (the directory that contains `config.json`), you can run `crocodash extract-forcings` without specifying `--caseroot` — it finds `config.json` in the current directory automatically.
 
 ---
 
