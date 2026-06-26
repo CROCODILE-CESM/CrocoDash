@@ -20,6 +20,7 @@ import os
 from datetime import datetime, timedelta
 from pathlib import Path
 
+import pandas as pd
 import regional_mom6 as rm6
 import xarray as xr
 from CrocoDash import logging
@@ -61,18 +62,19 @@ def _make_date_pairs(start: datetime, end: datetime, step_days):
     return pairs
 
 
-def _parse_raw_filename_dates(path: Path, boundary: str, date_format: str):
-    """Parse (start_date, end_date) from a raw OBC filename."""
+def _parse_raw_filename_dates(path: Path, boundary: str):
+    """Parse (start_date, end_date) from a raw OBC filename.
+
+    Expects ISO dates (YYYY-MM-DD) separated by ``_``, e.g.
+    ``east_unprocessed.2020-01-01_2020-01-31.nc``.
+    """
     date_part = path.stem.removeprefix(f"{boundary}_unprocessed.")
-    date_len = len(datetime(2000, 1, 1).strftime(date_format))
-    return (
-        datetime.strptime(date_part[:date_len], date_format),
-        datetime.strptime(date_part[date_len + 1 :], date_format),
-    )
+    start_str, end_str = date_part.split("_")
+    return datetime.fromisoformat(start_str), datetime.fromisoformat(end_str)
 
 
 def _validate_raw_coverage(
-    raw_dir, boundary: str, start_date: datetime, end_date: datetime, date_format: str
+    raw_dir, boundary: str, start_date: datetime, end_date: datetime
 ):
     """Check that raw files cover [start_date, end_date] without gaps or overlaps.
 
@@ -90,7 +92,7 @@ def _validate_raw_coverage(
         )
 
     intervals = sorted(
-        [(_parse_raw_filename_dates(f, boundary, date_format), f) for f in files],
+        [(_parse_raw_filename_dates(f, boundary), f) for f in files],
         key=lambda x: x[0][0],
     )
 
@@ -134,7 +136,6 @@ def _get_boundary(
     start_date: datetime,
     end_date: datetime,
     get_step_days,
-    date_format: str,
     hgrid_path,
     output_dir,
     product_name: str,
@@ -146,8 +147,8 @@ def _get_boundary(
     output_dir = Path(output_dir)
 
     for chunk_start, chunk_end in _make_date_pairs(start_date, end_date, get_step_days):
-        start_str = chunk_start.strftime(date_format)
-        end_str = chunk_end.strftime(date_format)
+        start_str = chunk_start.strftime("%Y-%m-%d")
+        end_str = chunk_end.strftime("%Y-%m-%d")
         output_file = output_dir / f"{boundary}_unprocessed.{start_str}_{end_str}.nc"
 
         if output_file.exists():
@@ -186,7 +187,6 @@ def _regrid_boundary(
     start_date: datetime,
     end_date: datetime,
     regrid_step_days: int,
-    date_format: str,
     hgrid_path,
     output_folder,
     dataset_varnames: dict,
@@ -221,8 +221,8 @@ def _regrid_boundary(
     for chunk_start, chunk_end in _make_date_pairs(
         start_date, end_date, regrid_step_days
     ):
-        start_str = chunk_start.strftime(date_format)
-        end_str = chunk_end.strftime(date_format)
+        start_str = chunk_start.strftime("%Y-%m-%d")
+        end_str = chunk_end.strftime("%Y-%m-%d")
         dated_output = (
             output_folder / f"forcing_obc_segment_{seg_id:03d}_{start_str}_{end_str}.nc"
         )
@@ -313,9 +313,8 @@ def process_obc_conditions(config_path, preview: bool = False):
     """
     config = utils.Config(config_path)
 
-    date_format = config["basic"]["dates"]["format"]
-    start_date = datetime.strptime(config["basic"]["dates"]["start"], date_format)
-    end_date = datetime.strptime(config["basic"]["dates"]["end"], date_format)
+    start_date = pd.to_datetime(config["basic"]["dates"]["start"]).to_pydatetime()
+    end_date = pd.to_datetime(config["basic"]["dates"]["end"]).to_pydatetime()
 
     general = config["basic"]["general"]
     bnc = general["boundary_number_conversion"]
@@ -377,7 +376,6 @@ def process_obc_conditions(config_path, preview: bool = False):
             start_date=start_date,
             end_date=end_date,
             get_step_days=get_step_days,
-            date_format=date_format,
             hgrid_path=str(hgrid_path),
             output_dir=str(raw_path),
             product_name=product_name,
@@ -386,9 +384,7 @@ def process_obc_conditions(config_path, preview: bool = False):
             extra_args=extra_args,
         )
 
-        raw_files = _validate_raw_coverage(
-            raw_path, boundary, start_date, end_date, date_format
-        )
+        raw_files = _validate_raw_coverage(raw_path, boundary, start_date, end_date)
 
         logger.info("REGRID [%s]: %d-day slices", boundary, regrid_step_days)
         regridded_files = _regrid_boundary(
@@ -398,7 +394,6 @@ def process_obc_conditions(config_path, preview: bool = False):
             start_date=start_date,
             end_date=end_date,
             regrid_step_days=regrid_step_days,
-            date_format=date_format,
             hgrid_path=str(hgrid_path),
             output_folder=str(regridded_path),
             dataset_varnames=product_info,

@@ -503,63 +503,38 @@ class Case:
         self.boundaries = boundaries
         self.date_range = pd.to_datetime(date_range)
 
-        # Set Vars for Config
-        date_format = "%Y%m%d"
-
-        # Write Config Dict for ic & bc forcings
-
         config = {
             "paths": {
-                "raw_dataset_path": "",
-                "hgrid_path": "",
-                "vgrid_path": "",
-                "bathymetry_path": "",
-                "regridded_dataset_path": "",
-                "output_path": "",
+                "hgrid_path": str(self.supergrid_path),
+                "vgrid_path": str(self.vgrid_path),
+                "bathymetry_path": str(self.topo_path),
+                "input_dataset_path": str(self.extract_forcings_path.parent),
+                "raw_dataset_path": str(self.extract_forcings_path / "raw_data"),
+                "regridded_dataset_path": str(
+                    self.extract_forcings_path / "regridded_data"
+                ),
+                "output_path": str(self.inputdir / "ocnice"),
             },
-            "dates": {"start": "", "end": "", "format": ""},
-            "forcing": {"product_name": "", "function_name": "", "information": {}},
+            "dates": {
+                "start": self.date_range[0].strftime("%Y-%m-%d"),
+                "end": self.date_range[1].strftime("%Y-%m-%d"),
+            },
+            "forcing": {
+                "product_name": self.forcing_product_name.upper(),
+                "function_name": function_name,
+                "information": ProductRegistry.get_product(
+                    self.forcing_product_name.lower()
+                ).write_metadata(include_marbl_tracers=self.bgc_in_compset),
+            },
             "general": {
-                "boundary_number_conversion": {},
+                "boundary_number_conversion": {
+                    item: idx + 1 for idx, item in enumerate(self.boundaries)
+                },
                 "get_step": None,
                 "regrid_step": 30,
                 "preview": False,
             },
         }
-
-        # Paths
-        config["paths"]["hgrid_path"] = self.supergrid_path
-        config["paths"]["vgrid_path"] = self.vgrid_path
-        config["paths"]["bathymetry_path"] = self.topo_path
-        config["paths"]["raw_dataset_path"] = str(
-            self.extract_forcings_path / "raw_data"
-        )
-        config["paths"]["input_dataset_path"] = str(self.extract_forcings_path.parent)
-        config["paths"]["regridded_dataset_path"] = str(
-            self.extract_forcings_path / "regridded_data"
-        )
-        config["paths"]["output_path"] = str(self.inputdir / "ocnice")
-
-        # Regex never changes!
-
-        # Dates
-        config["dates"]["start"] = self.date_range[0].strftime(date_format)
-        config["dates"]["end"] = self.date_range[1].strftime(date_format)
-        config["dates"]["format"] = date_format
-
-        # Product Information
-        config["forcing"]["product_name"] = self.forcing_product_name.upper()
-        config["forcing"]["function_name"] = function_name
-        config["forcing"]["information"] = ProductRegistry.get_product(
-            self.forcing_product_name.lower()
-        ).write_metadata(include_marbl_tracers=self.bgc_in_compset)
-
-        # General
-        config["general"]["boundary_number_conversion"] = {
-            item: idx + 1 for idx, item in enumerate(self.boundaries)
-        }
-        config["general"]["get_step"] = None
-        config["general"]["regrid_step"] = 30
 
         # Write out
         with open(self.extract_forcings_path / "config.json") as f:

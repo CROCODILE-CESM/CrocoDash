@@ -297,7 +297,6 @@ def run_workflow(
             product_name=cfg["basic"]["forcing"]["product_name"],
             function_name=cfg["basic"]["forcing"]["function_name"],
             product_information=cfg["basic"]["forcing"]["information"],
-            date_format=cfg["basic"]["dates"]["format"],
             start_date=cfg["basic"]["dates"]["start"],
             hgrid_path=cfg["basic"]["paths"]["hgrid_path"],
             vgrid_path=cfg["basic"]["paths"]["vgrid_path"],

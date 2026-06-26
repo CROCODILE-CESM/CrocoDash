@@ -41,9 +41,8 @@ def obc_config(tmp_path, get_rect_grid):
     config = {
         "basic": {
             "dates": {
-                "format": "%Y%m%d",
-                "start": "20200101",
-                "end": "20200115",
+                "start": "2020-01-01",
+                "end": "2020-01-15",
             },
             "general": {
                 "get_step": None,
@@ -182,9 +181,9 @@ def test_obc_regrid_workflow(
 
     process_obc_conditions(config_path)
 
-    # regrid_step=5 → first chunk is 20200101-20200105
-    assert (regridded_dir / "forcing_obc_segment_001_20200101_20200105.nc").exists()
-    assert (regridded_dir / "forcing_obc_segment_002_20200101_20200105.nc").exists()
+    # regrid_step=5 → first chunk is 2020-01-01 to 2020-01-05
+    assert (regridded_dir / "forcing_obc_segment_001_2020-01-01_2020-01-05.nc").exists()
+    assert (regridded_dir / "forcing_obc_segment_002_2020-01-01_2020-01-05.nc").exists()
 
 
 @pytest.mark.slow
@@ -216,14 +215,14 @@ def test_obc_merge_workflow(
     )
     # get_step=None → one raw file per boundary covering the full range
     for boundary, ds in [("east", east), ("south", south)]:
-        ds.to_netcdf(raw_dir / f"{boundary}_unprocessed.20200101_20200115.nc")
+        ds.to_netcdf(raw_dir / f"{boundary}_unprocessed.2020-01-01_2020-01-15.nc")
 
     # regrid_step=5 → three regridded chunks per boundary
     for seg, ds in [("001", east), ("002", south)]:
         for fname in [
-            f"forcing_obc_segment_{seg}_20200101_20200105.nc",
-            f"forcing_obc_segment_{seg}_20200106_20200110.nc",
-            f"forcing_obc_segment_{seg}_20200111_20200115.nc",
+            f"forcing_obc_segment_{seg}_2020-01-01_2020-01-05.nc",
+            f"forcing_obc_segment_{seg}_2020-01-06_2020-01-10.nc",
+            f"forcing_obc_segment_{seg}_2020-01-11_2020-01-15.nc",
         ]:
             ds.to_netcdf(regridded_dir / fname)
 
