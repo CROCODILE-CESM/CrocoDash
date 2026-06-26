@@ -44,7 +44,7 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'api-docs/CrocoDash.extract_forcings';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="CrocoDash.extract_forcings.case_setup package" href="CrocoDash.extract_forcings.case_setup.html" />
+    <link rel="next" title="CrocoDash.forcing_configurations package" href="CrocoDash.forcing_configurations.html" />
     <link rel="prev" title="CrocoDash package" href="CrocoDash.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -164,7 +164,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../for_users/grids.html">Grid Stuff (Supergrid, Bathymetry, Vgrid)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_users/datasets.html">Accessing Raw Data (raw_data_access)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_users/forcing_configurations.html">Forcing Configuration (case.configure_forcings)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../for_users/extract_forcings.html">Extract Forcings (case.process_forcings)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_users/extract_forcings.html">Extract Forcings</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_users/case_information.html">Extra CESM Case Information</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_users/cli.html">Command Line Interface</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_users/shareable.html">Sharing Cases</a></li>
@@ -180,10 +180,7 @@
 </details></li>
 <li class="toctree-l1 current active has-children"><a class="reference internal" href="modules.html">CrocoDash API Docs</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
 <li class="toctree-l2 current active has-children"><a class="reference internal" href="CrocoDash.html">CrocoDash package</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
-<li class="toctree-l3 current active has-children"><a class="current reference internal" href="#">CrocoDash.extract_forcings package</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
-<li class="toctree-l4"><a class="reference internal" href="CrocoDash.extract_forcings.case_setup.html">CrocoDash.extract_forcings.case_setup package</a></li>
-</ul>
-</details></li>
+<li class="toctree-l3 current active"><a class="current reference internal" href="#">CrocoDash.extract_forcings package</a></li>
 <li class="toctree-l3"><a class="reference internal" href="CrocoDash.forcing_configurations.html">CrocoDash.forcing_configurations package</a></li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="CrocoDash.raw_data_access.html">CrocoDash.raw_data_access package</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html">CrocoDash.raw_data_access.datasets package</a></li>
@@ -342,8 +339,12 @@ document.write(`
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#subpackages">Subpackages</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#submodules">Submodules</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.extract_forcings.driver">CrocoDash.extract_forcings.driver module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.driver.resolve_components"><code class="docutils literal notranslate"><span class="pre">resolve_components()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.driver.run_workflow"><code class="docutils literal notranslate"><span class="pre">run_workflow()</span></code></a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.extract_forcings.bgc">CrocoDash.extract_forcings.bgc module</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.bgc.process_bgc_ic"><code class="docutils literal notranslate"><span class="pre">process_bgc_ic()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.bgc.process_bgc_iron_forcing"><code class="docutils literal notranslate"><span class="pre">process_bgc_iron_forcing()</span></code></a></li>
@@ -396,21 +397,54 @@ document.write(`
                   
   <section id="crocodash-extract-forcings-package">
 <h1>CrocoDash.extract_forcings package<a class="headerlink" href="#crocodash-extract-forcings-package" title="Link to this heading">#</a></h1>
-<section id="subpackages">
-<h2>Subpackages<a class="headerlink" href="#subpackages" title="Link to this heading">#</a></h2>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="CrocoDash.extract_forcings.case_setup.html">CrocoDash.extract_forcings.case_setup package</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="CrocoDash.extract_forcings.case_setup.html#submodules">Submodules</a></li>
-<li class="toctree-l2"><a class="reference internal" href="CrocoDash.extract_forcings.case_setup.html#crocodash-extract-forcings-case-setup-driver-module">CrocoDash.extract_forcings.case_setup.driver module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="CrocoDash.extract_forcings.case_setup.html#module-contents">Module contents</a></li>
-</ul>
-</li>
-</ul>
-</div>
-</section>
 <section id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading">#</a></h2>
+</section>
+<section id="module-CrocoDash.extract_forcings.driver">
+<span id="crocodash-extract-forcings-driver-module"></span><h2>CrocoDash.extract_forcings.driver module<a class="headerlink" href="#module-CrocoDash.extract_forcings.driver" title="Link to this heading">#</a></h2>
+<p>CrocoDash Forcing Extraction Driver</p>
+<p>Orchestrates the forcing extraction workflow for a CrocoDash case. Reads
+<code class="docutils literal notranslate"><span class="pre">config.json</span></code> (written by <code class="docutils literal notranslate"><span class="pre">Case.configure_forcings</span></code>) and derives all paths
+from the case state file via <code class="docutils literal notranslate"><span class="pre">case_state.read</span></code>.</p>
+<p>This module exposes <code class="docutils literal notranslate"><span class="pre">run_workflow</span></code> as the Python API. The CLI entry point is
+<code class="docutils literal notranslate"><span class="pre">crocodash</span> <span class="pre">extract-forcings</span></code> (see <code class="docutils literal notranslate"><span class="pre">CrocoDash.cli</span></code>).</p>
+<p>Typical Python usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">CrocoDash.extract_forcings.driver</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_workflow</span>
+
+<span class="n">run_workflow</span><span class="p">(</span><span class="n">config_path</span><span class="o">=</span><span class="s2">&quot;~/croc_input/mycase/extract_forcings/config.json&quot;</span><span class="p">,</span> <span class="n">bc</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ic</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>OBC processing (<code class="docutils literal notranslate"><span class="pre">bc</span></code>) uses Dask for the <strong>GET</strong> step only. <strong>REGRID</strong> and
+<strong>MERGE</strong> always run sequentially in the main process — ESMF cannot initialise
+in subprocess workers on PBS/HPC systems.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.extract_forcings.driver.resolve_components">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.driver.</span></span><span class="sig-name descname"><span class="pre">resolve_components</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.extract_forcings.driver.resolve_components" title="Link to this definition">#</a></dt>
+<dd><p>Resolve which components to run based on CLI args and config availability.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.extract_forcings.driver.run_workflow">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.driver.</span></span><span class="sig-name descname"><span class="pre">run_workflow</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ic</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bgcic</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bgcironforcing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tides</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chl_</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">runoff</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bgcrivernutrients</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preview</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.extract_forcings.driver.run_workflow" title="Link to this definition">#</a></dt>
+<dd><p>Execute the forcing extraction workflow.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>config_path</strong> (<em>str</em><em> or </em><em>Path</em>) – Path to the <code class="docutils literal notranslate"><span class="pre">config.json</span></code> written by <code class="docutils literal notranslate"><span class="pre">Case.configure_forcings</span></code>.</p></li>
+<li><p><strong>ic</strong> (<em>bool</em>) – Run initial conditions.</p></li>
+<li><p><strong>bc</strong> (<em>bool</em>) – Run boundary conditions.</p></li>
+<li><p><strong>bgcic</strong> (<em>bool</em>) – Run BGC initial conditions.</p></li>
+<li><p><strong>bgcironforcing</strong> (<em>bool</em>) – Run BGC iron forcing.</p></li>
+<li><p><strong>tides</strong> (<em>bool</em>) – Run tidal forcing.</p></li>
+<li><p><strong>chl</strong> (<em>bool</em>) – Run chlorophyll processing.</p></li>
+<li><p><strong>runoff</strong> (<em>bool</em>) – Run runoff mapping.</p></li>
+<li><p><strong>bgcrivernutrients</strong> (<em>bool</em>) – Run BGC river nutrients (always runs after runoff).</p></li>
+<li><p><strong>preview</strong> (<em>bool</em>) – Preview task graph without executing.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 <section id="module-CrocoDash.extract_forcings.bgc">
 <span id="crocodash-extract-forcings-bgc-module"></span><h2>CrocoDash.extract_forcings.bgc module<a class="headerlink" href="#module-CrocoDash.extract_forcings.bgc" title="Link to this heading">#</a></h2>
@@ -679,11 +713,11 @@ Example: <cite>“(north|east|south|west)_unprocessed.(d{8})_(d{8}).nc”</cite>
       </div>
     </a>
     <a class="right-next"
-       href="CrocoDash.extract_forcings.case_setup.html"
+       href="CrocoDash.forcing_configurations.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">CrocoDash.extract_forcings.case_setup package</p>
+        <p class="prev-next-title">CrocoDash.forcing_configurations package</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -703,8 +737,12 @@ Example: <cite>“(north|east|south|west)_unprocessed.(d{8})_(d{8}).nc”</cite>
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#subpackages">Subpackages</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#submodules">Submodules</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.extract_forcings.driver">CrocoDash.extract_forcings.driver module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.driver.resolve_components"><code class="docutils literal notranslate"><span class="pre">resolve_components()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.driver.run_workflow"><code class="docutils literal notranslate"><span class="pre">run_workflow()</span></code></a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.extract_forcings.bgc">CrocoDash.extract_forcings.bgc module</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.bgc.process_bgc_ic"><code class="docutils literal notranslate"><span class="pre">process_bgc_ic()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.bgc.process_bgc_iron_forcing"><code class="docutils literal notranslate"><span class="pre">process_bgc_iron_forcing()</span></code></a></li>

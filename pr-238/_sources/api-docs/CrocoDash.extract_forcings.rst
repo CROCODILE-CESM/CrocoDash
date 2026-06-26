@@ -1,16 +1,16 @@
 CrocoDash.extract\_forcings package
 ===================================
 
-Subpackages
------------
-
-.. toctree::
-   :maxdepth: 4
-
-   CrocoDash.extract_forcings.case_setup
-
 Submodules
 ----------
+
+CrocoDash.extract\_forcings.driver module
+-----------------------------------------
+
+.. automodule:: CrocoDash.extract_forcings.driver
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 CrocoDash.extract\_forcings.bgc module
 --------------------------------------

@@ -164,7 +164,7 @@
 <li class="toctree-l2"><a class="reference internal" href="grids.html">Grid Stuff (Supergrid, Bathymetry, Vgrid)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="datasets.html">Accessing Raw Data (raw_data_access)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="forcing_configurations.html">Forcing Configuration (case.configure_forcings)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="extract_forcings.html">Extract Forcings (case.process_forcings)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="extract_forcings.html">Extract Forcings</a></li>
 <li class="toctree-l2"><a class="reference internal" href="case_information.html">Extra CESM Case Information</a></li>
 <li class="toctree-l2 current active"><a class="current reference internal" href="#">Command Line Interface</a></li>
 <li class="toctree-l2"><a class="reference internal" href="shareable.html">Sharing Cases</a></li>
@@ -180,10 +180,7 @@
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../api-docs/modules.html">CrocoDash API Docs</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../api-docs/CrocoDash.html">CrocoDash package</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../api-docs/CrocoDash.extract_forcings.html">CrocoDash.extract_forcings package</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
-<li class="toctree-l4"><a class="reference internal" href="../api-docs/CrocoDash.extract_forcings.case_setup.html">CrocoDash.extract_forcings.case_setup package</a></li>
-</ul>
-</details></li>
+<li class="toctree-l3"><a class="reference internal" href="../api-docs/CrocoDash.extract_forcings.html">CrocoDash.extract_forcings package</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../api-docs/CrocoDash.forcing_configurations.html">CrocoDash.forcing_configurations package</a></li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../api-docs/CrocoDash.raw_data_access.html">CrocoDash.raw_data_access package</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l4"><a class="reference internal" href="../api-docs/CrocoDash.raw_data_access.datasets.html">CrocoDash.raw_data_access.datasets package</a></li>
@@ -348,6 +345,11 @@ document.write(`
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crocodash-dump"><code class="docutils literal notranslate"><span class="pre">crocodash</span> <span class="pre">dump</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crocodash-extract-forcings"><code class="docutils literal notranslate"><span class="pre">crocodash</span> <span class="pre">extract-forcings</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#flags">Flags</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#auto-detection">Auto-detection</a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crocodash-bundle-fork-duplicate"><code class="docutils literal notranslate"><span class="pre">crocodash</span> <span class="pre">bundle</span></code>, <code class="docutils literal notranslate"><span class="pre">fork</span></code>, <code class="docutils literal notranslate"><span class="pre">duplicate</span></code></a></li>
 </ul>
             </nav>
@@ -365,11 +367,12 @@ document.write(`
 <p>CrocoDash ships a <code class="docutils literal notranslate"><span class="pre">crocodash</span></code> command (installed automatically with <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-e</span> <span class="pre">.</span></code>) that lets you run the full case setup workflow from a YAML config file and inspect or share existing cases — no Python scripting required.</p>
 <section id="quick-reference">
 <h2>Quick reference<a class="headerlink" href="#quick-reference" title="Link to this heading">#</a></h2>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">crocodash</span> <span class="n">create</span>   <span class="o">--</span><span class="n">config</span> <span class="n">mycase</span><span class="o">.</span><span class="n">yaml</span> <span class="p">[</span><span class="o">--</span><span class="n">override</span><span class="p">]</span>
-<span class="n">crocodash</span> <span class="n">dump</span>     <span class="o">--</span><span class="n">caseroot</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">case</span>
-<span class="n">crocodash</span> <span class="n">bundle</span>   <span class="o">--</span><span class="n">caseroot</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">case</span> <span class="o">--</span><span class="n">output</span><span class="o">-</span><span class="nb">dir</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">bundle_dir</span> <span class="o">...</span>
-<span class="n">crocodash</span> <span class="n">fork</span>     <span class="o">--</span><span class="n">bundle</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">bundle</span> <span class="o">--</span><span class="n">caseroot</span> <span class="o">...</span> <span class="o">--</span><span class="n">inputdir</span> <span class="o">...</span> <span class="o">--</span><span class="n">cesmroot</span> <span class="o">...</span> <span class="o">--</span><span class="n">machine</span> <span class="o">...</span> <span class="o">--</span><span class="n">project</span> <span class="o">...</span>
-<span class="n">crocodash</span> <span class="n">duplicate</span> <span class="o">--</span><span class="n">source</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">case</span> <span class="o">--</span><span class="n">case</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">new_case</span> <span class="o">--</span><span class="n">inputdir</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">new_inputdir</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">crocodash</span> <span class="n">create</span>            <span class="o">--</span><span class="n">config</span> <span class="n">mycase</span><span class="o">.</span><span class="n">yaml</span> <span class="p">[</span><span class="o">--</span><span class="n">override</span><span class="p">]</span>
+<span class="n">crocodash</span> <span class="n">dump</span>              <span class="o">--</span><span class="n">caseroot</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">case</span>
+<span class="n">crocodash</span> <span class="n">extract</span><span class="o">-</span><span class="n">forcings</span>  <span class="p">[</span><span class="o">--</span><span class="n">caseroot</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">case</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="nb">all</span> <span class="o">|</span> <span class="o">--</span><span class="n">ic</span> <span class="o">--</span><span class="n">bc</span> <span class="o">...</span><span class="p">]</span>  <span class="p">[</span><span class="o">--</span><span class="n">skip</span> <span class="o">...</span><span class="p">]</span>
+<span class="n">crocodash</span> <span class="n">bundle</span>            <span class="o">--</span><span class="n">caseroot</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">case</span> <span class="o">--</span><span class="n">output</span><span class="o">-</span><span class="nb">dir</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">bundle_dir</span> <span class="o">...</span>
+<span class="n">crocodash</span> <span class="n">fork</span>              <span class="o">--</span><span class="n">bundle</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">bundle</span> <span class="o">--</span><span class="n">caseroot</span> <span class="o">...</span> <span class="o">--</span><span class="n">inputdir</span> <span class="o">...</span> <span class="o">--</span><span class="n">cesmroot</span> <span class="o">...</span> <span class="o">--</span><span class="n">machine</span> <span class="o">...</span> <span class="o">--</span><span class="n">project</span> <span class="o">...</span>
+<span class="n">crocodash</span> <span class="n">duplicate</span>         <span class="o">--</span><span class="n">source</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">case</span> <span class="o">--</span><span class="n">case</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">new_case</span> <span class="o">--</span><span class="n">inputdir</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">new_inputdir</span>
 </pre></div>
 </div>
 </section>
@@ -465,6 +468,79 @@ crocodash<span class="w"> </span>create<span class="w"> </span>--config<span cla
 </pre></div>
 </div>
 <p>The dumped YAML uses <code class="docutils literal notranslate"><span class="pre">supergrid_path</span></code>/<code class="docutils literal notranslate"><span class="pre">from_file</span></code> references pointing at the existing grid/topo/vgrid files. To create a fully independent copy, either update those paths or re-generate the grid from parameters.</p>
+<hr class="docutils" />
+</section>
+<hr class="docutils" />
+<section id="crocodash-extract-forcings">
+<h2><code class="docutils literal notranslate"><span class="pre">crocodash</span> <span class="pre">extract-forcings</span></code><a class="headerlink" href="#crocodash-extract-forcings" title="Link to this heading">#</a></h2>
+<p>Runs the forcing extraction workflow for an existing CrocoDash case. This is equivalent to calling <code class="docutils literal notranslate"><span class="pre">case.process_forcings()</span></code> from Python, but can be invoked from any shell — including inside an HPC batch script.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Run all configured forcing components</span>
+crocodash<span class="w"> </span>extract-forcings<span class="w"> </span>--caseroot<span class="w"> </span>~/croc_cases/mycase<span class="w"> </span>--all
+
+<span class="c1"># Run only specific components</span>
+crocodash<span class="w"> </span>extract-forcings<span class="w"> </span>--caseroot<span class="w"> </span>~/croc_cases/mycase<span class="w"> </span>--ic<span class="w"> </span>--bc
+
+<span class="c1"># Skip components even when running --all</span>
+crocodash<span class="w"> </span>extract-forcings<span class="w"> </span>--caseroot<span class="w"> </span>~/croc_cases/mycase<span class="w"> </span>--all<span class="w"> </span>--skip<span class="w"> </span>tides<span class="w"> </span>runoff
+
+<span class="c1"># Run from inside the extract_forcings/ directory — no --caseroot needed</span>
+<span class="nb">cd</span><span class="w"> </span>~/scratch/croc_input/mycase/extract_forcings
+crocodash<span class="w"> </span>extract-forcings<span class="w"> </span>--all
+</pre></div>
+</div>
+<section id="flags">
+<h3>Flags<a class="headerlink" href="#flags" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Flag</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">--config</span> <span class="pre">PATH</span></code></p></td>
+<td><p>Direct path to <code class="docutils literal notranslate"><span class="pre">config.json</span></code>. Takes precedence over <code class="docutils literal notranslate"><span class="pre">--caseroot</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">--caseroot</span> <span class="pre">PATH</span></code></p></td>
+<td><p>Path to the CESM caseroot. Defaults to cwd if omitted.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">--all</span></code></p></td>
+<td><p>Enable all components that are present in <code class="docutils literal notranslate"><span class="pre">config.json</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">--ic</span></code></p></td>
+<td><p>Initial conditions.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">--bc</span></code></p></td>
+<td><p>Boundary conditions.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">--bgcic</span></code></p></td>
+<td><p>BGC initial conditions (requires BGC forcing configured).</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">--bgcironforcing</span></code></p></td>
+<td><p>BGC iron forcing.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">--bgcrivernutrients</span></code></p></td>
+<td><p>BGC river nutrients.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">--runoff</span></code></p></td>
+<td><p>Runoff-to-ocean mapping.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">--tides</span></code></p></td>
+<td><p>Tidal forcing.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">--chl</span></code></p></td>
+<td><p>Chlorophyll processing.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">--skip</span> <span class="pre">NAME...</span></code></p></td>
+<td><p>Skip one or more components by name (case-insensitive).</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="auto-detection">
+<h3>Auto-detection<a class="headerlink" href="#auto-detection" title="Link to this heading">#</a></h3>
+<p>If you <code class="docutils literal notranslate"><span class="pre">cd</span></code> into <code class="docutils literal notranslate"><span class="pre">inputdir/extract_forcings/</span></code> (the directory that contains <code class="docutils literal notranslate"><span class="pre">config.json</span></code>), you can run <code class="docutils literal notranslate"><span class="pre">crocodash</span> <span class="pre">extract-forcings</span></code> without specifying <code class="docutils literal notranslate"><span class="pre">--caseroot</span></code> — it finds <code class="docutils literal notranslate"><span class="pre">config.json</span></code> in the current directory automatically.</p>
+</section>
 </section>
 <hr class="docutils" />
 <section id="crocodash-bundle-fork-duplicate">
@@ -524,6 +600,11 @@ crocodash<span class="w"> </span>create<span class="w"> </span>--config<span cla
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crocodash-dump"><code class="docutils literal notranslate"><span class="pre">crocodash</span> <span class="pre">dump</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crocodash-extract-forcings"><code class="docutils literal notranslate"><span class="pre">crocodash</span> <span class="pre">extract-forcings</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#flags">Flags</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#auto-detection">Auto-detection</a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crocodash-bundle-fork-duplicate"><code class="docutils literal notranslate"><span class="pre">crocodash</span> <span class="pre">bundle</span></code>, <code class="docutils literal notranslate"><span class="pre">fork</span></code>, <code class="docutils literal notranslate"><span class="pre">duplicate</span></code></a></li>
 </ul>
   </nav></div>
