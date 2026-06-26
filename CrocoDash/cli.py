@@ -48,6 +48,21 @@ def _process(args):
 
     args = resolve_components(args, config)
 
+    if not any(
+        [
+            args.ic,
+            args.bc,
+            args.bgcic,
+            args.bgcironforcing,
+            args.tides,
+            args.chl,
+            args.runoff,
+            args.bgcrivernutrients,
+        ]
+    ):
+        args.subparser.print_help()
+        return
+
     run_workflow(
         config_path=config_path,
         ic=args.ic,
@@ -179,7 +194,7 @@ def main():
         default=[],
         help="Skip components by name (e.g. --skip tides runoff)",
     )
-    ef_parser.set_defaults(func=_process)
+    ef_parser.set_defaults(func=_process, subparser=ef_parser)
 
     # --- bundle ---
     bundle_parser = subparsers.add_parser(

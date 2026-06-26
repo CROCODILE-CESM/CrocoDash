@@ -20,7 +20,7 @@ def test_case_integration_driver(CrocoDash_case_factory, tmp_path, skip_if_not_g
     )
     print(result.stdout)
     assert result.returncode == 0
-    assert "No components selected" in result.stdout
+    assert "--all" in result.stdout
 
 
 def test_case_integration_config(CrocoDash_case_factory, tmp_path):
