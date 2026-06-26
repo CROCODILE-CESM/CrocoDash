@@ -517,10 +517,6 @@ class Case:
                 "regridded_dataset_path": "",
                 "output_path": "",
             },
-            "file_regex": {
-                "raw_dataset_pattern": "(north|east|south|west)_unprocessed\\.(\\d{8})_(\\d{8})\\.nc",
-                "regridded_dataset_pattern": "forcing_obc_segment_(\\d{3})_(\\d{8})_(\\d{8})\\.nc",
-            },
             "dates": {"start": "", "end": "", "format": ""},
             "forcing": {"product_name": "", "function_name": "", "information": {}},
             "general": {

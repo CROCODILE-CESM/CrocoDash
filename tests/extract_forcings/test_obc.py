@@ -77,10 +77,6 @@ def obc_config(tmp_path, get_rect_grid):
                 "output_path": str(output_dir),
                 "input_dataset_path": str(tmp_path),
             },
-            "file_regex": {
-                "raw_dataset_pattern": r"(east|south)_unprocessed\.(\d{8})_(\d{8})\.nc",
-                "regridded_dataset_pattern": r"forcing_obc_segment_(\d{3})_(\d{8})_(\d{8})\.nc",
-            },
         }
     }
 
