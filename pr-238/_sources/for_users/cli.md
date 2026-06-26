@@ -7,7 +7,7 @@ CrocoDash ships a `crocodash` command (installed automatically with `pip install
 ```
 crocodash create            --config mycase.yaml [--override]
 crocodash dump              --caseroot /path/to/case
-crocodash extract-forcings  [--caseroot /path/to/case] [--all | --ic --bc ...]  [--skip ...]
+crocodash process  [--caseroot /path/to/case] [--all | --ic --bc ...]  [--skip ...]
 crocodash bundle            --caseroot /path/to/case --output-dir /path/to/bundle_dir ...
 crocodash fork              --bundle /path/to/bundle --caseroot ... --inputdir ... --cesmroot ... --machine ... --project ...
 crocodash duplicate         --source /path/to/case --case /path/to/new_case --inputdir /path/to/new_inputdir
@@ -116,23 +116,23 @@ The dumped YAML uses `supergrid_path`/`from_file` references pointing at the exi
 
 ---
 
-## `crocodash extract-forcings`
+## `crocodash process`
 
 Runs the forcing extraction workflow for an existing CrocoDash case. This is equivalent to calling `case.process_forcings()` from Python, but can be invoked from any shell — including inside an HPC batch script.
 
 ```bash
 # Run all configured forcing components
-crocodash extract-forcings --caseroot ~/croc_cases/mycase --all
+crocodash process --caseroot ~/croc_cases/mycase --all
 
 # Run only specific components
-crocodash extract-forcings --caseroot ~/croc_cases/mycase --ic --bc
+crocodash process --caseroot ~/croc_cases/mycase --ic --bc
 
 # Skip components even when running --all
-crocodash extract-forcings --caseroot ~/croc_cases/mycase --all --skip tides runoff
+crocodash process --caseroot ~/croc_cases/mycase --all --skip tides runoff
 
 # Run from inside the extract_forcings/ directory — no --caseroot needed
 cd ~/scratch/croc_input/mycase/extract_forcings
-crocodash extract-forcings --all
+crocodash process --all
 ```
 
 ### Flags
@@ -154,7 +154,7 @@ crocodash extract-forcings --all
 
 ### Auto-detection
 
-If you `cd` into `inputdir/extract_forcings/` (the directory that contains `config.json`), you can run `crocodash extract-forcings` without specifying `--caseroot` — it finds `config.json` in the current directory automatically.
+If you `cd` into `inputdir/extract_forcings/` (the directory that contains `config.json`), you can run `crocodash process` without specifying `--caseroot` — it finds `config.json` in the current directory automatically.
 
 ---
 

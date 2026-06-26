@@ -358,7 +358,7 @@ document.write(`
                   
   <section id="extract-forcings">
 <h1>Extract Forcings<a class="headerlink" href="#extract-forcings" title="Link to this heading">#</a></h1>
-<p>The final step of the CrocoDash workflow is extracting and processing all forcing data for your simulation: initial conditions, boundary conditions, tides, biogeochemistry, and more. You trigger this from Python via <code class="docutils literal notranslate"><span class="pre">case.process_forcings()</span></code>, or from the shell via <code class="docutils literal notranslate"><span class="pre">crocodash</span> <span class="pre">extract-forcings</span></code>.</p>
+<p>The final step of the CrocoDash workflow is extracting and processing all forcing data for your simulation: initial conditions, boundary conditions, tides, biogeochemistry, and more. You trigger this from Python via <code class="docutils literal notranslate"><span class="pre">case.process_forcings()</span></code>, or from the shell via <code class="docutils literal notranslate"><span class="pre">crocodash</span> <span class="pre">process</span></code>.</p>
 <section id="workflow-overview">
 <h2>Workflow Overview<a class="headerlink" href="#workflow-overview" title="Link to this heading">#</a></h2>
 <ol class="arabic simple">
@@ -367,7 +367,7 @@ document.write(`
 <li><p>Outputs land in <code class="docutils literal notranslate"><span class="pre">inputdir/ocnice/</span></code></p></li>
 </ol>
 <p>The key insight: <strong>you don’t have to run this from a Jupyter notebook</strong>. After <code class="docutils literal notranslate"><span class="pre">configure_forcings</span></code> completes you can submit the extraction as a batch job using the CLI:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>crocodash<span class="w"> </span>extract-forcings<span class="w"> </span>--caseroot<span class="w"> </span>~/croc_cases/mycase<span class="w"> </span>--all
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>crocodash<span class="w"> </span>process<span class="w"> </span>--caseroot<span class="w"> </span>~/croc_cases/mycase<span class="w"> </span>--all
 </pre></div>
 </div>
 </section>
@@ -387,19 +387,19 @@ document.write(`
 </section>
 <section id="command-line-interface">
 <h2>Command-Line Interface<a class="headerlink" href="#command-line-interface" title="Link to this heading">#</a></h2>
-<p>See <a class="reference internal" href="cli.html#crocodash-extract-forcings"><span class="std std-ref">CLI reference</span></a> for full flag documentation.</p>
+<p>See <a class="reference internal" href="cli.html#crocodash-process"><span class="std std-ref">CLI reference</span></a> for full flag documentation.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Run all forcing extractions</span>
-crocodash<span class="w"> </span>extract-forcings<span class="w"> </span>--caseroot<span class="w"> </span>~/croc_cases/mycase<span class="w"> </span>--all
+crocodash<span class="w"> </span>process<span class="w"> </span>--caseroot<span class="w"> </span>~/croc_cases/mycase<span class="w"> </span>--all
 
 <span class="c1"># Run only initial + boundary conditions</span>
-crocodash<span class="w"> </span>extract-forcings<span class="w"> </span>--caseroot<span class="w"> </span>~/croc_cases/mycase<span class="w"> </span>--ic<span class="w"> </span>--bc
+crocodash<span class="w"> </span>process<span class="w"> </span>--caseroot<span class="w"> </span>~/croc_cases/mycase<span class="w"> </span>--ic<span class="w"> </span>--bc
 
 <span class="c1"># Run all but skip tides and runoff</span>
-crocodash<span class="w"> </span>extract-forcings<span class="w"> </span>--caseroot<span class="w"> </span>~/croc_cases/mycase<span class="w"> </span>--all<span class="w"> </span>--skip<span class="w"> </span>tides<span class="w"> </span>runoff
+crocodash<span class="w"> </span>process<span class="w"> </span>--caseroot<span class="w"> </span>~/croc_cases/mycase<span class="w"> </span>--all<span class="w"> </span>--skip<span class="w"> </span>tides<span class="w"> </span>runoff
 
 <span class="c1"># Ran from inside the extract_forcings/ directory — no --caseroot needed</span>
 <span class="nb">cd</span><span class="w"> </span>~/scratch/croc_input/mycase/extract_forcings
-crocodash<span class="w"> </span>extract-forcings<span class="w"> </span>--all
+crocodash<span class="w"> </span>process<span class="w"> </span>--all
 </pre></div>
 </div>
 <p>This flexibility lets you:</p>
