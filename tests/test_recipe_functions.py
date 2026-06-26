@@ -16,7 +16,8 @@ import yaml
 @pytest.fixture(scope="session")
 def sample_forcing_config():
     forcing_config = {
-        "basic": {
+        "caseroot": "/fake/case",
+        "conditions": {
             "dates": {
                 "start": "20200101",
                 "end": "20200109",

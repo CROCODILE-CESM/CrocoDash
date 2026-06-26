@@ -320,7 +320,7 @@ class CaseBundle:
                 shutil.copy(f, ocnice_target)
 
         for config, value in self.forcing_config.items():
-            if config == "basic":
+            if config in {"conditions", "caseroot"}:
                 continue
             configurator = ForcingConfigRegistry.get_configurator(value)
             for path in configurator.get_output_filepaths(ocnice_dir):

@@ -172,9 +172,9 @@ def generate_configure_forcing_args(forcing_config, remove_configs=None):
         remove_configs = []
     logger.info("Setup configuration arguments...")
 
-    start_str = forcing_config["basic"]["dates"]["start"]
-    end_str = forcing_config["basic"]["dates"]["end"]
-    date_format = forcing_config["basic"]["dates"]["format"]
+    start_str = forcing_config["conditions"]["dates"]["start"]
+    end_str = forcing_config["conditions"]["dates"]["end"]
+    date_format = forcing_config["conditions"]["dates"]["format"]
     start_dt = datetime.strptime(start_str, date_format)
     end_dt = datetime.strptime(end_str, date_format)
 
@@ -186,13 +186,13 @@ def generate_configure_forcing_args(forcing_config, remove_configs=None):
     configure_forcing_args = {
         "date_range": date_range,
         "boundaries": list(
-            forcing_config["basic"]["general"]["boundary_number_conversion"].keys()
+            forcing_config["conditions"]["general"]["boundary_number_conversion"].keys()
         ),
-        "product_name": forcing_config["basic"]["forcing"]["product_name"],
-        "function_name": forcing_config["basic"]["forcing"]["function_name"],
+        "product_name": forcing_config["conditions"]["forcing"]["product_name"],
+        "function_name": forcing_config["conditions"]["forcing"]["function_name"],
     }
     for key in forcing_config:
-        if key == "basic" or key in remove_configs:
+        if key in {"conditions", "caseroot"} or key in remove_configs:
             continue
         user_args = ForcingConfigRegistry.get_user_args(
             ForcingConfigRegistry.get_configurator_from_name(key)
