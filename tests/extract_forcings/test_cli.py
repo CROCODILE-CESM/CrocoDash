@@ -1,4 +1,4 @@
-"""Tests for the `crocodash extract-forcings` CLI subcommand."""
+"""Tests for the `crocodash process` CLI subcommand."""
 
 import json
 import sys
@@ -43,24 +43,24 @@ def _write_config(path, extra_keys=None):
 # =============================================================================
 
 
-def test_extract_forcings_help():
+def test_process_help():
     with pytest.raises(SystemExit) as exc:
-        run_main(["extract-forcings", "--help"])
+        run_main(["process", "--help"])
     assert exc.value.code == 0
 
 
-def test_extract_forcings_all_args_available():
+def test_process_all_args_available():
     """Verify every expected flag is registered."""
     import argparse
 
-    with patch("CrocoDash.cli._extract_forcings"):
-        # This will call _extract_forcings if args parse OK
+    with patch("CrocoDash.cli._process"):
+        # This will call _process if args parse OK
         with patch.object(
             sys,
             "argv",
             [
                 "crocodash",
-                "extract-forcings",
+                "process",
                 "--config",
                 "/some/config.json",
                 "--caseroot",
@@ -84,19 +84,19 @@ def test_extract_forcings_all_args_available():
 
 
 # =============================================================================
-# _extract_forcings integration (mock run_workflow)
+# _process integration (mock run_workflow)
 # =============================================================================
 
 
 @patch("CrocoDash.extract_forcings.driver.run_workflow")
 @patch("CrocoDash.extract_forcings.driver.resolve_components")
-def test_extract_forcings_config_flag(mock_resolve, mock_run, tmp_path):
+def test_process_config_flag(mock_resolve, mock_run, tmp_path):
     """--config takes a direct path to config.json, skipping case_state lookup."""
     config_path = tmp_path / "config.json"
     _write_config(config_path)
     mock_resolve.side_effect = lambda args, cfg: args
 
-    run_main(["extract-forcings", "--config", str(config_path), "--all"])
+    run_main(["process", "--config", str(config_path), "--all"])
 
     mock_run.assert_called_once()
     call_kwargs = mock_run.call_args.kwargs
@@ -106,7 +106,7 @@ def test_extract_forcings_config_flag(mock_resolve, mock_run, tmp_path):
 @patch("CrocoDash.extract_forcings.driver.run_workflow")
 @patch("CrocoDash.extract_forcings.driver.resolve_components")
 @patch("CrocoDash.case_state.read")
-def test_extract_forcings_caseroot_flag(mock_read, mock_resolve, mock_run, tmp_path):
+def test_process_caseroot_flag(mock_read, mock_resolve, mock_run, tmp_path):
     caseroot = tmp_path / "mycase"
     caseroot.mkdir()
     inputdir = tmp_path / "input"
@@ -118,7 +118,7 @@ def test_extract_forcings_caseroot_flag(mock_read, mock_resolve, mock_run, tmp_p
     mock_read.return_value = {"inputdir": str(inputdir)}
     mock_resolve.side_effect = lambda args, cfg: args  # pass-through
 
-    run_main(["extract-forcings", "--caseroot", str(caseroot), "--ic"])
+    run_main(["process", "--caseroot", str(caseroot), "--ic"])
 
     mock_read.assert_called_once_with(caseroot)
     assert mock_run.called
@@ -126,7 +126,7 @@ def test_extract_forcings_caseroot_flag(mock_read, mock_resolve, mock_run, tmp_p
 
 @patch("CrocoDash.extract_forcings.driver.run_workflow")
 @patch("CrocoDash.extract_forcings.driver.resolve_components")
-def test_extract_forcings_auto_detect_config_in_cwd(
+def test_process_auto_detect_config_in_cwd(
     mock_resolve, mock_run, tmp_path, monkeypatch
 ):
     """If cwd contains config.json, use it without --caseroot."""
@@ -134,7 +134,7 @@ def test_extract_forcings_auto_detect_config_in_cwd(
     _write_config(tmp_path / "config.json")
     mock_resolve.side_effect = lambda args, cfg: args
 
-    run_main(["extract-forcings", "--all"])
+    run_main(["process", "--all"])
 
     mock_run.assert_called_once()
     call_kwargs = mock_run.call_args.kwargs
@@ -144,7 +144,7 @@ def test_extract_forcings_auto_detect_config_in_cwd(
 @patch("CrocoDash.extract_forcings.driver.run_workflow")
 @patch("CrocoDash.extract_forcings.driver.resolve_components")
 @patch("CrocoDash.case_state.read")
-def test_extract_forcings_defaults_to_cwd_as_caseroot(
+def test_process_defaults_to_cwd_as_caseroot(
     mock_read, mock_resolve, mock_run, tmp_path, monkeypatch
 ):
     """Without --caseroot and without config.json in cwd, treats cwd as caseroot."""
@@ -158,7 +158,7 @@ def test_extract_forcings_defaults_to_cwd_as_caseroot(
     mock_read.return_value = {"inputdir": str(inputdir)}
     mock_resolve.side_effect = lambda args, cfg: args
 
-    run_main(["extract-forcings", "--ic"])
+    run_main(["process", "--ic"])
 
     mock_read.assert_called_once_with(tmp_path)
     assert mock_run.called
@@ -167,9 +167,7 @@ def test_extract_forcings_defaults_to_cwd_as_caseroot(
 @patch("CrocoDash.extract_forcings.driver.run_workflow")
 @patch("CrocoDash.extract_forcings.driver.resolve_components")
 @patch("CrocoDash.case_state.read")
-def test_extract_forcings_preview_from_config(
-    mock_read, mock_resolve, mock_run, tmp_path
-):
+def test_process_preview_from_config(mock_read, mock_resolve, mock_run, tmp_path):
     caseroot = tmp_path / "mycase"
     caseroot.mkdir()
     inputdir = tmp_path / "input"
@@ -194,7 +192,7 @@ def test_extract_forcings_preview_from_config(
     mock_read.return_value = {"inputdir": str(inputdir)}
     mock_resolve.side_effect = lambda args, cfg: args
 
-    run_main(["extract-forcings", "--caseroot", str(caseroot), "--ic"])
+    run_main(["process", "--caseroot", str(caseroot), "--ic"])
 
     call_kwargs = mock_run.call_args.kwargs
     assert call_kwargs["preview"] is True

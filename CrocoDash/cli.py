@@ -19,7 +19,7 @@ def _dump(args):
     yaml.dump(config, sys.stdout, default_flow_style=False, sort_keys=False)
 
 
-def _extract_forcings(args):
+def _process(args):
     from CrocoDash import case_state
     from CrocoDash.extract_forcings.driver import run_workflow, resolve_components
 
@@ -127,9 +127,9 @@ def main():
     )
     dump_parser.set_defaults(func=_dump)
 
-    # --- extract-forcings ---
+    # --- process ---
     ef_parser = subparsers.add_parser(
-        "extract-forcings",
+        "process",
         help="Run the forcing extraction workflow for an existing CrocoDash case.",
     )
     ef_parser.add_argument(
@@ -173,7 +173,7 @@ def main():
         default=[],
         help="Skip components by name (e.g. --skip tides runoff)",
     )
-    ef_parser.set_defaults(func=_extract_forcings)
+    ef_parser.set_defaults(func=_process)
 
     # --- bundle ---
     bundle_parser = subparsers.add_parser(

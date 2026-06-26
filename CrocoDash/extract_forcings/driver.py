@@ -5,7 +5,7 @@ Orchestrates the forcing extraction workflow for a CrocoDash case. Reads
 from the case state file via ``case_state.read``.
 
 This module exposes ``run_workflow`` as the Python API. The CLI entry point is
-``crocodash extract-forcings`` (see ``CrocoDash.cli``).
+``crocodash process`` (see ``CrocoDash.cli``).
 
 Typical Python usage::
 

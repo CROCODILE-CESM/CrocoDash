@@ -1,6 +1,6 @@
 # Extract Forcings
 
-The final step of the CrocoDash workflow is extracting and processing all forcing data for your simulation: initial conditions, boundary conditions, tides, biogeochemistry, and more. You trigger this from Python via `case.process_forcings()`, or from the shell via `crocodash extract-forcings`.
+The final step of the CrocoDash workflow is extracting and processing all forcing data for your simulation: initial conditions, boundary conditions, tides, biogeochemistry, and more. You trigger this from Python via `case.process_forcings()`, or from the shell via `crocodash process`.
 
 ## Workflow Overview
 
@@ -11,7 +11,7 @@ The final step of the CrocoDash workflow is extracting and processing all forcin
 The key insight: **you don't have to run this from a Jupyter notebook**. After `configure_forcings` completes you can submit the extraction as a batch job using the CLI:
 
 ```bash
-crocodash extract-forcings --caseroot ~/croc_cases/mycase --all
+crocodash process --caseroot ~/croc_cases/mycase --all
 ```
 
 ## Directory Structure
@@ -30,21 +30,21 @@ inputdir/
 
 ## Command-Line Interface
 
-See [CLI reference](cli.md#crocodash-extract-forcings) for full flag documentation.
+See [CLI reference](cli.md#crocodash-process) for full flag documentation.
 
 ```bash
 # Run all forcing extractions
-crocodash extract-forcings --caseroot ~/croc_cases/mycase --all
+crocodash process --caseroot ~/croc_cases/mycase --all
 
 # Run only initial + boundary conditions
-crocodash extract-forcings --caseroot ~/croc_cases/mycase --ic --bc
+crocodash process --caseroot ~/croc_cases/mycase --ic --bc
 
 # Run all but skip tides and runoff
-crocodash extract-forcings --caseroot ~/croc_cases/mycase --all --skip tides runoff
+crocodash process --caseroot ~/croc_cases/mycase --all --skip tides runoff
 
 # Ran from inside the extract_forcings/ directory — no --caseroot needed
 cd ~/scratch/croc_input/mycase/extract_forcings
-crocodash extract-forcings --all
+crocodash process --all
 ```
 
 This flexibility lets you:
