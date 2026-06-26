@@ -6,7 +6,6 @@ from pathlib import Path
 
 from CrocoDash.extract_forcings.driver import resolve_components, run_workflow, _load
 
-
 # =============================================================================
 # resolve_components
 # =============================================================================
@@ -31,7 +30,13 @@ def _make_args(**overrides):
 
 def test_resolve_components_all_enables_configured_components():
     args = _make_args(all=True)
-    config = {"tides": {}, "runoff": {}, "bgcic": {}, "caseroot": "/x", "conditions": {}}
+    config = {
+        "tides": {},
+        "runoff": {},
+        "bgcic": {},
+        "caseroot": "/x",
+        "conditions": {},
+    }
     resolved = resolve_components(args, config)
     assert resolved.tides is True
     assert resolved.runoff is True
@@ -238,7 +243,9 @@ def test_run_workflow_runoff_calls_rof_module(mock_cs, mock_rof, tmp_path):
 @patch("CrocoDash.extract_forcings.driver.regrid_dataset_piecewise")
 @patch("CrocoDash.extract_forcings.driver.get_dataset_piecewise")
 @patch("CrocoDash.extract_forcings.driver.case_state")
-def test_run_workflow_returns_timings(mock_cs, mock_get, mock_regrid, mock_merge, tmp_path):
+def test_run_workflow_returns_timings(
+    mock_cs, mock_get, mock_regrid, mock_merge, tmp_path
+):
     config = _make_config()
     state = _make_state(tmp_path)
     mock_cs.read.return_value = state

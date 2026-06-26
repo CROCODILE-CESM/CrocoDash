@@ -145,16 +145,33 @@ def main():
     ef_top = ef_parser.add_argument_group("Top-level actions")
     ef_top.add_argument("--all", action="store_true", help="Run all components")
     ef_components = ef_parser.add_argument_group("Forcing components")
-    ef_components.add_argument("--ic", action="store_true", help="Run initial conditions")
-    ef_components.add_argument("--bc", action="store_true", help="Run boundary conditions")
-    ef_components.add_argument("--bgcic", action="store_true", help="Run BGC initial conditions")
-    ef_components.add_argument("--bgcironforcing", action="store_true", help="Run BGC iron forcing")
-    ef_components.add_argument("--bgcrivernutrients", action="store_true", help="Run BGC river nutrients")
-    ef_components.add_argument("--runoff", action="store_true", help="Run runoff mapping")
+    ef_components.add_argument(
+        "--ic", action="store_true", help="Run initial conditions"
+    )
+    ef_components.add_argument(
+        "--bc", action="store_true", help="Run boundary conditions"
+    )
+    ef_components.add_argument(
+        "--bgcic", action="store_true", help="Run BGC initial conditions"
+    )
+    ef_components.add_argument(
+        "--bgcironforcing", action="store_true", help="Run BGC iron forcing"
+    )
+    ef_components.add_argument(
+        "--bgcrivernutrients", action="store_true", help="Run BGC river nutrients"
+    )
+    ef_components.add_argument(
+        "--runoff", action="store_true", help="Run runoff mapping"
+    )
     ef_components.add_argument("--tides", action="store_true", help="Run tidal forcing")
-    ef_components.add_argument("--chl", action="store_true", help="Run chlorophyll processing")
+    ef_components.add_argument(
+        "--chl", action="store_true", help="Run chlorophyll processing"
+    )
     ef_top.add_argument(
-        "--skip", nargs="*", default=[], help="Skip components by name (e.g. --skip tides runoff)"
+        "--skip",
+        nargs="*",
+        default=[],
+        help="Skip components by name (e.g. --skip tides runoff)",
     )
     ef_parser.set_defaults(func=_extract_forcings)
 

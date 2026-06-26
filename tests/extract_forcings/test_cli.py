@@ -61,8 +61,10 @@ def test_extract_forcings_all_args_available():
             [
                 "crocodash",
                 "extract-forcings",
-                "--config", "/some/config.json",
-                "--caseroot", "/some/case",
+                "--config",
+                "/some/config.json",
+                "--caseroot",
+                "/some/case",
                 "--all",
                 "--ic",
                 "--bc",
@@ -72,7 +74,8 @@ def test_extract_forcings_all_args_available():
                 "--runoff",
                 "--tides",
                 "--chl",
-                "--skip", "tides",
+                "--skip",
+                "tides",
             ],
         ):
             from CrocoDash.cli import main
@@ -123,7 +126,9 @@ def test_extract_forcings_caseroot_flag(mock_read, mock_resolve, mock_run, tmp_p
 
 @patch("CrocoDash.extract_forcings.driver.run_workflow")
 @patch("CrocoDash.extract_forcings.driver.resolve_components")
-def test_extract_forcings_auto_detect_config_in_cwd(mock_resolve, mock_run, tmp_path, monkeypatch):
+def test_extract_forcings_auto_detect_config_in_cwd(
+    mock_resolve, mock_run, tmp_path, monkeypatch
+):
     """If cwd contains config.json, use it without --caseroot."""
     monkeypatch.chdir(tmp_path)
     _write_config(tmp_path / "config.json")
@@ -162,7 +167,9 @@ def test_extract_forcings_defaults_to_cwd_as_caseroot(
 @patch("CrocoDash.extract_forcings.driver.run_workflow")
 @patch("CrocoDash.extract_forcings.driver.resolve_components")
 @patch("CrocoDash.case_state.read")
-def test_extract_forcings_preview_from_config(mock_read, mock_resolve, mock_run, tmp_path):
+def test_extract_forcings_preview_from_config(
+    mock_read, mock_resolve, mock_run, tmp_path
+):
     caseroot = tmp_path / "mycase"
     caseroot.mkdir()
     inputdir = tmp_path / "input"
@@ -174,7 +181,11 @@ def test_extract_forcings_preview_from_config(mock_read, mock_resolve, mock_run,
         "caseroot": str(caseroot),
         "conditions": {
             "dates": {"start": "20200101", "end": "20200109", "format": "%Y%m%d"},
-            "forcing": {"product_name": "GLORYS", "function_name": "fn", "information": {}},
+            "forcing": {
+                "product_name": "GLORYS",
+                "function_name": "fn",
+                "information": {},
+            },
             "general": {"boundary_number_conversion": {}, "step": "7", "preview": True},
         },
     }

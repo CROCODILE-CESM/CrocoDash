@@ -102,7 +102,9 @@ def run_workflow(
 
     timings = {}
     try:
-        raw_dataset_pattern = r"(north|east|south|west)_unprocessed\.(\d{8})_(\d{8})\.nc"
+        raw_dataset_pattern = (
+            r"(north|east|south|west)_unprocessed\.(\d{8})_(\d{8})\.nc"
+        )
         regridded_dataset_pattern = r"forcing_obc_segment_(\d{3})_(\d{8})_(\d{8})\.nc"
 
         if ic or bc:
@@ -117,7 +119,9 @@ def run_workflow(
                 hgrid_path=supergrid_path,
                 step_days=int(conditions["general"]["step"]),
                 output_dir=raw_data_dir,
-                boundary_number_conversion=conditions["general"]["boundary_number_conversion"],
+                boundary_number_conversion=conditions["general"][
+                    "boundary_number_conversion"
+                ],
                 run_initial_condition=ic,
                 run_boundary_conditions=bc,
                 preview=preview,
@@ -132,7 +136,9 @@ def run_workflow(
                 bathymetry=topo_path,
                 dataset_varnames=conditions["forcing"]["information"],
                 output_folder=regridded_data_dir,
-                boundary_number_conversion=conditions["general"]["boundary_number_conversion"],
+                boundary_number_conversion=conditions["general"][
+                    "boundary_number_conversion"
+                ],
                 run_initial_condition=ic,
                 run_boundary_conditions=bc,
                 vgrid_path=vgrid_path,
@@ -144,7 +150,9 @@ def run_workflow(
                 date_format=conditions["dates"]["format"],
                 start_date=conditions["dates"]["start"],
                 end_date=conditions["dates"]["end"],
-                boundary_number_conversion=conditions["general"]["boundary_number_conversion"],
+                boundary_number_conversion=conditions["general"][
+                    "boundary_number_conversion"
+                ],
                 output_folder=output_path,
                 run_initial_condition=ic,
                 run_boundary_conditions=bc,
@@ -156,7 +164,8 @@ def run_workflow(
             _t = time.perf_counter()
             bgc.process_bgc_ic(
                 file_path=config["bgcic"]["inputs"]["marbl_ic_filepath"],
-                output_path=output_path / config["bgcic"]["outputs"]["MARBL_TRACERS_IC_FILE"],
+                output_path=output_path
+                / config["bgcic"]["outputs"]["MARBL_TRACERS_IC_FILE"],
             )
             timings["bgcic"] = time.perf_counter() - _t
 
@@ -166,8 +175,12 @@ def run_workflow(
             bgc.process_bgc_iron_forcing(
                 nx=grid.nx,
                 ny=grid.ny,
-                MARBL_FESEDFLUX_FILE=config["bgcironforcing"]["outputs"]["MARBL_FESEDFLUX_FILE"],
-                MARBL_FEVENTFLUX_FILE=config["bgcironforcing"]["outputs"]["MARBL_FEVENTFLUX_FILE"],
+                MARBL_FESEDFLUX_FILE=config["bgcironforcing"]["outputs"][
+                    "MARBL_FESEDFLUX_FILE"
+                ],
+                MARBL_FEVENTFLUX_FILE=config["bgcironforcing"]["outputs"][
+                    "MARBL_FEVENTFLUX_FILE"
+                ],
                 inputdir=inputdir,
             )
             timings["bgcironforcing"] = time.perf_counter() - _t
@@ -188,8 +201,12 @@ def run_workflow(
                 vgrid_path=vgrid_path,
                 tidal_constituents=config["tides"]["inputs"]["tidal_constituents"],
                 boundaries=config["tides"]["inputs"]["boundaries"],
-                tpxo_elevation_filepath=config["tides"]["inputs"]["tpxo_elevation_filepath"],
-                tpxo_velocity_filepath=config["tides"]["inputs"]["tpxo_velocity_filepath"],
+                tpxo_elevation_filepath=config["tides"]["inputs"][
+                    "tpxo_elevation_filepath"
+                ],
+                tpxo_velocity_filepath=config["tides"]["inputs"][
+                    "tpxo_velocity_filepath"
+                ],
             )
             timings["tides"] = time.perf_counter() - _t
 
@@ -206,7 +223,9 @@ def run_workflow(
                 ocn_grid=grid,
                 ocn_topo=ocn_topo,
                 inputdir=inputdir,
-                chl_processed_filepath=config["chl"]["inputs"]["chl_processed_filepath"],
+                chl_processed_filepath=config["chl"]["inputs"][
+                    "chl_processed_filepath"
+                ],
                 output_filepath=config["chl"]["outputs"]["CHL_FILE"],
             )
             timings["chl"] = time.perf_counter() - _t
@@ -215,7 +234,9 @@ def run_workflow(
             _t = time.perf_counter()
             rof.generate_rof_ocn_map(
                 rof_grid_name=config["runoff"]["inputs"]["rof_grid_name"],
-                rof_esmf_mesh_filepath=config["runoff"]["inputs"]["rof_esmf_mesh_filepath"],
+                rof_esmf_mesh_filepath=config["runoff"]["inputs"][
+                    "rof_esmf_mesh_filepath"
+                ],
                 ocn_mesh_filepath=config["runoff"]["inputs"]["case_esmf_mesh_path"],
                 inputdir=inputdir,
                 grid_name=config["runoff"]["inputs"]["case_grid_name"],
@@ -252,10 +273,7 @@ def run_workflow(
 def resolve_components(args, config):
     """Resolve which components to run based on CLI args and config availability."""
     components = {
-        k: v
-        for k, v in vars(args).items()
-        if isinstance(v, bool)
-        and k not in {"all"}
+        k: v for k, v in vars(args).items() if isinstance(v, bool) and k not in {"all"}
     }
     skip = {s.lower() for s in args.skip}
 
