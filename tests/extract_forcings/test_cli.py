@@ -161,27 +161,11 @@ def test_process_auto_detect_config_in_cwd(
     assert call_kwargs["config_path"] == tmp_path / "config.json"
 
 
-@patch("CrocoDash.extract_forcings.driver.run_workflow")
-@patch("CrocoDash.extract_forcings.driver.resolve_components")
-@patch("CrocoDash.case_state.read")
-def test_process_defaults_to_cwd_as_caseroot(
-    mock_read, mock_resolve, mock_run, tmp_path, monkeypatch
-):
-    """Without --caseroot and without config.json in cwd, treats cwd as caseroot."""
+def test_process_no_config_in_cwd_raises_helpful_error(tmp_path, monkeypatch):
+    """Without --caseroot and without config.json in cwd, shows a clear error."""
     monkeypatch.chdir(tmp_path)
-    inputdir = tmp_path / "input"
-    inputdir.mkdir()
-    ef_dir = inputdir / "extract_forcings"
-    ef_dir.mkdir()
-    _write_config(ef_dir / "config.json")
-
-    mock_read.return_value = {"inputdir": str(inputdir)}
-    mock_resolve.side_effect = lambda args, cfg: args
-
-    run_main(["process", "--ic"])
-
-    mock_read.assert_called_once_with(tmp_path)
-    assert mock_run.called
+    with pytest.raises(FileNotFoundError, match="--caseroot"):
+        run_main(["process", "--ic"])
 
 
 @patch("CrocoDash.extract_forcings.driver.run_workflow")

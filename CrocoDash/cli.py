@@ -29,18 +29,18 @@ def _process(args):
         caseroot = Path(args.caseroot)
         state = case_state.read(caseroot)
         config_path = Path(state["inputdir"]) / "extract_forcings" / "config.json"
+        if not config_path.exists():
+            raise FileNotFoundError(
+                f"Forcing configuration not found at {config_path}\n"
+                "Run case.configure_forcings() before calling 'crocodash process'."
+            )
     elif (Path.cwd() / "config.json").exists():
         # Ran directly from inside the extract_forcings/ directory
         config_path = Path.cwd() / "config.json"
     else:
-        # Default: treat cwd as caseroot
-        state = case_state.read(Path.cwd())
-        config_path = Path(state["inputdir"]) / "extract_forcings" / "config.json"
-
-    if not config_path.exists():
         raise FileNotFoundError(
-            f"Forcing configuration not found at {config_path}\n"
-            "Run case.configure_forcings() before calling 'crocodash process'."
+            "No config.json found in the current directory and no --config or --caseroot provided.\n"
+            "Run from inside an extract_forcings/ directory, or pass --caseroot <path> or --config <path>."
         )
 
     with open(config_path) as f:
@@ -146,7 +146,7 @@ def main():
     ef_parser.add_argument(
         "--caseroot",
         default=None,
-        help="Path to the CESM caseroot. Defaults to the current working directory.",
+        help="Path to the CESM caseroot.",
     )
     ef_top = ef_parser.add_argument_group("Top-level actions")
     ef_top.add_argument("--all", action="store_true", help="Run all components")
