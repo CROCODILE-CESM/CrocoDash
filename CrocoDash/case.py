@@ -774,6 +774,7 @@ class Case:
         self._configure_custom_atmosphere_grid(atm_grid_name)
         self._configure_custom_ocean_grid()
         self._configure_custom_runoff_grid(rof_grid_name)
+        self._configure_custom_wave_grid()
 
     def _configure_custom_atmosphere_grid(self, atm_grid_name):
         """Configure the atmosphere grid for the case. To be called by _configure_custom_grid()"""
@@ -852,6 +853,20 @@ class Case:
             cvars["ROF_OCN_MAPPING_STATUS"].value = (
                 "skip"  # to be generated later in process_forcings
             )
+
+    def _configure_custom_wave_grid(self):
+        """Configure the wave grid for the case. To be called by _configure_custom_grid().
+
+        Only reached for an active wave model (WW3); for stub waves (SWAV) the Wave Grid
+        stages are auto-skipped (irrelevant), this method is a no-op.
+        """
+        if Stage.active().title == "Wave Grid Mode":
+            cvars["WAV_GRID_MODE"].value = "Custom Ocean Grid"
+            # The WW3 grid-preprocessor input files are generated separately in
+            # _create_grid_input_files() via ocn_topo.write_ww3_input(); mark the
+            # input-file generation sub-stage complete so the flow proceeds to Launch.
+            assert Stage.active().title == "Wave Input Files"
+            cvars["WW3_INPUT_STATUS"].value = "Complete"
 
     def _configure_launch(self):
         """Assign the launch variables for the case."""
