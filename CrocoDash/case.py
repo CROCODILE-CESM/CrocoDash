@@ -526,8 +526,8 @@ class Case:
                     self.forcing_product_name.lower()
                 ).write_metadata(include_marbl_tracers=self.bgc_in_compset),
                 "function_default_args": ProductRegistry.get_function_default_args(
-                self.forcing_product_name.lower(), function_name
-            )
+                    self.forcing_product_name.lower(), function_name
+                ),
             },
             "general": {
                 "boundary_number_conversion": {
