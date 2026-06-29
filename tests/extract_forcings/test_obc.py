@@ -8,6 +8,8 @@ from pathlib import Path
 from CrocoDash.extract_forcings.obc import (
     process_obc_conditions,
     _merge_boundary,
+    _validate_coverage,
+    _is_valid_netcdf,
 )
 from CrocoDash.grid import Grid
 
@@ -234,3 +236,85 @@ def test_obc_merge_workflow(
         ds = xr.open_dataset(out)
         assert "time" in ds.dims
         ds.close()
+
+
+# ---------------------------------------------------------------------------
+# Unit tests: _validate_coverage (covers success, empty, wrong endpoints, gap, overlap)
+# ---------------------------------------------------------------------------
+
+
+def test_validate_coverage(tmp_path):
+    start, end = datetime(2020, 1, 1), datetime(2020, 1, 15)
+
+    def parse(f):
+        s, e = f.stem.split("_")
+        return datetime.fromisoformat(s), datetime.fromisoformat(e)
+
+    good = [
+        tmp_path / "2020-01-01_2020-01-05.nc",
+        tmp_path / "2020-01-06_2020-01-10.nc",
+        tmp_path / "2020-01-11_2020-01-15.nc",
+    ]
+    for f in good:
+        f.touch()
+    result = _validate_coverage(good, parse, "east", start, end)
+    assert result == good
+
+    with pytest.raises(FileNotFoundError):
+        _validate_coverage([], parse, "east", start, end)
+
+    bad_start = [tmp_path / "2020-01-03_2020-01-15.nc"]
+    bad_start[0].touch()
+    with pytest.raises(ValueError, match="starts"):
+        _validate_coverage(bad_start, parse, "east", start, end)
+
+    gap = [tmp_path / "2020-01-01_2020-01-05.nc", tmp_path / "2020-01-07_2020-01-15.nc"]
+    for f in gap:
+        f.touch()
+    with pytest.raises(ValueError, match="Gap"):
+        _validate_coverage(gap, parse, "east", start, end)
+
+    overlap = [tmp_path / "2020-01-01_2020-01-05.nc", tmp_path / "2020-01-05_2020-01-15.nc"]
+    for f in overlap:
+        f.touch()
+    with pytest.raises(ValueError, match="Overlapping"):
+        _validate_coverage(overlap, parse, "east", start, end)
+
+
+# ---------------------------------------------------------------------------
+# Unit tests: corruption detection
+# ---------------------------------------------------------------------------
+
+
+def test_is_valid_netcdf_corrupt_file(tmp_path):
+    bad = tmp_path / "corrupt.nc"
+    bad.write_bytes(b"not a netcdf file at all")
+    assert not _is_valid_netcdf(bad)
+
+
+def test_merge_boundary_corrupt_existing_raises(
+    tmp_path, dummy_mom6_obc_data_factory, get_rect_grid
+):
+    grid = get_rect_grid
+    bounds = Grid.get_bounding_boxes_of_rectangular_grid(grid)
+    east = dummy_mom6_obc_data_factory(
+        bounds["ic"]["lat_min"],
+        bounds["ic"]["lat_max"],
+        bounds["ic"]["lon_min"],
+        bounds["ic"]["lon_max"],
+        "001",
+        6,
+    )
+    regridded_dir = tmp_path / "regridded"
+    regridded_dir.mkdir()
+    output_dir = tmp_path / "output"
+    output_dir.mkdir()
+
+    chunk_file = regridded_dir / "forcing_obc_segment_001_2020-01-01_2020-01-05.nc"
+    east.to_netcdf(chunk_file)
+
+    merged = output_dir / "forcing_obc_segment_001.nc"
+    merged.write_bytes(b"corrupted data")
+
+    with pytest.raises(RuntimeError, match="not valid NetCDF"):
+        _merge_boundary("001", [chunk_file], output_dir)

@@ -41,7 +41,8 @@ _NETCDF_MAGIC = (b"\x89HDF", b"CDF\x01", b"CDF\x02")
 def _is_valid_netcdf(path: Path) -> bool:
     try:
         with open(path, "rb") as f:
-            return any(f.read(4).startswith(m) for m in _NETCDF_MAGIC)
+            header = f.read(4)
+        return any(header.startswith(m) for m in _NETCDF_MAGIC)
     except OSError:
         return False
 
@@ -73,26 +74,42 @@ def _parse_raw_filename_dates(path: Path, boundary: str):
     return datetime.fromisoformat(start_str), datetime.fromisoformat(end_str)
 
 
-def _validate_raw_coverage(
-    raw_dir, boundary: str, start_date: datetime, end_date: datetime
+def _parse_regridded_filename_dates(path: Path, seg_id: int):
+    """Parse (start_date, end_date) from a regridded OBC filename.
+
+    Expects ISO dates (YYYY-MM-DD) separated by ``_``, e.g.
+    ``forcing_obc_segment_001_2020-01-01_2020-01-05.nc``.
+    """
+    prefix = f"forcing_obc_segment_{seg_id:03d}_"
+    date_part = path.stem.removeprefix(prefix)
+    start_str, end_str = date_part.split("_")
+    return datetime.fromisoformat(start_str), datetime.fromisoformat(end_str)
+
+
+def _validate_coverage(
+    files: list,
+    parse_dates,
+    label: str,
+    start_date: datetime,
+    end_date: datetime,
 ):
-    """Check that raw files cover [start_date, end_date] without gaps or overlaps.
+    """Check that files cover [start_date, end_date] without gaps or overlaps.
+
+    parse_dates: callable(Path) -> (start_datetime, end_datetime)
+    label: string used in error messages (e.g. boundary name or "segment 001")
 
     Reads dates from filenames only — does not open any files.
 
-    Returns the sorted list of raw file paths on success.
-    Raises FileNotFoundError, or ValueError for gaps/overlaps/wrong endpoints.
+    Returns the sorted list of file paths on success.
+    Raises FileNotFoundError if empty, or ValueError for gaps/overlaps/wrong endpoints.
     """
-    raw_dir = Path(raw_dir)
-    files = sorted(raw_dir.glob(f"{boundary}_unprocessed.*.nc"))
-
     if not files:
         raise FileNotFoundError(
-            f"No raw files for boundary '{boundary}' in {raw_dir}. Run GET phase first."
+            f"No files for [{label}] — preceding phase produced no output."
         )
 
     intervals = sorted(
-        [(_parse_raw_filename_dates(f, boundary), f) for f in files],
+        [(parse_dates(f), f) for f in files],
         key=lambda x: x[0][0],
     )
 
@@ -101,12 +118,12 @@ def _validate_raw_coverage(
 
     if first_start != start_date:
         raise ValueError(
-            f"[{boundary}] Raw coverage starts {first_start:%Y-%m-%d}, "
+            f"[{label}] Coverage starts {first_start:%Y-%m-%d}, "
             f"expected {start_date:%Y-%m-%d}"
         )
     if last_end != end_date:
         raise ValueError(
-            f"[{boundary}] Raw coverage ends {last_end:%Y-%m-%d}, "
+            f"[{label}] Coverage ends {last_end:%Y-%m-%d}, "
             f"expected {end_date:%Y-%m-%d}"
         )
 
@@ -116,11 +133,11 @@ def _validate_raw_coverage(
         expected = cur_end + timedelta(days=1)
         if next_start < expected:
             raise ValueError(
-                f"[{boundary}] Overlapping files around {cur_end:%Y-%m-%d}"
+                f"[{label}] Overlapping files around {cur_end:%Y-%m-%d}"
             )
         if next_start > expected:
             raise ValueError(
-                f"[{boundary}] Gap in coverage: {cur_end:%Y-%m-%d} → {next_start:%Y-%m-%d}"
+                f"[{label}] Gap in coverage: {cur_end:%Y-%m-%d} → {next_start:%Y-%m-%d}"
             )
 
     return [f for _, f in intervals]
@@ -228,6 +245,11 @@ def _regrid_boundary(
         )
 
         if dated_output.exists():
+            if not _is_valid_netcdf(dated_output):
+                raise RuntimeError(
+                    f"Regridded file {dated_output} exists but is not valid NetCDF. "
+                    "Delete it and re-run."
+                )
             logger.info(f"Regridded file {dated_output.name} already exists. Skipping.")
             regridded_files.append(dated_output)
             continue
@@ -275,6 +297,11 @@ def _merge_boundary(boundary_label: str, regridded_files: list, output_folder) -
     output_path = output_folder / f"forcing_obc_segment_{boundary_label}.nc"
 
     if output_path.exists():
+        if not _is_valid_netcdf(output_path):
+            raise RuntimeError(
+                f"Merged OBC file {output_path} exists but is not valid NetCDF. "
+                "Delete it and re-run."
+            )
         logger.info(f"Merged file {output_path.name} already exists. Skipping.")
         return output_path
 
@@ -384,7 +411,13 @@ def process_obc_conditions(config_path, preview: bool = False):
             extra_args=extra_args,
         )
 
-        raw_files = _validate_raw_coverage(raw_path, boundary, start_date, end_date)
+        raw_files = _validate_coverage(
+            sorted(raw_path.glob(f"{boundary}_unprocessed.*.nc")),
+            lambda f: _parse_raw_filename_dates(f, boundary),
+            boundary,
+            start_date,
+            end_date,
+        )
 
         logger.info("REGRID [%s]: %d-day slices", boundary, regrid_step_days)
         regridded_files = _regrid_boundary(
@@ -398,6 +431,14 @@ def process_obc_conditions(config_path, preview: bool = False):
             output_folder=str(regridded_path),
             dataset_varnames=product_info,
             fill_method=fill_method,
+        )
+
+        _validate_coverage(
+            regridded_files,
+            lambda f: _parse_regridded_filename_dates(f, seg_id),
+            f"segment {seg_id:03d}",
+            start_date,
+            end_date,
         )
 
         logger.info("MERGE [%s]", boundary)
