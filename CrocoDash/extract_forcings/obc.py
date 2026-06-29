@@ -132,9 +132,7 @@ def _validate_coverage(
         next_start = intervals[i + 1][0][0]
         expected = cur_end + timedelta(days=1)
         if next_start < expected:
-            raise ValueError(
-                f"[{label}] Overlapping files around {cur_end:%Y-%m-%d}"
-            )
+            raise ValueError(f"[{label}] Overlapping files around {cur_end:%Y-%m-%d}")
         if next_start > expected:
             raise ValueError(
                 f"[{label}] Gap in coverage: {cur_end:%Y-%m-%d} → {next_start:%Y-%m-%d}"

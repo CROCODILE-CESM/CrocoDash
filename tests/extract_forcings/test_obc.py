@@ -274,7 +274,10 @@ def test_validate_coverage(tmp_path):
     with pytest.raises(ValueError, match="Gap"):
         _validate_coverage(gap, parse, "east", start, end)
 
-    overlap = [tmp_path / "2020-01-01_2020-01-05.nc", tmp_path / "2020-01-05_2020-01-15.nc"]
+    overlap = [
+        tmp_path / "2020-01-01_2020-01-05.nc",
+        tmp_path / "2020-01-05_2020-01-15.nc",
+    ]
     for f in overlap:
         f.touch()
     with pytest.raises(ValueError, match="Overlapping"):
