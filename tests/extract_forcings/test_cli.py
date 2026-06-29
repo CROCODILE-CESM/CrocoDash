@@ -109,12 +109,10 @@ def test_process_missing_config_raises_helpful_error(mock_read, tmp_path):
 
 
 @patch("CrocoDash.extract_forcings.driver.run_workflow")
-@patch("CrocoDash.extract_forcings.driver.resolve_components")
-def test_process_config_flag(mock_resolve, mock_run, tmp_path):
+def test_process_config_flag(mock_run, tmp_path):
     """--config takes a direct path to config.json, skipping case_state lookup."""
     config_path = tmp_path / "config.json"
     _write_config(config_path)
-    mock_resolve.side_effect = lambda args, cfg: args
 
     run_main(["process", "--config", str(config_path), "--all"])
 
@@ -145,14 +143,10 @@ def test_process_caseroot_flag(mock_read, mock_resolve, mock_run, tmp_path):
 
 
 @patch("CrocoDash.extract_forcings.driver.run_workflow")
-@patch("CrocoDash.extract_forcings.driver.resolve_components")
-def test_process_auto_detect_config_in_cwd(
-    mock_resolve, mock_run, tmp_path, monkeypatch
-):
+def test_process_auto_detect_config_in_cwd(mock_run, tmp_path, monkeypatch):
     """If cwd contains config.json, use it without --caseroot."""
     monkeypatch.chdir(tmp_path)
     _write_config(tmp_path / "config.json")
-    mock_resolve.side_effect = lambda args, cfg: args
 
     run_main(["process", "--all"])
 
