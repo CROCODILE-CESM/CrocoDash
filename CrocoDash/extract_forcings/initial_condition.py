@@ -17,7 +17,6 @@ def process_initial_condition(
     product_name: str,
     function_name: str,
     product_information: dict,
-    date_format: str,
     start_date: str | datetime,
     hgrid_path: str | Path,
     vgrid_path: str | Path,
@@ -35,8 +34,7 @@ def process_initial_condition(
         product_name: The name of the data product to retrieve.
         function_name: The function to call for retrieving data.
         product_information: Variable name mappings and metadata for the forcing product.
-        date_format: The date format string (e.g., "%Y%m%d").
-        start_date: The start date (string or datetime).
+        start_date: The start date (any pandas-parseable string or datetime).
         hgrid_path: Path to the hgrid supergrid file.
         vgrid_path: Path to the vertical grid file.
         dataset_varnames: Variable name mappings passed to rm6 regridding.
@@ -45,8 +43,10 @@ def process_initial_condition(
         bathymetry_path: Path to the bathymetry file.
         preview: Return metadata dict without executing, default False.
     """
-    if isinstance(start_date, str):
-        start_date = datetime.strptime(start_date, date_format)
+    if not isinstance(start_date, datetime):
+        import pandas as pd
+
+        start_date = pd.to_datetime(start_date).to_pydatetime()
 
     ProductRegistry.load()
     ProductRegistry.validate_function(product_name, function_name)
@@ -60,8 +60,8 @@ def process_initial_condition(
     latlon_info = boundary_info["ic"]
     output_file = "ic_unprocessed.nc"
     end_ic_date = start_date + timedelta(days=1)
-    end_ic_date_str = end_ic_date.strftime(date_format)
-    start_date_str = start_date.strftime(date_format)
+    end_ic_date_str = end_ic_date.strftime("%Y-%m-%d")
+    start_date_str = start_date.strftime("%Y-%m-%d")
 
     # Build requested variables
     phys_vars = [

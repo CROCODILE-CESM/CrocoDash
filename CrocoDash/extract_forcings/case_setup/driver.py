@@ -8,54 +8,22 @@ The script can be run from the command line with various component flags to cont
 forcings are processed. It loads configuration from config.json and coordinates all extraction,
 regridding, and formatting operations.
 
-OBC processing (``--bc``) uses Dask for the **GET** (download) step only.
-**REGRID** and **MERGE** always run sequentially in the main process — xESMF/ESMF
-cannot initialize its parallel environment in subprocess workers on PBS/HPC
-systems (see :mod:`CrocoDash.extract_forcings.obc`).
-
-By default everything runs without a cluster (sequential ``dask.compute``). Pass
-``--n-workers N`` to launch a ``LocalCluster`` that parallelises GET. For PBS
-clusters, add ``--pbs`` along with optional ``--queue``, ``--walltime``,
-``--memory``, ``--cores``, and ``--resource-spec`` flags (requires
-``dask-jobqueue``). For full Python control (e.g. SLURM), create a client with
-:func:`~CrocoDash.extract_forcings.utils.make_pbs_cluster` and pass it to
-:func:`run_workflow` directly.
-
 Typical CLI usage::
 
-    python driver.py --all                          # all components, sequential OBC
-    python driver.py --bc --n-workers 4             # OBC with 4 local workers
-    python driver.py --bc --n-workers 8 --pbs \
-        --queue regular --walltime 02:00:00         # OBC with 8 PBS jobs
-    python driver.py --bc --n-workers 8 --pbs \
-        --queue regular --visualize                 # same, plus Dask dashboard link
-    python driver.py --tides --bgcic                # tides and BGC IC only
-    python driver.py --all --skip runoff            # all except runoff
-    python driver.py --ic --no-get                  # IC, skip raw data download
+    python driver.py --all
+    python driver.py --bc
+    python driver.py --tides --bgcic
+    python driver.py --all --skip runoff
 
-Typical Python usage (HPC power users)::
+Typical Python usage::
 
-    from CrocoDash.extract_forcings.utils import make_pbs_cluster
     from CrocoDash.extract_forcings.case_setup.driver import run_workflow
-
-    client = make_pbs_cluster(n_workers=8, queue="regular", walltime="02:00:00")
-    run_workflow(bc=True, ic=True, client=client, visualize=True)
-    client.close()
-
-.. note::
-
-    On HPC systems (PBS/SLURM), the Dask dashboard runs on an internal compute
-    node that is not directly reachable from your laptop. When ``--visualize``
-    is used with ``--pbs``, the driver prints a ready-to-run SSH tunnel command.
-    Run it on your laptop to forward the port, then open ``http://localhost:<port>/status``
-    in a browser::
-
-        ssh -L 8787:<compute-node>:8787 <login-node>
+    run_workflow(bc=True, ic=True)
 """
 
 import sys
+import time
 from pathlib import Path
-from urllib.parse import urlparse
 import argparse
 
 from CrocoDash.extract_forcings import (
@@ -208,65 +176,11 @@ def parse_args():
         "--chl", action="store_true", help="Run chlorophyll processing"
     )
 
-    conditions_opts = parser.add_argument_group("Conditions options")
-    conditions_opts.add_argument("--no-get", action="store_true")
-    conditions_opts.add_argument("--no-regrid", action="store_true")
-    conditions_opts.add_argument("--no-merge", action="store_true")
-
     top.add_argument(
         "--skip",
         nargs="*",
         default=[],
         help="Skip components by name (e.g. --skip tides runoff)",
-    )
-
-    cluster_opts = parser.add_argument_group(
-        "Cluster options",
-        "Parallelise OBC GET (download) step. REGRID and MERGE always run "
-        "sequentially in the main process. Omit --n-workers to skip cluster "
-        "setup entirely.",
-    )
-    cluster_opts.add_argument(
-        "--n-workers",
-        type=int,
-        default=None,
-        help="Number of workers. With --pbs, submits N PBS jobs; otherwise starts a LocalCluster.",
-    )
-    cluster_opts.add_argument(
-        "--pbs",
-        action="store_true",
-        help="Use a PBS cluster instead of a local cluster (requires dask-jobqueue).",
-    )
-    cluster_opts.add_argument(
-        "--queue",
-        default=None,
-        help="PBS queue/partition (e.g. 'regular'). Site-specific.",
-    )
-    cluster_opts.add_argument(
-        "--walltime",
-        default="01:00:00",
-        help="Walltime per PBS job (default: 01:00:00).",
-    )
-    cluster_opts.add_argument(
-        "--memory",
-        default="4GiB",
-        help="Memory per PBS job (default: 4GiB).",
-    )
-    cluster_opts.add_argument(
-        "--cores",
-        type=int,
-        default=1,
-        help="CPU cores per PBS job (default: 1).",
-    )
-    cluster_opts.add_argument(
-        "--resource-spec",
-        default=None,
-        help="Raw PBS -l resource string (e.g. 'select=1:ncpus=4:mem=4gb'). Overrides --cores/--memory.",
-    )
-    cluster_opts.add_argument(
-        "--visualize",
-        action="store_true",
-        help="Print the Dask dashboard link when a cluster is active (requires --n-workers or --pbs).",
     )
 
     if len(sys.argv) == 1:
@@ -302,7 +216,10 @@ def resolve_components(args, cfg):
         for k, v in vars(args).items()
         if isinstance(v, bool)
         and k
-        not in {"all", "test", "no_get", "no_regrid", "no_merge", "pbs", "visualize"}
+        not in {
+            "all",
+            "test",
+        }
     }
 
     skip = {s.lower() for s in args.skip}
@@ -336,50 +253,26 @@ def run_workflow(
     chl=False,
     runoff=False,
     bgcrivernutrients=False,
-    skip_get=False,
-    skip_regrid=False,
-    skip_merge=False,
     preview=False,
     cfg=None,
-    client=None,
-    n_workers=None,
-    visualize=False,
-    pbs=False,
 ):
     """
     Execute the forcing extraction workflow.
 
     This is the shared core used by both run_from_cli and case.py's process_forcings.
-    Each boolean flag enables the corresponding component. Components run sequentially;
-    parallelism is handled internally by individual components (e.g., OBC uses Dask).
+    Each boolean flag enables the corresponding component. All steps run sequentially.
 
     Args:
         ic:                  Run initial conditions
-        bc:                  Run boundary conditions (OBC; parallel internally via Dask)
+        bc:                  Run boundary conditions (OBC)
         bgcic:               Run BGC initial conditions
         bgcironforcing:      Run BGC iron forcing
         tides:               Run tidal forcing
         chl:                 Run chlorophyll processing
         runoff:              Run runoff mapping
         bgcrivernutrients:   Run BGC river nutrients (always runs after runoff)
-        skip_get:            Skip raw data download step (OBC/IC)
-        skip_regrid:         Skip regridding step (OBC)
-        skip_merge:          Skip merge step (OBC)
         preview:             Preview task graph without executing
         cfg:                 Config object; loaded from CONFIG_PATH if None
-        client:              Dask distributed Client (power users). Caller owns lifecycle.
-                             Create one with :func:`~CrocoDash.extract_forcings.utils.make_pbs_cluster`
-                             or :func:`~CrocoDash.extract_forcings.utils.make_local_cluster`.
-        n_workers:           Spin up a LocalCluster with this many workers for GET.
-                             REGRID and MERGE always run sequentially in the main
-                             process. Ignored if client is already provided. If neither
-                             is set, OBC uses ``dask.compute`` with no cluster overhead.
-        visualize:           If True and a Dask client is active, print the Dask
-                             dashboard link so progress can be monitored in a browser.
-                             When ``pbs=True``, also prints a ready-to-run SSH tunnel
-                             command for reaching the dashboard from outside the cluster.
-        pbs:                 Set to True when the client was created with a PBS cluster.
-                             Only affects the extra SSH hint printed by ``visualize``.
     """
     if cfg is None:
         cfg = utils.Config(CONFIG_PATH)
@@ -388,78 +281,72 @@ def run_workflow(
         print("No components selected.")
         return
 
-    own_client = client is None and n_workers is not None
-    if own_client:
-        client = utils.make_local_cluster(n_workers=n_workers)
+    timings = {}
 
-    if visualize:
-        if client is not None:
-            print(f"[dask] Dashboard: {client.dashboard_link}")
-            if pbs:
-                parsed = urlparse(client.dashboard_link)
-                host = parsed.hostname or "<compute-node>"
-                port = parsed.port or 8787
-                print(
-                    f"[dask] PBS/HPC tunnel (run on your laptop): "
-                    f"ssh -L {port}:{host}:{port} <login-node>"
-                )
-                print(f"[dask]   then open: http://localhost:{port}/status")
-        else:
-            print(
-                "[dask] --visualize requested but no Dask client is active "
-                "(pass --n-workers or --pbs to enable a cluster)."
-            )
+    if bc:
+        _t = time.perf_counter()
+        process_obc(
+            config_path=CONFIG_PATH,
+            preview=preview,
+        )
+        timings["bc"] = time.perf_counter() - _t
 
-    try:
-        if bc:
-            process_obc(
-                config_path=CONFIG_PATH,
-                skip_get=skip_get,
-                skip_regrid=skip_regrid,
-                skip_merge=skip_merge,
-                client=client,
-                preview=preview,
-            )
-
-        if ic:
-            initial_condition.process_initial_condition(
-                product_name=cfg["basic"]["forcing"]["product_name"],
-                function_name=cfg["basic"]["forcing"]["function_name"],
-                product_information=cfg["basic"]["forcing"]["information"],
-                date_format=cfg["basic"]["dates"]["format"],
-                start_date=cfg["basic"]["dates"]["start"],
-                hgrid_path=cfg["basic"]["paths"]["hgrid_path"],
-                vgrid_path=cfg["basic"]["paths"]["vgrid_path"],
-                dataset_varnames=cfg["basic"]["forcing"]["information"],
-                raw_data_dir=cfg["basic"]["paths"]["raw_dataset_path"],
-                output_data_dir=cfg["basic"]["paths"]["output_path"],
-                bathymetry_path=cfg["basic"]["paths"]["bathymetry_path"],
-                preview=preview,
-                function_default_args=cfg["basic"]["forcing"].get(
+    if ic:
+        _t = time.perf_counter()
+        initial_condition.process_initial_condition(
+            product_name=cfg["basic"]["forcing"]["product_name"],
+            function_name=cfg["basic"]["forcing"]["function_name"],
+            product_information=cfg["basic"]["forcing"]["information"],
+            start_date=cfg["basic"]["dates"]["start"],
+            hgrid_path=cfg["basic"]["paths"]["hgrid_path"],
+            vgrid_path=cfg["basic"]["paths"]["vgrid_path"],
+            dataset_varnames=cfg["basic"]["forcing"]["information"],
+            raw_data_dir=cfg["basic"]["paths"]["raw_dataset_path"],
+            output_data_dir=cfg["basic"]["paths"]["output_path"],
+            bathymetry_path=cfg["basic"]["paths"]["bathymetry_path"],
+            preview=preview,
+            function_default_args=cfg["basic"]["forcing"].get(
                     "function_default_args", {}
-                ),
-            )
+                )
+        )
+        timings["ic"] = time.perf_counter() - _t
 
-        if bgcic:
-            process_bgcic()
+    if bgcic:
+        _t = time.perf_counter()
+        process_bgcic()
+        timings["bgcic"] = time.perf_counter() - _t
 
-        if bgcironforcing:
-            process_bgcironforcing()
+    if bgcironforcing:
+        _t = time.perf_counter()
+        process_bgcironforcing()
+        timings["bgcironforcing"] = time.perf_counter() - _t
 
-        if tides:
-            process_tides()
+    if tides:
+        _t = time.perf_counter()
+        process_tides()
+        timings["tides"] = time.perf_counter() - _t
 
-        if chl:
-            process_chl()
+    if chl:
+        _t = time.perf_counter()
+        process_chl()
+        timings["chl"] = time.perf_counter() - _t
 
-        if runoff:
-            process_runoff()
+    if runoff:
+        _t = time.perf_counter()
+        process_runoff()
+        timings["runoff"] = time.perf_counter() - _t
 
-        if bgcrivernutrients:
-            process_bgcrivernutrients()
-    finally:
-        if own_client:
-            client.close()
+    if bgcrivernutrients:
+        _t = time.perf_counter()
+        process_bgcrivernutrients()
+        timings["bgcrivernutrients"] = time.perf_counter() - _t
+
+    if timings:
+        parts = [f"{k}: {v:.1f}s" for k, v in timings.items()]
+        parts.append(f"total: {sum(timings.values()):.1f}s")
+        print("[timing] " + "  ".join(parts))
+
+    return timings
 
 
 def run_from_cli(args, cfg):
@@ -474,45 +361,22 @@ def run_from_cli(args, cfg):
         test_driver()
         return
 
-    if args.pbs and args.n_workers is None:
-        raise ValueError("--pbs requires --n-workers")
-
     args = resolve_components(args, cfg)
 
-    client = None
-    if args.pbs:
-        client = utils.make_pbs_cluster(
-            n_workers=args.n_workers,
-            cores=args.cores,
-            memory=args.memory,
-            walltime=args.walltime,
-            queue=args.queue,
-            resource_spec=args.resource_spec,
-        )
+    workflow_kwargs = dict(
+        ic=args.ic,
+        bc=args.bc,
+        bgcic=args.bgcic,
+        bgcironforcing=args.bgcironforcing,
+        tides=args.tides,
+        chl=args.chl,
+        runoff=args.runoff,
+        bgcrivernutrients=args.bgcrivernutrients,
+        preview=cfg["basic"]["general"].get("preview", False),
+        cfg=cfg,
+    )
 
-    try:
-        run_workflow(
-            ic=args.ic,
-            bc=args.bc,
-            bgcic=args.bgcic,
-            bgcironforcing=args.bgcironforcing,
-            tides=args.tides,
-            chl=args.chl,
-            runoff=args.runoff,
-            bgcrivernutrients=args.bgcrivernutrients,
-            skip_get=args.no_get,
-            skip_regrid=args.no_regrid,
-            skip_merge=args.no_merge,
-            preview=cfg["basic"]["general"].get("preview", False),
-            cfg=cfg,
-            client=client,
-            n_workers=args.n_workers if not args.pbs else None,
-            visualize=args.visualize,
-            pbs=args.pbs,
-        )
-    finally:
-        if client is not None:
-            client.close()
+    run_workflow(**workflow_kwargs)
 
 
 if __name__ == "__main__":

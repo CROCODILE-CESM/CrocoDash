@@ -218,9 +218,15 @@ class Case:
         """Perform sanity checks on the input arguments to ensure they are valid and consistent."""
 
         if Path(caseroot).exists() and not override:
-            raise ValueError(f"Given caseroot {caseroot} already exists!")
+            raise ValueError(
+                f"Given caseroot {caseroot} already exists! "
+                "To overwrite it, use override=True."
+            )
         if Path(inputdir).exists() and not override:
-            raise ValueError(f"Given inputdir {inputdir} already exists!")
+            raise ValueError(
+                f"Given inputdir {inputdir} already exists! "
+                "To overwrite it, use override=True."
+            )
         if not isinstance(ocn_grid, Grid):
             raise TypeError("ocn_grid must be a Grid object.")
         if not isinstance(ocn_vgrid, VGrid):
@@ -261,7 +267,11 @@ class Case:
                 "ocn_grid must have a name. Please set it using the 'name' attribute."
             )
         if ocn_grid.name in cime.domains["ocnice"] and not override:
-            raise ValueError(f"ocn_grid name {ocn_grid.name} is already in use.")
+            raise ValueError(
+                f"ocn_grid name '{ocn_grid.name}' is already registered in CESM's grid config. "
+                "This happens when a previous case with this grid was deleted without using override=True. "
+                "To recreate the case, use override=True."
+            )
         if not isinstance(ninst, int):
             raise TypeError("ninst must be an integer.")
         if machine is None:
@@ -493,72 +503,41 @@ class Case:
         self.boundaries = boundaries
         self.date_range = pd.to_datetime(date_range)
 
-        # Set Vars for Config
-        date_format = "%Y%m%d"
-
-        # Write Config Dict for ic & bc forcings
-
-        step = (self.date_range[1] - self.date_range[0]).days + 1
-
         config = {
             "paths": {
-                "raw_dataset_path": "",
-                "hgrid_path": "",
-                "vgrid_path": "",
-                "bathymetry_path": "",
-                "regridded_dataset_path": "",
-                "output_path": "",
+                "hgrid_path": str(self.supergrid_path),
+                "vgrid_path": str(self.vgrid_path),
+                "bathymetry_path": str(self.topo_path),
+                "input_dataset_path": str(self.extract_forcings_path.parent),
+                "raw_dataset_path": str(self.extract_forcings_path / "raw_data"),
+                "regridded_dataset_path": str(
+                    self.extract_forcings_path / "regridded_data"
+                ),
+                "output_path": str(self.inputdir / "ocnice"),
             },
-            "file_regex": {
-                "raw_dataset_pattern": "(north|east|south|west)_unprocessed\\.(\\d{8})_(\\d{8})\\.nc",
-                "regridded_dataset_pattern": "forcing_obc_segment_(\\d{3})_(\\d{8})_(\\d{8})\\.nc",
+            "dates": {
+                "start": self.date_range[0].strftime("%Y-%m-%d"),
+                "end": self.date_range[1].strftime("%Y-%m-%d"),
             },
-            "dates": {"start": "", "end": "", "format": ""},
-            "forcing": {"product_name": "", "function_name": "", "information": {}},
+            "forcing": {
+                "product_name": self.forcing_product_name.upper(),
+                "function_name": function_name,
+                "information": ProductRegistry.get_product(
+                    self.forcing_product_name.lower()
+                ).write_metadata(include_marbl_tracers=self.bgc_in_compset),
+                "function_default_args": ProductRegistry.get_function_default_args(
+                self.forcing_product_name.lower(), function_name
+            )
+            },
             "general": {
-                "boundary_number_conversion": {},
-                "step": "",
+                "boundary_number_conversion": {
+                    item: idx + 1 for idx, item in enumerate(self.boundaries)
+                },
+                "get_step": None,
+                "regrid_step": 30,
                 "preview": False,
             },
         }
-
-        # Paths
-        config["paths"]["hgrid_path"] = self.supergrid_path
-        config["paths"]["vgrid_path"] = self.vgrid_path
-        config["paths"]["bathymetry_path"] = self.topo_path
-        config["paths"]["raw_dataset_path"] = str(
-            self.extract_forcings_path / "raw_data"
-        )
-        config["paths"]["input_dataset_path"] = str(self.extract_forcings_path.parent)
-        config["paths"]["regridded_dataset_path"] = str(
-            self.extract_forcings_path / "regridded_data"
-        )
-        config["paths"]["output_path"] = str(self.inputdir / "ocnice")
-
-        # Regex never changes!
-
-        # Dates
-        config["dates"]["start"] = self.date_range[0].strftime(date_format)
-        config["dates"]["end"] = self.date_range[1].strftime(date_format)
-        config["dates"]["format"] = date_format
-
-        # Product Information
-        config["forcing"]["product_name"] = self.forcing_product_name.upper()
-        config["forcing"]["function_name"] = function_name
-        config["forcing"]["information"] = ProductRegistry.get_product(
-            self.forcing_product_name.lower()
-        ).write_metadata(include_marbl_tracers=self.bgc_in_compset)
-        config["forcing"]["function_default_args"] = (
-            ProductRegistry.get_function_default_args(
-                self.forcing_product_name.lower(), function_name
-            )
-        )
-
-        # General
-        config["general"]["boundary_number_conversion"] = {
-            item: idx + 1 for idx, item in enumerate(self.boundaries)
-        }
-        config["general"]["step"] = step
 
         # Write out
         with open(self.extract_forcings_path / "config.json") as f:
@@ -586,8 +565,6 @@ class Case:
             This will be overridden and set to False if the large data workflow in configure_forcings is enabled.
         kwargs : bool, optional
             Whether to process the other forcings, of the form process_{configurator.name} = False.
-            Also accepts ``visualize=True`` to print the Dask dashboard link when a cluster is active
-            (see :func:`~CrocoDash.extract_forcings.case_setup.driver.run_workflow`).
 
         Raises
         ------
@@ -617,7 +594,6 @@ class Case:
         process_chl = kwargs.get("process_chl", True)
         process_runoff = kwargs.get("process_runoff", True)
         process_bgc_river_nutrients = kwargs.get("process_bgc_river_nutrients", True)
-        visualize = kwargs.get("visualize", False)
 
         self.driver.run_workflow(
             ic=process_initial_condition,
@@ -629,7 +605,6 @@ class Case:
             runoff=process_runoff and self.fcr.is_active("runoff"),
             bgcrivernutrients=process_bgc_river_nutrients
             and self.fcr.is_active("BGCRiverNutrients"),
-            visualize=visualize,
         )
 
         print(f"Case is ready to be built: {self.caseroot}")
@@ -759,7 +734,7 @@ class Case:
         # Stage: Component Physics Options (i.e., modifiers for the physics, e.g. %JRA, %MARBL-BIO, etc.)
         if Stage.active().title.startswith("Component Options"):
             for comp_class, phys in components.items():
-                opt = phys.split("%")[1] if "%" in phys else None
+                opt = "%".join(phys.split("%")[1:]) if "%" in phys else None
                 if opt is not None:
                     cvars[f"COMP_{comp_class}_OPTION"].value = opt
                 else:
@@ -767,6 +742,12 @@ class Case:
 
         # Confirm successful configuration of custom component set
         assert Stage.active().title == "2. Grid"
+
+        # VCG's Z3 solver cannot handle multi-select option values (e.g., "REGIONAL%MARBL-BIO")
+        # as assignment assertions, so only the first modifier was set above. Directly assign
+        # the full correct COMPSET_LNAME now that the options stage is complete and its
+        # options assertions have been cleared.
+        cvars["COMPSET_LNAME"].value = compset_lname
 
     def _configure_custom_grid(self, atm_grid_name, rof_grid_name):
         """Assign the custom grid variables for the case."""
@@ -1040,3 +1021,14 @@ class Case:
                 "Invalid direction or segment number for MOM6 rectangular orientation"
             )
         return val
+
+    def validate_case(self):
+
+        # Ensure configurations are done
+        for config in self.fcr.active_configurators.keys():
+            if not self.fcr.active_configurators[config].validate_output_filepaths(
+                self.inputdir / "ocnice"
+            ):
+                print(
+                    f"{config} was not valid yet! Which means you need to process this forcing and generate the files using your cases extract_forcings module! {self.inputdir/'extract_forcings'}"
+                )

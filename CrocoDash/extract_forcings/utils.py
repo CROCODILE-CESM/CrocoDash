@@ -6,8 +6,6 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 from CrocoDash.topo import *
 from CrocoDash.grid import *
-from dask.distributed import Client
-from dask.distributed import LocalCluster
 
 
 class Config:
@@ -123,96 +121,3 @@ def check_date_continuity(boundary_file_list: dict):
                 )
 
     return issues
-
-
-def make_local_cluster(n_workers=1, threads_per_worker=1):
-    """
-    Create a Dask Client backed by a LocalCluster.
-
-    Workers are used for the GET (download) step only. REGRID and MERGE always
-    run sequentially in the main process — ESMF's VM fails to initialize in
-    subprocess workers on PBS/HPC systems (``ESMCI::VM::getCurrent()`` rc=545).
-
-    For HPC batch jobs, see :func:`make_pbs_cluster`.
-
-    Typical usage::
-
-        from CrocoDash.extract_forcings.utils import make_local_cluster
-        client = make_local_cluster(n_workers=4)
-        process_obc_conditions(..., client=client)
-        client.close()
-
-    Args:
-        n_workers:          Number of worker processes (used for GET/MERGE).
-        threads_per_worker: Threads per worker.
-
-    Returns:
-        dask.distributed.Client connected to the LocalCluster.
-    """
-    return Client(
-        LocalCluster(n_workers=n_workers, threads_per_worker=threads_per_worker)
-    )
-
-
-def make_pbs_cluster(
-    n_workers,
-    cores=1,
-    processes=1,
-    memory="4GiB",
-    walltime="01:00:00",
-    job_name="crocodash",
-    queue=None,
-    resource_spec=None,
-):
-    """
-    Create a Dask Client backed by a PBS cluster via dask-jobqueue.
-
-    Each Dask worker is submitted as a separate PBS job. The function prints
-    the generated job script so you can verify the PBS directives before jobs
-    are queued.
-
-    Requires ``dask-jobqueue`` (``pip install dask-jobqueue``).
-
-    Typical usage::
-
-        from CrocoDash.extract_forcings.utils import make_pbs_cluster
-        from CrocoDash.extract_forcings.case_setup.driver import run_workflow
-
-        client = make_pbs_cluster(n_workers=8, queue="regular", walltime="02:00:00")
-        run_workflow(bc=True, client=client)
-        client.close()
-
-    Args:
-        n_workers:     Number of PBS jobs (workers) to submit.
-        cores:         CPU cores per PBS job.
-        processes:     Dask processes per PBS job (usually 1).
-        memory:        Memory per PBS job (e.g. ``'4GiB'``).
-        walltime:      Walltime per PBS job (e.g. ``'01:00:00'``).
-        job_name:      Job name visible in ``qstat``.
-        queue:         PBS queue/partition. Site-specific; omit to use the
-                       scheduler default.
-        resource_spec: Raw PBS ``-l`` resource string (e.g.
-                       ``'select=1:ncpus=4:mem=4gb'``). Optional; overrides
-                       cores/memory when set.
-
-    Returns:
-        dask.distributed.Client connected to the PBSCluster.
-    """
-    from dask_jobqueue import PBSCluster
-
-    worker_kwargs = dict(
-        cores=cores,
-        processes=processes,
-        memory=memory,
-        walltime=walltime,
-        job_name=job_name,
-    )
-    if queue is not None:
-        worker_kwargs["queue"] = queue
-    if resource_spec is not None:
-        worker_kwargs["resource_spec"] = resource_spec
-
-    cluster = PBSCluster(**worker_kwargs)
-    print(cluster.job_script())
-    cluster.scale(n_workers)
-    return Client(cluster)
