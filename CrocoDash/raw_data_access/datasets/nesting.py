@@ -44,11 +44,12 @@ class NESTING(ForcingProduct):
     )
     def get_nesting_slices(
         dates: list,
-        variables=None,
-        lon_min=None,
-        lon_max=None,
-        lat_min=None,
-        lat_max=None,
+        variables,
+        lon_min,
+        lon_max,
+        lat_min,
+        lat_max,
+        name,
         output_folder=Path(""),
         output_filename="nesting_slices.nc",
         input_dir=None,
