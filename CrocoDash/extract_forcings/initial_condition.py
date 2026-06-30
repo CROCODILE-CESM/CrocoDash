@@ -216,6 +216,7 @@ def _download_initial_condition(
             output_folder=raw_data_dir,
             output_filename=output_file,
             variables=variables,
+            name = "ic",
             **extra_args,
         )
 
