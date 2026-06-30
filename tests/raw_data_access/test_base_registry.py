@@ -43,6 +43,7 @@ class DummyForcing(ForcingProduct):
         lat_max,
         lon_min,
         lat_min,
+        name=None,
         variables="SSH",
     ):
         return f"Fetched {variables} to {output_folder}/{output_filename}"
