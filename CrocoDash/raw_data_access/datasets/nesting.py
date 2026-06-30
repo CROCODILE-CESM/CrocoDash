@@ -51,12 +51,11 @@ class NESTING(ForcingProduct):
         lat_max=None,
         output_folder=Path(""),
         output_filename="nesting_slices.nc",
-        output_dir=None,
+        input_dir=None,
         case_prefix="",
-        slices=None,
     ):
         """
-        Check whether nesting slice output files exist in output_dir for each named
+        Check whether nesting slice output files exist in input_dir for each named
         cross-section in slices. If all files are found and cover the requested dates,
         load and save them to output_folder/output_filename (one NetCDF group per slice)
         and return the output path. If any slice files are missing or dates are not
@@ -66,7 +65,7 @@ class NESTING(ForcingProduct):
         ----------
         dates : list
             [start_date, end_date] strings, e.g. ["2020-01-01", "2020-03-31"]
-        output_dir : Path or str
+        input_dir : Path or str
             Parent MOM6/CESM run history directory to search for slice files.
         case_prefix : str
             Prefix used in diag_table file names, e.g. "carib12_credit_runoff_01.mom6"
@@ -76,36 +75,37 @@ class NESTING(ForcingProduct):
         """
         if variables is None:
             variables = NESTING.SLICE_VARIABLES
-        if not slices:
-            NESTING.logger.warning("No slices provided — nothing to load or configure.")
-            return None
 
         output_folder = Path(output_folder)
-        output_dir = Path(output_dir) if output_dir is not None else None
+        input_dir = Path(input_dir) if input_dir is not None else None
 
         # --- Step 1: Locate files for each slice ---
         found_files = {}
         missing_slices = []
 
-        for s in slices:
-            name = s["name"]
-            if output_dir is not None and output_dir.is_dir():
-                matches = sorted(output_dir.glob(f"{case_prefix}.{name}*.nc"))
-                if matches:
-                    found_files[name] = matches
-                else:
-                    missing_slices.append(name)
+        if input_dir is not None and input_dir.is_dir():
+            matches = sorted(input_dir.glob(f"{case_prefix}.{name}*.nc"))
+            if matches:
+                found_files = matches
             else:
-                missing_slices.append(name)
+                missing_slices = True
+        else:
+            missing_slices = True
 
         # --- Step 2: Missing files → print diag_table config and exit ---
         if missing_slices:
             NESTING.logger.warning(
-                f"Slice files not found for: {missing_slices}. "
+                f"Slice files not found in {input_dir}. "
                 "Add the entries below to your parent run's diag_table and rerun."
             )
             diag_text = _build_diag_table_entries(
-                slices, case_prefix, NESTING.BUFFER_DEG
+                "bound",
+                lon_min,
+                lon_max,
+                lat_min,
+                lat_max,
+                case_prefix,
+                NESTING.BUFFER_DEG,
             )
             print(
                 "\n=== Add these entries to your parent run's diag_table ===\n"
@@ -152,28 +152,28 @@ class NESTING(ForcingProduct):
         return output_path
 
 
-def _build_diag_table_entries(slices, case_prefix, buffer_deg=0.5):
+def _build_diag_table_entries(
+    name, lon_min, lon_max, lat_min, lat_max, case_prefix, buffer_deg=0.5
+):
     """Return a diag_table-formatted string for a list of nesting cross-sections."""
     variables = ["volcello", "thetao", "so", "uo", "vo", "zos"]
 
     file_lines = []
     field_lines = []
 
-    for s in slices:
-        name = s["name"]
-        file_name = f"{case_prefix}.{name}%4yr-%2mo"
-        region = (
-            f"{s['lon_min'] - buffer_deg} {s['lon_max'] + buffer_deg} "
-            f"{s['lat_min'] - buffer_deg} {s['lat_max'] + buffer_deg}  -1 -1"
-        )
+    file_name = f"{case_prefix}.{name}%4yr-%2mo"
+    region = (
+        f"{lon_min - buffer_deg} {lon_max + buffer_deg} "
+        f"{lat_min - buffer_deg} {lat_max + buffer_deg}  -1 -1"
+    )
 
-        file_lines.append(
-            f'"{file_name}",  1,  "days",  1,  "days",  "time",  1,  "months"'
+    file_lines.append(
+        f'"{file_name}",  1,  "days",  1,  "days",  "time",  1,  "months"'
+    )
+    for var in variables:
+        field_lines.append(
+            f'"ocean_model_z", "{var}", "{var}", "{file_name}", "all", "mean", "{region}", 2'
         )
-        for var in variables:
-            field_lines.append(
-                f'"ocean_model_z", "{var}", "{var}", "{file_name}", "all", "mean", "{region}", 2'
-            )
 
     return (
         "# --- File entries ---\n"
