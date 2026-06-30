@@ -409,6 +409,8 @@ def process_obc_conditions(config_path, preview: bool = False):
             extra_args=extra_args,
         )
 
+    for boundary in boundaries:
+        seg_id = bnc[boundary]
         raw_files = _validate_coverage(
             sorted(raw_path.glob(f"{boundary}_unprocessed.*.nc")),
             lambda f: _parse_raw_filename_dates(f, boundary),
@@ -431,6 +433,8 @@ def process_obc_conditions(config_path, preview: bool = False):
             fill_method=fill_method,
         )
 
+    for boundary in boundaries:
+        seg_id = bnc[boundary]
         _validate_coverage(
             regridded_files,
             lambda f: _parse_regridded_filename_dates(f, seg_id),
