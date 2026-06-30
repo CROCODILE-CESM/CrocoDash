@@ -49,6 +49,7 @@ class GLORYS(ForcingProduct):
         lat_max,
         lon_min,
         lon_max,
+        name = None,
         output_folder=Path(""),
         output_filename="raw_glorys.nc",
         variables=[
