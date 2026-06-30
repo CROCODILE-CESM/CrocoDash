@@ -99,7 +99,7 @@ class NESTING(ForcingProduct):
                 "Add the entries below to your parent run's diag_table and rerun."
             )
             diag_text = _build_diag_table_entries(
-                "bound",
+                "[nameofboundary]",
                 lon_min,
                 lon_max,
                 lat_min,
