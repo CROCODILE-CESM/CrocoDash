@@ -188,6 +188,7 @@ def _get_boundary(
             lat_max=latlon["lat_max"],
             lon_min=latlon["lon_min"],
             lon_max=latlon["lon_max"],
+            name=boundary,
             output_folder=output_dir,
             output_filename=output_file.name,
             variables=variables,
