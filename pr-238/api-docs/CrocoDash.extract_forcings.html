@@ -414,9 +414,6 @@ from the case state file via <code class="docutils literal notranslate"><span cl
 <span class="n">run_workflow</span><span class="p">(</span><span class="n">config_path</span><span class="o">=</span><span class="s2">&quot;~/croc_input/mycase/extract_forcings/config.json&quot;</span><span class="p">,</span> <span class="n">bc</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ic</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>OBC processing (<code class="docutils literal notranslate"><span class="pre">bc</span></code>) uses Dask for the <strong>GET</strong> step only. <strong>REGRID</strong> and
-<strong>MERGE</strong> always run sequentially in the main process — ESMF cannot initialise
-in subprocess workers on PBS/HPC systems.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="CrocoDash.extract_forcings.driver.resolve_components">
 <span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.driver.</span></span><span class="sig-name descname"><span class="pre">resolve_components</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.extract_forcings.driver.resolve_components" title="Link to this definition">#</a></dt>
