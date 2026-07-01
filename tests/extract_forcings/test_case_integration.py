@@ -37,7 +37,7 @@ def test_case_integration_config(CrocoDash_case_factory, tmp_path):
     with open(large_data_workflow_path / "config.json", "r") as f:
         config = json.load(f)
     # Top-level keys
-    assert set(config["conditions"].keys()) == {"dates", "forcing", "general"}
+    assert set(config["conditions"].keys()) == {"name", "inputs", "outputs"}
     assert "caseroot" in config
 
 

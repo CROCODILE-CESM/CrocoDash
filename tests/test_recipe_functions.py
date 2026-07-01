@@ -18,16 +18,16 @@ def sample_forcing_config():
     forcing_config = {
         "caseroot": "/fake/case",
         "conditions": {
-            "dates": {
-                "start": "20200101",
-                "end": "20200109",
-                "format": "%Y%m%d",
-            },
-            "forcing": {
+            "inputs": {
                 "product_name": "GLORYS",
                 "function_name": "get_glorys_data_script_for_cli",
             },
-            "general": {"boundary_number_conversion": {"north": 1}},
+            "outputs": {
+                "start_date": "20200101",
+                "end_date": "20200109",
+                "date_format": "%Y%m%d",
+                "boundary_number_conversion": {"north": 1},
+            },
         },
         "tides": {
             "inputs": {

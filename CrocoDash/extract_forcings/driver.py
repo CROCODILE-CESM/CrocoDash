@@ -110,16 +110,16 @@ def run_workflow(
         if ic or bc:
             _t = time.perf_counter()
             get_dataset_piecewise(
-                product_name=conditions["forcing"]["product_name"],
-                function_name=conditions["forcing"]["function_name"],
-                product_information=conditions["forcing"]["information"],
-                date_format=conditions["dates"]["format"],
-                start_date=conditions["dates"]["start"],
-                end_date=conditions["dates"]["end"],
+                product_name=conditions["inputs"]["product_name"].upper(),
+                function_name=conditions["inputs"]["function_name"],
+                product_information=conditions["outputs"]["information"],
+                date_format=conditions["outputs"]["date_format"],
+                start_date=conditions["outputs"]["start_date"],
+                end_date=conditions["outputs"]["end_date"],
                 hgrid_path=supergrid_path,
-                step_days=int(conditions["general"]["step"]),
+                step_days=int(conditions["outputs"]["step"]),
                 output_dir=raw_data_dir,
-                boundary_number_conversion=conditions["general"][
+                boundary_number_conversion=conditions["outputs"][
                     "boundary_number_conversion"
                 ],
                 run_initial_condition=ic,
@@ -129,14 +129,14 @@ def run_workflow(
             regrid_dataset_piecewise(
                 folder=raw_data_dir,
                 input_dataset_regex=raw_dataset_pattern,
-                date_format=conditions["dates"]["format"],
-                start_date=conditions["dates"]["start"],
-                end_date=conditions["dates"]["end"],
+                date_format=conditions["outputs"]["date_format"],
+                start_date=conditions["outputs"]["start_date"],
+                end_date=conditions["outputs"]["end_date"],
                 hgrid_path=supergrid_path,
                 bathymetry=topo_path,
-                dataset_varnames=conditions["forcing"]["information"],
+                dataset_varnames=conditions["outputs"]["information"],
                 output_folder=regridded_data_dir,
-                boundary_number_conversion=conditions["general"][
+                boundary_number_conversion=conditions["outputs"][
                     "boundary_number_conversion"
                 ],
                 run_initial_condition=ic,
@@ -147,10 +147,10 @@ def run_workflow(
             merge_piecewise_dataset(
                 folder=regridded_data_dir,
                 input_dataset_regex=regridded_dataset_pattern,
-                date_format=conditions["dates"]["format"],
-                start_date=conditions["dates"]["start"],
-                end_date=conditions["dates"]["end"],
-                boundary_number_conversion=conditions["general"][
+                date_format=conditions["outputs"]["date_format"],
+                start_date=conditions["outputs"]["start_date"],
+                end_date=conditions["outputs"]["end_date"],
+                boundary_number_conversion=conditions["outputs"][
                     "boundary_number_conversion"
                 ],
                 output_folder=output_path,

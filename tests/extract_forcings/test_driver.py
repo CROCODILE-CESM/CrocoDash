@@ -123,13 +123,15 @@ def _make_config(caseroot="/case", extra_keys=None):
     cfg = {
         "caseroot": caseroot,
         "conditions": {
-            "dates": {"start": "20200101", "end": "20200109", "format": "%Y%m%d"},
-            "forcing": {
+            "inputs": {
                 "product_name": "GLORYS",
                 "function_name": "get_glorys_data_from_rda",
-                "information": {},
             },
-            "general": {
+            "outputs": {
+                "start_date": "20200101",
+                "end_date": "20200109",
+                "date_format": "%Y%m%d",
+                "information": {},
                 "boundary_number_conversion": {"north": 1, "south": 2},
                 "step": "7",
                 "preview": False,

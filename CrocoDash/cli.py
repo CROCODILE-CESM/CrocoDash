@@ -73,7 +73,7 @@ def _process(args):
         chl_=args.chl,
         runoff=args.runoff,
         bgcrivernutrients=args.bgcrivernutrients,
-        preview=config["conditions"]["general"].get("preview", False),
+        preview=config["conditions"]["outputs"].get("preview", False),
     )
 
 

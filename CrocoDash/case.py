@@ -10,7 +10,6 @@ from CrocoDash.topo import Topo
 from CrocoDash.vgrid import VGrid
 from CrocoDash.forcing_configurations.base import ForcingConfigRegistry
 from CrocoDash.raw_data_access.registry import ProductRegistry
-from CrocoDash.raw_data_access.base import ForcingProduct
 from ProConPy.config_var import ConfigVar, cvars
 from ProConPy.stage import Stage
 from ProConPy.dev_utils import ConstraintViolation
@@ -446,44 +445,10 @@ class Case:
                 shutil.rmtree(self.extract_forcings_path)
         self.extract_forcings_path.mkdir(parents=True, exist_ok=True)
 
-        # Call the required initial and boundary condition configurator
-        self.configure_initial_and_boundary_conditions(
-            date_range=date_range,
-            boundaries=boundaries,
-            product_name=product_name,
-            function_name=function_name,
-        )
-        # Call any optional configurators (e.g., tides) if specified
-
-        inputs = kwargs | {
-            "date_range": pd.to_datetime(date_range),
-            "boundaries": boundaries,
-        }
-
-        self.session_id = cvars["MB_ATTEMPT_ID"].value
-        self.grid_name = self.ocn_grid.name
-        self.fcr = ForcingConfigRegistry(self.compset_lname, inputs, self)
-        self.fcr.run_configurators(self.extract_forcings_path / "config.json")
-
-        self._update_forcing_variables()
-        self._configure_forcings_called = True
-
-    def configure_initial_and_boundary_conditions(
-        self,
-        date_range: list[str],
-        boundaries: list[str] = ["south", "north", "west", "east"],
-        product_name: str = "GLORYS",
-        function_name: str = "get_glorys_data_script_for_cli",
-    ):
-
-        ProductRegistry.load()
-        self.forcing_product_name = product_name.lower()
-        if not (
-            ProductRegistry.product_exists(product_name)
-            and ProductRegistry.product_is_of_type(product_name, ForcingProduct)
-        ):
-            raise ValueError("Product / Data Path is not supported quite yet")
-
+        # Validate date_range's raw shape and set case-level state. Everything else
+        # (boundaries/product_name validity, IC/OBC user_nl params, config.json
+        # "conditions" entry) is handled by ConditionsConfigurator's validate_args()/
+        # configure() (see forcing_configurations/configurations.py).
         if not (
             isinstance(date_range, list)
             and all(isinstance(date, str) for date in date_range)
@@ -492,53 +457,43 @@ class Case:
         if len(date_range) != 2:
             raise ValueError("date_range must have exactly two elements.")
 
-        if not isinstance(boundaries, list):
-            raise TypeError("boundaries must be a list of strings.")
-        if not all(isinstance(boundary, str) for boundary in boundaries):
-            raise TypeError("boundaries must be a list of strings.")
-
+        self.forcing_product_name = product_name.lower()
         self.boundaries = boundaries
         self.date_range = pd.to_datetime(date_range)
 
-        # Set Vars for Config
-        date_format = "%Y%m%d"
-
-        # Write Config Dict for ic & bc forcings
-
-        step = (self.date_range[1] - self.date_range[0]).days + 1
-
-        conditions = {
-            "dates": {
-                "start": self.date_range[0].strftime(date_format),
-                "end": self.date_range[1].strftime(date_format),
-                "format": date_format,
-            },
-            "forcing": {
-                "product_name": self.forcing_product_name.upper(),
-                "function_name": function_name,
-                "information": ProductRegistry.get_product(
-                    self.forcing_product_name.lower()
-                ).write_metadata(include_marbl_tracers=self.bgc_in_compset),
-            },
-            "general": {
-                "boundary_number_conversion": {
-                    item: idx + 1 for idx, item in enumerate(self.boundaries)
-                },
-                "step": step,
-                "preview": False,
-            },
+        inputs = kwargs | {
+            "date_range": pd.to_datetime(date_range),
+            "boundaries": boundaries,
+            "product_name": product_name,
+            "function_name": function_name,
         }
 
+        self.session_id = cvars["MB_ATTEMPT_ID"].value
+        self.grid_name = self.ocn_grid.name
+
         config_path = self.extract_forcings_path / "config.json"
-        if config_path.exists():
-            with open(config_path) as f:
-                general_config = json.load(f)
-        else:
-            general_config = {}
-        general_config["caseroot"] = str(self.caseroot)
-        general_config["conditions"] = conditions
         with open(config_path, "w") as f:
-            json.dump(general_config, f, indent=4)
+            json.dump({"caseroot": str(self.caseroot)}, f, indent=4)
+
+        self.fcr = ForcingConfigRegistry(self.compset_lname, inputs, self)
+        self.fcr.run_configurators(config_path)
+
+        xmlchange(
+            "RUN_STARTDATE",
+            str(self.date_range[0])[:10],
+            is_non_local=self.cc._is_non_local(),
+        )
+        xmlchange(
+            "STOP_OPTION",
+            "ndays",
+            is_non_local=self.cc._is_non_local(),
+        )
+        xmlchange(
+            "STOP_N",
+            (self.date_range[1] - self.date_range[0]).days,
+            is_non_local=self.cc._is_non_local(),
+        )
+        self._configure_forcings_called = True
 
     def process_forcings(
         self, process_initial_condition=True, process_velocity_tracers=True, **kwargs
@@ -888,150 +843,6 @@ class Case:
                 job_wallclock_time,
                 is_non_local=self.cc._is_non_local(),
             )
-
-    def _update_forcing_variables(self):
-        """Update the runtime parameters of the case."""
-
-        # Initial conditions:
-        ic_params = [
-            ("INIT_LAYERS_FROM_Z_FILE", "True"),
-            ("Z_INIT_ALE_REMAPPING", True),
-            ("TEMP_SALT_INIT_VERTICAL_REMAP_ONLY", True),
-            ("DEPRESS_INITIAL_SURFACE", True),
-            ("VELOCITY_CONFIG", "file"),
-            ("TEMP_SALT_Z_INIT_FILE", "init_tracers.nc"),
-            ("SURFACE_HEIGHT_IC_FILE", "init_eta.nc"),
-            ("VELOCITY_FILE", "init_vel.nc"),
-            ("Z_INIT_FILE_PTEMP_VAR", "temp"),
-            ("Z_INIT_FILE_SALT_VAR", "salt"),
-            ("SURFACE_HEIGHT_IC_VAR", "eta_t"),
-            ("U_IC_VAR", "u"),
-            ("V_IC_VAR", "v"),
-        ]
-
-        append_user_nl(
-            "mom",
-            ic_params,
-            do_exec=True,
-            comment="Initial conditions",
-        )
-
-        # Open boundary conditions (OBC):
-        obc_params = [
-            ("OBC_NUMBER_OF_SEGMENTS", len(self.boundaries)),
-            ("OBC_FREESLIP_VORTICITY", "False"),
-            ("OBC_FREESLIP_STRAIN", "False"),
-            ("OBC_COMPUTED_VORTICITY", "True"),
-            ("OBC_COMPUTED_STRAIN", "True"),
-            ("OBC_ZERO_BIHARMONIC", "True"),
-            ("OBC_TRACER_RESERVOIR_LENGTH_SCALE_OUT", "3.0E+04"),
-            ("OBC_TRACER_RESERVOIR_LENGTH_SCALE_IN", "3000.0"),
-            ("BRUSHCUTTER_MODE", "True"),
-        ]
-
-        # More OBC parameters:
-        for seg in self.boundaries:
-            seg_ix = str(self.find_MOM6_rectangular_orientation(seg)).zfill(
-                3
-            )  # "001", "002", etc.
-            seg_id = "OBC_SEGMENT_" + seg_ix
-
-            # Position and config
-            if seg == "south":
-                index_str = '"J=0,I=0:N'
-            elif seg == "north":
-                index_str = '"J=N,I=N:0'
-            elif seg == "west":
-                index_str = '"I=0,J=N:0'
-            elif seg == "east":
-                index_str = '"I=N,J=0:N'
-            else:
-                raise ValueError(f"Unknown segment {seg_id}")
-            obc_params.append(
-                (
-                    seg_id,
-                    index_str + ',FLATHER,ORLANSKI,NUDGED,ORLANSKI_TAN,NUDGED_TAN"',
-                )
-            )
-
-            # Nudging
-            obc_params.append((seg_id + "_VELOCITY_NUDGING_TIMESCALES", "0.3, 360.0"))
-            bgc_tracers = ""
-            standard_data_str = lambda: (
-                f'"U=file:forcing_obc_segment_{seg_ix}.nc(u),'
-                f"V=file:forcing_obc_segment_{seg_ix}.nc(v),"
-                f"SSH=file:forcing_obc_segment_{seg_ix}.nc(eta),"
-                f"TEMP=file:forcing_obc_segment_{seg_ix}.nc(temp),"
-                f"SALT=file:forcing_obc_segment_{seg_ix}.nc(salt)"
-            )
-            if self.fcr.is_active("bgc"):
-
-                product_info = ProductRegistry.get_product(
-                    self.forcing_product_name.lower()
-                ).marbl_var_names
-                for tracer_mom6_name in product_info:
-                    bgc_tracers += f",{tracer_mom6_name}=file:forcing_obc_segment_{seg_ix}.nc({product_info[tracer_mom6_name]})"
-
-            if self.fcr.is_active("tides"):
-                obc_params.append(
-                    (
-                        seg_id + "_DATA",
-                        standard_data_str()
-                        + self.fcr.active_configurators["tides"].tidal_data_str(seg_ix)
-                        + bgc_tracers
-                        + '"',
-                    )
-                )
-            else:
-                obc_params.append(
-                    (seg_id + "_DATA", standard_data_str() + bgc_tracers + '"')
-                )
-
-        append_user_nl(
-            "mom",
-            obc_params,
-            do_exec=True,
-            comment="Open boundary conditions",
-            log_title=False,
-        )
-
-        xmlchange(
-            "RUN_STARTDATE",
-            str(self.date_range[0])[:10],
-            is_non_local=self.cc._is_non_local(),
-        )
-
-        self.date_range = pd.to_datetime(self.date_range)
-        xmlchange(
-            "STOP_OPTION",
-            "ndays",
-            is_non_local=self.cc._is_non_local(),
-        )
-        xmlchange(
-            "STOP_N",
-            (self.date_range[1] - self.date_range[0]).days,
-            is_non_local=self.cc._is_non_local(),
-        )
-
-    def find_MOM6_rectangular_orientation(self, input):
-        """
-        Convert between MOM6 boundary and the specific segment number needed, or the inverse.
-        """
-
-        direction_dir = {}
-        counter = 1
-        for b in self.boundaries:
-            direction_dir[b] = counter
-            counter += 1
-        direction_dir_inv = {v: k for k, v in direction_dir.items()}
-        merged_dict = {**direction_dir, **direction_dir_inv}
-        try:
-            val = merged_dict[input]
-        except KeyError:
-            raise ValueError(
-                "Invalid direction or segment number for MOM6 rectangular orientation"
-            )
-        return val
 
     def validate_case(self):
 

@@ -1,7 +1,10 @@
 from CrocoDash.forcing_configurations.base import *
 from pathlib import Path
+from datetime import datetime
 from ProConPy.config_var import ConfigVar, cvars
 from mom6_forge import mapping
+from CrocoDash.raw_data_access.registry import ProductRegistry
+from CrocoDash.raw_data_access.base import ForcingProduct
 
 
 def register(cls):
@@ -510,3 +513,299 @@ class ChlConfigurator(BaseConfigurator):
         self.set_output_param("VAR_PEN_SW", "TRUE")
         self.set_output_param("PEN_SW_NBANDS", 3)
         super().configure()
+
+
+@register
+class ConditionsConfigurator(BaseConfigurator):
+    """Initial condition + open boundary condition (OBC) setup for MOM6.
+
+    Always active for regional MOM6 cases. Builds the `user_nl_mom` initial
+    condition and OBC_SEGMENT_* parameters, and the derived values consumed by
+    extract_forcings (dates, forcing product metadata, boundary numbering).
+    """
+
+    name = "conditions"
+    required_for_compsets = ["MOM6"]
+
+    _DATE_FORMAT = "%Y%m%d"
+
+    # Static output params that don't vary by boundary count.
+    _IC_PARAM_NAMES = {
+        "INIT_LAYERS_FROM_Z_FILE",
+        "Z_INIT_ALE_REMAPPING",
+        "TEMP_SALT_INIT_VERTICAL_REMAP_ONLY",
+        "DEPRESS_INITIAL_SURFACE",
+        "VELOCITY_CONFIG",
+        "TEMP_SALT_Z_INIT_FILE",
+        "SURFACE_HEIGHT_IC_FILE",
+        "VELOCITY_FILE",
+        "Z_INIT_FILE_PTEMP_VAR",
+        "Z_INIT_FILE_SALT_VAR",
+        "SURFACE_HEIGHT_IC_VAR",
+        "U_IC_VAR",
+        "V_IC_VAR",
+    }
+
+    input_params = [
+        InputValueParam("start_date", comment="Forcing start date"),
+        InputValueParam("end_date", comment="Forcing end date"),
+        InputValueParam("boundaries", comment="List of open boundaries to process"),
+        InputValueParam("product_name", comment="Forcing data product name"),
+        InputValueParam(
+            "function_name", comment="Download function name for the product"
+        ),
+        InputValueParam(
+            "compset", comment="Compset lname, used to detect MARBL tracers"
+        ),
+    ]
+
+    output_params = [
+        # Initial conditions
+        UserNLConfigParam("INIT_LAYERS_FROM_Z_FILE", comment="Initial conditions"),
+        UserNLConfigParam("Z_INIT_ALE_REMAPPING", comment="Initial conditions"),
+        UserNLConfigParam(
+            "TEMP_SALT_INIT_VERTICAL_REMAP_ONLY", comment="Initial conditions"
+        ),
+        UserNLConfigParam("DEPRESS_INITIAL_SURFACE", comment="Initial conditions"),
+        UserNLConfigParam("VELOCITY_CONFIG", comment="Initial conditions"),
+        UserNLConfigParam("TEMP_SALT_Z_INIT_FILE", comment="Initial conditions"),
+        UserNLConfigParam("SURFACE_HEIGHT_IC_FILE", comment="Initial conditions"),
+        UserNLConfigParam("VELOCITY_FILE", comment="Initial conditions"),
+        UserNLConfigParam("Z_INIT_FILE_PTEMP_VAR", comment="Initial conditions"),
+        UserNLConfigParam("Z_INIT_FILE_SALT_VAR", comment="Initial conditions"),
+        UserNLConfigParam("SURFACE_HEIGHT_IC_VAR", comment="Initial conditions"),
+        UserNLConfigParam("U_IC_VAR", comment="Initial conditions"),
+        UserNLConfigParam("V_IC_VAR", comment="Initial conditions"),
+        # Open boundary conditions (static; per-boundary params are added dynamically)
+        UserNLConfigParam("OBC_NUMBER_OF_SEGMENTS", comment="Open boundary conditions"),
+        UserNLConfigParam("OBC_FREESLIP_VORTICITY", comment="Open boundary conditions"),
+        UserNLConfigParam("OBC_FREESLIP_STRAIN", comment="Open boundary conditions"),
+        UserNLConfigParam("OBC_COMPUTED_VORTICITY", comment="Open boundary conditions"),
+        UserNLConfigParam("OBC_COMPUTED_STRAIN", comment="Open boundary conditions"),
+        UserNLConfigParam("OBC_ZERO_BIHARMONIC", comment="Open boundary conditions"),
+        UserNLConfigParam(
+            "OBC_TRACER_RESERVOIR_LENGTH_SCALE_OUT", comment="Open boundary conditions"
+        ),
+        UserNLConfigParam(
+            "OBC_TRACER_RESERVOIR_LENGTH_SCALE_IN", comment="Open boundary conditions"
+        ),
+        UserNLConfigParam("BRUSHCUTTER_MODE", comment="Open boundary conditions"),
+        # Derived, config.json-only values consumed by extract_forcings/driver.py.
+        # No case-side effect (see ConfigOutputParam).
+        ConfigOutputParam(
+            "date_format", comment="strftime format used for dates in config.json"
+        ),
+        ConfigOutputParam("start_date", comment="Forcing start date"),
+        ConfigOutputParam("end_date", comment="Forcing end date"),
+        ConfigOutputParam("information", comment="Product variable-name metadata"),
+        ConfigOutputParam("step", comment="Chunk size (days) for forcing extraction"),
+        ConfigOutputParam(
+            "boundary_number_conversion",
+            comment="Boundary name -> MOM6 segment number",
+        ),
+        ConfigOutputParam(
+            "preview", comment="Whether extract_forcings should preview only"
+        ),
+    ]
+
+    def __init__(
+        self,
+        boundaries,
+        product_name,
+        function_name,
+        compset,
+        date_range=None,
+        start_date=None,
+        end_date=None,
+    ):
+        if date_range is not None:
+            start_date = date_range[0].strftime(self._DATE_FORMAT)
+            end_date = date_range[1].strftime(self._DATE_FORMAT)
+        super().__init__(
+            start_date=start_date,
+            end_date=end_date,
+            boundaries=boundaries,
+            product_name=product_name,
+            function_name=function_name,
+            compset=compset,
+        )
+
+    def validate_args(self, **kwargs):
+        super().validate_args(**kwargs)
+
+        boundaries = kwargs["boundaries"]
+        if not isinstance(boundaries, list):
+            raise TypeError("boundaries must be a list of strings.")
+        if not all(isinstance(boundary, str) for boundary in boundaries):
+            raise TypeError("boundaries must be a list of strings.")
+
+        ProductRegistry.load()
+        product_name = kwargs["product_name"]
+        if not (
+            ProductRegistry.product_exists(product_name)
+            and ProductRegistry.product_is_of_type(product_name, ForcingProduct)
+        ):
+            raise ValueError("Product / Data Path is not supported quite yet")
+
+    @staticmethod
+    def _segment_index(boundaries, boundary):
+        """Map a boundary name to its 1-based MOM6 segment number (or the inverse)."""
+        direction_dir = {b: i + 1 for i, b in enumerate(boundaries)}
+        direction_dir_inv = {v: k for k, v in direction_dir.items()}
+        merged = {**direction_dir, **direction_dir_inv}
+        try:
+            return merged[boundary]
+        except KeyError:
+            raise ValueError(
+                "Invalid direction or segment number for MOM6 rectangular orientation"
+            )
+
+    def configure(self):
+        start_date = self.get_input_param("start_date")
+        end_date = self.get_input_param("end_date")
+        boundaries = self.get_input_param("boundaries")
+        product_name = self.get_input_param("product_name").lower()
+        compset = self.get_input_param("compset")
+        product = ProductRegistry.get_product(product_name)
+
+        # ---- derived, config.json-only values ----
+        self.set_output_param("date_format", self._DATE_FORMAT)
+        self.set_output_param("start_date", start_date)
+        self.set_output_param("end_date", end_date)
+        self.set_output_param(
+            "information",
+            product.write_metadata(include_marbl_tracers="%MARBL" in compset),
+        )
+        start_dt = datetime.strptime(start_date, self._DATE_FORMAT)
+        end_dt = datetime.strptime(end_date, self._DATE_FORMAT)
+        self.set_output_param("step", (end_dt - start_dt).days + 1)
+        self.set_output_param(
+            "boundary_number_conversion",
+            {b: i + 1 for i, b in enumerate(boundaries)},
+        )
+        self.set_output_param("preview", False)
+
+        # ---- static initial condition / OBC params ----
+        self.set_output_param("INIT_LAYERS_FROM_Z_FILE", "True")
+        self.set_output_param("Z_INIT_ALE_REMAPPING", True)
+        self.set_output_param("TEMP_SALT_INIT_VERTICAL_REMAP_ONLY", True)
+        self.set_output_param("DEPRESS_INITIAL_SURFACE", True)
+        self.set_output_param("VELOCITY_CONFIG", "file")
+        self.set_output_param("TEMP_SALT_Z_INIT_FILE", "init_tracers.nc")
+        self.set_output_param("SURFACE_HEIGHT_IC_FILE", "init_eta.nc")
+        self.set_output_param("VELOCITY_FILE", "init_vel.nc")
+        self.set_output_param("Z_INIT_FILE_PTEMP_VAR", "temp")
+        self.set_output_param("Z_INIT_FILE_SALT_VAR", "salt")
+        self.set_output_param("SURFACE_HEIGHT_IC_VAR", "eta_t")
+        self.set_output_param("U_IC_VAR", "u")
+        self.set_output_param("V_IC_VAR", "v")
+
+        self.set_output_param("OBC_NUMBER_OF_SEGMENTS", len(boundaries))
+        self.set_output_param("OBC_FREESLIP_VORTICITY", "False")
+        self.set_output_param("OBC_FREESLIP_STRAIN", "False")
+        self.set_output_param("OBC_COMPUTED_VORTICITY", "True")
+        self.set_output_param("OBC_COMPUTED_STRAIN", "True")
+        self.set_output_param("OBC_ZERO_BIHARMONIC", "True")
+        self.set_output_param("OBC_TRACER_RESERVOIR_LENGTH_SCALE_OUT", "3.0E+04")
+        self.set_output_param("OBC_TRACER_RESERVOIR_LENGTH_SCALE_IN", "3000.0")
+        self.set_output_param("BRUSHCUTTER_MODE", "True")
+
+        # ---- dynamic, per-boundary OBC params ----
+        dynamic_params = []
+        for seg in boundaries:
+            seg_ix = str(self._segment_index(boundaries, seg)).zfill(3)
+            seg_id = "OBC_SEGMENT_" + seg_ix
+
+            if seg == "south":
+                index_str = '"J=0,I=0:N'
+            elif seg == "north":
+                index_str = '"J=N,I=N:0'
+            elif seg == "west":
+                index_str = '"I=0,J=N:0'
+            elif seg == "east":
+                index_str = '"I=N,J=0:N'
+            else:
+                raise ValueError(f"Unknown segment {seg_id}")
+
+            position_param = UserNLConfigParam(
+                seg_id, comment="Open boundary conditions"
+            )
+            position_param.set_item(
+                index_str + ',FLATHER,ORLANSKI,NUDGED,ORLANSKI_TAN,NUDGED_TAN"'
+            )
+            dynamic_params.append(position_param)
+
+            nudging_param = UserNLConfigParam(
+                seg_id + "_VELOCITY_NUDGING_TIMESCALES",
+                comment="Open boundary conditions",
+            )
+            nudging_param.set_item("0.3, 360.0")
+            dynamic_params.append(nudging_param)
+
+            standard_data_str = (
+                f'"U=file:forcing_obc_segment_{seg_ix}.nc(u),'
+                f"V=file:forcing_obc_segment_{seg_ix}.nc(v),"
+                f"SSH=file:forcing_obc_segment_{seg_ix}.nc(eta),"
+                f"TEMP=file:forcing_obc_segment_{seg_ix}.nc(temp),"
+                f"SALT=file:forcing_obc_segment_{seg_ix}.nc(salt)"
+            )
+
+            bgc_tracers = ""
+            if self.registry and self.registry.is_active("bgc"):
+                for tracer_mom6_name, source_var in product.marbl_var_names.items():
+                    bgc_tracers += (
+                        f",{tracer_mom6_name}="
+                        f"file:forcing_obc_segment_{seg_ix}.nc({source_var})"
+                    )
+
+            data_str = standard_data_str
+            if self.registry and self.registry.is_active("tides"):
+                data_str += self.registry.active_configurators["tides"].tidal_data_str(
+                    seg_ix
+                )
+            data_str += bgc_tracers + '"'
+
+            data_param = UserNLConfigParam(
+                seg_id + "_DATA", comment="Open boundary conditions"
+            )
+            data_param.set_item(data_str)
+            dynamic_params.append(data_param)
+
+        self.output_params = self.output_params + dynamic_params
+
+        # ---- apply: batch into exactly 2 append_user_nl calls (preserves today's
+        # "Initial conditions" / "Open boundary conditions" banner formatting) ----
+        ic_params, obc_params = [], []
+        for param in self.output_params:
+            if not isinstance(param, UserNLConfigParam):
+                continue
+            (ic_params if param.name in self._IC_PARAM_NAMES else obc_params).append(
+                (param.name, param.value)
+            )
+
+        append_user_nl("mom", ic_params, do_exec=True, comment="Initial conditions")
+        append_user_nl(
+            "mom",
+            obc_params,
+            do_exec=True,
+            comment="Open boundary conditions",
+            log_title=False,
+        )
+        for param in self.output_params:
+            if isinstance(param, UserNLConfigParam):
+                param.executed = True
+
+    @classmethod
+    def deserialize(cls, data):
+        """Reconstruct dynamic per-boundary output params alongside the static ones."""
+        obj = super().deserialize(data)
+        boundaries = obj.get_input_param("boundaries")
+        for seg in boundaries:
+            seg_ix = str(cls._segment_index(boundaries, seg)).zfill(3)
+            for suffix in ("", "_VELOCITY_NUDGING_TIMESCALES", "_DATA"):
+                name = f"OBC_SEGMENT_{seg_ix}{suffix}"
+                if name in data["outputs"]:
+                    param = UserNLConfigParam(name, comment="Open boundary conditions")
+                    param.set_item(data["outputs"][name])
+                    obj.output_params.append(param)
+        return obj
