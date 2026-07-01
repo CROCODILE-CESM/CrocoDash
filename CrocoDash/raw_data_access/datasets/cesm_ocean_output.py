@@ -1,5 +1,13 @@
 """
-Data Access Module -> CESM ocean output (CESM-HR FOSI and CESM2-LENS2)
+Data Access Module -> CESM ocean output
+
+Two products, split because they have different variable/coordinate naming
+conventions (and so need different ForcingProduct metadata):
+- CESM_POP_OUTPUT: CESM-POP tseries output (CESM-HR FOSI, CESM2-LENS2)
+- CESM_MOM_OUTPUT: native MOM6 output (e.g. parent-run history/diag_table
+  output for nesting a child domain)
+
+Both share the same lower-level file-discovery/subsetting helpers below.
 """
 
 import xarray as xr
@@ -17,8 +25,8 @@ import pandas as pd
 from CrocoDash.raw_data_access.base import *
 
 
-class CESM_OCEAN_OUTPUT(ForcingProduct):
-    product_name = "cesm_ocean_output"
+class CESM_POP_OUTPUT(ForcingProduct):
+    product_name = "cesm_pop_output"
     description = "CESM ocean output (POP2 grid) for use as IC and OBC, including CESM-HR FOSI and CESM2 Large Ensemble (LENS2)"
     link = "https://gdex.ucar.edu/datasets/d267000/"
     time_var_name = "time"
@@ -120,56 +128,51 @@ class CESM_OCEAN_OUTPUT(ForcingProduct):
         lon_name="TLONG",
         preview=False,
     ):
-        if not Path(dataset_path).exists():
-            raise FileNotFoundError(
-                f"Provided dataset path {dataset_path} does not exist."
-            )
-        start_date, end_date = pd.Timestamp(dates[0]), pd.Timestamp(dates[-1])
-        # parse_dataset uses dateutil internally, so pass full ISO dates here -
-        # date_format (e.g. "%Y%m" for monthly tseries) is ambiguous/unparseable
-        # by dateutil and is only used for matching dates embedded in filenames.
-        variable_info = parse_dataset(
+        # CESM-POP tseries output needs the month-shift correction for its
+        # average-endpoint timestamp labeling convention.
+        return read_single_variable_tseries_data(
+            dates,
+            lat_min,
+            lat_max,
+            lon_min,
+            lon_max,
+            output_folder,
+            output_filename,
             variables,
             dataset_path,
-            start_date.strftime("%Y-%m-%d"),
-            end_date.strftime("%Y-%m-%d"),
-            date_format=date_format,
-            regex=regex,
-            space_character=delimiter,
+            member,
+            date_format,
+            regex,
+            delimiter,
+            lat_name,
+            lon_name,
+            preview,
+            apply_month_shift=True,
         )
 
-        # Filter to the requested ensemble member (e.g. for CESM2-LENS2)
-        if member is not None:
-            for var in variable_info:
-                variable_info[var] = [f for f in variable_info[var] if member in f]
 
-        paths = subset_dataset(
-            variable_info=variable_info,
-            output_path=output_folder,
-            lat_min=lat_min - 1.5,
-            lat_max=lat_max + 1.5,
-            lon_min=lon_min - 1.5,
-            lon_max=lon_max + 1.5,
-            lat_name=lat_name,
-            lon_name=lon_name,
-            dates=(
-                start_date.strftime(date_format),
-                end_date.strftime(date_format),
-            ),
-            preview=preview,
-        )
-
-        # Merge the file into the specified output file.
-        if output_filename is not None:
-            print(
-                f"Merging the files since output file is specified, into {Path(output_folder)/output_filename}"
-            )
-            merged = xr.open_mfdataset(
-                paths, combine="by_coords", parallel=True, decode_timedelta=False
-            )
-            merged.to_netcdf(Path(output_folder) / output_filename)
-
-        return paths
+class CESM_MOM_OUTPUT(ForcingProduct):
+    product_name = "cesm_mom_output"
+    description = (
+        "Native MOM6 output (full history/diagnostic files, or diag_table-"
+        "extracted cross-section slices) for use as IC/OBC forcing - e.g. for "
+        "nesting a child domain inside an outer/parent MOM6 run."
+    )
+    link = "https://mom6.readthedocs.io/en/main/api/generated/pages/Diagnostics.html"
+    time_var_name = "time"
+    time_units = "days"
+    boundary_fill_method = "regional_mom6"
+    tracer_x_coord = "xh"
+    tracer_y_coord = "yh"
+    u_var_name = "uo"
+    u_x_coord = "xq"
+    u_y_coord = "yh"
+    v_var_name = "vo"
+    v_x_coord = "xh"
+    v_y_coord = "yq"
+    eta_var_name = "zos"
+    depth_coord = "z_l"
+    tracer_var_names = {"temp": "thetao", "salt": "so"}
 
     @accessmethod(
         description=(
@@ -204,10 +207,7 @@ class CESM_OCEAN_OUTPUT(ForcingProduct):
         buffer_deg=1.5,
         preview=False,
     ):
-        if dataset_path is None or not Path(dataset_path).exists():
-            raise FileNotFoundError(
-                f"Provided dataset path {dataset_path} does not exist."
-            )
+        validate_dataset_path(dataset_path)
 
         files = sorted(Path(dataset_path).glob(file_glob))
         if not files:
@@ -217,9 +217,9 @@ class CESM_OCEAN_OUTPUT(ForcingProduct):
 
         ds = xr.open_mfdataset(files, combine="by_coords", decode_timedelta=False)
 
-        # Unlike get_cesm_single_variable_data, no month-shift is applied here -
-        # that shift is specific to the CESM-POP tseries convention, not native
-        # MOM6 output.
+        # Unlike CESM_POP_OUTPUT.get_cesm_single_variable_data, no month-shift is
+        # applied here - that shift is specific to the CESM-POP tseries
+        # convention, not native MOM6 output.
         ds = convert_cftime_to_numeric(ds, time_var_name=time_var_name)
 
         ds = ds.sel({time_var_name: slice(dates[0], dates[-1])})
@@ -232,7 +232,7 @@ class CESM_OCEAN_OUTPUT(ForcingProduct):
         keep_vars = [v for v in variables if v in ds.data_vars]
         missing_vars = [v for v in variables if v not in ds.data_vars]
         if missing_vars:
-            CESM_OCEAN_OUTPUT.logger.warning(
+            CESM_MOM_OUTPUT.logger.warning(
                 f"Requested variables not found in {dataset_path} (glob '{file_glob}'): "
                 f"{missing_vars}"
             )
@@ -250,6 +250,142 @@ class CESM_OCEAN_OUTPUT(ForcingProduct):
         output_path = output_folder / output_filename
         ds.load().to_netcdf(output_path)
         return [output_path]
+
+    @accessmethod(
+        description=(
+            "Gets native MOM6 output that's organized in the CESM single-"
+            "variable-per-file (tseries) convention instead of one multi-"
+            "variable file per region/timestep — some parent runs post-process "
+            "their history output this way before archiving it."
+        ),
+        type="python",
+        how_to_use=(
+            "Requires access to a `dataset_path` directory containing MOM6 "
+            "tseries NetCDF files (one variable per file series, MOM6 native "
+            "variable/coordinate names, date range encoded in the filename)."
+        ),
+    )
+    def get_mom6_single_variable_data(
+        dates: list,
+        lat_min,
+        lat_max,
+        lon_min,
+        lon_max,
+        output_folder=Path(""),
+        output_filename=None,
+        variables=["zos", "thetao", "so", "uo", "vo"],
+        dataset_path=None,
+        member=None,
+        date_format: str = "%Y%m%d",
+        regex=r"(\d{6,8})-(\d{6,8})",
+        delimiter=".",
+        lat_name="yh",
+        lon_name="xh",
+        preview=False,
+    ):
+        # Native MOM6 output doesn't need the CESM-POP month-shift correction.
+        return read_single_variable_tseries_data(
+            dates,
+            lat_min,
+            lat_max,
+            lon_min,
+            lon_max,
+            output_folder,
+            output_filename,
+            variables,
+            dataset_path,
+            member,
+            date_format,
+            regex,
+            delimiter,
+            lat_name,
+            lon_name,
+            preview,
+            apply_month_shift=False,
+        )
+
+
+def validate_dataset_path(dataset_path):
+    if dataset_path is None or not Path(dataset_path).exists():
+        raise FileNotFoundError(f"Provided dataset path {dataset_path} does not exist.")
+
+
+def read_single_variable_tseries_data(
+    dates,
+    lat_min,
+    lat_max,
+    lon_min,
+    lon_max,
+    output_folder,
+    output_filename,
+    variables,
+    dataset_path,
+    member,
+    date_format,
+    regex,
+    delimiter,
+    lat_name,
+    lon_name,
+    preview,
+    apply_month_shift,
+):
+    """
+    Shared implementation for reading single-variable-per-file (tseries) output
+    for a bounding box, used by both CESM_POP_OUTPUT.get_cesm_single_variable_data
+    and CESM_MOM_OUTPUT.get_mom6_single_variable_data - the CESM tseries file
+    convention (one variable per file series, date range in the filename) shows
+    up for both CESM-POP and native MOM6 output.
+    """
+    validate_dataset_path(dataset_path)
+    start_date, end_date = pd.Timestamp(dates[0]), pd.Timestamp(dates[-1])
+    # parse_dataset uses dateutil internally, so pass full ISO dates here -
+    # date_format (e.g. "%Y%m" for monthly tseries) is ambiguous/unparseable
+    # by dateutil and is only used for matching dates embedded in filenames.
+    variable_info = parse_dataset(
+        variables,
+        dataset_path,
+        start_date.strftime("%Y-%m-%d"),
+        end_date.strftime("%Y-%m-%d"),
+        date_format=date_format,
+        regex=regex,
+        space_character=delimiter,
+    )
+
+    # Filter to the requested ensemble member (e.g. for CESM2-LENS2)
+    if member is not None:
+        for var in variable_info:
+            variable_info[var] = [f for f in variable_info[var] if member in f]
+
+    paths = subset_dataset(
+        variable_info=variable_info,
+        output_path=output_folder,
+        lat_min=lat_min - 1.5,
+        lat_max=lat_max + 1.5,
+        lon_min=lon_min - 1.5,
+        lon_max=lon_max + 1.5,
+        lat_name=lat_name,
+        lon_name=lon_name,
+        dates=(
+            start_date.strftime(date_format),
+            end_date.strftime(date_format),
+        ),
+        preview=preview,
+        apply_month_shift=apply_month_shift,
+    )
+
+    # Merge the file into the specified output file.
+    if output_filename is not None:
+        print(
+            f"Merging the files since output file is specified, into {Path(output_folder)/output_filename}"
+        )
+        # parallel=True is unsafe here: the netCDF4 backend isn't thread-safe
+        # for concurrent metadata reads across multiple files, and can
+        # silently drop/corrupt variables (or crash) under dask's threaded
+        # scheduler instead of raising a clear error.
+        merged = xr.open_mfdataset(paths, combine="by_coords", decode_timedelta=False)
+        merged.to_netcdf(Path(output_folder) / output_filename)
+
+    return paths
 
 
 def parse_dataset(
@@ -391,6 +527,7 @@ def subset_dataset(
     lon_name="lon",
     dates=None,
     preview: bool = False,
+    apply_month_shift: bool = True,
 ) -> None:
     """
     Subsets (and merges) the dataset based on the provided variable names and geographical bounds into the output path
@@ -405,6 +542,9 @@ def subset_dataset(
         lon_name (str): Name of the longitude variable in the dataset. Default is "lon".
         dates (tuple): Just used for the file naming
         preview (bool): If True, only previews the subsetting without saving. Default is False.
+        apply_month_shift (bool): Apply the CESM-POP tseries average-endpoint
+            timestamp correction. Default True (matches CESM-POP); set False for
+            native MOM6 tseries output.
     """
 
     # Create the output directory if it does not exist
@@ -432,9 +572,9 @@ def subset_dataset(
         ds = xr.open_mfdataset(file_paths, decode_timedelta=False)
 
         # Convert time. Saving to netcdf is not working with cftime objects.
-        # The CESM-POP tseries convention needs a month-shift to correctly
-        # label average-endpoint timestamps.
-        ds = convert_cftime_to_numeric(ds, time_var_name="time", apply_month_shift=True)
+        ds = convert_cftime_to_numeric(
+            ds, time_var_name="time", apply_month_shift=apply_month_shift
+        )
 
         if mask is None:
             mask = bbox_mask(

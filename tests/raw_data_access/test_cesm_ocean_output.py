@@ -15,7 +15,7 @@ def test_get_cesm_single_variable_data_fosi(skip_if_not_glade, tmp_path):
     lat_max = 31
     lon_min = 289
     lon_max = 290
-    paths = co.CESM_OCEAN_OUTPUT.get_cesm_single_variable_data(
+    paths = co.CESM_POP_OUTPUT.get_cesm_single_variable_data(
         dates,
         lat_min,
         lat_max,
@@ -50,7 +50,7 @@ def test_get_cesm_single_variable_data_lens2_member(skip_if_not_glade, tmp_path)
     lat_max = 31
     lon_min = 289
     lon_max = 290
-    paths = co.CESM_OCEAN_OUTPUT.get_cesm_single_variable_data(
+    paths = co.CESM_POP_OUTPUT.get_cesm_single_variable_data(
         dates,
         lat_min,
         lat_max,
@@ -75,7 +75,7 @@ def test_get_cesm_single_variable_data_lens2_member(skip_if_not_glade, tmp_path)
 def test_get_cesm_single_variable_data_validation(skip_if_not_glade, tmp_path):
 
     assert ProductRegistry.validate_function(
-        "cesm_ocean_output", "get_cesm_single_variable_data"
+        "cesm_pop_output", "get_cesm_single_variable_data"
     )
 
 
@@ -105,7 +105,7 @@ def _write_mom6_history_file(
 
 def test_get_mom6_output_data_missing_dataset_path(tmp_path):
     with pytest.raises(FileNotFoundError):
-        co.CESM_OCEAN_OUTPUT.get_mom6_output_data(
+        co.CESM_MOM_OUTPUT.get_mom6_output_data(
             dates=["2000-01-01", "2000-01-10"],
             lat_min=20,
             lat_max=25,
@@ -118,7 +118,7 @@ def test_get_mom6_output_data_missing_dataset_path(tmp_path):
 
 def test_get_mom6_output_data_no_matching_files(tmp_path):
     with pytest.raises(FileNotFoundError):
-        co.CESM_OCEAN_OUTPUT.get_mom6_output_data(
+        co.CESM_MOM_OUTPUT.get_mom6_output_data(
             dates=["2000-01-01", "2000-01-10"],
             lat_min=20,
             lat_max=25,
@@ -136,7 +136,7 @@ def test_get_mom6_output_data_reads_multi_var_file(tmp_path):
         tmp_path / "test_case.region.nc", lat_min, lat_max, lon_min, lon_max
     )
 
-    paths = co.CESM_OCEAN_OUTPUT.get_mom6_output_data(
+    paths = co.CESM_MOM_OUTPUT.get_mom6_output_data(
         dates=["2000-01-01", "2000-01-10"],
         lat_min=lat_min,
         lat_max=lat_max,
@@ -164,7 +164,7 @@ def test_get_mom6_output_data_drops_missing_variables(tmp_path):
         tmp_path / "test_case.region.nc", lat_min, lat_max, lon_min, lon_max
     )
 
-    paths = co.CESM_OCEAN_OUTPUT.get_mom6_output_data(
+    paths = co.CESM_MOM_OUTPUT.get_mom6_output_data(
         dates=["2000-01-01", "2000-01-10"],
         lat_min=lat_min,
         lat_max=lat_max,
@@ -182,11 +182,60 @@ def test_get_mom6_output_data_drops_missing_variables(tmp_path):
     assert "not_a_real_variable" not in ds.data_vars
 
 
-@pytest.mark.slow
-def test_get_mom6_output_data_validation():
+def test_get_mom6_output_data_registered():
+    # CESM_MOM_OUTPUT has no universal default dataset_path (it's meant to
+    # point at any user-supplied directory), so the registry's "toy call"
+    # validate_function can't succeed here - just check registration.
     ProductRegistry.load()
-    assert ProductRegistry.validate_function(
-        "cesm_ocean_output", "get_mom6_output_data"
+    assert "get_mom6_output_data" in ProductRegistry.list_access_methods(
+        "cesm_mom_output"
+    )
+
+
+def _write_mom6_tseries_files(
+    dataset_path, variables, lat_min=20, lat_max=25, lon_min=-90, lon_max=-85, ntime=10
+):
+    """Writes synthetic single-variable-per-file MOM6 tseries files (MOM6 native names)."""
+    time = pd.date_range("2000-01-01", periods=ntime, freq="D")
+    yh = np.linspace(lat_min, lat_max, 6)
+    xh = np.linspace(lon_min, lon_max, 6)
+    for var in variables:
+        ds = xr.Dataset(
+            {var: (("time", "yh", "xh"), np.random.rand(ntime, 6, 6))},
+            coords={"time": time, "yh": yh, "xh": xh},
+        )
+        ds.to_netcdf(dataset_path / f"mom_case.{var}.20000101-20000110.nc")
+
+
+def test_get_mom6_single_variable_data(tmp_path):
+    lat_min, lat_max, lon_min, lon_max = 20, 25, -90, -85
+    _write_mom6_tseries_files(
+        tmp_path, ["thetao", "zos"], lat_min, lat_max, lon_min, lon_max
+    )
+
+    co.CESM_MOM_OUTPUT.get_mom6_single_variable_data(
+        dates=["2000-01-01", "2000-01-10"],
+        lat_min=lat_min,
+        lat_max=lat_max,
+        lon_min=lon_min,
+        lon_max=lon_max,
+        output_folder=tmp_path,
+        output_filename="out.nc",
+        variables=["thetao", "zos"],
+        dataset_path=tmp_path,
+    )
+    ds = xr.open_dataset(tmp_path / "out.nc")
+    assert "thetao" in ds.data_vars
+    assert "zos" in ds.data_vars
+    assert ds.yh.max() <= lat_max + 1.5
+    assert ds.yh.min() >= lat_min - 1.5
+
+
+def test_get_mom6_single_variable_data_registered():
+    # Same rationale as test_get_mom6_output_data_registered above.
+    ProductRegistry.load()
+    assert "get_mom6_single_variable_data" in ProductRegistry.list_access_methods(
+        "cesm_mom_output"
     )
 
 
