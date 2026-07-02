@@ -638,7 +638,14 @@ def subset_dataset(
 
         var_lat_name, var_lon_name = grid_coords.get(var_name, (lat_name, lon_name))
         mask = bbox_mask(
-            ds, lat_min, lat_max, lon_min, lon_max, var_lat_name, var_lon_name, buffer_deg=1
+            ds,
+            lat_min,
+            lat_max,
+            lon_min,
+            lon_max,
+            var_lat_name,
+            var_lon_name,
+            buffer_deg=1,
         )
 
         # Subset the dataset based on the provided geographical bounds
