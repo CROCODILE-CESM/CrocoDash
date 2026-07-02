@@ -409,6 +409,7 @@ def process_obc_conditions(config_path, preview: bool = False):
             extra_args=extra_args,
         )
 
+    regridded_files_by_boundary = {}
     for boundary in boundaries:
         seg_id = bnc[boundary]
         raw_files = _validate_coverage(
@@ -420,7 +421,7 @@ def process_obc_conditions(config_path, preview: bool = False):
         )
 
         logger.info("REGRID [%s]: %d-day slices", boundary, regrid_step_days)
-        regridded_files = _regrid_boundary(
+        regridded_files_by_boundary[boundary] = _regrid_boundary(
             boundary=boundary,
             seg_id=seg_id,
             raw_files=raw_files,
@@ -435,6 +436,7 @@ def process_obc_conditions(config_path, preview: bool = False):
 
     for boundary in boundaries:
         seg_id = bnc[boundary]
+        regridded_files = regridded_files_by_boundary[boundary]
         _validate_coverage(
             regridded_files,
             lambda f: _parse_regridded_filename_dates(f, seg_id),
