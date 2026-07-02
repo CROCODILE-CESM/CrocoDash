@@ -164,12 +164,18 @@ class CESM_MOM_OUTPUT(ForcingProduct):
     boundary_fill_method = "regional_mom6"
     tracer_x_coord = "xh"
     tracer_y_coord = "yh"
+    tracer_lon_coord = "xh"
+    tracer_lat_coord = "yh"
     u_var_name = "uo"
     u_x_coord = "xq"
     u_y_coord = "yh"
+    u_lon_coord = "xq"
+    u_lat_coord = "yh"
     v_var_name = "vo"
     v_x_coord = "xh"
     v_y_coord = "yq"
+    v_lon_coord = "xh"
+    v_lat_coord = "yq"
     eta_var_name = "zos"
     depth_coord = "z_l"
     tracer_var_names = {"temp": "thetao", "salt": "so"}
@@ -199,10 +205,8 @@ class CESM_MOM_OUTPUT(ForcingProduct):
         output_folder=Path(""),
         output_filename=None,
         variables=["zos", "thetao", "so", "uo", "vo"],
-        dataset_path=None,
+        dataset_path="/glade/u/home/manishrv/scratch/archive/gibraltar_parent/ocn/hist/z_files",
         file_glob="*.nc",
-        lat_name="yh",
-        lon_name="xh",
         time_var_name="time",
         buffer_deg=1.5,
         preview=False,
@@ -215,20 +219,27 @@ class CESM_MOM_OUTPUT(ForcingProduct):
                 f"No files matching glob '{file_glob}' found in {dataset_path}."
             )
 
-        ds = xr.open_mfdataset(files, combine="by_coords", decode_timedelta=False)
+        ds = xr.open_mfdataset(files, combine="by_coords")
 
         # Unlike CESM_POP_OUTPUT.get_cesm_single_variable_data, no month-shift is
         # applied here - that shift is specific to the CESM-POP tseries
         # convention, not native MOM6 output.
         ds = convert_cftime_to_numeric(ds, time_var_name=time_var_name)
 
-        ds = ds.sel({time_var_name: slice(dates[0], dates[-1])})
-
-        mask = bbox_mask(
-            ds, lat_min, lat_max, lon_min, lon_max, lat_name, lon_name, buffer_deg
-        )
-        ds = ds.where(mask, drop=True)
-
+        # convert_cftime_to_numeric re-encodes a cftime coordinate as numeric
+        # and stamps its units/calendar onto the coordinate attrs; match dates
+        # to that same encoding so the slice bounds compare correctly.
+        parsed_dates = pd.to_datetime(dates)
+        time_attrs = ds[time_var_name].attrs
+        if "units" in time_attrs and "calendar" in time_attrs:
+            sel_dates = cftime.date2num(
+                parsed_dates.to_pydatetime(),
+                units=time_attrs["units"],
+                calendar=time_attrs["calendar"],
+            )
+        else:
+            sel_dates = parsed_dates
+        ds = ds.sel({time_var_name: slice(sel_dates[0], sel_dates[-1])})
         keep_vars = [v for v in variables if v in ds.data_vars]
         missing_vars = [v for v in variables if v not in ds.data_vars]
         if missing_vars:
@@ -238,9 +249,35 @@ class CESM_MOM_OUTPUT(ForcingProduct):
             )
         ds = ds[keep_vars]
 
+        # MOM6's C-grid staggers uo/vo onto different horizontal dims than the
+        # tracer grid (xq for u-points, yq for v-points). A single tracer-grid
+        # mask broadcast across the whole dataset (ds.where(mask, drop=True))
+        # would add the tracer dims to those variables instead of subsetting
+        # them, since xarray broadcasts unmatched dims by name. Build one mask
+        # per C-grid point - tracer, u, v - and apply each only to the
+        # variables living on that point.
+        grid_points = {
+            (CESM_MOM_OUTPUT.tracer_y_coord, CESM_MOM_OUTPUT.tracer_x_coord),
+            (CESM_MOM_OUTPUT.u_y_coord, CESM_MOM_OUTPUT.u_x_coord),
+            (CESM_MOM_OUTPUT.v_y_coord, CESM_MOM_OUTPUT.v_x_coord),
+        }
+        subsets = []
+        for y_dim, x_dim in grid_points:
+            if y_dim not in ds.dims or x_dim not in ds.dims:
+                continue
+            grid_vars = [
+                v for v in ds.data_vars if y_dim in ds[v].dims and x_dim in ds[v].dims
+            ]
+            if not grid_vars:
+                continue
+            mask = bbox_mask(
+                ds, lat_min, lat_max, lon_min, lon_max, y_dim, x_dim, buffer_deg
+            )
+            subsets.append(ds[grid_vars].where(mask, drop=True))
+        ds = xr.merge(subsets)
+
         if preview:
             return ds
-
         output_folder = Path(output_folder)
         output_folder.mkdir(parents=True, exist_ok=True)
         if output_filename is None:
@@ -279,8 +316,6 @@ class CESM_MOM_OUTPUT(ForcingProduct):
         date_format: str = "%Y%m%d",
         regex=r"(\d{6,8})-(\d{6,8})",
         delimiter=".",
-        lat_name="yh",
-        lon_name="xh",
         preview=False,
     ):
         # Native MOM6 output doesn't need the CESM-POP month-shift correction.
@@ -298,10 +333,20 @@ class CESM_MOM_OUTPUT(ForcingProduct):
             date_format,
             regex,
             delimiter,
-            lat_name,
-            lon_name,
+            CESM_MOM_OUTPUT.tracer_y_coord,
+            CESM_MOM_OUTPUT.tracer_x_coord,
             preview,
             apply_month_shift=False,
+            grid_coords={
+                CESM_MOM_OUTPUT.u_var_name: (
+                    CESM_MOM_OUTPUT.u_y_coord,
+                    CESM_MOM_OUTPUT.u_x_coord,
+                ),
+                CESM_MOM_OUTPUT.v_var_name: (
+                    CESM_MOM_OUTPUT.v_y_coord,
+                    CESM_MOM_OUTPUT.v_x_coord,
+                ),
+            },
         )
 
 
@@ -328,6 +373,7 @@ def read_single_variable_tseries_data(
     lon_name,
     preview,
     apply_month_shift,
+    grid_coords=None,
 ):
     """
     Shared implementation for reading single-variable-per-file (tseries) output
@@ -335,6 +381,10 @@ def read_single_variable_tseries_data(
     and CESM_MOM_OUTPUT.get_mom6_single_variable_data - the CESM tseries file
     convention (one variable per file series, date range in the filename) shows
     up for both CESM-POP and native MOM6 output.
+
+    grid_coords optionally maps a variable name to its own (lat_name, lon_name)
+    pair, overriding lat_name/lon_name for that variable - needed for MOM6's
+    C-grid, where uo/vo live on different horizontal dims than the tracer grid.
     """
     validate_dataset_path(dataset_path)
     start_date, end_date = pd.Timestamp(dates[0]), pd.Timestamp(dates[-1])
@@ -371,6 +421,7 @@ def read_single_variable_tseries_data(
         ),
         preview=preview,
         apply_month_shift=apply_month_shift,
+        grid_coords=grid_coords,
     )
 
     # Merge the file into the specified output file.
@@ -528,6 +579,7 @@ def subset_dataset(
     dates=None,
     preview: bool = False,
     apply_month_shift: bool = True,
+    grid_coords: dict | None = None,
 ) -> None:
     """
     Subsets (and merges) the dataset based on the provided variable names and geographical bounds into the output path
@@ -538,21 +590,29 @@ def subset_dataset(
         lat_max (float): Maximum latitude for subsetting.
         lon_min (float): Minimum longitude for subsetting.
         lon_max (float): Maximum longitude for subsetting.
-        lat_name (str): Name of the latitude variable in the dataset. Default is "lat".
-        lon_name (str): Name of the longitude variable in the dataset. Default is "lon".
+        lat_name (str): Default latitude coordinate name, used for any variable
+            not listed in grid_coords. Default is "lat".
+        lon_name (str): Default longitude coordinate name, used for any variable
+            not listed in grid_coords. Default is "lon".
         dates (tuple): Just used for the file naming
         preview (bool): If True, only previews the subsetting without saving. Default is False.
         apply_month_shift (bool): Apply the CESM-POP tseries average-endpoint
             timestamp correction. Default True (matches CESM-POP); set False for
             native MOM6 tseries output.
+        grid_coords (dict | None): Optional {var_name: (lat_name, lon_name)}
+            override - needed for MOM6's C-grid, where uo/vo live on different
+            horizontal dims than the tracer grid, so a single lat_name/lon_name
+            pair can't mask every variable correctly.
     """
 
     # Create the output directory if it does not exist
     output_path = Path(output_path)
     output_path.mkdir(parents=True, exist_ok=True)
 
-    mask = None
-    # Iterate through each variable and its corresponding file paths
+    grid_coords = grid_coords or {}
+    # Each variable is loaded from its own file(s), so its mask is computed
+    # fresh per variable (not cached/reused across the loop) - variables can
+    # sit on different horizontal grid points with different lat/lon dims.
     output_file_paths = []
     for var_name, file_paths in variable_info.items():
         if dates is None:
@@ -576,10 +636,10 @@ def subset_dataset(
             ds, time_var_name="time", apply_month_shift=apply_month_shift
         )
 
-        if mask is None:
-            mask = bbox_mask(
-                ds, lat_min, lat_max, lon_min, lon_max, lat_name, lon_name, buffer_deg=1
-            )
+        var_lat_name, var_lon_name = grid_coords.get(var_name, (lat_name, lon_name))
+        mask = bbox_mask(
+            ds, lat_min, lat_max, lon_min, lon_max, var_lat_name, var_lon_name, buffer_deg=1
+        )
 
         # Subset the dataset based on the provided geographical bounds
         if not preview:
