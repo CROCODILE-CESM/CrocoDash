@@ -110,6 +110,19 @@ def test_configure_forcings(get_CrocoDash_case, tmp_path):
     assert case.boundaries == ["north", "south", "east"]
 
 
+def test_configure_forcings_invalid_function_overrides(get_CrocoDash_case):
+    """
+    GLORYS access functions have no non-required args, so any override key is invalid.
+    """
+    case = get_CrocoDash_case
+    with pytest.raises(ValueError):
+        case.configure_forcings(
+            date_range=["2020-01-01 00:00:00", "2020-02-01 00:00:00"],
+            boundaries=["north"],
+            function_overrides={"bogus_key": 1},
+        )
+
+
 def test_process_forcing(get_CrocoDash_case, tmp_path):
     """
     Test that the setup for the forcings works

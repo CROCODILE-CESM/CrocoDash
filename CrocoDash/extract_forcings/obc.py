@@ -377,7 +377,7 @@ def process_obc_conditions(config_path, preview: bool = False):
         if k not in ("temp", "salt")
     ]
     variables = phys_vars + extra_tracers
-    extra_args = config["basic"]["forcing"].get("function_default_args", {})
+    extra_args = config["basic"]["forcing"].get("function_args", {})
 
     if product_info.get("boundary_fill_method", "regional_mom6") != "regional_mom6":
         raise ValueError(

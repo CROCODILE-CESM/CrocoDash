@@ -305,9 +305,7 @@ def run_workflow(
             output_data_dir=cfg["basic"]["paths"]["output_path"],
             bathymetry_path=cfg["basic"]["paths"]["bathymetry_path"],
             preview=preview,
-            function_default_args=cfg["basic"]["forcing"].get(
-                "function_default_args", {}
-            ),
+            function_args=cfg["basic"]["forcing"].get("function_args", {}),
         )
         timings["ic"] = time.perf_counter() - _t
 
