@@ -25,6 +25,7 @@ def process_initial_condition(
     output_data_dir: str | Path,
     bathymetry_path: str | Path,
     preview: bool = False,
+    function_args: dict = None,
 ):
     """
     Process the initial condition (t=0) through the data retrieval pipeline.
@@ -75,11 +76,7 @@ def process_initial_condition(
         for k, v in product_information["tracer_var_names"].items()
         if k not in ("temp", "salt")
     ]
-    extra_args = {
-        key: product_information[key]
-        for key in ["dataset_path", "date_format", "regex", "delimiter"]
-        if key in product_information
-    }
+    extra_args = function_args or {}
     if not preview:
         _download_initial_condition(
             data_access_function=data_access_function,
@@ -219,6 +216,7 @@ def _download_initial_condition(
             output_folder=raw_data_dir,
             output_filename=output_file,
             variables=variables,
+            name="ic",
             **extra_args,
         )
 

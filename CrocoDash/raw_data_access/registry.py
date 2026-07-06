@@ -1,3 +1,5 @@
+import inspect
+
 from CrocoDash.raw_data_access.datasets import load_all_datasets
 
 
@@ -52,6 +54,19 @@ class ProductRegistry:
         product.validate_call(method_name, **kwargs)
         method = product._access_methods[method_name]
         return method(**kwargs)
+
+    @classmethod
+    def get_function_default_args(cls, product_name, function_name):
+        """Return a dict of {param: default} for all non-required parameters of an access method."""
+        product = cls.get_product(product_name)
+        func = product._access_methods[function_name].__func__
+        sig = inspect.signature(func)
+        required = set(product.required_args)
+        return {
+            name: param.default
+            for name, param in sig.parameters.items()
+            if name not in required and param.default is not inspect.Parameter.empty
+        }
 
     @classmethod
     def load(cls):

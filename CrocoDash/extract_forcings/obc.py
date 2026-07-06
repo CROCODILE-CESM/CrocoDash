@@ -188,6 +188,7 @@ def _get_boundary(
             lat_max=latlon["lat_max"],
             lon_min=latlon["lon_min"],
             lon_max=latlon["lon_max"],
+            name=boundary,
             output_folder=output_dir,
             output_filename=output_file.name,
             variables=variables,
@@ -376,11 +377,7 @@ def process_obc_conditions(config_path, preview: bool = False):
         if k not in ("temp", "salt")
     ]
     variables = phys_vars + extra_tracers
-    extra_args = {
-        k: product_info[k]
-        for k in ("dataset_path", "date_format", "regex", "delimiter")
-        if k in product_info
-    }
+    extra_args = config["basic"]["forcing"].get("function_args", {})
 
     if product_info.get("boundary_fill_method", "regional_mom6") != "regional_mom6":
         raise ValueError(

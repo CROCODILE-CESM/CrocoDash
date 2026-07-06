@@ -43,6 +43,7 @@ class DummyForcing(ForcingProduct):
         lat_max,
         lon_min,
         lat_min,
+        name=None,
         variables="SSH",
     ):
         return f"Fetched {variables} to {output_folder}/{output_filename}"
@@ -101,6 +102,7 @@ def test_call_access_method_success():
         lat_max=20,
         lon_min=0,
         lat_min=0,
+        name="north",
     )
     assert "Fetched" in result
     assert "/tmp/file.nc" in result
