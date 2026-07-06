@@ -38,7 +38,7 @@ class GLORYS(ForcingProduct):
     eta_var_name = "zos"
     depth_coord = "depth"
     tracer_var_names = {"temp": "thetao", "salt": "so"}
-    cf_calendar = "proleptic_gregorian"
+    cf_calendar = "julian"
     cesm_calendar = "GREGORIAN"
 
     @accessmethod(

@@ -457,7 +457,7 @@ class Case:
 
         self.session_id = cvars["MB_ATTEMPT_ID"].value
         self.grid_name = self.ocn_grid.name
-        self.calendar = forcing_product.cf_calendar
+        self.forcing_product = forcing_product
         self.fcr = ForcingConfigRegistry(self.compset_lname, inputs, self)
         self.fcr.run_configurators(self.extract_forcings_path / "config.json")
 
