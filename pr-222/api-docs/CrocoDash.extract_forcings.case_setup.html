@@ -348,11 +348,11 @@ document.write(`
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.case_setup.driver.process_bgcironforcing"><code class="docutils literal notranslate"><span class="pre">process_bgcironforcing()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.case_setup.driver.process_bgcrivernutrients"><code class="docutils literal notranslate"><span class="pre">process_bgcrivernutrients()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.case_setup.driver.process_chl"><code class="docutils literal notranslate"><span class="pre">process_chl()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.case_setup.driver.process_conditions"><code class="docutils literal notranslate"><span class="pre">process_conditions()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.case_setup.driver.process_runoff"><code class="docutils literal notranslate"><span class="pre">process_runoff()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.case_setup.driver.process_tides"><code class="docutils literal notranslate"><span class="pre">process_tides()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.case_setup.driver.resolve_components"><code class="docutils literal notranslate"><span class="pre">resolve_components()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.case_setup.driver.run_from_cli"><code class="docutils literal notranslate"><span class="pre">run_from_cli()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.case_setup.driver.run_workflow"><code class="docutils literal notranslate"><span class="pre">run_workflow()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.case_setup.driver.should_run"><code class="docutils literal notranslate"><span class="pre">should_run()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.case_setup.driver.test_driver"><code class="docutils literal notranslate"><span class="pre">test_driver()</span></code></a></li>
 </ul>
@@ -376,20 +376,25 @@ document.write(`
 </section>
 <section id="module-CrocoDash.extract_forcings.case_setup.driver">
 <span id="crocodash-extract-forcings-case-setup-driver-module"></span><h2>CrocoDash.extract_forcings.case_setup.driver module<a class="headerlink" href="#module-CrocoDash.extract_forcings.case_setup.driver" title="Link to this heading">#</a></h2>
-<p>nCrocoDash Forcing Extraction Driver</p>
+<p>CrocoDash Forcing Extraction Driver</p>
 <p>This module orchestrates the forcing extraction workflow for a CrocoDash case.
 It coordinates multiple forcing data sources (tides, runoff, BGC, etc.) and processes them
 into MOM6-compatible file formats.</p>
 <p>The script can be run from the command line with various component flags to control which
 forcings are processed. It loads configuration from config.json and coordinates all extraction,
 regridding, and formatting operations.</p>
-<dl class="simple">
-<dt>Typical usage:</dt><dd><p>python driver.py –all                  # Process all configured components
-python driver.py –tides –bgcic        # Process only tides and BGC initial conditions
-python driver.py –all –skip runoff    # Process all except runoff
-python driver.py –ic –no-get          # Process IC but skip data download step</p>
-</dd>
-</dl>
+<p>Typical CLI usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">driver</span><span class="o">.</span><span class="n">py</span> <span class="o">--</span><span class="nb">all</span>
+<span class="n">python</span> <span class="n">driver</span><span class="o">.</span><span class="n">py</span> <span class="o">--</span><span class="n">bc</span>
+<span class="n">python</span> <span class="n">driver</span><span class="o">.</span><span class="n">py</span> <span class="o">--</span><span class="n">tides</span> <span class="o">--</span><span class="n">bgcic</span>
+<span class="n">python</span> <span class="n">driver</span><span class="o">.</span><span class="n">py</span> <span class="o">--</span><span class="nb">all</span> <span class="o">--</span><span class="n">skip</span> <span class="n">runoff</span>
+</pre></div>
+</div>
+<p>Typical Python usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">CrocoDash.extract_forcings.case_setup.driver</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_workflow</span>
+<span class="n">run_workflow</span><span class="p">(</span><span class="n">bc</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ic</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
 <dl class="py function">
 <dt class="sig sig-object py" id="CrocoDash.extract_forcings.case_setup.driver.parse_args">
 <span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.case_setup.driver.</span></span><span class="sig-name descname"><span class="pre">parse_args</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.extract_forcings.case_setup.driver.parse_args" title="Link to this definition">#</a></dt>
@@ -416,27 +421,6 @@ python driver.py –ic –no-get          # Process IC but skip data download st
 <dt class="sig sig-object py" id="CrocoDash.extract_forcings.case_setup.driver.process_chl">
 <span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.case_setup.driver.</span></span><span class="sig-name descname"><span class="pre">process_chl</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.extract_forcings.case_setup.driver.process_chl" title="Link to this definition">#</a></dt>
 <dd><p>Process satellite-derived chlorophyll data</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="CrocoDash.extract_forcings.case_setup.driver.process_conditions">
-<span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.case_setup.driver.</span></span><span class="sig-name descname"><span class="pre">process_conditions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">get_dataset_piecewise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regrid_dataset_piecewise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">merge_piecewise_dataset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">run_initial_condition</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">run_boundary_conditions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.extract_forcings.case_setup.driver.process_conditions" title="Link to this definition">#</a></dt>
-<dd><p>Process initial and/or boundary conditions through the three-step pipeline.</p>
-<p>This function orchestrates the data extraction workflow:
-1. get_dataset_piecewise: Download/retrieve raw data from source datasets
-2. regrid_dataset_piecewise: Regrid data to your custom regional grid
-3. merge_piecewise_dataset: Merge regridded data into final forcing files</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>get_dataset_piecewise</strong> – Whether to download raw data (can skip if already cached)</p></li>
-<li><p><strong>regrid_dataset_piecewise</strong> – Whether to regrid data to regional grid</p></li>
-<li><p><strong>merge_piecewise_dataset</strong> – Whether to merge data into final files</p></li>
-<li><p><strong>run_initial_condition</strong> – Whether to process initial conditions (t=0)</p></li>
-<li><p><strong>run_boundary_conditions</strong> – Whether to process boundary conditions (open boundaries)</p></li>
-</ul>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -480,15 +464,35 @@ based on the resolution logic.</p>
 <dt class="sig sig-object py" id="CrocoDash.extract_forcings.case_setup.driver.run_from_cli">
 <span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.case_setup.driver.</span></span><span class="sig-name descname"><span class="pre">run_from_cli</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cfg</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.extract_forcings.case_setup.driver.run_from_cli" title="Link to this definition">#</a></dt>
 <dd><p>Execute the forcing extraction workflow based on CLI arguments.</p>
-<p>This is the main entry point that coordinates the entire workflow:
-1. Resolves which components to run
-2. Executes the appropriate process_* functions
-3. Maintains component dependencies (e.g., runoff before bgcrivernutrients)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>args</strong> – Parsed and resolved command-line arguments</p></li>
 <li><p><strong>cfg</strong> – Config object from utils.Config(CONFIG_PATH)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.extract_forcings.case_setup.driver.run_workflow">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.case_setup.driver.</span></span><span class="sig-name descname"><span class="pre">run_workflow</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ic</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bgcic</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bgcironforcing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tides</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chl</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">runoff</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bgcrivernutrients</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preview</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cfg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.extract_forcings.case_setup.driver.run_workflow" title="Link to this definition">#</a></dt>
+<dd><p>Execute the forcing extraction workflow.</p>
+<p>This is the shared core used by both run_from_cli and case.py’s process_forcings.
+Each boolean flag enables the corresponding component. All steps run sequentially.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ic</strong> – Run initial conditions</p></li>
+<li><p><strong>bc</strong> – Run boundary conditions (OBC)</p></li>
+<li><p><strong>bgcic</strong> – Run BGC initial conditions</p></li>
+<li><p><strong>bgcironforcing</strong> – Run BGC iron forcing</p></li>
+<li><p><strong>tides</strong> – Run tidal forcing</p></li>
+<li><p><strong>chl</strong> – Run chlorophyll processing</p></li>
+<li><p><strong>runoff</strong> – Run runoff mapping</p></li>
+<li><p><strong>bgcrivernutrients</strong> – Run BGC river nutrients (always runs after runoff)</p></li>
+<li><p><strong>preview</strong> – Preview task graph without executing</p></li>
+<li><p><strong>cfg</strong> – Config object; loaded from CONFIG_PATH if None</p></li>
 </ul>
 </dd>
 </dl>
@@ -563,11 +567,11 @@ based on the resolution logic.</p>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.case_setup.driver.process_bgcironforcing"><code class="docutils literal notranslate"><span class="pre">process_bgcironforcing()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.case_setup.driver.process_bgcrivernutrients"><code class="docutils literal notranslate"><span class="pre">process_bgcrivernutrients()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.case_setup.driver.process_chl"><code class="docutils literal notranslate"><span class="pre">process_chl()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.case_setup.driver.process_conditions"><code class="docutils literal notranslate"><span class="pre">process_conditions()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.case_setup.driver.process_runoff"><code class="docutils literal notranslate"><span class="pre">process_runoff()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.case_setup.driver.process_tides"><code class="docutils literal notranslate"><span class="pre">process_tides()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.case_setup.driver.resolve_components"><code class="docutils literal notranslate"><span class="pre">resolve_components()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.case_setup.driver.run_from_cli"><code class="docutils literal notranslate"><span class="pre">run_from_cli()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.case_setup.driver.run_workflow"><code class="docutils literal notranslate"><span class="pre">run_workflow()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.case_setup.driver.should_run"><code class="docutils literal notranslate"><span class="pre">should_run()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.case_setup.driver.test_driver"><code class="docutils literal notranslate"><span class="pre">test_driver()</span></code></a></li>
 </ul>

@@ -371,6 +371,7 @@ document.write(`
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.registry.ProductRegistry"><code class="docutils literal notranslate"><span class="pre">ProductRegistry</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.registry.ProductRegistry.call"><code class="docutils literal notranslate"><span class="pre">ProductRegistry.call()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.registry.ProductRegistry.get_access_function"><code class="docutils literal notranslate"><span class="pre">ProductRegistry.get_access_function()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.registry.ProductRegistry.get_function_default_args"><code class="docutils literal notranslate"><span class="pre">ProductRegistry.get_function_default_args()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.registry.ProductRegistry.get_product"><code class="docutils literal notranslate"><span class="pre">ProductRegistry.get_product()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.registry.ProductRegistry.list_access_methods"><code class="docutils literal notranslate"><span class="pre">ProductRegistry.list_access_methods()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.registry.ProductRegistry.list_products"><code class="docutils literal notranslate"><span class="pre">ProductRegistry.list_products()</span></code></a></li>
@@ -593,7 +594,7 @@ document.write(`
 <p>Specific enforcement needs for Forcing Products</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.base.ForcingProduct.required_args">
-<span class="sig-name descname"><span class="pre">required_args</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['output_folder',</span> <span class="pre">'output_filename',</span> <span class="pre">'dates',</span> <span class="pre">'variables',</span> <span class="pre">'lon_max',</span> <span class="pre">'lat_max',</span> <span class="pre">'lon_min',</span> <span class="pre">'lat_min']</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.base.ForcingProduct.required_args" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">required_args</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['output_folder',</span> <span class="pre">'output_filename',</span> <span class="pre">'dates',</span> <span class="pre">'variables',</span> <span class="pre">'lon_max',</span> <span class="pre">'lat_max',</span> <span class="pre">'lon_min',</span> <span class="pre">'lat_min',</span> <span class="pre">'name']</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.base.ForcingProduct.required_args" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -637,6 +638,12 @@ document.write(`
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.registry.ProductRegistry.get_access_function">
 <em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_access_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">product_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.registry.ProductRegistry.get_access_function" title="Link to this definition">#</a></dt>
 <dd><p>Return the raw function (unbound), even if staticmethod.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.registry.ProductRegistry.get_function_default_args">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_function_default_args</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">product_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.registry.ProductRegistry.get_function_default_args" title="Link to this definition">#</a></dt>
+<dd><p>Return a dict of {param: default} for all non-required parameters of an access method.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -826,6 +833,7 @@ and writes the filled content to a new file.</p>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.registry.ProductRegistry"><code class="docutils literal notranslate"><span class="pre">ProductRegistry</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.registry.ProductRegistry.call"><code class="docutils literal notranslate"><span class="pre">ProductRegistry.call()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.registry.ProductRegistry.get_access_function"><code class="docutils literal notranslate"><span class="pre">ProductRegistry.get_access_function()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.registry.ProductRegistry.get_function_default_args"><code class="docutils literal notranslate"><span class="pre">ProductRegistry.get_function_default_args()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.registry.ProductRegistry.get_product"><code class="docutils literal notranslate"><span class="pre">ProductRegistry.get_product()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.registry.ProductRegistry.list_access_methods"><code class="docutils literal notranslate"><span class="pre">ProductRegistry.list_access_methods()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.registry.ProductRegistry.list_products"><code class="docutils literal notranslate"><span class="pre">ProductRegistry.list_products()</span></code></a></li>
