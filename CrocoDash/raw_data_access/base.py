@@ -189,6 +189,8 @@ class ForcingProduct(DatedBaseProduct):
         "tracer_var_names",
         "boundary_fill_method",
         "time_units",
+        "cf_calendar",
+        "cesm_calendar",
     ]
 
     required_args = DatedBaseProduct.required_args + [

@@ -40,7 +40,8 @@ class MOM6_OUTPUT(ForcingProduct):
     tracer_lon_coord = "TLONG"
     eta_var_name = "SSH"
     time_units = "days since 1850-01-01"
-    calendar = "noleap"
+    cf_calendar = "noleap"
+    cesm_calendar = "NO_LEAP"
     depth_coord = ["z_t", "z_t_150m"]
     delimiter = "."
     tracer_var_names = {"temp": "TEMP", "salt": "SALT"}
@@ -267,7 +268,7 @@ def subset_dataset(
         if isinstance(ds.time.values[0], cftime.datetime):
             adjusted_time = [subtract_month(t) for t in ds.time.values]
             units = "days since 1850-01-01 00:00:00"
-            calendar = "noleap"
+            calendar = MOM6_OUTPUT.cf_calendar
             numeric_time = cftime.date2num(
                 adjusted_time, units=units, calendar=calendar
             )
@@ -348,4 +349,4 @@ def subtract_month(dt):
         year -= 1
     # keep day, hour, minute, second as is
     day = min(dt.day, 28)  # avoid invalid dates (Feb)
-    return cftime.DatetimeNoLeap(year, month, day, dt.hour, dt.minute, dt.second)
+    return type(dt)(year, month, day, dt.hour, dt.minute, dt.second)

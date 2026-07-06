@@ -260,6 +260,9 @@ class BGCRiverNutrientsConfigurator(BaseConfigurator):
         ),
         InputValueParam("case_session_id", comment="Case session identifier"),
         InputValueParam("case_grid_name", comment="Case grid name"),
+        InputValueParam(
+            "case_calendar", comment="CF calendar for the river nutrients output file"
+        ),
     ]
     output_params = [
         UserNLConfigParam(
@@ -276,12 +279,17 @@ class BGCRiverNutrientsConfigurator(BaseConfigurator):
     ]
 
     def __init__(
-        self, global_river_nutrients_filepath, case_session_id, case_grid_name
+        self,
+        global_river_nutrients_filepath,
+        case_session_id,
+        case_grid_name,
+        case_calendar,
     ):
         super().__init__(
             global_river_nutrients_filepath=global_river_nutrients_filepath,
             case_session_id=case_session_id,
             case_grid_name=case_grid_name,
+            case_calendar=case_calendar,
         )
 
     def validate_args(self, **kwargs):
@@ -464,6 +472,9 @@ class ChlConfigurator(BaseConfigurator):
         ),
         InputValueParam("case_grid_name", comment="Case grid name"),
         InputValueParam("case_session_id", comment="Case session identifier"),
+        InputValueParam(
+            "case_calendar", comment="CF calendar for the chlorophyll output file"
+        ),
     ]
     output_params = [
         UserNLConfigParam(
@@ -487,12 +498,15 @@ class ChlConfigurator(BaseConfigurator):
         ),
     ]
 
-    def __init__(self, chl_processed_filepath, case_grid_name, case_session_id):
+    def __init__(
+        self, chl_processed_filepath, case_grid_name, case_session_id, case_calendar
+    ):
 
         super().__init__(
             chl_processed_filepath=chl_processed_filepath,
             case_grid_name=case_grid_name,
             case_session_id=case_session_id,
+            case_calendar=case_calendar,
         )
 
     def validate_args(self, **kwargs):
