@@ -165,6 +165,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../for_users/forcing_configurations.html">Forcing Configuration (case.configure_forcings)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_users/extract_forcings.html">Extract Forcings (case.process_forcings)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_users/case_information.html">Extra CESM Case Information</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_users/shareable.html">Shareable Configuration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_users/additional_resources.html">Additional Resources</a></li>
 </ul>
 </details></li>
@@ -384,6 +385,8 @@ document.write(`
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.raw_data_access.datasets.glorys">CrocoDash.raw_data_access.datasets.glorys module</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS"><code class="docutils literal notranslate"><span class="pre">GLORYS</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.boundary_fill_method"><code class="docutils literal notranslate"><span class="pre">GLORYS.boundary_fill_method</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.cesm_calendar"><code class="docutils literal notranslate"><span class="pre">GLORYS.cesm_calendar</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.cf_calendar"><code class="docutils literal notranslate"><span class="pre">GLORYS.cf_calendar</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.depth_coord"><code class="docutils literal notranslate"><span class="pre">GLORYS.depth_coord</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.description"><code class="docutils literal notranslate"><span class="pre">GLORYS.description</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.eta_var_name"><code class="docutils literal notranslate"><span class="pre">GLORYS.eta_var_name</span></code></a></li>
@@ -417,7 +420,8 @@ document.write(`
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.raw_data_access.datasets.mom6_output">CrocoDash.raw_data_access.datasets.mom6_output module</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT"><code class="docutils literal notranslate"><span class="pre">MOM6_OUTPUT</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT.boundary_fill_method"><code class="docutils literal notranslate"><span class="pre">MOM6_OUTPUT.boundary_fill_method</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT.calendar"><code class="docutils literal notranslate"><span class="pre">MOM6_OUTPUT.calendar</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT.cesm_calendar"><code class="docutils literal notranslate"><span class="pre">MOM6_OUTPUT.cesm_calendar</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT.cf_calendar"><code class="docutils literal notranslate"><span class="pre">MOM6_OUTPUT.cf_calendar</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT.delimiter"><code class="docutils literal notranslate"><span class="pre">MOM6_OUTPUT.delimiter</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT.depth_coord"><code class="docutils literal notranslate"><span class="pre">MOM6_OUTPUT.depth_coord</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT.description"><code class="docutils literal notranslate"><span class="pre">MOM6_OUTPUT.description</span></code></a></li>
@@ -662,6 +666,16 @@ document.write(`
 <dd></dd></dl>
 
 <dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.glorys.GLORYS.cesm_calendar">
+<span class="sig-name descname"><span class="pre">cesm_calendar</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'GREGORIAN'</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.cesm_calendar" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.glorys.GLORYS.cf_calendar">
+<span class="sig-name descname"><span class="pre">cf_calendar</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'proleptic_gregorian'</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.cf_calendar" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.glorys.GLORYS.depth_coord">
 <span class="sig-name descname"><span class="pre">depth_coord</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'depth'</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.depth_coord" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
@@ -810,8 +824,13 @@ document.write(`
 <dd></dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT.calendar">
-<span class="sig-name descname"><span class="pre">calendar</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'noleap'</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT.calendar" title="Link to this definition">#</a></dt>
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT.cesm_calendar">
+<span class="sig-name descname"><span class="pre">cesm_calendar</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'NO_LEAP'</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT.cesm_calendar" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT.cf_calendar">
+<span class="sig-name descname"><span class="pre">cf_calendar</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'noleap'</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT.cf_calendar" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -1193,6 +1212,8 @@ _init_subclass hook run and populate the registry.</p>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.raw_data_access.datasets.glorys">CrocoDash.raw_data_access.datasets.glorys module</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS"><code class="docutils literal notranslate"><span class="pre">GLORYS</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.boundary_fill_method"><code class="docutils literal notranslate"><span class="pre">GLORYS.boundary_fill_method</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.cesm_calendar"><code class="docutils literal notranslate"><span class="pre">GLORYS.cesm_calendar</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.cf_calendar"><code class="docutils literal notranslate"><span class="pre">GLORYS.cf_calendar</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.depth_coord"><code class="docutils literal notranslate"><span class="pre">GLORYS.depth_coord</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.description"><code class="docutils literal notranslate"><span class="pre">GLORYS.description</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.eta_var_name"><code class="docutils literal notranslate"><span class="pre">GLORYS.eta_var_name</span></code></a></li>
@@ -1226,7 +1247,8 @@ _init_subclass hook run and populate the registry.</p>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.raw_data_access.datasets.mom6_output">CrocoDash.raw_data_access.datasets.mom6_output module</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT"><code class="docutils literal notranslate"><span class="pre">MOM6_OUTPUT</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT.boundary_fill_method"><code class="docutils literal notranslate"><span class="pre">MOM6_OUTPUT.boundary_fill_method</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT.calendar"><code class="docutils literal notranslate"><span class="pre">MOM6_OUTPUT.calendar</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT.cesm_calendar"><code class="docutils literal notranslate"><span class="pre">MOM6_OUTPUT.cesm_calendar</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT.cf_calendar"><code class="docutils literal notranslate"><span class="pre">MOM6_OUTPUT.cf_calendar</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT.delimiter"><code class="docutils literal notranslate"><span class="pre">MOM6_OUTPUT.delimiter</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT.depth_coord"><code class="docutils literal notranslate"><span class="pre">MOM6_OUTPUT.depth_coord</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT.description"><code class="docutils literal notranslate"><span class="pre">MOM6_OUTPUT.description</span></code></a></li>
