@@ -179,6 +179,12 @@ def _get_boundary(
         data_access_fn = ProductRegistry.get_access_function(
             product_name, function_name
         )
+
+        if getattr(data_access_fn, "_how_to_use", None):
+            logger.info(
+                f"[{product_name}.{function_name}] Usage: {data_access_fn._how_to_use}"
+            )
+
         hgrid = xr.open_dataset(hgrid_path)
         latlon = Grid.get_bounding_boxes_of_rectangular_grid(hgrid)[boundary]
 
