@@ -9,11 +9,15 @@ env:
   DIN_LOC_ROOT: /workspace
   CIME_OUTPUT_ROOT: /workspace
   USER: ${{ github.actor }}
+  WORKDIR: /workspace
 jobs:
   pytest:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/crocodile-cesm/crocodash:nightly
+      image: ghcr.io/crocodile-cesm/crocontainer:latest-amd64
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Configure Git Identity
         run: |
@@ -46,8 +50,13 @@ jobs:
           conda env remove -n CrocoDash --yes
           conda env create -f $WORKDIR/CrocoDash/environment.yml
       - name: Run Pytest
+      # Force a login bash shell to natively enable conda profile utilities
+        shell: bash -l {0}
         run: |
+          set -eo pipefail
           cd $WORKDIR/CrocoDash
+          source /opt/conda/etc/profile.d/conda.sh
+          conda activate CrocoDash
           pytest --ignore=CrocoDash/visualCaseGen -m "not workflow" -vv --showlocals --tb=short --cov=CrocoDash --cov-report=xml --cov-branch
           cp $WORKDIR/CrocoDash/coverage.xml $GITHUB_WORKSPACE/CrocoDash
       - name: Upload coverage to Codecov
@@ -56,8 +65,97 @@ jobs:
          token: ${{ secrets.CODECOV_TOKEN }}
          slug: CROCODILE-CESM/CrocoDash
          files: CrocoDash/coverage.xml
-      - name: Run Workflow Tests
+
+      - name: Run setup_case.py
+        shell: bash -l {0}
         run: |
-          cd $WORKDIR/CrocoDash
-          pytest -m "workflow" -s --ignore=CrocoDash/visualCaseGen
-        shell: bash
+          set -eo pipefail
+          source /opt/conda/etc/profile.d/conda.sh
+          conda activate CrocoDash
+          copernicusmarine login \
+            --username ${{ secrets.GLORYS_USERNAME }} \
+            --password ${{ secrets.GLORYS_PASSWORD }}
+          mkdir -p /workspace/croc_cases
+          mkdir -p /workspace/croc_input
+          python -u $GITHUB_WORKSPACE/CrocoDash/tests/generate_small_test_case.py \
+            --cesmroot /workspace/CESM \
+            --caseroot /workspace/croc_cases \
+            --inputdir /workspace/croc_input \
+            --casename actions_case \
+            --machine ubuntu-latest \
+            --project PLACEHOLDER \
+            --forcing-fn get_glorys_data_script_for_cli
+
+      - name: Bundle case with crocodash bundle
+        if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+        shell: bash -l {0}
+        run: |
+          set -eo pipefail
+          source /opt/conda/etc/profile.d/conda.sh
+          conda activate CrocoDash
+          mkdir -p $GITHUB_WORKSPACE/bundle_output
+          crocodash bundle \
+            --caseroot /workspace/croc_cases/actions_case \
+            --output-dir $GITHUB_WORKSPACE/bundle_output \
+            --cesmroot /workspace/CESM \
+            --machine ubuntu-latest \
+            --project PLACEHOLDER
+      - name: Upload bundle artifact
+        if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: cesm-bundle-actions_case
+          path: ${{ github.workspace }}/bundle_output
+          retention-days: 1
+  run_cesm_crocontainer:
+    needs: pytest
+    runs-on: gha-runner-crocodash
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    permissions:
+      contents: read     # Allows checking out code
+      packages: write    # Crucial: Allows authenticating with GHCR
+    steps:
+      - name: Install Apptainer
+        run: |
+          sudo apt update && sudo apt install -y software-properties-common
+          sudo add-apt-repository -y ppa:apptainer/ppa
+          sudo apt update
+          sudo apt-get install -y apptainer
+
+      - name: Download bundle artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: cesm-bundle-actions_case
+          path: ${{ github.workspace }}/bundle_output
+      - name: Verify artifact
+        run: ls -la ${{ github.workspace }}/bundle_output/
+      - name: Build Sandbox Container
+        env:
+          APPTAINER_DOCKER_USERNAME: ${{ github.actor }}
+          APPTAINER_DOCKER_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          apptainer build --sandbox workspace_sandbox/ \
+            docker://ghcr.io/crocodile-cesm/crocontainer:latest-amd64 
+        # This is warning that CIRRUS runners may not pull the most up-to-date image from crocontainer, you may need a new tag name. 
+      - name: Run CESM
+        run: |
+          mkdir ${{ github.workspace }}/cesm_scratch
+          apptainer exec \
+            --writable \
+            --env GIT_AUTHOR_NAME="${{ github.actor }}" \
+            --env GIT_AUTHOR_EMAIL="${{ github.actor_id }}+${{ github.actor }}@github.com" \
+            --env GIT_COMMITTER_NAME="${{ github.actor }}" \
+            --env GIT_COMMITTER_EMAIL="${{ github.actor_id }}+${{ github.actor }}@github.com" \
+            --bind /glade/campaign/cesm/cesmdata/inputdata:/root/cesm/inputdata \
+            --bind ${{ github.workspace }}/cesm_scratch:/root/cesm/scratch \
+            --bind ${{ github.workspace }}/bundle_output/actions_case_case_bundle:/workspace/bundle \
+            workspace_sandbox/ \
+            /bin/bash /workspace/run_case.sh
+      - name: Upload CESM logs/data
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cesm-${{ github.run_id }}
+          path: |
+            /home/runner/cesm/scratch/case/run/
+            /home/runner/cesm/archive/case/
