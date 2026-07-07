@@ -61,7 +61,7 @@ def run_full_workflow(
         tpxo_velocity_filepath=tmp_path / "u.nc",
     )
     # Create dummy forcings
-    bounds = Grid.get_bounding_boxes_of_rectangular_grid(case.ocn_grid)
+    bounds = Grid.get_bounding_boxes(case.ocn_grid)
     ds = dummy_forcing_factory(
         bounds["ic"]["lat_min"],
         bounds["ic"]["lat_max"],
