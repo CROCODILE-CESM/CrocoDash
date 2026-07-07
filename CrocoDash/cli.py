@@ -102,6 +102,41 @@ def _duplicate_case(args):
     print(f"Duplicated case created at: {new_case.caseroot}")
 
 
+def _template(args):
+    from pathlib import Path
+    from crocogallery import get_notebook_path, inject_into_text, load_paths
+
+    output = Path(args.output)
+    notebook_id = args.notebook
+
+    if output.suffix in (".yaml", ".yml"):
+        # YAML starter lives alongside the default tutorial notebook
+        yaml_path = get_notebook_path(notebook_id).parent / "starter_case.yaml"
+        template_text = yaml_path.read_text()
+        if args.machine:
+            template_text = inject_into_text(template_text, load_paths(args.machine))
+        output.write_text(template_text)
+    else:
+        import nbformat
+
+        paths = load_paths(args.machine) if args.machine else {}
+        nb = nbformat.read(get_notebook_path(notebook_id), as_version=4)
+
+        if output.suffix == ".ipynb":
+            for cell in nb.cells:
+                if cell.cell_type == "code":
+                    cell.source = inject_into_text(cell.source, paths)
+            nbformat.write(nb, output)
+        else:
+            code_cells = [cell.source for cell in nb.cells if cell.cell_type == "code"]
+            text = "# %%\n" + "\n\n# %%\n".join(code_cells)
+            output.write_text(inject_into_text(text, paths))
+
+    print(f"Template written to: {output}")
+    if not args.machine:
+        print("Tip: rerun with --machine derecho to pre-fill known dataset paths.")
+
+
 def _fork(args):
     from CrocoDash.shareable import ForkBundle
 
@@ -274,6 +309,33 @@ def main():
         help='JSON object controlling what non-standard CESM state to copy, e.g. \'{"xml_files": true, "user_nl": true, "source_mods": false, "xmlchanges": true}\'.',
     )
     fork_parser.set_defaults(func=_fork)
+
+    # --- template ---
+    template_parser = subparsers.add_parser(
+        "template",
+        help="Write a starter CrocoDash case script or notebook.",
+    )
+    template_parser.add_argument(
+        "--output",
+        required=True,
+        help="Output path. Use .yaml for a config, .ipynb for a notebook, .py for a script.",
+    )
+    template_parser.add_argument(
+        "--machine",
+        default=None,
+        help="Pre-fill known dataset paths for this machine (e.g. derecho). Omit to leave <KEY> placeholders.",
+    )
+    template_parser.add_argument(
+        "--notebook",
+        default="crocodash.tutorials.crocodash_tutorial",
+        help=(
+            "Gallery notebook ID to use as the template source "
+            "(default: crocodash.tutorials.crocodash_tutorial). "
+            "Run `python -c 'from crocogallery import list_notebooks; print(*list_notebooks(), sep=\"\\n\")'` "
+            "to see all available IDs."
+        ),
+    )
+    template_parser.set_defaults(func=_template)
 
     args = parser.parse_args()
     args.func(args)
