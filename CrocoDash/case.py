@@ -349,7 +349,7 @@ class Case:
             self.caseroot.parent.mkdir(parents=True, exist_ok=False)
 
         self.cc = CaseCreator(
-            self.cime, allow_xml_override=self.override, add_grids_to_ccs_config=True
+            self.cime, allow_xml_override=self.override, add_grids_to_ccs_config=False
         )
 
         try:
@@ -972,7 +972,6 @@ class Case:
 
             # Nudging
             obc_params.append((seg_id + "_VELOCITY_NUDGING_TIMESCALES", "0.3, 360.0"))
-            bgc_tracers = ""
             standard_data_str = lambda: (
                 f'"U=file:forcing_obc_segment_{seg_ix}.nc(u),'
                 f"V=file:forcing_obc_segment_{seg_ix}.nc(v),"
@@ -986,7 +985,12 @@ class Case:
                     self.forcing_product_name.lower()
                 ).marbl_var_names
                 for tracer_mom6_name in product_info:
-                    bgc_tracers += f",{tracer_mom6_name}=file:forcing_obc_segment_{seg_ix}.nc({product_info[tracer_mom6_name]})"
+                    obc_params.append(
+                        (
+                            f"OBC_DATA_{tracer_mom6_name}",
+                            f"{tracer_mom6_name}_obc_segment.nc({product_info[tracer_mom6_name]})",
+                        )
+                    )
 
             if self.fcr.is_active("tides"):
                 obc_params.append(
@@ -994,14 +998,11 @@ class Case:
                         seg_id + "_DATA",
                         standard_data_str()
                         + self.fcr.active_configurators["tides"].tidal_data_str(seg_ix)
-                        + bgc_tracers
                         + '"',
                     )
                 )
             else:
-                obc_params.append(
-                    (seg_id + "_DATA", standard_data_str() + bgc_tracers + '"')
-                )
+                obc_params.append((seg_id + "_DATA", standard_data_str() + '"'))
 
         append_user_nl(
             "mom",
