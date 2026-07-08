@@ -9,6 +9,7 @@ from pathlib import Path
 from collections import defaultdict
 import shutil
 import regional_mom6 as rm6
+import threading
 
 logger = logging.setup_logger(__name__)
 
@@ -105,6 +106,8 @@ def merge_piecewise_dataset(
                     combine="nested",
                     concat_dim="time",
                     coords="minimal",
+                    parallel=False,
+                    lock=threading.Lock(),
                 )
                 ds.to_netcdf(output_path)
                 ds.close()
