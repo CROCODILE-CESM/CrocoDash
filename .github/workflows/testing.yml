@@ -142,7 +142,7 @@ jobs:
       - name: Check if environment.yml changed
         id: compare
         run: |
-          if diff workspace_sandbox/CrocoDash/environment.yml CrocoDash/environment.yml; then
+          if diff workspace_sandbox/workspace/CrocoDash/environment.yml CrocoDash/environment.yml; then
             echo "No changes in environment.yml"
             echo "env_changed=false" >> $GITHUB_OUTPUT
           else
@@ -151,8 +151,8 @@ jobs:
           fi
       - name: Copy CrocoDash into container
         run: |
-              rm -rf workspace_sandbox/CrocoDash
-              cp -r CrocoDash workspace_sandbox/
+              rm -rf workspace_sandbox/workspace/CrocoDash
+              cp -r CrocoDash workspace_sandbox/workspace/
       
         # This is warning that CIRRUS runners may not pull the most up-to-date image from crocontainer, you may need a new tag name. 
       - name: Run CESM
