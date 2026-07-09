@@ -248,13 +248,16 @@ def _regrid_boundary(
             continue
 
         tmp_file = output_folder / f"_tmp_{boundary}_{start_str}_{end_str}.nc"
-        # Raw product timestamps (e.g. GLORYS daily means) are stamped at
-        # noon, not midnight — push chunk_end to end-of-day so label-based
-        # .sel() doesn't silently drop the last day's sample at each chunk
-        # boundary. Mirrors make_dates_end_inclusive in raw_data_access.
-        chunk_end_inclusive = chunk_end + timedelta(hours=23, minutes=59, seconds=59)
-        end_str = chunk_end_inclusive.strftime("%Y-%m-%d")
-        ds_full.sel(time=slice(start_str, end_str)).to_netcdf(tmp_file)
+        # chunk_start/chunk_end are midnight-anchored dates, but daily-mean products
+        # like GLORYS timestamp each day's value at noon. A plain slice(chunk_start,
+        # chunk_end) therefore excludes chunk_end's own data point (it falls after
+        # the midnight upper bound) -- silently dropping the chunk's last day, and
+        # producing a fully empty selection for any single-day chunk (e.g. the
+        # trailing remainder when the date range isn't a multiple of
+        # regrid_step_days), which crashes downstream on a zero-size array. Extend
+        # the upper bound through the end of chunk_end's calendar day.
+        chunk_end_of_day = chunk_end + timedelta(hours=23, minutes=59, seconds=59)
+        ds_full.sel(time=slice(chunk_start, chunk_end_of_day)).to_netcdf(tmp_file)
 
         try:
             seg = rm6.segment(
