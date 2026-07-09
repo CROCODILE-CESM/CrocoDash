@@ -132,7 +132,7 @@ jobs:
           APPTAINER_DOCKER_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
         run: |
           apptainer build --sandbox workspace_sandbox/ \
-            docker://ghcr.io/crocodile-cesm/crocontainer:latest-amd64 
+            docker://ghcr.io/crocodile-cesm/crocontainer:sha-4cfce86
         # This is warning that CIRRUS runners may not pull the most up-to-date image from crocontainer, you may need a new tag name. 
       - name: Run CESM
         run: |
