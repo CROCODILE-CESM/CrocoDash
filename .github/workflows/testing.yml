@@ -132,7 +132,28 @@ jobs:
           APPTAINER_DOCKER_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
         run: |
           apptainer build --sandbox workspace_sandbox/ \
-            docker://ghcr.io/crocodile-cesm/crocontainer:latest-amd64 
+            docker://ghcr.io/crocodile-cesm/crocontainer:sha-4cfce86
+
+      # Copy the current CrocoDash into the sandbox container to ensure the latest code is used
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          path: CrocoDash
+      - name: Check if environment.yml changed
+        id: compare
+        run: |
+          if diff workspace_sandbox/workspace/CrocoDash/environment.yml CrocoDash/environment.yml; then
+            echo "No changes in environment.yml"
+            echo "env_changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "environment.yml changed!"
+            echo "env_changed=true" >> $GITHUB_OUTPUT
+          fi
+      - name: Copy CrocoDash into container
+        run: |
+              rm -rf workspace_sandbox/workspace/CrocoDash
+              cp -r CrocoDash workspace_sandbox/workspace/
+      
         # This is warning that CIRRUS runners may not pull the most up-to-date image from crocontainer, you may need a new tag name. 
       - name: Run CESM
         run: |
