@@ -260,7 +260,7 @@ def _regrid_boundary(
             continue
 
         tmp_file = output_folder / f"_tmp_{boundary}_{start_str}_{end_str}.nc"
-        ds_full.sel(time=slice(chunk_start, chunk_end)).to_netcdf(tmp_file)
+        ds_full.sel(time=slice(start_str, end_str)).to_netcdf(tmp_file)
 
         try:
             hgrid = xr.open_dataset(hgrid_path)
