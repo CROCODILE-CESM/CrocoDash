@@ -15,7 +15,7 @@ from ProConPy.stage import Stage
 from ProConPy.dev_utils import ConstraintViolation
 from visualCaseGen.initialize import initialize as initialize_visualCaseGen
 from visualCaseGen.custom_widget_types.case_creator import CaseCreator, ERROR, RESET
-from visualCaseGen.custom_widget_types.case_tools import xmlchange, append_user_nl
+from visualCaseGen.custom_widget_types.case_tools import xmlchange
 from mom6_forge import chl, mapping
 import xesmf as xe
 import xarray as xr
@@ -203,6 +203,11 @@ class Case:
         return "CICE" in self.compset_lname
 
     @property
+    def ww3_in_compset(self):
+        """Check if WW3 is included in the compset."""
+        return "WW3" in self.compset_lname
+
+    @property
     def runoff_in_compset(self):
         """Check if runoff is included in the compset."""
         return "SROF" not in self.compset_lname
@@ -259,9 +264,9 @@ class Case:
             "Currently, active or data glacier models are not supported by CrocoDash."
             "Please use a compset with SGLC."
         )
-        assert "SWAV" in compset_lname, (
-            "Currently, active or data wave models are not supported by CrocoDash."
-            "Please use a compset with SWAV."
+        assert "DWAV" not in compset_lname, (
+            "Currently, data wave models (DWAV) are not supported by CrocoDash. "
+            "Please use a compset with SWAV or WW3."
         )
         if not isinstance(ocn_topo, Topo):
             raise TypeError("ocn_topo must be a Topo object.")
@@ -314,53 +319,40 @@ class Case:
                 shutil.rmtree(inputdir)
 
         inputdir.mkdir(parents=True, exist_ok=False)
-        (inputdir / "ocnice").mkdir()
+
+        ocnice = inputdir / "ocnice"
+        ocnice.mkdir()
 
         # suffix for the MOM6 grid files
         session_id = cvars["MB_ATTEMPT_ID"].value
-        self.supergrid_path = str(
-            self.inputdir
-            / "ocnice"
-            / f"ocean_hgrid_{self.ocn_grid.name}_{session_id}.nc"
-        )
-        self.vgrid_path = str(
-            self.inputdir
-            / "ocnice"
-            / f"ocean_vgrid_{self.ocn_grid.name}_{session_id}.nc"
-        )
-        self.topo_path = str(
-            inputdir / "ocnice" / f"ocean_topog_{ocn_grid.name}_{session_id}.nc"
-        )
-        self.scrip_grid_path = (
-            inputdir / "ocnice" / f"scrip_{ocn_grid.name}_{session_id}.nc"
-        )
-        self.esmf_mesh_path = (
-            inputdir / "ocnice" / f"ESMF_mesh_{ocn_grid.name}_{session_id}.nc"
-        )
+        suffix = f"{ocn_grid.name}_{session_id}"
 
         # MOM6 supergrid file
+        self.supergrid_path = str(ocnice / f"ocean_hgrid_{suffix}.nc")
         ocn_grid.write_supergrid(self.supergrid_path)
 
         # MOM6 topography file
+        self.topo_path = str(ocnice / f"ocean_topog_{suffix}.nc")
         ocn_topo.write_topo(self.topo_path)
 
         # MOM6 vertical grid file
+        self.vgrid_path = str(ocnice / f"ocean_vgrid_{suffix}.nc")
         ocn_vgrid.write(self.vgrid_path)
 
         # SCRIP grid file (needed for runoff remapping)
-        ocn_topo.write_scrip_grid(self.scrip_grid_path)
+        ocn_topo.write_scrip_grid(ocnice / f"scrip_{suffix}.nc")
 
         # ESMF mesh file:
+        self.esmf_mesh_path = str(ocnice / f"ESMF_mesh_{suffix}.nc")
         ocn_topo.write_esmf_mesh(self.esmf_mesh_path)
 
         # CICE grid file (if needed)
         if self.cice_in_compset:
-            self.cice_grid_path = (
-                inputdir
-                / "ocnice"
-                / f"cice_grid_{ocn_grid.name}_{cvars['MB_ATTEMPT_ID'].value}.nc"
-            )
-            self.ocn_topo.write_cice_grid(self.cice_grid_path)
+            self.ocn_topo.write_cice_grid(ocnice / f"cice_grid_{suffix}.nc")
+
+        # WW3 grid file (if needed)
+        if self.ww3_in_compset:
+            self.ocn_topo.write_ww3_input(ocnice, grid_alias=ocn_grid.name)
 
     def _create_newcase(self):
         """Create the case instance."""
@@ -375,7 +367,7 @@ class Case:
             self.caseroot.parent.mkdir(parents=True, exist_ok=False)
 
         self.cc = CaseCreator(
-            self.cime, allow_xml_override=self.override, add_grids_to_ccs_config=True
+            self.cime, allow_xml_override=self.override, add_grids_to_ccs_config=False
         )
 
         try:
@@ -708,6 +700,7 @@ class Case:
         self._configure_custom_atmosphere_grid(atm_grid_name)
         self._configure_custom_ocean_grid()
         self._configure_custom_runoff_grid(rof_grid_name)
+        self._configure_custom_wave_grid()
 
     def _configure_custom_atmosphere_grid(self, atm_grid_name):
         """Configure the atmosphere grid for the case. To be called by _configure_custom_grid()"""
@@ -787,6 +780,20 @@ class Case:
                 "skip"  # to be generated later in process_forcings
             )
 
+    def _configure_custom_wave_grid(self):
+        """Configure the wave grid for the case. To be called by _configure_custom_grid().
+
+        Only reached for an active wave model (WW3); for stub waves (SWAV) the Wave Grid
+        stages are auto-skipped (irrelevant), this method is a no-op.
+        """
+        if Stage.active().title == "Wave Grid Mode":
+            cvars["WAV_GRID_MODE"].value = "Custom Ocean Grid"
+            # The WW3 grid-preprocessor input files are generated separately in
+            # _create_grid_input_files() via ocn_topo.write_ww3_input(); mark the
+            # input-file generation sub-stage complete so the flow proceeds to Launch.
+            assert Stage.active().title == "Wave Input Files"
+            cvars["WW3_INPUT_STATUS"].value = "Complete"
+
     def _configure_launch(self):
         """Assign the launch variables for the case."""
 
@@ -847,10 +854,10 @@ class Case:
     def validate_case(self):
 
         # Ensure configurations are done
-        for config in self.fcr.active_configurators.keys():
-            if not self.fcr.active_configurators[config].validate_output_filepaths(
-                self.inputdir / "ocnice"
-            ):
+        for name, configurator in self.fcr.active_configurators.items():
+            if not configurator.validate_output_filepaths(self.inputdir / "ocnice"):
                 print(
-                    f"{config} was not valid yet! Which means you need to process this forcing and generate the files using your cases extract_forcings module! {self.inputdir/'extract_forcings'}"
+                    f"{name} is not valid yet — process this forcing and generate "
+                    f"the files using your case's extract_forcings module: "
+                    f"{self.inputdir / 'extract_forcings'}"
                 )

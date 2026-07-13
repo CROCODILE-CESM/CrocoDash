@@ -181,6 +181,9 @@ def run_workflow(
                 MARBL_FEVENTFLUX_FILE=config["bgcironforcing"]["outputs"][
                     "MARBL_FEVENTFLUX_FILE"
                 ],
+                MARBL_FESEDFLUXRED_FILE=config["bgcironforcing"]["outputs"][
+                    "MARBL_FESEDFLUXRED_FILE"
+                ],
                 inputdir=inputdir,
             )
             timings["bgcironforcing"] = time.perf_counter() - _t

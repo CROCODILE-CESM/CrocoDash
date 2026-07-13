@@ -239,6 +239,11 @@ class BGCIronForcingConfigurator(BaseConfigurator):
             user_nl_name="mom",
             is_file=True,
         ),
+        UserNLConfigParam(
+            "MARBL_FESEDFLUXRED_FILE",
+            comment="MARBL sediment iron flux (reduced) file",
+            user_nl_name="mom",
+        ),
     ]
 
     def __init__(self, case_session_id, case_grid_name):
@@ -247,8 +252,10 @@ class BGCIronForcingConfigurator(BaseConfigurator):
     def configure(self):
         feventflux_filepath = f"feventflux_5gmol_{self.get_input_param('case_grid_name')}_{self.get_input_param('case_session_id')}.nc"
         fesedflux_filepath = f"fesedflux_total_reduce_oxic_{self.get_input_param('case_grid_name')}_{self.get_input_param('case_session_id')}.nc"
+        fesedfluxred_filepath = f"fesedfluxred_{self.get_input_param('case_grid_name')}_{self.get_input_param('case_session_id')}.nc"
         self.set_output_param("MARBL_FESEDFLUX_FILE", fesedflux_filepath)
         self.set_output_param("MARBL_FEVENTFLUX_FILE", feventflux_filepath)
+        self.set_output_param("MARBL_FESEDFLUXRED_FILE", fesedfluxred_filepath)
         super().configure()
 
 
@@ -750,20 +757,23 @@ class ConditionsConfigurator(BaseConfigurator):
                 f"SALT=file:forcing_obc_segment_{seg_ix}.nc(salt)"
             )
 
-            bgc_tracers = ""
             if self.registry and self.registry.is_active("bgc"):
                 for tracer_mom6_name, source_var in product.marbl_var_names.items():
-                    bgc_tracers += (
-                        f",{tracer_mom6_name}="
-                        f"file:forcing_obc_segment_{seg_ix}.nc({source_var})"
+                    tracer_param = UserNLConfigParam(
+                        f"OBC_DATA_{tracer_mom6_name}",
+                        comment="Open boundary conditions",
                     )
+                    tracer_param.set_item(
+                        f"{tracer_mom6_name}_obc_segment.nc({source_var})"
+                    )
+                    dynamic_params.append(tracer_param)
 
             data_str = standard_data_str
             if self.registry and self.registry.is_active("tides"):
                 data_str += self.registry.active_configurators["tides"].tidal_data_str(
                     seg_ix
                 )
-            data_str += bgc_tracers + '"'
+            data_str += '"'
 
             data_param = UserNLConfigParam(
                 seg_id + "_DATA", comment="Open boundary conditions"

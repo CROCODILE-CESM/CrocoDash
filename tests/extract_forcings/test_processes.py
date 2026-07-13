@@ -67,6 +67,7 @@ def test_bgcironforcing(tmp_path):
         ny=60,
         MARBL_FESEDFLUX_FILE="fesed.nc",
         MARBL_FEVENTFLUX_FILE="fevent.nc",
+        MARBL_FESEDFLUXRED_FILE="fesedred.nc",
         inputdir=tmp_path,
     )
 
