@@ -60,20 +60,25 @@ The driver script accepts several options for fine-grained control:
 # Run all forcing extractions
 python driver.py --all
 
+# Check that config and imports are valid without processing anything
+python driver.py --test
+
 # Run only specific forcings
+python driver.py --ic --bc            # initial + boundary conditions
 python driver.py --tides
 python driver.py --runoff
-python driver.py --bgc
+python driver.py --bgcic --bgcironforcing --bgcrivernutrients
+python driver.py --chl
 
 # Run multiple forcings
-python driver.py --tides --runoff --bgc
+python driver.py --tides --runoff
 
-# Run all except certain forcings
+# Run all except certain components (names are the flag names, case-insensitive)
 python driver.py --all --skip bgcic
-python driver.py --all --skip conditions bgcic
+python driver.py --all --skip tides runoff
 
-# Skip entire processing phases
-python driver.py --all --skip conditions
+# Skip individual IC/BC pipeline steps (e.g. data already downloaded)
+python driver.py --ic --bc --no-get
 ```
 
 This flexibility is intentional—you might want to:
@@ -100,7 +105,7 @@ CrocoDash deliberately **doesn't do all the processing itself**. Instead, it lev
 
 | Task | Tool | Used By |
 |------|------|---------|
-| Regridding & OBC extraction | [regional-mom6](https://github.com/COSIMA/regional-mom6) | `regrid_dataset_piecewise.py` & Various Modules |
+| Regridding & OBC extraction | [regional-mom6](https://github.com/CROCODILE-CESM/regional-mom6) | `regrid_dataset_piecewise.py` & Various Modules |
 | Minor processing (fill, mapping, Chlorophyll) | [mom6_forge](https://github.com/NCAR/mom6_forge) | Various modules |
 | Data formatting | `netCDF4`, `xarray` | Throughout |
 

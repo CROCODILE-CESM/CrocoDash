@@ -11,7 +11,7 @@ modify, or extend it. For the day-to-day user workflow see the
 | 1. Grids (hgrid / topo / vgrid) | `grid`, `topo`, `vgrid`, `topo_editor` | [mom6_forge](https://github.com/NCAR/mom6_forge) |
 | 2. Case setup | `case` | [VisualCaseGen](https://github.com/ESMCI/VisualCaseGen) + CESM CIME |
 | 3a. Configure forcings | `forcing_configurations` | (internal) |
-| 3b. Process forcings | `extract_forcings` | [regional-mom6](https://github.com/COSIMA/regional-mom6), `mom6_forge` |
+| 3b. Process forcings | `extract_forcings` | [regional-mom6](https://github.com/CROCODILE-CESM/regional-mom6), `mom6_forge` |
 
 Supporting modules you'll touch when extending CrocoDash:
 
@@ -132,7 +132,7 @@ lives in three submodules:
 
 | Task | Tool |
 |---|---|
-| Regridding + OBC extraction | [regional-mom6](https://github.com/COSIMA/regional-mom6) |
+| Regridding + OBC extraction | [regional-mom6](https://github.com/CROCODILE-CESM/regional-mom6) |
 | Grid / bathymetry / vgrid generation, `TopoEditor` | [mom6_forge](https://github.com/NCAR/mom6_forge) |
 | CESM case creation + GUI | [VisualCaseGen](https://github.com/ESMCI/VisualCaseGen) |
 
