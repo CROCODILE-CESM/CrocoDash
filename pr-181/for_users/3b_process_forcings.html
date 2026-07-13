@@ -421,20 +421,25 @@ which means you can also run the driver yourself from the command line.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Run all forcing extractions</span>
 python<span class="w"> </span>driver.py<span class="w"> </span>--all
 
+<span class="c1"># Check that config and imports are valid without processing anything</span>
+python<span class="w"> </span>driver.py<span class="w"> </span>--test
+
 <span class="c1"># Run only specific forcings</span>
+python<span class="w"> </span>driver.py<span class="w"> </span>--ic<span class="w"> </span>--bc<span class="w">            </span><span class="c1"># initial + boundary conditions</span>
 python<span class="w"> </span>driver.py<span class="w"> </span>--tides
 python<span class="w"> </span>driver.py<span class="w"> </span>--runoff
-python<span class="w"> </span>driver.py<span class="w"> </span>--bgc
+python<span class="w"> </span>driver.py<span class="w"> </span>--bgcic<span class="w"> </span>--bgcironforcing<span class="w"> </span>--bgcrivernutrients
+python<span class="w"> </span>driver.py<span class="w"> </span>--chl
 
 <span class="c1"># Run multiple forcings</span>
-python<span class="w"> </span>driver.py<span class="w"> </span>--tides<span class="w"> </span>--runoff<span class="w"> </span>--bgc
+python<span class="w"> </span>driver.py<span class="w"> </span>--tides<span class="w"> </span>--runoff
 
-<span class="c1"># Run all except certain forcings</span>
+<span class="c1"># Run all except certain components (names are the flag names, case-insensitive)</span>
 python<span class="w"> </span>driver.py<span class="w"> </span>--all<span class="w"> </span>--skip<span class="w"> </span>bgcic
-python<span class="w"> </span>driver.py<span class="w"> </span>--all<span class="w"> </span>--skip<span class="w"> </span>conditions<span class="w"> </span>bgcic
+python<span class="w"> </span>driver.py<span class="w"> </span>--all<span class="w"> </span>--skip<span class="w"> </span>tides<span class="w"> </span>runoff
 
-<span class="c1"># Skip entire processing phases</span>
-python<span class="w"> </span>driver.py<span class="w"> </span>--all<span class="w"> </span>--skip<span class="w"> </span>conditions
+<span class="c1"># Skip individual IC/BC pipeline steps (e.g. data already downloaded)</span>
+python<span class="w"> </span>driver.py<span class="w"> </span>--ic<span class="w"> </span>--bc<span class="w"> </span>--no-get
 </pre></div>
 </div>
 <p>This flexibility is intentional—you might want to:</p>
@@ -468,7 +473,7 @@ python<span class="w"> </span>driver.py<span class="w"> </span>--all<span class=
 </thead>
 <tbody>
 <tr class="row-even"><td><p>Regridding &amp; OBC extraction</p></td>
-<td><p><a class="reference external" href="https://github.com/COSIMA/regional-mom6">regional-mom6</a></p></td>
+<td><p><a class="reference external" href="https://github.com/CROCODILE-CESM/regional-mom6">regional-mom6</a></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">regrid_dataset_piecewise.py</span></code> &amp; Various Modules</p></td>
 </tr>
 <tr class="row-odd"><td><p>Minor processing (fill, mapping, Chlorophyll)</p></td>

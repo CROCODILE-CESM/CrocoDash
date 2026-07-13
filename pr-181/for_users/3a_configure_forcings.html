@@ -402,14 +402,16 @@ the <a class="reference internal" href="datasets.html#crocodash-data-access-modu
 </section>
 <section id="common-configuration-examples">
 <h2>Common Configuration Examples<a class="headerlink" href="#common-configuration-examples" title="Link to this heading">#</a></h2>
-<p>Here are typical forcing configurations you might use:</p>
+<p>Here are typical forcing configurations you might use. Note that <code class="docutils literal notranslate"><span class="pre">date_range</span></code> is
+always required — it drives the initial and boundary condition extraction that every
+case needs, and optional configurators (like tides) derive their reference dates from it.</p>
 <section id="tidal-forcing">
 <h3>Tidal Forcing<a class="headerlink" href="#tidal-forcing" title="Link to this heading">#</a></h3>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">case</span><span class="o">.</span><span class="n">configure_forcings</span><span class="p">(</span>
+    <span class="n">date_range</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;2020-01-01 00:00:00&quot;</span><span class="p">,</span> <span class="s2">&quot;2020-02-01 00:00:00&quot;</span><span class="p">],</span>
     <span class="n">tpxo_elevation_filepath</span><span class="o">=</span><span class="s2">&quot;/path/to/h_tpxo9.v1.nc&quot;</span><span class="p">,</span>
     <span class="n">tpxo_velocity_filepath</span><span class="o">=</span><span class="s2">&quot;/path/to/u_tpxo9.v1.nc&quot;</span><span class="p">,</span>
     <span class="n">tidal_constituents</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;M2&quot;</span><span class="p">,</span> <span class="s2">&quot;K1&quot;</span><span class="p">],</span>
-    <span class="n">start_date</span><span class="o">=</span><span class="s2">&quot;2000,01,01&quot;</span>
 <span class="p">)</span>
 </pre></div>
 </div>
@@ -417,6 +419,7 @@ the <a class="reference internal" href="datasets.html#crocodash-data-access-modu
 <section id="biogeochemistry-bgc">
 <h3>Biogeochemistry (BGC)<a class="headerlink" href="#biogeochemistry-bgc" title="Link to this heading">#</a></h3>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">case</span><span class="o">.</span><span class="n">configure_forcings</span><span class="p">(</span>
+    <span class="n">date_range</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;2020-01-01 00:00:00&quot;</span><span class="p">,</span> <span class="s2">&quot;2020-02-01 00:00:00&quot;</span><span class="p">],</span>
     <span class="c1"># BGC configuration if &quot;MARBL&quot; in compset</span>
     <span class="n">marbl_ic_filepath</span><span class="o">=</span><span class="s2">&quot;/path/to/bgc_ic.nc&quot;</span><span class="p">,</span>
     <span class="c1"># ... other BGC options</span>
@@ -427,9 +430,13 @@ the <a class="reference internal" href="datasets.html#crocodash-data-access-modu
 <section id="runoff">
 <h3>Runoff<a class="headerlink" href="#runoff" title="Link to this heading">#</a></h3>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">case</span><span class="o">.</span><span class="n">configure_forcings</span><span class="p">(</span>
+    <span class="n">date_range</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;2020-01-01 00:00:00&quot;</span><span class="p">,</span> <span class="s2">&quot;2020-02-01 00:00:00&quot;</span><span class="p">],</span>
     <span class="c1"># Runoff configuration if &quot;DROF&quot; in compset</span>
-    <span class="n">runoff_esmf_mesh_filepath</span><span class="o">=</span><span class="s2">&quot;/path/to/glofas_mesh.nc&quot;</span><span class="p">,</span>
+    <span class="n">rof_esmf_mesh_filepath</span><span class="o">=</span><span class="s2">&quot;/path/to/glofas_mesh.nc&quot;</span><span class="p">,</span>
+    <span class="c1"># Optional smoothing parameters in km — must be given together, or omitted</span>
+    <span class="c1"># to let CrocoDash suggest values from the ocean mesh resolution:</span>
     <span class="n">rmax</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+    <span class="n">fold</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span>
     <span class="c1"># ... other runoff options</span>
 <span class="p">)</span>
 </pre></div>

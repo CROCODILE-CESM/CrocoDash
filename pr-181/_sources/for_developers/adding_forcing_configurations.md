@@ -322,8 +322,8 @@ If you need to pass complex objects to `extract_forcings`, store serializable re
 Validation should happen in `validate_args`, which is called from the base __init__:
 
 ```python
-def validate_args(self, kwargs):
-    assert kwargs["true"]
+def validate_args(self, **kwargs):
+    assert kwargs["my_required_param"] is not None
 ```
 
 ### Accessing Case Information

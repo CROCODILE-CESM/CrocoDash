@@ -691,8 +691,8 @@ document.write(`
 <section id="validation-strategy">
 <h3>Validation Strategy<a class="headerlink" href="#validation-strategy" title="Link to this heading">#</a></h3>
 <p>Validation should happen in <code class="docutils literal notranslate"><span class="pre">validate_args</span></code>, which is called from the base <strong>init</strong>:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">validate_args</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">):</span>
-    <span class="k">assert</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;true&quot;</span><span class="p">]</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">validate_args</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">assert</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;my_required_param&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
 </pre></div>
 </div>
 </section>

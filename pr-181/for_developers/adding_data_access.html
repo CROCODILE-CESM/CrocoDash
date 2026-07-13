@@ -462,8 +462,8 @@ document.write(`
 <section id="step-5-validation-and-tests">
 <h2>Step 5: Validation and Tests<a class="headerlink" href="#step-5-validation-and-tests" title="Link to this heading">#</a></h2>
 <p>When you test your class, it will automatically get registed with the registry and run validation. It will fail on import if you miss metadata or required args in your registed access function.</p>
-<p>Create a test file in <code class="docutils literal notranslate"><span class="pre">CrocoDash/tests/raw_data_access</span></code> to test your dataset:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># CrocoDash/tests/raw_data_access/test_my_dataset.py</span>
+<p>Create a test file in <code class="docutils literal notranslate"><span class="pre">tests/raw_data_access</span></code> to test your dataset:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># tests/raw_data_access/test_my_dataset.py</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">pytest</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
@@ -477,7 +477,7 @@ document.write(`
 </pre></div>
 </div>
 <p>Run your tests:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pytest<span class="w"> </span>tests/test_my_dataset.py<span class="w"> </span>-v
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pytest<span class="w"> </span>tests/raw_data_access/test_my_dataset.py<span class="w"> </span>-v
 </pre></div>
 </div>
 </section>

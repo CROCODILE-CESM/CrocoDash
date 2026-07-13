@@ -10,7 +10,7 @@ CrocoDash brings regional MOM6 inside CESM. It's a lightweight package that
 orchestrates four steps, one module per step:
 
 1. **Grids** — horizontal grid, bathymetry, and vertical grid (via [mom6_forge](https://github.com/NCAR/mom6_forge))
-2. **Case setup** — create a CESM regional MOM6 case (via [VisualCaseGen](https://github.com/CROCODILE-CESM/VisualCaseGen))
+2. **Case setup** — create a CESM regional MOM6 case (via [VisualCaseGen](https://github.com/ESMCI/visualCaseGen))
 3. **Configure forcings** — declare tides, BGC, rivers, ICs, etc. for your case
 4. **Process forcings** — download, regrid, and format the actual data (via [regional-mom6](https://github.com/CROCODILE-CESM/regional-mom6))
 
