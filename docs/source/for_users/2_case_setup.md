@@ -64,7 +64,7 @@ and which model components each activates.
 
 | Argument | Default | Notes |
 |---|---|---|
-| `machine` | auto-detected | CESM machine name. Auto-detected on known systems. |
+| `machine` | `None` | CESM machine name (e.g. `"derecho"`). Required — `Case` raises a `ValueError` if it can't be determined. |
 | `project` | `None` | Project/account code. Required on machines that use accounting. |
 | `atm_grid_name` | `"TL319"` | Atmosphere grid (data-atmosphere resolution). |
 | `rof_grid_name` | `None` | Runoff grid. Auto-inferred from compset; required only when multiple options are available. |
@@ -93,18 +93,25 @@ whole sequence.
 
 ## Reading the "required configurators" message
 
-After `Case(...)` succeeds, you'll see something like:
+After `Case(...)` succeeds, you'll see something like this for a compset with
+MARBL BGC and GLOFAS runoff (e.g. `CR1850MARBL_JRA_GLOFAS`):
 
 ```
 The following additional configuration options are required to run and must be
 provided with any listed arguments in configure_forcings:
-  - tides: tpxo_elevation_filepath, tpxo_velocity_filepath, tidal_constituents
-  - initial_conditions: start_date
+  - BGC: no arguments
+  - BGCIC: marbl_ic_filepath
+  - Runoff: no arguments
 ```
 
 Each line is one configurator class plus the keyword arguments you'll need to
-pass to `case.configure_forcings(...)` in the next step. See
-[Configure Forcings](3a_configure_forcings.md) for the full story.
+pass to `case.configure_forcings(...)` in the next step (arguments starting
+with `case_` are filled in automatically and never appear here). Note that
+configurators like `tides` aren't tied to any compset component, so they're
+never "required" — they're optional and you add them whenever you want tidal
+forcing. Standalone compsets with no BGC/CICE/runoff component (e.g. `CR_JRA`)
+print nothing here at all. See [Configure Forcings](3a_configure_forcings.md)
+for the full story.
 
 You can reproduce this list at any time:
 
@@ -129,7 +136,7 @@ configurators use internally to decide which configurators are compatible.
 ## Common pitfalls
 
 - **`Given caseroot ... already exists!`** — pass `override=True` *or* pick a fresh path. `override=True` is safe for iteration but will remove the prior case directory.
-- **`compset must be a valid CESM compset long name or alias.`** — aliases are resolved against your CESM checkout's compset list. If the alias isn't in the avialable compsets, you either have the wrong `cesmroot` or your CESM checkout doesn't include the CROCODILE compset fork.
+- **`compset must be a valid CESM compset long name or alias.`** — aliases are resolved against your CESM checkout's compset list. If the alias isn't in the available compsets, you either have the wrong `cesmroot` or your CESM checkout doesn't include the CROCODILE compset fork.
 - **Only MOM6-based compsets are supported.** CrocoDash enforces `MOM6`, `SLND`, `SGLC`, and `SWAV` in the compset longname. Active land/glacier/wave models are not supported.
 - **Machine requires a project.** If your machine has accounting, `project=` is not optional.
 
