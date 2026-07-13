@@ -53,13 +53,6 @@ python driver.py --all --skip tides bgcic
 # Skip raw data download (use files already on disk)
 python driver.py --bc --no-get
 python driver.py --ic --no-get
-
-# Parallel OBC processing with a local cluster
-python driver.py --bc --n-workers 4
-
-# Parallel OBC processing with a PBS cluster
-python driver.py --bc --n-workers 8 --pbs --queue regular --walltime 02:00:00
-python driver.py --bc --n-workers 8 --pbs --queue regular --walltime 02:00:00 --memory 8GiB --cores 2
 ```
 
 This flexibility is intentional—you might want to:
@@ -80,65 +73,6 @@ Here's what happens internally when the driver runs:
 3. Outputs all the data to ocnice
 ```
 
-## Parallelism
-
-OBC (boundary condition) processing is parallelised internally with [Dask](https://dask.org).
-By default the driver runs sequentially. There are three ways to add parallelism:
-
-### 1. Local cluster (workstation or interactive node)
-
-Pass `--n-workers N` on the CLI:
-
-```bash
-python driver.py --bc --n-workers 4
-```
-
-Or from Python:
-
-```python
-from CrocoDash.extract_forcings.utils import make_local_cluster
-from CrocoDash.extract_forcings.case_setup.driver import run_workflow
-
-client = make_local_cluster(n_workers=4)
-run_workflow(bc=True, ic=True, client=client)
-client.close()
-```
-
-### 2. PBS cluster (HPC batch system)
-
-Pass `--pbs` along with `--n-workers` on the CLI:
-
-```bash
-python driver.py --bc --n-workers 8 --pbs --queue regular --walltime 02:00:00
-python driver.py --bc --n-workers 8 --pbs --queue regular --walltime 02:00:00 --memory 8GiB --cores 2
-# Low-level resource override:
-python driver.py --bc --n-workers 8 --pbs --resource-spec "select=1:ncpus=4:mem=4gb"
-```
-
-Or from Python with full control:
-
-```python
-from CrocoDash.extract_forcings.utils import make_pbs_cluster
-from CrocoDash.extract_forcings.case_setup.driver import run_workflow
-
-client = make_pbs_cluster(
-    n_workers=8,
-    queue="regular",
-    walltime="02:00:00",
-    memory="8GiB",
-)
-run_workflow(bc=True, ic=True, client=client)
-client.close()
-```
-
-> **Note:** `make_pbs_cluster` requires `dask-jobqueue` (`pip install dask-jobqueue`).
-
-### 3. Sequential (default)
-
-Omit `--n-workers` and don't pass a client. OBC tasks run one at a time via
-`dask.compute`. This is safe and requires no cluster setup — it's the right
-choice for small domains or quick tests.
-
 ## Design Philosophy
 
 CrocoDash deliberately **doesn't do all the processing itself**. Instead, it leverages packages:
@@ -153,30 +87,3 @@ CrocoDash deliberately **doesn't do all the processing itself**. Instead, it lev
 
 For more detail on OBC regridding, see the
 [regional-mom6 documentation](https://regional-mom6.readthedocs.io/en/latest/index.html).
-
-## Example: Running Forcings on Your HPC System
-
-Here's a typical workflow for an HPC system with PBS:
-
-1. **Set up your case locally (or on a login node):**
-   ```python
-   case = Case(...)
-   case.configure_forcings(...)  # writes config.json into the case input dir
-   ```
-
-2. **Run extraction — option A: submit the driver as a batch script:**
-   ```bash
-   cd /path/to/case/input_directory/extract_forcings
-   conda activate CrocoDash
-   python driver.py --all --n-workers 4
-   ```
-
-3. **Run extraction — option B: use `make_pbs_cluster` for full HPC parallelism:**
-   ```python
-   from CrocoDash.extract_forcings.utils import make_pbs_cluster
-   from CrocoDash.extract_forcings.case_setup.driver import run_workflow
-
-   client = make_pbs_cluster(n_workers=8, queue="regular", walltime="02:00:00")
-   run_workflow(bc=True, ic=True, client=client)
-   client.close()
-   ```
