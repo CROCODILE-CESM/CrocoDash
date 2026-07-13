@@ -13,7 +13,7 @@ The first step in running an ocean model inside the CESM is setting up the CESM!
    CROCODILE has its own fork of the CESM available here: <https://github.com/CROCODILE-CESM/CESM>. Go ahead and clone it as shown below. I'm gonna call mine CROCESM.
 
    ```bash
-   git clone https://github.com/CROCODILE-CESM/CESM CROCESM -b workshop_2025
+   git clone https://github.com/CROCODILE-CESM/CESM CROCESM -b full_regional_cesm
    ```
 
 2. Checkout all the components

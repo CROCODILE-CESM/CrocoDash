@@ -28,7 +28,7 @@ def test_regrid_data_piecewise_workflow(
 
     # Generate piecewise data
     piecewise_factory = generate_piecewise_raw_data
-    bounds = Grid.get_bounding_boxes_of_rectangular_grid(grid)
+    bounds = Grid.get_bounding_boxes(grid)
     ds = dummy_forcing_factory(
         bounds["ic"]["lat_min"],
         bounds["ic"]["lat_max"],
@@ -102,7 +102,7 @@ def test_regrid_data_piecewise_parsing(
 
     # Generate piecewise data
     piecewise_factory = generate_piecewise_raw_data
-    bounds = Grid.get_bounding_boxes_of_rectangular_grid(grid)
+    bounds = Grid.get_bounding_boxes(grid)
     ds = dummy_forcing_factory(
         bounds["ic"]["lat_min"],
         bounds["ic"]["lat_max"],

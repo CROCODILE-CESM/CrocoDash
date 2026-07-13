@@ -76,7 +76,7 @@ def get_dataset_piecewise(
 
     # Get lat,lon information for each boundary
     hgrid = xr.open_dataset(hgrid_path)
-    boundary_info = Grid.get_bounding_boxes_of_rectangular_grid(hgrid)
+    boundary_info = Grid.get_bounding_boxes(hgrid)
 
     # Set up date range, pd.date_range is exclusive of the end_date
     dates = (
