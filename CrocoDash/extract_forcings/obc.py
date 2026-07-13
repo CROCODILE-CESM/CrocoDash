@@ -180,7 +180,7 @@ def _get_boundary(
             product_name, function_name
         )
         hgrid = xr.open_dataset(hgrid_path)
-        latlon = Grid.get_bounding_boxes_of_rectangular_grid(hgrid)[boundary]
+        latlon = Grid.get_bounding_boxes(hgrid)[boundary]
 
         data_access_fn(
             dates=[start_str, end_str],

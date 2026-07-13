@@ -55,7 +55,7 @@ def process_initial_condition(
 
     # Get lat,lon information for each boundary
     hgrid = xr.open_dataset(hgrid_path)
-    boundary_info = Grid.get_bounding_boxes_of_rectangular_grid(hgrid)
+    boundary_info = Grid.get_bounding_boxes(hgrid)
     latlon_info = boundary_info["ic"]
     output_file = "ic_unprocessed.nc"
     end_ic_date = start_date + timedelta(days=1)
