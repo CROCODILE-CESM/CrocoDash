@@ -89,7 +89,18 @@ class GLORYS(ForcingProduct):
             ds_in_files, decode_times=False, engine="h5netcdf", parallel=True
         )[variables]
 
-        if lon_min * lon_max > 0:
+        # lon_min <= lon_max is already a valid ascending range in the -180..180
+        # system -- true whether it's a normal same-sign box (e.g. -80..-70) or one
+        # that happens to straddle the prime meridian (e.g. -45..45) -- so a direct
+        # slice is correct either way. Splitting is only needed when the range
+        # actually wraps around the antimeridian (lon_min > lon_max, e.g. 170..-170).
+        # The previous `lon_min * lon_max > 0` (same-sign) check wrongly routed any
+        # opposite-sign range into the split/concat branch too, including
+        # prime-meridian-straddling boxes -- there, the two slices
+        # slice(lon_min-1, 360) and slice(-180, lon_max+1) overlap heavily (both
+        # cover the whole middle region) instead of being disjoint, duplicating a
+        # large swath of longitude values in the concatenated result.
+        if lon_min <= lon_max:
             dataset = ds.sel(
                 latitude=slice(lat_min - 1, lat_max + 1),
                 longitude=slice(lon_min - 1, lon_max + 1),
