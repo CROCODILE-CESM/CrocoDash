@@ -106,7 +106,7 @@ docs/source/
 │   └── index.md
 ├── for_developers/          # Developer documentation
 │   ├── index.md
-│   ├── docs.md              # This file
+│   ├── edit_docs.md         # This file
 │   └── ...
 ├── api-docs/                # Auto-generated API documentation
 │   ├── modules.rst
@@ -126,10 +126,10 @@ Sphinx configuration is in `docs/source/conf.py`. Key settings:
 Usually you don't need to modify this, but consult it if you're using advanced Sphinx features.
 
 ## Raw Data Access
-Every night, there is a CI action (in raw_data_access_testing.yml) to check if the datasets are accessible. Those are then updated on a page in the documentation, https://crocodile-cesm.github.io/CrocoDash/reports/raw_data_status.html. The code to check the raw_data_access is in the raw_data_access subfolder of docs/source, called check_raw_data.py. There is also a script called generate_info.py that generates the two tables in the same folder which list the products and functions available. This is run when the docs are built.
+Every night, there is a CI action (in raw_data_access_testing.yml) to check if the datasets are accessible. Those are then updated on a page in the documentation, https://crocodile-cesm.github.io/CrocoDash/reports/raw_data_status.html. The code to check the raw_data_access is in the raw_data_access subfolder of docs/source, called check_raw_data.py. There is also a script called generate_info.py in the same folder that generates `products.csv` and `functions.csv`, which list the products and functions available and are pulled into [Datasets](../for_users/datasets.md). This is **not** run automatically at build time (the call in `conf.py` is commented out) — if you add or change a data product, run `python raw_data_access/generate_info.py` from `docs/source/` and commit the regenerated CSVs.
 
 ## Diagrams
-The diagrams are generated from the scripts in docs/source/diagrams. They run when the docs are built.
+Most diagrams in these docs are inline ```{mermaid}``` blocks rendered directly by Sphinx via `sphinxcontrib.mermaid` — no generation step needed, just edit the block in place.
 
 ## Common Errors
 

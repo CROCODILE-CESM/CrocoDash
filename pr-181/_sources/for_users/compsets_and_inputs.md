@@ -30,7 +30,6 @@ When you run case preview (or setup), CESM generates several MOM6 configuration 
 
 - **`MOM_input`** - Main namelist controlling MOM6 parameters
 - **`diag_table`** - Diagnostic output configuration
-- **`others`** 
 
 These files are initially placed in the case's `CaseDocs` directory for reference.
 

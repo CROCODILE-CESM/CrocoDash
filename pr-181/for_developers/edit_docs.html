@@ -482,7 +482,7 @@ make<span class="w"> </span>serve
 │   └── index.md
 ├── for_developers/          # Developer documentation
 │   ├── index.md
-│   ├── docs.md              # This file
+│   ├── edit_docs.md         # This file
 │   └── ...
 ├── api-docs/                # Auto-generated API documentation
 │   ├── modules.rst
@@ -504,11 +504,11 @@ make<span class="w"> </span>serve
 </section>
 <section id="raw-data-access">
 <h2>Raw Data Access<a class="headerlink" href="#raw-data-access" title="Link to this heading">#</a></h2>
-<p>Every night, there is a CI action (in raw_data_access_testing.yml) to check if the datasets are accessible. Those are then updated on a page in the documentation, https://crocodile-cesm.github.io/CrocoDash/reports/raw_data_status.html. The code to check the raw_data_access is in the raw_data_access subfolder of docs/source, called check_raw_data.py. There is also a script called generate_info.py that generates the two tables in the same folder which list the products and functions available. This is run when the docs are built.</p>
+<p>Every night, there is a CI action (in raw_data_access_testing.yml) to check if the datasets are accessible. Those are then updated on a page in the documentation, https://crocodile-cesm.github.io/CrocoDash/reports/raw_data_status.html. The code to check the raw_data_access is in the raw_data_access subfolder of docs/source, called check_raw_data.py. There is also a script called generate_info.py in the same folder that generates <code class="docutils literal notranslate"><span class="pre">products.csv</span></code> and <code class="docutils literal notranslate"><span class="pre">functions.csv</span></code>, which list the products and functions available and are pulled into <a class="reference internal" href="../for_users/datasets.html"><span class="std std-doc">Datasets</span></a>. This is <strong>not</strong> run automatically at build time (the call in <code class="docutils literal notranslate"><span class="pre">conf.py</span></code> is commented out) — if you add or change a data product, run <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">raw_data_access/generate_info.py</span></code> from <code class="docutils literal notranslate"><span class="pre">docs/source/</span></code> and commit the regenerated CSVs.</p>
 </section>
 <section id="diagrams">
 <h2>Diagrams<a class="headerlink" href="#diagrams" title="Link to this heading">#</a></h2>
-<p>The diagrams are generated from the scripts in docs/source/diagrams. They run when the docs are built.</p>
+<p>Most diagrams in these docs are inline <code class="docutils literal notranslate"><span class="pre">{mermaid}</span></code> blocks rendered directly by Sphinx via <code class="docutils literal notranslate"><span class="pre">sphinxcontrib.mermaid</span></code> — no generation step needed, just edit the block in place.</p>
 </section>
 <section id="common-errors">
 <h2>Common Errors<a class="headerlink" href="#common-errors" title="Link to this heading">#</a></h2>

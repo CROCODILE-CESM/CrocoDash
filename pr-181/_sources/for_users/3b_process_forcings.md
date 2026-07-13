@@ -76,9 +76,6 @@ python driver.py --tides --runoff
 # Run all except certain components (names are the flag names, case-insensitive)
 python driver.py --all --skip bgcic
 python driver.py --all --skip tides runoff
-
-# Skip individual IC/BC pipeline steps (e.g. data already downloaded)
-python driver.py --ic --bc --no-get
 ```
 
 This flexibility is intentional—you might want to:
