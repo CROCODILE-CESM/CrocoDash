@@ -13,9 +13,6 @@ Typical Python usage::
 
     run_workflow(config_path="~/croc_input/mycase/extract_forcings/config.json", bc=True, ic=True)
 
-OBC processing (``bc``) uses Dask for the **GET** step only. **REGRID** and
-**MERGE** always run sequentially in the main process — ESMF cannot initialise
-in subprocess workers on PBS/HPC systems.
 """
 
 import json
