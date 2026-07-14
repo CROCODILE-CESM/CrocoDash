@@ -3,6 +3,7 @@ import xesmf as xe
 import xarray as xr
 import cftime
 import numpy as np
+from netCDF4 import default_fillvals
 
 
 def process_bgc_ic(file_path, output_path):
@@ -21,7 +22,12 @@ def process_bgc_ic(file_path, output_path):
 
 
 def process_bgc_iron_forcing(
-    nx, ny, MARBL_FESEDFLUX_FILE, MARBL_FEVENTFLUX_FILE, inputdir
+    nx,
+    ny,
+    MARBL_FESEDFLUX_FILE,
+    MARBL_FEVENTFLUX_FILE,
+    MARBL_FESEDFLUXRED_FILE,
+    inputdir,
 ):
     """
     Create dummy iron forcing files for MARBL.
@@ -66,6 +72,7 @@ def process_bgc_iron_forcing(
     }
     ds.to_netcdf(inputdir / "ocnice" / MARBL_FESEDFLUX_FILE)
     ds.to_netcdf(inputdir / "ocnice" / MARBL_FEVENTFLUX_FILE)
+    ds.to_netcdf(inputdir / "ocnice" / MARBL_FESEDFLUXRED_FILE)
 
 
 def process_river_nutrients(
@@ -200,9 +207,13 @@ def process_river_nutrients(
 
     # encoding only for data vars
     encoding = {
-        var: {"_FillValue": np.NaN}
+        var: {"_FillValue": default_fillvals["f8"]}
         for var in river_nutrients_remapped_cleaned.data_vars
     }
+    river_nutrients_remapped_cleaned["nx"] = river_nutrients_remapped_cleaned.nx
+    river_nutrients_remapped_cleaned["nx"].attrs["cartesian_axis"] = "X"
+    river_nutrients_remapped_cleaned["ny"] = river_nutrients_remapped_cleaned.ny
+    river_nutrients_remapped_cleaned["ny"].attrs["cartesian_axis"] = "Y"
 
     river_nutrients_remapped_cleaned.to_netcdf(
         river_nutrients_nnsm_filepath,

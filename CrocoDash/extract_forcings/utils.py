@@ -6,6 +6,12 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 from CrocoDash.topo import *
 from CrocoDash.grid import *
+from CrocoDash import logging
+from CrocoDash.raw_data_access.registry import ProductRegistry
+
+logger = logging.setup_logger(__name__)
+
+_NETCDF_MAGIC = (b"\x89HDF", b"CDF\x01", b"CDF\x02")
 
 
 class Config:
@@ -95,6 +101,84 @@ def parse_dataset_folder(
         boundary_file_list[boundary].sort()
 
     return boundary_file_list
+
+
+def is_valid_netcdf(path: Path) -> bool:
+    """Check a file's magic bytes match a known NetCDF format (HDF5, classic, or 64-bit offset)."""
+    try:
+        with open(path, "rb") as f:
+            header = f.read(4)
+        return any(header.startswith(m) for m in _NETCDF_MAGIC)
+    except OSError:
+        return False
+
+
+def get_data_access_function(product_name: str, function_name: str):
+    """Load the product registry and return the raw access function for (product_name, function_name)."""
+    ProductRegistry.load()
+    return ProductRegistry.get_access_function(product_name, function_name)
+
+
+def build_forcing_request(product_info: dict) -> tuple[list, dict]:
+    """Build the (variables, extra_args) an access function needs from a forcing product_info dict."""
+    phys_vars = [
+        product_info["u_var_name"],
+        product_info["v_var_name"],
+        product_info["eta_var_name"],
+        product_info["tracer_var_names"]["temp"],
+        product_info["tracer_var_names"]["salt"],
+    ]
+    extra_tracers = [
+        v
+        for k, v in product_info["tracer_var_names"].items()
+        if k not in ("temp", "salt")
+    ]
+    variables = phys_vars + extra_tracers
+    extra_args = {
+        key: product_info[key]
+        for key in ("dataset_path", "date_format", "regex", "delimiter")
+        if key in product_info
+    }
+    return variables, extra_args
+
+
+def fetch_raw_chunk(
+    data_access_fn,
+    dates: list,
+    latlon: dict,
+    output_folder: str | Path,
+    output_filename: str,
+    variables: list,
+    extra_args: dict,
+) -> Path:
+    """Download one raw data chunk, skipping if a valid output file already exists.
+
+    Shared by obc.py and initial_condition.py — both fetch a chunk of raw data
+    for a given date range and bounding box, and both need to be idempotent
+    across re-runs.
+    """
+    output_file = Path(output_folder) / output_filename
+
+    if output_file.exists():
+        if not is_valid_netcdf(output_file):
+            raise RuntimeError(
+                f"{output_file} exists but is not valid NetCDF. Delete it and re-run."
+            )
+        logger.info(f"{output_file.name} already exists. Skipping.")
+        return output_file
+
+    data_access_fn(
+        dates=dates,
+        lat_min=latlon["lat_min"],
+        lat_max=latlon["lat_max"],
+        lon_min=latlon["lon_min"],
+        lon_max=latlon["lon_max"],
+        output_folder=output_folder,
+        output_filename=output_file.name,
+        variables=variables,
+        **extra_args,
+    )
+    return output_file
 
 
 def check_date_continuity(boundary_file_list: dict):
