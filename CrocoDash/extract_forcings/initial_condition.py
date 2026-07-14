@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from CrocoDash import logging
 from CrocoDash.grid import Grid
 from CrocoDash.topo import Topo
-from CrocoDash.raw_data_access.registry import ProductRegistry
+from CrocoDash.extract_forcings import utils
 import dask
 import xarray as xr
 import regional_mom6 as rm6
@@ -48,35 +48,18 @@ def process_initial_condition(
 
         start_date = pd.to_datetime(start_date).to_pydatetime()
 
-    ProductRegistry.load()
-    ProductRegistry.validate_function(product_name, function_name)
-    data_access_function = ProductRegistry.get_access_function(
-        product_name, function_name
-    )
+    data_access_function = utils.get_data_access_function(product_name, function_name)
 
     # Get lat,lon information for each boundary
     hgrid = xr.open_dataset(hgrid_path)
-    boundary_info = Grid.get_bounding_boxes_of_rectangular_grid(hgrid)
+    boundary_info = Grid.get_bounding_boxes(hgrid)
     latlon_info = boundary_info["ic"]
     output_file = "ic_unprocessed.nc"
     end_ic_date = start_date + timedelta(days=1)
     end_ic_date_str = end_ic_date.strftime("%Y-%m-%d")
     start_date_str = start_date.strftime("%Y-%m-%d")
 
-    # Build requested variables
-    phys_vars = [
-        product_information["u_var_name"],
-        product_information["v_var_name"],
-        product_information["eta_var_name"],
-        product_information["tracer_var_names"]["temp"],
-        product_information["tracer_var_names"]["salt"],
-    ]
-    extra_tracers = [
-        v
-        for k, v in product_information["tracer_var_names"].items()
-        if k not in ("temp", "salt")
-    ]
-    extra_args = function_args or {}
+    variables, extra_args = utils.build_forcing_request(product_information)
     if not preview:
         _download_initial_condition(
             data_access_function=data_access_function,
@@ -84,7 +67,7 @@ def process_initial_condition(
             raw_data_dir=raw_data_dir,
             start_date_str=start_date_str,
             end_date_str=end_ic_date_str,
-            variables=phys_vars + extra_tracers,
+            variables=variables,
             extra_args=extra_args,
         )
 
@@ -198,23 +181,13 @@ def _download_initial_condition(
     variables: list[str],
     extra_args: dict,
 ):
-    output_file = "ic_unprocessed.nc"
-    raw_data_dir = Path(raw_data_dir)
-    if (raw_data_dir / output_file).exists():
-        logger.info(
-            f"Initial condition file {output_file} already exists. Skipping download."
-        )
-        return
-
     with dask.config.set(scheduler="synchronous"):
-        data_access_function(
+        utils.fetch_raw_chunk(
+            data_access_fn=data_access_function,
             dates=[start_date_str, end_date_str],
-            lat_min=latlon_info["lat_min"],
-            lat_max=latlon_info["lat_max"],
-            lon_min=latlon_info["lon_min"],
-            lon_max=latlon_info["lon_max"],
+            latlon=latlon_info,
             output_folder=raw_data_dir,
-            output_filename=output_file,
+            output_filename="ic_unprocessed.nc",
             variables=variables,
             name="ic",
             **extra_args,

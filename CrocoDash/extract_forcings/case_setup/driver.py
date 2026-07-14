@@ -71,6 +71,9 @@ def process_bgcironforcing():
         MARBL_FEVENTFLUX_FILE=config["bgcironforcing"]["outputs"][
             "MARBL_FEVENTFLUX_FILE"
         ],
+        MARBL_FESEDFLUXRED_FILE=config["bgcironforcing"]["outputs"][
+            "MARBL_FESEDFLUXRED_FILE"
+        ],
         inputdir=config.inputdir,
     )
 

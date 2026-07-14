@@ -152,3 +152,23 @@ def test_forcing_validate_method():
 def test_get_access_function(tmp_path):
     func = ProductRegistry.get_access_function("dummy", "dummy_method")
     func(dates="asdasd", output_folder=tmp_path, output_filename="asdasd")
+
+
+@pytest.mark.slow
+def test_validate_all_registered_access_methods():
+    """Exercise validate_function for every registered product/access method.
+
+    This makes a real "toy call" per method (BaseProduct.validate_method), which
+    for real products can hit real network APIs or campaign storage — not
+    something to run on every user invocation, so it's excluded from the fast
+    suite and only run here, deliberately, as a slow test.
+    """
+    ProductRegistry.load()
+
+    failures = []
+    for product_name in ProductRegistry.list_products():
+        for method_name in ProductRegistry.list_access_methods(product_name):
+            if ProductRegistry.validate_function(product_name, method_name) is False:
+                failures.append(f"{product_name}.{method_name}")
+
+    assert not failures, f"validate_method failed for: {failures}"

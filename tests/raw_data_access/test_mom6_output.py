@@ -97,7 +97,7 @@ def test_subset_dataset(dummy_forcing_factory, get_rect_grid, tmp_path):
     )
 
     grid = get_rect_grid
-    boundary_info = Grid.get_bounding_boxes_of_rectangular_grid(grid)
+    boundary_info = Grid.get_bounding_boxes(grid)
     co.subset_dataset(
         variable_info=variable_info,
         output_path=tmp_path,

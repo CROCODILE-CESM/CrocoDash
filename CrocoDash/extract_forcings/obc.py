@@ -26,25 +26,13 @@ import xarray as xr
 from CrocoDash import logging
 from CrocoDash.extract_forcings import utils
 from CrocoDash.grid import Grid
-from CrocoDash.raw_data_access.registry import ProductRegistry
 
 logger = logging.setup_logger(__name__)
-
-_NETCDF_MAGIC = (b"\x89HDF", b"CDF\x01", b"CDF\x02")
 
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
-
-
-def _is_valid_netcdf(path: Path) -> bool:
-    try:
-        with open(path, "rb") as f:
-            header = f.read(4)
-        return any(header.startswith(m) for m in _NETCDF_MAGIC)
-    except OSError:
-        return False
 
 
 def _make_date_pairs(start: datetime, end: datetime, step_days):
@@ -161,38 +149,26 @@ def _get_boundary(
     """Download all raw data for one boundary, chunked by get_step_days."""
     output_dir = Path(output_dir)
 
+    data_access_fn = utils.get_data_access_function(product_name, function_name)
+
+    # Get the bounding box for the specified boundary from the hgrid
+    hgrid = xr.open_dataset(hgrid_path)
+    latlon = Grid.get_bounding_boxes(hgrid)[boundary]
+
     for chunk_start, chunk_end in _make_date_pairs(start_date, end_date, get_step_days):
         start_str = chunk_start.strftime("%Y-%m-%d")
         end_str = chunk_end.strftime("%Y-%m-%d")
-        output_file = output_dir / f"{boundary}_unprocessed.{start_str}_{end_str}.nc"
+        output_filename = f"{boundary}_unprocessed.{start_str}_{end_str}.nc"
 
-        if output_file.exists():
-            if not _is_valid_netcdf(output_file):
-                raise RuntimeError(
-                    f"OBC file {output_file} exists but is not valid NetCDF. "
-                    "Delete it and re-run."
-                )
-            logger.info(f"OBC file {output_file.name} already exists. Skipping.")
-            continue
-
-        ProductRegistry.load()
-        data_access_fn = ProductRegistry.get_access_function(
-            product_name, function_name
-        )
-        hgrid = xr.open_dataset(hgrid_path)
-        latlon = Grid.get_bounding_boxes_of_rectangular_grid(hgrid)[boundary]
-
-        data_access_fn(
+        utils.fetch_raw_chunk(
+            data_access_fn=data_access_fn,
             dates=[start_str, end_str],
-            lat_min=latlon["lat_min"],
-            lat_max=latlon["lat_max"],
-            lon_min=latlon["lon_min"],
-            lon_max=latlon["lon_max"],
+            latlon=latlon,
             name=boundary,
             output_folder=output_dir,
-            output_filename=output_file.name,
+            output_filename=output_filename,
             variables=variables,
-            **extra_args,
+            extra_args=extra_args,
         )
 
 
@@ -244,7 +220,7 @@ def _regrid_boundary(
         )
 
         if dated_output.exists():
-            if not _is_valid_netcdf(dated_output):
+            if not utils.is_valid_netcdf(dated_output):
                 raise RuntimeError(
                     f"Regridded file {dated_output} exists but is not valid NetCDF. "
                     "Delete it and re-run."
@@ -296,7 +272,7 @@ def _merge_boundary(boundary_label: str, regridded_files: list, output_folder) -
     output_path = output_folder / f"forcing_obc_segment_{boundary_label}.nc"
 
     if output_path.exists():
-        if not _is_valid_netcdf(output_path):
+        if not utils.is_valid_netcdf(output_path):
             raise RuntimeError(
                 f"Merged OBC file {output_path} exists but is not valid NetCDF. "
                 "Delete it and re-run."
@@ -364,20 +340,7 @@ def process_obc_conditions(config_path, preview: bool = False):
             "regrid_pairs": _make_date_pairs(start_date, end_date, regrid_step_days),
         }
 
-    phys_vars = [
-        product_info["u_var_name"],
-        product_info["v_var_name"],
-        product_info["eta_var_name"],
-        product_info["tracer_var_names"]["temp"],
-        product_info["tracer_var_names"]["salt"],
-    ]
-    extra_tracers = [
-        v
-        for k, v in product_info["tracer_var_names"].items()
-        if k not in ("temp", "salt")
-    ]
-    variables = phys_vars + extra_tracers
-    extra_args = config["basic"]["forcing"].get("function_args", {})
+    variables, extra_args = utils.build_forcing_request(product_info)
 
     if product_info.get("boundary_fill_method", "regional_mom6") != "regional_mom6":
         raise ValueError(

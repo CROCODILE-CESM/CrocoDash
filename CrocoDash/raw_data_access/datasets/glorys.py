@@ -10,7 +10,7 @@ import regional_mom6 as rm6
 from pathlib import Path
 from CrocoDash.raw_data_access.utils import fill_template
 import pandas as pd
-from .utils import convert_lons_to_180_range
+from .utils import convert_lons_to_180_range, make_dates_end_inclusive
 from CrocoDash.raw_data_access.base import *
 
 
@@ -130,8 +130,7 @@ class GLORYS(ForcingProduct):
         """
         Using the copernucismarine api, query GLORYS data (any dates)
         """
-        start_datetime = dates[0]
-        end_datetime = dates[-1]
+        start_datetime, end_datetime = make_dates_end_inclusive(dates)
         dataset_id = "cmems_mod_glo_phy_my_0.083deg_P1D-m"
         response = copernicusmarine.subset(
             dataset_id=dataset_id,
@@ -171,7 +170,7 @@ class GLORYS(ForcingProduct):
         path = rm6.get_glorys_data(
             [lon_min, lon_max],
             [lat_min, lat_max],
-            [dates[0], dates[-1]],
+            list(make_dates_end_inclusive(dates)),
             os.path.splitext(output_filename)[0],
             output_folder,
             modify_existing=modify_existing,
