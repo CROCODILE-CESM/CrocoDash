@@ -6,6 +6,8 @@ permissions:
   contents: write
   pull-requests: write
 
+env:
+  WORKDIR: /workspace
 
 jobs:
   docs:
@@ -49,7 +51,19 @@ jobs:
       - name: Check if environment.yml changed
         id: compare
         run: |
-          if diff $WORKDIR/CrocoDash/environment.yml $GITHUB_WORKSPACE/CrocoDash/environment.yml; then
+          OLD_ENV="$WORKDIR/CrocoDash/environment.yml"
+          NEW_ENV="$GITHUB_WORKSPACE/environment.yml"
+
+          if [ ! -f "$OLD_ENV" ]; then
+            echo "::error::Reference environment.yml not found at $OLD_ENV — cannot determine if the CrocoDash env needs rebuilding."
+            exit 1
+          fi
+          if [ ! -f "$NEW_ENV" ]; then
+            echo "::error::Checked-out environment.yml not found at $NEW_ENV — cannot determine if the CrocoDash env needs rebuilding."
+            exit 1
+          fi
+
+          if diff "$OLD_ENV" "$NEW_ENV"; then
             echo "No changes in environment.yml"
             echo "env_changed=false" >> $GITHUB_OUTPUT
           else
@@ -59,7 +73,7 @@ jobs:
       - name: Copy CrocoDash into container
         run: |
               rm -rf $WORKDIR/CrocoDash
-              cp -r $GITHUB_WORKSPACE/ $WORKDIR/
+              cp -r $GITHUB_WORKSPACE $WORKDIR/CrocoDash
       - name: Create CrocoDash environment if changed
         if: steps.compare.outputs.env_changed == 'true'
         run: |
