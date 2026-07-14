@@ -345,14 +345,7 @@ document.write(`
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#directory-structure">Directory Structure</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#command-line-options">Command-Line Options</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-processing-pipeline">The Processing Pipeline</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#parallelism">Parallelism</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#local-cluster-workstation-or-interactive-node">1. Local cluster (workstation or interactive node)</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pbs-cluster-hpc-batch-system">2. PBS cluster (HPC batch system)</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sequential-default">3. Sequential (default)</a></li>
-</ul>
-</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#design-philosophy">Design Philosophy</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#example-running-forcings-on-your-hpc-system">Example: Running Forcings on Your HPC System</a></li>
 </ul>
             </nav>
         </div>
@@ -415,13 +408,6 @@ python<span class="w"> </span>driver.py<span class="w"> </span>--all<span class=
 <span class="c1"># Skip raw data download (use files already on disk)</span>
 python<span class="w"> </span>driver.py<span class="w"> </span>--bc<span class="w"> </span>--no-get
 python<span class="w"> </span>driver.py<span class="w"> </span>--ic<span class="w"> </span>--no-get
-
-<span class="c1"># Parallel OBC processing with a local cluster</span>
-python<span class="w"> </span>driver.py<span class="w"> </span>--bc<span class="w"> </span>--n-workers<span class="w"> </span><span class="m">4</span>
-
-<span class="c1"># Parallel OBC processing with a PBS cluster</span>
-python<span class="w"> </span>driver.py<span class="w"> </span>--bc<span class="w"> </span>--n-workers<span class="w"> </span><span class="m">8</span><span class="w"> </span>--pbs<span class="w"> </span>--queue<span class="w"> </span>regular<span class="w"> </span>--walltime<span class="w"> </span><span class="m">02</span>:00:00
-python<span class="w"> </span>driver.py<span class="w"> </span>--bc<span class="w"> </span>--n-workers<span class="w"> </span><span class="m">8</span><span class="w"> </span>--pbs<span class="w"> </span>--queue<span class="w"> </span>regular<span class="w"> </span>--walltime<span class="w"> </span><span class="m">02</span>:00:00<span class="w"> </span>--memory<span class="w"> </span>8GiB<span class="w"> </span>--cores<span class="w"> </span><span class="m">2</span>
 </pre></div>
 </div>
 <p>This flexibility is intentional—you might want to:</p>
@@ -442,60 +428,6 @@ python<span class="w"> </span>driver.py<span class="w"> </span>--bc<span class="
 3. Outputs all the data to ocnice
 </pre></div>
 </div>
-</section>
-<section id="parallelism">
-<h2>Parallelism<a class="headerlink" href="#parallelism" title="Link to this heading">#</a></h2>
-<p>OBC (boundary condition) processing is parallelised internally with <a class="reference external" href="https://dask.org">Dask</a>.
-By default the driver runs sequentially. There are three ways to add parallelism:</p>
-<section id="local-cluster-workstation-or-interactive-node">
-<h3>1. Local cluster (workstation or interactive node)<a class="headerlink" href="#local-cluster-workstation-or-interactive-node" title="Link to this heading">#</a></h3>
-<p>Pass <code class="docutils literal notranslate"><span class="pre">--n-workers</span> <span class="pre">N</span></code> on the CLI:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>driver.py<span class="w"> </span>--bc<span class="w"> </span>--n-workers<span class="w"> </span><span class="m">4</span>
-</pre></div>
-</div>
-<p>Or from Python:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">CrocoDash.extract_forcings.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_local_cluster</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">CrocoDash.extract_forcings.case_setup.driver</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_workflow</span>
-
-<span class="n">client</span> <span class="o">=</span> <span class="n">make_local_cluster</span><span class="p">(</span><span class="n">n_workers</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
-<span class="n">run_workflow</span><span class="p">(</span><span class="n">bc</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ic</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">)</span>
-<span class="n">client</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-</pre></div>
-</div>
-</section>
-<section id="pbs-cluster-hpc-batch-system">
-<h3>2. PBS cluster (HPC batch system)<a class="headerlink" href="#pbs-cluster-hpc-batch-system" title="Link to this heading">#</a></h3>
-<p>Pass <code class="docutils literal notranslate"><span class="pre">--pbs</span></code> along with <code class="docutils literal notranslate"><span class="pre">--n-workers</span></code> on the CLI:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>driver.py<span class="w"> </span>--bc<span class="w"> </span>--n-workers<span class="w"> </span><span class="m">8</span><span class="w"> </span>--pbs<span class="w"> </span>--queue<span class="w"> </span>regular<span class="w"> </span>--walltime<span class="w"> </span><span class="m">02</span>:00:00
-python<span class="w"> </span>driver.py<span class="w"> </span>--bc<span class="w"> </span>--n-workers<span class="w"> </span><span class="m">8</span><span class="w"> </span>--pbs<span class="w"> </span>--queue<span class="w"> </span>regular<span class="w"> </span>--walltime<span class="w"> </span><span class="m">02</span>:00:00<span class="w"> </span>--memory<span class="w"> </span>8GiB<span class="w"> </span>--cores<span class="w"> </span><span class="m">2</span>
-<span class="c1"># Low-level resource override:</span>
-python<span class="w"> </span>driver.py<span class="w"> </span>--bc<span class="w"> </span>--n-workers<span class="w"> </span><span class="m">8</span><span class="w"> </span>--pbs<span class="w"> </span>--resource-spec<span class="w"> </span><span class="s2">&quot;select=1:ncpus=4:mem=4gb&quot;</span>
-</pre></div>
-</div>
-<p>Or from Python with full control:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">CrocoDash.extract_forcings.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_pbs_cluster</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">CrocoDash.extract_forcings.case_setup.driver</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_workflow</span>
-
-<span class="n">client</span> <span class="o">=</span> <span class="n">make_pbs_cluster</span><span class="p">(</span>
-    <span class="n">n_workers</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
-    <span class="n">queue</span><span class="o">=</span><span class="s2">&quot;regular&quot;</span><span class="p">,</span>
-    <span class="n">walltime</span><span class="o">=</span><span class="s2">&quot;02:00:00&quot;</span><span class="p">,</span>
-    <span class="n">memory</span><span class="o">=</span><span class="s2">&quot;8GiB&quot;</span><span class="p">,</span>
-<span class="p">)</span>
-<span class="n">run_workflow</span><span class="p">(</span><span class="n">bc</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ic</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">)</span>
-<span class="n">client</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-</pre></div>
-</div>
-<blockquote>
-<div><p><strong>Note:</strong> <code class="docutils literal notranslate"><span class="pre">make_pbs_cluster</span></code> requires <code class="docutils literal notranslate"><span class="pre">dask-jobqueue</span></code> (<code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">dask-jobqueue</span></code>).</p>
-</div></blockquote>
-</section>
-<section id="sequential-default">
-<h3>3. Sequential (default)<a class="headerlink" href="#sequential-default" title="Link to this heading">#</a></h3>
-<p>Omit <code class="docutils literal notranslate"><span class="pre">--n-workers</span></code> and don’t pass a client. OBC tasks run one at a time via
-<code class="docutils literal notranslate"><span class="pre">dask.compute</span></code>. This is safe and requires no cluster setup — it’s the right
-choice for small domains or quick tests.</p>
-</section>
 </section>
 <section id="design-philosophy">
 <h2>Design Philosophy<a class="headerlink" href="#design-philosophy" title="Link to this heading">#</a></h2>
@@ -533,35 +465,6 @@ choice for small domains or quick tests.</p>
 </div>
 <p>For more detail on OBC regridding, see the
 <a class="reference external" href="https://regional-mom6.readthedocs.io/en/latest/index.html">regional-mom6 documentation</a>.</p>
-</section>
-<section id="example-running-forcings-on-your-hpc-system">
-<h2>Example: Running Forcings on Your HPC System<a class="headerlink" href="#example-running-forcings-on-your-hpc-system" title="Link to this heading">#</a></h2>
-<p>Here’s a typical workflow for an HPC system with PBS:</p>
-<ol class="arabic">
-<li><p><strong>Set up your case locally (or on a login node):</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">case</span> <span class="o">=</span> <span class="n">Case</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
-<span class="k">case</span><span class="o">.</span><span class="n">configure_forcings</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>  <span class="c1"># writes config.json into the case input dir</span>
-</pre></div>
-</div>
-</li>
-<li><p><strong>Run extraction — option A: submit the driver as a batch script:</strong></p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>/path/to/case/input_directory/extract_forcings
-conda<span class="w"> </span>activate<span class="w"> </span>CrocoDash
-python<span class="w"> </span>driver.py<span class="w"> </span>--all<span class="w"> </span>--n-workers<span class="w"> </span><span class="m">4</span>
-</pre></div>
-</div>
-</li>
-<li><p><strong>Run extraction — option B: use <code class="docutils literal notranslate"><span class="pre">make_pbs_cluster</span></code> for full HPC parallelism:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">CrocoDash.extract_forcings.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_pbs_cluster</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">CrocoDash.extract_forcings.case_setup.driver</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_workflow</span>
-
-<span class="n">client</span> <span class="o">=</span> <span class="n">make_pbs_cluster</span><span class="p">(</span><span class="n">n_workers</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">queue</span><span class="o">=</span><span class="s2">&quot;regular&quot;</span><span class="p">,</span> <span class="n">walltime</span><span class="o">=</span><span class="s2">&quot;02:00:00&quot;</span><span class="p">)</span>
-<span class="n">run_workflow</span><span class="p">(</span><span class="n">bc</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ic</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">)</span>
-<span class="n">client</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-</pre></div>
-</div>
-</li>
-</ol>
 </section>
 </section>
 
@@ -614,14 +517,7 @@ python<span class="w"> </span>driver.py<span class="w"> </span>--all<span class=
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#directory-structure">Directory Structure</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#command-line-options">Command-Line Options</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-processing-pipeline">The Processing Pipeline</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#parallelism">Parallelism</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#local-cluster-workstation-or-interactive-node">1. Local cluster (workstation or interactive node)</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pbs-cluster-hpc-batch-system">2. PBS cluster (HPC batch system)</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sequential-default">3. Sequential (default)</a></li>
-</ul>
-</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#design-philosophy">Design Philosophy</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#example-running-forcings-on-your-hpc-system">Example: Running Forcings on Your HPC System</a></li>
 </ul>
   </nav></div>
 
