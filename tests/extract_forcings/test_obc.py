@@ -9,8 +9,8 @@ from CrocoDash.extract_forcings.obc import (
     process_obc_conditions,
     _merge_boundary,
     _validate_coverage,
-    _is_valid_netcdf,
 )
+from CrocoDash.extract_forcings.utils import is_valid_netcdf
 from CrocoDash.grid import Grid
 
 # ---------------------------------------------------------------------------
@@ -292,7 +292,7 @@ def test_validate_coverage(tmp_path):
 def test_is_valid_netcdf_corrupt_file(tmp_path):
     bad = tmp_path / "corrupt.nc"
     bad.write_bytes(b"not a netcdf file at all")
-    assert not _is_valid_netcdf(bad)
+    assert not is_valid_netcdf(bad)
 
 
 def test_merge_boundary_corrupt_existing_raises(
