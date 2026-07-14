@@ -369,7 +369,11 @@ document.write(`
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.utils.Config.keys"><code class="docutils literal notranslate"><span class="pre">Config.keys()</span></code></a></li>
 </ul>
 </li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.utils.build_forcing_request"><code class="docutils literal notranslate"><span class="pre">build_forcing_request()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.utils.check_date_continuity"><code class="docutils literal notranslate"><span class="pre">check_date_continuity()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.utils.fetch_raw_chunk"><code class="docutils literal notranslate"><span class="pre">fetch_raw_chunk()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.utils.get_data_access_function"><code class="docutils literal notranslate"><span class="pre">get_data_access_function()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.utils.is_valid_netcdf"><code class="docutils literal notranslate"><span class="pre">is_valid_netcdf()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.utils.parse_dataset_folder"><code class="docutils literal notranslate"><span class="pre">parse_dataset_folder()</span></code></a></li>
 </ul>
 </li>
@@ -432,7 +436,7 @@ document.write(`
 
 <dl class="py function">
 <dt class="sig sig-object py" id="CrocoDash.extract_forcings.bgc.process_bgc_iron_forcing">
-<span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.bgc.</span></span><span class="sig-name descname"><span class="pre">process_bgc_iron_forcing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ny</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">MARBL_FESEDFLUX_FILE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">MARBL_FEVENTFLUX_FILE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputdir</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.extract_forcings.bgc.process_bgc_iron_forcing" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.bgc.</span></span><span class="sig-name descname"><span class="pre">process_bgc_iron_forcing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ny</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">MARBL_FESEDFLUX_FILE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">MARBL_FEVENTFLUX_FILE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">MARBL_FESEDFLUXRED_FILE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputdir</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.extract_forcings.bgc.process_bgc_iron_forcing" title="Link to this definition">#</a></dt>
 <dd><p>Create dummy iron forcing files for MARBL.
 Parameters:
 - nx: int, number of grid points in x-direction
@@ -498,9 +502,36 @@ Returns:
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.extract_forcings.utils.build_forcing_request">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.utils.</span></span><span class="sig-name descname"><span class="pre">build_forcing_request</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">product_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#CrocoDash.extract_forcings.utils.build_forcing_request" title="Link to this definition">#</a></dt>
+<dd><p>Build the (variables, extra_args) an access function needs from a forcing product_info dict.</p>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="CrocoDash.extract_forcings.utils.check_date_continuity">
 <span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.utils.</span></span><span class="sig-name descname"><span class="pre">check_date_continuity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">boundary_file_list</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.extract_forcings.utils.check_date_continuity" title="Link to this definition">#</a></dt>
 <dd><p>Check for overlaps or missing dates between consecutive files.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.extract_forcings.utils.fetch_raw_chunk">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.utils.</span></span><span class="sig-name descname"><span class="pre">fetch_raw_chunk</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_access_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dates</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">latlon</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_folder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_filename</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variables</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Path</span></span></span><a class="headerlink" href="#CrocoDash.extract_forcings.utils.fetch_raw_chunk" title="Link to this definition">#</a></dt>
+<dd><p>Download one raw data chunk, skipping if a valid output file already exists.</p>
+<p>Shared by obc.py and initial_condition.py — both fetch a chunk of raw data
+for a given date range and bounding box, and both need to be idempotent
+across re-runs.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.extract_forcings.utils.get_data_access_function">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.utils.</span></span><span class="sig-name descname"><span class="pre">get_data_access_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">product_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.extract_forcings.utils.get_data_access_function" title="Link to this definition">#</a></dt>
+<dd><p>Load the product registry and return the raw access function for (product_name, function_name).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.extract_forcings.utils.is_valid_netcdf">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.utils.</span></span><span class="sig-name descname"><span class="pre">is_valid_netcdf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#CrocoDash.extract_forcings.utils.is_valid_netcdf" title="Link to this definition">#</a></dt>
+<dd><p>Check a file’s magic bytes match a known NetCDF format (HDF5, classic, or 64-bit offset).</p>
 </dd></dl>
 
 <dl class="py function">
@@ -615,7 +646,11 @@ Example: <cite>“(north|east|south|west)_unprocessed.(d{8})_(d{8}).nc”</cite>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.utils.Config.keys"><code class="docutils literal notranslate"><span class="pre">Config.keys()</span></code></a></li>
 </ul>
 </li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.utils.build_forcing_request"><code class="docutils literal notranslate"><span class="pre">build_forcing_request()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.utils.check_date_continuity"><code class="docutils literal notranslate"><span class="pre">check_date_continuity()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.utils.fetch_raw_chunk"><code class="docutils literal notranslate"><span class="pre">fetch_raw_chunk()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.utils.get_data_access_function"><code class="docutils literal notranslate"><span class="pre">get_data_access_function()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.utils.is_valid_netcdf"><code class="docutils literal notranslate"><span class="pre">is_valid_netcdf()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.utils.parse_dataset_folder"><code class="docutils literal notranslate"><span class="pre">parse_dataset_folder()</span></code></a></li>
 </ul>
 </li>
