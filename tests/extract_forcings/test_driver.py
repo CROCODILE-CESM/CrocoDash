@@ -148,9 +148,6 @@ def test_resolve_components_ww3obc_flag():
     args = Namespace(
         all=False,
         test=False,
-        no_get=False,
-        no_regrid=False,
-        no_merge=False,
         skip=[],
         ic=False,
         bc=False,
@@ -256,8 +253,10 @@ def test_run_from_cli_ww3obc(mock_ww3obc):
     with patch.object(sys, "argv", ["driver.py", "--ww3obc"]):
         args = driver.parse_args()
 
-    config = Mock()
-    config.config = {"ww3obc": {}}
+    config_data = {"ww3obc": {}, "basic": {"general": {}}}
+    config = MagicMock()
+    config.config = config_data
+    config.__getitem__ = MagicMock(side_effect=lambda k: config_data[k])
 
     driver.run_from_cli(args, config)
 
