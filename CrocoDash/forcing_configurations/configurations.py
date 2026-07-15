@@ -186,6 +186,7 @@ class WW3OBCConfigurator(BaseConfigurator):
                 "WW3 OBC data product. Plumbing only for now, see ww3_obc_product_name."
             ),
         ),
+        InputValueParam("case_is_non_local", comment="Case is non-local"),
     ]
     output_params = [
         XMLConfigParam(
@@ -206,23 +207,27 @@ class WW3OBCConfigurator(BaseConfigurator):
         self,
         case_inputdir,
         boundaries,
+        case_is_non_local,
         ww3_obc_product_name=None,
         ww3_obc_function_name=None,
     ):
         super().__init__(
             case_inputdir=case_inputdir,
             boundaries=boundaries,
+            case_is_non_local=case_is_non_local,
             ww3_obc_product_name=ww3_obc_product_name,
             ww3_obc_function_name=ww3_obc_function_name,
         )
 
     def configure(self):
+        is_non_local = self.get_input_param("case_is_non_local")
         self.set_output_param(
             "WW3_GRID_INP_DIR",
             str(Path(self.get_input_param("case_inputdir")) / "ocnice"),
+            is_non_local=is_non_local,
         )
-        self.set_output_param("HIST_OPTION", "nhours")
-        self.set_output_param("HIST_N", "1")
+        self.set_output_param("HIST_OPTION", "nhours", is_non_local=is_non_local)
+        self.set_output_param("HIST_N", "1", is_non_local=is_non_local)
         super().configure()
 
 
