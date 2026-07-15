@@ -1,11 +1,7 @@
 from pathlib import Path
 
 import numpy as np
-import pandas as pd
 import xarray as xr
-
-from CrocoDash.extract_forcings import utils
-from CrocoDash.extract_forcings.obc import _make_date_pairs
 
 
 def write_ww3_boundary_spectrum(file_path, lat, lon, freq, direction, efth, time=None):
@@ -214,21 +210,6 @@ def write_spec_list(file_dir, spectra_paths, spec_list_filename="spec.list"):
             f.write(f"{p}\n")
 
 
-def jonswap_like_pulse(freq, direction, fp=0.1, dp=250.0, hs_scale=5.0):
-    """Rough Gaussian-in-frequency, cos^4-in-direction bump -- not a real
-    JONSWAP spectrum, just something with an obvious peak to look at."""
-    freq_shape = np.exp(-((freq - fp) ** 2) / (2 * (0.01**2)))
-    dtheta = np.deg2rad(((direction - dp + 180) % 360) - 180)
-    dir_shape = np.clip(np.cos(dtheta / 2), 0, None) ** 4
-    return hs_scale * np.outer(freq_shape, dir_shape)  # (NK, NTH)
-
-
-def calm_spectrum(freq, direction, floor=1e-4):
-    """Small flat baseline -- not exactly 0 (physically implausible) or
-    exactly the _FillValue, just a near-nothing sea state."""
-    return floor * np.ones((len(freq), len(direction)))
-
-
 def _boundary_points(ocn_grid, boundaries):
     """One (lat, lon) point per requested boundary side, at that edge's midpoint."""
     ny, nx = ocn_grid.ny, ocn_grid.nx
@@ -243,154 +224,6 @@ def _boundary_points(ocn_grid, boundaries):
     return lats, lons
 
 
-def _hourly_time_axis(chunk_start, chunk_end):
-    """Hourly records covering [chunk_start, chunk_end], inclusive of chunk_end."""
-    return np.arange(
-        np.datetime64(chunk_start),
-        np.datetime64(chunk_end) + np.timedelta64(1, "h"),
-        np.timedelta64(1, "h"),
-    )
-
-
-def _synthetic_efth(time, freq, direction, hs_scale, run_start, pulse_hours=6):
-    """
-    Station-distinct synthetic spectrum: an energetic pulse for the first
-    pulse_hours of the run, dropping to a station-distinct calm floor after.
-    Standing in for a real per-station data source until one is wired
-    through raw_data_access -- see process_ww3_obc.
-    """
-    pulse = jonswap_like_pulse(freq, direction, hs_scale=hs_scale)
-    calm = calm_spectrum(freq, direction, floor=hs_scale * 5e-5)
-    hours_since_start = (time - np.datetime64(run_start)) / np.timedelta64(1, "h")
-    return np.stack([pulse if h < pulse_hours else calm for h in hours_since_start])
-
-
-def _get_boundary_point(
-    boundary,
-    lat,
-    lon,
-    start_date,
-    end_date,
-    get_step_days,
-    freq,
-    direction,
-    hs_scale,
-    output_dir,
-    product_name,
-    function_name,
-) -> list:
-    """
-    GET phase (fake): stands in for downloading raw per-chunk spectra via
-    product_name/function_name (not yet wired through raw_data_access).
-    Calls the synthetic pulse/calm generator instead, chunked by
-    get_step_days exactly like a real per-chunk download would be.
-    Idempotent: skips chunks that already exist as valid NetCDF.
-    """
-    output_dir = Path(output_dir)
-    output_dir.mkdir(parents=True, exist_ok=True)
-
-    raw_files = []
-    for chunk_start, chunk_end in _make_date_pairs(start_date, end_date, get_step_days):
-        start_str = chunk_start.strftime("%Y-%m-%d")
-        end_str = chunk_end.strftime("%Y-%m-%d")
-        raw_path = output_dir / f"{boundary}_ww3_unprocessed.{start_str}_{end_str}.nc"
-
-        if raw_path.exists():
-            if not utils.is_valid_netcdf(raw_path):
-                raise RuntimeError(
-                    f"{raw_path} exists but is not valid NetCDF. Delete it and re-run."
-                )
-            raw_files.append(raw_path)
-            continue
-
-        time = _hourly_time_axis(chunk_start, chunk_end)
-        efth = _synthetic_efth(time, freq, direction, hs_scale, run_start=start_date)
-        write_ww3_boundary_spectrum(
-            raw_path, lat, lon, freq, direction, efth, time=time
-        )
-        raw_files.append(raw_path)
-
-    return raw_files
-
-
-def _regrid_boundary_point(
-    boundary,
-    point_id,
-    raw_files,
-    lat,
-    lon,
-    start_date,
-    end_date,
-    regrid_step_days,
-    freq,
-    direction,
-    hs_scale,
-    output_folder,
-) -> list:
-    """
-    REGRID phase (fake): WW3 boundary spectra need no grid remapping
-    (ww3_bounc does its own point-to-boundary-cell interpolation at model
-    build time), so this again calls the synthetic generator -- standing in
-    for whatever real per-product reformatting step would eventually read
-    raw_files -- and writes the ww3_bounc-ready per-chunk file, chunked by
-    regrid_step_days independently of the GET chunking (raw_files is
-    currently unused, kept for signature parity with obc.py's real regrid
-    phase until this reads real raw data).
-    """
-    output_folder = Path(output_folder)
-    output_folder.mkdir(parents=True, exist_ok=True)
-
-    regridded_files = []
-    for chunk_start, chunk_end in _make_date_pairs(
-        start_date, end_date, regrid_step_days
-    ):
-        start_str = chunk_start.strftime("%Y-%m-%d")
-        end_str = chunk_end.strftime("%Y-%m-%d")
-        regridded_path = (
-            output_folder / f"ww3_point_{point_id:03d}_{start_str}_{end_str}.nc"
-        )
-
-        if regridded_path.exists():
-            if not utils.is_valid_netcdf(regridded_path):
-                raise RuntimeError(
-                    f"{regridded_path} exists but is not valid NetCDF. Delete it and re-run."
-                )
-            regridded_files.append(regridded_path)
-            continue
-
-        time = _hourly_time_axis(chunk_start, chunk_end)
-        efth = _synthetic_efth(time, freq, direction, hs_scale, run_start=start_date)
-        write_ww3_boundary_spectrum(
-            regridded_path, lat, lon, freq, direction, efth, time=time
-        )
-        regridded_files.append(regridded_path)
-
-    return regridded_files
-
-
-def _merge_boundary_point(point_label, regridded_files, output_folder) -> Path:
-    """MERGE phase (real): concatenate regridded per-chunk files into the final per-point spectra file ww3_bounc reads."""
-    output_folder = Path(output_folder)
-    output_path = output_folder / f"ww3.point{point_label}_spec.nc"
-
-    if output_path.exists():
-        if not utils.is_valid_netcdf(output_path):
-            raise RuntimeError(
-                f"{output_path} exists but is not valid NetCDF. Delete it and re-run."
-            )
-        return output_path
-
-    ds = xr.open_mfdataset(
-        [str(p) for p in sorted(regridded_files)],
-        combine="nested",
-        concat_dim="time",
-        coords="minimal",
-    )
-    ds.to_netcdf(output_path)
-    ds.close()
-    return output_path
-
-
 def process_ww3_obc(
     ocn_grid,
     inputdir,
@@ -398,25 +231,17 @@ def process_ww3_obc(
     date_range,
     ww3_obc_product_name=None,
     ww3_obc_function_name=None,
-    get_step_days=None,
-    regrid_step_days=None,
 ):
     """
     Generate WW3 boundary spectra, spec.list, and ww3_bounc.nml into
     <inputdir>/ocnice.
 
-    Mirrors obc.py's three-phase GET -> REGRID -> MERGE pipeline shape (each
-    phase idempotent, GET/REGRID chunk sizes independent) so the two can
-    eventually be unified. WW3 has no analog to xESMF regridding (ww3_bounc
-    does its own point-to-boundary-cell mapping at model build time), and
-    there is no real WW3 OBC data source wired up yet, so GET and REGRID both
-    call the synthetic pulse/calm generator instead of a real download/regrid
-    -- ww3_obc_product_name/ww3_obc_function_name are unused plumbing until
-    that's wired through raw_data_access. One boundary point per requested
-    side, each station getting its own distinct, identifiable pulse height
-    (station i gets hs_scale=2*(i+1)) so that which station's data lands on
-    which grid boundary cell can be checked directly against the model's
-    output.
+    ww3_obc_product_name/ww3_obc_function_name are unused for now -- they're
+    plumbing for when WW3 OBC sourcing (e.g. ERA5 2D wave spectra, or a
+    parent CESM/WW3 run's own point output) is wired through raw_data_access.
+    Each boundary point instead gets a simple constant-value spectrum, scaled
+    by its position in `boundaries` (point i = 1e-3*(i+1)), so which station's
+    data lands on which grid boundary cell can be checked directly.
 
     ww3_bounc.nml is written with INTERP=1 (nearest point, no interpolation)
     rather than the usual linear blend between stations, so that mapping
@@ -439,50 +264,18 @@ def process_ww3_obc(
     freq = 0.04118 * 1.1 ** np.arange(NK)
     direction = np.linspace(0, 360, NTH, endpoint=False)
 
-    start_date = pd.to_datetime(date_range[0]).to_pydatetime()
-    end_date = pd.to_datetime(date_range[1]).to_pydatetime()
+    start, end = (np.datetime64(d) for d in date_range)
+    time = np.arange(start, end + np.timedelta64(1, "h"), np.timedelta64(1, "h"))
 
     spectra_names = []
-    for i, (boundary, lat, lon) in enumerate(zip(boundaries, lats, lons)):
-        point_id = i + 1
-        hs_scale = 2.0 * point_id
-
-        raw_files = _get_boundary_point(
-            boundary=boundary,
-            lat=lat,
-            lon=lon,
-            start_date=start_date,
-            end_date=end_date,
-            get_step_days=get_step_days,
-            freq=freq,
-            direction=direction,
-            hs_scale=hs_scale,
-            output_dir=output_dir,
-            product_name=ww3_obc_product_name,
-            function_name=ww3_obc_function_name,
+    for i, (lat, lon) in enumerate(zip(lats, lons)):
+        value = 1e-3 * (i + 1)
+        efth = np.full((len(time), len(freq), len(direction)), value)
+        name = f"ww3.point{i + 1}_spec.nc"
+        write_ww3_boundary_spectrum(
+            output_dir / name, lat, lon, freq, direction, efth, time=time
         )
-
-        regridded_files = _regrid_boundary_point(
-            boundary=boundary,
-            point_id=point_id,
-            raw_files=raw_files,
-            lat=lat,
-            lon=lon,
-            start_date=start_date,
-            end_date=end_date,
-            regrid_step_days=regrid_step_days,
-            freq=freq,
-            direction=direction,
-            hs_scale=hs_scale,
-            output_folder=output_dir,
-        )
-
-        merged_path = _merge_boundary_point(
-            point_label=point_id,
-            regridded_files=regridded_files,
-            output_folder=output_dir,
-        )
-        spectra_names.append(merged_path.name)
+        spectra_names.append(name)
 
     write_spec_list(output_dir, spectra_names)
     write_ww3_bounc_nml(output_dir, interp=1)

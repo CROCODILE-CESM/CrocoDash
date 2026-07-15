@@ -220,20 +220,13 @@ def test_process_ww3_obc(tmp_path, gen_grid_topo_vgrid):
         # hourly, spanning the full requested run window inclusive
         assert ds1.dims["time"] == 7
         assert ds2.dims["time"] == 7
-        # each station gets a distinct, identifiable amplitude (station i:
-        # hs_scale=2*(i+1), floor=1e-4*(i+1)) so the station a boundary cell's
-        # data came from can be checked directly -- both during the pulse...
-        assert float(ds1["efth"].isel(time=0).max()) < float(
-            ds2["efth"].isel(time=0).max()
-        )
-        # ...and after it shuts off to the (also station-distinct) calm floor
-        assert float(ds1["efth"].isel(time=6).max()) < float(
-            ds2["efth"].isel(time=6).max()
-        )
-        # pulse shuts off after pulse_hours, back down to the calm floor
-        assert float(ds1["efth"].isel(time=0).max()) > float(
-            ds1["efth"].isel(time=6).max()
-        )
+        # each station gets a distinct, identifiable constant value (point i:
+        # 1e-3*(i+1)) so the station a boundary cell's data came from can be
+        # checked directly, at every timestep
+        assert float(ds1["efth"].isel(time=0).max()) == pytest.approx(1e-3)
+        assert float(ds2["efth"].isel(time=0).max()) == pytest.approx(2e-3)
+        assert float(ds1["efth"].isel(time=6).max()) == pytest.approx(1e-3)
+        assert float(ds2["efth"].isel(time=6).max()) == pytest.approx(2e-3)
     finally:
         ds1.close()
         ds2.close()
