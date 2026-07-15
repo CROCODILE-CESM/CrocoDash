@@ -190,7 +190,7 @@ def _download_initial_condition(
             output_filename="ic_unprocessed.nc",
             variables=variables,
             name="ic",
-            **extra_args,
+            extra_args = extra_args,
         )
 
 
