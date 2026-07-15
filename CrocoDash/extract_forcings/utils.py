@@ -150,6 +150,7 @@ def fetch_raw_chunk(
     output_filename: str,
     variables: list,
     extra_args: dict,
+    name = None,
 ) -> Path:
     """Download one raw data chunk, skipping if a valid output file already exists.
 
@@ -176,6 +177,7 @@ def fetch_raw_chunk(
         output_folder=output_folder,
         output_filename=output_file.name,
         variables=variables,
+        name = name,
         **extra_args,
     )
     return output_file
