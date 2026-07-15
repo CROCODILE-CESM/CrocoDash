@@ -584,6 +584,7 @@ class Case:
         process_chl = kwargs.get("process_chl", True)
         process_runoff = kwargs.get("process_runoff", True)
         process_bgc_river_nutrients = kwargs.get("process_bgc_river_nutrients", True)
+        process_ww3obc = kwargs.get("process_ww3obc", True)
 
         self.driver.run_workflow(
             ic=process_initial_condition,
@@ -595,6 +596,7 @@ class Case:
             runoff=process_runoff and self.fcr.is_active("runoff"),
             bgcrivernutrients=process_bgc_river_nutrients
             and self.fcr.is_active("BGCRiverNutrients"),
+            ww3obc=process_ww3obc and self.fcr.is_active("ww3obc"),
         )
 
         print(f"Case is ready to be built: {self.caseroot}")

@@ -3,7 +3,8 @@ This testing file is for the other processes in extract_forcings. Most do not ne
 """
 
 import pytest
-from CrocoDash.extract_forcings import runoff, tides, bgc, chlorophyll as chl
+from CrocoDash.extract_forcings import runoff, tides, bgc, chlorophyll as chl, ww3
+import numpy as np
 import xarray as xr
 from unittest.mock import Mock, patch
 
@@ -96,6 +97,146 @@ def test_bgcironforcing(tmp_path):
         assert ds[main_var].shape == (depth, ny, nx)
 
         ds.close()
+
+
+def test_write_ww3_boundary_spectrum_default_time(tmp_path):
+    freq = 0.04118 * 1.1 ** np.arange(5)
+    direction = np.linspace(0, 360, 4, endpoint=False)
+    efth = np.ones((1, 5, 4))
+    path = tmp_path / "point_spec.nc"
+
+    ww3.write_ww3_boundary_spectrum(
+        path, lat=10.0, lon=200.0, freq=freq, direction=direction, efth=efth
+    )
+
+    ds = xr.open_dataset(path, decode_times=False, mask_and_scale=False)
+    try:
+        assert ds["efth"].shape == (1, 5, 4, 1, 1)
+        assert ds["efth"].attrs["_FillValue"] == pytest.approx(-999.9, rel=1e-4)
+        assert ds["efth"].attrs["scale_factor"] == pytest.approx(1.0)
+        assert ds["efth"].attrs["add_offset"] == pytest.approx(0.0)
+        assert ds["time"].attrs["units"] == "seconds since 1990-01-01 00:00:00.0"
+        assert ds["time"].attrs["calendar"] == "standard"
+        assert float(ds["latitude"].values[0]) == pytest.approx(10.0)
+        assert float(ds["longitude"].values[0]) == pytest.approx(200.0)
+        # No spurious _FillValue on any coordinate (xarray adds these by
+        # default unless explicitly suppressed -- see write_ww3_boundary_spectrum)
+        for coord in ("time", "frequency", "direction", "latitude", "longitude"):
+            assert "_FillValue" not in ds[coord].attrs
+    finally:
+        ds.close()
+
+
+def test_write_ww3_boundary_spectrum_time_units_untouched_by_xarray(tmp_path):
+    """
+    Regression test for the xarray CF-encoder bug found this session: writing
+    a midnight-exact datetime64 time coordinate directly (instead of plain
+    float seconds) causes xarray to silently rewrite the "units" attribute,
+    dropping the "hh:mm:ss" portion -- which corrupts W3TIMEMD's fixed
+    column-position parser in ww3_bounc.
+    """
+    freq = 0.04118 * 1.1 ** np.arange(3)
+    direction = np.linspace(0, 360, 4, endpoint=False)
+    time = np.array(["2020-01-01T00:00:00"], dtype="datetime64[ns]")
+    efth = np.ones((1, 3, 4))
+    path = tmp_path / "point_spec.nc"
+
+    ww3.write_ww3_boundary_spectrum(
+        path, lat=0.0, lon=0.0, freq=freq, direction=direction, efth=efth, time=time
+    )
+
+    ds = xr.open_dataset(path, decode_times=False, mask_and_scale=False)
+    try:
+        assert ds["time"].attrs["units"] == "seconds since 1990-01-01 00:00:00.0"
+        expected_seconds = (
+            time[0] - np.datetime64("1990-01-01T00:00:00", "ns")
+        ) / np.timedelta64(1, "s")
+        assert float(ds["time"].values[0]) == pytest.approx(expected_seconds)
+    finally:
+        ds.close()
+
+
+def test_write_ww3_bounc_nml(tmp_path):
+    ww3.write_ww3_bounc_nml(
+        tmp_path, spec_list_filename="foo.list", mode="READ", interp=1, verbose=2
+    )
+
+    content = (tmp_path / "ww3_bounc.nml").read_text()
+    assert "BOUND%MODE                 = 'READ'" in content
+    assert "BOUND%INTERP               = 1" in content
+    assert "BOUND%VERBOSE              = 2" in content
+    assert "BOUND%FILE                 = 'foo.list'" in content
+
+
+def test_write_spec_list(tmp_path):
+    ww3.write_spec_list(tmp_path, ["a_spec.nc", "b_spec.nc"])
+
+    content = (tmp_path / "spec.list").read_text()
+    assert content == "a_spec.nc\nb_spec.nc\n"
+
+
+def test_boundary_points(gen_grid_topo_vgrid):
+    grid, topo, vgrid = gen_grid_topo_vgrid
+
+    lats, lons = ww3._boundary_points(grid, ["south", "north", "west", "east"])
+
+    assert len(lats) == len(lons) == 4
+    # south should sit strictly south of north; west strictly west of east
+    assert lats[0] < lats[1]
+    assert lons[2] < lons[3]
+
+
+def test_process_ww3_obc(tmp_path, gen_grid_topo_vgrid):
+    grid, topo, vgrid = gen_grid_topo_vgrid
+
+    ww3.process_ww3_obc(
+        ocn_grid=grid,
+        inputdir=tmp_path,
+        boundaries=["west", "east"],
+        date_range=("2020-01-01 00:00:00", "2020-01-01 06:00:00"),
+        ww3_obc_product_name="ERA5",
+        ww3_obc_function_name="get_era5_2d_spectra",
+    )
+
+    ocnice = tmp_path / "ocnice"
+    assert (ocnice / "spec.list").exists()
+    assert (ocnice / "ww3_bounc.nml").exists()
+    assert (ocnice / "ww3.point1_spec.nc").exists()
+    assert (ocnice / "ww3.point2_spec.nc").exists()
+
+    assert (ocnice / "spec.list").read_text().splitlines() == [
+        "ww3.point1_spec.nc",
+        "ww3.point2_spec.nc",
+    ]
+
+    # nearest-point mapping (no interpolation between stations), so each
+    # boundary cell's forcing traces back to exactly one station
+    nml_contents = (ocnice / "ww3_bounc.nml").read_text()
+    assert "BOUND%INTERP               = 1" in nml_contents
+
+    ds1 = xr.open_dataset(ocnice / "ww3.point1_spec.nc", decode_times=False)
+    ds2 = xr.open_dataset(ocnice / "ww3.point2_spec.nc", decode_times=False)
+    try:
+        # hourly, spanning the full requested run window inclusive
+        assert ds1.dims["time"] == 7
+        assert ds2.dims["time"] == 7
+        # each station gets a distinct, identifiable amplitude (station i:
+        # hs_scale=2*(i+1), floor=1e-4*(i+1)) so the station a boundary cell's
+        # data came from can be checked directly -- both during the pulse...
+        assert float(ds1["efth"].isel(time=0).max()) < float(
+            ds2["efth"].isel(time=0).max()
+        )
+        # ...and after it shuts off to the (also station-distinct) calm floor
+        assert float(ds1["efth"].isel(time=6).max()) < float(
+            ds2["efth"].isel(time=6).max()
+        )
+        # pulse shuts off after pulse_hours, back down to the calm floor
+        assert float(ds1["efth"].isel(time=0).max()) > float(
+            ds1["efth"].isel(time=6).max()
+        )
+    finally:
+        ds1.close()
+        ds2.close()
 
 
 @pytest.mark.slow

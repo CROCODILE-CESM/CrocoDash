@@ -31,6 +31,7 @@ from CrocoDash.extract_forcings import (
     runoff as rof,
     tides,
     chlorophyll as chl,
+    ww3,
     utils as utils,
     initial_condition as initial_condition,
 )
@@ -122,6 +123,19 @@ def process_tides():
     )
 
 
+def process_ww3obc():
+    """Generate WW3 boundary spectra, spec list, and bounc namelist."""
+    config = utils.Config(CONFIG_PATH)
+    ww3.process_ww3_obc(
+        ocn_grid=config.ocn_grid,
+        inputdir=config.inputdir,
+        boundaries=config["ww3obc"]["inputs"]["boundaries"],
+        date_range=(config["basic"]["dates"]["start"], config["basic"]["dates"]["end"]),
+        ww3_obc_product_name=config["ww3obc"]["inputs"]["ww3_obc_product_name"],
+        ww3_obc_function_name=config["ww3obc"]["inputs"]["ww3_obc_function_name"],
+    )
+
+
 def process_chl():
     """Process satellite-derived chlorophyll data"""
     config = utils.Config(CONFIG_PATH)
@@ -177,6 +191,11 @@ def parse_args():
     )
     components.add_argument(
         "--chl", action="store_true", help="Run chlorophyll processing"
+    )
+    components.add_argument(
+        "--ww3obc",
+        action="store_true",
+        help="Run WW3 boundary condition spectra generation",
     )
 
     top.add_argument(
@@ -256,6 +275,7 @@ def run_workflow(
     chl=False,
     runoff=False,
     bgcrivernutrients=False,
+    ww3obc=False,
     preview=False,
     cfg=None,
 ):
@@ -274,13 +294,16 @@ def run_workflow(
         chl:                 Run chlorophyll processing
         runoff:              Run runoff mapping
         bgcrivernutrients:   Run BGC river nutrients (always runs after runoff)
+        ww3obc:              Run WW3 boundary condition spectra generation
         preview:             Preview task graph without executing
         cfg:                 Config object; loaded from CONFIG_PATH if None
     """
     if cfg is None:
         cfg = utils.Config(CONFIG_PATH)
 
-    if not any([ic, bc, bgcic, bgcironforcing, tides, chl, runoff, bgcrivernutrients]):
+    if not any(
+        [ic, bc, bgcic, bgcironforcing, tides, chl, runoff, bgcrivernutrients, ww3obc]
+    ):
         print("No components selected.")
         return
 
@@ -341,6 +364,11 @@ def run_workflow(
         process_bgcrivernutrients()
         timings["bgcrivernutrients"] = time.perf_counter() - _t
 
+    if ww3obc:
+        _t = time.perf_counter()
+        process_ww3obc()
+        timings["ww3obc"] = time.perf_counter() - _t
+
     if timings:
         parts = [f"{k}: {v:.1f}s" for k, v in timings.items()]
         parts.append(f"total: {sum(timings.values()):.1f}s")
@@ -372,6 +400,7 @@ def run_from_cli(args, cfg):
         chl=args.chl,
         runoff=args.runoff,
         bgcrivernutrients=args.bgcrivernutrients,
+        ww3obc=args.ww3obc,
         preview=cfg["basic"]["general"].get("preview", False),
         cfg=cfg,
     )
