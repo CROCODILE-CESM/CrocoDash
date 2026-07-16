@@ -40,8 +40,7 @@ class MOM6_OUTPUT(ForcingProduct):
     tracer_lon_coord = "TLONG"
     eta_var_name = "SSH"
     time_units = "days since 1850-01-01"
-    cf_calendar = "noleap"
-    cesm_calendar = "NO_LEAP"
+    calendar = NOLEAP
     depth_coord = ["z_t", "z_t_150m"]
     delimiter = "."
     tracer_var_names = {"temp": "TEMP", "salt": "SALT"}
