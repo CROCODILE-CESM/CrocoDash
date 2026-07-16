@@ -42,23 +42,42 @@ This removes cached build files and rebuilds from scratch.
 
 ## Regenerating API Documentation
 
-When you add new modules or submodules to CrocoDash, you need to regenerate the auto-documentation from docstrings:
+When you add new modules or submodules to CrocoDash, you need to regenerate the
+auto-documentation from docstrings. Use **exactly** this command — it matches
+what CI runs, so its output is what will be compared against your commit:
 
 ```bash
 cd docs
-sphinx-apidoc -o source/api-docs ../CrocoDash # This reads the code of CrocoDash and loads it into source/apidocs
-# You may consider deleting the regional_mom6 api docs, regional_mom6 has its own docs (which is what I've been doing.)
+sphinx-apidoc \
+  -o source/api-docs \
+  -H "CrocoDash API Docs" \
+  --force \
+  ../CrocoDash \
+  ../CrocoDash/rm6 \
+  ../CrocoDash/visualCaseGen
 make html
 ```
 
-**Why this is needed:** The API docs are auto-generated from your Python docstrings. When you add new modules, Sphinx needs to scan them and create `.rst` files documenting the public API.
+**Why these flags:**
+
+- `-H "CrocoDash API Docs"` — sets the top-level heading (otherwise each regen
+  overwrites any hand-edited title).
+- `../CrocoDash/rm6` and `../CrocoDash/visualCaseGen` — exclude vendored
+  submodules that ship their own documentation.
+
+**Why this is needed:** The API docs are auto-generated from your Python
+docstrings. When you add new modules, Sphinx needs to scan them and create
+`.rst` files documenting the public API.
 
 **When to do this:**
 - You create a new module or submodule under `CrocoDash/`
 - You add new public classes or functions to existing modules
 - You significantly restructure the package
 
-**Note:** The `sphinx-apidoc` command creates/updates files in `source/api-docs/`. These are referenced in the main documentation structure.
+**CI enforcement:** The `Deploy Sphinx Documentation` workflow re-runs the same
+`sphinx-apidoc` invocation on every push and PR and fails if the committed
+`source/api-docs/` differs from the generated output. If you see that failure,
+run the command above locally and commit the result.
 
 ## Local Server Preview
 
@@ -87,7 +106,7 @@ docs/source/
 │   └── index.md
 ├── for_developers/          # Developer documentation
 │   ├── index.md
-│   ├── docs.md              # This file
+│   ├── edit_docs.md         # This file
 │   └── ...
 ├── api-docs/                # Auto-generated API documentation
 │   ├── modules.rst
@@ -107,10 +126,10 @@ Sphinx configuration is in `docs/source/conf.py`. Key settings:
 Usually you don't need to modify this, but consult it if you're using advanced Sphinx features.
 
 ## Raw Data Access
-Every night, there is a CI action (in raw_data_access_testing.yml) to check if the datasets are accessible. Those are then updated on a page in the documentation, https://crocodile-cesm.github.io/CrocoDash/reports/raw_data_status.html. The code to check the raw_data_access is in the raw_data_access subfolder of docs/source, called check_raw_data.py. There is also a script called generate_info.py that generates the two tables in the same folder which list the products and functions available. This is run when the docs are built.
+Every night, there is a CI action (in raw_data_access_testing.yml) to check if the datasets are accessible. Those are then updated on a page in the documentation, https://crocodile-cesm.github.io/CrocoDash/reports/raw_data_status.html. The code to check the raw_data_access is in the raw_data_access subfolder of docs/source, called check_raw_data.py. There is also a script called generate_info.py in the same folder that generates `products.csv` and `functions.csv`, which list the products and functions available and are pulled into [Datasets](../for_users/datasets.md). This is **not** run automatically at build time (the call in `conf.py` is commented out) — if you add or change a data product, run `python raw_data_access/generate_info.py` from `docs/source/` and commit the regenerated CSVs.
 
 ## Diagrams
-The diagrams are generated from the scripts in docs/source/diagrams. They run when the docs are built.
+Most diagrams in these docs are inline ```{mermaid}``` blocks rendered directly by Sphinx via `sphinxcontrib.mermaid` — no generation step needed, just edit the block in place.
 
 ## Common Errors
 
