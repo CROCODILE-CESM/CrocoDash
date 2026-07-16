@@ -2,7 +2,6 @@
 This module (logging) contains logging functions that are used across the CrocoDash package.
 """
 
-import os
 import logging
 import sys
 
