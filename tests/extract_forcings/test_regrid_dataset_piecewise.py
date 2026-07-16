@@ -299,7 +299,7 @@ def regrid_setup(
     grid.write_supergrid(hgrid_path)
     topo.write_topo(topo_path)
 
-    bounds = Grid.get_bounding_boxes_of_rectangular_grid(grid)
+    bounds = Grid.get_bounding_boxes(grid)
     ds = dummy_forcing_factory(
         bounds["ic"]["lat_min"],
         bounds["ic"]["lat_max"],
@@ -464,7 +464,7 @@ def test_regrid_ic_pipeline_mocked(
     topo.write_topo(topo_path)
     vgrid.write(vgrid_path)
 
-    bounds = Grid.get_bounding_boxes_of_rectangular_grid(grid)
+    bounds = Grid.get_bounding_boxes(grid)
     ds = dummy_forcing_factory(
         bounds["ic"]["lat_min"],
         bounds["ic"]["lat_max"],
@@ -540,7 +540,7 @@ def test_regrid_ic_pipeline_mocked_skips_existing(
     topo.write_topo(topo_path)
     vgrid.write(vgrid_path)
 
-    bounds = Grid.get_bounding_boxes_of_rectangular_grid(grid)
+    bounds = Grid.get_bounding_boxes(grid)
     ds = dummy_forcing_factory(
         bounds["ic"]["lat_min"],
         bounds["ic"]["lat_max"],
