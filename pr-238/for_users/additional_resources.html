@@ -42,9 +42,10 @@
     <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'for_users/additional_resources';</script>
+    <link rel="icon" href="../_static/crocodile.png"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Want to do more?" href="../for_developers/index.html" />
+    <link rel="next" title="Command Line Interface" href="cli.html" />
     <link rel="prev" title="Sharing Cases" href="shareable.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -159,23 +160,25 @@
 <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://crocodile-cesm.github.io/CrocoGallery/">Tutorials &amp; Gallery</a></li>
-<li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">User Information</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="structure.html">How CrocoDash Is Organized</a></li>
-<li class="toctree-l2"><a class="reference internal" href="grids.html">Grid Stuff (Supergrid, Bathymetry, Vgrid)</a></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">User Guide</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="1_grids.html">1. Grids (hgrid · topo · vgrid)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="2_case_setup.html">2. Case Setup (<code class="docutils literal notranslate"><span class="pre">Case</span></code> object)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="3a_configure_forcings.html">3a. Configure Forcings (case.configure_forcings)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="3b_process_forcings.html">3b. Process Forcings (<code class="docutils literal notranslate"><span class="pre">case.process_forcings</span></code>)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="compsets_and_inputs.html">Regional Compsets &amp; Input Parameters</a></li>
 <li class="toctree-l2"><a class="reference internal" href="datasets.html">Accessing Raw Data (raw_data_access)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="forcing_configurations.html">Forcing Configuration (case.configure_forcings)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="extract_forcings.html">Extract Forcings</a></li>
-<li class="toctree-l2"><a class="reference internal" href="case_information.html">Extra CESM Case Information</a></li>
-<li class="toctree-l2"><a class="reference internal" href="cli.html">Command Line Interface</a></li>
 <li class="toctree-l2"><a class="reference internal" href="shareable.html">Sharing Cases</a></li>
 <li class="toctree-l2 current active"><a class="current reference internal" href="#">Additional Resources</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html">Command Line Interface</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../for_developers/index.html">Want to do more?</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
-<li class="toctree-l2"><a class="reference internal" href="../for_developers/dev_info.html">Get started developing!</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../for_developers/edit_docs.html">Write Documentation</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../for_developers/index.html">Developer Guide</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../for_developers/architecture.html">Architecture</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_developers/adding_data_access.html">Adding Data to the Data Access Module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_developers/adding_forcing_configurations.html">Adding Forcing Configurations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_developers/submodule_api_usage.html">Submodule API Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_developers/edit_docs.html">Write Documentation</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://github.com/CROCODILE-CESM/CrocoDash/discussions/138">Semi-Official ChangeLog</a></li>
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../api-docs/modules.html">CrocoDash API Docs</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
@@ -361,49 +364,55 @@ document.write(`
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p>CROCODILE Presentation to Regional MOM6</p></td>
+<tr class="row-even"><td><p>A Rough CrocoDash Walkthrough</p></td>
+<td><p><a class="reference external" href="https://youtu.be/cDNgGiQUZhg">See here</a></p></td>
+<td><p>Narrated Video Demo</p></td>
+<td><p>2026-05-27</p></td>
+<td><p>A 1-hr comprehensive walkthrough of how a developer on CrocoDash sets up a new domain</p></td>
+</tr>
+<tr class="row-odd"><td><p>CROCODILE Presentation to Regional MOM6</p></td>
 <td><p><a class="reference external" href="https://docs.google.com/presentation/d/1CPE9IdNjDHvQxEifghqQbhbhYKpuqzg00OuOMPVGMqo/edit?slide=id.g3302f22671f_0_2#slide=id.g3302f22671f_0_2">See here</a></p></td>
 <td><p>Slide Deck</p></td>
 <td><p>2025-08-05</p></td>
 <td><p>A presentation on the status of CROCODILE with a nice overview of the project</p></td>
 </tr>
-<tr class="row-odd"><td><p>CrocoDash Draft Video Demo</p></td>
+<tr class="row-even"><td><p>CrocoDash Draft Video Demo</p></td>
 <td><p><a class="reference external" href="https://youtu.be/U4tWKi1dNU8">See here</a></p></td>
 <td><p>Narrated Video Demo</p></td>
 <td><p>2025-02-01</p></td>
 <td><p>A narrated video demo of CrocoDash showing how to use CrocoDash</p></td>
 </tr>
-<tr class="row-even"><td><p>CrocoDash Short Video Demo</p></td>
+<tr class="row-odd"><td><p>CrocoDash Short Video Demo</p></td>
 <td><p><a class="reference external" href="https://youtu.be/7tWZfQL_Irc">See here</a></p></td>
 <td><p>Video Demo</p></td>
 <td><p>2025-02-01</p></td>
 <td><p>A silent video demo showing how to use CrocoDash</p></td>
 </tr>
-<tr class="row-odd"><td><p>CESM Tutorial</p></td>
+<tr class="row-even"><td><p>CESM Tutorial</p></td>
 <td><p><a class="reference external" href="https://ncar.github.io/CESM-Tutorial/README.html">See here</a></p></td>
 <td><p>Documentation</p></td>
 <td><p>Live/Updated</p></td>
 <td><p>A comprehensive tutorial for the CESM model - a very useful tool for understanding the CESM framework which CrocoDash is built on</p></td>
 </tr>
-<tr class="row-even"><td><p>MOM6 Documentation</p></td>
+<tr class="row-odd"><td><p>MOM6 Documentation</p></td>
 <td><p><a class="reference external" href="https://mom6.readthedocs.io/en/main/">See here</a></p></td>
 <td><p>Documentation</p></td>
 <td><p>Live/Updated</p></td>
 <td><p>Documentation for the MOM6 model including parameter file details</p></td>
 </tr>
-<tr class="row-odd"><td><p>regional_mom6 Documentation</p></td>
+<tr class="row-even"><td><p>regional_mom6 Documentation</p></td>
 <td><p><a class="reference external" href="https://regional-mom6.readthedocs.io/en/latest/">See here</a></p></td>
 <td><p>Documentation</p></td>
 <td><p>Live/Updated</p></td>
 <td><p>Documentation for the regional_mom6 package - a subpackage of CrocoDash</p></td>
 </tr>
-<tr class="row-even"><td><p>visualCaseGen Documentation</p></td>
+<tr class="row-odd"><td><p>visualCaseGen Documentation</p></td>
 <td><p><a class="reference external" href="https://esmci.github.io/visualCaseGen/">See here</a></p></td>
 <td><p>Documentation</p></td>
 <td><p>Live/Updated</p></td>
 <td><p>Documentation for the visualCaseGen package - a subpackage of CrocoDash</p></td>
 </tr>
-<tr class="row-odd"><td><p>OMWG CrocoDash Presentation</p></td>
+<tr class="row-even"><td><p>OMWG CrocoDash Presentation</p></td>
 <td><p><a class="reference external" href="https://docs.google.com/presentation/d/1V2ZkjdzFS8ivzhaMUEVIo16qGS7LZflx3QH0Jdsh6B8/edit?usp=sharing">See here</a></p></td>
 <td><p>Slide Deck</p></td>
 <td><p>2025-02-01</p></td>
@@ -435,11 +444,11 @@ document.write(`
       </div>
     </a>
     <a class="right-next"
-       href="../for_developers/index.html"
+       href="cli.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Want to do more?</p>
+        <p class="prev-next-title">Command Line Interface</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>

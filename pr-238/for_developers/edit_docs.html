@@ -42,10 +42,11 @@
     <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'for_developers/edit_docs';</script>
+    <link rel="icon" href="../_static/crocodile.png"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Adding Data to the Data Access Module" href="adding_data_access.html" />
-    <link rel="prev" title="Get started developing!" href="dev_info.html" />
+    <link rel="next" title="CrocoDash API Docs" href="../api-docs/modules.html" />
+    <link rel="prev" title="Submodule API Usage" href="submodule_api_usage.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -159,23 +160,25 @@
 <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://crocodile-cesm.github.io/CrocoGallery/">Tutorials &amp; Gallery</a></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../for_users/index.html">User Information</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
-<li class="toctree-l2"><a class="reference internal" href="../for_users/structure.html">How CrocoDash Is Organized</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../for_users/grids.html">Grid Stuff (Supergrid, Bathymetry, Vgrid)</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../for_users/index.html">User Guide</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../for_users/1_grids.html">1. Grids (hgrid · topo · vgrid)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_users/2_case_setup.html">2. Case Setup (<code class="docutils literal notranslate"><span class="pre">Case</span></code> object)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_users/3a_configure_forcings.html">3a. Configure Forcings (case.configure_forcings)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_users/3b_process_forcings.html">3b. Process Forcings (<code class="docutils literal notranslate"><span class="pre">case.process_forcings</span></code>)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_users/compsets_and_inputs.html">Regional Compsets &amp; Input Parameters</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_users/datasets.html">Accessing Raw Data (raw_data_access)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../for_users/forcing_configurations.html">Forcing Configuration (case.configure_forcings)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../for_users/extract_forcings.html">Extract Forcings</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../for_users/case_information.html">Extra CESM Case Information</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../for_users/cli.html">Command Line Interface</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_users/shareable.html">Sharing Cases</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_users/additional_resources.html">Additional Resources</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_users/cli.html">Command Line Interface</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">Want to do more?</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="dev_info.html">Get started developing!</a></li>
-<li class="toctree-l2 current active"><a class="current reference internal" href="#">Write Documentation</a></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">Developer Guide</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="architecture.html">Architecture</a></li>
 <li class="toctree-l2"><a class="reference internal" href="adding_data_access.html">Adding Data to the Data Access Module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="adding_forcing_configurations.html">Adding Forcing Configurations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="submodule_api_usage.html">Submodule API Usage</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Write Documentation</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://github.com/CROCODILE-CESM/CrocoDash/discussions/138">Semi-Official ChangeLog</a></li>
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../api-docs/modules.html">CrocoDash API Docs</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
@@ -418,21 +421,40 @@ make<span class="w"> </span>html
 </section>
 <section id="regenerating-api-documentation">
 <h2>Regenerating API Documentation<a class="headerlink" href="#regenerating-api-documentation" title="Link to this heading">#</a></h2>
-<p>When you add new modules or submodules to CrocoDash, you need to regenerate the auto-documentation from docstrings:</p>
+<p>When you add new modules or submodules to CrocoDash, you need to regenerate the
+auto-documentation from docstrings. Use <strong>exactly</strong> this command — it matches
+what CI runs, so its output is what will be compared against your commit:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>docs
-sphinx-apidoc<span class="w"> </span>-o<span class="w"> </span>source/api-docs<span class="w"> </span>../CrocoDash<span class="w"> </span><span class="c1"># This reads the code of CrocoDash and loads it into source/apidocs</span>
-<span class="c1"># You may consider deleting the regional_mom6 api docs, regional_mom6 has its own docs (which is what I&#39;ve been doing.)</span>
+sphinx-apidoc<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-o<span class="w"> </span>source/api-docs<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;CrocoDash API Docs&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--force<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>../CrocoDash<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>../CrocoDash/rm6<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>../CrocoDash/visualCaseGen
 make<span class="w"> </span>html
 </pre></div>
 </div>
-<p><strong>Why this is needed:</strong> The API docs are auto-generated from your Python docstrings. When you add new modules, Sphinx needs to scan them and create <code class="docutils literal notranslate"><span class="pre">.rst</span></code> files documenting the public API.</p>
+<p><strong>Why these flags:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">-H</span> <span class="pre">&quot;CrocoDash</span> <span class="pre">API</span> <span class="pre">Docs&quot;</span></code> — sets the top-level heading (otherwise each regen
+overwrites any hand-edited title).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">../CrocoDash/rm6</span></code> and <code class="docutils literal notranslate"><span class="pre">../CrocoDash/visualCaseGen</span></code> — exclude vendored
+submodules that ship their own documentation.</p></li>
+</ul>
+<p><strong>Why this is needed:</strong> The API docs are auto-generated from your Python
+docstrings. When you add new modules, Sphinx needs to scan them and create
+<code class="docutils literal notranslate"><span class="pre">.rst</span></code> files documenting the public API.</p>
 <p><strong>When to do this:</strong></p>
 <ul class="simple">
 <li><p>You create a new module or submodule under <code class="docutils literal notranslate"><span class="pre">CrocoDash/</span></code></p></li>
 <li><p>You add new public classes or functions to existing modules</p></li>
 <li><p>You significantly restructure the package</p></li>
 </ul>
-<p><strong>Note:</strong> The <code class="docutils literal notranslate"><span class="pre">sphinx-apidoc</span></code> command creates/updates files in <code class="docutils literal notranslate"><span class="pre">source/api-docs/</span></code>. These are referenced in the main documentation structure.</p>
+<p><strong>CI enforcement:</strong> The <code class="docutils literal notranslate"><span class="pre">Deploy</span> <span class="pre">Sphinx</span> <span class="pre">Documentation</span></code> workflow re-runs the same
+<code class="docutils literal notranslate"><span class="pre">sphinx-apidoc</span></code> invocation on every push and PR and fails if the committed
+<code class="docutils literal notranslate"><span class="pre">source/api-docs/</span></code> differs from the generated output. If you see that failure,
+run the command above locally and commit the result.</p>
 </section>
 <section id="local-server-preview">
 <h2>Local Server Preview<a class="headerlink" href="#local-server-preview" title="Link to this heading">#</a></h2>
@@ -457,7 +479,7 @@ make<span class="w"> </span>serve
 │   └── index.md
 ├── for_developers/          # Developer documentation
 │   ├── index.md
-│   ├── docs.md              # This file
+│   ├── edit_docs.md         # This file
 │   └── ...
 ├── api-docs/                # Auto-generated API documentation
 │   ├── modules.rst
@@ -479,11 +501,11 @@ make<span class="w"> </span>serve
 </section>
 <section id="raw-data-access">
 <h2>Raw Data Access<a class="headerlink" href="#raw-data-access" title="Link to this heading">#</a></h2>
-<p>Every night, there is a CI action (in raw_data_access_testing.yml) to check if the datasets are accessible. Those are then updated on a page in the documentation, https://crocodile-cesm.github.io/CrocoDash/reports/raw_data_status.html. The code to check the raw_data_access is in the raw_data_access subfolder of docs/source, called check_raw_data.py. There is also a script called generate_info.py that generates the two tables in the same folder which list the products and functions available. This is run when the docs are built.</p>
+<p>Every night, there is a CI action (in raw_data_access_testing.yml) to check if the datasets are accessible. Those are then updated on a page in the documentation, https://crocodile-cesm.github.io/CrocoDash/reports/raw_data_status.html. The code to check the raw_data_access is in the raw_data_access subfolder of docs/source, called check_raw_data.py. There is also a script called generate_info.py in the same folder that generates <code class="docutils literal notranslate"><span class="pre">products.csv</span></code> and <code class="docutils literal notranslate"><span class="pre">functions.csv</span></code>, which list the products and functions available and are pulled into <a class="reference internal" href="../for_users/datasets.html"><span class="std std-doc">Datasets</span></a>. This is <strong>not</strong> run automatically at build time (the call in <code class="docutils literal notranslate"><span class="pre">conf.py</span></code> is commented out) — if you add or change a data product, run <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">raw_data_access/generate_info.py</span></code> from <code class="docutils literal notranslate"><span class="pre">docs/source/</span></code> and commit the regenerated CSVs.</p>
 </section>
 <section id="diagrams">
 <h2>Diagrams<a class="headerlink" href="#diagrams" title="Link to this heading">#</a></h2>
-<p>The diagrams are generated from the scripts in docs/source/diagrams. They run when the docs are built.</p>
+<p>Most diagrams in these docs are inline <code class="docutils literal notranslate"><span class="pre">{mermaid}</span></code> blocks rendered directly by Sphinx via <code class="docutils literal notranslate"><span class="pre">sphinxcontrib.mermaid</span></code> — no generation step needed, just edit the block in place.</p>
 </section>
 <section id="common-errors">
 <h2>Common Errors<a class="headerlink" href="#common-errors" title="Link to this heading">#</a></h2>
@@ -557,20 +579,20 @@ make<span class="w"> </span>html
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="dev_info.html"
+       href="submodule_api_usage.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Get started developing!</p>
+        <p class="prev-next-title">Submodule API Usage</p>
       </div>
     </a>
     <a class="right-next"
-       href="adding_data_access.html"
+       href="../api-docs/modules.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Adding Data to the Data Access Module</p>
+        <p class="prev-next-title">CrocoDash API Docs</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>

@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Extra CESM Case Information &#8212; CrocoDash  documentation</title>
+    <title>Regional Compsets &amp; Input Parameters &#8212; CrocoDash  documentation</title>
   
   
   
@@ -41,11 +41,12 @@
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'for_users/case_information';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'for_users/compsets_and_inputs';</script>
+    <link rel="icon" href="../_static/crocodile.png"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Command Line Interface" href="cli.html" />
-    <link rel="prev" title="Extract Forcings" href="extract_forcings.html" />
+    <link rel="next" title="Accessing Raw Data (raw_data_access)" href="datasets.html" />
+    <link rel="prev" title="3b. Process Forcings (case.process_forcings)" href="3b_process_forcings.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -159,23 +160,25 @@
 <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://crocodile-cesm.github.io/CrocoGallery/">Tutorials &amp; Gallery</a></li>
-<li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">User Information</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="structure.html">How CrocoDash Is Organized</a></li>
-<li class="toctree-l2"><a class="reference internal" href="grids.html">Grid Stuff (Supergrid, Bathymetry, Vgrid)</a></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">User Guide</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="1_grids.html">1. Grids (hgrid · topo · vgrid)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="2_case_setup.html">2. Case Setup (<code class="docutils literal notranslate"><span class="pre">Case</span></code> object)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="3a_configure_forcings.html">3a. Configure Forcings (case.configure_forcings)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="3b_process_forcings.html">3b. Process Forcings (<code class="docutils literal notranslate"><span class="pre">case.process_forcings</span></code>)</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Regional Compsets &amp; Input Parameters</a></li>
 <li class="toctree-l2"><a class="reference internal" href="datasets.html">Accessing Raw Data (raw_data_access)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="forcing_configurations.html">Forcing Configuration (case.configure_forcings)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="extract_forcings.html">Extract Forcings</a></li>
-<li class="toctree-l2 current active"><a class="current reference internal" href="#">Extra CESM Case Information</a></li>
-<li class="toctree-l2"><a class="reference internal" href="cli.html">Command Line Interface</a></li>
 <li class="toctree-l2"><a class="reference internal" href="shareable.html">Sharing Cases</a></li>
 <li class="toctree-l2"><a class="reference internal" href="additional_resources.html">Additional Resources</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html">Command Line Interface</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../for_developers/index.html">Want to do more?</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
-<li class="toctree-l2"><a class="reference internal" href="../for_developers/dev_info.html">Get started developing!</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../for_developers/edit_docs.html">Write Documentation</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../for_developers/index.html">Developer Guide</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../for_developers/architecture.html">Architecture</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_developers/adding_data_access.html">Adding Data to the Data Access Module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_developers/adding_forcing_configurations.html">Adding Forcing Configurations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_developers/submodule_api_usage.html">Submodule API Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_developers/edit_docs.html">Write Documentation</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://github.com/CROCODILE-CESM/CrocoDash/discussions/138">Semi-Official ChangeLog</a></li>
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../api-docs/modules.html">CrocoDash API Docs</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
@@ -245,7 +248,7 @@
       
       
       
-      <li><a href="../_sources/for_users/case_information.md" target="_blank"
+      <li><a href="../_sources/for_users/compsets_and_inputs.md" target="_blank"
    class="btn btn-sm btn-download-source-button dropdown-item"
    title="Download source file"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -329,7 +332,7 @@ document.write(`
               
 
 <div id="jb-print-docs-body" class="onlyprint">
-    <h1>Extra CESM Case Information</h1>
+    <h1>Regional Compsets & Input Parameters</h1>
     <!-- Table of contents -->
     <div id="print-main-content">
         <div id="jb-print-toc">
@@ -370,8 +373,8 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="extra-cesm-case-information">
-<h1>Extra CESM Case Information<a class="headerlink" href="#extra-cesm-case-information" title="Link to this heading">#</a></h1>
+  <section id="regional-compsets-input-parameters">
+<h1>Regional Compsets &amp; Input Parameters<a class="headerlink" href="#regional-compsets-input-parameters" title="Link to this heading">#</a></h1>
 <section id="case-state-file">
 <h2>Case State File<a class="headerlink" href="#case-state-file" title="Link to this heading">#</a></h2>
 <p>At the end of <code class="docutils literal notranslate"><span class="pre">Case.__init__</span></code>, CrocoDash writes a <code class="docutils literal notranslate"><span class="pre">crocodash_state.json</span></code> file into the caseroot. It records the construction parameters needed to reconstruct or inspect the case later:</p>
@@ -449,7 +452,6 @@ document.write(`
 <ul class="simple">
 <li><p><strong><code class="docutils literal notranslate"><span class="pre">MOM_input</span></code></strong> - Main namelist controlling MOM6 parameters</p></li>
 <li><p><strong><code class="docutils literal notranslate"><span class="pre">diag_table</span></code></strong> - Diagnostic output configuration</p></li>
-<li><p><strong><code class="docutils literal notranslate"><span class="pre">others</span></code></strong></p></li>
 </ul>
 <p>These files are initially placed in the case’s <code class="docutils literal notranslate"><span class="pre">CaseDocs</span></code> directory for reference.</p>
 </section>
@@ -569,7 +571,7 @@ cat<span class="w"> </span>SourceMods/src.mom/MOM_input<span class="w">  </span>
 <li><p><strong>You customize parameters beyond CrocoDash</strong> via user_nl_mom or SourceMods</p></li>
 <li><p><strong>You build and run the case</strong> with modified parameters</p></li>
 </ol>
-<p>For configuration of forcing-specific parameters (tides, BGC, rivers, etc.), see <a class="reference internal" href="forcing_configurations.html"><span class="std std-doc">Forcing Configuration</span></a> instead.</p>
+<p>For configuration of forcing-specific parameters (tides, BGC, rivers, etc.), see <a class="reference internal" href="3a_configure_forcings.html"><span class="std std-doc">Configure Forcings</span></a> instead.</p>
 </section>
 </section>
 <section id="tips-and-best-practices">
@@ -595,20 +597,20 @@ cat<span class="w"> </span>SourceMods/src.mom/MOM_input<span class="w">  </span>
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="extract_forcings.html"
+       href="3b_process_forcings.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Extract Forcings</p>
+        <p class="prev-next-title">3b. Process Forcings (<code class="docutils literal notranslate"><span class="pre">case.process_forcings</span></code>)</p>
       </div>
     </a>
     <a class="right-next"
-       href="cli.html"
+       href="datasets.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Command Line Interface</p>
+        <p class="prev-next-title">Accessing Raw Data (raw_data_access)</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>

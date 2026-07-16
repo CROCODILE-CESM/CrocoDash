@@ -2,7 +2,7 @@
 
 # Installation
 
-To use CrocoDash, we need to install both the CESM and CrocoDash! See the steps below.
+To use CrocoDash, we need to install both the CESM and CrocoDash! CrocoDash runs on Linux and Mac computers. See the steps below:
 
 ## CESM Installation
 
