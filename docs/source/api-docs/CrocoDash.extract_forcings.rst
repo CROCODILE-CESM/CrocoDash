@@ -4,14 +4,6 @@ CrocoDash.extract\_forcings package
 Submodules
 ----------
 
-CrocoDash.extract\_forcings.driver module
------------------------------------------
-
-.. automodule:: CrocoDash.extract_forcings.driver
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 CrocoDash.extract\_forcings.bgc module
 --------------------------------------
 
@@ -24,6 +16,14 @@ CrocoDash.extract\_forcings.chlorophyll module
 ----------------------------------------------
 
 .. automodule:: CrocoDash.extract_forcings.chlorophyll
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+CrocoDash.extract\_forcings.driver module
+-----------------------------------------
+
+.. automodule:: CrocoDash.extract_forcings.driver
    :members:
    :show-inheritance:
    :undoc-members:

@@ -7,6 +7,7 @@ from CrocoDash.topo import *
 from CrocoDash.grid import *
 import json
 
+
 class Config:
 
     def __init__(self, config_path: str = "config.json"):
