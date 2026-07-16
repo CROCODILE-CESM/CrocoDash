@@ -65,6 +65,9 @@ def process_bgcironforcing():
         MARBL_FEVENTFLUX_FILE=config["bgcironforcing"]["outputs"][
             "MARBL_FEVENTFLUX_FILE"
         ],
+        MARBL_FESEDFLUXRED_FILE=config["bgcironforcing"]["outputs"][
+            "MARBL_FESEDFLUXRED_FILE"
+        ],
         inputdir=config.inputdir,
     )
 
@@ -142,6 +145,7 @@ def process_conditions(
             config["basic"]["dates"]["end"],
             config["basic"]["general"]["boundary_number_conversion"],
             config["basic"]["paths"]["output_path"],
+            config["basic"]["forcing"]["information"].get("marbl_var_names", None),
             run_initial_condition,
             run_boundary_conditions,
             config["basic"]["general"]["preview"],
@@ -204,20 +208,6 @@ def process_chl():
         output_filepath=config["chl"]["outputs"]["CHL_FILE"],
         calendar=config["chl"]["inputs"]["cf_calendar"],
     )
-
-
-def should_run(name, args, cfg):
-    not_skipped = name.lower() not in args.skip
-    requested = args.all or getattr(args, name)
-    exists = name in cfg.config.keys()
-
-    if requested and not exists:
-        print(f"[skip] '{name}' requested but not in config")
-
-    if requested and not not_skipped:
-        print(f"[skip] '{name}' skipped via --skip")
-
-    return requested and exists and not_skipped
 
 
 def parse_args():
@@ -368,7 +358,7 @@ def run_from_cli(args, cfg):
         process_chl()
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
 
     args = parse_args()
     cfg = utils.Config(CONFIG_PATH)
