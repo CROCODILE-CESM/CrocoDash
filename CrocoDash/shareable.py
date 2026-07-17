@@ -539,7 +539,7 @@ class ForkBundle:
         self._resolve_copy_plan(plan)
 
         logger.info("Creating new case from YAML...")
-        self.case = create_case_from_yaml(config, override=True)
+        self.case = create_case_from_yaml(config, override=True, configure_only=True)
 
         logger.info("Copying forcing files from bundle...")
         bundle_ocnice = self.bundle_location / "ocnice"
