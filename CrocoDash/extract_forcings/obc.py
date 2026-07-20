@@ -25,8 +25,8 @@ import regional_mom6 as rm6
 import xarray as xr
 from CrocoDash import logging
 from CrocoDash.extract_forcings import utils
-from CrocoDash.extract_forcings.segment_spec import build_segment
 from CrocoDash.grid import Grid
+from regional_mom6.segment import Segment
 
 logger = logging.setup_logger(__name__)
 
@@ -34,6 +34,40 @@ logger = logging.setup_logger(__name__)
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
+
+def boundary_key(boundary):
+    """The string identifier for a boundary entry: itself if a cardinal
+    string, or its ``.segment_name`` if a live ``Segment`` (e.g. built via
+    ``Segment.from_lonlat``/``from_hgrid`` when defining a non-cardinal
+    boundary)."""
+    return boundary.segment_name if isinstance(boundary, Segment) else boundary
+
+
+def build_segment(hgrid, boundary, segment_name, topo=None, custom_segments=None):
+    """Build a Segment for one boundary entry, always renamed to
+    ``segment_name`` (MOM6's own ``segment_00N`` numbering).
+
+    ``boundary`` may be:
+      - a cardinal string ("north"/"south"/"east"/"west") -- built via
+        ``Segment.cardinal``.
+      - a live ``Segment`` instance -- re-cut via ``Segment.from_spec`` using
+        its own ``to_spec()``. This is the case in the same process that
+        defined ``Case.boundaries`` (e.g. ``case.py``'s
+        ``_update_forcing_variables``).
+      - a plain boundary-key string paired with ``custom_segments`` -- the
+        ``general.custom_segments`` dict read back from config.json (key ->
+        ``Segment.to_spec()`` output), for code that only has the config,
+        e.g. ``process_obc_conditions``/``process_tides`` running as a
+        separate call.
+    """
+    if isinstance(boundary, Segment):
+        return Segment.from_spec(hgrid, boundary.to_spec(), segment_name, topo=topo)
+    if custom_segments is not None and boundary in custom_segments:
+        return Segment.from_spec(
+            hgrid, custom_segments[boundary], segment_name, topo=topo
+        )
+    return Segment.cardinal(hgrid, boundary, segment_name, topo=topo)
 
 
 def _make_date_pairs(start: datetime, end: datetime, step_days):

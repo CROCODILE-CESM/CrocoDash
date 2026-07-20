@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 from regional_mom6.regional_mom6 import convert_to_tpxo_tidal_constituents
-from CrocoDash.extract_forcings.segment_spec import boundary_key, build_segment
+from CrocoDash.extract_forcings.obc import boundary_key, build_segment
 
 
 def process_tides(

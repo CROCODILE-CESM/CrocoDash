@@ -11,11 +11,8 @@ from CrocoDash.vgrid import VGrid
 from CrocoDash.forcing_configurations.base import ForcingConfigRegistry
 from CrocoDash.raw_data_access.registry import ProductRegistry
 from CrocoDash.raw_data_access.base import ForcingProduct
-from CrocoDash.extract_forcings.segment_spec import (
-    CustomSegment,
-    boundary_key,
-    build_segment,
-)
+from CrocoDash.extract_forcings.obc import boundary_key, build_segment
+from regional_mom6.segment import Segment
 from ProConPy.config_var import ConfigVar, cvars
 from ProConPy.stage import Stage
 from ProConPy.dev_utils import ConstraintViolation
@@ -494,13 +491,13 @@ class Case:
 
         if not isinstance(boundaries, list):
             raise TypeError(
-                "boundaries must be a list of cardinal strings and/or CustomSegment instances."
+                "boundaries must be a list of cardinal strings and/or "
+                "regional_mom6.segment.Segment instances."
             )
-        if not all(
-            isinstance(boundary, (str, CustomSegment)) for boundary in boundaries
-        ):
+        if not all(isinstance(boundary, (str, Segment)) for boundary in boundaries):
             raise TypeError(
-                "boundaries must be a list of cardinal strings and/or CustomSegment instances."
+                "boundaries must be a list of cardinal strings and/or "
+                "regional_mom6.segment.Segment instances."
             )
 
         self.boundaries = boundaries
@@ -535,9 +532,9 @@ class Case:
                     for idx, item in enumerate(self.boundaries)
                 },
                 "custom_segments": {
-                    boundary_key(item): item.to_dict()
+                    boundary_key(item): item.to_spec()
                     for item in self.boundaries
-                    if isinstance(item, CustomSegment)
+                    if isinstance(item, Segment)
                 },
                 "get_step": None,
                 "regrid_step": 30,
@@ -904,7 +901,7 @@ class Case:
         # More OBC parameters. Position strings come straight from a
         # regional_mom6.segment.Segment built for each boundary -- built the
         # same way (Segment.cardinal / Segment.from_hgrid) whether the
-        # boundary is a cardinal edge or a CustomSegment; no
+        # boundary is a cardinal edge or a custom (non-cardinal) Segment; no
         # regional_mom6.experiment involved.
         hgrid = xr.open_dataset(self.supergrid_path)
         for seg in self.boundaries:
