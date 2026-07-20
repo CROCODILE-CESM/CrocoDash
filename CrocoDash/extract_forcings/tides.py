@@ -14,10 +14,16 @@ def process_tides(
     boundaries,
     tpxo_elevation_filepath,
     tpxo_velocity_filepath,
+    custom_segments=None,
 ):
     """Regrid tidal forcing onto each boundary, driving
     regional_mom6.segment.Segment directly (Segment.cardinal / from_hgrid) --
     no regional_mom6.experiment involved.
+
+    ``boundaries`` are plain boundary-key strings (cardinal or custom) read
+    back from config.json; ``custom_segments`` is the matching
+    ``general.custom_segments`` dict (key -> ``Segment.to_spec()``), needed
+    to rebuild any non-cardinal boundary via ``build_segment``.
     """
     date_range = pd.to_datetime(["1850-01-01 00:00:00", "1851-01-01 00:00:00"])
     hgrid = xr.open_dataset(supergrid_path)
@@ -55,7 +61,11 @@ def process_tides(
         seg_ix = str(idx + 1).zfill(3)
         print(f"Processing {boundary_key(boundary)} boundary tides...", end="")
         segment = build_segment(
-            hgrid, boundary, segment_name=f"segment_{seg_ix}", topo=ocn_topo
+            hgrid,
+            boundary,
+            segment_name=f"segment_{seg_ix}",
+            topo=ocn_topo,
+            custom_segments=custom_segments,
         )
         segment.regrid_tides(
             tpxo_v,

@@ -1,6 +1,10 @@
 from CrocoDash.forcing_configurations.base import *
+from CrocoDash.forcing_configurations.configurations import TidesConfigurator
 from ProConPy.config_var import cvars
+from regional_mom6.segment import Segment
 import pytest
+import json
+import xarray as xr
 from types import SimpleNamespace
 import pandas as pd
 
@@ -49,6 +53,34 @@ def test_xml_apply(fake_param_case):
         s = XMLConfigParam("test")
         s.set_item("test")
         s.apply()
+
+
+def test_tides_configurator_serializes_custom_segment_boundary():
+    """A live Segment boundary (a custom/non-cardinal boundary) isn't
+    JSON-serializable itself -- TidesConfigurator must store only its
+    boundary_key string, since the full spec is carried separately in
+    config.json's general.custom_segments. Regression test for the crash
+    this used to hit at json.dump time."""
+    dummy = xr.DataArray([0.0], dims=["nx_interior_west"])
+    interior = Segment(
+        lon=dummy,
+        lat=dummy,
+        angle=dummy,
+        segment_name="interior_west",
+        parallel="nx",
+        perpendicular="ny",
+        axis_to_expand=2,
+    )
+    configurator = TidesConfigurator(
+        tpxo_elevation_filepath="h.nc",
+        tpxo_velocity_filepath="u.nc",
+        tidal_constituents=["M2"],
+        boundaries=["south", interior],
+        start_date="2000, 01, 01",
+    )
+    serialized = configurator.serialize()
+    assert serialized["inputs"]["boundaries"] == ["south", "interior_west"]
+    json.dumps(serialized)  # must not raise
 
 
 def test_all_configurators_args_synced():

@@ -119,6 +119,7 @@ def process_tides():
         boundaries=config["tides"]["inputs"]["boundaries"],
         tpxo_elevation_filepath=config["tides"]["inputs"]["tpxo_elevation_filepath"],
         tpxo_velocity_filepath=config["tides"]["inputs"]["tpxo_velocity_filepath"],
+        custom_segments=config["basic"]["general"].get("custom_segments", {}),
     )
 
 
