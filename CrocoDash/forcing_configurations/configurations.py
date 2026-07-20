@@ -2,6 +2,7 @@ from CrocoDash.forcing_configurations.base import *
 from pathlib import Path
 from ProConPy.config_var import ConfigVar, cvars
 from mom6_forge import mapping
+from CrocoDash.extract_forcings.obc import boundary_key
 
 
 def register(cls):
@@ -65,6 +66,11 @@ class TidesConfigurator(BaseConfigurator):
         date_range=None,
         start_date=None,
     ):
+        # Store boundary-key strings only -- a live Segment (custom boundary)
+        # isn't JSON-serializable, and config.json's general.custom_segments
+        # already carries its full spec for reconstruction at process_tides
+        # time.
+        boundaries = [boundary_key(b) for b in boundaries]
         if date_range is not None:
             # Set the input params
             super().__init__(

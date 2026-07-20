@@ -1,7 +1,6 @@
 import pytest
 from CrocoDash.case import Case
 import os
-import regional_mom6 as rmom6
 import datetime as dt
 import os
 from CrocoDash.forcing_configurations.base import ForcingConfigRegistry
@@ -78,17 +77,6 @@ def test_create_grid_input(get_CrocoDash_case):
         assert len(files) > 0
 
 
-def test_case_expt_smoke(get_CrocoDash_case, tmp_path):
-    case = get_CrocoDash_case
-    case.configure_forcings(
-        date_range=["2020-01-01 00:00:00", "2020-02-01 00:00:00"],
-        tidal_constituents=["M2"],
-        tpxo_elevation_filepath=tmp_path,
-        tpxo_velocity_filepath=tmp_path,
-        chl_processed_filepath=tmp_path,
-        boundaries=["north", "south", "east"],
-    )
-    assert case.expt is not None
 
 
 def test_configure_forcings(get_CrocoDash_case, tmp_path):

@@ -5,13 +5,14 @@ from datetime import datetime
 import json
 import importlib.util
 import pandas as pd
-import regional_mom6 as rmom6
 from CrocoDash.grid import Grid
 from CrocoDash.topo import Topo
 from CrocoDash.vgrid import VGrid
 from CrocoDash.forcing_configurations.base import ForcingConfigRegistry
 from CrocoDash.raw_data_access.registry import ProductRegistry
 from CrocoDash.raw_data_access.base import ForcingProduct
+from CrocoDash.extract_forcings.obc import boundary_key, build_segment
+from regional_mom6.segment import Segment
 from ProConPy.config_var import ConfigVar, cvars
 from ProConPy.stage import Stage
 from ProConPy.dev_utils import ConstraintViolation
@@ -489,9 +490,15 @@ class Case:
             raise ValueError("date_range must have exactly two elements.")
 
         if not isinstance(boundaries, list):
-            raise TypeError("boundaries must be a list of strings.")
-        if not all(isinstance(boundary, str) for boundary in boundaries):
-            raise TypeError("boundaries must be a list of strings.")
+            raise TypeError(
+                "boundaries must be a list of cardinal strings and/or "
+                "regional_mom6.segment.Segment instances."
+            )
+        if not all(isinstance(boundary, (str, Segment)) for boundary in boundaries):
+            raise TypeError(
+                "boundaries must be a list of cardinal strings and/or "
+                "regional_mom6.segment.Segment instances."
+            )
 
         self.boundaries = boundaries
         self.date_range = pd.to_datetime(date_range)
@@ -521,7 +528,13 @@ class Case:
             },
             "general": {
                 "boundary_number_conversion": {
-                    item: idx + 1 for idx, item in enumerate(self.boundaries)
+                    boundary_key(item): idx + 1
+                    for idx, item in enumerate(self.boundaries)
+                },
+                "custom_segments": {
+                    boundary_key(item): item.to_spec()
+                    for item in self.boundaries
+                    if isinstance(item, Segment)
                 },
                 "get_step": None,
                 "regrid_step": 30,
@@ -602,44 +615,6 @@ class Case:
     @property
     def name(self) -> str:
         return self.caseroot.name
-
-    @property
-    def expt(self) -> rmom6.experiment:
-
-        if not hasattr(self, "date_range"):
-            print("Date not found so using a dummy date of 1850-1851")
-            date_range = ("1850-01-01 00:00:00", "1851-01-01 00:00:00")  # Dummy times
-        else:
-            date_range = tuple(
-                ts.strftime("%Y-%m-%d %H:%M:%S") for ts in self.date_range
-            )
-        if not hasattr(self, "boundaries"):
-            print("Boundaries not found so using default")
-            self.boundaries = ["north", "south", "east", "west"]
-        if not hasattr(self, "tidal_constituents"):
-            print("tidal_constituents not found so using only M2")
-            self.tidal_constituents = ["M2"]
-
-        expt = rmom6.experiment(
-            date_range=date_range,
-            resolution=None,
-            number_vertical_layers=None,
-            layer_thickness_ratio=None,
-            depth=self.ocn_topo.max_depth,
-            mom_run_dir=self._cime_case.get_value("RUNDIR"),
-            mom_input_dir=self.inputdir / "ocnice",
-            hgrid_type="from_file",
-            hgrid_path=self.supergrid_path,
-            vgrid_type="from_file",
-            vgrid_path=self.vgrid_path,
-            minimum_depth=self.ocn_topo.min_depth,
-            tidal_constituents=self.tidal_constituents,
-            expt_name=self.caseroot.name,
-            boundaries=self.boundaries,
-        )
-        expt.hgrid = self.ocn_grid.supergrid.to_ds()
-        # expt.vgrid = self.ocn_vgrid.gen_vgrid_ds() # Not implemented yet
-        return expt
 
     def _configure_case(self, atm_grid_name, rof_grid_name):
         """Using visualCaseGen's case configuration pipeline, set the variables for the case based
@@ -923,24 +898,20 @@ class Case:
             ("BRUSHCUTTER_MODE", "True"),
         ]
 
-        # More OBC parameters:
+        # More OBC parameters. Position strings come straight from a
+        # regional_mom6.segment.Segment built for each boundary -- built the
+        # same way (Segment.cardinal / Segment.from_hgrid) whether the
+        # boundary is a cardinal edge or a custom (non-cardinal) Segment; no
+        # regional_mom6.experiment involved.
+        hgrid = xr.open_dataset(self.supergrid_path)
         for seg in self.boundaries:
             seg_ix = str(self.find_MOM6_rectangular_orientation(seg)).zfill(
                 3
             )  # "001", "002", etc.
             seg_id = "OBC_SEGMENT_" + seg_ix
 
-            # Position and config
-            if seg == "south":
-                index_str = '"J=0,I=0:N'
-            elif seg == "north":
-                index_str = '"J=N,I=N:0'
-            elif seg == "west":
-                index_str = '"I=0,J=N:0'
-            elif seg == "east":
-                index_str = '"I=N,J=0:N'
-            else:
-                raise ValueError(f"Unknown segment {seg_id}")
+            segment = build_segment(hgrid, seg, segment_name=f"segment_{seg_ix}")
+            index_str = '"' + segment.mom6_obc_position_string()
             obc_params.append(
                 (
                     seg_id,
