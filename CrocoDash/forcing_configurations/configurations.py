@@ -158,8 +158,8 @@ class BGCConfigurator(BaseConfigurator):
 
 
 @register
-class WW3OBCConfigurator(BaseConfigurator):
-    name = "ww3obc"
+class WW3Configurator(BaseConfigurator):
+    name = "WW3"
     required_for_compsets = ["WW3"]
     allowed_compsets = ["WW3"]
     input_params = [
@@ -173,7 +173,7 @@ class WW3OBCConfigurator(BaseConfigurator):
             comment=(
                 "Name of the WW3 OBC input data product (e.g. 'ERA5'), mirroring "
                 "Case.configure_forcings's product_name/function_name pattern for "
-                "the main IC/OBC product. Plumbing only for now: process_ww3obc "
+                "the main IC/OBC product. Plumbing only for now: process_ww3 "
                 "always generates spectra with the synthetic pulse/calm generator "
                 "regardless of this value, until WW3 OBC sourcing is wired through "
                 "raw_data_access."
