@@ -25,6 +25,7 @@ import regional_mom6 as rm6
 import xarray as xr
 from CrocoDash import logging
 from CrocoDash.extract_forcings import utils
+from CrocoDash.extract_forcings.segment_spec import build_segment
 from CrocoDash.grid import Grid
 
 logger = logging.setup_logger(__name__)
@@ -134,6 +135,25 @@ def _validate_coverage(
 # ---------------------------------------------------------------------------
 
 
+def _boundary_bounding_box(hgrid, boundary: str, custom_segments: dict) -> dict:
+    """The lon/lat bounding box to download raw forcing data for -- one of
+    the 4 cardinal edges (from Grid.get_bounding_boxes), or, for a custom
+    (partial/interior) segment, computed straight from that Segment's own
+    lon/lat."""
+    if boundary not in custom_segments:
+        return Grid.get_bounding_boxes(hgrid)[boundary]
+
+    segment = build_segment(
+        hgrid, boundary, segment_name=f"segment_{boundary}", custom_segments=custom_segments
+    )
+    return {
+        "lon_min": float(segment.lon.min()),
+        "lon_max": float(segment.lon.max()),
+        "lat_min": float(segment.lat.min()),
+        "lat_max": float(segment.lat.max()),
+    }
+
+
 def _get_boundary(
     boundary: str,
     start_date: datetime,
@@ -145,6 +165,7 @@ def _get_boundary(
     function_name: str,
     variables: list,
     extra_args: dict,
+    custom_segments: dict,
 ) -> list:
     """Download all raw data for one boundary, chunked by get_step_days."""
     output_dir = Path(output_dir)
@@ -153,7 +174,7 @@ def _get_boundary(
 
     # Get the bounding box for the specified boundary from the hgrid
     hgrid = xr.open_dataset(hgrid_path)
-    latlon = Grid.get_bounding_boxes(hgrid)[boundary]
+    latlon = _boundary_bounding_box(hgrid, boundary, custom_segments)
 
     for chunk_start, chunk_end in _make_date_pairs(start_date, end_date, get_step_days):
         start_str = chunk_start.strftime("%Y-%m-%d")
@@ -182,6 +203,7 @@ def _regrid_boundary(
     output_folder,
     dataset_varnames: dict,
     fill_method,
+    custom_segments: dict,
 ) -> list:
     """Regrid all raw files for one boundary, sliced by regrid_step_days.
 
@@ -233,27 +255,26 @@ def _regrid_boundary(
 
         try:
             hgrid = xr.open_dataset(hgrid_path)
-            seg = rm6.segment(
-                hgrid=hgrid,
-                bathymetry_path=None,
-                outfolder=output_folder,
+            seg = build_segment(
+                hgrid,
+                boundary,
                 segment_name=f"segment_{seg_id:03d}",
-                orientation=boundary,
-                startdate=chunk_start,
-                repeat_year_forcing=False,
+                custom_segments=custom_segments,
             )
             seg.regrid_velocity_tracers(
                 infile=tmp_file,
                 varnames=dataset_varnames,
+                outfolder=output_folder,
+                startdate=chunk_start,
                 arakawa_grid=None,
-                rotational_method=rm6.rotation.RotationMethod.EXPAND_GRID,
                 regridding_method="bilinear",
                 fill_method=fill_method,
                 regridders=regridders,
+                repeat_year_forcing=False,
                 **kwargs,
             )
-            regridders = seg.regridders
-            temp_path = output_folder / f"forcing_obc_segment_{seg_id:03d}.nc"
+            regridders = seg._regridders
+            temp_path = output_folder / f"forcing_obc_{seg.segment_name}.nc"
             os.rename(temp_path, dated_output)
         finally:
             tmp_file.unlink(missing_ok=True)
@@ -319,6 +340,7 @@ def process_obc_conditions(config_path, preview: bool = False):
 
     general = config["basic"]["general"]
     bnc = general["boundary_number_conversion"]
+    custom_segments = general.get("custom_segments", {})
     # get_step=None → full range in one request; fall back to legacy "step" key
     get_step_days = general.get("get_step", None)
     regrid_step_days = int(general.get("regrid_step", general.get("step", 30)))
@@ -366,6 +388,7 @@ def process_obc_conditions(config_path, preview: bool = False):
             function_name=function_name,
             variables=variables,
             extra_args=extra_args,
+            custom_segments=custom_segments,
         )
 
     regridded_files_by_boundary = {}
@@ -391,6 +414,7 @@ def process_obc_conditions(config_path, preview: bool = False):
             output_folder=str(regridded_path),
             dataset_varnames=product_info,
             fill_method=fill_method,
+            custom_segments=custom_segments,
         )
 
     for boundary in boundaries:

@@ -23,13 +23,19 @@ def test_process_runoff(mock_runoff, is_glade_file_system, tmp_path):
     assert mock_runoff.called
 
 
-@patch("regional_mom6.regional_mom6.experiment.setup_boundary_tides", autospec=True)
-def test_process_tides(mock_tides, tmp_path, gen_grid_topo_vgrid, dummy_tidal_data):
+@patch("regional_mom6.segment.Segment.regrid_tides", autospec=True)
+def test_process_tides(mock_regrid_tides, tmp_path, gen_grid_topo_vgrid, dummy_tidal_data):
+    """process_tides drives Segment directly (Segment.cardinal + regrid_tides) --
+    no regional_mom6.experiment involved. The expensive xESMF regrid step
+    itself is mocked out; the real tidal-file open/rename/complex-transform
+    logic upstream of it still runs for real."""
     grid, topo, vgrid = gen_grid_topo_vgrid
     elev, vel = dummy_tidal_data
     grid.write_supergrid(tmp_path / "grid.nc")
     vgrid.write(tmp_path / "vgrid.nc")
     (tmp_path / "ocnice").mkdir()
+    elev.to_netcdf(tmp_path / "h.nc")
+    vel.to_netcdf(tmp_path / "u.nc")
     tides.process_tides(
         ocn_topo=topo,
         inputdir=tmp_path,
@@ -37,11 +43,11 @@ def test_process_tides(mock_tides, tmp_path, gen_grid_topo_vgrid, dummy_tidal_da
         vgrid_path=tmp_path / "vgrid.nc",
         tidal_constituents=["M2"],
         boundaries=["east"],
-        tpxo_elevation_filepath=elev,
-        tpxo_velocity_filepath=vel,
+        tpxo_elevation_filepath=tmp_path / "h.nc",
+        tpxo_velocity_filepath=tmp_path / "u.nc",
     )
 
-    assert mock_tides.called
+    assert mock_regrid_tides.called
 
 
 @patch("mom6_forge.chl.interpolate_and_fill_seawifs", autospec=True)
