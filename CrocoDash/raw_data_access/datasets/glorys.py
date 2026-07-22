@@ -44,6 +44,7 @@ class GLORYS(ForcingProduct):
     @accessmethod(
         description="Gathers GLORYS data from RDA on computers with access to glade/rda",
         type="python",
+        how_to_use="Requires read access to /glade/campaign/collections/rda/data/d010049/ and the CrocoDash conda environment.",
     )
     def get_glorys_data_from_rda(
         dates: list,
@@ -117,7 +118,11 @@ class GLORYS(ForcingProduct):
         dataset.to_netcdf(path)
         return path
 
-    @accessmethod(description="Python request with copernicusmarine api", type="python")
+    @accessmethod(
+        description="Python request with copernicusmarine api",
+        type="python",
+        how_to_use="Requires the CrocoDash conda environment and a Copernicus Marine account. Log in once with `copernicusmarine login` before use.",
+    )
     def get_glorys_data_from_cds_api(
         dates,
         lat_min,
@@ -149,8 +154,9 @@ class GLORYS(ForcingProduct):
         return Path(output_folder) / output_filename
 
     @accessmethod(
-        description="	Generates bash script for direct CLI run with the copernicusmarine package",
+        description="Generates bash script for direct CLI run with the copernicusmarine package",
         type="script",
+        how_to_use="The generated get_glorys_data.sh requires the CrocoDash conda environment to run (`conda activate CrocoDash`). A Copernicus Marine account is needed — log in once with `copernicusmarine login` before running the script.",
     )
     def get_glorys_data_script_for_cli(
         dates: tuple,

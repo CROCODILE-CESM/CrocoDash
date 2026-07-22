@@ -11,7 +11,9 @@ class GLOFAS(DatedBaseProduct):
     link = "https://ewds.climate.copernicus.eu/datasets/cems-glofas-historical?tab=download"
 
     @accessmethod(
-        description="Gets glofas raw data through the cdsapi package", type="python"
+        description="Gets glofas raw data through the cdsapi package",
+        type="python",
+        how_to_use="Requires a CDS API key — register at https://cds.climate.copernicus.eu and configure ~/.cdsapirc before use.",
     )
     def get_global_data_with_python(
         dates,
@@ -57,6 +59,7 @@ class GLOFAS(DatedBaseProduct):
     @accessmethod(
         description="Generates bash script for access to CESM Inputdata processed glofas data",
         type="script",
+        how_to_use="Only requires `curl`. Downloads pre-processed global GloFAS discharge data from CESM inputdata.",
     )
     def get_processed_global_glofas_script_for_cli(
         dates="UNUSED",
