@@ -363,7 +363,8 @@ def process_obc_conditions(config_path, preview: bool = False):
             "regrid_pairs": _make_date_pairs(start_date, end_date, regrid_step_days),
         }
 
-    variables, extra_args = utils.build_forcing_request(product_info)
+    function_args = config["basic"]["forcing"].get("function_args", {})
+    variables, extra_args = utils.build_forcing_request(product_info, function_args)
 
     if product_info.get("boundary_fill_method", "regional_mom6") != "regional_mom6":
         raise ValueError(

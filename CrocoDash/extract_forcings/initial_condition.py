@@ -44,6 +44,9 @@ def process_initial_condition(
         output_data_dir: Directory for final MOM6-ready output files.
         bathymetry_path: Path to the bathymetry file.
         preview: Return metadata dict without executing, default False.
+        function_args: Overrides for the access function's non-required
+            arguments (e.g. `member`), as written to config.json by
+            configure_forcings()'s function_overrides.
     """
     if not os.path.exists(vgrid_path):
         raise FileNotFoundError(
@@ -63,7 +66,9 @@ def process_initial_condition(
     end_ic_date_str = end_ic_date.strftime("%Y-%m-%d")
     start_date_str = start_date.strftime("%Y-%m-%d")
 
-    variables, extra_args = utils.build_forcing_request(product_information)
+    variables, extra_args = utils.build_forcing_request(
+        product_information, function_args
+    )
     if not preview:
         _download_initial_condition(
             data_access_function=data_access_function,
@@ -195,7 +200,7 @@ def _download_initial_condition(
             output_filename="ic_unprocessed.nc",
             variables=variables,
             name="ic",
-            extra_args = extra_args,
+            extra_args=extra_args,
         )
 
 
