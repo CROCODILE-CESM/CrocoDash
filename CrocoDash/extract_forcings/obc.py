@@ -208,6 +208,7 @@ def _regrid_boundary(
     if "calendar" in dataset_varnames:
         kwargs["calendar"] = dataset_varnames["calendar"]
         kwargs["time_units"] = dataset_varnames["time_units"]
+    hgrid = xr.open_dataset(hgrid_path)
 
     for chunk_start, chunk_end in _make_date_pairs(
         start_date, end_date, regrid_step_days
@@ -232,14 +233,13 @@ def _regrid_boundary(
         ds_full.sel(time=slice(chunk_start, chunk_end)).to_netcdf(tmp_file)
 
         try:
-            hgrid = xr.open_dataset(hgrid_path)
             seg = rm6.segment(
                 hgrid=hgrid,
                 bathymetry_path=None,
                 outfolder=output_folder,
                 segment_name=f"segment_{seg_id:03d}",
                 orientation=boundary,
-                startdate=chunk_start,
+                startdate=start_date,
                 repeat_year_forcing=False,
             )
             seg.regrid_velocity_tracers(
