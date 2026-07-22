@@ -74,6 +74,23 @@ def _parse_regridded_filename_dates(path: Path, seg_id: int):
     return datetime.fromisoformat(start_str), datetime.fromisoformat(end_str)
 
 
+def _files_within_range(
+    files: list, parse_dates, start_date: datetime, end_date: datetime
+) -> list:
+    """Keep only files whose filename date range falls within [start_date, end_date].
+
+    raw_dataset_path is reused across runs, so a directory can accumulate files
+    from a previous run with a different date range. Filtering here keeps
+    _validate_coverage focused on the current request instead of erroring out
+    on unrelated leftover files.
+    """
+    return [
+        f
+        for f in files
+        if start_date <= parse_dates(f)[0] and parse_dates(f)[1] <= end_date
+    ]
+
+
 def _validate_coverage(
     files: list,
     parse_dates,
@@ -209,6 +226,7 @@ def _regrid_boundary(
     if "calendar" in dataset_varnames:
         kwargs["calendar"] = dataset_varnames["calendar"]
         kwargs["time_units"] = dataset_varnames["time_units"]
+    hgrid = xr.open_dataset(hgrid_path)
 
     for chunk_start, chunk_end in _make_date_pairs(
         start_date, end_date, regrid_step_days
@@ -230,17 +248,22 @@ def _regrid_boundary(
             continue
 
         tmp_file = output_folder / f"_tmp_{boundary}_{start_str}_{end_str}.nc"
+        # Raw product timestamps (e.g. GLORYS daily means) are stamped at
+        # noon, not midnight — push chunk_end to end-of-day so label-based
+        # .sel() doesn't silently drop the last day's sample at each chunk
+        # boundary. Mirrors make_dates_end_inclusive in raw_data_access.
+        chunk_end_inclusive = chunk_end + timedelta(hours=23, minutes=59, seconds=59)
+        end_str = chunk_end_inclusive.strftime("%Y-%m-%d")
         ds_full.sel(time=slice(start_str, end_str)).to_netcdf(tmp_file)
 
         try:
-            hgrid = xr.open_dataset(hgrid_path)
             seg = rm6.segment(
                 hgrid=hgrid,
                 bathymetry_path=None,
                 outfolder=output_folder,
                 segment_name=f"segment_{seg_id:03d}",
                 orientation=boundary,
-                startdate=chunk_start,
+                startdate=start_date,
                 repeat_year_forcing=False,
             )
             seg.regrid_velocity_tracers(
@@ -340,7 +363,8 @@ def process_obc_conditions(config_path, preview: bool = False):
             "regrid_pairs": _make_date_pairs(start_date, end_date, regrid_step_days),
         }
 
-    variables, extra_args = utils.build_forcing_request(product_info)
+    function_args = config["basic"]["forcing"].get("function_args", {})
+    variables, extra_args = utils.build_forcing_request(product_info, function_args)
 
     if product_info.get("boundary_fill_method", "regional_mom6") != "regional_mom6":
         raise ValueError(
@@ -372,9 +396,17 @@ def process_obc_conditions(config_path, preview: bool = False):
     regridded_files_by_boundary = {}
     for boundary in boundaries:
         seg_id = bnc[boundary]
+        parse_raw_dates = lambda f, boundary=boundary: _parse_raw_filename_dates(
+            f, boundary
+        )
         raw_files = _validate_coverage(
-            sorted(raw_path.glob(f"{boundary}_unprocessed.*.nc")),
-            lambda f: _parse_raw_filename_dates(f, boundary),
+            _files_within_range(
+                sorted(raw_path.glob(f"{boundary}_unprocessed.*.nc")),
+                parse_raw_dates,
+                start_date,
+                end_date,
+            ),
+            parse_raw_dates,
             boundary,
             start_date,
             end_date,
