@@ -42,6 +42,7 @@
     <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'api-docs/CrocoDash';</script>
+    <link rel="icon" href="../_static/crocodile.png"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="CrocoDash.extract_forcings package" href="CrocoDash.extract_forcings.html" />
@@ -159,22 +160,24 @@
 <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://crocodile-cesm.github.io/CrocoGallery/">Tutorials &amp; Gallery</a></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../for_users/index.html">User Information</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
-<li class="toctree-l2"><a class="reference internal" href="../for_users/structure.html">How CrocoDash Is Organized</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../for_users/grids.html">Grid Stuff (Supergrid, Bathymetry, Vgrid)</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../for_users/index.html">User Guide</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../for_users/1_grids.html">1. Grids (hgrid · topo · vgrid)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_users/2_case_setup.html">2. Case Setup (<code class="docutils literal notranslate"><span class="pre">Case</span></code> object)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_users/3a_configure_forcings.html">3a. Configure Forcings (case.configure_forcings)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_users/3b_process_forcings.html">3b. Process Forcings (<code class="docutils literal notranslate"><span class="pre">case.process_forcings</span></code>)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_users/compsets_and_inputs.html">Regional Compsets &amp; Input Parameters</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_users/datasets.html">Accessing Raw Data (raw_data_access)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../for_users/forcing_configurations.html">Forcing Configuration (case.configure_forcings)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../for_users/extract_forcings.html">Extract Forcings (case.process_forcings)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../for_users/case_information.html">Extra CESM Case Information</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_users/shareable.html">Shareable Configuration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_users/additional_resources.html">Additional Resources</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../for_developers/index.html">Want to do more?</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
-<li class="toctree-l2"><a class="reference internal" href="../for_developers/dev_info.html">Get started developing!</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../for_developers/edit_docs.html">Write Documentation</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../for_developers/index.html">Developer Guide</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../for_developers/architecture.html">Architecture</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_developers/adding_data_access.html">Adding Data to the Data Access Module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_developers/adding_forcing_configurations.html">Adding Forcing Configurations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_developers/submodule_api_usage.html">Submodule API Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_developers/edit_docs.html">Write Documentation</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://github.com/CROCODILE-CESM/CrocoDash/discussions/138">Semi-Official ChangeLog</a></li>
 </ul>
 </details></li>
 <li class="toctree-l1 current active has-children"><a class="reference internal" href="modules.html">CrocoDash API Docs</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
@@ -188,6 +191,7 @@
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html">CrocoDash.raw_data_access.datasets package</a></li>
 </ul>
 </details></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.shareable.html">CrocoDash.shareable package</a></li>
 </ul>
 </details></li>
 </ul>
@@ -361,6 +365,10 @@ document.write(`
 </li>
 </ul>
 </li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.cli">CrocoDash.cli module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.cli.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.grid">CrocoDash.grid module</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.grid_creator">CrocoDash.grid_creator module</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.logging">CrocoDash.logging module</a><ul class="nav section-nav flex-column">
@@ -410,9 +418,15 @@ document.write(`
 <li class="toctree-l3"><a class="reference internal" href="CrocoDash.extract_forcings.html#CrocoDash.extract_forcings.chlorophyll.process_chl"><code class="docutils literal notranslate"><span class="pre">process_chl()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="CrocoDash.extract_forcings.html#crocodash-extract-forcings-get-dataset-piecewise-module">CrocoDash.extract_forcings.get_dataset_piecewise module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="CrocoDash.extract_forcings.html#crocodash-extract-forcings-merge-piecewise-dataset-module">CrocoDash.extract_forcings.merge_piecewise_dataset module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="CrocoDash.extract_forcings.html#crocodash-extract-forcings-regrid-dataset-piecewise-module">CrocoDash.extract_forcings.regrid_dataset_piecewise module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="CrocoDash.extract_forcings.html#module-CrocoDash.extract_forcings.initial_condition">CrocoDash.extract_forcings.initial_condition module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.extract_forcings.html#CrocoDash.extract_forcings.initial_condition.final_cleanliness_fill"><code class="docutils literal notranslate"><span class="pre">final_cleanliness_fill()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.extract_forcings.html#CrocoDash.extract_forcings.initial_condition.process_initial_condition"><code class="docutils literal notranslate"><span class="pre">process_initial_condition()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="CrocoDash.extract_forcings.html#module-CrocoDash.extract_forcings.obc">CrocoDash.extract_forcings.obc module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.extract_forcings.html#CrocoDash.extract_forcings.obc.process_obc_conditions"><code class="docutils literal notranslate"><span class="pre">process_obc_conditions()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="CrocoDash.extract_forcings.html#module-CrocoDash.extract_forcings.runoff">CrocoDash.extract_forcings.runoff module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="CrocoDash.extract_forcings.html#CrocoDash.extract_forcings.runoff.generate_rof_ocn_map"><code class="docutils literal notranslate"><span class="pre">generate_rof_ocn_map()</span></code></a></li>
 </ul>
@@ -657,13 +671,65 @@ document.write(`
 </li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="CrocoDash.raw_data_access.html#module-CrocoDash.raw_data_access.utils">CrocoDash.raw_data_access.utils module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.utils.fill_template"><code class="docutils literal notranslate"><span class="pre">fill_template()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.utils.load_config"><code class="docutils literal notranslate"><span class="pre">load_config()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.utils.setup_logger"><code class="docutils literal notranslate"><span class="pre">setup_logger()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="CrocoDash.raw_data_access.html#module-CrocoDash.raw_data_access">Module contents</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="CrocoDash.raw_data_access.html#module-CrocoDash.raw_data_access">Module contents</a></li>
+<li class="toctree-l1"><a class="reference internal" href="CrocoDash.shareable.html">CrocoDash.shareable package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="CrocoDash.shareable.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="CrocoDash.shareable.html#module-CrocoDash.shareable.apply">CrocoDash.shareable.apply module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.shareable.html#CrocoDash.shareable.apply.apply_xmlchanges_to_case"><code class="docutils literal notranslate"><span class="pre">apply_xmlchanges_to_case()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.shareable.html#CrocoDash.shareable.apply.copy_configurations_to_case"><code class="docutils literal notranslate"><span class="pre">copy_configurations_to_case()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.shareable.html#CrocoDash.shareable.apply.copy_source_mods_from_case"><code class="docutils literal notranslate"><span class="pre">copy_source_mods_from_case()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.shareable.html#CrocoDash.shareable.apply.copy_user_nl_params_from_case"><code class="docutils literal notranslate"><span class="pre">copy_user_nl_params_from_case()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.shareable.html#CrocoDash.shareable.apply.copy_xml_files_from_case"><code class="docutils literal notranslate"><span class="pre">copy_xml_files_from_case()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="CrocoDash.shareable.html#module-CrocoDash.shareable.bundle">CrocoDash.shareable.bundle module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.shareable.html#CrocoDash.shareable.bundle.BundleCrocoDashCase"><code class="docutils literal notranslate"><span class="pre">BundleCrocoDashCase</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.shareable.html#CrocoDash.shareable.bundle.BundleCrocoDashCase.bundle"><code class="docutils literal notranslate"><span class="pre">BundleCrocoDashCase.bundle()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.shareable.html#CrocoDash.shareable.bundle.BundleCrocoDashCase.case"><code class="docutils literal notranslate"><span class="pre">BundleCrocoDashCase.case</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.shareable.html#CrocoDash.shareable.bundle.BundleCrocoDashCase.diff"><code class="docutils literal notranslate"><span class="pre">BundleCrocoDashCase.diff()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.shareable.html#CrocoDash.shareable.bundle.BundleCrocoDashCase.duplicate_case"><code class="docutils literal notranslate"><span class="pre">BundleCrocoDashCase.duplicate_case()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.shareable.html#CrocoDash.shareable.bundle.BundleCrocoDashCase.generate_manifest"><code class="docutils literal notranslate"><span class="pre">BundleCrocoDashCase.generate_manifest()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.shareable.html#CrocoDash.shareable.bundle.BundleCrocoDashCase.get_user_nl_value"><code class="docutils literal notranslate"><span class="pre">BundleCrocoDashCase.get_user_nl_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.shareable.html#CrocoDash.shareable.bundle.BundleCrocoDashCase.identify_non_standard_CrocoDash_case_information"><code class="docutils literal notranslate"><span class="pre">BundleCrocoDashCase.identify_non_standard_CrocoDash_case_information()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.shareable.html#CrocoDash.shareable.bundle.BundleCrocoDashCase.reread"><code class="docutils literal notranslate"><span class="pre">BundleCrocoDashCase.reread()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.shareable.html#CrocoDash.shareable.bundle.duplicate_case"><code class="docutils literal notranslate"><span class="pre">duplicate_case()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.shareable.html#CrocoDash.shareable.bundle.get_case_obj"><code class="docutils literal notranslate"><span class="pre">get_case_obj()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.shareable.html#CrocoDash.shareable.bundle.run_xmlquery"><code class="docutils literal notranslate"><span class="pre">run_xmlquery()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="CrocoDash.shareable.html#module-CrocoDash.shareable.fork">CrocoDash.shareable.fork module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.shareable.html#CrocoDash.shareable.fork.BundleDifferences"><code class="docutils literal notranslate"><span class="pre">BundleDifferences</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.shareable.html#CrocoDash.shareable.fork.BundleDifferences.source_mods_missing_files"><code class="docutils literal notranslate"><span class="pre">BundleDifferences.source_mods_missing_files</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.shareable.html#CrocoDash.shareable.fork.BundleDifferences.user_nl_missing_params"><code class="docutils literal notranslate"><span class="pre">BundleDifferences.user_nl_missing_params</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.shareable.html#CrocoDash.shareable.fork.BundleDifferences.xml_files_missing_in_new"><code class="docutils literal notranslate"><span class="pre">BundleDifferences.xml_files_missing_in_new</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.shareable.html#CrocoDash.shareable.fork.BundleDifferences.xmlchanges_missing"><code class="docutils literal notranslate"><span class="pre">BundleDifferences.xmlchanges_missing</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.shareable.html#CrocoDash.shareable.fork.BundleManifest"><code class="docutils literal notranslate"><span class="pre">BundleManifest</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.shareable.html#CrocoDash.shareable.fork.BundleManifest.forcing_config"><code class="docutils literal notranslate"><span class="pre">BundleManifest.forcing_config</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.shareable.html#CrocoDash.shareable.fork.BundleManifest.init_args"><code class="docutils literal notranslate"><span class="pre">BundleManifest.init_args</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.shareable.html#CrocoDash.shareable.fork.BundleManifest.paths"><code class="docutils literal notranslate"><span class="pre">BundleManifest.paths</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.shareable.html#CrocoDash.shareable.fork.BundleManifest.sourcemods"><code class="docutils literal notranslate"><span class="pre">BundleManifest.sourcemods</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.shareable.html#CrocoDash.shareable.fork.BundleManifest.user_nl_info"><code class="docutils literal notranslate"><span class="pre">BundleManifest.user_nl_info</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.shareable.html#CrocoDash.shareable.fork.BundleManifest.xmlchanges"><code class="docutils literal notranslate"><span class="pre">BundleManifest.xmlchanges</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.shareable.html#CrocoDash.shareable.fork.ForkCrocoDashBundle"><code class="docutils literal notranslate"><span class="pre">ForkCrocoDashBundle</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.shareable.html#CrocoDash.shareable.fork.ForkCrocoDashBundle.apply_copy_plan"><code class="docutils literal notranslate"><span class="pre">ForkCrocoDashBundle.apply_copy_plan()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.shareable.html#CrocoDash.shareable.fork.ForkCrocoDashBundle.fork"><code class="docutils literal notranslate"><span class="pre">ForkCrocoDashBundle.fork()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.shareable.html#CrocoDash.shareable.fork.ask_string"><code class="docutils literal notranslate"><span class="pre">ask_string()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.shareable.html#CrocoDash.shareable.fork.ask_yes_no"><code class="docutils literal notranslate"><span class="pre">ask_yes_no()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.shareable.html#CrocoDash.shareable.fork.create_case"><code class="docutils literal notranslate"><span class="pre">create_case()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.shareable.html#CrocoDash.shareable.fork.generate_configure_forcing_args"><code class="docutils literal notranslate"><span class="pre">generate_configure_forcing_args()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="CrocoDash.shareable.html#module-CrocoDash.shareable">Module contents</a></li>
 </ul>
 </li>
 </ul>
@@ -831,6 +897,14 @@ within this method and must be handled externally.</p></li>
 </dd></dl>
 
 </section>
+<section id="module-CrocoDash.cli">
+<span id="crocodash-cli-module"></span><h2>CrocoDash.cli module<a class="headerlink" href="#module-CrocoDash.cli" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.cli.main">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.cli.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.cli.main" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+</section>
 <section id="module-CrocoDash.grid">
 <span id="crocodash-grid-module"></span><h2>CrocoDash.grid module<a class="headerlink" href="#module-CrocoDash.grid" title="Link to this heading">#</a></h2>
 </section>
@@ -938,6 +1012,10 @@ within this method and must be handled externally.</p></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.case.Case.ww3_in_compset"><code class="docutils literal notranslate"><span class="pre">Case.ww3_in_compset</span></code></a></li>
 </ul>
 </li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.cli">CrocoDash.cli module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.cli.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.grid">CrocoDash.grid module</a></li>
