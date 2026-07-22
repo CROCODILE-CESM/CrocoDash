@@ -2,8 +2,9 @@ import subprocess
 import json
 
 
-def test_case_integration_driver(get_CrocoDash_case, skip_if_not_glade):
-    case = get_CrocoDash_case
+def test_case_integration_driver(CrocoDash_case_factory, tmp_path, skip_if_not_glade):
+    """Verify configure_forcings creates extract_forcings/ and crocodash process can load it."""
+    case = CrocoDash_case_factory(tmp_path)
     case.configure_forcings(
         date_range=["2020-01-01 00:00:00", "2020-01-02 00:00:00"],
         boundaries=["north", "south", "east"],
@@ -11,20 +12,19 @@ def test_case_integration_driver(get_CrocoDash_case, skip_if_not_glade):
     )
     large_data_workflow_path = case.inputdir / "extract_forcings"
     assert (large_data_workflow_path).exists()
+    # No component flags → "No components selected", returncode 0
     result = subprocess.run(
-        ["python", large_data_workflow_path / "driver.py", "--test"],
+        ["crocodash", "process", "--caseroot", str(case.caseroot)],
         capture_output=True,
         text=True,
     )
-    print(result.stdout)  # Output of the script
-
+    print(result.stdout)
     assert result.returncode == 0
+    assert "--all" in result.stdout
 
-    return
 
-
-def test_case_integration_config(get_CrocoDash_case):
-    case = get_CrocoDash_case
+def test_case_integration_config(CrocoDash_case_factory, tmp_path):
+    case = CrocoDash_case_factory(tmp_path)
     case.configure_forcings(
         date_range=["2020-01-01 00:00:00", "2020-02-01 00:00:00"],
         boundaries=["north", "south", "east"],
@@ -37,20 +37,13 @@ def test_case_integration_config(get_CrocoDash_case):
     with open(large_data_workflow_path / "config.json", "r") as f:
         config = json.load(f)
     # Top-level keys
-    assert set(config["basic"].keys()) == {
-        "paths",
-        "file_regex",
-        "dates",
-        "forcing",
-        "general",
-    }
+    assert set(config["conditions"].keys()) == {"name", "inputs", "outputs"}
+    assert "caseroot" in config
 
 
-def test_driver_works(get_CrocoDash_case, tmp_path):
-    """
-    Test that the setup for the forcings works
-    """
-    case = get_CrocoDash_case
+def test_driver_works(CrocoDash_case_factory, tmp_path):
+    """Verify configure_forcings creates the right structure and crocodash process can be invoked."""
+    case = CrocoDash_case_factory(tmp_path / "case")
     case.configure_forcings(
         date_range=["2020-01-01 00:00:00", "2020-02-01 00:00:00"],
         tidal_constituents=["M2"],
@@ -62,7 +55,9 @@ def test_driver_works(get_CrocoDash_case, tmp_path):
     large_data_workflow_path = case.inputdir / "extract_forcings"
     assert (large_data_workflow_path).exists()
     result = subprocess.run(
-        ["python", large_data_workflow_path / "driver.py", "--tides"],
+        ["crocodash", "process", "--caseroot", str(case.caseroot), "--help"],
         capture_output=True,
         text=True,
     )
+    assert result.returncode == 0
+    assert "--all" in result.stdout

@@ -1,10 +1,6 @@
-import pytest
-from CrocoDash.case import Case
 import os
-import regional_mom6 as rmom6
 import datetime as dt
 import os
-from CrocoDash.forcing_configurations.base import ForcingConfigRegistry
 from uuid import uuid4
 
 
@@ -15,30 +11,14 @@ def file_with_prefix_exists(directory, prefix):
     return False
 
 
-def test_case_init(CrocoDash_case_factory, tmp_path_factory):
-
-    compsets = [
-        "1850_DATM%JRA_SLND_SICE_MOM6_SROF_SGLC_SWAV",
-    ]
-
-    # Setup Case
-    for c in compsets:
-        case = CrocoDash_case_factory(
-            tmp_path_factory.mktemp(f"case-{uuid4().hex}"),
-            configure_forcings=False,
-            compset=c,
-        )
-
-        # Check some basics
-        assert case is not None
-        assert os.path.exists(case.caseroot)
-        assert os.path.exists(case.inputdir)
-        assert file_with_prefix_exists(case.inputdir / "ocnice", "ocean_hgrid")
-        assert file_with_prefix_exists(case.caseroot, "README")
-
-
-def test_create_grid_input(get_CrocoDash_case):
+def test_case_init_and_create_grid_input(get_CrocoDash_case):
     case = get_CrocoDash_case
+    assert case is not None
+    assert os.path.exists(case.caseroot)
+    assert os.path.exists(case.inputdir)
+    assert file_with_prefix_exists(case.inputdir / "ocnice", "ocean_hgrid")
+    assert file_with_prefix_exists(case.caseroot, "README")
+
     files = [
         f
         for f in os.listdir(case.inputdir / "ocnice")
@@ -78,94 +58,15 @@ def test_create_grid_input(get_CrocoDash_case):
         assert len(files) > 0
 
 
-def test_case_expt_smoke(get_CrocoDash_case, tmp_path):
-    case = get_CrocoDash_case
-    case.configure_forcings(
-        date_range=["2020-01-01 00:00:00", "2020-02-01 00:00:00"],
-        tidal_constituents=["M2"],
-        tpxo_elevation_filepath=tmp_path,
-        tpxo_velocity_filepath=tmp_path,
-        chl_processed_filepath=tmp_path,
-        boundaries=["north", "south", "east"],
-    )
+def test_configure_forcings(get_case_with_cf):
+    case = get_case_with_cf
     assert case.expt is not None
-
-
-def test_configure_forcings(get_CrocoDash_case, tmp_path):
-    """
-    Test that the setup for the forcings works
-    """
-    case = get_CrocoDash_case
-    case.configure_forcings(
-        date_range=["2020-01-01 00:00:00", "2020-02-01 00:00:00"],
-        tidal_constituents=["M2"],
-        tpxo_elevation_filepath=tmp_path,
-        tpxo_velocity_filepath=tmp_path,
-        chl_processed_filepath=tmp_path,
-        boundaries=["north", "south", "east"],
-    )
-
     assert case.date_range[0].year == 2020
-    assert case.fcr["tides"].tidal_constituents == ["M2"]
-    assert case.boundaries == ["north", "south", "east"]
-
-
-def test_process_forcing(get_CrocoDash_case, tmp_path):
-    """
-    Test that the setup for the forcings works
-    """
-    case = get_CrocoDash_case
-    case.configure_forcings(
-        date_range=["2020-01-01 00:00:00", "2020-02-01 00:00:00"],
-        tidal_constituents=["M2"],
-        tpxo_elevation_filepath=tmp_path,
-        tpxo_velocity_filepath=tmp_path,
-        chl_processed_filepath=tmp_path,
-        boundaries=["north"],
-    )
-    path = case.inputdir / "glorys" / "large_data_workflow" / "raw_data"
-    filenames = ["ic_unprocessed.nc", "north_unprocessed.nc"]
-    with pytest.raises(FileNotFoundError):
-        case.process_forcings()
-
-    # Test CHL processing raises error in mom6_forge.chl, so we know the connection works
-    with pytest.raises(
-        ValueError,
-        match="did not find a match in any of xarray's currently installed IO backends",
-    ):
-        case.process_forcings(
-            process_tides=False,
-            process_initial_condition=False,
-            process_velocity_tracers=False,
-        )
-
-
-def test_update_forcing_variables(get_CrocoDash_case):
-    case = get_CrocoDash_case
-
+    assert case.boundaries == ["north", "east"]
     search_string = "OBC_NUMBER_OF_SEGMENTS"
-    found_user_nl_mom_adjusted_var = False
-    case.tidal_constituents = ["M2"]
-    case.boundaries = []
-    case.chl_processed_filepath = case.inputdir
-    case.date_range = [
-        dt.datetime.strptime("2020-01-01", "%Y-%m-%d"),
-        dt.datetime.strptime("2020-02-01", "%Y-%m-%d"),
-    ]
-    case.forcing_product_name = "glorys"
-    case.runoff_esmf_mesh_filepath = True
-    case.marbl_ic_filepath = "PATH"
-    case.regional_chl_file_path = "Path"
-    case.runoff_mapping_file_nnsm = "Path"
-    case.cice_file = "Path"
-    case.configured_tides = True
-    case.configured_chl = True
-    case.configured_runoff = True
-    case._update_forcing_variables()
-
     with open(case.caseroot / "user_nl_mom", "r", encoding="utf-8") as file:
         for line in file:
             if search_string in line:
                 found_user_nl_mom_adjusted_var = True
                 break
-    return found_user_nl_mom_adjusted_var
+    assert found_user_nl_mom_adjusted_var

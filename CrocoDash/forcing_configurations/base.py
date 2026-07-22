@@ -42,6 +42,8 @@ class ForcingConfigRegistry:
             inputs = inputs | self.case_info
         inputs["compset"] = compset
         self.find_active_configurators(self.compset, inputs)
+        for configurator in self.active_configurators.values():
+            configurator.registry = self
 
     @classmethod
     def get_configurator_from_name(cls, name):
@@ -324,6 +326,24 @@ class XMLConfigParam(OutputParam):
         self.set_item(runout.stdout.decode().strip())
 
 
+class ConfigOutputParam(OutputParam):
+    """
+    Derived value with no case-side effect (not written to user_nl or xmlchange'd).
+
+    Exists purely so `set_output_param()` + the generic `serialize()` pick it up
+    under a configurator's `outputs`, for values consumed only via config.json
+    (e.g. by extract_forcings).
+    """
+
+    def apply(self):
+        if self.value is None:
+            raise ValueError(f"Value for parameter {self.name} has not been set.")
+        self.executed = True
+
+    def inspect(self, caseroot):
+        pass
+
+
 class BaseConfigurator(ABC):
     """Base class for all CrocoDash configurators."""
 
@@ -336,6 +356,11 @@ class BaseConfigurator(ABC):
 
     input_params: List[Param]
     output_params: List[OutputParam]
+
+    # Injected by ForcingConfigRegistry.__init__ after all active configurators
+    # are instantiated; lets a configurator look up a sibling's pure helper
+    # methods (e.g. ConditionsConfigurator reading TidesConfigurator.tidal_data_str()).
+    registry: Optional["ForcingConfigRegistry"] = None
 
     def __eq__(self, other):
         if not isinstance(other, BaseConfigurator):

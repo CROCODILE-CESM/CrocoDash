@@ -1,5 +1,5 @@
-from CrocoDash.shareable import bundle, fork
-from CrocoDash.shareable.bundle import duplicate_case
+from CrocoDash import shareable
+from CrocoDash.shareable import duplicate_case, CaseBundle, ForkBundle
 from unittest.mock import patch
 import subprocess
 from pathlib import Path
@@ -13,34 +13,39 @@ def test_duplicate_case(get_case_with_cf, tmp_path):
     new_caseroot = tmp_path / "duplicated_case"
     new_inputdir = tmp_path / "duplicated_inputdir"
 
-    with patch("CrocoDash.shareable.fork.copy_configurations_to_case"):
-        new_case = duplicate_case(case.caseroot, new_caseroot, new_inputdir)
+    # configure_forcings doesn't produce NetCDF files — seed the ocnice dir
+    # with fake forcing files so the copy logic has something to transfer.
+    old_ocnice = Path(case.inputdir) / "ocnice"
+    old_ocnice.mkdir(parents=True, exist_ok=True)
+    fake_files = ["forcing_obc_seg_001.nc", "init_temp_salt.nc"]
+    for fname in fake_files:
+        (old_ocnice / fname).write_text("fake")
+
+    new_case = duplicate_case(case.caseroot, new_caseroot, new_inputdir)
 
     assert new_case is not None
     assert new_caseroot.exists()
-    assert any(new_caseroot.glob("*_case_bundle"))
+    new_ocnice = new_inputdir / "ocnice"
+    for fname in fake_files:
+        assert (new_ocnice / fname).exists()
 
 
 @pytest.mark.slow
 def test_pass_from_inspect_to_fork_no_change(get_case_with_cf, tmp_path):
     case = get_case_with_cf
-    rcc = bundle.BundleCrocoDashCase(case.caseroot)
-    rcc.identify_non_standard_CrocoDash_case_information(
-        rcc.cesmroot, case.machine, case.project
-    )
+    rcc = CaseBundle(case.caseroot)
+    rcc.identify_non_standard_case_info(rcc.cesmroot, case.machine, case.project)
     loc = rcc.bundle(tmp_path)
-    with patch("CrocoDash.shareable.fork.ask_yes_no", return_value=False), patch(
-        "CrocoDash.shareable.fork.ask_string", return_value=""
-    ), patch("CrocoDash.shareable.fork.copy_xml_files_from_case"), patch(
-        "CrocoDash.shareable.fork.copy_user_nl_params_from_case"
+    with patch("CrocoDash.shareable.ask_yes_no", return_value=False), patch(
+        "CrocoDash.shareable.ask_string", return_value=""
+    ), patch("CrocoDash.shareable.copy_xml_files_from_case"), patch(
+        "CrocoDash.shareable.copy_user_nl_params_from_case"
     ), patch(
-        "CrocoDash.shareable.fork.copy_source_mods_from_case"
+        "CrocoDash.shareable.copy_source_mods_from_case"
     ), patch(
-        "CrocoDash.shareable.fork.apply_xmlchanges_to_case"
-    ), patch(
-        "CrocoDash.shareable.fork.copy_configurations_to_case"
+        "CrocoDash.shareable.apply_xmlchanges_to_case"
     ):
-        fcb = fork.ForkCrocoDashBundle(loc)
+        fcb = ForkBundle(loc)
         fcb.fork(
             rcc.cesmroot,
             case.machine,
@@ -73,15 +78,13 @@ def test_pass_from_inspect_to_fork_with_changes(get_case_with_cf, tmp_path):
     user_nl_path = Path(case.caseroot) / "user_nl_mom"
     with open(user_nl_path, "a") as f:
         f.write("\nDEBUG=TRUE\n")
-    rcc = bundle.BundleCrocoDashCase(case.caseroot)
-    rcc.identify_non_standard_CrocoDash_case_information(
-        rcc.cesmroot, case.machine, case.project
-    )
+    rcc = CaseBundle(case.caseroot)
+    rcc.identify_non_standard_case_info(rcc.cesmroot, case.machine, case.project)
     loc = rcc.bundle(tmp_path)
-    with patch("CrocoDash.shareable.fork.ask_yes_no", return_value=True), patch(
-        "CrocoDash.shareable.fork.ask_string", return_value=""
+    with patch("CrocoDash.shareable.ask_yes_no", return_value=True), patch(
+        "CrocoDash.shareable.ask_string", return_value=""
     ):
-        fcb = fork.ForkCrocoDashBundle(loc)
+        fcb = ForkBundle(loc)
         fcb.fork(
             rcc.cesmroot,
             case.machine,

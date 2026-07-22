@@ -1,104 +1,97 @@
 # 3b. Process Forcings (`case.process_forcings`)
 
-This is the final step of the CrocoDash workflow: actually generating all the
-forcing files your simulation needs (initial conditions, boundary conditions,
-tides, BGC fields, runoff mappings, chlorophyll, …).
-
-## What this module does
-
-`case.process_forcings` wraps the `extract_forcings` submodule. `extract_forcings`
-is a collection of scripts — one per forcing type — that regrid and format data
-for MOM6.
-
-## How it integrates with `configure_forcings`
-
-Under `extract_forcings/` there's a `case_setup/` directory containing a
-`driver.py` and a `config.json`. The `config.json` is written by
-[`case.configure_forcings`](3a_configure_forcings.md); it stores every path,
-date, and option your case needs. The `driver.py` reads that config and
-dispatches to the right processing scripts.
-
-When you call `case.configure_forcings(...)`, CrocoDash **copies the whole
-`case_setup/` directory into your case's `inputdir/extract_forcings/`**. That
-copy is fully standalone: you can submit it as a batch job without going through the workflow again.
-
-`case.process_forcings` just shells into that directory and runs the driver —
-which means you can also run the driver yourself from the command line.
+The final part of the CrocoDash workflow is extracting and processing all the forcing data your simulation needs. This includes initial conditions, boundary conditions, tidal forcings, biogeochemistry data, and more. You process all of this data through the `case.process_forcings` call. `case.process_forcings` wraps a submodule of CrocoDash called extract_forcings. Extract_forcings is a set of scripts to process each forcing, like initial/boundary conditions, tides, etc... You trigger this from Python via `case.process_forcings()`, or from the shell via `crocodash process`.
 
 ## Workflow Overview
 
-When you run the CrocoDash workflow, configure_forcings and process_forcings:
-1. copies a ready-to-run forcing extraction system into your case directories (from `case.configure_forcings`)
-2. Runs it to download data from external sources
-3. Regrids data to your custom domain
-4. Formats everything for MOM6
+1. `case.configure_forcings(...)` — writes `inputdir/extract_forcings/config.json` with your case-specific forcing setup
+2. `case.process_forcings(...)` — reads that config and runs the extraction pipeline
+3. Outputs land in `inputdir/ocnice/`
 
-The key insight: **you don't have to run this from a Jupyter notebook**. You get a complete, standalone extraction system that you can submit to your supercomputer's job queue.
+The key insight: **you don't have to run this from a Jupyter notebook**. After `configure_forcings` completes you can submit the extraction as a batch job using the CLI:
+
+```bash
+crocodash process --caseroot ~/croc_cases/mycase --all
+```
 
 ## Directory Structure
 
-When CrocoDash sets up your case, it creates an `extract_forcings` directory in your input folder:
-
 ```
-input_directory/
+inputdir/
 ├── extract_forcings/
-│   ├── driver.py              # Main script that orchestrates everything
-│   ├── config.json            # Your case-specific configuration
-└── ocnice/                    # Output goes here
-    ├── initial_conditions.nc
-    ├── boundary_conditions/
-    ├── tides/
+│   └── config.json        # Written by case.configure_forcings
+└── ocnice/                # Output goes here
+    ├── init_eta_filled.nc
+    ├── init_vel_filled.nc
+    ├── init_tracers_filled.nc
+    ├── forcing_obc_segment_001.nc
     └── ...
 ```
 
+## Command-Line Interface
 
-## Command-Line Options
-
-The driver script accepts several options for fine-grained control:
+See [CLI reference](cli.md#crocodash-process) for full flag documentation.
 
 ```bash
 # Run all forcing extractions
-python driver.py --all
-
-# Check that config and imports are valid without processing anything
-python driver.py --test
+crocodash process --caseroot ~/croc_cases/mycase --all
 
 # Run only specific forcings
-python driver.py --ic --bc            # initial + boundary conditions
-python driver.py --tides
-python driver.py --runoff
-python driver.py --bgcic --bgcironforcing --bgcrivernutrients
-python driver.py --chl
+crocodash process  --tides
+crocodash process  --runoff
+crocodash process  --bgc
 
 # Run multiple forcings
-python driver.py --tides --runoff
+crocodash process  --tides --runoff --bgc
 
-# Run all except certain components (names are the flag names, case-insensitive)
-python driver.py --all --skip bgcic
-python driver.py --all --skip tides runoff
+# Run all except certain forcings
+crocodash process  --all --skip bgcic
+crocodash process  --all --skip conditions bgcic
+
+# Skip entire processing phases
+crocodash process  --all --skip conditions
 ```
 
-This flexibility is intentional—you might want to:
+This flexibility lets you:
 - Test individual components without running everything
 - Re-run one forcing type if your source data changed
-- Run on a supercomputer queue while iterating elsewhere
-- Resume after an interrupted run
+- Submit to a batch queue and re-run from the CLI after a failure
+- Resume a partially-completed run
+
+## Python API
+
+You can also call the driver directly from Python:
+
+```python
+from CrocoDash.extract_forcings.driver import run_workflow
+
+run_workflow(
+    config_path="~/scratch/croc_input/mycase/extract_forcings/config.json",
+    ic=True,
+    bc=True,
+    tides=True,
+)
+```
 
 ## The Processing Pipeline
 
-Here's what happens internally when the driver runs:
-
 ```
-1. Load config.json with your case specifications
-   ↓
-2. Calls an extract_forcing script
-   ↓
-3. Outputs all the data to ocnice
+config.json + crocodash_state.json
+    ↓
+get_dataset_piecewise     (download raw OBC/IC data in time-stepped chunks)
+    ↓
+regrid_dataset_piecewise  (regrid to model grid, fill missing data)
+    ↓
+merge_piecewise_dataset   (concatenate chunks into final OBC files)
+    ↓
+[tides / bgc / runoff / chl modules run independently]
+    ↓
+inputdir/ocnice/
 ```
 
 ## Design Philosophy
 
-CrocoDash deliberately **doesn't do all the processing itself**. Instead, it leverages packages:
+CrocoDash delegates heavy lifting to specialist packages:
 
 | Task | Tool | Used By |
 |------|------|---------|

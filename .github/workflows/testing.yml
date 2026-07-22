@@ -53,10 +53,11 @@ jobs:
       # Force a login bash shell to natively enable conda profile utilities
         shell: bash -l {0}
         run: |
+          set -eo pipefail
           cd $WORKDIR/CrocoDash
           source /opt/conda/etc/profile.d/conda.sh
           conda activate CrocoDash
-          pytest --ignore=CrocoDash/visualCaseGen -m "not workflow" -vv --showlocals --tb=short --cov=CrocoDash --cov-report=xml --cov-branch
+          pytest --ignore=CrocoDash/visualCaseGen --ignore=CrocoDash/rm6 -vv --tb=short --cov=CrocoDash --cov-report=xml --cov-branch --durations=10
           cp $WORKDIR/CrocoDash/coverage.xml $GITHUB_WORKSPACE/CrocoDash
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5

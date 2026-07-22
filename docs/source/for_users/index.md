@@ -53,6 +53,7 @@ compsets_and_inputs
 datasets
 shareable
 additional_resources
+cli
 ```
 
 ## Frequently needed info
