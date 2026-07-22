@@ -207,7 +207,7 @@ class CESM_MOM_OUTPUT(ForcingProduct):
         output_folder=Path(""),
         output_filename=None,
         variables=["zos", "thetao", "so", "uo", "vo"],
-        dataset_path="/glade/u/home/manishrv/scratch/archive/gibraltar_parent/ocn/hist/z_files",
+        dataset_path="please_provide_a_path",
         file_glob="*.nc",
         time_var_name="time",
         buffer_deg=1.5,
@@ -623,7 +623,7 @@ def subset_dataset(
         output_file = output_path / (
             f"{var_name}_subset_{lat_min}_{lat_max}_{lon_min}_{lon_max}_{dates[0]}_{dates[1]}.nc"
         )
-        output_file_paths.append(output_file)
+
         if output_file.exists():
             print(f"Subset already exists for {var_name}, skipping")
             continue
@@ -660,6 +660,7 @@ def subset_dataset(
             subset_ds.load().to_netcdf(output_file)
 
             print(f"Subsetted dataset for variable '{var_name}' saved to {output_file}")
+        output_file_paths.append(output_file)
 
     return output_file_paths
 
