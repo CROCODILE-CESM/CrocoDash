@@ -212,6 +212,7 @@ class ForcingProduct(DatedBaseProduct):
         "lat_max",
         "lon_min",
         "lat_min",
+        "name",
     ]
 
     def __init_subclass__(cls, **kwargs):

@@ -43,6 +43,7 @@ def test_case_integration_config(get_CrocoDash_case):
         "forcing",
         "general",
     }
+    assert config["basic"]["forcing"]["function_args"] == {}
 
 
 def test_driver_works(get_CrocoDash_case, tmp_path):

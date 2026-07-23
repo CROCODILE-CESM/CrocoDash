@@ -374,6 +374,7 @@ class Case:
         boundaries: list[str] = ["south", "north", "west", "east"],
         product_name: str = "GLORYS",
         function_name: str = "get_glorys_data_script_for_cli",
+        function_overrides: dict = None,
         **kwargs,
     ):
         """
@@ -396,6 +397,13 @@ class Case:
         function_name : str, optional
             Name of the function to call for downloading the forcing data.
             Default is "get_glorys_data_script_for_cli".
+        function_overrides : dict, optional
+            Overrides for `function_name`'s non-required arguments (e.g. `{"member": 3}`
+            to select a specific ensemble member for a CESM2-LENS2-style product). Keys
+            must match one of the function's non-required, defaulted parameters; any other
+            key raises a ValueError. Without this, the function's own defaults are used,
+            which previously could only be changed by hand-editing `config.json` between
+            `configure_forcings()` and `process_forcings()`.
         product_info: str | Path | dict, optional
             The equivalent MOM6 names to Product Names. Example:  xh -> lat time -> valid_time salinity -> salt, as well as any other information required for product parsing
             The `None` option assumes the information is in raw_data_access/config under {product_name}.json. Every other option is copied there.
@@ -407,7 +415,8 @@ class Case:
             If inputs such as `date_range`, `boundaries`, or `tidal_constituents` are not lists of strings.
         ValueError
             If `date_range` does not have exactly two elements, or if tidal arguments are inconsistently specified.
-            Also raised if an invalid product or function is provided.
+            Also raised if an invalid product or function is provided, or if `function_overrides`
+            contains a key that is not a valid overridable argument of `function_name`.
         AssertionError
             If the selected data product is not categorized as a forcing product.
 
@@ -448,6 +457,7 @@ class Case:
             boundaries=boundaries,
             product_name=product_name,
             function_name=function_name,
+            function_overrides=function_overrides,
         )
         # Call any optional configurators (e.g., tides) if specified
 
@@ -480,6 +490,7 @@ class Case:
         boundaries: list[str] = ["south", "north", "west", "east"],
         product_name: str = "GLORYS",
         function_name: str = "get_glorys_data_script_for_cli",
+        function_overrides: dict = None,
     ):
 
         ProductRegistry.load()
@@ -503,8 +514,23 @@ class Case:
         if not all(isinstance(boundary, str) for boundary in boundaries):
             raise TypeError("boundaries must be a list of strings.")
 
+        if function_overrides is not None and not isinstance(function_overrides, dict):
+            raise TypeError("function_overrides must be a dict.")
+
         self.boundaries = boundaries
         self.date_range = pd.to_datetime(date_range)
+
+        function_args = ProductRegistry.get_function_default_args(
+            self.forcing_product_name.lower(), function_name
+        )
+        if function_overrides:
+            invalid = set(function_overrides) - set(function_args)
+            if invalid:
+                raise ValueError(
+                    f"Invalid function_overrides key(s) {sorted(invalid)}; "
+                    f"valid overridable args are {sorted(function_args)}"
+                )
+            function_args.update(function_overrides)
 
         config = {
             "paths": {
@@ -528,6 +554,7 @@ class Case:
                 "information": ProductRegistry.get_product(
                     self.forcing_product_name.lower()
                 ).write_metadata(include_marbl_tracers=self.bgc_in_compset),
+                "function_args": function_args,
             },
             "general": {
                 "boundary_number_conversion": {

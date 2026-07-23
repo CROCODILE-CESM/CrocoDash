@@ -125,8 +125,16 @@ def get_data_access_function(product_name: str, function_name: str):
     return ProductRegistry.get_access_function(product_name, function_name)
 
 
-def build_forcing_request(product_info: dict) -> tuple[list, dict]:
-    """Build the (variables, extra_args) an access function needs from a forcing product_info dict."""
+def build_forcing_request(
+    product_info: dict, function_args: dict = None
+) -> tuple[list, dict]:
+    """Build the (variables, extra_args) an access function needs from a forcing product_info dict.
+
+    function_args: user overrides (or access-function defaults) for the access
+    function's non-required arguments, as written to config.json's
+    forcing.function_args by configure_forcings()'s function_overrides. Merged
+    into extra_args last so they take precedence over product_info-derived keys.
+    """
     phys_vars = [
         product_info["u_var_name"],
         product_info["v_var_name"],
@@ -145,6 +153,7 @@ def build_forcing_request(product_info: dict) -> tuple[list, dict]:
         for key in ("dataset_path", "date_format", "regex", "delimiter")
         if key in product_info
     }
+    extra_args.update(function_args or {})
     return variables, extra_args
 
 
@@ -156,6 +165,7 @@ def fetch_raw_chunk(
     output_filename: str,
     variables: list,
     extra_args: dict,
+    name=None,
 ) -> Path:
     """Download one raw data chunk, skipping if a valid output file already exists.
 
@@ -182,6 +192,7 @@ def fetch_raw_chunk(
         output_folder=output_folder,
         output_filename=output_file.name,
         variables=variables,
+        name=name,
         **extra_args,
     )
     return output_file
