@@ -158,6 +158,80 @@ class BGCConfigurator(BaseConfigurator):
 
 
 @register
+class WW3Configurator(BaseConfigurator):
+    name = "WW3"
+    required_for_compsets = ["WW3"]
+    allowed_compsets = ["WW3"]
+    input_params = [
+        InputValueParam("case_inputdir", comment="Case input directory"),
+        InputValueParam(
+            "boundaries",
+            comment="Open boundary sides to generate WW3 spectra for (e.g., ['N', 'S', 'E', 'W'])",
+        ),
+        InputValueParam(
+            "ww3_obc_product_name",
+            comment=(
+                "Name of the WW3 OBC input data product (e.g. 'ERA5'), mirroring "
+                "Case.configure_forcings's product_name/function_name pattern for "
+                "the main IC/OBC product. Plumbing only for now: process_ww3 "
+                "always generates spectra with the synthetic pulse/calm generator "
+                "regardless of this value, until WW3 OBC sourcing is wired through "
+                "raw_data_access."
+            ),
+        ),
+        InputValueParam(
+            "ww3_obc_function_name",
+            comment=(
+                "Name of the raw_data_access function to call for downloading the "
+                "WW3 OBC data product. Plumbing only for now, see ww3_obc_product_name."
+            ),
+        ),
+        InputValueParam("case_is_non_local", comment="Case is non-local"),
+    ]
+    output_params = [
+        XMLConfigParam(
+            "WW3_GRID_INP_DIR",
+            comment="Directory containing WW3 grid input files",
+        ),
+        XMLConfigParam(
+            "HIST_OPTION",
+            comment="CPl History outputs Wave Data",
+        ),
+        XMLConfigParam(
+            "HIST_N",
+            comment="CPl History outputs Wave Data",
+        ),
+    ]
+
+    def __init__(
+        self,
+        case_inputdir,
+        boundaries,
+        case_is_non_local,
+        ww3_obc_product_name=None,
+        ww3_obc_function_name=None,
+    ):
+        super().__init__(
+            case_inputdir=case_inputdir,
+            boundaries=boundaries,
+            case_is_non_local=case_is_non_local,
+            ww3_obc_product_name=ww3_obc_product_name,
+            ww3_obc_function_name=ww3_obc_function_name,
+        )
+
+    def configure(self):
+        is_non_local = self.get_input_param("case_is_non_local")
+        self.set_output_param(
+            "WW3_GRID_INP_DIR",
+            str(Path(self.get_input_param("case_inputdir")) / "ocnice"),
+            is_non_local=is_non_local,
+        )
+        self.set_output_param("HIST_OPTION", "nhours", is_non_local=is_non_local)
+        self.set_output_param("HIST_N", "1", is_non_local=is_non_local)
+        super().configure()
+
+
+@register
 class CICEConfigurator(BaseConfigurator):
     name = "CICE"
     required_for_compsets = ["CICE"]

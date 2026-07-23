@@ -37,6 +37,14 @@ def test_parse_args_component_flags():
         assert args.tides is True
         assert args.runoff is True
         assert args.chl is False
+        assert args.ww3 is False
+
+
+def test_parse_args_ww3_flag():
+    """Test --ww3 flag"""
+    with patch.object(sys, "argv", ["driver.py", "--ww3"]):
+        args = driver.parse_args()
+        assert args.ww3 is True
 
 
 def test_parse_args_skip_single():
@@ -135,6 +143,30 @@ def test_resolve_components_missing_in_config():
     assert resolved.runoff is False  # requested but doesn't exist
 
 
+def test_resolve_components_ww3_flag():
+    """--ww3 should only enable when requested and present in config"""
+    args = Namespace(
+        all=False,
+        test=False,
+        skip=[],
+        ic=False,
+        bc=False,
+        bgcic=False,
+        bgcironforcing=False,
+        runoff=False,
+        bgcrivernutrients=False,
+        tides=False,
+        chl=False,
+        ww3=True,
+    )
+    config = Mock()
+    config.config = {"ww3": {}}
+
+    resolved = driver.resolve_components(args, config)
+
+    assert resolved.ww3 is True
+
+
 def test_resolve_components_individual_component_flag():
     """Individual component flags should work without --all"""
     args = Namespace(
@@ -214,6 +246,21 @@ def test_run_from_cli_integration(
     assert mock_tides.called
     assert mock_cond.called
     assert mock_runoff.call_count == 0  # skipped
+
+
+@patch("CrocoDash.extract_forcings.case_setup.driver.process_ww3")
+def test_run_from_cli_ww3(mock_ww3):
+    with patch.object(sys, "argv", ["driver.py", "--ww3"]):
+        args = driver.parse_args()
+
+    config_data = {"ww3": {}, "basic": {"general": {}}}
+    config = MagicMock()
+    config.config = config_data
+    config.__getitem__ = MagicMock(side_effect=lambda k: config_data[k])
+
+    driver.run_from_cli(args, config)
+
+    assert mock_ww3.called
 
 
 def test_driver_subprocess_help():
