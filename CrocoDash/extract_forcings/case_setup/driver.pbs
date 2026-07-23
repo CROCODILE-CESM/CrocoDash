@@ -1,0 +1,44 @@
+#!/bin/bash -e
+#
+# PBS batch submission script for CrocoDash forcing extraction.
+#
+# Submit with:
+#   qsub driver.pbs
+#
+# Customize the PBS directives below for your allocation and use case.
+# See driver.py --help for a full list of component and cluster flags.
+#
+# ---------------------------------------------------------------------
+# COMMON CONFIGURATIONS
+#
+# 1. All components, sequential OBC (no extra workers):
+#      python driver.py --all
+#
+# 2. OBC only
+#      python driver.py
+#
+# 3. All components, skip tides:
+#      python driver.py --all --skip tides
+# ---------------------------------------------------------------------
+
+# --- Required: set your project/account code ---
+#PBS -A <YOUR_PROJECT_CODE>
+
+# --- Job settings ---
+#PBS -N crocodash_forcings
+#PBS -j oe
+#PBS -S /bin/bash
+#PBS -q main
+#PBS -l walltime=06:00:00
+#PBS -l select=1:ncpus=1:mpiprocs=1:ompthreads=1:mem=50GB
+
+# Change to the directory where qsub was run
+cd "$PBS_O_WORKDIR"
+
+# Activate the CrocoDash conda environment
+source ~/.bash_profile
+module load conda
+conda activate CrocoDash
+
+# Run all components
+python driver.py --all
