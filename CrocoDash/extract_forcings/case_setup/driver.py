@@ -104,6 +104,7 @@ def process_bgcrivernutrients():
         river_nutrients_nnsm_filepath=config.inputdir
         / "ocnice"
         / config["bgcrivernutrients"]["outputs"]["RIV_FLUX_FILE"],
+        calendar=config["bgcrivernutrients"]["inputs"]["cf_calendar"],
     )
 
 
@@ -131,6 +132,7 @@ def process_chl():
         inputdir=config.inputdir,
         chl_processed_filepath=config["chl"]["inputs"]["chl_processed_filepath"],
         output_filepath=config["chl"]["outputs"]["CHL_FILE"],
+        calendar=config["chl"]["inputs"]["cf_calendar"],
     )
 
 

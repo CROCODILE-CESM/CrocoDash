@@ -58,7 +58,7 @@ def test_all_configurators_args_synced():
         config_class.check_output_params_exist()
 
 
-def test_all_configurators_smoke(fake_param_case, fake_cime):
+def test_all_configurators_smoke(fake_param_case, fake_cime, fake_forcing_product):
 
     ## Set up some dummy args
     dummy_str = "123"
@@ -83,6 +83,8 @@ def test_all_configurators_smoke(fake_param_case, fake_cime):
                 ctor_args[a] = dummy_dir
             elif "cime" in a:
                 ctor_args[a] = fake_cime
+            elif "forcing_product" in a:
+                ctor_args[a] = fake_forcing_product
             else:
                 ctor_args[a] = dummy_str
         instance = config_class(**ctor_args)
