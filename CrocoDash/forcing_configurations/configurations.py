@@ -168,6 +168,7 @@ class CICEConfigurator(BaseConfigurator):
         UserNLConfigParam("ns_boundary_type", user_nl_name="cice"),
         UserNLConfigParam("ew_boundary_type", user_nl_name="cice"),
         UserNLConfigParam("close_boundaries", user_nl_name="cice"),
+        UserNLConfigParam("advect", user_nl_name="cice"),
     ]
 
     def __init__(
@@ -176,108 +177,11 @@ class CICEConfigurator(BaseConfigurator):
         super().__init__()
 
     def configure(self):
-        self.set_output_param("ice_ic", "'UNSET'")
-        self.set_output_param("ns_boundary_type", "'open'")
-        self.set_output_param("ew_boundary_type", "'cyclic'")
+        self.set_output_param("ice_ic", "'default'")
+        self.set_output_param("ns_boundary_type", "'zero_gradient'")
+        self.set_output_param("ew_boundary_type", "'zero_gradient'")
         self.set_output_param("close_boundaries", ".false.")
-        super().configure()
-
-
-@register
-class CICEICConfigurator(BaseConfigurator):
-    name = "CICEIC"
-    required_for_compsets = ["CICE"]
-    allowed_compsets = ["CICE"]
-    input_params = [
-        InputValueParam("case_inputdir", comment="Case input directory"),
-        InputValueParam(
-            "cice_product_name",
-            comment=(
-                "Name of the CICE input data product (e.g. 'GLORYS'), mirroring "
-                "Case.configure_forcings's product_name/function_name pattern for "
-                "the main IC/OBC product. Plumbing only for now: process_ciceic is not "
-                "yet implemented and raises NotImplementedError regardless of this "
-                "value, until CICE IC sourcing is wired through raw_data_access."
-            ),
-        ),
-        InputValueParam(
-            "cice_function_name",
-            comment=(
-                "Name of the raw_data_access function to call for downloading the "
-                "CICE data product. Plumbing only for now, see cice_product_name."
-            ),
-        ),
-        InputValueParam("case_is_non_local", comment="Case is non-local"),
-    ]
-    output_params = []
-
-    def __init__(
-        self,
-        case_inputdir,
-        case_is_non_local,
-        cice_product_name=None,
-        cice_function_name=None,
-    ):
-        super().__init__(
-            case_inputdir=case_inputdir,
-            case_is_non_local=case_is_non_local,
-            cice_product_name=cice_product_name,
-            cice_function_name=cice_function_name,
-        )
-
-    def configure(self):
-        super().configure()
-
-
-@register
-class CICEOBCConfigurator(BaseConfigurator):
-    name = "CICEOBC"
-    required_for_compsets = ["CICE"]
-    allowed_compsets = ["CICE"]
-    input_params = [
-        InputValueParam("case_inputdir", comment="Case input directory"),
-        InputValueParam(
-            "boundaries",
-            comment="Open boundary sides to generate CICE boundary conditions for (e.g., ['N', 'S', 'E', 'W'])",
-        ),
-        InputValueParam(
-            "cice_product_name",
-            comment=(
-                "Name of the CICE input data product (e.g. 'GLORYS'), mirroring "
-                "Case.configure_forcings's product_name/function_name pattern for "
-                "the main IC/OBC product. Plumbing only for now: process_ciceobc is not "
-                "yet implemented and raises NotImplementedError regardless of this "
-                "value, until CICE OBC sourcing is wired through raw_data_access."
-            ),
-        ),
-        InputValueParam(
-            "cice_function_name",
-            comment=(
-                "Name of the raw_data_access function to call for downloading the "
-                "CICE data product. Plumbing only for now, see cice_product_name."
-            ),
-        ),
-        InputValueParam("case_is_non_local", comment="Case is non-local"),
-    ]
-    output_params = []
-
-    def __init__(
-        self,
-        case_inputdir,
-        boundaries,
-        case_is_non_local,
-        cice_product_name=None,
-        cice_function_name=None,
-    ):
-        super().__init__(
-            case_inputdir=case_inputdir,
-            boundaries=boundaries,
-            case_is_non_local=case_is_non_local,
-            cice_product_name=cice_product_name,
-            cice_function_name=cice_function_name,
-        )
-
-    def configure(self):
+        self.set_output_param("advect", "'upwind'")
         super().configure()
 
 
@@ -334,11 +238,6 @@ class BGCIronForcingConfigurator(BaseConfigurator):
             user_nl_name="mom",
             is_file=True,
         ),
-        UserNLConfigParam(
-            "MARBL_FESEDFLUXRED_FILE",
-            comment="MARBL sediment iron flux (reduced) file",
-            user_nl_name="mom",
-        ),
     ]
 
     def __init__(self, case_session_id, case_grid_name):
@@ -347,10 +246,8 @@ class BGCIronForcingConfigurator(BaseConfigurator):
     def configure(self):
         feventflux_filepath = f"feventflux_5gmol_{self.get_input_param('case_grid_name')}_{self.get_input_param('case_session_id')}.nc"
         fesedflux_filepath = f"fesedflux_total_reduce_oxic_{self.get_input_param('case_grid_name')}_{self.get_input_param('case_session_id')}.nc"
-        fesedfluxred_filepath = f"fesedfluxred_{self.get_input_param('case_grid_name')}_{self.get_input_param('case_session_id')}.nc"
         self.set_output_param("MARBL_FESEDFLUX_FILE", fesedflux_filepath)
         self.set_output_param("MARBL_FEVENTFLUX_FILE", feventflux_filepath)
-        self.set_output_param("MARBL_FESEDFLUXRED_FILE", fesedfluxred_filepath)
         super().configure()
 
 
