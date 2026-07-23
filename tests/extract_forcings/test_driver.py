@@ -160,6 +160,98 @@ def test_resolve_components_individual_component_flag():
     assert resolved.runoff is False  # not explicitly requested
 
 
+def test_parse_args_ciceic_flag():
+    """Test --ciceic flag"""
+    with patch.object(sys, "argv", ["driver.py", "--ciceic"]):
+        args = driver.parse_args()
+        assert args.ciceic is True
+
+
+def test_parse_args_ciceobc_flag():
+    """Test --ciceobc flag"""
+    with patch.object(sys, "argv", ["driver.py", "--ciceobc"]):
+        args = driver.parse_args()
+        assert args.ciceobc is True
+
+
+def test_resolve_components_ciceic_flag():
+    """--ciceic should only enable when requested and present in config"""
+    args = Namespace(
+        all=False,
+        test=False,
+        skip=[],
+        ic=False,
+        bc=False,
+        bgcic=False,
+        bgcironforcing=False,
+        runoff=False,
+        bgcrivernutrients=False,
+        tides=False,
+        chl=False,
+        ciceic=True,
+    )
+    config = Mock()
+    config.config = {"ciceic": {}}
+
+    resolved = driver.resolve_components(args, config)
+
+    assert resolved.ciceic is True
+
+
+def test_resolve_components_ciceobc_flag():
+    """--ciceobc should only enable when requested and present in config"""
+    args = Namespace(
+        all=False,
+        test=False,
+        skip=[],
+        ic=False,
+        bc=False,
+        bgcic=False,
+        bgcironforcing=False,
+        runoff=False,
+        bgcrivernutrients=False,
+        tides=False,
+        chl=False,
+        ciceobc=True,
+    )
+    config = Mock()
+    config.config = {"ciceobc": {}}
+
+    resolved = driver.resolve_components(args, config)
+
+    assert resolved.ciceobc is True
+
+
+@patch("CrocoDash.extract_forcings.case_setup.driver.process_ciceic")
+def test_run_from_cli_ciceic(mock_ciceic):
+    with patch.object(sys, "argv", ["driver.py", "--ciceic"]):
+        args = driver.parse_args()
+
+    config_data = {"ciceic": {}, "basic": {"general": {}}}
+    config = MagicMock()
+    config.config = config_data
+    config.__getitem__ = MagicMock(side_effect=lambda k: config_data[k])
+
+    driver.run_from_cli(args, config)
+
+    assert mock_ciceic.called
+
+
+@patch("CrocoDash.extract_forcings.case_setup.driver.process_ciceobc")
+def test_run_from_cli_ciceobc(mock_ciceobc):
+    with patch.object(sys, "argv", ["driver.py", "--ciceobc"]):
+        args = driver.parse_args()
+
+    config_data = {"ciceobc": {}, "basic": {"general": {}}}
+    config = MagicMock()
+    config.config = config_data
+    config.__getitem__ = MagicMock(side_effect=lambda k: config_data[k])
+
+    driver.run_from_cli(args, config)
+
+    assert mock_ciceobc.called
+
+
 # Some simple dry runs
 @patch("CrocoDash.extract_forcings.case_setup.driver.process_runoff")
 @patch("CrocoDash.extract_forcings.case_setup.driver.process_tides")

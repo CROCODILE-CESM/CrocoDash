@@ -31,6 +31,7 @@ from CrocoDash.extract_forcings import (
     runoff as rof,
     tides,
     chlorophyll as chl,
+    cice,
     utils as utils,
     initial_condition as initial_condition,
 )
@@ -136,6 +137,31 @@ def process_chl():
     )
 
 
+def process_ciceic():
+    """Generate CICE initial conditions. NOT YET IMPLEMENTED -- always raises."""
+    config = utils.Config(CONFIG_PATH)
+    cice.process_cice_ic(
+        ocn_grid=config.ocn_grid,
+        inputdir=config.inputdir,
+        date_range=(config["basic"]["dates"]["start"], config["basic"]["dates"]["end"]),
+        cice_product_name=config["ciceic"]["inputs"]["cice_product_name"],
+        cice_function_name=config["ciceic"]["inputs"]["cice_function_name"],
+    )
+
+
+def process_ciceobc():
+    """Generate CICE open boundary conditions."""
+    config = utils.Config(CONFIG_PATH)
+    cice.process_cice_obc(
+        ocn_grid=config.ocn_grid,
+        inputdir=config.inputdir,
+        boundaries=config["ciceobc"]["inputs"]["boundaries"],
+        date_range=(config["basic"]["dates"]["start"], config["basic"]["dates"]["end"]),
+        cice_product_name=config["ciceobc"]["inputs"]["cice_product_name"],
+        cice_function_name=config["ciceobc"]["inputs"]["cice_function_name"],
+    )
+
+
 def parse_args():
     parser = argparse.ArgumentParser(description="CrocoDash forcing workflow driver")
 
@@ -165,6 +191,16 @@ def parse_args():
     )
     components.add_argument(
         "--chl", action="store_true", help="Run chlorophyll processing"
+    )
+    components.add_argument(
+        "--ciceic",
+        action="store_true",
+        help="Run CICE initial condition generation (NOT YET IMPLEMENTED)",
+    )
+    components.add_argument(
+        "--ciceobc",
+        action="store_true",
+        help="Run CICE boundary condition generation",
     )
 
     top.add_argument(
@@ -244,6 +280,8 @@ def run_workflow(
     chl=False,
     runoff=False,
     bgcrivernutrients=False,
+    ciceic=False,
+    ciceobc=False,
     preview=False,
     cfg=None,
 ):
@@ -262,13 +300,28 @@ def run_workflow(
         chl:                 Run chlorophyll processing
         runoff:              Run runoff mapping
         bgcrivernutrients:   Run BGC river nutrients (always runs after runoff)
+        ciceic:              Run CICE initial condition generation (NOT YET IMPLEMENTED)
+        ciceobc:             Run CICE boundary condition generation
         preview:             Preview task graph without executing
         cfg:                 Config object; loaded from CONFIG_PATH if None
     """
     if cfg is None:
         cfg = utils.Config(CONFIG_PATH)
 
-    if not any([ic, bc, bgcic, bgcironforcing, tides, chl, runoff, bgcrivernutrients]):
+    if not any(
+        [
+            ic,
+            bc,
+            bgcic,
+            bgcironforcing,
+            tides,
+            chl,
+            runoff,
+            bgcrivernutrients,
+            ciceic,
+            ciceobc,
+        ]
+    ):
         print("No components selected.")
         return
 
@@ -329,6 +382,16 @@ def run_workflow(
         process_bgcrivernutrients()
         timings["bgcrivernutrients"] = time.perf_counter() - _t
 
+    if ciceic:
+        _t = time.perf_counter()
+        process_ciceic()
+        timings["ciceic"] = time.perf_counter() - _t
+
+    if ciceobc:
+        _t = time.perf_counter()
+        process_ciceobc()
+        timings["ciceobc"] = time.perf_counter() - _t
+
     if timings:
         parts = [f"{k}: {v:.1f}s" for k, v in timings.items()]
         parts.append(f"total: {sum(timings.values()):.1f}s")
@@ -360,6 +423,8 @@ def run_from_cli(args, cfg):
         chl=args.chl,
         runoff=args.runoff,
         bgcrivernutrients=args.bgcrivernutrients,
+        ciceic=args.ciceic,
+        ciceobc=args.ciceobc,
         preview=cfg["basic"]["general"].get("preview", False),
         cfg=cfg,
     )
