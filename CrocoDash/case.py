@@ -412,6 +412,14 @@ class Case:
         process_forcings : Executes the actual boundary, initial condition, and tide setup based on the configuration.
         """
 
+        if self._configure_forcings_called:
+            print(
+                "WARNING: configure_forcings() has already been called. "
+                "Parameters will be written to user_nl_mom again, creating duplicates. "
+                "You will need to manually remove the duplicate entries from user_nl_mom "
+                "before running the case."
+            )
+
         # Set up Forcings Folder
         self.extract_forcings_path = self.inputdir / "extract_forcings"
         if self.override is True:
