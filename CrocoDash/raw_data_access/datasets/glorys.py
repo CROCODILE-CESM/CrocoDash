@@ -37,6 +37,7 @@ class GLORYS(ForcingProduct):
     eta_var_name = "zos"
     depth_coord = "depth"
     tracer_var_names = {"temp": "thetao", "salt": "so"}
+    calendar = GREGORIAN
 
     @accessmethod(
         description="Gathers GLORYS data from RDA on computers with access to glade/rda",

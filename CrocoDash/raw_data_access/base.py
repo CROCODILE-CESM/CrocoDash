@@ -19,11 +19,24 @@ How it was solved:
 """
 
 from CrocoDash.raw_data_access.registry import ProductRegistry
+from dataclasses import dataclass
 import inspect
 import json
 from CrocoDash.logging import setup_logger
 import tempfile
 import shutil
+
+
+@dataclass(frozen=True)
+class Calendar:
+    """Pairs a CF time-attribute calendar name with its corresponding CIME CALENDAR xml value, so a product can't declare one without the other."""
+
+    cf: str  # CF name for dataset time attrs
+    cesm: str  # CIME CALENDAR xml value
+
+
+GREGORIAN = Calendar(cf="standard", cesm="GREGORIAN")
+NOLEAP = Calendar(cf="noleap", cesm="NO_LEAP")
 
 
 def accessmethod(func=None, *, description=None, type=None):
@@ -189,6 +202,8 @@ class ForcingProduct(DatedBaseProduct):
         "tracer_var_names",
         "boundary_fill_method",
         "time_units",
+        "cf_calendar",
+        "cesm_calendar",
     ]
 
     required_args = DatedBaseProduct.required_args + [
@@ -200,6 +215,12 @@ class ForcingProduct(DatedBaseProduct):
     ]
 
     def __init_subclass__(cls, **kwargs):
+
+        # 0. Derive cf_calendar/cesm_calendar from a single `calendar` attr, if declared
+        calendar = getattr(cls, "calendar", None)
+        if calendar is not None:
+            cls.cf_calendar = calendar.cf
+            cls.cesm_calendar = calendar.cesm
 
         # 1. Let BaseProduct do its validation first
         super().__init_subclass__(**kwargs)

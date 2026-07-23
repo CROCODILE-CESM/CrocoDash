@@ -183,10 +183,6 @@ def regrid_dataset_piecewise(
                             startdate=file_start,
                             repeat_year_forcing=False,
                         )
-                        kwargs = {}
-                        if "calendar" in dataset_varnames:
-                            kwargs["calendar"] = dataset_varnames["calendar"]
-                            kwargs["time_units"] = dataset_varnames["time_units"]
                         seg.regrid_velocity_tracers(
                             infile=file_path,  # location of raw boundary
                             varnames=dataset_varnames,
@@ -194,7 +190,8 @@ def regrid_dataset_piecewise(
                             rotational_method=rm6.rotation.RotationMethod.EXPAND_GRID,
                             regridding_method="bilinear",
                             fill_method=fill_method,
-                            **kwargs,  # Only passes time info if it exists
+                            calendar=dataset_varnames["cf_calendar"],
+                            time_units=dataset_varnames["time_units"],
                         )
 
                         logger.info(f"Saving regridding file as {filename_with_dates}")
