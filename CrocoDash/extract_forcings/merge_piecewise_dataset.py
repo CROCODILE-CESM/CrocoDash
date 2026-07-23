@@ -94,6 +94,7 @@ def merge_piecewise_dataset(
 
     # Merge Files
     logger.info("Merging Files")
+    Path(output_folder).mkdir(parents=True, exist_ok=True)
     output_file_names = []
     if run_boundary_conditions:
         for boundary in boundary_list:
