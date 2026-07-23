@@ -136,7 +136,7 @@ def process_chl():
 
 
 def process_ciceic():
-    """Generate CICE initial conditions."""
+    """Generate CICE initial conditions. NOT YET IMPLEMENTED -- always raises."""
     config = utils.Config(CONFIG_PATH)
     cice.process_cice_ic(
         ocn_grid=config.ocn_grid,
@@ -193,7 +193,7 @@ def parse_args():
     components.add_argument(
         "--ciceic",
         action="store_true",
-        help="Run CICE initial condition generation",
+        help="Run CICE initial condition generation (NOT YET IMPLEMENTED)",
     )
     components.add_argument(
         "--ciceobc",
@@ -298,7 +298,7 @@ def run_workflow(
         chl:                 Run chlorophyll processing
         runoff:              Run runoff mapping
         bgcrivernutrients:   Run BGC river nutrients (always runs after runoff)
-        ciceic:              Run CICE initial condition generation
+        ciceic:              Run CICE initial condition generation (NOT YET IMPLEMENTED)
         ciceobc:             Run CICE boundary condition generation
         preview:             Preview task graph without executing
         cfg:                 Config object; loaded from CONFIG_PATH if None
