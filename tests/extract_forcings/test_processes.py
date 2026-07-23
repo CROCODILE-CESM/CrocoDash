@@ -3,7 +3,7 @@ This testing file is for the other processes in extract_forcings. Most do not ne
 """
 
 import pytest
-from CrocoDash.extract_forcings import runoff, tides, bgc, chlorophyll as chl
+from CrocoDash.extract_forcings import runoff, tides, bgc, chlorophyll as chl, cice
 import xarray as xr
 from unittest.mock import Mock, patch
 
@@ -57,6 +57,33 @@ def test_process_chl(mock_chl, is_glade_file_system, tmp_path, gen_grid_topo_vgr
     )
 
     assert mock_chl.called
+
+
+def test_process_cice_ic_not_implemented(tmp_path, gen_grid_topo_vgrid):
+    grid, topo, vgrid = gen_grid_topo_vgrid
+
+    with pytest.raises(NotImplementedError):
+        cice.process_cice_ic(
+            ocn_grid=grid,
+            inputdir=tmp_path,
+            date_range=("2020-01-01 00:00:00", "2020-01-01 06:00:00"),
+            cice_product_name="GLORYS",
+            cice_function_name="get_glorys_data_from_rda",
+        )
+
+
+def test_process_cice_obc_not_implemented(tmp_path, gen_grid_topo_vgrid):
+    grid, topo, vgrid = gen_grid_topo_vgrid
+
+    with pytest.raises(NotImplementedError):
+        cice.process_cice_obc(
+            ocn_grid=grid,
+            inputdir=tmp_path,
+            boundaries=["west", "east"],
+            date_range=("2020-01-01 00:00:00", "2020-01-01 06:00:00"),
+            cice_product_name="GLORYS",
+            cice_function_name="get_glorys_data_from_rda",
+        )
 
 
 def test_bgcironforcing(tmp_path):

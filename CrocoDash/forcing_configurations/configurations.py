@@ -184,6 +184,104 @@ class CICEConfigurator(BaseConfigurator):
 
 
 @register
+class CICEICConfigurator(BaseConfigurator):
+    name = "CICEIC"
+    required_for_compsets = ["CICE"]
+    allowed_compsets = ["CICE"]
+    input_params = [
+        InputValueParam("case_inputdir", comment="Case input directory"),
+        InputValueParam(
+            "cice_product_name",
+            comment=(
+                "Name of the CICE input data product (e.g. 'GLORYS'), mirroring "
+                "Case.configure_forcings's product_name/function_name pattern for "
+                "the main IC/OBC product. Plumbing only for now: process_ciceic is not "
+                "yet implemented and raises NotImplementedError regardless of this "
+                "value, until CICE IC sourcing is wired through raw_data_access."
+            ),
+        ),
+        InputValueParam(
+            "cice_function_name",
+            comment=(
+                "Name of the raw_data_access function to call for downloading the "
+                "CICE data product. Plumbing only for now, see cice_product_name."
+            ),
+        ),
+        InputValueParam("case_is_non_local", comment="Case is non-local"),
+    ]
+    output_params = []
+
+    def __init__(
+        self,
+        case_inputdir,
+        case_is_non_local,
+        cice_product_name=None,
+        cice_function_name=None,
+    ):
+        super().__init__(
+            case_inputdir=case_inputdir,
+            case_is_non_local=case_is_non_local,
+            cice_product_name=cice_product_name,
+            cice_function_name=cice_function_name,
+        )
+
+    def configure(self):
+        super().configure()
+
+
+@register
+class CICEOBCConfigurator(BaseConfigurator):
+    name = "CICEOBC"
+    required_for_compsets = ["CICE"]
+    allowed_compsets = ["CICE"]
+    input_params = [
+        InputValueParam("case_inputdir", comment="Case input directory"),
+        InputValueParam(
+            "boundaries",
+            comment="Open boundary sides to generate CICE boundary conditions for (e.g., ['N', 'S', 'E', 'W'])",
+        ),
+        InputValueParam(
+            "cice_product_name",
+            comment=(
+                "Name of the CICE input data product (e.g. 'GLORYS'), mirroring "
+                "Case.configure_forcings's product_name/function_name pattern for "
+                "the main IC/OBC product. Plumbing only for now: process_ciceobc is not "
+                "yet implemented and raises NotImplementedError regardless of this "
+                "value, until CICE OBC sourcing is wired through raw_data_access."
+            ),
+        ),
+        InputValueParam(
+            "cice_function_name",
+            comment=(
+                "Name of the raw_data_access function to call for downloading the "
+                "CICE data product. Plumbing only for now, see cice_product_name."
+            ),
+        ),
+        InputValueParam("case_is_non_local", comment="Case is non-local"),
+    ]
+    output_params = []
+
+    def __init__(
+        self,
+        case_inputdir,
+        boundaries,
+        case_is_non_local,
+        cice_product_name=None,
+        cice_function_name=None,
+    ):
+        super().__init__(
+            case_inputdir=case_inputdir,
+            boundaries=boundaries,
+            case_is_non_local=case_is_non_local,
+            cice_product_name=cice_product_name,
+            cice_function_name=cice_function_name,
+        )
+
+    def configure(self):
+        super().configure()
+
+
+@register
 class BGCICConfigurator(BaseConfigurator):
     name = "BGCIC"
     required_for_compsets = ["MARBL"]
