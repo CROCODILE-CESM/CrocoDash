@@ -456,12 +456,22 @@ class Case:
             "boundaries": boundaries,
         }
 
+        forcing_product = ProductRegistry.get_product(self.forcing_product_name.lower())
+
         self.session_id = cvars["MB_ATTEMPT_ID"].value
         self.grid_name = self.ocn_grid.name
+        self.forcing_product = forcing_product
         self.fcr = ForcingConfigRegistry(self.compset_lname, inputs, self)
         self.fcr.run_configurators(self.extract_forcings_path / "config.json")
 
         self._update_forcing_variables()
+
+        xmlchange(
+            "CALENDAR",
+            forcing_product.cesm_calendar,
+            is_non_local=self.cc._is_non_local(),
+        )
+
         self._configure_forcings_called = True
 
     def configure_initial_and_boundary_conditions(

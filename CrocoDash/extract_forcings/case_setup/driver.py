@@ -105,6 +105,7 @@ def process_bgcrivernutrients():
         river_nutrients_nnsm_filepath=config.inputdir
         / "ocnice"
         / config["bgcrivernutrients"]["outputs"]["RIV_FLUX_FILE"],
+        calendar=config["bgcrivernutrients"]["inputs"]["cf_calendar"],
     )
 
 
@@ -145,21 +146,8 @@ def process_chl():
         inputdir=config.inputdir,
         chl_processed_filepath=config["chl"]["inputs"]["chl_processed_filepath"],
         output_filepath=config["chl"]["outputs"]["CHL_FILE"],
+        calendar=config["chl"]["inputs"]["cf_calendar"],
     )
-
-
-def should_run(name, args, cfg):
-    not_skipped = name.lower() not in args.skip
-    requested = args.all or getattr(args, name)
-    exists = name in cfg.config.keys()
-
-    if requested and not exists:
-        print(f"[skip] '{name}' requested but not in config")
-
-    if requested and not not_skipped:
-        print(f"[skip] '{name}' skipped via --skip")
-
-    return requested and exists and not_skipped
 
 
 def parse_args():
@@ -408,7 +396,7 @@ def run_from_cli(args, cfg):
     run_workflow(**workflow_kwargs)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     args = parse_args()
     cfg = utils.Config(CONFIG_PATH)
     run_from_cli(args, cfg)
