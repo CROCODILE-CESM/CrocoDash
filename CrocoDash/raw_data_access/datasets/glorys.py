@@ -52,6 +52,7 @@ class GLORYS(ForcingProduct):
         lat_max,
         lon_min,
         lon_max,
+        name=None,
         output_folder=Path(""),
         output_filename="raw_glorys.nc",
         variables=[
@@ -124,6 +125,7 @@ class GLORYS(ForcingProduct):
         lat_max,
         lon_min,
         lon_max,
+        name=None,
         output_folder=None,
         output_filename=None,
         variables=["zos", "uo", "vo", "so", "thetao"],
@@ -160,6 +162,7 @@ class GLORYS(ForcingProduct):
         output_folder,
         output_filename,
         variables=None,
+        name=None,
     ) -> None:
         """
         Script to run the GLORYS data query for the CLI
