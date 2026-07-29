@@ -1,49 +1,88 @@
-# Shareable Configuration
+# Sharing Cases
 
-Ever wanted to share your regional MOM6 setup? Get a summary of your unique changes? Let someone else easily run your model? This module is for you!
+The `CrocoDash.shareable` module lets you share a configured regional ocean case
+with another user — across machines, institutions, or just between collaborators.
 
-Importable through `CrocoDash.shareable`, the module lets you:
-
-1. **Bundle** - Inspect an existing CESM case, identify what makes it unique, and package it into a portable folder
-2. **Fork** - Recreate a case from a bundle, with optional modifications
-3. **Duplicate** - One-step shortcut to copy a case to a new location, reading machine/project/cesmroot automatically from the original
+It sits on top of [recipe.py](cli.md), which handles programmatic case creation
+from YAML. The shareable layer adds case inspection, bundling, and an interactive
+guided review for the recipient.
 
 ---
 
-## Workflow
+## The model: sender and recipient
 
-### Step 1 — Bundle
+The **bundle folder** is the artifact that crosses the user boundary.
 
-```python
-from CrocoDash.shareable.bundle import BundleCrocoDashCase
-
-case = BundleCrocoDashCase("/path/to/caseroot")
-
-# Write the bundle — automatically diffs against a standard case first
-bundle_path = case.bundle("/path/to/output_dir")
+**Sender** (Person A, has a working case):
+```
+CaseBundle(caseroot)
+  → identify_non_standard_case_info()   # what makes this case unique?
+  → bundle(output_dir)                  # package everything up
 ```
 
-If you need to override the machine or project used for the diff (e.g. generating a bundle on a different machine than the original), pass them explicitly:
-
-```python
-bundle_path = case.bundle("/path/to/output_dir", machine="derecho", project="PROJ123")
+**Recipient** (Person B, gets the bundle folder):
+```
+ForkBundle(bundle_dir)
+  → fork(cesmroot, machine, ...)        # guided recreation on their machine
 ```
 
-The bundle folder contains:
-- `manifest.json` — grid paths, forcing config, all case metadata
-- `non_standard_case_info.json` — diff against a standard case
-- `ocnice/` — ocean/ice input files plus grid files
-- `user_nl_*` files, `replay.sh`
+The recipient can change the compset or forcing configuration during `fork()` —
+everything else (grid, bathymetry, vertical grid, non-standard CESM state) is
+carried over from the bundle.
+
+---
+
+## Sender: CaseBundle
+
+```python
+from CrocoDash.shareable import CaseBundle
+
+bundle = CaseBundle("/path/to/caseroot")
+
+# Optionally inspect the diff before bundling
+diff = bundle.identify_non_standard_case_info(
+    cesmroot="/path/to/cesm",
+    machine="derecho",
+    project_number="PROJ123",
+)
+print(diff.xmlchanges_missing)
+print(diff.source_mods_missing_files)
+
+# Package everything into a portable folder
+bundle_path = bundle.bundle("/path/to/output_dir")
+```
+
+`identify_non_standard_case_info()` creates a temporary reference case using
+recipe.py (with `configure_only=True` so forcings are not re-processed), then
+diffs your case against it. The diff captures everything you added on top of
+what CrocoDash sets up by default:
+
+| Category | What's captured |
+|---|---|
+| `xml_files_missing_in_new` | Extra `.xml` files in your caseroot |
+| `user_nl_missing_params` | Parameters added to `user_nl_*` files |
+| `source_mods_missing_files` | Files in `SourceMods/` |
+| `xmlchanges_missing` | `xmlchange` calls in `replay.sh` |
+
+`bundle()` calls `identify_non_standard_case_info()` automatically if you haven't
+already. The bundle folder contains:
+
+- `crocodash_case.yaml` — the full recipe (grid, topo, vgrid, case, forcings)
+- `non_standard_case_info.json` — the diff
+- `ocnice/` — all ocean/ice input files and grid files
+- `user_nl_*`, `replay.sh`
 - `xml_files/` and `SourceMods/` — any non-standard modifications
 
-### Step 2 — Fork
+---
+
+## Recipient: ForkBundle
 
 ```python
-from CrocoDash.shareable.fork import ForkCrocoDashBundle
+from CrocoDash.shareable import ForkBundle
 
-forker = ForkCrocoDashBundle("/path/to/bundle")
+fork = ForkBundle("/path/to/bundle")
 
-case = forker.fork(
+case = fork.fork(
     cesmroot="/path/to/cesm",
     machine="derecho",
     project_number="PROJ123",
@@ -52,35 +91,45 @@ case = forker.fork(
 )
 ```
 
-By default `fork()` is interactive — it will ask you which non-standard items to copy over (XML files, user_nl params, SourceMods, xmlchanges) and whether you want to change the compset.
+`fork()` walks the recipient through an interactive review:
 
-#### Non-interactive fork
+1. **Field review** — prompts for `caseroot`, `inputdir`, `cesmroot`, `machine`,
+   `project`, `compset`, and (if the case has forcings) `date_range` and
+   `boundaries`. Press Enter to keep the pre-filled value from the bundle.
+2. **EDITOR** — if `$EDITOR` is set, offers to open the full YAML for deeper
+   changes (e.g. swapping compset modifiers, adjusting forcing kwargs).
+3. **Confirmation** — shows the final config and asks to proceed.
+4. **Plan** — asks whether to transfer each category of non-standard CESM state
+   (XML files, user_nl params, SourceMods, xmlchanges).
 
-All prompts can be bypassed by passing arguments directly:
+After confirmation, `fork()` recreates the case via recipe.py and applies the
+non-standard state per the plan.
+
+### Non-interactive fork
+
+Pass `plan=` to skip the CESM-state copy prompts (the YAML review still runs):
 
 ```python
-case = forker.fork(
+case = fork.fork(
     cesmroot="/path/to/cesm",
     machine="derecho",
     project_number="PROJ123",
     new_caseroot="/path/to/new_case",
     new_inputdir="/path/to/new_inputdir",
     plan={"xml_files": True, "user_nl": True, "source_mods": False, "xmlchanges": True},
-    compset="GOMOM6",                          # omit to keep the bundle's compset
-    extra_configs=["tides"],                   # additional forcing configs to add
-    remove_configs=["bgc"],                    # forcing configs to drop
-    extra_forcing_args_path="/path/to/args.json",  # only needed if adding new configs
 )
 ```
 
-Any argument left as `None` (the default) will still prompt interactively, so you can pre-supply only some of them.
+---
 
-### Duplicate (one-step shortcut)
+## Duplicate (same-user shortcut)
 
-If you just want an exact copy of an existing case without any modifications, use `duplicate_case`. It reads machine, project, and cesmroot directly from the original caseroot — no extra arguments needed.
+For copying a case within your own environment — same machine, new paths — use
+`duplicate_case()`. It reads `cesmroot`, `machine`, and `project` directly from
+the original case's `crocodash_state.json`, so no arguments are needed for those:
 
 ```python
-from CrocoDash.shareable.bundle import duplicate_case
+from CrocoDash.shareable import duplicate_case
 
 new_case = duplicate_case(
     caseroot="/path/to/existing_case",
@@ -89,7 +138,7 @@ new_case = duplicate_case(
 )
 ```
 
-The bundle is written into `new_caseroot` and kept there after duplicating. You can also specify a custom location:
+Pass `bundle_dir=` to also save a bundle as a side effect:
 
 ```python
 new_case = duplicate_case(
@@ -103,8 +152,6 @@ new_case = duplicate_case(
 ---
 
 ## Command Line
-
-After installing CrocoDash (`pip install -e .`), a `crocodash` command is available.
 
 ### Bundle
 
@@ -120,7 +167,7 @@ crocodash bundle \
 ### Fork
 
 ```bash
-# Interactive
+# Interactive (guided YAML review + plan prompts)
 crocodash fork \
   --bundle /path/to/bundle \
   --caseroot /path/to/new_case \
@@ -129,7 +176,7 @@ crocodash fork \
   --machine derecho \
   --project PROJ123
 
-# Non-interactive
+# Non-interactive plan (YAML review still runs)
 crocodash fork \
   --bundle /path/to/bundle \
   --caseroot /path/to/new_case \
@@ -137,14 +184,8 @@ crocodash fork \
   --cesmroot /path/to/cesm \
   --machine derecho \
   --project PROJ123 \
-  --plan '{"xml_files": true, "user_nl": true, "source_mods": false, "xmlchanges": true}' \
-  --compset GOMOM6 \
-  --extra-configs tides,bgc \
-  --remove-configs runoff \
-  --extra-forcing-args /path/to/args.json
+  --plan '{"xml_files": true, "user_nl": true, "source_mods": false, "xmlchanges": true}'
 ```
-
-All `fork` flags beyond the six required ones are optional and only needed to bypass the interactive prompts.
 
 ### Duplicate
 
@@ -155,35 +196,15 @@ crocodash duplicate \
   --inputdir /path/to/new_inputdir
 ```
 
-Machine, project, and cesmroot are read automatically from the original case. Optionally specify where to keep the bundle:
-
-```bash
-crocodash duplicate \
-  --source /path/to/existing_case \
-  --case /path/to/new_case \
-  --inputdir /path/to/new_inputdir \
-  --bundle-dir /path/to/bundle
-```
-
----
-
-## What gets diffed?
-
-`identify_non_standard_CrocoDash_case_information` creates a temporary standard case with the same grid, topo, and forcing configuration, then diffs your case against it. The diff captures:
-
-- XML files present in your case but not in the standard one
-- `user_nl_*` parameters added on top of defaults
-- `xmlchange` commands in `replay.sh` not present by default
-- Files in `SourceMods/`
-
 ---
 
 ## Apply helpers
 
-`CrocoDash.shareable.apply` contains the low-level functions used by Fork internally. Savvy users can call these directly to transfer individual pieces of one case to another:
+The low-level transfer functions used by `ForkBundle` internally are importable
+directly for fine-grained control:
 
 ```python
-from CrocoDash.shareable.apply import (
+from CrocoDash.shareable import (
     copy_xml_files_from_case,
     copy_user_nl_params_from_case,
     copy_source_mods_from_case,
