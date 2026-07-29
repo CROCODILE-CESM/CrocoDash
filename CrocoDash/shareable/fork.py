@@ -4,6 +4,7 @@ from CrocoDash.shareable.apply import *
 import json
 import shutil
 from datetime import datetime
+import pandas as pd
 from dataclasses import dataclass, field
 from CrocoDash.case import Case
 from CrocoDash.grid import Grid
@@ -429,9 +430,8 @@ def generate_configure_forcing_args(forcing_config, remove_configs=None):
 
     start_str = forcing_config["basic"]["dates"]["start"]
     end_str = forcing_config["basic"]["dates"]["end"]
-    date_format = forcing_config["basic"]["dates"]["format"]
-    start_dt = datetime.strptime(start_str, date_format)
-    end_dt = datetime.strptime(end_str, date_format)
+    start_dt = pd.to_datetime(start_str).to_pydatetime()
+    end_dt = pd.to_datetime(end_str).to_pydatetime()
 
     date_range = [
         start_dt.strftime("%Y-%m-%d %H:%M:%S"),
