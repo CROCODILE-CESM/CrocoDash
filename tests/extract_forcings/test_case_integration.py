@@ -17,6 +17,7 @@ def test_case_integration_driver(get_CrocoDash_case, skip_if_not_glade):
         text=True,
     )
     print(result.stdout)  # Output of the script
+
     assert result.returncode == 0
 
     return

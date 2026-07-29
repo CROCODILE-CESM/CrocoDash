@@ -15,6 +15,7 @@ dependencies:
   - pytest-cov>=7.0.0,<7.1.0
   - numcodecs>=0.10.0,<0.16
   - h5netcdf>=1.7.3,<1.8.0
+  - sphinxcontrib-mermaid>=2.0.2,<2.1.0
   - pip>=24.2,<24.3
   - pip:
     - -e ./CrocoDash/visualCaseGen/external/mom6_forge/ # We need to install this first because it is a dependency of rm6 (and we need it at a newer version for CrocoDash)

@@ -9,8 +9,8 @@ from CrocoDash.extract_forcings.obc import (
     process_obc_conditions,
     _merge_boundary,
     _validate_coverage,
-    _is_valid_netcdf,
 )
+from CrocoDash.extract_forcings.utils import is_valid_netcdf
 from CrocoDash.grid import Grid
 
 # ---------------------------------------------------------------------------
@@ -127,7 +127,7 @@ def test_merge_single_boundary(
     tmp_path, generate_piecewise_raw_data, dummy_mom6_obc_data_factory, get_rect_grid
 ):
     grid = get_rect_grid
-    bounds = Grid.get_bounding_boxes_of_rectangular_grid(grid)
+    bounds = Grid.get_bounding_boxes(grid)
 
     east = dummy_mom6_obc_data_factory(
         bounds["ic"]["lat_min"],
@@ -167,7 +167,7 @@ def test_obc_regrid_workflow(
 ):
     config_path, tmp_path = obc_config
     grid = Grid.from_supergrid(tmp_path / "hgrid.nc")
-    bounds = Grid.get_bounding_boxes_of_rectangular_grid(grid)
+    bounds = Grid.get_bounding_boxes(grid)
     raw_dir = tmp_path / "raw"
     regridded_dir = tmp_path / "regridded"
 
@@ -194,7 +194,7 @@ def test_obc_merge_workflow(
 ):
     config_path, tmp_path = obc_config
     grid = get_rect_grid
-    bounds = Grid.get_bounding_boxes_of_rectangular_grid(grid)
+    bounds = Grid.get_bounding_boxes(grid)
     raw_dir = tmp_path / "raw"
     regridded_dir = tmp_path / "regridded"
     output_dir = tmp_path / "output"
@@ -292,14 +292,14 @@ def test_validate_coverage(tmp_path):
 def test_is_valid_netcdf_corrupt_file(tmp_path):
     bad = tmp_path / "corrupt.nc"
     bad.write_bytes(b"not a netcdf file at all")
-    assert not _is_valid_netcdf(bad)
+    assert not is_valid_netcdf(bad)
 
 
 def test_merge_boundary_corrupt_existing_raises(
     tmp_path, dummy_mom6_obc_data_factory, get_rect_grid
 ):
     grid = get_rect_grid
-    bounds = Grid.get_bounding_boxes_of_rectangular_grid(grid)
+    bounds = Grid.get_bounding_boxes(grid)
     east = dummy_mom6_obc_data_factory(
         bounds["ic"]["lat_min"],
         bounds["ic"]["lat_max"],
