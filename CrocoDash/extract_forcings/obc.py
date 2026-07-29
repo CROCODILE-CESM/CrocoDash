@@ -273,6 +273,8 @@ def _regrid_boundary(
                 regridding_method="bilinear",
                 fill_method=fill_method,
                 regridders=regridders,
+                calendar=dataset_varnames["cf_calendar"],
+                time_units=dataset_varnames["time_units"],
                 **kwargs,
             )
             regridders = seg.regridders
