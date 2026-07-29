@@ -75,6 +75,81 @@ def _process(args):
         bgcrivernutrients=args.bgcrivernutrients,
         preview=config["conditions"]["outputs"].get("preview", False),
     )
+import sys
+from pathlib import Path
+
+
+def _create(args):
+    from CrocoDash.recipe import load_config, create_case_from_yaml
+
+    config = load_config(args.config)
+    create_case_from_yaml(config, override=args.override)
+
+
+def _dump(args):
+    from CrocoDash.recipe import case_to_yaml
+    import yaml
+
+    config = case_to_yaml(args.caseroot)
+    yaml.dump(config, sys.stdout, default_flow_style=False, sort_keys=False)
+
+
+def _process(args):
+    from CrocoDash import case_state
+    from CrocoDash.extract_forcings.driver import run_workflow, resolve_components
+
+    if args.config:
+        config_path = Path(args.config)
+    elif args.caseroot:
+        caseroot = Path(args.caseroot)
+        state = case_state.read(caseroot)
+        config_path = Path(state["inputdir"]) / "extract_forcings" / "config.json"
+        if not config_path.exists():
+            raise FileNotFoundError(
+                f"Forcing configuration not found at {config_path}\n"
+                "Run case.configure_forcings() before calling 'crocodash process'."
+            )
+    elif (Path.cwd() / "config.json").exists():
+        # Ran directly from inside the extract_forcings/ directory
+        config_path = Path.cwd() / "config.json"
+    else:
+        raise FileNotFoundError(
+            "No config.json found in the current directory and no --config or --caseroot provided.\n"
+            "Run from inside an extract_forcings/ directory, or pass --caseroot <path> or --config <path>."
+        )
+
+    with open(config_path) as f:
+        config = json.load(f)
+
+    args = resolve_components(args, config)
+
+    if not any(
+        [
+            args.ic,
+            args.bc,
+            args.bgcic,
+            args.bgcironforcing,
+            args.tides,
+            args.chl,
+            args.runoff,
+            args.bgcrivernutrients,
+        ]
+    ):
+        args.subparser.print_help()
+        return
+
+    run_workflow(
+        config_path=config_path,
+        ic=args.ic,
+        bc=args.bc,
+        bgcic=args.bgcic,
+        bgcironforcing=args.bgcironforcing,
+        tides=args.tides,
+        chl_=args.chl,
+        runoff=args.runoff,
+        bgcrivernutrients=args.bgcrivernutrients,
+        preview=config["conditions"]["outputs"].get("preview", False),
+    )
 
 
 def _bundle(args):
