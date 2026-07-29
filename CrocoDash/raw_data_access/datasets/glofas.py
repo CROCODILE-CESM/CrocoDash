@@ -52,7 +52,7 @@ class GLOFAS(DatedBaseProduct):
         }
 
         client = cdsapi.Client()
-        path = output_folder / output_filename
+        path = Path(output_folder) / output_filename
         client.retrieve(dataset, request, path)
         return path
 
