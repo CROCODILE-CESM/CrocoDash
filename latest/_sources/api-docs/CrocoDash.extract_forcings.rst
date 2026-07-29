@@ -28,26 +28,18 @@ CrocoDash.extract\_forcings.chlorophyll module
    :show-inheritance:
    :undoc-members:
 
-CrocoDash.extract\_forcings.get\_dataset\_piecewise module
-----------------------------------------------------------
+CrocoDash.extract\_forcings.initial\_condition module
+-----------------------------------------------------
 
-.. automodule:: CrocoDash.extract_forcings.get_dataset_piecewise
+.. automodule:: CrocoDash.extract_forcings.initial_condition
    :members:
    :show-inheritance:
    :undoc-members:
 
-CrocoDash.extract\_forcings.merge\_piecewise\_dataset module
-------------------------------------------------------------
+CrocoDash.extract\_forcings.obc module
+--------------------------------------
 
-.. automodule:: CrocoDash.extract_forcings.merge_piecewise_dataset
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-CrocoDash.extract\_forcings.regrid\_dataset\_piecewise module
--------------------------------------------------------------
-
-.. automodule:: CrocoDash.extract_forcings.regrid_dataset_piecewise
+.. automodule:: CrocoDash.extract_forcings.obc
    :members:
    :show-inheritance:
    :undoc-members:

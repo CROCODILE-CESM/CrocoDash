@@ -67,15 +67,20 @@ python driver.py --test
 python driver.py --ic --bc            # initial + boundary conditions
 python driver.py --tides
 python driver.py --runoff
-python driver.py --bgcic --bgcironforcing --bgcrivernutrients
+python driver.py --bc        # boundary conditions (OBC)
+python driver.py --ic        # initial conditionsic --bgcironforcing --bgcrivernutrients
 python driver.py --chl
 
 # Run multiple forcings
-python driver.py --tides --runoff
+python driver.py --tides --runoffic
 
 # Run all except certain components (names are the flag names, case-insensitive)
 python driver.py --all --skip bgcic
-python driver.py --all --skip tides runoff
+python driver.py --all --skip tides bgcic
+
+# Skip raw data download (use files already on disk)
+python driver.py --bc --no-get
+python driver.py --ic --no-get
 ```
 
 This flexibility is intentional—you might want to:
@@ -100,29 +105,16 @@ Here's what happens internally when the driver runs:
 
 CrocoDash deliberately **doesn't do all the processing itself**. Instead, it leverages packages:
 
-| Task | Tool | Used By |
-|------|------|---------|
-| Regridding & OBC extraction | [regional-mom6](https://github.com/CROCODILE-CESM/regional-mom6) | `regrid_dataset_piecewise.py` & Various Modules |
-| Minor processing (fill, mapping, Chlorophyll) | [mom6_forge](https://github.com/NCAR/mom6_forge) | Various modules |
+| Task | Tool | Module |
+|------|------|--------|
+| OBC regridding | [regional-mom6](https://github.com/COSIMA/regional-mom6) | `obc.py` |
+| Initial condition regridding | [regional-mom6](https://github.com/COSIMA/regional-mom6) | `initial_condition.py` |
+| IC land-fill | [mom6_forge](https://github.com/NCAR/mom6_forge) | `initial_condition.py` |
+| Chlorophyll, fill, mapping | [mom6_forge](https://github.com/NCAR/mom6_forge) | Various modules |
 | Data formatting | `netCDF4`, `xarray` | Throughout |
 
-If you want to modify how regridding or initial/boundary conditions are processed, the main place to look is `CrocoDash.extract_forcings.regrid_dataset_piecewise`, which calls `regional-mom6` under the hood. You can look at [regional_mom6 documentation](https://regional-mom6.readthedocs.io/en/latest/index.html) for more information, allthrough it may be difficult to tease out how we use regional_mom6 without looking into the code a bit more.
-
-## Example: Running Forcings on Your HPC System
-
-Here's a typical workflow for an HPC system with job queues:
-
-1. **Set up your case locally (or on login node):**
-   ```python
-   case = Case(...)
-   case.configure_forcings(...)  # Sets up all configuration
-   ```
-
-3. **Submit extraction as a batch job:**
-   ```bash
-   cd /path/to/case/input_directory/extract_forcings
-   # Activate CrocoDash environment and submit to batch system!
-   ```
+For more detail on OBC regridding, see the
+[regional-mom6 documentation](https://regional-mom6.readthedocs.io/en/latest/index.html).
 
 ## See also
 
