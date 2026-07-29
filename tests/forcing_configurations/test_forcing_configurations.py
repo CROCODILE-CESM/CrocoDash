@@ -90,7 +90,9 @@ def test_all_configurators_args_synced():
         config_class.check_output_params_exist()
 
 
-def test_all_configurators_smoke(fake_param_case, fake_cime, fake_forcing_product):
+def test_all_configurators_smoke(
+    fake_param_case, fake_cime, fake_forcing_product, gen_grid_topo_vgrid
+):
 
     ## Set up some dummy args
     dummy_str = "123"
@@ -99,6 +101,14 @@ def test_all_configurators_smoke(fake_param_case, fake_cime, fake_forcing_produc
     dummy_path = fake_param_case / "dummy_path"
     dummy_dir = fake_param_case
     dummy_path.touch()
+
+    # ConditionsConfigurator builds a real regional_mom6.segment.Segment per
+    # boundary (cardinal or custom) from case_supergrid_path, so it needs a
+    # real hgrid file on disk, not just a placeholder string/path.
+    grid, _, _ = gen_grid_topo_vgrid
+    dummy_supergrid_path = fake_param_case / "grid.nc"
+    if not dummy_supergrid_path.exists():
+        grid.write_supergrid(dummy_supergrid_path)
 
     ## Iterate through config classes
     for config_class in ForcingConfigRegistry.registered_types:
@@ -109,6 +119,12 @@ def test_all_configurators_smoke(fake_param_case, fake_cime, fake_forcing_produc
         for a in args:
             if a == "date_range":
                 ctor_args[a] = dummy_date_range
+            elif a == "boundaries":
+                ctor_args[a] = ["south", "north", "west", "east"]
+            elif a == "product_name":
+                ctor_args[a] = "GLORYS"
+            elif "supergrid_path" in a:
+                ctor_args[a] = dummy_supergrid_path
             elif "filepath" in a:
                 ctor_args[a] = dummy_path
             elif "dir" in a:
@@ -127,6 +143,11 @@ def test_all_configurators_smoke(fake_param_case, fake_cime, fake_forcing_produc
         ):
             with pytest.raises(RuntimeError):
                 instance.configure()
+        elif any(isinstance(x, ConfigOutputParam) for x in instance.output_params):
+            # ConfigOutputParam values are config.json-only derived values (dates,
+            # product metadata, etc.) with no case-directory representation, so
+            # they can't be round-tripped through inspect().
+            instance.configure()
         else:
             instance.configure()
 

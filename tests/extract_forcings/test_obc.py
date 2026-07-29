@@ -1,4 +1,3 @@
-import json
 import pytest
 import numpy as np
 import xarray as xr
@@ -24,15 +23,6 @@ def obc_config(tmp_path, get_rect_grid):
     hgrid_path = tmp_path / "hgrid.nc"
     grid.write_supergrid(hgrid_path)
 
-    # Minimal bathymetry file -must match grid dims (ny=30, nx=40 for this grid)
-    # Config.__init__ reads min_depth from attrs
-    topo_ds = xr.Dataset(
-        {"depth": (["ny", "nx"], np.full((30, 40), 100.0))},
-        attrs={"min_depth": 9.5},
-    )
-    topo_path = tmp_path / "topo.nc"
-    topo_ds.to_netcdf(topo_path)
-
     raw_dir = tmp_path / "raw"
     regridded_dir = tmp_path / "regridded"
     output_dir = tmp_path / "output"
@@ -40,50 +30,34 @@ def obc_config(tmp_path, get_rect_grid):
     regridded_dir.mkdir()
     output_dir.mkdir()
 
-    config = {
-        "basic": {
-            "dates": {
-                "start": "2020-01-01",
-                "end": "2020-01-15",
-            },
-            "general": {
-                "get_step": None,
-                "regrid_step": 5,
-                "boundary_number_conversion": {"east": 1, "south": 2},
-                "preview": False,
-            },
-            "forcing": {
-                "product_name": "GLORYS",
-                "function_name": "get_glorys_data_from_rda",
-                "information": {
-                    "u_var_name": "uo",
-                    "v_var_name": "vo",
-                    "eta_var_name": "zos",
-                    "tracer_var_names": {"temp": "thetao", "salt": "so"},
-                    "time": "time",
-                    "tracer_x_coord": "longitude",
-                    "tracer_y_coord": "latitude",
-                    "u_y_coord": "latitude",
-                    "u_x_coord": "longitude",
-                    "v_x_coord": "longitude",
-                    "v_y_coord": "latitude",
-                    "depth_coord": "depth",
-                },
-            },
-            "paths": {
-                "hgrid_path": str(hgrid_path),
-                "bathymetry_path": str(topo_path),
-                "raw_dataset_path": str(raw_dir),
-                "regridded_dataset_path": str(regridded_dir),
-                "output_path": str(output_dir),
-                "input_dataset_path": str(tmp_path),
-            },
-        }
-    }
-
-    config_path = tmp_path / "config.json"
-    config_path.write_text(json.dumps(config))
-    return config_path, tmp_path
+    kwargs = dict(
+        start_date="2020-01-01",
+        end_date="2020-01-15",
+        boundary_number_conversion={"east": 1, "south": 2},
+        product_name="GLORYS",
+        function_name="get_glorys_data_from_rda",
+        product_info={
+            "u_var_name": "uo",
+            "v_var_name": "vo",
+            "eta_var_name": "zos",
+            "tracer_var_names": {"temp": "thetao", "salt": "so"},
+            "time": "time",
+            "tracer_x_coord": "longitude",
+            "tracer_y_coord": "latitude",
+            "u_y_coord": "latitude",
+            "u_x_coord": "longitude",
+            "v_x_coord": "longitude",
+            "v_y_coord": "latitude",
+            "depth_coord": "depth",
+        },
+        hgrid_path=str(hgrid_path),
+        raw_dataset_path=str(raw_dir),
+        regridded_dataset_path=str(regridded_dir),
+        output_path=str(output_dir),
+        get_step_days=None,
+        regrid_step_days=5,
+    )
+    return kwargs, tmp_path
 
 
 # ---------------------------------------------------------------------------
@@ -92,8 +66,8 @@ def obc_config(tmp_path, get_rect_grid):
 
 
 def test_preview_get_outputs(obc_config):
-    config_path, tmp_path = obc_config
-    preview = process_obc_conditions(config_path, preview=True)
+    kwargs, tmp_path = obc_config
+    preview = process_obc_conditions(**kwargs, preview=True)
 
     # get_step=None → one pair covering the full range
     assert len(preview["get_pairs"]) == 1
@@ -165,7 +139,7 @@ def test_merge_single_boundary(
 def test_obc_regrid_workflow(
     obc_config, generate_piecewise_raw_data, dummy_forcing_factory, skip_if_not_glade
 ):
-    config_path, tmp_path = obc_config
+    kwargs, tmp_path = obc_config
     grid = Grid.from_supergrid(tmp_path / "hgrid.nc")
     bounds = Grid.get_bounding_boxes(grid)
     raw_dir = tmp_path / "raw"
@@ -181,7 +155,7 @@ def test_obc_regrid_workflow(
     generate_piecewise_raw_data(ds, "2020-01-01", "2020-01-15", "east_unprocessed.")
     generate_piecewise_raw_data(ds, "2020-01-01", "2020-01-15", "south_unprocessed.")
 
-    process_obc_conditions(config_path)
+    process_obc_conditions(**kwargs)
 
     # regrid_step=5 → first chunk is 2020-01-01 to 2020-01-05
     assert (regridded_dir / "forcing_obc_segment_001_2020-01-01_2020-01-05.nc").exists()
@@ -192,7 +166,7 @@ def test_obc_regrid_workflow(
 def test_obc_merge_workflow(
     obc_config, generate_piecewise_raw_data, dummy_mom6_obc_data_factory, get_rect_grid
 ):
-    config_path, tmp_path = obc_config
+    kwargs, tmp_path = obc_config
     grid = get_rect_grid
     bounds = Grid.get_bounding_boxes(grid)
     raw_dir = tmp_path / "raw"
@@ -228,7 +202,7 @@ def test_obc_merge_workflow(
         ]:
             ds.to_netcdf(regridded_dir / fname)
 
-    process_obc_conditions(config_path)
+    process_obc_conditions(**kwargs)
 
     for seg in ["001", "002"]:
         out = output_dir / f"forcing_obc_segment_{seg}.nc"
