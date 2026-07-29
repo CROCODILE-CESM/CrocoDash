@@ -1,6 +1,15 @@
-# Forcing Configuration (case.configure_forcings)
+# 3a. Configure Forcings (case.configure_forcings)
 
 Forcing configuration handles setup of all forcing and boundary conditions for your regional MOM6 case, including tides, biogeochemistry, runoff, initial conditions, and more.
+
+:::{admonition} Need to find a dataset?
+:class: tip
+Most arguments to `configure_forcings()` are file paths to raw data (TPXO tides,
+GLORYS ICs, GLOFAS runoff, GEBCO bathymetry, …). See
+**[Datasets](datasets.md)** for the full list of built-in data products, and
+the [Accessing Raw Data page](datasets.md#crocodash-data-access-module) for the
+`raw_data_access` helpers that can download them for you.
+:::
 
 ## Overview
 
@@ -17,21 +26,24 @@ Forcing configuration is managed by the `forcing_configurations.py` module throu
 
 ## Common Configuration Examples
 
-Here are typical forcing configurations you might use:
+Here are typical forcing configurations you might use. Note that `date_range` is
+always required — it drives the initial and boundary condition extraction that every
+case needs, and optional configurators (like tides) derive their reference dates from it.
 
 ### Tidal Forcing
 ```python
 case.configure_forcings(
+    date_range=["2020-01-01 00:00:00", "2020-02-01 00:00:00"],
     tpxo_elevation_filepath="/path/to/h_tpxo9.v1.nc",
     tpxo_velocity_filepath="/path/to/u_tpxo9.v1.nc",
     tidal_constituents=["M2", "K1"],
-    start_date="2000,01,01"
 )
 ```
 
 ### Biogeochemistry (BGC)
 ```python
 case.configure_forcings(
+    date_range=["2020-01-01 00:00:00", "2020-02-01 00:00:00"],
     # BGC configuration if "MARBL" in compset
     marbl_ic_filepath="/path/to/bgc_ic.nc",
     # ... other BGC options
@@ -41,9 +53,13 @@ case.configure_forcings(
 ### Runoff
 ```python
 case.configure_forcings(
+    date_range=["2020-01-01 00:00:00", "2020-02-01 00:00:00"],
     # Runoff configuration if "DROF" in compset
-    runoff_esmf_mesh_filepath="/path/to/glofas_mesh.nc",
+    rof_esmf_mesh_filepath="/path/to/glofas_mesh.nc",
+    # Optional smoothing parameters in km — must be given together, or omitted
+    # to let CrocoDash suggest values from the ocean mesh resolution:
     rmax=8,
+    fold=16,
     # ... other runoff options
 )
 ```
@@ -149,6 +165,7 @@ To add a new forcing configuration, See [Adding Forcing Configurations](../for_d
 
 ## See Also
 
-- [Available Datasets](datasets.md) - What data sources can be used
-- [Available Compsets](case_information.md) - Valid compset options
-- [Tutorials](https://crocodile-cesm.github.io/CrocoGallery/) - Working examples with real cases
+- **Next step:** [3b. Process Forcings](3b_process_forcings.md) — actually generate the forcing files
+- [Datasets](datasets.md) — what data sources can be used
+- [Compsets & Inputs](compsets_and_inputs.md) — valid compset options
+- [Tutorials](https://crocodile-cesm.github.io/CrocoGallery/) — working examples with real cases
