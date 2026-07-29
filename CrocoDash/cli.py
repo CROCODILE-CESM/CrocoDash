@@ -1,6 +1,7 @@
 import argparse
 import json
 import sys
+from pathlib import Path
 
 
 def _create(args):
@@ -18,13 +19,69 @@ def _dump(args):
     yaml.dump(config, sys.stdout, default_flow_style=False, sort_keys=False)
 
 
-def _bundle(args):
-    from CrocoDash.shareable.bundle import (
-        BundleCrocoDashCase,
-    )  # Makes loading faster when not used
+def _process(args):
+    from CrocoDash import case_state
+    from CrocoDash.extract_forcings.driver import run_workflow, resolve_components
 
-    case = BundleCrocoDashCase(args.caseroot)
-    case.identify_non_standard_CrocoDash_case_information(
+    if args.config:
+        config_path = Path(args.config)
+    elif args.caseroot:
+        caseroot = Path(args.caseroot)
+        state = case_state.read(caseroot)
+        config_path = Path(state["inputdir"]) / "extract_forcings" / "config.json"
+        if not config_path.exists():
+            raise FileNotFoundError(
+                f"Forcing configuration not found at {config_path}\n"
+                "Run case.configure_forcings() before calling 'crocodash process'."
+            )
+    elif (Path.cwd() / "config.json").exists():
+        # Ran directly from inside the extract_forcings/ directory
+        config_path = Path.cwd() / "config.json"
+    else:
+        raise FileNotFoundError(
+            "No config.json found in the current directory and no --config or --caseroot provided.\n"
+            "Run from inside an extract_forcings/ directory, or pass --caseroot <path> or --config <path>."
+        )
+
+    with open(config_path) as f:
+        config = json.load(f)
+
+    args = resolve_components(args, config)
+
+    if not any(
+        [
+            args.ic,
+            args.bc,
+            args.bgcic,
+            args.bgcironforcing,
+            args.tides,
+            args.chl,
+            args.runoff,
+            args.bgcrivernutrients,
+        ]
+    ):
+        args.subparser.print_help()
+        return
+
+    run_workflow(
+        config_path=config_path,
+        ic=args.ic,
+        bc=args.bc,
+        bgcic=args.bgcic,
+        bgcironforcing=args.bgcironforcing,
+        tides=args.tides,
+        chl_=args.chl,
+        runoff=args.runoff,
+        bgcrivernutrients=args.bgcrivernutrients,
+        preview=config["conditions"]["outputs"].get("preview", False),
+    )
+
+
+def _bundle(args):
+    from CrocoDash.shareable import CaseBundle  # lazy import for faster startup
+
+    case = CaseBundle(args.caseroot)
+    case.identify_non_standard_case_info(
         cesmroot=args.cesmroot,
         machine=args.machine,
         project_number=args.project,
@@ -34,7 +91,7 @@ def _bundle(args):
 
 
 def _duplicate_case(args):
-    from CrocoDash.shareable.bundle import duplicate_case
+    from CrocoDash.shareable import duplicate_case
 
     new_case = duplicate_case(
         caseroot=args.source,
@@ -81,11 +138,11 @@ def _template(args):
 
 
 def _fork(args):
-    from CrocoDash.shareable.fork import ForkCrocoDashBundle
+    from CrocoDash.shareable import ForkBundle
 
     plan = json.loads(args.plan) if args.plan else None
 
-    forker = ForkCrocoDashBundle(args.bundle)
+    forker = ForkBundle(args.bundle)
     forker.fork(
         cesmroot=args.cesmroot,
         machine=args.machine,
@@ -125,6 +182,54 @@ def main():
         "--caseroot", required=True, help="Path to the existing CESM caseroot."
     )
     dump_parser.set_defaults(func=_dump)
+
+    # --- process ---
+    ef_parser = subparsers.add_parser(
+        "process",
+        help="Run the forcing extraction workflow for an existing CrocoDash case.",
+    )
+    ef_parser.add_argument(
+        "--config",
+        default=None,
+        help="Direct path to config.json. Takes precedence over --caseroot.",
+    )
+    ef_parser.add_argument(
+        "--caseroot",
+        default=None,
+        help="Path to the CESM caseroot.",
+    )
+    ef_top = ef_parser.add_argument_group("Top-level actions")
+    ef_top.add_argument("--all", action="store_true", help="Run all components")
+    ef_components = ef_parser.add_argument_group("Forcing components")
+    ef_components.add_argument(
+        "--ic", action="store_true", help="Run initial conditions"
+    )
+    ef_components.add_argument(
+        "--bc", action="store_true", help="Run boundary conditions"
+    )
+    ef_components.add_argument(
+        "--bgcic", action="store_true", help="Run BGC initial conditions"
+    )
+    ef_components.add_argument(
+        "--bgcironforcing", action="store_true", help="Run BGC iron forcing"
+    )
+    ef_components.add_argument(
+        "--bgcrivernutrients", action="store_true", help="Run BGC river nutrients"
+    )
+    ef_components.add_argument(
+        "--runoff", action="store_true", help="Run runoff mapping"
+    )
+    ef_components.add_argument("--tides", action="store_true", help="Run tidal forcing")
+    ef_components.add_argument(
+        "--chl", action="store_true", help="Run chlorophyll processing"
+    )
+    ef_top.add_argument(
+        "--skip",
+        nargs="*",
+        default=[],
+        help="Skip components by name (e.g. --skip tides runoff)",
+    )
+    ef_parser.set_defaults(func=_process, subparser=ef_parser)
 
     # --- bundle ---
     bundle_parser = subparsers.add_parser(

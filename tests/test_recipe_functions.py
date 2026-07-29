@@ -9,10 +9,43 @@ Covers:
 - Round-trip: case_to_yaml output is a valid input for create_case_from_yaml
 """
 
-import json
 import pytest
 import yaml
-from pathlib import Path
+
+
+@pytest.fixture(scope="session")
+def sample_forcing_config():
+    forcing_config = {
+        "caseroot": "/fake/case",
+        "conditions": {
+            "inputs": {
+                "product_name": "GLORYS",
+                "function_name": "get_glorys_data_script_for_cli",
+            },
+            "outputs": {
+                "start_date": "20200101",
+                "end_date": "20200109",
+                "date_format": "%Y%m%d",
+                "boundary_number_conversion": {"north": 1},
+            },
+        },
+        "tides": {
+            "inputs": {
+                "tidal_constituents": ["M2", "K1"],
+                "boundaries": ["north"],
+                "tpxo_elevation_filepath": "ASd",
+                "tpxo_velocity_filepath": "ASd",
+                "case_specific_param": "asdsd",
+            }
+        },
+        "bgcic": {
+            "inputs": {
+                "marbl_ic_filepath": "qwreqwre",
+            }
+        },
+    }
+    return forcing_config
+
 
 from CrocoDash.recipe import (
     build_grid,
@@ -21,7 +54,10 @@ from CrocoDash.recipe import (
     case_to_yaml,
     load_config,
     validate_config_structure,
+    generate_configure_forcing_args,
 )
+from CrocoDash.case_state import check_version as _check_state_schema_version
+from CrocoDash.case_state import SCHEMA_VERSION as STATE_SCHEMA_VERSION
 from CrocoDash.grid import Grid
 from CrocoDash.topo import Topo
 from CrocoDash.vgrid import VGrid
@@ -308,6 +344,42 @@ def test_build_vgrid_unknown_type_raises(get_rect_grid_and_topo):
 
 
 # ---------------------------------------------------------------------------
+# _check_state_schema_version
+# ---------------------------------------------------------------------------
+
+FAKE_PATH = "/some/case/crocodash_state.json"
+
+_major, _minor, _patch = STATE_SCHEMA_VERSION.split(".")
+
+
+@pytest.mark.parametrize(
+    "state, raises, match",
+    [
+        ({"schema_version": STATE_SCHEMA_VERSION}, None, None),
+        ({"schema_version": f"{_major}.{_minor}.99"}, None, None),
+        ({}, None, None),
+        (
+            {"schema_version": f"{_major}.{int(_minor) + 1}.{_patch}"},
+            ValueError,
+            "schema version",
+        ),
+        (
+            {"schema_version": f"{int(_major) + 1}.{_minor}.{_patch}"},
+            ValueError,
+            "schema version",
+        ),
+        ({"schema_version": "not-a-version"}, ValueError, "Invalid schema_version"),
+    ],
+)
+def test_check_state_schema_version(state, raises, match):
+    if raises:
+        with pytest.raises(raises, match=match):
+            _check_state_schema_version(state, FAKE_PATH)
+    else:
+        _check_state_schema_version(state, FAKE_PATH)
+
+
+# ---------------------------------------------------------------------------
 # case_to_yaml
 # ---------------------------------------------------------------------------
 
@@ -389,3 +461,26 @@ def test_case_to_yaml_round_trip(get_case_with_cf, tmp_path):
     assert reloaded["forcings"]["date_range"] == config["forcings"]["date_range"]
     assert reloaded["forcings"]["boundaries"] == config["forcings"]["boundaries"]
     assert reloaded["forcings"]["product_name"] == config["forcings"]["product_name"]
+
+
+def test_build_general_configure_forcing_args(sample_forcing_config):
+    """Test generate_configure_forcing_args creates correct argument dict."""
+    forcing_config = sample_forcing_config
+
+    remove_configs = set()
+
+    args = generate_configure_forcing_args(forcing_config, remove_configs)
+
+    assert args["date_range"] == ["2020-01-01 00:00:00", "2020-01-09 00:00:00"]
+    assert args["boundaries"] == ["north"]
+    assert args["product_name"] == "GLORYS"
+    assert args["function_name"] == "get_glorys_data_script_for_cli"
+    assert args["tidal_constituents"] == ["M2", "K1"]
+    assert "case_specific_param" not in args
+
+    remove_configs = {"tides"}
+
+    args = generate_configure_forcing_args(forcing_config, remove_configs)
+
+    assert "tidal_constituents" not in args
+    assert "marbl_ic_filepath" in args

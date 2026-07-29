@@ -1,4 +1,4 @@
-from CrocoDash.shareable.apply import *
+from CrocoDash.shareable import *
 from unittest.mock import patch, MagicMock
 
 
@@ -43,7 +43,7 @@ def test_copy_user_nl_params_from_case(tmp_path):
     )
 
     # Mock append_user_nl to track calls
-    with patch("CrocoDash.shareable.apply.append_user_nl") as mock_append:
+    with patch("CrocoDash.shareable.append_user_nl") as mock_append:
         copy_user_nl_params_from_case(
             old_caseroot, {"mom": {"PARAM1", "PARAM3"}, "cice": {"CICE_PARAM1"}}
         )
@@ -105,7 +105,7 @@ def test_apply_xmlchanges_to_case(tmp_path):
     )
 
     # Mock xmlchange to track calls
-    with patch("CrocoDash.shareable.apply.xmlchange") as mock_xmlchange:
+    with patch("CrocoDash.shareable.xmlchange") as mock_xmlchange:
         apply_xmlchanges_to_case(old_caseroot, {"JOB_PRIORITY", "CONTINUE_RUN"})
 
     # Verify that only specified params were applied
@@ -114,45 +114,3 @@ def test_apply_xmlchanges_to_case(tmp_path):
     assert ("CONTINUE_RUN", "FALSE") in calls
     # DOUT_S should not have been called
     assert ("DOUT_S", "TRUE") not in calls
-
-
-def test_copy_configurations_to_case(tmp_path):
-    """Test copy_configurations_to_case copies forcing configuration files."""
-    # Create mock case object
-    mock_case = MagicMock()
-    mock_case.inputdir = tmp_path / "inputdir" / "ocnice"
-    mock_case.inputdir.mkdir(parents=True, exist_ok=True)
-    mock_case.fcr.active_configurators.keys.return_value = ["tides", "bgc"]
-
-    # Create source directory with files
-    inputdir_ocnice = tmp_path / "old_ocnice"
-    inputdir_ocnice.mkdir()
-    (inputdir_ocnice / "forcing_obc_seg_0001.nc").write_text("data1")
-    (inputdir_ocnice / "init_temp_salt.nc").write_text("data2")
-    (inputdir_ocnice / "tides_data.nc").write_text("data3")
-
-    # Create forcing config
-    forcing_config = {
-        "basic": {"data": "basic_data"},
-        "tides": {"name": "tides", "outputs": ["tides_data.nc"]},
-        "bgc": {"name": "bgc", "outputs": ["bgc_data.nc"]},
-    }
-
-    # Mock multiple functions to track calls
-    with patch("CrocoDash.shareable.apply.shutil.copy") as mock_copy, patch(
-        "CrocoDash.shareable.apply.ForcingConfigRegistry.get_configurator"
-    ) as mock_get_cfg, patch("CrocoDash.shareable.apply.Path.glob") as mock_glob:
-
-        # Setup mock configurator
-        mock_cfg = MagicMock()
-        mock_cfg.get_output_filepaths.return_value = ["tides_data.nc"]
-        mock_get_cfg.return_value = mock_cfg
-
-        # Setup mock glob to return test files
-        mock_glob.return_value = [inputdir_ocnice / "forcing_obc_seg_0001.nc"]
-
-        copy_configurations_to_case(forcing_config, mock_case, inputdir_ocnice)
-
-    # Verify functions were called
-    assert mock_copy.call_count > 0
-    assert mock_get_cfg.called

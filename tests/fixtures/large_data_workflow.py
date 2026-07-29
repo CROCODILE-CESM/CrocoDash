@@ -22,7 +22,7 @@ def generate_piecewise_raw_data(tmp_path):
             # Generate output filename
             filename = (
                 filename_starter
-                + f"{current_date.strftime('%Y%m%d')}_{next_date.strftime('%Y%m%d')}.nc"
+                + f"{current_date.strftime('%Y-%m-%d')}_{next_date.strftime('%Y-%m-%d')}.nc"
             )
             ds.to_netcdf(output_dir / filename)
 

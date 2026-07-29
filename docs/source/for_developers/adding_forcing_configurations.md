@@ -322,8 +322,8 @@ If you need to pass complex objects to `extract_forcings`, store serializable re
 Validation should happen in `validate_args`, which is called from the base __init__:
 
 ```python
-def validate_args(self, kwargs):
-    assert kwargs["true"]
+def validate_args(self, **kwargs):
+    assert kwargs["my_required_param"] is not None
 ```
 
 ### Accessing Case Information
@@ -349,5 +349,6 @@ Most basic testing is taken care of, and the registry will run available configu
 
 ## See Also
 
-- [Project Architecture](../for_users/structure.md) - Understanding the Case class and workflow
+- [Architecture](architecture.md) — how `forcing_configurations` fits into the rest of CrocoDash
+- [Submodule API Usage](submodule_api_usage.md) — external entry points used by configurators
 - Example implementations in `CrocoDash/forcing_configurations.py`

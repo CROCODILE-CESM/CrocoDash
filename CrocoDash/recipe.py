@@ -1,3 +1,12 @@
+"""
+recipe.py — Creating a Case directly from a YAML config dict or file.
+
+Built on top of case.py, which handles the actual case creation through API calls,
+This module adds the layer for creating a case from a yaml file, which is a convenient way to create a case without having to write a script.
+The YAML file can be generated from an existing case using the case_to_yaml function, which reads the case's state files and reconstructs a config dict suitable for passing to create_case_from_yaml.
+
+"""
+
 import json
 from datetime import datetime
 from pathlib import Path
@@ -6,6 +15,7 @@ import xarray as xr
 import yaml
 
 from CrocoDash.case import Case
+from CrocoDash import case_state
 from CrocoDash.forcing_configurations.base import ForcingConfigRegistry
 from CrocoDash.grid import Grid
 from CrocoDash.topo import Topo
@@ -16,22 +26,6 @@ logger = setup_logger(__name__)
 
 _TOPO_SOURCE_TYPES = {"flat", "dataset", "from_file"}
 _VGRID_TYPES = {"uniform", "hyperbolic", "from_file"}
-
-# State keys that are derived/resolved at init time and cannot be passed straight back
-# to Case.__init__ — handled explicitly in case_to_yaml's "case" section.
-_STATE_DERIVED_KEYS = frozenset(
-    {
-        "inputdir",
-        "cesmroot",
-        "supergrid_path",
-        "topo_path",
-        "vgrid_path",
-        "grid_name",
-        "session_id",
-        "compset_lname",
-        "machine",
-    }
-)
 
 
 def load_config(path):
@@ -133,13 +127,20 @@ def build_vgrid(vgrid_cfg, topo):
         raise ValueError(f"Unknown vgrid.type: '{vgrid_type}'")
 
 
-def create_case_from_yaml(config, override=False):
+def create_case_from_yaml(config, override=False, configure_only=False):
     """
     Run the full case creation workflow from a config dict.
 
     Builds Grid, Topo, and VGrid objects, creates the CESM case, then calls
     configure_forcings and process_forcings. A forcings section is required.
     Returns the Case.
+
+    Parameters
+    ----------
+    configure_only : bool
+        If True, skip process_forcings. Useful when you only need the case
+        configured (e.g. to diff against a reference case) without running
+        the expensive forcing extraction step.
     """
     grid = build_grid(config["grid"])
     topo = build_topo(config["topo"], grid)
@@ -153,8 +154,14 @@ def create_case_from_yaml(config, override=False):
         **config["case"],
     )
 
+    if "forcings" not in config:
+        raise ValueError(
+            "Cannot recreate a case without a forcings configuration. "
+            "The original case must have configure_forcings() called before sharing."
+        )
     case.configure_forcings(**config["forcings"])
-    case.process_forcings()
+    if not configure_only:
+        case.process_forcings()
 
     return case
 
@@ -165,9 +172,9 @@ def generate_configure_forcing_args(forcing_config, remove_configs=None):
         remove_configs = []
     logger.info("Setup configuration arguments...")
 
-    start_str = forcing_config["basic"]["dates"]["start"]
-    end_str = forcing_config["basic"]["dates"]["end"]
-    date_format = forcing_config["basic"]["dates"]["format"]
+    start_str = forcing_config["conditions"]["outputs"]["start_date"]
+    end_str = forcing_config["conditions"]["outputs"]["end_date"]
+    date_format = forcing_config["conditions"]["outputs"]["date_format"]
     start_dt = datetime.strptime(start_str, date_format)
     end_dt = datetime.strptime(end_str, date_format)
 
@@ -179,13 +186,13 @@ def generate_configure_forcing_args(forcing_config, remove_configs=None):
     configure_forcing_args = {
         "date_range": date_range,
         "boundaries": list(
-            forcing_config["basic"]["general"]["boundary_number_conversion"].keys()
+            forcing_config["conditions"]["outputs"]["boundary_number_conversion"].keys()
         ),
-        "product_name": forcing_config["basic"]["forcing"]["product_name"],
-        "function_name": forcing_config["basic"]["forcing"]["function_name"],
+        "product_name": forcing_config["conditions"]["inputs"]["product_name"].upper(),
+        "function_name": forcing_config["conditions"]["inputs"]["function_name"],
     }
     for key in forcing_config:
-        if key == "basic" or key in remove_configs:
+        if key in {"conditions", "caseroot"} or key in remove_configs:
             continue
         user_args = ForcingConfigRegistry.get_user_args(
             ForcingConfigRegistry.get_configurator_from_name(key)
@@ -206,14 +213,7 @@ def case_to_yaml(caseroot):
     to a YAML file with yaml.dump().
     """
     caseroot = Path(caseroot)
-    state_path = caseroot / "crocodash_state.json"
-    if not state_path.exists():
-        raise FileNotFoundError(
-            f"No crocodash_state.json found in {caseroot}. "
-            "This case may not have been created with a recent version of CrocoDash."
-        )
-    with open(state_path) as f:
-        state = json.load(f)
+    state = case_state.read(caseroot)
 
     topo_ds = xr.open_dataset(state["topo_path"])
     min_depth = float(topo_ds.attrs.get("min_depth", 0.0))
@@ -244,7 +244,7 @@ def case_to_yaml(caseroot):
             "machine": state["machine"],
             # Scalar init args stored verbatim by Case._init_args — pull dynamically
             # so new Case.__init__ params flow through without touching this function.
-            **{k: v for k, v in state.items() if k not in _STATE_DERIVED_KEYS},
+            **{k: v for k, v in state.items() if k not in case_state.DERIVED_KEYS},
         },
     }
 
