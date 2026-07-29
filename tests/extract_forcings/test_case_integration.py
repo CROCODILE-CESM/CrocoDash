@@ -39,7 +39,6 @@ def test_case_integration_config(get_CrocoDash_case):
     # Top-level keys
     assert set(config["basic"].keys()) == {
         "paths",
-        "file_regex",
         "dates",
         "forcing",
         "general",

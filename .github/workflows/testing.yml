@@ -53,6 +53,7 @@ jobs:
       # Force a login bash shell to natively enable conda profile utilities
         shell: bash -l {0}
         run: |
+          set -eo pipefail
           cd $WORKDIR/CrocoDash
           source /opt/conda/etc/profile.d/conda.sh
           conda activate CrocoDash
@@ -68,6 +69,7 @@ jobs:
       - name: Run setup_case.py
         shell: bash -l {0}
         run: |
+          set -eo pipefail
           source /opt/conda/etc/profile.d/conda.sh
           conda activate CrocoDash
           copernicusmarine login \
@@ -88,6 +90,7 @@ jobs:
         if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
         shell: bash -l {0}
         run: |
+          set -eo pipefail
           source /opt/conda/etc/profile.d/conda.sh
           conda activate CrocoDash
           mkdir -p $GITHUB_WORKSPACE/bundle_output

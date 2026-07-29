@@ -1,4 +1,4 @@
-"""nCrocoDash Forcing Extraction Driver
+"""CrocoDash Forcing Extraction Driver
 
 This module orchestrates the forcing extraction workflow for a CrocoDash case.
 It coordinates multiple forcing data sources (tides, runoff, BGC, etc.) and processes them
@@ -8,28 +8,34 @@ The script can be run from the command line with various component flags to cont
 forcings are processed. It loads configuration from config.json and coordinates all extraction,
 regridding, and formatting operations.
 
-Typical usage:
-    python driver.py --all                  # Process all configured components
-    python driver.py --tides --bgcic        # Process only tides and BGC initial conditions
-    python driver.py --all --skip runoff    # Process all except runoff
-    python driver.py --ic --no-get          # Process IC but skip data download step
+Typical CLI usage::
+
+    python driver.py --all
+    python driver.py --bc
+    python driver.py --tides --bgcic
+    python driver.py --all --skip runoff
+
+Typical Python usage::
+
+    from CrocoDash.extract_forcings.case_setup.driver import run_workflow
+    run_workflow(bc=True, ic=True)
 """
 
 import sys
-import json
+import time
 from pathlib import Path
 import argparse
 
-
 from CrocoDash.extract_forcings import (
-    merge_piecewise_dataset as mpd,
-    get_dataset_piecewise as gdp,
-    regrid_dataset_piecewise as rdp,
     bgc,
     runoff as rof,
     tides,
     chlorophyll as chl,
     utils as utils,
+    initial_condition as initial_condition,
+)
+from CrocoDash.extract_forcings.obc import (
+    process_obc_conditions as process_obc,
 )
 
 CONFIG_PATH = Path(__file__).parent / "config.json"
@@ -70,86 +76,6 @@ def process_bgcironforcing():
         ],
         inputdir=config.inputdir,
     )
-
-
-def process_conditions(
-    get_dataset_piecewise=True,
-    regrid_dataset_piecewise=True,
-    merge_piecewise_dataset=True,
-    run_initial_condition=True,
-    run_boundary_conditions=True,
-):
-    """
-    Process initial and/or boundary conditions through the three-step pipeline.
-
-    This function orchestrates the data extraction workflow:
-    1. get_dataset_piecewise: Download/retrieve raw data from source datasets
-    2. regrid_dataset_piecewise: Regrid data to your custom regional grid
-    3. merge_piecewise_dataset: Merge regridded data into final forcing files
-
-    Args:
-        get_dataset_piecewise: Whether to download raw data (can skip if already cached)
-        regrid_dataset_piecewise: Whether to regrid data to regional grid
-        merge_piecewise_dataset: Whether to merge data into final files
-        run_initial_condition: Whether to process initial conditions (t=0)
-        run_boundary_conditions: Whether to process boundary conditions (open boundaries)
-    """
-    config = utils.Config(CONFIG_PATH)
-
-    # Call get_dataset_piecewise
-    if get_dataset_piecewise:
-        gdp.get_dataset_piecewise(
-            product_name=config["basic"]["forcing"]["product_name"],
-            function_name=config["basic"]["forcing"]["function_name"],
-            product_information=config["basic"]["forcing"]["information"],
-            date_format=config["basic"]["dates"]["format"],
-            start_date=config["basic"]["dates"]["start"],
-            end_date=config["basic"]["dates"]["end"],
-            hgrid_path=config["basic"]["paths"]["hgrid_path"],
-            step_days=int(config["basic"]["general"]["step"]),
-            output_dir=config["basic"]["paths"]["raw_dataset_path"],
-            boundary_number_conversion=config["basic"]["general"][
-                "boundary_number_conversion"
-            ],
-            run_initial_condition=run_initial_condition,
-            run_boundary_conditions=run_boundary_conditions,
-            preview=config["basic"]["general"]["preview"],
-        )
-
-    # Call regrid_dataset_piecewise
-    if regrid_dataset_piecewise:
-        rdp.regrid_dataset_piecewise(
-            config["basic"]["paths"]["raw_dataset_path"],
-            config["basic"]["file_regex"]["raw_dataset_pattern"],
-            config["basic"]["dates"]["format"],
-            config["basic"]["dates"]["start"],
-            config["basic"]["dates"]["end"],
-            config["basic"]["paths"]["hgrid_path"],
-            config["basic"]["paths"]["bathymetry_path"],
-            config["basic"]["forcing"]["information"],
-            config["basic"]["paths"]["regridded_dataset_path"],
-            config["basic"]["general"]["boundary_number_conversion"],
-            run_initial_condition,
-            run_boundary_conditions,
-            config["basic"]["paths"]["vgrid_path"],
-            config["basic"]["general"]["preview"],
-        )
-
-    # Call merge_dataset_piecewise
-    if merge_piecewise_dataset:
-        mpd.merge_piecewise_dataset(
-            config["basic"]["paths"]["regridded_dataset_path"],
-            config["basic"]["file_regex"]["regridded_dataset_pattern"],
-            config["basic"]["dates"]["format"],
-            config["basic"]["dates"]["start"],
-            config["basic"]["dates"]["end"],
-            config["basic"]["general"]["boundary_number_conversion"],
-            config["basic"]["paths"]["output_path"],
-            config["basic"]["forcing"]["information"].get("marbl_var_names", None),
-            run_initial_condition,
-            run_boundary_conditions,
-            config["basic"]["general"]["preview"],
-        )
 
 
 def process_runoff():
@@ -241,11 +167,6 @@ def parse_args():
         "--chl", action="store_true", help="Run chlorophyll processing"
     )
 
-    conditions_opts = parser.add_argument_group("Conditions options")
-    conditions_opts.add_argument("--no-get", action="store_true")
-    conditions_opts.add_argument("--no-regrid", action="store_true")
-    conditions_opts.add_argument("--no-merge", action="store_true")
-
     top.add_argument(
         "--skip",
         nargs="*",
@@ -285,7 +206,11 @@ def resolve_components(args, cfg):
         k: v
         for k, v in vars(args).items()
         if isinstance(v, bool)
-        and k not in {"all", "test", "no_get", "no_regrid", "no_merge"}
+        and k
+        not in {
+            "all",
+            "test",
+        }
     }
 
     skip = {s.lower() for s in args.skip}
@@ -310,14 +235,111 @@ def resolve_components(args, cfg):
     return args
 
 
+def run_workflow(
+    ic=False,
+    bc=False,
+    bgcic=False,
+    bgcironforcing=False,
+    tides=False,
+    chl=False,
+    runoff=False,
+    bgcrivernutrients=False,
+    preview=False,
+    cfg=None,
+):
+    """
+    Execute the forcing extraction workflow.
+
+    This is the shared core used by both run_from_cli and case.py's process_forcings.
+    Each boolean flag enables the corresponding component. All steps run sequentially.
+
+    Args:
+        ic:                  Run initial conditions
+        bc:                  Run boundary conditions (OBC)
+        bgcic:               Run BGC initial conditions
+        bgcironforcing:      Run BGC iron forcing
+        tides:               Run tidal forcing
+        chl:                 Run chlorophyll processing
+        runoff:              Run runoff mapping
+        bgcrivernutrients:   Run BGC river nutrients (always runs after runoff)
+        preview:             Preview task graph without executing
+        cfg:                 Config object; loaded from CONFIG_PATH if None
+    """
+    if cfg is None:
+        cfg = utils.Config(CONFIG_PATH)
+
+    if not any([ic, bc, bgcic, bgcironforcing, tides, chl, runoff, bgcrivernutrients]):
+        print("No components selected.")
+        return
+
+    timings = {}
+
+    if bc:
+        _t = time.perf_counter()
+        process_obc(
+            config_path=CONFIG_PATH,
+            preview=preview,
+        )
+        timings["bc"] = time.perf_counter() - _t
+
+    if ic:
+        _t = time.perf_counter()
+        initial_condition.process_initial_condition(
+            product_name=cfg["basic"]["forcing"]["product_name"],
+            function_name=cfg["basic"]["forcing"]["function_name"],
+            product_information=cfg["basic"]["forcing"]["information"],
+            start_date=cfg["basic"]["dates"]["start"],
+            hgrid_path=cfg["basic"]["paths"]["hgrid_path"],
+            vgrid_path=cfg["basic"]["paths"]["vgrid_path"],
+            dataset_varnames=cfg["basic"]["forcing"]["information"],
+            raw_data_dir=cfg["basic"]["paths"]["raw_dataset_path"],
+            output_data_dir=cfg["basic"]["paths"]["output_path"],
+            bathymetry_path=cfg["basic"]["paths"]["bathymetry_path"],
+            preview=preview,
+        )
+        timings["ic"] = time.perf_counter() - _t
+
+    if bgcic:
+        _t = time.perf_counter()
+        process_bgcic()
+        timings["bgcic"] = time.perf_counter() - _t
+
+    if bgcironforcing:
+        _t = time.perf_counter()
+        process_bgcironforcing()
+        timings["bgcironforcing"] = time.perf_counter() - _t
+
+    if tides:
+        _t = time.perf_counter()
+        process_tides()
+        timings["tides"] = time.perf_counter() - _t
+
+    if chl:
+        _t = time.perf_counter()
+        process_chl()
+        timings["chl"] = time.perf_counter() - _t
+
+    if runoff:
+        _t = time.perf_counter()
+        process_runoff()
+        timings["runoff"] = time.perf_counter() - _t
+
+    if bgcrivernutrients:
+        _t = time.perf_counter()
+        process_bgcrivernutrients()
+        timings["bgcrivernutrients"] = time.perf_counter() - _t
+
+    if timings:
+        parts = [f"{k}: {v:.1f}s" for k, v in timings.items()]
+        parts.append(f"total: {sum(timings.values()):.1f}s")
+        print("[timing] " + "  ".join(parts))
+
+    return timings
+
+
 def run_from_cli(args, cfg):
     """
     Execute the forcing extraction workflow based on CLI arguments.
-
-    This is the main entry point that coordinates the entire workflow:
-    1. Resolves which components to run
-    2. Executes the appropriate process_* functions
-    3. Maintains component dependencies (e.g., runoff before bgcrivernutrients)
 
     Args:
         args: Parsed and resolved command-line arguments
@@ -329,37 +351,23 @@ def run_from_cli(args, cfg):
 
     args = resolve_components(args, cfg)
 
-    if args.ic or args.bc:
-        process_conditions(
-            get_dataset_piecewise=not args.no_get,
-            regrid_dataset_piecewise=not args.no_regrid,
-            merge_piecewise_dataset=not args.no_merge,
-            run_initial_condition=args.ic,
-            run_boundary_conditions=args.bc,
-        )
+    workflow_kwargs = dict(
+        ic=args.ic,
+        bc=args.bc,
+        bgcic=args.bgcic,
+        bgcironforcing=args.bgcironforcing,
+        tides=args.tides,
+        chl=args.chl,
+        runoff=args.runoff,
+        bgcrivernutrients=args.bgcrivernutrients,
+        preview=cfg["basic"]["general"].get("preview", False),
+        cfg=cfg,
+    )
 
-    if args.bgcic:
-        process_bgcic()
-
-    if args.bgcironforcing:
-        process_bgcironforcing()
-
-    if args.runoff:
-        process_runoff()
-
-    # runoff-dependent product
-    if args.bgcrivernutrients:
-        process_bgcrivernutrients()
-
-    if args.tides:
-        process_tides()
-
-    if args.chl:
-        process_chl()
+    run_workflow(**workflow_kwargs)
 
 
 if __name__ == "__main__":  # pragma: no cover
-
     args = parse_args()
     cfg = utils.Config(CONFIG_PATH)
     run_from_cli(args, cfg)
