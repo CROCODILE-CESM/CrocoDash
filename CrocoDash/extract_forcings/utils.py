@@ -1,48 +1,14 @@
-import json
 import os
 import re
 from pathlib import Path
 from collections import defaultdict
 from datetime import datetime, timedelta
-from CrocoDash.topo import *
-from CrocoDash.grid import *
 from CrocoDash import logging
 from CrocoDash.raw_data_access.registry import ProductRegistry
 
 logger = logging.setup_logger(__name__)
 
 _NETCDF_MAGIC = (b"\x89HDF", b"CDF\x01", b"CDF\x02")
-
-
-class Config:
-
-    def __init__(self, config_path: str = "config.json"):
-
-        with open(config_path, "r", encoding="utf-8") as f:
-            self.config = json.load(f)
-        self.ocn_grid = Grid.from_supergrid(self.config["basic"]["paths"]["hgrid_path"])
-        topo = xr.open_dataset(
-            self.config["basic"]["paths"]["bathymetry_path"], decode_times=False
-        )
-
-        # Co-locate the TopoLibrary version-control dir alongside the case's config
-        # file instead of letting it default to the caller's cwd (which pollutes
-        # the repository root during tests).
-        topo_library_dir = Path(config_path).resolve().parent / "TopoLibrary"
-
-        self.ocn_topo = Topo.from_topo_file(
-            self.ocn_grid,
-            self.config["basic"]["paths"]["bathymetry_path"],
-            min_depth=topo.attrs["min_depth"],
-            version_control_dir=topo_library_dir,
-        )
-        self.inputdir = Path(self.config["basic"]["paths"]["input_dataset_path"])
-
-    def keys(self):
-        return self.config.keys()
-
-    def __getitem__(self, key):
-        return self.config[key]
 
 
 def parse_dataset_folder(
@@ -125,8 +91,16 @@ def get_data_access_function(product_name: str, function_name: str):
     return ProductRegistry.get_access_function(product_name, function_name)
 
 
-def build_forcing_request(product_info: dict) -> tuple[list, dict]:
-    """Build the (variables, extra_args) an access function needs from a forcing product_info dict."""
+def build_forcing_request(
+    product_info: dict, function_args: dict = None
+) -> tuple[list, dict]:
+    """Build the (variables, extra_args) an access function needs from a forcing product_info dict.
+
+    function_args: user overrides (or access-function defaults) for the access
+    function's non-required arguments, as written to config.json's
+    forcing.function_args by configure_forcings()'s function_overrides. Merged
+    into extra_args last so they take precedence over product_info-derived keys.
+    """
     phys_vars = [
         product_info["u_var_name"],
         product_info["v_var_name"],
@@ -145,6 +119,7 @@ def build_forcing_request(product_info: dict) -> tuple[list, dict]:
         for key in ("dataset_path", "date_format", "regex", "delimiter")
         if key in product_info
     }
+    extra_args.update(function_args or {})
     return variables, extra_args
 
 
@@ -156,6 +131,7 @@ def fetch_raw_chunk(
     output_filename: str,
     variables: list,
     extra_args: dict,
+    name=None,
 ) -> Path:
     """Download one raw data chunk, skipping if a valid output file already exists.
 
@@ -182,6 +158,7 @@ def fetch_raw_chunk(
         output_folder=output_folder,
         output_filename=output_file.name,
         variables=variables,
+        name=name,
         **extra_args,
     )
     return output_file

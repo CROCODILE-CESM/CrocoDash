@@ -181,6 +181,7 @@ def _get_boundary(
             data_access_fn=data_access_fn,
             dates=[start_str, end_str],
             latlon=latlon,
+            name=boundary,
             output_folder=output_dir,
             output_filename=output_filename,
             variables=variables,
@@ -322,40 +323,57 @@ def _merge_boundary(boundary_label: str, regridded_files: list, output_folder) -
 # ---------------------------------------------------------------------------
 
 
-def process_obc_conditions(config_path, preview: bool = False):
+def process_obc_conditions(
+    start_date,
+    end_date,
+    boundary_number_conversion: dict,
+    product_name: str,
+    function_name: str,
+    product_info: dict,
+    hgrid_path,
+    raw_dataset_path,
+    regridded_dataset_path,
+    output_path,
+    get_step_days=None,
+    regrid_step_days: int = 30,
+    function_args: dict = None,
+    preview: bool = False,
+):
     """Process boundary conditions through the GET → REGRID → MERGE pipeline.
 
     Each phase is idempotent. Re-running after a partial failure resumes from
     the last completed file.
 
-    GET and REGRID chunk sizes (``get_step`` / ``regrid_step`` in config) are
-    independent. GET defaults to the full date range in one request; REGRID
-    defaults to 30-day slices for memory efficiency.
+    GET and REGRID chunk sizes are independent. GET defaults to the full date
+    range in one request; REGRID defaults to 30-day slices for memory
+    efficiency.
 
     Args:
-        config_path: Path to the config JSON file.
-        preview:     If True, return a dict of expected date pairs without
-                     executing any downloads or regridding.
+        start_date: Forcing start date (datetime or any pandas-parseable string).
+        end_date: Forcing end date (datetime or any pandas-parseable string).
+        boundary_number_conversion: Boundary name -> MOM6 segment number.
+        product_name: Forcing data product name.
+        function_name: Download function name for the product.
+        product_info: Product variable-name metadata (a.k.a. dataset_varnames).
+        hgrid_path: Path to the hgrid supergrid file.
+        raw_dataset_path: Directory for raw downloaded data.
+        regridded_dataset_path: Directory for per-chunk regridded data.
+        output_path: Directory for final, merged MOM6-ready output files.
+        get_step_days: GET chunk size in days; None = full range in one request.
+        regrid_step_days: REGRID chunk size in days.
+        function_args: Overrides for the access function's non-required
+            arguments (e.g. `member`), as resolved by
+            configure_forcings()'s function_overrides.
+        preview: If True, return a dict of expected date pairs without
+            executing any downloads or regridding.
     """
-    config = utils.Config(config_path)
+    start_date = pd.to_datetime(start_date).to_pydatetime()
+    end_date = pd.to_datetime(end_date).to_pydatetime()
 
-    start_date = pd.to_datetime(config["basic"]["dates"]["start"]).to_pydatetime()
-    end_date = pd.to_datetime(config["basic"]["dates"]["end"]).to_pydatetime()
-
-    general = config["basic"]["general"]
-    bnc = general["boundary_number_conversion"]
-    # get_step=None → full range in one request; fall back to legacy "step" key
-    get_step_days = general.get("get_step", None)
-    regrid_step_days = int(general.get("regrid_step", general.get("step", 30)))
-
-    product_name = config["basic"]["forcing"]["product_name"]
-    function_name = config["basic"]["forcing"]["function_name"]
-    product_info = config["basic"]["forcing"]["information"]
-    raw_path = Path(config["basic"]["paths"]["raw_dataset_path"])
-    regridded_path = Path(config["basic"]["paths"]["regridded_dataset_path"])
-    output_path = Path(config["basic"]["paths"]["output_path"])
-    hgrid_path = config["basic"]["paths"]["hgrid_path"]
-    boundaries = list(bnc.keys())
+    raw_path = Path(raw_dataset_path)
+    regridded_path = Path(regridded_dataset_path)
+    output_path = Path(output_path)
+    boundaries = list(boundary_number_conversion.keys())
 
     if preview:
         return {
@@ -364,7 +382,7 @@ def process_obc_conditions(config_path, preview: bool = False):
             "regrid_pairs": _make_date_pairs(start_date, end_date, regrid_step_days),
         }
 
-    variables, extra_args = utils.build_forcing_request(product_info)
+    variables, extra_args = utils.build_forcing_request(product_info, function_args)
 
     if product_info.get("boundary_fill_method", "regional_mom6") != "regional_mom6":
         raise ValueError(
@@ -377,7 +395,7 @@ def process_obc_conditions(config_path, preview: bool = False):
     output_path.mkdir(exist_ok=True)
 
     for boundary in boundaries:
-        seg_id = bnc[boundary]
+        seg_id = boundary_number_conversion[boundary]
 
         logger.info("GET [%s]: %s → %s", boundary, start_date.date(), end_date.date())
         _get_boundary(
@@ -395,7 +413,7 @@ def process_obc_conditions(config_path, preview: bool = False):
 
     regridded_files_by_boundary = {}
     for boundary in boundaries:
-        seg_id = bnc[boundary]
+        seg_id = boundary_number_conversion[boundary]
         parse_raw_dates = lambda f, boundary=boundary: _parse_raw_filename_dates(
             f, boundary
         )
@@ -427,7 +445,7 @@ def process_obc_conditions(config_path, preview: bool = False):
         )
 
     for boundary in boundaries:
-        seg_id = bnc[boundary]
+        seg_id = boundary_number_conversion[boundary]
         regridded_files = regridded_files_by_boundary[boundary]
         _validate_coverage(
             regridded_files,

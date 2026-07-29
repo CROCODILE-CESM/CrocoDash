@@ -94,6 +94,7 @@ class MOM6_OUTPUT(ForcingProduct):
         lat_max,
         lon_min,
         lon_max,
+        name=None,
         output_folder=Path(""),
         output_filename=None,
         variables=["SSH", "TEMP", "SALT", "VVEL", "UVEL"],
