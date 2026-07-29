@@ -1,14 +1,6 @@
 CrocoDash.extract\_forcings package
 ===================================
 
-Subpackages
------------
-
-.. toctree::
-   :maxdepth: 4
-
-   CrocoDash.extract_forcings.case_setup
-
 Submodules
 ----------
 
@@ -17,69 +9,69 @@ CrocoDash.extract\_forcings.bgc module
 
 .. automodule:: CrocoDash.extract_forcings.bgc
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 CrocoDash.extract\_forcings.chlorophyll module
 ----------------------------------------------
 
 .. automodule:: CrocoDash.extract_forcings.chlorophyll
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
-CrocoDash.extract\_forcings.get\_dataset\_piecewise module
-----------------------------------------------------------
+CrocoDash.extract\_forcings.driver module
+-----------------------------------------
 
-.. automodule:: CrocoDash.extract_forcings.get_dataset_piecewise
+.. automodule:: CrocoDash.extract_forcings.driver
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
-CrocoDash.extract\_forcings.merge\_piecewise\_dataset module
-------------------------------------------------------------
+CrocoDash.extract\_forcings.initial\_condition module
+-----------------------------------------------------
 
-.. automodule:: CrocoDash.extract_forcings.merge_piecewise_dataset
+.. automodule:: CrocoDash.extract_forcings.initial_condition
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
-CrocoDash.extract\_forcings.regrid\_dataset\_piecewise module
--------------------------------------------------------------
+CrocoDash.extract\_forcings.obc module
+--------------------------------------
 
-.. automodule:: CrocoDash.extract_forcings.regrid_dataset_piecewise
+.. automodule:: CrocoDash.extract_forcings.obc
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 CrocoDash.extract\_forcings.runoff module
 -----------------------------------------
 
 .. automodule:: CrocoDash.extract_forcings.runoff
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 CrocoDash.extract\_forcings.tides module
 ----------------------------------------
 
 .. automodule:: CrocoDash.extract_forcings.tides
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 CrocoDash.extract\_forcings.utils module
 ----------------------------------------
 
 .. automodule:: CrocoDash.extract_forcings.utils
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 Module contents
 ---------------
 
 .. automodule:: CrocoDash.extract_forcings
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:

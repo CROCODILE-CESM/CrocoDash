@@ -1,5 +1,5 @@
 from pathlib import Path
-from . import utils
+from CrocoDash.raw_data_access.datasets import utils
 import cdsapi
 import pandas as pd
 from CrocoDash.raw_data_access.base import *
@@ -50,7 +50,7 @@ class GLOFAS(DatedBaseProduct):
         }
 
         client = cdsapi.Client()
-        path = output_folder / output_filename
+        path = Path(output_folder) / output_filename
         client.retrieve(dataset, request, path)
         return path
 
