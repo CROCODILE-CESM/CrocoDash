@@ -152,12 +152,11 @@ def _make_state(tmp_path):
     }
 
 
-@patch("CrocoDash.extract_forcings.driver.merge_piecewise_dataset")
-@patch("CrocoDash.extract_forcings.driver.regrid_dataset_piecewise")
-@patch("CrocoDash.extract_forcings.driver.get_dataset_piecewise")
+@patch("CrocoDash.extract_forcings.driver.initial_condition")
+@patch("CrocoDash.extract_forcings.driver.obc")
 @patch("CrocoDash.extract_forcings.driver.case_state")
-def test_run_workflow_ic_bc_calls_piecewise_triple(
-    mock_cs, mock_get, mock_regrid, mock_merge, tmp_path
+def test_run_workflow_ic_bc_calls_obc_and_initial_condition(
+    mock_cs, mock_obc, mock_initial_condition, tmp_path
 ):
     config = _make_config()
     state = _make_state(tmp_path)
@@ -167,17 +166,15 @@ def test_run_workflow_ic_bc_calls_piecewise_triple(
 
     run_workflow(config_path=config_path, ic=True, bc=True)
 
-    assert mock_get.called
-    assert mock_regrid.called
-    assert mock_merge.called
+    assert mock_obc.process_obc_conditions.called
+    assert mock_initial_condition.process_initial_condition.called
 
 
-@patch("CrocoDash.extract_forcings.driver.merge_piecewise_dataset")
-@patch("CrocoDash.extract_forcings.driver.regrid_dataset_piecewise")
-@patch("CrocoDash.extract_forcings.driver.get_dataset_piecewise")
+@patch("CrocoDash.extract_forcings.driver.initial_condition")
+@patch("CrocoDash.extract_forcings.driver.obc")
 @patch("CrocoDash.extract_forcings.driver.case_state")
 def test_run_workflow_no_components_returns_early(
-    mock_cs, mock_get, mock_regrid, mock_merge, tmp_path, capsys
+    mock_cs, mock_obc, mock_initial_condition, tmp_path, capsys
 ):
     config = _make_config()
     state = _make_state(tmp_path)
@@ -188,7 +185,7 @@ def test_run_workflow_no_components_returns_early(
     result = run_workflow(config_path=config_path)
 
     assert result is None
-    assert not mock_get.called
+    assert not mock_obc.process_obc_conditions.called
     captured = capsys.readouterr()
     assert "No components selected" in captured.out
 
@@ -241,12 +238,11 @@ def test_run_workflow_runoff_calls_rof_module(mock_cs, mock_rof, tmp_path):
     mock_rof.generate_rof_ocn_map.assert_called_once()
 
 
-@patch("CrocoDash.extract_forcings.driver.merge_piecewise_dataset")
-@patch("CrocoDash.extract_forcings.driver.regrid_dataset_piecewise")
-@patch("CrocoDash.extract_forcings.driver.get_dataset_piecewise")
+@patch("CrocoDash.extract_forcings.driver.initial_condition")
+@patch("CrocoDash.extract_forcings.driver.obc")
 @patch("CrocoDash.extract_forcings.driver.case_state")
 def test_run_workflow_returns_timings(
-    mock_cs, mock_get, mock_regrid, mock_merge, tmp_path
+    mock_cs, mock_obc, mock_initial_condition, tmp_path
 ):
     config = _make_config()
     state = _make_state(tmp_path)
@@ -257,4 +253,4 @@ def test_run_workflow_returns_timings(
     result = run_workflow(config_path=config_path, ic=True)
 
     assert isinstance(result, dict)
-    assert "ic/bc" in result
+    assert "ic" in result

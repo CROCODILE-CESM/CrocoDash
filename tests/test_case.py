@@ -1,6 +1,7 @@
 import os
 import datetime as dt
 import os
+import pytest
 from uuid import uuid4
 
 
@@ -70,3 +71,16 @@ def test_configure_forcings(get_case_with_cf):
                 found_user_nl_mom_adjusted_var = True
                 break
     assert found_user_nl_mom_adjusted_var
+
+
+def test_configure_forcings_invalid_function_overrides(get_CrocoDash_case):
+    """
+    GLORYS access functions have no non-required args, so any override key is invalid.
+    """
+    case = get_CrocoDash_case
+    with pytest.raises(ValueError):
+        case.configure_forcings(
+            date_range=["2020-01-01 00:00:00", "2020-02-01 00:00:00"],
+            boundaries=["north"],
+            function_overrides={"bogus_key": 1},
+        )

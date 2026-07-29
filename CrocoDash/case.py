@@ -10,6 +10,7 @@ from CrocoDash.topo import Topo
 from CrocoDash.vgrid import VGrid
 from CrocoDash.forcing_configurations.base import ForcingConfigRegistry
 from CrocoDash.raw_data_access.registry import ProductRegistry
+from CrocoDash.raw_data_access.base import ForcingProduct
 from ProConPy.config_var import ConfigVar, cvars
 from ProConPy.stage import Stage
 from ProConPy.dev_utils import ConstraintViolation
@@ -476,16 +477,39 @@ class Case:
             raise TypeError("date_range must be a list of strings.")
         if len(date_range) != 2:
             raise ValueError("date_range must have exactly two elements.")
+        if function_overrides is not None and not isinstance(function_overrides, dict):
+            raise TypeError("function_overrides must be a dict.")
 
         self.forcing_product_name = product_name.lower()
         self.boundaries = boundaries
         self.date_range = pd.to_datetime(date_range)
+
+        ProductRegistry.load()
+        if not (
+            ProductRegistry.product_exists(product_name)
+            and ProductRegistry.product_is_of_type(product_name, ForcingProduct)
+        ):
+            raise ValueError("Product / Data Path is not supported quite yet")
+        self.forcing_product = ProductRegistry.get_product(self.forcing_product_name)
+
+        function_args = ProductRegistry.get_function_default_args(
+            self.forcing_product_name, function_name
+        )
+        if function_overrides:
+            invalid = set(function_overrides) - set(function_args)
+            if invalid:
+                raise ValueError(
+                    f"Invalid function_overrides key(s) {sorted(invalid)}; "
+                    f"valid overridable args are {sorted(function_args)}"
+                )
+            function_args.update(function_overrides)
 
         inputs = kwargs | {
             "date_range": pd.to_datetime(date_range),
             "boundaries": boundaries,
             "product_name": product_name,
             "function_name": function_name,
+            "function_args": function_args,
         }
 
         self.session_id = cvars["MB_ATTEMPT_ID"].value

@@ -588,6 +588,10 @@ class ConditionsConfigurator(BaseConfigurator):
         InputValueParam(
             "compset", comment="Compset lname, used to detect MARBL tracers"
         ),
+        InputValueParam(
+            "function_args",
+            comment="Resolved (defaults + overrides) args for the download function",
+        ),
     ]
 
     output_params = [
@@ -637,6 +641,10 @@ class ConditionsConfigurator(BaseConfigurator):
         ConfigOutputParam(
             "preview", comment="Whether extract_forcings should preview only"
         ),
+        ConfigOutputParam(
+            "function_args",
+            comment="Resolved (defaults + overrides) args for the download function",
+        ),
     ]
 
     def __init__(
@@ -648,6 +656,7 @@ class ConditionsConfigurator(BaseConfigurator):
         date_range=None,
         start_date=None,
         end_date=None,
+        function_args=None,
     ):
         if date_range is not None:
             start_date = date_range[0].strftime(self._DATE_FORMAT)
@@ -659,6 +668,7 @@ class ConditionsConfigurator(BaseConfigurator):
             product_name=product_name,
             function_name=function_name,
             compset=compset,
+            function_args=function_args or {},
         )
 
     def validate_args(self, **kwargs):
@@ -715,6 +725,7 @@ class ConditionsConfigurator(BaseConfigurator):
             {b: i + 1 for i, b in enumerate(boundaries)},
         )
         self.set_output_param("preview", False)
+        self.set_output_param("function_args", self.get_input_param("function_args"))
 
         # ---- static initial condition / OBC params ----
         self.set_output_param("INIT_LAYERS_FROM_Z_FILE", "True")

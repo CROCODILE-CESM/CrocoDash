@@ -25,10 +25,9 @@ from CrocoDash.extract_forcings import (
     runoff as rof,
     tides as tides_mod,
     chlorophyll as chl,
+    obc,
+    initial_condition,
 )
-from CrocoDash.extract_forcings.get_dataset_piecewise import get_dataset_piecewise
-from CrocoDash.extract_forcings.regrid_dataset_piecewise import regrid_dataset_piecewise
-from CrocoDash.extract_forcings.merge_piecewise_dataset import merge_piecewise_dataset
 from CrocoDash.grid import Grid
 from CrocoDash.topo import Topo
 
@@ -106,63 +105,44 @@ def run_workflow(
 
     timings = {}
     try:
-        raw_dataset_pattern = (
-            r"(north|east|south|west)_unprocessed\.(\d{8})_(\d{8})\.nc"
-        )
-        regridded_dataset_pattern = r"forcing_obc_segment_(\d{3})_(\d{8})_(\d{8})\.nc"
-
-        if ic or bc:
+        if bc:
             _t = time.perf_counter()
-            get_dataset_piecewise(
+            obc.process_obc_conditions(
+                start_date=conditions["outputs"]["start_date"],
+                end_date=conditions["outputs"]["end_date"],
+                boundary_number_conversion=conditions["outputs"][
+                    "boundary_number_conversion"
+                ],
+                product_name=conditions["inputs"]["product_name"].upper(),
+                function_name=conditions["inputs"]["function_name"],
+                product_info=conditions["outputs"]["information"],
+                function_args=conditions["outputs"].get("function_args", {}),
+                hgrid_path=supergrid_path,
+                raw_dataset_path=raw_data_dir,
+                regridded_dataset_path=regridded_data_dir,
+                output_path=output_path,
+                regrid_step_days=int(conditions["outputs"]["step"]),
+                preview=preview,
+            )
+            timings["bc"] = time.perf_counter() - _t
+
+        if ic:
+            _t = time.perf_counter()
+            initial_condition.process_initial_condition(
                 product_name=conditions["inputs"]["product_name"].upper(),
                 function_name=conditions["inputs"]["function_name"],
                 product_information=conditions["outputs"]["information"],
-                date_format=conditions["outputs"]["date_format"],
                 start_date=conditions["outputs"]["start_date"],
-                end_date=conditions["outputs"]["end_date"],
                 hgrid_path=supergrid_path,
-                step_days=int(conditions["outputs"]["step"]),
-                output_dir=raw_data_dir,
-                boundary_number_conversion=conditions["outputs"][
-                    "boundary_number_conversion"
-                ],
-                run_initial_condition=ic,
-                run_boundary_conditions=bc,
-                preview=preview,
-            )
-            regrid_dataset_piecewise(
-                folder=raw_data_dir,
-                input_dataset_regex=raw_dataset_pattern,
-                date_format=conditions["outputs"]["date_format"],
-                start_date=conditions["outputs"]["start_date"],
-                end_date=conditions["outputs"]["end_date"],
-                hgrid_path=supergrid_path,
-                bathymetry=topo_path,
-                dataset_varnames=conditions["outputs"]["information"],
-                output_folder=regridded_data_dir,
-                boundary_number_conversion=conditions["outputs"][
-                    "boundary_number_conversion"
-                ],
-                run_initial_condition=ic,
-                run_boundary_conditions=bc,
                 vgrid_path=vgrid_path,
+                dataset_varnames=conditions["outputs"]["information"],
+                raw_data_dir=raw_data_dir,
+                output_data_dir=output_path,
+                bathymetry_path=topo_path,
                 preview=preview,
+                function_args=conditions["outputs"].get("function_args", {}),
             )
-            merge_piecewise_dataset(
-                folder=regridded_data_dir,
-                input_dataset_regex=regridded_dataset_pattern,
-                date_format=conditions["outputs"]["date_format"],
-                start_date=conditions["outputs"]["start_date"],
-                end_date=conditions["outputs"]["end_date"],
-                boundary_number_conversion=conditions["outputs"][
-                    "boundary_number_conversion"
-                ],
-                output_folder=output_path,
-                run_initial_condition=ic,
-                run_boundary_conditions=bc,
-                preview=preview,
-            )
-            timings["ic/bc"] = time.perf_counter() - _t
+            timings["ic"] = time.perf_counter() - _t
 
         if bgcic:
             _t = time.perf_counter()
@@ -234,6 +214,7 @@ def run_workflow(
                     "chl_processed_filepath"
                 ],
                 output_filepath=config["chl"]["outputs"]["CHL_FILE"],
+                calendar=config["chl"]["inputs"].get("cf_calendar") or "NOLEAP",
             )
             timings["chl"] = time.perf_counter() - _t
 
@@ -263,6 +244,8 @@ def run_workflow(
                 mapping_file=config["runoff"]["outputs"]["ROF2OCN_LIQ_RMAPNAME"],
                 river_nutrients_nnsm_filepath=output_path
                 / config["bgcrivernutrients"]["outputs"]["RIV_FLUX_FILE"],
+                calendar=config["bgcrivernutrients"]["inputs"].get("cf_calendar")
+                or "noleap",
             )
             timings["bgcrivernutrients"] = time.perf_counter() - _t
 

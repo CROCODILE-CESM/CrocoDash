@@ -4,6 +4,8 @@ from pathlib import Path
 from collections import defaultdict
 from datetime import datetime, timedelta
 
+_NETCDF_MAGIC = (b"\x89HDF", b"CDF\x01", b"CDF\x02")
+
 
 def parse_dataset_folder(
     folder: str | Path, input_dataset_regex: str, date_format: str

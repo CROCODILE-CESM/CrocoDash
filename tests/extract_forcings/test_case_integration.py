@@ -39,6 +39,8 @@ def test_case_integration_config(CrocoDash_case_factory, tmp_path):
     # Top-level keys
     assert set(config["conditions"].keys()) == {"name", "inputs", "outputs"}
     assert "caseroot" in config
+    # GLORYS's default download function has no non-required args to override
+    assert config["conditions"]["outputs"]["function_args"] == {}
 
 
 def test_driver_works(CrocoDash_case_factory, tmp_path):
