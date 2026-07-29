@@ -564,8 +564,6 @@ class Case:
         process_runoff = kwargs.get("process_runoff", True)
         process_bgc_river_nutrients = kwargs.get("process_bgc_river_nutrients", True)
 
-        
-
         run_workflow(
             config_path=self.extract_forcings_path / "config.json",
             ic=process_initial_condition,
