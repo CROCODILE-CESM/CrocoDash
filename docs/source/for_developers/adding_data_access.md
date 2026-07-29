@@ -97,10 +97,10 @@ class ForcingProduct(DatedBaseProduct):
 
 When you test your class, it will automatically get registed with the registry and run validation. It will fail on import if you miss metadata or required args in your registed access function.
 
-Create a test file in `CrocoDash/tests/raw_data_access` to test your dataset:
+Create a test file in `tests/raw_data_access` to test your dataset:
 
 ```python
-# CrocoDash/tests/raw_data_access/test_my_dataset.py
+# tests/raw_data_access/test_my_dataset.py
 
 import pytest
 from pathlib import Path
@@ -116,7 +116,7 @@ def test_get_data_basic(my_dataset):
 Run your tests:
 
 ```bash
-pytest tests/test_my_dataset.py -v
+pytest tests/raw_data_access/test_my_dataset.py -v
 ```
 
 ## ForcingProduct Base Class

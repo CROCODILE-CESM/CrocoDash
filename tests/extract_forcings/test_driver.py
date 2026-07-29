@@ -65,9 +65,6 @@ def test_resolve_components_all_flag_enables_all():
     args = Namespace(
         all=True,
         test=False,
-        no_get=False,
-        no_regrid=False,
-        no_merge=False,
         skip=[],
         ic=False,
         bc=False,
@@ -94,9 +91,6 @@ def test_resolve_components_skip_respects_case_insensitive():
     args = Namespace(
         all=True,
         test=False,
-        no_get=False,
-        no_regrid=False,
-        no_merge=False,
         skip=["TIDES", "Runoff"],
         ic=False,
         bc=False,
@@ -122,9 +116,6 @@ def test_resolve_components_missing_in_config():
     args = Namespace(
         all=False,
         test=False,
-        no_get=False,
-        no_regrid=False,
-        no_merge=False,
         skip=[],
         ic=False,
         bc=False,
@@ -149,9 +140,6 @@ def test_resolve_components_individual_component_flag():
     args = Namespace(
         all=False,
         test=False,
-        no_get=False,
-        no_regrid=False,
-        no_merge=False,
         skip=[],
         ic=False,
         bc=False,

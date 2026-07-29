@@ -119,6 +119,20 @@ class TidesConfigurator(BaseConfigurator):
         super().configure()
         # You also need to add the files to the OBC string, which is handled in the main case unfortunately
 
+    def get_output_filepaths(self, ocn_ice_directory):
+        # Search directory for tu_* and tz_* files
+        ocn_ice_directory = Path(ocn_ice_directory)
+
+        if not ocn_ice_directory.exists():
+            raise FileNotFoundError(f"{ocn_ice_directory} does not exist")
+
+        return [
+            str(p.resolve())
+            for pattern in ("tu_*", "tz_*")
+            for p in ocn_ice_directory.glob(pattern)
+            if p.is_file()
+        ]
+
 
 @register
 class BGCConfigurator(BaseConfigurator):
@@ -185,6 +199,7 @@ class BGCICConfigurator(BaseConfigurator):
             "MARBL_TRACERS_IC_FILE",
             comment="MARBL initial conditions file",
             user_nl_name="mom",
+            is_file=True,
         )
     ]
 
@@ -213,10 +228,17 @@ class BGCIronForcingConfigurator(BaseConfigurator):
             "MARBL_FESEDFLUX_FILE",
             comment="MARBL sedimentary iron flux file",
             user_nl_name="mom",
+            is_file=True,
         ),
         UserNLConfigParam(
             "MARBL_FEVENTFLUX_FILE",
             comment="MARBL event iron flux file",
+            user_nl_name="mom",
+            is_file=True,
+        ),
+        UserNLConfigParam(
+            "MARBL_FESEDFLUXRED_FILE",
+            comment="MARBL sediment iron flux (reduced) file",
             user_nl_name="mom",
         ),
     ]
@@ -227,8 +249,10 @@ class BGCIronForcingConfigurator(BaseConfigurator):
     def configure(self):
         feventflux_filepath = f"feventflux_5gmol_{self.get_input_param('case_grid_name')}_{self.get_input_param('case_session_id')}.nc"
         fesedflux_filepath = f"fesedflux_total_reduce_oxic_{self.get_input_param('case_grid_name')}_{self.get_input_param('case_session_id')}.nc"
+        fesedfluxred_filepath = f"fesedfluxred_{self.get_input_param('case_grid_name')}_{self.get_input_param('case_session_id')}.nc"
         self.set_output_param("MARBL_FESEDFLUX_FILE", fesedflux_filepath)
         self.set_output_param("MARBL_FEVENTFLUX_FILE", feventflux_filepath)
+        self.set_output_param("MARBL_FESEDFLUXRED_FILE", fesedfluxred_filepath)
         super().configure()
 
 
@@ -243,6 +267,9 @@ class BGCRiverNutrientsConfigurator(BaseConfigurator):
         ),
         InputValueParam("case_session_id", comment="Case session identifier"),
         InputValueParam("case_grid_name", comment="Case grid name"),
+        InputValueParam(
+            "cf_calendar", comment="CF calendar for the river nutrients output file"
+        ),
     ]
     output_params = [
         UserNLConfigParam(
@@ -254,16 +281,25 @@ class BGCRiverNutrientsConfigurator(BaseConfigurator):
             "RIV_FLUX_FILE",
             comment="River nutrient flux file",
             user_nl_name="mom",
+            is_file=True,
         ),
     ]
 
     def __init__(
-        self, global_river_nutrients_filepath, case_session_id, case_grid_name
+        self,
+        global_river_nutrients_filepath,
+        case_session_id,
+        case_grid_name,
+        case_forcing_product=None,
+        cf_calendar=None,
     ):
+        if case_forcing_product is not None and cf_calendar is None:
+            cf_calendar = case_forcing_product.cf_calendar
         super().__init__(
             global_river_nutrients_filepath=global_river_nutrients_filepath,
             case_session_id=case_session_id,
             case_grid_name=case_grid_name,
+            cf_calendar=cf_calendar,
         )
 
     def validate_args(self, **kwargs):
@@ -305,10 +341,14 @@ class RunoffConfigurator(BaseConfigurator):
     ]
     output_params = [
         XMLConfigParam(
-            "ROF2OCN_LIQ_RMAPNAME", comment="Runoff to ocean liquid runoff mapping file"
+            "ROF2OCN_LIQ_RMAPNAME",
+            comment="Runoff to ocean liquid runoff mapping file",
+            is_file=True,
         ),
         XMLConfigParam(
-            "ROF2OCN_ICE_RMAPNAME", comment="Runoff to ocean ice runoff mapping file"
+            "ROF2OCN_ICE_RMAPNAME",
+            comment="Runoff to ocean ice runoff mapping file",
+            is_file=True,
         ),
     ]
 
@@ -409,6 +449,27 @@ class RunoffConfigurator(BaseConfigurator):
                 "the compset must include an active or data runoff model."
             )
 
+    def get_output_filepaths(self, ocn_ice_directory):
+        # Return just the xml file paths (Can be either direct path or in ocn_ice as well)
+        ocn_ice_directory = Path(ocn_ice_directory)
+
+        params = [
+            self.get_output_param("ROF2OCN_LIQ_RMAPNAME"),
+            self.get_output_param("ROF2OCN_ICE_RMAPNAME"),
+        ]
+
+        valid_paths = []
+        for p in params:
+            if not p:
+                continue
+            p_path = Path(p)
+            if not p_path.exists():
+                p_path = ocn_ice_directory / p_path.name
+            if p_path.exists():
+                valid_paths.append(str(p_path.resolve()))
+
+        return valid_paths
+
 
 @register
 class ChlConfigurator(BaseConfigurator):
@@ -421,10 +482,16 @@ class ChlConfigurator(BaseConfigurator):
         ),
         InputValueParam("case_grid_name", comment="Case grid name"),
         InputValueParam("case_session_id", comment="Case session identifier"),
+        InputValueParam(
+            "cf_calendar", comment="CF calendar for the chlorophyll output file"
+        ),
     ]
     output_params = [
         UserNLConfigParam(
-            "CHL_FILE", comment="Chlorophyll data file", user_nl_name="mom"
+            "CHL_FILE",
+            comment="Chlorophyll data file",
+            user_nl_name="mom",
+            is_file=True,
         ),
         UserNLConfigParam(
             "CHL_FROM_FILE", comment="Enable chlorophyll from file", user_nl_name="mom"
@@ -441,12 +508,22 @@ class ChlConfigurator(BaseConfigurator):
         ),
     ]
 
-    def __init__(self, chl_processed_filepath, case_grid_name, case_session_id):
+    def __init__(
+        self,
+        chl_processed_filepath,
+        case_grid_name,
+        case_session_id,
+        case_forcing_product=None,
+        cf_calendar=None,
+    ):
+        if case_forcing_product is not None and cf_calendar is None:
+            cf_calendar = case_forcing_product.cf_calendar
 
         super().__init__(
             chl_processed_filepath=chl_processed_filepath,
             case_grid_name=case_grid_name,
             case_session_id=case_session_id,
+            cf_calendar=cf_calendar,
         )
 
     def validate_args(self, **kwargs):

@@ -6,4 +6,9 @@ if __name__ == "__main__":
         packages=["CrocoDash"],
         version="0.1",
         package_dir={"CrocoDash": "CrocoDash"},
+        entry_points={
+            "console_scripts": [
+                "crocodash=CrocoDash.cli:main",
+            ],
+        },
     )
