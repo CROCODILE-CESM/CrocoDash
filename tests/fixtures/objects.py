@@ -115,3 +115,11 @@ def fake_cime():
             return f"/dummy/meshes/{comp}/{grid}"
 
     return DummyCaseCIME()
+
+
+@pytest.fixture
+def fake_forcing_product():
+    class DummyForcingProduct:
+        cf_calendar = "noleap"
+
+    return DummyForcingProduct()
