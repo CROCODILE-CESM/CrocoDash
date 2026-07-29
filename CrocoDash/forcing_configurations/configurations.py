@@ -236,6 +236,11 @@ class BGCIronForcingConfigurator(BaseConfigurator):
             user_nl_name="mom",
             is_file=True,
         ),
+        UserNLConfigParam(
+            "MARBL_FESEDFLUXRED_FILE",
+            comment="MARBL sediment iron flux (reduced) file",
+            user_nl_name="mom",
+        ),
     ]
 
     def __init__(self, case_session_id, case_grid_name):
@@ -244,8 +249,10 @@ class BGCIronForcingConfigurator(BaseConfigurator):
     def configure(self):
         feventflux_filepath = f"feventflux_5gmol_{self.get_input_param('case_grid_name')}_{self.get_input_param('case_session_id')}.nc"
         fesedflux_filepath = f"fesedflux_total_reduce_oxic_{self.get_input_param('case_grid_name')}_{self.get_input_param('case_session_id')}.nc"
+        fesedfluxred_filepath = f"fesedfluxred_{self.get_input_param('case_grid_name')}_{self.get_input_param('case_session_id')}.nc"
         self.set_output_param("MARBL_FESEDFLUX_FILE", fesedflux_filepath)
         self.set_output_param("MARBL_FEVENTFLUX_FILE", feventflux_filepath)
+        self.set_output_param("MARBL_FESEDFLUXRED_FILE", fesedfluxred_filepath)
         super().configure()
 
 
@@ -260,6 +267,9 @@ class BGCRiverNutrientsConfigurator(BaseConfigurator):
         ),
         InputValueParam("case_session_id", comment="Case session identifier"),
         InputValueParam("case_grid_name", comment="Case grid name"),
+        InputValueParam(
+            "cf_calendar", comment="CF calendar for the river nutrients output file"
+        ),
     ]
     output_params = [
         UserNLConfigParam(
@@ -276,12 +286,20 @@ class BGCRiverNutrientsConfigurator(BaseConfigurator):
     ]
 
     def __init__(
-        self, global_river_nutrients_filepath, case_session_id, case_grid_name
+        self,
+        global_river_nutrients_filepath,
+        case_session_id,
+        case_grid_name,
+        case_forcing_product=None,
+        cf_calendar=None,
     ):
+        if case_forcing_product is not None and cf_calendar is None:
+            cf_calendar = case_forcing_product.cf_calendar
         super().__init__(
             global_river_nutrients_filepath=global_river_nutrients_filepath,
             case_session_id=case_session_id,
             case_grid_name=case_grid_name,
+            cf_calendar=cf_calendar,
         )
 
     def validate_args(self, **kwargs):
@@ -464,6 +482,9 @@ class ChlConfigurator(BaseConfigurator):
         ),
         InputValueParam("case_grid_name", comment="Case grid name"),
         InputValueParam("case_session_id", comment="Case session identifier"),
+        InputValueParam(
+            "cf_calendar", comment="CF calendar for the chlorophyll output file"
+        ),
     ]
     output_params = [
         UserNLConfigParam(
@@ -487,12 +508,22 @@ class ChlConfigurator(BaseConfigurator):
         ),
     ]
 
-    def __init__(self, chl_processed_filepath, case_grid_name, case_session_id):
+    def __init__(
+        self,
+        chl_processed_filepath,
+        case_grid_name,
+        case_session_id,
+        case_forcing_product=None,
+        cf_calendar=None,
+    ):
+        if case_forcing_product is not None and cf_calendar is None:
+            cf_calendar = case_forcing_product.cf_calendar
 
         super().__init__(
             chl_processed_filepath=chl_processed_filepath,
             case_grid_name=case_grid_name,
             case_session_id=case_session_id,
+            cf_calendar=cf_calendar,
         )
 
     def validate_args(self, **kwargs):
