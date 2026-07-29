@@ -1,6 +1,8 @@
-from CrocoDash.shareable.bundle import *
+from CrocoDash.shareable import *
+from CrocoDash.shareable import _get_case_obj
 import pytest
 import subprocess
+import yaml
 from pathlib import Path
 
 
@@ -16,24 +18,45 @@ def two_cesm_cases(CrocoDash_case_factory, tmp_path_factory):
 
 
 @pytest.fixture
-def fake_RCC_empty_case():
-    case = BundleCrocoDashCase.__new__(BundleCrocoDashCase)
-    case._case = None
+def fake_RCC_empty_case(get_CrocoDash_case):
+    from unittest.mock import MagicMock
+
+    case = CaseBundle.__new__(CaseBundle)
+    comp_map = {
+        "COMP_ATM": "datm",
+        "COMP_LND": "slnd",
+        "COMP_ICE": "sice",
+        "COMP_OCN": "mom",
+        "COMP_ROF": "srof",
+        "COMP_GLC": "sglc",
+        "COMP_WAV": "swav",
+    }
+    mock_cime = MagicMock()
+    mock_cime.get_values.return_value = [
+        "ATM",
+        "LND",
+        "ICE",
+        "OCN",
+        "ROF",
+        "GLC",
+        "WAV",
+    ]
+    mock_cime.get_value.side_effect = comp_map.get
+    case._case = mock_cime
+    case.cesmroot = get_CrocoDash_case.cesmroot
     return case
 
 
 def test_RCC_init(get_case_with_cf):
     case = get_case_with_cf
-    rcc = BundleCrocoDashCase(case.caseroot)
+    rcc = CaseBundle(case.caseroot)
     assert rcc
 
 
 def test_diff_CESM_cases_nodiff(two_cesm_cases):
 
     case1, case2 = two_cesm_cases
-    output = BundleCrocoDashCase(case1.caseroot).diff(
-        BundleCrocoDashCase(case2.caseroot)
-    )
+    output = CaseBundle(case1.caseroot).diff(CaseBundle(case2.caseroot))
     assert output.xml_files_missing_in_new == []
     for key, value in output.user_nl_missing_params.items():
         assert value == []
@@ -63,36 +86,26 @@ def test_diff_CESM_cases_alldiff(two_cesm_cases):
     with open(user_nl_path, "a") as f:
         f.write("\nDEBUG=TRUE\n")
 
-    output = BundleCrocoDashCase(case1.caseroot).diff(
-        BundleCrocoDashCase(case2.caseroot)
-    )
+    output = CaseBundle(case1.caseroot).diff(CaseBundle(case2.caseroot))
     assert output.xml_files_missing_in_new == ["test.xml"]
     assert output.user_nl_missing_params["mom"] == ["DEBUG"]
     assert output.source_mods_missing_files == ["src.mom/bleh.dummy"]
     assert output.xmlchanges_missing == ["JOB_PRIORITY"]
 
 
-def test_identify_CrocoDashCase_init_args(get_case_with_cf, fake_RCC_empty_case):
+def test_load_state_from_crocodash_init_args(get_case_with_cf):
     case = get_case_with_cf
-    rcc = fake_RCC_empty_case
-    rcc.caseroot = case.caseroot
-    rcc._get_cesmroot()
-    rcc._read_user_nls()
-    init_args = rcc._identify_CrocoDashCase_init_args()
-    print(init_args)
+    rcc = CaseBundle(case.caseroot)
+    init_args = rcc.init_args
 
     assert str(case.inputdir / "ocnice") == str(init_args["inputdir_ocnice"])
-    assert str(init_args["supergrid_path"]).startswith(str("ocean_hgrid_pana"))
-
-    assert str(init_args["topo_path"]).startswith(str("ocean_topog_pana"))
-
-    assert str(init_args["vgrid_path"]).startswith(str("ocean_vgrid_pana"))
-
-    assert init_args["compset"] == "1850_DATM%JRA_SLND_SICE_MOM6_SROF_SGLC_SWAV_SESP"
+    assert str(init_args["supergrid_path"]).startswith("ocean_hgrid_pana")
+    assert str(init_args["topo_path"]).startswith("ocean_topog_pana")
+    assert str(init_args["vgrid_path"]).startswith("ocean_vgrid_pana")
 
 
-def test_identify_CrocoDashCase_forcing_config_args(
-    CrocoDash_case_factory, tmp_path_factory, fake_RCC_empty_case
+def test_load_state_from_crocodash_forcing_config(
+    CrocoDash_case_factory, tmp_path_factory
 ):
     case1 = CrocoDash_case_factory(tmp_path_factory.mktemp("forcing_config_args"))
     case1.configure_forcings(
@@ -101,24 +114,13 @@ def test_identify_CrocoDashCase_forcing_config_args(
         tpxo_elevation_filepath="s3://crocodile-cesm/CrocoDash/data/tpxo/h_tpxo9.v1.zarr/",
         tpxo_velocity_filepath="s3://crocodile-cesm/CrocoDash/data/tpxo/u_tpxo9.v1.zarr/",
     )
-    rcc = fake_RCC_empty_case
-    rcc.caseroot = case1.caseroot
-    rcc._get_cesmroot()
-    rcc._read_user_nls()
-    forcing_config = rcc._identify_CrocoDashCase_forcing_config_args()
-    # Since this just reads the forcing_config json file in input directory, I'll only check one thing in it
-    assert "tides" in forcing_config
+    rcc = CaseBundle(case1.caseroot)
+    assert "tides" in rcc.forcing_config
 
 
-def test_identify_non_standard_case_information(get_CrocoDash_case):
+def test_identify_non_standard_case_information(get_shareable_CrocoDash_case):
 
-    case1 = get_CrocoDash_case
-    case1.configure_forcings(
-        date_range=["2020-01-01 00:00:00", "2020-01-09 00:00:00"],
-        tidal_constituents=["M2"],
-        tpxo_elevation_filepath="s3://crocodile-cesm/CrocoDash/data/tpxo/h_tpxo9.v1.zarr/",
-        tpxo_velocity_filepath="s3://crocodile-cesm/CrocoDash/data/tpxo/u_tpxo9.v1.zarr/",
-    )
+    case1 = get_shareable_CrocoDash_case
 
     xml_file = Path(case1.caseroot) / "test.xml"
     xml_file.write_text("<test>data</test>")
@@ -138,8 +140,8 @@ def test_identify_non_standard_case_information(get_CrocoDash_case):
     user_nl_path = Path(case1.caseroot) / "user_nl_mom"
     with open(user_nl_path, "a") as f:
         f.write("\nDEBUG=TRUE\n")
-    rcc = BundleCrocoDashCase(case1.caseroot)
-    output = rcc.identify_non_standard_CrocoDash_case_information(
+    rcc = CaseBundle(case1.caseroot)
+    output = rcc.identify_non_standard_case_info(
         case1.cime.cimeroot.parent, case1.machine, case1.project
     )
     assert output.xml_files_missing_in_new == ["test.xml"]
@@ -148,11 +150,10 @@ def test_identify_non_standard_case_information(get_CrocoDash_case):
     assert output.xmlchanges_missing == ["JOB_PRIORITY"]
 
 
-def test_read_user_nl_mom_lines_as_obj(get_CrocoDash_case, fake_RCC_empty_case):
+def test_read_user_nl_mom_lines_as_obj(get_CrocoDash_case):
     case = get_CrocoDash_case
-    rcc = fake_RCC_empty_case
+    rcc = CaseBundle(case.caseroot)
     rcc.caseroot = case.caseroot
-    rcc._get_cesmroot()
     user_nl_mom_obj = rcc._read_user_nl_lines_as_obj("mom")
     assert user_nl_mom_obj["Global"]["INPUTDIR"]["value"] == str(
         case.inputdir / "ocnice"
@@ -160,7 +161,7 @@ def test_read_user_nl_mom_lines_as_obj(get_CrocoDash_case, fake_RCC_empty_case):
 
 
 def test_get_case_obj(get_CrocoDash_case):
-    case = get_case_obj(get_CrocoDash_case.caseroot)
+    case = _get_case_obj(get_CrocoDash_case.caseroot)
     assert case.get_value("COMPSET") == get_CrocoDash_case.compset_lname + "_SESP"
 
 
@@ -206,8 +207,8 @@ def test_bundle_with_modifications(CrocoDash_case_factory, tmp_path_factory, tmp
     output_dir = tmp_path / "bundle_output_modified"
     output_dir.mkdir()
 
-    rcc = BundleCrocoDashCase(case.caseroot)
-    rcc.identify_non_standard_CrocoDash_case_information(
+    rcc = CaseBundle(case.caseroot)
+    rcc.identify_non_standard_case_info(
         case.cime.cimeroot.parent, case.machine, case.project
     )
     # Run the function
@@ -234,16 +235,17 @@ def test_bundle_with_modifications(CrocoDash_case_factory, tmp_path_factory, tmp
     replay_sh_path = case_bundle / "replay.sh"
     assert replay_sh_path.exists()
 
-    # Check that manifest.json was written
-    json_file = case_bundle / "manifest.json"
-    assert json_file.exists()
-    with open(json_file) as f:
-        saved_output = json.load(f)
+    # Check that crocodash_case.yaml was written (replaces the old manifest.json)
+    yaml_file = case_bundle / "crocodash_case.yaml"
+    assert yaml_file.exists()
+    with open(yaml_file) as f:
+        saved_yaml = yaml.safe_load(f)
     json_file = case_bundle / "non_standard_case_info.json"
     with open(json_file) as f:
         differences = json.load(f)
-    assert "init_args" in saved_output
-    assert "forcing_config" in saved_output
+    assert "case" in saved_yaml
+    assert "grid" in saved_yaml
+    assert "forcings" in saved_yaml
     assert differences["xml_files_missing_in_new"] == ["custom_settings.xml"]
     assert differences["source_mods_missing_files"] == ["src.mom/custom_module.F90"]
 
@@ -275,7 +277,6 @@ def test_bundle_with_modifications(CrocoDash_case_factory, tmp_path_factory, tmp
 def test_read_user_nls(fake_RCC_empty_case, get_CrocoDash_case):
     rcc = fake_RCC_empty_case
     rcc.caseroot = get_CrocoDash_case.caseroot
-    rcc._get_cesmroot()
     rcc._read_user_nls()
     assert "mom" in rcc.user_nl_objs.keys()
     assert "datm" in rcc.user_nl_objs.keys()
@@ -306,7 +307,7 @@ def test_read_sourcemods(fake_RCC_empty_case, tmp_path):
     case._read_sourcemods()
 
     # Expected relative paths
-    expected = {Path("src.drv/file1.txt"), Path("src.mom/file2.txt")}
+    expected = {"src.drv/file1.txt", "src.mom/file2.txt"}
 
     # Assert
     assert case.sourcemods == expected
