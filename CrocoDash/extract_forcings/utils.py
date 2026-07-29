@@ -3,6 +3,10 @@ import re
 from pathlib import Path
 from collections import defaultdict
 from datetime import datetime, timedelta
+from CrocoDash import logging
+from CrocoDash.raw_data_access.registry import ProductRegistry
+
+logger = logging.setup_logger(__name__)
 
 _NETCDF_MAGIC = (b"\x89HDF", b"CDF\x01", b"CDF\x02")
 
