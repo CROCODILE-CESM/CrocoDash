@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Case Templates &#8212; CrocoDash  documentation</title>
+    <title>Templates &#8212; CrocoDash  documentation</title>
   
   
   
@@ -168,7 +168,7 @@
 <li class="toctree-l2"><a class="reference internal" href="compsets_and_inputs.html">Regional Compsets &amp; Input Parameters</a></li>
 <li class="toctree-l2"><a class="reference internal" href="datasets.html">Accessing Raw Data (raw_data_access)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="shareable.html">Sharing Cases</a></li>
-<li class="toctree-l2 current active"><a class="current reference internal" href="#">Case Templates</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Templates</a></li>
 <li class="toctree-l2"><a class="reference internal" href="additional_resources.html">Additional Resources</a></li>
 <li class="toctree-l2"><a class="reference internal" href="cli.html">Command Line Interface</a></li>
 </ul>
@@ -333,7 +333,7 @@ document.write(`
               
 
 <div id="jb-print-docs-body" class="onlyprint">
-    <h1>Case Templates</h1>
+    <h1>Templates</h1>
     <!-- Table of contents -->
     <div id="print-main-content">
         <div id="jb-print-toc">
@@ -343,7 +343,9 @@ document.write(`
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#usage">Usage</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#case-templates-kind-case">Case templates (<code class="docutils literal notranslate"><span class="pre">--kind</span> <span class="pre">case</span></code>)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pbs-submission-script-kind-pbs">PBS submission script (<code class="docutils literal notranslate"><span class="pre">--kind</span> <span class="pre">pbs</span></code>)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#machine"><code class="docutils literal notranslate"><span class="pre">--machine</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#available-machines">Available machines</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#what-gets-filled-in">What gets filled in</a></li>
 </ul>
@@ -357,12 +359,16 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="case-templates">
-<h1>Case Templates<a class="headerlink" href="#case-templates" title="Link to this heading">#</a></h1>
-<p>The <code class="docutils literal notranslate"><span class="pre">crocodash</span> <span class="pre">template</span></code> command writes a ready-to-use CrocoDash case file sourced from the gallery tutorial notebook. Use it as a starting point instead of writing from scratch.</p>
+  <section id="templates">
+<h1>Templates<a class="headerlink" href="#templates" title="Link to this heading">#</a></h1>
+<p>The <code class="docutils literal notranslate"><span class="pre">crocodash</span> <span class="pre">template</span></code> command writes a ready-to-use starter file sourced from the gallery tutorial notebook. Use it as a starting point instead of writing from scratch. The <code class="docutils literal notranslate"><span class="pre">--kind</span></code> flag picks what you’re generating:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">--kind</span> <span class="pre">case</span></code> (default) — a case definition: config, notebook, or script</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--kind</span> <span class="pre">pbs</span></code> — a PBS batch script for submitting forcing extraction to an HPC queue</p></li>
+</ul>
 <hr class="docutils" />
-<section id="usage">
-<h2>Usage<a class="headerlink" href="#usage" title="Link to this heading">#</a></h2>
+<section id="case-templates-kind-case">
+<h2>Case templates (<code class="docutils literal notranslate"><span class="pre">--kind</span> <span class="pre">case</span></code>)<a class="headerlink" href="#case-templates-kind-case" title="Link to this heading">#</a></h2>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Jupyter notebook with &lt;KEY&gt; placeholders for manual editing</span>
 crocodash<span class="w"> </span>template<span class="w"> </span>--output<span class="w"> </span>my_case.ipynb
 
@@ -371,10 +377,26 @@ crocodash<span class="w"> </span>template<span class="w"> </span>--output<span c
 
 <span class="c1"># Python script with Derecho paths pre-filled</span>
 crocodash<span class="w"> </span>template<span class="w"> </span>--output<span class="w"> </span>my_case.py<span class="w"> </span>--machine<span class="w"> </span>derecho
+
+<span class="c1"># YAML config with Derecho paths pre-filled</span>
+crocodash<span class="w"> </span>template<span class="w"> </span>--output<span class="w"> </span>my_case.yaml<span class="w"> </span>--machine<span class="w"> </span>derecho
 </pre></div>
 </div>
-<p>The <code class="docutils literal notranslate"><span class="pre">--machine</span></code> flag replaces <code class="docutils literal notranslate"><span class="pre">&lt;KEY&gt;</span></code> placeholders (e.g. <code class="docutils literal notranslate"><span class="pre">&lt;GEBCO&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;CESM&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;inputdir&gt;</span></code>) with real paths for the given machine. Omit it to leave placeholders and fill them in manually.</p>
+<p>For <code class="docutils literal notranslate"><span class="pre">--kind</span> <span class="pre">case</span></code>, the output <em>format</em> is picked by <code class="docutils literal notranslate"><span class="pre">--output</span></code>’s suffix: <code class="docutils literal notranslate"><span class="pre">.yaml</span></code>/<code class="docutils literal notranslate"><span class="pre">.yml</span></code> for a config, <code class="docutils literal notranslate"><span class="pre">.ipynb</span></code> for a notebook, anything else for a <code class="docutils literal notranslate"><span class="pre">.py</span></code> script.</p>
 <p>The <code class="docutils literal notranslate"><span class="pre">.py</span></code> output extracts code cells directly from the gallery tutorial notebook — no separate template file to maintain. Cell boundaries are marked with <code class="docutils literal notranslate"><span class="pre">#</span> <span class="pre">%%</span></code>, making the file compatible with Jupytext and VS Code interactive Python.</p>
+</section>
+<hr class="docutils" />
+<section id="pbs-submission-script-kind-pbs">
+<h2>PBS submission script (<code class="docutils literal notranslate"><span class="pre">--kind</span> <span class="pre">pbs</span></code>)<a class="headerlink" href="#pbs-submission-script-kind-pbs" title="Link to this heading">#</a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>crocodash<span class="w"> </span>template<span class="w"> </span>--output<span class="w"> </span>submit_forcings.pbs<span class="w"> </span>--kind<span class="w"> </span>pbs<span class="w"> </span>--machine<span class="w"> </span>derecho
+</pre></div>
+</div>
+<p>This writes a batch submission script that runs <code class="docutils literal notranslate"><span class="pre">crocodash</span> <span class="pre">process</span> <span class="pre">--caseroot</span> <span class="pre">&lt;caseroot&gt;</span> <span class="pre">--all</span></code> on an HPC queue (e.g. Derecho) instead of interactively — useful for long-running forcing extraction. Edit the <code class="docutils literal notranslate"><span class="pre">#PBS</span> <span class="pre">-A</span> <span class="pre">&lt;PROJECT_CODE&gt;</span></code> and <code class="docutils literal notranslate"><span class="pre">caseroot</span></code> placeholders, then submit with <code class="docutils literal notranslate"><span class="pre">qsub</span> <span class="pre">submit_forcings.pbs</span></code>.</p>
+</section>
+<hr class="docutils" />
+<section id="machine">
+<h2><code class="docutils literal notranslate"><span class="pre">--machine</span></code><a class="headerlink" href="#machine" title="Link to this heading">#</a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">--machine</span></code> flag replaces <code class="docutils literal notranslate"><span class="pre">&lt;KEY&gt;</span></code> placeholders (e.g. <code class="docutils literal notranslate"><span class="pre">&lt;GEBCO&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;CESM&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;inputdir&gt;</span></code>) with real paths for the given machine. Omit it to leave placeholders and fill them in manually. Applies to both <code class="docutils literal notranslate"><span class="pre">--kind</span> <span class="pre">case</span></code> and <code class="docutils literal notranslate"><span class="pre">--kind</span> <span class="pre">pbs</span></code>.</p>
 </section>
 <hr class="docutils" />
 <section id="available-machines">
@@ -470,7 +492,9 @@ crocodash<span class="w"> </span>template<span class="w"> </span>--output<span c
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#usage">Usage</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#case-templates-kind-case">Case templates (<code class="docutils literal notranslate"><span class="pre">--kind</span> <span class="pre">case</span></code>)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pbs-submission-script-kind-pbs">PBS submission script (<code class="docutils literal notranslate"><span class="pre">--kind</span> <span class="pre">pbs</span></code>)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#machine"><code class="docutils literal notranslate"><span class="pre">--machine</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#available-machines">Available machines</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#what-gets-filled-in">What gets filled in</a></li>
 </ul>
