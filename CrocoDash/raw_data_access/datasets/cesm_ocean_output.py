@@ -23,6 +23,7 @@ import dask.base
 import pandas as pd
 
 from CrocoDash.raw_data_access.base import *
+from CrocoDash.raw_data_access.datasets.utils import make_dates_end_inclusive
 
 
 class CESM_POP_OUTPUT(ForcingProduct):
@@ -231,8 +232,11 @@ class CESM_MOM_OUTPUT(ForcingProduct):
 
         # convert_cftime_to_numeric re-encodes a cftime coordinate as numeric
         # and stamps its units/calendar onto the coordinate attrs; match dates
-        # to that same encoding so the slice bounds compare correctly.
-        parsed_dates = pd.to_datetime(dates)
+        # to that same encoding so the slice bounds compare correctly. Push the
+        # end date to the last second of its day so sub-daily output on the
+        # last requested day isn't silently dropped by the slice below.
+        start_str, end_str = make_dates_end_inclusive(dates)
+        parsed_dates = pd.to_datetime([start_str, end_str])
         time_attrs = ds[time_var_name].attrs
         if "units" in time_attrs and "calendar" in time_attrs:
             sel_dates = cftime.date2num(
