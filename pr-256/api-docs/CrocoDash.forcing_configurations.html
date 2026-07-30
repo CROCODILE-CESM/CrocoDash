@@ -46,7 +46,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="CrocoDash.raw_data_access package" href="CrocoDash.raw_data_access.html" />
-    <link rel="prev" title="CrocoDash.extract_forcings.case_setup package" href="CrocoDash.extract_forcings.case_setup.html" />
+    <link rel="prev" title="CrocoDash.extract_forcings package" href="CrocoDash.extract_forcings.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -167,8 +167,9 @@
 <li class="toctree-l2"><a class="reference internal" href="../for_users/3b_process_forcings.html">3b. Process Forcings (<code class="docutils literal notranslate"><span class="pre">case.process_forcings</span></code>)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_users/compsets_and_inputs.html">Regional Compsets &amp; Input Parameters</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_users/datasets.html">Accessing Raw Data (raw_data_access)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../for_users/shareable.html">Shareable Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_users/shareable.html">Sharing Cases</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_users/additional_resources.html">Additional Resources</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_users/cli.html">Command Line Interface</a></li>
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../for_developers/index.html">Developer Guide</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
@@ -182,16 +183,12 @@
 </details></li>
 <li class="toctree-l1 current active has-children"><a class="reference internal" href="modules.html">CrocoDash API Docs</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
 <li class="toctree-l2 current active has-children"><a class="reference internal" href="CrocoDash.html">CrocoDash package</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
-<li class="toctree-l3 has-children"><a class="reference internal" href="CrocoDash.extract_forcings.html">CrocoDash.extract_forcings package</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
-<li class="toctree-l4"><a class="reference internal" href="CrocoDash.extract_forcings.case_setup.html">CrocoDash.extract_forcings.case_setup package</a></li>
-</ul>
-</details></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.extract_forcings.html">CrocoDash.extract_forcings package</a></li>
 <li class="toctree-l3 current active"><a class="current reference internal" href="#">CrocoDash.forcing_configurations package</a></li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="CrocoDash.raw_data_access.html">CrocoDash.raw_data_access package</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html">CrocoDash.raw_data_access.datasets package</a></li>
 </ul>
 </details></li>
-<li class="toctree-l3"><a class="reference internal" href="CrocoDash.shareable.html">CrocoDash.shareable package</a></li>
 </ul>
 </details></li>
 </ul>
@@ -365,6 +362,7 @@ document.write(`
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.base.BaseConfigurator.make_serializable"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.make_serializable()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.base.BaseConfigurator.name"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.name</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.base.BaseConfigurator.output_params"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.output_params</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.base.BaseConfigurator.registry"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.registry</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.base.BaseConfigurator.required_for_compsets"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.required_for_compsets</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.base.BaseConfigurator.serialize"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.serialize()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.base.BaseConfigurator.set_input_param"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.set_input_param()</span></code></a></li>
@@ -372,6 +370,11 @@ document.write(`
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.base.BaseConfigurator.validate_args"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.validate_args()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.base.BaseConfigurator.validate_compset_compatibility"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.validate_compset_compatibility()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.base.BaseConfigurator.validate_output_filepaths"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.validate_output_filepaths()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.base.ConfigOutputParam"><code class="docutils literal notranslate"><span class="pre">ConfigOutputParam</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.base.ConfigOutputParam.apply"><code class="docutils literal notranslate"><span class="pre">ConfigOutputParam.apply()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.base.ConfigOutputParam.inspect"><code class="docutils literal notranslate"><span class="pre">ConfigOutputParam.inspect()</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.base.ForcingConfigRegistry"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry</span></code></a><ul class="nav section-nav flex-column">
@@ -538,6 +541,11 @@ document.write(`
 <dd></dd></dl>
 
 <dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.base.BaseConfigurator.registry">
+<span class="sig-name descname"><span class="pre">registry</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#CrocoDash.forcing_configurations.base.ForcingConfigRegistry" title="CrocoDash.forcing_configurations.base.ForcingConfigRegistry"><span class="pre">ForcingConfigRegistry</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#CrocoDash.forcing_configurations.base.BaseConfigurator.registry" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
 <dt class="sig sig-object py" id="CrocoDash.forcing_configurations.base.BaseConfigurator.required_for_compsets">
 <span class="sig-name descname"><span class="pre">required_for_compsets</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[]</span></em><a class="headerlink" href="#CrocoDash.forcing_configurations.base.BaseConfigurator.required_for_compsets" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
@@ -572,6 +580,28 @@ document.write(`
 <dt class="sig sig-object py" id="CrocoDash.forcing_configurations.base.BaseConfigurator.validate_output_filepaths">
 <span class="sig-name descname"><span class="pre">validate_output_filepaths</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ocn_ice_directory</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing_configurations.base.BaseConfigurator.validate_output_filepaths" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.base.ConfigOutputParam">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.forcing_configurations.base.</span></span><span class="sig-name descname"><span class="pre">ConfigOutputParam</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">comment</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing_configurations.base.ConfigOutputParam" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#CrocoDash.forcing_configurations.base.OutputParam" title="CrocoDash.forcing_configurations.base.OutputParam"><code class="xref py py-class docutils literal notranslate"><span class="pre">OutputParam</span></code></a></p>
+<p>Derived value with no case-side effect (not written to user_nl or xmlchange’d).</p>
+<p>Exists purely so <cite>set_output_param()</cite> + the generic <cite>serialize()</cite> pick it up
+under a configurator’s <cite>outputs</cite>, for values consumed only via config.json
+(e.g. by extract_forcings).</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.base.ConfigOutputParam.apply">
+<span class="sig-name descname"><span class="pre">apply</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing_configurations.base.ConfigOutputParam.apply" title="Link to this definition">#</a></dt>
+<dd><p>Apply the configuration change.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.forcing_configurations.base.ConfigOutputParam.inspect">
+<span class="sig-name descname"><span class="pre">inspect</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">caseroot</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing_configurations.base.ConfigOutputParam.inspect" title="Link to this definition">#</a></dt>
+<dd><p>Inspect the current value of this parameter in the case located at caseroot.</p>
+</dd></dl>
 
 </dd></dl>
 
@@ -789,12 +819,12 @@ document.write(`
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="CrocoDash.extract_forcings.case_setup.html"
+       href="CrocoDash.extract_forcings.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">CrocoDash.extract_forcings.case_setup package</p>
+        <p class="prev-next-title">CrocoDash.extract_forcings package</p>
       </div>
     </a>
     <a class="right-next"
@@ -842,6 +872,7 @@ document.write(`
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.base.BaseConfigurator.make_serializable"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.make_serializable()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.base.BaseConfigurator.name"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.name</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.base.BaseConfigurator.output_params"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.output_params</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.base.BaseConfigurator.registry"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.registry</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.base.BaseConfigurator.required_for_compsets"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.required_for_compsets</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.base.BaseConfigurator.serialize"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.serialize()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.base.BaseConfigurator.set_input_param"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.set_input_param()</span></code></a></li>
@@ -849,6 +880,11 @@ document.write(`
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.base.BaseConfigurator.validate_args"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.validate_args()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.base.BaseConfigurator.validate_compset_compatibility"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.validate_compset_compatibility()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.base.BaseConfigurator.validate_output_filepaths"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.validate_output_filepaths()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.base.ConfigOutputParam"><code class="docutils literal notranslate"><span class="pre">ConfigOutputParam</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.base.ConfigOutputParam.apply"><code class="docutils literal notranslate"><span class="pre">ConfigOutputParam.apply()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.base.ConfigOutputParam.inspect"><code class="docutils literal notranslate"><span class="pre">ConfigOutputParam.inspect()</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing_configurations.base.ForcingConfigRegistry"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry</span></code></a><ul class="nav section-nav flex-column">

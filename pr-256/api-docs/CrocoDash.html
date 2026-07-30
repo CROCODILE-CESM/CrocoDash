@@ -167,8 +167,9 @@
 <li class="toctree-l2"><a class="reference internal" href="../for_users/3b_process_forcings.html">3b. Process Forcings (<code class="docutils literal notranslate"><span class="pre">case.process_forcings</span></code>)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_users/compsets_and_inputs.html">Regional Compsets &amp; Input Parameters</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_users/datasets.html">Accessing Raw Data (raw_data_access)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../for_users/shareable.html">Shareable Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_users/shareable.html">Sharing Cases</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_users/additional_resources.html">Additional Resources</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_users/cli.html">Command Line Interface</a></li>
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../for_developers/index.html">Developer Guide</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
@@ -182,16 +183,12 @@
 </details></li>
 <li class="toctree-l1 current active has-children"><a class="reference internal" href="modules.html">CrocoDash API Docs</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
 <li class="toctree-l2 current active has-children"><a class="current reference internal" href="#">CrocoDash package</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
-<li class="toctree-l3 has-children"><a class="reference internal" href="CrocoDash.extract_forcings.html">CrocoDash.extract_forcings package</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
-<li class="toctree-l4"><a class="reference internal" href="CrocoDash.extract_forcings.case_setup.html">CrocoDash.extract_forcings.case_setup package</a></li>
-</ul>
-</details></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.extract_forcings.html">CrocoDash.extract_forcings package</a></li>
 <li class="toctree-l3"><a class="reference internal" href="CrocoDash.forcing_configurations.html">CrocoDash.forcing_configurations package</a></li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="CrocoDash.raw_data_access.html">CrocoDash.raw_data_access package</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html">CrocoDash.raw_data_access.datasets package</a></li>
 </ul>
 </details></li>
-<li class="toctree-l3"><a class="reference internal" href="CrocoDash.shareable.html">CrocoDash.shareable package</a></li>
 </ul>
 </details></li>
 </ul>
@@ -348,6 +345,12 @@ document.write(`
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#subpackages">Subpackages</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#submodules">Submodules</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crocodash-case-module">CrocoDash.case module</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.case_state">CrocoDash.case_state module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.case_state.check_version"><code class="docutils literal notranslate"><span class="pre">check_version()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.case_state.read"><code class="docutils literal notranslate"><span class="pre">read()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.case_state.write"><code class="docutils literal notranslate"><span class="pre">write()</span></code></a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.cli">CrocoDash.cli module</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.cli.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
 </ul>
@@ -358,6 +361,8 @@ document.write(`
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.logging.setup_logger"><code class="docutils literal notranslate"><span class="pre">setup_logger()</span></code></a></li>
 </ul>
 </li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crocodash-recipe-module">CrocoDash.recipe module</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crocodash-shareable-module">CrocoDash.shareable module</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.topo">CrocoDash.topo module</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.topo_editor">CrocoDash.topo_editor module</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.vgrid">CrocoDash.vgrid module</a></li>
@@ -381,15 +386,6 @@ document.write(`
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="CrocoDash.extract_forcings.html">CrocoDash.extract_forcings package</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="CrocoDash.extract_forcings.html#subpackages">Subpackages</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="CrocoDash.extract_forcings.case_setup.html">CrocoDash.extract_forcings.case_setup package</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="CrocoDash.extract_forcings.case_setup.html#submodules">Submodules</a></li>
-<li class="toctree-l4"><a class="reference internal" href="CrocoDash.extract_forcings.case_setup.html#crocodash-extract-forcings-case-setup-driver-module">CrocoDash.extract_forcings.case_setup.driver module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="CrocoDash.extract_forcings.case_setup.html#module-CrocoDash.extract_forcings.case_setup">Module contents</a></li>
-</ul>
-</li>
-</ul>
-</li>
 <li class="toctree-l2"><a class="reference internal" href="CrocoDash.extract_forcings.html#submodules">Submodules</a></li>
 <li class="toctree-l2"><a class="reference internal" href="CrocoDash.extract_forcings.html#module-CrocoDash.extract_forcings.bgc">CrocoDash.extract_forcings.bgc module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="CrocoDash.extract_forcings.html#CrocoDash.extract_forcings.bgc.process_bgc_ic"><code class="docutils literal notranslate"><span class="pre">process_bgc_ic()</span></code></a></li>
@@ -401,6 +397,7 @@ document.write(`
 <li class="toctree-l3"><a class="reference internal" href="CrocoDash.extract_forcings.html#CrocoDash.extract_forcings.chlorophyll.process_chl"><code class="docutils literal notranslate"><span class="pre">process_chl()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="CrocoDash.extract_forcings.html#crocodash-extract-forcings-driver-module">CrocoDash.extract_forcings.driver module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="CrocoDash.extract_forcings.html#module-CrocoDash.extract_forcings.initial_condition">CrocoDash.extract_forcings.initial_condition module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="CrocoDash.extract_forcings.html#CrocoDash.extract_forcings.initial_condition.final_cleanliness_fill"><code class="docutils literal notranslate"><span class="pre">final_cleanliness_fill()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="CrocoDash.extract_forcings.html#CrocoDash.extract_forcings.initial_condition.process_initial_condition"><code class="docutils literal notranslate"><span class="pre">process_initial_condition()</span></code></a></li>
@@ -413,10 +410,6 @@ document.write(`
 </li>
 <li class="toctree-l2"><a class="reference internal" href="CrocoDash.extract_forcings.html#crocodash-extract-forcings-tides-module">CrocoDash.extract_forcings.tides module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="CrocoDash.extract_forcings.html#module-CrocoDash.extract_forcings.utils">CrocoDash.extract_forcings.utils module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="CrocoDash.extract_forcings.html#CrocoDash.extract_forcings.utils.Config"><code class="docutils literal notranslate"><span class="pre">Config</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="CrocoDash.extract_forcings.html#CrocoDash.extract_forcings.utils.Config.keys"><code class="docutils literal notranslate"><span class="pre">Config.keys()</span></code></a></li>
-</ul>
-</li>
 <li class="toctree-l3"><a class="reference internal" href="CrocoDash.extract_forcings.html#CrocoDash.extract_forcings.utils.build_forcing_request"><code class="docutils literal notranslate"><span class="pre">build_forcing_request()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="CrocoDash.extract_forcings.html#CrocoDash.extract_forcings.utils.check_date_continuity"><code class="docutils literal notranslate"><span class="pre">check_date_continuity()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="CrocoDash.extract_forcings.html#CrocoDash.extract_forcings.utils.fetch_raw_chunk"><code class="docutils literal notranslate"><span class="pre">fetch_raw_chunk()</span></code></a></li>
@@ -449,6 +442,7 @@ document.write(`
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.BaseConfigurator.make_serializable"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.make_serializable()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.BaseConfigurator.name"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.name</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.BaseConfigurator.output_params"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.output_params</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.BaseConfigurator.registry"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.registry</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.BaseConfigurator.required_for_compsets"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.required_for_compsets</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.BaseConfigurator.serialize"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.serialize()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.BaseConfigurator.set_input_param"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.set_input_param()</span></code></a></li>
@@ -456,6 +450,11 @@ document.write(`
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.BaseConfigurator.validate_args"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.validate_args()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.BaseConfigurator.validate_compset_compatibility"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.validate_compset_compatibility()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.BaseConfigurator.validate_output_filepaths"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.validate_output_filepaths()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.ConfigOutputParam"><code class="docutils literal notranslate"><span class="pre">ConfigOutputParam</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.ConfigOutputParam.apply"><code class="docutils literal notranslate"><span class="pre">ConfigOutputParam.apply()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.ConfigOutputParam.inspect"><code class="docutils literal notranslate"><span class="pre">ConfigOutputParam.inspect()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="CrocoDash.forcing_configurations.html#CrocoDash.forcing_configurations.base.ForcingConfigRegistry"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry</span></code></a><ul>
@@ -561,6 +560,7 @@ document.write(`
 <li class="toctree-l3"><a class="reference internal" href="CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.registry.ProductRegistry"><code class="docutils literal notranslate"><span class="pre">ProductRegistry</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.registry.ProductRegistry.call"><code class="docutils literal notranslate"><span class="pre">ProductRegistry.call()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.registry.ProductRegistry.get_access_function"><code class="docutils literal notranslate"><span class="pre">ProductRegistry.get_access_function()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.registry.ProductRegistry.get_function_default_args"><code class="docutils literal notranslate"><span class="pre">ProductRegistry.get_function_default_args()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.registry.ProductRegistry.get_product"><code class="docutils literal notranslate"><span class="pre">ProductRegistry.get_product()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.registry.ProductRegistry.list_access_methods"><code class="docutils literal notranslate"><span class="pre">ProductRegistry.list_access_methods()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.registry.ProductRegistry.list_products"><code class="docutils literal notranslate"><span class="pre">ProductRegistry.list_products()</span></code></a></li>
@@ -578,14 +578,6 @@ document.write(`
 <li class="toctree-l2"><a class="reference internal" href="CrocoDash.raw_data_access.html#module-CrocoDash.raw_data_access">Module contents</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="CrocoDash.shareable.html">CrocoDash.shareable package</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="CrocoDash.shareable.html#submodules">Submodules</a></li>
-<li class="toctree-l2"><a class="reference internal" href="CrocoDash.shareable.html#crocodash-shareable-apply-module">CrocoDash.shareable.apply module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="CrocoDash.shareable.html#crocodash-shareable-bundle-module">CrocoDash.shareable.bundle module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="CrocoDash.shareable.html#crocodash-shareable-fork-module">CrocoDash.shareable.fork module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="CrocoDash.shareable.html#module-CrocoDash.shareable">Module contents</a></li>
-</ul>
-</li>
 </ul>
 </div>
 </section>
@@ -594,6 +586,45 @@ document.write(`
 </section>
 <section id="crocodash-case-module">
 <h2>CrocoDash.case module<a class="headerlink" href="#crocodash-case-module" title="Link to this heading">#</a></h2>
+</section>
+<section id="module-CrocoDash.case_state">
+<span id="crocodash-case-state-module"></span><h2>CrocoDash.case_state module<a class="headerlink" href="#module-CrocoDash.case_state" title="Link to this heading">#</a></h2>
+<p>case_state.py — Serialization policy and I/O for the CrocoDash case state file.</p>
+<p>The case state is written to <code class="docutils literal notranslate"><span class="pre">crocodash_state.json</span></code> inside the case root at the
+end of <code class="docutils literal notranslate"><span class="pre">Case.__init__</span></code>.  This module owns:</p>
+<ul class="simple">
+<li><p>the schema version used to gate compatibility checks;</p></li>
+<li><p>which <code class="docutils literal notranslate"><span class="pre">Case.__init__</span></code> arguments are excluded from the state snapshot
+(<code class="docutils literal notranslate"><span class="pre">INIT_ARGS_EXCLUDE</span></code>);</p></li>
+<li><p>which state-file keys are <em>derived</em> (i.e. cannot be passed straight back to
+<code class="docutils literal notranslate"><span class="pre">Case.__init__</span></code>) and therefore need explicit handling when reconstructing a
+case from the file (<code class="docutils literal notranslate"><span class="pre">DERIVED_KEYS</span></code>);</p></li>
+<li><p>the <code class="docutils literal notranslate"><span class="pre">write</span></code>, <code class="docutils literal notranslate"><span class="pre">read</span></code>, and <code class="docutils literal notranslate"><span class="pre">check_version</span></code> functions.</p></li>
+</ul>
+<p>Keeping both <code class="docutils literal notranslate"><span class="pre">INIT_ARGS_EXCLUDE</span></code> and <code class="docutils literal notranslate"><span class="pre">DERIVED_KEYS</span></code> here makes the
+serialisation contract visible and co-located: when the state schema changes,
+this is the single file to update.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.case_state.check_version">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.case_state.</span></span><span class="sig-name descname"><span class="pre">check_version</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state_path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.case_state.check_version" title="Link to this definition">#</a></dt>
+<dd><p>Raise ValueError if state’s schema_version is incompatible with SCHEMA_VERSION.</p>
+<p>Only MAJOR.MINOR must match; a higher PATCH is acceptable.
+Logs a warning (rather than raising) when schema_version is absent entirely
+(pre-versioning cases).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.case_state.read">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.case_state.</span></span><span class="sig-name descname"><span class="pre">read</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">caseroot</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.case_state.read" title="Link to this definition">#</a></dt>
+<dd><p>Read crocodash_state.json, validate the schema version, and return the state dict.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.case_state.write">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.case_state.</span></span><span class="sig-name descname"><span class="pre">write</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">caseroot</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.case_state.write" title="Link to this definition">#</a></dt>
+<dd><p>Write <em>state</em> to crocodash_state.json, injecting schema_version as the first key.</p>
+</dd></dl>
+
 </section>
 <section id="module-CrocoDash.cli">
 <span id="crocodash-cli-module"></span><h2>CrocoDash.cli module<a class="headerlink" href="#module-CrocoDash.cli" title="Link to this heading">#</a></h2>
@@ -629,6 +660,12 @@ document.write(`
 </dl>
 </dd></dl>
 
+</section>
+<section id="crocodash-recipe-module">
+<h2>CrocoDash.recipe module<a class="headerlink" href="#crocodash-recipe-module" title="Link to this heading">#</a></h2>
+</section>
+<section id="crocodash-shareable-module">
+<h2>CrocoDash.shareable module<a class="headerlink" href="#crocodash-shareable-module" title="Link to this heading">#</a></h2>
 </section>
 <section id="module-CrocoDash.topo">
 <span id="crocodash-topo-module"></span><h2>CrocoDash.topo module<a class="headerlink" href="#module-CrocoDash.topo" title="Link to this heading">#</a></h2>
@@ -695,6 +732,12 @@ document.write(`
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#subpackages">Subpackages</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#submodules">Submodules</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crocodash-case-module">CrocoDash.case module</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.case_state">CrocoDash.case_state module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.case_state.check_version"><code class="docutils literal notranslate"><span class="pre">check_version()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.case_state.read"><code class="docutils literal notranslate"><span class="pre">read()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.case_state.write"><code class="docutils literal notranslate"><span class="pre">write()</span></code></a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.cli">CrocoDash.cli module</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.cli.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
 </ul>
@@ -705,6 +748,8 @@ document.write(`
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.logging.setup_logger"><code class="docutils literal notranslate"><span class="pre">setup_logger()</span></code></a></li>
 </ul>
 </li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crocodash-recipe-module">CrocoDash.recipe module</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crocodash-shareable-module">CrocoDash.shareable module</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.topo">CrocoDash.topo module</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.topo_editor">CrocoDash.topo_editor module</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.vgrid">CrocoDash.vgrid module</a></li>
