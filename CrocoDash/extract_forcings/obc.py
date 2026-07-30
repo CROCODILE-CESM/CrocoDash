@@ -20,6 +20,7 @@ import os
 from datetime import datetime, timedelta
 from pathlib import Path
 
+import dask
 import pandas as pd
 import regional_mom6 as rm6
 import xarray as xr
