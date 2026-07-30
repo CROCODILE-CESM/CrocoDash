@@ -354,11 +354,7 @@ document.write(`
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crocodash-extract-forcings-driver-module">CrocoDash.extract_forcings.driver module</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.extract_forcings.initial_condition">CrocoDash.extract_forcings.initial_condition module</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.initial_condition.final_cleanliness_fill"><code class="docutils literal notranslate"><span class="pre">final_cleanliness_fill()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.initial_condition.process_initial_condition"><code class="docutils literal notranslate"><span class="pre">process_initial_condition()</span></code></a></li>
-</ul>
-</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crocodash-extract-forcings-initial-condition-module">CrocoDash.extract_forcings.initial_condition module</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crocodash-extract-forcings-obc-module">CrocoDash.extract_forcings.obc module</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.extract_forcings.runoff">CrocoDash.extract_forcings.runoff module</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.runoff.generate_rof_ocn_map"><code class="docutils literal notranslate"><span class="pre">generate_rof_ocn_map()</span></code></a></li>
@@ -435,39 +431,8 @@ Returns:
 <section id="crocodash-extract-forcings-driver-module">
 <h2>CrocoDash.extract_forcings.driver module<a class="headerlink" href="#crocodash-extract-forcings-driver-module" title="Link to this heading">#</a></h2>
 </section>
-<section id="module-CrocoDash.extract_forcings.initial_condition">
-<span id="crocodash-extract-forcings-initial-condition-module"></span><h2>CrocoDash.extract_forcings.initial_condition module<a class="headerlink" href="#module-CrocoDash.extract_forcings.initial_condition" title="Link to this heading">#</a></h2>
-<dl class="py function">
-<dt class="sig sig-object py" id="CrocoDash.extract_forcings.initial_condition.final_cleanliness_fill">
-<span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.initial_condition.</span></span><span class="sig-name descname"><span class="pre">final_cleanliness_fill</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">var</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z_dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.extract_forcings.initial_condition.final_cleanliness_fill" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="CrocoDash.extract_forcings.initial_condition.process_initial_condition">
-<span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.initial_condition.</span></span><span class="sig-name descname"><span class="pre">process_initial_condition</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">product_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">product_information</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_date</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">datetime</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hgrid_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vgrid_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset_varnames</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw_data_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_data_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bathymetry_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preview</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function_args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.extract_forcings.initial_condition.process_initial_condition" title="Link to this definition">#</a></dt>
-<dd><p>Process the initial condition (t=0) through the data retrieval pipeline.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>product_name</strong> – The name of the data product to retrieve.</p></li>
-<li><p><strong>function_name</strong> – The function to call for retrieving data.</p></li>
-<li><p><strong>product_information</strong> – Variable name mappings and metadata for the forcing product.</p></li>
-<li><p><strong>start_date</strong> – The start date (any pandas-parseable string or datetime).</p></li>
-<li><p><strong>hgrid_path</strong> – Path to the hgrid supergrid file.</p></li>
-<li><p><strong>vgrid_path</strong> – Path to the vertical grid file.</p></li>
-<li><p><strong>dataset_varnames</strong> – Variable name mappings passed to rm6 regridding.</p></li>
-<li><p><strong>raw_data_dir</strong> – Directory for raw downloaded data.</p></li>
-<li><p><strong>output_data_dir</strong> – Directory for final MOM6-ready output files.</p></li>
-<li><p><strong>bathymetry_path</strong> – Path to the bathymetry file.</p></li>
-<li><p><strong>preview</strong> – Return metadata dict without executing, default False.</p></li>
-<li><p><strong>function_args</strong> – Overrides for the access function’s non-required
-arguments (e.g. <cite>member</cite>), as written to config.json by
-configure_forcings()’s function_overrides.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
+<section id="crocodash-extract-forcings-initial-condition-module">
+<h2>CrocoDash.extract_forcings.initial_condition module<a class="headerlink" href="#crocodash-extract-forcings-initial-condition-module" title="Link to this heading">#</a></h2>
 </section>
 <section id="crocodash-extract-forcings-obc-module">
 <h2>CrocoDash.extract_forcings.obc module<a class="headerlink" href="#crocodash-extract-forcings-obc-module" title="Link to this heading">#</a></h2>
@@ -619,11 +584,7 @@ Example: <cite>“(north|east|south|west)_unprocessed.(d{8})_(d{8}).nc”</cite>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crocodash-extract-forcings-driver-module">CrocoDash.extract_forcings.driver module</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.extract_forcings.initial_condition">CrocoDash.extract_forcings.initial_condition module</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.initial_condition.final_cleanliness_fill"><code class="docutils literal notranslate"><span class="pre">final_cleanliness_fill()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.initial_condition.process_initial_condition"><code class="docutils literal notranslate"><span class="pre">process_initial_condition()</span></code></a></li>
-</ul>
-</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crocodash-extract-forcings-initial-condition-module">CrocoDash.extract_forcings.initial_condition module</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crocodash-extract-forcings-obc-module">CrocoDash.extract_forcings.obc module</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.extract_forcings.runoff">CrocoDash.extract_forcings.runoff module</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.runoff.generate_rof_ocn_map"><code class="docutils literal notranslate"><span class="pre">generate_rof_ocn_map()</span></code></a></li>
