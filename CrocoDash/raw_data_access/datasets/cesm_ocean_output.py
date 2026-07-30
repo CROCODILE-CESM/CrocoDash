@@ -179,6 +179,7 @@ class CESM_MOM_OUTPUT(ForcingProduct):
     v_lat_coord = "yq"
     eta_var_name = "zos"
     depth_coord = "z_l"
+    calendar = NOLEAP
     tracer_var_names = {"temp": "thetao", "salt": "so"}
 
     @accessmethod(
