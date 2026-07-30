@@ -86,7 +86,9 @@ def process_initial_condition(
     expt.mom_input_dir = Path(output_data_dir)
     expt.date_range = [start_date, None]
     vgrid_from_file = xr.open_dataset(vgrid_path)
-    expt._make_vgrid(vgrid_from_file.dz.data)  # sets expt.m6f_vgrid; expt.vgrid derives from it
+    expt._make_vgrid(
+        vgrid_from_file.dz.data
+    )  # sets expt.m6f_vgrid; expt.vgrid derives from it
     file_path = Path(raw_data_dir) / "ic_unprocessed.nc"
     if not preview:
         eta_path = expt.mom_input_dir / "init_eta.nc"

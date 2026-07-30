@@ -25,7 +25,9 @@ def test_process_runoff(mock_runoff, is_glade_file_system, tmp_path):
 
 
 @patch("regional_mom6.segment.Segment.regrid_tides", autospec=True)
-def test_process_tides(mock_regrid_tides, tmp_path, gen_grid_topo_vgrid, dummy_tidal_data):
+def test_process_tides(
+    mock_regrid_tides, tmp_path, gen_grid_topo_vgrid, dummy_tidal_data
+):
     """process_tides drives Segment directly (Segment.cardinal + regrid_tides) --
     no regional_mom6.experiment involved. The expensive xESMF regrid step
     itself is mocked out; the real tidal-file open/rename/complex-transform
