@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 from regional_mom6.regional_mom6 import convert_to_tpxo_tidal_constituents
-from CrocoDash.extract_forcings.obc import boundary_key, build_segment
+from CrocoDash.extract_forcings.obc import boundary_key, get_segment
 
 
 def process_tides(
@@ -23,7 +23,7 @@ def process_tides(
     ``boundaries`` are plain boundary-key strings (cardinal or custom) read
     back from config.json; ``custom_segments`` is the matching
     ``general.custom_segments`` dict (key -> ``Segment.to_spec()``), needed
-    to rebuild any non-cardinal boundary via ``build_segment``.
+    to rebuild any non-cardinal boundary via ``get_segment``.
     """
     date_range = pd.to_datetime(["1850-01-01 00:00:00", "1851-01-01 00:00:00"])
     hgrid = xr.open_dataset(supergrid_path)
@@ -60,7 +60,7 @@ def process_tides(
     for idx, boundary in enumerate(boundaries):
         seg_ix = str(idx + 1).zfill(3)
         print(f"Processing {boundary_key(boundary)} boundary tides...", end="")
-        segment = build_segment(
+        segment = get_segment(
             hgrid,
             boundary,
             segment_name=f"segment_{seg_ix}",

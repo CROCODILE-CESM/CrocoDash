@@ -3,7 +3,7 @@ from pathlib import Path
 from datetime import datetime
 from ProConPy.config_var import ConfigVar, cvars
 from mom6_forge import mapping
-from CrocoDash.extract_forcings.obc import boundary_key, build_segment
+from CrocoDash.extract_forcings.obc import boundary_key, get_segment
 from CrocoDash.raw_data_access.registry import ProductRegistry
 from CrocoDash.raw_data_access.base import ForcingProduct
 from regional_mom6.segment import Segment
@@ -790,7 +790,7 @@ class ConditionsConfigurator(BaseConfigurator):
         # ---- dynamic, per-boundary OBC params ----
         # Position strings come straight from a regional_mom6.segment.Segment
         # built for each boundary -- built the same way (Segment.cardinal /
-        # Segment.from_hgrid via build_segment) whether the boundary is a
+        # Segment.from_hgrid via get_segment) whether the boundary is a
         # cardinal edge or a custom (non-cardinal/interior) Segment.
         hgrid_path = self.get_input_param("case_supergrid_path")
         hgrid = xr.open_dataset(hgrid_path)
@@ -799,7 +799,7 @@ class ConditionsConfigurator(BaseConfigurator):
             seg_ix = str(self._segment_index(boundaries, seg)).zfill(3)
             seg_id = "OBC_SEGMENT_" + seg_ix
 
-            segment = build_segment(
+            segment = get_segment(
                 hgrid,
                 seg,
                 segment_name=f"segment_{seg_ix}",

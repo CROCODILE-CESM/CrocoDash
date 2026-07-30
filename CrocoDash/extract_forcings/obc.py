@@ -44,7 +44,33 @@ def boundary_key(boundary):
     return boundary.segment_name if isinstance(boundary, Segment) else boundary
 
 
-def build_segment(hgrid, boundary, segment_name, topo=None, custom_segments=None):
+# Cardinal edges in terms of the same (axis, supergrid index) pairs Segment
+# itself uses (see regional_mom6.segment._CARDINAL_AXES).
+_CARDINAL_EDGE_AXES = {
+    "south": ("nyp", 0),
+    "north": ("nyp", -1),
+    "west": ("nxp", 0),
+    "east": ("nxp", -1),
+}
+
+
+def detect_open_cardinal_boundaries(topo) -> list:
+    """The subset of the 4 cardinal edges that touch at least one ocean point
+    in ``topo.supergridmask`` -- an edge that's entirely land needs no OBC
+    segment at all. Used as ``configure_forcings()``'s default when the
+    caller doesn't pass an explicit ``boundaries`` list.
+
+    Doesn't apply to custom/interior boundaries -- those can't be inferred
+    from topo alone and must always be passed explicitly."""
+    mask = topo.supergridmask
+    return [
+        name
+        for name, (axis, index) in _CARDINAL_EDGE_AXES.items()
+        if bool(mask.isel({axis: index}).any())
+    ]
+
+
+def get_segment(hgrid, boundary, segment_name, topo=None, custom_segments=None):
     """Build a Segment for one boundary entry, always renamed to
     ``segment_name`` (MOM6's own ``segment_00N`` numbering).
 
@@ -194,7 +220,7 @@ def _boundary_bounding_box(hgrid, boundary: str, custom_segments: dict) -> dict:
     if boundary not in custom_segments:
         return Grid.get_bounding_boxes(hgrid)[boundary]
 
-    segment = build_segment(
+    segment = get_segment(
         hgrid,
         boundary,
         segment_name=f"segment_{boundary}",
@@ -316,7 +342,7 @@ def _regrid_boundary(
         ds_full.sel(time=slice(start_str, end_str)).to_netcdf(tmp_file)
 
         try:
-            seg = build_segment(
+            seg = get_segment(
                 hgrid,
                 boundary,
                 segment_name=f"segment_{seg_id:03d}",
@@ -428,7 +454,7 @@ def process_obc_conditions(
         custom_segments: Boundary key -> Segment.to_spec(), for non-cardinal
             (interior) boundaries -- read back from config.json's
             conditions.outputs.custom_segments. Needed to rebuild any
-            non-cardinal boundary via build_segment().
+            non-cardinal boundary via get_segment().
     """
     start_date = pd.to_datetime(start_date).to_pydatetime()
     end_date = pd.to_datetime(end_date).to_pydatetime()

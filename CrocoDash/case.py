@@ -22,6 +22,7 @@ import xarray as xr
 import numpy as np
 import cftime
 from CrocoDash.extract_forcings.driver import run_workflow
+from CrocoDash.extract_forcings.obc import detect_open_cardinal_boundaries
 
 from CrocoDash import case_state
 
@@ -390,7 +391,7 @@ class Case:
     def configure_forcings(
         self,
         date_range: list[str],
-        boundaries: list[str] = ["south", "north", "west", "east"],
+        boundaries: list[str] = None,
         product_name: str = "GLORYS",
         function_name: str = "get_glorys_data_script_for_cli",
         function_overrides: dict = None,
@@ -412,7 +413,13 @@ class Case:
             List of open boundaries to process. Each entry is either a cardinal
             string (e.g. "south", "north") or a live regional_mom6.segment.Segment
             instance (e.g. built via Segment.from_hgrid/Segment.from_lonlat) for a
-            non-cardinal/interior boundary. Default is ["south", "north", "west", "east"].
+            non-cardinal/interior boundary. Default (None) auto-detects which of
+            the 4 cardinal edges actually touch open ocean from `ocn_topo` and
+            uses only those -- an edge that's entirely land is dropped, since it
+            needs no OBC segment. Custom/interior boundaries can't be inferred
+            this way and must always be passed explicitly; passing any explicit
+            list here (cardinal, custom, or both) disables auto-detection
+            entirely and uses exactly what was given.
         product_name : str, optional
             Name of the forcing data product to use. Default is "GLORYS".
         function_name : str, optional
@@ -480,6 +487,9 @@ class Case:
             raise ValueError("date_range must have exactly two elements.")
         if function_overrides is not None and not isinstance(function_overrides, dict):
             raise TypeError("function_overrides must be a dict.")
+
+        if boundaries is None:
+            boundaries = detect_open_cardinal_boundaries(self.ocn_topo)
 
         self.forcing_product_name = product_name.lower()
         self.boundaries = boundaries
