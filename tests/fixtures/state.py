@@ -19,7 +19,7 @@ def skip_if_not_glade(is_glade_file_system):
         pytest.skip(reason="Skipping test: Not running on the Glade file system.")
 
 
-@pytest.fixture()
+@pytest.fixture(scope="session")
 def is_github_actions():
     return os.getenv("GITHUB_ACTIONS") == "true"
 
@@ -29,5 +29,9 @@ def get_cesm_root_path(is_glade_file_system):
     cesmroot = os.getenv("CESMROOT")
     if is_glade_file_system:
         # TODO: this must be generalized in some way
-        cesmroot = "/glade/u/home/manishrv/work/installs/CROCESM_workshop_2025"
+        cesmroot = "/glade/u/home/manishrv/work/installs/full_regional_cesm"
+    elif cesmroot is None:
+
+        cesmroot = "/Users/manishrv/Documents/cesm"
+        os.environ["CIME_MACHINE"] = "ubuntu-latest"  # macos has problems with VCG
     return cesmroot

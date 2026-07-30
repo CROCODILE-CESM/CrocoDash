@@ -42,14 +42,19 @@ class ForcingConfigRegistry:
             inputs = inputs | self.case_info
         inputs["compset"] = compset
         self.find_active_configurators(self.compset, inputs)
+        for configurator in self.active_configurators.values():
+            configurator.registry = self
 
     @classmethod
-    def deserialize(cls, obj_dict):
-        name = obj_dict["name"]
+    def get_configurator_from_name(cls, name):
         for thing in cls.registered_types:
-            if name == thing.name:
-                return thing.deserialize(obj_dict)
-        raise ValueError(f"Unknown configurator name: {name}")
+            if name.lower() == thing.name.lower():
+                return thing
+        raise ValueError("Configurator Not Found")
+
+    @classmethod
+    def get_configurator(cls, obj_dict):
+        return cls.get_configurator_from_name(obj_dict["name"]).deserialize(obj_dict)
 
     @classmethod
     def find_valid_configurators(cls, compset):
@@ -214,10 +219,11 @@ class OutputParam(Param):
     Base class for a single configuration parameter applied to a CESM/MOM6 case.
     """
 
-    def __init__(self, name: str, comment: Optional[str] = None):
+    def __init__(self, name: str, comment: Optional[str] = None, is_file: bool = False):
         super().__init__(name, comment)
         self.value: Any = None
         self.executed: bool = False
+        self.is_file = is_file
 
     def set_item(self, value: Any):
         self.value = value
@@ -243,8 +249,9 @@ class UserNLConfigParam(OutputParam):
         name: str,
         user_nl_name: str = "mom",
         comment: Optional[str] = None,
+        is_file: bool = False,
     ):
-        super().__init__(name, comment)
+        super().__init__(name, comment, is_file=is_file)
         self.user_nl_name = user_nl_name
 
     def apply(self):
@@ -291,8 +298,9 @@ class XMLConfigParam(OutputParam):
         name: str,
         is_non_local: bool = False,
         comment: Optional[str] = None,
+        is_file: bool = False,
     ):
-        super().__init__(name, comment)
+        super().__init__(name, comment, is_file=is_file)
         self.is_non_local = is_non_local
 
     def apply(self):
@@ -318,6 +326,24 @@ class XMLConfigParam(OutputParam):
         self.set_item(runout.stdout.decode().strip())
 
 
+class ConfigOutputParam(OutputParam):
+    """
+    Derived value with no case-side effect (not written to user_nl or xmlchange'd).
+
+    Exists purely so `set_output_param()` + the generic `serialize()` pick it up
+    under a configurator's `outputs`, for values consumed only via config.json
+    (e.g. by extract_forcings).
+    """
+
+    def apply(self):
+        if self.value is None:
+            raise ValueError(f"Value for parameter {self.name} has not been set.")
+        self.executed = True
+
+    def inspect(self, caseroot):
+        pass
+
+
 class BaseConfigurator(ABC):
     """Base class for all CrocoDash configurators."""
 
@@ -330,6 +356,11 @@ class BaseConfigurator(ABC):
 
     input_params: List[Param]
     output_params: List[OutputParam]
+
+    # Injected by ForcingConfigRegistry.__init__ after all active configurators
+    # are instantiated; lets a configurator look up a sibling's pure helper
+    # methods (e.g. ConditionsConfigurator reading TidesConfigurator.tidal_data_str()).
+    registry: Optional["ForcingConfigRegistry"] = None
 
     def __eq__(self, other):
         if not isinstance(other, BaseConfigurator):
@@ -490,3 +521,20 @@ class BaseConfigurator(ABC):
         return all(sub in compset for sub in cls.allowed_compsets) and all(
             sub not in compset for sub in cls.forbidden_compsets
         )
+
+    def get_output_filepaths(self, ocn_ice_directory):
+        """Get output files from the output parameters"""
+        potential_output_paths = []
+        for output in self.output_params:
+            if output.is_file:
+                potential_file_path = Path(ocn_ice_directory) / str(output.value)
+                if potential_file_path.exists():
+                    potential_output_paths.append(potential_file_path)
+        return potential_output_paths
+
+    def validate_output_filepaths(self, ocn_ice_directory):
+        output_paths = self.get_output_filepaths(ocn_ice_directory)
+        for path in output_paths:
+            if not Path(path).exists():
+                return False
+        return True
