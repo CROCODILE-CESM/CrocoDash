@@ -193,6 +193,14 @@ def _template(args):
         if args.machine:
             template_text = inject_into_text(template_text, load_paths(args.machine))
         output.write_text(template_text)
+    elif output.suffix == ".pbs":
+        # PBS submission script lives alongside the default tutorial notebook
+        pbs_path = get_notebook_path(notebook_id).parent / "submit_forcings.pbs"
+        template_text = pbs_path.read_text()
+        if args.machine:
+            template_text = inject_into_text(template_text, load_paths(args.machine))
+        output.write_text(template_text)
+        output.chmod(output.stat().st_mode | 0o111)
     else:
         import nbformat
 
@@ -395,7 +403,7 @@ def main():
     template_parser.add_argument(
         "--output",
         required=True,
-        help="Output path. Use .yaml for a config, .ipynb for a notebook, .py for a script.",
+        help="Output path. Use .yaml for a config, .ipynb for a notebook, .py for a script, .pbs for a PBS submission script.",
     )
     template_parser.add_argument(
         "--machine",

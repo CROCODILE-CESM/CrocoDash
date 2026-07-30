@@ -92,6 +92,32 @@ def test_template_yaml_with_machine(tmp_path):
     assert isinstance(config, dict)
 
 
+# --- .pbs output ---
+
+
+def test_template_pbs_no_machine(tmp_path):
+    output = tmp_path / "out.pbs"
+    run_main(["template", "--output", str(output)])
+    assert output.exists()
+    text = output.read_text()
+    assert (
+        "<PROJECT_CODE>" in text
+    ), "Placeholders should remain when --machine is not set"
+    assert text.startswith("#!/bin/bash"), "Output should be a shell script"
+    assert output.stat().st_mode & 0o111, "Output should be executable"
+
+
+def test_template_pbs_with_machine(tmp_path):
+    output = tmp_path / "out.pbs"
+    run_main(["template", "--output", str(output), "--machine", "derecho"])
+    assert output.exists()
+    text = output.read_text()
+    # submit_forcings.pbs has no known_paths.json keys, so --machine is a no-op
+    # on its content, but must not error and must still write the file.
+    assert "<PROJECT_CODE>" in text
+    assert text.startswith("#!/bin/bash")
+
+
 # --- error handling ---
 
 
