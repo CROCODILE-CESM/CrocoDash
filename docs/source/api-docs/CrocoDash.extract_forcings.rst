@@ -68,6 +68,14 @@ CrocoDash.extract\_forcings.utils module
    :show-inheritance:
    :undoc-members:
 
+CrocoDash.extract\_forcings.ww3 module
+--------------------------------------
+
+.. automodule:: CrocoDash.extract_forcings.ww3
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 Module contents
 ---------------
 
