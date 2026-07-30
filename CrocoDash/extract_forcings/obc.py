@@ -195,7 +195,10 @@ def _boundary_bounding_box(hgrid, boundary: str, custom_segments: dict) -> dict:
         return Grid.get_bounding_boxes(hgrid)[boundary]
 
     segment = build_segment(
-        hgrid, boundary, segment_name=f"segment_{boundary}", custom_segments=custom_segments
+        hgrid,
+        boundary,
+        segment_name=f"segment_{boundary}",
+        custom_segments=custom_segments,
     )
     return {
         "lon_min": float(segment.lon.min()),
