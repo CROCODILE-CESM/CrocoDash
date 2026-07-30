@@ -97,7 +97,7 @@ def test_template_yaml_with_machine(tmp_path):
 
 def test_template_pbs_no_machine(tmp_path):
     output = tmp_path / "out.pbs"
-    run_main(["template", "--output", str(output)])
+    run_main(["template", "--output", str(output), "--kind", "pbs"])
     assert output.exists()
     text = output.read_text()
     assert (
@@ -109,13 +109,25 @@ def test_template_pbs_no_machine(tmp_path):
 
 def test_template_pbs_with_machine(tmp_path):
     output = tmp_path / "out.pbs"
-    run_main(["template", "--output", str(output), "--machine", "derecho"])
+    run_main(
+        ["template", "--output", str(output), "--kind", "pbs", "--machine", "derecho"]
+    )
     assert output.exists()
     text = output.read_text()
     # submit_forcings.pbs has no known_paths.json keys, so --machine is a no-op
     # on its content, but must not error and must still write the file.
     assert "<PROJECT_CODE>" in text
     assert text.startswith("#!/bin/bash")
+
+
+def test_template_kind_case_ignores_pbs_suffix(tmp_path):
+    # --kind defaults to "case", so a .pbs-named output still gets case-template
+    # content (extracted notebook code cells), not the PBS script.
+    output = tmp_path / "out.pbs"
+    run_main(["template", "--output", str(output)])
+    assert output.exists()
+    text = output.read_text()
+    assert "#!/bin/bash" not in text
 
 
 # --- error handling ---

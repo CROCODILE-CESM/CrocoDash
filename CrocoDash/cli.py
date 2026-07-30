@@ -186,14 +186,7 @@ def _template(args):
     output = Path(args.output)
     notebook_id = args.notebook
 
-    if output.suffix in (".yaml", ".yml"):
-        # YAML starter lives alongside the default tutorial notebook
-        yaml_path = get_notebook_path(notebook_id).parent / "starter_case.yaml"
-        template_text = yaml_path.read_text()
-        if args.machine:
-            template_text = inject_into_text(template_text, load_paths(args.machine))
-        output.write_text(template_text)
-    elif output.suffix == ".pbs":
+    if args.kind == "pbs":
         # PBS submission script lives alongside the default tutorial notebook
         pbs_path = get_notebook_path(notebook_id).parent / "submit_forcings.pbs"
         template_text = pbs_path.read_text()
@@ -201,6 +194,13 @@ def _template(args):
             template_text = inject_into_text(template_text, load_paths(args.machine))
         output.write_text(template_text)
         output.chmod(output.stat().st_mode | 0o111)
+    elif output.suffix in (".yaml", ".yml"):
+        # YAML starter lives alongside the default tutorial notebook
+        yaml_path = get_notebook_path(notebook_id).parent / "starter_case.yaml"
+        template_text = yaml_path.read_text()
+        if args.machine:
+            template_text = inject_into_text(template_text, load_paths(args.machine))
+        output.write_text(template_text)
     else:
         import nbformat
 
@@ -398,12 +398,23 @@ def main():
     # --- template ---
     template_parser = subparsers.add_parser(
         "template",
-        help="Write a starter CrocoDash case script or notebook.",
+        help="Write a starter CrocoDash case file, or a PBS submission script.",
+    )
+    template_parser.add_argument(
+        "--kind",
+        choices=["case", "pbs"],
+        default="case",
+        help=(
+            "Kind of template to write. 'case' (default) writes a case definition "
+            "-- format picked by --output's suffix (.yaml for a config, .ipynb for "
+            "a notebook, .py for a script). 'pbs' writes a PBS batch script for "
+            "submitting `crocodash process` to an HPC queue."
+        ),
     )
     template_parser.add_argument(
         "--output",
         required=True,
-        help="Output path. Use .yaml for a config, .ipynb for a notebook, .py for a script, .pbs for a PBS submission script.",
+        help="Output path. For --kind case: .yaml, .ipynb, or .py. For --kind pbs: any path (e.g. submit_forcings.pbs).",
     )
     template_parser.add_argument(
         "--machine",
