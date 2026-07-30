@@ -44,32 +44,6 @@ def boundary_key(boundary):
     return boundary.segment_name if isinstance(boundary, Segment) else boundary
 
 
-# Cardinal edges in terms of the same (axis, supergrid index) pairs Segment
-# itself uses (see regional_mom6.segment._CARDINAL_AXES).
-_CARDINAL_EDGE_AXES = {
-    "south": ("nyp", 0),
-    "north": ("nyp", -1),
-    "west": ("nxp", 0),
-    "east": ("nxp", -1),
-}
-
-
-def detect_open_cardinal_boundaries(topo) -> list:
-    """The subset of the 4 cardinal edges that touch at least one ocean point
-    in ``topo.supergridmask`` -- an edge that's entirely land needs no OBC
-    segment at all. Used as ``configure_forcings()``'s default when the
-    caller doesn't pass an explicit ``boundaries`` list.
-
-    Doesn't apply to custom/interior boundaries -- those can't be inferred
-    from topo alone and must always be passed explicitly."""
-    mask = topo.supergridmask
-    return [
-        name
-        for name, (axis, index) in _CARDINAL_EDGE_AXES.items()
-        if bool(mask.isel({axis: index}).any())
-    ]
-
-
 def get_segment(hgrid, boundary, segment_name, topo=None, custom_segments=None):
     """Build a Segment for one boundary entry, always renamed to
     ``segment_name`` (MOM6's own ``segment_00N`` numbering).

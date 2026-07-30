@@ -22,7 +22,7 @@ import xarray as xr
 import numpy as np
 import cftime
 from CrocoDash.extract_forcings.driver import run_workflow
-from CrocoDash.extract_forcings.obc import detect_open_cardinal_boundaries
+from regional_mom6.segment import Segment
 
 from CrocoDash import case_state
 
@@ -489,7 +489,7 @@ class Case:
             raise TypeError("function_overrides must be a dict.")
 
         if boundaries is None:
-            boundaries = detect_open_cardinal_boundaries(self.ocn_topo)
+            boundaries = Segment.detect_open_cardinal_boundaries(self.ocn_topo)
 
         self.forcing_product_name = product_name.lower()
         self.boundaries = boundaries
