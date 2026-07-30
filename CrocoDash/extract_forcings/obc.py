@@ -384,6 +384,7 @@ def process_obc_conditions(
     get_step_days=None,
     regrid_step_days: int = 30,
     function_args: dict = None,
+    bathymetry_path=None,
     preview: bool = False,
 ):
     """Process boundary conditions through the GET → REGRID → MERGE pipeline.
@@ -411,6 +412,11 @@ def process_obc_conditions(
         function_args: Overrides for the access function's non-required
             arguments (e.g. `member`), as resolved by
             configure_forcings()'s function_overrides.
+        bathymetry_path: Optional path to the case's bathymetry file. When
+            given, download bounding boxes are computed from the bathymetry
+            ocean tmask (tighter than the full supergrid edge extent). When
+            omitted, falls back to the full supergrid bounding box per
+            boundary.
         preview: If True, return a dict of expected date pairs without
             executing any downloads or regridding.
     """
@@ -433,7 +439,6 @@ def process_obc_conditions(
 
     # Compute per-boundary download bboxes using the bathymetry tmask so we only
     # request data over ocean cells (tighter than the full supergrid edge extent).
-    bathymetry_path = config["basic"]["paths"].get("bathymetry_path")
     hgrid_ds = xr.open_dataset(hgrid_path)
     if bathymetry_path:
         grid_obj = Grid.from_supergrid(hgrid_path)
@@ -450,11 +455,9 @@ def process_obc_conditions(
         }
         logger.info("Using tmask-derived bounding boxes for OBC data download.")
     else:
-        full_bboxes = Grid.get_bounding_boxes_of_rectangular_grid(hgrid_ds)
+        full_bboxes = Grid.get_bounding_boxes(hgrid_ds)
         boundary_bboxes = {b: full_bboxes[b] for b in boundaries}
-        logger.info(
-            "No bathymetry_path in config; using full supergrid bounding boxes."
-        )
+        logger.info("No bathymetry_path given; using full supergrid bounding boxes.")
 
     fill_method = rm6.regridding.fill_missing_data
     if product_info.get("boundary_fill_method", "regional_mom6") != "regional_mom6":
