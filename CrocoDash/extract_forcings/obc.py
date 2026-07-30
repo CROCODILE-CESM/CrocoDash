@@ -90,12 +90,6 @@ def _ocean_bbox_for_boundary(hgrid, tmask, boundary: str) -> dict:
     }
 
 
-def _get_single_chunk(
-    boundary: str,
-    start_date: datetime,
-    end_date: datetime,
-    date_format: str,
-    latlon: dict,
 def _parse_raw_filename_dates(path: Path, boundary: str):
     """Parse (start_date, end_date) from a raw OBC filename.
 
@@ -213,32 +207,33 @@ def _get_boundary(
 
     data_access_fn = utils.get_data_access_function(product_name, function_name)
 
+    # Get the bounding box for the specified boundary from the hgrid
+    hgrid = xr.open_dataset(hgrid_path)
+    latlon = Grid.get_bounding_boxes(hgrid)[boundary]
+
     # copernicusmarine opens S3-backed zarr and calls dask.compute() internally
     # during to_netcdf(). Without this, that compute() routes to the distributed
     # scheduler, which tries to serialize botocore.client.S3 across processes and
     # fails. synchronous keeps it in-process. The outer parallelism (one worker
     # per boundary/chunk) is unaffected.
     with dask.config.set(scheduler="synchronous"):
-        data_access_fn(
-    # Get the bounding box for the specified boundary from the hgrid
-    hgrid = xr.open_dataset(hgrid_path)
-    latlon = Grid.get_bounding_boxes(hgrid)[boundary]
+        for chunk_start, chunk_end in _make_date_pairs(
+            start_date, end_date, get_step_days
+        ):
+            start_str = chunk_start.strftime("%Y-%m-%d")
+            end_str = chunk_end.strftime("%Y-%m-%d")
+            output_filename = f"{boundary}_unprocessed.{start_str}_{end_str}.nc"
 
-    for chunk_start, chunk_end in _make_date_pairs(start_date, end_date, get_step_days):
-        start_str = chunk_start.strftime("%Y-%m-%d")
-        end_str = chunk_end.strftime("%Y-%m-%d")
-        output_filename = f"{boundary}_unprocessed.{start_str}_{end_str}.nc"
-
-        utils.fetch_raw_chunk(
-            data_access_fn=data_access_fn,
-            dates=[start_str, end_str],
-            latlon=latlon,
-            name=boundary,
-            output_folder=output_dir,
-            output_filename=output_filename,
-            variables=variables,
-            extra_args=extra_args,
-        )
+            utils.fetch_raw_chunk(
+                data_access_fn=data_access_fn,
+                dates=[start_str, end_str],
+                latlon=latlon,
+                name=boundary,
+                output_folder=output_dir,
+                output_filename=output_filename,
+                variables=variables,
+                extra_args=extra_args,
+            )
 
 
 def _regrid_boundary(
