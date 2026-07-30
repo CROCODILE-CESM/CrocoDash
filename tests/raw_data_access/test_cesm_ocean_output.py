@@ -21,8 +21,8 @@ def test_get_cesm_single_variable_data_fosi(skip_if_not_glade, tmp_path):
         lat_max,
         lon_min,
         lon_max,
-        tmp_path,
-        "temp.nc",
+        output_folder=tmp_path,
+        output_filename="temp.nc",
         variables=["SSH"],
     )
     dataset = xr.open_dataset(paths[0])
@@ -56,7 +56,7 @@ def test_get_cesm_single_variable_data_lens2_member(skip_if_not_glade, tmp_path)
         lat_max,
         lon_min,
         lon_max,
-        tmp_path,
+        output_folder=tmp_path,
         variables=["SSH"],
         dataset_path="/gdex/data/d651056/CESM2-LE/ocn/proc/tseries/month_1",
         member="LE2-1001.001",
