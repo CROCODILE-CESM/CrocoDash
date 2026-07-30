@@ -20,6 +20,14 @@ CrocoDash.extract\_forcings.chlorophyll module
    :show-inheritance:
    :undoc-members:
 
+CrocoDash.extract\_forcings.cice module
+---------------------------------------
+
+.. automodule:: CrocoDash.extract_forcings.cice
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 CrocoDash.extract\_forcings.driver module
 -----------------------------------------
 
