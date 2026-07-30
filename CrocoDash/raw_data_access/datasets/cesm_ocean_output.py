@@ -48,7 +48,7 @@ class CESM_POP_OUTPUT(ForcingProduct):
     tracer_lon_coord = "TLONG"
     eta_var_name = "SSH"
     time_units = "days since 1850-01-01"
-    calendar = "noleap"
+    calendar = NOLEAP
     depth_coord = ["z_t", "z_t_150m"]
     delimiter = "."
     tracer_var_names = {"temp": "TEMP", "salt": "SALT"}
@@ -179,6 +179,7 @@ class CESM_MOM_OUTPUT(ForcingProduct):
     v_lat_coord = "yq"
     eta_var_name = "zos"
     depth_coord = "z_l"
+    calendar = NOLEAP
     tracer_var_names = {"temp": "thetao", "salt": "so"}
 
     @accessmethod(
