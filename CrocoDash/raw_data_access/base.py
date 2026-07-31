@@ -29,14 +29,23 @@ import shutil
 
 @dataclass(frozen=True)
 class Calendar:
-    """Pairs a CF time-attribute calendar name with its corresponding CIME CALENDAR xml value, so a product can't declare one without the other."""
+    """Pairs the calendar name each downstream consumer expects, so a product can't declare one without the others.
 
-    cf: str  # CF name for dataset time attrs
-    cesm: str  # CIME CALENDAR xml value
+    cf is for xarray's own time decode/encode while reading raw data (its CF
+    convention name, e.g. "standard" for the real-world calendar). cesm is
+    the CIME CALENDAR xml value. mom6 is the literal string the regridding
+    step must stamp on output forcing files' time:calendar attribute, since
+    MOM6's get_cal_time() accepts neither cf's "standard" nor cesm's
+    upper-cased "GREGORIAN"/"NO_LEAP" -- only e.g. "gregorian"/"noleap".
+    """
+
+    cf: str
+    cesm: str
+    mom6: str
 
 
-GREGORIAN = Calendar(cf="standard", cesm="GREGORIAN")
-NOLEAP = Calendar(cf="noleap", cesm="NO_LEAP")
+GREGORIAN = Calendar(cf="standard", cesm="GREGORIAN", mom6="gregorian")
+NOLEAP = Calendar(cf="noleap", cesm="NO_LEAP", mom6="noleap")
 
 
 def accessmethod(func=None, *, description=None, type=None):
@@ -204,6 +213,7 @@ class ForcingProduct(DatedBaseProduct):
         "time_units",
         "cf_calendar",
         "cesm_calendar",
+        "mom6_calendar",
     ]
 
     required_args = DatedBaseProduct.required_args + [
@@ -217,11 +227,12 @@ class ForcingProduct(DatedBaseProduct):
 
     def __init_subclass__(cls, **kwargs):
 
-        # 0. Derive cf_calendar/cesm_calendar from a single `calendar` attr, if declared
+        # 0. Derive cf_calendar/cesm_calendar/mom6_calendar from a single `calendar` attr, if declared
         calendar = getattr(cls, "calendar", None)
         if calendar is not None:
             cls.cf_calendar = calendar.cf
             cls.cesm_calendar = calendar.cesm
+            cls.mom6_calendar = calendar.mom6
 
         # 1. Let BaseProduct do its validation first
         super().__init_subclass__(**kwargs)

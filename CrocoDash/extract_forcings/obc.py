@@ -332,7 +332,7 @@ def _regrid_boundary(
                 fill_method=fill_method,
                 regridders=regridders,
                 repeat_year_forcing=False,
-                calendar=dataset_varnames["cf_calendar"],
+                calendar=dataset_varnames["mom6_calendar"],
                 time_units=dataset_varnames["time_units"],
                 **kwargs,
             )
