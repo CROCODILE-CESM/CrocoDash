@@ -123,6 +123,7 @@ def run_workflow(
                 output_path=output_path,
                 regrid_step_days=int(conditions["outputs"]["step"]),
                 preview=preview,
+                custom_segments=conditions["outputs"].get("custom_segments", {}),
             )
             timings["bc"] = time.perf_counter() - _t
 
@@ -194,6 +195,7 @@ def run_workflow(
                 tpxo_velocity_filepath=config["tides"]["inputs"][
                     "tpxo_velocity_filepath"
                 ],
+                custom_segments=conditions["outputs"].get("custom_segments", {}),
             )
             timings["tides"] = time.perf_counter() - _t
 

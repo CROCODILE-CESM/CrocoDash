@@ -1,6 +1,10 @@
 from CrocoDash.forcing_configurations.base import *
+from CrocoDash.forcing_configurations.configurations import TidesConfigurator
 from ProConPy.config_var import cvars
+from regional_mom6.segment import Segment
 import pytest
+import json
+import xarray as xr
 from types import SimpleNamespace
 import pandas as pd
 
@@ -51,6 +55,34 @@ def test_xml_apply(fake_param_case):
         s.apply()
 
 
+def test_tides_configurator_serializes_custom_segment_boundary():
+    """A live Segment boundary (a custom/non-cardinal boundary) isn't
+    JSON-serializable itself -- TidesConfigurator must store only its
+    boundary_key string, since the full spec is carried separately in
+    config.json's general.custom_segments. Regression test for the crash
+    this used to hit at json.dump time."""
+    dummy = xr.DataArray([0.0], dims=["nx_interior_west"])
+    interior = Segment(
+        lon=dummy,
+        lat=dummy,
+        angle=dummy,
+        segment_name="interior_west",
+        parallel="nx",
+        perpendicular="ny",
+        axis_to_expand=2,
+    )
+    configurator = TidesConfigurator(
+        tpxo_elevation_filepath="h.nc",
+        tpxo_velocity_filepath="u.nc",
+        tidal_constituents=["M2"],
+        boundaries=["south", interior],
+        start_date="2000, 01, 01",
+    )
+    serialized = configurator.serialize()
+    assert serialized["inputs"]["boundaries"] == ["south", "interior_west"]
+    json.dumps(serialized)  # must not raise
+
+
 def test_all_configurators_args_synced():
 
     for config_class in ForcingConfigRegistry.registered_types:
@@ -58,7 +90,9 @@ def test_all_configurators_args_synced():
         config_class.check_output_params_exist()
 
 
-def test_all_configurators_smoke(fake_param_case, fake_cime, fake_forcing_product):
+def test_all_configurators_smoke(
+    fake_param_case, fake_cime, fake_forcing_product, gen_grid_topo_vgrid
+):
 
     ## Set up some dummy args
     dummy_str = "123"
@@ -67,6 +101,14 @@ def test_all_configurators_smoke(fake_param_case, fake_cime, fake_forcing_produc
     dummy_path = fake_param_case / "dummy_path"
     dummy_dir = fake_param_case
     dummy_path.touch()
+
+    # ConditionsConfigurator builds a real regional_mom6.segment.Segment per
+    # boundary (cardinal or custom) from case_supergrid_path, so it needs a
+    # real hgrid file on disk, not just a placeholder string/path.
+    grid, _, _ = gen_grid_topo_vgrid
+    dummy_supergrid_path = fake_param_case / "grid.nc"
+    if not dummy_supergrid_path.exists():
+        grid.write_supergrid(dummy_supergrid_path)
 
     ## Iterate through config classes
     for config_class in ForcingConfigRegistry.registered_types:
@@ -81,6 +123,8 @@ def test_all_configurators_smoke(fake_param_case, fake_cime, fake_forcing_produc
                 ctor_args[a] = ["south", "north", "west", "east"]
             elif a == "product_name":
                 ctor_args[a] = "GLORYS"
+            elif "supergrid_path" in a:
+                ctor_args[a] = dummy_supergrid_path
             elif "filepath" in a:
                 ctor_args[a] = dummy_path
             elif "dir" in a:

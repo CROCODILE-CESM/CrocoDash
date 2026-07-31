@@ -3,8 +3,11 @@ from pathlib import Path
 from datetime import datetime
 from ProConPy.config_var import ConfigVar, cvars
 from mom6_forge import mapping
+from CrocoDash.extract_forcings.obc import boundary_key, get_segment
 from CrocoDash.raw_data_access.registry import ProductRegistry
 from CrocoDash.raw_data_access.base import ForcingProduct
+from regional_mom6.segment import Segment
+import xarray as xr
 
 
 def register(cls):
@@ -68,6 +71,11 @@ class TidesConfigurator(BaseConfigurator):
         date_range=None,
         start_date=None,
     ):
+        # Store boundary-key strings only -- a live Segment (custom boundary)
+        # isn't JSON-serializable, and config.json's general.custom_segments
+        # already carries its full spec for reconstruction at process_tides
+        # time.
+        boundaries = [boundary_key(b) for b in boundaries]
         if date_range is not None:
             # Set the input params
             super().__init__(
@@ -592,6 +600,12 @@ class ConditionsConfigurator(BaseConfigurator):
             "function_args",
             comment="Resolved (defaults + overrides) args for the download function",
         ),
+        InputValueParam(
+            "case_supergrid_path",
+            comment="Path to the ocean hgrid supergrid file; used to build each "
+            "boundary's regional_mom6.segment.Segment (position string, tidal/BGC "
+            "OBC data), whether cardinal or custom/interior",
+        ),
     ]
 
     output_params = [
@@ -639,6 +653,13 @@ class ConditionsConfigurator(BaseConfigurator):
             comment="Boundary name -> MOM6 segment number",
         ),
         ConfigOutputParam(
+            "custom_segments",
+            comment="Boundary key -> Segment.to_spec() for non-cardinal (interior) "
+            "boundaries; empty when all boundaries are cardinal. Consumed by "
+            "extract_forcings/obc.py and tides.py to rebuild the live Segment "
+            "out-of-process.",
+        ),
+        ConfigOutputParam(
             "preview", comment="Whether extract_forcings should preview only"
         ),
         ConfigOutputParam(
@@ -657,10 +678,22 @@ class ConditionsConfigurator(BaseConfigurator):
         start_date=None,
         end_date=None,
         function_args=None,
+        case_supergrid_path=None,
     ):
         if date_range is not None:
             start_date = date_range[0].strftime(self._DATE_FORMAT)
             end_date = date_range[1].strftime(self._DATE_FORMAT)
+
+        # A live Segment (custom/interior boundary) isn't JSON-serializable, so
+        # only its boundary_key string is kept in input_params/boundaries -- the
+        # full spec needed to rebuild it later (here and out-of-process, by
+        # extract_forcings/obc.py + tides.py) is captured now, while we still
+        # have the real object, into custom_segments (see configure()).
+        self._custom_segments = {
+            boundary_key(b): b.to_spec() for b in boundaries if isinstance(b, Segment)
+        }
+        boundaries = [boundary_key(b) for b in boundaries]
+
         super().__init__(
             start_date=start_date,
             end_date=end_date,
@@ -669,6 +702,7 @@ class ConditionsConfigurator(BaseConfigurator):
             function_name=function_name,
             compset=compset,
             function_args=function_args or {},
+            case_supergrid_path=case_supergrid_path,
         )
 
     def validate_args(self, **kwargs):
@@ -724,6 +758,7 @@ class ConditionsConfigurator(BaseConfigurator):
             "boundary_number_conversion",
             {b: i + 1 for i, b in enumerate(boundaries)},
         )
+        self.set_output_param("custom_segments", self._custom_segments)
         self.set_output_param("preview", False)
         self.set_output_param("function_args", self.get_input_param("function_args"))
 
@@ -753,21 +788,24 @@ class ConditionsConfigurator(BaseConfigurator):
         self.set_output_param("BRUSHCUTTER_MODE", "True")
 
         # ---- dynamic, per-boundary OBC params ----
+        # Position strings come straight from a regional_mom6.segment.Segment
+        # built for each boundary -- built the same way (Segment.cardinal /
+        # Segment.from_hgrid via get_segment) whether the boundary is a
+        # cardinal edge or a custom (non-cardinal/interior) Segment.
+        hgrid_path = self.get_input_param("case_supergrid_path")
+        hgrid = xr.open_dataset(hgrid_path)
         dynamic_params = []
         for seg in boundaries:
             seg_ix = str(self._segment_index(boundaries, seg)).zfill(3)
             seg_id = "OBC_SEGMENT_" + seg_ix
 
-            if seg == "south":
-                index_str = '"J=0,I=0:N'
-            elif seg == "north":
-                index_str = '"J=N,I=N:0'
-            elif seg == "west":
-                index_str = '"I=0,J=N:0'
-            elif seg == "east":
-                index_str = '"I=N,J=0:N'
-            else:
-                raise ValueError(f"Unknown segment {seg_id}")
+            segment = get_segment(
+                hgrid,
+                seg,
+                segment_name=f"segment_{seg_ix}",
+                custom_segments=self._custom_segments,
+            )
+            index_str = '"' + segment.mom6_obc_position_string()
 
             position_param = UserNLConfigParam(
                 seg_id, comment="Open boundary conditions"
