@@ -91,38 +91,6 @@ def get_data_access_function(product_name: str, function_name: str):
     return ProductRegistry.get_access_function(product_name, function_name)
 
 
-def build_forcing_request(
-    product_info: dict, function_args: dict = None
-) -> tuple[list, dict]:
-    """Build the (variables, extra_args) an access function needs from a forcing product_info dict.
-
-    function_args: user overrides (or access-function defaults) for the access
-    function's non-required arguments, as written to config.json's
-    forcing.function_args by configure_forcings()'s function_overrides. Merged
-    into extra_args last so they take precedence over product_info-derived keys.
-    """
-    phys_vars = [
-        product_info["u_var_name"],
-        product_info["v_var_name"],
-        product_info["eta_var_name"],
-        product_info["tracer_var_names"]["temp"],
-        product_info["tracer_var_names"]["salt"],
-    ]
-    extra_tracers = [
-        v
-        for k, v in product_info["tracer_var_names"].items()
-        if k not in ("temp", "salt")
-    ]
-    variables = phys_vars + extra_tracers
-    extra_args = {
-        key: product_info[key]
-        for key in ("dataset_path", "date_format", "regex", "delimiter")
-        if key in product_info
-    }
-    extra_args.update(function_args or {})
-    return variables, extra_args
-
-
 def fetch_raw_chunk(
     data_access_fn,
     dates: list,
@@ -135,7 +103,7 @@ def fetch_raw_chunk(
 ) -> Path:
     """Download one raw data chunk, skipping if a valid output file already exists.
 
-    Shared by obc.py and initial_condition.py — both fetch a chunk of raw data
+    Shared by obc.py and ic.py — both fetch a chunk of raw data
     for a given date range and bounding box, and both need to be idempotent
     across re-runs.
     """

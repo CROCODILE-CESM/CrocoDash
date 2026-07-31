@@ -1,7 +1,11 @@
+import shutil
 from pathlib import Path
 
 import numpy as np
 import xarray as xr
+
+from CrocoDash.extract_forcings import obc
+from CrocoDash.grid import Grid
 
 
 def write_ww3_boundary_spectrum(file_path, lat, lon, freq, direction, efth, time=None):
@@ -210,22 +214,43 @@ def write_spec_list(file_dir, spectra_paths, spec_list_filename="spec.list"):
             f.write(f"{p}\n")
 
 
-def _boundary_points(ocn_grid, boundaries):
-    """One (lat, lon) point per requested boundary side, at that edge's midpoint."""
-    ny, nx = ocn_grid.ny, ocn_grid.nx
-    edge_index = {
-        "south": (0, nx // 2),
-        "north": (ny - 1, nx // 2),
-        "west": (ny // 2, 0),
-        "east": (ny // 2, nx - 1),
-    }
-    lats = [float(ocn_grid.tlat[edge_index[side]]) for side in boundaries]
-    lons = [float(ocn_grid.tlon[edge_index[side]]) for side in boundaries]
-    return lats, lons
+# NK/NTH/freq/direction don't need to match the grid's own ww3_grid.inp
+# discretization -- ww3_bounc remaps automatically if they differ.
+_NK, _NTH = 25, 24
+_FREQ = 0.04118 * 1.1 ** np.arange(_NK)
+_DIRECTION = np.linspace(0, 360, _NTH, endpoint=False)
+
+
+def _regrid_chunk(
+    ds, hgrid, boundary, seg_id, outfolder, dataset_varnames, start_date, regridders
+):
+    """WW3's regrid step: ignores ds's placeholder content except for its
+    time axis (however the GET step's stub access function chunked it), and
+    writes a simple constant-value spectrum instead, scaled by the boundary's
+    point index (seg_id) -- point i = 1e-3*i -- so which station's data lands
+    on which grid boundary cell can be checked directly. No file to open (the
+    engine hands us the dataset directly) and nothing to regrid.
+
+    Writes to outfolder / f"forcing_obc_segment_{seg_id:03d}.nc" -- the
+    filename obc.py's generic engine expects to rename per-chunk. No
+    regridder weights to cache, so regridders is passed through unchanged.
+    """
+    time = ds["time"].values
+
+    bbox = Grid.get_bounding_boxes(hgrid)[boundary]
+    lat = (bbox["lat_min"] + bbox["lat_max"]) / 2
+    lon = (bbox["lon_min"] + bbox["lon_max"]) / 2
+
+    value = 1e-3 * seg_id
+    efth = np.full((len(time), len(_FREQ), len(_DIRECTION)), value)
+
+    out_path = Path(outfolder) / f"forcing_obc_segment_{seg_id:03d}.nc"
+    write_ww3_boundary_spectrum(out_path, lat, lon, _FREQ, _DIRECTION, efth, time=time)
+    return regridders
 
 
 def process_ww3_obc(
-    ocn_grid,
+    hgrid_path,
     inputdir,
     boundaries,
     date_range,
@@ -236,44 +261,61 @@ def process_ww3_obc(
     Generate WW3 boundary spectra, spec.list, and ww3_bounc.nml into
     <inputdir>/ocnice.
 
-    ww3_obc_product_name/ww3_obc_function_name are unused for now -- they're
-    plumbing for when WW3 OBC sourcing (e.g. ERA5 2D wave spectra, or a
-    parent CESM/WW3 run's own point output) is wired through raw_data_access.
-    Each boundary point instead gets a simple constant-value spectrum, scaled
-    by its position in `boundaries` (point i = 1e-3*(i+1)), so which station's
-    data lands on which grid boundary cell can be checked directly.
+    Routes through obc.py's shared GET -> chunk -> REGRID -> MERGE engine:
+    ww3_obc_product_name/ww3_obc_function_name (default to a placeholder WW3
+    product -- see raw_data_access/datasets/ww3.py -- since real wave-spectra
+    sourcing isn't wired up yet) drive the GET step; _regrid_chunk above is
+    the regrid step, synthesizing a constant-value spectrum per boundary
+    point instead of actually regridding anything.
 
     ww3_bounc.nml is written with INTERP=1 (nearest point, no interpolation)
-    rather than the usual linear blend between stations, so that mapping
-    stays exact and traceable per the above.
+    rather than the usual linear blend between stations, so that each
+    station's mapping to its boundary cell stays exact and traceable.
 
     The time axis must span the full run: WW3 interpolates linearly in time
     between whatever records exist in nest.ww3, but a time axis that runs out
     mid-run permanently disables boundary forcing (an EOF in w3iobcmd.F90
-    sets FLBPI=.FALSE. for the rest of the run). Building it hourly across
-    [date_range[0], date_range[1]] guarantees coverage regardless of spacing.
+    sets FLBPI=.FALSE. for the rest of the run). The placeholder access
+    function builds it hourly across [date_range[0], date_range[1]],
+    guaranteeing coverage regardless of spacing.
     """
     output_dir = Path(inputdir) / "ocnice"
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    lats, lons = _boundary_points(ocn_grid, boundaries)
+    staging_dir = Path(inputdir) / "extract_forcings" / "ww3"
+    raw_dir = staging_dir / "raw_data"
+    regridded_dir = staging_dir / "regridded_data"
+    merged_dir = staging_dir / "merged"
+    for d in (raw_dir, regridded_dir, merged_dir):
+        d.mkdir(parents=True, exist_ok=True)
 
-    # NK/NTH/freq/direction don't need to match the grid's own ww3_grid.inp
-    # discretization -- ww3_bounc remaps automatically if they differ.
-    NK, NTH = 25, 24
-    freq = 0.04118 * 1.1 ** np.arange(NK)
-    direction = np.linspace(0, 360, NTH, endpoint=False)
+    boundary_number_conversion = {b: i + 1 for i, b in enumerate(boundaries)}
+    start_date, end_date = date_range
 
-    start, end = (np.datetime64(d) for d in date_range)
-    time = np.arange(start, end + np.timedelta64(1, "h"), np.timedelta64(1, "h"))
+    obc.process_obc_conditions(
+        start_date=start_date,
+        end_date=end_date,
+        boundary_number_conversion=boundary_number_conversion,
+        product_name=ww3_obc_product_name or "WW3",
+        function_name=ww3_obc_function_name or "get_ww3_placeholder_data",
+        variables=[],
+        extra_args={},
+        dataset_varnames={},
+        hgrid_path=hgrid_path,
+        raw_dataset_path=raw_dir,
+        regridded_dataset_path=regridded_dir,
+        output_path=merged_dir,
+        regrid_chunk_fn=_regrid_chunk,
+        get_step_days=None,
+        regrid_step_days=None,
+    )
 
     spectra_names = []
-    for i, (lat, lon) in enumerate(zip(lats, lons)):
-        value = 1e-3 * (i + 1)
-        efth = np.full((len(time), len(freq), len(direction)), value)
-        name = f"ww3.point{i + 1}_spec.nc"
-        write_ww3_boundary_spectrum(
-            output_dir / name, lat, lon, freq, direction, efth, time=time
+    for boundary in boundaries:
+        seg_id = boundary_number_conversion[boundary]
+        name = f"ww3.point{seg_id}_spec.nc"
+        shutil.copy(
+            merged_dir / f"forcing_obc_segment_{seg_id:03d}.nc", output_dir / name
         )
         spectra_names.append(name)
 

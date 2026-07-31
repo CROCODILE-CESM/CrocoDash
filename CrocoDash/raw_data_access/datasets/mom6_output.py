@@ -17,7 +17,7 @@ import pandas as pd
 from CrocoDash.raw_data_access.base import *
 
 
-class MOM6_OUTPUT(ForcingProduct):
+class MOM6_OUTPUT(MOM6ForcingProduct):
     product_name = "mom6_output"
     description = "CESM had old runs that can be used for IC and OBC"
     link = "https://gdex.ucar.edu/datasets/d267000/"

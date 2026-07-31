@@ -25,8 +25,7 @@ from CrocoDash.extract_forcings import (
     runoff as rof,
     tides as tides_mod,
     chlorophyll as chl,
-    obc,
-    initial_condition,
+    mom6,
     cice,
     ww3 as ww3_mod,
 )
@@ -132,7 +131,7 @@ def run_workflow(
     try:
         if bc:
             _t = time.perf_counter()
-            obc.process_obc_conditions(
+            mom6.process_mom6_obc(
                 start_date=conditions["outputs"]["start_date"],
                 end_date=conditions["outputs"]["end_date"],
                 boundary_number_conversion=conditions["outputs"][
@@ -153,7 +152,7 @@ def run_workflow(
 
         if ic:
             _t = time.perf_counter()
-            initial_condition.process_initial_condition(
+            mom6.process_mom6_ic(
                 product_name=conditions["inputs"]["product_name"].upper(),
                 function_name=conditions["inputs"]["function_name"],
                 product_information=conditions["outputs"]["information"],
@@ -309,9 +308,8 @@ def run_workflow(
 
         if ww3:
             _t = time.perf_counter()
-            grid = Grid.from_supergrid(supergrid_path)
             ww3_mod.process_ww3_obc(
-                ocn_grid=grid,
+                hgrid_path=supergrid_path,
                 inputdir=inputdir,
                 boundaries=config["ww3"]["inputs"]["boundaries"],
                 date_range=(

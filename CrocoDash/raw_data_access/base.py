@@ -185,9 +185,46 @@ class DatedBaseProduct(BaseProduct):
 
 
 class ForcingProduct(DatedBaseProduct):
-    """Specific enforcement needs for Forcing Products"""
+    """Generic enforcement for any gridded, bounding-box-downloadable forcing
+    product. Deliberately holds no model-specific variable-name metadata --
+    see ``MOM6ForcingProduct``/``CICEForcingProduct``/``WW3ForcingProduct`` for
+    that. What every such product needs regardless of target model: a
+    lat/lon/variables/dates download contract, and sane toy-call defaults for
+    that contract's lat/lon args.
+    """
 
-    required_metadata = DatedBaseProduct.required_metadata + [
+    required_args = DatedBaseProduct.required_args + [
+        "variables",
+        "lon_max",
+        "lat_max",
+        "lon_min",
+        "lat_min",
+        "name",
+    ]
+
+    @classmethod
+    def validate_method(cls, method_name, **kwargs):
+
+        # Add child-class defaults
+        extra_defaults = {
+            "lat_min": 30,
+            "lat_max": 30.1,
+            "lon_min": 30,
+            "lon_max": 30.1,
+        }
+
+        # Delegate to the base implementation
+        return super().validate_method(method_name, **extra_defaults)
+
+
+class MOM6ForcingProduct(ForcingProduct):
+    """MOM6's own regridding var-name metadata -- consumed by
+    ``regional_mom6``'s ``Segment.regrid_velocity_tracers``, not by the
+    generic GET layer. Products that feed CrocoDash's MOM6 OBC/IC pipeline
+    (``GLORYS``, ``MOM6_OUTPUT``) extend this, not ``ForcingProduct`` directly.
+    """
+
+    required_metadata = ForcingProduct.required_metadata + [
         "time_var_name",
         "u_x_coord",
         "u_y_coord",
@@ -204,15 +241,6 @@ class ForcingProduct(DatedBaseProduct):
         "time_units",
         "cf_calendar",
         "cesm_calendar",
-    ]
-
-    required_args = DatedBaseProduct.required_args + [
-        "variables",
-        "lon_max",
-        "lat_max",
-        "lon_min",
-        "lat_min",
-        "name",
     ]
 
     def __init_subclass__(cls, **kwargs):
@@ -256,16 +284,15 @@ class ForcingProduct(DatedBaseProduct):
 
         return base
 
-    @classmethod
-    def validate_method(cls, method_name, **kwargs):
 
-        # Add child-class defaults
-        extra_defaults = {
-            "lat_min": 30,
-            "lat_max": 30.1,
-            "lon_min": 30,
-            "lon_max": 30.1,
-        }
+class CICEForcingProduct(ForcingProduct):
+    """Extension point for CICE's own regridding var-name metadata, once CICE
+    sourcing/regridding is implemented. Empty for now -- no concrete CICE
+    product is registered yet."""
 
-        # Delegate to the base implementation
-        return super().validate_method(method_name, **extra_defaults)
+
+class WW3ForcingProduct(ForcingProduct):
+    """Extension point for WW3's own regridding var-name metadata, once real
+    WW3 wave-spectra sourcing is implemented. Empty for now -- the WW3 stub
+    product (see raw_data_access/datasets/) needs no metadata beyond the
+    generic bounding-box-download contract."""

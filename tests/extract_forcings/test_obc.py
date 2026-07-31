@@ -10,6 +10,7 @@ from CrocoDash.extract_forcings.obc import (
     _validate_coverage,
 )
 from CrocoDash.extract_forcings.utils import is_valid_netcdf
+from CrocoDash.extract_forcings.mom6 import _regrid_obc_chunk
 from CrocoDash.grid import Grid
 
 # ---------------------------------------------------------------------------
@@ -36,7 +37,9 @@ def obc_config(tmp_path, get_rect_grid):
         boundary_number_conversion={"east": 1, "south": 2},
         product_name="GLORYS",
         function_name="get_glorys_data_from_rda",
-        product_info={
+        variables=[],
+        extra_args={},
+        dataset_varnames={
             "u_var_name": "uo",
             "v_var_name": "vo",
             "eta_var_name": "zos",
@@ -54,6 +57,7 @@ def obc_config(tmp_path, get_rect_grid):
         raw_dataset_path=str(raw_dir),
         regridded_dataset_path=str(regridded_dir),
         output_path=str(output_dir),
+        regrid_chunk_fn=_regrid_obc_chunk,
         get_step_days=None,
         regrid_step_days=5,
     )

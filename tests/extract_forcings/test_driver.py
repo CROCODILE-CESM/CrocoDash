@@ -192,12 +192,9 @@ def _make_state(tmp_path):
     }
 
 
-@patch("CrocoDash.extract_forcings.driver.initial_condition")
-@patch("CrocoDash.extract_forcings.driver.obc")
+@patch("CrocoDash.extract_forcings.driver.mom6")
 @patch("CrocoDash.extract_forcings.driver.case_state")
-def test_run_workflow_ic_bc_calls_obc_and_initial_condition(
-    mock_cs, mock_obc, mock_initial_condition, tmp_path
-):
+def test_run_workflow_ic_bc_calls_mom6(mock_cs, mock_mom6, tmp_path):
     config = _make_config()
     state = _make_state(tmp_path)
     mock_cs.read.return_value = state
@@ -206,16 +203,13 @@ def test_run_workflow_ic_bc_calls_obc_and_initial_condition(
 
     run_workflow(config_path=config_path, ic=True, bc=True)
 
-    assert mock_obc.process_obc_conditions.called
-    assert mock_initial_condition.process_initial_condition.called
+    assert mock_mom6.process_mom6_obc.called
+    assert mock_mom6.process_mom6_ic.called
 
 
-@patch("CrocoDash.extract_forcings.driver.initial_condition")
-@patch("CrocoDash.extract_forcings.driver.obc")
+@patch("CrocoDash.extract_forcings.driver.mom6")
 @patch("CrocoDash.extract_forcings.driver.case_state")
-def test_run_workflow_no_components_returns_early(
-    mock_cs, mock_obc, mock_initial_condition, tmp_path, capsys
-):
+def test_run_workflow_no_components_returns_early(mock_cs, mock_mom6, tmp_path, capsys):
     config = _make_config()
     state = _make_state(tmp_path)
     mock_cs.read.return_value = state
@@ -225,7 +219,7 @@ def test_run_workflow_no_components_returns_early(
     result = run_workflow(config_path=config_path)
 
     assert result is None
-    assert not mock_obc.process_obc_conditions.called
+    assert not mock_mom6.process_mom6_obc.called
     captured = capsys.readouterr()
     assert "No components selected" in captured.out
 
@@ -306,12 +300,9 @@ def test_run_workflow_ww3_calls_ww3_module(mock_cs, mock_grid, mock_ww3, tmp_pat
     assert kwargs["date_range"] == ("20200101", "20200109")
 
 
-@patch("CrocoDash.extract_forcings.driver.initial_condition")
-@patch("CrocoDash.extract_forcings.driver.obc")
+@patch("CrocoDash.extract_forcings.driver.mom6")
 @patch("CrocoDash.extract_forcings.driver.case_state")
-def test_run_workflow_returns_timings(
-    mock_cs, mock_obc, mock_initial_condition, tmp_path
-):
+def test_run_workflow_returns_timings(mock_cs, mock_mom6, tmp_path):
     config = _make_config()
     state = _make_state(tmp_path)
     mock_cs.read.return_value = state

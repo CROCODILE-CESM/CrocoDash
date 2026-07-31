@@ -15,7 +15,7 @@ class DummyProduct(DatedBaseProduct):
 
 
 # Dummy concrete forcing product
-class DummyForcing(ForcingProduct):
+class DummyForcing(MOM6ForcingProduct):
     link = "dummy_link"
     product_name = "dummy_forcing"
     description = "Dummy forcing product for testing"
@@ -114,7 +114,7 @@ def test_tracer_names_check():
     # Dummy concrete forcing product with broken tracer names
     with pytest.raises(AssertionError):
 
-        class DummyForcing(ForcingProduct):
+        class DummyForcing(MOM6ForcingProduct):
             link = "dummy_link"
             product_name = "dummy_forcing"
             description = "Dummy forcing product for testing"

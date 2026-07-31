@@ -202,27 +202,20 @@ def test_write_spec_list(tmp_path):
     assert content == "a_spec.nc\nb_spec.nc\n"
 
 
-def test_boundary_points(gen_grid_topo_vgrid):
-    grid, topo, vgrid = gen_grid_topo_vgrid
-
-    lats, lons = ww3._boundary_points(grid, ["south", "north", "west", "east"])
-
-    assert len(lats) == len(lons) == 4
-    # south should sit strictly south of north; west strictly west of east
-    assert lats[0] < lats[1]
-    assert lons[2] < lons[3]
-
-
 def test_process_ww3_obc(tmp_path, gen_grid_topo_vgrid):
     grid, topo, vgrid = gen_grid_topo_vgrid
+    hgrid_path = tmp_path / "hgrid.nc"
+    grid.write_supergrid(hgrid_path)
 
+    # obc.py's shared engine tracks GET/REGRID chunks at whole-day
+    # granularity (filenames and coverage checks are date-only), so -- unlike
+    # the old standalone implementation -- date_range here can't carry
+    # sub-day precision.
     ww3.process_ww3_obc(
-        ocn_grid=grid,
+        hgrid_path=str(hgrid_path),
         inputdir=tmp_path,
         boundaries=["west", "east"],
-        date_range=("2020-01-01 00:00:00", "2020-01-01 06:00:00"),
-        ww3_obc_product_name="ERA5",
-        ww3_obc_function_name="get_era5_2d_spectra",
+        date_range=("2020-01-01", "2020-01-02"),
     )
 
     ocnice = tmp_path / "ocnice"
@@ -244,16 +237,17 @@ def test_process_ww3_obc(tmp_path, gen_grid_topo_vgrid):
     ds1 = xr.open_dataset(ocnice / "ww3.point1_spec.nc", decode_times=False)
     ds2 = xr.open_dataset(ocnice / "ww3.point2_spec.nc", decode_times=False)
     try:
-        # hourly, spanning the full requested run window inclusive
-        assert ds1.dims["time"] == 7
-        assert ds2.dims["time"] == 7
+        # hourly, spanning the full requested run window inclusive:
+        # 2020-01-01T00:00 through 2020-01-02T00:00 = 25 points
+        assert ds1.dims["time"] == 25
+        assert ds2.dims["time"] == 25
         # each station gets a distinct, identifiable constant value (point i:
-        # 1e-3*(i+1)) so the station a boundary cell's data came from can be
+        # 1e-3*i) so the station a boundary cell's data came from can be
         # checked directly, at every timestep
         assert float(ds1["efth"].isel(time=0).max()) == pytest.approx(1e-3)
         assert float(ds2["efth"].isel(time=0).max()) == pytest.approx(2e-3)
-        assert float(ds1["efth"].isel(time=6).max()) == pytest.approx(1e-3)
-        assert float(ds2["efth"].isel(time=6).max()) == pytest.approx(2e-3)
+        assert float(ds1["efth"].isel(time=24).max()) == pytest.approx(1e-3)
+        assert float(ds2["efth"].isel(time=24).max()) == pytest.approx(2e-3)
     finally:
         ds1.close()
         ds2.close()

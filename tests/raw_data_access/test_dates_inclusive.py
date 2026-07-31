@@ -33,6 +33,10 @@ KNOWN_INCLUSIVE_WITHOUT_HELPER = {
     # `dates` is an unused placeholder — downloads one fixed pre-processed
     # file via a static URL, no date-based filtering happens at all.
     ("glofas", "get_processed_global_glofas_script_for_cli"),
+    # dates carries sub-day precision by design (hourly boundary-spectrum
+    # windows, not whole calendar days) — make_dates_end_inclusive's
+    # whole-day normalization would discard that precision.
+    ("ww3", "get_ww3_placeholder_data"),
     # Test fixtures from test_base_registry.py — placeholder data, not real
     # date handling.
     ("dummy", "dummy_method"),
