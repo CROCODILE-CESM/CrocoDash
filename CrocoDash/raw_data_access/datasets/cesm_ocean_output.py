@@ -209,7 +209,7 @@ class CESM_MOM_OUTPUT(ForcingProduct):
         output_folder=Path(""),
         output_filename=None,
         variables=["zos", "thetao", "so", "uo", "vo"],
-        dataset_path="please_provide_a_path",
+        dataset_path=None,
         file_glob="*.nc",
         time_var_name="time",
         buffer_deg=1.5,
@@ -360,7 +360,9 @@ class CESM_MOM_OUTPUT(ForcingProduct):
 
 def validate_dataset_path(dataset_path):
     if dataset_path is None or not Path(dataset_path).exists():
-        raise FileNotFoundError(f"Provided dataset path {dataset_path} does not exist.")
+        raise FileNotFoundError(
+            f"Provided dataset path {dataset_path} does not exist. Please provide a valid path through the function arguments"
+        )
 
 
 def read_single_variable_tseries_data(
@@ -441,7 +443,10 @@ def read_single_variable_tseries_data(
         # for concurrent metadata reads across multiple files, and can
         # silently drop/corrupt variables (or crash) under dask's threaded
         # scheduler instead of raising a clear error.
-        merged = xr.open_mfdataset(paths, combine="by_coords", decode_timedelta=False)
+        existing_files = [p for p in paths if Path(p).is_file()]
+        merged = xr.open_mfdataset(
+            existing_files, combine="by_coords", decode_timedelta=False
+        )
         merged.to_netcdf(Path(output_folder) / output_filename)
 
     return paths
@@ -497,7 +502,10 @@ def parse_dataset(
                 if not matched:
                     continue
                 s = str(file_path.resolve())
-                dt1, dt2 = get_date_range_from_filename(s, regex)
+                rng = get_date_range_from_filename(s, regex)
+                if rng is None:  # no date range found in filename regex, skip this file
+                    continue
+                dt1, dt2 = rng
                 if (dt1 >= start_date and dt1 <= end_date) or (
                     dt2 >= start_date and dt2 <= end_date
                 ):
@@ -631,6 +639,7 @@ def subset_dataset(
 
         if output_file.exists():
             print(f"Subset already exists for {var_name}, skipping")
+            output_file_paths.append(output_file)
             continue
         if not file_paths:
             print(f"No files found for variable: {var_name}")
