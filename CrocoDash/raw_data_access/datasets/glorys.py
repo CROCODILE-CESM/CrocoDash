@@ -9,10 +9,7 @@ import copernicusmarine
 import regional_mom6 as rm6
 from pathlib import Path
 import pandas as pd
-from CrocoDash.raw_data_access.datasets.utils import (
-    convert_lons_to_180_range,
-    make_dates_end_inclusive,
-)
+from CrocoDash.raw_data_access.datasets.utils import make_dates_end_inclusive
 from CrocoDash.raw_data_access.base import *
 from mom6_forge.utils import longitude_slicer
 
@@ -67,6 +64,7 @@ class GLORYS(ForcingProduct):
             "so",
             "thetao",
         ],
+        buf=1.0,
     ) -> xr.Dataset:
         """
         Gather GLORYS Data on Derecho Computers from the campaign storage and return the dataset sliced to the llc and urc coordinates at the specific dates
@@ -89,8 +87,7 @@ class GLORYS(ForcingProduct):
             ds_in_files, decode_times=False, engine="h5netcdf", parallel=True
         )[variables]
 
-        buf = 1.0  # buffer in degrees to ensure we have enough data for interpolation at the boundaries
-
+        ds = ds.sel(latitude=slice(lat_min - buf, lat_max + buf))
         dataset = longitude_slicer(
             ds, [lon_min - buf, lon_max + buf], longitude_coords="longitude"
         )
