@@ -356,6 +356,7 @@ document.write(`
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.Calendar"><code class="docutils literal notranslate"><span class="pre">Calendar</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.Calendar.cesm"><code class="docutils literal notranslate"><span class="pre">Calendar.cesm</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.Calendar.cf"><code class="docutils literal notranslate"><span class="pre">Calendar.cf</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.Calendar.mom6"><code class="docutils literal notranslate"><span class="pre">Calendar.mom6</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.DatedBaseProduct"><code class="docutils literal notranslate"><span class="pre">DatedBaseProduct</span></code></a><ul class="nav section-nav flex-column">
@@ -468,6 +469,7 @@ document.write(`
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT.link"><code class="docutils literal notranslate"><span class="pre">MOM6_OUTPUT.link</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT.logger"><code class="docutils literal notranslate"><span class="pre">MOM6_OUTPUT.logger</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT.marbl_var_names"><code class="docutils literal notranslate"><span class="pre">MOM6_OUTPUT.marbl_var_names</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT.mom6_calendar"><code class="docutils literal notranslate"><span class="pre">MOM6_OUTPUT.mom6_calendar</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT.product_name"><code class="docutils literal notranslate"><span class="pre">MOM6_OUTPUT.product_name</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT.time_units"><code class="docutils literal notranslate"><span class="pre">MOM6_OUTPUT.time_units</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.mom6_output.MOM6_OUTPUT.time_var_name"><code class="docutils literal notranslate"><span class="pre">MOM6_OUTPUT.time_var_name</span></code></a></li>
@@ -582,9 +584,15 @@ document.write(`
 
 <dl class="py class">
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.base.Calendar">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.base.</span></span><span class="sig-name descname"><span class="pre">Calendar</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cf</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cesm</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.base.Calendar" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.base.</span></span><span class="sig-name descname"><span class="pre">Calendar</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cf</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cesm</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mom6</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.base.Calendar" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Pairs a CF time-attribute calendar name with its corresponding CIME CALENDAR xml value, so a product can’t declare one without the other.</p>
+<p>Pairs the calendar name each downstream consumer expects, so a product can’t declare one without the others.</p>
+<p>cf is for xarray’s own time decode/encode while reading raw data (its CF
+convention name, e.g. “standard” for the real-world calendar). cesm is
+the CIME CALENDAR xml value. mom6 is the literal string the regridding
+step must stamp on output forcing files’ time:calendar attribute, since
+MOM6’s get_cal_time() accepts neither cf’s “standard” nor cesm’s
+upper-cased “GREGORIAN”/”NO_LEAP” – only e.g. “gregorian”/”noleap”.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.base.Calendar.cesm">
 <span class="sig-name descname"><span class="pre">cesm</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.base.Calendar.cesm" title="Link to this definition">#</a></dt>
@@ -593,6 +601,11 @@ document.write(`
 <dl class="py attribute">
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.base.Calendar.cf">
 <span class="sig-name descname"><span class="pre">cf</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.base.Calendar.cf" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.base.Calendar.mom6">
+<span class="sig-name descname"><span class="pre">mom6</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.base.Calendar.mom6" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -627,7 +640,7 @@ document.write(`
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.base.ForcingProduct.required_metadata">
-<span class="sig-name descname"><span class="pre">required_metadata</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['product_name',</span> <span class="pre">'description',</span> <span class="pre">'link',</span> <span class="pre">'time_var_name',</span> <span class="pre">'u_x_coord',</span> <span class="pre">'u_y_coord',</span> <span class="pre">'v_x_coord',</span> <span class="pre">'v_y_coord',</span> <span class="pre">'tracer_x_coord',</span> <span class="pre">'tracer_y_coord',</span> <span class="pre">'depth_coord',</span> <span class="pre">'u_var_name',</span> <span class="pre">'v_var_name',</span> <span class="pre">'eta_var_name',</span> <span class="pre">'tracer_var_names',</span> <span class="pre">'boundary_fill_method',</span> <span class="pre">'time_units',</span> <span class="pre">'cf_calendar',</span> <span class="pre">'cesm_calendar']</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.base.ForcingProduct.required_metadata" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">required_metadata</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['product_name',</span> <span class="pre">'description',</span> <span class="pre">'link',</span> <span class="pre">'time_var_name',</span> <span class="pre">'u_x_coord',</span> <span class="pre">'u_y_coord',</span> <span class="pre">'v_x_coord',</span> <span class="pre">'v_y_coord',</span> <span class="pre">'tracer_x_coord',</span> <span class="pre">'tracer_y_coord',</span> <span class="pre">'depth_coord',</span> <span class="pre">'u_var_name',</span> <span class="pre">'v_var_name',</span> <span class="pre">'eta_var_name',</span> <span class="pre">'tracer_var_names',</span> <span class="pre">'boundary_fill_method',</span> <span class="pre">'time_units',</span> <span class="pre">'cf_calendar',</span> <span class="pre">'cesm_calendar',</span> <span class="pre">'mom6_calendar']</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.base.ForcingProduct.required_metadata" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
@@ -792,6 +805,7 @@ document.write(`
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.Calendar"><code class="docutils literal notranslate"><span class="pre">Calendar</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.Calendar.cesm"><code class="docutils literal notranslate"><span class="pre">Calendar.cesm</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.Calendar.cf"><code class="docutils literal notranslate"><span class="pre">Calendar.cf</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.Calendar.mom6"><code class="docutils literal notranslate"><span class="pre">Calendar.mom6</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.DatedBaseProduct"><code class="docutils literal notranslate"><span class="pre">DatedBaseProduct</span></code></a><ul class="nav section-nav flex-column">
