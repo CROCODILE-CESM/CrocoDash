@@ -28,6 +28,7 @@ from CrocoDash.extract_forcings import (
     obc,
     initial_condition,
     cice,
+    ww3 as ww3_mod,
 )
 from CrocoDash.grid import Grid
 from CrocoDash.topo import Topo
@@ -55,6 +56,7 @@ def run_workflow(
     bgcrivernutrients=False,
     ciceic=False,
     ciceobc=False,
+    ww3=False,
     preview=False,
 ):
     """
@@ -84,6 +86,8 @@ def run_workflow(
         Run CICE initial condition generation (NOT YET IMPLEMENTED).
     ciceobc : bool
         Run CICE boundary condition generation.
+    ww3 : bool
+        Run WW3 boundary condition spectra generation.
     preview : bool
         Preview task graph without executing.
     """
@@ -111,6 +115,7 @@ def run_workflow(
             bgcrivernutrients,
             ciceic,
             ciceobc,
+            ww3,
         ]
     ):
         print("No components selected.")
@@ -301,6 +306,22 @@ def run_workflow(
                 ),
             )
             timings["ciceobc"] = time.perf_counter() - _t
+
+        if ww3:
+            _t = time.perf_counter()
+            grid = Grid.from_supergrid(supergrid_path)
+            ww3_mod.process_ww3_obc(
+                ocn_grid=grid,
+                inputdir=inputdir,
+                boundaries=config["ww3"]["inputs"]["boundaries"],
+                date_range=(
+                    conditions["outputs"]["start_date"],
+                    conditions["outputs"]["end_date"],
+                ),
+                ww3_obc_product_name=config["ww3"]["inputs"]["ww3_obc_product_name"],
+                ww3_obc_function_name=config["ww3"]["inputs"]["ww3_obc_function_name"],
+            )
+            timings["ww3"] = time.perf_counter() - _t
 
     finally:
         pass

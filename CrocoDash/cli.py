@@ -60,6 +60,7 @@ def _process(args):
             args.bgcrivernutrients,
             args.ciceic,
             args.ciceobc,
+            args.ww3,
         ]
     ):
         args.subparser.print_help()
@@ -77,6 +78,7 @@ def _process(args):
         bgcrivernutrients=args.bgcrivernutrients,
         ciceic=args.ciceic,
         ciceobc=args.ciceobc,
+        ww3=args.ww3,
         preview=config["conditions"]["outputs"].get("preview", False),
     )
 
@@ -201,6 +203,11 @@ def main():
         "--ciceobc",
         action="store_true",
         help="Run CICE boundary condition generation",
+    )
+    ef_components.add_argument(
+        "--ww3",
+        action="store_true",
+        help="Run WW3 boundary condition spectra generation",
     )
     ef_top.add_argument(
         "--skip",

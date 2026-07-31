@@ -1,6 +1,5 @@
 import json
-import pytest
-from unittest.mock import patch, MagicMock, call
+from unittest.mock import patch
 from argparse import Namespace
 from pathlib import Path
 
@@ -24,6 +23,7 @@ def _make_args(**overrides):
         chl=False,
         ciceic=False,
         ciceobc=False,
+        ww3=False,
         skip=[],
     )
     defaults.update(overrides)
@@ -79,6 +79,21 @@ def test_resolve_components_individual_flags_no_all():
     assert resolved.bgcic is True
     assert resolved.tides is True
     assert resolved.runoff is False  # not explicitly requested
+
+
+def test_resolve_components_ww3_flag():
+    """--ww3 should only enable when requested and present in config"""
+    args = _make_args(ww3=True)
+    config = {"ww3": {}}
+    resolved = resolve_components(args, config)
+    assert resolved.ww3 is True
+
+
+def test_resolve_components_ww3_missing_in_config_disabled():
+    args = _make_args(ww3=True)
+    config = {}  # ww3 not configured
+    resolved = resolve_components(args, config)
+    assert resolved.ww3 is False
 
 
 def test_resolve_components_skip_empty_default():
@@ -261,6 +276,34 @@ def test_run_workflow_runoff_calls_rof_module(mock_cs, mock_rof, tmp_path):
     run_workflow(config_path=config_path, runoff=True)
 
     mock_rof.generate_rof_ocn_map.assert_called_once()
+
+
+@patch("CrocoDash.extract_forcings.driver.ww3_mod")
+@patch("CrocoDash.extract_forcings.driver.Grid")
+@patch("CrocoDash.extract_forcings.driver.case_state")
+def test_run_workflow_ww3_calls_ww3_module(mock_cs, mock_grid, mock_ww3, tmp_path):
+    config = _make_config(
+        extra_keys={
+            "ww3": {
+                "inputs": {
+                    "boundaries": ["north", "south"],
+                    "ww3_obc_product_name": None,
+                    "ww3_obc_function_name": None,
+                }
+            }
+        }
+    )
+    state = _make_state(tmp_path)
+    mock_cs.read.return_value = state
+    config_path = tmp_path / "config.json"
+    config_path.write_text(json.dumps(config))
+
+    run_workflow(config_path=config_path, ww3=True)
+
+    mock_ww3.process_ww3_obc.assert_called_once()
+    _, kwargs = mock_ww3.process_ww3_obc.call_args
+    assert kwargs["boundaries"] == ["north", "south"]
+    assert kwargs["date_range"] == ("20200101", "20200109")
 
 
 @patch("CrocoDash.extract_forcings.driver.initial_condition")

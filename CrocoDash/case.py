@@ -589,6 +589,7 @@ class Case:
         process_bgc_river_nutrients = kwargs.get("process_bgc_river_nutrients", True)
         process_cice_ic = kwargs.get("process_cice_ic", True)
         process_cice_obc = kwargs.get("process_cice_obc", True)
+        process_ww3 = kwargs.get("process_ww3", True)
 
         run_workflow(
             config_path=self.extract_forcings_path / "config.json",
@@ -603,6 +604,7 @@ class Case:
             and self.fcr.is_active("BGCRiverNutrients"),
             ciceic=process_cice_ic and self.fcr.is_active("ciceic"),
             ciceobc=process_cice_obc and self.fcr.is_active("ciceobc"),
+            ww3=process_ww3 and self.fcr.is_active("ww3"),
         )
 
         print(f"Case is ready to be built: {self.caseroot}")
