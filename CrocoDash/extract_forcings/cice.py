@@ -1,5 +1,14 @@
 """CICE-specific OBC/IC handling for CrocoDash.
 
+Final CICE OBC output files are named ``cice_forcing_obc_segment_NNN.nc`` in
+<inputdir>/ocnice -- distinct from MOM6's own ``forcing_obc_segment_NNN.nc``
+in the same directory (see ``mom6.py``). Both engines share obc.py's
+internal ``forcing_obc_segment_NNN.nc`` convention for chunk files, but each
+target writes to its own private staging/merge directory first (mirroring
+``ww3.py``) and only copies the final merged file into the shared
+``ocnice`` directory under its own distinct name -- otherwise CICE and MOM6
+OBC output would silently overwrite each other.
+
 ``obc.py``/``ic.py`` are model-agnostic engines (see their module
 docstrings): they get raw data (and, for OBC, date-chunk/merge it) but know
 nothing about how to regrid it onto a target model's grid. This module
@@ -16,6 +25,7 @@ exists on this filesystem; this is unreleased dev work. Revisit those
 assumptions once real source/docs are available.
 """
 
+import shutil
 from pathlib import Path
 
 import numpy as np
@@ -226,6 +236,13 @@ def process_cice_obc(
     regrids it via _regrid_cice_chunk -- see that function's and
     _cice_boundary_lines's docstrings for the explicit geometry/interpolation
     assumptions this first-pass design rests on.
+
+    The engine's own merge output lands in a private staging directory
+    (mirroring ww3.py), then each boundary's merged file is copied into
+    <inputdir>/ocnice as ``cice_forcing_obc_segment_NNN.nc`` -- MOM6's OBC
+    engine writes ``forcing_obc_segment_NNN.nc`` into that same shared
+    directory, so reusing that name here would let one silently clobber
+    the other.
     """
     product_name = cice_product_name or "cice_restart"
     function_name = cice_function_name or "get_cice_restart_subset"
@@ -236,8 +253,9 @@ def process_cice_obc(
     staging_dir = Path(inputdir) / "extract_forcings" / "cice"
     raw_dir = staging_dir / "raw_data"
     regridded_dir = staging_dir / "regridded_data"
-    output_path = Path(inputdir) / "ocnice"
-    for d in (raw_dir, regridded_dir, output_path):
+    merged_dir = staging_dir / "merged"
+    output_dir = Path(inputdir) / "ocnice"
+    for d in (raw_dir, regridded_dir, merged_dir, output_dir):
         d.mkdir(parents=True, exist_ok=True)
 
     boundary_number_conversion = {b: i + 1 for i, b in enumerate(boundaries)}
@@ -255,8 +273,15 @@ def process_cice_obc(
         hgrid_path=hgrid_path,
         raw_dataset_path=raw_dir,
         regridded_dataset_path=regridded_dir,
-        output_path=output_path,
+        output_path=merged_dir,
         regrid_chunk_fn=_regrid_cice_chunk,
         get_step_days=None,
         regrid_step_days=None,
     )
+
+    for boundary in boundaries:
+        seg_id = boundary_number_conversion[boundary]
+        shutil.copy(
+            merged_dir / f"forcing_obc_segment_{seg_id:03d}.nc",
+            output_dir / f"cice_forcing_obc_segment_{seg_id:03d}.nc",
+        )
