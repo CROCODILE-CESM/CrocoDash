@@ -41,10 +41,18 @@ KNOWN_INCLUSIVE_WITHOUT_HELPER = {
     # windows, not whole calendar days) — make_dates_end_inclusive's
     # whole-day normalization would discard that precision.
     ("ww3", "get_ww3_placeholder_data"),
+    # Reparses `dates` into whole-day "YYYY-MM-DD" MARS date-range strings
+    # (time-of-day is dropped) combined with an explicit "00/to/23/by/1"
+    # hourly `time` key covering every hour of every requested day — whole-
+    # day inclusive by construction, same reasoning as GLORYS's RDA path.
+    ("era5_wave_spectra", "get_era5_2d_spectra"),
     # Test fixtures from test_base_registry.py — placeholder data, not real
     # date handling.
     ("dummy", "dummy_method"),
     ("dummy_forcing", "fetch_dummy"),
+    # Test fixture from test_processes.py — synthetic ERA5-shaped data, not
+    # real date handling.
+    ("test_fake_era5_spectra", "get_fake_spectra"),
 }
 
 

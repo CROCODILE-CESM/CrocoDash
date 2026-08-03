@@ -6,7 +6,9 @@ from pathlib import Path
 
 import pytest
 from CrocoDash.extract_forcings import runoff, tides, bgc, chlorophyll as chl, cice, ww3
+from CrocoDash.raw_data_access.base import WW3ForcingProduct, accessmethod, GREGORIAN
 import numpy as np
+import pandas as pd
 import xarray as xr
 from unittest.mock import Mock, patch
 
@@ -164,8 +166,8 @@ def test_process_cice_obc_produces_output(
         },
     )
 
-    west = xr.open_dataset(tmp_path / "ocnice" / "forcing_obc_segment_001.nc")
-    east = xr.open_dataset(tmp_path / "ocnice" / "forcing_obc_segment_002.nc")
+    west = xr.open_dataset(tmp_path / "ocnice" / "cice_forcing_obc_segment_001.nc")
+    east = xr.open_dataset(tmp_path / "ocnice" / "cice_forcing_obc_segment_002.nc")
 
     for ds, n in [(west, grid.tlat.shape[0]), (east, grid.tlat.shape[0])]:
         assert ds.sizes["boundary_point"] == n
@@ -340,6 +342,190 @@ def test_process_ww3_obc(tmp_path, gen_grid_topo_vgrid):
     finally:
         ds1.close()
         ds2.close()
+
+
+def _make_synthetic_era5_window(n_stations=3):
+    """Synthetic dataset matching the real decoded ERA5 shape (see
+    raw_data_access.datasets.era5.decode_era5_spectra_grib) -- a regular
+    (time, latitude, longitude, frequency, direction) grid -- so the real
+    regrid logic can be exercised without any network/GRIB dependency. Uses
+    a single latitude row (n_stations longitude columns), so each (lat, lon)
+    point maps 1:1 onto a station index k after _extract_all_stations's
+    stack, with a distinct, checkable efth value (100 + k) confirming no
+    station gets reduced/averaged with another.
+    """
+    time = pd.date_range("2020-01-01", periods=4, freq="6h")
+    freq = np.array([0.05, 0.1, 0.15])
+    direction = np.array([0.0, 120.0, 240.0])
+    lons = np.linspace(-170.0, -160.0, n_stations)
+    lats = np.array([68.5])
+    efth = np.zeros((len(time), 1, n_stations, len(freq), len(direction)))
+    for k in range(n_stations):
+        efth[:, 0, k, :, :] = 100.0 + k
+    return xr.Dataset(
+        {
+            "wave_spectra": (
+                ("time", "latitude", "longitude", "frequency", "direction"),
+                efth,
+            )
+        },
+        coords={
+            "time": time.values,
+            "latitude": lats,
+            "longitude": lons,
+            "frequency": freq,
+            "direction": direction,
+        },
+    )
+
+
+def test_extract_all_stations_keeps_every_point():
+    ds = _make_synthetic_era5_window(n_stations=3)
+    lons, lats, freq, direction, efth = ww3._extract_all_stations(ds)
+
+    assert list(lons) == list(ds["longitude"].values)
+    assert list(lats) == [68.5, 68.5, 68.5]
+    assert list(freq) == list(ds["frequency"].values)
+    assert list(direction) == list(ds["direction"].values)
+    assert efth.shape == (3, 4, 3, 3)  # (station, time, frequency, direction)
+    for k in range(3):
+        assert np.all(efth[k] == 100.0 + k)
+
+
+def test_extract_all_stations_shape_mismatch_raises():
+    # Missing the "direction" dim entirely -- should trigger the check.
+    bad = xr.Dataset(
+        {
+            "wave_spectra": (
+                ("time", "latitude", "longitude", "frequency"),
+                np.ones((4, 1, 3, 3)),
+            )
+        },
+        coords={
+            "time": pd.date_range("2020-01-01", periods=4, freq="6h").values,
+            "latitude": [68.5],
+            "longitude": [1.0, 2.0, 3.0],
+            "frequency": [0.05, 0.1, 0.15],
+        },
+    )
+    with pytest.raises(ValueError, match="direction"):
+        ww3._extract_all_stations(bad)
+
+
+def test_regrid_chunk_era5_writes_all_stations(tmp_path):
+    ds = _make_synthetic_era5_window(n_stations=3)
+
+    ww3._regrid_chunk_era5(
+        ds=ds,
+        hgrid=None,
+        boundary="west",
+        seg_id=3,
+        outfolder=tmp_path,
+        dataset_varnames={},
+        start_date="2020-01-01",
+        regridders=None,
+    )
+
+    out = xr.open_dataset(tmp_path / "forcing_obc_segment_003.nc")
+    try:
+        assert out.sizes["station"] == 3
+        for k in range(3):
+            assert np.all(out["efth"].isel(station=k).values == 100.0 + k)
+        assert list(out["station_lon"].values) == list(ds["longitude"].values)
+        assert list(out["station_lat"].values) == [68.5, 68.5, 68.5]
+    finally:
+        out.close()
+
+
+class _FakeERA5Spectra(WW3ForcingProduct):
+    """Test-only stand-in for era5.ERA5_WAVE_SPECTRA -- writes a synthetic
+    dataset already in the real decoded ERA5 shape (see
+    _make_synthetic_era5_window), instead of hitting CDS/GRIB, so
+    process_ww3_obc's real (non-placeholder) path can be exercised
+    end-to-end without network/credentials. Auto-registers on import via
+    BaseProduct.__init_subclass__, same as test_base_registry.py's
+    DummyProduct/DummyForcing fixtures."""
+
+    product_name = "test_fake_era5_spectra"
+    description = "Fake multi-station ERA5-shaped spectra for testing."
+    link = "n/a"
+    time_var_name = "time"
+    time_units = None
+    calendar = GREGORIAN
+
+    @accessmethod
+    def get_fake_spectra(
+        dates,
+        lat_min,
+        lat_max,
+        lon_min,
+        lon_max,
+        name=None,
+        output_folder=Path(""),
+        output_filename="fake_era5.nc",
+        variables=None,
+    ):
+        start, end = pd.to_datetime(dates[0]), pd.to_datetime(dates[1])
+        time = pd.date_range(start, end, freq="6h")
+        freq = np.array([0.05, 0.1, 0.15])
+        direction = np.array([0.0, 120.0, 240.0])
+        n_stations = 3
+        lons = np.linspace(lon_min, lon_max, n_stations)
+        lats = np.array([(lat_min + lat_max) / 2])
+        efth = np.zeros((len(time), 1, n_stations, len(freq), len(direction)))
+        for k in range(n_stations):
+            efth[:, 0, k, :, :] = 100.0 + k
+
+        ds = xr.Dataset(
+            {
+                "wave_spectra": (
+                    ("time", "latitude", "longitude", "frequency", "direction"),
+                    efth,
+                )
+            },
+            coords={
+                "time": time.values,
+                "latitude": lats,
+                "longitude": lons,
+                "frequency": freq,
+                "direction": direction,
+            },
+        )
+        output_folder = Path(output_folder)
+        output_folder.mkdir(parents=True, exist_ok=True)
+        path = output_folder / output_filename
+        ds.to_netcdf(path)
+        return path
+
+
+def test_process_ww3_obc_era5_path_multi_station(tmp_path, gen_grid_topo_vgrid):
+    grid, topo, vgrid = gen_grid_topo_vgrid
+    hgrid_path = tmp_path / "hgrid.nc"
+    grid.write_supergrid(hgrid_path)
+
+    ww3.process_ww3_obc(
+        hgrid_path=str(hgrid_path),
+        inputdir=tmp_path,
+        boundaries=["west", "east"],
+        date_range=("2020-01-01", "2020-01-02"),
+        ww3_obc_product_name="test_fake_era5_spectra",
+        ww3_obc_function_name="get_fake_spectra",
+    )
+
+    ocnice = tmp_path / "ocnice"
+    # 2 boundaries x 3 real stations each = 6 total, not 2.
+    spec_lines = (ocnice / "spec.list").read_text().splitlines()
+    assert spec_lines == [f"ww3.point{i}_spec.nc" for i in range(1, 7)]
+
+    nml_contents = (ocnice / "ww3_bounc.nml").read_text()
+    assert "BOUND%INTERP               = 2" in nml_contents
+
+    for i, expected_value in zip(range(1, 7), [100.0, 101.0, 102.0] * 2):
+        ds = xr.open_dataset(ocnice / f"ww3.point{i}_spec.nc", decode_times=False)
+        try:
+            assert np.all(ds["efth"].values == expected_value)
+        finally:
+            ds.close()
 
 
 @pytest.mark.slow

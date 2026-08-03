@@ -174,19 +174,22 @@ class WW3Configurator(BaseConfigurator):
         InputValueParam(
             "ww3_obc_product_name",
             comment=(
-                "Name of the WW3 OBC input data product (e.g. 'ERA5'), mirroring "
-                "Case.configure_forcings's product_name/function_name pattern for "
-                "the main IC/OBC product. Plumbing only for now: process_ww3 "
-                "always generates spectra with the synthetic pulse/calm generator "
-                "regardless of this value, until WW3 OBC sourcing is wired through "
-                "raw_data_access."
+                "Name of the WW3 OBC input data product (e.g. 'era5_wave_spectra'), "
+                "mirroring Case.configure_forcings's product_name/function_name "
+                "pattern for the main IC/OBC product. Defaults (None) to the "
+                "placeholder 'WW3' product (raw_data_access/datasets/ww3.py); pass "
+                "'era5_wave_spectra' to route through the real ERA5 2D-spectra "
+                "product instead (raw_data_access/datasets/era5.py) -- requires a "
+                "separate cds.climate.copernicus.eu API key not assumed to exist "
+                "by default."
             ),
         ),
         InputValueParam(
             "ww3_obc_function_name",
             comment=(
                 "Name of the raw_data_access function to call for downloading the "
-                "WW3 OBC data product. Plumbing only for now, see ww3_obc_product_name."
+                "WW3 OBC data product (e.g. 'get_era5_2d_spectra' for the real ERA5 "
+                "product). See ww3_obc_product_name."
             ),
         ),
         InputValueParam("case_is_non_local", comment="Case is non-local"),
