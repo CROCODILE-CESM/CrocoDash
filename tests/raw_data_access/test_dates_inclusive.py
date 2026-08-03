@@ -37,6 +37,9 @@ KNOWN_INCLUSIVE_WITHOUT_HELPER = {
     # windows, not whole calendar days) — make_dates_end_inclusive's
     # whole-day normalization would discard that precision.
     ("ww3", "get_ww3_placeholder_data"),
+    # `dates` is unused entirely -- a restart is a single snapshot, not a
+    # time series, so there's nothing to normalize.
+    ("cice_restart", "get_cice_restart_subset"),
     # Test fixtures from test_base_registry.py — placeholder data, not real
     # date handling.
     ("dummy", "dummy_method"),

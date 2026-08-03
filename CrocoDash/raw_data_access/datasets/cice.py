@@ -1,0 +1,134 @@
+"""
+Data Access Module -> CICE restart
+
+A global CICE restart carries no time or lat/lon coordinates of its own --
+just raw ni/nj/ncat state arrays on the model's native tripole grid index
+space. This module index-subsets a restart to a regional domain's bounding
+box using the companion CICE grid file (tlon/tlat, stored in radians despite
+their degrees_* attrs) to locate the matching (nj, ni) window, so the result
+can be used as a cold-start initial condition for a regional CICE case.
+"""
+
+from pathlib import Path
+
+import numpy as np
+import xarray as xr
+from mom6_forge.utils import longitude_slicer
+
+from CrocoDash.raw_data_access.base import *
+
+
+def find_cice_index_window(
+    grid_path, lat_min, lat_max, lon_min, lon_max, buffer_deg=1.5
+):
+    """
+    Locate the (ni_index, nj_min, nj_max) window on a CICE tripole grid
+    (T-point tlon/tlat) covering the given lat/lon bounding box.
+
+    Longitude is resolved via mom6_forge's longitude_slicer against the
+    grid's row 0 -- every row of a CICE tripole grid is identical and
+    uniformly spaced in longitude below the displaced-pole fold, and row 0
+    (the grid's southern edge) is always below it. Latitude doesn't need the
+    same periodicity handling (no wraparound), so it's a plain argwhere over
+    tlat restricted to the resolved longitude window, which also naturally
+    follows the curvature of latitude lines near the fold.
+
+    Known limitation: this returns a contiguous ni index range and can't
+    represent a window that straddles the tripole seam itself -- not
+    expected for realistic regional domains, since CESM's tripole grids
+    place both displaced poles over land specifically to avoid this.
+    """
+    grid = xr.open_dataset(grid_path)
+    tlon = np.rad2deg(grid["tlon"].values)
+    tlat = np.rad2deg(grid["tlat"].values)
+    ni = tlon.shape[1]
+
+    lon_row = xr.Dataset(
+        {"ni_index": ("lon", np.arange(ni))},
+        coords={"lon": tlon[0, :]},
+    )
+    sliced = longitude_slicer(
+        lon_row, (lon_min - buffer_deg, lon_max + buffer_deg), "lon"
+    )
+    ni_idx = sliced["ni_index"].values
+
+    lat_window = tlat[:, ni_idx]
+    lat_mask = (lat_window >= lat_min - buffer_deg) & (
+        lat_window <= lat_max + buffer_deg
+    )
+    nj_rows = np.where(lat_mask.any(axis=1))[0]
+    if nj_rows.size == 0:
+        raise ValueError(
+            f"No grid points found in bounding box lat=({lat_min}, {lat_max}) "
+            f"lon=({lon_min}, {lon_max}) on grid {grid_path}."
+        )
+    return ni_idx, int(nj_rows.min()), int(nj_rows.max())
+
+
+class CICE_RESTART(CICEForcingProduct):
+    product_name = "cice_restart"
+    description = (
+        "Global CICE restart file, index-subset to a regional domain's "
+        "bounding box for use as a cold-start initial condition."
+    )
+    link = "https://escomp.github.io/CICE/versions/master/html/user_guide/ug_case_settings.html"
+
+    @accessmethod(
+        description=(
+            "Reads a global CICE restart file and its companion grid file, "
+            "locates the (nj, ni) index window covering the requested lat/lon "
+            "bounding box on the grid's T-point coordinates, and writes the "
+            "restart subset over that window. Point restart_path at a global "
+            "CICE restart (*.cice.r.*.nc) and grid_path at its companion CICE "
+            "grid file, e.g. /glade/campaign/cesm/community/omwg/grids/"
+            "tx2_3v3_grid.nc for the tx2_3v3 grid. `dates` is accepted for "
+            "interface consistency but unused -- a restart is a single "
+            "snapshot, not a time series. `variables` defaults to keeping "
+            "every variable in the restart, since which state variables "
+            "exist depends on compile-time CICE options (tracer/layer "
+            "counts) that this function has no way to know in advance."
+        ),
+        type="python",
+    )
+    def get_cice_restart_subset(
+        dates: list,
+        lat_min,
+        lat_max,
+        lon_min,
+        lon_max,
+        name=None,
+        output_folder=Path(""),
+        output_filename="cice_restart_subset.nc",
+        variables=None,
+        restart_path="please_provide_a_path",
+        grid_path="please_provide_a_path",
+        buffer_deg=1.5,
+        preview=False,
+    ):
+        for label, p in (("restart_path", restart_path), ("grid_path", grid_path)):
+            if p is None or not Path(p).exists():
+                raise FileNotFoundError(f"Provided {label} {p} does not exist.")
+
+        ni_idx, nj_min, nj_max = find_cice_index_window(
+            grid_path, lat_min, lat_max, lon_min, lon_max, buffer_deg=buffer_deg
+        )
+
+        restart = xr.open_dataset(restart_path, decode_times=False)
+        subset = restart.isel(nj=slice(nj_min, nj_max + 1), ni=ni_idx)
+        if variables:
+            keep = [v for v in variables if v in subset.data_vars]
+            missing = [v for v in variables if v not in subset.data_vars]
+            if missing:
+                CICE_RESTART.logger.warning(
+                    f"Requested variables not found in restart {restart_path}: {missing}"
+                )
+            subset = subset[keep]
+
+        if preview:
+            return subset
+
+        output_folder = Path(output_folder)
+        output_folder.mkdir(parents=True, exist_ok=True)
+        output_path = output_folder / output_filename
+        subset.load().to_netcdf(output_path)
+        return [output_path]
