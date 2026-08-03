@@ -290,9 +290,8 @@ def run_workflow(
 
         if ciceobc:
             _t = time.perf_counter()
-            grid = Grid.from_supergrid(supergrid_path)
             cice.process_cice_obc(
-                ocn_grid=grid,
+                hgrid_path=supergrid_path,
                 inputdir=inputdir,
                 boundaries=config["ciceobc"]["inputs"]["boundaries"],
                 date_range=(
@@ -303,6 +302,7 @@ def run_workflow(
                 cice_function_name=config["ciceobc"]["inputs"].get(
                     "cice_function_name"
                 ),
+                function_args=config["ciceobc"]["inputs"].get("function_args"),
             )
             timings["ciceobc"] = time.perf_counter() - _t
 

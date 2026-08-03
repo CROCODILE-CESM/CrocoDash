@@ -56,7 +56,7 @@ def test_find_cice_index_window_out_of_bounds_raises(skip_if_not_glade):
 def test_get_cice_restart_subset(skip_if_not_glade, tmp_path):
     _skip_if_reference_files_missing()
     paths = cice.CICE_RESTART.get_cice_restart_subset(
-        dates=["2000-01-01", "2000-01-02"],
+        dates=["2000-01-01", "2000-01-04"],
         lat_min=18,
         lat_max=31,
         lon_min=-98,
@@ -68,10 +68,32 @@ def test_get_cice_restart_subset(skip_if_not_glade, tmp_path):
     )
 
     ds = xr.open_dataset(paths[0])
-    assert set(ds.sizes) == {"nj", "ni", "ncat"}
+    assert set(ds.sizes) == {"time", "nj", "ni", "ncat"}
     assert ds.sizes["nj"] > 0 and ds.sizes["ni"] > 0
+    # One snapshot copied forward onto every day in the range.
+    assert ds.sizes["time"] == 4
+    assert list(ds["time"].values.astype("datetime64[D]").astype(str)) == [
+        "2000-01-01",
+        "2000-01-02",
+        "2000-01-03",
+        "2000-01-04",
+    ]
+    aicen = ds["aicen"].values
+    assert np.all(aicen[0] == aicen)
     # No ice expected in the Gulf of Mexico.
     assert float(ds["aicen"].sum()) == 0.0
+
+    # tlon/tlat/ulon/ulat are attached from the grid file, in degrees, over
+    # the same window -- used by extract_forcings/cice.py's regrid step.
+    # expand_dims(time=...) broadcasts them too, like every other data var.
+    for coord_name in ("tlon", "tlat", "ulon", "ulat"):
+        assert coord_name in ds.data_vars
+        assert ds[coord_name].dims == ("time", "nj", "ni")
+    # Window is row-selected (whole nj rows, not per-point), so it covers
+    # the requested box but can extend further at high-latitude grid
+    # curvature -- just check it covers the request, not a tight bound.
+    assert ds["tlat"].values.min() <= 18
+    assert ds["tlat"].values.max() >= 31
 
 
 def test_get_cice_restart_subset_variable_filter(skip_if_not_glade, tmp_path):
@@ -90,7 +112,9 @@ def test_get_cice_restart_subset_variable_filter(skip_if_not_glade, tmp_path):
     )
 
     ds = xr.open_dataset(paths[0])
-    assert set(ds.data_vars) == {"aicen", "vicen"}
+    # tlon/tlat/ulon/ulat are always attached, regardless of the requested
+    # variable filter -- downstream regridding always needs them.
+    assert set(ds.data_vars) == {"aicen", "vicen", "tlon", "tlat", "ulon", "ulat"}
 
 
 def test_get_cice_restart_subset_missing_path_raises(tmp_path):

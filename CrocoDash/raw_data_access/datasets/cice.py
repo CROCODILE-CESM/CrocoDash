@@ -6,12 +6,15 @@ just raw ni/nj/ncat state arrays on the model's native tripole grid index
 space. This module index-subsets a restart to a regional domain's bounding
 box using the companion CICE grid file (tlon/tlat, stored in radians despite
 their degrees_* attrs) to locate the matching (nj, ni) window, so the result
-can be used as a cold-start initial condition for a regional CICE case.
+can be used as a cold-start initial condition for a regional CICE case. The
+same window's tlon/tlat/ulon/ulat are attached to the output (in degrees) so
+downstream regridding has real coordinates without re-opening the grid file.
 """
 
 from pathlib import Path
 
 import numpy as np
+import pandas as pd
 import xarray as xr
 from mom6_forge.utils import longitude_slicer
 
@@ -106,12 +109,13 @@ class CICE_RESTART(CICEForcingProduct):
             "restart subset over that window. Point restart_path at a global "
             "CICE restart (*.cice.r.*.nc) and grid_path at its companion CICE "
             "grid file, e.g. /glade/campaign/cesm/community/omwg/grids/"
-            "tx2_3v3_grid.nc for the tx2_3v3 grid. `dates` is accepted for "
-            "interface consistency but unused -- a restart is a single "
-            "snapshot, not a time series. `variables` defaults to keeping "
-            "every variable in the restart, since which state variables "
-            "exist depends on compile-time CICE options (tracer/layer "
-            "counts) that this function has no way to know in advance."
+            "tx2_3v3_grid.nc for the tx2_3v3 grid. This isn't a real dated "
+            "forcing product yet -- a restart is a single snapshot with no "
+            "time axis of its own, so the snapshot is just copied forward "
+            "onto a daily `time` axis spanning `dates`. `variables` defaults "
+            "to keeping every variable in the restart, since which state "
+            "variables exist depends on compile-time CICE options (tracer/"
+            "layer counts) that this function has no way to know in advance."
         ),
         type="python",
     )
@@ -148,6 +152,26 @@ class CICE_RESTART(CICEForcingProduct):
                     f"Requested variables not found in restart {restart_path}: {missing}"
                 )
             subset = subset[keep]
+
+        # The restart itself carries no lat/lon -- attach the same window's
+        # T-point (tlon/tlat) and U-point (ulon/ulat) coordinates from the
+        # grid file, converted to degrees, so downstream regridding (see
+        # extract_forcings/cice.py's _regrid_cice_chunk) has real coordinates
+        # to interpolate from without re-opening the grid file itself. Always
+        # attached, regardless of the `variables` filter above.
+        grid_ds = xr.open_dataset(grid_path)
+        grid_window = grid_ds.isel(nj=slice(nj_min, nj_max + 1), ni=ni_idx)
+        for coord_name in ("tlon", "tlat", "ulon", "ulat"):
+            subset[coord_name] = (
+                ("nj", "ni"),
+                np.rad2deg(grid_window[coord_name].values),
+            )
+
+        # Not a real forcing product -- there's no actual time evolution to
+        # source, so just copy the single snapshot forward onto every day in
+        # the requested range.
+        time = pd.date_range(dates[0], dates[-1], freq="D")
+        subset = subset.expand_dims(time=time)
 
         if preview:
             return subset

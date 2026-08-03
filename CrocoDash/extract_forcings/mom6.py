@@ -100,7 +100,6 @@ def _regrid_obc_chunk(
             infile=tmp_file,
             varnames=dataset_varnames,
             arakawa_grid=None,
-            rotational_method=rm6.rotation.RotationMethod.EXPAND_GRID,
             regridding_method="bilinear",
             fill_method=rm6.regridding.fill_missing_data,
             regridders=regridders,
@@ -243,11 +242,14 @@ def _regrid_ic(
     them via functools.partial before handing this to the engine as
     regrid_fn."""
     expt = rm6.experiment.create_empty()
-    expt.hgrid = hgrid
+    # hgrid/vgrid are now read-only properties derived from m6f_hgrid/
+    # m6f_vgrid (mom6_forge Grid/VGrid objects) -- set those instead.
+    # _make_vgrid already sets m6f_vgrid as a side effect.
+    expt.m6f_hgrid = Grid.from_supergrid_ds(hgrid)
     expt.mom_input_dir = output_dir
     expt.date_range = [start_date, None]
     vgrid_from_file = xr.open_dataset(vgrid_path)
-    expt.vgrid = expt._make_vgrid(vgrid_from_file.dz.data)
+    expt._make_vgrid(vgrid_from_file.dz.data)
 
     eta_path = expt.mom_input_dir / "init_eta.nc"
     if eta_path.exists():

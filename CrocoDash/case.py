@@ -587,7 +587,13 @@ class Case:
         process_chl = kwargs.get("process_chl", True)
         process_runoff = kwargs.get("process_runoff", True)
         process_bgc_river_nutrients = kwargs.get("process_bgc_river_nutrients", True)
-        process_cice_ic = kwargs.get("process_cice_ic", True)
+        # CICE IC generation always raises NotImplementedError (see
+        # extract_forcings/cice.py) -- default to off so process_forcings()
+        # doesn't fail out of the box once a CICEICConfigurator eventually
+        # makes self.fcr.is_active("ciceic") return True. CICE OBC has a
+        # first-pass implementation, so it stays on by default like the
+        # other components.
+        process_cice_ic = kwargs.get("process_cice_ic", False)
         process_cice_obc = kwargs.get("process_cice_obc", True)
         process_ww3 = kwargs.get("process_ww3", True)
 
@@ -630,6 +636,10 @@ class Case:
             print("tidal_constituents not found so using only M2")
             self.tidal_constituents = ["M2"]
 
+        # hgrid_type/vgrid_type take mom6_forge Grid/VGrid objects directly
+        # now -- "from_file" + a separate hgrid_path/vgrid_path kwarg no
+        # longer exists, and hgrid/vgrid are read-only properties derived
+        # from them (no more assigning after construction).
         expt = rmom6.experiment(
             date_range=date_range,
             resolution=None,
@@ -638,17 +648,13 @@ class Case:
             depth=self.ocn_topo.max_depth,
             mom_run_dir=self._cime_case.get_value("RUNDIR"),
             mom_input_dir=self.inputdir / "ocnice",
-            hgrid_type="from_file",
-            hgrid_path=self.supergrid_path,
-            vgrid_type="from_file",
-            vgrid_path=self.vgrid_path,
+            hgrid_type=self.ocn_grid,
+            vgrid_type=self.ocn_vgrid,
             minimum_depth=self.ocn_topo.min_depth,
             tidal_constituents=self.tidal_constituents,
             expt_name=self.caseroot.name,
             boundaries=self.boundaries,
         )
-        expt.hgrid = self.ocn_grid.supergrid.to_ds()
-        # expt.vgrid = self.ocn_vgrid.gen_vgrid_ds() # Not implemented yet
         return expt
 
     def _configure_case(self, atm_grid_name, rof_grid_name):

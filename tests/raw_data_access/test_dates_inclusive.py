@@ -30,6 +30,10 @@ KNOWN_INCLUSIVE_WITHOUT_HELPER = {
     ("glorys", "get_glorys_data_from_rda"),
     ("glofas", "get_global_data_with_python"),
     ("mom6_output", "get_mom6_data"),
+    # Same reparse-via-pd.date_range(freq="D") reasoning as above -- a
+    # restart has no real time series, so `dates` just drives how many whole
+    # days its single snapshot gets copied forward onto.
+    ("cice_restart", "get_cice_restart_subset"),
     # `dates` is an unused placeholder — downloads one fixed pre-processed
     # file via a static URL, no date-based filtering happens at all.
     ("glofas", "get_processed_global_glofas_script_for_cli"),
@@ -37,9 +41,6 @@ KNOWN_INCLUSIVE_WITHOUT_HELPER = {
     # windows, not whole calendar days) — make_dates_end_inclusive's
     # whole-day normalization would discard that precision.
     ("ww3", "get_ww3_placeholder_data"),
-    # `dates` is unused entirely -- a restart is a single snapshot, not a
-    # time series, so there's nothing to normalize.
-    ("cice_restart", "get_cice_restart_subset"),
     # Test fixtures from test_base_registry.py — placeholder data, not real
     # date handling.
     ("dummy", "dummy_method"),

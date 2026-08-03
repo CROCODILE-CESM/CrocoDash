@@ -2,11 +2,30 @@
 This testing file is for the other processes in extract_forcings. Most do not need much testing because they call other packages (which should ideally test correctness themselves) (I mean I'm probably writing those tests but still)
 """
 
+from pathlib import Path
+
 import pytest
 from CrocoDash.extract_forcings import runoff, tides, bgc, chlorophyll as chl, cice, ww3
 import numpy as np
 import xarray as xr
 from unittest.mock import Mock, patch
+
+# Reference files for the cice_restart product -- same as
+# tests/raw_data_access/test_cice.py. Duplicated here (rather than imported)
+# since each test file in this suite is self-contained.
+_CICE_GRID_PATH = "/glade/campaign/cesm/community/omwg/grids/tx2_3v3_grid.nc"
+_CICE_RESTART_PATH = (
+    "/glade/u/home/dbailey/"
+    "b.e30_alpha09b.B1850C_MTso.ne30_t233_wgx3.360.cice.r.0201-01-01-00000.nc"
+)
+
+
+def _skip_if_cice_reference_files_missing():
+    if not Path(_CICE_GRID_PATH).exists() or not Path(_CICE_RESTART_PATH).exists():
+        pytest.skip(
+            "Reference tx2_3v3 grid or CICE restart file not available on this "
+            "filesystem."
+        )
 
 
 @patch("mom6_forge.mapping.gen_rof_maps", autospec=True)
@@ -73,18 +92,88 @@ def test_process_cice_ic_not_implemented(tmp_path, gen_grid_topo_vgrid):
         )
 
 
-def test_process_cice_obc_not_implemented(tmp_path, gen_grid_topo_vgrid):
+def test_cice_boundary_lines_geometry(gen_grid_topo_vgrid):
+    """North/east boundaries get their own T-row/column's U-point exactly on
+    the true domain edge; south/east get it one cell inside instead -- a
+    direct consequence of CICE's NW-corner B-grid convention applied to
+    grid.qlon/qlat's indexing (see _cice_boundary_lines's docstring)."""
     grid, topo, vgrid = gen_grid_topo_vgrid
 
-    with pytest.raises(NotImplementedError):
-        cice.process_cice_obc(
-            ocn_grid=grid,
-            inputdir=tmp_path,
-            boundaries=["west", "east"],
-            date_range=("2020-01-01 00:00:00", "2020-01-01 06:00:00"),
-            cice_product_name="GLORYS",
-            cice_function_name="get_glorys_data_from_rda",
-        )
+    south = cice._cice_boundary_lines(grid, "south")
+    north = cice._cice_boundary_lines(grid, "north")
+    west = cice._cice_boundary_lines(grid, "west")
+    east = cice._cice_boundary_lines(grid, "east")
+
+    nx, ny = grid.tlon.shape[1], grid.tlon.shape[0]
+    for lines, n in [(south, nx), (north, nx), (west, ny), (east, ny)]:
+        for key in ("t_lon", "t_lat", "u_lon", "u_lat"):
+            assert lines[key].shape == (n,)
+
+    # Grid is an unrotated rectangle, so each true edge is a constant
+    # lon/lat -- safe to read off a single corner point.
+    true_south_edge_lat = float(grid.qlat.values[0, 0])
+    true_north_edge_lat = float(grid.qlat.values[-1, 0])
+    true_west_edge_lon = float(grid.qlon.values[0, 0])
+    true_east_edge_lon = float(grid.qlon.values[0, -1])
+
+    # North/west: boundary-most row/column's own U-point sits exactly on
+    # the true edge.
+    assert np.allclose(north["u_lat"], true_north_edge_lat)
+    assert np.allclose(west["u_lon"], true_west_edge_lon)
+
+    # South/east: one cell inside the true edge, not on it.
+    assert np.all(south["u_lat"] > true_south_edge_lat)
+    assert np.all(east["u_lon"] < true_east_edge_lon)
+
+    # Velocity/stress line always sits strictly between the true edge and
+    # the tracer line for the "interior" boundaries (south/east) -- half a
+    # cell further in than tracers.
+    assert np.all(south["u_lat"] > south["t_lat"])
+    assert np.all(east["u_lon"] < east["t_lon"])
+
+    # For the "aligned" boundaries (north/west), it's the tracer line that
+    # sits strictly between the true edge and the U-line instead.
+    assert np.all(north["t_lat"] < north["u_lat"])
+    assert np.all(west["t_lon"] > west["u_lon"])
+
+
+def test_cice_boundary_lines_unknown_boundary_raises(gen_grid_topo_vgrid):
+    grid, topo, vgrid = gen_grid_topo_vgrid
+    with pytest.raises(ValueError):
+        cice._cice_boundary_lines(grid, "northeast")
+
+
+def test_process_cice_obc_produces_output(
+    skip_if_not_glade, tmp_path, gen_grid_topo_vgrid
+):
+    """process_cice_obc runs the full GET -> chunk -> REGRID -> MERGE engine
+    for real against the reference restart + grid files -- confirms the
+    wiring end-to-end, not just that it reaches a known gap."""
+    _skip_if_cice_reference_files_missing()
+    grid, topo, vgrid = gen_grid_topo_vgrid
+    grid.write_supergrid(tmp_path / "grid.nc")
+
+    cice.process_cice_obc(
+        hgrid_path=tmp_path / "grid.nc",
+        inputdir=tmp_path,
+        boundaries=["west", "east"],
+        date_range=("2020-01-01", "2020-01-01"),
+        function_args={
+            "restart_path": _CICE_RESTART_PATH,
+            "grid_path": _CICE_GRID_PATH,
+        },
+    )
+
+    west = xr.open_dataset(tmp_path / "ocnice" / "forcing_obc_segment_001.nc")
+    east = xr.open_dataset(tmp_path / "ocnice" / "forcing_obc_segment_002.nc")
+
+    for ds, n in [(west, grid.tlat.shape[0]), (east, grid.tlat.shape[0])]:
+        assert ds.sizes["boundary_point"] == n
+        assert ds.sizes["time"] == 1
+        assert "aicen" in ds and ds["aicen"].dims == ("time", "ncat", "boundary_point")
+        assert "uvel" in ds and ds["uvel"].dims == ("time", "boundary_point")
+        # No ice expected at this (Panama-region) test grid's location.
+        assert float(ds["aicen"].sum()) == 0.0
 
 
 def test_bgcironforcing(tmp_path):
