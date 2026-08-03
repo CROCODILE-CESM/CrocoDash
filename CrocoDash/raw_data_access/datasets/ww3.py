@@ -25,6 +25,10 @@ class WW3(WW3ForcingProduct):
         "file; no real wave data yet."
     )
     link = "https://github.com/CROCODILE-CESM/WW3_interface"
+    time_var_name = "time"
+    # Matches extract_forcings/ww3.py's own regrid-step time encoding.
+    time_units = "seconds since 1990-01-01 00:00:00.0"
+    calendar = GREGORIAN
 
     @accessmethod(
         description="Writes a placeholder time-only raw file for the requested date range",

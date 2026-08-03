@@ -186,11 +186,14 @@ class DatedBaseProduct(BaseProduct):
 
 class ForcingProduct(DatedBaseProduct):
     """Generic enforcement for any gridded, bounding-box-downloadable forcing
-    product. Deliberately holds no model-specific variable-name metadata --
-    see ``MOM6ForcingProduct``/``CICEForcingProduct``/``WW3ForcingProduct`` for
-    that. What every such product needs regardless of target model: a
-    lat/lon/variables/dates download contract, and sane toy-call defaults for
-    that contract's lat/lon args.
+    product. Holds the metadata every such product needs regardless of
+    target model: a lat/lon/variables/dates download contract, sane toy-call
+    defaults for that contract's lat/lon args, and its own time-axis naming
+    (``time_var_name``/``time_units``/``cf_calendar``/``cesm_calendar``) --
+    every dated forcing product has *some* time coordinate to name, even one
+    (like a static restart snapshot) that leaves these unused. Velocity/
+    tracer grid-point metadata is NOT here -- see
+    ``VelocityTracerForcingProduct``/``MOM6ForcingProduct``.
     """
 
     required_args = DatedBaseProduct.required_args + [
@@ -201,6 +204,22 @@ class ForcingProduct(DatedBaseProduct):
         "lat_min",
         "name",
     ]
+
+    required_metadata = DatedBaseProduct.required_metadata + [
+        "time_var_name",
+        "time_units",
+        "cf_calendar",
+        "cesm_calendar",
+    ]
+
+    def __init_subclass__(cls, **kwargs):
+        # Derive cf_calendar/cesm_calendar from a single `calendar` attr, if declared
+        calendar = getattr(cls, "calendar", None)
+        if calendar is not None:
+            cls.cf_calendar = calendar.cf
+            cls.cesm_calendar = calendar.cesm
+
+        super().__init_subclass__(**kwargs)
 
     @classmethod
     def validate_method(cls, method_name, **kwargs):
@@ -217,41 +236,44 @@ class ForcingProduct(DatedBaseProduct):
         return super().validate_method(method_name, **extra_defaults)
 
 
-class MOM6ForcingProduct(ForcingProduct):
-    """MOM6's own regridding var-name metadata -- consumed by
+class VelocityTracerForcingProduct(ForcingProduct):
+    """Coordinate/variable-name metadata for a product's u/v velocity and
+    tracer grid points -- the var-map contract consumed by
     ``regional_mom6``'s ``Segment.regrid_velocity_tracers``, not by the
-    generic GET layer. Products that feed CrocoDash's MOM6 OBC/IC pipeline
-    (``GLORYS``, ``MOM6_OUTPUT``) extend this, not ``ForcingProduct`` directly.
+    generic GET layer. Shared by ``MOM6ForcingProduct`` and
+    ``CICEForcingProduct``, whose B-grid velocity/tracer state both live on
+    a plain (nj, ni) index space. Not needed by ``WW3ForcingProduct`` --
+    boundary spectra have no velocity/tracer grid at all.
     """
 
     required_metadata = ForcingProduct.required_metadata + [
-        "time_var_name",
         "u_x_coord",
         "u_y_coord",
         "v_x_coord",
         "v_y_coord",
         "tracer_x_coord",
         "tracer_y_coord",
-        "depth_coord",
         "u_var_name",
         "v_var_name",
-        "eta_var_name",
         "tracer_var_names",
+        "depth_coord",
+    ]
+
+
+class MOM6ForcingProduct(VelocityTracerForcingProduct):
+    """MOM6/regional_mom6-specific regridding metadata on top of
+    ``VelocityTracerForcingProduct`` -- SSH and the OBC fill method, neither
+    of which generalize to other models. Products that feed CrocoDash's
+    MOM6 OBC/IC pipeline (``GLORYS``, ``MOM6_OUTPUT``) extend this.
+    """
+
+    required_metadata = VelocityTracerForcingProduct.required_metadata + [
+        "eta_var_name",
         "boundary_fill_method",
-        "time_units",
-        "cf_calendar",
-        "cesm_calendar",
     ]
 
     def __init_subclass__(cls, **kwargs):
-
-        # 0. Derive cf_calendar/cesm_calendar from a single `calendar` attr, if declared
-        calendar = getattr(cls, "calendar", None)
-        if calendar is not None:
-            cls.cf_calendar = calendar.cf
-            cls.cesm_calendar = calendar.cesm
-
-        # 1. Let BaseProduct do its validation first
+        # 1. Let ForcingProduct/BaseProduct do their validation first
         super().__init_subclass__(**kwargs)
 
         # 2. tracer_var_names must be a dictionary with temp & salt
@@ -285,14 +307,16 @@ class MOM6ForcingProduct(ForcingProduct):
         return base
 
 
-class CICEForcingProduct(ForcingProduct):
-    """Extension point for CICE's own regridding var-name metadata, once CICE
-    sourcing/regridding is implemented. Empty for now -- no concrete CICE
-    product is registered yet."""
+class CICEForcingProduct(VelocityTracerForcingProduct):
+    """CICE's own regridding var-name metadata. CICE's B-grid velocity
+    (uvel/vvel) and tracer-like state both live on the same (nj, ni) index
+    space (no MOM6-style C-grid staggering across separately named dims),
+    so this extends VelocityTracerForcingProduct rather than ForcingProduct
+    directly -- any concrete CICE product regridded via
+    regional_mom6.Segment reuses the same var-map contract MOM6 does."""
 
 
 class WW3ForcingProduct(ForcingProduct):
-    """Extension point for WW3's own regridding var-name metadata, once real
-    WW3 wave-spectra sourcing is implemented. Empty for now -- the WW3 stub
-    product (see raw_data_access/datasets/) needs no metadata beyond the
-    generic bounding-box-download contract."""
+    """Extension point for WW3's own regridding var-name metadata, beyond
+    ForcingProduct's generic time-axis contract. No velocity/tracer grid
+    metadata here -- WW3 boundary spectra have no such grid."""

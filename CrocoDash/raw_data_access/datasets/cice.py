@@ -72,6 +72,31 @@ class CICE_RESTART(CICEForcingProduct):
         "bounding box for use as a cold-start initial condition."
     )
     link = "https://escomp.github.io/CICE/versions/master/html/user_guide/ug_case_settings.html"
+    # A restart is a single snapshot with no time dimension at all -- these
+    # only exist to satisfy ForcingProduct's generic contract and are never
+    # read. This product is a temporary stand-in and expected to be replaced
+    # by a real CICE forcing product later.
+    time_var_name = None
+    time_units = None
+    cf_calendar = None
+    cesm_calendar = None
+    # CICE's B-grid stores velocity (uvel/vvel) and tracer-like state on the
+    # same (nj, ni) index space -- no separate staggered dims like MOM6's
+    # xh/xq. These are real, not placeholders.
+    u_x_coord = "ni"
+    u_y_coord = "nj"
+    v_x_coord = "ni"
+    v_y_coord = "nj"
+    tracer_x_coord = "ni"
+    tracer_y_coord = "nj"
+    u_var_name = "uvel"
+    v_var_name = "vvel"
+    # No 1:1 tracer-name mapping and no depth dimension for a raw restart --
+    # its state is category-indexed (aicen/vicen/sice00N/...), not a single
+    # named tracer set on depth levels the way ocean tracers are. Unused
+    # placeholders, same caveat as the time fields above.
+    tracer_var_names = {}
+    depth_coord = None
 
     @accessmethod(
         description=(
