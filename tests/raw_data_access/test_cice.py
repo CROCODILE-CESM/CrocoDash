@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 import xarray as xr
 
-from CrocoDash.raw_data_access.datasets import cice
+from CrocoDash.raw_data_access.datasets import cice_output
 from CrocoDash.raw_data_access.registry import ProductRegistry
 
 GRID_PATH = "/glade/campaign/cesm/community/omwg/grids/tx2_3v3_grid.nc"
@@ -24,7 +24,7 @@ def _skip_if_reference_files_missing():
 
 def test_find_cice_index_window_gulf_of_mexico(skip_if_not_glade):
     _skip_if_reference_files_missing()
-    ni_idx, nj_min, nj_max = cice.find_cice_index_window(
+    ni_idx, nj_min, nj_max = cice_output.find_cice_index_window(
         GRID_PATH, lat_min=18, lat_max=31, lon_min=-98, lon_max=-80
     )
 
@@ -48,14 +48,14 @@ def test_find_cice_index_window_gulf_of_mexico(skip_if_not_glade):
 def test_find_cice_index_window_out_of_bounds_raises(skip_if_not_glade):
     _skip_if_reference_files_missing()
     with pytest.raises(ValueError):
-        cice.find_cice_index_window(
+        cice_output.find_cice_index_window(
             GRID_PATH, lat_min=1000, lat_max=1001, lon_min=0, lon_max=1
         )
 
 
 def test_get_cice_restart_subset(skip_if_not_glade, tmp_path):
     _skip_if_reference_files_missing()
-    paths = cice.CICE_RESTART.get_cice_restart_subset(
+    paths = cice_output.CICE_RESTART.get_cice_restart_subset(
         dates=["2000-01-01", "2000-01-04"],
         lat_min=18,
         lat_max=31,
@@ -98,7 +98,7 @@ def test_get_cice_restart_subset(skip_if_not_glade, tmp_path):
 
 def test_get_cice_restart_subset_variable_filter(skip_if_not_glade, tmp_path):
     _skip_if_reference_files_missing()
-    paths = cice.CICE_RESTART.get_cice_restart_subset(
+    paths = cice_output.CICE_RESTART.get_cice_restart_subset(
         dates=["2000-01-01", "2000-01-02"],
         lat_min=18,
         lat_max=31,
@@ -119,7 +119,7 @@ def test_get_cice_restart_subset_variable_filter(skip_if_not_glade, tmp_path):
 
 def test_get_cice_restart_subset_missing_path_raises(tmp_path):
     with pytest.raises(FileNotFoundError):
-        cice.CICE_RESTART.get_cice_restart_subset(
+        cice_output.CICE_RESTART.get_cice_restart_subset(
             dates=["2000-01-01", "2000-01-02"],
             lat_min=18,
             lat_max=31,

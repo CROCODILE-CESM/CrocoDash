@@ -58,8 +58,7 @@ def _process(args):
             args.chl,
             args.runoff,
             args.bgcrivernutrients,
-            args.ciceic,
-            args.ciceobc,
+            args.cice,
             args.ww3,
         ]
     ):
@@ -76,8 +75,7 @@ def _process(args):
         chl_=args.chl,
         runoff=args.runoff,
         bgcrivernutrients=args.bgcrivernutrients,
-        ciceic=args.ciceic,
-        ciceobc=args.ciceobc,
+        cice=args.cice,
         ww3=args.ww3,
         preview=config["conditions"]["outputs"].get("preview", False),
     )
@@ -195,14 +193,10 @@ def main():
         "--chl", action="store_true", help="Run chlorophyll processing"
     )
     ef_components.add_argument(
-        "--ciceic",
+        "--cice",
         action="store_true",
-        help="Run CICE initial condition generation (NOT YET IMPLEMENTED)",
-    )
-    ef_components.add_argument(
-        "--ciceobc",
-        action="store_true",
-        help="Run CICE boundary condition generation",
+        help="Run CICE forcing generation (requires cice_restart_path/"
+        "cice_grid_path -- see the Python API)",
     )
     ef_components.add_argument(
         "--ww3",

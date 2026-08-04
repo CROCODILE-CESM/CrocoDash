@@ -156,7 +156,7 @@ class CICE_RESTART(CICEForcingProduct):
         # The restart itself carries no lat/lon -- attach the same window's
         # T-point (tlon/tlat) and U-point (ulon/ulat) coordinates from the
         # grid file, converted to degrees, so downstream regridding (see
-        # extract_forcings/cice.py's _regrid_cice_chunk) has real coordinates
+        # extract_forcings/cice.py's _regrid_cice_full_grid) has real coordinates
         # to interpolate from without re-opening the grid file itself. Always
         # attached, regardless of the `variables` filter above.
         grid_ds = xr.open_dataset(grid_path)

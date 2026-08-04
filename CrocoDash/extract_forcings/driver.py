@@ -26,7 +26,7 @@ from CrocoDash.extract_forcings import (
     tides as tides_mod,
     chlorophyll as chl,
     mom6,
-    cice,
+    cice as cice_mod,
     ww3 as ww3_mod,
 )
 from CrocoDash.grid import Grid
@@ -53,8 +53,7 @@ def run_workflow(
     chl_=False,
     runoff=False,
     bgcrivernutrients=False,
-    ciceic=False,
-    ciceobc=False,
+    cice=False,
     ww3=False,
     preview=False,
 ):
@@ -81,10 +80,11 @@ def run_workflow(
         Run runoff mapping.
     bgcrivernutrients : bool
         Run BGC river nutrients (always runs after runoff).
-    ciceic : bool
-        Run CICE initial condition generation (NOT YET IMPLEMENTED).
-    ciceobc : bool
-        Run CICE boundary condition generation.
+    cice : bool
+        Run CICE forcing generation (see extract_forcings/cice.py). Reads
+        restart_path/grid_path/n_halo_cells from CICEConfigurator's own
+        inputs (see forcing_configurations/configurations.py) -- set via
+        Case.configure_forcings(restart_path=..., grid_path=...).
     ww3 : bool
         Run WW3 boundary condition spectra generation.
     preview : bool
@@ -112,8 +112,7 @@ def run_workflow(
             chl_,
             runoff,
             bgcrivernutrients,
-            ciceic,
-            ciceobc,
+            cice,
             ww3,
         ]
     ):
@@ -273,38 +272,20 @@ def run_workflow(
             )
             timings["bgcrivernutrients"] = time.perf_counter() - _t
 
-        if ciceic:
+        if cice:
             _t = time.perf_counter()
-            grid = Grid.from_supergrid(supergrid_path)
-            cice.process_cice_ic(
-                ocn_grid=grid,
-                inputdir=inputdir,
-                date_range=(
-                    conditions["outputs"]["start_date"],
-                    conditions["outputs"]["end_date"],
-                ),
-                cice_product_name=config["ciceic"]["inputs"].get("cice_product_name"),
-                cice_function_name=config["ciceic"]["inputs"].get("cice_function_name"),
-            )
-            timings["ciceic"] = time.perf_counter() - _t
-
-        if ciceobc:
-            _t = time.perf_counter()
-            cice.process_cice_obc(
+            cice_mod.process_cice_forcing(
                 hgrid_path=supergrid_path,
                 inputdir=inputdir,
-                boundaries=config["ciceobc"]["inputs"]["boundaries"],
                 date_range=(
                     conditions["outputs"]["start_date"],
                     conditions["outputs"]["end_date"],
                 ),
-                cice_product_name=config["ciceobc"]["inputs"].get("cice_product_name"),
-                cice_function_name=config["ciceobc"]["inputs"].get(
-                    "cice_function_name"
-                ),
-                function_args=config["ciceobc"]["inputs"].get("function_args"),
+                restart_path=config["cice"]["inputs"]["restart_path"],
+                grid_path=config["cice"]["inputs"]["grid_path"],
+                n_halo_cells=config["cice"]["inputs"].get("n_halo_cells", 2),
             )
-            timings["ciceobc"] = time.perf_counter() - _t
+            timings["cice"] = time.perf_counter() - _t
 
         if ww3:
             _t = time.perf_counter()

@@ -21,8 +21,7 @@ def _make_args(**overrides):
         bgcrivernutrients=False,
         tides=False,
         chl=False,
-        ciceic=False,
-        ciceobc=False,
+        cice=False,
         ww3=False,
         skip=[],
     )
@@ -103,27 +102,19 @@ def test_resolve_components_skip_empty_default():
     assert resolved.skip == []
 
 
-def test_resolve_components_ciceic_flag():
-    """--ciceic should only enable when requested and present in config."""
-    args = _make_args(ciceic=True)
-    config = {"ciceic": {}}
+def test_resolve_components_cice_flag():
+    """--cice should only enable when requested and present in config."""
+    args = _make_args(cice=True)
+    config = {"cice": {}}
     resolved = resolve_components(args, config)
-    assert resolved.ciceic is True
+    assert resolved.cice is True
 
 
-def test_resolve_components_ciceobc_flag():
-    """--ciceobc should only enable when requested and present in config."""
-    args = _make_args(ciceobc=True)
-    config = {"ciceobc": {}}
-    resolved = resolve_components(args, config)
-    assert resolved.ciceobc is True
-
-
-def test_resolve_components_ciceic_missing_in_config_disabled():
-    args = _make_args(ciceic=True)
+def test_resolve_components_cice_missing_in_config_disabled():
+    args = _make_args(cice=True)
     config = {}
     resolved = resolve_components(args, config)
-    assert resolved.ciceic is False
+    assert resolved.cice is False
 
 
 # =============================================================================
@@ -315,19 +306,20 @@ def test_run_workflow_returns_timings(mock_cs, mock_mom6, tmp_path):
     assert "ic" in result
 
 
-@patch("CrocoDash.extract_forcings.driver.cice")
+@patch("CrocoDash.extract_forcings.driver.cice_mod")
 @patch("CrocoDash.extract_forcings.driver.case_state")
-def test_run_workflow_ciceic_calls_cice_module(
+def test_run_workflow_cice_calls_cice_module(
     mock_cs, mock_cice, tmp_path, gen_grid_topo_vgrid
 ):
     grid, topo, vgrid = gen_grid_topo_vgrid
     grid.write_supergrid(tmp_path / "grid.nc")
     config = _make_config(
         extra_keys={
-            "ciceic": {
+            "cice": {
                 "inputs": {
-                    "cice_product_name": "GLORYS",
-                    "cice_function_name": "get_glorys_data_from_rda",
+                    "restart_path": "/path/to/restart.nc",
+                    "grid_path": "/path/to/grid.nc",
+                    "n_halo_cells": 2,
                 }
             }
         }
@@ -337,34 +329,10 @@ def test_run_workflow_ciceic_calls_cice_module(
     config_path = tmp_path / "config.json"
     config_path.write_text(json.dumps(config))
 
-    run_workflow(config_path=config_path, ciceic=True)
+    run_workflow(config_path=config_path, cice=True)
 
-    mock_cice.process_cice_ic.assert_called_once()
-
-
-@patch("CrocoDash.extract_forcings.driver.cice")
-@patch("CrocoDash.extract_forcings.driver.case_state")
-def test_run_workflow_ciceobc_calls_cice_module(
-    mock_cs, mock_cice, tmp_path, gen_grid_topo_vgrid
-):
-    grid, topo, vgrid = gen_grid_topo_vgrid
-    grid.write_supergrid(tmp_path / "grid.nc")
-    config = _make_config(
-        extra_keys={
-            "ciceobc": {
-                "inputs": {
-                    "boundaries": ["north", "south"],
-                    "cice_product_name": "GLORYS",
-                    "cice_function_name": "get_glorys_data_from_rda",
-                }
-            }
-        }
-    )
-    state = _make_state(tmp_path)
-    mock_cs.read.return_value = state
-    config_path = tmp_path / "config.json"
-    config_path.write_text(json.dumps(config))
-
-    run_workflow(config_path=config_path, ciceobc=True)
-
-    mock_cice.process_cice_obc.assert_called_once()
+    mock_cice.process_cice_forcing.assert_called_once()
+    _, kwargs = mock_cice.process_cice_forcing.call_args
+    assert kwargs["restart_path"] == "/path/to/restart.nc"
+    assert kwargs["grid_path"] == "/path/to/grid.nc"
+    assert kwargs["n_halo_cells"] == 2

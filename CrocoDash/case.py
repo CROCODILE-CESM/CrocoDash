@@ -587,14 +587,7 @@ class Case:
         process_chl = kwargs.get("process_chl", True)
         process_runoff = kwargs.get("process_runoff", True)
         process_bgc_river_nutrients = kwargs.get("process_bgc_river_nutrients", True)
-        # CICE IC generation always raises NotImplementedError (see
-        # extract_forcings/cice.py) -- default to off so process_forcings()
-        # doesn't fail out of the box once a CICEICConfigurator eventually
-        # makes self.fcr.is_active("ciceic") return True. CICE OBC has a
-        # first-pass implementation, so it stays on by default like the
-        # other components.
-        process_cice_ic = kwargs.get("process_cice_ic", False)
-        process_cice_obc = kwargs.get("process_cice_obc", True)
+        process_cice = kwargs.get("process_cice", True)
         process_ww3 = kwargs.get("process_ww3", True)
 
         run_workflow(
@@ -608,8 +601,7 @@ class Case:
             runoff=process_runoff and self.fcr.is_active("runoff"),
             bgcrivernutrients=process_bgc_river_nutrients
             and self.fcr.is_active("BGCRiverNutrients"),
-            ciceic=process_cice_ic and self.fcr.is_active("ciceic"),
-            ciceobc=process_cice_obc and self.fcr.is_active("ciceobc"),
+            cice=process_cice and self.fcr.is_active("cice"),
             ww3=process_ww3 and self.fcr.is_active("ww3"),
         )
 
