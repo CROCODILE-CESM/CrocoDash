@@ -354,8 +354,7 @@ document.write(`
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.extract_forcings.cice">CrocoDash.extract_forcings.cice module</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.cice.process_cice_ic"><code class="docutils literal notranslate"><span class="pre">process_cice_ic()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.cice.process_cice_obc"><code class="docutils literal notranslate"><span class="pre">process_cice_obc()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.cice.process_cice_forcing"><code class="docutils literal notranslate"><span class="pre">process_cice_forcing()</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.extract_forcings.driver">CrocoDash.extract_forcings.driver module</a><ul class="nav section-nav flex-column">
@@ -461,68 +460,35 @@ Returns:
 </section>
 <section id="module-CrocoDash.extract_forcings.cice">
 <span id="crocodash-extract-forcings-cice-module"></span><h2>CrocoDash.extract_forcings.cice module<a class="headerlink" href="#module-CrocoDash.extract_forcings.cice" title="Link to this heading">#</a></h2>
-<p>CICE-specific OBC/IC handling for CrocoDash.</p>
-<p>Final CICE OBC output files are named <code class="docutils literal notranslate"><span class="pre">cice_forcing_obc_segment_NNN.nc</span></code> in
-&lt;inputdir&gt;/ocnice – distinct from MOM6’s own <code class="docutils literal notranslate"><span class="pre">forcing_obc_segment_NNN.nc</span></code>
-in the same directory (see <code class="docutils literal notranslate"><span class="pre">mom6.py</span></code>). Both engines share obc.py’s
-internal <code class="docutils literal notranslate"><span class="pre">forcing_obc_segment_NNN.nc</span></code> convention for chunk files, but each
-target writes to its own private staging/merge directory first (mirroring
-<code class="docutils literal notranslate"><span class="pre">ww3.py</span></code>) and only copies the final merged file into the shared
-<code class="docutils literal notranslate"><span class="pre">ocnice</span></code> directory under its own distinct name – otherwise CICE and MOM6
-OBC output would silently overwrite each other.</p>
-<p><code class="docutils literal notranslate"><span class="pre">obc.py</span></code>/<code class="docutils literal notranslate"><span class="pre">ic.py</span></code> are model-agnostic engines (see their module
-docstrings): they get raw data (and, for OBC, date-chunk/merge it) but know
-nothing about how to regrid it onto a target model’s grid. This module
-supplies CICE’s own default product for the GET step – the
-<code class="docutils literal notranslate"><span class="pre">raw_data_access</span></code> <code class="docutils literal notranslate"><span class="pre">cice_restart</span></code> product (see
-<code class="docutils literal notranslate"><span class="pre">raw_data_access/datasets/cice.py</span></code>), the only real <code class="docutils literal notranslate"><span class="pre">CICEForcingProduct</span></code>
-registered so far – the same role <code class="docutils literal notranslate"><span class="pre">mom6.py</span></code>’s <code class="docutils literal notranslate"><span class="pre">build_forcing_request</span></code>
-and <code class="docutils literal notranslate"><span class="pre">ww3.py</span></code>’s <code class="docutils literal notranslate"><span class="pre">WW3</span></code> default play for their own targets.</p>
-<p>The REGRID step (<code class="docutils literal notranslate"><span class="pre">_regrid_cice_chunk</span></code>) implements a first-pass design built
-on explicit, documented assumptions about CICE’s B-grid boundary geometry
-(see <code class="docutils literal notranslate"><span class="pre">_cice_boundary_lines</span></code>) rather than verified CICE OBC source – none
-exists on this filesystem; this is unreleased dev work. Revisit those
-assumptions once real source/docs are available.</p>
+<p>CICE forcing for CrocoDash: a single expanded-grid restoring file.</p>
+<p>CICE’s restoring mechanism (<code class="docutils literal notranslate"><span class="pre">ice_restoring.F90</span></code>) relaxes boundary-adjacent
+cells toward a target ice state over time – the user is separately
+extending that Fortran to read the restoring target from an external file
+(not visible in this repo yet). This module produces that file: it must
+cover the case’s regional domain plus a halo (<code class="docutils literal notranslate"><span class="pre">n_halo_cells</span></code> on every
+side, required for the restoring routine), built from a real global CICE
+restart regridded onto every point of that expanded grid, with the single
+restart snapshot copied forward across a time axis spanning the whole run
+(<code class="docutils literal notranslate"><span class="pre">CICE_RESTART.get_cice_restart_subset</span></code>’s existing behavior, reused as-is).</p>
+<p>Unlike MOM6/WW3’s OBC, there’s no boundary-only regrid and no date-chunking
+need (one static snapshot, no real time evolution to fetch incrementally),
+so this doesn’t route through obc.py’s shared GET-&gt;chunk-&gt;REGRID-&gt;MERGE
+engine at all.</p>
+<p>The precise file/variable-naming contract the (not-yet-visible) Fortran
+restoring-file reader will expect is unverified – this produces a file
+using CICE’s own restart variable names (unchanged, since we’re only
+windowing+regridding them) over the expanded grid. Revisit once that
+Fortran work is available to check against.</p>
 <dl class="py function">
-<dt class="sig sig-object py" id="CrocoDash.extract_forcings.cice.process_cice_ic">
-<span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.cice.</span></span><span class="sig-name descname"><span class="pre">process_cice_ic</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ocn_grid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputdir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date_range</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cice_product_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cice_function_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.extract_forcings.cice.process_cice_ic" title="Link to this definition">#</a></dt>
-<dd><p>Generate CICE initial conditions into &lt;inputdir&gt;/ocnice.</p>
-<p>Not implemented yet: CICE IC sourcing (e.g. GLORYS sea-ice fields, or a
-parent CESM/CICE run’s own output) isn’t wired through raw_data_access
-yet, so this always raises until that work lands. Once it does, this
-becomes a thin wrapper around ic.process_initial_condition(…,
-regrid_fn=&lt;cice regrid step&gt;) – the same shape mom6.process_mom6_ic uses
-– with cice_product_name/cice_function_name resolving a CICEForcingProduct
-(see raw_data_access/base.py) instead of raising here.</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="CrocoDash.extract_forcings.cice.process_cice_obc">
-<span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.cice.</span></span><span class="sig-name descname"><span class="pre">process_cice_obc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hgrid_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputdir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundaries</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date_range</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cice_product_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cice_function_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variables</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.extract_forcings.cice.process_cice_obc" title="Link to this definition">#</a></dt>
-<dd><p>Generate CICE open boundary conditions into &lt;inputdir&gt;/ocnice.</p>
-<p>Routes through obc.py’s shared GET -&gt; chunk -&gt; REGRID -&gt; MERGE engine –
-the same shape mom6.process_mom6_obc/ww3.process_ww3_obc use.</p>
-<p>cice_product_name/cice_function_name default to the raw_data_access
-<code class="docutils literal notranslate"><span class="pre">cice_restart</span></code> product/<code class="docutils literal notranslate"><span class="pre">get_cice_restart_subset</span></code> method – the only
-CICEForcingProduct registered so far. That product’s metadata (fetched
-from the registry, mirroring how mom6.py forwards a GLORYS/MOM6_OUTPUT
-product’s metadata as dataset_varnames) is forwarded to the regrid step
-unused for now.</p>
-<p>function_args carries whatever the chosen access function needs beyond
-the generic dates/lat/lon/variables contract – for cice_restart, that’s
-restart_path/grid_path (required) and optionally buffer_deg. There’s no
-per-case configurator deriving these yet (unlike MOM6’s GLORYS/
-MOM6_OUTPUT product_info), so the caller must supply them directly.</p>
-<p>Runs GET for real (downloading/windowing the restart per boundary) and
-regrids it via _regrid_cice_chunk – see that function’s and
-_cice_boundary_lines’s docstrings for the explicit geometry/interpolation
-assumptions this first-pass design rests on.</p>
-<p>The engine’s own merge output lands in a private staging directory
-(mirroring ww3.py), then each boundary’s merged file is copied into
-&lt;inputdir&gt;/ocnice as <code class="docutils literal notranslate"><span class="pre">cice_forcing_obc_segment_NNN.nc</span></code> – MOM6’s OBC
-engine writes <code class="docutils literal notranslate"><span class="pre">forcing_obc_segment_NNN.nc</span></code> into that same shared
-directory, so reusing that name here would let one silently clobber
-the other.</p>
+<dt class="sig sig-object py" id="CrocoDash.extract_forcings.cice.process_cice_forcing">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.cice.</span></span><span class="sig-name descname"><span class="pre">process_cice_forcing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hgrid_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputdir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date_range</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">restart_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_halo_cells</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.extract_forcings.cice.process_cice_forcing" title="Link to this definition">#</a></dt>
+<dd><p>Generate CICE’s single restoring forcing file into
+&lt;inputdir&gt;/ocnice/cice_forcing.nc.</p>
+<p>Covers the case’s domain plus an <code class="docutils literal notranslate"><span class="pre">n_halo_cells</span></code>-cell halo on every
+side (grown via <code class="docutils literal notranslate"><span class="pre">SupergridBase.expand</span></code>), windowed from a real global
+CICE restart (<code class="docutils literal notranslate"><span class="pre">restart_path</span></code>/<code class="docutils literal notranslate"><span class="pre">grid_path</span></code>) and regridded onto that
+expanded grid. The output’s time axis spans <code class="docutils literal notranslate"><span class="pre">date_range</span></code> with the
+restart’s single snapshot held constant throughout.</p>
 </dd></dl>
 
 </section>
@@ -548,7 +514,7 @@ from the case state file via <code class="docutils literal notranslate"><span cl
 
 <dl class="py function">
 <dt class="sig sig-object py" id="CrocoDash.extract_forcings.driver.run_workflow">
-<span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.driver.</span></span><span class="sig-name descname"><span class="pre">run_workflow</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ic</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bgcic</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bgcironforcing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tides</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chl_</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">runoff</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bgcrivernutrients</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ciceic</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ciceobc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ww3</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preview</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.extract_forcings.driver.run_workflow" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.driver.</span></span><span class="sig-name descname"><span class="pre">run_workflow</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ic</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bgcic</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bgcironforcing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tides</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chl_</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">runoff</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bgcrivernutrients</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cice</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ww3</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preview</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.extract_forcings.driver.run_workflow" title="Link to this definition">#</a></dt>
 <dd><p>Execute the forcing extraction workflow.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -562,8 +528,10 @@ from the case state file via <code class="docutils literal notranslate"><span cl
 <li><p><strong>chl</strong> (<em>bool</em>) – Run chlorophyll processing.</p></li>
 <li><p><strong>runoff</strong> (<em>bool</em>) – Run runoff mapping.</p></li>
 <li><p><strong>bgcrivernutrients</strong> (<em>bool</em>) – Run BGC river nutrients (always runs after runoff).</p></li>
-<li><p><strong>ciceic</strong> (<em>bool</em>) – Run CICE initial condition generation (NOT YET IMPLEMENTED).</p></li>
-<li><p><strong>ciceobc</strong> (<em>bool</em>) – Run CICE boundary condition generation.</p></li>
+<li><p><strong>cice</strong> (<em>bool</em>) – Run CICE forcing generation (see extract_forcings/cice.py). Reads
+restart_path/grid_path/n_halo_cells from CICEConfigurator’s own
+inputs (see forcing_configurations/configurations.py) – set via
+Case.configure_forcings(restart_path=…, grid_path=…).</p></li>
 <li><p><strong>ww3</strong> (<em>bool</em>) – Run WW3 boundary condition spectra generation.</p></li>
 <li><p><strong>preview</strong> (<em>bool</em>) – Preview task graph without executing.</p></li>
 </ul>
@@ -1027,8 +995,7 @@ Converted to plain seconds-since-1990-01-01 floats before writing
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.extract_forcings.cice">CrocoDash.extract_forcings.cice module</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.cice.process_cice_ic"><code class="docutils literal notranslate"><span class="pre">process_cice_ic()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.cice.process_cice_obc"><code class="docutils literal notranslate"><span class="pre">process_cice_obc()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.cice.process_cice_forcing"><code class="docutils literal notranslate"><span class="pre">process_cice_forcing()</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.extract_forcings.driver">CrocoDash.extract_forcings.driver module</a><ul class="nav section-nav flex-column">
