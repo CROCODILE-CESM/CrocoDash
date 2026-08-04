@@ -353,6 +353,7 @@ document.write(`
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.BaseProduct.write_metadata"><code class="docutils literal notranslate"><span class="pre">BaseProduct.write_metadata()</span></code></a></li>
 </ul>
 </li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.CICEForcingProduct"><code class="docutils literal notranslate"><span class="pre">CICEForcingProduct</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.Calendar"><code class="docutils literal notranslate"><span class="pre">Calendar</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.Calendar.cesm"><code class="docutils literal notranslate"><span class="pre">Calendar.cesm</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.Calendar.cf"><code class="docutils literal notranslate"><span class="pre">Calendar.cf</span></code></a></li>
@@ -367,9 +368,18 @@ document.write(`
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.ForcingProduct.required_args"><code class="docutils literal notranslate"><span class="pre">ForcingProduct.required_args</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.ForcingProduct.required_metadata"><code class="docutils literal notranslate"><span class="pre">ForcingProduct.required_metadata</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.ForcingProduct.validate_method"><code class="docutils literal notranslate"><span class="pre">ForcingProduct.validate_method()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.ForcingProduct.write_metadata"><code class="docutils literal notranslate"><span class="pre">ForcingProduct.write_metadata()</span></code></a></li>
 </ul>
 </li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.MOM6ForcingProduct"><code class="docutils literal notranslate"><span class="pre">MOM6ForcingProduct</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.MOM6ForcingProduct.required_metadata"><code class="docutils literal notranslate"><span class="pre">MOM6ForcingProduct.required_metadata</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.MOM6ForcingProduct.write_metadata"><code class="docutils literal notranslate"><span class="pre">MOM6ForcingProduct.write_metadata()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.VelocityTracerForcingProduct"><code class="docutils literal notranslate"><span class="pre">VelocityTracerForcingProduct</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.VelocityTracerForcingProduct.required_metadata"><code class="docutils literal notranslate"><span class="pre">VelocityTracerForcingProduct.required_metadata</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.WW3ForcingProduct"><code class="docutils literal notranslate"><span class="pre">WW3ForcingProduct</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.accessmethod"><code class="docutils literal notranslate"><span class="pre">accessmethod()</span></code></a></li>
 </ul>
 </li>
@@ -412,6 +422,32 @@ document.write(`
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html">CrocoDash.raw_data_access.datasets package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#module-CrocoDash.raw_data_access.datasets.cice_output">CrocoDash.raw_data_access.datasets.cice_output module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.cice_output.CICE_RESTART"><code class="docutils literal notranslate"><span class="pre">CICE_RESTART</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.cice_output.CICE_RESTART.cesm_calendar"><code class="docutils literal notranslate"><span class="pre">CICE_RESTART.cesm_calendar</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.cice_output.CICE_RESTART.cf_calendar"><code class="docutils literal notranslate"><span class="pre">CICE_RESTART.cf_calendar</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.cice_output.CICE_RESTART.depth_coord"><code class="docutils literal notranslate"><span class="pre">CICE_RESTART.depth_coord</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.cice_output.CICE_RESTART.description"><code class="docutils literal notranslate"><span class="pre">CICE_RESTART.description</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.cice_output.CICE_RESTART.get_cice_restart_subset"><code class="docutils literal notranslate"><span class="pre">CICE_RESTART.get_cice_restart_subset()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.cice_output.CICE_RESTART.link"><code class="docutils literal notranslate"><span class="pre">CICE_RESTART.link</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.cice_output.CICE_RESTART.logger"><code class="docutils literal notranslate"><span class="pre">CICE_RESTART.logger</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.cice_output.CICE_RESTART.product_name"><code class="docutils literal notranslate"><span class="pre">CICE_RESTART.product_name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.cice_output.CICE_RESTART.time_units"><code class="docutils literal notranslate"><span class="pre">CICE_RESTART.time_units</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.cice_output.CICE_RESTART.time_var_name"><code class="docutils literal notranslate"><span class="pre">CICE_RESTART.time_var_name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.cice_output.CICE_RESTART.tracer_var_names"><code class="docutils literal notranslate"><span class="pre">CICE_RESTART.tracer_var_names</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.cice_output.CICE_RESTART.tracer_x_coord"><code class="docutils literal notranslate"><span class="pre">CICE_RESTART.tracer_x_coord</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.cice_output.CICE_RESTART.tracer_y_coord"><code class="docutils literal notranslate"><span class="pre">CICE_RESTART.tracer_y_coord</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.cice_output.CICE_RESTART.u_var_name"><code class="docutils literal notranslate"><span class="pre">CICE_RESTART.u_var_name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.cice_output.CICE_RESTART.u_x_coord"><code class="docutils literal notranslate"><span class="pre">CICE_RESTART.u_x_coord</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.cice_output.CICE_RESTART.u_y_coord"><code class="docutils literal notranslate"><span class="pre">CICE_RESTART.u_y_coord</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.cice_output.CICE_RESTART.v_var_name"><code class="docutils literal notranslate"><span class="pre">CICE_RESTART.v_var_name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.cice_output.CICE_RESTART.v_x_coord"><code class="docutils literal notranslate"><span class="pre">CICE_RESTART.v_x_coord</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.cice_output.CICE_RESTART.v_y_coord"><code class="docutils literal notranslate"><span class="pre">CICE_RESTART.v_y_coord</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.cice_output.find_cice_index_window"><code class="docutils literal notranslate"><span class="pre">find_cice_index_window()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#module-CrocoDash.raw_data_access.datasets.empty_products">CrocoDash.raw_data_access.datasets.empty_products module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.empty_products.CESMInputData"><code class="docutils literal notranslate"><span class="pre">CESMInputData</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.empty_products.CESMInputData.description"><code class="docutils literal notranslate"><span class="pre">CESMInputData.description</span></code></a></li>
@@ -427,6 +463,24 @@ document.write(`
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.empty_products.TPXO.product_name"><code class="docutils literal notranslate"><span class="pre">TPXO.product_name</span></code></a></li>
 </ul>
 </li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#module-CrocoDash.raw_data_access.datasets.era5">CrocoDash.raw_data_access.datasets.era5 module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.era5.ERA5_WAVE_SPECTRA"><code class="docutils literal notranslate"><span class="pre">ERA5_WAVE_SPECTRA</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.era5.ERA5_WAVE_SPECTRA.calendar"><code class="docutils literal notranslate"><span class="pre">ERA5_WAVE_SPECTRA.calendar</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.era5.ERA5_WAVE_SPECTRA.cesm_calendar"><code class="docutils literal notranslate"><span class="pre">ERA5_WAVE_SPECTRA.cesm_calendar</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.era5.ERA5_WAVE_SPECTRA.cf_calendar"><code class="docutils literal notranslate"><span class="pre">ERA5_WAVE_SPECTRA.cf_calendar</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.era5.ERA5_WAVE_SPECTRA.description"><code class="docutils literal notranslate"><span class="pre">ERA5_WAVE_SPECTRA.description</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.era5.ERA5_WAVE_SPECTRA.get_era5_2d_spectra"><code class="docutils literal notranslate"><span class="pre">ERA5_WAVE_SPECTRA.get_era5_2d_spectra()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.era5.ERA5_WAVE_SPECTRA.link"><code class="docutils literal notranslate"><span class="pre">ERA5_WAVE_SPECTRA.link</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.era5.ERA5_WAVE_SPECTRA.logger"><code class="docutils literal notranslate"><span class="pre">ERA5_WAVE_SPECTRA.logger</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.era5.ERA5_WAVE_SPECTRA.product_name"><code class="docutils literal notranslate"><span class="pre">ERA5_WAVE_SPECTRA.product_name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.era5.ERA5_WAVE_SPECTRA.time_units"><code class="docutils literal notranslate"><span class="pre">ERA5_WAVE_SPECTRA.time_units</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.era5.ERA5_WAVE_SPECTRA.time_var_name"><code class="docutils literal notranslate"><span class="pre">ERA5_WAVE_SPECTRA.time_var_name</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.era5.build_era5_spectra_request"><code class="docutils literal notranslate"><span class="pre">build_era5_spectra_request()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.era5.decode_era5_spectra_grib"><code class="docutils literal notranslate"><span class="pre">decode_era5_spectra_grib()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#module-CrocoDash.raw_data_access.datasets.gebco">CrocoDash.raw_data_access.datasets.gebco module</a><ul>
@@ -550,6 +604,22 @@ document.write(`
 <li class="toctree-l3"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.utils.write_bash_curl_script"><code class="docutils literal notranslate"><span class="pre">write_bash_curl_script()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#module-CrocoDash.raw_data_access.datasets.ww3">CrocoDash.raw_data_access.datasets.ww3 module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.ww3.WW3"><code class="docutils literal notranslate"><span class="pre">WW3</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.ww3.WW3.calendar"><code class="docutils literal notranslate"><span class="pre">WW3.calendar</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.ww3.WW3.cesm_calendar"><code class="docutils literal notranslate"><span class="pre">WW3.cesm_calendar</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.ww3.WW3.cf_calendar"><code class="docutils literal notranslate"><span class="pre">WW3.cf_calendar</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.ww3.WW3.description"><code class="docutils literal notranslate"><span class="pre">WW3.description</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.ww3.WW3.get_ww3_placeholder_data"><code class="docutils literal notranslate"><span class="pre">WW3.get_ww3_placeholder_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.ww3.WW3.link"><code class="docutils literal notranslate"><span class="pre">WW3.link</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.ww3.WW3.logger"><code class="docutils literal notranslate"><span class="pre">WW3.logger</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.ww3.WW3.product_name"><code class="docutils literal notranslate"><span class="pre">WW3.product_name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.ww3.WW3.time_units"><code class="docutils literal notranslate"><span class="pre">WW3.time_units</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.ww3.WW3.time_var_name"><code class="docutils literal notranslate"><span class="pre">WW3.time_var_name</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#module-CrocoDash.raw_data_access.datasets">Module contents</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.load_all_datasets"><code class="docutils literal notranslate"><span class="pre">load_all_datasets()</span></code></a></li>
 </ul>
@@ -616,6 +686,18 @@ document.write(`
 </dd></dl>
 
 <dl class="py class">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.base.CICEForcingProduct">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.base.</span></span><span class="sig-name descname"><span class="pre">CICEForcingProduct</span></span><a class="headerlink" href="#CrocoDash.raw_data_access.base.CICEForcingProduct" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#CrocoDash.raw_data_access.base.VelocityTracerForcingProduct" title="CrocoDash.raw_data_access.base.VelocityTracerForcingProduct"><code class="xref py py-class docutils literal notranslate"><span class="pre">VelocityTracerForcingProduct</span></code></a></p>
+<p>CICE’s own regridding var-name metadata. CICE’s B-grid velocity
+(uvel/vvel) and tracer-like state both live on the same (nj, ni) index
+space (no MOM6-style C-grid staggering across separately named dims),
+so this extends VelocityTracerForcingProduct rather than ForcingProduct
+directly – any concrete CICE product regridded via
+regional_mom6.Segment reuses the same var-map contract MOM6 does.</p>
+</dd></dl>
+
+<dl class="py class">
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.base.Calendar">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.base.</span></span><span class="sig-name descname"><span class="pre">Calendar</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cf</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cesm</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.base.Calendar" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
@@ -654,7 +736,15 @@ document.write(`
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.base.ForcingProduct">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.base.</span></span><span class="sig-name descname"><span class="pre">ForcingProduct</span></span><a class="headerlink" href="#CrocoDash.raw_data_access.base.ForcingProduct" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#CrocoDash.raw_data_access.base.DatedBaseProduct" title="CrocoDash.raw_data_access.base.DatedBaseProduct"><code class="xref py py-class docutils literal notranslate"><span class="pre">DatedBaseProduct</span></code></a></p>
-<p>Specific enforcement needs for Forcing Products</p>
+<p>Generic enforcement for any gridded, bounding-box-downloadable forcing
+product. Holds the metadata every such product needs regardless of
+target model: a lat/lon/variables/dates download contract, sane toy-call
+defaults for that contract’s lat/lon args, and its own time-axis naming
+(<code class="docutils literal notranslate"><span class="pre">time_var_name</span></code>/<code class="docutils literal notranslate"><span class="pre">time_units</span></code>/<code class="docutils literal notranslate"><span class="pre">cf_calendar</span></code>/<code class="docutils literal notranslate"><span class="pre">cesm_calendar</span></code>) –
+every dated forcing product has <em>some</em> time coordinate to name, even one
+(like a static restart snapshot) that leaves these unused. Velocity/
+tracer grid-point metadata is NOT here – see
+<code class="docutils literal notranslate"><span class="pre">VelocityTracerForcingProduct</span></code>/<code class="docutils literal notranslate"><span class="pre">MOM6ForcingProduct</span></code>.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.base.ForcingProduct.required_args">
 <span class="sig-name descname"><span class="pre">required_args</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['output_folder',</span> <span class="pre">'output_filename',</span> <span class="pre">'dates',</span> <span class="pre">'variables',</span> <span class="pre">'lon_max',</span> <span class="pre">'lat_max',</span> <span class="pre">'lon_min',</span> <span class="pre">'lat_min',</span> <span class="pre">'name']</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.base.ForcingProduct.required_args" title="Link to this definition">#</a></dt>
@@ -662,7 +752,7 @@ document.write(`
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.base.ForcingProduct.required_metadata">
-<span class="sig-name descname"><span class="pre">required_metadata</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['product_name',</span> <span class="pre">'description',</span> <span class="pre">'link',</span> <span class="pre">'time_var_name',</span> <span class="pre">'u_x_coord',</span> <span class="pre">'u_y_coord',</span> <span class="pre">'v_x_coord',</span> <span class="pre">'v_y_coord',</span> <span class="pre">'tracer_x_coord',</span> <span class="pre">'tracer_y_coord',</span> <span class="pre">'depth_coord',</span> <span class="pre">'u_var_name',</span> <span class="pre">'v_var_name',</span> <span class="pre">'eta_var_name',</span> <span class="pre">'tracer_var_names',</span> <span class="pre">'boundary_fill_method',</span> <span class="pre">'time_units',</span> <span class="pre">'cf_calendar',</span> <span class="pre">'cesm_calendar']</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.base.ForcingProduct.required_metadata" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">required_metadata</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['product_name',</span> <span class="pre">'description',</span> <span class="pre">'link',</span> <span class="pre">'time_var_name',</span> <span class="pre">'time_units',</span> <span class="pre">'cf_calendar',</span> <span class="pre">'cesm_calendar']</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.base.ForcingProduct.required_metadata" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
@@ -671,12 +761,54 @@ document.write(`
 <dd><p>Default validation just makes a toy call with a temporary directory.</p>
 </dd></dl>
 
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.base.MOM6ForcingProduct">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.base.</span></span><span class="sig-name descname"><span class="pre">MOM6ForcingProduct</span></span><a class="headerlink" href="#CrocoDash.raw_data_access.base.MOM6ForcingProduct" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#CrocoDash.raw_data_access.base.VelocityTracerForcingProduct" title="CrocoDash.raw_data_access.base.VelocityTracerForcingProduct"><code class="xref py py-class docutils literal notranslate"><span class="pre">VelocityTracerForcingProduct</span></code></a></p>
+<p>MOM6/regional_mom6-specific regridding metadata on top of
+<code class="docutils literal notranslate"><span class="pre">VelocityTracerForcingProduct</span></code> – SSH and the OBC fill method, neither
+of which generalize to other models. Products that feed CrocoDash’s
+MOM6 OBC/IC pipeline (<code class="docutils literal notranslate"><span class="pre">GLORYS</span></code>, <code class="docutils literal notranslate"><span class="pre">MOM6_OUTPUT</span></code>) extend this.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.base.MOM6ForcingProduct.required_metadata">
+<span class="sig-name descname"><span class="pre">required_metadata</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['product_name',</span> <span class="pre">'description',</span> <span class="pre">'link',</span> <span class="pre">'time_var_name',</span> <span class="pre">'time_units',</span> <span class="pre">'cf_calendar',</span> <span class="pre">'cesm_calendar',</span> <span class="pre">'u_x_coord',</span> <span class="pre">'u_y_coord',</span> <span class="pre">'v_x_coord',</span> <span class="pre">'v_y_coord',</span> <span class="pre">'tracer_x_coord',</span> <span class="pre">'tracer_y_coord',</span> <span class="pre">'u_var_name',</span> <span class="pre">'v_var_name',</span> <span class="pre">'tracer_var_names',</span> <span class="pre">'depth_coord',</span> <span class="pre">'eta_var_name',</span> <span class="pre">'boundary_fill_method']</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.base.MOM6ForcingProduct.required_metadata" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
 <dl class="py method">
-<dt class="sig sig-object py" id="CrocoDash.raw_data_access.base.ForcingProduct.write_metadata">
-<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">write_metadata</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_marbl_tracers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#CrocoDash.raw_data_access.base.ForcingProduct.write_metadata" title="Link to this definition">#</a></dt>
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.base.MOM6ForcingProduct.write_metadata">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">write_metadata</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_marbl_tracers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#CrocoDash.raw_data_access.base.MOM6ForcingProduct.write_metadata" title="Link to this definition">#</a></dt>
 <dd><p>Return a dict of the class metadata fields and their values, writes a file if a filepath is specified.</p>
 </dd></dl>
 
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.base.VelocityTracerForcingProduct">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.base.</span></span><span class="sig-name descname"><span class="pre">VelocityTracerForcingProduct</span></span><a class="headerlink" href="#CrocoDash.raw_data_access.base.VelocityTracerForcingProduct" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#CrocoDash.raw_data_access.base.ForcingProduct" title="CrocoDash.raw_data_access.base.ForcingProduct"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForcingProduct</span></code></a></p>
+<p>Coordinate/variable-name metadata for a product’s u/v velocity and
+tracer grid points – the var-map contract consumed by
+<code class="docutils literal notranslate"><span class="pre">regional_mom6</span></code>’s <code class="docutils literal notranslate"><span class="pre">Segment.regrid_velocity_tracers</span></code>, not by the
+generic GET layer. Shared by <code class="docutils literal notranslate"><span class="pre">MOM6ForcingProduct</span></code> and
+<code class="docutils literal notranslate"><span class="pre">CICEForcingProduct</span></code>, whose B-grid velocity/tracer state both live on
+a plain (nj, ni) index space. Not needed by <code class="docutils literal notranslate"><span class="pre">WW3ForcingProduct</span></code> –
+boundary spectra have no velocity/tracer grid at all.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.base.VelocityTracerForcingProduct.required_metadata">
+<span class="sig-name descname"><span class="pre">required_metadata</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['product_name',</span> <span class="pre">'description',</span> <span class="pre">'link',</span> <span class="pre">'time_var_name',</span> <span class="pre">'time_units',</span> <span class="pre">'cf_calendar',</span> <span class="pre">'cesm_calendar',</span> <span class="pre">'u_x_coord',</span> <span class="pre">'u_y_coord',</span> <span class="pre">'v_x_coord',</span> <span class="pre">'v_y_coord',</span> <span class="pre">'tracer_x_coord',</span> <span class="pre">'tracer_y_coord',</span> <span class="pre">'u_var_name',</span> <span class="pre">'v_var_name',</span> <span class="pre">'tracer_var_names',</span> <span class="pre">'depth_coord']</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.base.VelocityTracerForcingProduct.required_metadata" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.base.WW3ForcingProduct">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.base.</span></span><span class="sig-name descname"><span class="pre">WW3ForcingProduct</span></span><a class="headerlink" href="#CrocoDash.raw_data_access.base.WW3ForcingProduct" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#CrocoDash.raw_data_access.base.ForcingProduct" title="CrocoDash.raw_data_access.base.ForcingProduct"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForcingProduct</span></code></a></p>
+<p>Extension point for WW3’s own regridding var-name metadata, beyond
+ForcingProduct’s generic time-axis contract. No velocity/tracer grid
+metadata here – WW3 boundary spectra have no such grid.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -824,6 +956,7 @@ document.write(`
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.BaseProduct.write_metadata"><code class="docutils literal notranslate"><span class="pre">BaseProduct.write_metadata()</span></code></a></li>
 </ul>
 </li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.CICEForcingProduct"><code class="docutils literal notranslate"><span class="pre">CICEForcingProduct</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.Calendar"><code class="docutils literal notranslate"><span class="pre">Calendar</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.Calendar.cesm"><code class="docutils literal notranslate"><span class="pre">Calendar.cesm</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.Calendar.cf"><code class="docutils literal notranslate"><span class="pre">Calendar.cf</span></code></a></li>
@@ -838,9 +971,18 @@ document.write(`
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.ForcingProduct.required_args"><code class="docutils literal notranslate"><span class="pre">ForcingProduct.required_args</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.ForcingProduct.required_metadata"><code class="docutils literal notranslate"><span class="pre">ForcingProduct.required_metadata</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.ForcingProduct.validate_method"><code class="docutils literal notranslate"><span class="pre">ForcingProduct.validate_method()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.ForcingProduct.write_metadata"><code class="docutils literal notranslate"><span class="pre">ForcingProduct.write_metadata()</span></code></a></li>
 </ul>
 </li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.MOM6ForcingProduct"><code class="docutils literal notranslate"><span class="pre">MOM6ForcingProduct</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.MOM6ForcingProduct.required_metadata"><code class="docutils literal notranslate"><span class="pre">MOM6ForcingProduct.required_metadata</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.MOM6ForcingProduct.write_metadata"><code class="docutils literal notranslate"><span class="pre">MOM6ForcingProduct.write_metadata()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.VelocityTracerForcingProduct"><code class="docutils literal notranslate"><span class="pre">VelocityTracerForcingProduct</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.VelocityTracerForcingProduct.required_metadata"><code class="docutils literal notranslate"><span class="pre">VelocityTracerForcingProduct.required_metadata</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.WW3ForcingProduct"><code class="docutils literal notranslate"><span class="pre">WW3ForcingProduct</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.accessmethod"><code class="docutils literal notranslate"><span class="pre">accessmethod()</span></code></a></li>
 </ul>
 </li>

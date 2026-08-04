@@ -36,10 +36,18 @@ CrocoDash.extract\_forcings.driver module
    :show-inheritance:
    :undoc-members:
 
-CrocoDash.extract\_forcings.initial\_condition module
------------------------------------------------------
+CrocoDash.extract\_forcings.ic module
+-------------------------------------
 
-.. automodule:: CrocoDash.extract_forcings.initial_condition
+.. automodule:: CrocoDash.extract_forcings.ic
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+CrocoDash.extract\_forcings.mom6 module
+---------------------------------------
+
+.. automodule:: CrocoDash.extract_forcings.mom6
    :members:
    :show-inheritance:
    :undoc-members:
@@ -72,6 +80,14 @@ CrocoDash.extract\_forcings.utils module
 ----------------------------------------
 
 .. automodule:: CrocoDash.extract_forcings.utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+CrocoDash.extract\_forcings.ww3 module
+--------------------------------------
+
+.. automodule:: CrocoDash.extract_forcings.ww3
    :members:
    :show-inheritance:
    :undoc-members:
