@@ -44,6 +44,14 @@ CrocoDash.extract\_forcings.ic module
    :show-inheritance:
    :undoc-members:
 
+CrocoDash.extract\_forcings.mom6 module
+---------------------------------------
+
+.. automodule:: CrocoDash.extract_forcings.mom6
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 CrocoDash.extract\_forcings.obc module
 --------------------------------------
 

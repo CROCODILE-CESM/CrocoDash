@@ -361,10 +361,21 @@ def process_ww3_obc(
     date_range,
     ww3_obc_product_name=None,
     ww3_obc_function_name=None,
+    get_step_days=None,
+    regrid_step_days=None,
 ):
     """
     Generate WW3 boundary spectra, spec.list, and ww3_bounc.nml into
     <inputdir>/ocnice.
+
+    get_step_days/regrid_step_days: passed straight through to obc.py's GET/
+    REGRID chunking (see mom6.py's process_mom6_obc for the same pattern).
+    None (default) fetches/regrids the whole date_range in one request per
+    boundary -- fine for the placeholder, but for the real ERA5 product a
+    multi-day request expands into a very large number of GRIB messages
+    (days * 24 hours * 24 directions * 30 frequencies each) that can take a
+    long time to queue/process on CDS. Passing get_step_days=1 splits each
+    boundary's GET step into one request per calendar day instead.
 
     Routes through obc.py's shared GET -> chunk -> REGRID -> MERGE engine.
     ww3_obc_product_name/ww3_obc_function_name default to the placeholder
@@ -434,8 +445,8 @@ def process_ww3_obc(
         regridded_dataset_path=regridded_dir,
         output_path=merged_dir,
         regrid_chunk_fn=regrid_chunk_fn,
-        get_step_days=None,
-        regrid_step_days=None,
+        get_step_days=get_step_days,
+        regrid_step_days=regrid_step_days,
     )
 
     spectra_names = []
