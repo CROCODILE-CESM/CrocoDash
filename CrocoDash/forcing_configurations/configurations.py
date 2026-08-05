@@ -193,6 +193,22 @@ class WW3Configurator(BaseConfigurator):
             ),
         ),
         InputValueParam("case_is_non_local", comment="Case is non-local"),
+        InputValueParam(
+            "get_step_days",
+            comment=(
+                "Chunk the GET step by this many days per request (e.g. 1 for "
+                "one CDS request per day per boundary). Defaults (None) to one "
+                "request spanning the whole date_range. Useful for real "
+                "products with slow/rate-limited APIs (e.g. ERA5 2D spectra via "
+                "CDS): smaller requests turn around faster and let a resumed "
+                "run pick up wherever an earlier one left off, since the GET "
+                "step skips any per-chunk file that already exists on disk."
+            ),
+        ),
+        InputValueParam(
+            "regrid_step_days",
+            comment="Chunk the REGRID step by this many days per request. See get_step_days.",
+        ),
     ]
     output_params = [
         XMLConfigParam(
@@ -216,6 +232,8 @@ class WW3Configurator(BaseConfigurator):
         case_is_non_local,
         ww3_obc_product_name=None,
         ww3_obc_function_name=None,
+        get_step_days=None,
+        regrid_step_days=None,
     ):
         super().__init__(
             case_inputdir=case_inputdir,
@@ -223,6 +241,8 @@ class WW3Configurator(BaseConfigurator):
             case_is_non_local=case_is_non_local,
             ww3_obc_product_name=ww3_obc_product_name,
             ww3_obc_function_name=ww3_obc_function_name,
+            get_step_days=get_step_days,
+            regrid_step_days=regrid_step_days,
         )
 
     def configure(self):

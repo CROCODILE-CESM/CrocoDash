@@ -299,6 +299,8 @@ def run_workflow(
                 ),
                 ww3_obc_product_name=config["ww3"]["inputs"]["ww3_obc_product_name"],
                 ww3_obc_function_name=config["ww3"]["inputs"]["ww3_obc_function_name"],
+                get_step_days=config["ww3"]["inputs"].get("get_step_days"),
+                regrid_step_days=config["ww3"]["inputs"].get("regrid_step_days"),
             )
             timings["ww3"] = time.perf_counter() - _t
 
