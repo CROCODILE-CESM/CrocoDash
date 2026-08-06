@@ -65,6 +65,7 @@ ewds.climate.copernicus.eu (the Early Warning Data Store used by the
 existing GLOFAS product's CEMS dataset).
 """
 
+import os
 from pathlib import Path
 
 import cdsapi
@@ -73,6 +74,28 @@ import pandas as pd
 import xarray as xr
 
 from CrocoDash.raw_data_access.base import *
+
+# cdsapi.Client() resolves its config from $CDSAPI_RC, falling back to
+# ~/.cdsapirc if unset -- on this system that default points at EWDS (used
+# by GLOFAS), not CDS proper. If the caller hasn't already scoped CDSAPI_RC
+# themselves (e.g. per-subprocess), fall back to this ERA5-specific rc file
+# instead, rather than silently hitting the wrong service (see module
+# docstring). Never read/print the key itself -- only pass the path along.
+_ERA5_CDSAPI_RC = Path("~/.cdsapirc_era5").expanduser()
+
+
+def _era5_cdsapi_client():
+    if "CDSAPI_RC" in os.environ or not _ERA5_CDSAPI_RC.exists():
+        return cdsapi.Client()
+    original = os.environ.get("CDSAPI_RC")
+    os.environ["CDSAPI_RC"] = str(_ERA5_CDSAPI_RC)
+    try:
+        return cdsapi.Client()
+    finally:
+        if original is None:
+            os.environ.pop("CDSAPI_RC", None)
+        else:
+            os.environ["CDSAPI_RC"] = original
 
 
 def build_era5_spectra_request(
@@ -317,7 +340,7 @@ class ERA5_WAVE_SPECTRA(WW3ForcingProduct):
         grib_path = output_folder / f"{Path(output_filename).stem}_raw.grib"
         nc_path = output_folder / output_filename
 
-        client = cdsapi.Client()
+        client = _era5_cdsapi_client()
         client.retrieve("reanalysis-era5-complete", request, grib_path)
 
         ds = decode_era5_spectra_grib(grib_path)
