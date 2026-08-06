@@ -17,43 +17,43 @@ def test_case_init_and_create_grid_input(get_CrocoDash_case):
     assert case is not None
     assert os.path.exists(case.caseroot)
     assert os.path.exists(case.inputdir)
-    assert file_with_prefix_exists(case.inputdir / "ocnice", "ocean_hgrid")
+    assert file_with_prefix_exists(case.inputdir / "ocean", "ocean_hgrid")
     assert file_with_prefix_exists(case.caseroot, "README")
 
     files = [
         f
-        for f in os.listdir(case.inputdir / "ocnice")
+        for f in os.listdir(case.inputdir / "ocean")
         if f.startswith(f"ocean_hgrid_{case.ocn_grid.name}")
     ]
     assert len(files) > 0
     files = [
         f
-        for f in os.listdir(case.inputdir / "ocnice")
+        for f in os.listdir(case.inputdir / "ocean")
         if f.startswith(f"ocean_topog_{case.ocn_grid.name}")
     ]
     assert len(files) > 0
     files = [
         f
-        for f in os.listdir(case.inputdir / "ocnice")
+        for f in os.listdir(case.inputdir / "ocean")
         if f.startswith(f"ocean_vgrid_{case.ocn_grid.name}")
     ]
     assert len(files) > 0
     files = [
         f
-        for f in os.listdir(case.inputdir / "ocnice")
+        for f in os.listdir(case.inputdir / "ocean")
         if f.startswith(f"scrip_{case.ocn_grid.name}")
     ]
     assert len(files) > 0
     files = [
         f
-        for f in os.listdir(case.inputdir / "ocnice")
+        for f in os.listdir(case.inputdir / "ocean")
         if f.startswith(f"ESMF_mesh_{case.ocn_grid.name}")
     ]
     assert len(files) > 0
     if "CICE" in case.compset_lname:
         files = [
             f
-            for f in os.listdir(case.inputdir / "ocnice")
+            for f in os.listdir(case.inputdir / "ice")
             if f.startswith(f"cice_grid_{case.ocn_grid.name}")
         ]
         assert len(files) > 0

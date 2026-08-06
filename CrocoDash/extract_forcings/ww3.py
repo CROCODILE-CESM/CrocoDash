@@ -366,7 +366,7 @@ def process_ww3_obc(
 ):
     """
     Generate WW3 boundary spectra, spec.list, and ww3_bounc.nml into
-    <inputdir>/ocnice.
+    <inputdir>/wave.
 
     get_step_days/regrid_step_days: passed straight through to obc.py's GET/
     REGRID chunking (see mom6.py's process_mom6_obc for the same pattern).
@@ -412,7 +412,7 @@ def process_ww3_obc(
     function builds it hourly across [date_range[0], date_range[1]],
     guaranteeing coverage regardless of spacing.
     """
-    output_dir = Path(inputdir) / "ocnice"
+    output_dir = Path(inputdir) / "wave"
     output_dir.mkdir(parents=True, exist_ok=True)
 
     staging_dir = Path(inputdir) / "extract_forcings" / "ww3"

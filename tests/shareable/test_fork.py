@@ -55,7 +55,7 @@ def test_configure_yaml_for_forked_case_args(fake_fcb_empty_case, tmp_path):
     """Test _configure_yaml_for_forked_case_args correctly patches destination fields."""
     fcb = fake_fcb_empty_case
     fcb.bundle_location = tmp_path / "bundle"
-    (fcb.bundle_location / "ocnice").mkdir(parents=True)
+    (fcb.bundle_location / "ocean").mkdir(parents=True)
 
     bundle_yaml = {
         "case": {
@@ -66,14 +66,14 @@ def test_configure_yaml_for_forked_case_args(fake_fcb_empty_case, tmp_path):
             "inputdir": "/old/inputdir",
             "compset": "1850_DATM%JRA_SLND_SICE_MOM6_SROF_SGLC_SWAV",
         },
-        "grid": {"supergrid_path": "/old/ocnice/ocean_hgrid.nc"},
+        "grid": {"supergrid_path": "/old/ocean/ocean_hgrid.nc"},
         "topo": {
             "source": {
                 "type": "from_file",
-                "topo_file_path": "/old/ocnice/ocean_topog.nc",
+                "topo_file_path": "/old/ocean/ocean_topog.nc",
             }
         },
-        "vgrid": {"type": "from_file", "filename": "/old/ocnice/ocean_vgrid.nc"},
+        "vgrid": {"type": "from_file", "filename": "/old/ocean/ocean_vgrid.nc"},
     }
     fcb.bundle_yaml = bundle_yaml
 
@@ -92,7 +92,7 @@ def test_configure_yaml_for_forked_case_args(fake_fcb_empty_case, tmp_path):
     assert config["case"]["inputdir"] == "/new/inputdir"
     # Original must be unchanged
     assert bundle_yaml["case"]["cesmroot"] == "/old/cesm"
-    # Grid/topo/vgrid paths are redirected to bundle ocnice
+    # Grid/topo/vgrid paths are redirected to bundle ocean
     assert "ocean_hgrid.nc" in config["grid"]["supergrid_path"]
     assert "ocean_topog.nc" in config["topo"]["source"]["topo_file_path"]
     assert "ocean_vgrid.nc" in config["vgrid"]["filename"]

@@ -70,9 +70,9 @@ def process_bgc_iron_forcing(
     ds.attrs = {
         "history": "Created with xarray (this file is empty)",
     }
-    ds.to_netcdf(inputdir / "ocnice" / MARBL_FESEDFLUX_FILE)
-    ds.to_netcdf(inputdir / "ocnice" / MARBL_FEVENTFLUX_FILE)
-    ds.to_netcdf(inputdir / "ocnice" / MARBL_FESEDFLUXRED_FILE)
+    ds.to_netcdf(inputdir / "ocean" / MARBL_FESEDFLUX_FILE)
+    ds.to_netcdf(inputdir / "ocean" / MARBL_FEVENTFLUX_FILE)
+    ds.to_netcdf(inputdir / "ocean" / MARBL_FESEDFLUXRED_FILE)
 
 
 def process_river_nutrients(

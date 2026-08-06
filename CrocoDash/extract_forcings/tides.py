@@ -24,7 +24,7 @@ def process_tides(
         layer_thickness_ratio=None,
         depth=ocn_topo.max_depth,
         mom_run_dir=inputdir,
-        mom_input_dir=inputdir / "ocnice",
+        mom_input_dir=inputdir / "ocean",
         hgrid_type=Grid.from_supergrid(supergrid_path),
         vgrid_type=VGrid.from_file(str(vgrid_path)),
         minimum_depth=ocn_topo.min_depth,

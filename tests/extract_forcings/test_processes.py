@@ -51,7 +51,7 @@ def test_process_tides(mock_tides, tmp_path, gen_grid_topo_vgrid, dummy_tidal_da
     elev, vel = dummy_tidal_data
     grid.write_supergrid(tmp_path / "grid.nc")
     vgrid.write(tmp_path / "vgrid.nc")
-    (tmp_path / "ocnice").mkdir()
+    (tmp_path / "ocean").mkdir()
     tides.process_tides(
         ocn_topo=topo,
         inputdir=tmp_path,
@@ -104,7 +104,7 @@ def test_process_cice_forcing_produces_output(
         n_halo_cells=n_halo_cells,
     )
 
-    ds = xr.open_dataset(tmp_path / "ocnice" / "cice_forcing.nc")
+    ds = xr.open_dataset(tmp_path / "ice" / "cice_forcing.nc")
 
     assert ds.sizes["ny"] == ny + 2 * n_halo_cells
     assert ds.sizes["nx"] == nx + 2 * n_halo_cells
@@ -119,7 +119,7 @@ def test_process_cice_forcing_produces_output(
 
 
 def test_bgcironforcing(tmp_path):
-    (tmp_path / "ocnice").mkdir()
+    (tmp_path / "ocean").mkdir()
     depth, ny, nx = 103, 60, 60
     bgc.process_bgc_iron_forcing(
         nx=60,
@@ -130,11 +130,11 @@ def test_bgcironforcing(tmp_path):
         inputdir=tmp_path,
     )
 
-    assert (tmp_path / "ocnice" / "fesed.nc").exists()
-    assert (tmp_path / "ocnice" / "fevent.nc").exists()
+    assert (tmp_path / "ocean" / "fesed.nc").exists()
+    assert (tmp_path / "ocean" / "fevent.nc").exists()
     for path, main_var in [
-        (tmp_path / "ocnice" / "fesed.nc", "FESEDFLUXIN"),
-        (tmp_path / "ocnice" / "fevent.nc", "FESEDFLUXIN"),
+        (tmp_path / "ocean" / "fesed.nc", "FESEDFLUXIN"),
+        (tmp_path / "ocean" / "fevent.nc", "FESEDFLUXIN"),
     ]:
         ds = xr.open_dataset(path)
 
@@ -249,24 +249,24 @@ def test_process_ww3_obc(tmp_path, gen_grid_topo_vgrid):
         date_range=("2020-01-01", "2020-01-02"),
     )
 
-    ocnice = tmp_path / "ocnice"
-    assert (ocnice / "spec.list").exists()
-    assert (ocnice / "ww3_bounc.nml").exists()
-    assert (ocnice / "ww3.point1_spec.nc").exists()
-    assert (ocnice / "ww3.point2_spec.nc").exists()
+    wave = tmp_path / "wave"
+    assert (wave / "spec.list").exists()
+    assert (wave / "ww3_bounc.nml").exists()
+    assert (wave / "ww3.point1_spec.nc").exists()
+    assert (wave / "ww3.point2_spec.nc").exists()
 
-    assert (ocnice / "spec.list").read_text().splitlines() == [
+    assert (wave / "spec.list").read_text().splitlines() == [
         "ww3.point1_spec.nc",
         "ww3.point2_spec.nc",
     ]
 
     # nearest-point mapping (no interpolation between stations), so each
     # boundary cell's forcing traces back to exactly one station
-    nml_contents = (ocnice / "ww3_bounc.nml").read_text()
+    nml_contents = (wave / "ww3_bounc.nml").read_text()
     assert "BOUND%INTERP               = 1" in nml_contents
 
-    ds1 = xr.open_dataset(ocnice / "ww3.point1_spec.nc", decode_times=False)
-    ds2 = xr.open_dataset(ocnice / "ww3.point2_spec.nc", decode_times=False)
+    ds1 = xr.open_dataset(wave / "ww3.point1_spec.nc", decode_times=False)
+    ds2 = xr.open_dataset(wave / "ww3.point2_spec.nc", decode_times=False)
     try:
         # hourly, spanning the full requested run window inclusive:
         # 2020-01-01T00:00 through 2020-01-02T00:00 = 25 points
@@ -452,16 +452,16 @@ def test_process_ww3_obc_era5_path_multi_station(tmp_path, gen_grid_topo_vgrid):
         ww3_obc_function_name="get_fake_spectra",
     )
 
-    ocnice = tmp_path / "ocnice"
+    wave = tmp_path / "wave"
     # 2 boundaries x 3 real stations each = 6 total, not 2.
-    spec_lines = (ocnice / "spec.list").read_text().splitlines()
+    spec_lines = (wave / "spec.list").read_text().splitlines()
     assert spec_lines == [f"ww3.point{i}_spec.nc" for i in range(1, 7)]
 
-    nml_contents = (ocnice / "ww3_bounc.nml").read_text()
+    nml_contents = (wave / "ww3_bounc.nml").read_text()
     assert "BOUND%INTERP               = 2" in nml_contents
 
     for i, expected_value in zip(range(1, 7), [100.0, 101.0, 102.0] * 2):
-        ds = xr.open_dataset(ocnice / f"ww3.point{i}_spec.nc", decode_times=False)
+        ds = xr.open_dataset(wave / f"ww3.point{i}_spec.nc", decode_times=False)
         try:
             assert np.all(ds["efth"].values == expected_value)
         finally:

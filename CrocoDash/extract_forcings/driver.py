@@ -100,7 +100,7 @@ def run_workflow(
     extract_forcings_dir = inputdir / "extract_forcings"
     raw_data_dir = extract_forcings_dir / "raw_data"
     regridded_data_dir = extract_forcings_dir / "regridded_data"
-    output_path = inputdir / "ocnice"
+    output_path = inputdir / "ocean"
 
     if not any(
         [

@@ -13,21 +13,21 @@ def test_duplicate_case(get_case_with_cf, tmp_path):
     new_caseroot = tmp_path / "duplicated_case"
     new_inputdir = tmp_path / "duplicated_inputdir"
 
-    # configure_forcings doesn't produce NetCDF files — seed the ocnice dir
+    # configure_forcings doesn't produce NetCDF files — seed the ocean dir
     # with fake forcing files so the copy logic has something to transfer.
-    old_ocnice = Path(case.inputdir) / "ocnice"
-    old_ocnice.mkdir(parents=True, exist_ok=True)
+    old_ocean = Path(case.inputdir) / "ocean"
+    old_ocean.mkdir(parents=True, exist_ok=True)
     fake_files = ["forcing_obc_seg_001.nc", "init_temp_salt.nc"]
     for fname in fake_files:
-        (old_ocnice / fname).write_text("fake")
+        (old_ocean / fname).write_text("fake")
 
     new_case = duplicate_case(case.caseroot, new_caseroot, new_inputdir)
 
     assert new_case is not None
     assert new_caseroot.exists()
-    new_ocnice = new_inputdir / "ocnice"
+    new_ocean = new_inputdir / "ocean"
     for fname in fake_files:
-        assert (new_ocnice / fname).exists()
+        assert (new_ocean / fname).exists()
 
 
 @pytest.mark.slow

@@ -249,7 +249,7 @@ class WW3Configurator(BaseConfigurator):
         is_non_local = self.get_input_param("case_is_non_local")
         self.set_output_param(
             "WW3_GRID_INP_DIR",
-            str(Path(self.get_input_param("case_inputdir")) / "ocnice"),
+            str(Path(self.get_input_param("case_inputdir")) / "wave"),
             is_non_local=is_non_local,
         )
         self.set_output_param("HIST_OPTION", "nhours", is_non_local=is_non_local)
