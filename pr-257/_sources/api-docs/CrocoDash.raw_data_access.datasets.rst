@@ -76,14 +76,6 @@ CrocoDash.raw\_data\_access.datasets.utils module
    :show-inheritance:
    :undoc-members:
 
-CrocoDash.raw\_data\_access.datasets.ww3 module
------------------------------------------------
-
-.. automodule:: CrocoDash.raw_data_access.datasets.ww3
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
 Module contents
 ---------------
 

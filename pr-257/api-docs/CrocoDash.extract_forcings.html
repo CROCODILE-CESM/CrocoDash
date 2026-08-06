@@ -783,42 +783,32 @@ Example: <cite>“(north|east|south|west)_unprocessed.(d{8})_(d{8}).nc”</cite>
 <p>get_step_days/regrid_step_days: passed straight through to obc.py’s GET/
 REGRID chunking (see mom6.py’s process_mom6_obc for the same pattern).
 None (default) fetches/regrids the whole date_range in one request per
-boundary – fine for the placeholder, but for the real ERA5 product a
-multi-day request expands into a very large number of GRIB messages
-(days * 24 hours * 24 directions * 30 frequencies each) that can take a
-long time to queue/process on CDS. Passing get_step_days=1 splits each
-boundary’s GET step into one request per calendar day instead.</p>
+boundary – for the real ERA5 product, a multi-day request expands into
+a very large number of GRIB messages (days * 24 hours * 24 directions *
+30 frequencies each) that can take a long time to queue/process on CDS.
+Passing get_step_days=1 splits each boundary’s GET step into one request
+per calendar day instead.</p>
 <p>Routes through obc.py’s shared GET -&gt; chunk -&gt; REGRID -&gt; MERGE engine.
-ww3_obc_product_name/ww3_obc_function_name default to the placeholder
-WW3 product (see raw_data_access/datasets/ww3.py) – since the real ERA5
-product (raw_data_access/datasets/era5.py) needs a separate
-cds.climate.copernicus.eu API key not assumed to exist, the default
-isn’t flipped to it. Pass ww3_obc_product_name=”era5_wave_spectra”,
-ww3_obc_function_name=”get_era5_2d_spectra” to opt into the real path.
-The regrid step is chosen to match: _regrid_chunk_placeholder for the
-default, _regrid_chunk_era5 for anything else.</p>
+ww3_obc_product_name/ww3_obc_function_name default to the real ERA5
+2D-spectra product (raw_data_access/datasets/era5.py), which needs a
+separate cds.climate.copernicus.eu API key. Pass a different
+product/function pair (matching a WW3ForcingProduct-derived class’s own
+contract) to source boundary spectra some other way instead.</p>
 <p>Each boundary’s merged output carries a “station” dimension – one real
-(or, for the placeholder, one synthetic) point per boundary window, not
-reduced to a single value. Finalization below splits every boundary’s
-stations out into individual ww3.pointN_spec.nc files (one per real
-station, via write_ww3_boundary_spectrum – its per-point contract is
-unchanged), and pools ALL boundaries’ stations into one global spec.list
-(ww3_bounc’s list/interpolation is domain-wide, not scoped to a named
-boundary).</p>
-<p>ww3_bounc.nml’s INTERP is chosen to match the same placeholder/real
-split as the regrid step: INTERP=1 (nearest, no interpolation) for the
-placeholder, same as before, since each boundary still only contributes
-one synthetic station and nearest keeps that station’s mapping exact and
-traceable; INTERP=2 (linear) for the real ERA5 path, where each boundary
-contributes several real, spatially-distributed stations worth actually
-interpolating between via ww3_bounc’s own machinery rather than
+point per boundary window, not reduced to a single value. Finalization
+below splits every boundary’s stations out into individual
+ww3.pointN_spec.nc files (one per real station, via
+write_ww3_boundary_spectrum – its per-point contract is unchanged), and
+pools ALL boundaries’ stations into one global spec.list (ww3_bounc’s
+list/interpolation is domain-wide, not scoped to a named boundary).</p>
+<p>ww3_bounc.nml’s INTERP is set to 2 (linear): each boundary contributes
+several real, spatially-distributed stations worth actually
+interpolating between via ww3_bounc’s own machinery, rather than
 pre-collapsing to one hand-picked point ourselves.</p>
 <p>The time axis must span the full run: WW3 interpolates linearly in time
 between whatever records exist in nest.ww3, but a time axis that runs out
 mid-run permanently disables boundary forcing (an EOF in w3iobcmd.F90
-sets FLBPI=.FALSE. for the rest of the run). The placeholder access
-function builds it hourly across [date_range[0], date_range[1]],
-guaranteeing coverage regardless of spacing.</p>
+sets FLBPI=.FALSE. for the rest of the run).</p>
 </dd></dl>
 
 <dl class="py function">
