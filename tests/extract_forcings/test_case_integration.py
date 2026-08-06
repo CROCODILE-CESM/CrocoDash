@@ -43,6 +43,29 @@ def test_case_integration_config(CrocoDash_case_factory, tmp_path):
     assert config["conditions"]["outputs"]["function_args"] == {}
 
 
+def test_case_integration_config_cice_round_trip(CrocoDash_case_factory, tmp_path):
+    """Verify cice_product_name/cice_function_name/cice_function_args round-trip
+    through config.json into the exact keys driver.run_workflow reads
+    (extract_forcings/driver.py's process_cice_forcing call site)."""
+    case = CrocoDash_case_factory(
+        tmp_path, compset="2000_DATM%JRA_SLND_CICE%PRES_MOM6_SROF_SGLC_SWAV"
+    )
+    case.configure_forcings(
+        date_range=["2020-01-01 00:00:00", "2020-01-02 00:00:00"],
+        boundaries=["north", "south"],
+        cice_product_name="reference_ice",
+        cice_function_name="get_reference_ice_data",
+    )
+    with open(case.inputdir / "extract_forcings" / "config.json", "r") as f:
+        config = json.load(f)
+
+    cice_inputs = config["cice"]["inputs"]
+    assert cice_inputs["cice_product_name"] == "reference_ice"
+    assert cice_inputs["cice_function_name"] == "get_reference_ice_data"
+    assert cice_inputs["cice_function_args"] == {}
+    assert cice_inputs["n_halo_cells"] == 2
+
+
 def test_driver_works(CrocoDash_case_factory, tmp_path):
     """Verify configure_forcings creates the right structure and crocodash process can be invoked."""
     case = CrocoDash_case_factory(tmp_path / "case")

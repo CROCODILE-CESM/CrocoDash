@@ -281,8 +281,9 @@ def run_workflow(
                     conditions["outputs"]["start_date"],
                     conditions["outputs"]["end_date"],
                 ),
-                restart_path=config["cice"]["inputs"]["restart_path"],
-                grid_path=config["cice"]["inputs"]["grid_path"],
+                product_name=config["cice"]["inputs"]["cice_product_name"],
+                function_name=config["cice"]["inputs"]["cice_function_name"],
+                function_args=config["cice"]["inputs"].get("cice_function_args"),
                 n_halo_cells=config["cice"]["inputs"].get("n_halo_cells", 2),
             )
             timings["cice"] = time.perf_counter() - _t

@@ -140,33 +140,6 @@ def test_merge_single_boundary(
 
 
 @pytest.mark.slow
-def test_obc_regrid_workflow(
-    obc_config, generate_piecewise_raw_data, dummy_forcing_factory, skip_if_not_glade
-):
-    kwargs, tmp_path = obc_config
-    grid = Grid.from_supergrid(tmp_path / "hgrid.nc")
-    bounds = Grid.get_bounding_boxes(grid)
-    raw_dir = tmp_path / "raw"
-    regridded_dir = tmp_path / "regridded"
-
-    ds = dummy_forcing_factory(
-        bounds["ic"]["lat_min"],
-        bounds["ic"]["lat_max"],
-        bounds["ic"]["lon_min"],
-        bounds["ic"]["lon_max"],
-    )
-    # get_step=None → one file covering the full range
-    generate_piecewise_raw_data(ds, "2020-01-01", "2020-01-15", "east_unprocessed.")
-    generate_piecewise_raw_data(ds, "2020-01-01", "2020-01-15", "south_unprocessed.")
-
-    process_obc_conditions(**kwargs)
-
-    # regrid_step=5 → first chunk is 2020-01-01 to 2020-01-05
-    assert (regridded_dir / "forcing_obc_segment_001_2020-01-01_2020-01-05.nc").exists()
-    assert (regridded_dir / "forcing_obc_segment_002_2020-01-01_2020-01-05.nc").exists()
-
-
-@pytest.mark.slow
 def test_obc_merge_workflow(
     obc_config, generate_piecewise_raw_data, dummy_mom6_obc_data_factory, get_rect_grid
 ):

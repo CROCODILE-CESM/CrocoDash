@@ -1,4 +1,5 @@
 from CrocoDash.forcing_configurations.base import *
+from CrocoDash.forcing_configurations.configurations import CICEConfigurator
 from ProConPy.config_var import cvars
 import pytest
 from types import SimpleNamespace
@@ -81,6 +82,8 @@ def test_all_configurators_smoke(fake_param_case, fake_cime, fake_forcing_produc
                 ctor_args[a] = ["south", "north", "west", "east"]
             elif a == "product_name":
                 ctor_args[a] = "GLORYS"
+            elif a == "cice_product_name":
+                ctor_args[a] = "reference_ice"
             elif "filepath" in a:
                 ctor_args[a] = dummy_path
             elif "dir" in a:
@@ -121,3 +124,21 @@ def test_all_configurators_smoke(fake_param_case, fake_cime, fake_forcing_produc
 Configurators are only smoke tested because the individual parts of the process are tested above and in test_forcing_configuration_registry.
 The ONLY additional testing should be if any configuration has unique configuration that has additional complexity.
 """
+
+
+def test_cice_configurator_rejects_non_cice_product():
+    with pytest.raises(ValueError, match="not a registered CICEForcingProduct"):
+        CICEConfigurator(cice_product_name="reference_ocean")
+
+
+def test_cice_configurator_accepts_matching_product():
+    # Doesn't raise -- both the real restart product and the fast synthetic
+    # stand-in are valid CICEForcingProducts.
+    CICEConfigurator(cice_product_name="reference_ice")
+    CICEConfigurator(cice_product_name="cice_restart")
+
+
+def test_cice_configurator_defaults_to_none_product():
+    # None (unset) defers resolution to extract_forcings/cice.py's own
+    # default ("cice_restart") -- not something validate_args should reject.
+    CICEConfigurator()

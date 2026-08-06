@@ -4,7 +4,7 @@ from datetime import datetime
 from ProConPy.config_var import ConfigVar, cvars
 from mom6_forge import mapping
 from CrocoDash.raw_data_access.registry import ProductRegistry
-from CrocoDash.raw_data_access.base import ForcingProduct
+from CrocoDash.raw_data_access.base import ForcingProduct, CICEForcingProduct
 
 
 def register(cls):
@@ -264,12 +264,33 @@ class CICEConfigurator(BaseConfigurator):
     allowed_compsets = ["CICE"]
     input_params = [
         InputValueParam(
-            "restart_path",
-            comment="Global CICE restart file to source CICE's forcing from",
+            "cice_product_name",
+            comment=(
+                "Name of the CICE forcing data product, mirroring "
+                "Case.configure_forcings's product_name/function_name pattern for "
+                "the main MOM6 IC/OBC product. Defaults (None) to the real global "
+                "restart product ('cice_restart', "
+                "raw_data_access/datasets/cice_output.py), which requires a real "
+                "restart_path/grid_path (see cice_function_args). Pass a "
+                "different product name (e.g. 'reference_ice') to source CICE's "
+                "forcing some other way instead."
+            ),
         ),
         InputValueParam(
-            "grid_path",
-            comment="Companion CICE grid file for restart_path",
+            "cice_function_name",
+            comment=(
+                "Name of the raw_data_access function to call for the CICE "
+                "forcing product. Defaults (None) to 'get_cice_restart_subset'. "
+                "See cice_product_name."
+            ),
+        ),
+        InputValueParam(
+            "cice_function_args",
+            comment=(
+                "Extra kwargs the chosen product's access function needs (e.g. "
+                "restart_path/grid_path for 'cice_restart'; none for "
+                "'reference_ice')."
+            ),
         ),
         InputValueParam(
             "n_halo_cells",
@@ -286,12 +307,33 @@ class CICEConfigurator(BaseConfigurator):
         UserNLConfigParam("trestore", user_nl_name="cice"),
     ]
 
-    def __init__(self, restart_path, grid_path, n_halo_cells=2):
+    def __init__(
+        self,
+        cice_product_name=None,
+        cice_function_name=None,
+        cice_function_args=None,
+        n_halo_cells=2,
+    ):
         super().__init__(
-            restart_path=restart_path,
-            grid_path=grid_path,
+            cice_product_name=cice_product_name,
+            cice_function_name=cice_function_name,
+            cice_function_args=cice_function_args or {},
             n_halo_cells=n_halo_cells,
         )
+
+    def validate_args(self, **kwargs):
+        super().validate_args(**kwargs)
+
+        product_name = kwargs["cice_product_name"]
+        if product_name:
+            ProductRegistry.load()
+            if not (
+                ProductRegistry.product_exists(product_name)
+                and ProductRegistry.product_is_of_type(product_name, CICEForcingProduct)
+            ):
+                raise ValueError(
+                    f"CICE product '{product_name}' is not a registered CICEForcingProduct."
+                )
 
     def configure(self):
         self.set_output_param("ice_ic", "'default'")

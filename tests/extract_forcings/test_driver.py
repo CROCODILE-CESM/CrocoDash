@@ -317,8 +317,12 @@ def test_run_workflow_cice_calls_cice_module(
         extra_keys={
             "cice": {
                 "inputs": {
-                    "restart_path": "/path/to/restart.nc",
-                    "grid_path": "/path/to/grid.nc",
+                    "cice_product_name": "cice_restart",
+                    "cice_function_name": "get_cice_restart_subset",
+                    "cice_function_args": {
+                        "restart_path": "/path/to/restart.nc",
+                        "grid_path": "/path/to/grid.nc",
+                    },
                     "n_halo_cells": 2,
                 }
             }
@@ -333,6 +337,10 @@ def test_run_workflow_cice_calls_cice_module(
 
     mock_cice.process_cice_forcing.assert_called_once()
     _, kwargs = mock_cice.process_cice_forcing.call_args
-    assert kwargs["restart_path"] == "/path/to/restart.nc"
-    assert kwargs["grid_path"] == "/path/to/grid.nc"
+    assert kwargs["product_name"] == "cice_restart"
+    assert kwargs["function_name"] == "get_cice_restart_subset"
+    assert kwargs["function_args"] == {
+        "restart_path": "/path/to/restart.nc",
+        "grid_path": "/path/to/grid.nc",
+    }
     assert kwargs["n_halo_cells"] == 2

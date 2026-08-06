@@ -5,8 +5,18 @@ This testing file is for the other processes in extract_forcings. Most do not ne
 from pathlib import Path
 
 import pytest
-from CrocoDash.extract_forcings import runoff, tides, bgc, chlorophyll as chl, cice, ww3
+from CrocoDash.extract_forcings import (
+    runoff,
+    tides,
+    bgc,
+    chlorophyll as chl,
+    cice,
+    ww3,
+    mom6,
+)
 from CrocoDash.raw_data_access.base import WW3ForcingProduct, accessmethod, GREGORIAN
+from CrocoDash.raw_data_access.registry import ProductRegistry
+from CrocoDash.grid import Grid
 import numpy as np
 import pandas as pd
 import xarray as xr
@@ -81,6 +91,48 @@ def test_process_chl(mock_chl, is_glade_file_system, tmp_path, gen_grid_topo_vgr
     assert mock_chl.called
 
 
+def test_process_mom6_obc_with_reference_ocean(tmp_path, gen_grid_topo_vgrid):
+    """process_mom6_obc runs the real GET + regional_mom6 Segment regrid
+    end-to-end against the fast synthetic 'reference_ocean' product -- no
+    network/campaign-storage access, no /glade dependency."""
+    grid, topo, vgrid = gen_grid_topo_vgrid
+    hgrid_path = tmp_path / "hgrid.nc"
+    grid.write_supergrid(hgrid_path)
+
+    raw_dir = tmp_path / "raw"
+    regridded_dir = tmp_path / "regridded"
+    output_dir = tmp_path / "output"
+    for d in (raw_dir, regridded_dir, output_dir):
+        d.mkdir()
+
+    ProductRegistry.load()
+    product_info = ProductRegistry.get_product("reference_ocean").write_metadata()
+
+    mom6.process_mom6_obc(
+        start_date="2020-01-01",
+        end_date="2020-01-03",
+        boundary_number_conversion={"east": 1, "south": 2},
+        product_name="reference_ocean",
+        function_name="get_reference_ocean_data",
+        product_info=product_info,
+        hgrid_path=str(hgrid_path),
+        raw_dataset_path=str(raw_dir),
+        regridded_dataset_path=str(regridded_dir),
+        output_path=str(output_dir),
+        regrid_step_days=3,
+    )
+
+    for seg in ("001", "002"):
+        out = output_dir / f"forcing_obc_segment_{seg}.nc"
+        assert out.exists()
+        ds = xr.open_dataset(out)
+        try:
+            assert "time" in ds.dims
+            assert np.isfinite(ds[f"temp_segment_{seg}"].values).all()
+        finally:
+            ds.close()
+
+
 def test_process_cice_forcing_produces_output(
     skip_if_not_glade, tmp_path, gen_grid_topo_vgrid
 ):
@@ -99,8 +151,12 @@ def test_process_cice_forcing_produces_output(
         hgrid_path=tmp_path / "grid.nc",
         inputdir=tmp_path,
         date_range=("2020-01-01", "2020-01-02"),
-        restart_path=_CICE_RESTART_PATH,
-        grid_path=_CICE_GRID_PATH,
+        product_name="cice_restart",
+        function_name="get_cice_restart_subset",
+        function_args={
+            "restart_path": _CICE_RESTART_PATH,
+            "grid_path": _CICE_GRID_PATH,
+        },
         n_halo_cells=n_halo_cells,
     )
 
@@ -116,6 +172,35 @@ def test_process_cice_forcing_produces_output(
     # No ice expected at this (Panama-region) test grid's location -- both
     # the domain interior and its halo.
     assert float(ds["aicen"].sum()) == 0.0
+
+
+def test_process_cice_forcing_with_reference_ice(tmp_path, gen_grid_topo_vgrid):
+    """Same pipeline as test_process_cice_forcing_produces_output, but against
+    the fast synthetic 'reference_ice' product -- no real restart/grid file,
+    no /glade dependency, runs on every machine."""
+    grid, topo, vgrid = gen_grid_topo_vgrid
+    grid.write_supergrid(tmp_path / "grid.nc")
+
+    n_halo_cells = 2
+    ny, nx = grid.tlat.shape
+
+    cice.process_cice_forcing(
+        hgrid_path=tmp_path / "grid.nc",
+        inputdir=tmp_path,
+        date_range=("2020-01-01", "2020-01-02"),
+        product_name="reference_ice",
+        function_name="get_reference_ice_data",
+        n_halo_cells=n_halo_cells,
+    )
+
+    ds = xr.open_dataset(tmp_path / "ice" / "cice_forcing.nc")
+
+    assert ds.sizes["ny"] == ny + 2 * n_halo_cells
+    assert ds.sizes["nx"] == nx + 2 * n_halo_cells
+    assert ds.sizes["time"] == 2
+    assert "aicen" in ds and ds["aicen"].dims == ("time", "ncat", "ny", "nx")
+    assert "uvel" in ds and ds["uvel"].dims == ("time", "ny", "nx")
+    assert np.isfinite(ds["aicen"].values).all()
 
 
 def test_bgcironforcing(tmp_path):
@@ -436,6 +521,40 @@ def test_process_ww3_obc_multi_station(tmp_path, gen_grid_topo_vgrid):
         ds = xr.open_dataset(wave / f"ww3.point{i}_spec.nc", decode_times=False)
         try:
             assert np.all(ds["efth"].values == expected_value)
+        finally:
+            ds.close()
+
+
+def test_process_ww3_obc_with_reference_waves(tmp_path, gen_grid_topo_vgrid):
+    """Same pipeline as test_process_ww3_obc_multi_station, but against the
+    shipped, JONSWAP-shaped 'reference_waves' product instead of the
+    test-local flat-value fake."""
+    grid, topo, vgrid = gen_grid_topo_vgrid
+    hgrid_path = tmp_path / "hgrid.nc"
+    grid.write_supergrid(hgrid_path)
+
+    ww3.process_ww3_obc(
+        hgrid_path=str(hgrid_path),
+        inputdir=tmp_path,
+        boundaries=["west", "east"],
+        date_range=("2020-01-01", "2020-01-02"),
+        ww3_obc_product_name="reference_waves",
+        ww3_obc_function_name="get_reference_wave_spectra",
+    )
+
+    wave = tmp_path / "wave"
+    spec_lines = (wave / "spec.list").read_text().splitlines()
+    assert spec_lines == [f"ww3.point{i}_spec.nc" for i in range(1, 7)]
+
+    for i in range(1, 7):
+        ds = xr.open_dataset(wave / f"ww3.point{i}_spec.nc", decode_times=False)
+        try:
+            assert np.isfinite(ds["efth"].values).all()
+            # Cosine-2s directional spreading legitimately hits exact zero
+            # away from the dominant direction -- just check there's energy
+            # somewhere and nothing went negative.
+            assert np.all(ds["efth"].values >= 0)
+            assert np.any(ds["efth"].values > 0)
         finally:
             ds.close()
 
