@@ -37,10 +37,6 @@ KNOWN_INCLUSIVE_WITHOUT_HELPER = {
     # `dates` is an unused placeholder — downloads one fixed pre-processed
     # file via a static URL, no date-based filtering happens at all.
     ("glofas", "get_processed_global_glofas_script_for_cli"),
-    # dates carries sub-day precision by design (hourly boundary-spectrum
-    # windows, not whole calendar days) — make_dates_end_inclusive's
-    # whole-day normalization would discard that precision.
-    ("ww3", "get_ww3_placeholder_data"),
     # Reparses `dates` into whole-day "YYYY-MM-DD" MARS date-range strings
     # (time-of-day is dropped) combined with an explicit "00/to/23/by/1"
     # hourly `time` key covering every hour of every requested day — whole-

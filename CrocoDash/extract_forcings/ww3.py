@@ -4,7 +4,6 @@ import numpy as np
 import xarray as xr
 
 from CrocoDash.extract_forcings import obc
-from CrocoDash.grid import Grid
 
 
 def write_ww3_boundary_spectrum(file_path, lat, lon, freq, direction, efth, time=None):
@@ -213,56 +212,6 @@ def write_spec_list(file_dir, spectra_paths, spec_list_filename="spec.list"):
             f.write(f"{p}\n")
 
 
-# NK/NTH/freq/direction don't need to match the grid's own ww3_grid.inp
-# discretization -- ww3_bounc remaps automatically if they differ. Only used
-# by _regrid_chunk_placeholder below -- the real ERA5 path uses ERA5's own
-# native frequency/direction bins instead (see _extract_all_stations).
-_NK, _NTH = 25, 24
-_FREQ = 0.04118 * 1.1 ** np.arange(_NK)
-_DIRECTION = np.linspace(0, 360, _NTH, endpoint=False)
-
-
-def _regrid_chunk_placeholder(
-    ds, hgrid, boundary, seg_id, outfolder, dataset_varnames, start_date, regridders
-):
-    """WW3's placeholder regrid step: ignores ds's content except for its
-    time axis (however the GET step's stub access function chunked it), and
-    writes a simple constant-value spectrum instead, scaled by the boundary's
-    point index (seg_id) -- point i = 1e-3*i -- so which station's data lands
-    on which grid boundary cell can be checked directly. No file to open (the
-    engine hands us the dataset directly) and nothing to regrid.
-
-    Writes a single-station output (station dim of length 1) to outfolder /
-    f"forcing_obc_segment_{seg_id:03d}.nc" -- the same station-dimensioned
-    shape _regrid_chunk_era5 produces, so process_ww3_obc's finalization
-    step works identically for both. No regridder weights to cache, so
-    regridders is passed through unchanged.
-    """
-    time = ds["time"].values
-
-    bbox = Grid.get_bounding_boxes(hgrid)[boundary]
-    lat = (bbox["lat_min"] + bbox["lat_max"]) / 2
-    lon = (bbox["lon_min"] + bbox["lon_max"]) / 2
-
-    value = 1e-3 * seg_id
-    efth = np.full((1, len(time), len(_FREQ), len(_DIRECTION)), value)
-
-    out = xr.Dataset(
-        {"efth": (("station", "time", "frequency", "direction"), efth)},
-        coords={
-            "station": np.arange(1),
-            "station_lon": ("station", [lon]),
-            "station_lat": ("station", [lat]),
-            "time": time,
-            "frequency": _FREQ,
-            "direction": _DIRECTION,
-        },
-    )
-    out_path = Path(outfolder) / f"forcing_obc_segment_{seg_id:03d}.nc"
-    out.to_netcdf(out_path)
-    return regridders
-
-
 def _extract_all_stations(ds):
     """Pull every real spatial point's full (time, frequency, direction)
     spectrum out of a decoded ERA5 wave-spectra window -- no reduction to a
@@ -319,7 +268,7 @@ def _extract_all_stations(ds):
 def _regrid_chunk_era5(
     ds, hgrid, boundary, seg_id, outfolder, dataset_varnames, start_date, regridders
 ):
-    """WW3's real regrid step: keeps every real ERA5 point in the fetched
+    """WW3's regrid step: keeps every real ERA5 point in the fetched
     (buffered) boundary window as its own station, each carrying its own
     unmodified spectrum -- no spatial reduction, no spectral interpolation
     onto WW3's own frequency/direction bins (ww3_bounc's SPCONV/W3CSPC path
@@ -331,9 +280,8 @@ def _regrid_chunk_era5(
     reference spectrum).
 
     Writes a station-dimensioned output to outfolder /
-    f"forcing_obc_segment_{seg_id:03d}.nc", same shape
-    _regrid_chunk_placeholder produces. No regridder weights to cache, so
-    regridders is passed through unchanged.
+    f"forcing_obc_segment_{seg_id:03d}.nc". No regridder weights to cache,
+    so regridders is passed through unchanged.
     """
     lons, lats, freq, direction, efth = _extract_all_stations(ds)
     time = ds["time"].values
@@ -371,46 +319,36 @@ def process_ww3_obc(
     get_step_days/regrid_step_days: passed straight through to obc.py's GET/
     REGRID chunking (see mom6.py's process_mom6_obc for the same pattern).
     None (default) fetches/regrids the whole date_range in one request per
-    boundary -- fine for the placeholder, but for the real ERA5 product a
-    multi-day request expands into a very large number of GRIB messages
-    (days * 24 hours * 24 directions * 30 frequencies each) that can take a
-    long time to queue/process on CDS. Passing get_step_days=1 splits each
-    boundary's GET step into one request per calendar day instead.
+    boundary -- for the real ERA5 product, a multi-day request expands into
+    a very large number of GRIB messages (days * 24 hours * 24 directions *
+    30 frequencies each) that can take a long time to queue/process on CDS.
+    Passing get_step_days=1 splits each boundary's GET step into one request
+    per calendar day instead.
 
     Routes through obc.py's shared GET -> chunk -> REGRID -> MERGE engine.
-    ww3_obc_product_name/ww3_obc_function_name default to the placeholder
-    WW3 product (see raw_data_access/datasets/ww3.py) -- since the real ERA5
-    product (raw_data_access/datasets/era5.py) needs a separate
-    cds.climate.copernicus.eu API key not assumed to exist, the default
-    isn't flipped to it. Pass ww3_obc_product_name="era5_wave_spectra",
-    ww3_obc_function_name="get_era5_2d_spectra" to opt into the real path.
-    The regrid step is chosen to match: _regrid_chunk_placeholder for the
-    default, _regrid_chunk_era5 for anything else.
+    ww3_obc_product_name/ww3_obc_function_name default to the real ERA5
+    2D-spectra product (raw_data_access/datasets/era5.py), which needs a
+    separate cds.climate.copernicus.eu API key. Pass a different
+    product/function pair (matching a WW3ForcingProduct-derived class's own
+    contract) to source boundary spectra some other way instead.
 
     Each boundary's merged output carries a "station" dimension -- one real
-    (or, for the placeholder, one synthetic) point per boundary window, not
-    reduced to a single value. Finalization below splits every boundary's
-    stations out into individual ww3.pointN_spec.nc files (one per real
-    station, via write_ww3_boundary_spectrum -- its per-point contract is
-    unchanged), and pools ALL boundaries' stations into one global spec.list
-    (ww3_bounc's list/interpolation is domain-wide, not scoped to a named
-    boundary).
+    point per boundary window, not reduced to a single value. Finalization
+    below splits every boundary's stations out into individual
+    ww3.pointN_spec.nc files (one per real station, via
+    write_ww3_boundary_spectrum -- its per-point contract is unchanged), and
+    pools ALL boundaries' stations into one global spec.list (ww3_bounc's
+    list/interpolation is domain-wide, not scoped to a named boundary).
 
-    ww3_bounc.nml's INTERP is chosen to match the same placeholder/real
-    split as the regrid step: INTERP=1 (nearest, no interpolation) for the
-    placeholder, same as before, since each boundary still only contributes
-    one synthetic station and nearest keeps that station's mapping exact and
-    traceable; INTERP=2 (linear) for the real ERA5 path, where each boundary
-    contributes several real, spatially-distributed stations worth actually
-    interpolating between via ww3_bounc's own machinery rather than
+    ww3_bounc.nml's INTERP is set to 2 (linear): each boundary contributes
+    several real, spatially-distributed stations worth actually
+    interpolating between via ww3_bounc's own machinery, rather than
     pre-collapsing to one hand-picked point ourselves.
 
     The time axis must span the full run: WW3 interpolates linearly in time
     between whatever records exist in nest.ww3, but a time axis that runs out
     mid-run permanently disables boundary forcing (an EOF in w3iobcmd.F90
-    sets FLBPI=.FALSE. for the rest of the run). The placeholder access
-    function builds it hourly across [date_range[0], date_range[1]],
-    guaranteeing coverage regardless of spacing.
+    sets FLBPI=.FALSE. for the rest of the run).
     """
     output_dir = Path(inputdir) / "wave"
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -425,11 +363,8 @@ def process_ww3_obc(
     boundary_number_conversion = {b: i + 1 for i, b in enumerate(boundaries)}
     start_date, end_date = date_range
 
-    product_name = ww3_obc_product_name or "WW3"
-    function_name = ww3_obc_function_name or "get_ww3_placeholder_data"
-    regrid_chunk_fn = (
-        _regrid_chunk_placeholder if product_name == "WW3" else _regrid_chunk_era5
-    )
+    product_name = ww3_obc_product_name or "era5_wave_spectra"
+    function_name = ww3_obc_function_name or "get_era5_2d_spectra"
 
     obc.process_obc_conditions(
         start_date=start_date,
@@ -444,7 +379,7 @@ def process_ww3_obc(
         raw_dataset_path=raw_dir,
         regridded_dataset_path=regridded_dir,
         output_path=merged_dir,
-        regrid_chunk_fn=regrid_chunk_fn,
+        regrid_chunk_fn=_regrid_chunk_era5,
         get_step_days=get_step_days,
         regrid_step_days=regrid_step_days,
     )
@@ -469,5 +404,4 @@ def process_ww3_obc(
         merged.close()
 
     write_spec_list(output_dir, spectra_names)
-    interp = 1 if product_name == "WW3" else 2
-    write_ww3_bounc_nml(output_dir, interp=interp)
+    write_ww3_bounc_nml(output_dir, interp=2)

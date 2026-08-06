@@ -233,55 +233,27 @@ def test_write_spec_list(tmp_path):
     assert content == "a_spec.nc\nb_spec.nc\n"
 
 
-def test_process_ww3_obc(tmp_path, gen_grid_topo_vgrid):
+def test_process_ww3_obc_defaults_to_era5(tmp_path, gen_grid_topo_vgrid):
+    """No product/function passed -- process_ww3_obc must route to the real
+    ERA5 2D-spectra product, not a placeholder (there isn't one anymore)."""
     grid, topo, vgrid = gen_grid_topo_vgrid
     hgrid_path = tmp_path / "hgrid.nc"
     grid.write_supergrid(hgrid_path)
 
-    # obc.py's shared engine tracks GET/REGRID chunks at whole-day
-    # granularity (filenames and coverage checks are date-only), so -- unlike
-    # the old standalone implementation -- date_range here can't carry
-    # sub-day precision.
-    ww3.process_ww3_obc(
-        hgrid_path=str(hgrid_path),
-        inputdir=tmp_path,
-        boundaries=["west", "east"],
-        date_range=("2020-01-01", "2020-01-02"),
-    )
-
-    wave = tmp_path / "wave"
-    assert (wave / "spec.list").exists()
-    assert (wave / "ww3_bounc.nml").exists()
-    assert (wave / "ww3.point1_spec.nc").exists()
-    assert (wave / "ww3.point2_spec.nc").exists()
-
-    assert (wave / "spec.list").read_text().splitlines() == [
-        "ww3.point1_spec.nc",
-        "ww3.point2_spec.nc",
-    ]
-
-    # nearest-point mapping (no interpolation between stations), so each
-    # boundary cell's forcing traces back to exactly one station
-    nml_contents = (wave / "ww3_bounc.nml").read_text()
-    assert "BOUND%INTERP               = 1" in nml_contents
-
-    ds1 = xr.open_dataset(wave / "ww3.point1_spec.nc", decode_times=False)
-    ds2 = xr.open_dataset(wave / "ww3.point2_spec.nc", decode_times=False)
-    try:
-        # hourly, spanning the full requested run window inclusive:
-        # 2020-01-01T00:00 through 2020-01-02T00:00 = 25 points
-        assert ds1.dims["time"] == 25
-        assert ds2.dims["time"] == 25
-        # each station gets a distinct, identifiable constant value (point i:
-        # 1e-3*i) so the station a boundary cell's data came from can be
-        # checked directly, at every timestep
-        assert float(ds1["efth"].isel(time=0).max()) == pytest.approx(1e-3)
-        assert float(ds2["efth"].isel(time=0).max()) == pytest.approx(2e-3)
-        assert float(ds1["efth"].isel(time=24).max()) == pytest.approx(1e-3)
-        assert float(ds2["efth"].isel(time=24).max()) == pytest.approx(2e-3)
-    finally:
-        ds1.close()
-        ds2.close()
+    with patch(
+        "CrocoDash.extract_forcings.ww3.obc.process_obc_conditions",
+        side_effect=RuntimeError("stop-after-call"),
+    ) as mock_process:
+        with pytest.raises(RuntimeError, match="stop-after-call"):
+            ww3.process_ww3_obc(
+                hgrid_path=str(hgrid_path),
+                inputdir=tmp_path,
+                boundaries=["west"],
+                date_range=("2020-01-01", "2020-01-02"),
+            )
+    _, kwargs = mock_process.call_args
+    assert kwargs["product_name"] == "era5_wave_spectra"
+    assert kwargs["function_name"] == "get_era5_2d_spectra"
 
 
 def _make_synthetic_era5_window(n_stations=3):
@@ -381,8 +353,8 @@ class _FakeERA5Spectra(WW3ForcingProduct):
     """Test-only stand-in for era5.ERA5_WAVE_SPECTRA -- writes a synthetic
     dataset already in the real decoded ERA5 shape (see
     _make_synthetic_era5_window), instead of hitting CDS/GRIB, so
-    process_ww3_obc's real (non-placeholder) path can be exercised
-    end-to-end without network/credentials. Auto-registers on import via
+    process_ww3_obc's regrid path can be exercised end-to-end without
+    network/credentials. Auto-registers on import via
     BaseProduct.__init_subclass__, same as test_base_registry.py's
     DummyProduct/DummyForcing fixtures."""
 
@@ -438,7 +410,7 @@ class _FakeERA5Spectra(WW3ForcingProduct):
         return path
 
 
-def test_process_ww3_obc_era5_path_multi_station(tmp_path, gen_grid_topo_vgrid):
+def test_process_ww3_obc_multi_station(tmp_path, gen_grid_topo_vgrid):
     grid, topo, vgrid = gen_grid_topo_vgrid
     hgrid_path = tmp_path / "hgrid.nc"
     grid.write_supergrid(hgrid_path)
