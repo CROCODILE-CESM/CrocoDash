@@ -78,17 +78,19 @@ from CrocoDash.raw_data_access.base import *
 # cdsapi.Client() resolves its config from $CDSAPI_RC, falling back to
 # ~/.cdsapirc if unset -- on this system that default points at EWDS (used
 # by GLOFAS), not CDS proper. If the caller hasn't already scoped CDSAPI_RC
-# themselves (e.g. per-subprocess), fall back to this ERA5-specific rc file
-# instead, rather than silently hitting the wrong service (see module
-# docstring). Never read/print the key itself -- only pass the path along.
-_ERA5_CDSAPI_RC = Path("~/.cdsapirc_era5").expanduser()
+# themselves (e.g. per-subprocess), fall back to cdsapi_rc_path (see
+# get_era5_2d_spectra) instead, rather than silently hitting the wrong
+# service (see module docstring). Never read/print the key itself -- only
+# pass the path along.
+_DEFAULT_ERA5_CDSAPI_RC = "~/.cdsapirc_era5"
 
 
-def _era5_cdsapi_client():
-    if "CDSAPI_RC" in os.environ or not _ERA5_CDSAPI_RC.exists():
+def _era5_cdsapi_client(cdsapi_rc_path=_DEFAULT_ERA5_CDSAPI_RC):
+    rc_path = Path(cdsapi_rc_path).expanduser()
+    if "CDSAPI_RC" in os.environ or not rc_path.exists():
         return cdsapi.Client()
     original = os.environ.get("CDSAPI_RC")
-    os.environ["CDSAPI_RC"] = str(_ERA5_CDSAPI_RC)
+    os.environ["CDSAPI_RC"] = str(rc_path)
     try:
         return cdsapi.Client()
     finally:
@@ -307,7 +309,21 @@ class ERA5_WAVE_SPECTRA(WW3ForcingProduct):
             "(time, latitude, longitude, frequency, direction) dims. "
             "Requires a cdsapi config pointed at cds.climate.copernicus.eu "
             "with reanalysis-era5-complete access -- NOT the ~/.cdsapirc "
-            "EWDS config GLOFAS uses."
+            "EWDS config GLOFAS uses. To get a key: (1) register a free "
+            "account at cds.climate.copernicus.eu, (2) open "
+            "reanalysis-era5-complete's dataset page and accept its license "
+            "under 'Terms of use', (3) copy your UID and API key from your "
+            "CDS profile page, (4) write them to a config file (default "
+            "~/.cdsapirc_era5, overridable via the cdsapi_rc_path arg below) "
+            "in the form:\n"
+            "url: https://cds.climate.copernicus.eu/api\n"
+            "key: <UID>:<API-key>\n"
+            "If ~/.cdsapirc already points at a different CDS-family "
+            "service (e.g. EWDS, used by GLOFAS) and $CDSAPI_RC isn't set, "
+            "this falls back to cdsapi_rc_path automatically; set "
+            "cdsapi_rc_path to wherever your real CDS config actually "
+            "lives (via Case.configure_forcings's function_overrides) if "
+            "that's not ~/.cdsapirc_era5."
         ),
         type="python",
     )
@@ -321,6 +337,7 @@ class ERA5_WAVE_SPECTRA(WW3ForcingProduct):
         output_folder=Path(""),
         output_filename="era5_spectra.nc",
         variables=None,
+        cdsapi_rc_path=_DEFAULT_ERA5_CDSAPI_RC,
     ):
         """
         Downloads ERA5's true 2D wave spectra for the requested date range
@@ -340,7 +357,7 @@ class ERA5_WAVE_SPECTRA(WW3ForcingProduct):
         grib_path = output_folder / f"{Path(output_filename).stem}_raw.grib"
         nc_path = output_folder / output_filename
 
-        client = _era5_cdsapi_client()
+        client = _era5_cdsapi_client(cdsapi_rc_path)
         client.retrieve("reanalysis-era5-complete", request, grib_path)
 
         ds = decode_era5_spectra_grib(grib_path)
