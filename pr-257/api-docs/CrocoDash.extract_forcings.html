@@ -466,14 +466,17 @@ cells toward a target ice state over time – the user is separately
 extending that Fortran to read the restoring target from an external file
 (not visible in this repo yet). This module produces that file: it must
 cover the case’s regional domain plus a halo (<code class="docutils literal notranslate"><span class="pre">n_halo_cells</span></code> on every
-side, required for the restoring routine), built from a real global CICE
-restart regridded onto every point of that expanded grid, with the single
-restart snapshot copied forward across a time axis spanning the whole run
-(<code class="docutils literal notranslate"><span class="pre">CICE_RESTART.get_cice_restart_subset</span></code>’s existing behavior, reused as-is).</p>
+side, required for the restoring routine), built from a CICE-shaped forcing
+product (real global restart, or a fast synthetic stand-in – see
+<code class="docutils literal notranslate"><span class="pre">product_name</span></code>/<code class="docutils literal notranslate"><span class="pre">function_name</span></code> below) regridded onto every point of
+that expanded grid, with the product’s own time axis (a single restart
+snapshot copied forward, for <code class="docutils literal notranslate"><span class="pre">cice_restart</span></code>) carried through unchanged.</p>
 <p>Unlike MOM6/WW3’s OBC, there’s no boundary-only regrid and no date-chunking
 need (one static snapshot, no real time evolution to fetch incrementally),
 so this doesn’t route through obc.py’s shared GET-&gt;chunk-&gt;REGRID-&gt;MERGE
-engine at all.</p>
+engine at all – just resolves the requested product/function via the same
+<code class="docutils literal notranslate"><span class="pre">ProductRegistry</span></code> lookup MOM6/WW3 use (<code class="docutils literal notranslate"><span class="pre">utils.get_data_access_function</span></code>)
+instead of hardcoding a single product.</p>
 <p>The precise file/variable-naming contract the (not-yet-visible) Fortran
 restoring-file reader will expect is unverified – this produces a file
 using CICE’s own restart variable names (unchanged, since we’re only
@@ -481,14 +484,17 @@ windowing+regridding them) over the expanded grid. Revisit once that
 Fortran work is available to check against.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="CrocoDash.extract_forcings.cice.process_cice_forcing">
-<span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.cice.</span></span><span class="sig-name descname"><span class="pre">process_cice_forcing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hgrid_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputdir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date_range</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">restart_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_halo_cells</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.extract_forcings.cice.process_cice_forcing" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.cice.</span></span><span class="sig-name descname"><span class="pre">process_cice_forcing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hgrid_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputdir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date_range</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">product_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_halo_cells</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.extract_forcings.cice.process_cice_forcing" title="Link to this definition">#</a></dt>
 <dd><p>Generate CICE’s single restoring forcing file into
-&lt;inputdir&gt;/ice/cice_forcing.nc.</p>
+&lt;inputdir&gt;/sea_ice/cice_forcing.nc.</p>
 <p>Covers the case’s domain plus an <code class="docutils literal notranslate"><span class="pre">n_halo_cells</span></code>-cell halo on every
-side (grown via <code class="docutils literal notranslate"><span class="pre">SupergridBase.expand</span></code>), windowed from a real global
-CICE restart (<code class="docutils literal notranslate"><span class="pre">restart_path</span></code>/<code class="docutils literal notranslate"><span class="pre">grid_path</span></code>) and regridded onto that
-expanded grid. The output’s time axis spans <code class="docutils literal notranslate"><span class="pre">date_range</span></code> with the
-restart’s single snapshot held constant throughout.</p>
+side (grown via <code class="docutils literal notranslate"><span class="pre">SupergridBase.expand</span></code>), windowed from the requested
+CICE forcing product (<code class="docutils literal notranslate"><span class="pre">product_name</span></code>/<code class="docutils literal notranslate"><span class="pre">function_name</span></code>, resolved via
+the same <code class="docutils literal notranslate"><span class="pre">ProductRegistry</span></code> lookup MOM6/WW3 use – <code class="docutils literal notranslate"><span class="pre">restart_path</span></code>/
+<code class="docutils literal notranslate"><span class="pre">grid_path</span></code> for the real <code class="docutils literal notranslate"><span class="pre">cice_restart</span></code> product go in
+<code class="docutils literal notranslate"><span class="pre">function_args</span></code>) and regridded onto that expanded grid. The output’s
+time axis spans <code class="docutils literal notranslate"><span class="pre">date_range</span></code> with the product’s own snapshot (held
+constant throughout, for <code class="docutils literal notranslate"><span class="pre">cice_restart</span></code>) carried through.</p>
 </dd></dl>
 
 </section>

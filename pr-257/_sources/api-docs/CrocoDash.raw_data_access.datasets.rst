@@ -60,6 +60,14 @@ CrocoDash.raw\_data\_access.datasets.mom6\_output module
    :show-inheritance:
    :undoc-members:
 
+CrocoDash.raw\_data\_access.datasets.reference module
+-----------------------------------------------------
+
+.. automodule:: CrocoDash.raw_data_access.datasets.reference
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 CrocoDash.raw\_data\_access.datasets.seawifs module
 ---------------------------------------------------
 
