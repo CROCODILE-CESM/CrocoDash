@@ -35,6 +35,7 @@ class DummyForcing(MOM6ForcingProduct):
     time_units = "days since 2000-01-01"
     cf_calendar = "gregorian"
     cesm_calendar = "gregorian"
+    mom6_calendar = "gregorian"
 
     @accessmethod
     def fetch_dummy(
@@ -134,6 +135,7 @@ def test_tracer_names_check():
             time_units = "days since 2000-01-01"
             cf_calendar = "gregorian"
             cesm_calendar = "gregorian"
+            mom6_calendar = "gregorian"
 
 
 def test_write_metadata():

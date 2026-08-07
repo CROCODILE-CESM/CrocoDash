@@ -158,6 +158,7 @@ class REFERENCE_ICE(CICEForcingProduct):
     time_units = None
     cf_calendar = None
     cesm_calendar = None
+    mom6_calendar = None
     u_x_coord = "ni"
     u_y_coord = "nj"
     v_x_coord = "ni"

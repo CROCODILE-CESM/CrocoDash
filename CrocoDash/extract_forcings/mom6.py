@@ -103,7 +103,7 @@ def _regrid_obc_chunk(
             regridding_method="bilinear",
             fill_method=rm6.regridding.fill_missing_data,
             regridders=regridders,
-            calendar=dataset_varnames["cf_calendar"],
+            calendar=dataset_varnames["mom6_calendar"],
             time_units=dataset_varnames["time_units"],
             **kwargs,
         )

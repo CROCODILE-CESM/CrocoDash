@@ -115,7 +115,9 @@ def write_ww3_boundary_spectrum(file_path, lat, lon, freq, direction, efth, time
             "time": (
                 "time",
                 time_seconds,
-                {"units": time_units, "calendar": "standard"},
+                # "gregorian", not the also-CF-valid "standard" -- see
+                # raw_data_access/base.py's GREGORIAN calendar constant for why.
+                {"units": time_units, "calendar": "gregorian"},
             ),
             "frequency": ("frequency", freq, {"units": "s-1"}),
             "direction": ("direction", direction, {"units": "degree"}),

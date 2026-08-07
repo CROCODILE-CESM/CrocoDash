@@ -83,6 +83,7 @@ class CICE_RESTART(CICEForcingProduct):
     time_units = None
     cf_calendar = None
     cesm_calendar = None
+    mom6_calendar = None
     # CICE's B-grid stores velocity (uvel/vvel) and tracer-like state on the
     # same (nj, ni) index space -- no separate staggered dims like MOM6's
     # xh/xq. These are real, not placeholders.

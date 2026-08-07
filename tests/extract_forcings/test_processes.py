@@ -160,7 +160,7 @@ def test_process_cice_forcing_produces_output(
         n_halo_cells=n_halo_cells,
     )
 
-    ds = xr.open_dataset(tmp_path / "ice" / "cice_forcing.nc")
+    ds = xr.open_dataset(tmp_path / "sea_ice" / "cice_forcing.nc")
 
     assert ds.sizes["ny"] == ny + 2 * n_halo_cells
     assert ds.sizes["nx"] == nx + 2 * n_halo_cells
@@ -193,7 +193,7 @@ def test_process_cice_forcing_with_reference_ice(tmp_path, gen_grid_topo_vgrid):
         n_halo_cells=n_halo_cells,
     )
 
-    ds = xr.open_dataset(tmp_path / "ice" / "cice_forcing.nc")
+    ds = xr.open_dataset(tmp_path / "sea_ice" / "cice_forcing.nc")
 
     assert ds.sizes["ny"] == ny + 2 * n_halo_cells
     assert ds.sizes["nx"] == nx + 2 * n_halo_cells
@@ -259,7 +259,7 @@ def test_write_ww3_boundary_spectrum_default_time(tmp_path):
         assert ds["efth"].attrs["scale_factor"] == pytest.approx(1.0)
         assert ds["efth"].attrs["add_offset"] == pytest.approx(0.0)
         assert ds["time"].attrs["units"] == "seconds since 1990-01-01 00:00:00.0"
-        assert ds["time"].attrs["calendar"] == "standard"
+        assert ds["time"].attrs["calendar"] == "gregorian"
         assert float(ds["latitude"].values[0]) == pytest.approx(10.0)
         assert float(ds["longitude"].values[0]) == pytest.approx(200.0)
         # No spurious _FillValue on any coordinate (xarray adds these by

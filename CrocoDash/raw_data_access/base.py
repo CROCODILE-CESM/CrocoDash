@@ -29,14 +29,23 @@ import shutil
 
 @dataclass(frozen=True)
 class Calendar:
-    """Pairs a CF time-attribute calendar name with its corresponding CIME CALENDAR xml value, so a product can't declare one without the other."""
+    """Pairs the calendar name each downstream consumer expects, so a product can't declare one without the others.
 
-    cf: str  # CF name for dataset time attrs
-    cesm: str  # CIME CALENDAR xml value
+    cf is for xarray's own time decode/encode while reading raw data (its CF
+    convention name, e.g. "standard" for the real-world calendar). cesm is
+    the CIME CALENDAR xml value. mom6 is the literal string the regridding
+    step must stamp on output forcing files' time:calendar attribute, since
+    MOM6's get_cal_time() accepts neither cf's "standard" nor cesm's
+    upper-cased "GREGORIAN"/"NO_LEAP" -- only e.g. "gregorian"/"noleap".
+    """
+
+    cf: str
+    cesm: str
+    mom6: str
 
 
-GREGORIAN = Calendar(cf="standard", cesm="GREGORIAN")
-NOLEAP = Calendar(cf="noleap", cesm="NO_LEAP")
+GREGORIAN = Calendar(cf="standard", cesm="GREGORIAN", mom6="gregorian")
+NOLEAP = Calendar(cf="noleap", cesm="NO_LEAP", mom6="noleap")
 
 
 def accessmethod(func=None, *, description=None, type=None):
@@ -189,7 +198,7 @@ class ForcingProduct(DatedBaseProduct):
     product. Holds the metadata every such product needs regardless of
     target model: a lat/lon/variables/dates download contract, sane toy-call
     defaults for that contract's lat/lon args, and its own time-axis naming
-    (``time_var_name``/``time_units``/``cf_calendar``/``cesm_calendar``) --
+    (``time_var_name``/``time_units``/``cf_calendar``/``cesm_calendar``/``mom6_calendar``) --
     every dated forcing product has *some* time coordinate to name, even one
     (like a static restart snapshot) that leaves these unused. Velocity/
     tracer grid-point metadata is NOT here -- see
@@ -210,14 +219,16 @@ class ForcingProduct(DatedBaseProduct):
         "time_units",
         "cf_calendar",
         "cesm_calendar",
+        "mom6_calendar",
     ]
 
     def __init_subclass__(cls, **kwargs):
-        # Derive cf_calendar/cesm_calendar from a single `calendar` attr, if declared
+        # Derive cf_calendar/cesm_calendar/mom6_calendar from a single `calendar` attr, if declared
         calendar = getattr(cls, "calendar", None)
         if calendar is not None:
             cls.cf_calendar = calendar.cf
             cls.cesm_calendar = calendar.cesm
+            cls.mom6_calendar = calendar.mom6
 
         super().__init_subclass__(**kwargs)
 
