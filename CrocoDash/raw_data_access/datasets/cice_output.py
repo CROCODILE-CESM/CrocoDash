@@ -172,6 +172,13 @@ class CICE_RESTART(CICEForcingProduct):
         # source, so just copy the single snapshot forward onto every day in
         # the requested range.
         time = pd.date_range(dates[0], dates[-1], freq="D")
+        CICE_RESTART.logger.warning(
+            f"cice_restart has no real time evolution -- a single restart "
+            f"snapshot ({restart_path}) is being copied forward unchanged "
+            f"across all {len(time)} day(s) of the requested range "
+            f"({dates[0]} to {dates[-1]}). This is a stand-in until a real "
+            f"dated CICE forcing product is available."
+        )
         subset = subset.expand_dims(time=time)
 
         if preview:

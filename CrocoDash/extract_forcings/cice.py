@@ -23,6 +23,23 @@ restoring-file reader will expect is unverified -- this produces a file
 using CICE's own restart variable names (unchanged, since we're only
 windowing+regridding them) over the expanded grid. Revisit once that
 Fortran work is available to check against.
+
+Cross-checked against the CICE Consortium's own restoring implementation
+(``ice_restoring.F90``, ``ice_restoring_data_restartfiles``): that reader
+expects ``aicen``/``vicen``/``vsnon``/``trcrn`` (category-indexed, ncat=5)
+on the *same* grid as the regional domain plus the ``restart_ext`` ghost
+cells (``nx_global+2``/``ny_global+2`` -- one ring of padding, a fixed
+file-format requirement, not a physical restoring-zone choice). We don't
+enumerate those variable names -- every variable in the source restart
+passes through unfiltered (T-point and U-point alike), a superset of what
+that reader currently needs. ``n_halo_cells`` here controls the restoring
+zone's physical width, not the ``restart_ext`` padding; it happens to
+exceed the 1-cell minimum today, but nothing yet guarantees the outermost
+ring is genuine ghost padding rather than real regridded data -- revisit
+once the Fortran extension lands. ``uvel``/``vvel`` (B-grid, upper-right
+cell corner) are already plumbed through here but not yet consumed by any
+reader -- out of scope for the restoring file until the Consortium adds
+velocity restoring.
 """
 
 from pathlib import Path
@@ -36,22 +53,21 @@ from CrocoDash.extract_forcings import utils
 # CICE's B-grid stores velocity (uvel/vvel) and its own mask (iceumask) at
 # each T-cell's own NW corner -- grid.qlon/qlat, offset by one row/column
 # (T-cell (j, i)'s NW corner is qlon[j+1, i]) -- not grid.ulon/ulat (MOM6's
-# C-grid u-point, a different physical location). Everything else with
-# (nj, ni) or (ncat, nj, ni) dims (aicen/vicen/..., coszen, stressp_N/
-# stressm_N/stress12_N, ...) is genuinely T-cell-centered, confirmed by
-# inspecting the real restart file.
+# C-grid u-point, a different physical location). The EVP internal stress
+# state (stressp_N/stressm_N/stress12_N -- one field per cell corner) lives
+# at that same corner point, not the T-cell center, even though the restart
+# stores each numbered field with T-cell (nj, ni) shape -- so these regrid
+# through the corner grid too, not the T-point path. Everything else with
+# (nj, ni) or (ncat, nj, ni) dims (aicen/vicen/..., coszen, ...) is
+# genuinely T-cell-centered, confirmed by inspecting the real restart file.
 U_POINT_VARS = {"uvel", "vvel", "iceumask"}
+U_POINT_VAR_PREFIXES = ("stressp_", "stressm_", "stress12_")
 
 
-def _regrid_cice_full_grid(ds, grid):
-    """ESMF nearest-neighbor regrid of a CICE restart subset (native
-    tripole nj/ni index space) onto every T/U point of ``grid``.
+def _is_u_point_var(name):
+    return name in U_POINT_VARS or name.startswith(U_POINT_VAR_PREFIXES)
 
-    Nearest-neighbor, not bilinear: CICE's category/state fields are
-    discrete-like, so sharp ice edges shouldn't be smeared by interpolation.
-    """
-
-    def _regrid(vars_, src_lon, src_lat, tgt_lon, tgt_lat):
+def _regrid_point_group(ds, vars_, src_lon, src_lat, tgt_lon, tgt_lat):
         if not vars_:
             return xr.Dataset()
         src = ds[vars_].assign_coords(
@@ -62,21 +78,33 @@ def _regrid_cice_full_grid(ds, grid):
         )
         return regrid_dataset_via_xesmf(src, target, regridding_method="nearest_s2d")
 
+def _regrid_cice_full_grid(ds, grid):
+    """ESMF nearest-neighbor regrid of a CICE restart subset (native
+    tripole nj/ni index space) onto every T/U point of ``grid``.
+
+    Nearest-neighbor, not bilinear: CICE's category/state fields are
+    discrete-like, so sharp ice edges shouldn't be smeared by interpolation.
+    """
+
+    
+
     t_vars = [
         v
         for v in ds.data_vars
-        if v not in ("tlon", "tlat", "ulon", "ulat") and v not in U_POINT_VARS
+        if v not in ("tlon", "tlat", "ulon", "ulat") and not _is_u_point_var(v)
     ]
-    u_vars = [v for v in U_POINT_VARS if v in ds.data_vars]
+    u_vars = [v for v in ds.data_vars if _is_u_point_var(v)]
 
-    t_out = _regrid(
+    t_out = _regrid_point_group(
+        ds,
         t_vars,
         ds["tlon"].isel(time=0).values,
         ds["tlat"].isel(time=0).values,
         grid.tlon.values,
         grid.tlat.values,
     )
-    u_out = _regrid(
+    u_out = _regrid_point_group(
+        ds,
         u_vars,
         ds["ulon"].isel(time=0).values,
         ds["ulat"].isel(time=0).values,
