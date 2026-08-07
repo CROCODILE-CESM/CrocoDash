@@ -9,6 +9,7 @@ env:
   DIN_LOC_ROOT: ${{ github.workspace }}
   CIME_OUTPUT_ROOT: ${{ github.workspace }}
   USER: ${{ github.actor }}
+  CESMROOT: ${{ github.workspace }}/CESM
   CESM_REPO: CROCODILE-CESM/CESM
   CESM_REF: full_regional_cesm
   # Manual escape hatch: bump this to force a fresh CESM checkout/fleximod
