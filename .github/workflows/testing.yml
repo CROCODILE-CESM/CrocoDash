@@ -6,59 +6,57 @@ permissions:
   contents: write
 env:
   CIME_MACHINE: ubuntu-latest
-  DIN_LOC_ROOT: /workspace
-  CIME_OUTPUT_ROOT: /workspace
+  DIN_LOC_ROOT: ${{ github.workspace }}
+  CIME_OUTPUT_ROOT: ${{ github.workspace }}
   USER: ${{ github.actor }}
-  WORKDIR: /workspace
+  CESMROOT: ${{ github.workspace }}/CESM
+  CESM_REPO: CROCODILE-CESM/CESM
+  CESM_REF: full_regional_cesm
+  # Manual escape hatch: bump this to force a fresh CESM checkout/fleximod
+  # (e.g. after deliberately updating CESM_REF) without changing CESM_REF itself.
+  CESM_CACHE_VERSION: v1
 jobs:
   pytest:
     runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/crocodile-cesm/crocontainer:latest-amd64
-      credentials:
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Configure Git Identity
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
-      - name: Install GPG (for CodeCoverage)
-        run: apt-get update && apt-get install -y gnupg git bash curl gpg
       - uses: actions/checkout@v4
         with:
           submodules: recursive
           path: CrocoDash
-      - name: Check if environment.yml changed
-        id: compare
-        run: |
-          if diff $WORKDIR/CrocoDash/environment.yml $GITHUB_WORKSPACE/CrocoDash/environment.yml; then
-            echo "No changes in environment.yml"
-            echo "env_changed=false" >> $GITHUB_OUTPUT
-          else
-            echo "environment.yml changed!"
-            echo "env_changed=true" >> $GITHUB_OUTPUT
-          fi
-      - name: Copy CrocoDash into container
-        run: |
-              rm -rf $WORKDIR/CrocoDash
-              cp -r $GITHUB_WORKSPACE/CrocoDash $WORKDIR/
-      - name: Create CrocoDash environment if changed
-        if: steps.compare.outputs.env_changed == 'true'
-        run: |
-          echo "Environment changed! Rebuilding CrocoDash conda environment..."
-          conda env remove -n CrocoDash --yes
-          conda env create -f $WORKDIR/CrocoDash/environment.yml
+      - uses: mamba-org/setup-micromamba@v2
+        with:
+          environment-name: CrocoDash
+          environment-file: CrocoDash/environment.yml
+          cache-environment: true
+          cache-downloads: true
+      - name: Cache CESM checkout (post git-fleximod)
+        id: cesm-cache
+        uses: actions/cache@v4
+        with:
+          path: CESM
+          key: cesm-${{ runner.os }}-${{ env.CESM_REPO }}-${{ env.CESM_REF }}-${{ env.CESM_CACHE_VERSION }}
+          restore-keys: |
+            cesm-${{ runner.os }}-${{ env.CESM_REPO }}-
+      - name: Checkout CESM
+        if: steps.cesm-cache.outputs.cache-hit != 'true'
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.CESM_REPO }}
+          ref: ${{ env.CESM_REF }}
+          path: CESM
+      - name: Checkout CESM externals (git-fleximod)
+        if: steps.cesm-cache.outputs.cache-hit != 'true'
+        run: cd CESM && ./bin/git-fleximod update
       - name: Run Pytest
-      # Force a login bash shell to natively enable conda profile utilities
-        shell: bash -l {0}
+        shell: bash -el {0}
         run: |
           set -eo pipefail
-          cd $WORKDIR/CrocoDash
-          source /opt/conda/etc/profile.d/conda.sh
-          conda activate CrocoDash
+          cd CrocoDash
           pytest --ignore=CrocoDash/visualCaseGen --ignore=CrocoDash/rm6 -vv --tb=short --cov=CrocoDash --cov-report=xml --cov-branch --durations=10
-          cp $WORKDIR/CrocoDash/coverage.xml $GITHUB_WORKSPACE/CrocoDash
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
@@ -67,20 +65,18 @@ jobs:
          files: CrocoDash/coverage.xml
 
       - name: Run setup_case.py
-        shell: bash -l {0}
+        shell: bash -el {0}
         run: |
           set -eo pipefail
-          source /opt/conda/etc/profile.d/conda.sh
-          conda activate CrocoDash
           copernicusmarine login \
             --username ${{ secrets.GLORYS_USERNAME }} \
             --password ${{ secrets.GLORYS_PASSWORD }}
-          mkdir -p /workspace/croc_cases
-          mkdir -p /workspace/croc_input
+          mkdir -p ${{ github.workspace }}/croc_cases
+          mkdir -p ${{ github.workspace }}/croc_input
           python -u $GITHUB_WORKSPACE/CrocoDash/tests/generate_small_test_case.py \
-            --cesmroot /workspace/CESM \
-            --caseroot /workspace/croc_cases \
-            --inputdir /workspace/croc_input \
+            --cesmroot ${{ github.workspace }}/CESM \
+            --caseroot ${{ github.workspace }}/croc_cases \
+            --inputdir ${{ github.workspace }}/croc_input \
             --casename actions_case \
             --machine ubuntu-latest \
             --project PLACEHOLDER \
@@ -88,16 +84,14 @@ jobs:
 
       - name: Bundle case with crocodash bundle
         if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
-        shell: bash -l {0}
+        shell: bash -el {0}
         run: |
           set -eo pipefail
-          source /opt/conda/etc/profile.d/conda.sh
-          conda activate CrocoDash
           mkdir -p $GITHUB_WORKSPACE/bundle_output
           crocodash bundle \
-            --caseroot /workspace/croc_cases/actions_case \
+            --caseroot ${{ github.workspace }}/croc_cases/actions_case \
             --output-dir $GITHUB_WORKSPACE/bundle_output \
-            --cesmroot /workspace/CESM \
+            --cesmroot ${{ github.workspace }}/CESM \
             --machine ubuntu-latest \
             --project PLACEHOLDER
       - name: Upload bundle artifact

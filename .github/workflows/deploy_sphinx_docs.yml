@@ -1,36 +1,33 @@
 name: Deploy Sphinx Documentation
 
-on: [push, pull_request, workflow_dispatch]
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: write
   pull-requests: write
 
-env:
-  WORKDIR: /workspace
-
 jobs:
   docs:
     runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/crocodile-cesm/crocontainer:latest-amd64
     steps:
       - uses: actions/checkout@v4
         with:
             submodules: recursive
+      - uses: mamba-org/setup-micromamba@v2
+        with:
+          environment-name: CrocoDash
+          environment-file: environment.yml
+          cache-environment: true
+          cache-downloads: true
       - name: Check API docs are up to date
         # Regenerates docs/source/api-docs/ with the same invocation documented
         # in docs/source/for_developers/edit_docs.md. If anything changes, the
         # committed API docs are stale — fail the job with a helpful hint.
         run: |
-          source /opt/conda/etc/profile.d/conda.sh
-          conda activate CrocoDash
-
-          # actions/checkout inside a container can leave the workspace as an
-          # "unsafe" git repo for the runner user; mark it safe so `git diff`
-          # works.
-          git config --global --add safe.directory "$GITHUB_WORKSPACE"
-
           sphinx-apidoc \
             -o docs/source/api-docs \
             -H "CrocoDash API Docs" \
@@ -47,49 +44,15 @@ jobs:
             git --no-pager diff -- docs/source/api-docs/
             exit 1
           fi
-        shell: bash
-      - name: Check if environment.yml changed
-        id: compare
-        run: |
-          OLD_ENV="$WORKDIR/CrocoDash/environment.yml"
-          NEW_ENV="$GITHUB_WORKSPACE/environment.yml"
-
-          if [ ! -f "$OLD_ENV" ]; then
-            echo "::error::Reference environment.yml not found at $OLD_ENV — cannot determine if the CrocoDash env needs rebuilding."
-            exit 1
-          fi
-          if [ ! -f "$NEW_ENV" ]; then
-            echo "::error::Checked-out environment.yml not found at $NEW_ENV — cannot determine if the CrocoDash env needs rebuilding."
-            exit 1
-          fi
-
-          if diff "$OLD_ENV" "$NEW_ENV"; then
-            echo "No changes in environment.yml"
-            echo "env_changed=false" >> $GITHUB_OUTPUT
-          else
-            echo "environment.yml changed!"
-            echo "env_changed=true" >> $GITHUB_OUTPUT
-          fi
-      - name: Copy CrocoDash into container
-        run: |
-              rm -rf $WORKDIR/CrocoDash
-              cp -r $GITHUB_WORKSPACE $WORKDIR/CrocoDash
-      - name: Create CrocoDash environment if changed
-        if: steps.compare.outputs.env_changed == 'true'
-        run: |
-          echo "Environment changed! Rebuilding CrocoDash conda environment..."
-          conda env remove -n CrocoDash --yes
-          conda env create -f $WORKDIR/CrocoDash/environment.yml
+        shell: bash -el {0}
       - name: Sphinx build
         run: |
-          source /opt/conda/etc/profile.d/conda.sh 
-          conda activate CrocoDash
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
             sphinx-build docs/source _build/pr-${{ github.event.number }}
           else
             sphinx-build docs/source _build
           fi
-        shell: bash
+        shell: bash -el {0}
       - name: Deploy PR preview to GitHub Pages
         if: github.event_name == 'pull_request'
         uses: peaceiris/actions-gh-pages@v3
