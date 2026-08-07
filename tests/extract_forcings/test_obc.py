@@ -4,13 +4,16 @@ import xarray as xr
 from datetime import datetime
 from pathlib import Path
 
+import CrocoDash.extract_forcings.obc as obc_module
 from CrocoDash.extract_forcings.obc import (
     process_obc_conditions,
     _merge_boundary,
     _validate_coverage,
+    _ocean_bbox_for_boundary,
 )
 from CrocoDash.extract_forcings.utils import is_valid_netcdf
 from CrocoDash.grid import Grid
+from CrocoDash.topo import Topo
 
 # ---------------------------------------------------------------------------
 # Fixture: minimal config.json that process_obc_conditions can load
@@ -58,6 +61,63 @@ def obc_config(tmp_path, get_rect_grid):
         regrid_step_days=5,
     )
     return kwargs, tmp_path
+
+
+# ---------------------------------------------------------------------------
+# Regression: bathymetry_path must actually narrow the GET download bbox
+# ---------------------------------------------------------------------------
+
+
+def test_process_obc_conditions_uses_tmask_bbox_for_get(
+    obc_config, get_rect_grid, monkeypatch, tmp_path
+):
+    """bathymetry_path is only useful if the tmask-derived per-boundary bbox
+    it produces actually reaches the download call. process_obc_conditions
+    computed `boundary_bboxes` from the tmask but never passed it to
+    `_get_boundary`, which independently recomputed the *full* supergrid
+    bbox regardless of bathymetry_path -- silently making the whole feature
+    a no-op. This pins `_get_boundary` to receive the tmask-derived box, and
+    that the box is actually narrower than the full-grid one (i.e. the test
+    grid's land carving is doing something, not incidentally matching).
+    """
+    kwargs, case_tmp_path = obc_config
+    grid = get_rect_grid
+
+    # Carve land into the western half of the south edge so the south
+    # boundary's tmask-derived bbox is narrower than the full grid edge.
+    topo = Topo(grid=grid, min_depth=9.5, git=False)
+    depth = np.full((grid.ny, grid.nx), 10.0)
+    depth[0, : grid.nx // 2] = 0.0  # land: south row, western half
+    topo.send_entire_depth_change_to_tcm(
+        xr.DataArray(depth, dims=["ny", "nx"], attrs={"units": "m"})
+    )
+    bathymetry_path = tmp_path / "topo.nc"
+    topo.write_topo(bathymetry_path)
+
+    hgrid_path = Path(kwargs["hgrid_path"])
+    hgrid_ds = xr.open_dataset(hgrid_path)
+    full_south_bbox = Grid.get_bounding_boxes(hgrid_ds)["south"]
+    expected_tmask_bbox = _ocean_bbox_for_boundary(hgrid_ds, topo.tmask, "south")
+
+    # The land carving should have actually narrowed the box -- otherwise
+    # this test can't distinguish "tmask bbox used" from "full bbox used".
+    assert expected_tmask_bbox["lon_min"] > full_south_bbox["lon_min"]
+
+    captured_latlon = {}
+
+    def fake_get_boundary(boundary, latlon, **_kwargs):
+        captured_latlon[boundary] = latlon
+        return []
+
+    monkeypatch.setattr(obc_module, "_get_boundary", fake_get_boundary)
+    monkeypatch.setattr(obc_module, "_regrid_boundary", lambda **_k: [])
+    monkeypatch.setattr(obc_module, "_validate_coverage", lambda *a, **k: [])
+    monkeypatch.setattr(obc_module, "_merge_boundary", lambda *a, **k: None)
+
+    process_obc_conditions(**kwargs, bathymetry_path=bathymetry_path)
+
+    assert captured_latlon["south"] == pytest.approx(expected_tmask_bbox)
+    assert captured_latlon["south"] != pytest.approx(full_south_bbox)
 
 
 # ---------------------------------------------------------------------------

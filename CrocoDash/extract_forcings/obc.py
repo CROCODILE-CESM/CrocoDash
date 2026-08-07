@@ -196,7 +196,7 @@ def _get_boundary(
     start_date: datetime,
     end_date: datetime,
     get_step_days,
-    hgrid_path,
+    latlon: dict,
     output_dir,
     product_name: str,
     function_name: str,
@@ -207,10 +207,6 @@ def _get_boundary(
     output_dir = Path(output_dir)
 
     data_access_fn = utils.get_data_access_function(product_name, function_name)
-
-    # Get the bounding box for the specified boundary from the hgrid
-    hgrid = xr.open_dataset(hgrid_path)
-    latlon = Grid.get_bounding_boxes(hgrid)[boundary]
 
     # copernicusmarine opens S3-backed zarr and calls dask.compute() internally
     # during to_netcdf(). Without this, that compute() routes to the distributed
@@ -480,7 +476,7 @@ def process_obc_conditions(
             start_date=start_date,
             end_date=end_date,
             get_step_days=get_step_days,
-            hgrid_path=str(hgrid_path),
+            latlon=boundary_bboxes[boundary],
             output_dir=str(raw_path),
             product_name=product_name,
             function_name=function_name,
