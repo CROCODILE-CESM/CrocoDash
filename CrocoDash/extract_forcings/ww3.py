@@ -386,6 +386,7 @@ def process_ww3_obc(
         regrid_step_days=regrid_step_days,
     )
 
+    # This splits the per-boundary file into per-point file (which is what ww3_bounc actually reads) and writes the spec.list and ww3_bounc.nml that point files need to be listed in and read by.
     spectra_names = []
     for boundary in boundaries:
         seg_id = boundary_number_conversion[boundary]

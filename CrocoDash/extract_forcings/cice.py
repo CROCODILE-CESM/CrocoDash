@@ -67,16 +67,18 @@ U_POINT_VAR_PREFIXES = ("stressp_", "stressm_", "stress12_")
 def _is_u_point_var(name):
     return name in U_POINT_VARS or name.startswith(U_POINT_VAR_PREFIXES)
 
+
 def _regrid_point_group(ds, vars_, src_lon, src_lat, tgt_lon, tgt_lat):
-        if not vars_:
-            return xr.Dataset()
-        src = ds[vars_].assign_coords(
-            lon=(("nj", "ni"), src_lon), lat=(("nj", "ni"), src_lat)
-        )
-        target = xr.Dataset(
-            coords={"lon": (("ny", "nx"), tgt_lon), "lat": (("ny", "nx"), tgt_lat)}
-        )
-        return regrid_dataset_via_xesmf(src, target, regridding_method="nearest_s2d")
+    if not vars_:
+        return xr.Dataset()
+    src = ds[vars_].assign_coords(
+        lon=(("nj", "ni"), src_lon), lat=(("nj", "ni"), src_lat)
+    )
+    target = xr.Dataset(
+        coords={"lon": (("ny", "nx"), tgt_lon), "lat": (("ny", "nx"), tgt_lat)}
+    )
+    return regrid_dataset_via_xesmf(src, target, regridding_method="nearest_s2d")
+
 
 def _regrid_cice_full_grid(ds, grid):
     """ESMF nearest-neighbor regrid of a CICE restart subset (native
@@ -85,8 +87,6 @@ def _regrid_cice_full_grid(ds, grid):
     Nearest-neighbor, not bilinear: CICE's category/state fields are
     discrete-like, so sharp ice edges shouldn't be smeared by interpolation.
     """
-
-    
 
     t_vars = [
         v
