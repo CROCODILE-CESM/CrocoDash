@@ -327,6 +327,26 @@ class CaseBundle:
                 logger.info(f"Copying {config} file: {path}...")
                 shutil.copy(path, ocean_target)
 
+        # CICE/WW3 don't register their generated forcing files as `is_file`
+        # output params (they configure namelist/XML settings instead), so the
+        # loop above never picks them up. Their real files live in sibling
+        # directories to `ocean_dir` (Case._create_grid_input_files writes
+        # ocean/, sea_ice/, wave/ under the same inputdir) -- copy those over
+        # directly when the corresponding configurator is active.
+        case_inputdir = Path(ocean_dir).parent
+        for subdir_name, config_key in (("sea_ice", "cice"), ("wave", "ww3")):
+            if config_key not in self.forcing_config:
+                continue
+            src_dir = case_inputdir / subdir_name
+            if not src_dir.is_dir():
+                continue
+            dst_dir = case_subfolder / subdir_name
+            dst_dir.mkdir(parents=True, exist_ok=True)
+            for f in src_dir.iterdir():
+                if f.is_file():
+                    logger.info(f"Copying {subdir_name} file: {f}")
+                    shutil.copy(f, dst_dir)
+
         for key in ("supergrid_path", "topo_path", "vgrid_path", "esmf_mesh_path"):
             filename = self.init_args.get(key)
             if filename:
@@ -710,8 +730,8 @@ def ask_yes_no(prompt: str, default=True) -> bool:
     try:
         answer = input(f"{prompt} (yes/no): ").strip().lower()
     except EOFError:
-        print("No input available, assuming 'no'.")
-        return False
+        print(f"\nNo input detected, using default: {default!r}")
+        return default
     if answer in ("yes", "y"):
         return True
     if answer in ("no", "n"):
