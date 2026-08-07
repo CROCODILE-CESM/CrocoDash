@@ -482,6 +482,22 @@ restoring-file reader will expect is unverified – this produces a file
 using CICE’s own restart variable names (unchanged, since we’re only
 windowing+regridding them) over the expanded grid. Revisit once that
 Fortran work is available to check against.</p>
+<p>Cross-checked against the CICE Consortium’s own restoring implementation
+(<code class="docutils literal notranslate"><span class="pre">ice_restoring.F90</span></code>, <code class="docutils literal notranslate"><span class="pre">ice_restoring_data_restartfiles</span></code>): that reader
+expects <code class="docutils literal notranslate"><span class="pre">aicen</span></code>/<code class="docutils literal notranslate"><span class="pre">vicen</span></code>/<code class="docutils literal notranslate"><span class="pre">vsnon</span></code>/<code class="docutils literal notranslate"><span class="pre">trcrn</span></code> (category-indexed, ncat=5)
+on the <em>same</em> grid as the regional domain plus the <code class="docutils literal notranslate"><span class="pre">restart_ext</span></code> ghost
+cells (<code class="docutils literal notranslate"><span class="pre">nx_global+2</span></code>/<code class="docutils literal notranslate"><span class="pre">ny_global+2</span></code> – one ring of padding, a fixed
+file-format requirement, not a physical restoring-zone choice). We don’t
+enumerate those variable names – every variable in the source restart
+passes through unfiltered (T-point and U-point alike), a superset of what
+that reader currently needs. <code class="docutils literal notranslate"><span class="pre">n_halo_cells</span></code> here controls the restoring
+zone’s physical width, not the <code class="docutils literal notranslate"><span class="pre">restart_ext</span></code> padding; it happens to
+exceed the 1-cell minimum today, but nothing yet guarantees the outermost
+ring is genuine ghost padding rather than real regridded data – revisit
+once the Fortran extension lands. <code class="docutils literal notranslate"><span class="pre">uvel</span></code>/<code class="docutils literal notranslate"><span class="pre">vvel</span></code> (B-grid, upper-right
+cell corner) are already plumbed through here but not yet consumed by any
+reader – out of scope for the restoring file until the Consortium adds
+velocity restoring.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="CrocoDash.extract_forcings.cice.process_cice_forcing">
 <span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.cice.</span></span><span class="sig-name descname"><span class="pre">process_cice_forcing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hgrid_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputdir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date_range</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">product_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_halo_cells</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.extract_forcings.cice.process_cice_forcing" title="Link to this definition">#</a></dt>
