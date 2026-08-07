@@ -3,82 +3,7 @@ import json
 import sys
 from pathlib import Path
 
-
-def _create(args):
-    from CrocoDash.recipe import load_config, create_case_from_yaml
-
-    config = load_config(args.config)
-    create_case_from_yaml(config, override=args.override)
-
-
-def _dump(args):
-    from CrocoDash.recipe import case_to_yaml
-    import yaml
-
-    config = case_to_yaml(args.caseroot)
-    yaml.dump(config, sys.stdout, default_flow_style=False, sort_keys=False)
-
-
-def _process(args):
-    from CrocoDash import case_state
-    from CrocoDash.extract_forcings.driver import run_workflow, resolve_components
-
-    if args.config:
-        config_path = Path(args.config)
-    elif args.caseroot:
-        caseroot = Path(args.caseroot)
-        state = case_state.read(caseroot)
-        config_path = Path(state["inputdir"]) / "extract_forcings" / "config.json"
-        if not config_path.exists():
-            raise FileNotFoundError(
-                f"Forcing configuration not found at {config_path}\n"
-                "Run case.configure_forcings() before calling 'crocodash process'."
-            )
-    elif (Path.cwd() / "config.json").exists():
-        # Ran directly from inside the extract_forcings/ directory
-        config_path = Path.cwd() / "config.json"
-    else:
-        raise FileNotFoundError(
-            "No config.json found in the current directory and no --config or --caseroot provided.\n"
-            "Run from inside an extract_forcings/ directory, or pass --caseroot <path> or --config <path>."
-        )
-
-    with open(config_path) as f:
-        config = json.load(f)
-
-    args = resolve_components(args, config)
-
-    if not any(
-        [
-            args.ic,
-            args.bc,
-            args.bgcic,
-            args.bgcironforcing,
-            args.tides,
-            args.chl,
-            args.runoff,
-            args.bgcrivernutrients,
-        ]
-    ):
-        args.subparser.print_help()
-        return
-
-    run_workflow(
-        config_path=config_path,
-        ic=args.ic,
-        bc=args.bc,
-        bgcic=args.bgcic,
-        bgcironforcing=args.bgcironforcing,
-        tides=args.tides,
-        chl_=args.chl,
-        runoff=args.runoff,
-        bgcrivernutrients=args.bgcrivernutrients,
-        preview=config["conditions"]["outputs"].get("preview", False),
-    )
-
-
-import sys
-from pathlib import Path
+DEFAULT_TEMPLATE_NOTEBOOK_ID = "crocodash.tutorials.crocodash_tutorial"
 
 
 def _create(args):
@@ -181,26 +106,50 @@ def _duplicate_case(args):
 
 def _template(args):
     from pathlib import Path
-    from crocogallery import get_notebook_path, inject_into_text, load_paths
+    from crocogallery import (
+        get_notebook_path,
+        list_notebooks,
+        inject_into_text,
+        load_paths,
+    )
+
+    if args.list_notebooks:
+        for nb_id in sorted(list_notebooks()):
+            print(nb_id)
+        return
+
+    if not args.output:
+        args.subparser.error("--output is required unless --list-notebooks is given.")
 
     output = Path(args.output)
     notebook_id = args.notebook
+    output.parent.mkdir(parents=True, exist_ok=True)
 
-    if args.kind == "pbs":
-        # PBS submission script lives alongside the default tutorial notebook
-        pbs_path = get_notebook_path(notebook_id).parent / "submit_forcings.pbs"
-        template_text = pbs_path.read_text()
-        if args.machine:
-            template_text = inject_into_text(template_text, load_paths(args.machine))
-        output.write_text(template_text)
-        output.chmod(output.stat().st_mode | 0o111)
-    elif output.suffix in (".yaml", ".yml"):
-        # YAML starter lives alongside the default tutorial notebook
-        yaml_path = get_notebook_path(notebook_id).parent / "starter_case.yaml"
-        template_text = yaml_path.read_text()
-        if args.machine:
-            template_text = inject_into_text(template_text, load_paths(args.machine))
-        output.write_text(template_text)
+    if args.kind == "pbs" or output.suffix in (".yaml", ".yml"):
+        # The PBS script and YAML starter only live alongside the default
+        # tutorial notebook, not every gallery notebook -- --notebook only
+        # matters for the .ipynb/.py branch below.
+        if notebook_id != DEFAULT_TEMPLATE_NOTEBOOK_ID:
+            print(
+                f"[info] --notebook is ignored for --kind={args.kind!r} output "
+                f"{output.suffix!r}; using the default tutorial's template."
+            )
+        source_dir = get_notebook_path(DEFAULT_TEMPLATE_NOTEBOOK_ID).parent
+        if args.kind == "pbs":
+            template_text = (source_dir / "submit_forcings.pbs").read_text()
+            if args.machine:
+                template_text = inject_into_text(
+                    template_text, load_paths(args.machine)
+                )
+            output.write_text(template_text)
+            output.chmod(output.stat().st_mode | 0o111)
+        else:
+            template_text = (source_dir / "starter_case.yaml").read_text()
+            if args.machine:
+                template_text = inject_into_text(
+                    template_text, load_paths(args.machine)
+                )
+            output.write_text(template_text)
     else:
         import nbformat
 
@@ -213,9 +162,16 @@ def _template(args):
                     cell.source = inject_into_text(cell.source, paths)
             nbformat.write(nb, output)
         else:
-            code_cells = [cell.source for cell in nb.cells if cell.cell_type == "code"]
-            text = "# %%\n" + "\n\n# %%\n".join(code_cells)
-            output.write_text(inject_into_text(text, paths))
+            blocks = []
+            for cell in nb.cells:
+                if cell.cell_type == "code":
+                    blocks.append("# %%\n" + inject_into_text(cell.source, paths))
+                elif cell.cell_type == "markdown":
+                    commented = "\n".join(
+                        f"# {line}" if line else "#" for line in cell.source.split("\n")
+                    )
+                    blocks.append("# %% [markdown]\n" + commented)
+            output.write_text("\n\n".join(blocks))
 
     print(f"Template written to: {output}")
     if not args.machine:
@@ -413,8 +369,8 @@ def main():
     )
     template_parser.add_argument(
         "--output",
-        required=True,
-        help="Output path. For --kind case: .yaml, .ipynb, or .py. For --kind pbs: any path (e.g. submit_forcings.pbs).",
+        default=None,
+        help="Output path. For --kind case: .yaml, .ipynb, or .py. For --kind pbs: any path (e.g. submit_forcings.pbs). Required unless --list-notebooks is given.",
     )
     template_parser.add_argument(
         "--machine",
@@ -423,15 +379,32 @@ def main():
     )
     template_parser.add_argument(
         "--notebook",
-        default="crocodash.tutorials.crocodash_tutorial",
+        default=DEFAULT_TEMPLATE_NOTEBOOK_ID,
         help=(
             "Gallery notebook ID to use as the template source "
-            "(default: crocodash.tutorials.crocodash_tutorial). "
-            "Run `python -c 'from crocogallery import list_notebooks; print(*list_notebooks(), sep=\"\\n\")'` "
-            "to see all available IDs."
+            f"(default: {DEFAULT_TEMPLATE_NOTEBOOK_ID}). "
+            "Pass --list-notebooks to see all available IDs."
         ),
     )
-    template_parser.set_defaults(func=_template)
+    template_parser.add_argument(
+        "--list-notebooks",
+        action="store_true",
+        default=False,
+        dest="list_notebooks",
+        help="Print all available gallery notebook IDs and exit.",
+    )
+    template_parser.set_defaults(func=_template, subparser=template_parser)
 
     args = parser.parse_args()
-    args.func(args)
+    try:
+        args.func(args)
+    except KeyError as e:
+        # KeyError.__str__ reprs its (possibly multi-line) argument, which
+        # turns embedded newlines into literal "\n" -- print the original
+        # message instead so multi-line "available options" listings stay
+        # readable, then exit cleanly instead of a raw traceback.
+        print(e.args[0] if e.args else str(e), file=sys.stderr)
+        sys.exit(1)
+    except FileNotFoundError as e:
+        print(str(e), file=sys.stderr)
+        sys.exit(1)

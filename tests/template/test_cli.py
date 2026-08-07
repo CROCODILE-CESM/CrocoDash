@@ -133,16 +133,20 @@ def test_template_kind_case_ignores_pbs_suffix(tmp_path):
 # --- error handling ---
 
 
-def test_template_unknown_machine(tmp_path):
+def test_template_unknown_machine(tmp_path, capsys):
     output = tmp_path / "out.ipynb"
-    with pytest.raises(KeyError, match="Unknown machine 'bogus'"):
+    with pytest.raises(SystemExit) as exc_info:
         run_main(["template", "--output", str(output), "--machine", "bogus"])
+    assert exc_info.value.code == 1
+    assert "Unknown machine 'bogus'" in capsys.readouterr().err
 
 
-def test_template_yaml_unknown_machine(tmp_path):
+def test_template_yaml_unknown_machine(tmp_path, capsys):
     output = tmp_path / "out.yaml"
-    with pytest.raises(KeyError, match="Unknown machine 'bogus'"):
+    with pytest.raises(SystemExit) as exc_info:
         run_main(["template", "--output", str(output), "--machine", "bogus"])
+    assert exc_info.value.code == 1
+    assert "Unknown machine 'bogus'" in capsys.readouterr().err
 
 
 # --- --notebook flag ---
@@ -151,13 +155,18 @@ def test_template_yaml_unknown_machine(tmp_path):
 def test_template_custom_notebook(tmp_path):
     """Any gallery notebook can be used as the template source."""
     notebooks = list_notebooks()
-    # pick a notebook other than the default
+    # pick a notebook other than the default -- list_notebooks() only ever
+    # returns .ipynb paths, so no suffix filter is needed here
     alt_id = next(
-        nid
-        for nid in sorted(notebooks)
-        if nid != "crocodash.tutorials.crocodash_tutorial"
-        and notebooks[nid].suffix == ".ipynb"
+        (
+            nid
+            for nid in sorted(notebooks)
+            if nid != "crocodash.tutorials.crocodash_tutorial"
+        ),
+        None,
     )
+    if alt_id is None:
+        pytest.skip("Gallery has no notebook other than the default tutorial.")
     output = tmp_path / "out.ipynb"
     run_main(["template", "--output", str(output), "--notebook", alt_id])
     assert output.exists()
@@ -165,9 +174,55 @@ def test_template_custom_notebook(tmp_path):
     assert len(nb.cells) > 0
 
 
-def test_template_unknown_notebook(tmp_path):
+def test_template_unknown_notebook(tmp_path, capsys):
     output = tmp_path / "out.ipynb"
-    with pytest.raises(KeyError, match="Unknown notebook"):
+    with pytest.raises(SystemExit) as exc_info:
         run_main(
             ["template", "--output", str(output), "--notebook", "no.such.notebook"]
         )
+    assert exc_info.value.code == 1
+    assert "Unknown notebook" in capsys.readouterr().err
+
+
+def test_template_list_notebooks(capsys):
+    run_main(["template", "--list-notebooks"])
+    out = capsys.readouterr().out
+    assert "crocodash.tutorials.crocodash_tutorial" in out
+
+
+def test_template_missing_output_without_list_notebooks(tmp_path):
+    with pytest.raises(SystemExit) as exc_info:
+        run_main(["template"])
+    assert exc_info.value.code == 2
+
+
+def test_template_creates_missing_output_parent_dir(tmp_path):
+    output = tmp_path / "nested" / "dir" / "out.ipynb"
+    run_main(["template", "--output", str(output)])
+    assert output.exists()
+
+
+def test_template_python_preserves_markdown_cells(tmp_path):
+    output = tmp_path / "out.py"
+    run_main(["template", "--output", str(output)])
+    text = output.read_text()
+    assert (
+        "# %% [markdown]" in text
+    ), "Markdown cells should be preserved as jupytext blocks"
+
+
+def test_template_yaml_ignores_custom_notebook(tmp_path, capsys):
+    """starter_case.yaml only lives next to the default tutorial notebook --
+    a non-default --notebook must not error, just be ignored with a notice."""
+    output = tmp_path / "out.yaml"
+    run_main(
+        [
+            "template",
+            "--output",
+            str(output),
+            "--notebook",
+            "crocodash.features.add_chl",
+        ]
+    )
+    assert output.exists()
+    assert "ignored" in capsys.readouterr().out
