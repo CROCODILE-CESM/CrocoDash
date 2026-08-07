@@ -100,7 +100,7 @@ def process_cice_forcing(
 ):
     """
     Generate CICE's single restoring forcing file into
-    <inputdir>/ice/cice_forcing.nc.
+    <inputdir>/sea_ice/cice_forcing.nc.
 
     Covers the case's domain plus an ``n_halo_cells``-cell halo on every
     side (grown via ``SupergridBase.expand``), windowed from the requested
@@ -119,7 +119,7 @@ def process_cice_forcing(
 
     raw_dir = Path(inputdir) / "extract_forcings" / "cice" / "raw_data"
     raw_dir.mkdir(parents=True, exist_ok=True)
-    output_dir = Path(inputdir) / "ice"
+    output_dir = Path(inputdir) / "sea_ice"
     output_dir.mkdir(parents=True, exist_ok=True)
 
     product_name = product_name or "cice_restart"

@@ -337,7 +337,7 @@ class Case:
         # files into one shared directory got unwieldy fast.
         ocean = inputdir / "ocean"
         ocean.mkdir()
-        ice = inputdir / "ice"
+        ice = inputdir / "sea_ice"
         ice.mkdir()
         wave = inputdir / "wave"
         wave.mkdir()

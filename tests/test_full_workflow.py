@@ -38,7 +38,7 @@ def test_full_case_workflow_with_reference_products(CrocoDash_case_factory, tmp_
         finally:
             ds.close()
 
-    cice_file = case.inputdir / "ice" / "cice_forcing.nc"
+    cice_file = case.inputdir / "sea_ice" / "cice_forcing.nc"
     assert cice_file.exists()
     ds = xr.open_dataset(cice_file)
     try:

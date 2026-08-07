@@ -53,7 +53,7 @@ def test_case_init_and_create_grid_input(get_CrocoDash_case):
     if "CICE" in case.compset_lname:
         files = [
             f
-            for f in os.listdir(case.inputdir / "ice")
+            for f in os.listdir(case.inputdir / "sea_ice")
             if f.startswith(f"cice_grid_{case.ocn_grid.name}")
         ]
         assert len(files) > 0
