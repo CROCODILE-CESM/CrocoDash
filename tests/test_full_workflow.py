@@ -1,7 +1,7 @@
 """End-to-end Case.configure_forcings()/process_forcings() across all three
 engines (MOM6 + CICE + WW3) at once, driven entirely by the fast synthetic
 reference_ocean/reference_ice/reference_waves products -- no network or
-/glade-only real-data dependency, so this runs as a normal (non-slow,
+file system real-data dependency, so this runs as a normal (non-slow,
 non-glade-gated) test everywhere a real CESMROOT is available (see
 CrocoDash_case_factory).
 """
