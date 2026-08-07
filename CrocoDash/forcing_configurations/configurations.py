@@ -4,7 +4,7 @@ from datetime import datetime
 from ProConPy.config_var import ConfigVar, cvars
 from mom6_forge import mapping
 from CrocoDash.raw_data_access.registry import ProductRegistry
-from CrocoDash.raw_data_access.base import ForcingProduct
+from CrocoDash.raw_data_access.base import ForcingProduct, CICEForcingProduct
 
 
 def register(cls):
@@ -161,28 +161,194 @@ class BGCConfigurator(BaseConfigurator):
 
 
 @register
+class WW3Configurator(BaseConfigurator):
+    name = "WW3"
+    required_for_compsets = ["WW3"]
+    allowed_compsets = ["WW3"]
+    input_params = [
+        InputValueParam("case_inputdir", comment="Case input directory"),
+        InputValueParam(
+            "boundaries",
+            comment="Open boundary sides to generate WW3 spectra for (e.g., ['N', 'S', 'E', 'W'])",
+        ),
+        InputValueParam(
+            "ww3_obc_product_name",
+            comment=(
+                "Name of the WW3 OBC input data product, mirroring "
+                "Case.configure_forcings's product_name/function_name pattern for "
+                "the main IC/OBC product. Defaults (None) to the real ERA5 "
+                "2D-spectra product ('era5_wave_spectra', "
+                "raw_data_access/datasets/era5.py) -- requires a separate "
+                "cds.climate.copernicus.eu API key not assumed to exist by default. "
+                "Pass a different product name to source boundary spectra some "
+                "other way instead."
+            ),
+        ),
+        InputValueParam(
+            "ww3_obc_function_name",
+            comment=(
+                "Name of the raw_data_access function to call for downloading the "
+                "WW3 OBC data product. Defaults (None) to 'get_era5_2d_spectra'. "
+                "See ww3_obc_product_name."
+            ),
+        ),
+        InputValueParam("case_is_non_local", comment="Case is non-local"),
+        InputValueParam(
+            "get_step_days",
+            comment=(
+                "Chunk the GET step by this many days per request (e.g. 1 for "
+                "one CDS request per day per boundary). Defaults (None) to one "
+                "request spanning the whole date_range. Useful for real "
+                "products with slow/rate-limited APIs (e.g. ERA5 2D spectra via "
+                "CDS): smaller requests turn around faster and let a resumed "
+                "run pick up wherever an earlier one left off, since the GET "
+                "step skips any per-chunk file that already exists on disk."
+            ),
+        ),
+        InputValueParam(
+            "regrid_step_days",
+            comment="Chunk the REGRID step by this many days per request. See get_step_days.",
+        ),
+    ]
+    output_params = [
+        XMLConfigParam(
+            "WW3_GRID_INP_DIR",
+            comment="Directory containing WW3 grid input files",
+        ),
+        XMLConfigParam(
+            "HIST_OPTION",
+            comment="CPl History outputs Wave Data",
+        ),
+        XMLConfigParam(
+            "HIST_N",
+            comment="CPl History outputs Wave Data",
+        ),
+    ]
+
+    def __init__(
+        self,
+        case_inputdir,
+        boundaries,
+        case_is_non_local,
+        ww3_obc_product_name=None,
+        ww3_obc_function_name=None,
+        get_step_days=None,
+        regrid_step_days=None,
+    ):
+        super().__init__(
+            case_inputdir=case_inputdir,
+            boundaries=boundaries,
+            case_is_non_local=case_is_non_local,
+            ww3_obc_product_name=ww3_obc_product_name,
+            ww3_obc_function_name=ww3_obc_function_name,
+            get_step_days=get_step_days,
+            regrid_step_days=regrid_step_days,
+        )
+
+    def configure(self):
+        is_non_local = self.get_input_param("case_is_non_local")
+        self.set_output_param(
+            "WW3_GRID_INP_DIR",
+            str(Path(self.get_input_param("case_inputdir")) / "wave"),
+            is_non_local=is_non_local,
+        )
+        self.set_output_param("HIST_OPTION", "nhours", is_non_local=is_non_local)
+        self.set_output_param("HIST_N", "1", is_non_local=is_non_local)
+        super().configure()
+
+
+@register
 class CICEConfigurator(BaseConfigurator):
     name = "CICE"
     required_for_compsets = ["CICE"]
     allowed_compsets = ["CICE"]
-    input_params = []
+    input_params = [
+        InputValueParam(
+            "cice_product_name",
+            comment=(
+                "Name of the CICE forcing data product, mirroring "
+                "Case.configure_forcings's product_name/function_name pattern for "
+                "the main MOM6 IC/OBC product. Defaults (None) to the real global "
+                "restart product ('cice_restart', "
+                "raw_data_access/datasets/cice_output.py), which requires a real "
+                "restart_path/grid_path (see cice_function_args). Pass a "
+                "different product name (e.g. 'reference_ice') to source CICE's "
+                "forcing some other way instead."
+            ),
+        ),
+        InputValueParam(
+            "cice_function_name",
+            comment=(
+                "Name of the raw_data_access function to call for the CICE "
+                "forcing product. Defaults (None) to 'get_cice_restart_subset'. "
+                "See cice_product_name."
+            ),
+        ),
+        InputValueParam(
+            "cice_function_args",
+            comment=(
+                "Extra kwargs the chosen product's access function needs (e.g. "
+                "restart_path/grid_path for 'cice_restart'; none for "
+                "'reference_ice')."
+            ),
+        ),
+        InputValueParam(
+            "n_halo_cells",
+            comment="Halo width (T-cells per side) for CICE's restoring forcing",
+        ),
+    ]
     output_params = [
         UserNLConfigParam("ice_ic", user_nl_name="cice"),
         UserNLConfigParam("ns_boundary_type", user_nl_name="cice"),
         UserNLConfigParam("ew_boundary_type", user_nl_name="cice"),
         UserNLConfigParam("close_boundaries", user_nl_name="cice"),
+        UserNLConfigParam("advect", user_nl_name="cice"),
+        UserNLConfigParam("restore_ice", user_nl_name="cice"),
+        UserNLConfigParam("trestore", user_nl_name="cice"),
     ]
 
     def __init__(
         self,
+        cice_product_name=None,
+        cice_function_name=None,
+        cice_function_args=None,
+        n_halo_cells=2,
     ):
-        super().__init__()
+        super().__init__(
+            cice_product_name=cice_product_name,
+            cice_function_name=cice_function_name,
+            cice_function_args=cice_function_args or {},
+            n_halo_cells=n_halo_cells,
+        )
+
+    def validate_args(self, **kwargs):
+        super().validate_args(**kwargs)
+
+        product_name = kwargs["cice_product_name"]
+        if product_name:
+            ProductRegistry.load()
+            if not (
+                ProductRegistry.product_exists(product_name)
+                and ProductRegistry.product_is_of_type(product_name, CICEForcingProduct)
+            ):
+                raise ValueError(
+                    f"CICE product '{product_name}' is not a registered CICEForcingProduct."
+                )
 
     def configure(self):
-        self.set_output_param("ice_ic", "'UNSET'")
-        self.set_output_param("ns_boundary_type", "'open'")
-        self.set_output_param("ew_boundary_type", "'cyclic'")
+        self.set_output_param("ice_ic", "'default'")
+        self.set_output_param("ns_boundary_type", "'zero_gradient'")
+        self.set_output_param("ew_boundary_type", "'zero_gradient'")
         self.set_output_param("close_boundaries", ".false.")
+        self.set_output_param("advect", "'upwind'")
+        # Enables restoring toward the domain+halo forcing file generated by
+        # cice.process_cice_forcing (see extract_forcings/cice.py) at CICE's
+        # own documented default timescale. The file/variable contract the
+        # not-yet-merged CICE restoring-file reader will expect is
+        # unverified (see cice.py's module docstring), so the generated
+        # file's path isn't wired to a namelist parameter here yet.
+        self.set_output_param("restore_ice", ".true.")
+        self.set_output_param("trestore", 90)
         super().configure()
 
 

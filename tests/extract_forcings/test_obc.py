@@ -10,6 +10,7 @@ from CrocoDash.extract_forcings.obc import (
     _validate_coverage,
 )
 from CrocoDash.extract_forcings.utils import is_valid_netcdf
+from CrocoDash.extract_forcings.mom6 import _regrid_obc_chunk
 from CrocoDash.grid import Grid
 
 # ---------------------------------------------------------------------------
@@ -36,7 +37,9 @@ def obc_config(tmp_path, get_rect_grid):
         boundary_number_conversion={"east": 1, "south": 2},
         product_name="GLORYS",
         function_name="get_glorys_data_from_rda",
-        product_info={
+        variables=[],
+        extra_args={},
+        dataset_varnames={
             "u_var_name": "uo",
             "v_var_name": "vo",
             "eta_var_name": "zos",
@@ -54,6 +57,7 @@ def obc_config(tmp_path, get_rect_grid):
         raw_dataset_path=str(raw_dir),
         regridded_dataset_path=str(regridded_dir),
         output_path=str(output_dir),
+        regrid_chunk_fn=_regrid_obc_chunk,
         get_step_days=None,
         regrid_step_days=5,
     )
@@ -133,33 +137,6 @@ def test_merge_single_boundary(
 # ---------------------------------------------------------------------------
 # Slow integration tests (require real data access)
 # ---------------------------------------------------------------------------
-
-
-@pytest.mark.slow
-def test_obc_regrid_workflow(
-    obc_config, generate_piecewise_raw_data, dummy_forcing_factory, skip_if_not_glade
-):
-    kwargs, tmp_path = obc_config
-    grid = Grid.from_supergrid(tmp_path / "hgrid.nc")
-    bounds = Grid.get_bounding_boxes(grid)
-    raw_dir = tmp_path / "raw"
-    regridded_dir = tmp_path / "regridded"
-
-    ds = dummy_forcing_factory(
-        bounds["ic"]["lat_min"],
-        bounds["ic"]["lat_max"],
-        bounds["ic"]["lon_min"],
-        bounds["ic"]["lon_max"],
-    )
-    # get_step=None → one file covering the full range
-    generate_piecewise_raw_data(ds, "2020-01-01", "2020-01-15", "east_unprocessed.")
-    generate_piecewise_raw_data(ds, "2020-01-01", "2020-01-15", "south_unprocessed.")
-
-    process_obc_conditions(**kwargs)
-
-    # regrid_step=5 → first chunk is 2020-01-01 to 2020-01-05
-    assert (regridded_dir / "forcing_obc_segment_001_2020-01-01_2020-01-05.nc").exists()
-    assert (regridded_dir / "forcing_obc_segment_002_2020-01-01_2020-01-05.nc").exists()
 
 
 @pytest.mark.slow

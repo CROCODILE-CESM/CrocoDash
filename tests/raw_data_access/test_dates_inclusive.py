@@ -30,13 +30,32 @@ KNOWN_INCLUSIVE_WITHOUT_HELPER = {
     ("glorys", "get_glorys_data_from_rda"),
     ("glofas", "get_global_data_with_python"),
     ("mom6_output", "get_mom6_data"),
+    # Same reparse-via-pd.date_range(freq="D") reasoning as above -- a
+    # restart has no real time series, so `dates` just drives how many whole
+    # days its single snapshot gets copied forward onto.
+    ("cice_restart", "get_cice_restart_subset"),
     # `dates` is an unused placeholder — downloads one fixed pre-processed
     # file via a static URL, no date-based filtering happens at all.
     ("glofas", "get_processed_global_glofas_script_for_cli"),
+    # Reparses `dates` into whole-day "YYYY-MM-DD" MARS date-range strings
+    # (time-of-day is dropped) combined with an explicit "00/to/23/by/1"
+    # hourly `time` key covering every hour of every requested day — whole-
+    # day inclusive by construction, same reasoning as GLORYS's RDA path.
+    ("era5_wave_spectra", "get_era5_2d_spectra"),
     # Test fixtures from test_base_registry.py — placeholder data, not real
     # date handling.
     ("dummy", "dummy_method"),
     ("dummy_forcing", "fetch_dummy"),
+    # Test fixture from test_processes.py — synthetic ERA5-shaped data, not
+    # real date handling.
+    ("test_fake_era5_spectra", "get_fake_spectra"),
+    # Reparse `dates` via pd.date_range (freq="D"/"6h"), which is whole-day
+    # inclusive regardless of time-of-day — same reasoning as glorys/
+    # cice_restart above. Pure in-memory synthetic generation, not a real API
+    # call, so there's no end_datetime cutoff to normalize.
+    ("reference_ocean", "get_reference_ocean_data"),
+    ("reference_ice", "get_reference_ice_data"),
+    ("reference_waves", "get_reference_wave_spectra"),
 }
 
 

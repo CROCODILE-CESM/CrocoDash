@@ -2,20 +2,19 @@
 """
 CESM Regional Ocean Case Setup Script
 
-Configures and runs a MOM6 regional ocean case using CrocoDash,
-including grid definition, topography, vertical grid, and CESM case setup.
+Configures and runs a MOM6 regional ocean case via the `crocodash` CLI
+(create --configure-only, then process --all), staging pre-fetched test
+GEBCO/GLORYS data in between so this can run in CI without live data-access
+credentials.
 """
 
 import argparse
 import os
 import sys
+import tempfile
 from pathlib import Path
 import subprocess
-from CrocoDash.grid import Grid
-from CrocoDash.topo import Topo
-from CrocoDash.vgrid import VGrid
-from CrocoDash.case import Case
-from CrocoDash.raw_data_access.datasets.gebco import GEBCO
+import yaml
 
 
 def parse_args() -> argparse.Namespace:
@@ -195,77 +194,79 @@ def get_bathymetry(args: argparse.Namespace) -> Path:
     return bathy
 
 
+def build_case_config(args: argparse.Namespace, bathymetry_path: Path) -> dict:
+    """Assemble the recipe.py-schema config dict for this case from parsed args."""
+    return {
+        "grid": {
+            "resolution": args.resolution,
+            "xstart": args.xstart,
+            "lenx": args.lenx,
+            "ystart": args.ystart,
+            "leny": args.leny,
+            "name": args.name,
+        },
+        "topo": {
+            "min_depth": args.min_depth,
+            "source": {
+                "type": "dataset",
+                "bathymetry_path": str(bathymetry_path.resolve()),
+                "longitude_coordinate_name": args.lon_coord,
+                "latitude_coordinate_name": args.lat_coord,
+                "vertical_coordinate_name": args.elev_coord,
+            },
+        },
+        "vgrid": {
+            "type": "hyperbolic",
+            "nk": args.nk,
+            "ratio": args.vgrid_ratio,
+            # depth omitted: build_vgrid() derives it from topo.max_depth.
+        },
+        "case": {
+            "cesmroot": str(args.cesmroot),
+            "caseroot": str(Path(args.caseroot) / args.casename),
+            "inputdir": str(Path(args.inputdir) / args.casename),
+            "compset": args.compset,
+            "atm_grid_name": args.atm_grid_name,
+            "machine": args.machine,
+            "project": args.project,
+        },
+        "forcings": {
+            "date_range": [args.date_start, args.date_end],
+            "function_name": args.forcing_fn,
+        },
+    }
+
+
 def main() -> None:
     args = parse_args()
     args = resolve_paths(args)
-
-    # ------------------------------------------------------------------ #
-    # Grid
-    # ------------------------------------------------------------------ #
-    print(f"\n[1/5] Building horizontal grid '{args.name}' …")
-    grid = Grid(
-        resolution=args.resolution,
-        xstart=args.xstart,
-        lenx=args.lenx,
-        ystart=args.ystart,
-        leny=args.leny,
-        name=args.name,
-    )
-
-    # ------------------------------------------------------------------ #
-    # Topography
-    # ------------------------------------------------------------------ #
-    print("[2/5] Setting up topography …")
-    topo = Topo(grid=grid, min_depth=args.min_depth)
-    bathymetry_path = get_bathymetry(args)
-    topo.set_from_dataset(
-        bathymetry_path=bathymetry_path,
-        longitude_coordinate_name=args.lon_coord,
-        latitude_coordinate_name=args.lat_coord,
-        vertical_coordinate_name=args.elev_coord,
-    )
-
-    # ------------------------------------------------------------------ #
-    # Vertical grid
-    # ------------------------------------------------------------------ #
-    print("[3/5] Building vertical grid …")
-    vgrid = VGrid.hyperbolic(
-        nk=args.nk,
-        depth=topo.max_depth,
-        ratio=args.vgrid_ratio,
-    )
-
-    # ------------------------------------------------------------------ #
-    # CESM case
-    # ------------------------------------------------------------------ #
-    print(f"[4/5] Creating CESM case '{args.casename}' …")
     os.environ["CIME_MACHINE"] = args.machine
-    case = Case(
-        cesmroot=args.cesmroot,
-        caseroot=Path(args.caseroot) / args.casename,
-        inputdir=Path(args.inputdir) / args.casename,
-        ocn_grid=grid,
-        ocn_vgrid=vgrid,
-        ocn_topo=topo,
-        project=args.project,
-        override=args.override,
-        machine=args.machine,
-        compset=args.compset,
-        atm_grid_name=args.atm_grid_name,
-    )
 
-    # ------------------------------------------------------------------ #
-    # Forcings
-    # ------------------------------------------------------------------ #
-    print("[5/5] Configuring and processing forcings …")
-    case.configure_forcings(
-        date_range=[args.date_start, args.date_end],
-        function_name=args.forcing_fn,
-    )
+    caseroot = Path(args.caseroot) / args.casename
+    inputdir = Path(args.inputdir) / args.casename
 
-    # Get the raw data fast through AWS
-    output_dir = case.extract_forcings_path / "raw_data"
-    os.makedirs(output_dir, exist_ok=True)
+    print("[1/3] Building case config and creating case (configure-only) …")
+    bathymetry_path = get_bathymetry(args)
+    config = build_case_config(args, bathymetry_path)
+
+    with tempfile.NamedTemporaryFile(
+        mode="w", suffix=".yaml", delete=False
+    ) as tmp_config:
+        yaml.dump(config, tmp_config, default_flow_style=False, sort_keys=False)
+        tmp_config_path = tmp_config.name
+
+    try:
+        create_cmd = ["crocodash", "create", "--config", tmp_config_path]
+        if args.override:
+            create_cmd.append("--override")
+        create_cmd.append("--configure-only")
+        subprocess.run(create_cmd, check=True)
+    finally:
+        os.unlink(tmp_config_path)
+
+    print("[2/3] Staging test GLORYS OBC/IC data …")
+    raw_data_dir = inputdir / "extract_forcings" / "raw_data"
+    os.makedirs(raw_data_dir, exist_ok=True)
     base_url = (
         "https://crocodile-cesm.s3.us-east-1.amazonaws.com/CrocoDash/data/testing_data"
     )
@@ -276,13 +277,16 @@ def main() -> None:
         "south_unprocessed.20200101_20200105.nc",
         "west_unprocessed.20200101_20200105.nc",
     ]
-
     for f in files:
         url = f"{base_url}/{f}"
-        dest = os.path.join(output_dir, f)
+        dest = raw_data_dir / f
         print(f"Downloading {f}...")
-        subprocess.run(["wget", "-O", dest, url], check=True)
-    case.process_forcings()
+        subprocess.run(["wget", "-O", str(dest), url], check=True)
+
+    print("[3/3] Processing forcings …")
+    subprocess.run(
+        ["crocodash", "process", "--caseroot", str(caseroot), "--all"], check=True
+    )
     print("\nDone.")
 
 

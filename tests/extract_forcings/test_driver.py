@@ -1,6 +1,5 @@
 import json
-import pytest
-from unittest.mock import patch, MagicMock, call
+from unittest.mock import patch
 from argparse import Namespace
 from pathlib import Path
 
@@ -22,6 +21,8 @@ def _make_args(**overrides):
         bgcrivernutrients=False,
         tides=False,
         chl=False,
+        cice=False,
+        ww3=False,
         skip=[],
     )
     defaults.update(overrides)
@@ -79,11 +80,41 @@ def test_resolve_components_individual_flags_no_all():
     assert resolved.runoff is False  # not explicitly requested
 
 
+def test_resolve_components_ww3_flag():
+    """--ww3 should only enable when requested and present in config"""
+    args = _make_args(ww3=True)
+    config = {"ww3": {}}
+    resolved = resolve_components(args, config)
+    assert resolved.ww3 is True
+
+
+def test_resolve_components_ww3_missing_in_config_disabled():
+    args = _make_args(ww3=True)
+    config = {}  # ww3 not configured
+    resolved = resolve_components(args, config)
+    assert resolved.ww3 is False
+
+
 def test_resolve_components_skip_empty_default():
     args = _make_args(all=True)
     config = {"tides": {}}
     resolved = resolve_components(args, config)
     assert resolved.skip == []
+
+
+def test_resolve_components_cice_flag():
+    """--cice should only enable when requested and present in config."""
+    args = _make_args(cice=True)
+    config = {"cice": {}}
+    resolved = resolve_components(args, config)
+    assert resolved.cice is True
+
+
+def test_resolve_components_cice_missing_in_config_disabled():
+    args = _make_args(cice=True)
+    config = {}
+    resolved = resolve_components(args, config)
+    assert resolved.cice is False
 
 
 # =============================================================================
@@ -152,12 +183,9 @@ def _make_state(tmp_path):
     }
 
 
-@patch("CrocoDash.extract_forcings.driver.initial_condition")
-@patch("CrocoDash.extract_forcings.driver.obc")
+@patch("CrocoDash.extract_forcings.driver.mom6")
 @patch("CrocoDash.extract_forcings.driver.case_state")
-def test_run_workflow_ic_bc_calls_obc_and_initial_condition(
-    mock_cs, mock_obc, mock_initial_condition, tmp_path
-):
+def test_run_workflow_ic_bc_calls_mom6(mock_cs, mock_mom6, tmp_path):
     config = _make_config()
     state = _make_state(tmp_path)
     mock_cs.read.return_value = state
@@ -166,16 +194,13 @@ def test_run_workflow_ic_bc_calls_obc_and_initial_condition(
 
     run_workflow(config_path=config_path, ic=True, bc=True)
 
-    assert mock_obc.process_obc_conditions.called
-    assert mock_initial_condition.process_initial_condition.called
+    assert mock_mom6.process_mom6_obc.called
+    assert mock_mom6.process_mom6_ic.called
 
 
-@patch("CrocoDash.extract_forcings.driver.initial_condition")
-@patch("CrocoDash.extract_forcings.driver.obc")
+@patch("CrocoDash.extract_forcings.driver.mom6")
 @patch("CrocoDash.extract_forcings.driver.case_state")
-def test_run_workflow_no_components_returns_early(
-    mock_cs, mock_obc, mock_initial_condition, tmp_path, capsys
-):
+def test_run_workflow_no_components_returns_early(mock_cs, mock_mom6, tmp_path, capsys):
     config = _make_config()
     state = _make_state(tmp_path)
     mock_cs.read.return_value = state
@@ -185,7 +210,7 @@ def test_run_workflow_no_components_returns_early(
     result = run_workflow(config_path=config_path)
 
     assert result is None
-    assert not mock_obc.process_obc_conditions.called
+    assert not mock_mom6.process_mom6_obc.called
     captured = capsys.readouterr()
     assert "No components selected" in captured.out
 
@@ -238,12 +263,37 @@ def test_run_workflow_runoff_calls_rof_module(mock_cs, mock_rof, tmp_path):
     mock_rof.generate_rof_ocn_map.assert_called_once()
 
 
-@patch("CrocoDash.extract_forcings.driver.initial_condition")
-@patch("CrocoDash.extract_forcings.driver.obc")
+@patch("CrocoDash.extract_forcings.driver.ww3_mod")
+@patch("CrocoDash.extract_forcings.driver.Grid")
 @patch("CrocoDash.extract_forcings.driver.case_state")
-def test_run_workflow_returns_timings(
-    mock_cs, mock_obc, mock_initial_condition, tmp_path
-):
+def test_run_workflow_ww3_calls_ww3_module(mock_cs, mock_grid, mock_ww3, tmp_path):
+    config = _make_config(
+        extra_keys={
+            "ww3": {
+                "inputs": {
+                    "boundaries": ["north", "south"],
+                    "ww3_obc_product_name": None,
+                    "ww3_obc_function_name": None,
+                }
+            }
+        }
+    )
+    state = _make_state(tmp_path)
+    mock_cs.read.return_value = state
+    config_path = tmp_path / "config.json"
+    config_path.write_text(json.dumps(config))
+
+    run_workflow(config_path=config_path, ww3=True)
+
+    mock_ww3.process_ww3_obc.assert_called_once()
+    _, kwargs = mock_ww3.process_ww3_obc.call_args
+    assert kwargs["boundaries"] == ["north", "south"]
+    assert kwargs["date_range"] == ("20200101", "20200109")
+
+
+@patch("CrocoDash.extract_forcings.driver.mom6")
+@patch("CrocoDash.extract_forcings.driver.case_state")
+def test_run_workflow_returns_timings(mock_cs, mock_mom6, tmp_path):
     config = _make_config()
     state = _make_state(tmp_path)
     mock_cs.read.return_value = state
@@ -254,3 +304,43 @@ def test_run_workflow_returns_timings(
 
     assert isinstance(result, dict)
     assert "ic" in result
+
+
+@patch("CrocoDash.extract_forcings.driver.cice_mod")
+@patch("CrocoDash.extract_forcings.driver.case_state")
+def test_run_workflow_cice_calls_cice_module(
+    mock_cs, mock_cice, tmp_path, gen_grid_topo_vgrid
+):
+    grid, topo, vgrid = gen_grid_topo_vgrid
+    grid.write_supergrid(tmp_path / "grid.nc")
+    config = _make_config(
+        extra_keys={
+            "cice": {
+                "inputs": {
+                    "cice_product_name": "cice_restart",
+                    "cice_function_name": "get_cice_restart_subset",
+                    "cice_function_args": {
+                        "restart_path": "/path/to/restart.nc",
+                        "grid_path": "/path/to/grid.nc",
+                    },
+                    "n_halo_cells": 2,
+                }
+            }
+        }
+    )
+    state = _make_state(tmp_path)
+    mock_cs.read.return_value = state
+    config_path = tmp_path / "config.json"
+    config_path.write_text(json.dumps(config))
+
+    run_workflow(config_path=config_path, cice=True)
+
+    mock_cice.process_cice_forcing.assert_called_once()
+    _, kwargs = mock_cice.process_cice_forcing.call_args
+    assert kwargs["product_name"] == "cice_restart"
+    assert kwargs["function_name"] == "get_cice_restart_subset"
+    assert kwargs["function_args"] == {
+        "restart_path": "/path/to/restart.nc",
+        "grid_path": "/path/to/grid.nc",
+    }
+    assert kwargs["n_halo_cells"] == 2

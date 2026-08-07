@@ -76,6 +76,7 @@ def test_process_all_args_available():
                 "--runoff",
                 "--tides",
                 "--chl",
+                "--ww3",
                 "--skip",
                 "tides",
             ],

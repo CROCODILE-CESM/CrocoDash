@@ -4,10 +4,26 @@ CrocoDash.raw\_data\_access.datasets package
 Submodules
 ----------
 
+CrocoDash.raw\_data\_access.datasets.cice\_output module
+--------------------------------------------------------
+
+.. automodule:: CrocoDash.raw_data_access.datasets.cice_output
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 CrocoDash.raw\_data\_access.datasets.empty\_products module
 -----------------------------------------------------------
 
 .. automodule:: CrocoDash.raw_data_access.datasets.empty_products
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+CrocoDash.raw\_data\_access.datasets.era5 module
+------------------------------------------------
+
+.. automodule:: CrocoDash.raw_data_access.datasets.era5
    :members:
    :show-inheritance:
    :undoc-members:
@@ -40,6 +56,14 @@ CrocoDash.raw\_data\_access.datasets.mom6\_output module
 --------------------------------------------------------
 
 .. automodule:: CrocoDash.raw_data_access.datasets.mom6_output
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+CrocoDash.raw\_data\_access.datasets.reference module
+-----------------------------------------------------
+
+.. automodule:: CrocoDash.raw_data_access.datasets.reference
    :members:
    :show-inheritance:
    :undoc-members:

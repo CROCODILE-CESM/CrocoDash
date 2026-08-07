@@ -15,7 +15,7 @@ class DummyProduct(DatedBaseProduct):
 
 
 # Dummy concrete forcing product
-class DummyForcing(ForcingProduct):
+class DummyForcing(MOM6ForcingProduct):
     link = "dummy_link"
     product_name = "dummy_forcing"
     description = "Dummy forcing product for testing"
@@ -35,6 +35,7 @@ class DummyForcing(ForcingProduct):
     time_units = "days since 2000-01-01"
     cf_calendar = "gregorian"
     cesm_calendar = "gregorian"
+    mom6_calendar = "gregorian"
 
     @accessmethod
     def fetch_dummy(
@@ -114,7 +115,7 @@ def test_tracer_names_check():
     # Dummy concrete forcing product with broken tracer names
     with pytest.raises(AssertionError):
 
-        class DummyForcing(ForcingProduct):
+        class DummyForcing(MOM6ForcingProduct):
             link = "dummy_link"
             product_name = "dummy_forcing"
             description = "Dummy forcing product for testing"
@@ -134,6 +135,7 @@ def test_tracer_names_check():
             time_units = "days since 2000-01-01"
             cf_calendar = "gregorian"
             cesm_calendar = "gregorian"
+            mom6_calendar = "gregorian"
 
 
 def test_write_metadata():

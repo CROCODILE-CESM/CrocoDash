@@ -8,7 +8,9 @@ def _create(args):
     from CrocoDash.recipe import load_config, create_case_from_yaml
 
     config = load_config(args.config)
-    create_case_from_yaml(config, override=args.override)
+    create_case_from_yaml(
+        config, override=args.override, configure_only=args.configure_only
+    )
 
 
 def _dump(args):
@@ -58,6 +60,8 @@ def _process(args):
             args.chl,
             args.runoff,
             args.bgcrivernutrients,
+            args.cice,
+            args.ww3,
         ]
     ):
         args.subparser.print_help()
@@ -73,6 +77,8 @@ def _process(args):
         chl_=args.chl,
         runoff=args.runoff,
         bgcrivernutrients=args.bgcrivernutrients,
+        cice=args.cice,
+        ww3=args.ww3,
         preview=config["conditions"]["outputs"].get("preview", False),
     )
 
@@ -136,6 +142,14 @@ def main():
         default=False,
         help="Overwrite existing caseroot and inputdir if they exist.",
     )
+    create_parser.add_argument(
+        "--configure-only",
+        action="store_true",
+        default=False,
+        dest="configure_only",
+        help="Configure forcings but skip process_forcings — for cases that need to "
+        "stage custom input data before running the forcing extraction.",
+    )
     create_parser.set_defaults(func=_create)
 
     # --- dump ---
@@ -187,6 +201,17 @@ def main():
     ef_components.add_argument("--tides", action="store_true", help="Run tidal forcing")
     ef_components.add_argument(
         "--chl", action="store_true", help="Run chlorophyll processing"
+    )
+    ef_components.add_argument(
+        "--cice",
+        action="store_true",
+        help="Run CICE forcing generation (requires cice_restart_path/"
+        "cice_grid_path -- see the Python API)",
+    )
+    ef_components.add_argument(
+        "--ww3",
+        action="store_true",
+        help="Run WW3 boundary condition spectra generation",
     )
     ef_top.add_argument(
         "--skip",

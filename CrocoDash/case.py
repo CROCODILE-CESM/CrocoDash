@@ -332,39 +332,46 @@ class Case:
 
         inputdir.mkdir(parents=True, exist_ok=False)
 
-        ocnice = inputdir / "ocnice"
-        ocnice.mkdir()
+        # Split by component -- WW3's real ERA5 OBC output alone can be
+        # hundreds of per-station files, and dumping every component's
+        # files into one shared directory got unwieldy fast.
+        ocean = inputdir / "ocean"
+        ocean.mkdir()
+        ice = inputdir / "sea_ice"
+        ice.mkdir()
+        wave = inputdir / "wave"
+        wave.mkdir()
 
         # suffix for the MOM6 grid files
         session_id = cvars["MB_ATTEMPT_ID"].value
         suffix = f"{ocn_grid.name}_{session_id}"
 
         # MOM6 supergrid file
-        self.supergrid_path = str(ocnice / f"ocean_hgrid_{suffix}.nc")
+        self.supergrid_path = str(ocean / f"ocean_hgrid_{suffix}.nc")
         ocn_grid.write_supergrid(self.supergrid_path)
 
         # MOM6 topography file
-        self.topo_path = str(ocnice / f"ocean_topog_{suffix}.nc")
+        self.topo_path = str(ocean / f"ocean_topog_{suffix}.nc")
         ocn_topo.write_topo(self.topo_path)
 
         # MOM6 vertical grid file
-        self.vgrid_path = str(ocnice / f"ocean_vgrid_{suffix}.nc")
+        self.vgrid_path = str(ocean / f"ocean_vgrid_{suffix}.nc")
         ocn_vgrid.write(self.vgrid_path)
 
         # SCRIP grid file (needed for runoff remapping)
-        ocn_topo.write_scrip_grid(ocnice / f"scrip_{suffix}.nc")
+        ocn_topo.write_scrip_grid(ocean / f"scrip_{suffix}.nc")
 
         # ESMF mesh file:
-        self.esmf_mesh_path = str(ocnice / f"ESMF_mesh_{suffix}.nc")
+        self.esmf_mesh_path = str(ocean / f"ESMF_mesh_{suffix}.nc")
         ocn_topo.write_esmf_mesh(self.esmf_mesh_path)
 
         # CICE grid file (if needed)
         if self.cice_in_compset:
-            self.ocn_topo.write_cice_grid(ocnice / f"cice_grid_{suffix}.nc")
+            self.ocn_topo.write_cice_grid(ice / f"cice_grid_{suffix}.nc")
 
         # WW3 grid file (if needed)
         if self.ww3_in_compset:
-            self.ocn_topo.write_ww3_input(ocnice, grid_alias=ocn_grid.name)
+            self.ocn_topo.write_ww3_input(wave, grid_alias=ocn_grid.name)
 
     def _create_newcase(self):
         """Create the case instance."""
@@ -587,6 +594,8 @@ class Case:
         process_chl = kwargs.get("process_chl", True)
         process_runoff = kwargs.get("process_runoff", True)
         process_bgc_river_nutrients = kwargs.get("process_bgc_river_nutrients", True)
+        process_cice = kwargs.get("process_cice", True)
+        process_ww3 = kwargs.get("process_ww3", True)
 
         run_workflow(
             config_path=self.extract_forcings_path / "config.json",
@@ -599,6 +608,8 @@ class Case:
             runoff=process_runoff and self.fcr.is_active("runoff"),
             bgcrivernutrients=process_bgc_river_nutrients
             and self.fcr.is_active("BGCRiverNutrients"),
+            cice=process_cice and self.fcr.is_active("cice"),
+            ww3=process_ww3 and self.fcr.is_active("ww3"),
         )
 
         print(f"Case is ready to be built: {self.caseroot}")
@@ -624,6 +635,10 @@ class Case:
             print("tidal_constituents not found so using only M2")
             self.tidal_constituents = ["M2"]
 
+        # hgrid_type/vgrid_type take mom6_forge Grid/VGrid objects directly
+        # now -- "from_file" + a separate hgrid_path/vgrid_path kwarg no
+        # longer exists, and hgrid/vgrid are read-only properties derived
+        # from them (no more assigning after construction).
         expt = rmom6.experiment(
             date_range=date_range,
             resolution=None,
@@ -631,18 +646,14 @@ class Case:
             layer_thickness_ratio=None,
             depth=self.ocn_topo.max_depth,
             mom_run_dir=self._cime_case.get_value("RUNDIR"),
-            mom_input_dir=self.inputdir / "ocnice",
-            hgrid_type="from_file",
-            hgrid_path=self.supergrid_path,
-            vgrid_type="from_file",
-            vgrid_path=self.vgrid_path,
+            mom_input_dir=self.inputdir / "ocean",
+            hgrid_type=self.ocn_grid,
+            vgrid_type=self.ocn_vgrid,
             minimum_depth=self.ocn_topo.min_depth,
             tidal_constituents=self.tidal_constituents,
             expt_name=self.caseroot.name,
             boundaries=self.boundaries,
         )
-        expt.hgrid = self.ocn_grid.supergrid.to_ds()
-        # expt.vgrid = self.ocn_vgrid.gen_vgrid_ds() # Not implemented yet
         return expt
 
     def _configure_case(self, atm_grid_name, rof_grid_name):
@@ -911,7 +922,7 @@ class Case:
 
         # Ensure configurations are done
         for name, configurator in self.fcr.active_configurators.items():
-            if not configurator.validate_output_filepaths(self.inputdir / "ocnice"):
+            if not configurator.validate_output_filepaths(self.inputdir / "ocean"):
                 print(
                     f"{name} is not valid yet — process this forcing and generate "
                     f"the files using your case's extract_forcings module: "

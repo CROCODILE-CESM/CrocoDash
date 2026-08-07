@@ -6,7 +6,7 @@ The final part of the CrocoDash workflow is extracting and processing all the fo
 
 1. `case.configure_forcings(...)` — writes `inputdir/extract_forcings/config.json` with your case-specific forcing setup
 2. `case.process_forcings(...)` — reads that config and runs the extraction pipeline
-3. Outputs land in `inputdir/ocnice/`
+3. Outputs land in `inputdir/ocean/`, `inputdir/ice/`, and `inputdir/wave/` (split by component -- WW3's real OBC output alone can be hundreds of files)
 
 The key insight: **you don't have to run this from a Jupyter notebook**. After `configure_forcings` completes you can submit the extraction as a batch job using the CLI:
 
@@ -20,12 +20,14 @@ crocodash process --caseroot ~/croc_cases/mycase --all
 inputdir/
 ├── extract_forcings/
 │   └── config.json        # Written by case.configure_forcings
-└── ocnice/                # Output goes here
-    ├── init_eta_filled.nc
-    ├── init_vel_filled.nc
-    ├── init_tracers_filled.nc
-    ├── forcing_obc_segment_001.nc
-    └── ...
+├── ocean/                 # MOM6 output goes here
+│   ├── init_eta_filled.nc
+│   ├── init_vel_filled.nc
+│   ├── init_tracers_filled.nc
+│   ├── forcing_obc_segment_001.nc
+│   └── ...
+├── ice/                   # CICE output goes here (cice_grid_*.nc, cice_forcing.nc)
+└── wave/                  # WW3 output goes here (spec.list, ww3_bounc.nml, ww3.point*_spec.nc)
 ```
 
 ## Command-Line Interface
@@ -86,7 +88,7 @@ merge_piecewise_dataset   (concatenate chunks into final OBC files)
     ↓
 [tides / bgc / runoff / chl modules run independently]
     ↓
-inputdir/ocnice/
+inputdir/ocean/ (+ inputdir/ice/, inputdir/wave/ for CICE/WW3)
 ```
 
 ## Design Philosophy

@@ -13,6 +13,6 @@ def process_chl(
         ocn_grid,
         ocn_topo,
         chl_processed_filepath,
-        inputdir / "ocnice" / output_filepath,
+        inputdir / "ocean" / output_filepath,
         calendar=calendar,
     )

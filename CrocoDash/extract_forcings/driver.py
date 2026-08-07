@@ -25,8 +25,9 @@ from CrocoDash.extract_forcings import (
     runoff as rof,
     tides as tides_mod,
     chlorophyll as chl,
-    obc,
-    initial_condition,
+    mom6,
+    cice as cice_mod,
+    ww3 as ww3_mod,
 )
 from CrocoDash.grid import Grid
 from CrocoDash.topo import Topo
@@ -52,6 +53,8 @@ def run_workflow(
     chl_=False,
     runoff=False,
     bgcrivernutrients=False,
+    cice=False,
+    ww3=False,
     preview=False,
 ):
     """
@@ -77,6 +80,13 @@ def run_workflow(
         Run runoff mapping.
     bgcrivernutrients : bool
         Run BGC river nutrients (always runs after runoff).
+    cice : bool
+        Run CICE forcing generation (see extract_forcings/cice.py). Reads
+        restart_path/grid_path/n_halo_cells from CICEConfigurator's own
+        inputs (see forcing_configurations/configurations.py) -- set via
+        Case.configure_forcings(restart_path=..., grid_path=...).
+    ww3 : bool
+        Run WW3 boundary condition spectra generation.
     preview : bool
         Preview task graph without executing.
     """
@@ -90,9 +100,22 @@ def run_workflow(
     extract_forcings_dir = inputdir / "extract_forcings"
     raw_data_dir = extract_forcings_dir / "raw_data"
     regridded_data_dir = extract_forcings_dir / "regridded_data"
-    output_path = inputdir / "ocnice"
+    output_path = inputdir / "ocean"
 
-    if not any([ic, bc, bgcic, bgcironforcing, tides, chl_, runoff, bgcrivernutrients]):
+    if not any(
+        [
+            ic,
+            bc,
+            bgcic,
+            bgcironforcing,
+            tides,
+            chl_,
+            runoff,
+            bgcrivernutrients,
+            cice,
+            ww3,
+        ]
+    ):
         print("No components selected.")
         return
 
@@ -107,7 +130,7 @@ def run_workflow(
     try:
         if bc:
             _t = time.perf_counter()
-            obc.process_obc_conditions(
+            mom6.process_mom6_obc(
                 start_date=conditions["outputs"]["start_date"],
                 end_date=conditions["outputs"]["end_date"],
                 boundary_number_conversion=conditions["outputs"][
@@ -128,7 +151,7 @@ def run_workflow(
 
         if ic:
             _t = time.perf_counter()
-            initial_condition.process_initial_condition(
+            mom6.process_mom6_ic(
                 product_name=conditions["inputs"]["product_name"].upper(),
                 function_name=conditions["inputs"]["function_name"],
                 product_information=conditions["outputs"]["information"],
@@ -248,6 +271,39 @@ def run_workflow(
                 or "noleap",
             )
             timings["bgcrivernutrients"] = time.perf_counter() - _t
+
+        if cice:
+            _t = time.perf_counter()
+            cice_mod.process_cice_forcing(
+                hgrid_path=supergrid_path,
+                inputdir=inputdir,
+                date_range=(
+                    conditions["outputs"]["start_date"],
+                    conditions["outputs"]["end_date"],
+                ),
+                product_name=config["cice"]["inputs"]["cice_product_name"],
+                function_name=config["cice"]["inputs"]["cice_function_name"],
+                function_args=config["cice"]["inputs"].get("cice_function_args"),
+                n_halo_cells=config["cice"]["inputs"].get("n_halo_cells", 2),
+            )
+            timings["cice"] = time.perf_counter() - _t
+
+        if ww3:
+            _t = time.perf_counter()
+            ww3_mod.process_ww3_obc(
+                hgrid_path=supergrid_path,
+                inputdir=inputdir,
+                boundaries=config["ww3"]["inputs"]["boundaries"],
+                date_range=(
+                    conditions["outputs"]["start_date"],
+                    conditions["outputs"]["end_date"],
+                ),
+                ww3_obc_product_name=config["ww3"]["inputs"]["ww3_obc_product_name"],
+                ww3_obc_function_name=config["ww3"]["inputs"]["ww3_obc_function_name"],
+                get_step_days=config["ww3"]["inputs"].get("get_step_days"),
+                regrid_step_days=config["ww3"]["inputs"].get("regrid_step_days"),
+            )
+            timings["ww3"] = time.perf_counter() - _t
 
     finally:
         pass

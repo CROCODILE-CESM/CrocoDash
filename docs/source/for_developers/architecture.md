@@ -111,7 +111,7 @@ Case(grid, topo, vgrid, compset, ...)
      ├─► bgc / runoff / tides / chl (mom6_forge helpers)
           │
           ▼
-                               ──►  inputdir/ocnice/... forcing files
+                               ──►  inputdir/{ocean,ice,wave}/... forcing files
 ```
 
 ## Where to add what

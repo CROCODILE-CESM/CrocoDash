@@ -12,6 +12,7 @@ dependencies:
   - python-graphviz>=0.20.3,<0.21.0
   - nbsphinx>=0.9.6,<0.10.0
   - cdsapi>=0.7.6,<0.8.0
+  - cfgrib>=0.9.15,<0.10.0
   - pytest-cov>=7.0.0,<7.1.0
   - numcodecs>=0.10.0,<0.16
   - h5netcdf>=1.7.3,<1.8.0

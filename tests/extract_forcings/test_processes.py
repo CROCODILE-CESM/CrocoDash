@@ -2,10 +2,42 @@
 This testing file is for the other processes in extract_forcings. Most do not need much testing because they call other packages (which should ideally test correctness themselves) (I mean I'm probably writing those tests but still)
 """
 
+from pathlib import Path
+
 import pytest
-from CrocoDash.extract_forcings import runoff, tides, bgc, chlorophyll as chl
+from CrocoDash.extract_forcings import (
+    runoff,
+    tides,
+    bgc,
+    chlorophyll as chl,
+    cice,
+    ww3,
+    mom6,
+)
+from CrocoDash.raw_data_access.base import WW3ForcingProduct, accessmethod, GREGORIAN
+from CrocoDash.raw_data_access.registry import ProductRegistry
+from CrocoDash.grid import Grid
+import numpy as np
+import pandas as pd
 import xarray as xr
 from unittest.mock import Mock, patch
+
+# Reference files for the cice_restart product -- same as
+# tests/raw_data_access/test_cice.py. Duplicated here (rather than imported)
+# since each test file in this suite is self-contained.
+_CICE_GRID_PATH = "/glade/campaign/cesm/community/omwg/grids/tx2_3v3_grid.nc"
+_CICE_RESTART_PATH = (
+    "/glade/u/home/dbailey/"
+    "b.e30_alpha09b.B1850C_MTso.ne30_t233_wgx3.360.cice.r.0201-01-01-00000.nc"
+)
+
+
+def _skip_if_cice_reference_files_missing():
+    if not Path(_CICE_GRID_PATH).exists() or not Path(_CICE_RESTART_PATH).exists():
+        pytest.skip(
+            "Reference tx2_3v3 grid or CICE restart file not available on this "
+            "filesystem."
+        )
 
 
 @patch("mom6_forge.mapping.gen_rof_maps", autospec=True)
@@ -29,7 +61,7 @@ def test_process_tides(mock_tides, tmp_path, gen_grid_topo_vgrid, dummy_tidal_da
     elev, vel = dummy_tidal_data
     grid.write_supergrid(tmp_path / "grid.nc")
     vgrid.write(tmp_path / "vgrid.nc")
-    (tmp_path / "ocnice").mkdir()
+    (tmp_path / "ocean").mkdir()
     tides.process_tides(
         ocn_topo=topo,
         inputdir=tmp_path,
@@ -59,8 +91,120 @@ def test_process_chl(mock_chl, is_glade_file_system, tmp_path, gen_grid_topo_vgr
     assert mock_chl.called
 
 
+def test_process_mom6_obc_with_reference_ocean(tmp_path, gen_grid_topo_vgrid):
+    """process_mom6_obc runs the real GET + regional_mom6 Segment regrid
+    end-to-end against the fast synthetic 'reference_ocean' product -- no
+    network/campaign-storage access, no /glade dependency."""
+    grid, topo, vgrid = gen_grid_topo_vgrid
+    hgrid_path = tmp_path / "hgrid.nc"
+    grid.write_supergrid(hgrid_path)
+
+    raw_dir = tmp_path / "raw"
+    regridded_dir = tmp_path / "regridded"
+    output_dir = tmp_path / "output"
+    for d in (raw_dir, regridded_dir, output_dir):
+        d.mkdir()
+
+    ProductRegistry.load()
+    product_info = ProductRegistry.get_product("reference_ocean").write_metadata()
+
+    mom6.process_mom6_obc(
+        start_date="2020-01-01",
+        end_date="2020-01-03",
+        boundary_number_conversion={"east": 1, "south": 2},
+        product_name="reference_ocean",
+        function_name="get_reference_ocean_data",
+        product_info=product_info,
+        hgrid_path=str(hgrid_path),
+        raw_dataset_path=str(raw_dir),
+        regridded_dataset_path=str(regridded_dir),
+        output_path=str(output_dir),
+        regrid_step_days=3,
+    )
+
+    for seg in ("001", "002"):
+        out = output_dir / f"forcing_obc_segment_{seg}.nc"
+        assert out.exists()
+        ds = xr.open_dataset(out)
+        try:
+            assert "time" in ds.dims
+            assert np.isfinite(ds[f"temp_segment_{seg}"].values).all()
+        finally:
+            ds.close()
+
+
+def test_process_cice_forcing_produces_output(
+    skip_if_not_glade, tmp_path, gen_grid_topo_vgrid
+):
+    """process_cice_forcing runs the real restart GET + full-grid ESMF
+    regrid end-to-end against the reference restart + grid files -- confirms
+    the output covers the domain plus its halo, with a real time axis and
+    real (regridded, not placeholder) values."""
+    _skip_if_cice_reference_files_missing()
+    grid, topo, vgrid = gen_grid_topo_vgrid
+    grid.write_supergrid(tmp_path / "grid.nc")
+
+    n_halo_cells = 2
+    ny, nx = grid.tlat.shape
+
+    cice.process_cice_forcing(
+        hgrid_path=tmp_path / "grid.nc",
+        inputdir=tmp_path,
+        date_range=("2020-01-01", "2020-01-02"),
+        product_name="cice_restart",
+        function_name="get_cice_restart_subset",
+        function_args={
+            "restart_path": _CICE_RESTART_PATH,
+            "grid_path": _CICE_GRID_PATH,
+        },
+        n_halo_cells=n_halo_cells,
+    )
+
+    ds = xr.open_dataset(tmp_path / "sea_ice" / "cice_forcing.nc")
+
+    assert ds.sizes["ny"] == ny + 2 * n_halo_cells
+    assert ds.sizes["nx"] == nx + 2 * n_halo_cells
+    assert ds.sizes["time"] == 2
+    assert "aicen" in ds and ds["aicen"].dims == ("time", "ncat", "ny", "nx")
+    assert "uvel" in ds and ds["uvel"].dims == ("time", "ny", "nx")
+    # The restart snapshot is copied forward unchanged across both days.
+    assert np.allclose(ds["aicen"].isel(time=0), ds["aicen"].isel(time=1))
+    # No ice expected at this (Panama-region) test grid's location -- both
+    # the domain interior and its halo.
+    assert float(ds["aicen"].sum()) == 0.0
+
+
+def test_process_cice_forcing_with_reference_ice(tmp_path, gen_grid_topo_vgrid):
+    """Same pipeline as test_process_cice_forcing_produces_output, but against
+    the fast synthetic 'reference_ice' product -- no real restart/grid file,
+    no /glade dependency, runs on every machine."""
+    grid, topo, vgrid = gen_grid_topo_vgrid
+    grid.write_supergrid(tmp_path / "grid.nc")
+
+    n_halo_cells = 2
+    ny, nx = grid.tlat.shape
+
+    cice.process_cice_forcing(
+        hgrid_path=tmp_path / "grid.nc",
+        inputdir=tmp_path,
+        date_range=("2020-01-01", "2020-01-02"),
+        product_name="reference_ice",
+        function_name="get_reference_ice_data",
+        n_halo_cells=n_halo_cells,
+    )
+
+    ds = xr.open_dataset(tmp_path / "sea_ice" / "cice_forcing.nc")
+
+    assert ds.sizes["ny"] == ny + 2 * n_halo_cells
+    assert ds.sizes["nx"] == nx + 2 * n_halo_cells
+    assert ds.sizes["time"] == 2
+    assert "aicen" in ds and ds["aicen"].dims == ("time", "ncat", "ny", "nx")
+    assert "uvel" in ds and ds["uvel"].dims == ("time", "ny", "nx")
+    assert np.isfinite(ds["aicen"].values).all()
+
+
 def test_bgcironforcing(tmp_path):
-    (tmp_path / "ocnice").mkdir()
+    (tmp_path / "ocean").mkdir()
     depth, ny, nx = 103, 60, 60
     bgc.process_bgc_iron_forcing(
         nx=60,
@@ -71,11 +215,11 @@ def test_bgcironforcing(tmp_path):
         inputdir=tmp_path,
     )
 
-    assert (tmp_path / "ocnice" / "fesed.nc").exists()
-    assert (tmp_path / "ocnice" / "fevent.nc").exists()
+    assert (tmp_path / "ocean" / "fesed.nc").exists()
+    assert (tmp_path / "ocean" / "fevent.nc").exists()
     for path, main_var in [
-        (tmp_path / "ocnice" / "fesed.nc", "FESEDFLUXIN"),
-        (tmp_path / "ocnice" / "fevent.nc", "FESEDFLUXIN"),
+        (tmp_path / "ocean" / "fesed.nc", "FESEDFLUXIN"),
+        (tmp_path / "ocean" / "fevent.nc", "FESEDFLUXIN"),
     ]:
         ds = xr.open_dataset(path)
 
@@ -96,6 +240,323 @@ def test_bgcironforcing(tmp_path):
         assert ds[main_var].shape == (depth, ny, nx)
 
         ds.close()
+
+
+def test_write_ww3_boundary_spectrum_default_time(tmp_path):
+    freq = 0.04118 * 1.1 ** np.arange(5)
+    direction = np.linspace(0, 360, 4, endpoint=False)
+    efth = np.ones((1, 5, 4))
+    path = tmp_path / "point_spec.nc"
+
+    ww3.write_ww3_boundary_spectrum(
+        path, lat=10.0, lon=200.0, freq=freq, direction=direction, efth=efth
+    )
+
+    ds = xr.open_dataset(path, decode_times=False, mask_and_scale=False)
+    try:
+        assert ds["efth"].shape == (1, 5, 4, 1, 1)
+        assert ds["efth"].attrs["_FillValue"] == pytest.approx(-999.9, rel=1e-4)
+        assert ds["efth"].attrs["scale_factor"] == pytest.approx(1.0)
+        assert ds["efth"].attrs["add_offset"] == pytest.approx(0.0)
+        assert ds["time"].attrs["units"] == "seconds since 1990-01-01 00:00:00.0"
+        assert ds["time"].attrs["calendar"] == "gregorian"
+        assert float(ds["latitude"].values[0]) == pytest.approx(10.0)
+        assert float(ds["longitude"].values[0]) == pytest.approx(200.0)
+        # No spurious _FillValue on any coordinate (xarray adds these by
+        # default unless explicitly suppressed -- see write_ww3_boundary_spectrum)
+        for coord in ("time", "frequency", "direction", "latitude", "longitude"):
+            assert "_FillValue" not in ds[coord].attrs
+    finally:
+        ds.close()
+
+
+def test_write_ww3_boundary_spectrum_time_units_untouched_by_xarray(tmp_path):
+    """
+    Regression test for the xarray CF-encoder bug found this session: writing
+    a midnight-exact datetime64 time coordinate directly (instead of plain
+    float seconds) causes xarray to silently rewrite the "units" attribute,
+    dropping the "hh:mm:ss" portion -- which corrupts W3TIMEMD's fixed
+    column-position parser in ww3_bounc.
+    """
+    freq = 0.04118 * 1.1 ** np.arange(3)
+    direction = np.linspace(0, 360, 4, endpoint=False)
+    time = np.array(["2020-01-01T00:00:00"], dtype="datetime64[ns]")
+    efth = np.ones((1, 3, 4))
+    path = tmp_path / "point_spec.nc"
+
+    ww3.write_ww3_boundary_spectrum(
+        path, lat=0.0, lon=0.0, freq=freq, direction=direction, efth=efth, time=time
+    )
+
+    ds = xr.open_dataset(path, decode_times=False, mask_and_scale=False)
+    try:
+        assert ds["time"].attrs["units"] == "seconds since 1990-01-01 00:00:00.0"
+        expected_seconds = (
+            time[0] - np.datetime64("1990-01-01T00:00:00", "ns")
+        ) / np.timedelta64(1, "s")
+        assert float(ds["time"].values[0]) == pytest.approx(expected_seconds)
+    finally:
+        ds.close()
+
+
+def test_write_ww3_bounc_nml(tmp_path):
+    ww3.write_ww3_bounc_nml(
+        tmp_path, spec_list_filename="foo.list", mode="READ", interp=1, verbose=2
+    )
+
+    content = (tmp_path / "ww3_bounc.nml").read_text()
+    assert "BOUND%MODE                 = 'READ'" in content
+    assert "BOUND%INTERP               = 1" in content
+    assert "BOUND%VERBOSE              = 2" in content
+    assert "BOUND%FILE                 = 'foo.list'" in content
+
+
+def test_write_spec_list(tmp_path):
+    ww3.write_spec_list(tmp_path, ["a_spec.nc", "b_spec.nc"])
+
+    content = (tmp_path / "spec.list").read_text()
+    assert content == "a_spec.nc\nb_spec.nc\n"
+
+
+def test_process_ww3_obc_defaults_to_era5(tmp_path, gen_grid_topo_vgrid):
+    """No product/function passed -- process_ww3_obc must route to the real
+    ERA5 2D-spectra product, not a placeholder (there isn't one anymore)."""
+    grid, topo, vgrid = gen_grid_topo_vgrid
+    hgrid_path = tmp_path / "hgrid.nc"
+    grid.write_supergrid(hgrid_path)
+
+    with patch(
+        "CrocoDash.extract_forcings.ww3.obc.process_obc_conditions",
+        side_effect=RuntimeError("stop-after-call"),
+    ) as mock_process:
+        with pytest.raises(RuntimeError, match="stop-after-call"):
+            ww3.process_ww3_obc(
+                hgrid_path=str(hgrid_path),
+                inputdir=tmp_path,
+                boundaries=["west"],
+                date_range=("2020-01-01", "2020-01-02"),
+            )
+    _, kwargs = mock_process.call_args
+    assert kwargs["product_name"] == "era5_wave_spectra"
+    assert kwargs["function_name"] == "get_era5_2d_spectra"
+
+
+def _make_synthetic_era5_window(n_stations=3):
+    """Synthetic dataset matching the real decoded ERA5 shape (see
+    raw_data_access.datasets.era5.decode_era5_spectra_grib) -- a regular
+    (time, latitude, longitude, frequency, direction) grid -- so the real
+    regrid logic can be exercised without any network/GRIB dependency. Uses
+    a single latitude row (n_stations longitude columns), so each (lat, lon)
+    point maps 1:1 onto a station index k after _extract_all_stations's
+    stack, with a distinct, checkable efth value (100 + k) confirming no
+    station gets reduced/averaged with another.
+    """
+    time = pd.date_range("2020-01-01", periods=4, freq="6h")
+    freq = np.array([0.05, 0.1, 0.15])
+    direction = np.array([0.0, 120.0, 240.0])
+    lons = np.linspace(-170.0, -160.0, n_stations)
+    lats = np.array([68.5])
+    efth = np.zeros((len(time), 1, n_stations, len(freq), len(direction)))
+    for k in range(n_stations):
+        efth[:, 0, k, :, :] = 100.0 + k
+    return xr.Dataset(
+        {
+            "wave_spectra": (
+                ("time", "latitude", "longitude", "frequency", "direction"),
+                efth,
+            )
+        },
+        coords={
+            "time": time.values,
+            "latitude": lats,
+            "longitude": lons,
+            "frequency": freq,
+            "direction": direction,
+        },
+    )
+
+
+def test_extract_all_stations_keeps_every_point():
+    ds = _make_synthetic_era5_window(n_stations=3)
+    lons, lats, freq, direction, efth = ww3._extract_all_stations(ds)
+
+    assert list(lons) == list(ds["longitude"].values)
+    assert list(lats) == [68.5, 68.5, 68.5]
+    assert list(freq) == list(ds["frequency"].values)
+    assert list(direction) == list(ds["direction"].values)
+    assert efth.shape == (3, 4, 3, 3)  # (station, time, frequency, direction)
+    for k in range(3):
+        assert np.all(efth[k] == 100.0 + k)
+
+
+def test_extract_all_stations_shape_mismatch_raises():
+    # Missing the "direction" dim entirely -- should trigger the check.
+    bad = xr.Dataset(
+        {
+            "wave_spectra": (
+                ("time", "latitude", "longitude", "frequency"),
+                np.ones((4, 1, 3, 3)),
+            )
+        },
+        coords={
+            "time": pd.date_range("2020-01-01", periods=4, freq="6h").values,
+            "latitude": [68.5],
+            "longitude": [1.0, 2.0, 3.0],
+            "frequency": [0.05, 0.1, 0.15],
+        },
+    )
+    with pytest.raises(ValueError, match="direction"):
+        ww3._extract_all_stations(bad)
+
+
+def test_regrid_chunk_era5_writes_all_stations(tmp_path):
+    ds = _make_synthetic_era5_window(n_stations=3)
+
+    ww3._regrid_chunk_era5(
+        ds=ds,
+        hgrid=None,
+        boundary="west",
+        seg_id=3,
+        outfolder=tmp_path,
+        dataset_varnames={},
+        start_date="2020-01-01",
+        regridders=None,
+    )
+
+    out = xr.open_dataset(tmp_path / "forcing_obc_segment_003.nc")
+    try:
+        assert out.sizes["station"] == 3
+        for k in range(3):
+            assert np.all(out["efth"].isel(station=k).values == 100.0 + k)
+        assert list(out["station_lon"].values) == list(ds["longitude"].values)
+        assert list(out["station_lat"].values) == [68.5, 68.5, 68.5]
+    finally:
+        out.close()
+
+
+class _FakeERA5Spectra(WW3ForcingProduct):
+    """Test-only stand-in for era5.ERA5_WAVE_SPECTRA -- writes a synthetic
+    dataset already in the real decoded ERA5 shape (see
+    _make_synthetic_era5_window), instead of hitting CDS/GRIB, so
+    process_ww3_obc's regrid path can be exercised end-to-end without
+    network/credentials. Auto-registers on import via
+    BaseProduct.__init_subclass__, same as test_base_registry.py's
+    DummyProduct/DummyForcing fixtures."""
+
+    product_name = "test_fake_era5_spectra"
+    description = "Fake multi-station ERA5-shaped spectra for testing."
+    link = "n/a"
+    time_var_name = "time"
+    time_units = None
+    calendar = GREGORIAN
+
+    @accessmethod
+    def get_fake_spectra(
+        dates,
+        lat_min,
+        lat_max,
+        lon_min,
+        lon_max,
+        name=None,
+        output_folder=Path(""),
+        output_filename="fake_era5.nc",
+        variables=None,
+    ):
+        start, end = pd.to_datetime(dates[0]), pd.to_datetime(dates[1])
+        time = pd.date_range(start, end, freq="6h")
+        freq = np.array([0.05, 0.1, 0.15])
+        direction = np.array([0.0, 120.0, 240.0])
+        n_stations = 3
+        lons = np.linspace(lon_min, lon_max, n_stations)
+        lats = np.array([(lat_min + lat_max) / 2])
+        efth = np.zeros((len(time), 1, n_stations, len(freq), len(direction)))
+        for k in range(n_stations):
+            efth[:, 0, k, :, :] = 100.0 + k
+
+        ds = xr.Dataset(
+            {
+                "wave_spectra": (
+                    ("time", "latitude", "longitude", "frequency", "direction"),
+                    efth,
+                )
+            },
+            coords={
+                "time": time.values,
+                "latitude": lats,
+                "longitude": lons,
+                "frequency": freq,
+                "direction": direction,
+            },
+        )
+        output_folder = Path(output_folder)
+        output_folder.mkdir(parents=True, exist_ok=True)
+        path = output_folder / output_filename
+        ds.to_netcdf(path)
+        return path
+
+
+def test_process_ww3_obc_multi_station(tmp_path, gen_grid_topo_vgrid):
+    grid, topo, vgrid = gen_grid_topo_vgrid
+    hgrid_path = tmp_path / "hgrid.nc"
+    grid.write_supergrid(hgrid_path)
+
+    ww3.process_ww3_obc(
+        hgrid_path=str(hgrid_path),
+        inputdir=tmp_path,
+        boundaries=["west", "east"],
+        date_range=("2020-01-01", "2020-01-02"),
+        ww3_obc_product_name="test_fake_era5_spectra",
+        ww3_obc_function_name="get_fake_spectra",
+    )
+
+    wave = tmp_path / "wave"
+    # 2 boundaries x 3 real stations each = 6 total, not 2.
+    spec_lines = (wave / "spec.list").read_text().splitlines()
+    assert spec_lines == [f"ww3.point{i}_spec.nc" for i in range(1, 7)]
+
+    nml_contents = (wave / "ww3_bounc.nml").read_text()
+    assert "BOUND%INTERP               = 2" in nml_contents
+
+    for i, expected_value in zip(range(1, 7), [100.0, 101.0, 102.0] * 2):
+        ds = xr.open_dataset(wave / f"ww3.point{i}_spec.nc", decode_times=False)
+        try:
+            assert np.all(ds["efth"].values == expected_value)
+        finally:
+            ds.close()
+
+
+def test_process_ww3_obc_with_reference_waves(tmp_path, gen_grid_topo_vgrid):
+    """Same pipeline as test_process_ww3_obc_multi_station, but against the
+    shipped, JONSWAP-shaped 'reference_waves' product instead of the
+    test-local flat-value fake."""
+    grid, topo, vgrid = gen_grid_topo_vgrid
+    hgrid_path = tmp_path / "hgrid.nc"
+    grid.write_supergrid(hgrid_path)
+
+    ww3.process_ww3_obc(
+        hgrid_path=str(hgrid_path),
+        inputdir=tmp_path,
+        boundaries=["west", "east"],
+        date_range=("2020-01-01", "2020-01-02"),
+        ww3_obc_product_name="reference_waves",
+        ww3_obc_function_name="get_reference_wave_spectra",
+    )
+
+    wave = tmp_path / "wave"
+    spec_lines = (wave / "spec.list").read_text().splitlines()
+    assert spec_lines == [f"ww3.point{i}_spec.nc" for i in range(1, 7)]
+
+    for i in range(1, 7):
+        ds = xr.open_dataset(wave / f"ww3.point{i}_spec.nc", decode_times=False)
+        try:
+            assert np.isfinite(ds["efth"].values).all()
+            # Cosine-2s directional spreading legitimately hits exact zero
+            # away from the dominant direction -- just check there's energy
+            # somewhere and nothing went negative.
+            assert np.all(ds["efth"].values >= 0)
+            assert np.any(ds["efth"].values > 0)
+        finally:
+            ds.close()
 
 
 @pytest.mark.slow
