@@ -92,7 +92,7 @@ forcings:
   # tpxo_velocity_filepath:  "/path/to/TPXO_velocity.nc"
 ```
 
-After `create` completes the caseroot contains a `crocodash_state.json` recording all construction parameters, and `inputdir/extract_forcings/config.json` recording the forcing setup. These files are the source of truth for `dump`, `bundle`, and `fork`.
+After `create` completes the caseroot contains a `_crocodash_state.json` recording all construction parameters, and `inputdir/extract_forcings/config.json` recording the forcing setup. These files are the source of truth for `dump`, `bundle`, and `fork`.
 
 ---
 
