@@ -29,7 +29,6 @@ KNOWN_INCLUSIVE_WITHOUT_HELPER = {
     # inclusive regardless of time-of-day — nothing to normalize.
     ("glorys", "get_glorys_data_from_rda"),
     ("glofas", "get_global_data_with_python"),
-    ("mom6_output", "get_mom6_data"),
     # Reparses `dates` via parse_dataset's filename-based day matching
     # (date_format/regex on the file list), same whole-day-inclusive
     # construction as the RDA/GLOFAS entries above.

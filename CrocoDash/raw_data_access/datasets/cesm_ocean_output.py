@@ -444,10 +444,13 @@ def read_single_variable_tseries_data(
         # silently drop/corrupt variables (or crash) under dask's threaded
         # scheduler instead of raising a clear error.
         existing_files = [p for p in paths if Path(p).is_file()]
-        merged = xr.open_mfdataset(
-            existing_files, combine="by_coords", decode_timedelta=False
-        )
-        merged.to_netcdf(Path(output_folder) / output_filename)
+        if not existing_files:
+            print(f"No subset files to merge into {output_filename}; skipping merge.")
+        else:
+            merged = xr.open_mfdataset(
+                existing_files, combine="by_coords", decode_timedelta=False
+            )
+            merged.to_netcdf(Path(output_folder) / output_filename)
 
     return paths
 
@@ -506,9 +509,11 @@ def parse_dataset(
                 if rng is None:  # no date range found in filename regex, skip this file
                     continue
                 dt1, dt2 = rng
-                if (dt1 >= start_date and dt1 <= end_date) or (
-                    dt2 >= start_date and dt2 <= end_date
-                ):
+                # Interval-overlap test, not an endpoints-in-window test: a
+                # file spanning the whole requested window (e.g. LENS2's
+                # decadal chunks, FOSI's annual files) has both endpoints
+                # outside [start_date, end_date] but still contains the data.
+                if dt1 <= end_date and dt2 >= start_date:
                     for v in matched:
                         variable_info[v].append(s)
 
@@ -674,7 +679,7 @@ def subset_dataset(
             subset_ds.load().to_netcdf(output_file)
 
             print(f"Subsetted dataset for variable '{var_name}' saved to {output_file}")
-        output_file_paths.append(output_file)
+            output_file_paths.append(output_file)
 
     return output_file_paths
 
