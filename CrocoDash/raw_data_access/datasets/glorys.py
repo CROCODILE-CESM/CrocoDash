@@ -79,14 +79,6 @@ class GLORYS(ForcingProduct):
         ds_in_files = []
         date_strings = [date.strftime("%Y%m%d") for date in dates]
 
-        # Adjust lat lon inputs to make sure they are in the correct range of -180 to 180
-        lon_min, lon_max = convert_lons_to_180_range(lon_min, lon_max)
-        # 180 and -180 are the same meridian, but the conversion above always
-        # picks -180 -- undo that for lon_max so a contiguous box like
-        # 100..180 doesn't wrongly take the wrap branch below.
-        if lon_max == -180:
-            lon_max = 180
-
         for date in date_strings:
             pattern = os.path.join(ds_in_path, "**", f"*_{date}_*.nc")
             ds_in_files.extend(glob.glob(pattern, recursive=True))
