@@ -13,14 +13,17 @@ jobs:
   pytest:
     runs-on: ubuntu-latest
     env:
-      # Deliberately outside the checked-out repo: git-fleximod looks for a
-      # .gitmodules file starting at CWD and walks upward through parents if
-      # it isn't found there. This CESM branch doesn't have its own
-      # top-level .gitmodules, so cloning CESM *inside* $GITHUB_WORKSPACE
-      # made that upward search land on CrocoDash's own .gitmodules instead
-      # -- fleximod would silently "update" CrocoDash's submodules (already
-      # checked out, hence a fast no-op) instead of CESM's real externals.
-      CESMROOT: ${{ runner.temp }}/CESM
+      # Deliberately a sibling of the checkout, not nested inside it:
+      # git-fleximod looks for a .gitmodules file starting at CWD and walks
+      # upward through parents if it isn't found there. This CESM branch
+      # doesn't have its own top-level .gitmodules, so cloning CESM *inside*
+      # the workspace made that upward search land on CrocoDash's own
+      # .gitmodules instead -- fleximod would silently "update" CrocoDash's
+      # submodules (already checked out, hence a fast no-op) instead of
+      # CESM's real externals. (Job-level env: only has access to the
+      # github/inputs/matrix/needs/secrets/strategy/vars contexts -- no
+      # `runner` -- so this has to be built from github.workspace.)
+      CESMROOT: ${{ github.workspace }}/../CESM
       DIN_LOC_ROOT: ${{ github.workspace }}/cesm_data
       CIME_OUTPUT_ROOT: ${{ github.workspace }}/cesm_data
     steps:
