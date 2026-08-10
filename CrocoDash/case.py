@@ -874,7 +874,7 @@ class Case:
         cvars["NINST"].value = self.ninst
 
     def _write_state(self):
-        """Write case creation parameters to crocodash_state.json in caseroot."""
+        """Write case creation parameters to _crocodash_state.json in caseroot."""
         case_state.write(
             self.caseroot,
             {

@@ -131,8 +131,8 @@ def run_workflow(
         if bc:
             _t = time.perf_counter()
             mom6.process_mom6_obc(
-                start_date=conditions["outputs"]["start_date"],
-                end_date=conditions["outputs"]["end_date"],
+                start_date=conditions["inputs"]["start_date"],
+                end_date=conditions["inputs"]["end_date"],
                 boundary_number_conversion=conditions["outputs"][
                     "boundary_number_conversion"
                 ],
@@ -144,7 +144,8 @@ def run_workflow(
                 raw_dataset_path=raw_data_dir,
                 regridded_dataset_path=regridded_data_dir,
                 output_path=output_path,
-                regrid_step_days=int(conditions["outputs"]["step"]),
+                get_step_days=int(conditions["outputs"]["get_step_days"]),
+                regrid_step_days=int(conditions["outputs"]["regrid_step_days"]),
                 preview=preview,
             )
             timings["bc"] = time.perf_counter() - _t
@@ -155,7 +156,7 @@ def run_workflow(
                 product_name=conditions["inputs"]["product_name"].upper(),
                 function_name=conditions["inputs"]["function_name"],
                 product_information=conditions["outputs"]["information"],
-                start_date=conditions["outputs"]["start_date"],
+                start_date=conditions["inputs"]["start_date"],
                 hgrid_path=supergrid_path,
                 vgrid_path=vgrid_path,
                 dataset_varnames=conditions["outputs"]["information"],
@@ -278,8 +279,8 @@ def run_workflow(
                 hgrid_path=supergrid_path,
                 inputdir=inputdir,
                 date_range=(
-                    conditions["outputs"]["start_date"],
-                    conditions["outputs"]["end_date"],
+                    conditions["inputs"]["start_date"],
+                    conditions["inputs"]["end_date"],
                 ),
                 product_name=config["cice"]["inputs"]["cice_product_name"],
                 function_name=config["cice"]["inputs"]["cice_function_name"],
@@ -295,8 +296,8 @@ def run_workflow(
                 inputdir=inputdir,
                 boundaries=config["ww3"]["inputs"]["boundaries"],
                 date_range=(
-                    conditions["outputs"]["start_date"],
-                    conditions["outputs"]["end_date"],
+                    conditions["inputs"]["start_date"],
+                    conditions["inputs"]["end_date"],
                 ),
                 ww3_obc_product_name=config["ww3"]["inputs"]["ww3_obc_product_name"],
                 ww3_obc_function_name=config["ww3"]["inputs"]["ww3_obc_function_name"],

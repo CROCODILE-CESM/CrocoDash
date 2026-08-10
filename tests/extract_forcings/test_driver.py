@@ -157,14 +157,15 @@ def _make_config(caseroot="/case", extra_keys=None):
             "inputs": {
                 "product_name": "GLORYS",
                 "function_name": "get_glorys_data_from_rda",
-            },
-            "outputs": {
                 "start_date": "20200101",
                 "end_date": "20200109",
+            },
+            "outputs": {
                 "date_format": "%Y%m%d",
                 "information": {},
                 "boundary_number_conversion": {"north": 1, "south": 2},
-                "step": "7",
+                "get_step_days": "7",
+                "regrid_step_days": "7",
                 "preview": False,
             },
         },

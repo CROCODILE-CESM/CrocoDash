@@ -78,7 +78,7 @@ run_workflow(
 ## The Processing Pipeline
 
 ```
-config.json + crocodash_state.json
+config.json + _crocodash_state.json
     ↓
 get_dataset_piecewise     (download raw OBC/IC data in time-stepped chunks)
     ↓
