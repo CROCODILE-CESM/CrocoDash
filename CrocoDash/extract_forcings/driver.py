@@ -108,8 +108,8 @@ def run_workflow(
         if bc:
             _t = time.perf_counter()
             obc.process_obc_conditions(
-                start_date=conditions["outputs"]["start_date"],
-                end_date=conditions["outputs"]["end_date"],
+                start_date=conditions["inputs"]["start_date"],
+                end_date=conditions["inputs"]["end_date"],
                 boundary_number_conversion=conditions["outputs"][
                     "boundary_number_conversion"
                 ],
@@ -121,7 +121,8 @@ def run_workflow(
                 raw_dataset_path=raw_data_dir,
                 regridded_dataset_path=regridded_data_dir,
                 output_path=output_path,
-                regrid_step_days=int(conditions["outputs"]["step"]),
+                get_step_days=int(conditions["outputs"]["get_step_days"]),
+                regrid_step_days=int(conditions["outputs"]["regrid_step_days"]),
                 preview=preview,
             )
             timings["bc"] = time.perf_counter() - _t
@@ -132,7 +133,7 @@ def run_workflow(
                 product_name=conditions["inputs"]["product_name"].upper(),
                 function_name=conditions["inputs"]["function_name"],
                 product_information=conditions["outputs"]["information"],
-                start_date=conditions["outputs"]["start_date"],
+                start_date=conditions["inputs"]["start_date"],
                 hgrid_path=supergrid_path,
                 vgrid_path=vgrid_path,
                 dataset_varnames=conditions["outputs"]["information"],

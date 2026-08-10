@@ -172,8 +172,8 @@ def generate_configure_forcing_args(forcing_config, remove_configs=None):
         remove_configs = []
     logger.info("Setup configuration arguments...")
 
-    start_str = forcing_config["conditions"]["outputs"]["start_date"]
-    end_str = forcing_config["conditions"]["outputs"]["end_date"]
+    start_str = forcing_config["conditions"]["inputs"]["start_date"]
+    end_str = forcing_config["conditions"]["inputs"]["end_date"]
     date_format = forcing_config["conditions"]["outputs"]["date_format"]
     start_dt = datetime.strptime(start_str, date_format)
     end_dt = datetime.strptime(end_str, date_format)

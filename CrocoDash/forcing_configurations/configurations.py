@@ -630,10 +630,13 @@ class ConditionsConfigurator(BaseConfigurator):
         ConfigOutputParam(
             "date_format", comment="strftime format used for dates in config.json"
         ),
-        ConfigOutputParam("start_date", comment="Forcing start date"),
-        ConfigOutputParam("end_date", comment="Forcing end date"),
         ConfigOutputParam("information", comment="Product variable-name metadata"),
-        ConfigOutputParam("step", comment="Chunk size (days) for forcing extraction"),
+        ConfigOutputParam(
+            "get_step_days", comment="Chunk size (days) for forcing retrieval (GET)"
+        ),
+        ConfigOutputParam(
+            "regrid_step_days", comment="Chunk size (days) for forcing regridding"
+        ),
         ConfigOutputParam(
             "boundary_number_conversion",
             comment="Boundary name -> MOM6 segment number",
@@ -711,15 +714,15 @@ class ConditionsConfigurator(BaseConfigurator):
 
         # ---- derived, config.json-only values ----
         self.set_output_param("date_format", self._DATE_FORMAT)
-        self.set_output_param("start_date", start_date)
-        self.set_output_param("end_date", end_date)
         self.set_output_param(
             "information",
             product.write_metadata(include_marbl_tracers="%MARBL" in compset),
         )
         start_dt = datetime.strptime(start_date, self._DATE_FORMAT)
         end_dt = datetime.strptime(end_date, self._DATE_FORMAT)
-        self.set_output_param("step", (end_dt - start_dt).days + 1)
+        step = (end_dt - start_dt).days + 1
+        self.set_output_param("get_step_days", step)
+        self.set_output_param("regrid_step_days", step)
         self.set_output_param(
             "boundary_number_conversion",
             {b: i + 1 for i, b in enumerate(boundaries)},
