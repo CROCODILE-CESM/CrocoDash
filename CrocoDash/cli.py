@@ -12,6 +12,16 @@ DEFAULT_TEMPLATE_NOTEBOOK_ID = "crocodash.tutorials.crocodash_tutorial"
 _NON_PATH_KEYS = {"CESM", "inputdir", "casedir"}
 
 
+class CrocoDashCliError(Exception):
+    """A deliberate, user-facing CLI error.
+
+    main() prints this cleanly and exits(1) instead of showing a traceback.
+    Only raise this for conditions a user can act on (e.g. "run this other
+    command first") -- never to blanket-catch unexpected bugs, which should
+    keep their real traceback.
+    """
+
+
 def _comment_out_magics(source):
     """Comment out IPython magic/shell lines (jupytext convention) so
     extracted code cells are valid, runnable Python."""
@@ -47,7 +57,7 @@ def _process(args):
         state = case_state.read(caseroot)
         config_path = Path(state["inputdir"]) / "extract_forcings" / "config.json"
         if not config_path.exists():
-            raise FileNotFoundError(
+            raise CrocoDashCliError(
                 f"Forcing configuration not found at {config_path}\n"
                 "Run case.configure_forcings() before calling 'crocodash process'."
             )
@@ -55,7 +65,7 @@ def _process(args):
         # Ran directly from inside the extract_forcings/ directory
         config_path = Path.cwd() / "config.json"
     else:
-        raise FileNotFoundError(
+        raise CrocoDashCliError(
             "No config.json found in the current directory and no --config or --caseroot provided.\n"
             "Run from inside an extract_forcings/ directory, or pass --caseroot <path> or --config <path>."
         )
@@ -428,4 +438,8 @@ def main():
     template_parser.set_defaults(func=_template, subparser=template_parser)
 
     args = parser.parse_args()
-    args.func(args)
+    try:
+        args.func(args)
+    except CrocoDashCliError as e:
+        print(str(e), file=sys.stderr)
+        sys.exit(1)
