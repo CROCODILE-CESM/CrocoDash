@@ -377,7 +377,7 @@ def duplicate_case(caseroot, new_caseroot, new_inputdir, bundle_dir=None):
     """
     Copy a CrocoDash case to a new location within the same user context.
 
-    Reads machine, project, and cesmroot from the original case's crocodash_state.json,
+    Reads machine, project, and cesmroot from the original case's _crocodash_state.json,
     identifies any non-standard CESM state, recreates the case via recipe.py, and
     transfers the non-standard state to the new location. Pass bundle_dir to also save
     a portable bundle as a side effect.

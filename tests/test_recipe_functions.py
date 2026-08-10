@@ -347,7 +347,7 @@ def test_build_vgrid_unknown_type_raises(get_rect_grid_and_topo):
 # _check_state_schema_version
 # ---------------------------------------------------------------------------
 
-FAKE_PATH = "/some/case/crocodash_state.json"
+FAKE_PATH = "/some/case/_crocodash_state.json"
 
 _major, _minor, _patch = STATE_SCHEMA_VERSION.split(".")
 

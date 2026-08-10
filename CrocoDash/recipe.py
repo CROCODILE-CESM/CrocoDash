@@ -207,7 +207,7 @@ def case_to_yaml(caseroot):
     """
     Reconstruct a YAML config dict from an existing case's state files.
 
-    Reads crocodash_state.json (written by Case.__init__) and, if present,
+    Reads _crocodash_state.json (written by Case.__init__) and, if present,
     extract_forcings/config.json (written by Case.configure_forcings).
     Returns a dict suitable for passing to create_case_from_yaml or writing
     to a YAML file with yaml.dump().
