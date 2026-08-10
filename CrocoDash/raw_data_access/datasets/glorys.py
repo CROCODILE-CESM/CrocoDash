@@ -82,6 +82,11 @@ class GLORYS(ForcingProduct):
 
         # Adjust lat lon inputs to make sure they are in the correct range of -180 to 180
         lon_min, lon_max = convert_lons_to_180_range(lon_min, lon_max)
+        # 180 and -180 are the same meridian, but the conversion above always
+        # picks -180 -- undo that for lon_max so a contiguous box like
+        # 100..180 doesn't wrongly take the wrap branch below.
+        if lon_max == -180:
+            lon_max = 180
 
         for date in date_strings:
             pattern = os.path.join(ds_in_path, "**", f"*_{date}_*.nc")
@@ -92,7 +97,18 @@ class GLORYS(ForcingProduct):
             ds_in_files, decode_times=False, engine="h5netcdf", parallel=True
         )[variables]
 
-        if lon_min * lon_max > 0:
+        # lon_min <= lon_max is already a valid ascending range in the -180..180
+        # system -- true whether it's a normal same-sign box (e.g. -80..-70) or one
+        # that happens to straddle the prime meridian (e.g. -45..45) -- so a direct
+        # slice is correct either way. Splitting is only needed when the range
+        # actually wraps around the antimeridian (lon_min > lon_max, e.g. 170..-170).
+        # The previous `lon_min * lon_max > 0` (same-sign) check wrongly routed any
+        # opposite-sign range into the split/concat branch too, including
+        # prime-meridian-straddling boxes -- there, the two slices
+        # slice(lon_min-1, 360) and slice(-180, lon_max+1) overlap heavily (both
+        # cover the whole middle region) instead of being disjoint, duplicating a
+        # large swath of longitude values in the concatenated result.
+        if lon_min <= lon_max:
             dataset = ds.sel(
                 latitude=slice(lat_min - 1, lat_max + 1),
                 longitude=slice(lon_min - 1, lon_max + 1),
@@ -112,9 +128,18 @@ class GLORYS(ForcingProduct):
                 dim="longitude",
             )
 
-            # convert longitude from degree west to degree east
-            dataset["longitude"] = (360 - dataset["longitude"]) % 360
+            # The two slices above are still in the native -180..180 system, so
+            # concatenating them gives a non-monotonic sequence across the wrap
+            # (e.g. ...,179,180,-180,-179,...). Shift into a continuous 0..360
+            # range -- lon % 360 leaves the eastern slice (169..180) untouched
+            # and maps the western slice (-180..-169) to 180..191 -- so the
+            # combined array sorts into one ascending run across the seam.
+            dataset["longitude"] = dataset["longitude"] % 360
             dataset = dataset.sortby("longitude")
+            # Near-full-circle boxes leave a gap narrower than the combined
+            # 2deg buffer, so the slices above can overlap and duplicate
+            # longitudes -- keep the first occurrence.
+            dataset = dataset.drop_duplicates("longitude")
 
         dataset.to_netcdf(path)
         return path
