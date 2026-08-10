@@ -34,7 +34,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ env.CESMROOT }}
-          key: cesm-${{ runner.os }}-${{ env.CESM_REF }}-v1
+          key: cesm-${{ runner.os }}-${{ env.CESM_REF }}-v2
 
       - name: Checkout CESM and run git-fleximod update
         if: steps.cesm-cache.outputs.cache-hit != 'true'
@@ -42,6 +42,12 @@ jobs:
           git clone --depth 1 --branch ${{ env.CESM_REF }} https://github.com/${{ env.CESM_REPO }} ${{ env.CESMROOT }}
           cd ${{ env.CESMROOT }}
           ./bin/git-fleximod update
+          # CIME stamps its own version via `git describe --tags` on this
+          # checkout (case creation reads it). Depending on how fleximod
+          # negotiates the fetch, the shallow checkout can land on a commit
+          # with no reachable tag, which makes that call fail outright.
+          # Force the tags in so describe always has something to find.
+          git -C cime fetch --tags
 
       - uses: mamba-org/setup-micromamba@v2
         with:
@@ -49,6 +55,13 @@ jobs:
           environment-file: environment.yml
           cache-environment: true
           cache-downloads: true
+          # environment.yml only pins the top-level deps -- the editable
+          # submodule installs (rm6, mom6_forge, visualCaseGen,
+          # ipyfilechooser) declare their own dependencies in their own
+          # pyproject.toml/setup.py/environment.yml. Fold those into the
+          # cache key too, so a submodule dependency bump invalidates the
+          # cached env instead of silently reusing a stale one.
+          cache-environment-key: environment-${{ hashFiles('environment.yml', 'CrocoDash/rm6/pyproject.toml', 'CrocoDash/rm6/environment-ci.yml', 'CrocoDash/visualCaseGen/pyproject.toml', 'CrocoDash/visualCaseGen/environment.yml', 'CrocoDash/visualCaseGen/external/mom6_forge/pyproject.toml', 'CrocoDash/visualCaseGen/external/mom6_forge/environment.yml', 'CrocoDash/visualCaseGen/external/mom6_forge/setup.py', 'CrocoDash/visualCaseGen/external/ipyfilechooser/setup.py') }}
 
       - name: Run Pytest
         shell: bash -el {0}
