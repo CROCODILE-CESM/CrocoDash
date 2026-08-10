@@ -596,7 +596,7 @@ When omitted the recipient is asked interactively for each category.</p></li>
 <dt class="sig sig-object py" id="CrocoDash.shareable.duplicate_case">
 <span class="sig-prename descclassname"><span class="pre">CrocoDash.shareable.</span></span><span class="sig-name descname"><span class="pre">duplicate_case</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">caseroot</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_caseroot</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_inputdir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bundle_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.shareable.duplicate_case" title="Link to this definition">#</a></dt>
 <dd><p>Copy a CrocoDash case to a new location within the same user context.</p>
-<p>Reads machine, project, and cesmroot from the original case’s crocodash_state.json,
+<p>Reads machine, project, and cesmroot from the original case’s _crocodash_state.json,
 identifies any non-standard CESM state, recreates the case via recipe.py, and
 transfers the non-standard state to the new location. Pass bundle_dir to also save
 a portable bundle as a side effect.</p>

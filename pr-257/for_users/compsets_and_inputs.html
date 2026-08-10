@@ -377,7 +377,7 @@ document.write(`
 <h1>Regional Compsets &amp; Input Parameters<a class="headerlink" href="#regional-compsets-input-parameters" title="Link to this heading">#</a></h1>
 <section id="case-state-file">
 <h2>Case State File<a class="headerlink" href="#case-state-file" title="Link to this heading">#</a></h2>
-<p>At the end of <code class="docutils literal notranslate"><span class="pre">Case.__init__</span></code>, CrocoDash writes a <code class="docutils literal notranslate"><span class="pre">crocodash_state.json</span></code> file into the caseroot. It records the construction parameters needed to reconstruct or inspect the case later:</p>
+<p>At the end of <code class="docutils literal notranslate"><span class="pre">Case.__init__</span></code>, CrocoDash writes a <code class="docutils literal notranslate"><span class="pre">_crocodash_state.json</span></code> file into the caseroot. It records the construction parameters needed to reconstruct or inspect the case later:</p>
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
 <span class="w">  </span><span class="nt">&quot;inputdir&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/path/to/croc_input/mycase&quot;</span><span class="p">,</span>
 <span class="w">  </span><span class="nt">&quot;cesmroot&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/path/to/CROCESM&quot;</span><span class="p">,</span>

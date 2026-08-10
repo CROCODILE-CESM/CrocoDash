@@ -926,7 +926,7 @@ within this method and must be handled externally.</p></li>
 <section id="module-CrocoDash.case_state">
 <span id="crocodash-case-state-module"></span><h2>CrocoDash.case_state module<a class="headerlink" href="#module-CrocoDash.case_state" title="Link to this heading">#</a></h2>
 <p>case_state.py — Serialization policy and I/O for the CrocoDash case state file.</p>
-<p>The case state is written to <code class="docutils literal notranslate"><span class="pre">crocodash_state.json</span></code> inside the case root at the
+<p>The case state is written to <code class="docutils literal notranslate"><span class="pre">_crocodash_state.json</span></code> inside the case root at the
 end of <code class="docutils literal notranslate"><span class="pre">Case.__init__</span></code>.  This module owns:</p>
 <ul class="simple">
 <li><p>the schema version used to gate compatibility checks;</p></li>
@@ -952,13 +952,13 @@ Logs a warning (rather than raising) when schema_version is absent entirely
 <dl class="py function">
 <dt class="sig sig-object py" id="CrocoDash.case_state.read">
 <span class="sig-prename descclassname"><span class="pre">CrocoDash.case_state.</span></span><span class="sig-name descname"><span class="pre">read</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">caseroot</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.case_state.read" title="Link to this definition">#</a></dt>
-<dd><p>Read crocodash_state.json, validate the schema version, and return the state dict.</p>
+<dd><p>Read _crocodash_state.json, validate the schema version, and return the state dict.</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="CrocoDash.case_state.write">
 <span class="sig-prename descclassname"><span class="pre">CrocoDash.case_state.</span></span><span class="sig-name descname"><span class="pre">write</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">caseroot</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.case_state.write" title="Link to this definition">#</a></dt>
-<dd><p>Write <em>state</em> to crocodash_state.json, injecting schema_version as the first key.</p>
+<dd><p>Write <em>state</em> to _crocodash_state.json, injecting schema_version as the first key.</p>
 </dd></dl>
 
 </section>
@@ -1025,7 +1025,7 @@ The YAML file can be generated from an existing case using the case_to_yaml func
 <dt class="sig sig-object py" id="CrocoDash.recipe.case_to_yaml">
 <span class="sig-prename descclassname"><span class="pre">CrocoDash.recipe.</span></span><span class="sig-name descname"><span class="pre">case_to_yaml</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">caseroot</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.recipe.case_to_yaml" title="Link to this definition">#</a></dt>
 <dd><p>Reconstruct a YAML config dict from an existing case’s state files.</p>
-<p>Reads crocodash_state.json (written by Case.__init__) and, if present,
+<p>Reads _crocodash_state.json (written by Case.__init__) and, if present,
 extract_forcings/config.json (written by Case.configure_forcings).
 Returns a dict suitable for passing to create_case_from_yaml or writing
 to a YAML file with yaml.dump().</p>
@@ -1261,7 +1261,7 @@ When omitted the recipient is asked interactively for each category.</p></li>
 <dt class="sig sig-object py" id="CrocoDash.shareable.duplicate_case">
 <span class="sig-prename descclassname"><span class="pre">CrocoDash.shareable.</span></span><span class="sig-name descname"><span class="pre">duplicate_case</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">caseroot</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_caseroot</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_inputdir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bundle_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.shareable.duplicate_case" title="Link to this definition">#</a></dt>
 <dd><p>Copy a CrocoDash case to a new location within the same user context.</p>
-<p>Reads machine, project, and cesmroot from the original case’s crocodash_state.json,
+<p>Reads machine, project, and cesmroot from the original case’s _crocodash_state.json,
 identifies any non-standard CESM state, recreates the case via recipe.py, and
 transfers the non-standard state to the new location. Pass bundle_dir to also save
 a portable bundle as a side effect.</p>
