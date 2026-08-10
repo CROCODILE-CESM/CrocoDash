@@ -388,15 +388,16 @@ crocodash<span class="w"> </span>template<span class="w"> </span>--output<span c
 <hr class="docutils" />
 <section id="pbs-submission-script-kind-pbs">
 <h2>PBS submission script (<code class="docutils literal notranslate"><span class="pre">--kind</span> <span class="pre">pbs</span></code>)<a class="headerlink" href="#pbs-submission-script-kind-pbs" title="Link to this heading">#</a></h2>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>crocodash<span class="w"> </span>template<span class="w"> </span>--output<span class="w"> </span>submit_forcings.pbs<span class="w"> </span>--kind<span class="w"> </span>pbs<span class="w"> </span>--machine<span class="w"> </span>derecho
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>crocodash<span class="w"> </span>template<span class="w"> </span>--output<span class="w"> </span>submit_forcings.pbs
 </pre></div>
 </div>
-<p>This writes a batch submission script that runs <code class="docutils literal notranslate"><span class="pre">crocodash</span> <span class="pre">process</span> <span class="pre">--caseroot</span> <span class="pre">&lt;caseroot&gt;</span> <span class="pre">--all</span></code> on an HPC queue (e.g. Derecho) instead of interactively — useful for long-running forcing extraction. Edit the <code class="docutils literal notranslate"><span class="pre">#PBS</span> <span class="pre">-A</span> <span class="pre">&lt;PROJECT_CODE&gt;</span></code> and <code class="docutils literal notranslate"><span class="pre">caseroot</span></code> placeholders, then submit with <code class="docutils literal notranslate"><span class="pre">qsub</span> <span class="pre">submit_forcings.pbs</span></code>.</p>
+<p>A <code class="docutils literal notranslate"><span class="pre">.pbs</span></code> output suffix selects the PBS template on its own, the same way <code class="docutils literal notranslate"><span class="pre">.yaml</span></code>/<code class="docutils literal notranslate"><span class="pre">.ipynb</span></code> do for <code class="docutils literal notranslate"><span class="pre">--kind</span> <span class="pre">case</span></code> — <code class="docutils literal notranslate"><span class="pre">--kind</span> <span class="pre">pbs</span></code> is only needed if you want a different output filename. This writes a batch submission script that runs <code class="docutils literal notranslate"><span class="pre">crocodash</span> <span class="pre">process</span> <span class="pre">--caseroot</span> <span class="pre">&lt;caseroot&gt;</span> <span class="pre">--all</span></code> on an HPC queue (e.g. Derecho) instead of interactively — useful for long-running forcing extraction. Edit the <code class="docutils literal notranslate"><span class="pre">#PBS</span> <span class="pre">-A</span> <span class="pre">&lt;PROJECT_CODE&gt;</span></code> and <code class="docutils literal notranslate"><span class="pre">caseroot</span></code> placeholders, then submit with <code class="docutils literal notranslate"><span class="pre">qsub</span> <span class="pre">submit_forcings.pbs</span></code>.</p>
 </section>
 <hr class="docutils" />
 <section id="machine">
 <h2><code class="docutils literal notranslate"><span class="pre">--machine</span></code><a class="headerlink" href="#machine" title="Link to this heading">#</a></h2>
-<p>The <code class="docutils literal notranslate"><span class="pre">--machine</span></code> flag replaces <code class="docutils literal notranslate"><span class="pre">&lt;KEY&gt;</span></code> placeholders (e.g. <code class="docutils literal notranslate"><span class="pre">&lt;GEBCO&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;CESM&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;inputdir&gt;</span></code>) with real paths for the given machine. Omit it to leave placeholders and fill them in manually. Applies to both <code class="docutils literal notranslate"><span class="pre">--kind</span> <span class="pre">case</span></code> and <code class="docutils literal notranslate"><span class="pre">--kind</span> <span class="pre">pbs</span></code>.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">--machine</span></code> flag replaces <code class="docutils literal notranslate"><span class="pre">&lt;KEY&gt;</span></code> placeholders (e.g. <code class="docutils literal notranslate"><span class="pre">&lt;GEBCO&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;TPXO_H&gt;</span></code>) with real dataset paths for the given machine. Omit it to leave placeholders and fill them in manually. It only applies to <code class="docutils literal notranslate"><span class="pre">--kind</span> <span class="pre">case</span></code> — the pbs template’s placeholders (<code class="docutils literal notranslate"><span class="pre">&lt;PROJECT_CODE&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">caseroot</span></code>) aren’t dataset paths, so <code class="docutils literal notranslate"><span class="pre">--machine</span></code> has no effect on <code class="docutils literal notranslate"><span class="pre">--kind</span> <span class="pre">pbs</span></code> output.</p>
+<p>A few <code class="docutils literal notranslate"><span class="pre">known_paths.json</span></code> keys (<code class="docutils literal notranslate"><span class="pre">CESM</span></code>, <code class="docutils literal notranslate"><span class="pre">inputdir</span></code>, <code class="docutils literal notranslate"><span class="pre">casedir</span></code>) are also placeholder tokens rather than real paths, so they’re always left as <code class="docutils literal notranslate"><span class="pre">&lt;KEY&gt;</span></code> for manual editing regardless of <code class="docutils literal notranslate"><span class="pre">--machine</span></code>.</p>
 </section>
 <hr class="docutils" />
 <section id="available-machines">
@@ -423,27 +424,19 @@ crocodash<span class="w"> </span>template<span class="w"> </span>--output<span c
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">&lt;TPXO_H&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;TPXO_U&gt;</span></code></p></td>
 <td><p>TPXO tidal constituent files</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">&lt;CESM&gt;</span></code></p></td>
-<td><p>Path to CESM source checkout</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">&lt;inputdir&gt;</span></code></p></td>
-<td><p>Directory for model input files</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">&lt;casedir&gt;</span></code></p></td>
-<td><p>Directory for the CESM case</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">&lt;CHL&gt;</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">&lt;CHL&gt;</span></code></p></td>
 <td><p>Chlorophyll data file</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">&lt;MARBL_IC&gt;</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">&lt;MARBL_IC&gt;</span></code></p></td>
 <td><p>MARBL BGC initial condition</p></td>
 </tr>
-<tr class="row-odd"><td><p>…</p></td>
+<tr class="row-even"><td><p>…</p></td>
 <td><p>Other dataset paths in known_paths.json</p></td>
 </tr>
 </tbody>
 </table>
 </div>
+<p><code class="docutils literal notranslate"><span class="pre">&lt;CESM&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;inputdir&gt;</span></code>, and <code class="docutils literal notranslate"><span class="pre">&lt;casedir&gt;</span></code> are never filled in — always edit those manually.</p>
 </section>
 </section>
 
