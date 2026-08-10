@@ -22,14 +22,15 @@ def _write_config(path, extra_keys=None):
             "inputs": {
                 "product_name": "GLORYS",
                 "function_name": "get_glorys_data_from_rda",
-            },
-            "outputs": {
                 "start_date": "20200101",
                 "end_date": "20200109",
+            },
+            "outputs": {
                 "date_format": "%Y%m%d",
                 "information": {},
                 "boundary_number_conversion": {"north": 1},
-                "step": "7",
+                "get_step_days": "7",
+                "regrid_step_days": "7",
                 "preview": False,
             },
         },
@@ -181,14 +182,15 @@ def test_process_preview_from_config(mock_read, mock_resolve, mock_run, tmp_path
             "inputs": {
                 "product_name": "GLORYS",
                 "function_name": "fn",
-            },
-            "outputs": {
                 "start_date": "20200101",
                 "end_date": "20200109",
+            },
+            "outputs": {
                 "date_format": "%Y%m%d",
                 "information": {},
                 "boundary_number_conversion": {},
-                "step": "7",
+                "get_step_days": "7",
+                "regrid_step_days": "7",
                 "preview": True,
             },
         },
