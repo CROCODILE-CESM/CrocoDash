@@ -13,7 +13,14 @@ jobs:
   pytest:
     runs-on: ubuntu-latest
     env:
-      CESMROOT: ${{ github.workspace }}/CESM
+      # Deliberately outside the checked-out repo: git-fleximod looks for a
+      # .gitmodules file starting at CWD and walks upward through parents if
+      # it isn't found there. This CESM branch doesn't have its own
+      # top-level .gitmodules, so cloning CESM *inside* $GITHUB_WORKSPACE
+      # made that upward search land on CrocoDash's own .gitmodules instead
+      # -- fleximod would silently "update" CrocoDash's submodules (already
+      # checked out, hence a fast no-op) instead of CESM's real externals.
+      CESMROOT: ${{ runner.temp }}/CESM
       DIN_LOC_ROOT: ${{ github.workspace }}/cesm_data
       CIME_OUTPUT_ROOT: ${{ github.workspace }}/cesm_data
     steps:
@@ -34,7 +41,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ env.CESMROOT }}
-          key: cesm-${{ runner.os }}-${{ env.CESM_REF }}-v2
+          key: cesm-${{ runner.os }}-${{ env.CESM_REF }}-v3
 
       - name: Checkout CESM and run git-fleximod update
         if: steps.cesm-cache.outputs.cache-hit != 'true'
@@ -42,6 +49,8 @@ jobs:
           git clone --depth 1 --branch ${{ env.CESM_REF }} https://github.com/${{ env.CESM_REPO }} ${{ env.CESMROOT }}
           cd ${{ env.CESMROOT }}
           ./bin/git-fleximod update
+          echo "--- sanity check: cime/CIME python package present? ---"
+          ls cime/CIME/__init__.py
           # visualCaseGen's CIME_interface stamps a compatibility check off
           # `git describe --tags` on this checkout (case creation reads it,
           # expects a `cimeN.M.P` tag). In CI, fleximod's checkout of `cime`
