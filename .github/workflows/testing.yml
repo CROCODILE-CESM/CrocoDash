@@ -42,12 +42,16 @@ jobs:
           git clone --depth 1 --branch ${{ env.CESM_REF }} https://github.com/${{ env.CESM_REPO }} ${{ env.CESMROOT }}
           cd ${{ env.CESMROOT }}
           ./bin/git-fleximod update
-          # CIME stamps its own version via `git describe --tags` on this
-          # checkout (case creation reads it). Depending on how fleximod
-          # negotiates the fetch, the shallow checkout can land on a commit
-          # with no reachable tag, which makes that call fail outright.
-          # Force the tags in so describe always has something to find.
-          git -C cime fetch --tags
+          # visualCaseGen's CIME_interface stamps a compatibility check off
+          # `git describe --tags` on this checkout (case creation reads it,
+          # expects a `cimeN.M.P` tag). In CI, fleximod's checkout of `cime`
+          # doesn't come with its own reachable tag (git -C cime fetch --tags
+          # only pulls the *parent* CESM repo's unrelated tags here), so
+          # describe fails outright. This CESM branch is documented (see
+          # visualCaseGen/cime_interface.py) as shipping cime6.2.2 -- stamp
+          # that tag directly if describe still can't find anything.
+          git -C cime fetch --tags || true
+          git -C cime describe --tags >/dev/null 2>&1 || git -C cime tag cime6.2.2
 
       - uses: mamba-org/setup-micromamba@v2
         with:
