@@ -32,16 +32,18 @@ The `.py` output extracts code cells directly from the gallery tutorial notebook
 ## PBS submission script (`--kind pbs`)
 
 ```bash
-crocodash template --output submit_forcings.pbs --kind pbs --machine derecho
+crocodash template --output submit_forcings.pbs
 ```
 
-This writes a batch submission script that runs `crocodash process --caseroot <caseroot> --all` on an HPC queue (e.g. Derecho) instead of interactively — useful for long-running forcing extraction. Edit the `#PBS -A <PROJECT_CODE>` and `caseroot` placeholders, then submit with `qsub submit_forcings.pbs`.
+A `.pbs` output suffix selects the PBS template on its own, the same way `.yaml`/`.ipynb` do for `--kind case` — `--kind pbs` is only needed if you want a different output filename. This writes a batch submission script that runs `crocodash process --caseroot <caseroot> --all` on an HPC queue (e.g. Derecho) instead of interactively — useful for long-running forcing extraction. Edit the `#PBS -A <PROJECT_CODE>` and `caseroot` placeholders, then submit with `qsub submit_forcings.pbs`.
 
 ---
 
 ## `--machine`
 
-The `--machine` flag replaces `<KEY>` placeholders (e.g. `<GEBCO>`, `<CESM>`, `<inputdir>`) with real paths for the given machine. Omit it to leave placeholders and fill them in manually. Applies to both `--kind case` and `--kind pbs`.
+The `--machine` flag replaces `<KEY>` placeholders (e.g. `<GEBCO>`, `<TPXO_H>`) with real dataset paths for the given machine. Omit it to leave placeholders and fill them in manually. It only applies to `--kind case` — the pbs template's placeholders (`<PROJECT_CODE>`, `caseroot`) aren't dataset paths, so `--machine` has no effect on `--kind pbs` output.
+
+A few `known_paths.json` keys (`CESM`, `inputdir`, `casedir`) are also placeholder tokens rather than real paths, so they're always left as `<KEY>` for manual editing regardless of `--machine`.
 
 ---
 
@@ -63,9 +65,8 @@ KeyError: Unknown machine 'bogus'. Available: derecho
 |---|---|
 | `<GEBCO>` | GEBCO bathymetry file |
 | `<TPXO_H>`, `<TPXO_U>` | TPXO tidal constituent files |
-| `<CESM>` | Path to CESM source checkout |
-| `<inputdir>` | Directory for model input files |
-| `<casedir>` | Directory for the CESM case |
 | `<CHL>` | Chlorophyll data file |
 | `<MARBL_IC>` | MARBL BGC initial condition |
 | ... | Other dataset paths in known_paths.json |
+
+`<CESM>`, `<inputdir>`, and `<casedir>` are never filled in — always edit those manually.

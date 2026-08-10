@@ -65,6 +65,32 @@ def test_template_python_with_machine(tmp_path):
     assert text.count("# %%") > 1, "Multiple cells should each have a # %% marker"
 
 
+def test_template_python_is_valid_python(tmp_path):
+    # The tutorial notebook has IPython magic cells (e.g. `%matplotlib ipympl`)
+    # which must be commented out, or the .py output fails to even parse.
+    import py_compile
+
+    for extra_args in ([], ["--machine", "derecho"]):
+        output = tmp_path / f"out_{len(extra_args)}.py"
+        run_main(["template", "--output", str(output)] + extra_args)
+        py_compile.compile(str(output), doraise=True)
+
+
+def test_template_machine_leaves_non_path_keys_as_placeholders(tmp_path):
+    # CESM/inputdir/casedir in known_paths.json hold placeholder tokens
+    # ("Checkout", "fill_in_id", "fill_in_cd"), not real paths -- injecting
+    # them is worse than leaving <KEY> since nothing then signals they still
+    # need manual editing.
+    output = tmp_path / "out.yaml"
+    run_main(["template", "--output", str(output), "--machine", "derecho"])
+    text = output.read_text()
+    assert "<CESM>" in text
+    assert "<inputdir>" in text
+    assert "<casedir>" in text
+    for bogus in ("Checkout", "fill_in_id", "fill_in_cd"):
+        assert bogus not in text
+
+
 # --- YAML output ---
 
 
@@ -87,7 +113,11 @@ def test_template_yaml_with_machine(tmp_path):
     run_main(["template", "--output", str(output), "--machine", "derecho"])
     assert output.exists()
     text = output.read_text()
-    assert "<CESM>" not in text, "Placeholders should be replaced with --machine"
+    assert "<GEBCO>" not in text, "Dataset path placeholders should be replaced"
+    # CESM/inputdir/casedir are not real paths in known_paths.json (see
+    # test_template_machine_leaves_non_path_keys_as_placeholders) and are
+    # deliberately left as placeholders even with --machine set.
+    assert "<CESM>" in text
     config = yaml.safe_load(text)
     assert isinstance(config, dict)
 
@@ -120,14 +150,16 @@ def test_template_pbs_with_machine(tmp_path):
     assert text.startswith("#!/bin/bash")
 
 
-def test_template_kind_case_ignores_pbs_suffix(tmp_path):
-    # --kind defaults to "case", so a .pbs-named output still gets case-template
-    # content (extracted notebook code cells), not the PBS script.
+def test_template_pbs_suffix_dispatches_without_kind_flag(tmp_path):
+    # A .pbs output suffix selects the PBS template on its own, the same way
+    # .yaml/.ipynb already dispatch by suffix -- --kind pbs is only needed to
+    # use a different filename.
     output = tmp_path / "out.pbs"
     run_main(["template", "--output", str(output)])
     assert output.exists()
     text = output.read_text()
-    assert "#!/bin/bash" not in text
+    assert text.startswith("#!/bin/bash")
+    assert output.stat().st_mode & 0o111, "Output should be executable"
 
 
 # --- error handling ---
