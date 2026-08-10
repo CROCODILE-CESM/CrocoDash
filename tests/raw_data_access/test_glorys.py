@@ -37,8 +37,8 @@ def test_get_glorys_data_from_rda_antimeridian_wrap_no_mirror(tmp_path, monkeypa
         31,
         170,
         -170,
-        tmp_path,
-        "temp.nc",
+        output_folder=tmp_path,
+        output_filename="temp.nc",
         variables=["zos"],
     )
     result = xr.open_dataset(dataset_path)
@@ -93,8 +93,8 @@ def test_get_glorys_data_from_rda_lon_max_exactly_180_is_not_a_wrap(
         31,
         100,
         180,
-        tmp_path,
-        "temp.nc",
+        output_folder=tmp_path,
+        output_filename="temp.nc",
         variables=["zos"],
     )
     result = xr.open_dataset(dataset_path)
@@ -123,8 +123,8 @@ def test_get_glorys_data_from_rda_near_global_box_has_no_duplicate_longitudes(
         31,
         0.5,
         -0.5,
-        tmp_path,
-        "temp.nc",
+        output_folder=tmp_path,
+        output_filename="temp.nc",
         variables=["zos"],
     )
     result = xr.open_dataset(dataset_path)
@@ -141,7 +141,13 @@ def test_get_glorys_data_from_rda(skip_if_not_glade, tmp_path):
     lon_min = -71
     lon_max = -70
     dataset_path = gl.GLORYS.get_glorys_data_from_rda(
-        dates, lat_min, lat_max, lon_min, lon_max, tmp_path, "temp.nc"
+        dates,
+        lat_min,
+        lat_max,
+        lon_min,
+        lon_max,
+        output_folder=tmp_path,
+        output_filename="temp.nc",
     )
     dataset = xr.open_dataset(dataset_path)
     assert dataset.time.values[0] == np.datetime64("2000-01-01T12:00:00.000000000")
