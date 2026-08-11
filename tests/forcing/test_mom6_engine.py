@@ -26,7 +26,7 @@ def test_build_forcing_request_merges_function_args():
 def test_regrid_obc_chunk_with_reference_ocean(tmp_path, gen_grid_topo_vgrid):
     """process_obc_conditions runs the real GET + regional_mom6.segment.Segment
     regrid end-to-end against the fast synthetic 'reference_ocean' product --
-    no network/campaign-storage access, no /glade dependency. Confirms
+    no network/campaign-storage access, no GLADE dependency. Confirms
     _regrid_obc_chunk's port to the new Segment class (replacing the old
     rm6.segment(...) factory) still produces valid per-boundary output."""
     grid, topo, vgrid = gen_grid_topo_vgrid
