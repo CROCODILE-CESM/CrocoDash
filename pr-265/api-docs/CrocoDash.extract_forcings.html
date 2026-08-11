@@ -1,0 +1,878 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>CrocoDash.extract_forcings package &#8212; CrocoDash  documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=eba8b062" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'api-docs/CrocoDash.extract_forcings';</script>
+    <link rel="icon" href="../_static/crocodile.png"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="CrocoDash.forcing_configurations package" href="CrocoDash.forcing_configurations.html" />
+    <link rel="prev" title="CrocoDash package" href="CrocoDash.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../_static/crocodile.png" class="logo__image only-light" alt="CrocoDash  documentation - Home"/>
+    <script>document.write(`<img src="../_static/crocodile.png" class="logo__image only-dark" alt="CrocoDash  documentation - Home"/>`);</script>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://crocodile-cesm.github.io/CrocoGallery/">Tutorials &amp; Gallery</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../for_users/index.html">User Guide</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../for_users/1_grids.html">1. Grids (hgrid · topo · vgrid)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_users/2_case_setup.html">2. Case Setup (<code class="docutils literal notranslate"><span class="pre">Case</span></code> object)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_users/3a_configure_forcings.html">3a. Configure Forcings (case.configure_forcings)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_users/3b_process_forcings.html">3b. Process Forcings (<code class="docutils literal notranslate"><span class="pre">case.process_forcings</span></code>)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_users/compsets_and_inputs.html">Regional Compsets &amp; Input Parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_users/datasets.html">Accessing Raw Data (raw_data_access)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_users/shareable.html">Sharing Cases</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_users/additional_resources.html">Additional Resources</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_users/cli.html">Command Line Interface</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../for_developers/index.html">Developer Guide</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../for_developers/architecture.html">Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_developers/adding_data_access.html">Adding Data to the Data Access Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_developers/adding_forcing_configurations.html">Adding Forcing Configurations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_developers/submodule_api_usage.html">Submodule API Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_developers/edit_docs.html">Write Documentation</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://github.com/CROCODILE-CESM/CrocoDash/discussions/138">Semi-Official ChangeLog</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="modules.html">CrocoDash API Docs</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2 current active has-children"><a class="reference internal" href="CrocoDash.html">CrocoDash package</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l3 current active"><a class="current reference internal" href="#">CrocoDash.extract_forcings package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.forcing_configurations.html">CrocoDash.forcing_configurations package</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="CrocoDash.raw_data_access.html">CrocoDash.raw_data_access package</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html">CrocoDash.raw_data_access.datasets package</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/CROCODILE-CESM/CrocoDash/discussions/84">Common Errors</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/api-docs/CrocoDash.extract_forcings.rst" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.rst</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>CrocoDash.extract_forcings package</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#submodules">Submodules</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.extract_forcings.bgc">CrocoDash.extract_forcings.bgc module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.bgc.process_bgc_ic"><code class="docutils literal notranslate"><span class="pre">process_bgc_ic()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.bgc.process_bgc_iron_forcing"><code class="docutils literal notranslate"><span class="pre">process_bgc_iron_forcing()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.bgc.process_river_nutrients"><code class="docutils literal notranslate"><span class="pre">process_river_nutrients()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.extract_forcings.chlorophyll">CrocoDash.extract_forcings.chlorophyll module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.chlorophyll.process_chl"><code class="docutils literal notranslate"><span class="pre">process_chl()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.extract_forcings.driver">CrocoDash.extract_forcings.driver module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.driver.resolve_components"><code class="docutils literal notranslate"><span class="pre">resolve_components()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.driver.run_workflow"><code class="docutils literal notranslate"><span class="pre">run_workflow()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.extract_forcings.ic">CrocoDash.extract_forcings.ic module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.ic.process_initial_condition"><code class="docutils literal notranslate"><span class="pre">process_initial_condition()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.extract_forcings.mom6">CrocoDash.extract_forcings.mom6 module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.mom6.build_forcing_request"><code class="docutils literal notranslate"><span class="pre">build_forcing_request()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.mom6.final_cleanliness_fill"><code class="docutils literal notranslate"><span class="pre">final_cleanliness_fill()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.mom6.process_mom6_ic"><code class="docutils literal notranslate"><span class="pre">process_mom6_ic()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.mom6.process_mom6_obc"><code class="docutils literal notranslate"><span class="pre">process_mom6_obc()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.extract_forcings.obc">CrocoDash.extract_forcings.obc module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.obc.process_obc_conditions"><code class="docutils literal notranslate"><span class="pre">process_obc_conditions()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.extract_forcings.runoff">CrocoDash.extract_forcings.runoff module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.runoff.generate_rof_ocn_map"><code class="docutils literal notranslate"><span class="pre">generate_rof_ocn_map()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.extract_forcings.tides">CrocoDash.extract_forcings.tides module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.tides.process_tides"><code class="docutils literal notranslate"><span class="pre">process_tides()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.extract_forcings.utils">CrocoDash.extract_forcings.utils module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.utils.check_date_continuity"><code class="docutils literal notranslate"><span class="pre">check_date_continuity()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.utils.fetch_raw_chunk"><code class="docutils literal notranslate"><span class="pre">fetch_raw_chunk()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.utils.get_data_access_function"><code class="docutils literal notranslate"><span class="pre">get_data_access_function()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.utils.is_valid_netcdf"><code class="docutils literal notranslate"><span class="pre">is_valid_netcdf()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.utils.parse_dataset_folder"><code class="docutils literal notranslate"><span class="pre">parse_dataset_folder()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.extract_forcings">Module contents</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="crocodash-extract-forcings-package">
+<h1>CrocoDash.extract_forcings package<a class="headerlink" href="#crocodash-extract-forcings-package" title="Link to this heading">#</a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading">#</a></h2>
+</section>
+<section id="module-CrocoDash.extract_forcings.bgc">
+<span id="crocodash-extract-forcings-bgc-module"></span><h2>CrocoDash.extract_forcings.bgc module<a class="headerlink" href="#module-CrocoDash.extract_forcings.bgc" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.extract_forcings.bgc.process_bgc_ic">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.bgc.</span></span><span class="sig-name descname"><span class="pre">process_bgc_ic</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.extract_forcings.bgc.process_bgc_ic" title="Link to this definition">#</a></dt>
+<dd><p>Copy BGC initial condition file</p>
+<p>Parameters:
+- file_path: str, path to the original BGC IC file
+- output_path: str, path to save the processed BGC IC file</p>
+<p>Returns:
+- None</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.extract_forcings.bgc.process_bgc_iron_forcing">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.bgc.</span></span><span class="sig-name descname"><span class="pre">process_bgc_iron_forcing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ny</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">MARBL_FESEDFLUX_FILE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">MARBL_FEVENTFLUX_FILE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">MARBL_FESEDFLUXRED_FILE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputdir</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.extract_forcings.bgc.process_bgc_iron_forcing" title="Link to this definition">#</a></dt>
+<dd><p>Create dummy iron forcing files for MARBL.
+Parameters:
+- nx: int, number of grid points in x-direction
+- ny: int, number of grid points in y-direction
+- MARBL_FESEDFLUX_FILE: str, filename for sediment flux input
+- MARBL_FEVENTFLUX_FILE: str, filename for event flux input
+- inputdir: str, directory to save the generated files
+Returns:
+- None</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.extract_forcings.bgc.process_river_nutrients">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.bgc.</span></span><span class="sig-name descname"><span class="pre">process_river_nutrients</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">global_river_nutrients_filepath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ocn_grid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mapping_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">river_nutrients_nnsm_filepath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calendar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'noleap'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.extract_forcings.bgc.process_river_nutrients" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-CrocoDash.extract_forcings.chlorophyll">
+<span id="crocodash-extract-forcings-chlorophyll-module"></span><h2>CrocoDash.extract_forcings.chlorophyll module<a class="headerlink" href="#module-CrocoDash.extract_forcings.chlorophyll" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.extract_forcings.chlorophyll.process_chl">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.chlorophyll.</span></span><span class="sig-name descname"><span class="pre">process_chl</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ocn_grid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ocn_topo</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputdir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chl_processed_filepath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_filepath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calendar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'NOLEAP'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.extract_forcings.chlorophyll.process_chl" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-CrocoDash.extract_forcings.driver">
+<span id="crocodash-extract-forcings-driver-module"></span><h2>CrocoDash.extract_forcings.driver module<a class="headerlink" href="#module-CrocoDash.extract_forcings.driver" title="Link to this heading">#</a></h2>
+<p>CrocoDash Forcing Extraction Driver</p>
+<p>Orchestrates the forcing extraction workflow for a CrocoDash case. Reads
+<code class="docutils literal notranslate"><span class="pre">config.json</span></code> (written by <code class="docutils literal notranslate"><span class="pre">Case.configure_forcings</span></code>) and derives all paths
+from the case state file via <code class="docutils literal notranslate"><span class="pre">case_state.read</span></code>.</p>
+<p>This module exposes <code class="docutils literal notranslate"><span class="pre">run_workflow</span></code> as the Python API. The CLI entry point is
+<code class="docutils literal notranslate"><span class="pre">crocodash</span> <span class="pre">process</span></code> (see <code class="docutils literal notranslate"><span class="pre">CrocoDash.cli</span></code>).</p>
+<p>Typical Python usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">CrocoDash.extract_forcings.driver</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_workflow</span>
+
+<span class="n">run_workflow</span><span class="p">(</span><span class="n">config_path</span><span class="o">=</span><span class="s2">&quot;~/croc_input/mycase/extract_forcings/config.json&quot;</span><span class="p">,</span> <span class="n">bc</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ic</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.extract_forcings.driver.resolve_components">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.driver.</span></span><span class="sig-name descname"><span class="pre">resolve_components</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.extract_forcings.driver.resolve_components" title="Link to this definition">#</a></dt>
+<dd><p>Resolve which components to run based on CLI args and config availability.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.extract_forcings.driver.run_workflow">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.driver.</span></span><span class="sig-name descname"><span class="pre">run_workflow</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ic</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bgcic</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bgcironforcing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tides</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chl_</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">runoff</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bgcrivernutrients</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preview</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.extract_forcings.driver.run_workflow" title="Link to this definition">#</a></dt>
+<dd><p>Execute the forcing extraction workflow.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>config_path</strong> (<em>str</em><em> or </em><em>Path</em>) – Path to the <code class="docutils literal notranslate"><span class="pre">config.json</span></code> written by <code class="docutils literal notranslate"><span class="pre">Case.configure_forcings</span></code>.</p></li>
+<li><p><strong>ic</strong> (<em>bool</em>) – Run initial conditions.</p></li>
+<li><p><strong>bc</strong> (<em>bool</em>) – Run boundary conditions.</p></li>
+<li><p><strong>bgcic</strong> (<em>bool</em>) – Run BGC initial conditions.</p></li>
+<li><p><strong>bgcironforcing</strong> (<em>bool</em>) – Run BGC iron forcing.</p></li>
+<li><p><strong>tides</strong> (<em>bool</em>) – Run tidal forcing.</p></li>
+<li><p><strong>chl</strong> (<em>bool</em>) – Run chlorophyll processing.</p></li>
+<li><p><strong>runoff</strong> (<em>bool</em>) – Run runoff mapping.</p></li>
+<li><p><strong>bgcrivernutrients</strong> (<em>bool</em>) – Run BGC river nutrients (always runs after runoff).</p></li>
+<li><p><strong>preview</strong> (<em>bool</em>) – Preview task graph without executing.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-CrocoDash.extract_forcings.ic">
+<span id="crocodash-extract-forcings-ic-module"></span><h2>CrocoDash.extract_forcings.ic module<a class="headerlink" href="#module-CrocoDash.extract_forcings.ic" title="Link to this heading">#</a></h2>
+<p>IC (Initial Condition) forcing extraction engine for CrocoDash.</p>
+<p>Model-agnostic: this module gets the raw t=0 snapshot, but knows nothing
+about how to regrid it. Callers (<code class="docutils literal notranslate"><span class="pre">mom6.py</span></code>, <code class="docutils literal notranslate"><span class="pre">cice.py</span></code>, <code class="docutils literal notranslate"><span class="pre">ww3.py</span></code>)
+supply a <code class="docutils literal notranslate"><span class="pre">regrid_fn</span></code> that turns the raw snapshot into that target’s own
+initial-condition file(s) – the GET step is shared.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.extract_forcings.ic.process_initial_condition">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.ic.</span></span><span class="sig-name descname"><span class="pre">process_initial_condition</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">product_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variables</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset_varnames</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_date</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">datetime</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hgrid_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw_data_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_data_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regrid_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preview</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.extract_forcings.ic.process_initial_condition" title="Link to this definition">#</a></dt>
+<dd><p>Process the initial condition (t=0) through the GET → REGRID pipeline.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>product_name</strong> – The name of the data product to retrieve.</p></li>
+<li><p><strong>function_name</strong> – The function to call for retrieving data.</p></li>
+<li><p><strong>variables</strong> – Variable names to request from the download function
+(already resolved by the caller from its own product metadata).</p></li>
+<li><p><strong>extra_args</strong> – Extra kwargs for the download function (already resolved
+by the caller).</p></li>
+<li><p><strong>dataset_varnames</strong> – Opaque metadata dict forwarded to <code class="docutils literal notranslate"><span class="pre">regrid_fn</span></code> –
+this module never reads its keys itself.</p></li>
+<li><p><strong>start_date</strong> – The start date (any pandas-parseable string or datetime).</p></li>
+<li><p><strong>hgrid_path</strong> – Path to the hgrid supergrid file.</p></li>
+<li><p><strong>raw_data_dir</strong> – Directory for raw downloaded data.</p></li>
+<li><p><strong>output_data_dir</strong> – Directory for final output files.</p></li>
+<li><p><strong>regrid_fn</strong> – Target-specific regrid step, called as
+<code class="docutils literal notranslate"><span class="pre">regrid_fn(raw_file,</span> <span class="pre">hgrid,</span> <span class="pre">start_date,</span> <span class="pre">output_dir,</span> <span class="pre">dataset_varnames)</span></code>
+once the raw snapshot has been downloaded. Owns its own
+idempotency (this engine has no per-chunk state to check –
+IC is a single snapshot, not a date-chunked series).</p></li>
+<li><p><strong>preview</strong> – Return metadata dict without executing, default False.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-CrocoDash.extract_forcings.mom6">
+<span id="crocodash-extract-forcings-mom6-module"></span><h2>CrocoDash.extract_forcings.mom6 module<a class="headerlink" href="#module-CrocoDash.extract_forcings.mom6" title="Link to this heading">#</a></h2>
+<p>MOM6-specific OBC/IC handling for CrocoDash.</p>
+<p><code class="docutils literal notranslate"><span class="pre">obc.py</span></code>/<code class="docutils literal notranslate"><span class="pre">ic.py</span></code> are model-agnostic engines: they get raw data (and, for
+OBC, date-chunk/merge it) but know nothing about how to regrid it onto a
+target model’s grid. This module supplies MOM6’s own regrid step – built on
+<code class="docutils literal notranslate"><span class="pre">regional_mom6</span></code>’s <code class="docutils literal notranslate"><span class="pre">segment</span></code>/<code class="docutils literal notranslate"><span class="pre">experiment</span></code> classes and <code class="docutils literal notranslate"><span class="pre">mom6_forge</span></code>’s
+fill utilities – and the MOM6-specific piece of the GET step (turning a
+forcing product’s own u/v/eta/tracer var-name metadata into a download
+request). <code class="docutils literal notranslate"><span class="pre">process_mom6_obc</span></code>/<code class="docutils literal notranslate"><span class="pre">process_mom6_ic</span></code> are the entry points
+<code class="docutils literal notranslate"><span class="pre">driver.py</span></code> calls; they have the same external shape as the old
+<code class="docutils literal notranslate"><span class="pre">obc.process_obc_conditions</span></code>/<code class="docutils literal notranslate"><span class="pre">ic.process_initial_condition</span></code> did before
+those were generalized.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.extract_forcings.mom6.build_forcing_request">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.mom6.</span></span><span class="sig-name descname"><span class="pre">build_forcing_request</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">product_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function_args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#CrocoDash.extract_forcings.mom6.build_forcing_request" title="Link to this definition">#</a></dt>
+<dd><p>Build the (variables, extra_args) an access function needs from a MOM6
+forcing product_info dict (u/v/eta/tracer var names).</p>
+<p>function_args: user overrides (or access-function defaults) for the access
+function’s non-required arguments, as written to config.json’s
+forcing.function_args by configure_forcings()’s function_overrides. Merged
+into extra_args last so they take precedence over product_info-derived keys.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.extract_forcings.mom6.final_cleanliness_fill">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.mom6.</span></span><span class="sig-name descname"><span class="pre">final_cleanliness_fill</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">var</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z_dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.extract_forcings.mom6.final_cleanliness_fill" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.extract_forcings.mom6.process_mom6_ic">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.mom6.</span></span><span class="sig-name descname"><span class="pre">process_mom6_ic</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">product_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">product_information</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_date</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hgrid_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vgrid_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset_varnames</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw_data_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_data_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bathymetry_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preview</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function_args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.extract_forcings.mom6.process_mom6_ic" title="Link to this definition">#</a></dt>
+<dd><p>Process the MOM6 initial condition (t=0) through ic.py’s GET → REGRID
+engine, using regional_mom6’s experiment + mom6_forge’s fill utilities as
+the regrid step.</p>
+<p>Args mirror ic.process_initial_condition’s pre-generalization signature.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.extract_forcings.mom6.process_mom6_obc">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.mom6.</span></span><span class="sig-name descname"><span class="pre">process_mom6_obc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start_date</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_date</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundary_number_conversion</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">product_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">product_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hgrid_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw_dataset_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regridded_dataset_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">get_step_days</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regrid_step_days</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">30</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function_args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preview</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.extract_forcings.mom6.process_mom6_obc" title="Link to this definition">#</a></dt>
+<dd><p>Process MOM6 boundary conditions through obc.py’s GET → REGRID → MERGE
+engine, using regional_mom6’s Segment as the regrid step.</p>
+<p>Args mirror obc.process_obc_conditions’s pre-generalization signature –
+see that function’s docstring for the shared-engine parameters, and
+build_forcing_request/_regrid_obc_chunk above for what’s MOM6-specific.</p>
+</dd></dl>
+
+</section>
+<section id="module-CrocoDash.extract_forcings.obc">
+<span id="crocodash-extract-forcings-obc-module"></span><h2>CrocoDash.extract_forcings.obc module<a class="headerlink" href="#module-CrocoDash.extract_forcings.obc" title="Link to this heading">#</a></h2>
+<p>OBC (Open Boundary Condition) forcing extraction engine for CrocoDash.</p>
+<p>Model-agnostic: this module gets raw data and chunks/merges it, but knows
+nothing about how to regrid it. Callers (<code class="docutils literal notranslate"><span class="pre">mom6.py</span></code>, <code class="docutils literal notranslate"><span class="pre">cice.py</span></code>, <code class="docutils literal notranslate"><span class="pre">ww3.py</span></code>)
+supply a <code class="docutils literal notranslate"><span class="pre">regrid_chunk_fn</span></code> that turns one raw chunk into that target’s own
+per-segment output file – everything else (GET, date-chunking, idempotency,
+MERGE) is shared.</p>
+<p>Three-phase pipeline per boundary:</p>
+<ol class="arabic simple">
+<li><dl class="simple">
+<dt>GET    — download raw data, chunked by <code class="docutils literal notranslate"><span class="pre">get_step</span></code> (default: full range in</dt><dd><p>one request). Chunk size is driven by data-provider constraints
+(API limits, download size). Each chunk is written as
+<code class="docutils literal notranslate"><span class="pre">{boundary}_unprocessed.{start}_{end}.nc</span></code>.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>REGRID — validate raw coverage from filenames, then open all raw files</dt><dd><p>lazily and regrid (via the caller-supplied <code class="docutils literal notranslate"><span class="pre">regrid_chunk_fn</span></code>) in
+<code class="docutils literal notranslate"><span class="pre">regrid_step</span></code>-sized slices. Chunk size is driven by memory and
+xESMF performance. GET and REGRID chunks are fully independent.</p>
+</dd>
+</dl>
+</li>
+<li><p>MERGE  — concatenate regridded chunks into <code class="docutils literal notranslate"><span class="pre">forcing_obc_segment_NNN.nc</span></code>.</p></li>
+</ol>
+<p>Each phase is idempotent: existing output files are detected and skipped,
+so a failed run can be safely re-started.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.extract_forcings.obc.process_obc_conditions">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.obc.</span></span><span class="sig-name descname"><span class="pre">process_obc_conditions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start_date</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_date</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundary_number_conversion</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">product_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variables</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset_varnames</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hgrid_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw_dataset_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regridded_dataset_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regrid_chunk_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">get_step_days</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regrid_step_days</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">30</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preview</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.extract_forcings.obc.process_obc_conditions" title="Link to this definition">#</a></dt>
+<dd><p>Process boundary conditions through the GET → REGRID → MERGE pipeline.</p>
+<p>Each phase is idempotent. Re-running after a partial failure resumes from
+the last completed file.</p>
+<p>GET and REGRID chunk sizes are independent. GET defaults to the full date
+range in one request; REGRID defaults to 30-day slices for memory
+efficiency.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>start_date</strong> – Forcing start date (datetime or any pandas-parseable string).</p></li>
+<li><p><strong>end_date</strong> – Forcing end date (datetime or any pandas-parseable string).</p></li>
+<li><p><strong>boundary_number_conversion</strong> – Boundary name -&gt; target-model segment number.</p></li>
+<li><p><strong>product_name</strong> – Forcing data product name.</p></li>
+<li><p><strong>function_name</strong> – Download function name for the product.</p></li>
+<li><p><strong>variables</strong> – Variable names to request from the download function
+(already resolved by the caller from its own product metadata).</p></li>
+<li><p><strong>extra_args</strong> – Extra kwargs for the download function (already resolved
+by the caller).</p></li>
+<li><p><strong>dataset_varnames</strong> – Opaque metadata dict forwarded to <code class="docutils literal notranslate"><span class="pre">regrid_chunk_fn</span></code>
+– this module never reads its keys itself.</p></li>
+<li><p><strong>hgrid_path</strong> – Path to the hgrid supergrid file.</p></li>
+<li><p><strong>raw_dataset_path</strong> – Directory for raw downloaded data.</p></li>
+<li><p><strong>regridded_dataset_path</strong> – Directory for per-chunk regridded data.</p></li>
+<li><p><strong>output_path</strong> – Directory for final, merged output files.</p></li>
+<li><p><strong>regrid_chunk_fn</strong> – Target-specific regrid step – see <code class="docutils literal notranslate"><span class="pre">_regrid_boundary</span></code>.</p></li>
+<li><p><strong>get_step_days</strong> – GET chunk size in days; None = full range in one request.</p></li>
+<li><p><strong>regrid_step_days</strong> – REGRID chunk size in days.</p></li>
+<li><p><strong>preview</strong> – If True, return a dict of expected date pairs without
+executing any downloads or regridding.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-CrocoDash.extract_forcings.runoff">
+<span id="crocodash-extract-forcings-runoff-module"></span><h2>CrocoDash.extract_forcings.runoff module<a class="headerlink" href="#module-CrocoDash.extract_forcings.runoff" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.extract_forcings.runoff.generate_rof_ocn_map">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.runoff.</span></span><span class="sig-name descname"><span class="pre">generate_rof_ocn_map</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rof_grid_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rof_esmf_mesh_filepath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ocn_mesh_filepath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputdir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rmax</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fold</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.extract_forcings.runoff.generate_rof_ocn_map" title="Link to this definition">#</a></dt>
+<dd><p>Generate runoff to ocean mapping files if runoff is active in the compset.</p>
+</dd></dl>
+
+</section>
+<section id="module-CrocoDash.extract_forcings.tides">
+<span id="crocodash-extract-forcings-tides-module"></span><h2>CrocoDash.extract_forcings.tides module<a class="headerlink" href="#module-CrocoDash.extract_forcings.tides" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.extract_forcings.tides.process_tides">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.tides.</span></span><span class="sig-name descname"><span class="pre">process_tides</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ocn_topo</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputdir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">supergrid_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vgrid_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tidal_constituents</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundaries</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tpxo_elevation_filepath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tpxo_velocity_filepath</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.extract_forcings.tides.process_tides" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-CrocoDash.extract_forcings.utils">
+<span id="crocodash-extract-forcings-utils-module"></span><h2>CrocoDash.extract_forcings.utils module<a class="headerlink" href="#module-CrocoDash.extract_forcings.utils" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.extract_forcings.utils.check_date_continuity">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.utils.</span></span><span class="sig-name descname"><span class="pre">check_date_continuity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">boundary_file_list</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.extract_forcings.utils.check_date_continuity" title="Link to this definition">#</a></dt>
+<dd><p>Check for overlaps or missing dates between consecutive files.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.extract_forcings.utils.fetch_raw_chunk">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.utils.</span></span><span class="sig-name descname"><span class="pre">fetch_raw_chunk</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_access_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dates</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">latlon</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_folder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_filename</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variables</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Path</span></span></span><a class="headerlink" href="#CrocoDash.extract_forcings.utils.fetch_raw_chunk" title="Link to this definition">#</a></dt>
+<dd><p>Download one raw data chunk, skipping if a valid output file already exists.</p>
+<p>Shared by obc.py and ic.py — both fetch a chunk of raw data
+for a given date range and bounding box, and both need to be idempotent
+across re-runs.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.extract_forcings.utils.get_data_access_function">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.utils.</span></span><span class="sig-name descname"><span class="pre">get_data_access_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">product_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.extract_forcings.utils.get_data_access_function" title="Link to this definition">#</a></dt>
+<dd><p>Load the product registry and return the raw access function for (product_name, function_name).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.extract_forcings.utils.is_valid_netcdf">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.utils.</span></span><span class="sig-name descname"><span class="pre">is_valid_netcdf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#CrocoDash.extract_forcings.utils.is_valid_netcdf" title="Link to this definition">#</a></dt>
+<dd><p>Check a file’s magic bytes match a known NetCDF format (HDF5, classic, or 64-bit offset).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.extract_forcings.utils.parse_dataset_folder">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.utils.</span></span><span class="sig-name descname"><span class="pre">parse_dataset_folder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">folder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_dataset_regex</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date_format</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.extract_forcings.utils.parse_dataset_folder" title="Link to this definition">#</a></dt>
+<dd><p>Parse a folder to find and extract dataset file information based on a regex pattern.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>folder</strong> (<em>str</em><em> or </em><em>Path</em>) – Path to the folder containing the dataset files.</p></li>
+<li><p><strong>input_dataset_regex</strong> (<em>str</em>) – Regular expression pattern to match dataset filenames.
+Example: <cite>“(north|east|south|west)_unprocessed.(d{8})_(d{8}).nc”</cite></p></li>
+<li><p><strong>date_format</strong> (<em>str</em>) – Date format string used to parse dates in filenames (e.g., “%Y%m%d”).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><p>Dictionary mapping boundaries to a list of tuples with:
+- Start date (<cite>datetime</cite>)
+- End date (<cite>datetime</cite>)
+- Full file path (<cite>Path</cite>)</p>
+<p>Example:
+{</p>
+<blockquote>
+<div><p>”north”: [(datetime(2000, 1, 1), datetime(2000, 1, 2), Path(“/path/to/north_20000101_20000102.nc”))],
+“east”: [(datetime(2000, 1, 3), datetime(2000, 1, 4), Path(“/path/to/east_20000103_20000104.nc”))]</p>
+</div></blockquote>
+<p>}</p>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-CrocoDash.extract_forcings">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-CrocoDash.extract_forcings" title="Link to this heading">#</a></h2>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="CrocoDash.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">CrocoDash package</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="CrocoDash.forcing_configurations.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">CrocoDash.forcing_configurations package</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#submodules">Submodules</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.extract_forcings.bgc">CrocoDash.extract_forcings.bgc module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.bgc.process_bgc_ic"><code class="docutils literal notranslate"><span class="pre">process_bgc_ic()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.bgc.process_bgc_iron_forcing"><code class="docutils literal notranslate"><span class="pre">process_bgc_iron_forcing()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.bgc.process_river_nutrients"><code class="docutils literal notranslate"><span class="pre">process_river_nutrients()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.extract_forcings.chlorophyll">CrocoDash.extract_forcings.chlorophyll module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.chlorophyll.process_chl"><code class="docutils literal notranslate"><span class="pre">process_chl()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.extract_forcings.driver">CrocoDash.extract_forcings.driver module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.driver.resolve_components"><code class="docutils literal notranslate"><span class="pre">resolve_components()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.driver.run_workflow"><code class="docutils literal notranslate"><span class="pre">run_workflow()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.extract_forcings.ic">CrocoDash.extract_forcings.ic module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.ic.process_initial_condition"><code class="docutils literal notranslate"><span class="pre">process_initial_condition()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.extract_forcings.mom6">CrocoDash.extract_forcings.mom6 module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.mom6.build_forcing_request"><code class="docutils literal notranslate"><span class="pre">build_forcing_request()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.mom6.final_cleanliness_fill"><code class="docutils literal notranslate"><span class="pre">final_cleanliness_fill()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.mom6.process_mom6_ic"><code class="docutils literal notranslate"><span class="pre">process_mom6_ic()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.mom6.process_mom6_obc"><code class="docutils literal notranslate"><span class="pre">process_mom6_obc()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.extract_forcings.obc">CrocoDash.extract_forcings.obc module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.obc.process_obc_conditions"><code class="docutils literal notranslate"><span class="pre">process_obc_conditions()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.extract_forcings.runoff">CrocoDash.extract_forcings.runoff module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.runoff.generate_rof_ocn_map"><code class="docutils literal notranslate"><span class="pre">generate_rof_ocn_map()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.extract_forcings.tides">CrocoDash.extract_forcings.tides module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.tides.process_tides"><code class="docutils literal notranslate"><span class="pre">process_tides()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.extract_forcings.utils">CrocoDash.extract_forcings.utils module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.utils.check_date_continuity"><code class="docutils literal notranslate"><span class="pre">check_date_continuity()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.utils.fetch_raw_chunk"><code class="docutils literal notranslate"><span class="pre">fetch_raw_chunk()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.utils.get_data_access_function"><code class="docutils literal notranslate"><span class="pre">get_data_access_function()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.utils.is_valid_netcdf"><code class="docutils literal notranslate"><span class="pre">is_valid_netcdf()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.utils.parse_dataset_folder"><code class="docutils literal notranslate"><span class="pre">parse_dataset_folder()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.extract_forcings">Module contents</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By CROCODILE
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2024, CROCODILE.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>
