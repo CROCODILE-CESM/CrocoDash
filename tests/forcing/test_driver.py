@@ -225,7 +225,6 @@ def test_run_workflow_auto_enables_dependency(mock_cs, tmp_path):
                     "case_session_id": "s",
                     "case_compset_lname": "DROF",
                     "case_inputdir": str(tmp_path),
-                    "case_is_non_local": False,
                     "case_esmf_mesh_path": "/fake.nc",
                     "rmax": 20,
                     "fold": 40,

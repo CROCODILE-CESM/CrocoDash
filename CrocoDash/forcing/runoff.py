@@ -23,7 +23,6 @@ class RunoffConfigurator(BaseConfigurator):
         InputValueParam(
             "rof_grid_name", comment="Name of the runoff grid used in the case"
         ),
-        InputValueParam("case_is_non_local", comment="Case is non-local"),
         InputValueParam(
             "fold", comment="Smoothing fold parameter for runoff mapping generation"
         ),
@@ -49,7 +48,6 @@ class RunoffConfigurator(BaseConfigurator):
         case_session_id,
         case_compset_lname,
         case_inputdir,
-        case_is_non_local,
         case_esmf_mesh_path,
         case_cime=None,
         rmax=None,
@@ -80,7 +78,6 @@ class RunoffConfigurator(BaseConfigurator):
                 fold=fold,
                 case_esmf_mesh_path=case_esmf_mesh_path,
                 case_compset_lname=case_compset_lname,
-                case_is_non_local=case_is_non_local,
                 rof_esmf_mesh_filepath=rof_esmf_mesh_filepath,
                 rof_grid_name=rof_grid_name,
             )
@@ -93,7 +90,6 @@ class RunoffConfigurator(BaseConfigurator):
                 fold=fold,
                 case_compset_lname=case_compset_lname,
                 case_esmf_mesh_path=case_esmf_mesh_path,
-                case_is_non_local=case_is_non_local,
                 rof_esmf_mesh_filepath=rof_esmf_mesh_filepath,
                 rof_grid_name=rof_grid_name,
             )
@@ -118,16 +114,8 @@ class RunoffConfigurator(BaseConfigurator):
             rmax=self.get_input_param("rmax"),
             fold=self.get_input_param("fold"),
         )
-        self.set_output_param(
-            "ROF2OCN_LIQ_RMAPNAME",
-            self.runoff_mapping_file_nnsm,
-            is_non_local=self.get_input_param("case_is_non_local"),
-        )
-        self.set_output_param(
-            "ROF2OCN_ICE_RMAPNAME",
-            self.runoff_mapping_file_nnsm,
-            is_non_local=self.get_input_param("case_is_non_local"),
-        )
+        self.set_output_param("ROF2OCN_LIQ_RMAPNAME", self.runoff_mapping_file_nnsm)
+        self.set_output_param("ROF2OCN_ICE_RMAPNAME", self.runoff_mapping_file_nnsm)
         super().configure()
 
     def validate_args(self, **kwargs):

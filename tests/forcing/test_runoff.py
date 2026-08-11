@@ -10,7 +10,6 @@ def _make_configurator(tmp_path, rmax=20, fold=40):
         case_session_id="abc123",
         case_compset_lname="DROF",
         case_inputdir=tmp_path,
-        case_is_non_local=False,
         case_esmf_mesh_path="/fake/ocn_mesh.nc",
         rmax=rmax,
         fold=fold,
