@@ -4,7 +4,7 @@ import shutil
 from datetime import datetime
 import json
 import pandas as pd
-import regional_mom6 as rmom6
+from regional_mom6.segment import Segment
 from CrocoDash.grid import Grid
 from CrocoDash.topo import Topo
 from CrocoDash.vgrid import VGrid
@@ -391,7 +391,7 @@ class Case:
     def configure_forcings(
         self,
         date_range: list[str],
-        boundaries: list[str] = ["south", "north", "west", "east"],
+        boundaries: list[str] = None,
         product_name: str = "GLORYS",
         function_name: str = "get_glorys_data_script_for_cli",
         function_overrides: dict = None,
@@ -409,9 +409,17 @@ class Case:
         date_range : list of str
             Start and end dates for the forcing data, formatted as strings.
             Must contain exactly two elements.
-        boundaries : list of str, optional
-            List of open boundaries to process (e.g., ["south", "north"]).
-            Default is ["south", "north", "west", "east"].
+        boundaries : list of str and/or regional_mom6.segment.Segment, optional
+            List of open boundaries to process. Each entry is either a cardinal
+            string (e.g. "south", "north") or a live regional_mom6.segment.Segment
+            instance (e.g. built via Segment.from_hgrid/Segment.from_lonlat) for a
+            non-cardinal/interior boundary. Default (None) auto-detects which of
+            the 4 cardinal edges actually touch open ocean from `ocn_topo` and
+            uses only those -- an edge that's entirely land is dropped, since it
+            needs no OBC segment. Custom/interior boundaries can't be inferred
+            this way and must always be passed explicitly; passing any explicit
+            list here (cardinal, custom, or both) disables auto-detection
+            entirely and uses exactly what was given.
         product_name : str, optional
             Name of the forcing data product to use. Default is "GLORYS".
         function_name : str, optional
@@ -479,6 +487,9 @@ class Case:
             raise ValueError("date_range must have exactly two elements.")
         if function_overrides is not None and not isinstance(function_overrides, dict):
             raise TypeError("function_overrides must be a dict.")
+
+        if boundaries is None:
+            boundaries = Segment.detect_open_cardinal_boundaries(self.ocn_topo)
 
         self.forcing_product_name = product_name.lower()
         self.boundaries = boundaries
@@ -593,44 +604,6 @@ class Case:
     @property
     def name(self) -> str:
         return self.caseroot.name
-
-    @property
-    def expt(self) -> rmom6.experiment:
-
-        if not hasattr(self, "date_range"):
-            print("Date not found so using a dummy date of 1850-1851")
-            date_range = ("1850-01-01 00:00:00", "1851-01-01 00:00:00")  # Dummy times
-        else:
-            date_range = tuple(
-                ts.strftime("%Y-%m-%d %H:%M:%S") for ts in self.date_range
-            )
-        if not hasattr(self, "boundaries"):
-            print("Boundaries not found so using default")
-            self.boundaries = ["north", "south", "east", "west"]
-        if not hasattr(self, "tidal_constituents"):
-            print("tidal_constituents not found so using only M2")
-            self.tidal_constituents = ["M2"]
-
-        # hgrid_type/vgrid_type take mom6_forge Grid/VGrid objects directly
-        # now -- "from_file" + a separate hgrid_path/vgrid_path kwarg no
-        # longer exists, and hgrid/vgrid are read-only properties derived
-        # from them (no more assigning after construction).
-        expt = rmom6.experiment(
-            date_range=date_range,
-            resolution=None,
-            number_vertical_layers=None,
-            layer_thickness_ratio=None,
-            depth=self.ocn_topo.max_depth,
-            mom_run_dir=self._cime_case.get_value("RUNDIR"),
-            mom_input_dir=self.inputdir / "ocnice",
-            hgrid_type=self.ocn_grid,
-            vgrid_type=self.ocn_vgrid,
-            minimum_depth=self.ocn_topo.min_depth,
-            tidal_constituents=self.tidal_constituents,
-            expt_name=self.caseroot.name,
-            boundaries=self.boundaries,
-        )
-        return expt
 
     def _configure_case(self, atm_grid_name, rof_grid_name):
         """Using visualCaseGen's case configuration pipeline, set the variables for the case based

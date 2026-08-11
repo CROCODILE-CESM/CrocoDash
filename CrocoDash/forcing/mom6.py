@@ -22,11 +22,13 @@ import mom6_forge as m6b
 import xarray as xr
 from CrocoDash import logging
 from CrocoDash.forcing import ic as ic_mod, obc, utils
+from CrocoDash.forcing.obc import boundary_key, get_segment
 from CrocoDash.forcing.base import *
 from CrocoDash.grid import Grid
 from CrocoDash.topo import Topo
 from CrocoDash.raw_data_access.registry import ProductRegistry
 from CrocoDash.raw_data_access.base import ForcingProduct
+from regional_mom6.segment import Segment
 
 logger = logging.setup_logger(__name__)
 
@@ -70,47 +72,55 @@ def build_forcing_request(
 
 
 def _regrid_obc_chunk(
-    ds, hgrid, boundary, seg_id, outfolder, dataset_varnames, start_date, regridders
+    ds,
+    hgrid,
+    boundary,
+    seg_id,
+    outfolder,
+    dataset_varnames,
+    start_date,
+    regridders,
+    custom_segments=None,
 ):
     """Regrid one OBC chunk via regional_mom6's Segment. Writes to
     ``outfolder / f"forcing_obc_segment_{seg_id:03d}.nc"`` -- the filename
     ``obc.py``'s generic engine expects to rename per-chunk.
+
+    ``custom_segments`` (boundary key -> Segment.to_spec()) rebuilds a
+    non-cardinal (interior/partial) boundary the same way for every chunk;
+    empty/None means every boundary is a plain cardinal edge. Bound in via
+    functools.partial by process_bc below -- not a generic-engine concern,
+    so it isn't part of obc.py's regrid_chunk_fn contract itself.
 
     ``Segment.regrid_velocity_tracers`` only reads from disk (it calls
     ``xr.open_mfdataset`` on ``infile`` internally), so unlike the engine that
     handed us ``ds``, we do need a real file here -- write one, use it, clean
     it up. That's this function's own business, not the generic engine's.
     """
-    kwargs = {}
-    if "calendar" in dataset_varnames:
-        kwargs["calendar"] = dataset_varnames["calendar"]
-        kwargs["time_units"] = dataset_varnames["time_units"]
-
     outfolder = Path(outfolder)
     tmp_file = outfolder / f"_tmp_{boundary}_segment_{seg_id:03d}.nc"
     ds.to_netcdf(tmp_file)
     try:
-        seg = rm6.segment(
-            hgrid=hgrid,
-            bathymetry_path=None,
-            outfolder=outfolder,
+        seg = get_segment(
+            hgrid,
+            boundary,
             segment_name=f"segment_{seg_id:03d}",
-            orientation=boundary,
-            startdate=start_date,
-            repeat_year_forcing=False,
+            custom_segments=custom_segments,
         )
         seg.regrid_velocity_tracers(
             infile=tmp_file,
             varnames=dataset_varnames,
+            outfolder=outfolder,
+            startdate=start_date,
             arakawa_grid=None,
             regridding_method="bilinear",
             fill_method=rm6.regridding.fill_missing_data,
             regridders=regridders,
+            repeat_year_forcing=False,
             calendar=dataset_varnames["mom6_calendar"],
             time_units=dataset_varnames["time_units"],
-            **kwargs,
         )
-        return seg.regridders
+        return seg._regridders
     finally:
         tmp_file.unlink(missing_ok=True)
 
@@ -313,6 +323,12 @@ class ConditionsConfigurator(BaseConfigurator):
             "function_args",
             comment="Resolved (defaults + overrides) args for the download function",
         ),
+        InputValueParam(
+            "case_supergrid_path",
+            comment="Path to the ocean hgrid supergrid file; used to build each "
+            "boundary's regional_mom6.segment.Segment (position string, tidal/BGC "
+            "OBC data), whether cardinal or custom/interior",
+        ),
     ]
 
     output_params = [
@@ -363,6 +379,13 @@ class ConditionsConfigurator(BaseConfigurator):
             comment="Boundary name -> MOM6 segment number",
         ),
         ConfigOutputParam(
+            "custom_segments",
+            comment="Boundary key -> Segment.to_spec() for non-cardinal (interior) "
+            "boundaries; empty when all boundaries are cardinal. Consumed by "
+            "forcing/obc.py and forcing/tides.py to rebuild the live Segment "
+            "out-of-process.",
+        ),
+        ConfigOutputParam(
             "preview", comment="Whether process_ic/process_bc should preview only"
         ),
         ConfigOutputParam(
@@ -381,10 +404,22 @@ class ConditionsConfigurator(BaseConfigurator):
         start_date=None,
         end_date=None,
         function_args=None,
+        case_supergrid_path=None,
     ):
         if date_range is not None:
             start_date = date_range[0].strftime(self._DATE_FORMAT)
             end_date = date_range[1].strftime(self._DATE_FORMAT)
+
+        # A live Segment (custom/interior boundary) isn't JSON-serializable, so
+        # only its boundary_key string is kept in input_params/boundaries -- the
+        # full spec needed to rebuild it later (here and out-of-process, by
+        # forcing/obc.py + forcing/tides.py) is captured now, while we still
+        # have the real object, into custom_segments (see configure()).
+        self._custom_segments = {
+            boundary_key(b): b.to_spec() for b in boundaries if isinstance(b, Segment)
+        }
+        boundaries = [boundary_key(b) for b in boundaries]
+
         super().__init__(
             start_date=start_date,
             end_date=end_date,
@@ -393,6 +428,7 @@ class ConditionsConfigurator(BaseConfigurator):
             function_name=function_name,
             compset=compset,
             function_args=function_args or {},
+            case_supergrid_path=case_supergrid_path,
         )
 
     def validate_args(self, **kwargs):
@@ -448,6 +484,7 @@ class ConditionsConfigurator(BaseConfigurator):
             "boundary_number_conversion",
             {b: i + 1 for i, b in enumerate(boundaries)},
         )
+        self.set_output_param("custom_segments", self._custom_segments)
         self.set_output_param("preview", False)
         self.set_output_param("function_args", self.get_input_param("function_args"))
 
@@ -477,21 +514,23 @@ class ConditionsConfigurator(BaseConfigurator):
         self.set_output_param("BRUSHCUTTER_MODE", "True")
 
         # ---- dynamic, per-boundary OBC params ----
+        # Position strings come straight from a regional_mom6.segment.Segment
+        # built for each boundary -- built the same way (Segment.cardinal /
+        # Segment.from_hgrid via get_segment) whether the boundary is a
+        # cardinal edge or a custom (non-cardinal/interior) Segment.
+        hgrid = xr.open_dataset(self.get_input_param("case_supergrid_path"))
         dynamic_params = []
         for seg in boundaries:
             seg_ix = str(self._segment_index(boundaries, seg)).zfill(3)
             seg_id = "OBC_SEGMENT_" + seg_ix
 
-            if seg == "south":
-                index_str = '"J=0,I=0:N'
-            elif seg == "north":
-                index_str = '"J=N,I=N:0'
-            elif seg == "west":
-                index_str = '"I=0,J=N:0'
-            elif seg == "east":
-                index_str = '"I=N,J=0:N'
-            else:
-                raise ValueError(f"Unknown segment {seg_id}")
+            segment = get_segment(
+                hgrid,
+                seg,
+                segment_name=f"segment_{seg_ix}",
+                custom_segments=self._custom_segments,
+            )
+            index_str = '"' + segment.mom6_obc_position_string()
 
             position_param = UserNLConfigParam(
                 seg_id, comment="Open boundary conditions"
@@ -587,6 +626,8 @@ class ConditionsConfigurator(BaseConfigurator):
         product_info = self.get_output_param("information")
         function_args = self.get_output_param("function_args") or {}
         preview = ctx.preview
+        custom_segments = self.get_output_param("custom_segments") or {}
+        regrid_chunk_fn = partial(_regrid_obc_chunk, custom_segments=custom_segments)
 
         if preview:
             return obc.process_obc_conditions(
@@ -604,7 +645,8 @@ class ConditionsConfigurator(BaseConfigurator):
                 raw_dataset_path=ctx.raw_data_dir,
                 regridded_dataset_path=ctx.regridded_data_dir,
                 output_path=ctx.output_path,
-                regrid_chunk_fn=_regrid_obc_chunk,
+                regrid_chunk_fn=regrid_chunk_fn,
+                custom_segments=custom_segments,
                 get_step_days=int(self.get_output_param("get_step_days")),
                 regrid_step_days=int(self.get_output_param("regrid_step_days")),
                 preview=True,
@@ -632,7 +674,8 @@ class ConditionsConfigurator(BaseConfigurator):
             raw_dataset_path=ctx.raw_data_dir,
             regridded_dataset_path=ctx.regridded_data_dir,
             output_path=ctx.output_path,
-            regrid_chunk_fn=_regrid_obc_chunk,
+            regrid_chunk_fn=regrid_chunk_fn,
+            custom_segments=custom_segments,
             get_step_days=int(self.get_output_param("get_step_days")),
             regrid_step_days=int(self.get_output_param("regrid_step_days")),
             preview=False,
