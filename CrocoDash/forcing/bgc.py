@@ -177,7 +177,9 @@ class BGCIronForcingConfigurator(BaseConfigurator):
         ds.attrs = {
             "history": "Created with xarray (this file is empty)",
         }
-        ds.to_netcdf(ctx.inputdir / "ocnice" / self.get_output_param("MARBL_FESEDFLUX_FILE"))
+        ds.to_netcdf(
+            ctx.inputdir / "ocnice" / self.get_output_param("MARBL_FESEDFLUX_FILE")
+        )
         ds.to_netcdf(
             ctx.inputdir / "ocnice" / self.get_output_param("MARBL_FEVENTFLUX_FILE")
         )
@@ -252,8 +254,8 @@ class BGCRiverNutrientsConfigurator(BaseConfigurator):
         already produced that mapping file (see forcing/base.py's
         _PROCESS_ORDER_OVERRIDES in driver.py)."""
         mapping_file = ctx.config["runoff"]["outputs"]["ROF2OCN_LIQ_RMAPNAME"]
-        river_nutrients_nnsm_filepath = (
-            ctx.output_path / self.get_output_param("RIV_FLUX_FILE")
+        river_nutrients_nnsm_filepath = ctx.output_path / self.get_output_param(
+            "RIV_FLUX_FILE"
         )
         calendar = self.get_input_param("cf_calendar") or "noleap"
 

@@ -314,3 +314,9 @@ class MOM6ForcingProduct(VelocityTracerForcingProduct):
                 json.dump(base, f, indent=2)
 
         return base
+
+
+class WW3ForcingProduct(ForcingProduct):
+    """Extension point for WW3's own regridding var-name metadata, beyond
+    ForcingProduct's generic time-axis contract. No velocity/tracer grid
+    metadata here -- WW3 boundary spectra have no such grid."""

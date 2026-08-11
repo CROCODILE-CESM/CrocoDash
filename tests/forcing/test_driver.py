@@ -8,7 +8,6 @@ import pytest
 from CrocoDash.forcing.base import BaseConfigurator, InputValueParam, register
 from CrocoDash.forcing.driver import _load, resolve_components, run_workflow
 
-
 # =============================================================================
 # Dummy configurators exercising the generic process_components dispatch
 # =============================================================================
