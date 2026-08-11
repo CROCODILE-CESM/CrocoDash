@@ -25,8 +25,7 @@ from CrocoDash.extract_forcings import (
     runoff as rof,
     tides as tides_mod,
     chlorophyll as chl,
-    obc,
-    initial_condition,
+    mom6,
 )
 from CrocoDash.grid import Grid
 from CrocoDash.topo import Topo
@@ -107,7 +106,7 @@ def run_workflow(
     try:
         if bc:
             _t = time.perf_counter()
-            obc.process_obc_conditions(
+            mom6.process_mom6_obc(
                 start_date=conditions["inputs"]["start_date"],
                 end_date=conditions["inputs"]["end_date"],
                 boundary_number_conversion=conditions["outputs"][
@@ -129,7 +128,7 @@ def run_workflow(
 
         if ic:
             _t = time.perf_counter()
-            initial_condition.process_initial_condition(
+            mom6.process_mom6_ic(
                 product_name=conditions["inputs"]["product_name"].upper(),
                 function_name=conditions["inputs"]["function_name"],
                 product_information=conditions["outputs"]["information"],

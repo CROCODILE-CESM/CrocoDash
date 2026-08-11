@@ -1,4 +1,4 @@
-from CrocoDash.extract_forcings import utils
+from CrocoDash.extract_forcings import mom6
 
 
 def test_build_forcing_request_merges_function_args():
@@ -10,7 +10,7 @@ def test_build_forcing_request_merges_function_args():
         "dataset_path": "/some/path",
     }
 
-    variables, extra_args = utils.build_forcing_request(
+    variables, extra_args = mom6.build_forcing_request(
         product_info, function_args={"member": 5}
     )
 

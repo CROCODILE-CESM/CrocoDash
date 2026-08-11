@@ -1,4 +1,10 @@
-"""OBC (Open Boundary Condition) forcing extraction for CrocoDash.
+"""OBC (Open Boundary Condition) forcing extraction engine for CrocoDash.
+
+Model-agnostic: this module gets raw data and chunks/merges it, but knows
+nothing about how to regrid it. Callers (``mom6.py``, ``cice.py``, ``ww3.py``)
+supply a ``regrid_chunk_fn`` that turns one raw chunk into that target's own
+per-segment output file -- everything else (GET, date-chunking, idempotency,
+MERGE) is shared.
 
 Three-phase pipeline per boundary:
 
@@ -7,9 +13,9 @@ Three-phase pipeline per boundary:
              (API limits, download size). Each chunk is written as
              ``{boundary}_unprocessed.{start}_{end}.nc``.
 2. REGRID — validate raw coverage from filenames, then open all raw files
-             lazily and regrid in ``regrid_step``-sized slices. Chunk size is
-             driven by memory and xESMF performance. GET and REGRID chunks are
-             fully independent.
+             lazily and regrid (via the caller-supplied ``regrid_chunk_fn``) in
+             ``regrid_step``-sized slices. Chunk size is driven by memory and
+             xESMF performance. GET and REGRID chunks are fully independent.
 3. MERGE  — concatenate regridded chunks into ``forcing_obc_segment_NNN.nc``.
 
 Each phase is idempotent: existing output files are detected and skipped,
@@ -21,7 +27,6 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 import pandas as pd
-import regional_mom6 as rm6
 import xarray as xr
 from CrocoDash import logging
 from CrocoDash.extract_forcings import utils
@@ -199,14 +204,20 @@ def _regrid_boundary(
     hgrid_path,
     output_folder,
     dataset_varnames: dict,
-    fill_method,
+    regrid_chunk_fn,
 ) -> list:
     """Regrid all raw files for one boundary, sliced by regrid_step_days.
 
     Opens raw files lazily via open_mfdataset, independent of how GET chunked
-    them. Regridder weights are computed once on the first chunk and reused.
-    Each regrid_step slice is written to a temp file (required by the rm6
-    interface), then removed after regridding.
+    them. Each regrid_step slice is handed to ``regrid_chunk_fn`` (the
+    target-specific regrid step -- see ``mom6.py``/``cice.py``/``ww3.py``) as
+    a plain in-memory ``xr.Dataset`` -- no file, no cleanup for this engine to
+    manage. If a target's own regrid step needs a file on disk (as
+    regional_mom6's does), that's its own business: write one, use it, remove
+    it. ``regrid_chunk_fn`` is expected to write its output to
+    ``output_folder / f"forcing_obc_segment_{seg_id:03d}.nc"`` (renamed to the
+    dated filename below) and return the updated regridder cache to reuse on
+    the next chunk (regridder weights are typically computed once and reused).
     """
     output_folder = Path(output_folder)
     (output_folder / "weights").mkdir(exist_ok=True)
@@ -222,10 +233,6 @@ def _regrid_boundary(
     regridders = None
     regridded_files = []
 
-    kwargs = {}
-    if "calendar" in dataset_varnames:
-        kwargs["calendar"] = dataset_varnames["calendar"]
-        kwargs["time_units"] = dataset_varnames["time_units"]
     hgrid = xr.open_dataset(hgrid_path)
 
     for chunk_start, chunk_end in _make_date_pairs(
@@ -247,42 +254,26 @@ def _regrid_boundary(
             regridded_files.append(dated_output)
             continue
 
-        tmp_file = output_folder / f"_tmp_{boundary}_{start_str}_{end_str}.nc"
         # Raw product timestamps (e.g. GLORYS daily means) are stamped at
         # noon, not midnight — push chunk_end to end-of-day so label-based
         # .sel() doesn't silently drop the last day's sample at each chunk
         # boundary. Mirrors make_dates_end_inclusive in raw_data_access.
         chunk_end_inclusive = chunk_end + timedelta(hours=23, minutes=59, seconds=59)
         end_str = chunk_end_inclusive.strftime("%Y-%m-%d")
-        ds_full.sel(time=slice(start_str, end_str)).to_netcdf(tmp_file)
+        chunk_ds = ds_full.sel(time=slice(start_str, end_str))
 
-        try:
-            seg = rm6.segment(
-                hgrid=hgrid,
-                bathymetry_path=None,
-                outfolder=output_folder,
-                segment_name=f"segment_{seg_id:03d}",
-                orientation=boundary,
-                startdate=start_date,
-                repeat_year_forcing=False,
-            )
-            seg.regrid_velocity_tracers(
-                infile=tmp_file,
-                varnames=dataset_varnames,
-                arakawa_grid=None,
-                rotational_method=rm6.rotation.RotationMethod.EXPAND_GRID,
-                regridding_method="bilinear",
-                fill_method=fill_method,
-                regridders=regridders,
-                calendar=dataset_varnames["mom6_calendar"],
-                time_units=dataset_varnames["time_units"],
-                **kwargs,
-            )
-            regridders = seg.regridders
-            temp_path = output_folder / f"forcing_obc_segment_{seg_id:03d}.nc"
-            os.rename(temp_path, dated_output)
-        finally:
-            tmp_file.unlink(missing_ok=True)
+        regridders = regrid_chunk_fn(
+            ds=chunk_ds,
+            hgrid=hgrid,
+            boundary=boundary,
+            seg_id=seg_id,
+            outfolder=output_folder,
+            dataset_varnames=dataset_varnames,
+            start_date=start_date,
+            regridders=regridders,
+        )
+        temp_path = output_folder / f"forcing_obc_segment_{seg_id:03d}.nc"
+        os.rename(temp_path, dated_output)
 
         logger.info(f"Saved regridded file as {dated_output.name}")
         regridded_files.append(dated_output)
@@ -329,14 +320,16 @@ def process_obc_conditions(
     boundary_number_conversion: dict,
     product_name: str,
     function_name: str,
-    product_info: dict,
+    variables: list,
+    extra_args: dict,
+    dataset_varnames: dict,
     hgrid_path,
     raw_dataset_path,
     regridded_dataset_path,
     output_path,
+    regrid_chunk_fn,
     get_step_days=None,
     regrid_step_days: int = 30,
-    function_args: dict = None,
     preview: bool = False,
 ):
     """Process boundary conditions through the GET → REGRID → MERGE pipeline.
@@ -351,19 +344,22 @@ def process_obc_conditions(
     Args:
         start_date: Forcing start date (datetime or any pandas-parseable string).
         end_date: Forcing end date (datetime or any pandas-parseable string).
-        boundary_number_conversion: Boundary name -> MOM6 segment number.
+        boundary_number_conversion: Boundary name -> target-model segment number.
         product_name: Forcing data product name.
         function_name: Download function name for the product.
-        product_info: Product variable-name metadata (a.k.a. dataset_varnames).
+        variables: Variable names to request from the download function
+            (already resolved by the caller from its own product metadata).
+        extra_args: Extra kwargs for the download function (already resolved
+            by the caller).
+        dataset_varnames: Opaque metadata dict forwarded to ``regrid_chunk_fn``
+            -- this module never reads its keys itself.
         hgrid_path: Path to the hgrid supergrid file.
         raw_dataset_path: Directory for raw downloaded data.
         regridded_dataset_path: Directory for per-chunk regridded data.
-        output_path: Directory for final, merged MOM6-ready output files.
+        output_path: Directory for final, merged output files.
+        regrid_chunk_fn: Target-specific regrid step -- see ``_regrid_boundary``.
         get_step_days: GET chunk size in days; None = full range in one request.
         regrid_step_days: REGRID chunk size in days.
-        function_args: Overrides for the access function's non-required
-            arguments (e.g. `member`), as resolved by
-            configure_forcings()'s function_overrides.
         preview: If True, return a dict of expected date pairs without
             executing any downloads or regridding.
     """
@@ -381,14 +377,6 @@ def process_obc_conditions(
             "get_pairs": _make_date_pairs(start_date, end_date, get_step_days),
             "regrid_pairs": _make_date_pairs(start_date, end_date, regrid_step_days),
         }
-
-    variables, extra_args = utils.build_forcing_request(product_info, function_args)
-
-    if product_info.get("boundary_fill_method", "regional_mom6") != "regional_mom6":
-        raise ValueError(
-            f"fill_method '{product_info['boundary_fill_method']}' is not supported."
-        )
-    fill_method = rm6.regridding.fill_missing_data
 
     raw_path.mkdir(exist_ok=True)
     regridded_path.mkdir(exist_ok=True)
@@ -430,7 +418,7 @@ def process_obc_conditions(
             end_date,
         )
 
-        logger.info("REGRID [%s]: %d-day slices", boundary, regrid_step_days)
+        logger.info("REGRID [%s]: %s-day slices", boundary, regrid_step_days)
         regridded_files_by_boundary[boundary] = _regrid_boundary(
             boundary=boundary,
             seg_id=seg_id,
@@ -440,8 +428,8 @@ def process_obc_conditions(
             regrid_step_days=regrid_step_days,
             hgrid_path=str(hgrid_path),
             output_folder=str(regridded_path),
-            dataset_varnames=product_info,
-            fill_method=fill_method,
+            dataset_varnames=dataset_varnames,
+            regrid_chunk_fn=regrid_chunk_fn,
         )
 
     for boundary in boundaries:
