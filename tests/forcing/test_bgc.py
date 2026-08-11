@@ -237,7 +237,9 @@ def test_bgcrivernutrients_process_mocked(tmp_path, monkeypatch):
 
     ctx = _make_ctx(tmp_path, output_path=tmp_path)
     ctx.grid = ocn_grid
-    ctx.config = {"runoff": {"outputs": {"ROF2OCN_LIQ_RMAPNAME": str(tmp_path / "map.nc")}}}
+    ctx.config = {
+        "runoff": {"outputs": {"ROF2OCN_LIQ_RMAPNAME": str(tmp_path / "map.nc")}}
+    }
 
     configurator.process(ctx)
 

@@ -30,6 +30,10 @@ KNOWN_INCLUSIVE_WITHOUT_HELPER = {
     ("glorys", "get_glorys_data_from_rda"),
     ("glofas", "get_global_data_with_python"),
     ("mom6_output", "get_mom6_data"),
+    # Same reparse-via-pd.date_range(freq="D") reasoning as above -- a
+    # restart has no real time series, so `dates` just drives how many whole
+    # days its single snapshot gets copied forward onto.
+    ("cice_restart", "get_cice_restart_subset"),
     # `dates` is an unused placeholder — downloads one fixed pre-processed
     # file via a static URL, no date-based filtering happens at all.
     ("glofas", "get_processed_global_glofas_script_for_cli"),
@@ -38,10 +42,11 @@ KNOWN_INCLUSIVE_WITHOUT_HELPER = {
     ("dummy", "dummy_method"),
     ("dummy_forcing", "fetch_dummy"),
     # Reparses `dates` via pd.date_range (freq="D"), which is whole-day
-    # inclusive regardless of time-of-day — same reasoning as glorys above.
-    # Pure in-memory synthetic generation, not a real API call, so there's
-    # no end_datetime cutoff to normalize.
+    # inclusive regardless of time-of-day — same reasoning as glorys/
+    # cice_restart above. Pure in-memory synthetic generation, not a real API
+    # call, so there's no end_datetime cutoff to normalize.
     ("reference_ocean", "get_reference_ocean_data"),
+    ("reference_ice", "get_reference_ice_data"),
 }
 
 

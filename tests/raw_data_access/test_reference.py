@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 import xarray as xr
 from CrocoDash.raw_data_access.registry import ProductRegistry
-from CrocoDash.raw_data_access.datasets.reference import REFERENCE_OCEAN
+from CrocoDash.raw_data_access.datasets.reference import REFERENCE_OCEAN, REFERENCE_ICE
 
 BBOX = dict(lat_min=10.0, lat_max=15.0, lon_min=-30.0, lon_max=-25.0)
 DATES = ["2020-01-01", "2020-01-02"]
@@ -10,13 +10,15 @@ DATES = ["2020-01-01", "2020-01-02"]
 
 def test_reference_products_registered():
     ProductRegistry.load()
-    assert "reference_ocean" in ProductRegistry.list_products()
+    for name in ("reference_ocean", "reference_ice"):
+        assert name in ProductRegistry.list_products()
 
 
 @pytest.mark.parametrize(
     "cls,method_name",
     [
         (REFERENCE_OCEAN, "get_reference_ocean_data"),
+        (REFERENCE_ICE, "get_reference_ice_data"),
     ],
 )
 def test_write_metadata_has_required_fields(cls, method_name):
@@ -30,6 +32,7 @@ def test_write_metadata_has_required_fields(cls, method_name):
     "cls,method_name",
     [
         (REFERENCE_OCEAN, "get_reference_ocean_data"),
+        (REFERENCE_ICE, "get_reference_ice_data"),
     ],
 )
 def test_validate_method_toy_call_succeeds(cls, method_name):
@@ -71,3 +74,23 @@ def test_reference_ocean_is_deterministic(tmp_path):
     )
     ds_a, ds_b = xr.open_dataset(path_a), xr.open_dataset(path_b)
     xr.testing.assert_identical(ds_a, ds_b)
+
+
+def test_reference_ice_edge_tapers_with_latitude(tmp_path):
+    paths = REFERENCE_ICE.get_reference_ice_data(
+        dates=DATES,
+        lat_min=60.0,
+        lat_max=70.0,
+        lon_min=-30.0,
+        lon_max=-25.0,
+        output_folder=tmp_path,
+        output_filename="ice.nc",
+    )
+    ds = xr.open_dataset(paths[0])
+    assert set(ds.sizes) >= {"time", "ncat", "nj", "ni"}
+    aicen = ds["aicen"].isel(time=0, ncat=0)
+    # Equatorward edge (row 0) has no ice, poleward edge (last row) is fully iced.
+    assert np.allclose(aicen.isel(nj=0).values, 0.0)
+    assert np.allclose(aicen.isel(nj=-1).values, 1.0)
+    # tlon/tlat gain a time dim (see forcing/cice.py's isel(time=0)).
+    assert "time" in ds["tlon"].dims
