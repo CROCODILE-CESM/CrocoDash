@@ -16,7 +16,7 @@ from CrocoDash.raw_data_access.datasets.utils import (
 from CrocoDash.raw_data_access.base import *
 
 
-class GLORYS(ForcingProduct):
+class GLORYS(MOM6ForcingProduct):
     product_name = "glorys"
     description = "GLORYS (Global Ocean Physics Reanalysis) is a public dataset provided through the copernicus marine service."
     link = "https://data.marine.copernicus.eu/product/GLOBAL_MULTIYEAR_PHY_001_030/description"

@@ -194,27 +194,16 @@ class DatedBaseProduct(BaseProduct):
 
 
 class ForcingProduct(DatedBaseProduct):
-    """Specific enforcement needs for Forcing Products"""
-
-    required_metadata = DatedBaseProduct.required_metadata + [
-        "time_var_name",
-        "u_x_coord",
-        "u_y_coord",
-        "v_x_coord",
-        "v_y_coord",
-        "tracer_x_coord",
-        "tracer_y_coord",
-        "depth_coord",
-        "u_var_name",
-        "v_var_name",
-        "eta_var_name",
-        "tracer_var_names",
-        "boundary_fill_method",
-        "time_units",
-        "cf_calendar",
-        "cesm_calendar",
-        "mom6_calendar",
-    ]
+    """Generic enforcement for any gridded, bounding-box-downloadable forcing
+    product. Holds the metadata every such product needs regardless of
+    target model: a lat/lon/variables/dates download contract, sane toy-call
+    defaults for that contract's lat/lon args, and its own time-axis naming
+    (``time_var_name``/``time_units``/``cf_calendar``/``cesm_calendar``/``mom6_calendar``) --
+    every dated forcing product has *some* time coordinate to name, even one
+    (like a static restart snapshot) that leaves these unused. Velocity/
+    tracer grid-point metadata is NOT here -- see
+    ``VelocityTracerForcingProduct``/``MOM6ForcingProduct``.
+    """
 
     required_args = DatedBaseProduct.required_args + [
         "variables",
@@ -225,16 +214,75 @@ class ForcingProduct(DatedBaseProduct):
         "name",
     ]
 
-    def __init_subclass__(cls, **kwargs):
+    required_metadata = DatedBaseProduct.required_metadata + [
+        "time_var_name",
+        "time_units",
+        "cf_calendar",
+        "cesm_calendar",
+        "mom6_calendar",
+    ]
 
-        # 0. Derive cf_calendar/cesm_calendar/mom6_calendar from a single `calendar` attr, if declared
+    def __init_subclass__(cls, **kwargs):
+        # Derive cf_calendar/cesm_calendar/mom6_calendar from a single `calendar` attr, if declared
         calendar = getattr(cls, "calendar", None)
         if calendar is not None:
             cls.cf_calendar = calendar.cf
             cls.cesm_calendar = calendar.cesm
             cls.mom6_calendar = calendar.mom6
 
-        # 1. Let BaseProduct do its validation first
+        super().__init_subclass__(**kwargs)
+
+    @classmethod
+    def validate_method(cls, method_name, **kwargs):
+
+        # Add child-class defaults
+        extra_defaults = {
+            "lat_min": 30,
+            "lat_max": 30.1,
+            "lon_min": 30,
+            "lon_max": 30.1,
+        }
+
+        # Delegate to the base implementation
+        return super().validate_method(method_name, **extra_defaults)
+
+
+class VelocityTracerForcingProduct(ForcingProduct):
+    """Coordinate/variable-name metadata for a product's u/v velocity and
+    tracer grid points -- the var-map contract consumed by
+    ``regional_mom6``'s ``Segment.regrid_velocity_tracers``, not by the
+    generic GET layer. Shared by ``MOM6ForcingProduct`` and any future
+    model whose velocity/tracer state lives on a plain (nj, ni) index space.
+    """
+
+    required_metadata = ForcingProduct.required_metadata + [
+        "u_x_coord",
+        "u_y_coord",
+        "v_x_coord",
+        "v_y_coord",
+        "tracer_x_coord",
+        "tracer_y_coord",
+        "u_var_name",
+        "v_var_name",
+        "tracer_var_names",
+        "depth_coord",
+    ]
+
+
+class MOM6ForcingProduct(VelocityTracerForcingProduct):
+    """MOM6/regional_mom6-specific regridding metadata on top of
+    ``VelocityTracerForcingProduct`` -- SSH and the OBC fill method, neither
+    of which generalize to other models. Products that feed CrocoDash's
+    MOM6 OBC/IC pipeline (``GLORYS``, ``MOM6_OUTPUT``) extend this.
+    """
+
+    required_metadata = VelocityTracerForcingProduct.required_metadata + [
+        "eta_var_name",
+        "boundary_fill_method",
+    ]
+
+    def __init_subclass__(cls, **kwargs):
+        # 1. Let ForcingProduct/BaseProduct do their validation first
         super().__init_subclass__(**kwargs)
 
         # 2. tracer_var_names must be a dictionary with temp & salt
@@ -266,17 +314,3 @@ class ForcingProduct(DatedBaseProduct):
                 json.dump(base, f, indent=2)
 
         return base
-
-    @classmethod
-    def validate_method(cls, method_name, **kwargs):
-
-        # Add child-class defaults
-        extra_defaults = {
-            "lat_min": 30,
-            "lat_max": 30.1,
-            "lon_min": 30,
-            "lon_max": 30.1,
-        }
-
-        # Delegate to the base implementation
-        return super().validate_method(method_name, **extra_defaults)
