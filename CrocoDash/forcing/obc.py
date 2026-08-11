@@ -29,7 +29,7 @@ from pathlib import Path
 import pandas as pd
 import xarray as xr
 from CrocoDash import logging
-from CrocoDash.extract_forcings import utils
+from CrocoDash.forcing import utils
 from CrocoDash.grid import Grid
 
 logger = logging.setup_logger(__name__)

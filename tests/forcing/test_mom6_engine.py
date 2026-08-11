@@ -1,4 +1,4 @@
-from CrocoDash.extract_forcings import mom6
+from CrocoDash.forcing import mom6
 
 
 def test_build_forcing_request_merges_function_args():

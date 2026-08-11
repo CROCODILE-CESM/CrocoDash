@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import List, Dict
 from abc import ABC, abstractmethod
+from functools import cached_property
 from visualCaseGen.custom_widget_types.case_tools import (
     xmlchange,
     append_user_nl,
@@ -17,6 +18,68 @@ logger = setup_logger(__name__)
 
 def is_serializable(v):
     return isinstance(v, (str, int, float, bool, type(None), Path, list, dict))
+
+
+def register(cls):
+    """Decorator: register a BaseConfigurator subclass with ForcingConfigRegistry.
+
+    Every module under CrocoDash.forcing that defines a configurator class
+    applies this at class-definition time; CrocoDash.forcing/__init__.py's
+    auto-discovery ensures those modules (and hence this decorator) run for
+    every file in the package, so adding a new forcing type is just adding a
+    new file here -- nothing else needs to import it by name.
+    """
+    ForcingConfigRegistry.register(cls)
+    return cls
+
+
+class WorkflowContext:
+    """Workflow-level paths shared by every configurator's process step.
+
+    Built once by driver.run_workflow() from config.json + case_state, and
+    passed into every ``process_*(ctx)`` call. These are paths no single
+    configurator owns (they're not part of any configurator's own inputs/
+    outputs) but that most process steps need -- grid/topo/vgrid files and
+    the raw/regridded/output directories for this case.
+    """
+
+    def __init__(
+        self,
+        inputdir: Path,
+        supergrid_path: Path,
+        vgrid_path: Path,
+        topo_path: Path,
+        raw_data_dir: Path,
+        regridded_data_dir: Path,
+        output_path: Path,
+        config: dict,
+        preview: bool = False,
+    ):
+        self.inputdir = Path(inputdir)
+        self.supergrid_path = Path(supergrid_path)
+        self.vgrid_path = Path(vgrid_path)
+        self.topo_path = Path(topo_path)
+        self.raw_data_dir = Path(raw_data_dir)
+        self.regridded_data_dir = Path(regridded_data_dir)
+        self.output_path = Path(output_path)
+        self.config = config
+        self.preview = preview
+
+    @cached_property
+    def grid(self):
+        from CrocoDash.grid import Grid
+
+        return Grid.from_supergrid(self.supergrid_path)
+
+    @cached_property
+    def ocn_topo(self):
+        import xarray as xr
+        from CrocoDash.topo import Topo
+
+        topo_ds = xr.open_dataset(self.topo_path, decode_times=False)
+        return Topo.from_topo_file(
+            self.grid, self.topo_path, min_depth=topo_ds.attrs["min_depth"], git=False
+        )
 
 
 class ForcingConfigRegistry:
@@ -164,6 +227,47 @@ class ForcingConfigRegistry:
     def is_active(self, name: str) -> bool:
         """Return True if a configurator with this name is active."""
         return name.lower() in self.active_configurators
+
+    @classmethod
+    def all_process_flags(cls):
+        """Every process-component flag name any registered configurator can
+        answer to, regardless of whether it's active for a given case --
+        used to build cli.py's argparse flags generically."""
+        flags = set()
+        for configurator_cls in cls.registered_types:
+            flags.update(configurator_cls.process_components.keys())
+        return flags
+
+    @classmethod
+    def available_process_flags(cls, config: dict):
+        """Every process-component flag name available given which forcing
+        types are present in a config.json dict -- looked up from each
+        entry's declared class only (no full deserialize), so this works
+        even when an entry's inputs/outputs aren't fully valid yet. Used by
+        resolve_components/cli.py to answer "does this flag exist" without
+        needing working configurator instances the way actual dispatch does."""
+        flags = set()
+        for key, entry in config.items():
+            if key == "caseroot":
+                continue
+            configurator_cls = cls.get_configurator_from_name(entry["name"])
+            flags.update(configurator_cls.process_components.keys())
+        return flags
+
+    @classmethod
+    def resolve_process_targets(cls, config: dict):
+        """Deserialize every configurator present in a config.json dict and
+        return {flag_name: (configurator_instance, method_name)} covering
+        every process component any of them declare. Used by driver.py to
+        dispatch generically instead of a hand-maintained if-ladder."""
+        targets = {}
+        for key, entry in config.items():
+            if key == "caseroot":
+                continue
+            configurator = cls.get_configurator(entry)
+            for flag_name, method_name in configurator.process_components.items():
+                targets[flag_name] = (configurator, method_name)
+        return targets
 
 
 class Param(ABC):
@@ -332,7 +436,7 @@ class ConfigOutputParam(OutputParam):
 
     Exists purely so `set_output_param()` + the generic `serialize()` pick it up
     under a configurator's `outputs`, for values consumed only via config.json
-    (e.g. by extract_forcings).
+    (e.g. by a sibling configurator's `process_*` method).
     """
 
     def apply(self):
@@ -356,6 +460,13 @@ class BaseConfigurator(ABC):
 
     input_params: List[Param]
     output_params: List[OutputParam]
+
+    # {cli_flag_name: method_name} -- what this configurator's process step(s)
+    # answer to. A configurator with no process step (e.g. one that only sets
+    # namelist defaults) leaves this empty. A configurator whose forcing type
+    # is one-to-many (e.g. "conditions" produces both ic and bc) declares more
+    # than one entry, each naming its own method.
+    process_components: Dict[str, str] = {}
 
     # Injected by ForcingConfigRegistry.__init__ after all active configurators
     # are instantiated; lets a configurator look up a sibling's pure helper

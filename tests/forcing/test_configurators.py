@@ -1,4 +1,4 @@
-from CrocoDash.forcing_configurations.base import *
+from CrocoDash.forcing.base import *
 from ProConPy.config_var import cvars
 import pytest
 from types import SimpleNamespace

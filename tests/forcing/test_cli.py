@@ -19,11 +19,15 @@ def _write_config(path, extra_keys=None):
     config = {
         "caseroot": "/fake/case",
         "conditions": {
+            "name": "conditions",
             "inputs": {
                 "product_name": "GLORYS",
                 "function_name": "get_glorys_data_from_rda",
                 "start_date": "20200101",
                 "end_date": "20200109",
+                "boundaries": ["north"],
+                "compset": "MOM6",
+                "function_args": {},
             },
             "outputs": {
                 "date_format": "%Y%m%d",
@@ -32,6 +36,7 @@ def _write_config(path, extra_keys=None):
                 "get_step_days": "7",
                 "regrid_step_days": "7",
                 "preview": False,
+                "function_args": {},
             },
         },
     }
@@ -111,7 +116,7 @@ def test_process_missing_config_raises_helpful_error(mock_read, tmp_path):
 # =============================================================================
 
 
-@patch("CrocoDash.extract_forcings.driver.run_workflow")
+@patch("CrocoDash.forcing.driver.run_workflow")
 def test_process_config_flag(mock_run, tmp_path):
     """--config takes a direct path to config.json, skipping case_state lookup."""
     config_path = tmp_path / "config.json"
@@ -124,8 +129,8 @@ def test_process_config_flag(mock_run, tmp_path):
     assert call_kwargs["config_path"] == config_path
 
 
-@patch("CrocoDash.extract_forcings.driver.run_workflow")
-@patch("CrocoDash.extract_forcings.driver.resolve_components")
+@patch("CrocoDash.forcing.driver.run_workflow")
+@patch("CrocoDash.forcing.driver.resolve_components")
 @patch("CrocoDash.case_state.read")
 def test_process_caseroot_flag(mock_read, mock_resolve, mock_run, tmp_path):
     caseroot = tmp_path / "mycase"
@@ -145,7 +150,7 @@ def test_process_caseroot_flag(mock_read, mock_resolve, mock_run, tmp_path):
     assert mock_run.called
 
 
-@patch("CrocoDash.extract_forcings.driver.run_workflow")
+@patch("CrocoDash.forcing.driver.run_workflow")
 def test_process_auto_detect_config_in_cwd(mock_run, tmp_path, monkeypatch):
     """If cwd contains config.json, use it without --caseroot."""
     monkeypatch.chdir(tmp_path)
@@ -165,8 +170,8 @@ def test_process_no_config_in_cwd_raises_helpful_error(tmp_path, monkeypatch):
         run_main(["process", "--ic"])
 
 
-@patch("CrocoDash.extract_forcings.driver.run_workflow")
-@patch("CrocoDash.extract_forcings.driver.resolve_components")
+@patch("CrocoDash.forcing.driver.run_workflow")
+@patch("CrocoDash.forcing.driver.resolve_components")
 @patch("CrocoDash.case_state.read")
 def test_process_preview_from_config(mock_read, mock_resolve, mock_run, tmp_path):
     caseroot = tmp_path / "mycase"

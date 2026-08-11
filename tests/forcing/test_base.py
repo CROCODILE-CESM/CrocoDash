@@ -1,5 +1,4 @@
-from CrocoDash.forcing_configurations.base import *
-from CrocoDash.forcing_configurations.configurations import *
+from CrocoDash.forcing.base import *
 
 import pytest
 

@@ -1,75 +1,63 @@
-"""
-This testing file is for the other processes in extract_forcings. Most do not need much testing because they call other packages (which should ideally test correctness themselves) (I mean I'm probably writing those tests but still)
-"""
+"""Tests for the BGC-family configurators' process() methods."""
+
+from types import SimpleNamespace
+from unittest.mock import MagicMock, patch
 
 import pytest
-from CrocoDash.extract_forcings import runoff, tides, bgc, chlorophyll as chl
 import xarray as xr
-from unittest.mock import Mock, patch
+
+from CrocoDash.forcing.base import WorkflowContext
+from CrocoDash.forcing.bgc import (
+    BGCICConfigurator,
+    BGCIronForcingConfigurator,
+    BGCRiverNutrientsConfigurator,
+)
 
 
-@patch("mom6_forge.mapping.gen_rof_maps", autospec=True)
-def test_process_runoff(mock_runoff, is_glade_file_system, tmp_path):
-    runoff.generate_rof_ocn_map(
-        rof_grid_name="GLOFAS",
-        rof_esmf_mesh_filepath="/glade/campaign/cesm/cesmdata/cseg/inputdata/ocn/mom/croc/rof/glofas/dis24/GLOFAS_esmf_mesh_v4.nc",
-        ocn_mesh_filepath="/glade/campaign/cesm/cesmdata/cseg/inputdata/ocn/mom/croc/testing_data/panama/ESMF_mesh_panama1_352fd1.nc",
-        inputdir=tmp_path,
-        grid_name="test",
-        rmax=20,
-        fold=40,
-    )
-
-    assert mock_runoff.called
-
-
-@patch("regional_mom6.regional_mom6.experiment.setup_boundary_tides", autospec=True)
-def test_process_tides(mock_tides, tmp_path, gen_grid_topo_vgrid, dummy_tidal_data):
-    grid, topo, vgrid = gen_grid_topo_vgrid
-    elev, vel = dummy_tidal_data
-    grid.write_supergrid(tmp_path / "grid.nc")
-    vgrid.write(tmp_path / "vgrid.nc")
-    (tmp_path / "ocnice").mkdir()
-    tides.process_tides(
-        ocn_topo=topo,
+def _make_ctx(tmp_path, **overrides):
+    defaults = dict(
         inputdir=tmp_path,
         supergrid_path=tmp_path / "grid.nc",
         vgrid_path=tmp_path / "vgrid.nc",
-        tidal_constituents=["M2"],
-        boundaries=["east"],
-        tpxo_elevation_filepath=elev,
-        tpxo_velocity_filepath=vel,
+        topo_path=tmp_path / "topo.nc",
+        raw_data_dir=tmp_path,
+        regridded_data_dir=tmp_path,
+        output_path=tmp_path,
+        config={},
     )
-
-    assert mock_tides.called
-
-
-@patch("mom6_forge.chl.interpolate_and_fill_seawifs", autospec=True)
-def test_process_chl(mock_chl, is_glade_file_system, tmp_path, gen_grid_topo_vgrid):
-
-    grid, topo, vgrid = gen_grid_topo_vgrid
-    chl.process_chl(
-        ocn_grid=grid,
-        ocn_topo=topo,
-        inputdir=tmp_path,
-        chl_processed_filepath="/glade/campaign/cesm/cesmdata/cseg/inputdata/ocn/mom/croc/chl/data/SeaWIFS.L3m.MC.CHL.chlor_a.0.25deg.nc",
-        output_filepath=tmp_path / "chl.nc",
-    )
-
-    assert mock_chl.called
+    defaults.update(overrides)
+    return WorkflowContext(**defaults)
 
 
-def test_bgcironforcing(tmp_path):
+def test_bgcic_process_copies_file(tmp_path):
+    src = tmp_path / "src.nc"
+    src.write_bytes(b"hello")
+    out_dir = tmp_path / "out"
+    out_dir.mkdir()
+
+    configurator = BGCICConfigurator(marbl_ic_filepath=src)
+    configurator.set_output_param("MARBL_TRACERS_IC_FILE", "dst.nc")
+
+    configurator.process(_make_ctx(tmp_path, output_path=out_dir))
+
+    assert (out_dir / "dst.nc").read_bytes() == b"hello"
+
+
+def test_bgcironforcing_process(tmp_path):
     (tmp_path / "ocnice").mkdir()
     depth, ny, nx = 103, 60, 60
-    bgc.process_bgc_iron_forcing(
-        nx=60,
-        ny=60,
-        MARBL_FESEDFLUX_FILE="fesed.nc",
-        MARBL_FEVENTFLUX_FILE="fevent.nc",
-        MARBL_FESEDFLUXRED_FILE="fesedred.nc",
-        inputdir=tmp_path,
+
+    configurator = BGCIronForcingConfigurator(
+        case_session_id="abc123", case_grid_name="test"
     )
+    configurator.set_output_param("MARBL_FESEDFLUX_FILE", "fesed.nc")
+    configurator.set_output_param("MARBL_FEVENTFLUX_FILE", "fevent.nc")
+    configurator.set_output_param("MARBL_FESEDFLUXRED_FILE", "fesedred.nc")
+
+    ctx = _make_ctx(tmp_path)
+    ctx.grid = SimpleNamespace(nx=nx, ny=ny)
+
+    configurator.process(ctx)
 
     assert (tmp_path / "ocnice" / "fesed.nc").exists()
     assert (tmp_path / "ocnice" / "fevent.nc").exists()
@@ -79,42 +67,46 @@ def test_bgcironforcing(tmp_path):
     ]:
         ds = xr.open_dataset(path)
 
-        # --- dimension checks ---
-        assert ds.dims["DEPTH"] == depth
-        assert ds.dims["ny"] == ny
-        assert ds.dims["nx"] == nx
-        assert ds.dims["DEPTH_EDGES"] == depth + 1
+        assert ds.sizes["DEPTH"] == depth
+        assert ds.sizes["ny"] == ny
+        assert ds.sizes["nx"] == nx
+        assert ds.sizes["DEPTH_EDGES"] == depth + 1
 
-        # --- variable presence ---
         assert main_var in ds
         assert "DEPTH" in ds
         assert "DEPTH_EDGES" in ds
         assert "KMT" in ds
         assert "TAREA" in ds
 
-        # --- main variable shape ---
         assert ds[main_var].shape == (depth, ny, nx)
 
         ds.close()
 
 
 @pytest.mark.slow
-def test_bgcrivernutrients(tmp_path, is_glade_file_system, gen_grid_topo_vgrid):
-
+def test_bgcrivernutrients_process(tmp_path, is_glade_file_system, gen_grid_topo_vgrid):
     grid, topo, vgrid = gen_grid_topo_vgrid
     mapping_file = "/glade/campaign/cesm/cesmdata/cseg/inputdata/ocn/mom/croc/testing_data/panama/GLOFAS_to_panama1_map_r20_f40_nnsm.nc"
     output_file = tmp_path / "riv_flux.nc"
-    bgc.process_river_nutrients(
-        ocn_grid=grid,
+
+    configurator = BGCRiverNutrientsConfigurator(
         global_river_nutrients_filepath="/glade/campaign/cesm/cesmdata/cseg/inputdata/ocn/mom/croc/rof/river_nutrients/river_nutrients.GNEWS_GNM.glofas.20250916.64bit.nc",
-        mapping_file=mapping_file,
-        river_nutrients_nnsm_filepath=output_file,
+        case_session_id="abc123",
+        case_grid_name="panama1",
     )
+    configurator.set_output_param("RIV_FLUX_FILE", "riv_flux.nc")
+
+    ctx = _make_ctx(tmp_path, output_path=tmp_path)
+    ctx.grid = grid
+    ctx.config = {"runoff": {"outputs": {"ROF2OCN_LIQ_RMAPNAME": mapping_file}}}
+
+    configurator.process(ctx)
+
     assert output_file.exists()
-    mapping_file = xr.open_dataset(mapping_file)
+    mapping_ds = xr.open_dataset(mapping_file)
     riv_file = xr.open_dataset(output_file)
-    assert riv_file.dims["ny"] == mapping_file.dims["nj_b"]
-    assert riv_file.dims["nx"] == mapping_file.dims["ni_b"]
+    assert riv_file.sizes["ny"] == mapping_ds.sizes["nj_b"]
+    assert riv_file.sizes["nx"] == mapping_ds.sizes["ni_b"]
     required_vars = [
         "din_riv_flux",
         "dip_riv_flux",
@@ -132,14 +124,13 @@ def test_bgcrivernutrients(tmp_path, is_glade_file_system, gen_grid_topo_vgrid):
 
 
 # =============================================================================
-# Fast mocked test for process_river_nutrients (avoids --runslow dependency)
+# Fast mocked test for BGCRiverNutrientsConfigurator.process (avoids --runslow)
 # =============================================================================
 
 
 def _make_fake_global_river_nutrients(nx_src=6, ny_src=5, nt=3):
     """Build a dataset that looks like river_nutrients.GNEWS_GNM.glofas.*.nc."""
     import numpy as np
-    import xarray as xr
     import cftime
 
     rng = np.random.default_rng(0)
@@ -180,17 +171,14 @@ def _make_fake_global_river_nutrients(nx_src=6, ny_src=5, nt=3):
     return ds
 
 
-def test_bgcrivernutrients_mocked(tmp_path, monkeypatch):
-    """Fast test of process_river_nutrients with xe.Regridder mocked out.
+def test_bgcrivernutrients_process_mocked(tmp_path, monkeypatch):
+    """Fast test of BGCRiverNutrientsConfigurator.process with xe.Regridder mocked out.
 
     The regridder is replaced by a passthrough callable that returns a dataset
     with the same variables regridded onto a small (ny, nx) target grid, which
-    is all that process_river_nutrients requires downstream.
+    is all that process() requires downstream.
     """
     import numpy as np
-    import xarray as xr
-    from unittest.mock import MagicMock
-    from CrocoDash.extract_forcings import bgc
 
     # ---- Build source dataset on disk ----
     src_path = tmp_path / "global_river_nutrients.nc"
@@ -236,16 +224,22 @@ def test_bgcrivernutrients_mocked(tmp_path, monkeypatch):
 
     fake_regridder_instance = MagicMock(side_effect=_fake_regridder_call)
     fake_Regridder = MagicMock(return_value=fake_regridder_instance)
-    monkeypatch.setattr("CrocoDash.extract_forcings.bgc.xe.Regridder", fake_Regridder)
+    monkeypatch.setattr("CrocoDash.forcing.bgc.xe.Regridder", fake_Regridder)
 
     # ---- Run ----
     out_path = tmp_path / "riv_flux.nc"
-    bgc.process_river_nutrients(
+    configurator = BGCRiverNutrientsConfigurator(
         global_river_nutrients_filepath=str(src_path),
-        ocn_grid=ocn_grid,
-        mapping_file=str(tmp_path / "map.nc"),
-        river_nutrients_nnsm_filepath=str(out_path),
+        case_session_id="abc123",
+        case_grid_name="test",
     )
+    configurator.set_output_param("RIV_FLUX_FILE", "riv_flux.nc")
+
+    ctx = _make_ctx(tmp_path, output_path=tmp_path)
+    ctx.grid = ocn_grid
+    ctx.config = {"runoff": {"outputs": {"ROF2OCN_LIQ_RMAPNAME": str(tmp_path / "map.nc")}}}
+
+    configurator.process(ctx)
 
     # ---- Assert ----
     assert out_path.exists()
@@ -272,42 +266,3 @@ def test_bgcrivernutrients_mocked(tmp_path, monkeypatch):
     assert "lat" in out.coords or "lat" in out.data_vars
     assert "lon" in out.coords or "lon" in out.data_vars
     out.close()
-
-
-# =============================================================================
-# Small direct-call tests that cover one-liner branches
-# =============================================================================
-
-
-def test_process_bgc_ic_copies_file(tmp_path):
-    """process_bgc_ic is a thin shutil.copy wrapper; confirm it copies bytes."""
-    src = tmp_path / "src.nc"
-    src.write_bytes(b"hello")
-    dst = tmp_path / "out" / "dst.nc"
-    dst.parent.mkdir()
-    bgc.process_bgc_ic(str(src), str(dst))
-    assert dst.read_bytes() == b"hello"
-
-
-@patch("mom6_forge.mapping.gen_rof_maps", autospec=True)
-@patch("mom6_forge.mapping.get_smoothed_map_filepath")
-def test_generate_rof_ocn_map_reuses_existing(
-    mock_get_filepath, mock_gen_maps, tmp_path
-):
-    """If the smoothed-map file already exists, gen_rof_maps must not be called."""
-    existing = tmp_path / "mapping" / "EXISTING_map.nc"
-    existing.parent.mkdir(parents=True, exist_ok=False)
-    existing.write_text("x")
-    mock_get_filepath.return_value = existing
-
-    runoff.generate_rof_ocn_map(
-        rof_grid_name="GLOFAS",
-        rof_esmf_mesh_filepath="/fake/rof_mesh.nc",
-        ocn_mesh_filepath="/fake/ocn_mesh.nc",
-        inputdir=tmp_path,
-        grid_name="fake_grid",
-        rmax=20,
-        fold=40,
-    )
-    # The "already exists, reusing it" branch should be taken.
-    mock_gen_maps.assert_not_called()
