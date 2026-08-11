@@ -95,6 +95,7 @@ class ForcingConfigRegistry:
 
     def __init__(self, compset, inputs: dict, case=None):
         self.compset = compset
+        self.case = case
         self.active_configurators = {}
         if case is not None:
             self.case_info = {
@@ -544,10 +545,25 @@ class BaseConfigurator(ABC):
         if extra:
             raise ValueError(f"Unexpected inputs: {extra}")
 
+    @property
+    def is_non_local(self) -> bool:
+        """Whether this configurator's case is non-local (CIME's `--non-local`).
+
+        Sourced from the live Case via the registry rather than a declared
+        input param, so an XMLConfigParam output doesn't require its
+        configurator to accept/thread a `case_is_non_local` ctor arg just to
+        reach `apply()` -- it's always False when there's no live Case
+        (e.g. direct construction in tests, or deserialize()).
+        """
+        case = getattr(self.registry, "case", None)
+        return bool(getattr(case, "is_non_local", False))
+
     @abstractmethod
     def configure(self):
         """Bind input values to parameters and files."""
         for p in self.output_params:
+            if isinstance(p, XMLConfigParam):
+                p.is_non_local = self.is_non_local
             p.apply()
         pass
 
@@ -609,13 +625,7 @@ class BaseConfigurator(ABC):
         except StopIteration:
             raise KeyError(f"Output param '{name}' not found")
 
-    def set_output_param(self, name: str, value, is_non_local=None):
-        if is_non_local is not None:
-            param = self.get_output_param_object(name)
-            assert isinstance(
-                param, XMLConfigParam
-            ), f"Expected XMLConfigParam, got {type(param)}"
-            param.is_non_local = is_non_local
+    def set_output_param(self, name: str, value):
         self.get_output_param_object(name).set_item(value)
 
     def set_input_param(self, name: str, value):
