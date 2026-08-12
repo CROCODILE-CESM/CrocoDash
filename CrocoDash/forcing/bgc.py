@@ -166,6 +166,7 @@ class BGCIronForcingConfigurator(BaseConfigurator):
 class BGCRiverNutrientsConfigurator(BaseConfigurator):
     name = "BGCRiverNutrients"
     process_components = {"bgcrivernutrients": "process"}
+    depends_on_outputs = {"runoff": ["ROF2OCN_LIQ_RMAPNAME"]}
     allowed_compsets = ["MARBL", "DROF"]
     input_params = [
         InputFileParam(
@@ -225,9 +226,12 @@ class BGCRiverNutrientsConfigurator(BaseConfigurator):
     def process(self, ctx):
         """Regrid global river nutrients onto the ocean grid via the runoff
         mapping file -- requires RunoffConfigurator's process step to have
-        already produced that mapping file (see forcing/base.py's
-        _PROCESS_ORDER_OVERRIDES in driver.py)."""
-        mapping_file = ctx.config["runoff"]["outputs"]["ROF2OCN_LIQ_RMAPNAME"]
+        already produced that mapping file. See depends_on_outputs above:
+        driver.py derives the required run-before ordering from it
+        automatically."""
+        mapping_file = ForcingConfigRegistry.get_configurator_output(
+            ctx.config, "runoff", "ROF2OCN_LIQ_RMAPNAME"
+        )
         river_nutrients_nnsm_filepath = ctx.output_path / self.get_output_param(
             "RIV_FLUX_FILE"
         )

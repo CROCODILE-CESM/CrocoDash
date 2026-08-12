@@ -26,14 +26,24 @@ from pathlib import Path
 from CrocoDash import case_state
 from CrocoDash.forcing.base import ForcingConfigRegistry, WorkflowContext
 
-# Some forcing types depend on another's process step having already run
-# (its output isn't in its own inputs/outputs, so there's nothing generic to
-# infer this from) -- {flag_name: [flag_names that must run first]}. Kept as
-# an explicit, small exception list rather than a generic dependency system,
-# since exactly one case of this exists today.
-_PROCESS_ORDER_OVERRIDES = {
-    "bgcrivernutrients": ["runoff"],
-}
+
+def _resolve_process_order_overrides(targets):
+    """{flag_name: [flag_names that must run first]}, derived from every
+    active configurator's declared `depends_on_outputs` -- so "runoff must
+    run before bgcrivernutrients" (etc.) is declared once, on the class that
+    needs it (see forcing/bgc.py), instead of hand-maintained here."""
+    overrides = {}
+    for flag_name, (configurator, _method) in targets.items():
+        if not configurator.depends_on_outputs:
+            continue
+        dep_flags = [
+            other_flag
+            for other_flag, (other_configurator, _) in targets.items()
+            if other_configurator.name.lower() in configurator.depends_on_outputs
+        ]
+        if dep_flags:
+            overrides[flag_name] = dep_flags
+    return overrides
 
 
 def _load(config_path):
@@ -83,7 +93,9 @@ def run_workflow(config_path, preview=False, **flags):
     targets = ForcingConfigRegistry.resolve_process_targets(config)
     requested = {name for name, enabled in flags.items() if enabled and name in targets}
 
-    for flag_name, deps in _PROCESS_ORDER_OVERRIDES.items():
+    order_overrides = _resolve_process_order_overrides(targets)
+
+    for flag_name, deps in order_overrides.items():
         if flag_name not in requested:
             continue
         for dep in deps:
@@ -101,7 +113,7 @@ def run_workflow(config_path, preview=False, **flags):
     # Stable order: anything named as a dependency runs before its dependents.
     order = []
     for flag_name in requested:
-        for dep in _PROCESS_ORDER_OVERRIDES.get(flag_name, []):
+        for dep in order_overrides.get(flag_name, []):
             if dep in requested and dep not in order:
                 order.append(dep)
         if flag_name not in order:
