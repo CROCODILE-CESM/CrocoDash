@@ -71,6 +71,11 @@ def process_initial_condition(
 
     data_access_function = utils.get_data_access_function(product_name, function_name)
 
+    if getattr(data_access_function, "_how_to_use", None):
+        logger.info(
+            f"[{product_name}.{function_name}] Usage: {data_access_function._how_to_use}"
+        )
+
     # Get lat,lon information for the IC snapshot
     hgrid = xr.open_dataset(hgrid_path)
     latlon_info = Grid.get_bounding_boxes(hgrid)["ic"]

@@ -1,5 +1,6 @@
 import pytest
 import numpy as np
+import pandas as pd
 import xarray as xr
 from datetime import datetime
 from pathlib import Path
@@ -12,6 +13,27 @@ from CrocoDash.extract_forcings.obc import (
 from CrocoDash.extract_forcings.utils import is_valid_netcdf
 from CrocoDash.extract_forcings.mom6 import _regrid_obc_chunk
 from CrocoDash.grid import Grid
+
+
+def test_date_string_slice_includes_noon_stamped_trailing_day():
+    """The per-regrid-chunk slice uses date strings (not chunk_start/chunk_end
+    datetimes) because pandas partial-string indexing covers the end string's
+    whole calendar day. Daily-mean products like GLORYS stamp each day's value
+    at noon, so a midnight-anchored datetime slice would exclude a single-day
+    trailing chunk (e.g. a date range that isn't an exact multiple of
+    regrid_step_days) entirely, crashing downstream on a zero-size array.
+    """
+    times = pd.date_range("2020-01-01 12:00", periods=16, freq="D")
+    ds_full = xr.Dataset({"var": ("time", np.arange(16))}, coords={"time": times})
+
+    chunk_start, chunk_end = datetime(2020, 1, 16), datetime(2020, 1, 16)
+    start_str = chunk_start.strftime("%Y-%m-%d")
+    end_str = chunk_end.strftime("%Y-%m-%d")
+
+    sliced = ds_full.sel(time=slice(start_str, end_str))
+    assert sliced.sizes["time"] == 1
+    assert sliced.time.values[0] == np.datetime64("2020-01-16T12:00:00")
+
 
 # ---------------------------------------------------------------------------
 # Fixture: minimal config.json that process_obc_conditions can load
