@@ -371,6 +371,14 @@ document.write(`
 </tr>
 </thead>
 <tbody>
+<tr class="row-even"><td><p>cesm_pop_output</p></td>
+<td><p>CESM ocean output (POP2 grid) for use as IC and OBC, including CESM-HR FOSI and CESM2 Large Ensemble (LENS2)</p></td>
+<td><p><a class="reference external" href="https://gdex.ucar.edu/datasets/d267000/">https://gdex.ucar.edu/datasets/d267000/</a></p></td>
+</tr>
+<tr class="row-odd"><td><p>cesm_mom_output</p></td>
+<td><p>Native MOM6 output (full history/diagnostic files, or diag_table-extracted cross-section slices) for use as IC/OBC forcing - e.g. for nesting a child domain inside an outer/parent MOM6 run.</p></td>
+<td><p><a class="reference external" href="https://mom6.readthedocs.io/en/main/api/generated/pages/Diagnostics.html">https://mom6.readthedocs.io/en/main/api/generated/pages/Diagnostics.html</a></p></td>
+</tr>
 <tr class="row-even"><td><p>tpxo</p></td>
 <td><p>TPXO (TOPEX/POSEIDON Global Tidal Ocean I think) is a public tidal model dataset</p></td>
 <td><p><a class="reference external" href="https://www.tpxo.net/global">https://www.tpxo.net/global</a></p></td>
@@ -391,13 +399,13 @@ document.write(`
 <td><p>GLORYS (Global Ocean Physics Reanalysis) is a public dataset provided through the copernicus marine service.</p></td>
 <td><p><a class="reference external" href="https://data.marine.copernicus.eu/product/GLOBAL_MULTIYEAR_PHY_001_030/description">https://data.marine.copernicus.eu/product/GLOBAL_MULTIYEAR_PHY_001_030/description</a></p></td>
 </tr>
-<tr class="row-odd"><td><p>mom6_output</p></td>
-<td><p>CESM had old runs that can be used for IC and OBC</p></td>
-<td><p><a class="reference external" href="https://gdex.ucar.edu/datasets/d267000/">https://gdex.ucar.edu/datasets/d267000/</a></p></td>
-</tr>
-<tr class="row-even"><td><p>seawifs</p></td>
+<tr class="row-odd"><td><p>seawifs</p></td>
 <td><p>SEAWIFS is a Chlorophyll Dataset for MOM6</p></td>
 <td><p><a class="reference external" href="https://oceandata.sci.gsfc.nasa.gov/getfile/SEASTAR_SEAWIFS_GAC.19980201_20100228.L3m.MC.CHL.chlor_a.9km.nc">https://oceandata.sci.gsfc.nasa.gov/getfile/SEASTAR_SEAWIFS_GAC.19980201_20100228.L3m.MC.CHL.chlor_a.9km.nc</a></p></td>
+</tr>
+<tr class="row-even"><td><p>srtm</p></td>
+<td><p>SRTM15+ is a global 15 arc-second resolution bathymetry/topography dataset compiled from SRTM land topography and satellite-derived ocean bathymetry.</p></td>
+<td><p><a class="reference external" href="https://topex.ucsd.edu/WWW_html/srtm15_plus.html">https://topex.ucsd.edu/WWW_html/srtm15_plus.html</a></p></td>
 </tr>
 </tbody>
 </table>
@@ -415,45 +423,55 @@ document.write(`
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p>gebco</p></td>
+<tr class="row-even"><td><p>cesm_pop_output</p></td>
+<td><p>get_cesm_single_variable_data</p></td>
+<td><p>python</p></td>
+<td><p>Gets CESM single-variable-per-file (tseries) ocean data from a given path (by default a POP-MARBL run) — the standard CESM postprocessed output organization, one variable per file series with the date range encoded in the filename. Covers both CESM-HR FOSI and CESM2-LENS2 (pass <cite>member</cite> to select an ensemble member).</p></td>
+</tr>
+<tr class="row-odd"><td><p>cesm_mom_output</p></td>
+<td><p>get_mom6_output_data</p></td>
+<td><p>python</p></td>
+<td><p>Reads native MOM6 output (full history/diagnostic files, or diag_table-extracted cross-section slices) from any directory and subsets to a lat/lon bounding box — e.g. for nesting a child domain inside an outer/parent MOM6 run.</p></td>
+</tr>
+<tr class="row-even"><td><p>cesm_mom_output</p></td>
+<td><p>get_mom6_single_variable_data</p></td>
+<td><p>python</p></td>
+<td><p>Gets native MOM6 output that’s organized in the CESM single-variable-per-file (tseries) convention instead of one multi-variable file per region/timestep — some parent runs post-process their history output this way before archiving it.</p></td>
+</tr>
+<tr class="row-odd"><td><p>gebco</p></td>
 <td><p>get_gebco_data_with_python</p></td>
 <td><p>python</p></td>
 <td><p>Python request for global bathymetry data</p></td>
 </tr>
-<tr class="row-odd"><td><p>gebco</p></td>
+<tr class="row-even"><td><p>gebco</p></td>
 <td><p>get_gebco_data_script</p></td>
 <td><p>script</p></td>
 <td><p>get script to download global bathymetry data</p></td>
 </tr>
-<tr class="row-even"><td><p>glofas</p></td>
+<tr class="row-odd"><td><p>glofas</p></td>
 <td><p>get_global_data_with_python</p></td>
 <td><p>python</p></td>
 <td><p>Gets glofas raw data through the cdsapi package</p></td>
 </tr>
-<tr class="row-odd"><td><p>glofas</p></td>
+<tr class="row-even"><td><p>glofas</p></td>
 <td><p>get_processed_global_glofas_script_for_cli</p></td>
 <td><p>script</p></td>
 <td><p>Generates bash script for access to CESM Inputdata processed glofas data</p></td>
 </tr>
-<tr class="row-even"><td><p>glorys</p></td>
+<tr class="row-odd"><td><p>glorys</p></td>
 <td><p>get_glorys_data_from_rda</p></td>
 <td><p>python</p></td>
 <td><p>Gathers GLORYS data from RDA on computers with access to glade/rda</p></td>
 </tr>
-<tr class="row-odd"><td><p>glorys</p></td>
+<tr class="row-even"><td><p>glorys</p></td>
 <td><p>get_glorys_data_from_cds_api</p></td>
 <td><p>python</p></td>
 <td><p>Python request with copernicusmarine api</p></td>
 </tr>
-<tr class="row-even"><td><p>glorys</p></td>
+<tr class="row-odd"><td><p>glorys</p></td>
 <td><p>get_glorys_data_script_for_cli</p></td>
 <td><p>script</p></td>
-<td><p>	Generates bash script for direct CLI run with the copernicusmarine package</p></td>
-</tr>
-<tr class="row-odd"><td><p>mom6_output</p></td>
-<td><p>get_mom6_data</p></td>
-<td><p>python</p></td>
-<td><p>Gets MOM6 Data from a given path (by default a POP-MARBL run)</p></td>
+<td><p>Generates bash script for direct CLI run with the copernicusmarine package</p></td>
 </tr>
 <tr class="row-even"><td><p>seawifs</p></td>
 <td><p>get_global_seawifs_script_for_cli</p></td>
@@ -463,7 +481,17 @@ document.write(`
 <tr class="row-odd"><td><p>seawifs</p></td>
 <td><p>get_processed_global_seawifs_script_for_cli</p></td>
 <td><p>script</p></td>
-<td><p>	Generates bash script for direct CLI access to processed chlorophyll data (No Package Required)</p></td>
+<td><p>Generates bash script for direct CLI access to processed chlorophyll data (No Package Required)</p></td>
+</tr>
+<tr class="row-even"><td><p>srtm</p></td>
+<td><p>get_srtm_data_with_python</p></td>
+<td><p>python</p></td>
+<td><p>Python download of the SRTM15+ global bathymetry NetCDF file</p></td>
+</tr>
+<tr class="row-odd"><td><p>srtm</p></td>
+<td><p>get_srtm_data_script</p></td>
+<td><p>script</p></td>
+<td><p>Bash script to download the SRTM15+ global bathymetry NetCDF file</p></td>
 </tr>
 </tbody>
 </table>
