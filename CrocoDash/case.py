@@ -515,6 +515,14 @@ class Case:
                 )
             function_args.update(function_overrides)
 
+        # function_args is written straight to config.json (via ConditionsConfigurator's
+        # "function_args" ConfigOutputParam); coerce Path values (e.g. a dataset_path
+        # override) to strings so they're JSON-serializable.
+        function_args = {
+            k: (v.as_posix() if isinstance(v, Path) else v)
+            for k, v in function_args.items()
+        }
+
         inputs = kwargs | {
             "date_range": pd.to_datetime(date_range),
             "boundaries": boundaries,
