@@ -30,7 +30,7 @@ The first step in running an ocean model inside the CESM is setting up the CESM!
 1. Clone the repository from GitHub
 
    ```bash
-   git clone --recurse-submodules https://github.com/CROCODILE-CESM/CrocoDash.git -b v0.1.0-beta
+   git clone --recurse-submodules https://github.com/CROCODILE-CESM/CrocoDash.git
    ```
 
 2. Create the environment (called CrocoDash by default) using the provided environment.yml file
