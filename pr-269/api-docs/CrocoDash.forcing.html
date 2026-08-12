@@ -348,6 +348,7 @@ document.write(`
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.BaseConfigurator.check_input_params_synced"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.check_input_params_synced()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.BaseConfigurator.check_output_params_exist"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.check_output_params_exist()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.BaseConfigurator.configure"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.configure()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.BaseConfigurator.depends_on_outputs"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.depends_on_outputs</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.BaseConfigurator.deserialize"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.deserialize()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.BaseConfigurator.forbidden_compsets"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.forbidden_compsets</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.BaseConfigurator.get_input_param"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.get_input_param()</span></code></a></li>
@@ -387,6 +388,7 @@ document.write(`
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.ForcingConfigRegistry.get_active_configurators"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.get_active_configurators()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.ForcingConfigRegistry.get_configurator"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.get_configurator()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.ForcingConfigRegistry.get_configurator_from_name"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.get_configurator_from_name()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.ForcingConfigRegistry.get_configurator_output"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.get_configurator_output()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.ForcingConfigRegistry.get_ctor_signature"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.get_ctor_signature()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.ForcingConfigRegistry.get_user_args"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.get_user_args()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.ForcingConfigRegistry.instantiate_configurator"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.instantiate_configurator()</span></code></a></li>
@@ -417,6 +419,7 @@ document.write(`
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.Param.set_item"><code class="docutils literal notranslate"><span class="pre">Param.set_item()</span></code></a></li>
 </ul>
 </li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.UndeclaredParamError"><code class="docutils literal notranslate"><span class="pre">UndeclaredParamError</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.UserNLConfigParam"><code class="docutils literal notranslate"><span class="pre">UserNLConfigParam</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.UserNLConfigParam.apply"><code class="docutils literal notranslate"><span class="pre">UserNLConfigParam.apply()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.UserNLConfigParam.inspect"><code class="docutils literal notranslate"><span class="pre">UserNLConfigParam.inspect()</span></code></a></li>
@@ -471,6 +474,7 @@ document.write(`
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.bgc.BGCRiverNutrientsConfigurator"><code class="docutils literal notranslate"><span class="pre">BGCRiverNutrientsConfigurator</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.bgc.BGCRiverNutrientsConfigurator.allowed_compsets"><code class="docutils literal notranslate"><span class="pre">BGCRiverNutrientsConfigurator.allowed_compsets</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.bgc.BGCRiverNutrientsConfigurator.configure"><code class="docutils literal notranslate"><span class="pre">BGCRiverNutrientsConfigurator.configure()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.bgc.BGCRiverNutrientsConfigurator.depends_on_outputs"><code class="docutils literal notranslate"><span class="pre">BGCRiverNutrientsConfigurator.depends_on_outputs</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.bgc.BGCRiverNutrientsConfigurator.input_params"><code class="docutils literal notranslate"><span class="pre">BGCRiverNutrientsConfigurator.input_params</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.bgc.BGCRiverNutrientsConfigurator.name"><code class="docutils literal notranslate"><span class="pre">BGCRiverNutrientsConfigurator.name</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.bgc.BGCRiverNutrientsConfigurator.output_params"><code class="docutils literal notranslate"><span class="pre">BGCRiverNutrientsConfigurator.output_params</span></code></a></li>
@@ -623,6 +627,11 @@ document.write(`
 <em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">configure</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.base.BaseConfigurator.configure" title="Link to this definition">#</a></dt>
 <dd><p>Bind input values to parameters and files.</p>
 </dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.forcing.base.BaseConfigurator.depends_on_outputs">
+<span class="sig-name descname"><span class="pre">depends_on_outputs</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></em><a class="headerlink" href="#CrocoDash.forcing.base.BaseConfigurator.depends_on_outputs" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.forcing.base.BaseConfigurator.deserialize">
@@ -828,6 +837,18 @@ needing working configurator instances the way actual dispatch does.</p>
 <dd></dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.forcing.base.ForcingConfigRegistry.get_configurator_output">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_configurator_output</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">configurator_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.base.ForcingConfigRegistry.get_configurator_output" title="Link to this definition">#</a></dt>
+<dd><p>Look up another configurator’s serialized output value from
+config.json – for a process_*() method that depends on a sibling’s
+output but (unlike configure()) can’t rely on a live registry/Case,
+since process() may run in a different process. Raises a clear,
+named error instead of a bare KeyError several dict levels deep if
+the dependency isn’t there (e.g. the sibling hasn’t run yet, or
+never configured this case).</p>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.forcing.base.ForcingConfigRegistry.get_ctor_signature">
 <em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_ctor_signature</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">configurator_cls</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.base.ForcingConfigRegistry.get_ctor_signature" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
@@ -947,6 +968,18 @@ dispatch generically instead of a hand-maintained if-ladder.</p>
 <dd><p>Bind a runtime value to this parameter.</p>
 </dd></dl>
 
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="CrocoDash.forcing.base.UndeclaredParamError">
+<em class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.forcing.base.</span></span><span class="sig-name descname"><span class="pre">UndeclaredParamError</span></span><a class="headerlink" href="#CrocoDash.forcing.base.UndeclaredParamError" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">KeyError</span></code></p>
+<p>Code referenced an input/output param name that isn’t declared on the
+class (a schema bug, e.g. a stale name after a rename). Kept as a
+KeyError subclass so existing <cite>except KeyError</cite> call sites are
+unaffected, but a distinct type so a param-consistency check can catch
+exactly this failure and not any other incidental KeyError raised by a
+configurator’s own business logic.</p>
 </dd></dl>
 
 <dl class="py class">
@@ -1181,6 +1214,11 @@ configurators that actually produce BGC forcing files.</p>
 </dd></dl>
 
 <dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.forcing.bgc.BGCRiverNutrientsConfigurator.depends_on_outputs">
+<span class="sig-name descname"><span class="pre">depends_on_outputs</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'runoff':</span> <span class="pre">['ROF2OCN_LIQ_RMAPNAME']}</span></em><a class="headerlink" href="#CrocoDash.forcing.bgc.BGCRiverNutrientsConfigurator.depends_on_outputs" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
 <dt class="sig sig-object py" id="CrocoDash.forcing.bgc.BGCRiverNutrientsConfigurator.input_params">
 <span class="sig-name descname"><span class="pre">input_params</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#CrocoDash.forcing.base.Param" title="CrocoDash.forcing.base.Param"><span class="pre">Param</span></a><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[InputFileParam(name='global_river_nutrients_filepath'),</span> <span class="pre">InputValueParam(name='case_session_id'),</span> <span class="pre">InputValueParam(name='case_grid_name'),</span> <span class="pre">InputValueParam(name='cf_calendar')]</span></em><a class="headerlink" href="#CrocoDash.forcing.bgc.BGCRiverNutrientsConfigurator.input_params" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
@@ -1200,8 +1238,9 @@ configurators that actually produce BGC forcing files.</p>
 <span class="sig-name descname"><span class="pre">process</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.bgc.BGCRiverNutrientsConfigurator.process" title="Link to this definition">#</a></dt>
 <dd><p>Regrid global river nutrients onto the ocean grid via the runoff
 mapping file – requires RunoffConfigurator’s process step to have
-already produced that mapping file (see forcing/base.py’s
-_PROCESS_ORDER_OVERRIDES in driver.py).</p>
+already produced that mapping file. See depends_on_outputs above:
+driver.py derives the required run-before ordering from it
+automatically.</p>
 </dd></dl>
 
 <dl class="py attribute">
@@ -1843,6 +1882,7 @@ needs to import it by name.</p>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.BaseConfigurator.check_input_params_synced"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.check_input_params_synced()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.BaseConfigurator.check_output_params_exist"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.check_output_params_exist()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.BaseConfigurator.configure"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.configure()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.BaseConfigurator.depends_on_outputs"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.depends_on_outputs</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.BaseConfigurator.deserialize"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.deserialize()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.BaseConfigurator.forbidden_compsets"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.forbidden_compsets</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.BaseConfigurator.get_input_param"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.get_input_param()</span></code></a></li>
@@ -1882,6 +1922,7 @@ needs to import it by name.</p>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.ForcingConfigRegistry.get_active_configurators"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.get_active_configurators()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.ForcingConfigRegistry.get_configurator"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.get_configurator()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.ForcingConfigRegistry.get_configurator_from_name"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.get_configurator_from_name()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.ForcingConfigRegistry.get_configurator_output"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.get_configurator_output()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.ForcingConfigRegistry.get_ctor_signature"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.get_ctor_signature()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.ForcingConfigRegistry.get_user_args"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.get_user_args()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.ForcingConfigRegistry.instantiate_configurator"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.instantiate_configurator()</span></code></a></li>
@@ -1912,6 +1953,7 @@ needs to import it by name.</p>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.Param.set_item"><code class="docutils literal notranslate"><span class="pre">Param.set_item()</span></code></a></li>
 </ul>
 </li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.UndeclaredParamError"><code class="docutils literal notranslate"><span class="pre">UndeclaredParamError</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.UserNLConfigParam"><code class="docutils literal notranslate"><span class="pre">UserNLConfigParam</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.UserNLConfigParam.apply"><code class="docutils literal notranslate"><span class="pre">UserNLConfigParam.apply()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.UserNLConfigParam.inspect"><code class="docutils literal notranslate"><span class="pre">UserNLConfigParam.inspect()</span></code></a></li>
@@ -1966,6 +2008,7 @@ needs to import it by name.</p>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.bgc.BGCRiverNutrientsConfigurator"><code class="docutils literal notranslate"><span class="pre">BGCRiverNutrientsConfigurator</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.bgc.BGCRiverNutrientsConfigurator.allowed_compsets"><code class="docutils literal notranslate"><span class="pre">BGCRiverNutrientsConfigurator.allowed_compsets</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.bgc.BGCRiverNutrientsConfigurator.configure"><code class="docutils literal notranslate"><span class="pre">BGCRiverNutrientsConfigurator.configure()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.bgc.BGCRiverNutrientsConfigurator.depends_on_outputs"><code class="docutils literal notranslate"><span class="pre">BGCRiverNutrientsConfigurator.depends_on_outputs</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.bgc.BGCRiverNutrientsConfigurator.input_params"><code class="docutils literal notranslate"><span class="pre">BGCRiverNutrientsConfigurator.input_params</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.bgc.BGCRiverNutrientsConfigurator.name"><code class="docutils literal notranslate"><span class="pre">BGCRiverNutrientsConfigurator.name</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.bgc.BGCRiverNutrientsConfigurator.output_params"><code class="docutils literal notranslate"><span class="pre">BGCRiverNutrientsConfigurator.output_params</span></code></a></li>
