@@ -91,7 +91,7 @@ def test_process_all_args_available():
 
 
 @patch("CrocoDash.case_state.read")
-def test_process_missing_config_raises_helpful_error(mock_read, tmp_path):
+def test_process_missing_config_raises_helpful_error(mock_read, tmp_path, capsys):
     """Clear error when configure_forcings hasn't been run yet."""
     caseroot = tmp_path / "mycase"
     caseroot.mkdir()
@@ -101,8 +101,10 @@ def test_process_missing_config_raises_helpful_error(mock_read, tmp_path):
 
     mock_read.return_value = {"inputdir": str(inputdir)}
 
-    with pytest.raises(FileNotFoundError, match="configure_forcings"):
+    with pytest.raises(SystemExit) as exc_info:
         run_main(["process", "--caseroot", str(caseroot), "--all"])
+    assert exc_info.value.code == 1
+    assert "configure_forcings" in capsys.readouterr().err
 
 
 # =============================================================================
@@ -157,11 +159,13 @@ def test_process_auto_detect_config_in_cwd(mock_run, tmp_path, monkeypatch):
     assert call_kwargs["config_path"] == tmp_path / "config.json"
 
 
-def test_process_no_config_in_cwd_raises_helpful_error(tmp_path, monkeypatch):
+def test_process_no_config_in_cwd_raises_helpful_error(tmp_path, monkeypatch, capsys):
     """Without --caseroot and without config.json in cwd, shows a clear error."""
     monkeypatch.chdir(tmp_path)
-    with pytest.raises(FileNotFoundError, match="--caseroot"):
+    with pytest.raises(SystemExit) as exc_info:
         run_main(["process", "--ic"])
+    assert exc_info.value.code == 1
+    assert "--caseroot" in capsys.readouterr().err
 
 
 @patch("CrocoDash.extract_forcings.driver.run_workflow")
