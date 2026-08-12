@@ -9,11 +9,9 @@ import copernicusmarine
 import regional_mom6 as rm6
 from pathlib import Path
 import pandas as pd
-from CrocoDash.raw_data_access.datasets.utils import (
-    convert_lons_to_180_range,
-    make_dates_end_inclusive,
-)
+from CrocoDash.raw_data_access.datasets.utils import make_dates_end_inclusive
 from CrocoDash.raw_data_access.base import *
+from mom6_forge.utils import longitude_slicer
 
 
 class GLORYS(MOM6ForcingProduct):
@@ -45,6 +43,7 @@ class GLORYS(MOM6ForcingProduct):
     @accessmethod(
         description="Gathers GLORYS data from RDA on computers with access to glade/rda",
         type="python",
+        how_to_use="Requires read access to /glade/campaign/collections/rda/data/d010049/ and the CrocoDash conda environment.",
     )
     def get_glorys_data_from_rda(
         dates: list,
@@ -66,6 +65,7 @@ class GLORYS(MOM6ForcingProduct):
             "so",
             "thetao",
         ],
+        buf=1.0,
     ) -> xr.Dataset:
         """
         Gather GLORYS Data on Derecho Computers from the campaign storage and return the dataset sliced to the llc and urc coordinates at the specific dates
@@ -79,9 +79,6 @@ class GLORYS(MOM6ForcingProduct):
         ds_in_files = []
         date_strings = [date.strftime("%Y%m%d") for date in dates]
 
-        # Adjust lat lon inputs to make sure they are in the correct range of -180 to 180
-        lon_min, lon_max = convert_lons_to_180_range(lon_min, lon_max)
-
         for date in date_strings:
             pattern = os.path.join(ds_in_path, "**", f"*_{date}_*.nc")
             ds_in_files.extend(glob.glob(pattern, recursive=True))
@@ -91,34 +88,18 @@ class GLORYS(MOM6ForcingProduct):
             ds_in_files, decode_times=False, engine="h5netcdf", parallel=True
         )[variables]
 
-        if lon_min * lon_max > 0:
-            dataset = ds.sel(
-                latitude=slice(lat_min - 1, lat_max + 1),
-                longitude=slice(lon_min - 1, lon_max + 1),
-            )
-        else:
-            dataset = xr.concat(
-                [
-                    ds.sel(
-                        latitude=slice(lat_min - 1, lat_max + 1),
-                        **{"longitude": slice(lon_min - 1, 360)},
-                    ),
-                    ds.sel(
-                        latitude=slice(lat_min - 1, lat_max + 1),
-                        **{"longitude": slice(-180, lon_max + 1)},
-                    ),
-                ],
-                dim="longitude",
-            )
-
-            # convert longitude from degree west to degree east
-            dataset["longitude"] = (360 - dataset["longitude"]) % 360
-            dataset = dataset.sortby("longitude")
-
+        ds = ds.sel(latitude=slice(lat_min - buf, lat_max + buf))
+        dataset = longitude_slicer(
+            ds, [lon_min - buf, lon_max + buf], longitude_coords="longitude"
+        )
         dataset.to_netcdf(path)
         return path
 
-    @accessmethod(description="Python request with copernicusmarine api", type="python")
+    @accessmethod(
+        description="Python request with copernicusmarine api",
+        type="python",
+        how_to_use="Requires the CrocoDash conda environment and a Copernicus Marine account. Log in once with `copernicusmarine login` before use.",
+    )
     def get_glorys_data_from_cds_api(
         dates,
         lat_min,
@@ -150,8 +131,9 @@ class GLORYS(MOM6ForcingProduct):
         return Path(output_folder) / output_filename
 
     @accessmethod(
-        description="	Generates bash script for direct CLI run with the copernicusmarine package",
+        description="Generates bash script for direct CLI run with the copernicusmarine package",
         type="script",
+        how_to_use="The generated get_glorys_data.sh requires the CrocoDash conda environment to run (`conda activate CrocoDash`). A Copernicus Marine account is needed — log in once with `copernicusmarine login` before running the script.",
     )
     def get_glorys_data_script_for_cli(
         dates: tuple,

@@ -1,11 +1,15 @@
 Product,Function,Type,Description
+cesm_pop_output,get_cesm_single_variable_data,python,"Gets CESM single-variable-per-file (tseries) ocean data from a given path (by default a POP-MARBL run) — the standard CESM postprocessed output organization, one variable per file series with the date range encoded in the filename. Covers both CESM-HR FOSI and CESM2-LENS2 (pass `member` to select an ensemble member)."
+cesm_mom_output,get_mom6_output_data,python,"Reads native MOM6 output (full history/diagnostic files, or diag_table-extracted cross-section slices) from any directory and subsets to a lat/lon bounding box — e.g. for nesting a child domain inside an outer/parent MOM6 run."
+cesm_mom_output,get_mom6_single_variable_data,python,Gets native MOM6 output that's organized in the CESM single-variable-per-file (tseries) convention instead of one multi-variable file per region/timestep — some parent runs post-process their history output this way before archiving it.
 gebco,get_gebco_data_with_python,python,Python request for global bathymetry data
 gebco,get_gebco_data_script,script,get script to download global bathymetry data
 glofas,get_global_data_with_python,python,Gets glofas raw data through the cdsapi package
 glofas,get_processed_global_glofas_script_for_cli,script,Generates bash script for access to CESM Inputdata processed glofas data
 glorys,get_glorys_data_from_rda,python,Gathers GLORYS data from RDA on computers with access to glade/rda
 glorys,get_glorys_data_from_cds_api,python,Python request with copernicusmarine api
-glorys,get_glorys_data_script_for_cli,script,	Generates bash script for direct CLI run with the copernicusmarine package
-mom6_output,get_mom6_data,python,Gets MOM6 Data from a given path (by default a POP-MARBL run)
+glorys,get_glorys_data_script_for_cli,script,Generates bash script for direct CLI run with the copernicusmarine package
 seawifs,get_global_seawifs_script_for_cli,script,Generates bash script for direct CLI access to chlorophyll data (No Package Required)
-seawifs,get_processed_global_seawifs_script_for_cli,script,	Generates bash script for direct CLI access to processed chlorophyll data (No Package Required)
+seawifs,get_processed_global_seawifs_script_for_cli,script,Generates bash script for direct CLI access to processed chlorophyll data (No Package Required)
+srtm,get_srtm_data_with_python,python,Python download of the SRTM15+ global bathymetry NetCDF file
+srtm,get_srtm_data_script,script,Bash script to download the SRTM15+ global bathymetry NetCDF file

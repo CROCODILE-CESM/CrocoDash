@@ -254,12 +254,10 @@ def _regrid_boundary(
             regridded_files.append(dated_output)
             continue
 
-        # Raw product timestamps (e.g. GLORYS daily means) are stamped at
-        # noon, not midnight — push chunk_end to end-of-day so label-based
-        # .sel() doesn't silently drop the last day's sample at each chunk
-        # boundary. Mirrors make_dates_end_inclusive in raw_data_access.
-        chunk_end_inclusive = chunk_end + timedelta(hours=23, minutes=59, seconds=59)
-        end_str = chunk_end_inclusive.strftime("%Y-%m-%d")
+        # Daily-mean products like GLORYS timestamp each day's value at noon, so
+        # slice by date strings (pandas partial-string indexing treats the end
+        # string as covering that whole calendar day) to include chunk_end's own
+        # data point instead of a midnight-anchored datetime slice excluding it.
         chunk_ds = ds_full.sel(time=slice(start_str, end_str))
 
         regridders = regrid_chunk_fn(

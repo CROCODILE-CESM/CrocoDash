@@ -28,7 +28,12 @@ class ProductRegistry:
 
     @classmethod
     def get_product(cls, name):
-        return cls.products[name.lower()]
+        key = name.lower()
+        if key not in cls.products:
+            raise KeyError(
+                f"Unknown product '{name}'. Known products: {sorted(cls.products)}."
+            )
+        return cls.products[key]
 
     @classmethod
     def list_access_methods(cls, name):
