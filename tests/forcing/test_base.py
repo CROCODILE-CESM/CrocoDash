@@ -180,3 +180,21 @@ def test_is_non_local_propagates_from_registry_case(mock_xmlchange):
     obj.registry = SimpleNamespace(case=SimpleNamespace(is_non_local=True))
     obj.configure()
     mock_xmlchange.assert_called_once_with("DUMMY_XML_VAR", "value", is_non_local=True)
+
+
+def test_depends_on_outputs_targets_exist():
+    """Every declared cross-configurator dependency (depends_on_outputs)
+    must name a real, registered configurator and a real output param on
+    it -- catches a stale reference (e.g. after a rename) statically,
+    instead of a bare KeyError only surfacing at process-time deep inside
+    ForcingConfigRegistry.get_configurator_output()."""
+    for configurator_cls in ForcingConfigRegistry.registered_types:
+        for dep_name, output_names in configurator_cls.depends_on_outputs.items():
+            dep_cls = ForcingConfigRegistry.get_configurator_from_name(dep_name)
+            declared_outputs = {p.name for p in dep_cls.output_params}
+            missing = set(output_names) - declared_outputs
+            assert not missing, (
+                f"{configurator_cls.__name__}.depends_on_outputs references "
+                f"{dep_name!r}.{sorted(missing)}, but {dep_cls.__name__} has no "
+                f"such output_params (has: {sorted(declared_outputs)})"
+            )

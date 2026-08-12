@@ -20,6 +20,15 @@ def is_serializable(v):
     return isinstance(v, (str, int, float, bool, type(None), Path, list, dict))
 
 
+class UndeclaredParamError(KeyError):
+    """Code referenced an input/output param name that isn't declared on the
+    class (a schema bug, e.g. a stale name after a rename). Kept as a
+    KeyError subclass so existing `except KeyError` call sites are
+    unaffected, but a distinct type so a param-consistency check can catch
+    exactly this failure and not any other incidental KeyError raised by a
+    configurator's own business logic."""
+
+
 def register(cls):
     """Decorator: register a BaseConfigurator subclass with ForcingConfigRegistry.
 
@@ -270,6 +279,31 @@ class ForcingConfigRegistry:
                 targets[flag_name] = (configurator, method_name)
         return targets
 
+    @classmethod
+    def get_configurator_output(
+        cls, config: dict, configurator_name: str, output_name: str
+    ):
+        """Look up another configurator's serialized output value from
+        config.json -- for a process_*() method that depends on a sibling's
+        output but (unlike configure()) can't rely on a live registry/Case,
+        since process() may run in a different process. Raises a clear,
+        named error instead of a bare KeyError several dict levels deep if
+        the dependency isn't there (e.g. the sibling hasn't run yet, or
+        never configured this case)."""
+        key = configurator_name.lower()
+        if key not in config:
+            raise KeyError(
+                f"Configurator '{configurator_name}' not found in config.json -- "
+                f"is it active/configured for this case?"
+            )
+        outputs = config[key].get("outputs", {})
+        if output_name not in outputs:
+            raise KeyError(
+                f"Configurator '{configurator_name}' has no output '{output_name}' "
+                f"in config.json (available: {sorted(outputs)})"
+            )
+        return outputs[output_name]
+
 
 class Param(ABC):
     """
@@ -469,6 +503,18 @@ class BaseConfigurator(ABC):
     # than one entry, each naming its own method.
     process_components: Dict[str, str] = {}
 
+    # {configurator_name: [output_names]} -- other configurators' outputs
+    # this class's process_*() methods read via
+    # ForcingConfigRegistry.get_configurator_output() (process() may run in a
+    # different process than configure(), so it can't rely on a live
+    # registry -- it goes through the serialized config.json instead).
+    # Declaring the dependency here (rather than reaching into
+    # ctx.config[...] with no record of the coupling) lets driver.py derive
+    # processing order automatically, and lets a test statically confirm the
+    # named output actually exists on the target class -- instead of a
+    # silent, undeclared coupling that only breaks at process-time.
+    depends_on_outputs: Dict[str, List[str]] = {}
+
     # Injected by ForcingConfigRegistry.__init__ after all active configurators
     # are instantiated; lets a configurator look up a sibling's pure helper
     # methods (e.g. ConditionsConfigurator reading TidesConfigurator.tidal_data_str()).
@@ -614,7 +660,7 @@ class BaseConfigurator(ABC):
         try:
             return next(p for p in self.input_params if p.name == name)
         except StopIteration:
-            raise KeyError(f"Input param '{name}' not found")
+            raise UndeclaredParamError(f"Input param '{name}' not found")
 
     def get_output_param(self, name: str) -> OutputParam:
         return self.get_output_param_object(name).value
@@ -623,7 +669,7 @@ class BaseConfigurator(ABC):
         try:
             return next(p for p in self.output_params if p.name == name)
         except StopIteration:
-            raise KeyError(f"Output param '{name}' not found")
+            raise UndeclaredParamError(f"Output param '{name}' not found")
 
     def set_output_param(self, name: str, value):
         self.get_output_param_object(name).set_item(value)
