@@ -338,7 +338,6 @@ class WW3Configurator(BaseConfigurator):
                 "See ww3_obc_product_name."
             ),
         ),
-        InputValueParam("case_is_non_local", comment="Case is non-local"),
         InputValueParam(
             "get_step_days",
             comment=(
@@ -375,7 +374,6 @@ class WW3Configurator(BaseConfigurator):
         self,
         case_inputdir,
         boundaries,
-        case_is_non_local,
         ww3_obc_product_name=None,
         ww3_obc_function_name=None,
         get_step_days=None,
@@ -384,7 +382,6 @@ class WW3Configurator(BaseConfigurator):
         super().__init__(
             case_inputdir=case_inputdir,
             boundaries=boundaries,
-            case_is_non_local=case_is_non_local,
             ww3_obc_product_name=ww3_obc_product_name,
             ww3_obc_function_name=ww3_obc_function_name,
             get_step_days=get_step_days,
@@ -392,14 +389,12 @@ class WW3Configurator(BaseConfigurator):
         )
 
     def configure(self):
-        is_non_local = self.get_input_param("case_is_non_local")
         self.set_output_param(
             "WW3_GRID_INP_DIR",
             str(Path(self.get_input_param("case_inputdir")) / "wave"),
-            is_non_local=is_non_local,
         )
-        self.set_output_param("HIST_OPTION", "nhours", is_non_local=is_non_local)
-        self.set_output_param("HIST_N", "1", is_non_local=is_non_local)
+        self.set_output_param("HIST_OPTION", "nhours")
+        self.set_output_param("HIST_N", "1")
         super().configure()
 
     def process(self, ctx):

@@ -126,9 +126,7 @@ def test_process_ww3_obc_defaults_to_era5(tmp_path, gen_grid_topo_vgrid):
     hgrid_path = tmp_path / "hgrid.nc"
     grid.write_supergrid(hgrid_path)
 
-    configurator = WW3Configurator(
-        case_inputdir=tmp_path, boundaries=["west"], case_is_non_local=False
-    )
+    configurator = WW3Configurator(case_inputdir=tmp_path, boundaries=["west"])
 
     with patch(
         "CrocoDash.forcing.ww3.obc.process_obc_conditions",
@@ -303,7 +301,6 @@ def test_process_ww3_obc_multi_station(tmp_path, gen_grid_topo_vgrid):
     configurator = WW3Configurator(
         case_inputdir=tmp_path,
         boundaries=["west", "east"],
-        case_is_non_local=False,
         ww3_obc_product_name="test_fake_era5_spectra",
         ww3_obc_function_name="get_fake_spectra",
     )
@@ -336,7 +333,6 @@ def test_process_ww3_obc_with_reference_waves(tmp_path, gen_grid_topo_vgrid):
     configurator = WW3Configurator(
         case_inputdir=tmp_path,
         boundaries=["west", "east"],
-        case_is_non_local=False,
         ww3_obc_product_name="reference_waves",
         ww3_obc_function_name="get_reference_wave_spectra",
     )
@@ -368,4 +364,4 @@ def test_ww3_configurator_defaults_to_none_product():
     # None (unset) defers resolution to WW3Configurator.process's own
     # default ("era5_wave_spectra") -- not something validate_args should
     # reject (there is no validate_args override on WW3Configurator today).
-    WW3Configurator(case_inputdir="dummy", boundaries=["west"], case_is_non_local=False)
+    WW3Configurator(case_inputdir="dummy", boundaries=["west"])
