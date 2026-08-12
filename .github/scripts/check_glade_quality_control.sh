@@ -3,8 +3,8 @@ set -euo pipefail
 
 EXEMPTIONS=(
   "CrocoDash/raw_data_access/datasets/glorys.py"
-  "CrocoDash/raw_data_access/datasets/mom6_output.py"
   "CrocoDash/raw_data_access/datasets/cice_output.py"
+  "CrocoDash/raw_data_access/datasets/cesm_ocean_output.py"
   "tests/fixtures/state.py"
   "tests/forcing/test_bgc.py"
   "tests/raw_data_access/test_cice.py"
