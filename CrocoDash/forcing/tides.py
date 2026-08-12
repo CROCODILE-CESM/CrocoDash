@@ -87,16 +87,6 @@ class TidesConfigurator(BaseConfigurator):
                 boundaries=boundaries,
             )
 
-    def tidal_data_str(self, seg_ix):
-        return (
-            f",Uamp=file:tu_segment_{seg_ix}.nc(uamp),"
-            f"Uphase=file:tu_segment_{seg_ix}.nc(uphase),"
-            f"Vamp=file:tu_segment_{seg_ix}.nc(vamp),"
-            f"Vphase=file:tu_segment_{seg_ix}.nc(vphase),"
-            f"SSHamp=file:tz_segment_{seg_ix}.nc(zamp),"
-            f"SSHphase=file:tz_segment_{seg_ix}.nc(zphase)"
-        )
-
     def configure(self):
         # Set the output params
         self.set_output_param("TIDES", "True")
