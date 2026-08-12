@@ -516,8 +516,9 @@ class BaseConfigurator(ABC):
     depends_on_outputs: Dict[str, List[str]] = {}
 
     # Injected by ForcingConfigRegistry.__init__ after all active configurators
-    # are instantiated; lets a configurator look up a sibling's pure helper
-    # methods (e.g. ConditionsConfigurator reading TidesConfigurator.tidal_data_str()).
+    # are instantiated; lets a configurator check whether a sibling is active
+    # (e.g. ConditionsConfigurator gating its own tides/bgc string-building on
+    # self.registry.is_active(...)) without reaching into the sibling itself.
     registry: Optional["ForcingConfigRegistry"] = None
 
     def __eq__(self, other):

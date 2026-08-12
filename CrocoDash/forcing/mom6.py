@@ -529,8 +529,13 @@ class ConditionsConfigurator(BaseConfigurator):
 
             data_str = standard_data_str
             if self.registry and self.registry.is_active("tides"):
-                data_str += self.registry.active_configurators["tides"].tidal_data_str(
-                    seg_ix
+                data_str += (
+                    f",Uamp=file:tu_segment_{seg_ix}.nc(uamp),"
+                    f"Uphase=file:tu_segment_{seg_ix}.nc(uphase),"
+                    f"Vamp=file:tu_segment_{seg_ix}.nc(vamp),"
+                    f"Vphase=file:tu_segment_{seg_ix}.nc(vphase),"
+                    f"SSHamp=file:tz_segment_{seg_ix}.nc(zamp),"
+                    f"SSHphase=file:tz_segment_{seg_ix}.nc(zphase)"
                 )
             data_str += '"'
 
