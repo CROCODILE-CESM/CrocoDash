@@ -4,6 +4,14 @@ CrocoDash.raw\_data\_access.datasets package
 Submodules
 ----------
 
+CrocoDash.raw\_data\_access.datasets.cesm\_ocean\_output module
+---------------------------------------------------------------
+
+.. automodule:: CrocoDash.raw_data_access.datasets.cesm_ocean_output
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 CrocoDash.raw\_data\_access.datasets.empty\_products module
 -----------------------------------------------------------
 
@@ -36,14 +44,6 @@ CrocoDash.raw\_data\_access.datasets.glorys module
    :show-inheritance:
    :undoc-members:
 
-CrocoDash.raw\_data\_access.datasets.mom6\_output module
---------------------------------------------------------
-
-.. automodule:: CrocoDash.raw_data_access.datasets.mom6_output
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
 CrocoDash.raw\_data\_access.datasets.reference module
 -----------------------------------------------------
 
@@ -56,6 +56,14 @@ CrocoDash.raw\_data\_access.datasets.seawifs module
 ---------------------------------------------------
 
 .. automodule:: CrocoDash.raw_data_access.datasets.seawifs
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+CrocoDash.raw\_data\_access.datasets.srtm module
+------------------------------------------------
+
+.. automodule:: CrocoDash.raw_data_access.datasets.srtm
    :members:
    :show-inheritance:
    :undoc-members:
