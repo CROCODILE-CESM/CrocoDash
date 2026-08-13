@@ -1323,9 +1323,9 @@ file: it must cover the case’s regional domain plus a halo (<code class="docut
 on every side, required for the restoring routine), built from a CICE-shaped
 forcing product (real global restart, or a fast synthetic stand-in – see
 <code class="docutils literal notranslate"><span class="pre">cice_product_name</span></code>/<code class="docutils literal notranslate"><span class="pre">cice_function_name</span></code> below) regridded onto every
-point of that expanded grid, with the product’s own time axis (a single
-restart snapshot copied forward, for <code class="docutils literal notranslate"><span class="pre">cice_restart</span></code>) carried through
-unchanged.</p>
+point of that expanded grid. Like a real CICE restart/initial-condition
+file, the output carries no <code class="docutils literal notranslate"><span class="pre">time</span></code> dimension at all – just the single
+static snapshot (for <code class="docutils literal notranslate"><span class="pre">cice_restart</span></code>), regridded once.</p>
 <p>Unlike MOM6/WW3’s OBC, there’s no boundary-only regrid and no date-chunking
 need (one static snapshot, no real time evolution to fetch incrementally),
 so this doesn’t route through obc.py’s shared GET-&gt;chunk-&gt;REGRID-&gt;MERGE
@@ -1393,10 +1393,10 @@ side (grown via <code class="docutils literal notranslate"><span class="pre">Sup
 CICE forcing product (<code class="docutils literal notranslate"><span class="pre">cice_product_name</span></code>/<code class="docutils literal notranslate"><span class="pre">cice_function_name</span></code>,
 resolved via the same <code class="docutils literal notranslate"><span class="pre">ProductRegistry</span></code> lookup MOM6/WW3 use –
 <code class="docutils literal notranslate"><span class="pre">restart_path</span></code>/<code class="docutils literal notranslate"><span class="pre">grid_path</span></code> for the real <code class="docutils literal notranslate"><span class="pre">cice_restart</span></code> product go
-in <code class="docutils literal notranslate"><span class="pre">cice_function_args</span></code>) and regridded onto that expanded grid. The
-output’s time axis spans the case’s date range with the product’s own
-snapshot (held constant throughout, for <code class="docutils literal notranslate"><span class="pre">cice_restart</span></code>) carried
-through.</p>
+in <code class="docutils literal notranslate"><span class="pre">cice_function_args</span></code>) and regridded onto that expanded grid. Like
+a real CICE restart/initial-condition file, the output has no
+<code class="docutils literal notranslate"><span class="pre">time</span></code> dimension – a single static snapshot (for <code class="docutils literal notranslate"><span class="pre">cice_restart</span></code>),
+not a time series.</p>
 </dd></dl>
 
 <dl class="py attribute">
