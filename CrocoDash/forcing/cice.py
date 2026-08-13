@@ -8,9 +8,9 @@ file: it must cover the case's regional domain plus a halo (``n_halo_cells``
 on every side, required for the restoring routine), built from a CICE-shaped
 forcing product (real global restart, or a fast synthetic stand-in -- see
 ``cice_product_name``/``cice_function_name`` below) regridded onto every
-point of that expanded grid, with the product's own time axis (a single
-restart snapshot copied forward, for ``cice_restart``) carried through
-unchanged.
+point of that expanded grid. Like a real CICE restart/initial-condition
+file, the output carries no ``time`` dimension at all -- just the single
+static snapshot (for ``cice_restart``), regridded once.
 
 Unlike MOM6/WW3's OBC, there's no boundary-only regrid and no date-chunking
 need (one static snapshot, no real time evolution to fetch incrementally),
@@ -102,16 +102,16 @@ def _regrid_cice_full_grid(ds, grid):
     t_out = _regrid_point_group(
         ds,
         t_vars,
-        ds["tlon"].isel(time=0).values,
-        ds["tlat"].isel(time=0).values,
+        ds["tlon"].values,
+        ds["tlat"].values,
         grid.tlon.values,
         grid.tlat.values,
     )
     u_out = _regrid_point_group(
         ds,
         u_vars,
-        ds["ulon"].isel(time=0).values,
-        ds["ulat"].isel(time=0).values,
+        ds["ulon"].values,
+        ds["ulat"].values,
         grid.qlon.values[1:, :-1],
         grid.qlat.values[1:, :-1],
     )
@@ -226,10 +226,10 @@ class CICEConfigurator(BaseConfigurator):
         CICE forcing product (``cice_product_name``/``cice_function_name``,
         resolved via the same ``ProductRegistry`` lookup MOM6/WW3 use --
         ``restart_path``/``grid_path`` for the real ``cice_restart`` product go
-        in ``cice_function_args``) and regridded onto that expanded grid. The
-        output's time axis spans the case's date range with the product's own
-        snapshot (held constant throughout, for ``cice_restart``) carried
-        through.
+        in ``cice_function_args``) and regridded onto that expanded grid. Like
+        a real CICE restart/initial-condition file, the output has no
+        ``time`` dimension -- a single static snapshot (for ``cice_restart``),
+        not a time series.
         """
         hgrid_ds = xr.open_dataset(ctx.supergrid_path)
         grid = Grid.from_supergrid_ds(hgrid_ds)
@@ -261,6 +261,47 @@ class CICEConfigurator(BaseConfigurator):
             **(self.get_input_param("cice_function_args") or {}),
         )
         subset = xr.open_dataset(subset_paths[0])
+        if "time" in subset.dims:
+            # A CICE restart/initial-condition file is a single static
+            # snapshot -- no `time` dimension at all, unlike a real dated
+            # forcing stream. Upstream products carry one anyway (to keep a
+            # uniform GET-step return shape); drop it here before regridding.
+            #
+            # Short-term: this restoring file is currently a single static
+            # snapshot because that's all the current upstream products
+            # (cice_restart/reference_ice) provide. Once the Fortran
+            # restoring-file reader and a real dated CICE forcing product
+            # exist, this file will likely need a genuine time-varying
+            # restoring target again -- revisit dropping `time` here then.
+            subset = subset.isel(time=0, drop=True)
 
         regridded = _regrid_cice_full_grid(subset, grid)
-        regridded.to_netcdf(output_dir / "cice_forcing.nc")
+
+        # Land/masked cells come back as NaN from the nearest-neighbor
+        # regrid -- CICE restart/initial files use zero for land, not a
+        # _FillValue convention (which isn't really defined for restarts).
+        regridded = regridded.fillna(0)
+
+        # xarray's auto-generated "coordinates" attribute would otherwise
+        # list every non-dimension coordinate whose dims are a subset of a
+        # variable's own (lat/lon *and* u_lat/u_lon, since the T-point and
+        # U-point groups share dim names) -- every variable just gets "lat
+        # lon" instead. Set via .encoding (not .attrs) so
+        # conventions.encode_dataset_coordinates does the CF-correct thing
+        # with it before the plain _FillValue encoding below is applied.
+        for var in regridded.data_vars:
+            regridded[var].encoding["coordinates"] = "lat lon"
+        # Demote u_lat/u_lon from coordinate to plain-variable status now
+        # that no variable's "coordinates" attribute references them --
+        # otherwise xarray writes them as an orphaned *global* "coordinates"
+        # attribute to avoid silently dropping them.
+        u_point_coords = [c for c in ("u_lat", "u_lon") if c in regridded.coords]
+        if u_point_coords:
+            regridded = regridded.reset_coords(u_point_coords)
+
+        # _FillValue isn't a real restart-file convention either -- suppress
+        # it on every variable, including the lat/lon/u_lat/u_lon coordinate
+        # arrays themselves (which xarray would otherwise tag with it too,
+        # even though they're fully populated with no missing values).
+        encoding = {var: {"_FillValue": None} for var in regridded.variables}
+        regridded.to_netcdf(output_dir / "cice_forcing.nc", encoding=encoding)

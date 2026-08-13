@@ -87,10 +87,11 @@ def test_reference_ice_edge_tapers_with_latitude(tmp_path):
         output_filename="ice.nc",
     )
     ds = xr.open_dataset(paths[0])
-    assert set(ds.sizes) >= {"time", "ncat", "nj", "ni"}
-    aicen = ds["aicen"].isel(time=0, ncat=0)
+    # A CICE restart/initial-condition file is a single static snapshot --
+    # no `time` dimension at all.
+    assert set(ds.sizes) >= {"ncat", "nj", "ni"}
+    assert "time" not in ds.dims
+    aicen = ds["aicen"].isel(ncat=0)
     # Equatorward edge (row 0) has no ice, poleward edge (last row) is fully iced.
     assert np.allclose(aicen.isel(nj=0).values, 0.0)
     assert np.allclose(aicen.isel(nj=-1).values, 1.0)
-    # tlon/tlat gain a time dim (see forcing/cice.py's isel(time=0)).
-    assert "time" in ds["tlon"].dims

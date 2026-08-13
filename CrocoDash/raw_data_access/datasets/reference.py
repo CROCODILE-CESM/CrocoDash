@@ -198,7 +198,6 @@ class REFERENCE_ICE(CICEForcingProduct):
         lon = np.arange(lon_min, lon_max + resolution_deg, resolution_deg)
         lat = np.arange(lat_min, lat_max + resolution_deg, resolution_deg)
         tlon, tlat = np.meshgrid(lon, lat)
-        time = pd.date_range(dates[0], dates[-1], freq="D")
 
         # 0 at the bbox's equatorward edge (min |lat|), 1 at its poleward edge
         # (max |lat|) -- hemisphere-agnostic via abs(), so this works for
@@ -233,13 +232,10 @@ class REFERENCE_ICE(CICEForcingProduct):
             keep = [v for v in variables if v in ds.data_vars]
             ds = ds[keep + ["tlon", "tlat", "ulon", "ulat"]]
 
-        # No real time evolution to source (same stand-in convention
-        # CICE_RESTART.get_cice_restart_subset uses) -- copy the single
-        # snapshot forward onto every day in the requested range. This also
-        # gives tlon/tlat/ulon/ulat a "time" dim, which forcing/cice.py's
-        # regrid step expects.
-        ds = ds.expand_dims(time=time)
-
+        # No real time evolution to source, and (same convention
+        # CICE_RESTART.get_cice_restart_subset uses) a CICE restart/initial-
+        # condition file is a single static snapshot with no `time`
+        # dimension of its own -- so this doesn't add one.
         output_folder = Path(output_folder)
         output_folder.mkdir(parents=True, exist_ok=True)
         output_path = output_folder / output_filename

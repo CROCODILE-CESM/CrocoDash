@@ -14,7 +14,6 @@ downstream regridding has real coordinates without re-opening the grid file.
 from pathlib import Path
 
 import numpy as np
-import pandas as pd
 import xarray as xr
 from mom6_forge.utils import longitude_slicer
 
@@ -169,17 +168,15 @@ class CICE_RESTART(CICEForcingProduct):
             )
 
         # Not a real forcing product -- there's no actual time evolution to
-        # source, so just copy the single snapshot forward onto every day in
-        # the requested range.
-        time = pd.date_range(dates[0], dates[-1], freq="D")
+        # source, and a CICE restart/initial-condition file is a single
+        # static snapshot with no `time` dimension of its own anyway, so the
+        # subset is written as-is regardless of the requested date range.
         CICE_RESTART.logger.warning(
-            f"cice_restart has no real time evolution -- a single restart "
-            f"snapshot ({restart_path}) is being copied forward unchanged "
-            f"across all {len(time)} day(s) of the requested range "
-            f"({dates[0]} to {dates[-1]}). This is a stand-in until a real "
-            f"dated CICE forcing product is available."
+            f"cice_restart has no real time evolution -- the single restart "
+            f"snapshot ({restart_path}) is being used unchanged for the "
+            f"requested range ({dates[0]} to {dates[-1]}). This is a "
+            f"stand-in until a real dated CICE forcing product is available."
         )
-        subset = subset.expand_dims(time=time)
 
         if preview:
             return subset

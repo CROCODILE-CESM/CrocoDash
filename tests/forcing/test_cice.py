@@ -79,8 +79,10 @@ def test_process_cice_forcing_produces_output(
 ):
     """process() runs the real restart GET + full-grid ESMF regrid
     end-to-end against the reference restart + grid files -- confirms the
-    output covers the domain plus its halo, with a real time axis and real
-    (regridded, not placeholder) values."""
+    output covers the domain plus its halo, with real (regridded, not
+    placeholder) values, no ``time`` dimension (a restart/initial-condition
+    file is a single static snapshot), a plain ``lat lon`` coordinates
+    attribute, and no ``_FillValue`` (land is zero, not NaN)."""
     _skip_if_cice_reference_files_missing()
     grid, topo, vgrid = gen_grid_topo_vgrid
     grid.write_supergrid(tmp_path / "grid.nc")
@@ -103,11 +105,13 @@ def test_process_cice_forcing_produces_output(
 
     assert ds.sizes["ny"] == ny + 2 * n_halo_cells
     assert ds.sizes["nx"] == nx + 2 * n_halo_cells
-    assert ds.sizes["time"] == 2
-    assert "aicen" in ds and ds["aicen"].dims == ("time", "ncat", "ny", "nx")
-    assert "uvel" in ds and ds["uvel"].dims == ("time", "ny", "nx")
-    # The restart snapshot is copied forward unchanged across both days.
-    assert np.allclose(ds["aicen"].isel(time=0), ds["aicen"].isel(time=1))
+    assert "time" not in ds.dims
+    assert "aicen" in ds and ds["aicen"].dims == ("ncat", "ny", "nx")
+    assert "uvel" in ds and ds["uvel"].dims == ("ny", "nx")
+    assert ds["iceumask"].encoding.get("coordinates") == "lat lon"
+    assert ds["aicen"].encoding.get("coordinates") == "lat lon"
+    assert "_FillValue" not in ds["iceumask"].encoding
+    assert not np.isnan(ds["iceumask"].values).any()
     # No ice expected at this (Panama-region) test grid's location -- both
     # the domain interior and its halo.
     assert float(ds["aicen"].sum()) == 0.0
@@ -134,7 +138,9 @@ def test_process_cice_forcing_with_reference_ice(tmp_path, gen_grid_topo_vgrid):
 
     assert ds.sizes["ny"] == ny + 2 * n_halo_cells
     assert ds.sizes["nx"] == nx + 2 * n_halo_cells
-    assert ds.sizes["time"] == 2
-    assert "aicen" in ds and ds["aicen"].dims == ("time", "ncat", "ny", "nx")
-    assert "uvel" in ds and ds["uvel"].dims == ("time", "ny", "nx")
+    assert "time" not in ds.dims
+    assert "aicen" in ds and ds["aicen"].dims == ("ncat", "ny", "nx")
+    assert "uvel" in ds and ds["uvel"].dims == ("ny", "nx")
+    assert ds["uvel"].encoding.get("coordinates") == "lat lon"
+    assert "_FillValue" not in ds["uvel"].encoding
     assert np.isfinite(ds["aicen"].values).all()

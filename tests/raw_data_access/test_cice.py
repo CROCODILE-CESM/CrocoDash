@@ -68,27 +68,18 @@ def test_get_cice_restart_subset(skip_if_not_glade, tmp_path):
     )
 
     ds = xr.open_dataset(paths[0])
-    assert set(ds.sizes) == {"time", "nj", "ni", "ncat"}
+    # A restart is a single static snapshot -- no `time` dimension at all,
+    # regardless of the requested date range.
+    assert set(ds.sizes) == {"nj", "ni", "ncat"}
     assert ds.sizes["nj"] > 0 and ds.sizes["ni"] > 0
-    # One snapshot copied forward onto every day in the range.
-    assert ds.sizes["time"] == 4
-    assert list(ds["time"].values.astype("datetime64[D]").astype(str)) == [
-        "2000-01-01",
-        "2000-01-02",
-        "2000-01-03",
-        "2000-01-04",
-    ]
-    aicen = ds["aicen"].values
-    assert np.all(aicen[0] == aicen)
     # No ice expected in the Gulf of Mexico.
     assert float(ds["aicen"].sum()) == 0.0
 
     # tlon/tlat/ulon/ulat are attached from the grid file, in degrees, over
     # the same window -- used by extract_forcings/cice.py's regrid step.
-    # expand_dims(time=...) broadcasts them too, like every other data var.
     for coord_name in ("tlon", "tlat", "ulon", "ulat"):
         assert coord_name in ds.data_vars
-        assert ds[coord_name].dims == ("time", "nj", "ni")
+        assert ds[coord_name].dims == ("nj", "ni")
     # Window is row-selected (whole nj rows, not per-point), so it covers
     # the requested box but can extend further at high-latitude grid
     # curvature -- just check it covers the request, not a tight bound.
