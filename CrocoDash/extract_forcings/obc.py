@@ -147,7 +147,7 @@ def _validate_coverage(
     return [f for _, f in intervals]
 
 
- def _get_one_chunk(
+def _get_one_chunk(
     chunk_start: datetime,
     chunk_end: datetime,
     boundary: str,
