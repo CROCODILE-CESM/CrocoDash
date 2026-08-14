@@ -19,6 +19,7 @@ so a failed run can be safely re-started.
 import os
 from datetime import datetime, timedelta
 from pathlib import Path
+from concurrent.futures import ProcessPoolExecutor, as_completed
 
 import pandas as pd
 import regional_mom6 as rm6
@@ -146,6 +147,36 @@ def _validate_coverage(
     return [f for _, f in intervals]
 
 
+ def _get_one_chunk(
+    chunk_start: datetime,
+    chunk_end: datetime,
+    boundary: str,
+    product_name: str,
+    function_name: str,
+    latlon: dict,
+    output_dir: str | Path,
+    variables: list,
+    extra_args: dict,
+):
+    """Download one chunk so that it can be called by multiple processes at once."""
+    
+    start_str = chunk_start.strftime("%Y-%m-%d")
+    end_str = chunk_end.strftime("%Y-%m-%d")
+    output_filename = f"{boundary}_unprocessed.{start_str}_{end_str}.nc"
+    data_access_fn = utils.get_data_access_function(product_name, function_name)
+
+    return utils.fetch_raw_chunk(
+        data_access_fn=data_access_fn,
+        dates=[start_str, end_str],
+        latlon=latlon,
+        name=boundary,
+        output_folder=output_dir,
+        output_filename=output_filename,
+        variables=variables,
+        extra_args=extra_args,
+    )
+
+
 # ---------------------------------------------------------------------------
 # Phase functions — one call per boundary
 # ---------------------------------------------------------------------------
@@ -169,25 +200,31 @@ def _get_boundary(
     data_access_fn = utils.get_data_access_function(product_name, function_name)
 
     # Get the bounding box for the specified boundary from the hgrid
-    hgrid = xr.open_dataset(hgrid_path)
-    latlon = Grid.get_bounding_boxes(hgrid)[boundary]
+    with xr.open_dataset(hgrid_path) as hgrid:
+        latlon = Grid.get_bounding_boxes(hgrid)[boundary]
 
-    for chunk_start, chunk_end in _make_date_pairs(start_date, end_date, get_step_days):
-        start_str = chunk_start.strftime("%Y-%m-%d")
-        end_str = chunk_end.strftime("%Y-%m-%d")
-        output_filename = f"{boundary}_unprocessed.{start_str}_{end_str}.nc"
+    pairs = list(_make_date_pairs(start_date, end_date, get_step_days))
 
-        utils.fetch_raw_chunk(
-            data_access_fn=data_access_fn,
-            dates=[start_str, end_str],
-            latlon=latlon,
-            name=boundary,
-            output_folder=output_dir,
-            output_filename=output_filename,
-            variables=variables,
-            extra_args=extra_args,
-        )
-
+    # Spread work across processes. If no chunking is prescribed it falls back
+    # to one processor.
+    with ProcessPoolExecutor(max_workers=min(12, len(pairs))) as ex:
+        futures = [
+            ex.submit(
+                _get_one_chunk,
+                chunk_start,
+                chunk_end,
+                boundary,
+                product_name,
+                function_name,
+                latlon,
+                output_dir,
+                variables,
+                extra_args,
+            )
+            for chunk_start, chunk_end in pairs
+        ]
+        for f in as_completed(futures):
+            f.result()
 
 def _regrid_boundary(
     boundary: str,

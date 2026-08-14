@@ -89,14 +89,16 @@ class GLORYS(ForcingProduct):
         ds_in_files = sorted(ds_in_files)
 
         ds = xr.open_mfdataset(
-            ds_in_files, decode_times=False, engine="h5netcdf", parallel=True
+            ds_in_files, decode_times=False, engine="h5netcdf", parallel=False,
         )[variables]
-
+        
         ds = ds.sel(latitude=slice(lat_min - buf, lat_max + buf))
         dataset = longitude_slicer(
             ds, [lon_min - buf, lon_max + buf], longitude_coords="longitude"
         )
+
         dataset.to_netcdf(path)
+        GLORYS.logger.info(f"Download of {path} complete.")
         return path
 
     @accessmethod(
