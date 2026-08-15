@@ -21,6 +21,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
+import math
 import pandas as pd
 import regional_mom6 as rm6
 import xarray as xr
@@ -177,6 +178,143 @@ def _get_one_chunk(
     )
 
 
+def _regrid_per_process(
+    proc_id,
+    chunk_pairs,
+    boundary,
+    raw_files,
+    seg_id,
+    hgrid_path,
+    output_folder,
+    dataset_varnames,
+    fill_method,
+    kwargs,
+):
+
+    output_folder = Path(output_folder + f"_{seg_id:03d}_{proc_id:02d}")
+    output_folder.mkdir(exist_ok=True)
+    (output_folder / "weights").mkdir(exist_ok=True)
+
+    regridders = None
+    proc_regridded_files = []
+
+    with xr.open_dataset(hgrid_path) as hgrid:
+        for pair in chunk_pairs:
+            chunk_dated_output, regridders = _regrid_one_chunk(
+                pair[0],
+                pair[1],
+                boundary,
+                raw_files,
+                seg_id,
+                hgrid,
+                output_folder,
+                dataset_varnames,
+                fill_method,
+                regridders,
+                kwargs,
+            )
+            proc_regridded_files.append(chunk_dated_output)
+
+    return proc_regridded_files
+
+def _regrid_one_chunk(
+    chunk_start_date,
+    chunk_end_date,
+    boundary,
+    raw_files,
+    seg_id,
+    hgrid,
+    output_folder,
+    dataset_varnames,
+    fill_method,
+    regridders,
+    kwargs,
+):
+    """Regrid one chunk so that it can be called by multiple processes at once.
+
+    Each regrid_step slice is written to a temp file (required by the rm6
+    interface), then removed after regridding.
+    """
+
+    # Keep only files related to this chunk
+    parse_raw_dates = lambda f, boundary=boundary: _parse_raw_filename_dates(
+        f, boundary
+    )
+    chunk_raw_files = _validate_coverage(
+        _files_within_range(
+            sorted(raw_files),
+            parse_raw_dates,
+            chunk_start_date,
+            chunk_end_date,
+        ),
+        parse_raw_dates,
+        boundary,
+        chunk_start_date,
+        chunk_end_date,
+    )
+
+    start_str = chunk_start_date.strftime("%Y-%m-%d")
+    end_str = chunk_end_date.strftime("%Y-%m-%d")
+
+    dated_output = (
+        output_folder / f"forcing_obc_segment_{seg_id:03d}_{start_str}_{end_str}.nc"
+    )
+
+    if dated_output.exists():
+        if not utils.is_valid_netcdf(dated_output):
+            raise RuntimeError(
+                f"Regridded file {dated_output} exists but is not valid NetCDF. "
+                "Delete it and re-run."
+            )
+        logger.info(f"Regridded file {dated_output.name} already exists. Skipping.")
+        return dated_output, regridders
+
+    # Opens chunk raw files lazily via open_mfdataset
+    with xr.open_mfdataset(
+        [str(f) for f in sorted(chunk_raw_files)],
+        combine="nested",
+        concat_dim="time",
+        coords="minimal",
+        parallel=False,
+    ) as ds_full:
+
+        tmp_file = output_folder / f"_tmp_{boundary}_{start_str}_{end_str}.nc"
+        # Daily-mean products like GLORYS timestamp each day's value at noon, so
+        # slice by date strings (pandas partial-string indexing treats the end
+        # string as covering that whole calendar day) to include chunk_end's own
+        # data point instead of a midnight-anchored datetime slice excluding it.
+        ds_full.sel(time=slice(start_str, end_str)).to_netcdf(tmp_file)
+
+    # Regridder weights are computed once per processor on the first chunk and reused.
+    try:
+        seg = rm6.segment(
+            hgrid=hgrid,
+            bathymetry_path=None,
+            outfolder=output_folder,
+            segment_name=f"segment_{seg_id:03d}",
+            orientation=boundary,
+            startdate=chunk_start_date,
+            repeat_year_forcing=False,
+        )
+        seg.regrid_velocity_tracers(
+            infile=tmp_file,
+            varnames=dataset_varnames,
+            arakawa_grid=None,
+            rotational_method=rm6.rotation.RotationMethod.EXPAND_GRID,
+            regridding_method="bilinear",
+            fill_method=fill_method,
+            regridders=regridders,
+            calendar=dataset_varnames["mom6_calendar"],
+            time_units=dataset_varnames["time_units"],
+            **kwargs,
+        )
+        temp_path = output_folder / f"forcing_obc_segment_{seg_id:03d}.nc"
+        os.rename(temp_path, dated_output)
+    finally:
+        tmp_file.unlink(missing_ok=True)
+
+    return dated_output, seg.regridders
+
 # ---------------------------------------------------------------------------
 # Phase functions — one call per boundary
 # ---------------------------------------------------------------------------
@@ -238,92 +376,44 @@ def _regrid_boundary(
     dataset_varnames: dict,
     fill_method,
 ) -> list:
-    """Regrid all raw files for one boundary, sliced by regrid_step_days.
-
-    Opens raw files lazily via open_mfdataset, independent of how GET chunked
-    them. Regridder weights are computed once on the first chunk and reused.
-    Each regrid_step slice is written to a temp file (required by the rm6
-    interface), then removed after regridding.
-    """
-    output_folder = Path(output_folder)
-    (output_folder / "weights").mkdir(exist_ok=True)
-
-    ds_full = xr.open_mfdataset(
-        [str(f) for f in sorted(raw_files)],
-        combine="nested",
-        concat_dim="time",
-        coords="minimal",
-        parallel=False,
-    )
-
-    regridders = None
-    regridded_files = []
-
+    """Regrid all raw files for one boundary, sliced by regrid_step_days."""
     kwargs = {}
     if "calendar" in dataset_varnames:
         kwargs["calendar"] = dataset_varnames["calendar"]
         kwargs["time_units"] = dataset_varnames["time_units"]
-    hgrid = xr.open_dataset(hgrid_path)
 
-    for chunk_start, chunk_end in _make_date_pairs(
-        start_date, end_date, regrid_step_days
-    ):
-        start_str = chunk_start.strftime("%Y-%m-%d")
-        end_str = chunk_end.strftime("%Y-%m-%d")
-        dated_output = (
-            output_folder / f"forcing_obc_segment_{seg_id:03d}_{start_str}_{end_str}.nc"
-        )
+    pairs = list(_make_date_pairs(start_date, end_date, regrid_step_days))
+    # Spread work across processes. If no chunking is prescribed it falls back
+    # to one processor.
 
-        if dated_output.exists():
-            if not utils.is_valid_netcdf(dated_output):
-                raise RuntimeError(
-                    f"Regridded file {dated_output} exists but is not valid NetCDF. "
-                    "Delete it and re-run."
-                )
-            logger.info(f"Regridded file {dated_output.name} already exists. Skipping.")
-            regridded_files.append(dated_output)
-            continue
-
-        tmp_file = output_folder / f"_tmp_{boundary}_{start_str}_{end_str}.nc"
-        # Daily-mean products like GLORYS timestamp each day's value at noon, so
-        # slice by date strings (pandas partial-string indexing treats the end
-        # string as covering that whole calendar day) to include chunk_end's own
-        # data point instead of a midnight-anchored datetime slice excluding it.
-        ds_full.sel(time=slice(start_str, end_str)).to_netcdf(tmp_file)
-
-        try:
-            seg = rm6.segment(
-                hgrid=hgrid,
-                bathymetry_path=None,
-                outfolder=output_folder,
-                segment_name=f"segment_{seg_id:03d}",
-                orientation=boundary,
-                startdate=start_date,
-                repeat_year_forcing=False,
+    num_workers = min(12, len(pairs))
+    pairs_per_workers = math.ceil(len(pairs)/num_workers)
+    regridded_files = []
+    with ProcessPoolExecutor(max_workers=num_workers) as ex:
+        futures = [
+            ex.submit(
+                _regrid_per_process,
+                proc_id,
+                chunk_pairs,
+                boundary,
+                raw_files,
+                seg_id,
+                hgrid_path,
+                output_folder,
+                dataset_varnames,
+                fill_method,
+                kwargs
             )
-            seg.regrid_velocity_tracers(
-                infile=tmp_file,
-                varnames=dataset_varnames,
-                arakawa_grid=None,
-                rotational_method=rm6.rotation.RotationMethod.EXPAND_GRID,
-                regridding_method="bilinear",
-                fill_method=fill_method,
-                regridders=regridders,
-                calendar=dataset_varnames["mom6_calendar"],
-                time_units=dataset_varnames["time_units"],
-                **kwargs,
+            for proc_id, chunk_pairs in enumerate(
+                    [pairs[j : j + pairs_per_workers] for j in range(0, len(pairs), pairs_per_workers)]
             )
-            regridders = seg.regridders
-            temp_path = output_folder / f"forcing_obc_segment_{seg_id:03d}.nc"
-            os.rename(temp_path, dated_output)
-        finally:
-            tmp_file.unlink(missing_ok=True)
+        ]
+        for f in as_completed(futures):
+            regridded_files.extend(
+                f.result()
+            )
 
-        logger.info(f"Saved regridded file as {dated_output.name}")
-        regridded_files.append(dated_output)
-
-    ds_full.close()
-    return regridded_files
+    return sorted(regridded_files, key=os.path.basename)
 
 
 def _merge_boundary(boundary_label: str, regridded_files: list, output_folder) -> Path:
