@@ -322,6 +322,15 @@ def _regrid_one_chunk(
     logger.info("PROC [%d] - REGRID [%s]: Regridding done for %s", proc_id, boundary, dated_output)
     return dated_output, seg.regridders
 
+
+def available_cpus():
+    """Get number of available processes to spun"""
+    try:
+        return len(os.sched_getaffinity(0))
+    except AttributeError:
+        # Fallback for systems without sched_getaffinity
+        return 12
+
 # ---------------------------------------------------------------------------
 # Phase functions — one call per boundary
 # ---------------------------------------------------------------------------
@@ -352,7 +361,8 @@ def _get_boundary(
 
     # Spread work across processes. If no chunking is prescribed it falls back
     # to one processor.
-    with ProcessPoolExecutor(max_workers=min(12, len(pairs))) as ex:
+    num_workers = min(available_cpus(), len(pairs))
+    with ProcessPoolExecutor(max_workers=min(12, num_workers)) as ex:
         futures = [
             ex.submit(
                 _get_one_chunk,
@@ -393,7 +403,7 @@ def _regrid_boundary(
     # Spread work across processes. If no chunking is prescribed it falls back
     # to one processor.
 
-    num_workers = min(12, len(pairs))
+    num_workers = min(available_cpus(), len(pairs))
     pairs_per_workers = math.ceil(len(pairs)/num_workers)
     regridded_files = []
     logger.info("REGRID [%s]: ready for multi processes", boundary)
