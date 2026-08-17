@@ -389,9 +389,11 @@ class UserNLConfigParam(OutputParam):
         user_nl_name: str = "mom",
         comment: Optional[str] = None,
         is_file: bool = False,
+        do_exec: bool = True,
     ):
         super().__init__(name, comment, is_file=is_file)
         self.user_nl_name = user_nl_name
+        self.do_exec = do_exec
 
     def apply(self):
         if self.value is None:
@@ -401,7 +403,7 @@ class UserNLConfigParam(OutputParam):
         append_user_nl(
             self.user_nl_name,
             param,
-            do_exec=True,
+            do_exec=self.do_exec,
             comment=self.comment,
         )
         self.executed = True
@@ -438,9 +440,11 @@ class XMLConfigParam(OutputParam):
         is_non_local: bool = False,
         comment: Optional[str] = None,
         is_file: bool = False,
+        do_exec: bool = True,
     ):
         super().__init__(name, comment, is_file=is_file)
         self.is_non_local = is_non_local
+        self.do_exec = do_exec
 
     def apply(self):
         if self.value is None:
@@ -449,6 +453,7 @@ class XMLConfigParam(OutputParam):
         xmlchange(
             self.name,
             str(self.value),
+            do_exec=self.do_exec,
             is_non_local=self.is_non_local,
         )
         self.executed = True
@@ -605,12 +610,31 @@ class BaseConfigurator(ABC):
         case = getattr(self.registry, "case", None)
         return bool(getattr(case, "is_non_local", False))
 
+    @property
+    def do_exec(self) -> bool:
+        """Whether case-side effects should actually be executed.
+
+        False when the case was configured but never created (an un-ported machine,
+        i.e. MACHINE == CESM_NOT_PORTED), where there is no case directory to
+        xmlchange or append user_nl into. Sourced from the live Case via the
+        registry, the same way `is_non_local` is, so no configurator has to declare
+        a ctor arg just to carry it down to `apply()`.
+
+        Defaults to True -- the opposite of `is_non_local` -- so that a
+        configurator with no live Case (direct construction in tests, or
+        deserialize()) keeps behaving exactly as it did before this existed.
+        """
+        case = getattr(self.registry, "case", None)
+        return bool(getattr(case, "do_exec", True))
+
     @abstractmethod
     def configure(self):
         """Bind input values to parameters and files."""
         for p in self.output_params:
             if isinstance(p, XMLConfigParam):
                 p.is_non_local = self.is_non_local
+            if isinstance(p, (XMLConfigParam, UserNLConfigParam)):
+                p.do_exec = self.do_exec
             p.apply()
         pass
 

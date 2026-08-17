@@ -26,6 +26,12 @@ from CrocoDash.forcing.driver import run_workflow
 
 from CrocoDash import case_state
 
+# visualCaseGen's placeholder machine name, set when CESM has no machine definition for
+# the current host (see cime_interface._handle_machine_not_ported). Case creation is
+# disabled for it, so CrocoDash configures without executing. Keep in sync with
+# visualCaseGen.
+NOT_PORTED_MACHINE = "CESM_NOT_PORTED"
+
 
 class Case:
     """This class represents a regional MOM6 case within the CESM framework. It is similar to the
@@ -143,6 +149,14 @@ class Case:
         self.rof_grid_name = rof_grid_name
         self.ninst = ninst
         self.machine = machine or self.cime.machine
+        # CESM_NOT_PORTED is visualCaseGen's placeholder machine, used when CESM has no
+        # machine definition for the current host (e.g. a laptop with a CESM checkout but
+        # no port). CIME cannot create or set up a case there, so everything that would
+        # shell out to create_newcase/case.setup/xmlchange is configured but not executed.
+        # Forcing extraction is unaffected -- it never touches CIME -- so the expensive
+        # download+regrid work still runs, and the case itself is recreated later on a
+        # ported machine from crocodash_case.yaml.
+        self.do_exec = self.machine != NOT_PORTED_MACHINE
         self.project = project
         self.override = override
         self.ntasks_ocn = ntasks_ocn
@@ -174,10 +188,15 @@ class Case:
         # Having set the configuration variables and created the grid input files, we can now create the case instance.
         self._create_newcase()
 
-        # After creating the case, instantiate the CIME case object for later use.
-        self._cime_case = self.cime.get_case(
-            self.caseroot, non_local=self.cc._is_non_local()
-        )
+        # After creating the case, instantiate the CIME case object for later use. This
+        # parses the case's env_*.xml files, which only exist once case.setup has run, so
+        # there is nothing to attach to when the case was configured but not created.
+        if self.do_exec:
+            self._cime_case = self.cime.get_case(
+                self.caseroot, non_local=self.cc._is_non_local()
+            )
+        else:
+            self._cime_case = None
 
         self.is_non_local = self.cc._is_non_local()
 
@@ -382,11 +401,27 @@ class Case:
             self.cime, allow_xml_override=self.override, add_grids_to_ccs_config=False
         )
 
+        if not self.do_exec:
+            # CaseCreator refuses to create a case for the placeholder machine, so there
+            # is nothing to run here. Everything downstream (state file, user_nl writes,
+            # forcing config) still expects the directory to exist, and create_newcase is
+            # what would normally have made it.
+            self.caseroot.mkdir(parents=True, exist_ok=self.override)
+            print(
+                f"Machine is {NOT_PORTED_MACHINE}: configuring "
+                f"{self.caseroot} without creating a CESM case."
+            )
+            return
+
         try:
             self.cc.create_case(do_exec=True)
-        except Exception as e:
-            print(f"{ERROR}{str(e)}{RESET}")
+        except Exception:
+            # Revert the ccs_config edits, then re-raise: a half-created case looks
+            # identical to a working one until something much later fails on a file
+            # case.setup never wrote (e.g. a missing user_nl_cpl surfacing inside
+            # CaseBundle), so failing here is far cheaper to diagnose.
             self.cc.revert_launch(do_exec=True)
+            raise
 
     def configure_forcings(
         self,
@@ -533,16 +568,19 @@ class Case:
         xmlchange(
             "RUN_STARTDATE",
             str(self.date_range[0])[:10],
+            do_exec=self.do_exec,
             is_non_local=self.cc._is_non_local(),
         )
         xmlchange(
             "STOP_OPTION",
             "ndays",
+            do_exec=self.do_exec,
             is_non_local=self.cc._is_non_local(),
         )
         xmlchange(
             "STOP_N",
             (self.date_range[1] - self.date_range[0]).days,
+            do_exec=self.do_exec,
             is_non_local=self.cc._is_non_local(),
         )
         self._configure_forcings_called = True
@@ -886,19 +924,31 @@ class Case:
         xmlchange(
             "MOM6_MEMORY_MODE",
             "dynamic_symmetric",
+            do_exec=self.do_exec,
             is_non_local=self.cc._is_non_local(),
         )
 
         # xmlchange("ROOTPE_OCN", 128, is_non_local=self.cc._is_non_local()) -> needs to be before the the setup
         if ntasks_ocn is not None:
-            xmlchange("NTASKS_OCN", ntasks_ocn, is_non_local=self.cc._is_non_local())
+            xmlchange(
+                "NTASKS_OCN",
+                ntasks_ocn,
+                do_exec=self.do_exec,
+                is_non_local=self.cc._is_non_local(),
+            )
         # This will trigger for both the run and the archiver.
         if job_queue is not None:
-            xmlchange("JOB_QUEUE", job_queue, is_non_local=self.cc._is_non_local())
+            xmlchange(
+                "JOB_QUEUE",
+                job_queue,
+                do_exec=self.do_exec,
+                is_non_local=self.cc._is_non_local(),
+            )
         if job_wallclock_time is not None:
             xmlchange(
                 "JOB_WALLCLOCK_TIME",
                 job_wallclock_time,
+                do_exec=self.do_exec,
                 is_non_local=self.cc._is_non_local(),
             )
 

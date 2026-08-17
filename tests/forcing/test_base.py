@@ -93,6 +93,30 @@ class DummyXML(BaseConfigurator):
         super().configure()
 
 
+class DummyUserNL(BaseConfigurator):
+    """UserNLConfigParam counterpart to DummyXML, for the do_exec tests below.
+    Not @register'd, for the same reason DummyXML isn't."""
+
+    name = "dummyusernl"
+
+    input_params = [
+        InputValueParam(
+            "dummy",
+            comment="Boop Boop",
+        )
+    ]
+    output_params = [
+        UserNLConfigParam("DUMMY_NL_VAR", comment="Boop Boop"),
+    ]
+
+    def __init__(self, dummy):
+        super().__init__(dummy=dummy)
+
+    def configure(self):
+        self.set_output_param("DUMMY_NL_VAR", "value")
+        super().configure()
+
+
 @pytest.fixture
 def fcr_add_dummy1():
     return ForcingConfigRegistry("", {"dummy": "dummy"}, None)
@@ -168,7 +192,9 @@ def test_is_non_local_defaults_false_without_case(mock_xmlchange):
     without DummyXML declaring a case_is_non_local input param."""
     obj = DummyXML("x")
     obj.configure()
-    mock_xmlchange.assert_called_once_with("DUMMY_XML_VAR", "value", is_non_local=False)
+    mock_xmlchange.assert_called_once_with(
+        "DUMMY_XML_VAR", "value", do_exec=True, is_non_local=False
+    )
 
 
 @patch("CrocoDash.forcing.base.xmlchange")
@@ -179,7 +205,49 @@ def test_is_non_local_propagates_from_registry_case(mock_xmlchange):
     obj = DummyXML("x")
     obj.registry = SimpleNamespace(case=SimpleNamespace(is_non_local=True))
     obj.configure()
-    mock_xmlchange.assert_called_once_with("DUMMY_XML_VAR", "value", is_non_local=True)
+    mock_xmlchange.assert_called_once_with(
+        "DUMMY_XML_VAR", "value", do_exec=True, is_non_local=True
+    )
+
+
+@patch("CrocoDash.forcing.base.xmlchange")
+def test_do_exec_defaults_true_without_case(mock_xmlchange):
+    """No live Case (direct construction, deserialize()) must keep executing.
+
+    do_exec's default is the opposite of is_non_local's: True, so that every
+    existing caller behaves exactly as it did before do_exec existed.
+    """
+    obj = DummyXML("x")
+    obj.configure()
+    assert mock_xmlchange.call_args.kwargs["do_exec"] is True
+
+
+@patch("CrocoDash.forcing.base.xmlchange")
+def test_do_exec_propagates_from_registry_case(mock_xmlchange):
+    """A Case configured but never created (MACHINE == CESM_NOT_PORTED) must not
+    shell out to xmlchange -- there is no case directory to run it in."""
+    obj = DummyXML("x")
+    obj.registry = SimpleNamespace(case=SimpleNamespace(do_exec=False))
+    obj.configure()
+    assert mock_xmlchange.call_args.kwargs["do_exec"] is False
+
+
+@patch("CrocoDash.forcing.base.append_user_nl")
+def test_do_exec_propagates_to_user_nl_params(mock_append_user_nl):
+    """do_exec must also reach UserNLConfigParam, which (unlike XMLConfigParam)
+    previously hardcoded do_exec=True in apply()."""
+    obj = DummyUserNL("x")
+    obj.registry = SimpleNamespace(case=SimpleNamespace(do_exec=False))
+    obj.configure()
+    assert mock_append_user_nl.call_args.kwargs["do_exec"] is False
+
+
+@patch("CrocoDash.forcing.base.append_user_nl")
+def test_user_nl_do_exec_defaults_true_without_case(mock_append_user_nl):
+    """Same default-True guarantee as the XML path, for user_nl writes."""
+    obj = DummyUserNL("x")
+    obj.configure()
+    assert mock_append_user_nl.call_args.kwargs["do_exec"] is True
 
 
 def test_depends_on_outputs_targets_exist():

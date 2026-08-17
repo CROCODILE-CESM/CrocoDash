@@ -557,11 +557,16 @@ class ConditionsConfigurator(BaseConfigurator):
                 (param.name, param.value)
             )
 
-        append_user_nl("mom", ic_params, do_exec=True, comment="Initial conditions")
+        # This configurator batches its own writes rather than going through
+        # BaseConfigurator.configure()'s per-param loop, so it has to honor do_exec
+        # itself (see BaseConfigurator.do_exec).
+        append_user_nl(
+            "mom", ic_params, do_exec=self.do_exec, comment="Initial conditions"
+        )
         append_user_nl(
             "mom",
             obc_params,
-            do_exec=True,
+            do_exec=self.do_exec,
             comment="Open boundary conditions",
             log_title=False,
         )
