@@ -191,6 +191,7 @@ def _regrid_per_process(
     kwargs,
 ):
 
+    logger.info("PROC [%d] - REGRID [%s]: Spun up new proc", proc_id, boundary)
     output_folder = Path(output_folder + f"_{seg_id:03d}_{proc_id:02d}")
     output_folder.mkdir(exist_ok=True)
     (output_folder / "weights").mkdir(exist_ok=True)
@@ -201,6 +202,7 @@ def _regrid_per_process(
     with xr.open_dataset(hgrid_path) as hgrid:
         for pair in chunk_pairs:
             chunk_dated_output, regridders = _regrid_one_chunk(
+                proc_id,
                 pair[0],
                 pair[1],
                 boundary,
@@ -218,6 +220,7 @@ def _regrid_per_process(
     return proc_regridded_files
 
 def _regrid_one_chunk(
+    proc_id,
     chunk_start_date,
     chunk_end_date,
     boundary,
@@ -236,6 +239,10 @@ def _regrid_one_chunk(
     interface), then removed after regridding.
     """
 
+    start_str = chunk_start_date.strftime("%Y-%m-%d")
+    end_str = chunk_end_date.strftime("%Y-%m-%d")
+    logger.info("PROC [%d] - REGRID [%s]: Chunk start - end date: [%s] - [%s]", proc_id, boundary, start_str, end_str)
+    logger.info("PROC [%d] - REGRID [%s]: Validating coverage", proc_id, boundary)
     # Keep only files related to this chunk
     parse_raw_dates = lambda f, boundary=boundary: _parse_raw_filename_dates(
         f, boundary
@@ -253,13 +260,11 @@ def _regrid_one_chunk(
         chunk_end_date,
     )
 
-    start_str = chunk_start_date.strftime("%Y-%m-%d")
-    end_str = chunk_end_date.strftime("%Y-%m-%d")
-
     dated_output = (
         output_folder / f"forcing_obc_segment_{seg_id:03d}_{start_str}_{end_str}.nc"
     )
 
+    logger.info("PROC [%d] - REGRID [%s]: Checking if file exists", proc_id, boundary)
     if dated_output.exists():
         if not utils.is_valid_netcdf(dated_output):
             raise RuntimeError(
@@ -287,6 +292,7 @@ def _regrid_one_chunk(
 
     # Regridder weights are computed once per processor on the first chunk and reused.
     try:
+        logger.info("PROC [%d] - REGRID [%s]: Performing regrid", proc_id, boundary)
         seg = rm6.segment(
             hgrid=hgrid,
             bathymetry_path=None,
@@ -313,6 +319,7 @@ def _regrid_one_chunk(
     finally:
         tmp_file.unlink(missing_ok=True)
 
+    logger.info("PROC [%d] - REGRID [%s]: Regridding done for %s", proc_id, boundary, dated_output)
     return dated_output, seg.regridders
 
 # ---------------------------------------------------------------------------
@@ -389,6 +396,7 @@ def _regrid_boundary(
     num_workers = min(12, len(pairs))
     pairs_per_workers = math.ceil(len(pairs)/num_workers)
     regridded_files = []
+    logger.info("REGRID [%s]: ready for multi processes", boundary)
     with ProcessPoolExecutor(max_workers=num_workers) as ex:
         futures = [
             ex.submit(
