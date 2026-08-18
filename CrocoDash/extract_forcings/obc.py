@@ -160,7 +160,7 @@ def _get_one_chunk(
     extra_args: dict,
 ):
     """Download one chunk so that it can be called by multiple processes at once."""
-    
+
     start_str = chunk_start.strftime("%Y-%m-%d")
     end_str = chunk_end.strftime("%Y-%m-%d")
     output_filename = f"{boundary}_unprocessed.{start_str}_{end_str}.nc"
@@ -219,6 +219,7 @@ def _regrid_per_process(
 
     return proc_regridded_files
 
+
 def _regrid_one_chunk(
     proc_id,
     chunk_start_date,
@@ -241,7 +242,13 @@ def _regrid_one_chunk(
 
     start_str = chunk_start_date.strftime("%Y-%m-%d")
     end_str = chunk_end_date.strftime("%Y-%m-%d")
-    logger.info("PROC [%d] - REGRID [%s]: Chunk start - end date: [%s] - [%s]", proc_id, boundary, start_str, end_str)
+    logger.info(
+        "PROC [%d] - REGRID [%s]: Chunk start - end date: [%s] - [%s]",
+        proc_id,
+        boundary,
+        start_str,
+        end_str,
+    )
     logger.info("PROC [%d] - REGRID [%s]: Validating coverage", proc_id, boundary)
     # Keep only files related to this chunk
     parse_raw_dates = lambda f, boundary=boundary: _parse_raw_filename_dates(
@@ -319,7 +326,12 @@ def _regrid_one_chunk(
     finally:
         tmp_file.unlink(missing_ok=True)
 
-    logger.info("PROC [%d] - REGRID [%s]: Regridding done for %s", proc_id, boundary, dated_output)
+    logger.info(
+        "PROC [%d] - REGRID [%s]: Regridding done for %s",
+        proc_id,
+        boundary,
+        dated_output,
+    )
     return dated_output, seg.regridders
 
 
@@ -330,6 +342,7 @@ def available_cpus():
     except AttributeError:
         # Fallback for systems without sched_getaffinity
         return 12
+
 
 # ---------------------------------------------------------------------------
 # Phase functions — one call per boundary
@@ -381,6 +394,7 @@ def _get_boundary(
         for f in as_completed(futures):
             f.result()
 
+
 def _regrid_boundary(
     boundary: str,
     seg_id: int,
@@ -404,7 +418,7 @@ def _regrid_boundary(
     # to one processor.
 
     num_workers = min(available_cpus(), len(pairs))
-    pairs_per_workers = math.ceil(len(pairs)/num_workers)
+    pairs_per_workers = math.ceil(len(pairs) / num_workers)
     regridded_files = []
     logger.info("REGRID [%s]: ready for multi processes", boundary)
     with ProcessPoolExecutor(max_workers=num_workers) as ex:
@@ -420,16 +434,17 @@ def _regrid_boundary(
                 output_folder,
                 dataset_varnames,
                 fill_method,
-                kwargs
+                kwargs,
             )
             for proc_id, chunk_pairs in enumerate(
-                    [pairs[j : j + pairs_per_workers] for j in range(0, len(pairs), pairs_per_workers)]
+                [
+                    pairs[j : j + pairs_per_workers]
+                    for j in range(0, len(pairs), pairs_per_workers)
+                ]
             )
         ]
         for f in as_completed(futures):
-            regridded_files.extend(
-                f.result()
-            )
+            regridded_files.extend(f.result())
 
     return sorted(regridded_files, key=os.path.basename)
 
