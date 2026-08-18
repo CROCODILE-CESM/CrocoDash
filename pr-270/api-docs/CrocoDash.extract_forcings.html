@@ -365,6 +365,7 @@ document.write(`
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.extract_forcings.obc">CrocoDash.extract_forcings.obc module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.obc.available_cpus"><code class="docutils literal notranslate"><span class="pre">available_cpus()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.obc.process_obc_conditions"><code class="docutils literal notranslate"><span class="pre">process_obc_conditions()</span></code></a></li>
 </ul>
 </li>
@@ -454,7 +455,7 @@ from the case state file via <code class="docutils literal notranslate"><span cl
 <p>Typical Python usage:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">CrocoDash.extract_forcings.driver</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_workflow</span>
 
-<span class="n">run_workflow</span><span class="p">(</span><span class="n">config_path</span><span class="o">=</span><span class="s2">&quot;~/croc_input/mycase/extract_forcings/config.json&quot;</span><span class="p">,</span> <span class="n">bc</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ic</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">run_workflow</span><span class="p">(</span><span class="n">config_path</span><span class="o">=</span><span class="s2">"~/croc_input/mycase/extract_forcings/config.json"</span><span class="p">,</span> <span class="n">bc</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ic</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
 <dl class="py function">
@@ -543,6 +544,12 @@ fully independent.</p>
 </ol>
 <p>Each phase is idempotent: existing output files are detected and skipped,
 so a failed run can be safely re-started.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.extract_forcings.obc.available_cpus">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.obc.</span></span><span class="sig-name descname"><span class="pre">available_cpus</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.extract_forcings.obc.available_cpus" title="Link to this definition">#</a></dt>
+<dd><p>Get number of available processes to spun</p>
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="CrocoDash.extract_forcings.obc.process_obc_conditions">
 <span class="sig-prename descclassname"><span class="pre">CrocoDash.extract_forcings.obc.</span></span><span class="sig-name descname"><span class="pre">process_obc_conditions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start_date</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_date</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundary_number_conversion</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">product_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">product_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hgrid_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw_dataset_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regridded_dataset_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">get_step_days</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regrid_step_days</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">30</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function_args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preview</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.extract_forcings.obc.process_obc_conditions" title="Link to this definition">#</a></dt>
@@ -740,6 +747,7 @@ Example: <cite>“(north|east|south|west)_unprocessed.(d{8})_(d{8}).nc”</cite>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.extract_forcings.obc">CrocoDash.extract_forcings.obc module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.obc.available_cpus"><code class="docutils literal notranslate"><span class="pre">available_cpus()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.extract_forcings.obc.process_obc_conditions"><code class="docutils literal notranslate"><span class="pre">process_obc_conditions()</span></code></a></li>
 </ul>
 </li>

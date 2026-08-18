@@ -380,17 +380,17 @@ document.write(`
 <h2>Case State File<a class="headerlink" href="#case-state-file" title="Link to this heading">#</a></h2>
 <p>At the end of <code class="docutils literal notranslate"><span class="pre">Case.__init__</span></code>, CrocoDash writes a <code class="docutils literal notranslate"><span class="pre">_crocodash_state.json</span></code> file into the caseroot. It records the construction parameters needed to reconstruct or inspect the case later:</p>
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;inputdir&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/path/to/croc_input/mycase&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;cesmroot&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/path/to/CROCESM&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;supergrid_path&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/path/to/.../ocean_hgrid_mygrid_abc123.nc&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;topo_path&quot;</span><span class="p">:</span><span class="w">      </span><span class="s2">&quot;/path/to/.../ocean_topog_mygrid_abc123.nc&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;vgrid_path&quot;</span><span class="p">:</span><span class="w">     </span><span class="s2">&quot;/path/to/.../ocean_vgrid_mygrid_abc123.nc&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;grid_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;mygrid&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;session_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;abc123&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;compset_lname&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;1850_DATM%JRA_SLND_SICE_MOM6%REGIONAL_SROF_SGLC_SWAV&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;machine&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;derecho&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;project&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;NCGD0011&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;atm_grid_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;TL319&quot;</span>
+<span class="w">  </span><span class="nt">"inputdir"</span><span class="p">:</span><span class="w"> </span><span class="s2">"/path/to/croc_input/mycase"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"cesmroot"</span><span class="p">:</span><span class="w"> </span><span class="s2">"/path/to/CROCESM"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"supergrid_path"</span><span class="p">:</span><span class="w"> </span><span class="s2">"/path/to/.../ocean_hgrid_mygrid_abc123.nc"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"topo_path"</span><span class="p">:</span><span class="w">      </span><span class="s2">"/path/to/.../ocean_topog_mygrid_abc123.nc"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"vgrid_path"</span><span class="p">:</span><span class="w">     </span><span class="s2">"/path/to/.../ocean_vgrid_mygrid_abc123.nc"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"grid_name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"mygrid"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"session_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"abc123"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"compset_lname"</span><span class="p">:</span><span class="w"> </span><span class="s2">"1850_DATM%JRA_SLND_SICE_MOM6%REGIONAL_SROF_SGLC_SWAV"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"machine"</span><span class="p">:</span><span class="w"> </span><span class="s2">"derecho"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"project"</span><span class="p">:</span><span class="w"> </span><span class="s2">"NCGD0011"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"atm_grid_name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"TL319"</span>
 <span class="p">}</span>
 </pre></div>
 </div>
@@ -549,7 +549,7 @@ cat<span class="w"> </span>SourceMods/src.mom/MOM_input<span class="w">  </span>
 <h3>Common Customizations<a class="headerlink" href="#common-customizations" title="Link to this heading">#</a></h3>
 <section id="change-model-timestep">
 <h4>Change Model Timestep<a class="headerlink" href="#change-model-timestep" title="Link to this heading">#</a></h4>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;DT_BAROCLINIC = 1800&quot;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>user_nl_mom
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">echo</span><span class="w"> </span><span class="s2">"DT_BAROCLINIC = 1800"</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>user_nl_mom
 </pre></div>
 </div>
 </section>
