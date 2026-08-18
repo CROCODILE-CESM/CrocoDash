@@ -165,6 +165,13 @@ class Case:
         except Exception as e:
             print(f"\n{ERROR}Case Configuration Error:{RESET}")
             print(f"  {str(e)}")
+            if cvars["COMPSET_MODE"].value == "Custom":
+                print(f"  COMPSET_LNAME: {cvars['COMPSET_LNAME'].value!r}")
+                for comp_class in self.cime.comp_classes:
+                    print(
+                        f"  COMP_{comp_class}_PHYS={cvars[f'COMP_{comp_class}_PHYS'].value!r} "
+                        f"COMP_{comp_class}_OPTION={cvars[f'COMP_{comp_class}_OPTION'].value!r}"
+                    )
             return
 
         # Before creating the case, we need to create the grid input files (except for mapping files,
@@ -736,6 +743,17 @@ class Case:
         # Stage: Component Physics Options (i.e., modifiers for the physics, e.g. %JRA, %MARBL-BIO, etc.)
         if Stage.active().title.startswith("Component Options"):
             for comp_class, phys in components.items():
+                # Only ever assign the FIRST modifier here. Assigning a component's
+                # COMP_*_OPTION its full "%"-joined multi-modifier value (e.g.
+                # "REGIONAL%MARBL-BIO", per ConfigVarStrMS's docstring) triggers
+                # compset_vars.py's update_compset_lname observer, which immediately
+                # rebuilds and validates COMPSET_LNAME as a side effect -- and that
+                # specific value has been unreliable to validate this way (works in
+                # some environments, raises an opaque, empty-reasons
+                # ConstraintViolation in others, independent of assignment order).
+                # Leaving each component at just its first modifier here keeps every
+                # intermediate COMPSET_LNAME the observer builds trivially valid;
+                # the full, correct COMPSET_LNAME is assigned directly below instead.
                 opt = phys.split("%")[1] if "%" in phys else None
                 if opt is not None:
                     cvars[f"COMP_{comp_class}_OPTION"].value = opt
@@ -745,10 +763,9 @@ class Case:
         # Confirm successful configuration of custom component set
         assert Stage.active().title == "2. Grid"
 
-        # VCG's Z3 solver cannot handle multi-select option values (e.g., "REGIONAL%MARBL-BIO")
-        # as assignment assertions, so only the first modifier was set above. Directly assign
-        # the full correct COMPSET_LNAME now that the options stage is complete and its
-        # options assertions have been cleared.
+        # Directly assign the full, correct COMPSET_LNAME now that the options stage
+        # is complete -- see the note above for why this can't be done by assigning
+        # the individual COMP_*_OPTION variables their full multi-modifier values.
         cvars["COMPSET_LNAME"].value = compset_lname
 
     def _configure_custom_grid(self, atm_grid_name, rof_grid_name):
