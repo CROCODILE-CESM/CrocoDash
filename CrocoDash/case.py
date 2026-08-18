@@ -736,7 +736,7 @@ class Case:
         # Stage: Component Physics Options (i.e., modifiers for the physics, e.g. %JRA, %MARBL-BIO, etc.)
         if Stage.active().title.startswith("Component Options"):
             for comp_class, phys in components.items():
-                opt = "%".join(phys.split("%")[1:]) if "%" in phys else None
+                opt = phys.split("%")[1] if "%" in phys else None
                 if opt is not None:
                     cvars[f"COMP_{comp_class}_OPTION"].value = opt
                 else:
