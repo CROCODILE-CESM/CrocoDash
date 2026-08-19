@@ -45,7 +45,10 @@ class DomainSpec:
 
     key: str
     description: str
-    builder: str  # "rect" | "projection" | "center"
+    # Which Grid constructor to use. Deliberately spelled the same as
+    # recipe.py's grid.type values, so to_grid_config() is a straight pass
+    # through and the two dispatches cannot drift apart silently.
+    builder: str  # see _GRID_TYPES in CrocoDash/recipe.py
     kwargs: dict
     tags: frozenset
     rectangular: bool = True  # expected Grid.is_rectangular()
@@ -56,13 +59,25 @@ class DomainSpec:
     xfail: Optional[str] = None
 
     def build_grid(self) -> Grid:
-        if self.builder == "rect":
+        """Build the Grid directly, through the Python API."""
+        if self.builder == "uniform_spherical":
             return Grid(**self.kwargs)
-        if self.builder == "projection":
+        if self.builder == "from_projection":
             return Grid.from_projection(**self.kwargs)
-        if self.builder == "center":
+        if self.builder == "from_center":
             return Grid.from_center(**self.kwargs)
         raise ValueError(f"Unknown builder {self.builder!r} for domain {self.key!r}")
+
+    def to_grid_config(self) -> dict:
+        """This spec as a recipe/YAML `grid:` block.
+
+        Everything in the catalog is a plain scalar, so the result is directly
+        yaml.dump-able -- which is what the crocontainer follow-up will need.
+        """
+        # kwargs wins on collision: the cartesian row carries its own
+        # type=rectilinear_cartesian, which is a valid grid.type in its own
+        # right and must not be clobbered by the builder default.
+        return {"type": self.builder, **self.kwargs}
 
     def marks(self):
         """Strict-xfail mark for this domain, or nothing."""
@@ -79,7 +94,7 @@ def _rect(key, description, tags, **kwargs):
     return DomainSpec(
         key=key,
         description=description,
-        builder="rect",
+        builder="uniform_spherical",
         kwargs=kwargs,
         tags=frozenset(tags),
     )
@@ -217,7 +232,7 @@ DOMAINS = [
     DomainSpec(
         key="arctic_cap",
         description="North pole inside the domain (EPSG:3995, +/-400 km).",
-        builder="projection",
+        builder="from_projection",
         kwargs=dict(
             crs="EPSG:3995",
             x_min=-400e3,
@@ -233,7 +248,7 @@ DOMAINS = [
     DomainSpec(
         key="antarctic_cap",
         description="South pole inside the domain (EPSG:3031, +/-400 km).",
-        builder="projection",
+        builder="from_projection",
         kwargs=dict(
             crs="EPSG:3031",
             x_min=-400e3,
@@ -250,7 +265,7 @@ DOMAINS = [
     DomainSpec(
         key="rotated_estuary",
         description="Rotated 45 deg off north, mid-latitude Atlantic coast.",
-        builder="center",
+        builder="from_center",
         kwargs=dict(
             center_lat=40.0,
             center_lon=-70.0,
@@ -267,7 +282,7 @@ DOMAINS = [
         key="rotated_on_dateline",
         description="Rotated 30 deg AND centred on the antimeridian -- the "
         "composition of two independently hard cases.",
-        builder="center",
+        builder="from_center",
         kwargs=dict(
             center_lat=-20.0,
             center_lon=180.0,
@@ -285,7 +300,7 @@ DOMAINS = [
         key="cyclic_global",
         description="Globally cyclic in x. Grid.get_bounding_boxes asserts "
         "not is_cyclic_x, so every forcing path is a hard failure today.",
-        builder="rect",
+        builder="uniform_spherical",
         kwargs=dict(
             resolution=1.0,
             xstart=0.0,

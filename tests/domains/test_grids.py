@@ -12,6 +12,7 @@ import numpy as np
 import pytest
 
 from CrocoDash.grid import Grid
+from CrocoDash.recipe import build_grid, validate_config_structure
 from tests.fixtures.domains import (
     CONVENTION_PAIRS,
     DOMAINS_BY_KEY,
@@ -152,3 +153,49 @@ def test_convention_pair_has_same_metrics(key_a, key_b):
             rtol=CONVENTION_RTOL,
             err_msg=f"{name} differs between {key_a} and {key_b}",
         )
+
+
+# ---------------------------------------------------------------------------
+# The YAML/recipe path
+# ---------------------------------------------------------------------------
+#
+# recipe.build_grid is what the CLI, the crocodash MCP server and crocontainer
+# all go through. It used to handle only Grid(...) and Grid.from_supergrid, so
+# polar and rotated domains could not be expressed in a config at all -- half
+# this catalog was unreachable from YAML.
+
+
+def test_domain_is_expressible_as_a_recipe_config(domain):
+    """Every catalog domain survives the round trip through a config dict.
+
+    Builds the grid twice -- once through the Python API, once through
+    recipe.build_grid(spec.to_grid_config()) -- and requires the coordinates to
+    match exactly. Two independent dispatches, so this catches either one
+    gaining a constructor the other does not know about.
+    """
+    validate_config_structure(
+        {
+            "grid": domain.to_grid_config(),
+            "topo": {},
+            "vgrid": {},
+            "case": {
+                "cesmroot": "x",
+                "caseroot": "x",
+                "inputdir": "x",
+                "compset": "x",
+                "machine": "x",
+            },
+            "forcings": {"date_range": ["2020-01-01", "2020-01-02"]},
+        }
+    )
+
+    direct = domain.build_grid()
+    via_config = build_grid(domain.to_grid_config())
+
+    np.testing.assert_array_equal(
+        via_config.supergrid.to_ds().x.values, direct.supergrid.to_ds().x.values
+    )
+    np.testing.assert_array_equal(
+        via_config.supergrid.to_ds().y.values, direct.supergrid.to_ds().y.values
+    )
+    assert via_config.name == direct.name
