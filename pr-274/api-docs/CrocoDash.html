@@ -995,7 +995,25 @@ The YAML file can be generated from an existing case using the case_to_yaml func
 <dl class="py function">
 <dt class="sig sig-object py" id="CrocoDash.recipe.build_grid">
 <span class="sig-prename descclassname"><span class="pre">CrocoDash.recipe.</span></span><span class="sig-name descname"><span class="pre">build_grid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">grid_cfg</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.recipe.build_grid" title="Link to this definition">#</a></dt>
-<dd><p>Build a Grid from a config dict. Uses supergrid_path for file-based grids.</p>
+<dd><p>Build a Grid from a config dict. Dispatches on grid.type.</p>
+<p>grid.type selects the constructor:</p>
+<blockquote>
+<div><p>uniform_spherical     Grid(…)              lon/lat box (the default)
+rectilinear_cartesian Grid(…, type=…)    the Cartesian supergrid
+from_file             Grid.from_supergrid    an existing ocean_hgrid.nc
+from_projection       Grid.from_projection   projected extents, e.g. a</p>
+<blockquote>
+<div><p>polar cap in EPSG:3995/3031</p>
+</div></blockquote>
+<p>from_center           Grid.from_center       rotated box about a point</p>
+</div></blockquote>
+<p>The first two are the values Grid.__init__ has always taken, and are passed
+through to it untouched – a config written before the other three existed
+keeps working unchanged. The rest are stripped before the remaining keys are
+handed to the named constructor, whose signature is the source of truth for
+what those keys may be.</p>
+<p>With no type at all, a config carrying supergrid_path is from_file and
+anything else is an ordinary Grid(…).</p>
 </dd></dl>
 
 <dl class="py function">
