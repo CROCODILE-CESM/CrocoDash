@@ -1,0 +1,699 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Sharing Cases &#8212; CrocoDash  documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=eba8b062" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'for_users/shareable';</script>
+    <link rel="icon" href="../_static/crocodile.png"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Templates" href="template.html" />
+    <link rel="prev" title="Accessing Raw Data (raw_data_access)" href="datasets.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../_static/crocodile.png" class="logo__image only-light" alt="CrocoDash  documentation - Home"/>
+    <script>document.write(`<img src="../_static/crocodile.png" class="logo__image only-dark" alt="CrocoDash  documentation - Home"/>`);</script>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://crocodile-cesm.github.io/CrocoGallery/">Tutorials &amp; Gallery</a></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="index.html">User Guide</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="1_grids.html">1. Grids (hgrid · topo · vgrid)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="2_case_setup.html">2. Case Setup (<code class="docutils literal notranslate"><span class="pre">Case</span></code> object)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="3a_configure_forcings.html">3a. Configure Forcings (case.configure_forcings)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="3b_process_forcings.html">3b. Process Forcings (<code class="docutils literal notranslate"><span class="pre">case.process_forcings</span></code>)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="compsets_and_inputs.html">Regional Compsets &amp; Input Parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="datasets.html">Accessing Raw Data (raw_data_access)</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Sharing Cases</a></li>
+<li class="toctree-l2"><a class="reference internal" href="template.html">Templates</a></li>
+<li class="toctree-l2"><a class="reference internal" href="additional_resources.html">Additional Resources</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html">Command Line Interface</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../for_developers/index.html">Developer Guide</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../for_developers/architecture.html">Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_developers/adding_data_access.html">Adding Data to the Data Access Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_developers/adding_forcing_configurations.html">Adding Forcing Configurations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_developers/submodule_api_usage.html">Submodule API Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_developers/edit_docs.html">Write Documentation</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://github.com/CROCODILE-CESM/CrocoDash/discussions/138">Semi-Official ChangeLog</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../api-docs/modules.html">CrocoDash API Docs</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../api-docs/CrocoDash.html">CrocoDash package</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../api-docs/CrocoDash.extract_forcings.html">CrocoDash.extract_forcings package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api-docs/CrocoDash.forcing_configurations.html">CrocoDash.forcing_configurations package</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../api-docs/CrocoDash.raw_data_access.html">CrocoDash.raw_data_access package</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../api-docs/CrocoDash.raw_data_access.datasets.html">CrocoDash.raw_data_access.datasets package</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/CROCODILE-CESM/CrocoDash/discussions/84">Common Errors</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/for_users/shareable.md" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.md</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Sharing Cases</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-model-sender-and-recipient">The model: sender and recipient</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#sender-casebundle">Sender: CaseBundle</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#recipient-forkbundle">Recipient: ForkBundle</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#non-interactive-fork">Non-interactive fork</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#duplicate-same-user-shortcut">Duplicate (same-user shortcut)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#command-line">Command Line</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#bundle">Bundle</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#fork">Fork</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#duplicate">Duplicate</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#apply-helpers">Apply helpers</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="sharing-cases">
+<h1>Sharing Cases<a class="headerlink" href="#sharing-cases" title="Link to this heading">#</a></h1>
+<p>The <code class="docutils literal notranslate"><span class="pre">CrocoDash.shareable</span></code> module lets you share a configured regional ocean case
+with another user — across machines, institutions, or just between collaborators.</p>
+<p>It sits on top of <a class="reference internal" href="cli.html"><span class="std std-doc">recipe.py</span></a>, which handles programmatic case creation
+from YAML. The shareable layer adds case inspection, bundling, and an interactive
+guided review for the recipient.</p>
+<hr class="docutils" />
+<section id="the-model-sender-and-recipient">
+<h2>The model: sender and recipient<a class="headerlink" href="#the-model-sender-and-recipient" title="Link to this heading">#</a></h2>
+<p>The <strong>bundle folder</strong> is the artifact that crosses the user boundary.</p>
+<p><strong>Sender</strong> (Person A, has a working case):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>CaseBundle(caseroot)
+  → identify_non_standard_case_info()   # what makes this case unique?
+  → bundle(output_dir)                  # package everything up
+</pre></div>
+</div>
+<p><strong>Recipient</strong> (Person B, gets the bundle folder):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>ForkBundle(bundle_dir)
+  → fork(cesmroot, machine, ...)        # guided recreation on their machine
+</pre></div>
+</div>
+<p>The recipient can change the compset or forcing configuration during <code class="docutils literal notranslate"><span class="pre">fork()</span></code> —
+everything else (grid, bathymetry, vertical grid, non-standard CESM state) is
+carried over from the bundle.</p>
+</section>
+<hr class="docutils" />
+<section id="sender-casebundle">
+<h2>Sender: CaseBundle<a class="headerlink" href="#sender-casebundle" title="Link to this heading">#</a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">CrocoDash.shareable</span><span class="w"> </span><span class="kn">import</span> <span class="n">CaseBundle</span>
+
+<span class="n">bundle</span> <span class="o">=</span> <span class="n">CaseBundle</span><span class="p">(</span><span class="s2">"/path/to/caseroot"</span><span class="p">)</span>
+
+<span class="c1"># Optionally inspect the diff before bundling</span>
+<span class="n">diff</span> <span class="o">=</span> <span class="n">bundle</span><span class="o">.</span><span class="n">identify_non_standard_case_info</span><span class="p">(</span>
+    <span class="n">cesmroot</span><span class="o">=</span><span class="s2">"/path/to/cesm"</span><span class="p">,</span>
+    <span class="n">machine</span><span class="o">=</span><span class="s2">"derecho"</span><span class="p">,</span>
+    <span class="n">project_number</span><span class="o">=</span><span class="s2">"PROJ123"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">diff</span><span class="o">.</span><span class="n">xmlchanges_missing</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">diff</span><span class="o">.</span><span class="n">source_mods_missing_files</span><span class="p">)</span>
+
+<span class="c1"># Package everything into a portable folder</span>
+<span class="n">bundle_path</span> <span class="o">=</span> <span class="n">bundle</span><span class="o">.</span><span class="n">bundle</span><span class="p">(</span><span class="s2">"/path/to/output_dir"</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">identify_non_standard_case_info()</span></code> creates a temporary reference case using
+recipe.py (with <code class="docutils literal notranslate"><span class="pre">configure_only=True</span></code> so forcings are not re-processed), then
+diffs your case against it. The diff captures everything you added on top of
+what CrocoDash sets up by default:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Category</p></th>
+<th class="head"><p>What’s captured</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">xml_files_missing_in_new</span></code></p></td>
+<td><p>Extra <code class="docutils literal notranslate"><span class="pre">.xml</span></code> files in your caseroot</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">user_nl_missing_params</span></code></p></td>
+<td><p>Parameters added to <code class="docutils literal notranslate"><span class="pre">user_nl_*</span></code> files</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">source_mods_missing_files</span></code></p></td>
+<td><p>Files in <code class="docutils literal notranslate"><span class="pre">SourceMods/</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">xmlchanges_missing</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">xmlchange</span></code> calls in <code class="docutils literal notranslate"><span class="pre">replay.sh</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">bundle()</span></code> calls <code class="docutils literal notranslate"><span class="pre">identify_non_standard_case_info()</span></code> automatically if you haven’t
+already. The bundle folder contains:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">crocodash_case.yaml</span></code> — the full recipe (grid, topo, vgrid, case, forcings)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">non_standard_case_info.json</span></code> — the diff</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ocnice/</span></code> — all ocean/ice input files and grid files</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">user_nl_*</span></code>, <code class="docutils literal notranslate"><span class="pre">replay.sh</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">xml_files/</span></code> and <code class="docutils literal notranslate"><span class="pre">SourceMods/</span></code> — any non-standard modifications</p></li>
+</ul>
+</section>
+<hr class="docutils" />
+<section id="recipient-forkbundle">
+<h2>Recipient: ForkBundle<a class="headerlink" href="#recipient-forkbundle" title="Link to this heading">#</a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">CrocoDash.shareable</span><span class="w"> </span><span class="kn">import</span> <span class="n">ForkBundle</span>
+
+<span class="n">fork</span> <span class="o">=</span> <span class="n">ForkBundle</span><span class="p">(</span><span class="s2">"/path/to/bundle"</span><span class="p">)</span>
+
+<span class="n">case</span> <span class="o">=</span> <span class="n">fork</span><span class="o">.</span><span class="n">fork</span><span class="p">(</span>
+    <span class="n">cesmroot</span><span class="o">=</span><span class="s2">"/path/to/cesm"</span><span class="p">,</span>
+    <span class="n">machine</span><span class="o">=</span><span class="s2">"derecho"</span><span class="p">,</span>
+    <span class="n">project_number</span><span class="o">=</span><span class="s2">"PROJ123"</span><span class="p">,</span>
+    <span class="n">new_caseroot</span><span class="o">=</span><span class="s2">"/path/to/new_case"</span><span class="p">,</span>
+    <span class="n">new_inputdir</span><span class="o">=</span><span class="s2">"/path/to/new_inputdir"</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">fork()</span></code> walks the recipient through an interactive review:</p>
+<ol class="arabic simple">
+<li><p><strong>Field review</strong> — prompts for <code class="docutils literal notranslate"><span class="pre">caseroot</span></code>, <code class="docutils literal notranslate"><span class="pre">inputdir</span></code>, <code class="docutils literal notranslate"><span class="pre">cesmroot</span></code>, <code class="docutils literal notranslate"><span class="pre">machine</span></code>,
+<code class="docutils literal notranslate"><span class="pre">project</span></code>, <code class="docutils literal notranslate"><span class="pre">compset</span></code>, and (if the case has forcings) <code class="docutils literal notranslate"><span class="pre">date_range</span></code> and
+<code class="docutils literal notranslate"><span class="pre">boundaries</span></code>. Press Enter to keep the pre-filled value from the bundle.</p></li>
+<li><p><strong>EDITOR</strong> — if <code class="docutils literal notranslate"><span class="pre">$EDITOR</span></code> is set, offers to open the full YAML for deeper
+changes (e.g. swapping compset modifiers, adjusting forcing kwargs).</p></li>
+<li><p><strong>Confirmation</strong> — shows the final config and asks to proceed.</p></li>
+<li><p><strong>Plan</strong> — asks whether to transfer each category of non-standard CESM state
+(XML files, user_nl params, SourceMods, xmlchanges).</p></li>
+</ol>
+<p>After confirmation, <code class="docutils literal notranslate"><span class="pre">fork()</span></code> recreates the case via recipe.py and applies the
+non-standard state per the plan.</p>
+<section id="non-interactive-fork">
+<h3>Non-interactive fork<a class="headerlink" href="#non-interactive-fork" title="Link to this heading">#</a></h3>
+<p>Pass <code class="docutils literal notranslate"><span class="pre">plan=</span></code> to skip the CESM-state copy prompts (the YAML review still runs):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">case</span> <span class="o">=</span> <span class="n">fork</span><span class="o">.</span><span class="n">fork</span><span class="p">(</span>
+    <span class="n">cesmroot</span><span class="o">=</span><span class="s2">"/path/to/cesm"</span><span class="p">,</span>
+    <span class="n">machine</span><span class="o">=</span><span class="s2">"derecho"</span><span class="p">,</span>
+    <span class="n">project_number</span><span class="o">=</span><span class="s2">"PROJ123"</span><span class="p">,</span>
+    <span class="n">new_caseroot</span><span class="o">=</span><span class="s2">"/path/to/new_case"</span><span class="p">,</span>
+    <span class="n">new_inputdir</span><span class="o">=</span><span class="s2">"/path/to/new_inputdir"</span><span class="p">,</span>
+    <span class="n">plan</span><span class="o">=</span><span class="p">{</span><span class="s2">"xml_files"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">"user_nl"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">"source_mods"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">"xmlchanges"</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<hr class="docutils" />
+<section id="duplicate-same-user-shortcut">
+<h2>Duplicate (same-user shortcut)<a class="headerlink" href="#duplicate-same-user-shortcut" title="Link to this heading">#</a></h2>
+<p>For copying a case within your own environment — same machine, new paths — use
+<code class="docutils literal notranslate"><span class="pre">duplicate_case()</span></code>. It reads <code class="docutils literal notranslate"><span class="pre">cesmroot</span></code>, <code class="docutils literal notranslate"><span class="pre">machine</span></code>, and <code class="docutils literal notranslate"><span class="pre">project</span></code> directly from
+the original case’s <code class="docutils literal notranslate"><span class="pre">_crocodash_state.json</span></code>, so no arguments are needed for those:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">CrocoDash.shareable</span><span class="w"> </span><span class="kn">import</span> <span class="n">duplicate_case</span>
+
+<span class="n">new_case</span> <span class="o">=</span> <span class="n">duplicate_case</span><span class="p">(</span>
+    <span class="n">caseroot</span><span class="o">=</span><span class="s2">"/path/to/existing_case"</span><span class="p">,</span>
+    <span class="n">new_caseroot</span><span class="o">=</span><span class="s2">"/path/to/new_case"</span><span class="p">,</span>
+    <span class="n">new_inputdir</span><span class="o">=</span><span class="s2">"/path/to/new_inputdir"</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>Pass <code class="docutils literal notranslate"><span class="pre">bundle_dir=</span></code> to also save a bundle as a side effect:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">new_case</span> <span class="o">=</span> <span class="n">duplicate_case</span><span class="p">(</span>
+    <span class="n">caseroot</span><span class="o">=</span><span class="s2">"/path/to/existing_case"</span><span class="p">,</span>
+    <span class="n">new_caseroot</span><span class="o">=</span><span class="s2">"/path/to/new_case"</span><span class="p">,</span>
+    <span class="n">new_inputdir</span><span class="o">=</span><span class="s2">"/path/to/new_inputdir"</span><span class="p">,</span>
+    <span class="n">bundle_dir</span><span class="o">=</span><span class="s2">"/path/to/bundle"</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="command-line">
+<h2>Command Line<a class="headerlink" href="#command-line" title="Link to this heading">#</a></h2>
+<section id="bundle">
+<h3>Bundle<a class="headerlink" href="#bundle" title="Link to this heading">#</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>crocodash<span class="w"> </span>bundle<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--caseroot<span class="w"> </span>/path/to/case<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output-dir<span class="w"> </span>/path/to/bundle_dir<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--cesmroot<span class="w"> </span>/path/to/cesm<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--machine<span class="w"> </span>derecho<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--project<span class="w"> </span>PROJ123
+</pre></div>
+</div>
+</section>
+<section id="fork">
+<h3>Fork<a class="headerlink" href="#fork" title="Link to this heading">#</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Interactive (guided YAML review + plan prompts)</span>
+crocodash<span class="w"> </span>fork<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--bundle<span class="w"> </span>/path/to/bundle<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--caseroot<span class="w"> </span>/path/to/new_case<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--inputdir<span class="w"> </span>/path/to/new_inputdir<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--cesmroot<span class="w"> </span>/path/to/cesm<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--machine<span class="w"> </span>derecho<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--project<span class="w"> </span>PROJ123
+
+<span class="c1"># Non-interactive plan (YAML review still runs)</span>
+crocodash<span class="w"> </span>fork<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--bundle<span class="w"> </span>/path/to/bundle<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--caseroot<span class="w"> </span>/path/to/new_case<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--inputdir<span class="w"> </span>/path/to/new_inputdir<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--cesmroot<span class="w"> </span>/path/to/cesm<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--machine<span class="w"> </span>derecho<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--project<span class="w"> </span>PROJ123<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--plan<span class="w"> </span><span class="s1">'{"xml_files": true, "user_nl": true, "source_mods": false, "xmlchanges": true}'</span>
+</pre></div>
+</div>
+</section>
+<section id="duplicate">
+<h3>Duplicate<a class="headerlink" href="#duplicate" title="Link to this heading">#</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>crocodash<span class="w"> </span>duplicate<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--source<span class="w"> </span>/path/to/existing_case<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--case<span class="w"> </span>/path/to/new_case<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--inputdir<span class="w"> </span>/path/to/new_inputdir
+</pre></div>
+</div>
+</section>
+</section>
+<hr class="docutils" />
+<section id="apply-helpers">
+<h2>Apply helpers<a class="headerlink" href="#apply-helpers" title="Link to this heading">#</a></h2>
+<p>The low-level transfer functions used by <code class="docutils literal notranslate"><span class="pre">ForkBundle</span></code> internally are importable
+directly for fine-grained control:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">CrocoDash.shareable</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">copy_xml_files_from_case</span><span class="p">,</span>
+    <span class="n">copy_user_nl_params_from_case</span><span class="p">,</span>
+    <span class="n">copy_source_mods_from_case</span><span class="p">,</span>
+    <span class="n">apply_xmlchanges_to_case</span><span class="p">,</span>
+    <span class="n">copy_configurations_to_case</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="datasets.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Accessing Raw Data (raw_data_access)</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="template.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Templates</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-model-sender-and-recipient">The model: sender and recipient</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#sender-casebundle">Sender: CaseBundle</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#recipient-forkbundle">Recipient: ForkBundle</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#non-interactive-fork">Non-interactive fork</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#duplicate-same-user-shortcut">Duplicate (same-user shortcut)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#command-line">Command Line</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#bundle">Bundle</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#fork">Fork</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#duplicate">Duplicate</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#apply-helpers">Apply helpers</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By CROCODILE
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2024, CROCODILE.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>
