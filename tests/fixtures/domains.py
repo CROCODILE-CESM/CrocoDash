@@ -21,25 +21,22 @@ subset of the catalog:
 By default that is the `cheap` tier. Widen it with --all-domains,
 --domain-tags=seam,polar, or narrow it with --domains=arctic_cap. See
 select_domains() and the pytest_generate_tests hook in tests/conftest.py.
+
+Everything here is pure: grids are built in memory, and nothing touches the
+network, CESM, or a case directory. That is deliberate. Sweeping the *full*
+forcing pipeline across domains needs a real CESM root and costs minutes per
+domain, so it belongs in crocontainer rather than in pytest -- and it would
+not buy much here anyway, since the synthetic forcing product generates data
+for whatever bounding box it is handed and so cannot detect a wrong one. The
+bounding boxes are therefore checked directly, in test_bounding_boxes.py.
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Optional
-from uuid import uuid4
 
 import pytest
-from ProConPy.config_var import cvars
 
 from CrocoDash.grid import Grid
-from CrocoDash.topo import Topo
-from CrocoDash.vgrid import VGrid
-
-# Flat-bottom depth and vertical levels used for every domain. These are test
-# fixtures, not science: the point is to vary the *horizontal* topology and
-# hold everything else constant, so a failure is unambiguously about lat/lon.
-TOPO_DEPTH = 1000.0
-TOPO_MIN_DEPTH = 9.5
-VGRID_NK = 5
 
 
 @dataclass(frozen=True)
@@ -373,71 +370,6 @@ def select_domains(config, apply_xfail=False):
 def domain_grid(domain):
     """The Grid for the current domain."""
     return domain.build_grid()
-
-
-@pytest.fixture
-def domain_grid_topo_vgrid(domain_grid):
-    """(grid, topo, vgrid) for the current domain.
-
-    Same shape as the session-scoped gen_grid_topo_vgrid fixture, so it is a
-    drop-in for anything that already consumes that triple.
-    """
-    topo = Topo(grid=domain_grid, min_depth=TOPO_MIN_DEPTH)
-    topo.set_flat(TOPO_DEPTH)
-    vgrid = VGrid.uniform(nk=VGRID_NK, depth=TOPO_DEPTH)
-    return domain_grid, topo, vgrid
-
-
-@pytest.fixture
-def domain_case(domain, domain_grid_topo_vgrid, CrocoDash_case_factory, tmp_path):
-    """A CrocoDash Case built on the current domain.
-
-    Function-scoped on purpose -- see configure_domain_forcings() for why a
-    shared case would silently corrupt a parametrized sweep.
-    """
-    case = CrocoDash_case_factory(
-        tmp_path / f"case-{uuid4().hex[:8]}",
-        grid_topo_vgrid=domain_grid_topo_vgrid,
-    )
-    # Snapshot the process-global config vars this case was *built* with, so
-    # configure_domain_forcings() can restore them later. See below.
-    case._domain_cvar_snapshot = {
-        "CASEROOT": cvars["CASEROOT"].value,
-        "MB_ATTEMPT_ID": cvars["MB_ATTEMPT_ID"].value,
-    }
-    return case
-
-
-def configure_domain_forcings(case, **kwargs):
-    """Call case.configure_forcings() with the process-global cvars restored.
-
-    Case construction and configure_forcings both read ProConPy's *global*
-    cvars, not per-instance state:
-
-      - Case.__init__ stamps the grid/topo/vgrid filenames with a suffix built
-        from cvars["MB_ATTEMPT_ID"] (case.py:339).
-      - configure_forcings later re-reads cvars["MB_ATTEMPT_ID"] into
-        self.session_id (case.py:523) and cvars["CASEROOT"] (case.py:865).
-
-    Constructing a second Case in the same process overwrites both. In a
-    parametrized domain sweep that happens on every iteration, so without this
-    restore, domain N's configure_forcings() would stamp its outputs with
-    domain N+1's session id and point at N+1's caseroot -- producing files that
-    exist but that nothing downstream can find, or worse, cross-writes between
-    domains. Restoring the snapshot taken at construction keeps each domain's
-    case self-consistent.
-
-    Defaults to REFERENCE_OCEAN: deterministic, in-memory, no network or
-    credentials, so the whole sweep runs anywhere.
-    """
-    snapshot = getattr(case, "_domain_cvar_snapshot", None)
-    if snapshot is not None:
-        for name, value in snapshot.items():
-            cvars[name].value = value
-
-    kwargs.setdefault("product_name", "reference_ocean")
-    kwargs.setdefault("function_name", "get_reference_ocean_data")
-    return case.configure_forcings(**kwargs)
 
 
 # ---------------------------------------------------------------------------

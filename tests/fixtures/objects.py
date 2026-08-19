@@ -74,21 +74,15 @@ def CrocoDash_case_factory(
         configure_forcings=False,
         compset: str = "1850_DATM%JRA_SLND_SICE_MOM6_SROF_SGLC_SWAV",
         atm_grid_name: str = "TL319",
-        grid_topo_vgrid=None,
     ):
         """
         Factory function to create a CrocoDash Case object with sensible defaults.
         Can be called from pytest fixtures or standalone scripts.
-
-        grid_topo_vgrid: optional (grid, topo, vgrid) triple to build the case
-        on instead of the default panama1 one. Used by the domain catalog
-        (tests/fixtures/domains.py) to run this same factory across every
-        lat/lon topology.
         """
         directory = Path(directory)
         directory.mkdir(exist_ok=True)
         # Set Grid Info
-        grid, topo, vgrid = grid_topo_vgrid or gen_grid_topo_vgrid
+        grid, topo, vgrid = gen_grid_topo_vgrid
 
         # Set paths
         caseroot = directory / f"case-{uuid4().hex}"
