@@ -2,7 +2,7 @@ import os
 import pytest
 import shutil
 from CrocoDash.rm6 import regional_mom6 as rm6
-from CrocoDash.case import Case
+from CrocoDash.case import Case, NOT_PORTED_MACHINE
 from pathlib import Path
 from uuid import uuid4
 
@@ -74,14 +74,14 @@ def ported_case(CrocoDash_case_factory, tmp_path_factory):
     create_newcase plus case.setup dominates the cost of building a case (seconds
     each, against a small fraction of that for everything else Case.__init__ does), so
     every other fixture here configures its case without executing CIME
-    (do_exec=False) and anything that needs the artifacts only CIME writes -- the
+    (CESM_NOT_PORTED) and anything that needs the artifacts only CIME writes -- the
     xmlquery/xmlchange scripts, env_*.xml, the default user_nl files, SourceMods/,
     README.case -- shares this one instead of paying for its own.
 
     Treat it as read-only: a test that mutates the caseroot, or writes into the
     inputdir, must take a copy via ported_case_copy instead.
     """
-    case = CrocoDash_case_factory(tmp_path_factory.mktemp("ported-case"), do_exec=True)
+    case = CrocoDash_case_factory(tmp_path_factory.mktemp("ported-case"), ported=True)
     case.configure_forcings(**FORCING_ARGS)
     return case
 
@@ -168,19 +168,20 @@ def CrocoDash_case_factory(
         configure_forcings=False,
         compset: str = "1850_DATM%JRA_SLND_SICE_MOM6_SROF_SGLC_SWAV",
         atm_grid_name: str = "TL319",
-        do_exec: bool = False,
+        ported: bool = False,
     ):
         """
         Factory function to create a CrocoDash Case object with sensible defaults.
         Can be called from pytest fixtures or standalone scripts.
 
-        do_exec defaults to False, so the case is configured but CIME is never invoked:
-        no create_newcase, no case.setup, no xmlchange, no user_nl writes. Grid input
-        files, the state file, and the forcing configuration are all still produced,
-        which is everything most tests actually assert on, and it is roughly an order
-        of magnitude faster. Pass do_exec=True only for a case that must carry real
-        CIME artifacts -- and prefer the ported_case fixture, which already provides
-        one, over creating another.
+        ported defaults to False, which selects CESM_NOT_PORTED -- visualCaseGen's
+        placeholder for a host CESM has no machine definition for. CIME cannot create a
+        case there, so no create_newcase, no case.setup, no xmlchange, no user_nl writes.
+        Grid input files, the state file, and the forcing configuration are all still
+        produced, which is everything most tests actually assert on, and it is roughly an
+        order of magnitude faster. Pass ported=True only for a case that must carry real
+        CIME artifacts -- and prefer the ported_case fixture, which already provides one,
+        over creating another.
         """
         directory = Path(directory)
         directory.mkdir(parents=True, exist_ok=True)
@@ -192,7 +193,9 @@ def CrocoDash_case_factory(
         inputdir = directory / "inputdir"
 
         # Decide machine
-        if is_github_actions:
+        if not ported:
+            machine = NOT_PORTED_MACHINE
+        elif is_github_actions:
             machine = "ubuntu-latest"
         elif is_glade_file_system:
             machine = "derecho"
@@ -213,7 +216,6 @@ def CrocoDash_case_factory(
             machine=machine,
             atm_grid_name=atm_grid_name,
             ninst=ninst,
-            do_exec=do_exec,
         )
         if configure_forcings:
             case.configure_forcings(

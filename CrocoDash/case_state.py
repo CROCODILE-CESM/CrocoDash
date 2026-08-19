@@ -41,7 +41,6 @@ INIT_ARGS_EXCLUDE = frozenset(
         "caseroot",
         "inputdir",
         "override",
-        "do_exec",
     }
 )
 

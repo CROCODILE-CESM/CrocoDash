@@ -59,7 +59,7 @@ def test_case_init_and_create_grid_input(get_CrocoDash_case):
 
 
 def test_ported_case_has_cime_artifacts(ported_case):
-    """The one case built with do_exec=True must be a real, CIME-created case.
+    """The one case built on a ported machine must be a real, CIME-created case.
 
     Everything else in the suite is configured without invoking CIME, so this is what
     covers the create_newcase/case.setup path: the files below only exist because CIME
@@ -71,6 +71,75 @@ def test_ported_case_has_cime_artifacts(ported_case):
     assert (caseroot / "env_case.xml").exists()
     assert (caseroot / "user_nl_mom").exists()
     assert (caseroot / "SourceMods").is_dir()
+
+
+def test_not_ported_machine_configures_without_cime(get_CrocoDash_case):
+    """The complement of test_ported_case_has_cime_artifacts: CESM_NOT_PORTED must
+    configure everything CIME is not needed for, and invoke CIME for nothing.
+
+    This is the un-ported path itself, not a stand-in for it. CESM_NOT_PORTED is
+    visualCaseGen's placeholder rather than a CIME machine, so requesting it works on any
+    host -- which is what makes the path assertable here rather than only on a laptop with
+    an unported CESM checkout.
+    """
+    case = get_CrocoDash_case
+    assert case.machine == "CESM_NOT_PORTED"
+    assert case.do_exec is False
+
+    # Everything that does not need CIME still happened.
+    assert case.caseroot.exists()
+    assert file_with_prefix_exists(case.inputdir / "ocnice", "ocean_hgrid")
+    assert (case.caseroot / "_crocodash_state.json").exists()
+
+    # Nothing create_newcase or case.setup would have written exists.
+    assert not (case.caseroot / "xmlquery").exists()
+    assert not (case.caseroot / "env_case.xml").exists()
+    assert not (case.caseroot / "SourceMods").exists()
+    assert not file_with_prefix_exists(case.caseroot, "README")
+
+
+def test_not_ported_machine_recorded_in_state(get_CrocoDash_case):
+    """The state file records the placeholder machine, so a later replay on a ported
+    machine has to override it rather than silently inheriting a case CIME never ran."""
+    import json
+
+    state = json.loads(
+        (get_CrocoDash_case.caseroot / "_crocodash_state.json").read_text()
+    )
+    assert state["machine"] == "CESM_NOT_PORTED"
+
+
+def test_emulate_not_ported_matches_visualcasegen(monkeypatch, tmp_path):
+    """_emulate_not_ported replicates the identity fields of visualCaseGen's own
+    _handle_machine_not_ported instead of calling it, so that a test run does not create
+    ~/scratch and ~/inputdata as a side effect. Replication can drift from the original,
+    so pin the two together here.
+
+    Only the identity fields are compared: the data roots are intentionally different,
+    since on a ported host the machine's real CIME_OUTPUT_ROOT/DIN_LOC_ROOT already exist
+    and are the correct place to write.
+    """
+    from pathlib import Path
+    from types import SimpleNamespace
+
+    from visualCaseGen.cime_interface import CIME_interface
+    from CrocoDash import case as case_module
+
+    # Redirect $HOME so the handler's mkdirs land in tmp_path.
+    monkeypatch.setattr(Path, "home", classmethod(lambda cls: tmp_path))
+    reference = SimpleNamespace()
+    CIME_interface._handle_machine_not_ported(reference)
+
+    # _emulate_not_ported refreshes the MACHINE option list, which needs cvars.
+    machine_var = SimpleNamespace(options=["derecho", "casper"])
+    monkeypatch.setattr(case_module, "cvars", {"MACHINE": machine_var})
+    emulated = SimpleNamespace(machine="derecho")
+    case_module._emulate_not_ported(emulated)
+
+    assert emulated.machine == reference.machine
+    assert emulated.machines == reference.machines
+    assert emulated.project_required == reference.project_required
+    assert machine_var.options == reference.machines
 
 
 def test_configure_forcings(ported_case):

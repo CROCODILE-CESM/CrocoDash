@@ -33,6 +33,48 @@ from CrocoDash import case_state
 NOT_PORTED_MACHINE = "CESM_NOT_PORTED"
 
 
+def _emulate_not_ported(cime):
+    """Put an already-initialized CIME interface into the un-ported state, so that
+    ``machine=CESM_NOT_PORTED`` can be requested on any host.
+
+    CESM_NOT_PORTED is visualCaseGen's own placeholder rather than a CIME machine:
+    CIME_interface picks it in ``_handle_machine_not_ported()`` when CIME cannot identify
+    the host, and from then on it is the only machine the interface offers. Selecting it
+    on a host CESM *is* ported to therefore has to reproduce that state, or the request is
+    only half-applied. Two things go wrong otherwise, both verified: MACHINE's options
+    still come from the real machine list, so the assignment in ``_configure_launch``
+    fails with "CESM_NOT_PORTED not an option for MACHINE"; and ``_is_non_local()``
+    compares the interface's real machine against the selected one, so it would wrongly
+    report a non-local case and add ``--non-local`` to every xmlchange.
+
+    This mirrors the identity fields ``_handle_machine_not_ported()`` sets, but
+    deliberately leaves ``cime_output_root``/``din_loc_root`` pointing at the real host's
+    values. That handler falls back to ``~/scratch`` and ``~/inputdata`` and creates them,
+    which is right on a laptop with nothing better to use, but here the host's own roots
+    already exist and are the correct place to write -- and a test suite should not be
+    creating directories in ``$HOME`` as a side effect. What is being overridden is the
+    machine's *identity*, not the filesystem layout.
+    """
+    if cime.machine == NOT_PORTED_MACHINE:
+        return  # genuinely un-ported host; the interface is already in this state
+    # Asking for it on a host that *is* ported is deliberate, but it used to be rejected
+    # by init_args_check, and crocodash_case.yaml records the machine it was configured
+    # with -- so replaying an un-ported case's yaml here would otherwise quietly produce
+    # another case CIME never ran, where it previously raised. Say so.
+    print(
+        f"{NOT_PORTED_MACHINE} requested on {cime.machine}, which CESM *is* ported to: "
+        "the case will be configured but CIME will not be invoked, so no CESM case is "
+        f"created. Pass machine='{cime.machine}' (or another ported machine) for a real "
+        "case."
+    )
+    cime.machine = NOT_PORTED_MACHINE
+    cime.machines = [NOT_PORTED_MACHINE]
+    cime.project_required = {NOT_PORTED_MACHINE: False}
+    # MACHINE's options were derived from the real machine list by set_launcher_options()
+    # during initialize(); re-derive them from the now un-ported interface.
+    cvars["MACHINE"].options = cime.machines
+
+
 class Case:
     """This class represents a regional MOM6 case within the CESM framework. It is similar to the
     Experiment class in the regional_mom6 package, but with modifications to work within the CESM framework.
@@ -57,7 +99,6 @@ class Case:
         ntasks_ocn: int | None = None,
         job_queue: str | None = None,
         job_wallclock_time: str | None = None,
-        do_exec: bool = True,
     ):
         """
         Initialize a new regional MOM6 case within the CESM framework.
@@ -100,14 +141,6 @@ class Case:
             The queue to submit the CESM case to. If None, defaults to the CESM defaults (usually main)
         job_wallclock_time: str, optional
             Must be in the form hh:mm:ss. If None, defaults to the CESM defaults
-        do_exec : bool, optional
-            Whether to actually run the CIME commands that create and modify the case
-            (create_newcase, case.setup, xmlchange, user_nl appends). Default is True.
-            Pass False to configure the case without executing any of them: the grid
-            input files, the state file, and the forcing configuration are all still
-            written, so the case can be recreated later on a ported machine from
-            crocodash_case.yaml. This is forced to False on an un-ported machine
-            (MACHINE == CESM_NOT_PORTED), where CIME cannot create a case at all.
         """
 
         # Capture scalar init args for state serialization before any local vars are added.
@@ -118,6 +151,8 @@ class Case:
 
         # Initialize visualCaseGen system and get the CIME interface
         self.cime = initialize_visualCaseGen(cesmroot)
+        if machine == NOT_PORTED_MACHINE:
+            _emulate_not_ported(self.cime)
 
         # Determine compset alias and long name
         if compset in self.cime.compsets:
@@ -165,11 +200,9 @@ class Case:
         # Forcing extraction is unaffected -- it never touches CIME -- so the expensive
         # download+regrid work still runs, and the case itself is recreated later on a
         # ported machine from crocodash_case.yaml.
-        # do_exec=False additionally lets a caller opt into the same configure-only
-        # behaviour on a ported machine, where NOT_PORTED_MACHINE is never selected:
-        # everything except the CIME shell-outs still happens, which is how the test
-        # suite avoids paying for create_newcase/case.setup in every fixture.
-        self.do_exec = do_exec and self.machine != NOT_PORTED_MACHINE
+        # Requesting it explicitly is how the test suite avoids paying for
+        # create_newcase/case.setup in every fixture (see _emulate_not_ported).
+        self.do_exec = self.machine != NOT_PORTED_MACHINE
         self.project = project
         self.override = override
         self.ntasks_ocn = ntasks_ocn
@@ -421,13 +454,9 @@ class Case:
             # forcing config) still expects the directory to exist, and create_newcase is
             # what would normally have made it.
             self.caseroot.mkdir(parents=True, exist_ok=self.override)
-            reason = (
-                f"Machine is {NOT_PORTED_MACHINE}"
-                if self.machine == NOT_PORTED_MACHINE
-                else "do_exec is False"
-            )
             print(
-                f"{reason}: configuring {self.caseroot} without creating a CESM case."
+                f"Machine is {NOT_PORTED_MACHINE}: configuring {self.caseroot} "
+                "without creating a CESM case."
             )
             return
 
@@ -663,7 +692,7 @@ class Case:
         """The case's CIME run directory.
 
         Normally read straight off the CIME case object. When the case was configured
-        but never created (``do_exec=False``) there is no case object to ask, so fall
+        but never created (an un-ported machine) there is no case object to ask, so fall
         back to the path CIME would have derived, ``$CIME_OUTPUT_ROOT/$CASE/run``.
         """
         if self._cime_case is not None:
