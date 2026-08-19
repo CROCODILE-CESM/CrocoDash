@@ -132,7 +132,7 @@ def test_bgcrivernutrients(tmp_path, is_glade_file_system, gen_grid_topo_vgrid):
 
 
 # =============================================================================
-# Fast mocked test for process_river_nutrients (avoids --runslow dependency)
+# Fast mocked test for process_river_nutrients (runs under -m "not slow")
 # =============================================================================
 
 
