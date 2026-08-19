@@ -57,6 +57,7 @@ class Case:
         ntasks_ocn: int | None = None,
         job_queue: str | None = None,
         job_wallclock_time: str | None = None,
+        do_exec: bool = True,
     ):
         """
         Initialize a new regional MOM6 case within the CESM framework.
@@ -99,6 +100,14 @@ class Case:
             The queue to submit the CESM case to. If None, defaults to the CESM defaults (usually main)
         job_wallclock_time: str, optional
             Must be in the form hh:mm:ss. If None, defaults to the CESM defaults
+        do_exec : bool, optional
+            Whether to actually run the CIME commands that create and modify the case
+            (create_newcase, case.setup, xmlchange, user_nl appends). Default is True.
+            Pass False to configure the case without executing any of them: the grid
+            input files, the state file, and the forcing configuration are all still
+            written, so the case can be recreated later on a ported machine from
+            crocodash_case.yaml. This is forced to False on an un-ported machine
+            (MACHINE == CESM_NOT_PORTED), where CIME cannot create a case at all.
         """
 
         # Capture scalar init args for state serialization before any local vars are added.
@@ -156,7 +165,11 @@ class Case:
         # Forcing extraction is unaffected -- it never touches CIME -- so the expensive
         # download+regrid work still runs, and the case itself is recreated later on a
         # ported machine from crocodash_case.yaml.
-        self.do_exec = self.machine != NOT_PORTED_MACHINE
+        # do_exec=False additionally lets a caller opt into the same configure-only
+        # behaviour on a ported machine, where NOT_PORTED_MACHINE is never selected:
+        # everything except the CIME shell-outs still happens, which is how the test
+        # suite avoids paying for create_newcase/case.setup in every fixture.
+        self.do_exec = do_exec and self.machine != NOT_PORTED_MACHINE
         self.project = project
         self.override = override
         self.ntasks_ocn = ntasks_ocn
@@ -402,14 +415,19 @@ class Case:
         )
 
         if not self.do_exec:
-            # CaseCreator refuses to create a case for the placeholder machine, so there
-            # is nothing to run here. Everything downstream (state file, user_nl writes,
+            # Either CaseCreator refuses to create a case for the placeholder machine, or
+            # the caller asked for configuration without execution. Either way there is
+            # nothing to run here. Everything downstream (state file, user_nl writes,
             # forcing config) still expects the directory to exist, and create_newcase is
             # what would normally have made it.
             self.caseroot.mkdir(parents=True, exist_ok=self.override)
+            reason = (
+                f"Machine is {NOT_PORTED_MACHINE}"
+                if self.machine == NOT_PORTED_MACHINE
+                else "do_exec is False"
+            )
             print(
-                f"Machine is {NOT_PORTED_MACHINE}: configuring "
-                f"{self.caseroot} without creating a CESM case."
+                f"{reason}: configuring {self.caseroot} without creating a CESM case."
             )
             return
 
@@ -641,6 +659,23 @@ class Case:
         return self.caseroot.name
 
     @property
+    def _run_dir(self) -> Path:
+        """The case's CIME run directory.
+
+        Normally read straight off the CIME case object. When the case was configured
+        but never created (``do_exec=False``) there is no case object to ask, so fall
+        back to the path CIME would have derived, ``$CIME_OUTPUT_ROOT/$CASE/run``.
+        """
+        if self._cime_case is not None:
+            return Path(self._cime_case.get_value("RUNDIR"))
+        # rm6's experiment mkdirs mom_run_dir without parents, and nothing has created
+        # $CIME_OUTPUT_ROOT/$CASE yet (case.setup is what normally would), so make the
+        # whole chain here.
+        run_dir = Path(self.cime.cime_output_root) / self.caseroot.name / "run"
+        run_dir.mkdir(parents=True, exist_ok=True)
+        return run_dir
+
+    @property
     def expt(self) -> rmom6.experiment:
 
         if not hasattr(self, "date_range"):
@@ -667,7 +702,7 @@ class Case:
             number_vertical_layers=None,
             layer_thickness_ratio=None,
             depth=self.ocn_topo.max_depth,
-            mom_run_dir=self._cime_case.get_value("RUNDIR"),
+            mom_run_dir=self._run_dir,
             mom_input_dir=self.inputdir / "ocnice",
             hgrid_type=self.ocn_grid,
             vgrid_type=self.ocn_vgrid,

@@ -6,19 +6,19 @@ import yaml
 from pathlib import Path
 
 
-@pytest.fixture(scope="session")
-def two_cesm_cases(CrocoDash_case_factory, tmp_path_factory):
-    case1 = CrocoDash_case_factory(
-        tmp_path_factory.mktemp("case1"), configure_forcings=True
-    )
-    case2 = CrocoDash_case_factory(
-        tmp_path_factory.mktemp("case2"), configure_forcings=True
-    )
-    return case1, case2
+@pytest.fixture
+def two_cesm_cases(ported_case_copy):
+    """Two caserootss of a real CIME case, identical until a test perturbs one.
+
+    Both are copies of the single ported case, so the pair costs two directory copies
+    rather than two create_newcase runs. Function-scoped because the alldiff test below
+    mutates the first one.
+    """
+    return ported_case_copy("case1"), ported_case_copy("case2")
 
 
 @pytest.fixture
-def fake_RCC_empty_case(get_CrocoDash_case):
+def fake_RCC_empty_case(ported_case):
     from unittest.mock import MagicMock
 
     case = CaseBundle.__new__(CaseBundle)
@@ -43,20 +43,20 @@ def fake_RCC_empty_case(get_CrocoDash_case):
     ]
     mock_cime.get_value.side_effect = comp_map.get
     case._case = mock_cime
-    case.cesmroot = get_CrocoDash_case.cesmroot
+    case.cesmroot = ported_case.cesmroot
     return case
 
 
-def test_RCC_init(get_case_with_cf):
-    case = get_case_with_cf
+def test_RCC_init(ported_case):
+    case = ported_case
     rcc = CaseBundle(case.caseroot)
     assert rcc
 
 
 def test_diff_CESM_cases_nodiff(two_cesm_cases):
 
-    case1, case2 = two_cesm_cases
-    output = CaseBundle(case1.caseroot).diff(CaseBundle(case2.caseroot))
+    caseroot1, caseroot2 = two_cesm_cases
+    output = CaseBundle(caseroot1).diff(CaseBundle(caseroot2))
     assert output.xml_files_missing_in_new == []
     for key, value in output.user_nl_missing_params.items():
         assert value == []
@@ -65,36 +65,36 @@ def test_diff_CESM_cases_nodiff(two_cesm_cases):
 
 
 def test_diff_CESM_cases_alldiff(two_cesm_cases):
-    case1, case2 = two_cesm_cases
-    # add in a .xml file to case1.caseroot folder
-    xml_file = Path(case1.caseroot) / "test.xml"
+    caseroot1, caseroot2 = two_cesm_cases
+    # add in a .xml file to caseroot1 folder
+    xml_file = Path(caseroot1) / "test.xml"
     xml_file.write_text("<test>data</test>")
 
     # run subprocess.run xmlchange in case1.caseroot folder for JOB_PRIORITY=premium with -N flag
     subprocess.run(
         ["./xmlchange", "JOB_PRIORITY=premium", "-N"],
-        cwd=case1.caseroot,
+        cwd=caseroot1,
     )
 
-    # add a file to case1.caseroot/SourceMods/src.mom called bleh.dummy
-    srcmods_dir = Path(case1.caseroot) / "SourceMods" / "src.mom"
+    # add a file to caseroot1/SourceMods/src.mom called bleh.dummy
+    srcmods_dir = Path(caseroot1) / "SourceMods" / "src.mom"
     dummy_file = srcmods_dir / "bleh.dummy"
     dummy_file.write_text("dummy content")
 
-    # add a line to case1.caseroot/user_nl_mom with DEBUG=TRUE
-    user_nl_path = Path(case1.caseroot) / "user_nl_mom"
+    # add a line to caseroot1/user_nl_mom with DEBUG=TRUE
+    user_nl_path = Path(caseroot1) / "user_nl_mom"
     with open(user_nl_path, "a") as f:
         f.write("\nDEBUG=TRUE\n")
 
-    output = CaseBundle(case1.caseroot).diff(CaseBundle(case2.caseroot))
+    output = CaseBundle(caseroot1).diff(CaseBundle(caseroot2))
     assert output.xml_files_missing_in_new == ["test.xml"]
     assert output.user_nl_missing_params["mom"] == ["DEBUG"]
     assert output.source_mods_missing_files == ["src.mom/bleh.dummy"]
     assert output.xmlchanges_missing == ["JOB_PRIORITY"]
 
 
-def test_load_state_from_crocodash_init_args(get_case_with_cf):
-    case = get_case_with_cf
+def test_load_state_from_crocodash_init_args(ported_case):
+    case = ported_case
     rcc = CaseBundle(case.caseroot)
     init_args = rcc.init_args
 
@@ -104,45 +104,36 @@ def test_load_state_from_crocodash_init_args(get_case_with_cf):
     assert str(init_args["vgrid_path"]).startswith("ocean_vgrid_pana")
 
 
-def test_load_state_from_crocodash_forcing_config(
-    CrocoDash_case_factory, tmp_path_factory
-):
-    case1 = CrocoDash_case_factory(tmp_path_factory.mktemp("forcing_config_args"))
-    case1.configure_forcings(
-        date_range=["2020-01-01 00:00:00", "2020-01-09 00:00:00"],
-        tidal_constituents=["M2"],
-        tpxo_elevation_filepath="s3://crocodile-cesm/CrocoDash/data/tpxo/h_tpxo9.v1.zarr/",
-        tpxo_velocity_filepath="s3://crocodile-cesm/CrocoDash/data/tpxo/u_tpxo9.v1.zarr/",
-    )
-    rcc = CaseBundle(case1.caseroot)
+def test_load_state_from_crocodash_forcing_config(ported_case):
+    rcc = CaseBundle(ported_case.caseroot)
     assert "tides" in rcc.forcing_config
 
 
-def test_identify_non_standard_case_information(get_shareable_CrocoDash_case):
+def test_identify_non_standard_case_information(ported_case, ported_case_copy):
 
-    case1 = get_shareable_CrocoDash_case
+    caseroot1 = ported_case_copy("non-standard")
 
-    xml_file = Path(case1.caseroot) / "test.xml"
+    xml_file = Path(caseroot1) / "test.xml"
     xml_file.write_text("<test>data</test>")
 
     # run subprocess.run xmlchange in case1.caseroot folder for JOB_PRIORITY=premium with -N flag
     subprocess.run(
         ["./xmlchange", "JOB_PRIORITY=premium", "-N"],
-        cwd=case1.caseroot,
+        cwd=caseroot1,
     )
 
-    # add a file to case1.caseroot/SourceMods/src.mom called bleh.dummy
-    srcmods_dir = Path(case1.caseroot) / "SourceMods" / "src.mom"
+    # add a file to caseroot1/SourceMods/src.mom called bleh.dummy
+    srcmods_dir = Path(caseroot1) / "SourceMods" / "src.mom"
     dummy_file = srcmods_dir / "bleh.dummy"
     dummy_file.write_text("dummy content")
 
-    # add a line to case1.caseroot/user_nl_mom with DEBUG=TRUE
-    user_nl_path = Path(case1.caseroot) / "user_nl_mom"
+    # add a line to caseroot1/user_nl_mom with DEBUG=TRUE
+    user_nl_path = Path(caseroot1) / "user_nl_mom"
     with open(user_nl_path, "a") as f:
         f.write("\nDEBUG=TRUE\n")
-    rcc = CaseBundle(case1.caseroot)
+    rcc = CaseBundle(caseroot1)
     output = rcc.identify_non_standard_case_info(
-        case1.cime.cimeroot.parent, case1.machine, case1.project
+        ported_case.cime.cimeroot.parent, ported_case.machine, ported_case.project
     )
     assert output.xml_files_missing_in_new == ["test.xml"]
     assert output.user_nl_missing_params["mom"] == ["DEBUG"]
@@ -150,8 +141,8 @@ def test_identify_non_standard_case_information(get_shareable_CrocoDash_case):
     assert output.xmlchanges_missing == ["JOB_PRIORITY"]
 
 
-def test_read_user_nl_mom_lines_as_obj(get_CrocoDash_case):
-    case = get_CrocoDash_case
+def test_read_user_nl_mom_lines_as_obj(ported_case):
+    case = ported_case
     rcc = CaseBundle(case.caseroot)
     rcc.caseroot = case.caseroot
     user_nl_mom_obj = rcc._read_user_nl_lines_as_obj("mom")
@@ -160,9 +151,9 @@ def test_read_user_nl_mom_lines_as_obj(get_CrocoDash_case):
     )
 
 
-def test_get_case_obj(get_CrocoDash_case):
-    case = _get_case_obj(get_CrocoDash_case.caseroot)
-    assert case.get_value("COMPSET") == get_CrocoDash_case.compset_lname + "_SESP"
+def test_get_case_obj(ported_case):
+    case = _get_case_obj(ported_case.caseroot)
+    assert case.get_value("COMPSET") == ported_case.compset_lname + "_SESP"
 
 
 # Need to test xml, sourcemods, user_nls, init
@@ -170,16 +161,20 @@ def test_get_case_obj(get_CrocoDash_case):
 # Add bundle test
 
 
-def test_bundle_with_modifications(CrocoDash_case_factory, tmp_path_factory, tmp_path):
+def test_bundle_with_modifications(ported_case, ported_case_copy, tmp_path):
     """Test bundle with XML files and sourceMods modifications."""
-    case = CrocoDash_case_factory(tmp_path_factory.mktemp(f"case-{uuid4().hex}"))
+    # A copy of the ported case, with its own inputdir because this test seeds fake
+    # forcing files into ocnice. The copy already carries the ported case's forcing
+    # configuration, so there is nothing to configure here.
+    caseroot = ported_case_copy("modifications", with_inputdir=True)
+    inputdir = caseroot.parent / "inputdir"
     # Add modifications to the case
     # 1. Add an XML file
-    xml_file = Path(case.caseroot) / "custom_settings.xml"
+    xml_file = Path(caseroot) / "custom_settings.xml"
     xml_file.write_text("<config><setting>value</setting></config>")
 
     # 2. Add a sourceMods file
-    srcmods_dir = Path(case.caseroot) / "SourceMods" / "src.mom"
+    srcmods_dir = Path(caseroot) / "SourceMods" / "src.mom"
     srcmods_dir.mkdir(parents=True, exist_ok=True)
     srcmods_file = srcmods_dir / "custom_module.F90"
     srcmods_file.write_text(
@@ -187,35 +182,27 @@ def test_bundle_with_modifications(CrocoDash_case_factory, tmp_path_factory, tmp
     )
 
     # 3. Modify user_nl_mom
-    user_nl_path = Path(case.caseroot) / "user_nl_mom"
+    user_nl_path = Path(caseroot) / "user_nl_mom"
     with open(user_nl_path, "a") as f:
         f.write("\nCUSTOM_PARAM=42\n")
 
-    # Configure forcings
-    case.configure_forcings(
-        date_range=["2020-01-01 00:00:00", "2020-01-09 00:00:00"],
-        tidal_constituents=["M2"],
-        tpxo_elevation_filepath="s3://crocodile-cesm/CrocoDash/data/tpxo/h_tpxo9.v1.zarr/",
-        tpxo_velocity_filepath="s3://crocodile-cesm/CrocoDash/data/tpxo/u_tpxo9.v1.zarr/",
-    )
-
     # Create fake files in ocnice directory
-    ocnice_dir = Path(case.inputdir) / "ocnice"
+    ocnice_dir = Path(inputdir) / "ocnice"
     (ocnice_dir / "forcing_obc_segment_fake.nc").touch()
     (ocnice_dir / "tz_fake.nc").touch()
 
     output_dir = tmp_path / "bundle_output_modified"
     output_dir.mkdir()
 
-    rcc = CaseBundle(case.caseroot)
+    rcc = CaseBundle(caseroot)
     rcc.identify_non_standard_case_info(
-        case.cime.cimeroot.parent, case.machine, case.project
+        ported_case.cime.cimeroot.parent, ported_case.machine, ported_case.project
     )
     # Run the function
     rcc.bundle(output_dir)
 
     # Check that case_bundle folder was created
-    case_bundle = output_dir / f"{case.caseroot.name}_case_bundle"
+    case_bundle = output_dir / f"{caseroot.name}_case_bundle"
     assert case_bundle.exists()
 
     # Check that XML files were copied
@@ -274,14 +261,14 @@ def test_bundle_with_modifications(CrocoDash_case_factory, tmp_path_factory, tmp
     assert "CUSTOM_PARAM=42" in user_nl_content
 
 
-def test_read_user_nls(fake_RCC_empty_case, get_CrocoDash_case):
+def test_read_user_nls(fake_RCC_empty_case, ported_case):
     rcc = fake_RCC_empty_case
-    rcc.caseroot = get_CrocoDash_case.caseroot
+    rcc.caseroot = ported_case.caseroot
     rcc._read_user_nls()
     assert "mom" in rcc.user_nl_objs.keys()
     assert "datm" in rcc.user_nl_objs.keys()
     assert rcc.get_user_nl_value("mom", "INPUTDIR") == str(
-        get_CrocoDash_case.inputdir / "ocnice"
+        ported_case.inputdir / "ocnice"
     )
 
 
