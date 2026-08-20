@@ -603,6 +603,7 @@ document.write(`
 <li class="toctree-l3"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.cice.CICEConfigurator"><code class="docutils literal notranslate"><span class="pre">CICEConfigurator</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.cice.CICEConfigurator.allowed_compsets"><code class="docutils literal notranslate"><span class="pre">CICEConfigurator.allowed_compsets</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.cice.CICEConfigurator.configure"><code class="docutils literal notranslate"><span class="pre">CICEConfigurator.configure()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.cice.CICEConfigurator.get_output_filepaths"><code class="docutils literal notranslate"><span class="pre">CICEConfigurator.get_output_filepaths()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.cice.CICEConfigurator.input_params"><code class="docutils literal notranslate"><span class="pre">CICEConfigurator.input_params</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.cice.CICEConfigurator.name"><code class="docutils literal notranslate"><span class="pre">CICEConfigurator.name</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.cice.CICEConfigurator.output_params"><code class="docutils literal notranslate"><span class="pre">CICEConfigurator.output_params</span></code></a></li>
@@ -1197,11 +1198,11 @@ applies any non-standard CESM state that was captured at bundle time.</p>
 <p>Typical usage:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">fork</span> <span class="o">=</span> <span class="n">ForkBundle</span><span class="p">(</span><span class="n">bundle_dir</span><span class="p">)</span>
 <span class="n">case</span> <span class="o">=</span> <span class="n">fork</span><span class="o">.</span><span class="n">fork</span><span class="p">(</span>
-    <span class="n">cesmroot</span><span class="o">=</span><span class="s2">&quot;/path/to/cesm&quot;</span><span class="p">,</span>
-    <span class="n">machine</span><span class="o">=</span><span class="s2">&quot;derecho&quot;</span><span class="p">,</span>
-    <span class="n">project_number</span><span class="o">=</span><span class="s2">&quot;PROJ123&quot;</span><span class="p">,</span>
-    <span class="n">new_caseroot</span><span class="o">=</span><span class="s2">&quot;/path/to/new_case&quot;</span><span class="p">,</span>
-    <span class="n">new_inputdir</span><span class="o">=</span><span class="s2">&quot;/path/to/new_inputdir&quot;</span><span class="p">,</span>
+    <span class="n">cesmroot</span><span class="o">=</span><span class="s2">"/path/to/cesm"</span><span class="p">,</span>
+    <span class="n">machine</span><span class="o">=</span><span class="s2">"derecho"</span><span class="p">,</span>
+    <span class="n">project_number</span><span class="o">=</span><span class="s2">"PROJ123"</span><span class="p">,</span>
+    <span class="n">new_caseroot</span><span class="o">=</span><span class="s2">"/path/to/new_case"</span><span class="p">,</span>
+    <span class="n">new_inputdir</span><span class="o">=</span><span class="s2">"/path/to/new_inputdir"</span><span class="p">,</span>
 <span class="p">)</span>
 </pre></div>
 </div>

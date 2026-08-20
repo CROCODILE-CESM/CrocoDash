@@ -567,13 +567,13 @@ lives in three submodules:</p>
 <h2>Testing<a class="headerlink" href="#testing" title="Link to this heading">#</a></h2>
 <p>CrocoDash uses <code class="docutils literal notranslate"><span class="pre">pytest</span></code>. Run from the repo root:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Full suite (mocked / fast)</span>
-pytest<span class="w"> </span>--ignore<span class="o">=</span>CrocoDash/visualCaseGen<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;not workflow&quot;</span>
+pytest<span class="w"> </span>--ignore<span class="o">=</span>CrocoDash/visualCaseGen<span class="w"> </span>-m<span class="w"> </span><span class="s2">"not workflow"</span>
 
 <span class="c1"># Workflow tests (slower, may hit real data)</span>
-pytest<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;workflow&quot;</span>
+pytest<span class="w"> </span>-m<span class="w"> </span><span class="s2">"workflow"</span>
 
 <span class="c1"># With coverage report</span>
-pytest<span class="w"> </span>--ignore<span class="o">=</span>CrocoDash/visualCaseGen<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;not workflow&quot;</span><span class="w"> </span><span class="se">\</span>
+pytest<span class="w"> </span>--ignore<span class="o">=</span>CrocoDash/visualCaseGen<span class="w"> </span>-m<span class="w"> </span><span class="s2">"not workflow"</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--cov<span class="o">=</span>CrocoDash<span class="w"> </span>--cov-report<span class="o">=</span>xml<span class="w"> </span>--cov-branch
 </pre></div>
 </div>

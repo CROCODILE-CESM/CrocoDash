@@ -504,6 +504,7 @@ document.write(`
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.cice.CICEConfigurator"><code class="docutils literal notranslate"><span class="pre">CICEConfigurator</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.cice.CICEConfigurator.allowed_compsets"><code class="docutils literal notranslate"><span class="pre">CICEConfigurator.allowed_compsets</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.cice.CICEConfigurator.configure"><code class="docutils literal notranslate"><span class="pre">CICEConfigurator.configure()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.cice.CICEConfigurator.get_output_filepaths"><code class="docutils literal notranslate"><span class="pre">CICEConfigurator.get_output_filepaths()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.cice.CICEConfigurator.input_params"><code class="docutils literal notranslate"><span class="pre">CICEConfigurator.input_params</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.cice.CICEConfigurator.name"><code class="docutils literal notranslate"><span class="pre">CICEConfigurator.name</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.cice.CICEConfigurator.output_params"><code class="docutils literal notranslate"><span class="pre">CICEConfigurator.output_params</span></code></a></li>
@@ -1368,6 +1369,19 @@ velocity restoring.</p>
 <dd><p>Bind input values to parameters and files.</p>
 </dd></dl>
 
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.forcing.cice.CICEConfigurator.get_output_filepaths">
+<span class="sig-name descname"><span class="pre">get_output_filepaths</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ocn_ice_directory</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.cice.CICEConfigurator.get_output_filepaths" title="Link to this definition">#</a></dt>
+<dd><p>CICE’s forcing file, which lives beside ocnice/ rather than in it.</p>
+<p>The base implementation walks output_params for is_file entries, but all
+of CICE’s are namelist settings – the forcing file’s location is fixed
+by process() rather than carried in a parameter. Without this override
+the base returns nothing, so CaseBundle.bundle() copies no CICE file at
+all and validate_output_filepaths() passes vacuously.</p>
+<p>ocn_ice_directory is &lt;inputdir&gt;/ocnice; process() writes to
+&lt;inputdir&gt;/sea_ice, hence the sibling lookup.</p>
+</dd></dl>
+
 <dl class="py attribute">
 <dt class="sig sig-object py" id="CrocoDash.forcing.cice.CICEConfigurator.input_params">
 <span class="sig-name descname"><span class="pre">input_params</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#CrocoDash.forcing.base.Param" title="CrocoDash.forcing.base.Param"><span class="pre">Param</span></a><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[InputValueParam(name='cice_product_name'),</span> <span class="pre">InputValueParam(name='cice_function_name'),</span> <span class="pre">InputValueParam(name='cice_function_args'),</span> <span class="pre">InputValueParam(name='n_halo_cells')]</span></em><a class="headerlink" href="#CrocoDash.forcing.cice.CICEConfigurator.input_params" title="Link to this definition">#</a></dt>
@@ -1433,7 +1447,7 @@ when a new forcing type is added. The CLI entry point is <code class="docutils l
 <p>Typical Python usage:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">CrocoDash.forcing.driver</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_workflow</span>
 
-<span class="n">run_workflow</span><span class="p">(</span><span class="n">config_path</span><span class="o">=</span><span class="s2">&quot;~/croc_input/mycase/extract_forcings/config.json&quot;</span><span class="p">,</span> <span class="n">bc</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ic</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">run_workflow</span><span class="p">(</span><span class="n">config_path</span><span class="o">=</span><span class="s2">"~/croc_input/mycase/extract_forcings/config.json"</span><span class="p">,</span> <span class="n">bc</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ic</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
 <dl class="py function">
@@ -2056,6 +2070,7 @@ needs to import it by name.</p>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.cice.CICEConfigurator"><code class="docutils literal notranslate"><span class="pre">CICEConfigurator</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.cice.CICEConfigurator.allowed_compsets"><code class="docutils literal notranslate"><span class="pre">CICEConfigurator.allowed_compsets</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.cice.CICEConfigurator.configure"><code class="docutils literal notranslate"><span class="pre">CICEConfigurator.configure()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.cice.CICEConfigurator.get_output_filepaths"><code class="docutils literal notranslate"><span class="pre">CICEConfigurator.get_output_filepaths()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.cice.CICEConfigurator.input_params"><code class="docutils literal notranslate"><span class="pre">CICEConfigurator.input_params</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.cice.CICEConfigurator.name"><code class="docutils literal notranslate"><span class="pre">CICEConfigurator.name</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.cice.CICEConfigurator.output_params"><code class="docutils literal notranslate"><span class="pre">CICEConfigurator.output_params</span></code></a></li>
