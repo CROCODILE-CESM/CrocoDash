@@ -22,6 +22,10 @@ from tests.fixtures.domains import (
 
 EDGES = ("north", "south", "east", "west")
 
+# Above this true angular width a domain is near-global in longitude, so no
+# bounding box can be meaningfully "too wide" for it. Polar caps land here.
+NEAR_GLOBAL_SPAN_DEG = 180.0
+
 # Opts this whole module into per-domain xfails, so a domain that cannot
 # produce bounding boxes at all (cyclic_global) is pinned rather than erroring.
 pytestmark = pytest.mark.needs_forcing
@@ -95,19 +99,37 @@ def _angular_lon_span(lon):
 
 
 def test_bbox_lon_span_matches_domain_width(domain, domain_grid, boxes, request):
-    """A domain's bounding box must not be much wider than the domain itself.
+    """A modest domain must not get a near-global longitude bounding box.
 
-    The failure this guards against is a small domain reporting a near-global
-    longitude range, which turns a modest subset into a whole-planet data
-    fetch. Polar caps are exempt in spirit but need no exemption in code: their
-    true angular span really is ~360 degrees, so they compare equal.
+    The failure this guards against turns a few-hundred-km subset into a
+    whole-planet data fetch, silently, because raw min/max over longitudes that
+    wrap through +/-180 spans almost 360 degrees.
+
+    Domains that genuinely span most of the globe are exempt, and the exemption
+    is the point rather than a loophole. A polar cap really does touch every
+    meridian -- its true angular span is ~358.6 degrees -- so no bounding box
+    can be "too wide" for it, and nothing useful is left to assert. Separating
+    those from the spurious case is what _angular_lon_span is for: raw min/max
+    cannot tell a 5-degree domain straddling the dateline from a cap, but the
+    largest-gap method can.
+
+    This is deliberately independent of whether mom6_forge#113 is present.
+    That fix widens any >180-degree raw span to the full range instead of
+    narrowing it, which leaves the caps (already exempt here) reporting ~360
+    and leaves rotated_on_dateline just as inflated -- hence still xfailed.
     """
+    true_span = _angular_lon_span(domain_grid.supergrid.to_ds().x.values)
+    if true_span > NEAR_GLOBAL_SPAN_DEG:
+        pytest.skip(
+            f"{domain.key} genuinely spans {true_span:.1f} deg of longitude, so a "
+            "near-global bounding box is correct, not inflated"
+        )
+
     if domain.key in INFLATED_BBOX_DOMAINS:
         request.applymarker(
             pytest.mark.xfail(reason=BBOX_ANTIMERIDIAN_SPAN_BUG, strict=True)
         )
 
-    true_span = _angular_lon_span(domain_grid.supergrid.to_ds().x.values)
     bbox_span = boxes["ic"]["lon_max"] - boxes["ic"]["lon_min"]
     assert bbox_span <= true_span + 1e-6, (
         f"{domain.key}: bounding box spans {bbox_span:.3f} deg of longitude "
