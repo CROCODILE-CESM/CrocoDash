@@ -168,6 +168,7 @@
 <li class="toctree-l2"><a class="reference internal" href="for_users/compsets_and_inputs.html">Regional Compsets &amp; Input Parameters</a></li>
 <li class="toctree-l2"><a class="reference internal" href="for_users/datasets.html">Accessing Raw Data (raw_data_access)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="for_users/shareable.html">Sharing Cases</a></li>
+<li class="toctree-l2"><a class="reference internal" href="for_users/template.html">Templates</a></li>
 <li class="toctree-l2"><a class="reference internal" href="for_users/additional_resources.html">Additional Resources</a></li>
 <li class="toctree-l2"><a class="reference internal" href="for_users/cli.html">Command Line Interface</a></li>
 </ul>
@@ -381,18 +382,18 @@ document.write(`
 <h2>CrocoDash Installation<a class="headerlink" href="#crocodash-installation" title="Link to this heading">#</a></h2>
 <ol class="arabic">
 <li><p>Clone the repository from GitHub</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>--recurse-submodules<span class="w"> </span>https://github.com/CROCODILE-CESM/CrocoDash.git<span class="w"> </span>-b<span class="w"> </span>v0.1.0-beta
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>--recurse-submodules<span class="w"> </span>https://github.com/CROCODILE-CESM/CrocoDash.git
 </pre></div>
 </div>
 </li>
 <li><p>Create the environment (called CrocoDash by default) using the provided environment.yml file</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>env<span class="w"> </span>create<span class="w"> </span>-f<span class="w"> </span>environment.yml<span class="w"> </span>--yes<span class="w"> </span><span class="c1"># Use Mamba if you have it installed! It&#39;s faster.</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>env<span class="w"> </span>create<span class="w"> </span>-f<span class="w"> </span>environment.yml<span class="w"> </span>--yes<span class="w"> </span><span class="c1"># Use Mamba if you have it installed! It's faster.</span>
 </pre></div>
 </div>
 </li>
 <li><p>Activate the environment!</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>activate<span class="w"> </span>CrocoDash
-pytest<span class="w"> </span>tests/test_installation.py<span class="w"> </span><span class="c1"># If you&#39;d like, run this to see if the package is installed correctly</span>
+pytest<span class="w"> </span>tests/test_installation.py<span class="w"> </span><span class="c1"># If you'd like, run this to see if the package is installed correctly</span>
 </pre></div>
 </div>
 </li>

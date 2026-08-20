@@ -45,7 +45,7 @@
     <link rel="icon" href="../_static/crocodile.png"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Additional Resources" href="additional_resources.html" />
+    <link rel="next" title="Templates" href="template.html" />
     <link rel="prev" title="Accessing Raw Data (raw_data_access)" href="datasets.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -168,6 +168,7 @@
 <li class="toctree-l2"><a class="reference internal" href="compsets_and_inputs.html">Regional Compsets &amp; Input Parameters</a></li>
 <li class="toctree-l2"><a class="reference internal" href="datasets.html">Accessing Raw Data (raw_data_access)</a></li>
 <li class="toctree-l2 current active"><a class="current reference internal" href="#">Sharing Cases</a></li>
+<li class="toctree-l2"><a class="reference internal" href="template.html">Templates</a></li>
 <li class="toctree-l2"><a class="reference internal" href="additional_resources.html">Additional Resources</a></li>
 <li class="toctree-l2"><a class="reference internal" href="cli.html">Command Line Interface</a></li>
 </ul>
@@ -398,19 +399,19 @@ carried over from the bundle.</p>
 <h2>Sender: CaseBundle<a class="headerlink" href="#sender-casebundle" title="Link to this heading">#</a></h2>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">CrocoDash.shareable</span><span class="w"> </span><span class="kn">import</span> <span class="n">CaseBundle</span>
 
-<span class="n">bundle</span> <span class="o">=</span> <span class="n">CaseBundle</span><span class="p">(</span><span class="s2">&quot;/path/to/caseroot&quot;</span><span class="p">)</span>
+<span class="n">bundle</span> <span class="o">=</span> <span class="n">CaseBundle</span><span class="p">(</span><span class="s2">"/path/to/caseroot"</span><span class="p">)</span>
 
 <span class="c1"># Optionally inspect the diff before bundling</span>
 <span class="n">diff</span> <span class="o">=</span> <span class="n">bundle</span><span class="o">.</span><span class="n">identify_non_standard_case_info</span><span class="p">(</span>
-    <span class="n">cesmroot</span><span class="o">=</span><span class="s2">&quot;/path/to/cesm&quot;</span><span class="p">,</span>
-    <span class="n">machine</span><span class="o">=</span><span class="s2">&quot;derecho&quot;</span><span class="p">,</span>
-    <span class="n">project_number</span><span class="o">=</span><span class="s2">&quot;PROJ123&quot;</span><span class="p">,</span>
+    <span class="n">cesmroot</span><span class="o">=</span><span class="s2">"/path/to/cesm"</span><span class="p">,</span>
+    <span class="n">machine</span><span class="o">=</span><span class="s2">"derecho"</span><span class="p">,</span>
+    <span class="n">project_number</span><span class="o">=</span><span class="s2">"PROJ123"</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">diff</span><span class="o">.</span><span class="n">xmlchanges_missing</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">diff</span><span class="o">.</span><span class="n">source_mods_missing_files</span><span class="p">)</span>
 
 <span class="c1"># Package everything into a portable folder</span>
-<span class="n">bundle_path</span> <span class="o">=</span> <span class="n">bundle</span><span class="o">.</span><span class="n">bundle</span><span class="p">(</span><span class="s2">&quot;/path/to/output_dir&quot;</span><span class="p">)</span>
+<span class="n">bundle_path</span> <span class="o">=</span> <span class="n">bundle</span><span class="o">.</span><span class="n">bundle</span><span class="p">(</span><span class="s2">"/path/to/output_dir"</span><span class="p">)</span>
 </pre></div>
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">identify_non_standard_case_info()</span></code> creates a temporary reference case using
@@ -454,14 +455,14 @@ already. The bundle folder contains:</p>
 <h2>Recipient: ForkBundle<a class="headerlink" href="#recipient-forkbundle" title="Link to this heading">#</a></h2>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">CrocoDash.shareable</span><span class="w"> </span><span class="kn">import</span> <span class="n">ForkBundle</span>
 
-<span class="n">fork</span> <span class="o">=</span> <span class="n">ForkBundle</span><span class="p">(</span><span class="s2">&quot;/path/to/bundle&quot;</span><span class="p">)</span>
+<span class="n">fork</span> <span class="o">=</span> <span class="n">ForkBundle</span><span class="p">(</span><span class="s2">"/path/to/bundle"</span><span class="p">)</span>
 
 <span class="n">case</span> <span class="o">=</span> <span class="n">fork</span><span class="o">.</span><span class="n">fork</span><span class="p">(</span>
-    <span class="n">cesmroot</span><span class="o">=</span><span class="s2">&quot;/path/to/cesm&quot;</span><span class="p">,</span>
-    <span class="n">machine</span><span class="o">=</span><span class="s2">&quot;derecho&quot;</span><span class="p">,</span>
-    <span class="n">project_number</span><span class="o">=</span><span class="s2">&quot;PROJ123&quot;</span><span class="p">,</span>
-    <span class="n">new_caseroot</span><span class="o">=</span><span class="s2">&quot;/path/to/new_case&quot;</span><span class="p">,</span>
-    <span class="n">new_inputdir</span><span class="o">=</span><span class="s2">&quot;/path/to/new_inputdir&quot;</span><span class="p">,</span>
+    <span class="n">cesmroot</span><span class="o">=</span><span class="s2">"/path/to/cesm"</span><span class="p">,</span>
+    <span class="n">machine</span><span class="o">=</span><span class="s2">"derecho"</span><span class="p">,</span>
+    <span class="n">project_number</span><span class="o">=</span><span class="s2">"PROJ123"</span><span class="p">,</span>
+    <span class="n">new_caseroot</span><span class="o">=</span><span class="s2">"/path/to/new_case"</span><span class="p">,</span>
+    <span class="n">new_inputdir</span><span class="o">=</span><span class="s2">"/path/to/new_inputdir"</span><span class="p">,</span>
 <span class="p">)</span>
 </pre></div>
 </div>
@@ -482,12 +483,12 @@ non-standard state per the plan.</p>
 <h3>Non-interactive fork<a class="headerlink" href="#non-interactive-fork" title="Link to this heading">#</a></h3>
 <p>Pass <code class="docutils literal notranslate"><span class="pre">plan=</span></code> to skip the CESM-state copy prompts (the YAML review still runs):</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">case</span> <span class="o">=</span> <span class="n">fork</span><span class="o">.</span><span class="n">fork</span><span class="p">(</span>
-    <span class="n">cesmroot</span><span class="o">=</span><span class="s2">&quot;/path/to/cesm&quot;</span><span class="p">,</span>
-    <span class="n">machine</span><span class="o">=</span><span class="s2">&quot;derecho&quot;</span><span class="p">,</span>
-    <span class="n">project_number</span><span class="o">=</span><span class="s2">&quot;PROJ123&quot;</span><span class="p">,</span>
-    <span class="n">new_caseroot</span><span class="o">=</span><span class="s2">&quot;/path/to/new_case&quot;</span><span class="p">,</span>
-    <span class="n">new_inputdir</span><span class="o">=</span><span class="s2">&quot;/path/to/new_inputdir&quot;</span><span class="p">,</span>
-    <span class="n">plan</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;xml_files&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;user_nl&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;source_mods&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">&quot;xmlchanges&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
+    <span class="n">cesmroot</span><span class="o">=</span><span class="s2">"/path/to/cesm"</span><span class="p">,</span>
+    <span class="n">machine</span><span class="o">=</span><span class="s2">"derecho"</span><span class="p">,</span>
+    <span class="n">project_number</span><span class="o">=</span><span class="s2">"PROJ123"</span><span class="p">,</span>
+    <span class="n">new_caseroot</span><span class="o">=</span><span class="s2">"/path/to/new_case"</span><span class="p">,</span>
+    <span class="n">new_inputdir</span><span class="o">=</span><span class="s2">"/path/to/new_inputdir"</span><span class="p">,</span>
+    <span class="n">plan</span><span class="o">=</span><span class="p">{</span><span class="s2">"xml_files"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">"user_nl"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">"source_mods"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">"xmlchanges"</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
 <span class="p">)</span>
 </pre></div>
 </div>
@@ -502,18 +503,18 @@ the original case’s <code class="docutils literal notranslate"><span class="pr
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">CrocoDash.shareable</span><span class="w"> </span><span class="kn">import</span> <span class="n">duplicate_case</span>
 
 <span class="n">new_case</span> <span class="o">=</span> <span class="n">duplicate_case</span><span class="p">(</span>
-    <span class="n">caseroot</span><span class="o">=</span><span class="s2">&quot;/path/to/existing_case&quot;</span><span class="p">,</span>
-    <span class="n">new_caseroot</span><span class="o">=</span><span class="s2">&quot;/path/to/new_case&quot;</span><span class="p">,</span>
-    <span class="n">new_inputdir</span><span class="o">=</span><span class="s2">&quot;/path/to/new_inputdir&quot;</span><span class="p">,</span>
+    <span class="n">caseroot</span><span class="o">=</span><span class="s2">"/path/to/existing_case"</span><span class="p">,</span>
+    <span class="n">new_caseroot</span><span class="o">=</span><span class="s2">"/path/to/new_case"</span><span class="p">,</span>
+    <span class="n">new_inputdir</span><span class="o">=</span><span class="s2">"/path/to/new_inputdir"</span><span class="p">,</span>
 <span class="p">)</span>
 </pre></div>
 </div>
 <p>Pass <code class="docutils literal notranslate"><span class="pre">bundle_dir=</span></code> to also save a bundle as a side effect:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">new_case</span> <span class="o">=</span> <span class="n">duplicate_case</span><span class="p">(</span>
-    <span class="n">caseroot</span><span class="o">=</span><span class="s2">&quot;/path/to/existing_case&quot;</span><span class="p">,</span>
-    <span class="n">new_caseroot</span><span class="o">=</span><span class="s2">&quot;/path/to/new_case&quot;</span><span class="p">,</span>
-    <span class="n">new_inputdir</span><span class="o">=</span><span class="s2">&quot;/path/to/new_inputdir&quot;</span><span class="p">,</span>
-    <span class="n">bundle_dir</span><span class="o">=</span><span class="s2">&quot;/path/to/bundle&quot;</span><span class="p">,</span>
+    <span class="n">caseroot</span><span class="o">=</span><span class="s2">"/path/to/existing_case"</span><span class="p">,</span>
+    <span class="n">new_caseroot</span><span class="o">=</span><span class="s2">"/path/to/new_case"</span><span class="p">,</span>
+    <span class="n">new_inputdir</span><span class="o">=</span><span class="s2">"/path/to/new_inputdir"</span><span class="p">,</span>
+    <span class="n">bundle_dir</span><span class="o">=</span><span class="s2">"/path/to/bundle"</span><span class="p">,</span>
 <span class="p">)</span>
 </pre></div>
 </div>
@@ -551,7 +552,7 @@ crocodash<span class="w"> </span>fork<span class="w"> </span><span class="se">\<
 <span class="w">  </span>--cesmroot<span class="w"> </span>/path/to/cesm<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--machine<span class="w"> </span>derecho<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--project<span class="w"> </span>PROJ123<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--plan<span class="w"> </span><span class="s1">&#39;{&quot;xml_files&quot;: true, &quot;user_nl&quot;: true, &quot;source_mods&quot;: false, &quot;xmlchanges&quot;: true}&#39;</span>
+<span class="w">  </span>--plan<span class="w"> </span><span class="s1">'{"xml_files": true, "user_nl": true, "source_mods": false, "xmlchanges": true}'</span>
 </pre></div>
 </div>
 </section>
@@ -603,11 +604,11 @@ directly for fine-grained control:</p>
       </div>
     </a>
     <a class="right-next"
-       href="additional_resources.html"
+       href="template.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Additional Resources</p>
+        <p class="prev-next-title">Templates</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
