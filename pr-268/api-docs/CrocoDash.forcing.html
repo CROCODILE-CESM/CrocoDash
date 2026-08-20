@@ -581,6 +581,7 @@ document.write(`
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.ww3.WW3Configurator"><code class="docutils literal notranslate"><span class="pre">WW3Configurator</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.ww3.WW3Configurator.allowed_compsets"><code class="docutils literal notranslate"><span class="pre">WW3Configurator.allowed_compsets</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.ww3.WW3Configurator.configure"><code class="docutils literal notranslate"><span class="pre">WW3Configurator.configure()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.ww3.WW3Configurator.get_output_filepaths"><code class="docutils literal notranslate"><span class="pre">WW3Configurator.get_output_filepaths()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.ww3.WW3Configurator.input_params"><code class="docutils literal notranslate"><span class="pre">WW3Configurator.input_params</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.ww3.WW3Configurator.name"><code class="docutils literal notranslate"><span class="pre">WW3Configurator.name</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.ww3.WW3Configurator.output_params"><code class="docutils literal notranslate"><span class="pre">WW3Configurator.output_params</span></code></a></li>
@@ -1375,7 +1376,7 @@ when a new forcing type is added. The CLI entry point is <code class="docutils l
 <p>Typical Python usage:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">CrocoDash.forcing.driver</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_workflow</span>
 
-<span class="n">run_workflow</span><span class="p">(</span><span class="n">config_path</span><span class="o">=</span><span class="s2">&quot;~/croc_input/mycase/extract_forcings/config.json&quot;</span><span class="p">,</span> <span class="n">bc</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ic</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">run_workflow</span><span class="p">(</span><span class="n">config_path</span><span class="o">=</span><span class="s2">"~/croc_input/mycase/extract_forcings/config.json"</span><span class="p">,</span> <span class="n">bc</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ic</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
 <dl class="py function">
@@ -1792,6 +1793,25 @@ Example: <cite>“(north|east|south|west)_unprocessed.(d{8})_(d{8}).nc”</cite>
 <dt class="sig sig-object py" id="CrocoDash.forcing.ww3.WW3Configurator.configure">
 <span class="sig-name descname"><span class="pre">configure</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.ww3.WW3Configurator.configure" title="Link to this definition">#</a></dt>
 <dd><p>Bind input values to parameters and files.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.forcing.ww3.WW3Configurator.get_output_filepaths">
+<span class="sig-name descname"><span class="pre">get_output_filepaths</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ocn_ice_directory</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.ww3.WW3Configurator.get_output_filepaths" title="Link to this definition">#</a></dt>
+<dd><p>Everything WW3 generated, which is a whole directory rather than a
+fixed set of named files.</p>
+<p>The base implementation walks output_params for is_file entries, and
+all of WW3’s are XML settings – WW3_GRID_INP_DIR even holds the
+directory rather than any single file. Without this override the base
+returns nothing, so CaseBundle.bundle() copies no WW3 input at all and
+validate_output_filepaths() passes vacuously.</p>
+<p>Globbing rather than naming files is deliberate: process() writes one
+ww3.pointN_spec.nc per boundary station, so the count is not known up
+front, and spec.list references those paths while ww3_bounc.nml
+references spec.list. The directory is the unit that stays coherent,
+which is also why WW3_GRID_INP_DIR points at it.</p>
+<p>ocn_ice_directory is &lt;inputdir&gt;/ocnice; process() writes to
+&lt;inputdir&gt;/wave, hence the sibling lookup.</p>
 </dd></dl>
 
 <dl class="py attribute">
@@ -2269,6 +2289,7 @@ needs to import it by name.</p>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.ww3.WW3Configurator"><code class="docutils literal notranslate"><span class="pre">WW3Configurator</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.ww3.WW3Configurator.allowed_compsets"><code class="docutils literal notranslate"><span class="pre">WW3Configurator.allowed_compsets</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.ww3.WW3Configurator.configure"><code class="docutils literal notranslate"><span class="pre">WW3Configurator.configure()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.ww3.WW3Configurator.get_output_filepaths"><code class="docutils literal notranslate"><span class="pre">WW3Configurator.get_output_filepaths()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.ww3.WW3Configurator.input_params"><code class="docutils literal notranslate"><span class="pre">WW3Configurator.input_params</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.ww3.WW3Configurator.name"><code class="docutils literal notranslate"><span class="pre">WW3Configurator.name</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.ww3.WW3Configurator.output_params"><code class="docutils literal notranslate"><span class="pre">WW3Configurator.output_params</span></code></a></li>
