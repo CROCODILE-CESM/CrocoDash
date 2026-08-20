@@ -710,8 +710,13 @@ def ask_yes_no(prompt: str, default=True) -> bool:
     try:
         answer = input(f"{prompt} (yes/no): ").strip().lower()
     except EOFError:
-        print("No input available, assuming 'no'.")
-        return False
+        # Fall back to `default`, matching ask_string() above and matching what
+        # pressing enter at an interactive prompt would do. Returning False
+        # regardless of the default made ForkBundle.fork() unusable
+        # non-interactively: its final "Proceed with this configuration?" is
+        # default=True, so an EOF turned into "Fork cancelled by user."
+        print(f"\nNo input detected, using default: {default!r}")
+        return default
     if answer in ("yes", "y"):
         return True
     if answer in ("no", "n"):
