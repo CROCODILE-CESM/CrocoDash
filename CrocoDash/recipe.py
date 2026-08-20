@@ -24,6 +24,12 @@ from CrocoDash.logging import setup_logger
 
 logger = setup_logger(__name__)
 
+# grid.type is a single key with two families of value: the supergrid flavours
+# Grid.__init__ already accepted (and which existing configs may already carry),
+# and the names of the alternative constructors.
+_GRID_SUPERGRID_TYPES = {"uniform_spherical", "rectilinear_cartesian"}
+_GRID_CONSTRUCTOR_TYPES = {"from_file", "from_projection", "from_center"}
+_GRID_TYPES = _GRID_SUPERGRID_TYPES | _GRID_CONSTRUCTOR_TYPES
 _TOPO_SOURCE_TYPES = {"flat", "dataset", "from_file"}
 _VGRID_TYPES = {"uniform", "hyperbolic", "from_file"}
 
@@ -47,6 +53,11 @@ def validate_config_structure(config):
     for key in ("cesmroot", "caseroot", "inputdir", "compset", "machine"):
         if key not in case_cfg:
             raise ValueError(f"case.{key} is required")
+
+    grid_cfg = config.get("grid", {})
+    grid_type = grid_cfg.get("type")
+    if grid_type is not None and grid_type not in _GRID_TYPES:
+        raise ValueError(f"grid.type must be one of {_GRID_TYPES}")
 
     topo_cfg = config.get("topo", {})
     source_cfg = topo_cfg.get("source", {})
@@ -78,12 +89,42 @@ def validate_config_structure(config):
 
 
 def build_grid(grid_cfg):
-    """Build a Grid from a config dict. Uses supergrid_path for file-based grids."""
-    if "supergrid_path" in grid_cfg:
-        grid = Grid.from_supergrid(grid_cfg["supergrid_path"])
-        if grid_cfg.get("name"):
-            grid.name = grid_cfg["name"]
-        return grid
+    """Build a Grid from a config dict. Dispatches on grid.type.
+
+    grid.type selects the constructor:
+
+      uniform_spherical     Grid(...)              lon/lat box (the default)
+      rectilinear_cartesian Grid(..., type=...)    the Cartesian supergrid
+      from_file             Grid.from_supergrid    an existing ocean_hgrid.nc
+      from_projection       Grid.from_projection   projected extents, e.g. a
+                                                   polar cap in EPSG:3995/3031
+      from_center           Grid.from_center       rotated box about a point
+
+    The first two are the values Grid.__init__ has always taken, and are passed
+    through to it untouched -- a config written before the other three existed
+    keeps working unchanged. The rest are stripped before the remaining keys are
+    handed to the named constructor, whose signature is the source of truth for
+    what those keys may be.
+
+    With no type at all, a config carrying supergrid_path is from_file and
+    anything else is an ordinary Grid(...).
+    """
+    grid_type = grid_cfg.get("type")
+    if grid_type is None and "supergrid_path" in grid_cfg:
+        grid_type = "from_file"
+
+    if grid_type in _GRID_CONSTRUCTOR_TYPES:
+        cfg = {k: v for k, v in grid_cfg.items() if k != "type"}
+        if grid_type == "from_file":
+            grid = Grid.from_supergrid(cfg["supergrid_path"])
+            if cfg.get("name"):
+                grid.name = cfg["name"]
+            return grid
+        if grid_type == "from_projection":
+            return Grid.from_projection(**cfg)
+        return Grid.from_center(**cfg)
+
+    # uniform_spherical, rectilinear_cartesian, or absent: Grid validates it.
     return Grid(**grid_cfg)
 
 

@@ -264,6 +264,76 @@ def test_build_grid_from_supergrid_preserves_shape(gen_grid_topo_vgrid, tmp_path
     assert grid.ny == orig_grid.ny
 
 
+def test_build_grid_from_projection():
+    """A polar cap: unreachable from a config until grid.type existed."""
+    grid = build_grid(
+        {
+            "type": "from_projection",
+            "crs": "EPSG:3995",
+            "x_min": -200e3,
+            "x_max": 200e3,
+            "y_min": -200e3,
+            "y_max": 200e3,
+            "resolution_m": 50e3,
+            "name": "arctic",
+        }
+    )
+    assert isinstance(grid, Grid)
+    assert grid.name == "arctic"
+    # The north pole is inside the domain, so the grid is not lat/lon aligned.
+    assert not grid.is_rectangular()
+    assert float(grid.tlat.max()) > 88.0
+
+
+def test_build_grid_from_center():
+    grid = build_grid(
+        {
+            "type": "from_center",
+            "center_lat": 40.0,
+            "center_lon": -70.0,
+            "width_m": 200e3,
+            "height_m": 150e3,
+            "resolution_m": 25e3,
+            "angle_deg": 45.0,
+            "name": "estuary",
+        }
+    )
+    assert isinstance(grid, Grid)
+    assert grid.name == "estuary"
+    assert not grid.is_rectangular()
+
+
+def test_build_grid_type_is_optional():
+    """Configs written before grid.type existed must keep working."""
+    cfg = {"lenx": 4.0, "leny": 3.0, "resolution": 0.5, "xstart": 278.0, "ystart": 7.0}
+    assert build_grid(cfg).nx == build_grid({**cfg, "type": "uniform_spherical"}).nx
+
+
+def test_build_grid_passes_through_supergrid_flavour():
+    """grid.type doubles as Grid.__init__'s own type argument.
+
+    Grid(**cfg) has always forwarded `type`, so rectilinear_cartesian may
+    already appear in configs in the wild. The constructor dispatch must not
+    swallow it.
+    """
+    grid = build_grid(
+        {
+            "type": "rectilinear_cartesian",
+            "lenx": 4.0,
+            "leny": 3.0,
+            "resolution": 0.5,
+            "xstart": 278.0,
+            "ystart": 7.0,
+        }
+    )
+    assert isinstance(grid, Grid)
+
+
+def test_build_grid_rejects_unknown_type():
+    with pytest.raises(ValueError, match="grid.type must be one of"):
+        validate_config_structure({**MINIMAL_VALID_CONFIG, "grid": {"type": "banana"}})
+
+
 # ---------------------------------------------------------------------------
 # build_topo
 # ---------------------------------------------------------------------------
