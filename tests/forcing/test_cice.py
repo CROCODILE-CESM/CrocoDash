@@ -7,7 +7,11 @@ import pytest
 import xarray as xr
 
 from CrocoDash.forcing.base import WorkflowContext
-from CrocoDash.forcing.cice import CICEConfigurator
+from CrocoDash.forcing.cice import (
+    CICEConfigurator,
+    FORCING_FILENAME,
+    SEA_ICE_SUBDIR,
+)
 
 # Reference files for the cice_restart product -- same as
 # tests/raw_data_access/test_cice.py. Duplicated here (rather than imported)
@@ -144,3 +148,52 @@ def test_process_cice_forcing_with_reference_ice(tmp_path, gen_grid_topo_vgrid):
     assert ds["uvel"].encoding.get("coordinates") == "lat lon"
     assert "_FillValue" not in ds["uvel"].encoding
     assert np.isfinite(ds["aicen"].values).all()
+
+
+# ---------------------------------------------------------------------------
+# get_output_filepaths
+# ---------------------------------------------------------------------------
+#
+# CICE's output_params are all namelist settings, so the base implementation
+# (which walks output_params for is_file entries) finds nothing. Left that way,
+# CaseBundle.bundle() silently ships a bundle with no CICE forcing in it and
+# validate_output_filepaths() passes without checking anything.
+
+
+def test_get_output_filepaths_finds_the_forcing_file(tmp_path):
+    """The file lives beside ocnice/, not in it."""
+    sea_ice = tmp_path / SEA_ICE_SUBDIR
+    sea_ice.mkdir()
+    expected = sea_ice / FORCING_FILENAME
+    expected.touch()
+
+    paths = CICEConfigurator().get_output_filepaths(tmp_path / "ocnice")
+    assert [Path(p) for p in paths] == [expected]
+
+
+def test_get_output_filepaths_empty_when_not_yet_processed(tmp_path):
+    (tmp_path / "ocnice").mkdir()
+    assert CICEConfigurator().get_output_filepaths(tmp_path / "ocnice") == []
+
+
+def test_get_output_filepaths_agrees_with_process(tmp_path, gen_grid_topo_vgrid):
+    """The writer and the reader must point at the same path.
+
+    This is the regression that matters: process() and get_output_filepaths()
+    each built the path independently before they were given shared constants,
+    so either could move without the other noticing.
+    """
+    grid, _, _ = gen_grid_topo_vgrid
+    grid.write_supergrid(tmp_path / "grid.nc")
+
+    configurator = CICEConfigurator(
+        cice_product_name="reference_ice",
+        cice_function_name="get_reference_ice_data",
+        n_halo_cells=2,
+    )
+    configurator.process(_make_ctx(tmp_path, supergrid_path=tmp_path / "grid.nc"))
+
+    paths = configurator.get_output_filepaths(tmp_path / "ocnice")
+    assert len(paths) == 1
+    assert Path(paths[0]).exists()
+    assert configurator.validate_output_filepaths(tmp_path / "ocnice")

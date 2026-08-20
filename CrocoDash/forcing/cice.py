@@ -54,6 +54,12 @@ from CrocoDash.forcing.base import *
 from CrocoDash.raw_data_access.registry import ProductRegistry
 from CrocoDash.raw_data_access.base import CICEForcingProduct
 
+# Where process() writes CICE's forcing file, and therefore where
+# get_output_filepaths() looks for it. Kept in one place so the writer and the
+# reader cannot drift apart.
+SEA_ICE_SUBDIR = "sea_ice"
+FORCING_FILENAME = "cice_forcing.nc"
+
 # CICE's B-grid stores velocity (uvel/vvel) and its own mask (iceumask) at
 # each T-cell's own NW corner -- grid.qlon/qlat, offset by one row/column
 # (T-cell (j, i)'s NW corner is qlon[j+1, i]) -- not grid.ulon/ulat (MOM6's
@@ -216,6 +222,21 @@ class CICEConfigurator(BaseConfigurator):
         self.set_output_param("trestore", 90)
         super().configure()
 
+    def get_output_filepaths(self, ocn_ice_directory):
+        """CICE's forcing file, which lives beside ocnice/ rather than in it.
+
+        The base implementation walks output_params for is_file entries, but all
+        of CICE's are namelist settings -- the forcing file's location is fixed
+        by process() rather than carried in a parameter. Without this override
+        the base returns nothing, so CaseBundle.bundle() copies no CICE file at
+        all and validate_output_filepaths() passes vacuously.
+
+        ocn_ice_directory is <inputdir>/ocnice; process() writes to
+        <inputdir>/sea_ice, hence the sibling lookup.
+        """
+        path = Path(ocn_ice_directory).parent / SEA_ICE_SUBDIR / FORCING_FILENAME
+        return [path] if path.exists() else []
+
     def process(self, ctx):
         """
         Generate CICE's single restoring forcing file into
@@ -240,7 +261,7 @@ class CICEConfigurator(BaseConfigurator):
 
         raw_dir = Path(ctx.inputdir) / "extract_forcings" / "cice" / "raw_data"
         raw_dir.mkdir(parents=True, exist_ok=True)
-        output_dir = Path(ctx.inputdir) / "sea_ice"
+        output_dir = Path(ctx.inputdir) / SEA_ICE_SUBDIR
         output_dir.mkdir(parents=True, exist_ok=True)
 
         conditions = ctx.config["conditions"]
@@ -304,4 +325,4 @@ class CICEConfigurator(BaseConfigurator):
         # arrays themselves (which xarray would otherwise tag with it too,
         # even though they're fully populated with no missing values).
         encoding = {var: {"_FillValue": None} for var in regridded.variables}
-        regridded.to_netcdf(output_dir / "cice_forcing.nc", encoding=encoding)
+        regridded.to_netcdf(output_dir / FORCING_FILENAME, encoding=encoding)
