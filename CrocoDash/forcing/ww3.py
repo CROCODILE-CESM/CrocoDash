@@ -138,6 +138,12 @@ def write_ww3_boundary_spectrum(file_path, lat, lon, freq, direction, efth, time
     return ds
 
 
+# Where process() writes WW3's generated inputs, and therefore where
+# get_output_filepaths() looks for them. Kept in one place so the writer, the
+# WW3_GRID_INP_DIR setting and the reader cannot drift apart.
+WAVE_SUBDIR = "wave"
+
+
 def write_ww3_bounc_nml(
     file_dir, spec_list_filename="spec.list", mode="WRITE", interp=2, verbose=1
 ):
@@ -391,11 +397,35 @@ class WW3Configurator(BaseConfigurator):
     def configure(self):
         self.set_output_param(
             "WW3_GRID_INP_DIR",
-            str(Path(self.get_input_param("case_inputdir")) / "wave"),
+            str(Path(self.get_input_param("case_inputdir")) / WAVE_SUBDIR),
         )
         self.set_output_param("HIST_OPTION", "nhours")
         self.set_output_param("HIST_N", "1")
         super().configure()
+
+    def get_output_filepaths(self, ocn_ice_directory):
+        """Everything WW3 generated, which is a whole directory rather than a
+        fixed set of named files.
+
+        The base implementation walks output_params for is_file entries, and
+        all of WW3's are XML settings -- WW3_GRID_INP_DIR even holds the
+        directory rather than any single file. Without this override the base
+        returns nothing, so CaseBundle.bundle() copies no WW3 input at all and
+        validate_output_filepaths() passes vacuously.
+
+        Globbing rather than naming files is deliberate: process() writes one
+        ww3.pointN_spec.nc per boundary station, so the count is not known up
+        front, and spec.list references those paths while ww3_bounc.nml
+        references spec.list. The directory is the unit that stays coherent,
+        which is also why WW3_GRID_INP_DIR points at it.
+
+        ocn_ice_directory is <inputdir>/ocnice; process() writes to
+        <inputdir>/wave, hence the sibling lookup.
+        """
+        wave_dir = Path(ocn_ice_directory).parent / WAVE_SUBDIR
+        if not wave_dir.is_dir():
+            return []
+        return sorted(p for p in wave_dir.iterdir() if p.is_file())
 
     def process(self, ctx):
         """
@@ -443,7 +473,7 @@ class WW3Configurator(BaseConfigurator):
         start_date = conditions["inputs"]["start_date"]
         end_date = conditions["inputs"]["end_date"]
 
-        output_dir = Path(ctx.inputdir) / "wave"
+        output_dir = Path(ctx.inputdir) / WAVE_SUBDIR
         output_dir.mkdir(parents=True, exist_ok=True)
 
         staging_dir = Path(ctx.inputdir) / "extract_forcings" / "ww3"
