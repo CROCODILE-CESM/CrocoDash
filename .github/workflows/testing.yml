@@ -42,32 +42,42 @@ jobs:
       # update`, which pulls in every CESM external (MOM6, CICE, CDEPS,
       # cime, ccs_config, ...). Cache the whole post-fleximod CESMROOT tree
       # so a cache hit skips both steps entirely.
+      - name: Get latest branch SHA
+        id: get-sha
+        run: |
+          # Fetch the SHA of the remote branch
+          SHA=$(git ls-remote https://github.com/CROCODILE-CESM/CESM refs/heads/full_regional_cesm | cut -f1)
+          echo "sha=$SHA" >> $GITHUB_OUTPUT
       - name: Cache CESM checkout + externals
-        id: cesm-cache
+        id: restore-cesm-cache
         uses: actions/cache@v4
         with:
           path: ${{ env.CESMROOT }}
-          key: cesm-${{ runner.os }}-${{ env.CESM_REF }}-v4
+          key: cesm-${{ runner.os }}-${{ env.CESM_REF }}-${{ steps.get-sha.outputs.sha }}
 
       - name: Checkout CESM and run git-fleximod update
-        if: steps.cesm-cache.outputs.cache-hit != 'true'
+        # Run ONLY on a cache miss
+        if: steps.restore-cesm-cache.outputs.cache-hit != 'true'
         run: |
           git clone --depth 1 --branch ${{ env.CESM_REF }} https://github.com/${{ env.CESM_REPO }} ${{ env.CESMROOT }}
           cd ${{ env.CESMROOT }}
           ./bin/git-fleximod update
+          
           echo "--- sanity check: cime/CIME python package present? ---"
           ls cime/CIME/__init__.py
-          # visualCaseGen's CIME_interface stamps a compatibility check off
-          # `git describe --tags` on this checkout (case creation reads it,
-          # expects a `cimeN.M.P` tag). In CI, fleximod's checkout of `cime`
-          # doesn't come with its own reachable tag (git -C cime fetch --tags
-          # only pulls the *parent* CESM repo's unrelated tags here), so
-          # describe fails outright. This CESM branch is documented (see
-          # visualCaseGen/cime_interface.py) as shipping cime6.2.2 -- stamp
-          # that tag directly if describe still can't find anything.
+          
+          # Stamp the CIME tag if git describe fails
           git -C cime fetch --tags || true
           git -C cime describe --tags >/dev/null 2>&1 || git -C cime tag cime6.2.2
 
+      - name: Save CESM Cache
+        # Save ONLY if checkout/fleximod succeeded AND it wasn't a cache hit
+        if: success() && steps.restore-cesm-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ env.CESMROOT }}
+          key: cesm-${{ runner.os }}-${{ env.CESM_REF }}-${{ steps.get-sha.outputs.sha }}
+          
       - uses: mamba-org/setup-micromamba@v2
         with:
           environment-name: CrocoDash
