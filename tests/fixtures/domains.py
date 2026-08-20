@@ -32,8 +32,10 @@ bounding boxes are therefore checked directly, in test_bounding_boxes.py.
 """
 
 from dataclasses import dataclass
+from functools import lru_cache
 from typing import Optional
 
+import numpy as np
 import pytest
 
 from CrocoDash.grid import Grid
@@ -437,9 +439,63 @@ TAREA_QUADRANT_BUG = (
 # instead of a small subset. Note this is NOT the same as a polar cap, whose
 # near-global lon span is genuinely correct: a cap really does touch every
 # meridian. See test_bbox_lon_span_matches_domain_width.
+# NCAR/mom6_forge#113 does NOT fix this, which is why there is no capability
+# probe for it below. That PR widens any raw span over 180 degrees to the full
+# range on purpose (to stop lon_max landing exactly on 180.0 and being
+# collapsed to -180.0 by downstream normalization), so a wrapping domain still
+# reports a near-global span -- 359.999 rather than 359.997. Narrowing it needs
+# the bounding box to carry a wrapped range, i.e. lon_min > lon_max, which
+# every consumer of get_bounding_boxes would have to understand.
 BBOX_ANTIMERIDIAN_SPAN_BUG = (
     "mom6_forge get_bounding_boxes uses raw min/max over supergrid longitudes "
     "(grid.py:414-419) with no antimeridian branch handling, so a domain "
-    "wrapping +/-180 reports a near-global lon span."
+    "wrapping +/-180 reports a near-global lon span. #113 widens rather than "
+    "narrows it, so the symptom survives that fix."
 )
 INFLATED_BBOX_DOMAINS = {"rotated_on_dateline"}
+
+
+# ---------------------------------------------------------------------------
+# Upstream capability probes
+# ---------------------------------------------------------------------------
+#
+# Two of the mom6_forge bugs below have open fixes (NCAR/mom6_forge#113 and
+# #126). CrocoDash pins mom6_forge through a nested submodule, so which
+# behaviour is present depends on the checkout, and a CI integration branch may
+# well carry the fixes before they reach main.
+#
+# Rather than pin the xfails to one side of that and break on the other, ask the
+# installed mom6_forge what it does. Each probe builds a throwaway 4x4 grid, so
+# the cost is negligible, and lru_cache means it happens once per session. They
+# are called from the tests rather than at import time so that a probe blowing
+# up surfaces as one clear failure instead of a collection error.
+
+
+@lru_cache(maxsize=1)
+def tarea_sums_all_four_quadrants():
+    """Whether tarea sums four distinct supergrid quadrants (mom6_forge#126)."""
+    grid = Grid(nx=4, ny=4, lenx=0.4, leny=0.4, xstart=0.0, ystart=0.0, name="probe")
+    sg = grid.supergrid
+    expected = sg.area[:8, :8].reshape(4, 2, 4, 2).sum(axis=(1, 3))
+    return bool(np.allclose(grid.tarea.values, expected, rtol=1e-12))
+
+
+@lru_cache(maxsize=1)
+def polar_metrics_are_positive():
+    """Whether dx/dy survive a pole inside the domain (mom6_forge#113).
+
+    A polar cap is the cheapest reliable trigger: its grid lines pass through
+    the pole and cross the antimeridian, which is exactly what the signed
+    np.diff in _calc_dx_dy mishandles. A plain rectangular box near the
+    dateline does *not* trigger it -- its longitudes stay monotonic.
+    """
+    grid = Grid.from_projection(
+        crs="EPSG:3995",
+        x_min=-1e5,
+        x_max=1e5,
+        y_min=-1e5,
+        y_max=1e5,
+        resolution_m=5e4,
+        name="probe",
+    )
+    return bool((grid.dxt.values > 0).all() and (grid.dyt.values > 0).all())

@@ -19,6 +19,8 @@ from tests.fixtures.domains import (
     DX_DY_SIGN_BUG,
     NEGATIVE_METRIC_DOMAINS,
     TAREA_QUADRANT_BUG,
+    polar_metrics_are_positive,
+    tarea_sums_all_four_quadrants,
 )
 
 # Grid metrics that must be finite and strictly positive everywhere on every
@@ -71,7 +73,7 @@ def test_is_rectangular_matches_catalog(domain, domain_grid):
 
 def test_grid_metrics_positive_and_finite(domain, domain_grid, request):
     """Cell widths and areas are physical quantities: positive and finite."""
-    if domain.key in NEGATIVE_METRIC_DOMAINS:
+    if domain.key in NEGATIVE_METRIC_DOMAINS and not polar_metrics_are_positive():
         request.applymarker(
             pytest.mark.xfail(
                 reason=DX_DY_SIGN_BUG.format(
@@ -87,13 +89,15 @@ def test_grid_metrics_positive_and_finite(domain, domain_grid, request):
         assert (values > 0).all(), f"{name} has non-positive entries"
 
 
-@pytest.mark.xfail(reason=TAREA_QUADRANT_BUG, strict=True)
-def test_tarea_matches_supergrid_quadrants(domain_grid):
+def test_tarea_matches_supergrid_quadrants(domain_grid, request):
     """Each T-cell's area is the sum of its four supergrid quadrants.
 
-    Fails on every domain, not just the exotic ones -- see TAREA_QUADRANT_BUG.
-    Pinned here so the fix, whenever it lands, is announced by an XPASS.
+    Where the fix is absent this fails on every domain, not just the exotic
+    ones -- see TAREA_QUADRANT_BUG.
     """
+    if not tarea_sums_all_four_quadrants():
+        request.applymarker(pytest.mark.xfail(reason=TAREA_QUADRANT_BUG, strict=True))
+
     sg = domain_grid.supergrid
     ny, nx = domain_grid.ny, domain_grid.nx
     expected = sg.area[: 2 * ny, : 2 * nx].reshape(ny, 2, nx, 2).sum(axis=(1, 3))
