@@ -28,7 +28,6 @@ from CrocoDash import logging
 from CrocoDash.extract_forcings import utils
 from CrocoDash.grid import Grid
 from CrocoDash.topo import Topo
-from CrocoDash.raw_data_access.registry import ProductRegistry
 
 logger = logging.setup_logger(__name__)
 
@@ -54,29 +53,47 @@ def _make_date_pairs(start: datetime, end: datetime, step_days):
     return pairs
 
 
-def _ocean_bbox_for_boundary(hgrid, tmask, boundary: str) -> dict:
+def _ocean_bbox_for_boundary(hgrid, supergridmask, boundary: str) -> dict:
     """Return a lat/lon bounding box covering only the ocean cells on a boundary edge.
 
-    Uses tmask (shape ny×nx) to exclude land cells, giving a tighter download bbox
+    Uses supergridmask (shape ny×nx) to exclude land cells, giving a tighter download bbox
     than the full supergrid extent. Falls back to the full edge extent if all cells
     are land.
     """
     # T-cell centers are at every other supergrid node starting at index 1
-    tcell_lon = hgrid.x.values[1::2, 1::2]  # (ny, nx)
-    tcell_lat = hgrid.y.values[1::2, 1::2]
+    cell_lon = hgrid.x.values
+    cell_lat = hgrid.y.values
 
-    tmask_arr = (
-        tmask.values.astype(bool) if hasattr(tmask, "values") else tmask.astype(bool)
+    supergridmask_arr = (
+        supergridmask.values.astype(bool)
+        if hasattr(supergridmask, "values")
+        else supergridmask.astype(bool)
     )
 
     if boundary == "north":
-        edge_lon, edge_lat, mask = tcell_lon[-1, :], tcell_lat[-1, :], tmask_arr[-1, :]
+        edge_lon, edge_lat, mask = (
+            cell_lon[-1, :],
+            cell_lat[-1, :],
+            supergridmask_arr[-1, :],
+        )
     elif boundary == "south":
-        edge_lon, edge_lat, mask = tcell_lon[0, :], tcell_lat[0, :], tmask_arr[0, :]
+        edge_lon, edge_lat, mask = (
+            cell_lon[0, :],
+            cell_lat[0, :],
+            supergridmask_arr[0, :],
+        )
     elif boundary == "east":
-        edge_lon, edge_lat, mask = tcell_lon[:, -1], tcell_lat[:, -1], tmask_arr[:, -1]
+        edge_lon, edge_lat, mask = (
+            cell_lon[:, -1],
+            cell_lat[:, -1],
+            supergridmask_arr[:, -1],
+        )
     elif boundary == "west":
-        edge_lon, edge_lat, mask = tcell_lon[:, 0], tcell_lat[:, 0], tmask_arr[:, 0]
+        edge_lon, edge_lat, mask = (
+            cell_lon[:, 0],
+            cell_lat[:, 0],
+            supergridmask_arr[:, 0],
+        )
     else:
         raise ValueError(f"Unknown boundary '{boundary}'")
 
@@ -434,32 +451,35 @@ def process_obc_conditions(
 
     # Compute per-boundary download bboxes using the bathymetry tmask so we only
     # request data over ocean cells (tighter than the full supergrid edge extent).
-    hgrid_ds = xr.open_dataset(hgrid_path)
-    if bathymetry_path:
-        grid_obj = Grid.from_supergrid(hgrid_path)
-        with xr.open_dataset(bathymetry_path) as bds:
-            min_depth = bds.attrs.get("min_depth")
-        topo = Topo.from_topo_file(
-            grid=grid_obj,
-            topo_file_path=bathymetry_path,
-            min_depth=min_depth,
-            git=False,
-        )
-        boundary_bboxes = {
-            b: _ocean_bbox_for_boundary(hgrid_ds, topo.tmask, b) for b in boundaries
-        }
-        logger.info("Using tmask-derived bounding boxes for OBC data download.")
-    else:
-        full_bboxes = Grid.get_bounding_boxes(hgrid_ds)
-        boundary_bboxes = {b: full_bboxes[b] for b in boundaries}
-        logger.info("No bathymetry_path given; using full supergrid bounding boxes.")
+    with xr.open_dataset(hgrid_path) as hgrid_ds:
+        assert not Grid.is_cyclic_x(hgrid_ds), "bboxes not supported for cyclic grids."
+        if bathymetry_path:
+            grid_obj = Grid.from_supergrid(hgrid_path)
+            with xr.open_dataset(bathymetry_path) as bds:
+                min_depth = bds.attrs.get("min_depth", 0.0)
+            topo = Topo.from_topo_file(
+                grid=grid_obj,
+                topo_file_path=bathymetry_path,
+                min_depth=min_depth,
+                git=False,
+            )
+            boundary_bboxes = {
+                b: _ocean_bbox_for_boundary(hgrid_ds, topo.supergridmask, b)
+                for b in boundaries
+            }
+            logger.info("Using tmask-derived bounding boxes for OBC data download.")
+        else:
+            full_bboxes = Grid.get_bounding_boxes(hgrid_ds)
+            boundary_bboxes = {b: full_bboxes[b] for b in boundaries}
+            logger.info(
+                "No bathymetry_path given; using full supergrid bounding boxes."
+            )
 
     fill_method = rm6.regridding.fill_missing_data
     if product_info.get("boundary_fill_method", "regional_mom6") != "regional_mom6":
         raise ValueError(
             f"fill_method '{product_info['boundary_fill_method']}' is not supported."
         )
-    fill_method = rm6.regridding.fill_missing_data
 
     raw_path.mkdir(exist_ok=True)
     regridded_path.mkdir(exist_ok=True)
