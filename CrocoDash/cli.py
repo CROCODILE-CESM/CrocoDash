@@ -1,7 +1,34 @@
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
+
+DEFAULT_TEMPLATE_NOTEBOOK_ID = "crocodash.tutorials.crocodash_tutorial"
+
+# known_paths.json keys that hold placeholder tokens rather than real
+# dataset paths -- injecting them would silently overwrite an obvious
+# <KEY> placeholder with something equally uninformative (e.g. "Checkout").
+_NON_PATH_KEYS = {"CESM", "inputdir", "casedir"}
+
+
+class CrocoDashCliError(Exception):
+    """A deliberate, user-facing CLI error.
+
+    main() prints this cleanly and exits(1) instead of showing a traceback.
+    Only raise this for conditions a user can act on (e.g. "run this other
+    command first") -- never to blanket-catch unexpected bugs, which should
+    keep their real traceback.
+    """
+
+
+def _comment_out_magics(source):
+    """Comment out IPython magic/shell lines (jupytext convention) so
+    extracted code cells are valid, runnable Python."""
+    return "\n".join(
+        "# " + line if re.match(r"^\s*[%!]", line) else line
+        for line in source.split("\n")
+    )
 
 
 def _create(args):
@@ -30,7 +57,7 @@ def _process(args):
         state = case_state.read(caseroot)
         config_path = Path(state["inputdir"]) / "extract_forcings" / "config.json"
         if not config_path.exists():
-            raise FileNotFoundError(
+            raise CrocoDashCliError(
                 f"Forcing configuration not found at {config_path}\n"
                 "Run case.configure_forcings() before calling 'crocodash process'."
             )
@@ -38,7 +65,7 @@ def _process(args):
         # Ran directly from inside the extract_forcings/ directory
         config_path = Path.cwd() / "config.json"
     else:
-        raise FileNotFoundError(
+        raise CrocoDashCliError(
             "No config.json found in the current directory and no --config or --caseroot provided.\n"
             "Run from inside an extract_forcings/ directory, or pass --caseroot <path> or --config <path>."
         )
@@ -100,6 +127,97 @@ def _duplicate_case(args):
         bundle_dir=args.bundle_dir,
     )
     print(f"Duplicated case created at: {new_case.caseroot}")
+
+
+def _template(args):
+    from pathlib import Path
+    from crocogallery import (
+        get_notebook_path,
+        list_notebooks,
+        inject_into_text,
+        load_paths,
+    )
+
+    def _paths():
+        if not args.machine:
+            return {}
+        return {
+            k: v for k, v in load_paths(args.machine).items() if k not in _NON_PATH_KEYS
+        }
+
+    try:
+        if args.list_notebooks:
+            for nb_id in sorted(list_notebooks()):
+                print(nb_id)
+            return
+
+        if not args.output:
+            args.subparser.error(
+                "--output is required unless --list-notebooks is given."
+            )
+
+        output = Path(args.output)
+        notebook_id = args.notebook
+        output.parent.mkdir(parents=True, exist_ok=True)
+        is_pbs = args.kind == "pbs" or output.suffix == ".pbs"
+
+        if is_pbs or output.suffix in (".yaml", ".yml"):
+            # The PBS script and YAML starter only live alongside the default
+            # tutorial notebook, not every gallery notebook -- --notebook only
+            # matters for the .ipynb/.py branch below.
+            if notebook_id != DEFAULT_TEMPLATE_NOTEBOOK_ID:
+                print(
+                    f"[info] --notebook is ignored for --kind={args.kind!r} output "
+                    f"{output.suffix!r}; using the default tutorial's template."
+                )
+            source_dir = get_notebook_path(DEFAULT_TEMPLATE_NOTEBOOK_ID).parent
+            if is_pbs:
+                template_text = (source_dir / "submit_forcings.pbs").read_text()
+                template_text = inject_into_text(template_text, _paths())
+                output.write_text(template_text)
+                output.chmod(output.stat().st_mode | 0o111)
+            else:
+                template_text = (source_dir / "starter_case.yaml").read_text()
+                template_text = inject_into_text(template_text, _paths())
+                output.write_text(template_text)
+        else:
+            import nbformat
+
+            paths = _paths()
+            nb = nbformat.read(get_notebook_path(notebook_id), as_version=4)
+
+            if output.suffix == ".ipynb":
+                for cell in nb.cells:
+                    if cell.cell_type == "code":
+                        cell.source = inject_into_text(cell.source, paths)
+                nbformat.write(nb, output)
+            else:
+                blocks = []
+                for cell in nb.cells:
+                    if cell.cell_type == "code":
+                        code = _comment_out_magics(inject_into_text(cell.source, paths))
+                        blocks.append("# %%\n" + code)
+                    elif cell.cell_type == "markdown":
+                        commented = "\n".join(
+                            f"# {line}" if line else "#"
+                            for line in cell.source.split("\n")
+                        )
+                        blocks.append("# %% [markdown]\n" + commented)
+                output.write_text("\n\n".join(blocks))
+
+        print(f"Template written to: {output}")
+        if not args.machine:
+            print("Tip: rerun with --machine derecho to pre-fill known dataset paths.")
+    except KeyError as e:
+        # KeyError.__str__ reprs its (possibly multi-line) argument, which
+        # turns embedded newlines into literal "\n" -- print the original
+        # message instead so multi-line "available options" listings stay
+        # readable, then exit cleanly instead of a raw traceback.
+        print(e.args[0] if e.args else str(e), file=sys.stderr)
+        sys.exit(1)
+    except FileNotFoundError as e:
+        print(str(e), file=sys.stderr)
+        sys.exit(1)
 
 
 def _fork(args):
@@ -275,5 +393,53 @@ def main():
     )
     fork_parser.set_defaults(func=_fork)
 
+    # --- template ---
+    template_parser = subparsers.add_parser(
+        "template",
+        help="Write a starter CrocoDash case file, or a PBS submission script.",
+    )
+    template_parser.add_argument(
+        "--kind",
+        choices=["case", "pbs"],
+        default="case",
+        help=(
+            "Kind of template to write. 'case' (default) writes a case definition "
+            "-- format picked by --output's suffix (.yaml for a config, .ipynb for "
+            "a notebook, .py for a script). 'pbs' writes a PBS batch script for "
+            "submitting `crocodash process` to an HPC queue."
+        ),
+    )
+    template_parser.add_argument(
+        "--output",
+        default=None,
+        help="Output path. For --kind case: .yaml, .ipynb, or .py. For --kind pbs: any path, or a .pbs suffix (which also selects the pbs template without needing --kind pbs). Required unless --list-notebooks is given.",
+    )
+    template_parser.add_argument(
+        "--machine",
+        default=None,
+        help="Pre-fill known dataset paths for this machine (e.g. derecho). Omit to leave <KEY> placeholders.",
+    )
+    template_parser.add_argument(
+        "--notebook",
+        default=DEFAULT_TEMPLATE_NOTEBOOK_ID,
+        help=(
+            "Gallery notebook ID to use as the template source "
+            f"(default: {DEFAULT_TEMPLATE_NOTEBOOK_ID}). "
+            "Pass --list-notebooks to see all available IDs."
+        ),
+    )
+    template_parser.add_argument(
+        "--list-notebooks",
+        action="store_true",
+        default=False,
+        dest="list_notebooks",
+        help="Print all available gallery notebook IDs and exit.",
+    )
+    template_parser.set_defaults(func=_template, subparser=template_parser)
+
     args = parser.parse_args()
-    args.func(args)
+    try:
+        args.func(args)
+    except CrocoDashCliError as e:
+        print(str(e), file=sys.stderr)
+        sys.exit(1)
