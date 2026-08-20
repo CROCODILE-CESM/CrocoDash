@@ -869,10 +869,10 @@ class Case:
         MOM6 is allocated full Derecho nodes (128 cores each). The tier string
         maps nodes_needed to CIME --pecount keyword.
         """
-        TASKS_PER_NODE = 128
+        MAX_TASKS_PER_NODE = self._cime_case.get_value("MAX_TASKS_PER_NODE")
         pts_per_core = 60 if self.bgc_in_compset else 170
         ocean_pts = int(self.ocn_topo.tmask.sum())
-        nodes_needed = math.ceil(ocean_pts / (pts_per_core * TASKS_PER_NODE))
+        nodes_needed = math.ceil(ocean_pts / (pts_per_core * MAX_TASKS_PER_NODE))
         if nodes_needed < 1:
             return "XS"
         elif nodes_needed == 1:
