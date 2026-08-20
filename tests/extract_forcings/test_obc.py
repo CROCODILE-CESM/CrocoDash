@@ -119,7 +119,9 @@ def test_process_obc_conditions_uses_tmask_bbox_for_get(
     hgrid_path = Path(kwargs["hgrid_path"])
     hgrid_ds = xr.open_dataset(hgrid_path)
     full_south_bbox = Grid.get_bounding_boxes(hgrid_ds)["south"]
-    expected_tmask_bbox = _ocean_bbox_for_boundary(hgrid_ds, topo.supergridmask, "south")
+    expected_tmask_bbox = _ocean_bbox_for_boundary(
+        hgrid_ds, topo.supergridmask, "south"
+    )
 
     # The land carving should have actually narrowed the box -- otherwise
     # this test can't distinguish "tmask bbox used" from "full bbox used".
