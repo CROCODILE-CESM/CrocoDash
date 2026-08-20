@@ -11,6 +11,7 @@ class SeaWIFS(BaseProduct):
     @accessmethod(
         description="Generates bash script for direct CLI access to chlorophyll data (No Package Required)",
         type="script",
+        how_to_use="Requires a NASA Earthdata account (https://urs.earthdata.nasa.gov). Provide your username — you will be prompted for your password at runtime.",
     )
     def get_global_seawifs_script_for_cli(
         output_folder=None,
@@ -59,8 +60,9 @@ class SeaWIFS(BaseProduct):
         return script_path
 
     @accessmethod(
-        description="	Generates bash script for direct CLI access to processed chlorophyll data (No Package Required)",
+        description="Generates bash script for direct CLI access to processed chlorophyll data (No Package Required)",
         type="script",
+        how_to_use="Only requires `curl`. Downloads pre-processed SeaWIFS chlorophyll data from CESM inputdata.",
     )
     def get_processed_global_seawifs_script_for_cli(
         output_folder=Path(""),

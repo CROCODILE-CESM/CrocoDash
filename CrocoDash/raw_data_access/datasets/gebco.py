@@ -11,7 +11,9 @@ class GEBCO(BaseProduct):
     link = "https://www.gebco.net/data_and_products/gridded_bathymetry_data/#global"
 
     @accessmethod(
-        description="Python request for global bathymetry data", type="python"
+        description="Python request for global bathymetry data",
+        type="python",
+        how_to_use="Requires the CrocoDash conda environment. Downloads the full global GEBCO 2024 grid (~450 MB zip).",
     )
     def get_gebco_data_with_python(
         output_folder=None,
@@ -38,7 +40,9 @@ class GEBCO(BaseProduct):
         return
 
     @accessmethod(
-        description="get script to download global bathymetry data", type="script"
+        description="get script to download global bathymetry data",
+        type="script",
+        how_to_use="Only requires `curl`. Downloads the full global GEBCO 2024 grid (~450 MB zip).",
     )
     def get_gebco_data_script(
         output_folder=None,
