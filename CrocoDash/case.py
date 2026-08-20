@@ -162,7 +162,7 @@ class Case:
         # Using visualCaseGen's configuration system, set the configuration variables for the case
         # based on the provided arguments. This includes setting the compset, grid, and launch variables.
         try:
-            self._configure_case(atm_grid_name, rof_grid_name)
+            self._configure_case(atm_grid_name, rof_grid_name, ntasks_ocn_specified = ntasks_ocn is not None)
         except Exception as e:
             print(f"\n{ERROR}Case Configuration Error:{RESET}")
             print(f"  {str(e)}")
@@ -654,7 +654,7 @@ class Case:
         # expt.vgrid = self.ocn_vgrid.gen_vgrid_ds() # Not implemented yet
         return expt
 
-    def _configure_case(self, atm_grid_name, rof_grid_name):
+    def _configure_case(self, atm_grid_name, rof_grid_name, ntasks_ocn_specified = False):
         """Using visualCaseGen's case configuration pipeline, set the variables for the case based
         on the provided arguments. This includes setting the compset, grid, and launch variables.
         """
@@ -669,7 +669,7 @@ class Case:
         self._configure_custom_grid(atm_grid_name, rof_grid_name)
 
         # 3. Launch
-        self._configure_launch()
+        self._configure_launch(ntasks_ocn_specified = ntasks_ocn_specified)
 
     def _configure_standard_compset(self, compset_alias: str):
         """Configure the case for a standard component set."""
@@ -882,7 +882,7 @@ class Case:
         else:
             return "L"
 
-    def _configure_launch(self):
+    def _configure_launch(self, ntasks_ocn_specified = False):
         """Assign the launch variables for the case."""
 
         assert Stage.active().title == "3. Launch"
@@ -893,7 +893,8 @@ class Case:
 
         # Variables that are not included in a stage:
         cvars["NINST"].value = self.ninst
-        cvars["PECOUNT"].value = self._compute_pecount()
+        if not ntasks_ocn_specified:
+            cvars["PECOUNT"].value = self._compute_pecount()
 
     def _write_state(self):
         """Write case creation parameters to crocodash_state.json in caseroot."""
