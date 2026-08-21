@@ -16,6 +16,7 @@ import os
 from functools import partial
 from pathlib import Path
 
+import dask
 import netCDF4
 import regional_mom6 as rm6
 import mom6_forge as m6b
@@ -85,7 +86,16 @@ def _regrid_obc_chunk(
 
     outfolder = Path(outfolder)
     tmp_file = outfolder / f"_tmp_{boundary}_segment_{seg_id:03d}.nc"
-    ds.to_netcdf(tmp_file)
+    # Serialised deliberately. This dataset is dask-backed, and writing it
+    # through dask's threaded scheduler deadlocks intermittently inside
+    # HDF5: a CrocoDash domain sweep in crocontainer wedged here on 3 of 16
+    # domains in one run and a disjoint 4 of 16 in the next, always with the
+    # main thread parked in dask.local.queue_get waiting on a worker that
+    # never returns. Which domain hits it is random -- the topology is not
+    # the trigger. Same guard, same reason as _download_initial_condition
+    # in ic.py; the chunk-by-chunk memory profile is unchanged.
+    with dask.config.set(scheduler="synchronous"):
+        ds.to_netcdf(tmp_file)
     try:
         seg = rm6.segment(
             hgrid=hgrid,
