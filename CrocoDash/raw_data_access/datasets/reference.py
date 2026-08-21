@@ -53,6 +53,49 @@ class REFERENCE_OCEAN(MOM6ForcingProduct):
     eta_var_name = "ssh"
     depth_coord = "depth"
     tracer_var_names = {"temp": "temp", "salt": "salt"}
+    # Same MARBL tracer set as CESM_POP_OUTPUT (raw_data_access/datasets/cesm_ocean_output.py)
+    # -- identity-mapped since get_reference_ocean_data names its synthetic variables after
+    # these keys directly. Lets a MARBL-enabled compset (%MARBL-BIO) use REFERENCE_OCEAN for
+    # IC/OBC, e.g. in fast no-network tests, instead of hard-failing in write_metadata().
+    marbl_var_names = {
+        "PO4": "PO4",
+        "NO3": "NO3",
+        "SiO3": "SiO3",
+        "NH4": "NH4",
+        "Fe": "Fe",
+        "Lig": "Lig",
+        "O2": "O2",
+        "DIC": "DIC",
+        "DIC_ALT_CO2": "DIC_ALT_CO2",
+        "ALK": "ALK",
+        "ALK_ALT_CO2": "ALK_ALT_CO2",
+        "DOC": "DOC",
+        "DON": "DON",
+        "DOP": "DOP",
+        "DOPr": "DOPr",
+        "DONr": "DONr",
+        "DOCr": "DOCr",
+        "microzooC": "microzooC",
+        "mesozooC": "mesozooC",
+        "spChl": "spChl",
+        "spC": "spC",
+        "spP": "spP",
+        "spFe": "spFe",
+        "diatChl": "diatChl",
+        "diatC": "diatC",
+        "diatP": "diatP",
+        "diatFe": "diatFe",
+        "diatSi": "diatSi",
+        "diazChl": "diazChl",
+        "diazC": "diazC",
+        "diazP": "diazP",
+        "diazFe": "diazFe",
+        "coccoChl": "coccoChl",
+        "coccoC": "coccoC",
+        "coccoP": "coccoP",
+        "coccoFe": "coccoFe",
+        "coccoCaCO3": "coccoCaCO3",
+    }
 
     @accessmethod(
         description=(
@@ -117,14 +160,25 @@ class REFERENCE_OCEAN(MOM6ForcingProduct):
             0.05 * np.cos(np.deg2rad(lon))[None, None, None, :], shape_4d
         )
 
+        data_vars = {
+            "temp": (("time", "depth", "latitude", "longitude"), temp),
+            "salt": (("time", "depth", "latitude", "longitude"), salt),
+            "u": (("time", "depth", "latitude", "longitude"), u),
+            "v": (("time", "depth", "latitude", "longitude"), v),
+            "ssh": (("time", "latitude", "longitude"), ssh),
+        }
+        # One placeholder variable per MARBL tracer, on the same grid as temp/salt --
+        # not physically meaningful, just a small positive constant (MARBL's chemistry
+        # doesn't tolerate exact zero concentrations) so a %MARBL-BIO compset has real
+        # IC/OBC tracer data to regrid instead of failing in write_metadata().
+        for tracer in REFERENCE_OCEAN.marbl_var_names:
+            data_vars[tracer] = (
+                ("time", "depth", "latitude", "longitude"),
+                np.full(shape_4d, 1e-6),
+            )
+
         ds = xr.Dataset(
-            {
-                "temp": (("time", "depth", "latitude", "longitude"), temp),
-                "salt": (("time", "depth", "latitude", "longitude"), salt),
-                "u": (("time", "depth", "latitude", "longitude"), u),
-                "v": (("time", "depth", "latitude", "longitude"), v),
-                "ssh": (("time", "latitude", "longitude"), ssh),
-            },
+            data_vars,
             coords={
                 "time": time,
                 "depth": depth,
