@@ -863,6 +863,32 @@ class Case:
             assert Stage.active().title == "Wave Input Files"
             cvars["WW3_INPUT_STATUS"].value = "Complete"
 
+    def _max_tasks_per_node(self):
+        """Return MAX_TASKS_PER_NODE for the target machine, or None if unavailable.
+
+        Read from the machine XML config rather than from a CIME case object, because
+        PECOUNT must be set before create_newcase runs, i.e. before self._cime_case
+        exists.
+        """
+        from CIME.XML.machines import Machines
+        from CIME.utils import CIMEError
+
+        machs_file = self.cime._files.get_value("MACHINES_SPEC_FILE")
+        try:
+            machines_obj = Machines(machs_file, machine=self.machine)
+        except CIMEError:
+            print(
+                f"WARNING: machine {self.machine} not found in the CESM machines XML "
+                "file, so MAX_TASKS_PER_NODE could not be determined."
+            )
+            return None
+
+        max_tasks_per_node = machines_obj.get_value("MAX_TASKS_PER_NODE")
+        if max_tasks_per_node is None:
+            print(f"WARNING: MAX_TASKS_PER_NODE is not set for machine {self.machine}.")
+            return None
+        return int(max_tasks_per_node)
+
     def _compute_pecount(self):
         """Compute the CIME pecount tier based on active ocean points and compset.
 
@@ -870,15 +896,20 @@ class Case:
           - without MARBL: ~170 pts/core
           - with MARBL:    ~60  pts/core
 
-        MOM6 is allocated full Derecho nodes (128 cores each). The tier string
-        maps nodes_needed to CIME --pecount keyword.
+        MOM6 is allocated whole nodes, so the active point count is converted to a
+        node count using the machine's MAX_TASKS_PER_NODE, and that node count is
+        mapped to a CIME --pecount keyword. Returns None when no tier should be
+        requested (the domain fits in the default layout, or the node size is
+        unknown), in which case CIME's default PE layout is left in place.
         """
-        MAX_TASKS_PER_NODE = self._cime_case.get_value("MAX_TASKS_PER_NODE")
+        max_tasks_per_node = self._max_tasks_per_node()
+        if max_tasks_per_node is None:
+            return None
         pts_per_core = 60 if self.bgc_in_compset else 170
         ocean_pts = int(self.ocn_topo.tmask.sum())
-        nodes_needed = math.ceil(ocean_pts / (pts_per_core * MAX_TASKS_PER_NODE))
+        nodes_needed = math.ceil(ocean_pts / (pts_per_core * max_tasks_per_node))
         if nodes_needed < 1:
-            return "XS"
+            return None
         elif nodes_needed == 1:
             return "S"
         elif nodes_needed <= 3:
@@ -898,7 +929,9 @@ class Case:
         # Variables that are not included in a stage:
         cvars["NINST"].value = self.ninst
         if not ntasks_ocn_specified:
-            cvars["PECOUNT"].value = self._compute_pecount()
+            pecount = self._compute_pecount()
+            if pecount is not None:
+                cvars["PECOUNT"].value = pecount
 
     def _write_state(self):
         """Write case creation parameters to crocodash_state.json in caseroot."""
