@@ -58,7 +58,9 @@ def test_all_configurators_args_synced():
         config_class.check_output_params_exist()
 
 
-def test_all_configurators_smoke(fake_param_case, fake_cime, fake_forcing_product):
+def test_all_configurators_smoke(
+    fake_param_case, fake_cime, fake_forcing_product, gen_grid_topo_vgrid
+):
 
     ## Set up some dummy args
     dummy_str = "123"
@@ -67,6 +69,12 @@ def test_all_configurators_smoke(fake_param_case, fake_cime, fake_forcing_produc
     dummy_path = fake_param_case / "dummy_path"
     dummy_dir = fake_param_case
     dummy_path.touch()
+    # ConditionsConfigurator.configure() opens case_supergrid_path for real
+    # (to build each boundary's Segment) -- a bare dummy_path won't parse as
+    # a supergrid, so give it a real one.
+    grid, _, _ = gen_grid_topo_vgrid
+    supergrid_path = fake_param_case / "supergrid.nc"
+    grid.write_supergrid(supergrid_path)
 
     ## Iterate through config classes
     for config_class in ForcingConfigRegistry.registered_types:
@@ -81,6 +89,8 @@ def test_all_configurators_smoke(fake_param_case, fake_cime, fake_forcing_produc
                 ctor_args[a] = ["south", "north", "west", "east"]
             elif a == "product_name":
                 ctor_args[a] = "GLORYS"
+            elif "supergrid_path" in a:
+                ctor_args[a] = supergrid_path
             elif "filepath" in a:
                 ctor_args[a] = dummy_path
             elif "dir" in a:

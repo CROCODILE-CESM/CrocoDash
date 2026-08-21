@@ -32,6 +32,7 @@ import xarray as xr
 from CrocoDash import logging
 from CrocoDash.forcing import utils
 from CrocoDash.grid import Grid
+from regional_mom6.segment import Segment
 
 logger = logging.setup_logger(__name__)
 
@@ -39,6 +40,40 @@ logger = logging.setup_logger(__name__)
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
+
+def boundary_key(boundary):
+    """The string identifier for a boundary entry: itself if a cardinal
+    string, or its ``.segment_name`` if a live ``Segment`` (e.g. built via
+    ``Segment.from_lonlat``/``from_hgrid`` when defining a non-cardinal
+    boundary)."""
+    return boundary.segment_name if isinstance(boundary, Segment) else boundary
+
+
+def get_segment(hgrid, boundary, segment_name, topo=None, custom_segments=None):
+    """Build a Segment for one boundary entry, always renamed to
+    ``segment_name`` (MOM6's own ``segment_00N`` numbering).
+
+    ``boundary`` may be:
+      - a cardinal string ("north"/"south"/"east"/"west") -- built via
+        ``Segment.cardinal``.
+      - a live ``Segment`` instance -- re-cut via ``Segment.from_spec`` using
+        its own ``to_spec()``. This is the case in the same process that
+        defined ``Case.boundaries`` (e.g. ``case.py``'s
+        ``configure_forcings``).
+      - a plain boundary-key string paired with ``custom_segments`` -- the
+        ``conditions.outputs.custom_segments`` dict read back from
+        config.json (key -> ``Segment.to_spec()`` output), for code that
+        only has the config, e.g. ``process_obc_conditions``/``tides.py``'s
+        ``process`` running as a separate call.
+    """
+    if isinstance(boundary, Segment):
+        return Segment.from_spec(hgrid, boundary.to_spec(), segment_name, topo=topo)
+    if custom_segments is not None and boundary in custom_segments:
+        return Segment.from_spec(
+            hgrid, custom_segments[boundary], segment_name, topo=topo
+        )
+    return Segment.cardinal(hgrid, boundary, segment_name, topo=topo)
 
 
 def _make_date_pairs(start: datetime, end: datetime, step_days):
@@ -157,6 +192,28 @@ def _validate_coverage(
 # ---------------------------------------------------------------------------
 
 
+def _boundary_bounding_box(hgrid, boundary: str, custom_segments: dict) -> dict:
+    """The lon/lat bounding box to download raw forcing data for -- one of
+    the 4 cardinal edges (from Grid.get_bounding_boxes), or, for a custom
+    (partial/interior) segment, computed straight from that Segment's own
+    lon/lat."""
+    if boundary not in custom_segments:
+        return Grid.get_bounding_boxes(hgrid)[boundary]
+
+    segment = get_segment(
+        hgrid,
+        boundary,
+        segment_name=f"segment_{boundary}",
+        custom_segments=custom_segments,
+    )
+    return {
+        "lon_min": float(segment.lon.min()),
+        "lon_max": float(segment.lon.max()),
+        "lat_min": float(segment.lat.min()),
+        "lat_max": float(segment.lat.max()),
+    }
+
+
 def _get_boundary(
     boundary: str,
     start_date: datetime,
@@ -168,6 +225,7 @@ def _get_boundary(
     function_name: str,
     variables: list,
     extra_args: dict,
+    custom_segments: dict,
 ) -> list:
     """Download all raw data for one boundary, chunked by get_step_days."""
     output_dir = Path(output_dir)
@@ -176,7 +234,7 @@ def _get_boundary(
 
     # Get the bounding box for the specified boundary from the hgrid
     hgrid = xr.open_dataset(hgrid_path)
-    latlon = Grid.get_bounding_boxes(hgrid)[boundary]
+    latlon = _boundary_bounding_box(hgrid, boundary, custom_segments)
 
     for chunk_start, chunk_end in _make_date_pairs(start_date, end_date, get_step_days):
         start_str = chunk_start.strftime("%Y-%m-%d")
@@ -336,6 +394,7 @@ def process_obc_conditions(
     get_step_days=None,
     regrid_step_days: int = 30,
     preview: bool = False,
+    custom_segments: dict = None,
 ):
     """Process boundary conditions through the GET → REGRID → MERGE pipeline.
 
@@ -367,6 +426,12 @@ def process_obc_conditions(
         regrid_step_days: REGRID chunk size in days.
         preview: If True, return a dict of expected date pairs without
             executing any downloads or regridding.
+        custom_segments: Boundary key -> Segment.to_spec(), for non-cardinal
+            (interior) boundaries -- read back from config.json's
+            conditions.outputs.custom_segments. Needed to compute the right
+            bounding box for the GET step via get_segment(); the REGRID
+            step's own segment rebuild is the caller's business (bind it
+            into regrid_chunk_fn, e.g. via functools.partial).
     """
     start_date = pd.to_datetime(start_date).to_pydatetime()
     end_date = pd.to_datetime(end_date).to_pydatetime()
@@ -375,6 +440,7 @@ def process_obc_conditions(
     regridded_path = Path(regridded_dataset_path)
     output_path = Path(output_path)
     boundaries = list(boundary_number_conversion.keys())
+    custom_segments = custom_segments or {}
 
     if preview:
         return {
@@ -402,6 +468,7 @@ def process_obc_conditions(
             function_name=function_name,
             variables=variables,
             extra_args=extra_args,
+            custom_segments=custom_segments,
         )
 
     regridded_files_by_boundary = {}
