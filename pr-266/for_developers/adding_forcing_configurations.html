@@ -402,12 +402,12 @@ document.write(`
 
 <span class="nd">@register</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">MyConfigurator</span><span class="p">(</span><span class="n">BaseConfigurator</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Configure MyComponent for the case.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Configure MyComponent for the case."""</span>
     
-    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;my_component&quot;</span>
-    <span class="n">required_for_compsets</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># e.g., [&quot;BGC&quot;] means required if &quot;BGC&quot; in compset</span>
-    <span class="n">allowed_compsets</span> <span class="o">=</span> <span class="p">[]</span>       <span class="c1"># e.g., [&quot;MOM6&quot;] means only allowed if &quot;MOM6&quot; in compset</span>
-    <span class="n">forbidden_compsets</span> <span class="o">=</span> <span class="p">[]</span>     <span class="c1"># e.g., [&quot;CICE&quot;] means incompatible if &quot;CICE&quot; in compset</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">"my_component"</span>
+    <span class="n">required_for_compsets</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># e.g., ["BGC"] means required if "BGC" in compset</span>
+    <span class="n">allowed_compsets</span> <span class="o">=</span> <span class="p">[]</span>       <span class="c1"># e.g., ["MOM6"] means only allowed if "MOM6" in compset</span>
+    <span class="n">forbidden_compsets</span> <span class="o">=</span> <span class="p">[]</span>     <span class="c1"># e.g., ["CICE"] means incompatible if "CICE" in compset</span>
 </pre></div>
 </div>
 <p>The decorator automatically registers your class in <code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.registered_types</span></code>.</p>
@@ -417,16 +417,16 @@ document.write(`
 <p>Declare what inputs your configurator needs as class variables:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@register</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">MyConfigurator</span><span class="p">(</span><span class="n">BaseConfigurator</span><span class="p">):</span>
-    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;my_component&quot;</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">"my_component"</span>
     
     <span class="n">input_params</span> <span class="o">=</span> <span class="p">[</span>
         <span class="n">InputFileParam</span><span class="p">(</span>
-            <span class="s2">&quot;data_filepath&quot;</span><span class="p">,</span>
-            <span class="n">comment</span><span class="o">=</span><span class="s2">&quot;Path to input data file&quot;</span>
+            <span class="s2">"data_filepath"</span><span class="p">,</span>
+            <span class="n">comment</span><span class="o">=</span><span class="s2">"Path to input data file"</span>
         <span class="p">),</span>
         <span class="n">InputValueParam</span><span class="p">(</span>
-            <span class="s2">&quot;processing_mode&quot;</span><span class="p">,</span>
-            <span class="n">comment</span><span class="o">=</span><span class="s2">&quot;How to process data: &#39;fast&#39; or &#39;accurate&#39;&quot;</span>
+            <span class="s2">"processing_mode"</span><span class="p">,</span>
+            <span class="n">comment</span><span class="o">=</span><span class="s2">"How to process data: 'fast' or 'accurate'"</span>
         <span class="p">),</span>
     <span class="p">]</span>
 </pre></div>
@@ -443,20 +443,20 @@ document.write(`
 <p>Declare what CESM/MOM6 case parameters this configurator will modify:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@register</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">MyConfigurator</span><span class="p">(</span><span class="n">BaseConfigurator</span><span class="p">):</span>
-    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;my_component&quot;</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">"my_component"</span>
     
     <span class="n">input_params</span> <span class="o">=</span> <span class="p">[</span><span class="o">...</span><span class="p">]</span>
     
     <span class="n">output_params</span> <span class="o">=</span> <span class="p">[</span>
         <span class="n">XMLConfigParam</span><span class="p">(</span>
-            <span class="s2">&quot;MY_COMPONENT_ENABLED&quot;</span><span class="p">,</span>
+            <span class="s2">"MY_COMPONENT_ENABLED"</span><span class="p">,</span>
             <span class="n">is_non_local</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-            <span class="n">comment</span><span class="o">=</span><span class="s2">&quot;Enable MyComponent&quot;</span>
+            <span class="n">comment</span><span class="o">=</span><span class="s2">"Enable MyComponent"</span>
         <span class="p">),</span>
         <span class="n">UserNLConfigParam</span><span class="p">(</span>
-            <span class="s2">&quot;my_component_data_file&quot;</span><span class="p">,</span>
-            <span class="n">user_nl_name</span><span class="o">=</span><span class="s2">&quot;mom&quot;</span><span class="p">,</span>
-            <span class="n">comment</span><span class="o">=</span><span class="s2">&quot;Path to component data in user_nl_mom&quot;</span>
+            <span class="s2">"my_component_data_file"</span><span class="p">,</span>
+            <span class="n">user_nl_name</span><span class="o">=</span><span class="s2">"mom"</span><span class="p">,</span>
+            <span class="n">comment</span><span class="o">=</span><span class="s2">"Path to component data in user_nl_mom"</span>
         <span class="p">),</span>
     <span class="p">]</span>
 </pre></div>
@@ -481,7 +481,7 @@ document.write(`
 <p>Define what inputs your configurator accepts:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@register</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">MyConfigurator</span><span class="p">(</span><span class="n">BaseConfigurator</span><span class="p">):</span>
-    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;my_component&quot;</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">"my_component"</span>
     <span class="n">input_params</span> <span class="o">=</span> <span class="p">[</span><span class="o">...</span><span class="p">]</span>
     <span class="n">output_params</span> <span class="o">=</span> <span class="p">[</span><span class="o">...</span><span class="p">]</span>
     
@@ -492,7 +492,7 @@ document.write(`
         <span class="n">case_caseroot</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># Optional: access Case object attributes</span>
         <span class="n">case_inputdir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Initialize configurator.</span>
 <span class="sd">        </span>
 <span class="sd">        Parameters</span>
@@ -500,15 +500,15 @@ document.write(`
 <span class="sd">        data_filepath : str</span>
 <span class="sd">            Path to input data file</span>
 <span class="sd">        processing_mode : str</span>
-<span class="sd">            Processing mode: &#39;fast&#39; or &#39;accurate&#39;</span>
+<span class="sd">            Processing mode: 'fast' or 'accurate'</span>
 <span class="sd">        case_caseroot : str, optional</span>
 <span class="sd">            Case root directory (passed from Case object)</span>
 <span class="sd">        case_inputdir : str, optional</span>
 <span class="sd">            Case input directory (passed from Case object)</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="c1"># Validate inputs before passing to parent</span>
-        <span class="k">if</span> <span class="n">processing_mode</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;fast&quot;</span><span class="p">,</span> <span class="s2">&quot;accurate&quot;</span><span class="p">]:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown processing_mode: </span><span class="si">{</span><span class="n">processing_mode</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">processing_mode</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"fast"</span><span class="p">,</span> <span class="s2">"accurate"</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Unknown processing_mode: </span><span class="si">{</span><span class="n">processing_mode</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         
         <span class="c1"># Call parent constructor (handles input parameter binding)</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
@@ -535,18 +535,18 @@ document.write(`
     <span class="c1"># ... class variables and __init__ ...</span>
     
     <span class="k">def</span><span class="w"> </span><span class="nf">configure</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Process inputs and set output parameters.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Process inputs and set output parameters."""</span>
         <span class="c1"># Access input values via attribute access</span>
         <span class="n">data_file</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_filepath</span>  <span class="c1"># Accesses input parameter</span>
         <span class="n">mode</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">processing_mode</span>
         
         <span class="c1"># Process/validate</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">Path</span><span class="p">(</span><span class="n">data_file</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-            <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Data file not found: </span><span class="si">{</span><span class="n">data_file</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Data file not found: </span><span class="si">{</span><span class="n">data_file</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         
         <span class="c1"># Set output parameter values</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">set_output_param</span><span class="p">(</span><span class="s2">&quot;MY_COMPONENT_ENABLED&quot;</span><span class="p">,</span> <span class="s2">&quot;true&quot;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">set_output_param</span><span class="p">(</span><span class="s2">&quot;my_component_data_file&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">data_file</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_output_param</span><span class="p">(</span><span class="s2">"MY_COMPONENT_ENABLED"</span><span class="p">,</span> <span class="s2">"true"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_output_param</span><span class="p">(</span><span class="s2">"my_component_data_file"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">data_file</span><span class="p">))</span>
         
         <span class="c1"># Apply all output parameters (writes to case)</span>
         <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_params</span><span class="p">:</span>
@@ -559,10 +559,10 @@ document.write(`
 <p>Define when your configurator is required or allowed:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@register</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">MyConfigurator</span><span class="p">(</span><span class="n">BaseConfigurator</span><span class="p">):</span>
-    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;my_component&quot;</span>
-    <span class="n">required_for_compsets</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;MY_COMPONENT&quot;</span><span class="p">]</span>  <span class="c1"># Required if compset contains &quot;MY_COMPONENT&quot;</span>
-    <span class="n">allowed_compsets</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;MOM6&quot;</span><span class="p">]</span>               <span class="c1"># Only allowed if &quot;MOM6&quot; in compset</span>
-    <span class="n">forbidden_compsets</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;CICE&quot;</span><span class="p">]</span>             <span class="c1"># Never allowed if &quot;CICE&quot; in compset</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">"my_component"</span>
+    <span class="n">required_for_compsets</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"MY_COMPONENT"</span><span class="p">]</span>  <span class="c1"># Required if compset contains "MY_COMPONENT"</span>
+    <span class="n">allowed_compsets</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"MOM6"</span><span class="p">]</span>               <span class="c1"># Only allowed if "MOM6" in compset</span>
+    <span class="n">forbidden_compsets</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"CICE"</span><span class="p">]</span>             <span class="c1"># Never allowed if "CICE" in compset</span>
     
     <span class="c1"># ... rest of class ...</span>
 </pre></div>
@@ -589,33 +589,33 @@ document.write(`
 
 <span class="nd">@register</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">IceForcing</span><span class="p">(</span><span class="n">BaseConfigurator</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Configure ice boundary conditions.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Configure ice boundary conditions."""</span>
     
-    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;ice_forcing&quot;</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">"ice_forcing"</span>
     <span class="n">required_for_compsets</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">allowed_compsets</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;SICE&quot;</span><span class="p">]</span>
+    <span class="n">allowed_compsets</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"SICE"</span><span class="p">]</span>
     <span class="n">forbidden_compsets</span> <span class="o">=</span> <span class="p">[]</span>
     
     <span class="n">input_params</span> <span class="o">=</span> <span class="p">[</span>
         <span class="n">InputFileParam</span><span class="p">(</span>
-            <span class="s2">&quot;ice_data_file&quot;</span><span class="p">,</span>
-            <span class="n">comment</span><span class="o">=</span><span class="s2">&quot;Path to ice initial conditions&quot;</span>
+            <span class="s2">"ice_data_file"</span><span class="p">,</span>
+            <span class="n">comment</span><span class="o">=</span><span class="s2">"Path to ice initial conditions"</span>
         <span class="p">),</span>
         <span class="n">InputValueParam</span><span class="p">(</span>
-            <span class="s2">&quot;ice_concentration_threshold&quot;</span><span class="p">,</span>
-            <span class="n">comment</span><span class="o">=</span><span class="s2">&quot;Minimum ice concentration to include&quot;</span>
+            <span class="s2">"ice_concentration_threshold"</span><span class="p">,</span>
+            <span class="n">comment</span><span class="o">=</span><span class="s2">"Minimum ice concentration to include"</span>
         <span class="p">),</span>
     <span class="p">]</span>
     
     <span class="n">output_params</span> <span class="o">=</span> <span class="p">[</span>
         <span class="n">XMLConfigParam</span><span class="p">(</span>
-            <span class="s2">&quot;ICE_DATA_FILE&quot;</span><span class="p">,</span>
-            <span class="n">comment</span><span class="o">=</span><span class="s2">&quot;Ice data location in case&quot;</span>
+            <span class="s2">"ICE_DATA_FILE"</span><span class="p">,</span>
+            <span class="n">comment</span><span class="o">=</span><span class="s2">"Ice data location in case"</span>
         <span class="p">),</span>
         <span class="n">UserNLConfigParam</span><span class="p">(</span>
-            <span class="s2">&quot;ice_conc_min&quot;</span><span class="p">,</span>
-            <span class="n">user_nl_name</span><span class="o">=</span><span class="s2">&quot;cice&quot;</span><span class="p">,</span>
-            <span class="n">comment</span><span class="o">=</span><span class="s2">&quot;Ice concentration threshold&quot;</span>
+            <span class="s2">"ice_conc_min"</span><span class="p">,</span>
+            <span class="n">user_nl_name</span><span class="o">=</span><span class="s2">"cice"</span><span class="p">,</span>
+            <span class="n">comment</span><span class="o">=</span><span class="s2">"Ice concentration threshold"</span>
         <span class="p">),</span>
     <span class="p">]</span>
     
@@ -625,14 +625,14 @@ document.write(`
         <span class="n">ice_concentration_threshold</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">case_inputdir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize ice forcing configurator.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Initialize ice forcing configurator."""</span>
         <span class="c1"># Validate</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">threshold</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">ice_concentration_threshold</span><span class="p">)</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">threshold</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">):</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Threshold must be between 0 and 1&quot;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Threshold must be between 0 and 1"</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid ice_concentration_threshold: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Invalid ice_concentration_threshold: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">ice_data_file</span><span class="o">=</span><span class="n">ice_data_file</span><span class="p">,</span>
@@ -641,13 +641,13 @@ document.write(`
         <span class="p">)</span>
     
     <span class="k">def</span><span class="w"> </span><span class="nf">configure</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Configure ice boundary conditions.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Configure ice boundary conditions."""</span>
         <span class="n">data_file</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ice_data_file</span>
         <span class="n">threshold</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ice_concentration_threshold</span>
         
         <span class="c1"># Validate file exists</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">Path</span><span class="p">(</span><span class="n">data_file</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-            <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Ice data file not found: </span><span class="si">{</span><span class="n">data_file</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Ice data file not found: </span><span class="si">{</span><span class="n">data_file</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         
         <span class="c1"># Copy to case input directory if provided</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">case_inputdir</span><span class="p">:</span>
@@ -657,8 +657,8 @@ document.write(`
             <span class="n">data_file</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">dest</span><span class="p">)</span>
         
         <span class="c1"># Set outputs and apply</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">set_output_param</span><span class="p">(</span><span class="s2">&quot;ICE_DATA_FILE&quot;</span><span class="p">,</span> <span class="n">data_file</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">set_output_param</span><span class="p">(</span><span class="s2">&quot;ice_conc_min&quot;</span><span class="p">,</span> <span class="n">threshold</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_output_param</span><span class="p">(</span><span class="s2">"ICE_DATA_FILE"</span><span class="p">,</span> <span class="n">data_file</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_output_param</span><span class="p">(</span><span class="s2">"ice_conc_min"</span><span class="p">,</span> <span class="n">threshold</span><span class="p">)</span>
         
         <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_params</span><span class="p">:</span>
             <span class="n">param</span><span class="o">.</span><span class="n">apply</span><span class="p">()</span>
@@ -672,14 +672,14 @@ document.write(`
 <p>Input and output parameters are serialized to JSON for the <code class="docutils literal notranslate"><span class="pre">extract_forcings</span></code> module:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># ✅ Good - JSON serializable</span>
 <span class="n">input_params</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="n">InputFileParam</span><span class="p">(</span><span class="s2">&quot;file_path&quot;</span><span class="p">),</span>           <span class="c1"># str</span>
-    <span class="n">InputValueParam</span><span class="p">(</span><span class="s2">&quot;threshold&quot;</span><span class="p">),</span>           <span class="c1"># str</span>
+    <span class="n">InputFileParam</span><span class="p">(</span><span class="s2">"file_path"</span><span class="p">),</span>           <span class="c1"># str</span>
+    <span class="n">InputValueParam</span><span class="p">(</span><span class="s2">"threshold"</span><span class="p">),</span>           <span class="c1"># str</span>
 <span class="p">]</span>
 
 <span class="c1"># ❌ Bad - Not JSON serializable</span>
 <span class="n">input_params</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="n">InputFileParam</span><span class="p">(</span><span class="s2">&quot;data_object&quot;</span><span class="p">),</span>          <span class="c1"># xarray.Dataset</span>
-    <span class="n">InputFileParam</span><span class="p">(</span><span class="s2">&quot;case_object&quot;</span><span class="p">),</span>          <span class="c1"># Case instance</span>
+    <span class="n">InputFileParam</span><span class="p">(</span><span class="s2">"data_object"</span><span class="p">),</span>          <span class="c1"># xarray.Dataset</span>
+    <span class="n">InputFileParam</span><span class="p">(</span><span class="s2">"case_object"</span><span class="p">),</span>          <span class="c1"># Case instance</span>
 <span class="p">]</span>
 </pre></div>
 </div>
@@ -689,7 +689,7 @@ document.write(`
 <h3>Validation Strategy<a class="headerlink" href="#validation-strategy" title="Link to this heading">#</a></h3>
 <p>Validation should happen in <code class="docutils literal notranslate"><span class="pre">validate_args</span></code>, which is called from the base <strong>init</strong>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">validate_args</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-    <span class="k">assert</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;my_required_param&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+    <span class="k">assert</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">"my_required_param"</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
 </pre></div>
 </div>
 </section>
@@ -698,7 +698,7 @@ document.write(`
 <p>To access Case object attributes, use the <code class="docutils literal notranslate"><span class="pre">case_</span></code> prefix:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">some_param</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">case_caseroot</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">case_compset</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
     <span class="c1"># case_caseroot and case_compset are optional</span>
-    <span class="c1"># They&#39;re injected by ForcingConfigRegistry if available</span>
+    <span class="c1"># They're injected by ForcingConfigRegistry if available</span>
     <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
         <span class="n">some_param</span><span class="o">=</span><span class="n">some_param</span><span class="p">,</span>
         <span class="n">case_caseroot</span><span class="o">=</span><span class="n">case_caseroot</span><span class="p">,</span>
