@@ -155,6 +155,16 @@ DOMAINS = [
         leny=6.0,
     ),
     _rect(
+        "equator_prime_meridian",
+        "Origin corner: straddles the equator and longitude 0 at once, so lat "
+        "and lon both change sign in the same domain.",
+        ["cheap", "equator", "seam"],
+        xstart=-3.0,
+        lenx=6.0,
+        ystart=-3.0,
+        leny=6.0,
+    ),
+    _rect(
         "prime_meridian_seam",
         "Crosses longitude 0, so lon changes sign in -180/180 convention.",
         ["cheap", "seam"],
