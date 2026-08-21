@@ -26,6 +26,7 @@ import os
 from datetime import datetime, timedelta
 from pathlib import Path
 
+import dask
 import pandas as pd
 import xarray as xr
 from CrocoDash import logging
@@ -359,7 +360,13 @@ def _merge_boundary(boundary_label: str, regridded_files: list, output_folder) -
         coords="minimal",
         parallel=False,
     )
-    ds.to_netcdf(output_path)
+    # open_mfdataset makes this dask-backed, so the write is exposed to the
+    # same intermittent HDF5/threaded-scheduler deadlock documented at
+    # mom6.py's _regrid_obc_chunk. Not observed here -- guarded because it is
+    # the identical pattern, and a deadlock that strikes one write in four is
+    # not something to leave to chance two functions away from a known one.
+    with dask.config.set(scheduler="synchronous"):
+        ds.to_netcdf(output_path)
     ds.close()
     logger.info(f"Saved merged boundary at {output_path}")
     return output_path
