@@ -358,6 +358,7 @@ document.write(`
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.BaseConfigurator.get_output_filepaths"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.get_output_filepaths()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.BaseConfigurator.get_output_param"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.get_output_param()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.BaseConfigurator.get_output_param_object"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.get_output_param_object()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.BaseConfigurator.has_cesm"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.has_cesm</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.BaseConfigurator.input_params"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.input_params</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.BaseConfigurator.inspect"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.inspect()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.BaseConfigurator.is_non_local"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.is_non_local</span></code></a></li>
@@ -681,6 +682,21 @@ deserialize()) keeps behaving exactly as it did before this existed.</p>
 <dt class="sig sig-object py" id="CrocoDash.forcing.base.BaseConfigurator.get_output_param_object">
 <span class="sig-name descname"><span class="pre">get_output_param_object</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#CrocoDash.forcing.base.OutputParam" title="CrocoDash.forcing.base.OutputParam"><span class="pre">OutputParam</span></a></span></span><a class="headerlink" href="#CrocoDash.forcing.base.BaseConfigurator.get_output_param_object" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="CrocoDash.forcing.base.BaseConfigurator.has_cesm">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">has_cesm</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#CrocoDash.forcing.base.BaseConfigurator.has_cesm" title="Link to this definition">#</a></dt>
+<dd><p>Whether there is a CESM checkout behind this case.</p>
+<p>With none, visualCaseGen is never initialized, so <cite>cvars</cite> is empty – and both
+<cite>xmlchange</cite> and <cite>append_user_nl</cite> read <cite>cvars[“CASEROOT”]</cite> <em>before</em> they consult
+<cite>do_exec</cite>, so they raise KeyError rather than no-op. Output params therefore have
+to be skipped outright rather than applied with <cite>do_exec=False</cite>.</p>
+<p>This is deliberately narrower than <cite>do_exec</cite>: on an un-ported machine that <em>does</em>
+have a checkout, <cite>apply()</cite> is still called so that it prints the commands a user
+would run to create the case by hand, which is the point of that path.</p>
+<p>Defaults to True, like <cite>do_exec</cite>, so a configurator with no live Case (direct
+construction in tests, or deserialize()) behaves as it always has.</p>
+</dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="CrocoDash.forcing.base.BaseConfigurator.input_params">
@@ -1850,6 +1866,7 @@ needs to import it by name.</p>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.BaseConfigurator.get_output_filepaths"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.get_output_filepaths()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.BaseConfigurator.get_output_param"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.get_output_param()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.BaseConfigurator.get_output_param_object"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.get_output_param_object()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.BaseConfigurator.has_cesm"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.has_cesm</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.BaseConfigurator.input_params"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.input_params</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.BaseConfigurator.inspect"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.inspect()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.BaseConfigurator.is_non_local"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.is_non_local</span></code></a></li>
