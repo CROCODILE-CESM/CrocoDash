@@ -627,6 +627,25 @@ class BaseConfigurator(ABC):
         case = getattr(self.registry, "case", None)
         return bool(getattr(case, "do_exec", True))
 
+    @property
+    def has_cesm(self) -> bool:
+        """Whether there is a CESM checkout behind this case.
+
+        With none, visualCaseGen is never initialized, so `cvars` is empty -- and both
+        `xmlchange` and `append_user_nl` read `cvars["CASEROOT"]` *before* they consult
+        `do_exec`, so they raise KeyError rather than no-op. Output params therefore have
+        to be skipped outright rather than applied with `do_exec=False`.
+
+        This is deliberately narrower than `do_exec`: on an un-ported machine that *does*
+        have a checkout, `apply()` is still called so that it prints the commands a user
+        would run to create the case by hand, which is the point of that path.
+
+        Defaults to True, like `do_exec`, so a configurator with no live Case (direct
+        construction in tests, or deserialize()) behaves as it always has.
+        """
+        case = getattr(self.registry, "case", None)
+        return bool(getattr(case, "has_cesm", True))
+
     @abstractmethod
     def configure(self):
         """Bind input values to parameters and files."""
@@ -635,6 +654,10 @@ class BaseConfigurator(ABC):
                 p.is_non_local = self.is_non_local
             if isinstance(p, (XMLConfigParam, UserNLConfigParam)):
                 p.do_exec = self.do_exec
+                if not self.has_cesm:
+                    # Nothing to write into, and the values are recorded in
+                    # crocodash_case.yaml for the eventual replay on a ported machine.
+                    continue
             p.apply()
         pass
 

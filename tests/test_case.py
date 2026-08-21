@@ -109,6 +109,95 @@ def test_not_ported_machine_recorded_in_state(get_CrocoDash_case):
     assert state["machine"] == "CESM_NOT_PORTED"
 
 
+def test_no_cesm_checkout_configures_case(gen_grid_topo_vgrid, tmp_path):
+    """A case can be configured with no CESM checkout at all -- no cesmroot argument.
+
+    This is the case that genuinely needs no CESM on disk. CIME_interface can't be built
+    without the tree, so _NoCesmCIME stands in for it and the visualCaseGen configuration
+    pipeline is skipped: what that pipeline does is validate the compset and grid names
+    against the catalogue, and there is no catalogue to validate against. Everything that
+    doesn't need CESM still happens.
+    """
+    from CrocoDash.case import Case
+
+    grid, topo, vgrid = gen_grid_topo_vgrid
+    case = Case(
+        caseroot=tmp_path / "case",
+        inputdir=tmp_path / "inputdir",
+        # A long name, not an alias: alias resolution is the one thing that truly
+        # requires the catalogue.
+        compset="1850_DATM%NYF_SLND_SICE_MOM6%REGIONAL_SROF_SGLC_SWAV",
+        ocn_grid=grid,
+        ocn_topo=topo,
+        ocn_vgrid=vgrid,
+        atm_grid_name="T62",
+        override=True,
+    )
+
+    assert case.has_cesm is False
+    assert case.cesmroot is None
+    assert case.machine == "CESM_NOT_PORTED"
+    assert case.do_exec is False
+    assert case.is_non_local is False
+
+    # Grid inputs and the state file are still produced.
+    assert file_with_prefix_exists(case.inputdir / "ocnice", "ocean_hgrid")
+    assert (case.caseroot / "_crocodash_state.json").exists()
+
+    # Forcing extraction never touches CIME, so it still configures.
+    case.configure_forcings(
+        date_range=["2020-01-01 00:00:00", "2020-01-05 00:00:00"],
+        boundaries=["north"],
+    )
+    assert (case.inputdir / "extract_forcings").exists()
+
+    # Nothing CIME writes exists.
+    assert not (case.caseroot / "xmlquery").exists()
+    assert not (case.caseroot / "env_case.xml").exists()
+
+
+def test_no_cesm_checkout_rejects_other_machines(gen_grid_topo_vgrid, tmp_path):
+    """Without a checkout, CESM_NOT_PORTED is the only possible machine, since CIME is
+    what defines every other one. Asking for a real machine has to fail loudly rather
+    than silently downgrade."""
+    from CrocoDash.case import Case
+
+    grid, topo, vgrid = gen_grid_topo_vgrid
+    with pytest.raises(ValueError, match="without a cesmroot"):
+        Case(
+            caseroot=tmp_path / "case",
+            inputdir=tmp_path / "inputdir",
+            compset="1850_DATM%NYF_SLND_SICE_MOM6%REGIONAL_SROF_SGLC_SWAV",
+            ocn_grid=grid,
+            ocn_topo=topo,
+            ocn_vgrid=vgrid,
+            machine="derecho",
+            override=True,
+        )
+
+
+def test_no_cesm_cime_parses_compset_lname():
+    """_NoCesmCIME must split a compset long name exactly as CIME_interface does, and
+    reject one that is too short rather than silently mis-assigning components."""
+    from CrocoDash.case import _NoCesmCIME
+
+    cime = _NoCesmCIME()
+    components = cime.get_components_from_compset_lname(
+        "1850_DATM%NYF_SLND_SICE_MOM6%REGIONAL_SROF_SGLC_SWAV"
+    )
+    assert components == {
+        "ATM": "DATM%NYF",
+        "LND": "SLND",
+        "ICE": "SICE",
+        "OCN": "MOM6%REGIONAL",
+        "ROF": "SROF",
+        "GLC": "SGLC",
+        "WAV": "SWAV",
+    }
+    with pytest.raises(ValueError, match="Invalid compset long name"):
+        cime.get_components_from_compset_lname("1850_DATM_SLND")
+
+
 def test_emulate_not_ported_matches_visualcasegen(monkeypatch, tmp_path):
     """_emulate_not_ported replicates the identity fields of visualCaseGen's own
     _handle_machine_not_ported instead of calling it, so that a test run does not create

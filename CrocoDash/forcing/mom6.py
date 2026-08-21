@@ -558,18 +558,19 @@ class ConditionsConfigurator(BaseConfigurator):
             )
 
         # This configurator batches its own writes rather than going through
-        # BaseConfigurator.configure()'s per-param loop, so it has to honor do_exec
-        # itself (see BaseConfigurator.do_exec).
-        append_user_nl(
-            "mom", ic_params, do_exec=self.do_exec, comment="Initial conditions"
-        )
-        append_user_nl(
-            "mom",
-            obc_params,
-            do_exec=self.do_exec,
-            comment="Open boundary conditions",
-            log_title=False,
-        )
+        # BaseConfigurator.configure()'s per-param loop, so it has to honor do_exec --
+        # and has_cesm -- itself (see BaseConfigurator.do_exec / .has_cesm).
+        if self.has_cesm:
+            append_user_nl(
+                "mom", ic_params, do_exec=self.do_exec, comment="Initial conditions"
+            )
+            append_user_nl(
+                "mom",
+                obc_params,
+                do_exec=self.do_exec,
+                comment="Open boundary conditions",
+                log_title=False,
+            )
         for param in self.output_params:
             if isinstance(param, UserNLConfigParam):
                 param.executed = True
