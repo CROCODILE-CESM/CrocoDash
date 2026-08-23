@@ -9,6 +9,8 @@ Covers:
 - Round-trip: case_to_yaml output is a valid input for create_case_from_yaml
 """
 
+import copy
+
 import pytest
 import yaml
 
@@ -484,3 +486,53 @@ def test_build_general_configure_forcing_args(sample_forcing_config):
 
     assert "tidal_constituents" not in args
     assert "marbl_ic_filepath" in args
+
+
+def test_configure_forcing_args_round_trip_optional_args(sample_forcing_config):
+    """Configurators whose constructor args all carry defaults must still be
+    round-tripped. CICE is the case in point: every one of its args is
+    optional, so a required-args-only walk returned nothing and a forked case
+    came back with no CICE forcing configured at all."""
+    forcing_config = copy.deepcopy(sample_forcing_config)
+    forcing_config["cice"] = {
+        "inputs": {
+            "cice_product_name": "cice_restart",
+            "cice_function_name": "get_cice_restart_subset",
+            "cice_function_args": {
+                "restart_path": "/fake/restart.nc",
+                "grid_path": "/fake/grid.nc",
+            },
+            # non-default value: silently reverting to the default of 2 would
+            # change the halo width of the reproduced case
+            "n_halo_cells": 1,
+        }
+    }
+
+    args = generate_configure_forcing_args(forcing_config)
+
+    assert args["cice_product_name"] == "cice_restart"
+    assert args["cice_function_name"] == "get_cice_restart_subset"
+    assert args["cice_function_args"] == {
+        "restart_path": "/fake/restart.nc",
+        "grid_path": "/fake/grid.nc",
+    }
+    assert args["n_halo_cells"] == 1
+
+
+def test_configure_forcing_args_conditions_boundaries_win(sample_forcing_config):
+    """The conditions block is the authority on boundaries; a configurator's own
+    stored copy must not overwrite it."""
+    forcing_config = copy.deepcopy(sample_forcing_config)
+    forcing_config["tides"]["inputs"]["boundaries"] = ["south"]
+
+    args = generate_configure_forcing_args(forcing_config)
+
+    assert args["boundaries"] == ["north"]
+
+
+def test_configure_forcing_args_missing_required_arg_raises(sample_forcing_config):
+    forcing_config = copy.deepcopy(sample_forcing_config)
+    del forcing_config["bgcic"]["inputs"]["marbl_ic_filepath"]
+
+    with pytest.raises(ValueError, match="marbl_ic_filepath"):
+        generate_configure_forcing_args(forcing_config)
