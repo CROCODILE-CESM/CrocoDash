@@ -25,8 +25,8 @@ from CrocoDash.raw_data_access.registry import ProductRegistry
 
 # (product_name, method_name) pairs allowed to skip make_dates_end_inclusive.
 KNOWN_INCLUSIVE_WITHOUT_HELPER = {
-    # Reparses `dates` via pd.date_range(freq="D"), which is whole-day
-    # inclusive regardless of time-of-day — nothing to normalize.
+    # Reparses `dates` via pd.date_range at the resolved freq, which is
+    # whole-day inclusive regardless of time-of-day — nothing to normalize.
     ("glorys", "get_glorys_data_from_rda"),
     ("glofas", "get_global_data_with_python"),
     # Reparses `dates` via parse_dataset's filename-based day matching
@@ -41,8 +41,8 @@ KNOWN_INCLUSIVE_WITHOUT_HELPER = {
     # date handling.
     ("dummy", "dummy_method"),
     ("dummy_forcing", "fetch_dummy"),
-    # Reparses `dates` via pd.date_range (freq="D"), which is whole-day
-    # inclusive regardless of time-of-day — same reasoning as glorys above.
+    # Reparses `dates` via pd.date_range at the resolved freq, which is
+    # whole-day inclusive regardless of time-of-day — same reasoning as glorys.
     # Pure in-memory synthetic generation, not a real API call, so there's
     # no end_datetime cutoff to normalize.
     ("reference_ocean", "get_reference_ocean_data"),

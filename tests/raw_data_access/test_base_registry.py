@@ -8,9 +8,10 @@ class DummyProduct(DatedBaseProduct):
     product_name = "dummy"
     description = "A dummy product for testing"
     link = "dummy_link"
+    native_frequency = "D"
 
     @accessmethod
-    def dummy_method(dates, output_folder, output_filename):
+    def dummy_method(dates, output_folder, output_filename, freq=None):
         return f"{dates[0]}{dates[1]}{output_folder}/{output_filename}"
 
 
@@ -36,6 +37,7 @@ class DummyForcing(MOM6ForcingProduct):
     cf_calendar = "gregorian"
     cesm_calendar = "gregorian"
     mom6_calendar = "gregorian"
+    native_frequency = "D"
 
     @accessmethod
     def fetch_dummy(
@@ -48,6 +50,7 @@ class DummyForcing(MOM6ForcingProduct):
         lat_min,
         name=None,
         variables="SSH",
+        freq=None,
     ):
         return f"Fetched {variables} to {output_folder}/{output_filename}"
 
@@ -136,6 +139,7 @@ def test_tracer_names_check():
             cf_calendar = "gregorian"
             cesm_calendar = "gregorian"
             mom6_calendar = "gregorian"
+            native_frequency = "D"
 
 
 def test_write_metadata():

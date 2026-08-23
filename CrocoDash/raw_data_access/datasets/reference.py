@@ -32,6 +32,8 @@ class REFERENCE_OCEAN(MOM6ForcingProduct):
     link = "n/a"
     time_var_name = "time"
     time_units = "days"
+    # The synthetic fields are generated on a daily axis by default.
+    native_frequency = "D"
     calendar = GREGORIAN
     boundary_fill_method = "regional_mom6"
     tracer_x_coord = "longitude"
@@ -115,6 +117,7 @@ class REFERENCE_OCEAN(MOM6ForcingProduct):
         output_filename="reference_ocean.nc",
         variables=None,
         resolution_deg=0.5,
+        freq=None,
     ):
         # Coarse by default to keep the downstream ESMF regrid cheap -- pass a
         # smaller resolution_deg for a finer (more expensive) source grid.
@@ -126,7 +129,10 @@ class REFERENCE_OCEAN(MOM6ForcingProduct):
         lon = np.arange(lon_min - 1.0, lon_max + 1.0 + resolution_deg, resolution_deg)
         lat = np.arange(lat_min - 1.0, lat_max + 1.0 + resolution_deg, resolution_deg)
         depth = np.array([0, 10, 25, 50, 100, 200, 500, 1000, 2000, 4000], dtype=float)
-        time = pd.date_range(dates[0], dates[-1], freq="D")
+        # Synthetic data, so any cadence is free -- honour the request directly.
+        time = pd.date_range(
+            dates[0], dates[-1], freq=resolve_frequency(REFERENCE_OCEAN, freq)
+        )
         shape_4d = (len(time), len(depth), len(lat), len(lon))
 
         # Warm at the equator, decaying exponentially from the surface to an

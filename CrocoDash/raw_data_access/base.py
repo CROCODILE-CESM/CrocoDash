@@ -11,6 +11,7 @@ Raw Data Access Module Requirements:
 How it was solved:
 1. There is a set of "abstract" classes that specify an array of "required_metadata". There is no type enforcement currently. This is checked in the _init_subclass hook.
 2. There is a set of "abstract" classes that specify an array of "required_args". There is no type enforcement. This is checked in the _init_subclass hook.
+2b. Args the framework does NOT pass unconditionally (currently just ``freq``) live in "required_tunable_args" instead, which additionally checks that the arg carries a default -- see BaseProduct.required_tunable_args.
 3. There is a class called ProductRegistry in the registry.py file that does this
 4. The classes are all static.
 5. There is a validate method in the BaseProduct class that takes in additional default args from child classes, and the _init_subclass hook validates the args.
@@ -22,6 +23,7 @@ from CrocoDash.raw_data_access.registry import ProductRegistry
 from dataclasses import dataclass
 import inspect
 import json
+import pandas as pd
 from CrocoDash.logging import setup_logger
 import tempfile
 import shutil
@@ -65,12 +67,82 @@ def accessmethod(func=None, *, description=None, type=None, how_to_use=None):
     return decorator
 
 
+def frequency_step(freq: str) -> pd.Timedelta:
+    """Approximate wall-clock spacing of a pandas frequency alias, as a Timedelta.
+
+    Used only to order two frequencies coarsest-first, so an approximation is
+    fine and a fixed-length one is unavailable anyway: calendar offsets like
+    "MS" (month start) have no constant duration, so ``pd.tseries.frequencies.
+    to_offset("MS").nanos`` raises. Measuring the mean spacing over a year of
+    generated stamps handles every alias uniformly -- fixed ("D", "6h") and
+    calendar ("MS", "QS", "YS", "W") alike.
+    """
+    try:
+        idx = pd.date_range("2001-01-01", periods=13, freq=freq)
+    except ValueError as e:
+        raise ValueError(f"{freq!r} is not a valid pandas frequency alias: {e}") from e
+    return (idx[-1] - idx[0]) / (len(idx) - 1)
+
+
+def resolve_frequency(product, freq: str | None) -> str:
+    """Return the frequency an access method should actually sample at.
+
+    ``freq=None`` means "whatever the product natively provides", which keeps
+    every existing call site behaving exactly as before. A coarser request is
+    honoured; a finer one is rejected, because no access method can invent
+    records the archive does not contain -- left unchecked it would silently
+    return fewer timestamps than asked for.
+
+    Products whose cadence is a property of the archive the *user* points at
+    rather than of the product itself (the CESM tseries readers, whose
+    dataset_path may be month_1, day_1, ...) declare
+    ``native_frequency = None``; nothing can be validated statically for those,
+    so the request is passed through untouched.
+    """
+    native = product.native_frequency
+    if freq is None:
+        return native
+    if native is None:
+        return freq
+    if frequency_step(freq) < frequency_step(native):
+        raise ValueError(
+            f"{product.product_name} is {native} data; freq={freq!r} is finer than "
+            f"that, so sampling at it would silently yield fewer records than "
+            f"requested. Pass freq={native!r} or coarser."
+        )
+    return freq
+
+
+def require_native_frequency(product, freq: str | None, method_name: str, hint: str):
+    """Reject a non-native ``freq`` for an access method that cannot honour one.
+
+    Every dated access method must accept ``freq`` so that a single
+    ``function_overrides={"freq": ...}`` is valid no matter which method the
+    user selects. Methods that fetch by date *range* (a server-side query, a
+    generated script, a file-window overlap scan) have no way to sample within
+    it, so they say so loudly here instead of accepting the argument and
+    quietly ignoring it.
+    """
+    if freq is None or freq == product.native_frequency:
+        return
+    raise NotImplementedError(
+        f"{product.product_name}.{method_name} cannot sub-sample: {hint} "
+        f"Drop freq (or pass freq={product.native_frequency!r})."
+    )
+
+
 class BaseProduct:
     """Base class for all raw data products. It enforces the metadata on the product as well as the function args."""
 
     # Subclasses must define this
     required_metadata = ["product_name", "description", "link"]
     required_args = ["output_folder", "output_filename"]
+    # Args every access method must accept but that the framework does not pass
+    # unconditionally, so they must additionally carry a default. Kept separate
+    # from required_args: an arg in there may legitimately be positional, while
+    # one in here is broken if it is (the framework would omit it and the call
+    # would raise TypeError).
+    required_tunable_args = []
 
     _access_methods = {}  # method_name → {func}
 
@@ -109,6 +181,23 @@ class BaseProduct:
                 raise ValueError(
                     f"Access method '{name}' in {cls.product_name} missing args {missing}"
                 )
+
+            # Tunable args must be present AND optional
+            for arg in cls.required_tunable_args:
+                param = sig.parameters.get(arg)
+                if param is None:
+                    raise ValueError(
+                        f"Access method '{name}' in {cls.product_name} missing "
+                        f"tunable arg '{arg}'"
+                    )
+                if param.default is inspect._empty:
+                    raise ValueError(
+                        f"Access method '{name}' in {cls.product_name} declares "
+                        f"'{arg}' without a default. Tunable args must be optional: "
+                        f"the framework only passes them when the user overrides "
+                        f"them, so a required one raises TypeError on every "
+                        f"ordinary call."
+                    )
 
         # ---- Auto-register product ----
         ProductRegistry.register(cls)
@@ -175,10 +264,27 @@ class BaseProduct:
 
 
 class DatedBaseProduct(BaseProduct):
-    """Specific enforcement needs for Dated Products"""
+    """Specific enforcement needs for Dated Products.
 
+    Every dated product declares its own cadence (``native_frequency``) and
+    every one of its access methods accepts ``freq``, so a caller can ask for a
+    coarser sampling of a date range without knowing which product or access
+    method is behind it. A year of daily GLORYS is 369 files to open; the same
+    year at freq="MS" is 13.
+
+    ``native_frequency`` is a pandas frequency alias ("D", "MS", "6h", ...), or
+    None for products whose cadence is a property of the archive the user points
+    at rather than of the product itself -- see resolve_frequency.
+    """
+
+    required_metadata = BaseProduct.required_metadata + [
+        "native_frequency",
+    ]
     required_args = BaseProduct.required_args + [
         "dates",
+    ]
+    required_tunable_args = BaseProduct.required_tunable_args + [
+        "freq",
     ]
 
     @classmethod
