@@ -278,7 +278,10 @@ class CICEConfigurator(BaseConfigurator):
         subset_paths = data_access_fn(
             dates=date_range,
             output_folder=raw_dir,
-            **bbox,
+            lat_min = bbox["lat_min"] - 1,
+            lat_max = bbox["lat_max"] + 1,
+            lon_min = bbox["lon_min"] - 1,
+            lon_max = bbox["lon_max"] + 1,
             **(self.get_input_param("cice_function_args") or {}),
         )
         subset = xr.open_dataset(subset_paths[0])
