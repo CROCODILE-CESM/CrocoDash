@@ -378,20 +378,22 @@ def _get_boundary(
         f = []
         extra_args["last_pair"] = False
         if len(pairs) > 1:
-            f.extend([
-                _get_one_chunk(
-                    chunk_start,
-                    chunk_end,
-                    boundary,
-                    product_name,
-                    function_name,
-                    latlon,
-                    output_dir,
-                    variables,
-                    extra_args,
-                ) 
-            for chunk_start, chunk_end in pairs[:-1]
-            ])
+            f.extend(
+                [
+                    _get_one_chunk(
+                        chunk_start,
+                        chunk_end,
+                        boundary,
+                        product_name,
+                        function_name,
+                        latlon,
+                        output_dir,
+                        variables,
+                        extra_args,
+                    )
+                    for chunk_start, chunk_end in pairs[:-1]
+                ]
+            )
 
         if last_boundary:
             extra_args["last_pair"] = True
@@ -406,7 +408,7 @@ def _get_boundary(
                 output_dir,
                 variables,
                 extra_args,
-            ) 
+            )
         )
     else:
         num_workers = min(available_cpus(), len(pairs))
@@ -589,7 +591,7 @@ def process_obc_conditions(
 
     last_boundary = False
     for j, boundary in enumerate(boundaries):
-        if j == (len(boundaries)-1):
+        if j == (len(boundaries) - 1):
             last_boundary = True
         seg_id = boundary_number_conversion[boundary]
 
