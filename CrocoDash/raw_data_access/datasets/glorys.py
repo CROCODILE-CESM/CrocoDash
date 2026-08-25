@@ -154,6 +154,7 @@ class GLORYS(ForcingProduct):
         output_filename,
         variables=None,
         name=None,
+        last_pair=False,
     ) -> None:
         """
         Script to run the GLORYS data query for the CLI
@@ -168,8 +169,9 @@ class GLORYS(ForcingProduct):
             os.path.splitext(output_filename)[0],
             output_folder,
             modify_existing=modify_existing,
+            last_pair=last_pair,
         )
         GLORYS.logger.info(
-            f"This data access method retuns a script at path {path} to run to get access data "
+            f"This data access method returns a script at path {path} to run to get access data "
         )
         return path
