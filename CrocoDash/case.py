@@ -10,7 +10,7 @@ from CrocoDash.topo import Topo
 from CrocoDash.vgrid import VGrid
 from CrocoDash.forcing.base import ForcingConfigRegistry
 from CrocoDash.raw_data_access.registry import ProductRegistry
-from CrocoDash.raw_data_access.base import ForcingProduct
+from CrocoDash.raw_data_access.base import MOM6ForcingProduct
 from ProConPy.config_var import ConfigVar, cvars
 from ProConPy.stage import Stage
 from ProConPy.dev_utils import ConstraintViolation
@@ -485,11 +485,18 @@ class Case:
         self.date_range = pd.to_datetime(date_range)
 
         ProductRegistry.load()
-        if not (
-            ProductRegistry.product_exists(product_name)
-            and ProductRegistry.product_is_of_type(product_name, ForcingProduct)
-        ):
-            raise ValueError("Product / Data Path is not supported quite yet")
+        if not ProductRegistry.product_exists(product_name):
+            raise ValueError(
+                f"Unknown forcing product '{product_name}'. Known products: "
+                f"{sorted(ProductRegistry.products)}."
+            )
+        if not ProductRegistry.product_is_of_type(product_name, MOM6ForcingProduct):
+            raise ValueError(
+                f"Product '{product_name}' ({ProductRegistry.get_product(product_name).__name__}) "
+                "is not a MOM6ForcingProduct, so it can't be used as configure_forcings()'s "
+                "product_name (MOM6's initial/boundary condition forcing). If this is a CICE "
+                "forcing product, pass it as cice_product_name instead."
+            )
         self.forcing_product = ProductRegistry.get_product(self.forcing_product_name)
 
         function_args = ProductRegistry.get_function_default_args(
