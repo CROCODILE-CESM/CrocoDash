@@ -154,11 +154,12 @@ class GLORYS(ForcingProduct):
         output_filename,
         variables=None,
         name=None,
-        last_pair=False,
+        **kwargs,
     ) -> None:
         """
         Script to run the GLORYS data query for the CLI
         """
+        last_pair = kwargs.pop("last_pair", False)
         modify_existing = False
         if os.path.exists(output_folder / Path("get_glorys_data.sh")):
             modify_existing = True

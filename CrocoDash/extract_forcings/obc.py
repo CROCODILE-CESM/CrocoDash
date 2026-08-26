@@ -12,6 +12,9 @@ Three-phase pipeline per boundary:
              fully independent.
 3. MERGE  — concatenate regridded chunks into ``forcing_obc_segment_NNN.nc``.
 
+GET and REGRID phase automatically switch to multiprocessing when chunking and
+multiple cpus are available.
+
 Each phase is idempotent: existing output files are detected and skipped,
 so a failed run can be safely re-started.
 """
@@ -412,7 +415,7 @@ def _get_boundary(
         )
     else:
         num_workers = min(available_cpus(), len(pairs))
-        with ProcessPoolExecutor(max_workers=min(12, num_workers)) as ex:
+        with ProcessPoolExecutor(max_workers=num_workers) as ex:
             futures = [
                 ex.submit(
                     _get_one_chunk,
