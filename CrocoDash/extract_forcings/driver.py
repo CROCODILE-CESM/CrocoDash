@@ -122,6 +122,7 @@ def run_workflow(
                 regridded_dataset_path=regridded_data_dir,
                 output_path=output_path,
                 regrid_step_days=int(conditions["outputs"]["step"]),
+                bathymetry_path=topo_path,
                 preview=preview,
             )
             timings["bc"] = time.perf_counter() - _t
