@@ -397,32 +397,32 @@ crocodash<span class="w"> </span>create<span class="w"> </span>--config<span cla
 <span class="w">  </span><span class="nt">xstart</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">-60.0</span><span class="w">        </span><span class="c1"># western edge longitude</span>
 <span class="w">  </span><span class="nt">ystart</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30.0</span><span class="w">         </span><span class="c1"># southern edge latitude</span>
 <span class="w">  </span><span class="nt">resolution</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0</span><span class="w">      </span><span class="c1"># degrees per cell (or use nx/ny instead)</span>
-<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;mygrid&quot;</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"mygrid"</span>
 
 <span class="c1"># --- Bathymetry ---</span>
 <span class="nt">topo</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">min_depth</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10.0</span><span class="w">      </span><span class="c1"># columns shallower than this are masked</span>
 <span class="w">  </span><span class="nt">source</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;flat&quot;</span><span class="w">           </span><span class="c1"># flat | dataset | from_file</span>
+<span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="s">"flat"</span><span class="w">           </span><span class="c1"># flat | dataset | from_file</span>
 <span class="w">    </span><span class="nt">depth</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1000.0</span><span class="w">          </span><span class="c1"># for type: flat — constant depth in metres</span>
 
 <span class="w">    </span><span class="c1"># type: dataset — interpolate from a real bathymetry file (e.g. GEBCO)</span>
-<span class="w">    </span><span class="c1"># bathymetry_path: &quot;/path/to/gebco.nc&quot;</span>
-<span class="w">    </span><span class="c1"># longitude_coordinate_name: &quot;lon&quot;</span>
-<span class="w">    </span><span class="c1"># latitude_coordinate_name: &quot;lat&quot;</span>
-<span class="w">    </span><span class="c1"># vertical_coordinate_name: &quot;elevation&quot;</span>
+<span class="w">    </span><span class="c1"># bathymetry_path: "/path/to/gebco.nc"</span>
+<span class="w">    </span><span class="c1"># longitude_coordinate_name: "lon"</span>
+<span class="w">    </span><span class="c1"># latitude_coordinate_name: "lat"</span>
+<span class="w">    </span><span class="c1"># vertical_coordinate_name: "elevation"</span>
 <span class="w">    </span><span class="c1"># is_input_positive_below_msl: false</span>
 <span class="w">    </span><span class="c1"># fill_channels: false</span>
 
 <span class="w">    </span><span class="c1"># type: from_file — reuse an existing topog.nc</span>
-<span class="w">    </span><span class="c1"># topo_file_path: &quot;/path/to/ocean_topog.nc&quot;</span>
+<span class="w">    </span><span class="c1"># topo_file_path: "/path/to/ocean_topog.nc"</span>
 
 <span class="c1"># --- Vertical grid ---</span>
 <span class="nt">vgrid</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;uniform&quot;</span><span class="w">      </span><span class="c1"># uniform | hyperbolic | from_file</span>
+<span class="w">  </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="s">"uniform"</span><span class="w">      </span><span class="c1"># uniform | hyperbolic | from_file</span>
 <span class="w">  </span><span class="nt">nk</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span><span class="w">               </span><span class="c1"># number of layers</span>
 <span class="w">  </span><span class="c1"># depth omitted → uses topo.max_depth automatically</span>
-<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;myvgrid&quot;</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"myvgrid"</span>
 
 <span class="w">  </span><span class="c1"># type: hyperbolic — surface-intensified levels</span>
 <span class="w">  </span><span class="c1"># nk: 75</span>
@@ -430,29 +430,29 @@ crocodash<span class="w"> </span>create<span class="w"> </span>--config<span cla
 <span class="w">  </span><span class="c1"># ratio: 20.0</span>
 
 <span class="w">  </span><span class="c1"># type: from_file — reuse an existing vgrid.nc</span>
-<span class="w">  </span><span class="c1"># filename: &quot;/path/to/ocean_vgrid.nc&quot;</span>
+<span class="w">  </span><span class="c1"># filename: "/path/to/ocean_vgrid.nc"</span>
 
 <span class="c1"># --- CESM case ---</span>
 <span class="nt">case</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">cesmroot</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/path/to/CROCESM&quot;</span>
-<span class="w">  </span><span class="nt">caseroot</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/path/to/cases/mycase&quot;</span>
-<span class="w">  </span><span class="nt">inputdir</span><span class="p">:</span><span class="w">  </span><span class="s">&quot;/path/to/croc_input/mycase&quot;</span>
-<span class="w">  </span><span class="nt">compset</span><span class="p">:</span><span class="w">   </span><span class="s">&quot;CR_JRA&quot;</span><span class="w">          </span><span class="c1"># alias or full long name</span>
-<span class="w">  </span><span class="nt">machine</span><span class="p">:</span><span class="w">   </span><span class="s">&quot;derecho&quot;</span>
-<span class="w">  </span><span class="nt">project</span><span class="p">:</span><span class="w">   </span><span class="s">&quot;NCGD0011&quot;</span>
-<span class="w">  </span><span class="nt">atm_grid_name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;TL319&quot;</span><span class="w">       </span><span class="c1"># optional, default TL319</span>
+<span class="w">  </span><span class="nt">cesmroot</span><span class="p">:</span><span class="w"> </span><span class="s">"/path/to/CROCESM"</span>
+<span class="w">  </span><span class="nt">caseroot</span><span class="p">:</span><span class="w"> </span><span class="s">"/path/to/cases/mycase"</span>
+<span class="w">  </span><span class="nt">inputdir</span><span class="p">:</span><span class="w">  </span><span class="s">"/path/to/croc_input/mycase"</span>
+<span class="w">  </span><span class="nt">compset</span><span class="p">:</span><span class="w">   </span><span class="s">"CR_JRA"</span><span class="w">          </span><span class="c1"># alias or full long name</span>
+<span class="w">  </span><span class="nt">machine</span><span class="p">:</span><span class="w">   </span><span class="s">"derecho"</span>
+<span class="w">  </span><span class="nt">project</span><span class="p">:</span><span class="w">   </span><span class="s">"NCGD0011"</span>
+<span class="w">  </span><span class="nt">atm_grid_name</span><span class="p">:</span><span class="w"> </span><span class="s">"TL319"</span><span class="w">       </span><span class="c1"># optional, default TL319</span>
 
 <span class="c1"># --- Forcings (required) ---</span>
 <span class="nt">forcings</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">date_range</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;2020-01-01</span><span class="nv"> </span><span class="s">00:00:00&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;2020-02-01</span><span class="nv"> </span><span class="s">00:00:00&quot;</span><span class="p p-Indicator">]</span>
-<span class="w">  </span><span class="nt">boundaries</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;south&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;east&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;west&quot;</span><span class="p p-Indicator">]</span>
-<span class="w">  </span><span class="nt">product_name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;GLORYS&quot;</span>
-<span class="w">  </span><span class="nt">function_name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;get_glorys_data_from_rda&quot;</span>
+<span class="w">  </span><span class="nt">date_range</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"2020-01-01</span><span class="nv"> </span><span class="s">00:00:00"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"2020-02-01</span><span class="nv"> </span><span class="s">00:00:00"</span><span class="p p-Indicator">]</span>
+<span class="w">  </span><span class="nt">boundaries</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"south"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"east"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"west"</span><span class="p p-Indicator">]</span>
+<span class="w">  </span><span class="nt">product_name</span><span class="p">:</span><span class="w"> </span><span class="s">"GLORYS"</span>
+<span class="w">  </span><span class="nt">function_name</span><span class="p">:</span><span class="w"> </span><span class="s">"get_glorys_data_from_rda"</span>
 
 <span class="w">  </span><span class="c1"># Any extra kwargs are forwarded directly to configure_forcings:</span>
-<span class="w">  </span><span class="c1"># tidal_constituents: [&quot;M2&quot;, &quot;S2&quot;]</span>
-<span class="w">  </span><span class="c1"># tpxo_elevation_filepath: &quot;/path/to/TPXO_elevation.nc&quot;</span>
-<span class="w">  </span><span class="c1"># tpxo_velocity_filepath:  &quot;/path/to/TPXO_velocity.nc&quot;</span>
+<span class="w">  </span><span class="c1"># tidal_constituents: ["M2", "S2"]</span>
+<span class="w">  </span><span class="c1"># tpxo_elevation_filepath: "/path/to/TPXO_elevation.nc"</span>
+<span class="w">  </span><span class="c1"># tpxo_velocity_filepath:  "/path/to/TPXO_velocity.nc"</span>
 </pre></div>
 </div>
 <p>After <code class="docutils literal notranslate"><span class="pre">create</span></code> completes the caseroot contains a <code class="docutils literal notranslate"><span class="pre">crocodash_state.json</span></code> recording all construction parameters, and <code class="docutils literal notranslate"><span class="pre">inputdir/extract_forcings/config.json</span></code> recording the forcing setup. These files are the source of truth for <code class="docutils literal notranslate"><span class="pre">dump</span></code>, <code class="docutils literal notranslate"><span class="pre">bundle</span></code>, and <code class="docutils literal notranslate"><span class="pre">fork</span></code>.</p>
