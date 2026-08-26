@@ -346,6 +346,7 @@ document.write(`
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow-overview">Workflow Overview</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#directory-structure">Directory Structure</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#command-line-interface">Command-Line Interface</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#large-datasets">Large datasets</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#python-api">Python API</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-processing-pipeline">The Processing Pipeline</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#design-philosophy">Design Philosophy</a></li>
@@ -419,6 +420,10 @@ crocodash<span class="w"> </span>process<span class="w">  </span>--all<span clas
 <li><p>Submit to a batch queue and re-run from the CLI after a failure</p></li>
 <li><p>Resume a partially-completed run</p></li>
 </ul>
+</section>
+<section id="large-datasets">
+<h2>Large datasets<a class="headerlink" href="#large-datasets" title="Link to this heading">#</a></h2>
+<p>Large regional domains require large datasets. CrocoDash automatically switches to parallel downloading and regridding of Glorys data if multiple CPUs are available and a regridding step is provided in <code class="docutils literal notranslate"><span class="pre">config.json</span></code> (<a class="reference external" href="https://crocodile-cesm.github.io/CrocoGallery/latest/crocodash/process-forcings/">see example here</a>). External infrastructure may set limits: for example, if using <code class="docutils literal notranslate"><span class="pre">get_glorys_data_from_cds_api</span></code> or <code class="docutils literal notranslate"><span class="pre">get_glorys_data_script_for_cli</span></code>, Copernicus Marine Services may throw a “Too many requests” error if too many CPUs are used and they all contact the server at once. <code class="docutils literal notranslate"><span class="pre">get_glorys_data_from_rda</span></code> does not have this limitation but implies permission to access to NCAR’s RDA repository. Regridding has no limitations per se.</p>
 </section>
 <section id="python-api">
 <h2>Python API<a class="headerlink" href="#python-api" title="Link to this heading">#</a></h2>
@@ -546,6 +551,7 @@ inputdir/ocnice/
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow-overview">Workflow Overview</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#directory-structure">Directory Structure</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#command-line-interface">Command-Line Interface</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#large-datasets">Large datasets</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#python-api">Python API</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-processing-pipeline">The Processing Pipeline</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#design-philosophy">Design Philosophy</a></li>

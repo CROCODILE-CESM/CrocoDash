@@ -542,6 +542,8 @@ fully independent.</p>
 </li>
 <li><p>MERGE  — concatenate regridded chunks into <code class="docutils literal notranslate"><span class="pre">forcing_obc_segment_NNN.nc</span></code>.</p></li>
 </ol>
+<p>GET and REGRID phase automatically switch to multiprocessing when chunking and
+multiple cpus are available.</p>
 <p>Each phase is idempotent: existing output files are detected and skipped,
 so a failed run can be safely re-started.</p>
 <dl class="py function">
