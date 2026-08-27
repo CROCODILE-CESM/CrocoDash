@@ -1,15 +1,7 @@
 import argparse
 import json
-import re
 import sys
 from pathlib import Path
-
-DEFAULT_TEMPLATE_NOTEBOOK_ID = "crocodash.tutorials.crocodash_tutorial"
-
-# known_paths.json keys that hold placeholder tokens rather than real
-# dataset paths -- injecting them would silently overwrite an obvious
-# <KEY> placeholder with something equally uninformative (e.g. "Checkout").
-_NON_PATH_KEYS = {"CESM", "inputdir", "casedir"}
 
 
 class CrocoDashCliError(Exception):
@@ -20,15 +12,6 @@ class CrocoDashCliError(Exception):
     command first") -- never to blanket-catch unexpected bugs, which should
     keep their real traceback.
     """
-
-
-def _comment_out_magics(source):
-    """Comment out IPython magic/shell lines (jupytext convention) so
-    extracted code cells are valid, runnable Python."""
-    return "\n".join(
-        "# " + line if re.match(r"^\s*[%!]", line) else line
-        for line in source.split("\n")
-    )
 
 
 def _create(args):
@@ -130,20 +113,14 @@ def _duplicate_case(args):
 
 
 def _template(args):
-    from pathlib import Path
-    from crocogallery import (
-        get_notebook_path,
-        list_notebooks,
-        inject_into_text,
-        load_paths,
-    )
+    """Thin wrapper over crocogallery's template renderer.
 
-    def _paths():
-        if not args.machine:
-            return {}
-        return {
-            k: v for k, v in load_paths(args.machine).items() if k not in _NON_PATH_KEYS
-        }
+    The gallery owns the template sources -- notebooks, known_paths.json, and
+    the loose pbs/yaml assets -- so it owns the rendering too. This only maps
+    CLI arguments onto that call and keeps the error output friendly.
+    """
+    from crocogallery import list_notebooks, write_template
+    from crocogallery.template import DEFAULT_TEMPLATE_NOTEBOOK_ID, uses_notebook
 
     try:
         if args.list_notebooks:
@@ -156,55 +133,20 @@ def _template(args):
                 "--output is required unless --list-notebooks is given."
             )
 
-        output = Path(args.output)
-        notebook_id = args.notebook
-        output.parent.mkdir(parents=True, exist_ok=True)
-        is_pbs = args.kind == "pbs" or output.suffix == ".pbs"
+        if args.notebook != DEFAULT_TEMPLATE_NOTEBOOK_ID and not uses_notebook(
+            args.output, args.kind
+        ):
+            print(
+                f"[info] --notebook is ignored for --kind={args.kind!r} output "
+                f"{Path(args.output).suffix!r}; those templates are standalone files."
+            )
 
-        if is_pbs or output.suffix in (".yaml", ".yml"):
-            # The PBS script and YAML starter only live alongside the default
-            # tutorial notebook, not every gallery notebook -- --notebook only
-            # matters for the .ipynb/.py branch below.
-            if notebook_id != DEFAULT_TEMPLATE_NOTEBOOK_ID:
-                print(
-                    f"[info] --notebook is ignored for --kind={args.kind!r} output "
-                    f"{output.suffix!r}; using the default tutorial's template."
-                )
-            source_dir = get_notebook_path(DEFAULT_TEMPLATE_NOTEBOOK_ID).parent
-            if is_pbs:
-                template_text = (source_dir / "submit_forcings.pbs").read_text()
-                template_text = inject_into_text(template_text, _paths())
-                output.write_text(template_text)
-                output.chmod(output.stat().st_mode | 0o111)
-            else:
-                template_text = (source_dir / "starter_case.yaml").read_text()
-                template_text = inject_into_text(template_text, _paths())
-                output.write_text(template_text)
-        else:
-            import nbformat
-
-            paths = _paths()
-            nb = nbformat.read(get_notebook_path(notebook_id), as_version=4)
-
-            if output.suffix == ".ipynb":
-                for cell in nb.cells:
-                    if cell.cell_type == "code":
-                        cell.source = inject_into_text(cell.source, paths)
-                nbformat.write(nb, output)
-            else:
-                blocks = []
-                for cell in nb.cells:
-                    if cell.cell_type == "code":
-                        code = _comment_out_magics(inject_into_text(cell.source, paths))
-                        blocks.append("# %%\n" + code)
-                    elif cell.cell_type == "markdown":
-                        commented = "\n".join(
-                            f"# {line}" if line else "#"
-                            for line in cell.source.split("\n")
-                        )
-                        blocks.append("# %% [markdown]\n" + commented)
-                output.write_text("\n\n".join(blocks))
-
+        output = write_template(
+            args.output,
+            notebook_id=args.notebook,
+            machine=args.machine,
+            kind=args.kind,
+        )
         print(f"Template written to: {output}")
         if not args.machine:
             print("Tip: rerun with --machine derecho to pre-fill known dataset paths.")
@@ -419,6 +361,8 @@ def main():
         default=None,
         help="Pre-fill known dataset paths for this machine (e.g. derecho). Omit to leave <KEY> placeholders.",
     )
+    from crocogallery.template import DEFAULT_TEMPLATE_NOTEBOOK_ID
+
     template_parser.add_argument(
         "--notebook",
         default=DEFAULT_TEMPLATE_NOTEBOOK_ID,

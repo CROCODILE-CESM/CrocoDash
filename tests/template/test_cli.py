@@ -6,6 +6,7 @@ import nbformat
 import pytest
 
 from crocogallery import list_notebooks, load_paths
+from crocogallery.template import DEFAULT_TEMPLATE_NOTEBOOK_ID
 
 
 def run_main(argv):
@@ -219,7 +220,9 @@ def test_template_unknown_notebook(tmp_path, capsys):
 def test_template_list_notebooks(capsys):
     run_main(["template", "--list-notebooks"])
     out = capsys.readouterr().out
-    assert "crocodash.tutorials.crocodash_tutorial" in out
+    # Assert against the constant, not a hardcoded string: a default that is
+    # not actually a listed notebook breaks every no---notebook invocation.
+    assert DEFAULT_TEMPLATE_NOTEBOOK_ID in out
 
 
 def test_template_missing_output_without_list_notebooks(tmp_path):
