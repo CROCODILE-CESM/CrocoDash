@@ -363,8 +363,41 @@ def test_process_ww3_obc_with_reference_waves(tmp_path, gen_grid_topo_vgrid):
 def test_ww3_configurator_defaults_to_none_product():
     # None (unset) defers resolution to WW3Configurator.process's own
     # default ("era5_wave_spectra") -- not something validate_args should
-    # reject (there is no validate_args override on WW3Configurator today).
+    # reject.
     WW3Configurator(case_inputdir="dummy", boundaries=["west"])
+
+
+def test_ww3_configurator_rejects_non_ww3_product():
+    # A registered product of the wrong flavor (a MOM6 forcing product) and an
+    # entirely unknown name are both rejected, with distinct messages.
+    with pytest.raises(ValueError, match="not a WW3ForcingProduct"):
+        WW3Configurator(
+            case_inputdir="dummy",
+            boundaries=["west"],
+            ww3_obc_product_name="reference_ocean",
+        )
+
+    with pytest.raises(ValueError, match="Unknown forcing product"):
+        WW3Configurator(
+            case_inputdir="dummy",
+            boundaries=["west"],
+            ww3_obc_product_name="not_a_real_product",
+        )
+
+
+def test_ww3_configurator_accepts_matching_product():
+    # Doesn't raise -- both the real ERA5 spectra product and the fast
+    # synthetic stand-in are valid WW3ForcingProducts.
+    WW3Configurator(
+        case_inputdir="dummy",
+        boundaries=["west"],
+        ww3_obc_product_name="era5_wave_spectra",
+    )
+    WW3Configurator(
+        case_inputdir="dummy",
+        boundaries=["west"],
+        ww3_obc_product_name="reference_waves",
+    )
 
 
 # =============================================================================

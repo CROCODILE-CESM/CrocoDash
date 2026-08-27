@@ -81,6 +81,8 @@ def test_all_configurators_smoke(fake_param_case, fake_cime, fake_forcing_produc
                 ctor_args[a] = ["south", "north", "west", "east"]
             elif a == "product_name":
                 ctor_args[a] = "GLORYS"
+            elif a == "ww3_obc_product_name":
+                ctor_args[a] = "reference_waves"
             elif "filepath" in a:
                 ctor_args[a] = dummy_path
             elif "dir" in a:

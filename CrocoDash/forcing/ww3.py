@@ -5,6 +5,8 @@ import xarray as xr
 
 from CrocoDash.forcing import obc
 from CrocoDash.forcing.base import *
+from CrocoDash.raw_data_access.registry import ProductRegistry
+from CrocoDash.raw_data_access.base import WW3ForcingProduct
 
 
 def write_ww3_boundary_spectrum(file_path, lat, lon, freq, direction, efth, time=None):
@@ -393,6 +395,30 @@ class WW3Configurator(BaseConfigurator):
             get_step_days=get_step_days,
             regrid_step_days=regrid_step_days,
         )
+
+    def validate_args(self, **kwargs):
+        super().validate_args(**kwargs)
+
+        # None means "use this class's default product" (era5_wave_spectra),
+        # resolved in process(). Anything else must be a registered WW3 forcing
+        # product: the boundary spectra written here follow WW3ForcingProduct's
+        # spectral contract, so a MOM6 (or any other) forcing product can't
+        # stand in.
+        product_name = kwargs["ww3_obc_product_name"]
+        if product_name:
+            ProductRegistry.load()
+            if not ProductRegistry.product_exists(product_name):
+                raise ValueError(
+                    f"Unknown forcing product '{product_name}'. Known products: "
+                    f"{sorted(ProductRegistry.products)}."
+                )
+            if not ProductRegistry.product_is_of_type(product_name, WW3ForcingProduct):
+                raise ValueError(
+                    f"Product '{product_name}' ({ProductRegistry.get_product(product_name).__name__}) "
+                    "is not a WW3ForcingProduct, so it can't be used as "
+                    "ww3_obc_product_name (WW3's boundary spectra). If this is a MOM6 "
+                    "initial/boundary condition product, pass it as product_name instead."
+                )
 
     def configure(self):
         self.set_output_param(
