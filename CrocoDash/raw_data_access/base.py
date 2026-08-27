@@ -274,7 +274,8 @@ class MOM6ForcingProduct(VelocityTracerForcingProduct):
     """MOM6/regional_mom6-specific regridding metadata on top of
     ``VelocityTracerForcingProduct`` -- SSH and the OBC fill method, neither
     of which generalize to other models. Products that feed CrocoDash's
-    MOM6 OBC/IC pipeline (``GLORYS``, ``MOM6_OUTPUT``) extend this.
+    MOM6 OBC/IC pipeline (``GLORYS``, ``CESM_POP_OUTPUT``, ``CESM_MOM_OUTPUT``)
+    extend this.
     """
 
     required_metadata = VelocityTracerForcingProduct.required_metadata + [
