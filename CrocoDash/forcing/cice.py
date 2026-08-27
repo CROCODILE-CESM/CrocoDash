@@ -195,15 +195,24 @@ class CICEConfigurator(BaseConfigurator):
     def validate_args(self, **kwargs):
         super().validate_args(**kwargs)
 
+        # None means "use this class's default product", resolved in process().
+        # Anything else must be a registered CICE forcing product: process()
+        # regrids it with CICEForcingProduct's own B-grid var-name metadata, so
+        # a MOM6 (or any other) forcing product can't stand in here.
         product_name = kwargs["cice_product_name"]
         if product_name:
             ProductRegistry.load()
-            if not (
-                ProductRegistry.product_exists(product_name)
-                and ProductRegistry.product_is_of_type(product_name, CICEForcingProduct)
-            ):
+            if not ProductRegistry.product_exists(product_name):
                 raise ValueError(
-                    f"CICE product '{product_name}' is not a registered CICEForcingProduct."
+                    f"Unknown forcing product '{product_name}'. Known products: "
+                    f"{sorted(ProductRegistry.products)}."
+                )
+            if not ProductRegistry.product_is_of_type(product_name, CICEForcingProduct):
+                raise ValueError(
+                    f"Product '{product_name}' ({ProductRegistry.get_product(product_name).__name__}) "
+                    "is not a CICEForcingProduct, so it can't be used as cice_product_name "
+                    "(CICE's restoring forcing). If this is a MOM6 initial/boundary condition "
+                    "product, pass it as product_name instead."
                 )
 
     def configure(self):
@@ -278,10 +287,10 @@ class CICEConfigurator(BaseConfigurator):
         subset_paths = data_access_fn(
             dates=date_range,
             output_folder=raw_dir,
-            lat_min = bbox["lat_min"] - 1,
-            lat_max = bbox["lat_max"] + 1,
-            lon_min = bbox["lon_min"] - 1,
-            lon_max = bbox["lon_max"] + 1,
+            lat_min=bbox["lat_min"] - 1,
+            lat_max=bbox["lat_max"] + 1,
+            lon_min=bbox["lon_min"] - 1,
+            lon_max=bbox["lon_max"] + 1,
             **(self.get_input_param("cice_function_args") or {}),
         )
         subset = xr.open_dataset(subset_paths[0])

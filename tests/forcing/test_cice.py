@@ -56,8 +56,13 @@ def _make_ctx(tmp_path, **overrides):
 
 
 def test_cice_configurator_rejects_non_cice_product():
-    with pytest.raises(ValueError, match="not a registered CICEForcingProduct"):
+    # A registered product of the wrong flavor (a MOM6 forcing product) and an
+    # entirely unknown name are both rejected, with distinct messages.
+    with pytest.raises(ValueError, match="not a CICEForcingProduct"):
         CICEConfigurator(cice_product_name="reference_ocean")
+
+    with pytest.raises(ValueError, match="Unknown forcing product"):
+        CICEConfigurator(cice_product_name="not_a_real_product")
 
 
 def test_cice_configurator_accepts_matching_product():
