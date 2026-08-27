@@ -27,7 +27,7 @@ from CrocoDash.forcing.base import *
 from CrocoDash.grid import Grid
 from CrocoDash.topo import Topo
 from CrocoDash.raw_data_access.registry import ProductRegistry
-from CrocoDash.raw_data_access.base import MOM6ForcingProduct
+from CrocoDash.raw_data_access.base import ForcingProduct
 
 logger = logging.setup_logger(__name__)
 
@@ -416,18 +416,11 @@ class ConditionsConfigurator(BaseConfigurator):
 
         ProductRegistry.load()
         product_name = kwargs["product_name"]
-        if not ProductRegistry.product_exists(product_name):
-            raise ValueError(
-                f"Unknown forcing product '{product_name}'. Known products: "
-                f"{sorted(ProductRegistry.products)}."
-            )
-        if not ProductRegistry.product_is_of_type(product_name, MOM6ForcingProduct):
-            raise ValueError(
-                f"Product '{product_name}' ({ProductRegistry.get_product(product_name).__name__}) "
-                "is not a MOM6ForcingProduct, so it can't be used as the conditions "
-                "configurator's product_name (MOM6's initial/boundary condition forcing). "
-                "If this is a CICE forcing product, pass it as cice_product_name instead."
-            )
+        if not (
+            ProductRegistry.product_exists(product_name)
+            and ProductRegistry.product_is_of_type(product_name, ForcingProduct)
+        ):
+            raise ValueError("Product / Data Path is not supported quite yet")
 
     @staticmethod
     def _segment_index(boundaries, boundary):
