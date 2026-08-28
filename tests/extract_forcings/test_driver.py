@@ -169,7 +169,7 @@ def test_run_workflow_ic_bc_calls_mom6(mock_cs, mock_mom6, tmp_path):
     # process_obc_conditions always falls back to the full supergrid bbox
     # and the tmask-derived per-boundary bbox feature is a silent no-op.
     assert (
-        mock_mom6.process_obc_conditions.call_args.kwargs["bathymetry_path"]
+        mock_mom6.process_mom6_obc.call_args.kwargs["bathymetry_path"]
         == state["topo_path"]
     )
 

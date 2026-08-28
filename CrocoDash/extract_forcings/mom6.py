@@ -143,6 +143,7 @@ def process_mom6_obc(
     get_step_days=None,
     regrid_step_days: int = 30,
     function_args: dict = None,
+    bathymetry_path=None,
     preview: bool = False,
 ):
     """Process MOM6 boundary conditions through obc.py's GET → REGRID → MERGE
@@ -169,6 +170,7 @@ def process_mom6_obc(
             regrid_chunk_fn=_regrid_obc_chunk,
             get_step_days=get_step_days,
             regrid_step_days=regrid_step_days,
+            bathymetry_path=bathymetry_path,
             preview=True,
         )
 
@@ -195,6 +197,7 @@ def process_mom6_obc(
         regrid_chunk_fn=_regrid_obc_chunk,
         get_step_days=get_step_days,
         regrid_step_days=regrid_step_days,
+        bathymetry_path=bathymetry_path,
         preview=False,
     )
 

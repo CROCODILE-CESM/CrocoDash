@@ -395,7 +395,6 @@ def process_obc_conditions(
     regrid_chunk_fn,
     get_step_days=None,
     regrid_step_days: int = 30,
-    function_args: dict = None,
     bathymetry_path=None,
     preview: bool = False,
 ):
@@ -427,9 +426,6 @@ def process_obc_conditions(
         regrid_chunk_fn: Target-specific regrid step -- see ``_regrid_boundary``.
         get_step_days: GET chunk size in days; None = full range in one request.
         regrid_step_days: REGRID chunk size in days.
-        function_args: Overrides for the access function's non-required
-            arguments (e.g. `member`), as resolved by
-            configure_forcings()'s function_overrides.
         bathymetry_path: Optional path to the case's bathymetry file. When
             given, download bounding boxes are computed from the bathymetry
             ocean tmask (tighter than the full supergrid edge extent). When
@@ -452,8 +448,6 @@ def process_obc_conditions(
             "get_pairs": _make_date_pairs(start_date, end_date, get_step_days),
             "regrid_pairs": _make_date_pairs(start_date, end_date, regrid_step_days),
         }
-
-    variables, extra_args = utils.build_forcing_request(product_info, function_args)
 
     # Compute per-boundary download bboxes using the bathymetry tmask so we only
     # request data over ocean cells (tighter than the full supergrid edge extent).
@@ -480,12 +474,6 @@ def process_obc_conditions(
             logger.info(
                 "No bathymetry_path given; using full supergrid bounding boxes."
             )
-
-    fill_method = rm6.regridding.fill_missing_data
-    if product_info.get("boundary_fill_method", "regional_mom6") != "regional_mom6":
-        raise ValueError(
-            f"fill_method '{product_info['boundary_fill_method']}' is not supported."
-        )
 
     raw_path.mkdir(exist_ok=True)
     regridded_path.mkdir(exist_ok=True)
