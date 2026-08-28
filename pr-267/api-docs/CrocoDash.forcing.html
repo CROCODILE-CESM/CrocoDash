@@ -1324,7 +1324,9 @@ file: it must cover the case’s regional domain plus a halo (<code class="docut
 on every side, required for the restoring routine), built from a CICE-shaped
 forcing product (real global restart, or a fast synthetic stand-in – see
 <code class="docutils literal notranslate"><span class="pre">cice_product_name</span></code>/<code class="docutils literal notranslate"><span class="pre">cice_function_name</span></code> below) regridded onto every
-point of that expanded grid. Like a real CICE restart/initial-condition
+point of that expanded grid. Producing it is opt-in: naming neither product
+nor function skips <code class="docutils literal notranslate"><span class="pre">process</span></code> entirely and leaves <code class="docutils literal notranslate"><span class="pre">restore_ice</span></code> off, so
+CICE runs with zero-gradient boundaries and no restoring. Like a real CICE restart/initial-condition
 file, the output carries no <code class="docutils literal notranslate"><span class="pre">time</span></code> dimension at all – just the single
 static snapshot (for <code class="docutils literal notranslate"><span class="pre">cice_restart</span></code>), regridded once.</p>
 <p>Unlike MOM6/WW3’s OBC, there’s no boundary-only regrid and no date-chunking
@@ -1402,10 +1404,13 @@ all and validate_output_filepaths() passes vacuously.</p>
 <span class="sig-name descname"><span class="pre">process</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.cice.CICEConfigurator.process" title="Link to this definition">#</a></dt>
 <dd><p>Generate CICE’s single restoring forcing file into
 &lt;inputdir&gt;/sea_ice/cice_forcing.nc.</p>
-<p>Covers the case’s domain plus an <code class="docutils literal notranslate"><span class="pre">n_halo_cells</span></code>-cell halo on every
-side (grown via <code class="docutils literal notranslate"><span class="pre">SupergridBase.expand</span></code>), windowed from the requested
-CICE forcing product (<code class="docutils literal notranslate"><span class="pre">cice_product_name</span></code>/<code class="docutils literal notranslate"><span class="pre">cice_function_name</span></code>,
-resolved via the same <code class="docutils literal notranslate"><span class="pre">ProductRegistry</span></code> lookup MOM6/WW3 use –
+<p>Does nothing unless the caller named both <code class="docutils literal notranslate"><span class="pre">cice_product_name</span></code> and
+<code class="docutils literal notranslate"><span class="pre">cice_function_name</span></code> – restoring is opt-in, see
+<code class="docutils literal notranslate"><span class="pre">_resolve_forcing_source</span></code>.</p>
+<p>When they are given, covers the case’s domain plus an
+<code class="docutils literal notranslate"><span class="pre">n_halo_cells</span></code>-cell halo on every side (grown via
+<code class="docutils literal notranslate"><span class="pre">SupergridBase.expand</span></code>), windowed from that CICE forcing product
+(resolved via the same <code class="docutils literal notranslate"><span class="pre">ProductRegistry</span></code> lookup MOM6/WW3 use –
 <code class="docutils literal notranslate"><span class="pre">restart_path</span></code>/<code class="docutils literal notranslate"><span class="pre">grid_path</span></code> for the real <code class="docutils literal notranslate"><span class="pre">cice_restart</span></code> product go
 in <code class="docutils literal notranslate"><span class="pre">cice_function_args</span></code>) and regridded onto that expanded grid. Like
 a real CICE restart/initial-condition file, the output has no
