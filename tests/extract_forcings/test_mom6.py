@@ -1,6 +1,10 @@
 import pytest
+import numpy as np
+import pandas as pd
+import xarray as xr
 
 from CrocoDash.extract_forcings import mom6
+from CrocoDash.extract_forcings.mom6 import _split_bgc_tracers_into_files
 from CrocoDash.forcing_configurations.configurations import ConditionsConfigurator
 
 
@@ -53,3 +57,75 @@ def test_conditions_configurator_accepts_mom6_products():
     _conditions("glorys")
     _conditions("cesm_pop_output")
     _conditions("cesm_mom_output")
+
+
+# ---------------------------------------------------------------------------
+# BGC tracer splitting
+# ---------------------------------------------------------------------------
+
+
+def _write_segment_file(path, seg, tracers, nt=3, nz=4, nx=5):
+    """A stand-in for a merged forcing_obc_segment_NNN.nc holding physical +
+    BGC tracers, in the ``<var>_segment_NNN`` / ``dz_<var>_segment_NNN`` layout
+    the regrid step produces."""
+    ds = xr.Dataset()
+    dims = ("time", f"nz_segment_{seg}", f"nx_segment_{seg}")
+    for var in ("temp", "salt", *tracers):
+        name = f"{var}_segment_{seg}"
+        ds[name] = (dims, np.full((nt, nz, nx), float(len(var))))
+        ds[f"dz_{name}"] = (dims, np.ones((nt, nz, nx)))
+    ds["time"] = ("time", pd.date_range("2020-01-01", periods=nt))
+    ds.to_netcdf(path)
+
+
+def test_split_bgc_tracers_writes_one_file_per_tracer_with_all_segments(tmp_path):
+    """Each BGC tracer gets its own file holding every segment.
+
+    MOM6's generic tracer code reads BGC boundary data per tracer, not per
+    segment, so OBC_DATA_<tracer> points at <tracer>_obc_segment.nc. Without
+    this split those files never exist.
+    """
+    conversion = {"south": 1, "north": 2, "west": 3, "east": 4}
+    tracers = {"o2": "o2", "no3": "no3"}
+    for seg in ("001", "002", "003", "004"):
+        _write_segment_file(
+            tmp_path / f"forcing_obc_segment_{seg}.nc", seg, tracers.keys()
+        )
+
+    written = _split_bgc_tracers_into_files(tmp_path, conversion, tracers)
+
+    assert sorted(p.name for p in written) == [
+        "no3_obc_segment.nc",
+        "o2_obc_segment.nc",
+    ]
+    for var in tracers:
+        with xr.open_dataset(tmp_path / f"{var}_obc_segment.nc") as ds:
+            for seg in ("001", "002", "003", "004"):
+                assert f"{var}_segment_{seg}" in ds
+                assert f"dz_{var}_segment_{seg}" in ds
+            # Physical tracers stay in the per-boundary files, not here.
+            assert not [v for v in ds.data_vars if v.startswith(("temp", "salt"))]
+
+    # The per-boundary files are left intact for the physical tracers.
+    for seg in ("001", "002", "003", "004"):
+        with xr.open_dataset(tmp_path / f"forcing_obc_segment_{seg}.nc") as ds:
+            assert f"temp_segment_{seg}" in ds
+
+
+def test_split_bgc_tracers_is_a_noop_without_marbl_tracers(tmp_path):
+    """Non-BGC cases must not gain any per-tracer files."""
+    conversion = {"south": 1}
+    _write_segment_file(tmp_path / "forcing_obc_segment_001.nc", "001", [])
+
+    assert _split_bgc_tracers_into_files(tmp_path, conversion, {}) == []
+    assert sorted(p.name for p in tmp_path.iterdir()) == ["forcing_obc_segment_001.nc"]
+
+
+def test_split_bgc_tracers_raises_when_tracer_missing_from_segment(tmp_path):
+    """A tracer requested but absent from a segment file is a hard error, not a
+    silently truncated output file."""
+    conversion = {"south": 1}
+    _write_segment_file(tmp_path / "forcing_obc_segment_001.nc", "001", ["o2"])
+
+    with pytest.raises(KeyError, match="alk_segment_001"):
+        _split_bgc_tracers_into_files(tmp_path, conversion, {"alk": "alk"})

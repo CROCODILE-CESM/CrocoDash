@@ -305,6 +305,10 @@ class MOM6ForcingProduct(VelocityTracerForcingProduct):
         if include_marbl_tracers and hasattr(cls, "marbl_var_names"):
             merged.update(cls.marbl_var_names)
             base["tracer_var_names"] = merged
+            # Keep the MARBL subset addressable on its own. Once merged above,
+            # the BGC tracers are indistinguishable from temp/salt, and the OBC
+            # step needs to know which ones to split into per-tracer files.
+            base["marbl_var_names"] = dict(cls.marbl_var_names)
         elif include_marbl_tracers and not hasattr(cls, "marbl_var_names"):
             raise ValueError(
                 "This product does not have marbl tracer var names and cannot be written out as such."
