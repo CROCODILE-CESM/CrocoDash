@@ -801,17 +801,6 @@ class ConditionsConfigurator(BaseConfigurator):
                 f"SALT=file:forcing_obc_segment_{seg_ix}.nc(salt)"
             )
 
-            if self.registry and self.registry.is_active("bgc"):
-                for tracer_mom6_name, source_var in product.marbl_var_names.items():
-                    tracer_param = UserNLConfigParam(
-                        f"OBC_DATA_{tracer_mom6_name}",
-                        comment="Open boundary conditions",
-                    )
-                    tracer_param.set_item(
-                        f"{tracer_mom6_name}_obc_segment.nc({source_var})"
-                    )
-                    dynamic_params.append(tracer_param)
-
             data_str = standard_data_str
             if self.registry and self.registry.is_active("tides"):
                 data_str += self.registry.active_configurators["tides"].tidal_data_str(
@@ -824,6 +813,20 @@ class ConditionsConfigurator(BaseConfigurator):
             )
             data_param.set_item(data_str)
             dynamic_params.append(data_param)
+
+        # ---- BGC tracer OBC params ----
+        # Each BGC tracer lives in a single {tracer}_obc_segment.nc holding all
+        # boundaries, so these are emitted once per tracer, not per segment.
+        if self.registry and self.registry.is_active("bgc"):
+            for tracer_mom6_name, source_var in product.marbl_var_names.items():
+                tracer_param = UserNLConfigParam(
+                    f"OBC_DATA_{tracer_mom6_name}",
+                    comment="Open boundary conditions",
+                )
+                tracer_param.set_item(
+                    f"{tracer_mom6_name}_obc_segment.nc({source_var})"
+                )
+                dynamic_params.append(tracer_param)
 
         self.output_params = self.output_params + dynamic_params
 
@@ -862,4 +865,13 @@ class ConditionsConfigurator(BaseConfigurator):
                     param = UserNLConfigParam(name, comment="Open boundary conditions")
                     param.set_item(data["outputs"][name])
                     obj.output_params.append(param)
+        # BGC tracer params are keyed by tracer, not by segment, and are only
+        # present when the bgc configurator was active. Recover them by name so
+        # a round-trip preserves them without needing the registry or product.
+        existing = {param.name for param in obj.output_params}
+        for name, value in data["outputs"].items():
+            if name.startswith("OBC_DATA_") and name not in existing:
+                param = UserNLConfigParam(name, comment="Open boundary conditions")
+                param.set_item(value)
+                obj.output_params.append(param)
         return obj
