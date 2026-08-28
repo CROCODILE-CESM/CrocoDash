@@ -330,20 +330,21 @@ class WW3Configurator(BaseConfigurator):
             comment=(
                 "Name of the WW3 OBC input data product, mirroring "
                 "Case.configure_forcings's product_name/function_name pattern for "
-                "the main IC/OBC product. Defaults (None) to the real ERA5 "
-                "2D-spectra product ('era5_wave_spectra', "
-                "raw_data_access/datasets/era5.py) -- requires a separate "
-                "cds.climate.copernicus.eu API key not assumed to exist by default. "
-                "Pass a different product name to source boundary spectra some "
-                "other way instead."
+                "the main IC/OBC product. Boundary spectra are opt-in: leaving this "
+                "unset (None) skips WW3 OBC generation entirely and WW3 runs with "
+                "its own in-core calm boundaries, which is a valid configuration. "
+                "Set it -- together with ww3_obc_function_name -- to generate "
+                "boundary spectra, e.g. 'era5_wave_spectra' / 'get_era5_2d_spectra' "
+                "(raw_data_access/datasets/era5.py), which needs a separate "
+                "cds.climate.copernicus.eu API key."
             ),
         ),
         InputValueParam(
             "ww3_obc_function_name",
             comment=(
                 "Name of the raw_data_access function to call for downloading the "
-                "WW3 OBC data product. Defaults (None) to 'get_era5_2d_spectra'. "
-                "See ww3_obc_product_name."
+                "WW3 OBC data product. Must be given whenever ww3_obc_product_name "
+                "is; there is no implicit default. See ww3_obc_product_name."
             ),
         ),
         InputValueParam(
@@ -399,11 +400,11 @@ class WW3Configurator(BaseConfigurator):
     def validate_args(self, **kwargs):
         super().validate_args(**kwargs)
 
-        # None means "use this class's default product" (era5_wave_spectra),
-        # resolved in process(). Anything else must be a registered WW3 forcing
-        # product: the boundary spectra written here follow WW3ForcingProduct's
-        # spectral contract, so a MOM6 (or any other) forcing product can't
-        # stand in.
+        # None means "generate no boundary spectra at all" -- process() skips
+        # itself entirely (WW3 runs unforced at its boundaries). Anything else
+        # must be a registered WW3 forcing product: the boundary spectra
+        # written here follow WW3ForcingProduct's spectral contract, so a MOM6
+        # (or any other) forcing product can't stand in.
         product_name = kwargs["ww3_obc_product_name"]
         if product_name:
             ProductRegistry.load()
@@ -467,13 +468,19 @@ class WW3Configurator(BaseConfigurator):
         time to queue/process on CDS. Passing get_step_days=1 splits each
         boundary's GET step into one request per calendar day instead.
 
-        Routes through obc.py's shared GET -> chunk -> REGRID -> MERGE
-        engine. ww3_obc_product_name/ww3_obc_function_name default to the
-        real ERA5 2D-spectra product (raw_data_access/datasets/era5.py),
-        which needs a separate cds.climate.copernicus.eu API key. Pass a
-        different product/function pair (matching a WW3ForcingProduct-
-        derived class's own contract) to source boundary spectra some other
-        way instead.
+        Boundary spectra are opt-in. WW3 runs perfectly well without open
+        boundary forcing -- an unforced run just starts from in-core calm
+        conditions -- so this step does nothing unless the caller names both
+        ww3_obc_product_name and ww3_obc_function_name. Defaulting to the
+        real ERA5 2D-spectra product instead would make every WW3 case
+        depend on a separate cds.climate.copernicus.eu API key that most
+        users don't have, to produce forcing they may not have asked for.
+
+        When both are given, routes through obc.py's shared GET -> chunk ->
+        REGRID -> MERGE engine. The product must match a WW3ForcingProduct-
+        derived class's spectral contract (enforced in validate_args); e.g.
+        'era5_wave_spectra' / 'get_era5_2d_spectra'
+        (raw_data_access/datasets/era5.py).
 
         Each boundary's merged output carries a "station" dimension -- one
         real point per boundary window, not reduced to a single value.
@@ -494,13 +501,41 @@ class WW3Configurator(BaseConfigurator):
         that runs out mid-run permanently disables boundary forcing (an EOF
         in w3iobcmd.F90 sets FLBPI=.FALSE. for the rest of the run).
         """
+        product_name = self.get_input_param("ww3_obc_product_name")
+        function_name = self.get_input_param("ww3_obc_function_name")
+
+        # WW3_GRID_INP_DIR points here whether or not there are boundary
+        # spectra in it, so make it real before the opt-out below.
+        output_dir = Path(ctx.inputdir) / WAVE_SUBDIR
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        if not product_name and not function_name:
+            print(
+                "[info] WW3: no ww3_obc_product_name/ww3_obc_function_name given -- "
+                "skipping boundary spectra. WW3 will run without open boundary "
+                "forcing (in-core calm conditions). Pass both to generate them."
+            )
+            return
+
+        # Half-specified is always a mistake: silently skipping would hide a
+        # typo'd or forgotten argument behind a case that still runs.
+        if not product_name or not function_name:
+            missing, given = (
+                ("ww3_obc_product_name", "ww3_obc_function_name")
+                if not product_name
+                else ("ww3_obc_function_name", "ww3_obc_product_name")
+            )
+            raise ValueError(
+                f"WW3 boundary spectra need both ww3_obc_product_name and "
+                f"ww3_obc_function_name; {given} was given but {missing} was not. "
+                f"Pass both to generate spectra, or neither to run WW3 without "
+                f"open boundary forcing."
+            )
+
         boundaries = self.get_input_param("boundaries")
         conditions = ctx.config["conditions"]
         start_date = conditions["inputs"]["start_date"]
         end_date = conditions["inputs"]["end_date"]
-
-        output_dir = Path(ctx.inputdir) / WAVE_SUBDIR
-        output_dir.mkdir(parents=True, exist_ok=True)
 
         staging_dir = Path(ctx.inputdir) / "extract_forcings" / "ww3"
         raw_dir = staging_dir / "raw_data"
@@ -510,13 +545,6 @@ class WW3Configurator(BaseConfigurator):
             d.mkdir(parents=True, exist_ok=True)
 
         boundary_number_conversion = {b: i + 1 for i, b in enumerate(boundaries)}
-
-        product_name = (
-            self.get_input_param("ww3_obc_product_name") or "era5_wave_spectra"
-        )
-        function_name = (
-            self.get_input_param("ww3_obc_function_name") or "get_era5_2d_spectra"
-        )
 
         obc.process_obc_conditions(
             start_date=start_date,

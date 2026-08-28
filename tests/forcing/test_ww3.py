@@ -119,24 +119,63 @@ def test_write_spec_list(tmp_path):
 # =============================================================================
 
 
-def test_process_ww3_obc_defaults_to_era5(tmp_path, gen_grid_topo_vgrid):
-    """No product/function passed -- process() must route to the real ERA5
-    2D-spectra product, not a placeholder (there isn't one anymore)."""
+def test_process_ww3_obc_skipped_without_product(tmp_path, gen_grid_topo_vgrid):
+    """Boundary spectra are opt-in: with neither product nor function named,
+    process() must generate nothing at all rather than fall back to a default
+    product. WW3 runs fine unforced at its boundaries, and defaulting to ERA5
+    would make every WW3 case need a CDS API key."""
     grid, topo, vgrid = gen_grid_topo_vgrid
     hgrid_path = tmp_path / "hgrid.nc"
     grid.write_supergrid(hgrid_path)
 
     configurator = WW3Configurator(case_inputdir=tmp_path, boundaries=["west"])
 
-    with patch(
-        "CrocoDash.forcing.ww3.obc.process_obc_conditions",
-        side_effect=RuntimeError("stop-after-call"),
-    ) as mock_process:
-        with pytest.raises(RuntimeError, match="stop-after-call"):
+    with patch("CrocoDash.forcing.ww3.obc.process_obc_conditions") as mock_process:
+        configurator.process(_make_ctx(tmp_path, supergrid_path=hgrid_path))
+
+    mock_process.assert_not_called()
+
+    # No spec.list / ww3_bounc.nml / point files -- but WW3_GRID_INP_DIR still
+    # has to name a directory that exists, since CIME's ww3 buildnml reads it.
+    wave_dir = tmp_path / "wave"
+    assert wave_dir.is_dir()
+    assert list(wave_dir.iterdir()) == []
+
+
+@pytest.mark.parametrize(
+    "kwargs, given, missing",
+    [
+        (
+            {"ww3_obc_product_name": "era5_wave_spectra"},
+            "ww3_obc_product_name",
+            "ww3_obc_function_name",
+        ),
+        (
+            {"ww3_obc_function_name": "get_era5_2d_spectra"},
+            "ww3_obc_function_name",
+            "ww3_obc_product_name",
+        ),
+    ],
+)
+def test_process_ww3_obc_half_specified_raises(
+    tmp_path, gen_grid_topo_vgrid, kwargs, given, missing
+):
+    """Only one of the pair given is a typo or a forgotten argument, not a
+    request to skip -- skipping silently would hide it behind a case that
+    still runs."""
+    grid, topo, vgrid = gen_grid_topo_vgrid
+    hgrid_path = tmp_path / "hgrid.nc"
+    grid.write_supergrid(hgrid_path)
+
+    configurator = WW3Configurator(
+        case_inputdir=tmp_path, boundaries=["west"], **kwargs
+    )
+
+    with patch("CrocoDash.forcing.ww3.obc.process_obc_conditions") as mock_process:
+        with pytest.raises(ValueError, match=f"{given} was given but {missing}"):
             configurator.process(_make_ctx(tmp_path, supergrid_path=hgrid_path))
-    _, kwargs = mock_process.call_args
-    assert kwargs["product_name"] == "era5_wave_spectra"
-    assert kwargs["function_name"] == "get_era5_2d_spectra"
+
+    mock_process.assert_not_called()
 
 
 def _make_synthetic_era5_window(n_stations=3):
@@ -361,9 +400,9 @@ def test_process_ww3_obc_with_reference_waves(tmp_path, gen_grid_topo_vgrid):
 
 
 def test_ww3_configurator_defaults_to_none_product():
-    # None (unset) defers resolution to WW3Configurator.process's own
-    # default ("era5_wave_spectra") -- not something validate_args should
-    # reject.
+    # None (unset) means "skip boundary spectra entirely" (handled in
+    # process()) -- a valid WW3 configuration, not something validate_args
+    # should reject.
     WW3Configurator(case_inputdir="dummy", boundaries=["west"])
 
 
