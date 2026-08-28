@@ -1,6 +1,7 @@
 """Tests for CICEConfigurator: validate_args and process()."""
 
 from pathlib import Path
+from unittest.mock import patch
 
 import numpy as np
 import pytest
@@ -73,14 +74,78 @@ def test_cice_configurator_accepts_matching_product():
 
 
 def test_cice_configurator_defaults_to_none_product():
-    # None (unset) defers resolution to CICEConfigurator.process's own
-    # default ("cice_restart") -- not something validate_args should reject.
+    # None (unset) means "generate no restoring forcing" (handled in
+    # configure()/process()) -- a valid CICE configuration, not something
+    # validate_args should reject.
     CICEConfigurator()
+
+
+def _configure_without_a_case(configurator):
+    """Run configure() with the namelist write stubbed out -- CICE's outputs
+    are all UserNLConfigParams, whose apply() would otherwise append into a
+    real case directory."""
+    with patch("CrocoDash.forcing.base.append_user_nl"):
+        configurator.configure()
+
+
+def test_configure_leaves_restore_ice_off_without_a_product():
+    """Restoring is opt-in, so restore_ice must stay off unless process() will
+    actually produce a file to restore toward -- otherwise CICE is pointed at a
+    restoring target that doesn't exist."""
+    configurator = CICEConfigurator()
+    _configure_without_a_case(configurator)
+    assert configurator.get_output_param("restore_ice") == ".false."
+
+
+def test_configure_turns_restore_ice_on_with_a_product():
+    configurator = CICEConfigurator(
+        cice_product_name="reference_ice",
+        cice_function_name="get_reference_ice_data",
+    )
+    _configure_without_a_case(configurator)
+    assert configurator.get_output_param("restore_ice") == ".true."
+
+
+@pytest.mark.parametrize(
+    "kwargs, given, missing",
+    [
+        (
+            {"cice_product_name": "reference_ice"},
+            "cice_product_name",
+            "cice_function_name",
+        ),
+        (
+            {"cice_function_name": "get_reference_ice_data"},
+            "cice_function_name",
+            "cice_product_name",
+        ),
+    ],
+)
+def test_cice_half_specified_raises(kwargs, given, missing):
+    """Only one of the pair given is a typo or a forgotten argument, not a
+    request to skip -- skipping silently would hide it behind a case that
+    still runs."""
+    configurator = CICEConfigurator(**kwargs)
+    with pytest.raises(ValueError, match=f"{given} was given but {missing}"):
+        configurator._resolve_forcing_source()
 
 
 # =============================================================================
 # process()
 # =============================================================================
+
+
+def test_process_cice_forcing_skipped_without_product(tmp_path, gen_grid_topo_vgrid):
+    """With neither product nor function named, process() must generate nothing
+    at all rather than fall back to the real cice_restart product (which needs
+    a restart_path/grid_path most users don't have)."""
+    grid, topo, vgrid = gen_grid_topo_vgrid
+    grid.write_supergrid(tmp_path / "grid.nc")
+
+    CICEConfigurator().process(_make_ctx(tmp_path, supergrid_path=tmp_path / "grid.nc"))
+
+    assert not (tmp_path / SEA_ICE_SUBDIR).exists()
+    assert not (tmp_path / "extract_forcings" / "cice").exists()
 
 
 def test_process_cice_forcing_produces_output(

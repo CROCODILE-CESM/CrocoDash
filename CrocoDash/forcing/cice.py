@@ -8,7 +8,9 @@ file: it must cover the case's regional domain plus a halo (``n_halo_cells``
 on every side, required for the restoring routine), built from a CICE-shaped
 forcing product (real global restart, or a fast synthetic stand-in -- see
 ``cice_product_name``/``cice_function_name`` below) regridded onto every
-point of that expanded grid. Like a real CICE restart/initial-condition
+point of that expanded grid. Producing it is opt-in: naming neither product
+nor function skips ``process`` entirely and leaves ``restore_ice`` off, so
+CICE runs with zero-gradient boundaries and no restoring. Like a real CICE restart/initial-condition
 file, the output carries no ``time`` dimension at all -- just the single
 static snapshot (for ``cice_restart``), regridded once.
 
@@ -139,20 +141,24 @@ class CICEConfigurator(BaseConfigurator):
             comment=(
                 "Name of the CICE forcing data product, mirroring "
                 "Case.configure_forcings's product_name/function_name pattern for "
-                "the main MOM6 IC/OBC product. Defaults (None) to the real global "
-                "restart product ('cice_restart', "
-                "raw_data_access/datasets/cice_output.py), which requires a real "
-                "restart_path/grid_path (see cice_function_args). Pass a "
-                "different product name (e.g. 'reference_ice') to source CICE's "
-                "forcing some other way instead."
+                "the main MOM6 IC/OBC product. The restoring forcing is opt-in: "
+                "leaving this unset (None) generates no forcing file and leaves "
+                "restore_ice off, so CICE runs with zero-gradient boundaries and "
+                "no restoring -- a valid configuration. Set it, together with "
+                "cice_function_name, to generate the file: e.g. the real global "
+                "restart product 'cice_restart' / 'get_cice_restart_subset' "
+                "(raw_data_access/datasets/cice_output.py), which also needs a "
+                "real restart_path/grid_path in cice_function_args, or "
+                "'reference_ice' / 'get_reference_ice_data' for a fast synthetic "
+                "stand-in."
             ),
         ),
         InputValueParam(
             "cice_function_name",
             comment=(
                 "Name of the raw_data_access function to call for the CICE "
-                "forcing product. Defaults (None) to 'get_cice_restart_subset'. "
-                "See cice_product_name."
+                "forcing product. Must be given whenever cice_product_name is; "
+                "there is no implicit default. See cice_product_name."
             ),
         ),
         InputValueParam(
@@ -195,10 +201,11 @@ class CICEConfigurator(BaseConfigurator):
     def validate_args(self, **kwargs):
         super().validate_args(**kwargs)
 
-        # None means "use this class's default product", resolved in process().
-        # Anything else must be a registered CICE forcing product: process()
-        # regrids it with CICEForcingProduct's own B-grid var-name metadata, so
-        # a MOM6 (or any other) forcing product can't stand in here.
+        # None means "generate no restoring forcing at all" -- process() skips
+        # itself entirely and configure() leaves restore_ice off. Anything else
+        # must be a registered CICE forcing product: process() regrids it with
+        # CICEForcingProduct's own B-grid var-name metadata, so a MOM6 (or any
+        # other) forcing product can't stand in here.
         product_name = kwargs["cice_product_name"]
         if product_name:
             ProductRegistry.load()
@@ -215,19 +222,58 @@ class CICEConfigurator(BaseConfigurator):
                     "product, pass it as product_name instead."
                 )
 
+    def _resolve_forcing_source(self):
+        """(product_name, function_name) for the restoring forcing, or
+        (None, None) when the caller asked for none.
+
+        Restoring is opt-in: CICE runs perfectly well without it (zero-gradient
+        boundaries, no restoring), so naming neither product nor function means
+        "generate nothing". Defaulting to the real ``cice_restart`` product
+        instead would make every CICE case depend on a real global
+        restart_path/grid_path most users don't have, to produce a restoring
+        target they may not have asked for.
+
+        Half-specified is always a mistake -- a typo'd or forgotten argument --
+        so it raises rather than silently skipping behind a case that still
+        runs.
+        """
+        product_name = self.get_input_param("cice_product_name")
+        function_name = self.get_input_param("cice_function_name")
+
+        if not product_name and not function_name:
+            return None, None
+
+        if not product_name or not function_name:
+            missing, given = (
+                ("cice_product_name", "cice_function_name")
+                if not product_name
+                else ("cice_function_name", "cice_product_name")
+            )
+            raise ValueError(
+                f"CICE restoring forcing needs both cice_product_name and "
+                f"cice_function_name; {given} was given but {missing} was not. "
+                f"Pass both to generate the forcing file, or neither to run CICE "
+                f"without restoring."
+            )
+
+        return product_name, function_name
+
     def configure(self):
         self.set_output_param("ice_ic", "'default'")
         self.set_output_param("ns_boundary_type", "'zero_gradient'")
         self.set_output_param("ew_boundary_type", "'zero_gradient'")
         self.set_output_param("close_boundaries", ".false.")
         self.set_output_param("advect", "'upwind'")
-        # Enables restoring toward the domain+halo forcing file generated by
-        # this class's process() method at CICE's own documented default
-        # timescale. The file/variable contract the not-yet-merged CICE
-        # restoring-file reader will expect is unverified (see this module's
-        # docstring), so the generated file's path isn't wired to a
-        # namelist parameter here yet.
-        self.set_output_param("restore_ice", ".true.")
+        # restore_ice tracks whether process() will actually produce the
+        # domain+halo forcing file to restore toward: turning it on without
+        # that file would point CICE at a restoring target that doesn't
+        # exist. trestore is CICE's own documented default timescale, and is
+        # inert when restore_ice is off. The file/variable contract the
+        # not-yet-merged CICE restoring-file reader will expect is unverified
+        # (see this module's docstring), so the generated file's path isn't
+        # wired to a namelist parameter here yet.
+        product_name, _ = self._resolve_forcing_source()
+        self.set_output_param("restore_ice", ".true." if product_name else ".false.")
         self.set_output_param("trestore", 90)
         super().configure()
 
@@ -251,16 +297,30 @@ class CICEConfigurator(BaseConfigurator):
         Generate CICE's single restoring forcing file into
         <inputdir>/sea_ice/cice_forcing.nc.
 
-        Covers the case's domain plus an ``n_halo_cells``-cell halo on every
-        side (grown via ``SupergridBase.expand``), windowed from the requested
-        CICE forcing product (``cice_product_name``/``cice_function_name``,
-        resolved via the same ``ProductRegistry`` lookup MOM6/WW3 use --
+        Does nothing unless the caller named both ``cice_product_name`` and
+        ``cice_function_name`` -- restoring is opt-in, see
+        ``_resolve_forcing_source``.
+
+        When they are given, covers the case's domain plus an
+        ``n_halo_cells``-cell halo on every side (grown via
+        ``SupergridBase.expand``), windowed from that CICE forcing product
+        (resolved via the same ``ProductRegistry`` lookup MOM6/WW3 use --
         ``restart_path``/``grid_path`` for the real ``cice_restart`` product go
         in ``cice_function_args``) and regridded onto that expanded grid. Like
         a real CICE restart/initial-condition file, the output has no
         ``time`` dimension -- a single static snapshot (for ``cice_restart``),
         not a time series.
         """
+        product_name, function_name = self._resolve_forcing_source()
+        if product_name is None:
+            print(
+                "[info] CICE: no cice_product_name/cice_function_name given -- "
+                "skipping the restoring forcing file. CICE will run with "
+                "zero-gradient boundaries and restore_ice off. Pass both to "
+                "generate it."
+            )
+            return
+
         hgrid_ds = xr.open_dataset(ctx.supergrid_path)
         grid = Grid.from_supergrid_ds(hgrid_ds)
         n_halo_cells = self.get_input_param("n_halo_cells")
@@ -279,10 +339,6 @@ class CICEConfigurator(BaseConfigurator):
             conditions["inputs"]["end_date"],
         )
 
-        product_name = self.get_input_param("cice_product_name") or "cice_restart"
-        function_name = (
-            self.get_input_param("cice_function_name") or "get_cice_restart_subset"
-        )
         data_access_fn = utils.get_data_access_function(product_name, function_name)
         subset_paths = data_access_fn(
             dates=date_range,
