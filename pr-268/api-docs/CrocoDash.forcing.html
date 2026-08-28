@@ -588,6 +588,7 @@ document.write(`
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.ww3.WW3Configurator.process"><code class="docutils literal notranslate"><span class="pre">WW3Configurator.process()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.ww3.WW3Configurator.process_components"><code class="docutils literal notranslate"><span class="pre">WW3Configurator.process_components</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.ww3.WW3Configurator.required_for_compsets"><code class="docutils literal notranslate"><span class="pre">WW3Configurator.required_for_compsets</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.ww3.WW3Configurator.validate_args"><code class="docutils literal notranslate"><span class="pre">WW3Configurator.validate_args()</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.ww3.write_spec_list"><code class="docutils literal notranslate"><span class="pre">write_spec_list()</span></code></a></li>
@@ -1842,13 +1843,18 @@ request expands into a very large number of GRIB messages (days * 24
 hours * 24 directions * 30 frequencies each) that can take a long
 time to queue/process on CDS. Passing get_step_days=1 splits each
 boundary’s GET step into one request per calendar day instead.</p>
-<p>Routes through obc.py’s shared GET -&gt; chunk -&gt; REGRID -&gt; MERGE
-engine. ww3_obc_product_name/ww3_obc_function_name default to the
-real ERA5 2D-spectra product (raw_data_access/datasets/era5.py),
-which needs a separate cds.climate.copernicus.eu API key. Pass a
-different product/function pair (matching a WW3ForcingProduct-
-derived class’s own contract) to source boundary spectra some other
-way instead.</p>
+<p>Boundary spectra are opt-in. WW3 runs perfectly well without open
+boundary forcing – an unforced run just starts from in-core calm
+conditions – so this step does nothing unless the caller names both
+ww3_obc_product_name and ww3_obc_function_name. Defaulting to the
+real ERA5 2D-spectra product instead would make every WW3 case
+depend on a separate cds.climate.copernicus.eu API key that most
+users don’t have, to produce forcing they may not have asked for.</p>
+<p>When both are given, routes through obc.py’s shared GET -&gt; chunk -&gt;
+REGRID -&gt; MERGE engine. The product must match a WW3ForcingProduct-
+derived class’s spectral contract (enforced in validate_args); e.g.
+‘era5_wave_spectra’ / ‘get_era5_2d_spectra’
+(raw_data_access/datasets/era5.py).</p>
 <p>Each boundary’s merged output carries a “station” dimension – one
 real point per boundary window, not reduced to a single value.
 Finalization below splits every boundary’s stations out into
@@ -1876,6 +1882,12 @@ in w3iobcmd.F90 sets FLBPI=.FALSE. for the rest of the run).</p>
 <dt class="sig sig-object py" id="CrocoDash.forcing.ww3.WW3Configurator.required_for_compsets">
 <span class="sig-name descname"><span class="pre">required_for_compsets</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['WW3']</span></em><a class="headerlink" href="#CrocoDash.forcing.ww3.WW3Configurator.required_for_compsets" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.forcing.ww3.WW3Configurator.validate_args">
+<span class="sig-name descname"><span class="pre">validate_args</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.ww3.WW3Configurator.validate_args" title="Link to this definition">#</a></dt>
+<dd><p>Validate provided inputs against declared input_params.</p>
+</dd></dl>
 
 </dd></dl>
 
@@ -2296,6 +2308,7 @@ needs to import it by name.</p>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.ww3.WW3Configurator.process"><code class="docutils literal notranslate"><span class="pre">WW3Configurator.process()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.ww3.WW3Configurator.process_components"><code class="docutils literal notranslate"><span class="pre">WW3Configurator.process_components</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.ww3.WW3Configurator.required_for_compsets"><code class="docutils literal notranslate"><span class="pre">WW3Configurator.required_for_compsets</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.ww3.WW3Configurator.validate_args"><code class="docutils literal notranslate"><span class="pre">WW3Configurator.validate_args()</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.ww3.write_spec_list"><code class="docutils literal notranslate"><span class="pre">write_spec_list()</span></code></a></li>

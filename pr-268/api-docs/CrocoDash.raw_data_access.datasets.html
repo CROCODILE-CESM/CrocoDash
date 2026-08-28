@@ -624,7 +624,7 @@ document.write(`
 <span id="crocodash-raw-data-access-datasets-cesm-ocean-output-module"></span><h2>CrocoDash.raw_data_access.datasets.cesm_ocean_output module<a class="headerlink" href="#module-CrocoDash.raw_data_access.datasets.cesm_ocean_output" title="Link to this heading">#</a></h2>
 <p>Data Access Module -&gt; CESM ocean output</p>
 <p>Two products, split because they have different variable/coordinate naming
-conventions (and so need different ForcingProduct metadata):
+conventions (and so need different MOM6ForcingProduct metadata):
 - CESM_POP_OUTPUT: CESM-POP tseries output (CESM-HR FOSI, CESM2-LENS2)
 - CESM_MOM_OUTPUT: native MOM6 output (e.g. parent-run history/diag_table</p>
 <blockquote>
@@ -634,7 +634,7 @@ conventions (and so need different ForcingProduct metadata):
 <dl class="py class">
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.cesm_ocean_output.CESM_MOM_OUTPUT">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.datasets.cesm_ocean_output.</span></span><span class="sig-name descname"><span class="pre">CESM_MOM_OUTPUT</span></span><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.cesm_ocean_output.CESM_MOM_OUTPUT" title="Link to this definition">#</a></dt>
-<dd><p>Bases: <a class="reference internal" href="CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.base.ForcingProduct" title="CrocoDash.raw_data_access.base.ForcingProduct"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForcingProduct</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.base.MOM6ForcingProduct" title="CrocoDash.raw_data_access.base.MOM6ForcingProduct"><code class="xref py py-class docutils literal notranslate"><span class="pre">MOM6ForcingProduct</span></code></a></p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.cesm_ocean_output.CESM_MOM_OUTPUT.boundary_fill_method">
 <span class="sig-name descname"><span class="pre">boundary_fill_method</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'regional_mom6'</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.cesm_ocean_output.CESM_MOM_OUTPUT.boundary_fill_method" title="Link to this definition">#</a></dt>
@@ -790,7 +790,7 @@ conventions (and so need different ForcingProduct metadata):
 <dl class="py class">
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.cesm_ocean_output.CESM_POP_OUTPUT">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.datasets.cesm_ocean_output.</span></span><span class="sig-name descname"><span class="pre">CESM_POP_OUTPUT</span></span><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.cesm_ocean_output.CESM_POP_OUTPUT" title="Link to this definition">#</a></dt>
-<dd><p>Bases: <a class="reference internal" href="CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.base.ForcingProduct" title="CrocoDash.raw_data_access.base.ForcingProduct"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForcingProduct</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.base.MOM6ForcingProduct" title="CrocoDash.raw_data_access.base.MOM6ForcingProduct"><code class="xref py py-class docutils literal notranslate"><span class="pre">MOM6ForcingProduct</span></code></a></p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.cesm_ocean_output.CESM_POP_OUTPUT.boundary_fill_method">
 <span class="sig-name descname"><span class="pre">boundary_fill_method</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'regional_mom6'</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.cesm_ocean_output.CESM_POP_OUTPUT.boundary_fill_method" title="Link to this definition">#</a></dt>
