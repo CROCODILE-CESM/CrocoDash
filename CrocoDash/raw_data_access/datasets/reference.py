@@ -1,16 +1,18 @@
 """
 Data Access Module -> Reference (fast, deterministic synthetic forcing)
 
-REFERENCE_OCEAN (MOM6) generates plausible-looking forcing data purely in
-memory via numpy, with no network access, credentials, or campaign-storage
-dependency. Each access method is a pure function of its own (dates,
-lat/lon bbox) arguments: same inputs always produce the same output, so
-this is safe to use in tests (real assertions, not just "did it not crash")
-and in demo notebooks that should look identical on every run.
+Two products -- REFERENCE_OCEAN (MOM6), REFERENCE_ICE (CICE) -- that
+generate plausible-looking forcing data purely in memory via numpy, with no
+network access, credentials, or campaign-storage dependency. Each access
+method is a pure function of its own (dates, lat/lon bbox) arguments: same
+inputs always produce the same output, so these are safe to use in tests
+(real assertions, not just "did it not crash") and in demo notebooks that
+should look identical on every run.
 
-This is not meant to be physically accurate -- just close enough in shape
-(a warm-at-equator thermocline) that the real MOM6 regrid pipeline has
-something sensible to chew on, fast.
+These are not meant to be physically accurate -- just close enough in shape
+(a warm-at-equator thermocline, an ice edge that tapers with latitude) that
+the real MOM6/CICE regrid pipelines have something sensible to chew on,
+fast.
 """
 
 from pathlib import Path
@@ -192,3 +194,104 @@ class REFERENCE_OCEAN(MOM6ForcingProduct):
         output_path = output_folder / output_filename
         ds.to_netcdf(output_path)
         return output_path
+
+
+class REFERENCE_ICE(CICEForcingProduct):
+    product_name = "reference_ice"
+    description = (
+        "Fast, deterministic synthetic CICE forcing (ice concentration/"
+        "volume/surface temp and a small drift velocity) for testing and "
+        "demos -- generates its own grid, no real CICE restart/grid file "
+        "required."
+    )
+    link = "n/a"
+    # No real time evolution any more than CICE_RESTART has (see
+    # cice_output.py) -- these only exist to satisfy ForcingProduct's
+    # generic contract.
+    time_var_name = None
+    time_units = None
+    cf_calendar = None
+    cesm_calendar = None
+    mom6_calendar = None
+    u_x_coord = "ni"
+    u_y_coord = "nj"
+    v_x_coord = "ni"
+    v_y_coord = "nj"
+    tracer_x_coord = "ni"
+    tracer_y_coord = "nj"
+    u_var_name = "uvel"
+    v_var_name = "vvel"
+    tracer_var_names = {}
+    depth_coord = None
+
+    @accessmethod(
+        description=(
+            "Generates a synthetic single-category CICE-shaped dataset over "
+            "the requested bbox/dates: its own regular tlon/tlat/ulon/ulat "
+            "mesh (no real CICE grid file needed), ice concentration tapering "
+            "linearly from the bbox's poleward edge to zero at its equatorward "
+            "edge, matching ice volume/surface temp, and a small drift "
+            "velocity."
+        ),
+        type="python",
+    )
+    def get_reference_ice_data(
+        dates: list,
+        lat_min,
+        lat_max,
+        lon_min,
+        lon_max,
+        name=None,
+        output_folder=Path(""),
+        output_filename="reference_ice.nc",
+        variables=None,
+        resolution_deg=0.5,
+    ):
+        # Coarse by default to keep the downstream ESMF regrid cheap -- pass a
+        # smaller resolution_deg for a finer (more expensive) source grid.
+        lon = np.arange(lon_min, lon_max + resolution_deg, resolution_deg)
+        lat = np.arange(lat_min, lat_max + resolution_deg, resolution_deg)
+        tlon, tlat = np.meshgrid(lon, lat)
+
+        # 0 at the bbox's equatorward edge (min |lat|), 1 at its poleward edge
+        # (max |lat|) -- hemisphere-agnostic via abs(), so this works for
+        # either a northern or southern-hemisphere bounding box.
+        edge = (np.abs(tlat) - np.abs(tlat).min()) / (
+            np.abs(tlat).max() - np.abs(tlat).min() + 1e-9
+        )
+        aicen = edge[None, :, :]  # single category (ncat=1)
+        vicen = 2.0 * aicen
+        # -1.8C under thick ice, warming toward the open-water ice edge.
+        Tsfcn = -1.8 * aicen - 1.0 * (1.0 - aicen)
+        uvel = np.full_like(tlon, 0.02)
+        vvel = np.full_like(tlon, 0.02)
+
+        ds = xr.Dataset(
+            {
+                "aicen": (("ncat", "nj", "ni"), aicen),
+                "vicen": (("ncat", "nj", "ni"), vicen),
+                "Tsfcn": (("ncat", "nj", "ni"), Tsfcn),
+                "uvel": (("nj", "ni"), uvel),
+                "vvel": (("nj", "ni"), vvel),
+            },
+        )
+        ds["tlon"] = (("nj", "ni"), tlon)
+        ds["tlat"] = (("nj", "ni"), tlat)
+        # No real staggering here (synthetic mesh, not a real B-grid) -- offset
+        # by half a cell as a placeholder U-point location.
+        ds["ulon"] = (("nj", "ni"), tlon + resolution_deg / 2)
+        ds["ulat"] = (("nj", "ni"), tlat + resolution_deg / 2)
+
+        if variables:
+            keep = [v for v in variables if v in ds.data_vars]
+            ds = ds[keep + ["tlon", "tlat", "ulon", "ulat"]]
+
+        # No real time evolution to source, and (same convention
+        # CICE_RESTART.get_cice_restart_subset uses) a CICE restart/initial-
+        # condition file is a single static snapshot with no `time`
+        # dimension of its own -- so this doesn't add one.
+        output_folder = Path(output_folder)
+        output_folder.mkdir(parents=True, exist_ok=True)
+        output_path = output_folder / output_filename
+        ds.to_netcdf(output_path)
+        return [output_path]

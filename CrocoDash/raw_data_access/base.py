@@ -316,3 +316,12 @@ class MOM6ForcingProduct(VelocityTracerForcingProduct):
                 json.dump(base, f, indent=2)
 
         return base
+
+
+class CICEForcingProduct(VelocityTracerForcingProduct):
+    """CICE's own regridding var-name metadata. CICE's B-grid velocity
+    (uvel/vvel) and tracer-like state both live on the same (nj, ni) index
+    space (no MOM6-style C-grid staggering across separately named dims),
+    so this extends VelocityTracerForcingProduct rather than ForcingProduct
+    directly -- any concrete CICE product regridded via
+    regional_mom6.Segment reuses the same var-map contract MOM6 does."""

@@ -194,12 +194,27 @@ def generate_configure_forcing_args(forcing_config, remove_configs=None):
     for key in forcing_config:
         if key in {"conditions", "caseroot"} or key in remove_configs:
             continue
-        user_args = ForcingConfigRegistry.get_user_args(
-            ForcingConfigRegistry.get_configurator_from_name(key)
+        configurator_cls = ForcingConfigRegistry.get_configurator_from_name(key)
+        # Round-trip every constructor arg the original case recorded, not just
+        # the required ones: configurators whose args all carry defaults (e.g.
+        # CICE) would otherwise come back with nothing at all, silently
+        # reverting to defaults instead of reproducing the original case.
+        all_args, required_args = ForcingConfigRegistry.get_ctor_signature(
+            configurator_cls
         )
-        for arg in user_args:
-            if not arg.startswith("case_"):
-                configure_forcing_args[arg] = forcing_config[key]["inputs"][arg]
+        stored_inputs = forcing_config[key].get("inputs", {})
+        for arg in all_args:
+            # case_* args are re-derived from the new Case, not round-tripped.
+            if arg.startswith("case_") or arg in configure_forcing_args:
+                continue
+            if arg in stored_inputs:
+                configure_forcing_args[arg] = stored_inputs[arg]
+            elif arg in required_args:
+                raise ValueError(
+                    f"config.json's '{key}' block is missing required argument "
+                    f"'{arg}' for configurator {configurator_cls.name}; the case "
+                    "cannot be reproduced from it."
+                )
     return configure_forcing_args
 
 

@@ -12,6 +12,14 @@ CrocoDash.raw\_data\_access.datasets.cesm\_ocean\_output module
    :show-inheritance:
    :undoc-members:
 
+CrocoDash.raw\_data\_access.datasets.cice\_output module
+--------------------------------------------------------
+
+.. automodule:: CrocoDash.raw_data_access.datasets.cice_output
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 CrocoDash.raw\_data\_access.datasets.empty\_products module
 -----------------------------------------------------------
 
