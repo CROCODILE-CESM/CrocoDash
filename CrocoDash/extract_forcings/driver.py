@@ -123,6 +123,7 @@ def run_workflow(
                 output_path=output_path,
                 get_step_days=int(conditions["outputs"]["get_step_days"]),
                 regrid_step_days=int(conditions["outputs"]["regrid_step_days"]),
+                bathymetry_path=topo_path,
                 preview=preview,
             )
             timings["bc"] = time.perf_counter() - _t
