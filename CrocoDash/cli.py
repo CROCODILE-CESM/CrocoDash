@@ -35,7 +35,9 @@ def _create(args):
     from CrocoDash.recipe import load_config, create_case_from_yaml
 
     config = load_config(args.config)
-    create_case_from_yaml(config, override=args.override)
+    create_case_from_yaml(
+        config, override=args.override, configure_only=args.configure_only
+    )
 
 
 def _dump(args):
@@ -253,6 +255,14 @@ def main():
         action="store_true",
         default=False,
         help="Overwrite existing caseroot and inputdir if they exist.",
+    )
+    create_parser.add_argument(
+        "--configure-only",
+        action="store_true",
+        default=False,
+        dest="configure_only",
+        help="Configure forcings but skip process_forcings — for cases that need to "
+        "stage custom input data before running the forcing extraction.",
     )
     create_parser.set_defaults(func=_create)
 
