@@ -1,8 +1,24 @@
+import os
 import pytest
+import shutil
 from CrocoDash.rm6 import regional_mom6 as rm6
-from CrocoDash.case import Case
+from CrocoDash.case import Case, NOT_PORTED_MACHINE
 from pathlib import Path
 from uuid import uuid4
+
+# Forcing configuration shared by ported_case and the fast fixtures that stand in for
+# it. Kept in one place so a copy of the ported case and a freshly configured fast case
+# describe the same experiment, and a test can move between them without its
+# assertions changing.
+FORCING_ARGS = {
+    "date_range": ["2020-01-01 00:00:00", "2020-02-01 00:00:00"],
+    "boundaries": ["north", "east"],
+    # Tides are configured here so that a copy of the ported case satisfies the tests
+    # that assert on a tidal forcing configuration, without needing a case of its own.
+    "tidal_constituents": ["M2"],
+    "tpxo_elevation_filepath": "s3://crocodile-cesm/CrocoDash/data/tpxo/h_tpxo9.v1.zarr/",
+    "tpxo_velocity_filepath": "s3://crocodile-cesm/CrocoDash/data/tpxo/u_tpxo9.v1.zarr/",
+}
 
 
 @pytest.fixture(scope="session")
@@ -28,33 +44,111 @@ def setup_sample_rm6_expt(tmp_path):
 
 @pytest.fixture(scope="session")
 def get_case_with_cf(CrocoDash_case_factory, tmp_path_factory):
+    """A configured (not created) case with forcings. See CrocoDash_case_factory."""
     case = CrocoDash_case_factory(tmp_path_factory.mktemp(f"case-{uuid4().hex}"))
-    case.configure_forcings(
-        date_range=["2020-01-01 00:00:00", "2020-02-01 00:00:00"],
-        boundaries=["north", "east"],
-    )
-    return case
-
-
-@pytest.fixture(scope="session")
-def get_shareable_CrocoDash_case(CrocoDash_case_factory, tmp_path_factory):
-    case = CrocoDash_case_factory(tmp_path_factory.mktemp(f"case-{uuid4().hex}"))
-    case.configure_forcings(
-        date_range=["2020-01-01 00:00:00", "2020-01-09 00:00:00"],
-        tidal_constituents=["M2"],
-        tpxo_elevation_filepath="s3://crocodile-cesm/CrocoDash/data/tpxo/h_tpxo9.v1.zarr/",
-        tpxo_velocity_filepath="s3://crocodile-cesm/CrocoDash/data/tpxo/u_tpxo9.v1.zarr/",
-    )
+    case.configure_forcings(**FORCING_ARGS)
     return case
 
 
 @pytest.fixture(scope="session")
 def get_CrocoDash_case(CrocoDash_case_factory, tmp_path_factory):
+    """A configured (not created) case with no forcings. See CrocoDash_case_factory."""
+    return CrocoDash_case_factory(tmp_path_factory.mktemp(f"case-{uuid4().hex}"))
 
-    # Set some defaults
-    caseroot = tmp_path_factory.mktemp(f"case-{uuid4().hex}")
 
-    return CrocoDash_case_factory(caseroot)
+@pytest.fixture
+def get_mutable_CrocoDash_case(CrocoDash_case_factory, tmp_path):
+    """A configured (not created) case a single test may mutate freely.
+
+    Function-scoped, unlike the session-scoped fixtures above: for tests that call
+    configure_forcings() themselves, which rewrites case state and wipes the
+    extract_forcings directory, so sharing one across tests makes them order-dependent.
+    """
+    return CrocoDash_case_factory(tmp_path / f"case-{uuid4().hex}")
+
+
+@pytest.fixture(scope="session")
+def ported_case(CrocoDash_case_factory, tmp_path_factory):
+    """The one case in the suite that really runs CIME.
+
+    create_newcase plus case.setup dominates the cost of building a case (seconds
+    each, against a small fraction of that for everything else Case.__init__ does), so
+    every other fixture here configures its case without executing CIME
+    (CESM_NOT_PORTED) and anything that needs the artifacts only CIME writes -- the
+    xmlquery/xmlchange scripts, env_*.xml, the default user_nl files, SourceMods/,
+    README.case -- shares this one instead of paying for its own.
+
+    Treat it as read-only: a test that mutates the caseroot, or writes into the
+    inputdir, must take a copy via ported_case_copy instead.
+    """
+    case = CrocoDash_case_factory(tmp_path_factory.mktemp("ported-case"), ported=True)
+    case.configure_forcings(**FORCING_ARGS)
+    return case
+
+
+def _rewrite_paths(root, replacements):
+    """Substitute absolute paths inside the text files of a copied case.
+
+    A copied case still names the original everywhere the original wrote its own path,
+    and those references are load-bearing rather than cosmetic:
+
+    - CIME resolves ./xmlchange's replay log against CASEROOT in env_case.xml, so an
+      xmlchange in an unrewritten copy appends to the *original* case's replay.sh --
+      the copy never records it, and the case every other test reads gets polluted.
+    - CaseBundle.bundle() locates the ocnice directory from user_nl_mom's INPUTDIR
+      line, so a copy given its own inputdir would still bundle the original's files.
+
+    Symlinks are skipped and symlinked directories are never descended into: a
+    caseroot's ./xmlquery and Tools/ point into CESM itself, and writing through them
+    would edit the CESM installation.
+    """
+    for dirpath, dirnames, filenames in os.walk(root, followlinks=False):
+        dirnames[:] = [d for d in dirnames if not Path(dirpath, d).is_symlink()]
+        for filename in filenames:
+            path = Path(dirpath, filename)
+            if path.is_symlink():
+                continue
+            try:
+                text = path.read_text()
+            except (UnicodeDecodeError, OSError):
+                continue  # binary (or unreadable) file, nothing to rewrite
+            rewritten = text
+            for old, new in replacements:
+                rewritten = rewritten.replace(str(old), str(new))
+            if rewritten != text:
+                path.write_text(rewritten)
+
+
+@pytest.fixture
+def ported_case_copy(ported_case, tmp_path_factory):
+    """Factory for throwaway copies of ported_case, returning the copied caseroot.
+
+    A copied caseroot stays a working CIME case -- ./xmlquery and ./xmlchange
+    --non-local read and write the copy's own env_*.xml -- so a mutating test gets full
+    isolation for the price of a directory copy rather than a second create_newcase,
+    once the paths the original baked into itself are rewritten (see _rewrite_paths).
+
+    Pass with_inputdir=True when the test also writes into the case's inputdir, so
+    those writes don't land in the inputdir every other ported_case test reads.
+    """
+
+    def _copy(name="copy", with_inputdir=False):
+        root = tmp_path_factory.mktemp(f"ported-copy-{name}")
+        caseroot = root / "case"
+        shutil.copytree(ported_case.caseroot, caseroot, symlinks=True)
+        replacements = [(ported_case.caseroot, caseroot)]
+        if with_inputdir:
+            inputdir = root / "inputdir"
+            # symlinks=True: ocnice/rundir links into the case's run directory, which
+            # links back to inputdir, so following symlinks recurses forever.
+            shutil.copytree(ported_case.inputdir, inputdir, symlinks=True)
+            replacements.append((ported_case.inputdir, inputdir))
+            # Only extract_forcings holds paths; the rest of inputdir is NetCDF.
+            _rewrite_paths(inputdir / "extract_forcings", replacements)
+        _rewrite_paths(caseroot, replacements)
+        return caseroot
+
+    return _copy
 
 
 @pytest.fixture(scope="session")
@@ -74,13 +168,23 @@ def CrocoDash_case_factory(
         configure_forcings=False,
         compset: str = "1850_DATM%JRA_SLND_SICE_MOM6_SROF_SGLC_SWAV",
         atm_grid_name: str = "TL319",
+        ported: bool = False,
     ):
         """
         Factory function to create a CrocoDash Case object with sensible defaults.
         Can be called from pytest fixtures or standalone scripts.
+
+        ported defaults to False, which selects CESM_NOT_PORTED -- visualCaseGen's
+        placeholder for a host CESM has no machine definition for. CIME cannot create a
+        case there, so no create_newcase, no case.setup, no xmlchange, no user_nl writes.
+        Grid input files, the state file, and the forcing configuration are all still
+        produced, which is everything most tests actually assert on, and it is roughly an
+        order of magnitude faster. Pass ported=True only for a case that must carry real
+        CIME artifacts -- and prefer the ported_case fixture, which already provides one,
+        over creating another.
         """
         directory = Path(directory)
-        directory.mkdir(exist_ok=True)
+        directory.mkdir(parents=True, exist_ok=True)
         # Set Grid Info
         grid, topo, vgrid = gen_grid_topo_vgrid
 
@@ -89,7 +193,9 @@ def CrocoDash_case_factory(
         inputdir = directory / "inputdir"
 
         # Decide machine
-        if is_github_actions:
+        if not ported:
+            machine = NOT_PORTED_MACHINE
+        elif is_github_actions:
             machine = "ubuntu-latest"
         elif is_glade_file_system:
             machine = "derecho"

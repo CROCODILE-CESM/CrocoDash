@@ -8,20 +8,22 @@ import pytest
 
 
 @pytest.mark.slow
-def test_duplicate_case(get_case_with_cf, tmp_path):
-    case = get_case_with_cf
+def test_duplicate_case(ported_case_copy, tmp_path):
+    # A copy with its own inputdir, since the seeded forcing files below would
+    # otherwise land in the inputdir the other ported_case tests read.
+    caseroot = ported_case_copy("duplicate", with_inputdir=True)
     new_caseroot = tmp_path / "duplicated_case"
     new_inputdir = tmp_path / "duplicated_inputdir"
 
     # configure_forcings doesn't produce NetCDF files — seed the ocnice dir
     # with fake forcing files so the copy logic has something to transfer.
-    old_ocnice = Path(case.inputdir) / "ocnice"
+    old_ocnice = caseroot.parent / "inputdir" / "ocnice"
     old_ocnice.mkdir(parents=True, exist_ok=True)
     fake_files = ["forcing_obc_seg_001.nc", "init_temp_salt.nc"]
     for fname in fake_files:
         (old_ocnice / fname).write_text("fake")
 
-    new_case = duplicate_case(case.caseroot, new_caseroot, new_inputdir)
+    new_case = duplicate_case(caseroot, new_caseroot, new_inputdir)
 
     assert new_case is not None
     assert new_caseroot.exists()
@@ -31,8 +33,8 @@ def test_duplicate_case(get_case_with_cf, tmp_path):
 
 
 @pytest.mark.slow
-def test_pass_from_inspect_to_fork_no_change(get_case_with_cf, tmp_path):
-    case = get_case_with_cf
+def test_pass_from_inspect_to_fork_no_change(ported_case, tmp_path):
+    case = ported_case
     rcc = CaseBundle(case.caseroot)
     rcc.identify_non_standard_case_info(rcc.cesmroot, case.machine, case.project)
     loc = rcc.bundle(tmp_path)
@@ -57,29 +59,33 @@ def test_pass_from_inspect_to_fork_no_change(get_case_with_cf, tmp_path):
 
 
 @pytest.mark.slow
-def test_pass_from_inspect_to_fork_with_changes(get_case_with_cf, tmp_path):
-    case = get_case_with_cf
+def test_pass_from_inspect_to_fork_with_changes(
+    ported_case, ported_case_copy, tmp_path
+):
+    caseroot = ported_case_copy("fork-with-changes")
 
-    xml_file = Path(case.caseroot) / "test.xml"
+    xml_file = Path(caseroot) / "test.xml"
     xml_file.write_text("<test>data</test>")
 
     # run subprocess.run xmlchange in case.caseroot folder for JOB_PRIORITY=premium with -N flag
     subprocess.run(
         ["./xmlchange", "JOB_PRIORITY=premium", "-N"],
-        cwd=case.caseroot,
+        cwd=caseroot,
     )
 
-    # add a file to case.caseroot/SourceMods/src.mom called bleh.dummy
-    srcmods_dir = Path(case.caseroot) / "SourceMods" / "src.mom"
+    # add a file to caseroot/SourceMods/src.mom called bleh.dummy
+    srcmods_dir = Path(caseroot) / "SourceMods" / "src.mom"
     dummy_file = srcmods_dir / "bleh.dummy"
     dummy_file.write_text("dummy content")
 
-    # add a line to case.caseroot/user_nl_mom with DEBUG=TRUE
-    user_nl_path = Path(case.caseroot) / "user_nl_mom"
+    # add a line to caseroot/user_nl_mom with DEBUG=TRUE
+    user_nl_path = Path(caseroot) / "user_nl_mom"
     with open(user_nl_path, "a") as f:
         f.write("\nDEBUG=TRUE\n")
-    rcc = CaseBundle(case.caseroot)
-    rcc.identify_non_standard_case_info(rcc.cesmroot, case.machine, case.project)
+    rcc = CaseBundle(caseroot)
+    rcc.identify_non_standard_case_info(
+        rcc.cesmroot, ported_case.machine, ported_case.project
+    )
     loc = rcc.bundle(tmp_path)
     with patch("CrocoDash.shareable.ask_yes_no", return_value=True), patch(
         "CrocoDash.shareable.ask_string", return_value=""
@@ -87,11 +93,11 @@ def test_pass_from_inspect_to_fork_with_changes(get_case_with_cf, tmp_path):
         fcb = ForkBundle(loc)
         fcb.fork(
             rcc.cesmroot,
-            case.machine,
-            case.project,
+            ported_case.machine,
+            ported_case.project,
             tmp_path / "caseroot",
             tmp_path / "inputdir",
-            compset=case.compset_lname,
+            compset=ported_case.compset_lname,
         )
         path_to_case = fcb.case.caseroot
         assert (path_to_case / "test.xml").exists()

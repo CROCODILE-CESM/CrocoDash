@@ -26,6 +26,122 @@ from CrocoDash.forcing.driver import run_workflow
 
 from CrocoDash import case_state
 
+# visualCaseGen's placeholder machine name, set when CESM has no machine definition for
+# the current host (see cime_interface._handle_machine_not_ported). Case creation is
+# disabled for it, so CrocoDash configures without executing. Keep in sync with
+# visualCaseGen.
+NOT_PORTED_MACHINE = "CESM_NOT_PORTED"
+
+
+# CESM's component classes, in the order they appear in a compset long name. Fixed by
+# the compset format itself, not by what a given checkout contains, which is why the
+# no-checkout path can hardcode them.
+COMP_CLASSES = ["ATM", "LND", "ICE", "OCN", "ROF", "GLC", "WAV"]
+
+
+class _NoCesmCIME:
+    """Stand-in for CIME_interface when there is no CESM checkout to read.
+
+    CIME_interface needs the tree: it asserts <cesmroot>/cime exists, reads CIME's
+    version, then parses component classes, models, physics, options, grids and compsets
+    out of the XML -- and only after all that does _retrieve_machines() decide whether the
+    host is ported. So "un-ported" cannot by itself mean "no checkout": the placeholder
+    machine substitutes five host-configuration fields, and nothing substitutes the model
+    catalogue.
+
+    What CrocoDash actually needs from that catalogue on a configure-only path is much
+    smaller than the catalogue itself, and this provides it:
+
+    - the component classes, which are fixed by the compset long-name format;
+    - splitting a compset long name into components, which is pure string work;
+    - the host-configuration fields, which are exactly what the placeholder supplies.
+
+    Everything else the catalogue is used for is *validation* -- checking a compset's
+    physics and options and a grid name against what this CESM can actually build. With no
+    checkout there is nothing to validate against, so Case skips that step and takes the
+    caller's compset long name and grid names at face value. The trade is real and
+    deliberate: a typo is no longer caught at configure time and will instead surface when
+    the case is created on a ported machine.
+
+    compsets is deliberately empty: alias resolution is the one thing that genuinely
+    cannot work without the catalogue, so a long name is required here.
+    """
+
+    machine = NOT_PORTED_MACHINE
+    machines = [NOT_PORTED_MACHINE]
+    project_required = {NOT_PORTED_MACHINE: False}
+    comp_classes = COMP_CLASSES
+    compsets = {}
+    # None rather than an empty dict: an empty catalogue would make every grid name look
+    # invalid, whereas the intent is that grid names simply go unchecked. Callers test
+    # `domains is not None` before validating against it.
+    domains = None
+
+    def __init__(self, cime_output_root=None, din_loc_root=None):
+        # Same defaults as CIME_interface._handle_machine_not_ported, but without
+        # creating them: nothing on this path writes to either.
+        self.cime_output_root = str(cime_output_root or Path.home() / "scratch")
+        self.din_loc_root = str(din_loc_root or Path.home() / "inputdata")
+
+    def get_components_from_compset_lname(self, compset_lname):
+        """Split a compset long name into {component class: physics}.
+
+        Mirrors CIME_interface.get_components_from_compset_lname, which is pure string
+        manipulation over comp_classes and needs no catalogue.
+        """
+        parts = compset_lname.split("_")
+        if len(parts) < len(self.comp_classes) + 1:
+            raise ValueError(
+                f"Invalid compset long name: {compset_lname!r}. Expected an init time "
+                f"followed by {len(self.comp_classes)} components "
+                f"({'_'.join(self.comp_classes)})."
+            )
+        return {
+            comp_class: parts[i + 1] for i, comp_class in enumerate(self.comp_classes)
+        }
+
+
+def _emulate_not_ported(cime):
+    """Put an already-initialized CIME interface into the un-ported state, so that
+    ``machine=CESM_NOT_PORTED`` can be requested on any host.
+
+    CESM_NOT_PORTED is visualCaseGen's own placeholder rather than a CIME machine:
+    CIME_interface picks it in ``_handle_machine_not_ported()`` when CIME cannot identify
+    the host, and from then on it is the only machine the interface offers. Selecting it
+    on a host CESM *is* ported to therefore has to reproduce that state, or the request is
+    only half-applied. Two things go wrong otherwise, both verified: MACHINE's options
+    still come from the real machine list, so the assignment in ``_configure_launch``
+    fails with "CESM_NOT_PORTED not an option for MACHINE"; and ``_is_non_local()``
+    compares the interface's real machine against the selected one, so it would wrongly
+    report a non-local case and add ``--non-local`` to every xmlchange.
+
+    This mirrors the identity fields ``_handle_machine_not_ported()`` sets, but
+    deliberately leaves ``cime_output_root``/``din_loc_root`` pointing at the real host's
+    values. That handler falls back to ``~/scratch`` and ``~/inputdata`` and creates them,
+    which is right on a laptop with nothing better to use, but here the host's own roots
+    already exist and are the correct place to write -- and a test suite should not be
+    creating directories in ``$HOME`` as a side effect. What is being overridden is the
+    machine's *identity*, not the filesystem layout.
+    """
+    if cime.machine == NOT_PORTED_MACHINE:
+        return  # genuinely un-ported host; the interface is already in this state
+    # Asking for it on a host that *is* ported is deliberate, but it used to be rejected
+    # by init_args_check, and crocodash_case.yaml records the machine it was configured
+    # with -- so replaying an un-ported case's yaml here would otherwise quietly produce
+    # another case CIME never ran, where it previously raised. Say so.
+    print(
+        f"{NOT_PORTED_MACHINE} requested on {cime.machine}, which CESM *is* ported to: "
+        "the case will be configured but CIME will not be invoked, so no CESM case is "
+        f"created. Pass machine='{cime.machine}' (or another ported machine) for a real "
+        "case."
+    )
+    cime.machine = NOT_PORTED_MACHINE
+    cime.machines = [NOT_PORTED_MACHINE]
+    cime.project_required = {NOT_PORTED_MACHINE: False}
+    # MACHINE's options were derived from the real machine list by set_launcher_options()
+    # during initialize(); re-derive them from the now un-ported interface.
+    cvars["MACHINE"].options = cime.machines
+
 
 class Case:
     """This class represents a regional MOM6 case within the CESM framework. It is similar to the
@@ -35,7 +151,7 @@ class Case:
     def __init__(
         self,
         *,
-        cesmroot: str | Path,
+        cesmroot: str | Path | None = None,
         caseroot: str | Path,
         inputdir: str | Path,
         compset: str,
@@ -57,8 +173,12 @@ class Case:
 
         Parameters
         ----------
-        cesmroot : str | Path
-            Path to the existing CESM root directory.
+        cesmroot : str | Path, optional
+            Path to an existing CESM root directory. If omitted, the case is configured
+            without CESM: machine is forced to CESM_NOT_PORTED, CIME is never invoked, and
+            the compset long name and grid names are accepted without validation (a CESM
+            checkout is what validation reads). A compset alias cannot be resolved in that
+            mode, so a long name is required. See _NoCesmCIME.
         caseroot : str | Path
             Path to the case root directory to be created.
         inputdir : str | Path
@@ -101,8 +221,34 @@ class Case:
             k: v for k, v in _locals.items() if k not in case_state.INIT_ARGS_EXCLUDE
         }
 
-        # Initialize visualCaseGen system and get the CIME interface
-        self.cime = initialize_visualCaseGen(cesmroot)
+        # An id for this construction, used to suffix the grid input filenames. Generated
+        # here rather than read back out of cvars["MB_ATTEMPT_ID"] so that it exists on
+        # the no-checkout path, where visualCaseGen is never initialized.
+        self.session_id = str(uuid.uuid1())[:6]
+
+        # Initialize visualCaseGen system and get the CIME interface. With no CESM
+        # checkout there is nothing for it to read, so stand in for it and skip the
+        # configuration pipeline entirely -- see _NoCesmCIME.
+        self.has_cesm = cesmroot is not None
+        if self.has_cesm:
+            self.cime = initialize_visualCaseGen(cesmroot)
+            if machine == NOT_PORTED_MACHINE:
+                _emulate_not_ported(self.cime)
+        else:
+            if machine not in (None, NOT_PORTED_MACHINE):
+                raise ValueError(
+                    f"machine={machine!r} was given without a cesmroot. Without a CESM "
+                    f"checkout only {NOT_PORTED_MACHINE} is possible, since CIME is what "
+                    "defines every other machine."
+                )
+            machine = NOT_PORTED_MACHINE
+            self.cime = _NoCesmCIME()
+            print(
+                "No cesmroot given: configuring without CESM. The compset long name and "
+                "grid names are taken as given and NOT validated, since validating them "
+                "is what needs the checkout. Forcing extraction is unaffected. Recreate "
+                "the case on a ported machine from crocodash_case.yaml."
+            )
 
         # Determine compset alias and long name
         if compset in self.cime.compsets:
@@ -133,7 +279,7 @@ class Case:
         )
 
         # Set instance attributes from arguments, in argument order
-        self.cesmroot = Path(cesmroot)
+        self.cesmroot = Path(cesmroot) if cesmroot is not None else None
         self.caseroot = Path(caseroot)
         self.inputdir = Path(inputdir)
         self.ocn_grid = ocn_grid
@@ -143,6 +289,16 @@ class Case:
         self.rof_grid_name = rof_grid_name
         self.ninst = ninst
         self.machine = machine or self.cime.machine
+        # CESM_NOT_PORTED is visualCaseGen's placeholder machine, used when CESM has no
+        # machine definition for the current host (e.g. a laptop with a CESM checkout but
+        # no port). CIME cannot create or set up a case there, so everything that would
+        # shell out to create_newcase/case.setup/xmlchange is configured but not executed.
+        # Forcing extraction is unaffected -- it never touches CIME -- so the expensive
+        # download+regrid work still runs, and the case itself is recreated later on a
+        # ported machine from crocodash_case.yaml.
+        # Requesting it explicitly is how the test suite avoids paying for
+        # create_newcase/case.setup in every fixture (see _emulate_not_ported).
+        self.do_exec = self.machine != NOT_PORTED_MACHINE
         self.project = project
         self.override = override
         self.ntasks_ocn = ntasks_ocn
@@ -161,7 +317,8 @@ class Case:
         # Using visualCaseGen's configuration system, set the configuration variables for the case
         # based on the provided arguments. This includes setting the compset, grid, and launch variables.
         try:
-            self._configure_case(atm_grid_name, rof_grid_name)
+            if self.has_cesm:
+                self._configure_case(atm_grid_name, rof_grid_name)
         except Exception as e:
             print(f"\n{ERROR}Case Configuration Error:{RESET}")
             print(f"  {str(e)}")
@@ -174,14 +331,27 @@ class Case:
         # Having set the configuration variables and created the grid input files, we can now create the case instance.
         self._create_newcase()
 
-        # After creating the case, instantiate the CIME case object for later use.
-        self._cime_case = self.cime.get_case(
-            self.caseroot, non_local=self.cc._is_non_local()
-        )
+        # Resolved once here rather than re-asked at each call site: there is no
+        # CaseCreator without a checkout, and nothing to be non-local *to* when CIME is
+        # never invoked.
+        self.is_non_local = self.cc._is_non_local() if self.cc is not None else False
 
-        self.is_non_local = self.cc._is_non_local()
+        # After creating the case, instantiate the CIME case object for later use. This
+        # parses the case's env_*.xml files, which only exist once case.setup has run, so
+        # there is nothing to attach to when the case was configured but not created.
+        if self.do_exec:
+            self._cime_case = self.cime.get_case(
+                self.caseroot, non_local=self.is_non_local
+            )
+        else:
+            self._cime_case = None
 
-        self._apply_final_xmlchanges(ntasks_ocn, job_queue, job_wallclock_time)
+        # visualCaseGen's xmlchange() reads cvars["CASEROOT"] before it consults do_exec,
+        # so it cannot even be called through to be skipped without a checkout. Nothing is
+        # lost: every value it sets is derived from an init arg, all of which are in the
+        # state file, so recreating the case on a ported machine applies them for real.
+        if self.has_cesm:
+            self._apply_final_xmlchanges(ntasks_ocn, job_queue, job_wallclock_time)
 
         self._write_state()
 
@@ -278,20 +448,31 @@ class Case:
         )
         if not isinstance(ocn_topo, Topo):
             raise TypeError("ocn_topo must be a Topo object.")
-        if atm_grid_name not in (available_atm_grids := cime.domains["atm"].keys()):
+        # The three cime.domains lookups below validate grid names against the CESM grid
+        # catalogue, which only exists when there is a checkout to read it from. With none,
+        # grid names are taken as given -- see _NoCesmCIME.
+        if cime.domains is not None and atm_grid_name not in (
+            available_atm_grids := cime.domains["atm"].keys()
+        ):
             raise ValueError(f"atm_grid_name must be one of {available_atm_grids}.")
         if rof_grid_name is not None:
             assert "SROF" not in compset_lname, (
                 "When a runoff grid is specified, "
                 "the compset must include an active or data runoff model."
             )
-            if rof_grid_name not in (available_rof_grids := cime.domains["rof"].keys()):
+            if cime.domains is not None and rof_grid_name not in (
+                available_rof_grids := cime.domains["rof"].keys()
+            ):
                 raise ValueError(f"rof_grid_name must be one of {available_rof_grids}.")
         if ocn_grid.name is None:
             raise ValueError(
                 "ocn_grid must have a name. Please set it using the 'name' attribute."
             )
-        if ocn_grid.name in cime.domains["ocnice"] and not override:
+        if (
+            cime.domains is not None
+            and ocn_grid.name in cime.domains["ocnice"]
+            and not override
+        ):
             raise ValueError(
                 f"ocn_grid name '{ocn_grid.name}' is already registered in CESM's grid config. "
                 "This happens when a previous case with this grid was deleted without using override=True. "
@@ -336,8 +517,7 @@ class Case:
         ocnice.mkdir()
 
         # suffix for the MOM6 grid files
-        session_id = cvars["MB_ATTEMPT_ID"].value
-        suffix = f"{ocn_grid.name}_{session_id}"
+        suffix = f"{ocn_grid.name}_{self.session_id}"
 
         # MOM6 supergrid file
         self.supergrid_path = str(ocnice / f"ocean_hgrid_{suffix}.nc")
@@ -378,15 +558,40 @@ class Case:
         if not self.caseroot.parent.exists():
             self.caseroot.parent.mkdir(parents=True, exist_ok=False)
 
-        self.cc = CaseCreator(
-            self.cime, allow_xml_override=self.override, add_grids_to_ccs_config=False
+        # CaseCreator drives CIME and reads visualCaseGen's cvars, neither of which
+        # exists without a checkout.
+        self.cc = (
+            CaseCreator(
+                self.cime,
+                allow_xml_override=self.override,
+                add_grids_to_ccs_config=False,
+            )
+            if self.has_cesm
+            else None
         )
+
+        if not self.do_exec:
+            # Either CaseCreator refuses to create a case for the placeholder machine, or
+            # the caller asked for configuration without execution. Either way there is
+            # nothing to run here. Everything downstream (state file, user_nl writes,
+            # forcing config) still expects the directory to exist, and create_newcase is
+            # what would normally have made it.
+            self.caseroot.mkdir(parents=True, exist_ok=self.override)
+            print(
+                f"Machine is {NOT_PORTED_MACHINE}: configuring {self.caseroot} "
+                "without creating a CESM case."
+            )
+            return
 
         try:
             self.cc.create_case(do_exec=True)
-        except Exception as e:
-            print(f"{ERROR}{str(e)}{RESET}")
+        except Exception:
+            # Revert the ccs_config edits, then re-raise: a half-created case looks
+            # identical to a working one until something much later fails on a file
+            # case.setup never wrote (e.g. a missing user_nl_cpl surfacing inside
+            # CaseBundle), so failing here is far cheaper to diagnose.
             self.cc.revert_launch(do_exec=True)
+            raise
 
     def configure_forcings(
         self,
@@ -520,7 +725,6 @@ class Case:
             "function_args": function_args,
         }
 
-        self.session_id = cvars["MB_ATTEMPT_ID"].value
         self.grid_name = self.ocn_grid.name
 
         config_path = self.extract_forcings_path / "config.json"
@@ -530,21 +734,29 @@ class Case:
         self.fcr = ForcingConfigRegistry(self.compset_lname, inputs, self)
         self.fcr.run_configurators(config_path)
 
-        xmlchange(
-            "RUN_STARTDATE",
-            str(self.date_range[0])[:10],
-            is_non_local=self.cc._is_non_local(),
-        )
-        xmlchange(
-            "STOP_OPTION",
-            "ndays",
-            is_non_local=self.cc._is_non_local(),
-        )
-        xmlchange(
-            "STOP_N",
-            (self.date_range[1] - self.date_range[0]).days,
-            is_non_local=self.cc._is_non_local(),
-        )
+        # As in _apply_final_xmlchanges, xmlchange() reads cvars["CASEROOT"] before it
+        # consults do_exec, so it cannot be called at all without a checkout. All three
+        # values derive from date_range, which the forcing config records, so recreating
+        # the case on a ported machine sets them for real.
+        if self.has_cesm:
+            xmlchange(
+                "RUN_STARTDATE",
+                str(self.date_range[0])[:10],
+                do_exec=self.do_exec,
+                is_non_local=self.is_non_local,
+            )
+            xmlchange(
+                "STOP_OPTION",
+                "ndays",
+                do_exec=self.do_exec,
+                is_non_local=self.is_non_local,
+            )
+            xmlchange(
+                "STOP_N",
+                (self.date_range[1] - self.date_range[0]).days,
+                do_exec=self.do_exec,
+                is_non_local=self.is_non_local,
+            )
         self._configure_forcings_called = True
 
     def process_forcings(self, **kwargs):
@@ -603,6 +815,23 @@ class Case:
         return self.caseroot.name
 
     @property
+    def _run_dir(self) -> Path:
+        """The case's CIME run directory.
+
+        Normally read straight off the CIME case object. When the case was configured
+        but never created (an un-ported machine) there is no case object to ask, so fall
+        back to the path CIME would have derived, ``$CIME_OUTPUT_ROOT/$CASE/run``.
+        """
+        if self._cime_case is not None:
+            return Path(self._cime_case.get_value("RUNDIR"))
+        # rm6's experiment mkdirs mom_run_dir without parents, and nothing has created
+        # $CIME_OUTPUT_ROOT/$CASE yet (case.setup is what normally would), so make the
+        # whole chain here.
+        run_dir = Path(self.cime.cime_output_root) / self.caseroot.name / "run"
+        run_dir.mkdir(parents=True, exist_ok=True)
+        return run_dir
+
+    @property
     def expt(self) -> rmom6.experiment:
 
         if not hasattr(self, "date_range"):
@@ -629,7 +858,7 @@ class Case:
             number_vertical_layers=None,
             layer_thickness_ratio=None,
             depth=self.ocn_topo.max_depth,
-            mom_run_dir=self._cime_case.get_value("RUNDIR"),
+            mom_run_dir=self._run_dir,
             mom_input_dir=self.inputdir / "ocnice",
             hgrid_type=self.ocn_grid,
             vgrid_type=self.ocn_vgrid,
@@ -794,7 +1023,9 @@ class Case:
             self.ocn_grid.tlat.max().item() - self.ocn_grid.tlat.min().item()
         )
         cvars["CUSTOM_OCN_GRID_NAME"].value = self.ocn_grid.name
-        cvars["MB_ATTEMPT_ID"].value = str(uuid.uuid1())[:6]
+        # Mirror the id generated in __init__; CaseCreator names its ESMF mesh file
+        # from this cvar, so the two must agree.
+        cvars["MB_ATTEMPT_ID"].value = self.session_id
         cvars["MOM6_BATHY_STATUS"].value = "Complete"
         if Stage.active().title == "Custom Ocean Grid":
             Stage.active().proceed()
@@ -864,12 +1095,12 @@ class Case:
             {
                 # Derived / resolved fields that can't come from init args directly
                 "inputdir": str(self.inputdir),
-                "cesmroot": str(self.cesmroot),
+                "cesmroot": str(self.cesmroot) if self.cesmroot else None,
                 "supergrid_path": self.supergrid_path,
                 "topo_path": self.topo_path,
                 "vgrid_path": self.vgrid_path,
                 "grid_name": self.ocn_grid.name,
-                "session_id": cvars["MB_ATTEMPT_ID"].value,
+                "session_id": self.session_id,
                 "compset_lname": self.compset_lname,
                 "machine": self.machine,
                 # Scalar init args captured at construction time
@@ -886,20 +1117,32 @@ class Case:
         xmlchange(
             "MOM6_MEMORY_MODE",
             "dynamic_symmetric",
-            is_non_local=self.cc._is_non_local(),
+            do_exec=self.do_exec,
+            is_non_local=self.is_non_local,
         )
 
-        # xmlchange("ROOTPE_OCN", 128, is_non_local=self.cc._is_non_local()) -> needs to be before the the setup
+        # xmlchange("ROOTPE_OCN", 128, is_non_local=self.is_non_local) -> needs to be before the the setup
         if ntasks_ocn is not None:
-            xmlchange("NTASKS_OCN", ntasks_ocn, is_non_local=self.cc._is_non_local())
+            xmlchange(
+                "NTASKS_OCN",
+                ntasks_ocn,
+                do_exec=self.do_exec,
+                is_non_local=self.is_non_local,
+            )
         # This will trigger for both the run and the archiver.
         if job_queue is not None:
-            xmlchange("JOB_QUEUE", job_queue, is_non_local=self.cc._is_non_local())
+            xmlchange(
+                "JOB_QUEUE",
+                job_queue,
+                do_exec=self.do_exec,
+                is_non_local=self.is_non_local,
+            )
         if job_wallclock_time is not None:
             xmlchange(
                 "JOB_WALLCLOCK_TIME",
                 job_wallclock_time,
-                is_non_local=self.cc._is_non_local(),
+                do_exec=self.do_exec,
+                is_non_local=self.is_non_local,
             )
 
     def validate_case(self):
