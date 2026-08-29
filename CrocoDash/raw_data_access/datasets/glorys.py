@@ -38,6 +38,8 @@ class GLORYS(MOM6ForcingProduct):
     eta_var_name = "zos"
     depth_coord = "depth"
     tracer_var_names = {"temp": "thetao", "salt": "so"}
+    # GLORYS reanalysis is distributed as daily means.
+    native_frequency = "D"
     calendar = GREGORIAN
 
     @accessmethod(
@@ -66,11 +68,23 @@ class GLORYS(MOM6ForcingProduct):
             "thetao",
         ],
         buf=1.0,
+        freq=None,
     ) -> xr.Dataset:
         """
         Gather GLORYS Data on Derecho Computers from the campaign storage and return the dataset sliced to the llc and urc coordinates at the specific dates
+
+        freq sub-samples the range instead of taking every day: RDA stores one
+        file per day, so freq="MS" turns a year from 369 files to open into 13.
+        The result is the daily mean on each sampled stamp, not an average over
+        the interval -- MOM6 interpolates between OBC records, so that is
+        usually what you want, but it is a sub-sample and not a monthly mean.
         """
-        dates = pd.date_range(start=dates[0], end=dates[1]).to_pydatetime().tolist()
+        freq = resolve_frequency(GLORYS, freq)
+        dates = (
+            pd.date_range(start=dates[0], end=dates[1], freq=freq)
+            .to_pydatetime()
+            .tolist()
+        )
         path = Path(output_folder) / output_filename
         GLORYS.logger.info(f"Downloading Glorys data from RDA to {path}")
 
@@ -114,10 +128,18 @@ class GLORYS(MOM6ForcingProduct):
         output_folder=None,
         output_filename=None,
         variables=["zos", "uo", "vo", "so", "thetao"],
+        freq=None,
     ):
         """
         Using the copernucismarine api, query GLORYS data (any dates)
         """
+        require_native_frequency(
+            GLORYS,
+            freq,
+            "get_glorys_data_from_cds_api",
+            "copernicusmarine.subset takes a start/end datetime range and "
+            "returns every daily record in it, with no stride to request.",
+        )
         start_datetime, end_datetime = make_dates_end_inclusive(dates)
         dataset_id = "cmems_mod_glo_phy_my_0.083deg_P1D-m"
         response = copernicusmarine.subset(
@@ -149,10 +171,18 @@ class GLORYS(MOM6ForcingProduct):
         output_filename,
         variables=None,
         name=None,
+        freq=None,
     ) -> None:
         """
         Script to run the GLORYS data query for the CLI
         """
+        require_native_frequency(
+            GLORYS,
+            freq,
+            "get_glorys_data_script_for_cli",
+            "the generated script issues one copernicusmarine range query, "
+            "which has no stride to request.",
+        )
         modify_existing = False
         if os.path.exists(output_folder / Path("get_glorys_data.sh")):
             modify_existing = True

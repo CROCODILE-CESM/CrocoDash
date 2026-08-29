@@ -9,6 +9,8 @@ class GLOFAS(DatedBaseProduct):
     product_name = "glofas"
     description = "	GLOFAS (Global Flood Awareness System) is a public river discharge/runoff Product"
     link = "https://ewds.climate.copernicus.eu/datasets/cems-glofas-historical?tab=download"
+    # GloFAS historical is distributed as daily river discharge.
+    native_frequency = "D"
 
     @accessmethod(
         description="Gets glofas raw data through the cdsapi package",
@@ -19,6 +21,7 @@ class GLOFAS(DatedBaseProduct):
         dates,
         output_folder=Path(""),
         output_filename="glofas_data.nc",
+        freq=None,
     ):
         """
         Downloads glofas data using cdsapi library. Note that users need to have an account with copernicus and have cdsapi installed and configured.
@@ -34,7 +37,12 @@ class GLOFAS(DatedBaseProduct):
         """
         dataset = "cems-glofas-historical"
         start, end = pd.to_datetime(dates[0]), pd.to_datetime(dates[1])
-        dates = pd.date_range(start=start, end=end)
+        # The request below is a year x month x day cross-product built from
+        # these stamps, so a coarser freq genuinely shrinks the download (e.g.
+        # freq="MS" narrows hday to just "01").
+        dates = pd.date_range(
+            start=start, end=end, freq=resolve_frequency(GLOFAS, freq)
+        )
         hyear = sorted(list({d.strftime("%Y") for d in dates}))
         hmonth = sorted(list({d.strftime("%m") for d in dates}))
         hday = sorted(list({d.strftime("%d") for d in dates}))
@@ -65,6 +73,7 @@ class GLOFAS(DatedBaseProduct):
         dates="UNUSED",
         output_folder=Path(""),
         output_filename="processed_glofas.nc",
+        freq=None,
     ):
         """
         Downloads chlor_a data from the CESM inputdata repository by generating a script users can run in their terminal.
@@ -85,8 +94,17 @@ class GLOFAS(DatedBaseProduct):
             Directory where downloaded files will be saved.
         output_filename : str, optional
             filename in output directory
+        freq : str, optional
+            Accepted for signature uniformity only; see below.
 
         """
+        require_native_frequency(
+            GLOFAS,
+            freq,
+            "get_processed_global_glofas_script_for_cli",
+            "it fetches one pre-processed global file whose cadence is fixed "
+            "upstream (note it ignores `dates` entirely).",
+        )
 
         return utils.write_bash_curl_script(
             url="https://svn-ccsm-inputdata.cgd.ucar.edu/trunk/inputdata/ocn/mom/croc/rof/glofas/processed_glofas_data.nc",

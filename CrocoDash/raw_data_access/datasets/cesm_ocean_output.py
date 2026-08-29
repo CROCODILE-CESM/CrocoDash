@@ -49,6 +49,10 @@ class CESM_POP_OUTPUT(MOM6ForcingProduct):
     tracer_lon_coord = "TLONG"
     eta_var_name = "SSH"
     time_units = "days since 1850-01-01"
+    # Cadence is a property of the archive the user points dataset_path at
+    # (.../tseries/month_1 vs day_1 vs ...), not of the product, so there is
+    # nothing to validate a freq request against statically.
+    native_frequency = None
     calendar = NOLEAP
     depth_coord = ["z_t", "z_t_150m"]
     delimiter = "."
@@ -129,7 +133,15 @@ class CESM_POP_OUTPUT(MOM6ForcingProduct):
         lat_name="TLAT",
         lon_name="TLONG",
         preview=False,
+        freq=None,
     ):
+        require_native_frequency(
+            CESM_POP_OUTPUT,
+            freq,
+            "get_cesm_single_variable_data",
+            "it selects whole tseries files by date-range overlap and keeps every "
+            "native record in them; there is no per-timestamp fetch to stride.",
+        )
         # CESM-POP tseries output needs the month-shift correction for its
         # average-endpoint timestamp labeling convention.
         return read_single_variable_tseries_data(
@@ -180,6 +192,10 @@ class CESM_MOM_OUTPUT(MOM6ForcingProduct):
     v_lat_coord = "yq"
     eta_var_name = "zos"
     depth_coord = "z_l"
+    # Cadence is a property of the archive the user points dataset_path at
+    # (.../tseries/month_1 vs day_1 vs ...), not of the product, so there is
+    # nothing to validate a freq request against statically.
+    native_frequency = None
     calendar = NOLEAP
     tracer_var_names = {"temp": "thetao", "salt": "so"}
 
@@ -214,7 +230,15 @@ class CESM_MOM_OUTPUT(MOM6ForcingProduct):
         time_var_name="time",
         buffer_deg=1.5,
         preview=False,
+        freq=None,
     ):
+        require_native_frequency(
+            CESM_MOM_OUTPUT,
+            freq,
+            "get_mom6_output_data",
+            "it opens every file matching file_glob before slicing, so the cost "
+            "is already paid by the time a stride could be applied.",
+        )
         validate_dataset_path(dataset_path)
 
         files = sorted(Path(dataset_path).glob(file_glob))
@@ -325,7 +349,15 @@ class CESM_MOM_OUTPUT(MOM6ForcingProduct):
         regex=r"(\d{6,8})-(\d{6,8})",
         delimiter=".",
         preview=False,
+        freq=None,
     ):
+        require_native_frequency(
+            CESM_MOM_OUTPUT,
+            freq,
+            "get_mom6_single_variable_data",
+            "it selects whole tseries files by date-range overlap and keeps every "
+            "native record in them; there is no per-timestamp fetch to stride.",
+        )
         # Native MOM6 output doesn't need the CESM-POP month-shift correction.
         return read_single_variable_tseries_data(
             dates,

@@ -11,7 +11,7 @@ from CrocoDash.topo import Topo
 from CrocoDash.vgrid import VGrid
 from CrocoDash.forcing_configurations.base import ForcingConfigRegistry
 from CrocoDash.raw_data_access.registry import ProductRegistry
-from CrocoDash.raw_data_access.base import ForcingProduct
+from CrocoDash.raw_data_access.base import ForcingProduct, resolve_frequency
 from ProConPy.config_var import ConfigVar, cvars
 from ProConPy.stage import Stage
 from ProConPy.dev_utils import ConstraintViolation
@@ -508,6 +508,12 @@ class Case:
                     f"valid overridable args are {sorted(function_args)}"
                 )
             function_args.update(function_overrides)
+
+        # Fail fast on an unusable freq. Without this the request is only
+        # checked when the access function finally runs, which for a large
+        # domain is a long way into process_forcings.
+        if function_args.get("freq") is not None:
+            resolve_frequency(self.forcing_product, function_args["freq"])
 
         # function_args is written straight to config.json (via ConditionsConfigurator's
         # "function_args" ConfigOutputParam); coerce Path values (e.g. a dataset_path
