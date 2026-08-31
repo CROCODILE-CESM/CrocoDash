@@ -264,6 +264,17 @@ class ForcingProduct(DatedBaseProduct):
             raise ValueError(
                 "This product does not have marbl tracer var names and cannot be written out as such."
             )
+        else:
+            # BaseProduct.write_metadata copies every public, JSON-compatible
+            # class attribute, so a product that merely *declares*
+            # marbl_var_names (CESM_POP_OUTPUT does, so a %MARBL-BIO compset can
+            # use it) carries the key into the metadata even when BGC is off.
+            # The BGC tracers were never merged into tracer_var_names above, so
+            # they are never regridded -- but the OBC step reads the presence of
+            # this key as "these were regridded" and then fails looking for
+            # <tracer>_segment_NNN. Drop it so the key means what the branch
+            # above makes it mean.
+            base.pop("marbl_var_names", None)
 
         # 3. Optionally write file
         if file_path is not None:
