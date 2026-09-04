@@ -5,7 +5,20 @@ from datetime import datetime
 from ProConPy.config_var import ConfigVar, cvars
 from mom6_forge import mapping
 from CrocoDash.raw_data_access.registry import ProductRegistry
-from CrocoDash.raw_data_access.base import ForcingProduct
+from CrocoDash.raw_data_access.base import Calendar, ForcingProduct
+
+
+def _calendar_as_dict(calendar):
+    """Store a Calendar in config.json as a plain dict, leaving anything else be.
+
+    The configurators are constructed from a live Calendar in the normal path,
+    but also from the serialized dict (BaseConfigurator.deserialize) and from
+    empty placeholders (BaseConfigurator.inspect), so only the dataclass is
+    converted here.
+    """
+    if isinstance(calendar, Calendar):
+        return dataclasses.asdict(calendar)
+    return calendar
 
 
 def register(cls):
@@ -306,7 +319,7 @@ class BGCRiverNutrientsConfigurator(BaseConfigurator):
             global_river_nutrients_filepath=global_river_nutrients_filepath,
             case_session_id=case_session_id,
             case_grid_name=case_grid_name,
-            calendar=dataclasses.asdict(calendar) if calendar is not None else None,
+            calendar=_calendar_as_dict(calendar),
         )
 
     def validate_args(self, **kwargs):
@@ -531,7 +544,7 @@ class ChlConfigurator(BaseConfigurator):
             chl_processed_filepath=chl_processed_filepath,
             case_grid_name=case_grid_name,
             case_session_id=case_session_id,
-            calendar=dataclasses.asdict(calendar) if calendar is not None else None,
+            calendar=_calendar_as_dict(calendar),
         )
 
     def validate_args(self, **kwargs):
