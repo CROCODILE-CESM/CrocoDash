@@ -436,6 +436,7 @@ document.write(`
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.XMLConfigParam.inspect"><code class="docutils literal notranslate"><span class="pre">XMLConfigParam.inspect()</span></code></a></li>
 </ul>
 </li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.calendar_as_dict"><code class="docutils literal notranslate"><span class="pre">calendar_as_dict()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.is_serializable"><code class="docutils literal notranslate"><span class="pre">is_serializable()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.register"><code class="docutils literal notranslate"><span class="pre">register()</span></code></a></li>
 </ul>
@@ -518,57 +519,10 @@ document.write(`
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.ic.process_initial_condition"><code class="docutils literal notranslate"><span class="pre">process_initial_condition()</span></code></a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.forcing.mom6">CrocoDash.forcing.mom6 module</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.mom6.ConditionsConfigurator"><code class="docutils literal notranslate"><span class="pre">ConditionsConfigurator</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.mom6.ConditionsConfigurator.configure"><code class="docutils literal notranslate"><span class="pre">ConditionsConfigurator.configure()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.mom6.ConditionsConfigurator.deserialize"><code class="docutils literal notranslate"><span class="pre">ConditionsConfigurator.deserialize()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.mom6.ConditionsConfigurator.input_params"><code class="docutils literal notranslate"><span class="pre">ConditionsConfigurator.input_params</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.mom6.ConditionsConfigurator.name"><code class="docutils literal notranslate"><span class="pre">ConditionsConfigurator.name</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.mom6.ConditionsConfigurator.output_params"><code class="docutils literal notranslate"><span class="pre">ConditionsConfigurator.output_params</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.mom6.ConditionsConfigurator.process_bc"><code class="docutils literal notranslate"><span class="pre">ConditionsConfigurator.process_bc()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.mom6.ConditionsConfigurator.process_components"><code class="docutils literal notranslate"><span class="pre">ConditionsConfigurator.process_components</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.mom6.ConditionsConfigurator.process_ic"><code class="docutils literal notranslate"><span class="pre">ConditionsConfigurator.process_ic()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.mom6.ConditionsConfigurator.required_for_compsets"><code class="docutils literal notranslate"><span class="pre">ConditionsConfigurator.required_for_compsets</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.mom6.ConditionsConfigurator.validate_args"><code class="docutils literal notranslate"><span class="pre">ConditionsConfigurator.validate_args()</span></code></a></li>
-</ul>
-</li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.mom6.build_forcing_request"><code class="docutils literal notranslate"><span class="pre">build_forcing_request()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.mom6.final_cleanliness_fill"><code class="docutils literal notranslate"><span class="pre">final_cleanliness_fill()</span></code></a></li>
-</ul>
-</li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.forcing.obc">CrocoDash.forcing.obc module</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.obc.process_obc_conditions"><code class="docutils literal notranslate"><span class="pre">process_obc_conditions()</span></code></a></li>
-</ul>
-</li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.forcing.runoff">CrocoDash.forcing.runoff module</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.runoff.RunoffConfigurator"><code class="docutils literal notranslate"><span class="pre">RunoffConfigurator</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.runoff.RunoffConfigurator.allowed_compsets"><code class="docutils literal notranslate"><span class="pre">RunoffConfigurator.allowed_compsets</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.runoff.RunoffConfigurator.configure"><code class="docutils literal notranslate"><span class="pre">RunoffConfigurator.configure()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.runoff.RunoffConfigurator.get_output_filepaths"><code class="docutils literal notranslate"><span class="pre">RunoffConfigurator.get_output_filepaths()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.runoff.RunoffConfigurator.input_params"><code class="docutils literal notranslate"><span class="pre">RunoffConfigurator.input_params</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.runoff.RunoffConfigurator.name"><code class="docutils literal notranslate"><span class="pre">RunoffConfigurator.name</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.runoff.RunoffConfigurator.output_params"><code class="docutils literal notranslate"><span class="pre">RunoffConfigurator.output_params</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.runoff.RunoffConfigurator.process"><code class="docutils literal notranslate"><span class="pre">RunoffConfigurator.process()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.runoff.RunoffConfigurator.process_components"><code class="docutils literal notranslate"><span class="pre">RunoffConfigurator.process_components</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.runoff.RunoffConfigurator.required_for_compsets"><code class="docutils literal notranslate"><span class="pre">RunoffConfigurator.required_for_compsets</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.runoff.RunoffConfigurator.validate_args"><code class="docutils literal notranslate"><span class="pre">RunoffConfigurator.validate_args()</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.forcing.tides">CrocoDash.forcing.tides module</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.tides.TidesConfigurator"><code class="docutils literal notranslate"><span class="pre">TidesConfigurator</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.tides.TidesConfigurator.configure"><code class="docutils literal notranslate"><span class="pre">TidesConfigurator.configure()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.tides.TidesConfigurator.get_output_filepaths"><code class="docutils literal notranslate"><span class="pre">TidesConfigurator.get_output_filepaths()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.tides.TidesConfigurator.input_params"><code class="docutils literal notranslate"><span class="pre">TidesConfigurator.input_params</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.tides.TidesConfigurator.name"><code class="docutils literal notranslate"><span class="pre">TidesConfigurator.name</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.tides.TidesConfigurator.output_params"><code class="docutils literal notranslate"><span class="pre">TidesConfigurator.output_params</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.tides.TidesConfigurator.process"><code class="docutils literal notranslate"><span class="pre">TidesConfigurator.process()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.tides.TidesConfigurator.process_components"><code class="docutils literal notranslate"><span class="pre">TidesConfigurator.process_components</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crocodash-forcing-mom6-module">CrocoDash.forcing.mom6 module</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crocodash-forcing-obc-module">CrocoDash.forcing.obc module</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crocodash-forcing-runoff-module">CrocoDash.forcing.runoff module</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crocodash-forcing-tides-module">CrocoDash.forcing.tides module</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.forcing.utils">CrocoDash.forcing.utils module</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.utils.check_date_continuity"><code class="docutils literal notranslate"><span class="pre">check_date_continuity()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.utils.fetch_raw_chunk"><code class="docutils literal notranslate"><span class="pre">fetch_raw_chunk()</span></code></a></li>
@@ -577,10 +531,7 @@ document.write(`
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.utils.parse_dataset_folder"><code class="docutils literal notranslate"><span class="pre">parse_dataset_folder()</span></code></a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.forcing">Module contents</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.load_all_configurators"><code class="docutils literal notranslate"><span class="pre">load_all_configurators()</span></code></a></li>
-</ul>
-</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module contents</a></li>
 </ul>
             </nav>
         </div>
@@ -874,7 +825,7 @@ never configured this case).</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="CrocoDash.forcing.base.ForcingConfigRegistry.registered_types">
-<span class="sig-name descname"><span class="pre">registered_types</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">type</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[&lt;class</span> <span class="pre">'CrocoDash.forcing.bgc.BGCConfigurator'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'CrocoDash.forcing.bgc.CICEConfigurator'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'CrocoDash.forcing.bgc.BGCICConfigurator'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'CrocoDash.forcing.bgc.BGCIronForcingConfigurator'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'CrocoDash.forcing.bgc.BGCRiverNutrientsConfigurator'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'CrocoDash.forcing.chl.ChlConfigurator'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'CrocoDash.forcing.mom6.ConditionsConfigurator'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'CrocoDash.forcing.runoff.RunoffConfigurator'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'CrocoDash.forcing.tides.TidesConfigurator'&gt;]</span></em><a class="headerlink" href="#CrocoDash.forcing.base.ForcingConfigRegistry.registered_types" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">registered_types</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">type</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[&lt;class</span> <span class="pre">'CrocoDash.forcing.bgc.BGCConfigurator'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'CrocoDash.forcing.bgc.CICEConfigurator'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'CrocoDash.forcing.bgc.BGCICConfigurator'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'CrocoDash.forcing.bgc.BGCIronForcingConfigurator'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'CrocoDash.forcing.bgc.BGCRiverNutrientsConfigurator'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'CrocoDash.forcing.chl.ChlConfigurator'&gt;]</span></em><a class="headerlink" href="#CrocoDash.forcing.base.ForcingConfigRegistry.registered_types" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
@@ -1042,6 +993,16 @@ the raw/regridded/output directories for this case.</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.forcing.base.calendar_as_dict">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.forcing.base.</span></span><span class="sig-name descname"><span class="pre">calendar_as_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">calendar</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.base.calendar_as_dict" title="Link to this definition">#</a></dt>
+<dd><p>Store a Calendar in config.json as a plain dict, leaving anything else be.</p>
+<p>A configurator is normally constructed from a live Calendar, but also from
+the serialized dict (BaseConfigurator.deserialize) and from empty
+placeholders (BaseConfigurator.inspect), so only the dataclass is
+converted here.</p>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="CrocoDash.forcing.base.is_serializable">
 <span class="sig-prename descclassname"><span class="pre">CrocoDash.forcing.base.</span></span><span class="sig-name descname"><span class="pre">is_serializable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">v</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.base.is_serializable" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
@@ -1198,7 +1159,7 @@ configurators that actually produce BGC forcing files.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="CrocoDash.forcing.bgc.BGCRiverNutrientsConfigurator">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.forcing.bgc.</span></span><span class="sig-name descname"><span class="pre">BGCRiverNutrientsConfigurator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">global_river_nutrients_filepath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">case_session_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">case_grid_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">case_forcing_product</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cf_calendar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.bgc.BGCRiverNutrientsConfigurator" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.forcing.bgc.</span></span><span class="sig-name descname"><span class="pre">BGCRiverNutrientsConfigurator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">global_river_nutrients_filepath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">case_session_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">case_grid_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">case_forcing_product</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calendar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.bgc.BGCRiverNutrientsConfigurator" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#CrocoDash.forcing.base.BaseConfigurator" title="CrocoDash.forcing.base.BaseConfigurator"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseConfigurator</span></code></a></p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="CrocoDash.forcing.bgc.BGCRiverNutrientsConfigurator.allowed_compsets">
@@ -1218,7 +1179,7 @@ configurators that actually produce BGC forcing files.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="CrocoDash.forcing.bgc.BGCRiverNutrientsConfigurator.input_params">
-<span class="sig-name descname"><span class="pre">input_params</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#CrocoDash.forcing.base.Param" title="CrocoDash.forcing.base.Param"><span class="pre">Param</span></a><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[InputFileParam(name='global_river_nutrients_filepath'),</span> <span class="pre">InputValueParam(name='case_session_id'),</span> <span class="pre">InputValueParam(name='case_grid_name'),</span> <span class="pre">InputValueParam(name='cf_calendar')]</span></em><a class="headerlink" href="#CrocoDash.forcing.bgc.BGCRiverNutrientsConfigurator.input_params" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">input_params</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#CrocoDash.forcing.base.Param" title="CrocoDash.forcing.base.Param"><span class="pre">Param</span></a><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[InputFileParam(name='global_river_nutrients_filepath'),</span> <span class="pre">InputValueParam(name='case_session_id'),</span> <span class="pre">InputValueParam(name='case_grid_name'),</span> <span class="pre">InputValueParam(name='calendar')]</span></em><a class="headerlink" href="#CrocoDash.forcing.bgc.BGCRiverNutrientsConfigurator.input_params" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -1296,7 +1257,7 @@ automatically.</p>
 <span id="crocodash-forcing-chl-module"></span><h2>CrocoDash.forcing.chl module<a class="headerlink" href="#module-CrocoDash.forcing.chl" title="Link to this heading">#</a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="CrocoDash.forcing.chl.ChlConfigurator">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.forcing.chl.</span></span><span class="sig-name descname"><span class="pre">ChlConfigurator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">chl_processed_filepath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">case_grid_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">case_session_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">case_forcing_product</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cf_calendar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.chl.ChlConfigurator" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.forcing.chl.</span></span><span class="sig-name descname"><span class="pre">ChlConfigurator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">chl_processed_filepath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">case_grid_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">case_session_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">case_forcing_product</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calendar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.chl.ChlConfigurator" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#CrocoDash.forcing.base.BaseConfigurator" title="CrocoDash.forcing.base.BaseConfigurator"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseConfigurator</span></code></a></p>
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.forcing.chl.ChlConfigurator.configure">
@@ -1311,7 +1272,7 @@ automatically.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="CrocoDash.forcing.chl.ChlConfigurator.input_params">
-<span class="sig-name descname"><span class="pre">input_params</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#CrocoDash.forcing.base.Param" title="CrocoDash.forcing.base.Param"><span class="pre">Param</span></a><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[InputFileParam(name='chl_processed_filepath'),</span> <span class="pre">InputValueParam(name='case_grid_name'),</span> <span class="pre">InputValueParam(name='case_session_id'),</span> <span class="pre">InputValueParam(name='cf_calendar')]</span></em><a class="headerlink" href="#CrocoDash.forcing.chl.ChlConfigurator.input_params" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">input_params</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#CrocoDash.forcing.base.Param" title="CrocoDash.forcing.base.Param"><span class="pre">Param</span></a><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[InputFileParam(name='chl_processed_filepath'),</span> <span class="pre">InputValueParam(name='case_grid_name'),</span> <span class="pre">InputValueParam(name='case_session_id'),</span> <span class="pre">InputValueParam(name='calendar')]</span></em><a class="headerlink" href="#CrocoDash.forcing.chl.ChlConfigurator.input_params" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -1424,278 +1385,17 @@ IC is a single snapshot, not a date-chunked series).</p></li>
 </dd></dl>
 
 </section>
-<section id="module-CrocoDash.forcing.mom6">
-<span id="crocodash-forcing-mom6-module"></span><h2>CrocoDash.forcing.mom6 module<a class="headerlink" href="#module-CrocoDash.forcing.mom6" title="Link to this heading">#</a></h2>
-<p>MOM6 initial + open boundary condition configuration and processing.</p>
-<p><code class="docutils literal notranslate"><span class="pre">ConditionsConfigurator</span></code> is always active for regional MOM6 cases – it
-builds the <cite>user_nl_mom</cite> initial condition and OBC_SEGMENT_* parameters at
-configure time, and (one-to-many: this one configurator answers for both
-the “ic” and “bc” process flags) drives IC/OBC extraction at process time via
-<code class="docutils literal notranslate"><span class="pre">forcing.ic</span></code>/<code class="docutils literal notranslate"><span class="pre">forcing.obc</span></code>’s model-agnostic engines, supplying MOM6’s own
-regrid step – built on <code class="docutils literal notranslate"><span class="pre">regional_mom6</span></code>’s <code class="docutils literal notranslate"><span class="pre">segment</span></code>/<code class="docutils literal notranslate"><span class="pre">experiment</span></code>
-classes and <code class="docutils literal notranslate"><span class="pre">mom6_forge</span></code>’s fill utilities – and the MOM6-specific piece of
-the GET step (turning a forcing product’s own u/v/eta/tracer var-name
-metadata into a download request).</p>
-<dl class="py class">
-<dt class="sig sig-object py" id="CrocoDash.forcing.mom6.ConditionsConfigurator">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.forcing.mom6.</span></span><span class="sig-name descname"><span class="pre">ConditionsConfigurator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">boundaries</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">product_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_date</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_date</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.mom6.ConditionsConfigurator" title="Link to this definition">#</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#CrocoDash.forcing.base.BaseConfigurator" title="CrocoDash.forcing.base.BaseConfigurator"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseConfigurator</span></code></a></p>
-<p>Initial condition + open boundary condition (OBC) setup for MOM6.</p>
-<p>Always active for regional MOM6 cases. Builds the <cite>user_nl_mom</cite> initial
-condition and OBC_SEGMENT_* parameters, and the derived values consumed
-by process_ic/process_bc (dates, forcing product metadata, boundary
-numbering).</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="CrocoDash.forcing.mom6.ConditionsConfigurator.configure">
-<span class="sig-name descname"><span class="pre">configure</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.mom6.ConditionsConfigurator.configure" title="Link to this definition">#</a></dt>
-<dd><p>Bind input values to parameters and files.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="CrocoDash.forcing.mom6.ConditionsConfigurator.deserialize">
-<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">deserialize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.mom6.ConditionsConfigurator.deserialize" title="Link to this definition">#</a></dt>
-<dd><p>Reconstruct dynamic per-boundary output params alongside the static ones.</p>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="CrocoDash.forcing.mom6.ConditionsConfigurator.input_params">
-<span class="sig-name descname"><span class="pre">input_params</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#CrocoDash.forcing.base.Param" title="CrocoDash.forcing.base.Param"><span class="pre">Param</span></a><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[InputValueParam(name='start_date'),</span> <span class="pre">InputValueParam(name='end_date'),</span> <span class="pre">InputValueParam(name='boundaries'),</span> <span class="pre">InputValueParam(name='product_name'),</span> <span class="pre">InputValueParam(name='function_name'),</span> <span class="pre">InputValueParam(name='compset'),</span> <span class="pre">InputValueParam(name='function_args')]</span></em><a class="headerlink" href="#CrocoDash.forcing.mom6.ConditionsConfigurator.input_params" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="CrocoDash.forcing.mom6.ConditionsConfigurator.name">
-<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'conditions'</span></em><a class="headerlink" href="#CrocoDash.forcing.mom6.ConditionsConfigurator.name" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="CrocoDash.forcing.mom6.ConditionsConfigurator.output_params">
-<span class="sig-name descname"><span class="pre">output_params</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#CrocoDash.forcing.base.OutputParam" title="CrocoDash.forcing.base.OutputParam"><span class="pre">OutputParam</span></a><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[UserNLConfigParam(name='INIT_LAYERS_FROM_Z_FILE'),</span> <span class="pre">UserNLConfigParam(name='Z_INIT_ALE_REMAPPING'),</span> <span class="pre">UserNLConfigParam(name='TEMP_SALT_INIT_VERTICAL_REMAP_ONLY'),</span> <span class="pre">UserNLConfigParam(name='DEPRESS_INITIAL_SURFACE'),</span> <span class="pre">UserNLConfigParam(name='VELOCITY_CONFIG'),</span> <span class="pre">UserNLConfigParam(name='TEMP_SALT_Z_INIT_FILE'),</span> <span class="pre">UserNLConfigParam(name='SURFACE_HEIGHT_IC_FILE'),</span> <span class="pre">UserNLConfigParam(name='VELOCITY_FILE'),</span> <span class="pre">UserNLConfigParam(name='Z_INIT_FILE_PTEMP_VAR'),</span> <span class="pre">UserNLConfigParam(name='Z_INIT_FILE_SALT_VAR'),</span> <span class="pre">UserNLConfigParam(name='SURFACE_HEIGHT_IC_VAR'),</span> <span class="pre">UserNLConfigParam(name='U_IC_VAR'),</span> <span class="pre">UserNLConfigParam(name='V_IC_VAR'),</span> <span class="pre">UserNLConfigParam(name='OBC_NUMBER_OF_SEGMENTS'),</span> <span class="pre">UserNLConfigParam(name='OBC_FREESLIP_VORTICITY'),</span> <span class="pre">UserNLConfigParam(name='OBC_FREESLIP_STRAIN'),</span> <span class="pre">UserNLConfigParam(name='OBC_COMPUTED_VORTICITY'),</span> <span class="pre">UserNLConfigParam(name='OBC_COMPUTED_STRAIN'),</span> <span class="pre">UserNLConfigParam(name='OBC_ZERO_BIHARMONIC'),</span> <span class="pre">UserNLConfigParam(name='OBC_TRACER_RESERVOIR_LENGTH_SCALE_OUT'),</span> <span class="pre">UserNLConfigParam(name='OBC_TRACER_RESERVOIR_LENGTH_SCALE_IN'),</span> <span class="pre">UserNLConfigParam(name='BRUSHCUTTER_MODE'),</span> <span class="pre">ConfigOutputParam(name='date_format'),</span> <span class="pre">ConfigOutputParam(name='information'),</span> <span class="pre">ConfigOutputParam(name='get_step_days'),</span> <span class="pre">ConfigOutputParam(name='regrid_step_days'),</span> <span class="pre">ConfigOutputParam(name='boundary_number_conversion'),</span> <span class="pre">ConfigOutputParam(name='preview'),</span> <span class="pre">ConfigOutputParam(name='function_args')]</span></em><a class="headerlink" href="#CrocoDash.forcing.mom6.ConditionsConfigurator.output_params" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="CrocoDash.forcing.mom6.ConditionsConfigurator.process_bc">
-<span class="sig-name descname"><span class="pre">process_bc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.mom6.ConditionsConfigurator.process_bc" title="Link to this definition">#</a></dt>
-<dd><p>Process MOM6 boundary conditions through forcing.obc’s GET → REGRID →
-MERGE engine, using regional_mom6’s Segment as the regrid step.</p>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="CrocoDash.forcing.mom6.ConditionsConfigurator.process_components">
-<span class="sig-name descname"><span class="pre">process_components</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'bc':</span> <span class="pre">'process_bc',</span> <span class="pre">'ic':</span> <span class="pre">'process_ic'}</span></em><a class="headerlink" href="#CrocoDash.forcing.mom6.ConditionsConfigurator.process_components" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="CrocoDash.forcing.mom6.ConditionsConfigurator.process_ic">
-<span class="sig-name descname"><span class="pre">process_ic</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.mom6.ConditionsConfigurator.process_ic" title="Link to this definition">#</a></dt>
-<dd><p>Process the MOM6 initial condition (t=0) through forcing.ic’s GET →
-REGRID engine, using regional_mom6’s experiment + mom6_forge’s fill
-utilities as the regrid step.</p>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="CrocoDash.forcing.mom6.ConditionsConfigurator.required_for_compsets">
-<span class="sig-name descname"><span class="pre">required_for_compsets</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['MOM6']</span></em><a class="headerlink" href="#CrocoDash.forcing.mom6.ConditionsConfigurator.required_for_compsets" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="CrocoDash.forcing.mom6.ConditionsConfigurator.validate_args">
-<span class="sig-name descname"><span class="pre">validate_args</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.mom6.ConditionsConfigurator.validate_args" title="Link to this definition">#</a></dt>
-<dd><p>Validate provided inputs against declared input_params.</p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="CrocoDash.forcing.mom6.build_forcing_request">
-<span class="sig-prename descclassname"><span class="pre">CrocoDash.forcing.mom6.</span></span><span class="sig-name descname"><span class="pre">build_forcing_request</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">product_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function_args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#CrocoDash.forcing.mom6.build_forcing_request" title="Link to this definition">#</a></dt>
-<dd><p>Build the (variables, extra_args) an access function needs from a MOM6
-forcing product_info dict (u/v/eta/tracer var names).</p>
-<p>function_args: user overrides (or access-function defaults) for the access
-function’s non-required arguments, as written to config.json’s
-forcing.function_args by configure_forcings()’s function_overrides. Merged
-into extra_args last so they take precedence over product_info-derived keys.</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="CrocoDash.forcing.mom6.final_cleanliness_fill">
-<span class="sig-prename descclassname"><span class="pre">CrocoDash.forcing.mom6.</span></span><span class="sig-name descname"><span class="pre">final_cleanliness_fill</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">var</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z_dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.mom6.final_cleanliness_fill" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
+<section id="crocodash-forcing-mom6-module">
+<h2>CrocoDash.forcing.mom6 module<a class="headerlink" href="#crocodash-forcing-mom6-module" title="Link to this heading">#</a></h2>
 </section>
-<section id="module-CrocoDash.forcing.obc">
-<span id="crocodash-forcing-obc-module"></span><h2>CrocoDash.forcing.obc module<a class="headerlink" href="#module-CrocoDash.forcing.obc" title="Link to this heading">#</a></h2>
-<p>OBC (Open Boundary Condition) forcing extraction engine for CrocoDash.</p>
-<p>Model-agnostic: this module gets raw data and chunks/merges it, but knows
-nothing about how to regrid it. Callers (<code class="docutils literal notranslate"><span class="pre">mom6.py</span></code>, <code class="docutils literal notranslate"><span class="pre">cice.py</span></code>, <code class="docutils literal notranslate"><span class="pre">ww3.py</span></code>)
-supply a <code class="docutils literal notranslate"><span class="pre">regrid_chunk_fn</span></code> that turns one raw chunk into that target’s own
-per-segment output file – everything else (GET, date-chunking, idempotency,
-MERGE) is shared.</p>
-<p>Three-phase pipeline per boundary:</p>
-<ol class="arabic simple">
-<li><dl class="simple">
-<dt>GET    — download raw data, chunked by <code class="docutils literal notranslate"><span class="pre">get_step</span></code> (default: full range in</dt><dd><p>one request). Chunk size is driven by data-provider constraints
-(API limits, download size). Each chunk is written as
-<code class="docutils literal notranslate"><span class="pre">{boundary}_unprocessed.{start}_{end}.nc</span></code>.</p>
-</dd>
-</dl>
-</li>
-<li><dl class="simple">
-<dt>REGRID — validate raw coverage from filenames, then open all raw files</dt><dd><p>lazily and regrid (via the caller-supplied <code class="docutils literal notranslate"><span class="pre">regrid_chunk_fn</span></code>) in
-<code class="docutils literal notranslate"><span class="pre">regrid_step</span></code>-sized slices. Chunk size is driven by memory and
-xESMF performance. GET and REGRID chunks are fully independent.</p>
-</dd>
-</dl>
-</li>
-<li><p>MERGE  — concatenate regridded chunks into <code class="docutils literal notranslate"><span class="pre">forcing_obc_segment_NNN.nc</span></code>.</p></li>
-</ol>
-<p>Each phase is idempotent: existing output files are detected and skipped,
-so a failed run can be safely re-started.</p>
-<dl class="py function">
-<dt class="sig sig-object py" id="CrocoDash.forcing.obc.process_obc_conditions">
-<span class="sig-prename descclassname"><span class="pre">CrocoDash.forcing.obc.</span></span><span class="sig-name descname"><span class="pre">process_obc_conditions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start_date</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_date</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundary_number_conversion</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">product_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variables</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset_varnames</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hgrid_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw_dataset_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regridded_dataset_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regrid_chunk_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">get_step_days</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regrid_step_days</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">30</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preview</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.obc.process_obc_conditions" title="Link to this definition">#</a></dt>
-<dd><p>Process boundary conditions through the GET → REGRID → MERGE pipeline.</p>
-<p>Each phase is idempotent. Re-running after a partial failure resumes from
-the last completed file.</p>
-<p>GET and REGRID chunk sizes are independent. GET defaults to the full date
-range in one request; REGRID defaults to 30-day slices for memory
-efficiency.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>start_date</strong> – Forcing start date (datetime or any pandas-parseable string).</p></li>
-<li><p><strong>end_date</strong> – Forcing end date (datetime or any pandas-parseable string).</p></li>
-<li><p><strong>boundary_number_conversion</strong> – Boundary name -&gt; target-model segment number.</p></li>
-<li><p><strong>product_name</strong> – Forcing data product name.</p></li>
-<li><p><strong>function_name</strong> – Download function name for the product.</p></li>
-<li><p><strong>variables</strong> – Variable names to request from the download function
-(already resolved by the caller from its own product metadata).</p></li>
-<li><p><strong>extra_args</strong> – Extra kwargs for the download function (already resolved
-by the caller).</p></li>
-<li><p><strong>dataset_varnames</strong> – Opaque metadata dict forwarded to <code class="docutils literal notranslate"><span class="pre">regrid_chunk_fn</span></code>
-– this module never reads its keys itself.</p></li>
-<li><p><strong>hgrid_path</strong> – Path to the hgrid supergrid file.</p></li>
-<li><p><strong>raw_dataset_path</strong> – Directory for raw downloaded data.</p></li>
-<li><p><strong>regridded_dataset_path</strong> – Directory for per-chunk regridded data.</p></li>
-<li><p><strong>output_path</strong> – Directory for final, merged output files.</p></li>
-<li><p><strong>regrid_chunk_fn</strong> – Target-specific regrid step – see <code class="docutils literal notranslate"><span class="pre">_regrid_boundary</span></code>.</p></li>
-<li><p><strong>get_step_days</strong> – GET chunk size in days; None = full range in one request.</p></li>
-<li><p><strong>regrid_step_days</strong> – REGRID chunk size in days.</p></li>
-<li><p><strong>preview</strong> – If True, return a dict of expected date pairs without
-executing any downloads or regridding.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
+<section id="crocodash-forcing-obc-module">
+<h2>CrocoDash.forcing.obc module<a class="headerlink" href="#crocodash-forcing-obc-module" title="Link to this heading">#</a></h2>
 </section>
-<section id="module-CrocoDash.forcing.runoff">
-<span id="crocodash-forcing-runoff-module"></span><h2>CrocoDash.forcing.runoff module<a class="headerlink" href="#module-CrocoDash.forcing.runoff" title="Link to this heading">#</a></h2>
-<dl class="py class">
-<dt class="sig sig-object py" id="CrocoDash.forcing.runoff.RunoffConfigurator">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.forcing.runoff.</span></span><span class="sig-name descname"><span class="pre">RunoffConfigurator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">case_grid_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">case_session_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">case_compset_lname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">case_inputdir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">case_esmf_mesh_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">case_cime</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rmax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rof_grid_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rof_esmf_mesh_filepath</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.runoff.RunoffConfigurator" title="Link to this definition">#</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#CrocoDash.forcing.base.BaseConfigurator" title="CrocoDash.forcing.base.BaseConfigurator"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseConfigurator</span></code></a></p>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="CrocoDash.forcing.runoff.RunoffConfigurator.allowed_compsets">
-<span class="sig-name descname"><span class="pre">allowed_compsets</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'DROF'}</span></em><a class="headerlink" href="#CrocoDash.forcing.runoff.RunoffConfigurator.allowed_compsets" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="CrocoDash.forcing.runoff.RunoffConfigurator.configure">
-<span class="sig-name descname"><span class="pre">configure</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.runoff.RunoffConfigurator.configure" title="Link to this definition">#</a></dt>
-<dd><p>Bind input values to parameters and files.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="CrocoDash.forcing.runoff.RunoffConfigurator.get_output_filepaths">
-<span class="sig-name descname"><span class="pre">get_output_filepaths</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ocn_ice_directory</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.runoff.RunoffConfigurator.get_output_filepaths" title="Link to this definition">#</a></dt>
-<dd><p>Get output files from the output parameters</p>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="CrocoDash.forcing.runoff.RunoffConfigurator.input_params">
-<span class="sig-name descname"><span class="pre">input_params</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#CrocoDash.forcing.base.Param" title="CrocoDash.forcing.base.Param"><span class="pre">Param</span></a><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[InputValueParam(name='case_grid_name'),</span> <span class="pre">InputValueParam(name='case_session_id'),</span> <span class="pre">InputValueParam(name='case_compset_lname'),</span> <span class="pre">InputValueParam(name='case_inputdir'),</span> <span class="pre">InputValueParam(name='rmax'),</span> <span class="pre">InputValueParam(name='rof_grid_name'),</span> <span class="pre">InputValueParam(name='fold'),</span> <span class="pre">InputFileParam(name='rof_esmf_mesh_filepath'),</span> <span class="pre">InputFileParam(name='case_esmf_mesh_path')]</span></em><a class="headerlink" href="#CrocoDash.forcing.runoff.RunoffConfigurator.input_params" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="CrocoDash.forcing.runoff.RunoffConfigurator.name">
-<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Runoff'</span></em><a class="headerlink" href="#CrocoDash.forcing.runoff.RunoffConfigurator.name" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="CrocoDash.forcing.runoff.RunoffConfigurator.output_params">
-<span class="sig-name descname"><span class="pre">output_params</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#CrocoDash.forcing.base.OutputParam" title="CrocoDash.forcing.base.OutputParam"><span class="pre">OutputParam</span></a><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[XMLConfigParam(name='ROF2OCN_LIQ_RMAPNAME'),</span> <span class="pre">XMLConfigParam(name='ROF2OCN_ICE_RMAPNAME')]</span></em><a class="headerlink" href="#CrocoDash.forcing.runoff.RunoffConfigurator.output_params" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="CrocoDash.forcing.runoff.RunoffConfigurator.process">
-<span class="sig-name descname"><span class="pre">process</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.runoff.RunoffConfigurator.process" title="Link to this definition">#</a></dt>
-<dd><p>Generate runoff-to-ocean mapping files if runoff is active in the compset.</p>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="CrocoDash.forcing.runoff.RunoffConfigurator.process_components">
-<span class="sig-name descname"><span class="pre">process_components</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'runoff':</span> <span class="pre">'process'}</span></em><a class="headerlink" href="#CrocoDash.forcing.runoff.RunoffConfigurator.process_components" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="CrocoDash.forcing.runoff.RunoffConfigurator.required_for_compsets">
-<span class="sig-name descname"><span class="pre">required_for_compsets</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'DROF'}</span></em><a class="headerlink" href="#CrocoDash.forcing.runoff.RunoffConfigurator.required_for_compsets" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="CrocoDash.forcing.runoff.RunoffConfigurator.validate_args">
-<span class="sig-name descname"><span class="pre">validate_args</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.runoff.RunoffConfigurator.validate_args" title="Link to this definition">#</a></dt>
-<dd><p>Validate provided inputs against declared input_params.</p>
-</dd></dl>
-
-</dd></dl>
-
+<section id="crocodash-forcing-runoff-module">
+<h2>CrocoDash.forcing.runoff module<a class="headerlink" href="#crocodash-forcing-runoff-module" title="Link to this heading">#</a></h2>
 </section>
-<section id="module-CrocoDash.forcing.tides">
-<span id="crocodash-forcing-tides-module"></span><h2>CrocoDash.forcing.tides module<a class="headerlink" href="#module-CrocoDash.forcing.tides" title="Link to this heading">#</a></h2>
-<dl class="py class">
-<dt class="sig sig-object py" id="CrocoDash.forcing.tides.TidesConfigurator">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.forcing.tides.</span></span><span class="sig-name descname"><span class="pre">TidesConfigurator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tpxo_elevation_filepath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tpxo_velocity_filepath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tidal_constituents</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundaries</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_date</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.tides.TidesConfigurator" title="Link to this definition">#</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#CrocoDash.forcing.base.BaseConfigurator" title="CrocoDash.forcing.base.BaseConfigurator"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseConfigurator</span></code></a></p>
-<dl class="py method">
-<dt class="sig sig-object py" id="CrocoDash.forcing.tides.TidesConfigurator.configure">
-<span class="sig-name descname"><span class="pre">configure</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.tides.TidesConfigurator.configure" title="Link to this definition">#</a></dt>
-<dd><p>Bind input values to parameters and files.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="CrocoDash.forcing.tides.TidesConfigurator.get_output_filepaths">
-<span class="sig-name descname"><span class="pre">get_output_filepaths</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ocn_ice_directory</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.tides.TidesConfigurator.get_output_filepaths" title="Link to this definition">#</a></dt>
-<dd><p>Get output files from the output parameters</p>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="CrocoDash.forcing.tides.TidesConfigurator.input_params">
-<span class="sig-name descname"><span class="pre">input_params</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#CrocoDash.forcing.base.Param" title="CrocoDash.forcing.base.Param"><span class="pre">Param</span></a><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[InputFileParam(name='tpxo_elevation_filepath'),</span> <span class="pre">InputFileParam(name='tpxo_velocity_filepath'),</span> <span class="pre">InputValueParam(name='tidal_constituents'),</span> <span class="pre">InputValueParam(name='start_date'),</span> <span class="pre">InputValueParam(name='boundaries')]</span></em><a class="headerlink" href="#CrocoDash.forcing.tides.TidesConfigurator.input_params" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="CrocoDash.forcing.tides.TidesConfigurator.name">
-<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'tides'</span></em><a class="headerlink" href="#CrocoDash.forcing.tides.TidesConfigurator.name" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="CrocoDash.forcing.tides.TidesConfigurator.output_params">
-<span class="sig-name descname"><span class="pre">output_params</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#CrocoDash.forcing.base.OutputParam" title="CrocoDash.forcing.base.OutputParam"><span class="pre">OutputParam</span></a><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[UserNLConfigParam(name='TIDES'),</span> <span class="pre">UserNLConfigParam(name='TIDE_M2'),</span> <span class="pre">UserNLConfigParam(name='CD_TIDES'),</span> <span class="pre">UserNLConfigParam(name='TIDE_USE_EQ_PHASE'),</span> <span class="pre">UserNLConfigParam(name='TIDE_REF_DATE'),</span> <span class="pre">UserNLConfigParam(name='OBC_TIDE_ADD_EQ_PHASE'),</span> <span class="pre">UserNLConfigParam(name='OBC_TIDE_N_CONSTITUENTS'),</span> <span class="pre">UserNLConfigParam(name='OBC_TIDE_CONSTITUENTS'),</span> <span class="pre">UserNLConfigParam(name='OBC_TIDE_REF_DATE')]</span></em><a class="headerlink" href="#CrocoDash.forcing.tides.TidesConfigurator.output_params" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="CrocoDash.forcing.tides.TidesConfigurator.process">
-<span class="sig-name descname"><span class="pre">process</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.tides.TidesConfigurator.process" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="CrocoDash.forcing.tides.TidesConfigurator.process_components">
-<span class="sig-name descname"><span class="pre">process_components</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'tides':</span> <span class="pre">'process'}</span></em><a class="headerlink" href="#CrocoDash.forcing.tides.TidesConfigurator.process_components" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
+<section id="crocodash-forcing-tides-module">
+<h2>CrocoDash.forcing.tides module<a class="headerlink" href="#crocodash-forcing-tides-module" title="Link to this heading">#</a></h2>
 </section>
 <section id="module-CrocoDash.forcing.utils">
 <span id="crocodash-forcing-utils-module"></span><h2>CrocoDash.forcing.utils module<a class="headerlink" href="#module-CrocoDash.forcing.utils" title="Link to this heading">#</a></h2>
@@ -1760,17 +1460,8 @@ Example: <cite>“(north|east|south|west)_unprocessed.(d{8})_(d{8}).nc”</cite>
 </dd></dl>
 
 </section>
-<section id="module-CrocoDash.forcing">
-<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-CrocoDash.forcing" title="Link to this heading">#</a></h2>
-<dl class="py function">
-<dt class="sig sig-object py" id="CrocoDash.forcing.load_all_configurators">
-<span class="sig-prename descclassname"><span class="pre">CrocoDash.forcing.</span></span><span class="sig-name descname"><span class="pre">load_all_configurators</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.load_all_configurators" title="Link to this definition">#</a></dt>
-<dd><p>Dynamically import every module in this package so each configurator
-class’s &#64;register decorator runs and populates ForcingConfigRegistry.
-Adding a new forcing type is just adding a new file here – nothing
-needs to import it by name.</p>
-</dd></dl>
-
+<section id="module-contents">
+<h2>Module contents<a class="headerlink" href="#module-contents" title="Link to this heading">#</a></h2>
 </section>
 </section>
 
@@ -1913,6 +1604,7 @@ needs to import it by name.</p>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.XMLConfigParam.inspect"><code class="docutils literal notranslate"><span class="pre">XMLConfigParam.inspect()</span></code></a></li>
 </ul>
 </li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.calendar_as_dict"><code class="docutils literal notranslate"><span class="pre">calendar_as_dict()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.is_serializable"><code class="docutils literal notranslate"><span class="pre">is_serializable()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.register"><code class="docutils literal notranslate"><span class="pre">register()</span></code></a></li>
 </ul>
@@ -1995,57 +1687,10 @@ needs to import it by name.</p>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.ic.process_initial_condition"><code class="docutils literal notranslate"><span class="pre">process_initial_condition()</span></code></a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.forcing.mom6">CrocoDash.forcing.mom6 module</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.mom6.ConditionsConfigurator"><code class="docutils literal notranslate"><span class="pre">ConditionsConfigurator</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.mom6.ConditionsConfigurator.configure"><code class="docutils literal notranslate"><span class="pre">ConditionsConfigurator.configure()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.mom6.ConditionsConfigurator.deserialize"><code class="docutils literal notranslate"><span class="pre">ConditionsConfigurator.deserialize()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.mom6.ConditionsConfigurator.input_params"><code class="docutils literal notranslate"><span class="pre">ConditionsConfigurator.input_params</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.mom6.ConditionsConfigurator.name"><code class="docutils literal notranslate"><span class="pre">ConditionsConfigurator.name</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.mom6.ConditionsConfigurator.output_params"><code class="docutils literal notranslate"><span class="pre">ConditionsConfigurator.output_params</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.mom6.ConditionsConfigurator.process_bc"><code class="docutils literal notranslate"><span class="pre">ConditionsConfigurator.process_bc()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.mom6.ConditionsConfigurator.process_components"><code class="docutils literal notranslate"><span class="pre">ConditionsConfigurator.process_components</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.mom6.ConditionsConfigurator.process_ic"><code class="docutils literal notranslate"><span class="pre">ConditionsConfigurator.process_ic()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.mom6.ConditionsConfigurator.required_for_compsets"><code class="docutils literal notranslate"><span class="pre">ConditionsConfigurator.required_for_compsets</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.mom6.ConditionsConfigurator.validate_args"><code class="docutils literal notranslate"><span class="pre">ConditionsConfigurator.validate_args()</span></code></a></li>
-</ul>
-</li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.mom6.build_forcing_request"><code class="docutils literal notranslate"><span class="pre">build_forcing_request()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.mom6.final_cleanliness_fill"><code class="docutils literal notranslate"><span class="pre">final_cleanliness_fill()</span></code></a></li>
-</ul>
-</li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.forcing.obc">CrocoDash.forcing.obc module</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.obc.process_obc_conditions"><code class="docutils literal notranslate"><span class="pre">process_obc_conditions()</span></code></a></li>
-</ul>
-</li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.forcing.runoff">CrocoDash.forcing.runoff module</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.runoff.RunoffConfigurator"><code class="docutils literal notranslate"><span class="pre">RunoffConfigurator</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.runoff.RunoffConfigurator.allowed_compsets"><code class="docutils literal notranslate"><span class="pre">RunoffConfigurator.allowed_compsets</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.runoff.RunoffConfigurator.configure"><code class="docutils literal notranslate"><span class="pre">RunoffConfigurator.configure()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.runoff.RunoffConfigurator.get_output_filepaths"><code class="docutils literal notranslate"><span class="pre">RunoffConfigurator.get_output_filepaths()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.runoff.RunoffConfigurator.input_params"><code class="docutils literal notranslate"><span class="pre">RunoffConfigurator.input_params</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.runoff.RunoffConfigurator.name"><code class="docutils literal notranslate"><span class="pre">RunoffConfigurator.name</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.runoff.RunoffConfigurator.output_params"><code class="docutils literal notranslate"><span class="pre">RunoffConfigurator.output_params</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.runoff.RunoffConfigurator.process"><code class="docutils literal notranslate"><span class="pre">RunoffConfigurator.process()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.runoff.RunoffConfigurator.process_components"><code class="docutils literal notranslate"><span class="pre">RunoffConfigurator.process_components</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.runoff.RunoffConfigurator.required_for_compsets"><code class="docutils literal notranslate"><span class="pre">RunoffConfigurator.required_for_compsets</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.runoff.RunoffConfigurator.validate_args"><code class="docutils literal notranslate"><span class="pre">RunoffConfigurator.validate_args()</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.forcing.tides">CrocoDash.forcing.tides module</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.tides.TidesConfigurator"><code class="docutils literal notranslate"><span class="pre">TidesConfigurator</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.tides.TidesConfigurator.configure"><code class="docutils literal notranslate"><span class="pre">TidesConfigurator.configure()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.tides.TidesConfigurator.get_output_filepaths"><code class="docutils literal notranslate"><span class="pre">TidesConfigurator.get_output_filepaths()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.tides.TidesConfigurator.input_params"><code class="docutils literal notranslate"><span class="pre">TidesConfigurator.input_params</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.tides.TidesConfigurator.name"><code class="docutils literal notranslate"><span class="pre">TidesConfigurator.name</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.tides.TidesConfigurator.output_params"><code class="docutils literal notranslate"><span class="pre">TidesConfigurator.output_params</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.tides.TidesConfigurator.process"><code class="docutils literal notranslate"><span class="pre">TidesConfigurator.process()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.tides.TidesConfigurator.process_components"><code class="docutils literal notranslate"><span class="pre">TidesConfigurator.process_components</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crocodash-forcing-mom6-module">CrocoDash.forcing.mom6 module</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crocodash-forcing-obc-module">CrocoDash.forcing.obc module</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crocodash-forcing-runoff-module">CrocoDash.forcing.runoff module</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crocodash-forcing-tides-module">CrocoDash.forcing.tides module</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.forcing.utils">CrocoDash.forcing.utils module</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.utils.check_date_continuity"><code class="docutils literal notranslate"><span class="pre">check_date_continuity()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.utils.fetch_raw_chunk"><code class="docutils literal notranslate"><span class="pre">fetch_raw_chunk()</span></code></a></li>
@@ -2054,10 +1699,7 @@ needs to import it by name.</p>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.utils.parse_dataset_folder"><code class="docutils literal notranslate"><span class="pre">parse_dataset_folder()</span></code></a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.forcing">Module contents</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.load_all_configurators"><code class="docutils literal notranslate"><span class="pre">load_all_configurators()</span></code></a></li>
-</ul>
-</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module contents</a></li>
 </ul>
   </nav></div>
 
