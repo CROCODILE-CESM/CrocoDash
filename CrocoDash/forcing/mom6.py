@@ -113,6 +113,13 @@ def _regrid_obc_chunk(
             regridders=regridders,
             calendar=dataset_varnames["calendar"]["mom6"],
             time_units=dataset_varnames["time_units"],
+            # Opt in to ESMF skipping degenerate (duplicate/collapsed) source
+            # cells rather than aborting the regrid with "rc=506 (Degenerate
+            # Element Detected)". Global products have them near the poles --
+            # GLORYS at its southernmost latitudes -- so polar domains fail
+            # outright without this. rm6 defaults it off so a source grid that
+            # is malformed for some other reason still fails loudly.
+            ignore_degenerate=True,
         )
         return seg.regridders
     finally:
