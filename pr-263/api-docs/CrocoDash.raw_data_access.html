@@ -682,11 +682,13 @@ mom6 (FMS) is the string the netcdf files must have on time:calendar attribute, 
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.base.Calendar.from_config">
 <em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">section</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#CrocoDash.raw_data_access.base.Calendar" title="CrocoDash.raw_data_access.base.Calendar"><span class="pre">Calendar</span></a></span></span><a class="headerlink" href="#CrocoDash.raw_data_access.base.Calendar.from_config" title="Link to this definition">#</a></dt>
-<dd><p>Rebuild a Calendar from the <code class="docutils literal notranslate"><span class="pre">calendar</span></code> object stored in config.json.</p>
-<p>BaseProduct.write_metadata expands the dataclass to a named dict, so
-the round trip is by field name. This lets the extraction driver hand
-writers the whole Calendar rather than one name and a guess about
-which of its roles that name was meant for.</p>
+<dd><p>Rebuild a Calendar from the <code class="docutils literal notranslate"><span class="pre">calendar</span></code> object in a config.json section.</p>
+<p>Reads the copy the chl / river-nutrients configurators store in their
+own <code class="docutils literal notranslate"><span class="pre">inputs</span></code> block, so the extraction driver can hand those writers
+the whole Calendar rather than one name and a guess about which of its
+roles that name was meant for. The product metadata block is a separate
+copy, written by BaseProduct.write_metadata and read directly by the
+OBC step; it does not come through here.</p>
 </dd></dl>
 
 <dl class="py attribute">
