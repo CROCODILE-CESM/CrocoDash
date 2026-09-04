@@ -2,8 +2,11 @@ import pytest
 import numpy as np
 import pandas as pd
 import xarray as xr
+from types import SimpleNamespace
 
 from CrocoDash.forcing import mom6
+from CrocoDash.forcing.mom6 import _split_bgc_tracers_into_files
+from CrocoDash.raw_data_access.registry import ProductRegistry
 
 
 def test_build_forcing_request_merges_function_args():
@@ -127,3 +130,48 @@ def test_split_bgc_tracers_raises_when_tracer_missing_from_segment(tmp_path):
 
     with pytest.raises(KeyError, match="alk_segment_001"):
         _split_bgc_tracers_into_files(tmp_path, conversion, {"alk": "alk"})
+
+
+# ---------------------------------------------------------------------------
+# OBC wiring
+# ---------------------------------------------------------------------------
+
+
+def _bc_context(tmp_path, preview=False):
+    """The attributes ConditionsConfigurator.process_bc reads off the context."""
+    return SimpleNamespace(
+        preview=preview,
+        supergrid_path=tmp_path / "supergrid.nc",
+        topo_path=tmp_path / "topog.nc",
+        raw_data_dir=tmp_path / "raw",
+        regridded_data_dir=tmp_path / "regridded",
+        output_path=tmp_path / "ocnice",
+    )
+
+
+@pytest.mark.parametrize("preview", [False, True])
+def test_process_bc_forwards_bathymetry_path(tmp_path, monkeypatch, preview):
+    """obc.process_obc_conditions derives a per-boundary download bbox from the
+    topography's ocean mask, but only when handed bathymetry_path -- otherwise
+    it silently falls back to the full supergrid extent and every boundary
+    downloads the whole domain. Both the preview and real calls must pass it.
+    """
+    cfg = _conditions("glorys")
+    cfg.set_output_param(
+        "information", ProductRegistry.get_product("glorys").write_metadata()
+    )
+    cfg.set_output_param("function_args", {})
+    cfg.set_output_param("boundary_number_conversion", {"north": 1})
+    cfg.set_output_param("get_step_days", 5)
+    cfg.set_output_param("regrid_step_days", 5)
+
+    captured = {}
+    monkeypatch.setattr(
+        mom6.obc, "process_obc_conditions", lambda **kw: captured.update(kw)
+    )
+    monkeypatch.setattr(mom6, "_split_bgc_tracers_into_files", lambda **kw: [])
+
+    ctx = _bc_context(tmp_path, preview=preview)
+    cfg.process_bc(ctx)
+
+    assert captured["bathymetry_path"] == ctx.topo_path

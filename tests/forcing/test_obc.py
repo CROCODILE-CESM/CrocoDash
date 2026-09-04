@@ -5,6 +5,7 @@ import xarray as xr
 from datetime import datetime
 from pathlib import Path
 
+import CrocoDash.forcing.obc as obc_module
 from CrocoDash.forcing.obc import (
     process_obc_conditions,
     _merge_boundary,
