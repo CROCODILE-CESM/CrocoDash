@@ -357,6 +357,7 @@ document.write(`
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.Calendar"><code class="docutils literal notranslate"><span class="pre">Calendar</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.Calendar.cesm"><code class="docutils literal notranslate"><span class="pre">Calendar.cesm</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.Calendar.cf"><code class="docutils literal notranslate"><span class="pre">Calendar.cf</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.Calendar.from_config"><code class="docutils literal notranslate"><span class="pre">Calendar.from_config()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.Calendar.mom6"><code class="docutils literal notranslate"><span class="pre">Calendar.mom6</span></code></a></li>
 </ul>
 </li>
@@ -418,8 +419,6 @@ document.write(`
 <li class="toctree-l3"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.cesm_ocean_output.CESM_MOM_OUTPUT"><code class="docutils literal notranslate"><span class="pre">CESM_MOM_OUTPUT</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.cesm_ocean_output.CESM_MOM_OUTPUT.boundary_fill_method"><code class="docutils literal notranslate"><span class="pre">CESM_MOM_OUTPUT.boundary_fill_method</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.cesm_ocean_output.CESM_MOM_OUTPUT.calendar"><code class="docutils literal notranslate"><span class="pre">CESM_MOM_OUTPUT.calendar</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.cesm_ocean_output.CESM_MOM_OUTPUT.cesm_calendar"><code class="docutils literal notranslate"><span class="pre">CESM_MOM_OUTPUT.cesm_calendar</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.cesm_ocean_output.CESM_MOM_OUTPUT.cf_calendar"><code class="docutils literal notranslate"><span class="pre">CESM_MOM_OUTPUT.cf_calendar</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.cesm_ocean_output.CESM_MOM_OUTPUT.depth_coord"><code class="docutils literal notranslate"><span class="pre">CESM_MOM_OUTPUT.depth_coord</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.cesm_ocean_output.CESM_MOM_OUTPUT.description"><code class="docutils literal notranslate"><span class="pre">CESM_MOM_OUTPUT.description</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.cesm_ocean_output.CESM_MOM_OUTPUT.eta_var_name"><code class="docutils literal notranslate"><span class="pre">CESM_MOM_OUTPUT.eta_var_name</span></code></a></li>
@@ -427,7 +426,6 @@ document.write(`
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.cesm_ocean_output.CESM_MOM_OUTPUT.get_mom6_single_variable_data"><code class="docutils literal notranslate"><span class="pre">CESM_MOM_OUTPUT.get_mom6_single_variable_data()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.cesm_ocean_output.CESM_MOM_OUTPUT.link"><code class="docutils literal notranslate"><span class="pre">CESM_MOM_OUTPUT.link</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.cesm_ocean_output.CESM_MOM_OUTPUT.logger"><code class="docutils literal notranslate"><span class="pre">CESM_MOM_OUTPUT.logger</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.cesm_ocean_output.CESM_MOM_OUTPUT.mom6_calendar"><code class="docutils literal notranslate"><span class="pre">CESM_MOM_OUTPUT.mom6_calendar</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.cesm_ocean_output.CESM_MOM_OUTPUT.product_name"><code class="docutils literal notranslate"><span class="pre">CESM_MOM_OUTPUT.product_name</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.cesm_ocean_output.CESM_MOM_OUTPUT.time_units"><code class="docutils literal notranslate"><span class="pre">CESM_MOM_OUTPUT.time_units</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.cesm_ocean_output.CESM_MOM_OUTPUT.time_var_name"><code class="docutils literal notranslate"><span class="pre">CESM_MOM_OUTPUT.time_var_name</span></code></a></li>
@@ -451,8 +449,6 @@ document.write(`
 <li class="toctree-l3"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.cesm_ocean_output.CESM_POP_OUTPUT"><code class="docutils literal notranslate"><span class="pre">CESM_POP_OUTPUT</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.cesm_ocean_output.CESM_POP_OUTPUT.boundary_fill_method"><code class="docutils literal notranslate"><span class="pre">CESM_POP_OUTPUT.boundary_fill_method</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.cesm_ocean_output.CESM_POP_OUTPUT.calendar"><code class="docutils literal notranslate"><span class="pre">CESM_POP_OUTPUT.calendar</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.cesm_ocean_output.CESM_POP_OUTPUT.cesm_calendar"><code class="docutils literal notranslate"><span class="pre">CESM_POP_OUTPUT.cesm_calendar</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.cesm_ocean_output.CESM_POP_OUTPUT.cf_calendar"><code class="docutils literal notranslate"><span class="pre">CESM_POP_OUTPUT.cf_calendar</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.cesm_ocean_output.CESM_POP_OUTPUT.delimiter"><code class="docutils literal notranslate"><span class="pre">CESM_POP_OUTPUT.delimiter</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.cesm_ocean_output.CESM_POP_OUTPUT.depth_coord"><code class="docutils literal notranslate"><span class="pre">CESM_POP_OUTPUT.depth_coord</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.cesm_ocean_output.CESM_POP_OUTPUT.description"><code class="docutils literal notranslate"><span class="pre">CESM_POP_OUTPUT.description</span></code></a></li>
@@ -461,7 +457,6 @@ document.write(`
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.cesm_ocean_output.CESM_POP_OUTPUT.link"><code class="docutils literal notranslate"><span class="pre">CESM_POP_OUTPUT.link</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.cesm_ocean_output.CESM_POP_OUTPUT.logger"><code class="docutils literal notranslate"><span class="pre">CESM_POP_OUTPUT.logger</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.cesm_ocean_output.CESM_POP_OUTPUT.marbl_var_names"><code class="docutils literal notranslate"><span class="pre">CESM_POP_OUTPUT.marbl_var_names</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.cesm_ocean_output.CESM_POP_OUTPUT.mom6_calendar"><code class="docutils literal notranslate"><span class="pre">CESM_POP_OUTPUT.mom6_calendar</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.cesm_ocean_output.CESM_POP_OUTPUT.product_name"><code class="docutils literal notranslate"><span class="pre">CESM_POP_OUTPUT.product_name</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.cesm_ocean_output.CESM_POP_OUTPUT.time_units"><code class="docutils literal notranslate"><span class="pre">CESM_POP_OUTPUT.time_units</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.cesm_ocean_output.CESM_POP_OUTPUT.time_var_name"><code class="docutils literal notranslate"><span class="pre">CESM_POP_OUTPUT.time_var_name</span></code></a></li>
@@ -540,8 +535,6 @@ document.write(`
 <li class="toctree-l3"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.glorys.GLORYS"><code class="docutils literal notranslate"><span class="pre">GLORYS</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.glorys.GLORYS.boundary_fill_method"><code class="docutils literal notranslate"><span class="pre">GLORYS.boundary_fill_method</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.glorys.GLORYS.calendar"><code class="docutils literal notranslate"><span class="pre">GLORYS.calendar</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.glorys.GLORYS.cesm_calendar"><code class="docutils literal notranslate"><span class="pre">GLORYS.cesm_calendar</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.glorys.GLORYS.cf_calendar"><code class="docutils literal notranslate"><span class="pre">GLORYS.cf_calendar</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.glorys.GLORYS.depth_coord"><code class="docutils literal notranslate"><span class="pre">GLORYS.depth_coord</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.glorys.GLORYS.description"><code class="docutils literal notranslate"><span class="pre">GLORYS.description</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.glorys.GLORYS.eta_var_name"><code class="docutils literal notranslate"><span class="pre">GLORYS.eta_var_name</span></code></a></li>
@@ -550,7 +543,6 @@ document.write(`
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.glorys.GLORYS.get_glorys_data_script_for_cli"><code class="docutils literal notranslate"><span class="pre">GLORYS.get_glorys_data_script_for_cli()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.glorys.GLORYS.link"><code class="docutils literal notranslate"><span class="pre">GLORYS.link</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.glorys.GLORYS.logger"><code class="docutils literal notranslate"><span class="pre">GLORYS.logger</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.glorys.GLORYS.mom6_calendar"><code class="docutils literal notranslate"><span class="pre">GLORYS.mom6_calendar</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.glorys.GLORYS.product_name"><code class="docutils literal notranslate"><span class="pre">GLORYS.product_name</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.glorys.GLORYS.time_units"><code class="docutils literal notranslate"><span class="pre">GLORYS.time_units</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.glorys.GLORYS.time_var_name"><code class="docutils literal notranslate"><span class="pre">GLORYS.time_var_name</span></code></a></li>
@@ -674,11 +666,9 @@ document.write(`
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Pairs the calendar name each downstream consumer expects, so a product can’t declare one without the others.</p>
 <p>cf is for xarray’s own time decode/encode while reading raw data (its CF
-convention name, e.g. “standard” for the real-world calendar). cesm is
-the CIME CALENDAR xml value. mom6 is the literal string the regridding
-step must stamp on output forcing files’ time:calendar attribute, since
-MOM6’s get_cal_time() accepts neither cf’s “standard” nor cesm’s
-upper-cased “GREGORIAN”/”NO_LEAP” – only e.g. “gregorian”/”noleap”.</p>
+convention name, e.g. “standard” for the real-world calendar).
+cesm is the CESM xml value.
+mom6 (FMS) is the string the netcdf files must have on time:calendar attribute, since it is not necessarily the same as cf OR cesm.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.base.Calendar.cesm">
 <span class="sig-name descname"><span class="pre">cesm</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.base.Calendar.cesm" title="Link to this definition">#</a></dt>
@@ -688,6 +678,16 @@ upper-cased “GREGORIAN”/”NO_LEAP” – only e.g. “gregorian”/”nolea
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.base.Calendar.cf">
 <span class="sig-name descname"><span class="pre">cf</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.base.Calendar.cf" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.base.Calendar.from_config">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">section</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#CrocoDash.raw_data_access.base.Calendar" title="CrocoDash.raw_data_access.base.Calendar"><span class="pre">Calendar</span></a></span></span><a class="headerlink" href="#CrocoDash.raw_data_access.base.Calendar.from_config" title="Link to this definition">#</a></dt>
+<dd><p>Rebuild a Calendar from the <code class="docutils literal notranslate"><span class="pre">calendar</span></code> object stored in config.json.</p>
+<p>BaseProduct.write_metadata expands the dataclass to a named dict, so
+the round trip is by field name. This lets the extraction driver hand
+writers the whole Calendar rather than one name and a guess about
+which of its roles that name was meant for.</p>
+</dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.base.Calendar.mom6">
@@ -726,7 +726,7 @@ upper-cased “GREGORIAN”/”NO_LEAP” – only e.g. “gregorian”/”nolea
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.base.ForcingProduct.required_metadata">
-<span class="sig-name descname"><span class="pre">required_metadata</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['product_name',</span> <span class="pre">'description',</span> <span class="pre">'link',</span> <span class="pre">'time_var_name',</span> <span class="pre">'u_x_coord',</span> <span class="pre">'u_y_coord',</span> <span class="pre">'v_x_coord',</span> <span class="pre">'v_y_coord',</span> <span class="pre">'tracer_x_coord',</span> <span class="pre">'tracer_y_coord',</span> <span class="pre">'depth_coord',</span> <span class="pre">'u_var_name',</span> <span class="pre">'v_var_name',</span> <span class="pre">'eta_var_name',</span> <span class="pre">'tracer_var_names',</span> <span class="pre">'boundary_fill_method',</span> <span class="pre">'time_units',</span> <span class="pre">'cf_calendar',</span> <span class="pre">'cesm_calendar',</span> <span class="pre">'mom6_calendar']</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.base.ForcingProduct.required_metadata" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">required_metadata</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['product_name',</span> <span class="pre">'description',</span> <span class="pre">'link',</span> <span class="pre">'time_var_name',</span> <span class="pre">'u_x_coord',</span> <span class="pre">'u_y_coord',</span> <span class="pre">'v_x_coord',</span> <span class="pre">'v_y_coord',</span> <span class="pre">'tracer_x_coord',</span> <span class="pre">'tracer_y_coord',</span> <span class="pre">'depth_coord',</span> <span class="pre">'u_var_name',</span> <span class="pre">'v_var_name',</span> <span class="pre">'eta_var_name',</span> <span class="pre">'tracer_var_names',</span> <span class="pre">'boundary_fill_method',</span> <span class="pre">'time_units',</span> <span class="pre">'calendar']</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.base.ForcingProduct.required_metadata" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
@@ -891,6 +891,7 @@ upper-cased “GREGORIAN”/”NO_LEAP” – only e.g. “gregorian”/”nolea
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.Calendar"><code class="docutils literal notranslate"><span class="pre">Calendar</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.Calendar.cesm"><code class="docutils literal notranslate"><span class="pre">Calendar.cesm</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.Calendar.cf"><code class="docutils literal notranslate"><span class="pre">Calendar.cf</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.Calendar.from_config"><code class="docutils literal notranslate"><span class="pre">Calendar.from_config()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.Calendar.mom6"><code class="docutils literal notranslate"><span class="pre">Calendar.mom6</span></code></a></li>
 </ul>
 </li>
