@@ -20,6 +20,7 @@ import time
 from pathlib import Path
 
 from CrocoDash import case_state
+from CrocoDash.raw_data_access.base import Calendar
 from CrocoDash.extract_forcings import (
     bgc,
     runoff as rof,
@@ -216,7 +217,7 @@ def run_workflow(
                     "chl_processed_filepath"
                 ],
                 output_filepath=config["chl"]["outputs"]["CHL_FILE"],
-                calendar=config["chl"]["inputs"].get("cf_calendar") or "NOLEAP",
+                calendar=Calendar.from_config(config["chl"]["inputs"]),
             )
             timings["chl"] = time.perf_counter() - _t
 
@@ -246,8 +247,7 @@ def run_workflow(
                 mapping_file=config["runoff"]["outputs"]["ROF2OCN_LIQ_RMAPNAME"],
                 river_nutrients_nnsm_filepath=output_path
                 / config["bgcrivernutrients"]["outputs"]["RIV_FLUX_FILE"],
-                calendar=config["bgcrivernutrients"]["inputs"].get("cf_calendar")
-                or "noleap",
+                calendar=Calendar.from_config(config["bgcrivernutrients"]["inputs"]),
             )
             timings["bgcrivernutrients"] = time.perf_counter() - _t
 

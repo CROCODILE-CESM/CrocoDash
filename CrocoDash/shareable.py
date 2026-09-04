@@ -644,7 +644,8 @@ class ForkBundle:
         if self.differences.xml_files_missing_in_new:
             self.plan["xml_files"] = ask_yes_no(
                 f"The following non-default XML files are missing in the new case:\n"
-                f"{self.differences.xml_files_missing_in_new}\nCopy them over?"
+                f"{self.differences.xml_files_missing_in_new}\nCopy them over?",
+                default=False,
             )
 
         if self.differences.user_nl_missing_params and any(
@@ -652,19 +653,22 @@ class ForkBundle:
         ):
             self.plan["user_nl"] = ask_yes_no(
                 f"Non-default user_nl parameters detected:\n"
-                f"{self.differences.user_nl_missing_params}\nCopy them over?"
+                f"{self.differences.user_nl_missing_params}\nCopy them over?",
+                default=False,
             )
 
         if self.differences.source_mods_missing_files:
             self.plan["source_mods"] = ask_yes_no(
                 f"The following source mods files exist in the old case:\n"
-                f"{self.differences.source_mods_missing_files}\nCopy them over?"
+                f"{self.differences.source_mods_missing_files}\nCopy them over?",
+                default=False,
             )
 
         if self.differences.xmlchanges_missing:
             self.plan["xmlchanges"] = ask_yes_no(
                 f"Non-default xmlchange parameters detected:\n"
-                f"{self.differences.xmlchanges_missing}\nApply them?"
+                f"{self.differences.xmlchanges_missing}\nApply them?",
+                default=False,
             )
 
     def apply_copy_plan(self):

@@ -1,4 +1,5 @@
 from CrocoDash.forcing_configurations.base import *
+import dataclasses
 from pathlib import Path
 from datetime import datetime
 from ProConPy.config_var import ConfigVar, cvars
@@ -271,7 +272,8 @@ class BGCRiverNutrientsConfigurator(BaseConfigurator):
         InputValueParam("case_session_id", comment="Case session identifier"),
         InputValueParam("case_grid_name", comment="Case grid name"),
         InputValueParam(
-            "cf_calendar", comment="CF calendar for the river nutrients output file"
+            "calendar",
+            comment="Calendar names (cf/cesm/mom6) for the river nutrients output",
         ),
     ]
     output_params = [
@@ -294,15 +296,17 @@ class BGCRiverNutrientsConfigurator(BaseConfigurator):
         case_session_id,
         case_grid_name,
         case_forcing_product=None,
-        cf_calendar=None,
+        calendar=None,
     ):
-        if case_forcing_product is not None and cf_calendar is None:
-            cf_calendar = case_forcing_product.cf_calendar
+        # All three names travel together: the writer needs cftime's spelling
+        # for its date arithmetic and MOM6's for the attribute it writes.
+        if calendar is None and case_forcing_product is not None:
+            calendar = case_forcing_product.calendar
         super().__init__(
             global_river_nutrients_filepath=global_river_nutrients_filepath,
             case_session_id=case_session_id,
             case_grid_name=case_grid_name,
-            cf_calendar=cf_calendar,
+            calendar=dataclasses.asdict(calendar) if calendar is not None else None,
         )
 
     def validate_args(self, **kwargs):
@@ -486,7 +490,8 @@ class ChlConfigurator(BaseConfigurator):
         InputValueParam("case_grid_name", comment="Case grid name"),
         InputValueParam("case_session_id", comment="Case session identifier"),
         InputValueParam(
-            "cf_calendar", comment="CF calendar for the chlorophyll output file"
+            "calendar",
+            comment="Calendar names (cf/cesm/mom6) for the chlorophyll output",
         ),
     ]
     output_params = [
@@ -517,16 +522,16 @@ class ChlConfigurator(BaseConfigurator):
         case_grid_name,
         case_session_id,
         case_forcing_product=None,
-        cf_calendar=None,
+        calendar=None,
     ):
-        if case_forcing_product is not None and cf_calendar is None:
-            cf_calendar = case_forcing_product.cf_calendar
+        if calendar is None and case_forcing_product is not None:
+            calendar = case_forcing_product.calendar
 
         super().__init__(
             chl_processed_filepath=chl_processed_filepath,
             case_grid_name=case_grid_name,
             case_session_id=case_session_id,
-            cf_calendar=cf_calendar,
+            calendar=dataclasses.asdict(calendar) if calendar is not None else None,
         )
 
     def validate_args(self, **kwargs):
@@ -720,6 +725,8 @@ class ConditionsConfigurator(BaseConfigurator):
         )
         start_dt = datetime.strptime(start_date, self._DATE_FORMAT)
         end_dt = datetime.strptime(end_date, self._DATE_FORMAT)
+
+        # Setting both get and regrid to the entire modeling period. Power users can modify this as they need!
         step = (end_dt - start_dt).days + 1
         self.set_output_param("get_step_days", step)
         self.set_output_param("regrid_step_days", step)
