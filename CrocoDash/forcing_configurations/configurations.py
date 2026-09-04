@@ -5,7 +5,7 @@ from datetime import datetime
 from ProConPy.config_var import ConfigVar, cvars
 from mom6_forge import mapping
 from CrocoDash.raw_data_access.registry import ProductRegistry
-from CrocoDash.raw_data_access.base import Calendar, ForcingProduct
+from CrocoDash.raw_data_access.base import Calendar, MOM6ForcingProduct
 
 
 def _calendar_as_dict(calendar):
@@ -703,11 +703,17 @@ class ConditionsConfigurator(BaseConfigurator):
 
         ProductRegistry.load()
         product_name = kwargs["product_name"]
-        if not (
-            ProductRegistry.product_exists(product_name)
-            and ProductRegistry.product_is_of_type(product_name, ForcingProduct)
-        ):
-            raise ValueError("Product / Data Path is not supported quite yet")
+        if not ProductRegistry.product_exists(product_name):
+            raise ValueError(
+                f"Unknown forcing product '{product_name}'. Known products: "
+                f"{sorted(ProductRegistry.products)}."
+            )
+        if not ProductRegistry.product_is_of_type(product_name, MOM6ForcingProduct):
+            raise ValueError(
+                f"Product '{product_name}' ({ProductRegistry.get_product(product_name).__name__}) "
+                "is not a MOM6ForcingProduct, so it can't be used as the conditions configurator's product_name "
+                "(MOM6's initial/boundary condition forcing). If this is a CICE forcing product, pass it as cice_product_name instead."
+            )
 
     @staticmethod
     def _segment_index(boundaries, boundary):
