@@ -1,5 +1,6 @@
 from CrocoDash.forcing.base import *
 from ProConPy.config_var import cvars
+from CrocoDash.raw_data_access.base import NOLEAP
 import pytest
 from types import SimpleNamespace
 import pandas as pd
@@ -89,6 +90,10 @@ def test_all_configurators_smoke(fake_param_case, fake_cime, fake_forcing_produc
                 ctor_args[a] = fake_cime
             elif "forcing_product" in a:
                 ctor_args[a] = fake_forcing_product
+            elif a == "calendar":
+                # Typed arg: the configurators expand it with asdict(), so the
+                # generic dummy_str fallback below would not do.
+                ctor_args[a] = NOLEAP
             else:
                 ctor_args[a] = dummy_str
         instance = config_class(**ctor_args)

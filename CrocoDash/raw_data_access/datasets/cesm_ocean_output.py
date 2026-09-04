@@ -228,7 +228,9 @@ class CESM_MOM_OUTPUT(MOM6ForcingProduct):
         # Unlike CESM_POP_OUTPUT.get_cesm_single_variable_data, no month-shift is
         # applied here - that shift is specific to the CESM-POP tseries
         # convention, not native MOM6 output.
-        ds = convert_cftime_to_numeric(ds, time_var_name=time_var_name)
+        ds = convert_cftime_to_numeric(
+            ds, time_var_name=time_var_name, calendar=CESM_MOM_OUTPUT.calendar
+        )
 
         # convert_cftime_to_numeric re-encodes a cftime coordinate as numeric
         # and stamps its units/calendar onto the coordinate attrs; match dates
@@ -538,7 +540,9 @@ def parse_dataset(
     return variable_info
 
 
-def convert_cftime_to_numeric(ds, time_var_name="time", apply_month_shift=False):
+def convert_cftime_to_numeric(
+    ds, time_var_name="time", apply_month_shift=False, calendar: Calendar = NOLEAP
+):
     """
     Converts a cftime time coordinate to numeric (days since 1850-01-01, noleap)
     for safe NetCDF serialization; a no-op if the coordinate isn't cftime.
@@ -551,14 +555,17 @@ def convert_cftime_to_numeric(ds, time_var_name="time", apply_month_shift=False)
     if apply_month_shift:
         time_values = [subtract_month(t) for t in time_values]
     units = "days since 1850-01-01 00:00:00"
-    calendar = "noleap"
-    numeric_time = cftime.date2num(time_values, units=units, calendar=calendar)
+    # This file is an intermediate read back by xarray/cftime (see the
+    # date2num against these same attrs in get_mom6_output_data), not by
+    # MOM6, so both roles here want the cf spelling.
+    cal_name = calendar.cf
+    numeric_time = cftime.date2num(time_values, units=units, calendar=cal_name)
     ds = ds.assign_coords(
         **{
             time_var_name: (
                 time_var_name,
                 numeric_time,
-                {"units": units, "calendar": calendar},
+                {"units": units, "calendar": cal_name},
             )
         }
     )
