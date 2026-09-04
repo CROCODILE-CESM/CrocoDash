@@ -19,6 +19,7 @@ How it was solved:
 """
 
 from CrocoDash.raw_data_access.registry import ProductRegistry
+import dataclasses
 from dataclasses import dataclass
 import inspect
 import json
@@ -32,16 +33,27 @@ class Calendar:
     """Pairs the calendar name each downstream consumer expects, so a product can't declare one without the others.
 
     cf is for xarray's own time decode/encode while reading raw data (its CF
-    convention name, e.g. "standard" for the real-world calendar). cesm is
-    the CIME CALENDAR xml value. mom6 is the literal string the regridding
-    step must stamp on output forcing files' time:calendar attribute, since
-    MOM6's get_cal_time() accepts neither cf's "standard" nor cesm's
-    upper-cased "GREGORIAN"/"NO_LEAP" -- only e.g. "gregorian"/"noleap".
+    convention name, e.g. "standard" for the real-world calendar).
+    cesm is the CESM xml value.
+    mom6 (FMS) is the string the netcdf files must have on time:calendar attribute, since it is not necessarily the same as cf OR cesm.
     """
 
     cf: str
     cesm: str
     mom6: str
+
+    @classmethod
+    def from_config(cls, section: dict) -> "Calendar":
+        """Rebuild a Calendar from the ``calendar`` object in a config.json section.
+
+        Reads the copy the chl / river-nutrients configurators store in their
+        own ``inputs`` block, so the extraction driver can hand those writers
+        the whole Calendar rather than one name and a guess about which of its
+        roles that name was meant for. The product metadata block is a separate
+        copy, written by BaseProduct.write_metadata and read directly by the
+        OBC step; it does not come through here.
+        """
+        return cls(**section["calendar"])
 
 
 GREGORIAN = Calendar(cf="standard", cesm="GREGORIAN", mom6="gregorian")
@@ -153,21 +165,31 @@ class BaseProduct:
     def write_metadata(cls, file_path: str = None) -> dict:
         """Return a dict of the class metadata fields and their values, writes a file if a filepath is specified."""
 
-        def is_json_compatible(value):
+        unset = object()
+
+        def to_json_value(value):
+            """Return a JSON-serializable form of `value`, else `unset`.
+
+            Dataclasses (e.g. Calendar) are expanded to a named dict so they
+            survive into the metadata instead of being silently dropped. The
+            sentinel is not None, because None is itself serializable and a
+            class attribute set to None should be kept.
+            """
+            if dataclasses.is_dataclass(value) and not isinstance(value, type):
+                value = dataclasses.asdict(value)
             try:
                 json.dumps(value)
-                return True
+                return value
             except (TypeError, OverflowError):
-                return False
+                return unset
 
         metadata = {}
         for name, value in cls.__dict__.items():
-            if (
-                not name.startswith("_")
-                and not isinstance(value, (staticmethod, classmethod))
-                and is_json_compatible(value)
-            ):
-                metadata[name] = value
+            if name.startswith("_") or isinstance(value, (staticmethod, classmethod)):
+                continue
+            json_value = to_json_value(value)
+            if json_value is not unset:
+                metadata[name] = json_value
         if file_path is not None:
             with open(file_path, "w") as f:
                 json.dump(metadata, f, indent=2)
@@ -199,7 +221,7 @@ class ForcingProduct(DatedBaseProduct):
     product. Holds the metadata every such product needs regardless of
     target model: a lat/lon/variables/dates download contract, sane toy-call
     defaults for that contract's lat/lon args, and its own time-axis naming
-    (``time_var_name``/``time_units``/``cf_calendar``/``cesm_calendar``/``mom6_calendar``) --
+    (``time_var_name``/``time_units``/``calendar``) --
     every dated forcing product has *some* time coordinate to name, even one
     (like a static restart snapshot) that leaves these unused. Velocity/
     tracer grid-point metadata is NOT here -- see
@@ -218,20 +240,29 @@ class ForcingProduct(DatedBaseProduct):
     required_metadata = DatedBaseProduct.required_metadata + [
         "time_var_name",
         "time_units",
-        "cf_calendar",
-        "cesm_calendar",
-        "mom6_calendar",
+        "calendar",
     ]
 
     def __init_subclass__(cls, **kwargs):
-        # Derive cf_calendar/cesm_calendar/mom6_calendar from a single `calendar` attr, if declared
-        calendar = getattr(cls, "calendar", None)
-        if calendar is not None:
-            cls.cf_calendar = calendar.cf
-            cls.cesm_calendar = calendar.cesm
-            cls.mom6_calendar = calendar.mom6
-
+        # Let BaseProduct classify the subclass first: the abstract
+        # intermediates in this hierarchy (VelocityTracerForcingProduct,
+        # MOM6ForcingProduct) have no product_name and no reason to declare a
+        # Calendar, so only concrete products are held to the check below.
         super().__init_subclass__(**kwargs)
+        if cls._is_abstract:
+            return
+
+        # One Calendar is the whole calendar contract: the three names it
+        # carries cannot disagree. write_metadata expands it into a named
+        # dict, so it survives into the product metadata block of config.json
+        # rather than being dropped by that method's JSON filter; the OBC
+        # step reads calendar.mom6 straight out of it.
+        calendar = getattr(cls, "calendar", None)
+        assert isinstance(calendar, Calendar), (
+            f"{cls.__name__} must declare `calendar` as a Calendar instance "
+            f"(got {type(calendar).__name__}); use a module-level constant such "
+            "as GREGORIAN or NOLEAP rather than bare calendar-name strings."
+        )
 
     @classmethod
     def validate_method(cls, method_name, **kwargs):
@@ -301,14 +332,11 @@ class MOM6ForcingProduct(VelocityTracerForcingProduct):
         base = super().write_metadata()
 
         # 2. Merge marbl_var_names → tracer_var_names
-        merged = dict(base["tracer_var_names"])  # copy existing
+
         if include_marbl_tracers and hasattr(cls, "marbl_var_names"):
+            merged = dict(base["tracer_var_names"])  # copy existing
             merged.update(cls.marbl_var_names)
             base["tracer_var_names"] = merged
-            # Keep the MARBL subset addressable on its own. Once merged above,
-            # the BGC tracers are indistinguishable from temp/salt, and the OBC
-            # step needs to know which ones to split into per-tracer files.
-            base["marbl_var_names"] = dict(cls.marbl_var_names)
         elif include_marbl_tracers and not hasattr(cls, "marbl_var_names"):
             raise ValueError(
                 "This product does not have marbl tracer var names and cannot be written out as such."

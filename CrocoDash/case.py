@@ -536,6 +536,11 @@ class Case:
         self.fcr.run_configurators(config_path)
 
         xmlchange(
+            "CALENDAR",
+            self.forcing_product.calendar.cesm,
+            is_non_local=self.cc._is_non_local(),
+        )
+        xmlchange(
             "RUN_STARTDATE",
             str(self.date_range[0])[:10],
             is_non_local=self.cc._is_non_local(),

@@ -5,6 +5,8 @@ import cftime
 import numpy as np
 from netCDF4 import default_fillvals
 
+from CrocoDash.raw_data_access.base import Calendar, NOLEAP
+
 
 def process_bgc_ic(file_path, output_path):
     """
@@ -80,7 +82,7 @@ def process_river_nutrients(
     ocn_grid,
     mapping_file,
     river_nutrients_nnsm_filepath,
-    calendar="noleap",
+    calendar: Calendar = NOLEAP,
 ):
 
     # Open Dataset & Create Regridder
@@ -134,7 +136,8 @@ def process_river_nutrients(
     # Write out
     print("Writing out river nutrients...")
     # new time value as cftime - Required
-    new_time_val = cftime.datetime(1900, 1, 1, 0, 0, 0, calendar=calendar)
+    # cftime's own calendar vocabulary, not FMS's -- see Calendar.
+    new_time_val = cftime.datetime(1900, 1, 1, 0, 0, 0, calendar=calendar.cf)
 
     # select only variables that have 'time' as a dimension
     vars_with_time = [
@@ -176,7 +179,7 @@ def process_river_nutrients(
     for var in vars:
         river_nutrients_remapped_time_added[var].attrs["units"] = "mmol/cm^2/s"
     time_units = "days since 0001-01-01 00:00:00"
-    time_calendar = calendar
+    time_calendar = calendar.cf
     time_num = cftime.date2num(
         river_nutrients_remapped_time_added["time"].values,
         units=time_units,
@@ -201,7 +204,9 @@ def process_river_nutrients(
     river_nutrients_remapped_cleaned["time"].attrs.update(
         {
             "units": time_units,
-            "calendar": calendar,
+            # Written to disk and read back by MOM6/FMS, so this is the one
+            # place in this function that needs the mom6 spelling.
+            "calendar": calendar.mom6,
             "long_name": "time",
         }
     )
