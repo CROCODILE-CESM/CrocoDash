@@ -50,7 +50,8 @@ def _dump(args):
 
 def _process(args):
     from CrocoDash import case_state
-    from CrocoDash.extract_forcings.driver import run_workflow, resolve_components
+    from CrocoDash.forcing.driver import run_workflow, resolve_components
+    from CrocoDash.forcing.base import ForcingConfigRegistry
 
     if args.config:
         config_path = Path(args.config)
@@ -77,31 +78,14 @@ def _process(args):
 
     args = resolve_components(args, config)
 
-    if not any(
-        [
-            args.ic,
-            args.bc,
-            args.bgcic,
-            args.bgcironforcing,
-            args.tides,
-            args.chl,
-            args.runoff,
-            args.bgcrivernutrients,
-        ]
-    ):
+    flag_names = ForcingConfigRegistry.all_process_flags()
+    if not any(getattr(args, name) for name in flag_names):
         args.subparser.print_help()
         return
 
     run_workflow(
         config_path=config_path,
-        ic=args.ic,
-        bc=args.bc,
-        bgcic=args.bgcic,
-        bgcironforcing=args.bgcironforcing,
-        tides=args.tides,
-        chl_=args.chl,
-        runoff=args.runoff,
-        bgcrivernutrients=args.bgcrivernutrients,
+        **{name: getattr(args, name) for name in flag_names},
         preview=config["conditions"]["outputs"].get("preview", False),
     )
 
@@ -294,28 +278,15 @@ def main():
     ef_top = ef_parser.add_argument_group("Top-level actions")
     ef_top.add_argument("--all", action="store_true", help="Run all components")
     ef_components = ef_parser.add_argument_group("Forcing components")
-    ef_components.add_argument(
-        "--ic", action="store_true", help="Run initial conditions"
-    )
-    ef_components.add_argument(
-        "--bc", action="store_true", help="Run boundary conditions"
-    )
-    ef_components.add_argument(
-        "--bgcic", action="store_true", help="Run BGC initial conditions"
-    )
-    ef_components.add_argument(
-        "--bgcironforcing", action="store_true", help="Run BGC iron forcing"
-    )
-    ef_components.add_argument(
-        "--bgcrivernutrients", action="store_true", help="Run BGC river nutrients"
-    )
-    ef_components.add_argument(
-        "--runoff", action="store_true", help="Run runoff mapping"
-    )
-    ef_components.add_argument("--tides", action="store_true", help="Run tidal forcing")
-    ef_components.add_argument(
-        "--chl", action="store_true", help="Run chlorophyll processing"
-    )
+    # One flag per process-component any registered forcing type declares --
+    # adding a new forcing type's process_components entry surfaces its flag
+    # here automatically, no hand-added add_argument() call needed.
+    from CrocoDash.forcing.base import ForcingConfigRegistry
+
+    for flag_name in sorted(ForcingConfigRegistry.all_process_flags()):
+        ef_components.add_argument(
+            f"--{flag_name}", action="store_true", help=f"Run {flag_name}"
+        )
     ef_top.add_argument(
         "--skip",
         nargs="*",

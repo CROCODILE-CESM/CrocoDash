@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import List, Dict
 from abc import ABC, abstractmethod
+from functools import cached_property
 from visualCaseGen.custom_widget_types.case_tools import (
     xmlchange,
     append_user_nl,
@@ -11,12 +12,98 @@ from typing import Optional, Any
 import copy
 import subprocess
 import json
+import dataclasses
+from CrocoDash.raw_data_access.base import Calendar
 
 logger = setup_logger(__name__)
 
 
+def calendar_as_dict(calendar):
+    """Store a Calendar in config.json as a plain dict, leaving anything else be.
+
+    A configurator is normally constructed from a live Calendar, but also from
+    the serialized dict (BaseConfigurator.deserialize) and from empty
+    placeholders (BaseConfigurator.inspect), so only the dataclass is
+    converted here.
+    """
+    if isinstance(calendar, Calendar):
+        return dataclasses.asdict(calendar)
+    return calendar
+
+
 def is_serializable(v):
     return isinstance(v, (str, int, float, bool, type(None), Path, list, dict))
+
+
+class UndeclaredParamError(KeyError):
+    """Code referenced an input/output param name that isn't declared on the
+    class (a schema bug, e.g. a stale name after a rename). Kept as a
+    KeyError subclass so existing `except KeyError` call sites are
+    unaffected, but a distinct type so a param-consistency check can catch
+    exactly this failure and not any other incidental KeyError raised by a
+    configurator's own business logic."""
+
+
+def register(cls):
+    """Decorator: register a BaseConfigurator subclass with ForcingConfigRegistry.
+
+    Every module under CrocoDash.forcing that defines a configurator class
+    applies this at class-definition time; CrocoDash.forcing/__init__.py's
+    auto-discovery ensures those modules (and hence this decorator) run for
+    every file in the package, so adding a new forcing type is just adding a
+    new file here -- nothing else needs to import it by name.
+    """
+    ForcingConfigRegistry.register(cls)
+    return cls
+
+
+class WorkflowContext:
+    """Workflow-level paths shared by every configurator's process step.
+
+    Built once by driver.run_workflow() from config.json + case_state, and
+    passed into every ``process_*(ctx)`` call. These are paths no single
+    configurator owns (they're not part of any configurator's own inputs/
+    outputs) but that most process steps need -- grid/topo/vgrid files and
+    the raw/regridded/output directories for this case.
+    """
+
+    def __init__(
+        self,
+        inputdir: Path,
+        supergrid_path: Path,
+        vgrid_path: Path,
+        topo_path: Path,
+        raw_data_dir: Path,
+        regridded_data_dir: Path,
+        output_path: Path,
+        config: dict,
+        preview: bool = False,
+    ):
+        self.inputdir = Path(inputdir)
+        self.supergrid_path = Path(supergrid_path)
+        self.vgrid_path = Path(vgrid_path)
+        self.topo_path = Path(topo_path)
+        self.raw_data_dir = Path(raw_data_dir)
+        self.regridded_data_dir = Path(regridded_data_dir)
+        self.output_path = Path(output_path)
+        self.config = config
+        self.preview = preview
+
+    @cached_property
+    def grid(self):
+        from CrocoDash.grid import Grid
+
+        return Grid.from_supergrid(self.supergrid_path)
+
+    @cached_property
+    def ocn_topo(self):
+        import xarray as xr
+        from CrocoDash.topo import Topo
+
+        topo_ds = xr.open_dataset(self.topo_path, decode_times=False)
+        return Topo.from_topo_file(
+            self.grid, self.topo_path, min_depth=topo_ds.attrs["min_depth"], git=False
+        )
 
 
 class ForcingConfigRegistry:
@@ -32,6 +119,7 @@ class ForcingConfigRegistry:
 
     def __init__(self, compset, inputs: dict, case=None):
         self.compset = compset
+        self.case = case
         self.active_configurators = {}
         if case is not None:
             self.case_info = {
@@ -164,6 +252,72 @@ class ForcingConfigRegistry:
     def is_active(self, name: str) -> bool:
         """Return True if a configurator with this name is active."""
         return name.lower() in self.active_configurators
+
+    @classmethod
+    def all_process_flags(cls):
+        """Every process-component flag name any registered configurator can
+        answer to, regardless of whether it's active for a given case --
+        used to build cli.py's argparse flags generically."""
+        flags = set()
+        for configurator_cls in cls.registered_types:
+            flags.update(configurator_cls.process_components.keys())
+        return flags
+
+    @classmethod
+    def available_process_flags(cls, config: dict):
+        """Every process-component flag name available given which forcing
+        types are present in a config.json dict -- looked up from each
+        entry's declared class only (no full deserialize), so this works
+        even when an entry's inputs/outputs aren't fully valid yet. Used by
+        resolve_components/cli.py to answer "does this flag exist" without
+        needing working configurator instances the way actual dispatch does."""
+        flags = set()
+        for key, entry in config.items():
+            if key == "caseroot":
+                continue
+            configurator_cls = cls.get_configurator_from_name(entry["name"])
+            flags.update(configurator_cls.process_components.keys())
+        return flags
+
+    @classmethod
+    def resolve_process_targets(cls, config: dict):
+        """Deserialize every configurator present in a config.json dict and
+        return {flag_name: (configurator_instance, method_name)} covering
+        every process component any of them declare. Used by driver.py to
+        dispatch generically instead of a hand-maintained if-ladder."""
+        targets = {}
+        for key, entry in config.items():
+            if key == "caseroot":
+                continue
+            configurator = cls.get_configurator(entry)
+            for flag_name, method_name in configurator.process_components.items():
+                targets[flag_name] = (configurator, method_name)
+        return targets
+
+    @classmethod
+    def get_configurator_output(
+        cls, config: dict, configurator_name: str, output_name: str
+    ):
+        """Look up another configurator's serialized output value from
+        config.json -- for a process_*() method that depends on a sibling's
+        output but (unlike configure()) can't rely on a live registry/Case,
+        since process() may run in a different process. Raises a clear,
+        named error instead of a bare KeyError several dict levels deep if
+        the dependency isn't there (e.g. the sibling hasn't run yet, or
+        never configured this case)."""
+        key = configurator_name.lower()
+        if key not in config:
+            raise KeyError(
+                f"Configurator '{configurator_name}' not found in config.json -- "
+                f"is it active/configured for this case?"
+            )
+        outputs = config[key].get("outputs", {})
+        if output_name not in outputs:
+            raise KeyError(
+                f"Configurator '{configurator_name}' has no output '{output_name}' "
+                f"in config.json (available: {sorted(outputs)})"
+            )
+        return outputs[output_name]
 
 
 class Param(ABC):
@@ -332,7 +486,7 @@ class ConfigOutputParam(OutputParam):
 
     Exists purely so `set_output_param()` + the generic `serialize()` pick it up
     under a configurator's `outputs`, for values consumed only via config.json
-    (e.g. by extract_forcings).
+    (e.g. by a sibling configurator's `process_*` method).
     """
 
     def apply(self):
@@ -357,9 +511,29 @@ class BaseConfigurator(ABC):
     input_params: List[Param]
     output_params: List[OutputParam]
 
+    # {cli_flag_name: method_name} -- what this configurator's process step(s)
+    # answer to. A configurator with no process step (e.g. one that only sets
+    # namelist defaults) leaves this empty. A configurator whose forcing type
+    # is one-to-many (e.g. "conditions" produces both ic and bc) declares more
+    # than one entry, each naming its own method.
+    process_components: Dict[str, str] = {}
+
+    # {configurator_name: [output_names]} -- other configurators' outputs
+    # this class's process_*() methods read via
+    # ForcingConfigRegistry.get_configurator_output() (process() may run in a
+    # different process than configure(), so it can't rely on a live
+    # registry -- it goes through the serialized config.json instead).
+    # Declaring the dependency here (rather than reaching into
+    # ctx.config[...] with no record of the coupling) lets driver.py derive
+    # processing order automatically, and lets a test statically confirm the
+    # named output actually exists on the target class -- instead of a
+    # silent, undeclared coupling that only breaks at process-time.
+    depends_on_outputs: Dict[str, List[str]] = {}
+
     # Injected by ForcingConfigRegistry.__init__ after all active configurators
-    # are instantiated; lets a configurator look up a sibling's pure helper
-    # methods (e.g. ConditionsConfigurator reading TidesConfigurator.tidal_data_str()).
+    # are instantiated; lets a configurator check whether a sibling is active
+    # (e.g. ConditionsConfigurator gating its own tides/bgc string-building on
+    # self.registry.is_active(...)) without reaching into the sibling itself.
     registry: Optional["ForcingConfigRegistry"] = None
 
     def __eq__(self, other):
@@ -433,10 +607,25 @@ class BaseConfigurator(ABC):
         if extra:
             raise ValueError(f"Unexpected inputs: {extra}")
 
+    @property
+    def is_non_local(self) -> bool:
+        """Whether this configurator's case is non-local (CIME's `--non-local`).
+
+        Sourced from the live Case via the registry rather than a declared
+        input param, so an XMLConfigParam output doesn't require its
+        configurator to accept/thread a `case_is_non_local` ctor arg just to
+        reach `apply()` -- it's always False when there's no live Case
+        (e.g. direct construction in tests, or deserialize()).
+        """
+        case = getattr(self.registry, "case", None)
+        return bool(getattr(case, "is_non_local", False))
+
     @abstractmethod
     def configure(self):
         """Bind input values to parameters and files."""
         for p in self.output_params:
+            if isinstance(p, XMLConfigParam):
+                p.is_non_local = self.is_non_local
             p.apply()
         pass
 
@@ -487,7 +676,7 @@ class BaseConfigurator(ABC):
         try:
             return next(p for p in self.input_params if p.name == name)
         except StopIteration:
-            raise KeyError(f"Input param '{name}' not found")
+            raise UndeclaredParamError(f"Input param '{name}' not found")
 
     def get_output_param(self, name: str) -> OutputParam:
         return self.get_output_param_object(name).value
@@ -496,15 +685,9 @@ class BaseConfigurator(ABC):
         try:
             return next(p for p in self.output_params if p.name == name)
         except StopIteration:
-            raise KeyError(f"Output param '{name}' not found")
+            raise UndeclaredParamError(f"Output param '{name}' not found")
 
-    def set_output_param(self, name: str, value, is_non_local=None):
-        if is_non_local is not None:
-            param = self.get_output_param_object(name)
-            assert isinstance(
-                param, XMLConfigParam
-            ), f"Expected XMLConfigParam, got {type(param)}"
-            param.is_non_local = is_non_local
+    def set_output_param(self, name: str, value):
         self.get_output_param_object(name).set_item(value)
 
     def set_input_param(self, name: str, value):

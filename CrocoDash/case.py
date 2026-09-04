@@ -9,7 +9,7 @@ import regional_mom6 as rmom6
 from CrocoDash.grid import Grid
 from CrocoDash.topo import Topo
 from CrocoDash.vgrid import VGrid
-from CrocoDash.forcing_configurations.base import ForcingConfigRegistry
+from CrocoDash.forcing.base import ForcingConfigRegistry
 from CrocoDash.raw_data_access.registry import ProductRegistry
 from CrocoDash.raw_data_access.base import ForcingProduct
 from ProConPy.config_var import ConfigVar, cvars
@@ -23,7 +23,7 @@ import xesmf as xe
 import xarray as xr
 import numpy as np
 import cftime
-from CrocoDash.extract_forcings.driver import run_workflow
+from CrocoDash.forcing.driver import run_workflow
 
 from CrocoDash import case_state
 
@@ -474,7 +474,7 @@ class Case:
         # Validate date_range's raw shape and set case-level state. Everything else
         # (boundaries/product_name validity, IC/OBC user_nl params, config.json
         # "conditions" entry) is handled by ConditionsConfigurator's validate_args()/
-        # configure() (see forcing_configurations/configurations.py).
+        # configure() (see forcing/mom6.py).
         if not (
             isinstance(date_range, list)
             and all(isinstance(date, str) for date in date_range)
@@ -557,11 +557,9 @@ class Case:
         )
         self._configure_forcings_called = True
 
-    def process_forcings(
-        self, process_initial_condition=True, process_velocity_tracers=True, **kwargs
-    ):
+    def process_forcings(self, **kwargs):
         """
-        Process boundary conditions, initial conditions, and other forcings for a MOM6 case. It's a wrapper around extract_forcings/case_setup/driver.py
+        Process boundary conditions, initial conditions, and other forcings for a MOM6 case. It's a wrapper around forcing/driver.py
 
         This method configures a regional MOM6 case's ocean state boundaries and initial conditions
         using previously downloaded data setup in configure_forcings. The method expects `configure_forcings()` to be
@@ -569,13 +567,14 @@ class Case:
 
         Parameters
         ----------
-        process_initial_condition : bool, optional
-            Whether to process the initial condition file. Default is True.
-        process_velocity_tracers : bool, optional
-            Whether to process velocity and tracer boundary conditions. Default is True.
-            This will be overridden and set to False if the large data workflow in configure_forcings is enabled.
         kwargs : bool, optional
-            Whether to process the other forcings, of the form process_{configurator.name} = False.
+            Whether to run each process component, of the form
+            `process_{flag_name}=False` (e.g. `process_ic=False`,
+            `process_bgcic=False`). Defaults to True for every component
+            that's actually active for this case's compset -- components
+            that aren't active are silently skipped regardless. Valid
+            `{flag_name}`s come from every active configurator's
+            `process_components` (see `CrocoDash.forcing.base`).
 
         Raises
         ------
@@ -587,8 +586,6 @@ class Case:
         Notes
         -----
         - This method uses variable name mappings specified in the forcing product configuration.
-        - If the large data workflow has been enabled, velocity and tracer OBCs are not processed
-          within this method and must be handled externally.
         - Applies forcing-related namelist and XML updates at the end of the method.
 
         See Also
@@ -600,24 +597,14 @@ class Case:
                 "configure_forcings() must be called before process_forcings()."
             )
 
-        process_bgc = kwargs.get("process_bgc", True)
-        process_tides = kwargs.get("process_tides", True)
-        process_chl = kwargs.get("process_chl", True)
-        process_runoff = kwargs.get("process_runoff", True)
-        process_bgc_river_nutrients = kwargs.get("process_bgc_river_nutrients", True)
+        config_path = self.extract_forcings_path / "config.json"
+        with open(config_path) as f:
+            config = json.load(f)
 
-        run_workflow(
-            config_path=self.extract_forcings_path / "config.json",
-            ic=process_initial_condition,
-            bc=process_velocity_tracers,
-            bgcic=process_bgc and self.fcr.is_active("bgc"),
-            bgcironforcing=process_bgc and self.fcr.is_active("bgc"),
-            tides=process_tides and self.fcr.is_active("tides"),
-            chl_=process_chl and self.fcr.is_active("chl"),
-            runoff=process_runoff and self.fcr.is_active("runoff"),
-            bgcrivernutrients=process_bgc_river_nutrients
-            and self.fcr.is_active("BGCRiverNutrients"),
-        )
+        flag_names = ForcingConfigRegistry.resolve_process_targets(config).keys()
+        flags = {name: kwargs.get(f"process_{name}", True) for name in flag_names}
+
+        run_workflow(config_path=config_path, **flags)
 
         print(f"Case is ready to be built: {self.caseroot}")
 

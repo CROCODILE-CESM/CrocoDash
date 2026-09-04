@@ -36,8 +36,8 @@ from uuid import uuid4
 
 import yaml
 from visualCaseGen.custom_widget_types.case_tools import xmlchange, append_user_nl
-from CrocoDash.forcing_configurations.base import *
-from CrocoDash.forcing_configurations import *
+from CrocoDash.forcing.base import *
+from CrocoDash.forcing import *
 from CrocoDash.logging import setup_logger
 from CrocoDash.recipe import case_to_yaml, create_case_from_yaml
 from CrocoDash import case_state
