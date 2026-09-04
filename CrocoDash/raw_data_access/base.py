@@ -44,12 +44,14 @@ class Calendar:
 
     @classmethod
     def from_config(cls, section: dict) -> "Calendar":
-        """Rebuild a Calendar from the ``calendar`` object stored in config.json.
+        """Rebuild a Calendar from the ``calendar`` object in a config.json section.
 
-        BaseProduct.write_metadata expands the dataclass to a named dict, so
-        the round trip is by field name. This lets the extraction driver hand
-        writers the whole Calendar rather than one name and a guess about
-        which of its roles that name was meant for.
+        Reads the copy the chl / river-nutrients configurators store in their
+        own ``inputs`` block, so the extraction driver can hand those writers
+        the whole Calendar rather than one name and a guess about which of its
+        roles that name was meant for. The product metadata block is a separate
+        copy, written by BaseProduct.write_metadata and read directly by the
+        OBC step; it does not come through here.
         """
         return cls(**section["calendar"])
 
@@ -247,9 +249,10 @@ class ForcingProduct(DatedBaseProduct):
     def __init_subclass__(cls, **kwargs):
 
         # 0. One Calendar is the whole calendar contract: the three names it
-        #    carries cannot disagree, and write_metadata expands it into a named
-        #    dict so it reaches config.json intact (Calendar.from_config reads
-        #    it back).
+        #    carries cannot disagree. write_metadata expands it into a named
+        #    dict, so it survives into the product metadata block of config.json
+        #    rather than being dropped by that method's JSON filter; the OBC
+        #    step reads calendar.mom6 straight out of it.
         calendar = getattr(cls, "calendar", None)
         assert isinstance(calendar, Calendar), (
             f"{cls.__name__} must declare `calendar` as a Calendar instance "
