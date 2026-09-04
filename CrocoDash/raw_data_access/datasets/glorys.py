@@ -80,8 +80,15 @@ class GLORYS(ForcingProduct):
         date_strings = [date.strftime("%Y%m%d") for date in dates]
 
         for date in date_strings:
-            pattern = os.path.join(ds_in_path, "**", f"*_{date}_*.nc")
-            ds_in_files.extend(glob.glob(pattern, recursive=True))
+            # Files are filed under a year subdirectory matching their own date
+            # (e.g. d010049/1993/..._19930909_...nc). Scoping the glob to that
+            # subdirectory avoids a recursive walk of the entire multi-decade
+            # archive for every single day requested.
+            pattern = os.path.join(ds_in_path, date[:4], f"*_{date}_*.nc")
+            matches = glob.glob(pattern)
+            if not matches:
+                raise FileNotFoundError(f"No GLORYS file found for {date} at {pattern}")
+            ds_in_files.extend(matches)
         ds_in_files = sorted(ds_in_files)
 
         ds = xr.open_mfdataset(

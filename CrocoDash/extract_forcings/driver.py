@@ -20,6 +20,7 @@ import time
 from pathlib import Path
 
 from CrocoDash import case_state
+from CrocoDash.raw_data_access.base import Calendar
 from CrocoDash.extract_forcings import (
     bgc,
     runoff as rof,
@@ -108,8 +109,8 @@ def run_workflow(
         if bc:
             _t = time.perf_counter()
             obc.process_obc_conditions(
-                start_date=conditions["outputs"]["start_date"],
-                end_date=conditions["outputs"]["end_date"],
+                start_date=conditions["inputs"]["start_date"],
+                end_date=conditions["inputs"]["end_date"],
                 boundary_number_conversion=conditions["outputs"][
                     "boundary_number_conversion"
                 ],
@@ -121,7 +122,8 @@ def run_workflow(
                 raw_dataset_path=raw_data_dir,
                 regridded_dataset_path=regridded_data_dir,
                 output_path=output_path,
-                regrid_step_days=int(conditions["outputs"]["step"]),
+                get_step_days=int(conditions["outputs"]["get_step_days"]),
+                regrid_step_days=int(conditions["outputs"]["regrid_step_days"]),
                 bathymetry_path=topo_path,
                 preview=preview,
             )
@@ -133,7 +135,7 @@ def run_workflow(
                 product_name=conditions["inputs"]["product_name"].upper(),
                 function_name=conditions["inputs"]["function_name"],
                 product_information=conditions["outputs"]["information"],
-                start_date=conditions["outputs"]["start_date"],
+                start_date=conditions["inputs"]["start_date"],
                 hgrid_path=supergrid_path,
                 vgrid_path=vgrid_path,
                 dataset_varnames=conditions["outputs"]["information"],
@@ -215,7 +217,7 @@ def run_workflow(
                     "chl_processed_filepath"
                 ],
                 output_filepath=config["chl"]["outputs"]["CHL_FILE"],
-                calendar=config["chl"]["inputs"].get("cf_calendar") or "NOLEAP",
+                calendar=Calendar.from_config(config["chl"]["inputs"]),
             )
             timings["chl"] = time.perf_counter() - _t
 
@@ -245,8 +247,7 @@ def run_workflow(
                 mapping_file=config["runoff"]["outputs"]["ROF2OCN_LIQ_RMAPNAME"],
                 river_nutrients_nnsm_filepath=output_path
                 / config["bgcrivernutrients"]["outputs"]["RIV_FLUX_FILE"],
-                calendar=config["bgcrivernutrients"]["inputs"].get("cf_calendar")
-                or "noleap",
+                calendar=Calendar.from_config(config["bgcrivernutrients"]["inputs"]),
             )
             timings["bgcrivernutrients"] = time.perf_counter() - _t
 

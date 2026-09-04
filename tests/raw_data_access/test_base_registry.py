@@ -33,8 +33,7 @@ class DummyForcing(ForcingProduct):
     tracer_var_names = {"temp": "theta", "salt": "salt"}
     boundary_fill_method = "nearest"
     time_units = "days since 2000-01-01"
-    cf_calendar = "gregorian"
-    cesm_calendar = "gregorian"
+    calendar = GREGORIAN
 
     @accessmethod
     def fetch_dummy(
@@ -132,8 +131,7 @@ def test_tracer_names_check():
             tracer_var_names = {"not_temp": "theta", "salt": "salt"}
             boundary_fill_method = "nearest"
             time_units = "days since 2000-01-01"
-            cf_calendar = "gregorian"
-            cesm_calendar = "gregorian"
+            calendar = GREGORIAN
 
 
 def test_write_metadata():
