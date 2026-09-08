@@ -69,6 +69,13 @@ def process_initial_condition(
             "output_folder": output_data_dir,
         }
 
+    # obc.py creates these itself, but the driver can run IC before BC (or
+    # without it), so IC cannot rely on that having happened. netCDF4 reports a
+    # missing parent directory as a bare EACCES, so skipping this surfaces as a
+    # misleading PermissionError rather than "no such directory".
+    Path(raw_data_dir).mkdir(parents=True, exist_ok=True)
+    Path(output_data_dir).mkdir(parents=True, exist_ok=True)
+
     data_access_function = utils.get_data_access_function(product_name, function_name)
 
     if getattr(data_access_function, "_how_to_use", None):
