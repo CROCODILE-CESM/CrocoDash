@@ -20,6 +20,7 @@ How it was solved:
 
 from CrocoDash.raw_data_access.registry import ProductRegistry
 import dataclasses
+import dataclasses
 from dataclasses import dataclass
 import inspect
 import json

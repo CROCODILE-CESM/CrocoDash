@@ -1,5 +1,6 @@
 from CrocoDash.forcing_configurations.base import *
 import dataclasses
+import dataclasses
 from pathlib import Path
 from datetime import datetime
 from ProConPy.config_var import ConfigVar, cvars
