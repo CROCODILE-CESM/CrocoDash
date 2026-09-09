@@ -21,10 +21,10 @@ def sample_forcing_config():
             "inputs": {
                 "product_name": "GLORYS",
                 "function_name": "get_glorys_data_script_for_cli",
-            },
-            "outputs": {
                 "start_date": "20200101",
                 "end_date": "20200109",
+            },
+            "outputs": {
                 "date_format": "%Y%m%d",
                 "boundary_number_conversion": {"north": 1},
             },
@@ -347,7 +347,7 @@ def test_build_vgrid_unknown_type_raises(get_rect_grid_and_topo):
 # _check_state_schema_version
 # ---------------------------------------------------------------------------
 
-FAKE_PATH = "/some/case/crocodash_state.json"
+FAKE_PATH = "/some/case/_crocodash_state.json"
 
 _major, _minor, _patch = STATE_SCHEMA_VERSION.split(".")
 

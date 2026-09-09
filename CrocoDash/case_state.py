@@ -1,7 +1,7 @@
 """
 case_state.py — Serialization policy and I/O for the CrocoDash case state file.
 
-The case state is written to ``crocodash_state.json`` inside the case root at the
+The case state is written to ``_crocodash_state.json`` inside the case root at the
 end of ``Case.__init__``.  This module owns:
 
 - the schema version used to gate compatibility checks;
@@ -25,7 +25,7 @@ from CrocoDash.logging import setup_logger
 logger = setup_logger(__name__)
 
 SCHEMA_VERSION = "1.0.0"
-FILENAME = "crocodash_state.json"
+FILENAME = "_crocodash_state.json"
 
 # Keys from Case.__init__ locals() that are NOT stored in _init_args.
 # Objects (stored as paths), args resolved to derived values, and ephemeral flags.
@@ -95,14 +95,14 @@ def check_version(state, state_path):
 
 
 def write(caseroot, state):
-    """Write *state* to crocodash_state.json, injecting schema_version as the first key."""
+    """Write *state* to _crocodash_state.json, injecting schema_version as the first key."""
     full_state = {"schema_version": SCHEMA_VERSION, **state}
     with open(Path(caseroot) / FILENAME, "w") as f:
         json.dump(full_state, f, indent=2)
 
 
 def read(caseroot):
-    """Read crocodash_state.json, validate the schema version, and return the state dict."""
+    """Read _crocodash_state.json, validate the schema version, and return the state dict."""
     path = Path(caseroot) / FILENAME
     if not path.exists():
         raise FileNotFoundError(

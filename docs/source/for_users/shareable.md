@@ -126,7 +126,7 @@ case = fork.fork(
 
 For copying a case within your own environment — same machine, new paths — use
 `duplicate_case()`. It reads `cesmroot`, `machine`, and `project` directly from
-the original case's `crocodash_state.json`, so no arguments are needed for those:
+the original case's `_crocodash_state.json`, so no arguments are needed for those:
 
 ```python
 from CrocoDash.shareable import duplicate_case

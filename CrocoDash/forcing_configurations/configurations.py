@@ -1,10 +1,24 @@
 from CrocoDash.forcing_configurations.base import *
+import dataclasses
 from pathlib import Path
 from datetime import datetime
 from ProConPy.config_var import ConfigVar, cvars
 from mom6_forge import mapping
 from CrocoDash.raw_data_access.registry import ProductRegistry
-from CrocoDash.raw_data_access.base import ForcingProduct
+from CrocoDash.raw_data_access.base import Calendar, ForcingProduct
+
+
+def _calendar_as_dict(calendar):
+    """Store a Calendar in config.json as a plain dict, leaving anything else be.
+
+    The configurators are constructed from a live Calendar in the normal path,
+    but also from the serialized dict (BaseConfigurator.deserialize) and from
+    empty placeholders (BaseConfigurator.inspect), so only the dataclass is
+    converted here.
+    """
+    if isinstance(calendar, Calendar):
+        return dataclasses.asdict(calendar)
+    return calendar
 
 
 def register(cls):
@@ -271,7 +285,8 @@ class BGCRiverNutrientsConfigurator(BaseConfigurator):
         InputValueParam("case_session_id", comment="Case session identifier"),
         InputValueParam("case_grid_name", comment="Case grid name"),
         InputValueParam(
-            "cf_calendar", comment="CF calendar for the river nutrients output file"
+            "calendar",
+            comment="Calendar names (cf/cesm/mom6) for the river nutrients output",
         ),
     ]
     output_params = [
@@ -294,15 +309,17 @@ class BGCRiverNutrientsConfigurator(BaseConfigurator):
         case_session_id,
         case_grid_name,
         case_forcing_product=None,
-        cf_calendar=None,
+        calendar=None,
     ):
-        if case_forcing_product is not None and cf_calendar is None:
-            cf_calendar = case_forcing_product.cf_calendar
+        # All three names travel together: the writer needs cftime's spelling
+        # for its date arithmetic and MOM6's for the attribute it writes.
+        if calendar is None and case_forcing_product is not None:
+            calendar = case_forcing_product.calendar
         super().__init__(
             global_river_nutrients_filepath=global_river_nutrients_filepath,
             case_session_id=case_session_id,
             case_grid_name=case_grid_name,
-            cf_calendar=cf_calendar,
+            calendar=_calendar_as_dict(calendar),
         )
 
     def validate_args(self, **kwargs):
@@ -486,7 +503,8 @@ class ChlConfigurator(BaseConfigurator):
         InputValueParam("case_grid_name", comment="Case grid name"),
         InputValueParam("case_session_id", comment="Case session identifier"),
         InputValueParam(
-            "cf_calendar", comment="CF calendar for the chlorophyll output file"
+            "calendar",
+            comment="Calendar names (cf/cesm/mom6) for the chlorophyll output",
         ),
     ]
     output_params = [
@@ -517,16 +535,16 @@ class ChlConfigurator(BaseConfigurator):
         case_grid_name,
         case_session_id,
         case_forcing_product=None,
-        cf_calendar=None,
+        calendar=None,
     ):
-        if case_forcing_product is not None and cf_calendar is None:
-            cf_calendar = case_forcing_product.cf_calendar
+        if calendar is None and case_forcing_product is not None:
+            calendar = case_forcing_product.calendar
 
         super().__init__(
             chl_processed_filepath=chl_processed_filepath,
             case_grid_name=case_grid_name,
             case_session_id=case_session_id,
-            cf_calendar=cf_calendar,
+            calendar=_calendar_as_dict(calendar),
         )
 
     def validate_args(self, **kwargs):
@@ -630,10 +648,13 @@ class ConditionsConfigurator(BaseConfigurator):
         ConfigOutputParam(
             "date_format", comment="strftime format used for dates in config.json"
         ),
-        ConfigOutputParam("start_date", comment="Forcing start date"),
-        ConfigOutputParam("end_date", comment="Forcing end date"),
         ConfigOutputParam("information", comment="Product variable-name metadata"),
-        ConfigOutputParam("step", comment="Chunk size (days) for forcing extraction"),
+        ConfigOutputParam(
+            "get_step_days", comment="Chunk size (days) for forcing retrieval (GET)"
+        ),
+        ConfigOutputParam(
+            "regrid_step_days", comment="Chunk size (days) for forcing regridding"
+        ),
         ConfigOutputParam(
             "boundary_number_conversion",
             comment="Boundary name -> MOM6 segment number",
@@ -711,15 +732,17 @@ class ConditionsConfigurator(BaseConfigurator):
 
         # ---- derived, config.json-only values ----
         self.set_output_param("date_format", self._DATE_FORMAT)
-        self.set_output_param("start_date", start_date)
-        self.set_output_param("end_date", end_date)
         self.set_output_param(
             "information",
             product.write_metadata(include_marbl_tracers="%MARBL" in compset),
         )
         start_dt = datetime.strptime(start_date, self._DATE_FORMAT)
         end_dt = datetime.strptime(end_date, self._DATE_FORMAT)
-        self.set_output_param("step", (end_dt - start_dt).days + 1)
+
+        # Setting both get and regrid to the entire modeling period. Power users can modify this as they need!
+        step = (end_dt - start_dt).days + 1
+        self.set_output_param("get_step_days", step)
+        self.set_output_param("regrid_step_days", step)
         self.set_output_param(
             "boundary_number_conversion",
             {b: i + 1 for i, b in enumerate(boundaries)},
@@ -792,17 +815,6 @@ class ConditionsConfigurator(BaseConfigurator):
                 f"SALT=file:forcing_obc_segment_{seg_ix}.nc(salt)"
             )
 
-            if self.registry and self.registry.is_active("bgc"):
-                for tracer_mom6_name, source_var in product.marbl_var_names.items():
-                    tracer_param = UserNLConfigParam(
-                        f"OBC_DATA_{tracer_mom6_name}",
-                        comment="Open boundary conditions",
-                    )
-                    tracer_param.set_item(
-                        f"{tracer_mom6_name}_obc_segment.nc({source_var})"
-                    )
-                    dynamic_params.append(tracer_param)
-
             data_str = standard_data_str
             if self.registry and self.registry.is_active("tides"):
                 data_str += self.registry.active_configurators["tides"].tidal_data_str(
@@ -815,6 +827,20 @@ class ConditionsConfigurator(BaseConfigurator):
             )
             data_param.set_item(data_str)
             dynamic_params.append(data_param)
+
+        # ---- BGC tracer OBC params ----
+        # Each BGC tracer lives in a single {tracer}_obc_segment.nc holding all
+        # boundaries, so these are emitted once per tracer, not per segment.
+        if self.registry and self.registry.is_active("bgc"):
+            for tracer_mom6_name, source_var in product.marbl_var_names.items():
+                tracer_param = UserNLConfigParam(
+                    f"OBC_DATA_{tracer_mom6_name}",
+                    comment="Open boundary conditions",
+                )
+                tracer_param.set_item(
+                    f"{tracer_mom6_name}_obc_segment.nc({source_var})"
+                )
+                dynamic_params.append(tracer_param)
 
         self.output_params = self.output_params + dynamic_params
 
@@ -853,4 +879,13 @@ class ConditionsConfigurator(BaseConfigurator):
                     param = UserNLConfigParam(name, comment="Open boundary conditions")
                     param.set_item(data["outputs"][name])
                     obj.output_params.append(param)
+        # BGC tracer params are keyed by tracer, not by segment, and are only
+        # present when the bgc configurator was active. Recover them by name so
+        # a round-trip preserves them without needing the registry or product.
+        existing = {param.name for param in obj.output_params}
+        for name, value in data["outputs"].items():
+            if name.startswith("OBC_DATA_") and name not in existing:
+                param = UserNLConfigParam(name, comment="Open boundary conditions")
+                param.set_item(value)
+                obj.output_params.append(param)
         return obj
