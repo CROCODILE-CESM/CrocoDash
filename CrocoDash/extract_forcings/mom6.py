@@ -154,7 +154,14 @@ def _split_bgc_tracers_into_files(
     # Step 3 strips the BGC tracers out of the per-boundary files, so on a
     # re-run they are no longer there to be read. Every other phase of the OBC
     # pipeline resumes by skipping completed work; do the same here.
+
     if all(f.exists() for f in out_files):
+        for f in out_files:
+            if not utils.is_valid_netcdf(f):
+                raise RuntimeError(
+                    f"BGC per-tracer file {f} exists but is not valid NetCDF. "
+                    "Delete it and re-run."
+                )
         logger.info("BGC SPLIT: per-tracer files already exist. Skipping.")
         return out_files
 

@@ -129,3 +129,23 @@ def test_split_bgc_tracers_raises_when_tracer_missing_from_segment(tmp_path):
 
     with pytest.raises(KeyError, match="alk_segment_001"):
         _split_bgc_tracers_into_files(tmp_path, conversion, {"alk": "alk"})
+
+
+def test_split_bgc_tracers_resume_rejects_truncated_per_tracer_file(tmp_path):
+    """A per-tracer file left truncated by an interrupted run is a hard error,
+    not a resume-skip.
+
+    Step 3 strips the BGC tracers out of the per-boundary files, and the
+    upstream MERGE phase skips on its own output, so a silent skip here would
+    hand MOM6 the truncated file with nothing left to regenerate it from.
+    """
+    conversion = {"south": 1}
+    tracers = {"o2": "o2", "no3": "no3"}
+    _write_segment_file(tmp_path / "forcing_obc_segment_001.nc", "001", tracers.keys())
+
+    # A completed run's output, plus one file the kill caught mid-write.
+    _split_bgc_tracers_into_files(tmp_path, conversion, tracers)
+    (tmp_path / "no3_obc_segment.nc").write_bytes(b"truncated")
+
+    with pytest.raises(RuntimeError, match="not valid NetCDF"):
+        _split_bgc_tracers_into_files(tmp_path, conversion, tracers)
