@@ -3,6 +3,7 @@ from pathlib import Path
 from mom6_forge import chl as m6f_chl
 
 from CrocoDash.forcing.base import *
+from CrocoDash.raw_data_access.base import Calendar
 
 
 @register
@@ -18,7 +19,8 @@ class ChlConfigurator(BaseConfigurator):
         InputValueParam("case_grid_name", comment="Case grid name"),
         InputValueParam("case_session_id", comment="Case session identifier"),
         InputValueParam(
-            "cf_calendar", comment="CF calendar for the chlorophyll output file"
+            "calendar",
+            comment="Calendar names (cf/cesm/mom6) for the chlorophyll output",
         ),
     ]
     output_params = [
@@ -49,16 +51,16 @@ class ChlConfigurator(BaseConfigurator):
         case_grid_name,
         case_session_id,
         case_forcing_product=None,
-        cf_calendar=None,
+        calendar=None,
     ):
-        if case_forcing_product is not None and cf_calendar is None:
-            cf_calendar = case_forcing_product.cf_calendar
+        if calendar is None and case_forcing_product is not None:
+            calendar = case_forcing_product.calendar
 
         super().__init__(
             chl_processed_filepath=chl_processed_filepath,
             case_grid_name=case_grid_name,
             case_session_id=case_session_id,
-            cf_calendar=cf_calendar,
+            calendar=calendar_as_dict(calendar),
         )
 
     def validate_args(self, **kwargs):
@@ -83,5 +85,7 @@ class ChlConfigurator(BaseConfigurator):
             ctx.ocn_topo,
             self.get_input_param("chl_processed_filepath"),
             ctx.output_path / self.get_output_param("CHL_FILE"),
-            calendar=self.get_input_param("cf_calendar") or "NOLEAP",
+            # mom6_forge stamps this straight onto the output time coordinate,
+            # which MOM6/FMS then reads, so it needs the mom6 spelling.
+            calendar=Calendar(**self.get_input_param("calendar")).mom6,
         )
