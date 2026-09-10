@@ -78,11 +78,17 @@ class CICE_RESTART(CICEForcingProduct):
     # only exist to satisfy ForcingProduct's generic contract and are never
     # read. This product is a temporary stand-in and expected to be replaced
     # by a real CICE forcing product later.
+    #
+    # `calendar` can't be None the way the other two can: ForcingProduct
+    # asserts it is a real Calendar. GREGORIAN is the arbitrary-but-harmless
+    # choice -- nothing reads a CICE product's calendar (the CESM CALENDAR xml
+    # comes from the MOM6 forcing product in Case.configure_forcings, and
+    # calendar.mom6 is only read by the MOM6 OBC regrid), and there's no time
+    # axis here to stamp it onto. Revisit when a real dated CICE forcing
+    # product lands.
     time_var_name = None
     time_units = None
-    cf_calendar = None
-    cesm_calendar = None
-    mom6_calendar = None
+    calendar = GREGORIAN
     # CICE's B-grid stores velocity (uvel/vvel) and tracer-like state on the
     # same (nj, ni) index space -- no separate staggered dims like MOM6's
     # xh/xq. These are real, not placeholders.

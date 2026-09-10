@@ -91,19 +91,80 @@ def _configure_without_a_case(configurator):
 def test_configure_leaves_restore_ice_off_without_a_product():
     """Restoring is opt-in, so restore_ice must stay off unless process() will
     actually produce a file to restore toward -- otherwise CICE is pointed at a
-    restoring target that doesn't exist."""
+    restoring target that doesn't exist. ice_ic falls back to CICE's own
+    internal initialization for the same reason."""
     configurator = CICEConfigurator()
     _configure_without_a_case(configurator)
     assert configurator.get_output_param("restore_ice") == ".false."
+    assert configurator.get_output_param("ice_ic") == "'default'"
 
 
-def test_configure_turns_restore_ice_on_with_a_product():
+def test_configure_turns_restore_ice_on_with_a_product(tmp_path):
+    """restore_ice defaults to True, so naming a product is enough: the
+    namelist flag goes on and ice_ic points at the expanded-grid restart
+    process() will write."""
+    configurator = CICEConfigurator(
+        cice_product_name="reference_ice",
+        cice_function_name="get_reference_ice_data",
+        case_inputdir=tmp_path,
+    )
+    _configure_without_a_case(configurator)
+    assert configurator.get_output_param("restore_ice") == ".true."
+    assert (
+        configurator.get_output_param("ice_ic")
+        == f"'{tmp_path / SEA_ICE_SUBDIR / FORCING_FILENAME}'"
+    )
+
+
+def test_configure_restore_ice_false_overrides_a_named_product(tmp_path):
+    """The explicit off switch wins over a named product: no restoring, and
+    ice_ic left alone, so CICE runs zero-gradient with ice free to advect
+    out."""
+    configurator = CICEConfigurator(
+        cice_product_name="reference_ice",
+        cice_function_name="get_reference_ice_data",
+        case_inputdir=tmp_path,
+        restore_ice=False,
+    )
+    _configure_without_a_case(configurator)
+    assert configurator.get_output_param("restore_ice") == ".false."
+    assert configurator.get_output_param("ice_ic") == "'default'"
+    assert configurator._resolve_forcing_source() == (None, None)
+
+
+@pytest.mark.parametrize("restore_ice", [True, False])
+def test_configure_always_sets_restart_ext(restore_ice, tmp_path):
+    """CICE's own set_nml.bczerogradient pairs zero_gradient boundaries with
+    restart_ext = .true., and the ghost ring only exists on disk with it --
+    so it goes on regardless of whether restoring is active."""
+    configurator = CICEConfigurator(
+        cice_product_name="reference_ice",
+        cice_function_name="get_reference_ice_data",
+        case_inputdir=tmp_path,
+        restore_ice=restore_ice,
+    )
+    _configure_without_a_case(configurator)
+    assert configurator.get_output_param("restart_ext") == ".true."
+    assert configurator.get_output_param("ns_boundary_type") == "'zero_gradient'"
+    assert configurator.get_output_param("ew_boundary_type") == "'zero_gradient'"
+
+
+def test_configure_restoring_without_a_case_inputdir_raises():
+    """There's nowhere for ice_ic to point without it -- fail with a named
+    error rather than writing a bogus relative path into user_nl_cice."""
     configurator = CICEConfigurator(
         cice_product_name="reference_ice",
         cice_function_name="get_reference_ice_data",
     )
-    _configure_without_a_case(configurator)
-    assert configurator.get_output_param("restore_ice") == ".true."
+    with pytest.raises(ValueError, match="case_inputdir is unset"):
+        _configure_without_a_case(configurator)
+
+
+def test_default_halo_matches_cice_nghost():
+    """CICE reads ice_ic with restart_ext = .true., i.e. at
+    ni = nx_global + 2*nghost with nghost == 1 -- so the default halo has to be
+    1 or the generated file is the wrong shape to be read at all."""
+    assert CICEConfigurator().get_input_param("n_halo_cells") == 1
 
 
 @pytest.mark.parametrize(
@@ -161,7 +222,7 @@ def test_process_cice_forcing_produces_output(
     grid, topo, vgrid = gen_grid_topo_vgrid
     grid.write_supergrid(tmp_path / "grid.nc")
 
-    n_halo_cells = 2
+    n_halo_cells = 1
     ny, nx = grid.tlat.shape
 
     configurator = CICEConfigurator(
@@ -177,11 +238,14 @@ def test_process_cice_forcing_produces_output(
 
     ds = xr.open_dataset(tmp_path / "sea_ice" / "cice_forcing.nc")
 
-    assert ds.sizes["ny"] == ny + 2 * n_halo_cells
-    assert ds.sizes["nx"] == nx + 2 * n_halo_cells
+    # nj/ni, not ny/nx: these are the dimension names CICE's restart reader
+    # expects, since configure() points ice_ic at this file.
+    assert ds.sizes["nj"] == ny + 2 * n_halo_cells
+    assert ds.sizes["ni"] == nx + 2 * n_halo_cells
+    assert "ny" not in ds.dims and "nx" not in ds.dims
     assert "time" not in ds.dims
-    assert "aicen" in ds and ds["aicen"].dims == ("ncat", "ny", "nx")
-    assert "uvel" in ds and ds["uvel"].dims == ("ny", "nx")
+    assert "aicen" in ds and ds["aicen"].dims == ("ncat", "nj", "ni")
+    assert "uvel" in ds and ds["uvel"].dims == ("nj", "ni")
     assert ds["iceumask"].encoding.get("coordinates") == "lat lon"
     assert ds["aicen"].encoding.get("coordinates") == "lat lon"
     assert "_FillValue" not in ds["iceumask"].encoding
@@ -198,7 +262,7 @@ def test_process_cice_forcing_with_reference_ice(tmp_path, gen_grid_topo_vgrid):
     grid, topo, vgrid = gen_grid_topo_vgrid
     grid.write_supergrid(tmp_path / "grid.nc")
 
-    n_halo_cells = 2
+    n_halo_cells = 1
     ny, nx = grid.tlat.shape
 
     configurator = CICEConfigurator(
@@ -210,11 +274,14 @@ def test_process_cice_forcing_with_reference_ice(tmp_path, gen_grid_topo_vgrid):
 
     ds = xr.open_dataset(tmp_path / "sea_ice" / "cice_forcing.nc")
 
-    assert ds.sizes["ny"] == ny + 2 * n_halo_cells
-    assert ds.sizes["nx"] == nx + 2 * n_halo_cells
+    # nj/ni, not ny/nx: these are the dimension names CICE's restart reader
+    # expects, since configure() points ice_ic at this file.
+    assert ds.sizes["nj"] == ny + 2 * n_halo_cells
+    assert ds.sizes["ni"] == nx + 2 * n_halo_cells
+    assert "ny" not in ds.dims and "nx" not in ds.dims
     assert "time" not in ds.dims
-    assert "aicen" in ds and ds["aicen"].dims == ("ncat", "ny", "nx")
-    assert "uvel" in ds and ds["uvel"].dims == ("ny", "nx")
+    assert "aicen" in ds and ds["aicen"].dims == ("ncat", "nj", "ni")
+    assert "uvel" in ds and ds["uvel"].dims == ("nj", "ni")
     assert ds["uvel"].encoding.get("coordinates") == "lat lon"
     assert "_FillValue" not in ds["uvel"].encoding
     assert np.isfinite(ds["aicen"].values).all()
@@ -259,7 +326,7 @@ def test_get_output_filepaths_agrees_with_process(tmp_path, gen_grid_topo_vgrid)
     configurator = CICEConfigurator(
         cice_product_name="reference_ice",
         cice_function_name="get_reference_ice_data",
-        n_halo_cells=2,
+        n_halo_cells=1,
     )
     configurator.process(_make_ctx(tmp_path, supergrid_path=tmp_path / "grid.nc"))
 

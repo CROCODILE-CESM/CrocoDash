@@ -207,12 +207,11 @@ class REFERENCE_ICE(CICEForcingProduct):
     link = "n/a"
     # No real time evolution any more than CICE_RESTART has (see
     # cice_output.py) -- these only exist to satisfy ForcingProduct's
-    # generic contract.
+    # generic contract, and `calendar` is the arbitrary-but-harmless
+    # GREGORIAN for the same reason given there.
     time_var_name = None
     time_units = None
-    cf_calendar = None
-    cesm_calendar = None
-    mom6_calendar = None
+    calendar = GREGORIAN
     u_x_coord = "ni"
     u_y_coord = "nj"
     v_x_coord = "ni"

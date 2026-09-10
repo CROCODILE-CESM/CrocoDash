@@ -1,18 +1,41 @@
-"""CICE forcing for CrocoDash: a single expanded-grid restoring file.
+"""CICE forcing for CrocoDash: one expanded-grid restart serving as both the
+initial condition and the restoring target.
 
-CICE's restoring mechanism (``ice_restoring.F90``) relaxes boundary-adjacent
-cells toward a target ice state over time -- the user is separately
-extending that Fortran to read the restoring target from an external file
-(not visible in this repo yet). ``CICEConfigurator.process`` produces that
-file: it must cover the case's regional domain plus a halo (``n_halo_cells``
-on every side, required for the restoring routine), built from a CICE-shaped
-forcing product (real global restart, or a fast synthetic stand-in -- see
-``cice_product_name``/``cice_function_name`` below) regridded onto every
-point of that expanded grid. Producing it is opt-in: naming neither product
-nor function skips ``process`` entirely and leaves ``restore_ice`` off, so
-CICE runs with zero-gradient boundaries and no restoring. Like a real CICE restart/initial-condition
-file, the output carries no ``time`` dimension at all -- just the single
-static snapshot (for ``cice_restart``), regridded once.
+CICE's restoring mechanism (``ice_restoring.F90``) relaxes the
+boundary-adjacent ghost cells toward a target ice state over time.
+``CICEConfigurator.process`` produces the file that supplies it: the case's
+regional domain plus an ``n_halo_cells`` halo on every side, built from a
+CICE-shaped forcing product (a real global restart, or a fast synthetic
+stand-in -- see ``cice_product_name``/``cice_function_name`` below) regridded
+onto every point of that expanded grid. ``configure`` then points CICE's
+``ice_ic`` at that file and sets ``restart_ext = .true.``, so CICE reads it as
+a restart *including* its ghost ring (``ni = nx_global + 2*nghost``,
+``nj = ny_global + 2*nghost`` -- see ``ice_restart.F90``).
+
+The ghost-ring values that land this way are what gets restored toward, given
+the restoring-for-OBCs support in Dave Bailey's CICE checkout, which sits on
+top of this. Note that stock ``ice_restoring.F90`` does *not* consume that
+ring: its active ``restore_ic = 'initial'`` path extrapolates the innermost
+physical row/column outward into the ghost cells instead (the commented-out
+"easy way", ``aicen_rest = aicen``, is what would use it).
+
+``nghost`` is 1 in CICE (``ice_blocks.F90``), hence ``n_halo_cells``
+defaulting to 1: the generated file has to match that extended-restart shape
+exactly or CICE won't read it. It stays configurable because the halo also
+sets the restoring zone's physical width, but any value other than 1 makes
+the file unusable as an ``ice_ic``.
+
+Restoring is opt-in two ways over: pass ``restore_ice=False``, or name
+neither product nor function, and ``process`` generates nothing, ``ice_ic``
+stays ``'default'``, and CICE runs with zero-gradient boundaries and no
+restoring -- a valid configuration, with ice still free to advect out of the
+domain. ``restore_ice`` defaults to True, so naming a product is enough to
+turn restoring on.
+
+Like a real CICE restart/initial-condition file, the output carries no
+``time`` dimension at all -- just the single static snapshot, regridded once
+-- on CICE's own ``nj``/``ni`` dimension names, which is what its restart
+reader expects.
 
 Unlike MOM6/WW3's OBC, there's no boundary-only regrid and no date-chunking
 need (one static snapshot, no real time evolution to fetch incrementally),
@@ -21,28 +44,12 @@ engine at all -- just resolves the requested product/function via the same
 ``ProductRegistry`` lookup MOM6/WW3 use (``utils.get_data_access_function``)
 instead of hardcoding a single product.
 
-The precise file/variable-naming contract the (not-yet-visible) Fortran
-restoring-file reader will expect is unverified -- this produces a file
-using CICE's own restart variable names (unchanged, since we're only
-windowing+regridding them) over the expanded grid. Revisit once that
-Fortran work is available to check against.
-
-Cross-checked against the CICE Consortium's own restoring implementation
-(``ice_restoring.F90``, ``ice_restoring_data_restartfiles``): that reader
-expects ``aicen``/``vicen``/``vsnon``/``trcrn`` (category-indexed, ncat=5)
-on the *same* grid as the regional domain plus the ``restart_ext`` ghost
-cells (``nx_global+2``/``ny_global+2`` -- one ring of padding, a fixed
-file-format requirement, not a physical restoring-zone choice). We don't
-enumerate those variable names -- every variable in the source restart
-passes through unfiltered (T-point and U-point alike), a superset of what
-that reader currently needs. ``n_halo_cells`` here controls the restoring
-zone's physical width, not the ``restart_ext`` padding; it happens to
-exceed the 1-cell minimum today, but nothing yet guarantees the outermost
-ring is genuine ghost padding rather than real regridded data -- revisit
-once the Fortran extension lands. ``uvel``/``vvel`` (B-grid, upper-right
-cell corner) are already plumbed through here but not yet consumed by any
-reader -- out of scope for the restoring file until the Consortium adds
-velocity restoring.
+Every variable in the source restart passes through unfiltered (T-point and
+U-point alike) -- a superset of the ``aicen``/``vicen``/``vsnon``/``trcrn``
+(category-indexed, ncat=5) that ``ice_restoring.F90``'s restoring arrays
+actually read. ``uvel``/``vvel`` (B-grid, at the cell corner) are plumbed
+through here but not consumed by any restoring path yet; the Consortium
+doesn't restore velocity.
 """
 
 from pathlib import Path
@@ -86,6 +93,11 @@ def _regrid_point_group(ds, vars_, src_lon, src_lat, tgt_lon, tgt_lat):
     src = ds[vars_].assign_coords(
         lon=(("nj", "ni"), src_lon), lat=(("nj", "ni"), src_lat)
     )
+    # Regridded onto ny/nx here and renamed to CICE's own nj/ni once both
+    # point groups are merged (see _regrid_cice_full_grid). The rename can't
+    # happen on the target grid itself: the *source* restart already uses
+    # nj/ni for its native tripole index space, and xESMF would then have to
+    # build an output dataset whose source and target spatial dims collide.
     target = xr.Dataset(
         coords={"lon": (("ny", "nx"), tgt_lon), "lat": (("ny", "nx"), tgt_lat)}
     )
@@ -126,7 +138,10 @@ def _regrid_cice_full_grid(ds, grid):
     if u_vars:
         u_out = u_out.rename({"lon": "u_lon", "lat": "u_lat"})
 
-    return xr.merge([t_out, u_out])
+    # CICE's restart reader indexes on ni/nj, not the ny/nx the regrid target
+    # was built with -- rename now that the source grid's own nj/ni are out of
+    # scope, so the file CICE reads through ice_ic has the dims it expects.
+    return xr.merge([t_out, u_out]).rename({"ny": "nj", "nx": "ni"})
 
 
 @register
@@ -171,7 +186,31 @@ class CICEConfigurator(BaseConfigurator):
         ),
         InputValueParam(
             "n_halo_cells",
-            comment="Halo width (T-cells per side) for CICE's restoring forcing",
+            comment=(
+                "Halo width (T-cells per side) for CICE's restoring forcing. "
+                "Must be 1 to match CICE's own nghost, since configure() points "
+                "ice_ic at the generated file and CICE reads it with "
+                "restart_ext = .true. (ni = nx_global + 2*nghost); any other "
+                "value produces a file CICE won't read."
+            ),
+        ),
+        InputValueParam(
+            "restore_ice",
+            comment=(
+                "Whether to restore the boundary-adjacent ghost cells toward the "
+                "generated expanded-grid restart. True by default, so naming a "
+                "cice_product_name/cice_function_name pair is enough to turn "
+                "restoring on. False skips generating the file altogether and "
+                "leaves ice_ic at 'default': CICE then runs with zero-gradient "
+                "boundaries and no restoring, ice still free to advect out."
+            ),
+        ),
+        InputValueParam(
+            "case_inputdir",
+            comment=(
+                "Case input directory -- where process() writes the forcing file "
+                "and therefore the absolute path configure() gives ice_ic."
+            ),
         ),
     ]
     output_params = [
@@ -180,6 +219,7 @@ class CICEConfigurator(BaseConfigurator):
         UserNLConfigParam("ew_boundary_type", user_nl_name="cice"),
         UserNLConfigParam("close_boundaries", user_nl_name="cice"),
         UserNLConfigParam("advect", user_nl_name="cice"),
+        UserNLConfigParam("restart_ext", user_nl_name="cice"),
         UserNLConfigParam("restore_ice", user_nl_name="cice"),
         UserNLConfigParam("trestore", user_nl_name="cice"),
     ]
@@ -189,13 +229,17 @@ class CICEConfigurator(BaseConfigurator):
         cice_product_name=None,
         cice_function_name=None,
         cice_function_args=None,
-        n_halo_cells=2,
+        n_halo_cells=1,
+        restore_ice=True,
+        case_inputdir=None,
     ):
         super().__init__(
             cice_product_name=cice_product_name,
             cice_function_name=cice_function_name,
             cice_function_args=cice_function_args or {},
             n_halo_cells=n_halo_cells,
+            restore_ice=restore_ice,
+            case_inputdir=case_inputdir,
         )
 
     def validate_args(self, **kwargs):
@@ -235,10 +279,14 @@ class CICEConfigurator(BaseConfigurator):
 
         Half-specified is always a mistake -- a typo'd or forgotten argument --
         so it raises rather than silently skipping behind a case that still
-        runs.
+        runs. That check runs before the ``restore_ice`` gate below, so an
+        explicit ``restore_ice=False`` doesn't swallow the typo.
         """
         product_name = self.get_input_param("cice_product_name")
         function_name = self.get_input_param("cice_function_name")
+
+        if product_name and function_name and not self.get_input_param("restore_ice"):
+            return None, None
 
         if not product_name and not function_name:
             return None, None
@@ -259,23 +307,55 @@ class CICEConfigurator(BaseConfigurator):
         return product_name, function_name
 
     def configure(self):
-        self.set_output_param("ice_ic", "'default'")
         self.set_output_param("ns_boundary_type", "'zero_gradient'")
         self.set_output_param("ew_boundary_type", "'zero_gradient'")
         self.set_output_param("close_boundaries", ".false.")
         self.set_output_param("advect", "'upwind'")
-        # restore_ice tracks whether process() will actually produce the
-        # domain+halo forcing file to restore toward: turning it on without
-        # that file would point CICE at a restoring target that doesn't
-        # exist. trestore is CICE's own documented default timescale, and is
-        # inert when restore_ice is off. The file/variable contract the
-        # not-yet-merged CICE restoring-file reader will expect is unverified
-        # (see this module's docstring), so the generated file's path isn't
-        # wired to a namelist parameter here yet.
+        # Set unconditionally, not just when restoring: CICE's own
+        # set_nml.bczerogradient option pairs zero_gradient boundaries with
+        # restart_ext = .true., and it's what makes the ghost ring exist on
+        # disk at all -- which is what ice_ic needs below. Harmless without
+        # restoring, since ice_ic = 'default' means no restart is read.
+        self.set_output_param("restart_ext", ".true.")
+
+        # The namelist restore_ice tracks whether process() will actually
+        # produce the domain+halo restart to restore toward -- turning it on
+        # without that file would point CICE at a restoring target that
+        # doesn't exist. So it's the *conjunction* of the caller's restore_ice
+        # and a named product, not the input flag alone. trestore is CICE's own
+        # documented default timescale, and is inert when restore_ice is off.
         product_name, _ = self._resolve_forcing_source()
-        self.set_output_param("restore_ice", ".true." if product_name else ".false.")
+        restoring = bool(product_name)
+        self.set_output_param("restore_ice", ".true." if restoring else ".false.")
         self.set_output_param("trestore", 90)
+
+        # ice_ic points at the expanded-grid restart process() writes, so its
+        # ghost ring is read in (restart_ext above) and becomes the restoring
+        # target. 'default' -- CICE's own latitude/SST-dependent internal
+        # initialization -- whenever there's no such file to point at.
+        self.set_output_param(
+            "ice_ic", f"'{self._forcing_filepath()}'" if restoring else "'default'"
+        )
         super().configure()
+
+    def _forcing_filepath(self):
+        """Absolute path process() writes the forcing file to.
+
+        Needed at configure() time (before process() has run) to give ice_ic a
+        path, so it's derived from case_inputdir rather than the WorkflowContext
+        process() gets. get_output_filepaths() resolves the same file from the
+        directory it's handed instead, since bundling relocates it.
+        """
+        case_inputdir = self.get_input_param("case_inputdir")
+        if not case_inputdir:
+            raise ValueError(
+                "CICE restoring is on (restore_ice, cice_product_name and "
+                "cice_function_name are all set) but case_inputdir is unset, so "
+                "there's no path to give ice_ic. It's injected automatically from "
+                "the Case; pass it explicitly when constructing "
+                "CICEConfigurator directly."
+            )
+        return Path(case_inputdir) / SEA_ICE_SUBDIR / FORCING_FILENAME
 
     def get_output_filepaths(self, ocn_ice_directory):
         """CICE's forcing file, which lives beside ocnice/ rather than in it.

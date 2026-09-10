@@ -63,7 +63,18 @@ def test_case_integration_config_cice_round_trip(CrocoDash_case_factory, tmp_pat
     assert cice_inputs["cice_product_name"] == "reference_ice"
     assert cice_inputs["cice_function_name"] == "get_reference_ice_data"
     assert cice_inputs["cice_function_args"] == {}
-    assert cice_inputs["n_halo_cells"] == 2
+    assert cice_inputs["n_halo_cells"] == 1
+    # restoring is on by default, and case_inputdir is injected from the Case
+    # (it's what configure() builds ice_ic's path from)
+    assert cice_inputs["restore_ice"] is True
+    assert cice_inputs["case_inputdir"] == str(case.inputdir)
+
+    cice_outputs = config["cice"]["outputs"]
+    assert cice_outputs["restore_ice"] == ".true."
+    assert cice_outputs["restart_ext"] == ".true."
+    assert (
+        cice_outputs["ice_ic"] == f"'{case.inputdir / 'sea_ice' / 'cice_forcing.nc'}'"
+    )
 
 
 def test_driver_works(CrocoDash_case_factory, tmp_path):

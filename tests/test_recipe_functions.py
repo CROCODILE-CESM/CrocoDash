@@ -502,9 +502,9 @@ def test_configure_forcing_args_round_trip_optional_args(sample_forcing_config):
                 "restart_path": "/fake/restart.nc",
                 "grid_path": "/fake/grid.nc",
             },
-            # non-default value: silently reverting to the default of 2 would
+            # non-default value: silently reverting to the default of 1 would
             # change the halo width of the reproduced case
-            "n_halo_cells": 1,
+            "n_halo_cells": 2,
         }
     }
 
@@ -516,7 +516,7 @@ def test_configure_forcing_args_round_trip_optional_args(sample_forcing_config):
         "restart_path": "/fake/restart.nc",
         "grid_path": "/fake/grid.nc",
     }
-    assert args["n_halo_cells"] == 1
+    assert args["n_halo_cells"] == 2
 
 
 def test_configure_forcing_args_conditions_boundaries_win(sample_forcing_config):
