@@ -3,6 +3,7 @@ from CrocoDash.rm6 import regional_mom6 as rm6
 from CrocoDash.case import Case
 from pathlib import Path
 from uuid import uuid4
+from CrocoDash.raw_data_access.base import NOLEAP
 
 
 @pytest.fixture(scope="session")
@@ -132,6 +133,8 @@ def fake_cime():
 @pytest.fixture
 def fake_forcing_product():
     class DummyForcingProduct:
-        cf_calendar = "noleap"
+        # Duck-types a ForcingProduct as the configurators see it: they read the
+        # Calendar and pull the individual names off it themselves.
+        calendar = NOLEAP
 
     return DummyForcingProduct()

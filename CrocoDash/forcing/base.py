@@ -12,8 +12,23 @@ from typing import Optional, Any
 import copy
 import subprocess
 import json
+import dataclasses
+from CrocoDash.raw_data_access.base import Calendar
 
 logger = setup_logger(__name__)
+
+
+def calendar_as_dict(calendar):
+    """Store a Calendar in config.json as a plain dict, leaving anything else be.
+
+    A configurator is normally constructed from a live Calendar, but also from
+    the serialized dict (BaseConfigurator.deserialize) and from empty
+    placeholders (BaseConfigurator.inspect), so only the dataclass is
+    converted here.
+    """
+    if isinstance(calendar, Calendar):
+        return dataclasses.asdict(calendar)
+    return calendar
 
 
 def is_serializable(v):

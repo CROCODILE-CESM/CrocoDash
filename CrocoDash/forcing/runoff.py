@@ -104,7 +104,7 @@ class RunoffConfigurator(BaseConfigurator):
 
         if self.get_input_param("rmax") is None:
             rmax, fold = mapping.get_suggested_smoothing_params(
-                self.get_input_param("rof_esmf_mesh_filepath")
+                self.get_input_param("case_esmf_mesh_path")
             )
             self.set_input_param("rmax", rmax)
             self.set_input_param("fold", fold)
