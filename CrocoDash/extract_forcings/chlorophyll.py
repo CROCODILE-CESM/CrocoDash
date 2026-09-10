@@ -1,4 +1,4 @@
-from mom6_forge import chl
+from regional_mom6 import chl
 
 from CrocoDash.raw_data_access.base import Calendar, NOLEAP
 
