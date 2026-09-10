@@ -24,7 +24,7 @@ from CrocoDash.logging import setup_logger
 
 logger = setup_logger(__name__)
 
-SCHEMA_VERSION = "1.0.0"
+SCHEMA_VERSION = "1.1.0"
 FILENAME = "_crocodash_state.json"
 
 # Keys from Case.__init__ locals() that are NOT stored in _init_args.
