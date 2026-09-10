@@ -31,6 +31,7 @@ import xarray as xr
 from CrocoDash import logging
 from CrocoDash.extract_forcings import utils
 from CrocoDash.grid import Grid
+from CrocoDash.topo import Topo
 
 logger = logging.setup_logger(__name__)
 
@@ -54,6 +55,61 @@ def _make_date_pairs(start: datetime, end: datetime, step_days):
         pairs.append((cur, chunk_end))
         cur = chunk_end + timedelta(days=1)
     return pairs
+
+
+def _ocean_bbox_for_boundary(hgrid, supergridmask, boundary: str) -> dict:
+    """Return a lat/lon bounding box covering only the ocean cells on a boundary edge.
+
+    Uses supergridmask (shape ny×nx) to exclude land cells, giving a tighter download bbox
+    than the full supergrid extent. Falls back to the full edge extent if all cells
+    are land.
+    """
+    # T-cell centers are at every other supergrid node starting at index 1
+    cell_lon = hgrid.x.values
+    cell_lat = hgrid.y.values
+
+    supergridmask_arr = (
+        supergridmask.values.astype(bool)
+        if hasattr(supergridmask, "values")
+        else supergridmask.astype(bool)
+    )
+
+    if boundary == "north":
+        edge_lon, edge_lat, mask = (
+            cell_lon[-1, :],
+            cell_lat[-1, :],
+            supergridmask_arr[-1, :],
+        )
+    elif boundary == "south":
+        edge_lon, edge_lat, mask = (
+            cell_lon[0, :],
+            cell_lat[0, :],
+            supergridmask_arr[0, :],
+        )
+    elif boundary == "east":
+        edge_lon, edge_lat, mask = (
+            cell_lon[:, -1],
+            cell_lat[:, -1],
+            supergridmask_arr[:, -1],
+        )
+    elif boundary == "west":
+        edge_lon, edge_lat, mask = (
+            cell_lon[:, 0],
+            cell_lat[:, 0],
+            supergridmask_arr[:, 0],
+        )
+    else:
+        raise ValueError(f"Unknown boundary '{boundary}'")
+
+    ocean_lon = edge_lon[mask] if mask.any() else edge_lon
+    ocean_lat = edge_lat[mask] if mask.any() else edge_lat
+
+    return {
+        "lat_min": float(ocean_lat.min()),
+        "lat_max": float(ocean_lat.max()),
+        "lon_min": float(ocean_lon.min()),
+        "lon_max": float(ocean_lon.max()),
+    }
 
 
 def _parse_raw_filename_dates(path: Path, boundary: str):
@@ -191,7 +247,6 @@ def _regrid_per_process(
     output_folder,
     dataset_varnames,
     fill_method,
-    kwargs,
 ):
 
     logger.info("PROC [%d] - REGRID [%s]: Spun up new proc", proc_id, boundary)
@@ -216,7 +271,6 @@ def _regrid_per_process(
                 dataset_varnames,
                 fill_method,
                 regridders,
-                kwargs,
             )
             proc_regridded_files.append(chunk_dated_output)
 
@@ -235,7 +289,6 @@ def _regrid_one_chunk(
     dataset_varnames,
     fill_method,
     regridders,
-    kwargs,
 ):
     """Regrid one chunk so that it can be called by multiple processes at once.
 
@@ -320,9 +373,8 @@ def _regrid_one_chunk(
             regridding_method="bilinear",
             fill_method=fill_method,
             regridders=regridders,
-            calendar=dataset_varnames["mom6_calendar"],
+            calendar=dataset_varnames["calendar"]["mom6"],
             time_units=dataset_varnames["time_units"],
-            **kwargs,
         )
         temp_path = output_folder / f"forcing_obc_segment_{seg_id:03d}.nc"
         os.rename(temp_path, dated_output)
@@ -357,7 +409,7 @@ def _get_boundary(
     start_date: datetime,
     end_date: datetime,
     get_step_days,
-    hgrid_path,
+    latlon: dict,
     output_dir,
     product_name: str,
     function_name: str,
@@ -367,10 +419,6 @@ def _get_boundary(
 ) -> list:
     """Download all raw data for one boundary, chunked by get_step_days."""
     output_dir = Path(output_dir)
-
-    # Get the bounding box for the specified boundary from the hgrid
-    with xr.open_dataset(hgrid_path) as hgrid:
-        latlon = Grid.get_bounding_boxes(hgrid)[boundary]
 
     pairs = list(_make_date_pairs(start_date, end_date, get_step_days))
 
@@ -448,11 +496,6 @@ def _regrid_boundary(
     fill_method,
 ) -> list:
     """Regrid all raw files for one boundary, sliced by regrid_step_days."""
-    kwargs = {}
-    if "calendar" in dataset_varnames:
-        kwargs["calendar"] = dataset_varnames["calendar"]
-        kwargs["time_units"] = dataset_varnames["time_units"]
-
     pairs = list(_make_date_pairs(start_date, end_date, regrid_step_days))
     # Spread work across processes. If no chunking is prescribed it falls back
     # to one processor.
@@ -474,7 +517,6 @@ def _regrid_boundary(
                 output_folder,
                 dataset_varnames,
                 fill_method,
-                kwargs,
             )
             for proc_id, chunk_pairs in enumerate(
                 [
@@ -521,6 +563,99 @@ def _merge_boundary(boundary_label: str, regridded_files: list, output_folder) -
 # ---------------------------------------------------------------------------
 
 
+def _split_bgc_tracers_into_files(
+    output_path, boundary_number_conversion: dict, marbl_var_names: dict
+):
+    """Move each BGC tracer out of the per-boundary OBC files into its own file.
+
+    MOM6's generic tracer code reads BGC open-boundary data from one file per
+    tracer holding every segment (``<tracer>_obc_segment.nc``), whereas the
+    physical tracers are read per boundary from
+    ``forcing_obc_segment_NNN.nc``. The regrid step writes the BGC tracers into
+    those per-boundary files alongside temp/salt, so without this step the
+    per-tracer files MOM6 is pointed at never exist.
+
+    The tracers are *moved*, not copied: ``OBC_SEGMENT_NNN_DATA`` names only
+    U/V/SSH/TEMP/SALT out of the per-boundary file, so BGC copies left behind
+    there are never read and would put every field on disk twice.
+
+    Mirrors regional_mom6's ``reformat_bgc_tracers_into_files``, which only runs
+    inside rm6's own ``setup_ocean_state_boundaries`` and so is never reached by
+    this pipeline.
+    """
+    if not marbl_var_names:
+        return []
+
+    output_path = Path(output_path)
+    seg_ids = [f"{n:03d}" for n in boundary_number_conversion.values()]
+    seg_files = {seg: output_path / f"forcing_obc_segment_{seg}.nc" for seg in seg_ids}
+    out_files = [output_path / f"{var}_obc_segment.nc" for var in marbl_var_names]
+
+    # Step 3 strips the BGC tracers out of the per-boundary files, so on a
+    # re-run they are no longer there to be read. Every other phase of the OBC
+    # pipeline resumes by skipping completed work; do the same here.
+    if all(f.exists() for f in out_files):
+        logger.info("BGC SPLIT: per-tracer files already exist. Skipping.")
+        return out_files
+
+    # 1. Open each per-boundary file once. These are the largest files the
+    #    pipeline produces, and opening inside the tracer loop below would
+    #    reopen every one of them once per tracer.
+    seg_datasets = {seg: xr.open_dataset(f) for seg, f in seg_files.items()}
+
+    # 2. Write one file per tracer, gathering that tracer across all segments.
+    written = []
+    try:
+        for var in marbl_var_names:
+            ds_var = xr.Dataset()
+            for seg in seg_ids:
+                ds = seg_datasets[seg]
+                var_name = f"{var}_segment_{seg}"
+                if var_name not in ds:
+                    raise KeyError(
+                        f"BGC tracer variable {var_name!r} not found in "
+                        f"{seg_files[seg]}. Expected it there because {var!r} was "
+                        "included in the regridded tracer set."
+                    )
+                # Left lazy so to_netcdf streams from the open source file
+                # rather than materialising every segment first.
+                ds_var[var_name] = ds[var_name]
+                dz_var_name = f"dz_{var_name}"
+                if dz_var_name in ds:
+                    ds_var[dz_var_name] = ds[dz_var_name]
+
+            out_file = output_path / f"{var}_obc_segment.nc"
+            ds_var.to_netcdf(out_file, unlimited_dims="time")
+            written.append(out_file)
+            logger.info("BGC SPLIT: wrote %s", out_file.name)
+    finally:
+        for ds in seg_datasets.values():
+            ds.close()
+
+    # 3. Drop the now-redundant copies from the per-boundary files. Must follow
+    #    step 2, which streams its output from these same files.
+    for seg in seg_ids:
+        seg_file = seg_files[seg]
+        with xr.open_dataset(seg_file) as ds:
+            drop = [
+                name
+                for var in marbl_var_names
+                for name in (f"{var}_segment_{seg}", f"dz_{var}_segment_{seg}")
+                if name in ds
+            ]
+            if not drop:
+                continue
+            # A NetCDF file cannot be rewritten while open, so stage a copy and
+            # swap it in. os.replace is atomic: an interrupted run leaves either
+            # the old file or the new one, never a truncated one.
+            tmp = seg_file.with_name(seg_file.name + ".tmp")
+            ds.drop_vars(drop).to_netcdf(tmp, unlimited_dims="time")
+        os.replace(tmp, seg_file)
+        logger.info("BGC SPLIT: dropped %d BGC vars from %s", len(drop), seg_file.name)
+
+    return written
+
+
 def process_obc_conditions(
     start_date,
     end_date,
@@ -535,6 +670,7 @@ def process_obc_conditions(
     get_step_days=None,
     regrid_step_days: int = 30,
     function_args: dict = None,
+    bathymetry_path=None,
     preview: bool = False,
 ):
     """Process boundary conditions through the GET → REGRID → MERGE pipeline.
@@ -562,6 +698,11 @@ def process_obc_conditions(
         function_args: Overrides for the access function's non-required
             arguments (e.g. `member`), as resolved by
             configure_forcings()'s function_overrides.
+        bathymetry_path: Optional path to the case's bathymetry file. When
+            given, download bounding boxes are computed from the bathymetry
+            ocean tmask (tighter than the full supergrid edge extent). When
+            omitted, falls back to the full supergrid bounding box per
+            boundary.
         preview: If True, return a dict of expected date pairs without
             executing any downloads or regridding.
     """
@@ -582,11 +723,37 @@ def process_obc_conditions(
 
     variables, extra_args = utils.build_forcing_request(product_info, function_args)
 
+    # Compute per-boundary download bboxes using the bathymetry tmask so we only
+    # request data over ocean cells (tighter than the full supergrid edge extent).
+    with xr.open_dataset(hgrid_path) as hgrid_ds:
+        assert not Grid.is_cyclic_x(hgrid_ds), "bboxes not supported for cyclic grids."
+        if bathymetry_path:
+            grid_obj = Grid.from_supergrid(hgrid_path)
+            with xr.open_dataset(bathymetry_path) as bds:
+                min_depth = bds.attrs.get("min_depth", 0.0)
+            topo = Topo.from_topo_file(
+                grid=grid_obj,
+                topo_file_path=bathymetry_path,
+                min_depth=min_depth,
+                git=False,
+            )
+            boundary_bboxes = {
+                b: _ocean_bbox_for_boundary(hgrid_ds, topo.supergridmask, b)
+                for b in boundaries
+            }
+            logger.info("Using tmask-derived bounding boxes for OBC data download.")
+        else:
+            full_bboxes = Grid.get_bounding_boxes(hgrid_ds)
+            boundary_bboxes = {b: full_bboxes[b] for b in boundaries}
+            logger.info(
+                "No bathymetry_path given; using full supergrid bounding boxes."
+            )
+
+    fill_method = rm6.regridding.fill_missing_data
     if product_info.get("boundary_fill_method", "regional_mom6") != "regional_mom6":
         raise ValueError(
             f"fill_method '{product_info['boundary_fill_method']}' is not supported."
         )
-    fill_method = rm6.regridding.fill_missing_data
 
     raw_path.mkdir(exist_ok=True)
     regridded_path.mkdir(exist_ok=True)
@@ -604,7 +771,7 @@ def process_obc_conditions(
             start_date=start_date,
             end_date=end_date,
             get_step_days=get_step_days,
-            hgrid_path=str(hgrid_path),
+            latlon=boundary_bboxes[boundary],
             output_dir=str(raw_path),
             product_name=product_name,
             function_name=function_name,
@@ -663,5 +830,11 @@ def process_obc_conditions(
             regridded_files=regridded_files,
             output_folder=str(output_path),
         )
+
+    _split_bgc_tracers_into_files(
+        output_path=output_path,
+        boundary_number_conversion=boundary_number_conversion,
+        marbl_var_names=product_info.get("marbl_var_names", {}),
+    )
 
     logger.info("OBC processing complete.")

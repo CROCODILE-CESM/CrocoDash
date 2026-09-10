@@ -85,7 +85,10 @@ class GLORYS(ForcingProduct):
             # subdirectory avoids a recursive walk of the entire multi-decade
             # archive for every single day requested.
             pattern = os.path.join(ds_in_path, date[:4], f"*_{date}_*.nc")
-            ds_in_files.extend(glob.glob(pattern))
+            matches = glob.glob(pattern)
+            if not matches:
+                raise FileNotFoundError(f"No GLORYS file found for {date} at {pattern}")
+            ds_in_files.extend(matches)
         ds_in_files = sorted(ds_in_files)
 
         ds = xr.open_mfdataset(
