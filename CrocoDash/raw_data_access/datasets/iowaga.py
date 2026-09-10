@@ -1,152 +1,128 @@
 """
-Data Access Module -> IOWAGA WAVEWATCH-III hindcast 2D wave spectra, via OPeNDAP
+Data Access Module -> IOWAGA GLOBMULTI_ERA5_GLOBCUR_01 2D wave spectra
 
-Fetches Ifremer's IOWAGA global wave hindcast through the THREDDS OPeNDAP
-service and reconstructs a 2D spectrum E(f, theta) for use as WW3 boundary
-forcing.
+Builds WW3 boundary spectra E(f, theta) from the spectral partitioning of
+Ifremer's GLOBMULTI_ERA5_GLOBCUR_01 wave hindcast, fetched from the
+data-dataref file server.
 
-Why OPeNDAP rather than the file server
----------------------------------------
-The obvious alternative is the plain HTTPS file tree at
-`data-dataref.ifremer.fr/ww3/`, which serves whole monthly global files. Those
-are ~2.8 GB per month for the field data alone, and a regional boundary strip
-needs a vanishingly small corner of each. OPeNDAP subsets **server-side**: the
-`.sel()` calls below are translated into a byte-range request for just the
-requested time/lat/lon window, so a month of a small domain is megabytes
-rather than gigabytes and needs no local scratch staging at all.
+Which hindcast this is, and why not OPeNDAP
+-------------------------------------------
+This is the current IOWAGA product: WAVEWATCH-III v7.08, ERA5 winds,
+CMEMS-GLOBCURRENT currents, CERSAT ice and ALTIBERG icebergs, Alday et al.
+(2021) physics, **1993-01 to 2026-03** and still growing. It is the dataset
+with the Sextant DOI (10.12770/857a3337-f59a-481a-bf98-5561e8b61e7b).
 
-READ THIS BEFORE USING: which hindcast this actually is
--------------------------------------------------------
-Ifremer publishes several IOWAGA hindcasts and the OPeNDAP service does NOT
-serve the newest one. Verified against the live catalogue on 2026-09-10:
+An earlier version of this module read Ifremer's THREDDS OPeNDAP service
+instead, for server-side subsetting. That was abandoned, and it is worth
+recording why so nobody re-treads it. Verified against the live services on
+2026-09-10:
 
-  * This module's default, `IOWAGA-GLOBAL_ECMWF-WW3-HINDCAST_FULL_TIME_SERIE`
-    on tds3: WW3 v6.07, BETAMAX 1.5, ECMWF operational analysis winds,
-    **1991-07-01 to 2019-12-31**, 0.5 degree global.
+  * GLOBMULTI_ERA5_GLOBCUR_01 is **not on OPeNDAP at all**. Searching the
+    whole tds3 IOWAGA catalogue for globmulti/era5/globcur returns nothing;
+    the dataset's THREDDS directory holds only a staging folder named
+    `toremove/`. Only tds0/tds1/tds3 exist and only tds3 carries IOWAGA.
+  * What OPeNDAP does serve is `IOWAGA-GLOBAL_ECMWF`, a different and older
+    run (WW3 v6.07, ECMWF operational winds, BETAMAX 1.5).
+  * That aggregation is also corrupt past 2018-01-31: 46752 steps for 40912
+    unique timestamps, 24 backward jumps at month boundaries, each 2018-2019
+    month appearing about twice and out of order. Confirmed on the RAW
+    undecoded time values, so it is the server, not a decoding artifact.
 
-  * `GLOBMULTI_ERA5_GLOBCUR_01` (the dataset with the Sextant DOI, Alday et
-    al. 2021 physics, WW3 v7.08, ERA5 winds + CMEMS-GLOBCURRENT currents,
-    1993-2024): **not on OPeNDAP at all**, only on the `data-dataref` file
-    tree. Its THREDDS directory exists but is empty apart from a staging
-    folder literally named `toremove/`.
+The point-output spectra (`POINTS/<year>/SPEC_*/`) were also considered,
+since they carry true observed 2D spectra rather than a reconstruction. They
+are unusable as a general boundary source: the virtual buoys are clustered
+near coasts. Measured over the 10808 points published for 1993, a coastal box
+holds 0.4-0.8 points per square degree, but an open-ocean 10x10 degree box in
+the North Atlantic (40W-30W, 45N-55N) holds **two**. A regional domain's
+offshore boundary would have almost no stations.
 
-And the record is shorter than advertised. The aggregation claims data to
-2019-12-31, but its time axis is corrupt from 2018 onward: 46752 steps for
-only 40912 unique timestamps, with 24 backward jumps at month boundaries, so
-each 2018-2019 month appears about twice and out of order. Only the strictly
-increasing prefix -- **1991-07-01 to 2018-01-31** -- is usable, and that is
-what `check_coverage` enforces. See DEFAULT_DATASET_COVERAGE.
-
-So this module trades newer physics and a longer record for server-side
-subsetting. If you need dates past 2018-01, ERA5 forcing, or the Alday et al.
-(2021) parameterization, this product cannot give them to you -- use the file
-server instead. `check_coverage` refuses an out-of-range request rather than
-silently returning a short or duplicated record.
-
-The catalogue's own `<variables>` block is unreliable: it advertises the
-partition fields (phs0-5, ptp0-5, pdir0-5, pspr0-5) which the aggregation
-does NOT contain. It appears to be the union over the whole product family.
-Everything below resolves variables against the live dataset, never the
-catalogue.
+So: gridded partitions from the file server, reconstructed into spectra.
 
 How the 2D spectrum is built
 ----------------------------
-The aggregation carries the **observed 1D frequency spectrum** `ef`, on 32
-native WW3 frequency bins, plus a frequency-integrated mean direction `dir`
-and directional spread `spr`. So:
+The monthly files carry a six-way spectral partitioning -- partition 0 is the
+wind sea, 1-5 are swell systems ordered by energy -- with four fields each
+that are exactly what a parametric reconstruction needs:
 
-    E(f, theta) = E(f) * D(theta; dir, spr)
+    phs0-5   significant height of the partition          m
+    ptp0-5   PEAK period of the partition                 s
+    pdir0-5  mean direction, coming-from, cw from north   degree
+    pspr0-5  directional spread of the partition          degree
 
-with D a cosine-2s lobe normalized to integrate to 1 over direction in
-radians, which makes Hs exactly conservative by construction.
+Each partition becomes a JONSWAP frequency shape peaked at 1/ptp, scaled so
+its significant height is exactly phs, multiplied by a cosine-2s directional
+lobe centred on pdir with spread pspr. The partitions are then summed.
 
-Compared to a fully parametric reconstruction from bulk statistics, the
-frequency shape here is **observed, not assumed** -- a real gain. What is
-given up is frequency-dependent direction: `dir` and `spr` are single
-frequency-integrated values, so every frequency band is assigned the same
-mean direction and the same spread. A crossing sea (wind sea from one
-direction, swell from another) therefore collapses onto one smeared lobe
-rather than showing two. For a boundary condition dominated by a single
-swell system this is minor; for a genuine crossing sea it is not. The
-`fp`/`dir` split cannot fix this because the aggregation publishes no
-per-partition directions.
+Two things make this materially better than the equivalent reconstruction
+from ERA5 bulk statistics (`era5_wave_stats.py`):
 
-`ef` is log10-encoded
----------------------
-This is the trap in this dataset and the reason a naive read is badly wrong.
-`ef` has `units = "log10(m2 s+1E-12)"` and `standard_name =
-"base_ten_logarithm_of_power_spectral_density_of_surface_elevation"`; on top
-of that the wire type is Int16 with `scale_factor = 4e-4`. xarray's
-mask_and_scale applies the scale factor and gives the *logarithm*; the linear
-spectral density needs the further step
+  * `ptp` is a true peak period -- its standard_name is
+    `sea_surface_wave_period_at_variance_spectral_density_maximum` -- which
+    is exactly the parameter JONSWAP's peak frequency wants. The ERA5 route
+    has only Tm(-1,0) and must assume a moment order to convert.
+  * Every partition carries its **own** directional spread. ERA5 publishes no
+    per-swell-partition width and has to reuse the total-swell width across
+    all of them, biasing individual partitions toward over-spread.
 
-    E(f) = 10**ef - 1e-12
+And six partitions resolve a crossing sea that the ERA5 route's two-to-four
+would merge.
 
-which `decode_ef_spectrum` does. Using `ef` directly yields values around
--3 to +1 that look superficially plausible as a spectrum and are meaningless.
+The partitions are energy-complete, which is what makes this trustworthy:
+measured on 1993-01, the median of sqrt(sum_i phs_i^2) / hs over points with
+hs > 0.5 m is **1.0000**. Nothing is lost to an unrepresented residual, so
+unlike the ERA5 route there is no need to synthesize one. Absent partitions
+are NaN (not zero) and are simply skipped.
 
-Because this decoding is an inference from the units string rather than from
-Ifremer documentation, `spectra_from_iowaga` cross-checks it: it recomputes
-Hs = 4*sqrt(integral of E(f) df) from the decoded spectrum and compares
-against the dataset's own independently-published `hs`. A wrong decoding
-misses by orders of magnitude, so this is a sharp test, and it runs on every
-real pull rather than only in tests. See `verify_hs_against_source`.
+What is still assumed: the frequency SHAPE within each partition is JONSWAP
+rather than observed. Significant height, peak period and mean direction are
+reproduced by construction; the spectral shape between them is parametric.
+`spectra_from_partitions` cross-checks the result against the file's own `hs`
+on every real call -- see `verify_hs_against_source`.
 
-Facts confirmed against the live service (2026-09-10)
-------------------------------------------------------
-- The OPeNDAP endpoint, its aggregation name, and that it responds to `.dds`
-  and `.das`.
-- Dimensions: time = 46752 (nominally 3-hourly, 1991-07-01T00 to
-  2019-12-31T21, but see the time-axis corruption above), f = 32,
-  latitude = 317 (-78 to 80), longitude = 720 (-180 to 179.5).
-- Latitude and longitude ARE strictly monotonic; only time is not.
-- `ef` is `Int16 ef[time][f][latitude][longitude]` -- the 1D spectrum is
-  present and 4D, not a per-station product.
-- `dir` and `spr` carry no `f` dimension, hence the single-lobe limitation
-  described above.
-- The aggregation has 39 data variables and none of them is a partition
-  field, contradicting the catalogue.
+Cost, and why the whole file comes down
+----------------------------------------
+The monthly global files are ~2.8 GB and the 25 variables used here are 29%
+of the data, so a lazy range-read would save ~3.5x. That is not done, for a
+concrete reason: the files are NETCDF4 chunked `[1, 323, 720]`, i.e. one
+chunk is a whole global timestep, so spatial subsetting saves nothing within
+a timestep and only the variable/time selection would help. Reading remotely
+that way needs `fsspec[http]`, which pulls in `aiohttp` -- not currently in
+CrocoDash's environment. Against that, the server honours byte ranges and
+throttles per connection, so a parallel-chunk download of a whole month takes
+about 15-25 seconds (measured: 2.7 GB in 17 s at 16 chunks). Downloading the
+month, subsetting it locally and deleting it is simpler, adds no dependency,
+and is not the bottleneck. Set `keep_raw=True` to retain the monthly files.
 
-Direction convention -- verified, and a trap next door
-------------------------------------------------------
-`dir` is the direction waves come FROM (clockwise from north), which is
-exactly what `forcing/ww3.py::write_ww3_boundary_spectrum` documents for its
-`direction` argument, so the lobe is centred on `dir` unrotated and the
-output axis is labelled the same way. No conversion is applied and none is
-needed.
+Peak transient disk is one monthly file (~2.8 GB); months are processed and
+deleted one at a time, so a multi-year request does not accumulate.
 
-This is not merely read off the CF standard name. It was measured against
-IOWAGA's own point-output spectra (the `POINTS/.../*_spec.nc` files, which
-carry a real observed `efth(frequency, direction)`) by computing the
-frequency-integrated mean direction from those spectra and comparing it with
-the gridded `dir` at the same point and time:
+Direction convention -- verified
+--------------------------------
+`pdir` is `sea_surface_wave_from_direction_partition_N`: the direction waves
+come FROM, clockwise from north. That is exactly what
+`forcing/ww3.py::write_ww3_boundary_spectrum` documents for its `direction`
+argument, so lobes are centred on `pdir` unrotated and the output axis is
+labelled the same way.
 
-    buoy (30W 52N)    median |delta| = 179.98 deg
-    buoy (140W 0N)    median |delta| = 179.91 deg
-    buoy (90W 58S)    median |delta| = 179.97 deg
+This was checked against real data rather than taken from the CF name. The
+frequency-integrated mean direction computed from IOWAGA's own point-output
+spectra sits 180 degrees from the gridded `dir` at the same points and times
+(median |delta| = 179.98, 179.91, 179.97 degrees at three buoys, with `spr`
+and `hs` agreeing to printed precision, so the comparison is sound). The
+reason is that those spectral files declare a `sea_surface_wave_to_direction`
+axis while the gridded directions are from-direction. Both CF names are
+honest and they corroborate each other.
 
-with `spr` and `hs` agreeing to the printed precision at the same points, so
-the comparison is sound and the 180 degrees is real. The reason is that those
-spectral files declare their direction axis as
-`sea_surface_wave_to_direction` -- waves going TO -- while `dir` on the grid
-is `sea_surface_wave_from_direction`. Both CF names are therefore honest, and
-they corroborate each other.
-
-The trap: if you validate this module's reconstruction against IOWAGA's own
-`_spec.nc` files, you MUST rotate one of them by 180 degrees first. Comparing
-them raw makes a correct reconstruction look exactly backwards.
-
-Facts NOT confirmed against a real pull (verify and update)
-------------------------------------------------------------
-- That `E = 10**ef - 1e-12` is the exact intended inverse rather than, say,
-  `10**ef` with the 1e-12 being only an encoding floor. The two differ by far
-  less than the Hs check's tolerance at any realistic energy level, so the
-  Hs check cannot separate them; it only rules out a grossly wrong decoding.
-- Nothing further. The direction convention, previously the largest
-  unverified assumption here, was checked against real data -- see below.
+The trap: if you validate this module against IOWAGA's own `_spec.nc` files,
+rotate one of them by 180 degrees first. Compared raw, a correct
+reconstruction looks exactly backwards.
 """
 
+import shutil
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from urllib.error import HTTPError
+from urllib.request import Request, urlopen
 
 import numpy as np
 import pandas as pd
@@ -155,47 +131,38 @@ import xarray as xr
 from CrocoDash.raw_data_access.base import *
 from CrocoDash.raw_data_access.datasets.utils import convert_lons_to_180_range
 
-THREDDS_DODS_BASE = "https://tds3.ifremer.fr/thredds/dodsC"
-THREDDS_CATALOG = (
-    "https://tds3.ifremer.fr/thredds/catalogs/IOWAGA-WW3-HINDCAST/"
-    "IOWAGA-WW3-HINDCAST.xml"
-)
+FILE_SERVER_BASE = "https://data-dataref.ifremer.fr/ww3/GLOBMULTI_ERA5_GLOBCUR_01"
+GRID_NAME = "GLOB-30M"
 
-# The global aggregations on the service. The regional ones (ATNE, ATNW, CRB,
-# NC, PACE, MED, MEDNORD, ...) follow the same
-# IOWAGA-<AREA>_<WIND>-WW3-HINDCAST_FULL_TIME_SERIE naming and are selectable
-# through `dataset=`, but only these two have been checked here.
-DEFAULT_DATASET = "IOWAGA-GLOBAL_ECMWF-WW3-HINDCAST_FULL_TIME_SERIE"
-KNOWN_DATASETS = (
-    "IOWAGA-GLOBAL_ECMWF-WW3-HINDCAST_FULL_TIME_SERIE",
-    "IOWAGA-GLOBAL_CFSR-WW3-HINDCAST_FULL_TIME_SERIE",
-)
+# Earliest month published. The end is deliberately NOT hardcoded -- the
+# hindcast is extended over time (2026-03 was the last month available on
+# 2026-09-10), so `available_months` reads the server's own directory listing
+# instead of going stale.
+DATASET_START = "1993-01-01T00:00:00"
 
-# Usable extent of DEFAULT_DATASET, used to reject a bad date range up front
-# rather than after a slow request. Only claimed for DEFAULT_DATASET.
-#
-# The aggregation ADVERTISES 1991-07-01T00 to 2019-12-31T21 (46752 steps), but
-# its time axis is broken from 2018 onward and only the prefix below is
-# trustworthy. Measured against the live service on 2026-09-10:
-#
-#   - 46752 steps but only 40912 unique timestamps -- 5840 are duplicates.
-#   - 24 backward jumps, all at month boundaries, all in 2018-2019: the axis
-#     runs ... 2018-01-31T21 then jumps back to 2018-01-01T00.
-#   - The tail past that first jump covers 2018-01-01..2019-12-31 in 11432
-#     steps for 5840 unique timestamps, i.e. every 2018-2019 step appears
-#     about twice, month-interleaved.
-#
-# THREDDS is evidently stitching the monthly files in the wrong order there.
-# Two copies of a timestamp give no way to tell which slab is right, so this
-# module refuses those dates rather than silently picking one. Pandas will not
-# even slice a non-monotonic DatetimeIndex by value, so an unguarded
-# .sel(time=slice(...)) into that region raises a KeyError that says nothing
-# about the real cause.
-DEFAULT_DATASET_COVERAGE = ("1991-07-01T00:00:00", "2018-01-31T21:00:00")
-DEFAULT_DATASET_ADVERTISED_END = "2019-12-31T21:00:00"
+N_PARTITIONS = 6
+PARTITION_FIELDS = ("phs", "ptp", "pdir", "pspr")
+# `hs` is fetched too, purely so verify_hs_against_source has an independent
+# reference; it takes no part in the reconstruction.
+REFERENCE_FIELD = "hs"
 
-# The additive floor in ef's "log10(m2 s+1E-12)" units string.
-EF_LOG_OFFSET = 1e-12
+# IOWAGA's native spectral discretization, read off its own point-output
+# spectra files: 36 frequencies, f0 = 0.0339 Hz, geometric ratio 1.1, and 24
+# directions. Reconstructing onto the same grid the real spectral product
+# uses means ww3_bounc's SPCONV remapping has the least work to do.
+IOWAGA_F0 = 0.0339
+IOWAGA_FREQUENCY_RATIO = 1.1
+IOWAGA_N_FREQUENCIES = 36
+DEFAULT_N_DIRECTIONS = 24
+
+# JONSWAP peak-enhancement factor. 3.3 is the mean value from the original
+# JONSWAP fit and the same default era5_wave_stats.py uses, so the two
+# products' reconstructions differ in their inputs rather than their shape
+# assumption.
+DEFAULT_GAMMA = 3.3
+# JONSWAP spectral width parameters either side of the peak (Hasselmann 1973).
+JONSWAP_SIGMA_BELOW = 0.07
+JONSWAP_SIGMA_ABOVE = 0.09
 
 EFTH_UNITS = "m2 s rad-1"
 FREQUENCY_UNITS = "s-1"
@@ -205,75 +172,201 @@ DIRECTION_COMMENT = (
     "forcing/ww3.py::write_ww3_boundary_spectrum expects."
 )
 
-# Number of directional bins synthesized. 24 matches the native directional
-# resolution of IOWAGA's own point-output spectra files (efth is 36 frequencies
-# x 24 directions there), so the reconstructed spectrum lands on the same
-# directional grid the real spectral product uses.
-DEFAULT_N_DIRECTIONS = 24
+# Parallel byte-range chunks per monthly file. The server throttles per
+# connection but honours ranges, so this is the difference between ~20 s and
+# several minutes for one month.
+DEFAULT_N_CHUNKS = 16
+DOWNLOAD_RETRIES = 4
 
-# Hs cross-check tolerances. Loose on purpose: the point is to catch a wrong
-# log-decoding (which misses by orders of magnitude), not to police the
-# quadrature error of a 32-point trapezoid over a geometric frequency grid,
-# which genuinely runs a few percent low because the tail past the last bin is
-# not represented.
-HS_CHECK_RTOL = 0.15
+# Hs cross-check tolerance. Loose on purpose: it exists to catch a structural
+# mistake (wrong field, wrong partition indexing, lost energy), not to police
+# the difference between a JONSWAP shape and the real one.
+HS_CHECK_RTOL = 0.10
 HS_CHECK_MIN_HS = 0.25
 
 
-def build_opendap_url(dataset=DEFAULT_DATASET):
-    """OPeNDAP endpoint for one IOWAGA aggregation.
+def iowaga_frequencies(
+    n=IOWAGA_N_FREQUENCIES, f0=IOWAGA_F0, ratio=IOWAGA_FREQUENCY_RATIO
+):
+    """IOWAGA's native geometric frequency grid, in Hz."""
+    return f0 * ratio ** np.arange(n, dtype=np.float64)
 
-    Not validated against KNOWN_DATASETS -- the service carries regional
-    aggregations this module has not been tested against, and refusing them
-    would be more annoying than useful. A wrong name fails loudly at open
-    time with an HTTP error.
+
+def build_month_url(year, month, grid=GRID_NAME, base=FILE_SERVER_BASE):
+    """URL of one monthly field file."""
+    return f"{base}/{grid}/{year:04d}/FIELD_NC/LOPS_WW3-{grid}_{year:04d}{month:02d}.nc"
+
+
+def months_in_range(dates):
+    """[(year, month), ...] covering `dates`, inclusive at both ends."""
+    start, stop = pd.Timestamp(dates[0]), pd.Timestamp(dates[-1])
+    if stop < start:
+        raise ValueError(f"dates run backwards: {dates[0]} to {dates[-1]}.")
+    periods = pd.period_range(start.to_period("M"), stop.to_period("M"), freq="M")
+    return [(p.year, p.month) for p in periods]
+
+
+def available_months(year, grid=GRID_NAME, base=FILE_SERVER_BASE):
+    """Months published for `year`, read from the server's directory listing.
+
+    Used instead of a hardcoded end date because the hindcast is extended
+    over time. Returns an empty list for a year with no directory, which the
+    caller reports as an out-of-range request.
     """
-    return f"{THREDDS_DODS_BASE}/{dataset}"
+    url = f"{base}/{grid}/{year:04d}/FIELD_NC/"
+    try:
+        with urlopen(Request(url), timeout=120) as response:
+            listing = response.read().decode("utf-8", errors="replace")
+    except HTTPError as error:
+        if error.code == 404:
+            return []
+        raise
+    prefix = f"LOPS_WW3-{grid}_{year:04d}"
+    found = set()
+    for token in listing.split('href="'):
+        name = token.split('"')[0]
+        if name.startswith(prefix) and name.endswith(".nc") and "_p2l" not in name:
+            tail = name[len(prefix) :].removesuffix(".nc")
+            if tail.isdigit() and len(tail) == 2:
+                found.add(int(tail))
+    return sorted(found)
 
 
-def check_coverage(dates, dataset=DEFAULT_DATASET):
-    """Raise if `dates` falls outside the aggregation's record.
+def check_coverage(dates, grid=GRID_NAME, base=FILE_SERVER_BASE):
+    """Raise if any month in `dates` is not published.
 
-    Exists because the failure mode otherwise is silent and expensive: an
-    out-of-range `.sel(time=slice(...))` on an OPeNDAP dataset returns an
-    empty or short selection rather than an error, and the truncation would
-    only surface much later as a WW3 boundary file that does not cover the
-    run. Only enforced for DEFAULT_DATASET, whose extent was read off the
-    live service; other aggregations pass through unchecked.
+    Checks the server rather than a hardcoded end, so this does not go stale
+    as Ifremer extends the hindcast. One small directory listing per distinct
+    year -- negligible next to a 2.8 GB monthly file.
     """
-    if dataset != DEFAULT_DATASET:
-        return
-    start, stop = (pd.Timestamp(t) for t in DEFAULT_DATASET_COVERAGE)
-    first, last = pd.Timestamp(dates[0]), pd.Timestamp(dates[-1])
-    if first < start or last > stop:
+    start = pd.Timestamp(DATASET_START)
+    first = pd.Timestamp(dates[0])
+    if first < start:
         raise ValueError(
-            f"{dataset} is usable from {start} to {stop}, but dates {first} "
-            f"to {last} were requested. The aggregation advertises data to "
-            f"{pd.Timestamp(DEFAULT_DATASET_ADVERTISED_END)}, but its time "
-            "axis is broken from 2018 on -- each month appears about twice "
-            "and out of order, so a slice of it cannot be trusted. The "
-            "OPeNDAP service also does not carry the newer "
-            "GLOBMULTI_ERA5_GLOBCUR_01 hindcast (1993-2024, ERA5 forcing) at "
-            "all. For dates outside the usable range use the "
-            "data-dataref.ifremer.fr file tree instead. See this module's "
-            "docstring."
+            f"GLOBMULTI_ERA5_GLOBCUR_01 begins {start:%Y-%m}, but "
+            f"{first:%Y-%m-%d} was requested."
         )
+    by_year = {}
+    for year, month in months_in_range(dates):
+        by_year.setdefault(year, set()).add(month)
+    for year in sorted(by_year):
+        published = set(available_months(year, grid=grid, base=base))
+        missing = sorted(by_year[year] - published)
+        if missing:
+            extra = (
+                f" (and {len(missing) - 1} more month(s) in {year})"
+                if len(missing) > 1
+                else ""
+            )
+            have = (
+                ", ".join(f"{m:02d}" for m in sorted(published))
+                if published
+                else "nothing"
+            )
+            raise ValueError(
+                f"GLOBMULTI_ERA5_GLOBCUR_01 has no {grid} data for "
+                f"{year}-{missing[0]:02d}{extra}. Published for that year: "
+                f"{have}. See {base}/{grid}/."
+            )
 
 
-def decode_ef_spectrum(ef, log_offset=EF_LOG_OFFSET):
-    """Undo IOWAGA's log10 encoding of the 1D frequency spectrum.
+def _content_length(url):
+    with urlopen(Request(url, method="HEAD"), timeout=120) as response:
+        length = response.headers.get("Content-Length")
+    if length is None:
+        raise ValueError(f"{url} did not report a Content-Length.")
+    return int(length)
 
-    `ef` arrives from xarray already unpacked by scale_factor, but still as
-    a base-10 logarithm (units "log10(m2 s+1E-12)"), so the linear spectral
-    density in m2 s is 10**ef - log_offset. See the module docstring; this is
-    the single easiest thing to get wrong about this dataset.
 
-    Negatives from the subtraction at near-zero energy are clipped to 0 --
-    they are encoding noise around the floor, and a negative spectral density
-    would poison the Hs integral.
+def _fetch_range(url, start, stop, destination):
+    """One byte range to one part file, with retries."""
+    last_error = None
+    for _ in range(DOWNLOAD_RETRIES):
+        try:
+            request = Request(url, headers={"Range": f"bytes={start}-{stop}"})
+            with urlopen(request, timeout=1800) as response, open(
+                destination, "wb"
+            ) as handle:
+                shutil.copyfileobj(response, handle, length=1024 * 1024)
+            return
+        except Exception as error:  # network flakiness, not a logic error
+            last_error = error
+    raise RuntimeError(f"failed to fetch bytes {start}-{stop} of {url}: {last_error}")
+
+
+def download_month(url, destination, n_chunks=DEFAULT_N_CHUNKS):
+    """Download one monthly file as `n_chunks` parallel byte ranges.
+
+    The server throttles per connection but sets `accept-ranges: bytes`, so
+    splitting the file across parallel range requests is the difference
+    between ~20 seconds and several minutes for one 2.8 GB month.
+
+    Skips the download when a correctly sized file is already in place, which
+    makes a re-run after a partial failure cheap and lets a caller stage
+    files by hand.
     """
-    linear = np.power(10.0, ef) - log_offset
-    return linear.clip(min=0.0)
+    destination = Path(destination)
+    size = _content_length(url)
+    if destination.exists() and destination.stat().st_size == size:
+        return destination
+
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    per_chunk = -(-size // n_chunks)
+    spans = []
+    for index in range(n_chunks):
+        start = index * per_chunk
+        stop = min(start + per_chunk - 1, size - 1)
+        if start <= stop:
+            spans.append((start, stop))
+
+    parts = [destination.with_suffix(f".part{i:03d}") for i in range(len(spans))]
+    try:
+        with ThreadPoolExecutor(max_workers=len(spans)) as pool:
+            list(
+                pool.map(
+                    lambda pair: _fetch_range(url, pair[0][0], pair[0][1], pair[1]),
+                    zip(spans, parts),
+                )
+            )
+        with open(destination, "wb") as handle:
+            for part in parts:
+                with open(part, "rb") as chunk:
+                    shutil.copyfileobj(chunk, handle, length=1024 * 1024)
+    finally:
+        for part in parts:
+            part.unlink(missing_ok=True)
+
+    written = destination.stat().st_size
+    if written != size:
+        destination.unlink(missing_ok=True)
+        raise RuntimeError(
+            f"{url} downloaded {written} bytes but Content-Length was {size}."
+        )
+    return destination
+
+
+def jonswap_shape(frequency, peak_frequency, gamma=DEFAULT_GAMMA):
+    """Unnormalized JONSWAP frequency shape, broadcast over `peak_frequency`.
+
+    Returns shape peak_frequency.shape + (n_frequency,). The scale factor is
+    left out entirely because the caller renormalizes to a known significant
+    height, so alpha and g would cancel; only the shape matters here.
+
+    Guarded with `np.errstate` and finished with `nan_to_num` because absent
+    partitions arrive as NaN peak frequencies, which must come back as a row
+    of zeros rather than propagating into the sum.
+    """
+    frequency = np.asarray(frequency, dtype=np.float64)
+    fp = np.asarray(peak_frequency, dtype=np.float64)[..., None]
+    f = frequency.reshape((1,) * (fp.ndim - 1) + (frequency.size,))
+
+    with np.errstate(divide="ignore", invalid="ignore", over="ignore"):
+        pierson = np.power(f, -5.0) * np.exp(-1.25 * np.power(fp / f, 4.0))
+        sigma = np.where(f <= fp, JONSWAP_SIGMA_BELOW, JONSWAP_SIGMA_ABOVE)
+        exponent = -np.square(f - fp) / (2.0 * np.square(sigma * fp))
+        shape = pierson * np.power(gamma, np.exp(exponent))
+
+    return np.nan_to_num(shape, nan=0.0, posinf=0.0, neginf=0.0)
 
 
 def cosine_2s_spread(direction_deg, mean_direction_deg, spread_deg):
@@ -286,26 +379,18 @@ def cosine_2s_spread(direction_deg, mean_direction_deg, spread_deg):
     Computed in log space -- 2s * log(cos(dtheta/2)) with the max subtracted
     before exponentiating -- rather than as a direct power. A narrow swell
     with a spread of a degree or two gives s in the thousands, and
-    cos(x)**(2s) evaluated directly underflows to zero in every bin including
-    the peak, silently producing an all-zero spectrum. The log form is exact
-    for arbitrarily large s.
+    cos(x)**(2s) evaluated directly underflows to zero in *every* bin
+    including the peak, silently producing an all-zero spectrum.
 
     Normalization is done numerically against the actual direction grid, not
     by the analytic Gamma-function constant, so that sum(D) * dtheta == 1 on
-    the discrete bins that get written. That is what makes the reconstructed
-    Hs match the source Hs exactly rather than to within a quadrature error.
+    the discrete bins that get written. That is what makes each partition's
+    significant height come out exactly right rather than to within a
+    quadrature error.
 
-    Parameters
-    ----------
-    direction_deg : 1D array, the direction bin centres in degrees.
-    mean_direction_deg, spread_deg : arrays of matching shape, broadcast
-        against the direction axis, in degrees. NaN (typically land) or a
-        non-positive spread yields a uniform lobe, so those points carry
-        whatever energy E(f) has rather than NaN-poisoning the file.
-
-    Returns
-    -------
-    Array of shape mean_direction_deg.shape + (n_directions,), in rad^-1.
+    NaN (an absent partition, or land) or a non-positive spread yields a
+    uniform lobe so those points stay finite; the partition's height is zero
+    there anyway, so the choice adds no energy.
     """
     direction = np.deg2rad(np.asarray(direction_deg, dtype=np.float64))
     n_dir = direction.size
@@ -314,9 +399,6 @@ def cosine_2s_spread(direction_deg, mean_direction_deg, spread_deg):
     mean_direction = np.deg2rad(np.asarray(mean_direction_deg, dtype=np.float64))
     spread = np.deg2rad(np.asarray(spread_deg, dtype=np.float64))
 
-    # s = 2/sigma^2 - 1, floored at 0 (sigma = sqrt(2) rad is the isotropic
-    # limit of this family; a larger spread cannot be represented and becomes
-    # uniform rather than a negative exponent).
     with np.errstate(divide="ignore", invalid="ignore"):
         s = 2.0 / np.square(spread) - 1.0
     degenerate = ~np.isfinite(s) | (s <= 0.0) | ~np.isfinite(mean_direction)
@@ -328,7 +410,6 @@ def cosine_2s_spread(direction_deg, mean_direction_deg, spread_deg):
     )
     half = 0.5 * np.where(np.isfinite(delta), delta, 0.0)
 
-    # cos(half) < 0 on the far half of the circle -> zero energy there.
     cos_half = np.cos(half)
     positive = cos_half > 0.0
     with np.errstate(divide="ignore", invalid="ignore"):
@@ -340,49 +421,40 @@ def cosine_2s_spread(direction_deg, mean_direction_deg, spread_deg):
     )
     lobe = np.exp(log_lobe)
     lobe = np.where(np.isfinite(lobe), lobe, 0.0)
-
     lobe = np.where(degenerate[..., None], 1.0, lobe)
 
     total = lobe.sum(axis=-1, keepdims=True) * dtheta
     with np.errstate(divide="ignore", invalid="ignore"):
-        normalized = np.where(total > 0.0, lobe / total, 1.0 / (n_dir * dtheta))
-    return normalized
+        return np.where(total > 0.0, lobe / total, 1.0 / (n_dir * dtheta))
 
 
-def significant_height_from_ef(ef_linear, frequency):
-    """Hs = 4 * sqrt(integral E(f) df), for the decoded 1D spectrum.
-
-    Trapezoidal over the native geometric frequency grid. This runs a few
-    percent low against the model's own Hs because the energy above the last
-    bin is not represented; HS_CHECK_RTOL is set with that in mind.
-    """
-    frequency = np.asarray(frequency, dtype=np.float64)
-    axis = (
-        ef_linear.get_axis_num("frequency")
-        if hasattr(ef_linear, "get_axis_num")
-        else -1
-    )
-    values = np.asarray(ef_linear, dtype=np.float64)
-    m0 = np.trapezoid(values, x=frequency, axis=axis)
+def significant_height_from_efth(efth, frequency, n_directions):
+    """Hs = 4 sqrt(int int E df dtheta) from a (..., f, theta) spectrum."""
+    dtheta = 2.0 * np.pi / n_directions
+    m0 = np.trapezoid(np.asarray(efth).sum(axis=-1) * dtheta, x=frequency, axis=-1)
     return 4.0 * np.sqrt(np.clip(m0, 0.0, None))
 
 
 def verify_hs_against_source(
-    ef_linear, frequency, source_hs, rtol=HS_CHECK_RTOL, min_hs=HS_CHECK_MIN_HS
+    efth,
+    frequency,
+    n_directions,
+    source_hs,
+    rtol=HS_CHECK_RTOL,
+    min_hs=HS_CHECK_MIN_HS,
 ):
-    """Cross-check the log10 decoding against the dataset's published `hs`.
+    """Cross-check the reconstruction against the file's own `hs`.
 
-    Returns a dict of diagnostics (written into the output file's attrs) and
-    raises if the two disagree beyond `rtol`. A wrong decoding -- forgetting
-    the 10** entirely, say -- is off by orders of magnitude, so this is a
-    sharp test of the one inference in this module that Ifremer does not
-    document.
+    Returns diagnostics (written into the output attrs) and raises if the two
+    disagree beyond `rtol`. Because the partitions are energy-complete this
+    is a genuinely tight check: a wrong field, a mis-indexed partition, or a
+    lost swell system all show up here rather than as a quiet bias
+    downstream.
 
-    Only points with source Hs above `min_hs` are scored: at near-zero energy
-    the relative error is dominated by the encoding floor and would trip the
-    check for no physical reason.
+    Only points with source Hs above `min_hs` are scored -- at near-zero
+    energy the relative error is dominated by rounding.
     """
-    reconstructed = significant_height_from_ef(ef_linear, frequency)
+    reconstructed = significant_height_from_efth(efth, frequency, n_directions)
     published = np.asarray(source_hs, dtype=np.float64)
 
     scored = np.isfinite(reconstructed) & np.isfinite(published) & (published > min_hs)
@@ -406,233 +478,147 @@ def verify_hs_against_source(
     }
     if abs(median_bias) > rtol:
         raise ValueError(
-            "IOWAGA ef decoding failed its self-check: significant height "
-            f"recomputed from the decoded 1D spectrum is off by a median "
-            f"{median_bias:+.1%} against the dataset's own published `hs` "
-            f"over {n_scored} points (tolerance {rtol:.0%}). The assumed "
-            "encoding is E(f) = 10**ef - 1e-12; if Ifremer has changed it, "
-            "fix decode_ef_spectrum in "
+            "IOWAGA partition reconstruction failed its self-check: significant "
+            f"height recomputed from the reconstructed spectrum is off by a "
+            f"median {median_bias:+.1%} against the file's own `hs` over "
+            f"{n_scored} points (tolerance {rtol:.0%}). The partitions are "
+            "energy-complete, so this points at a structural problem -- a "
+            "renamed field, a mis-indexed partition, or a lost wave system -- "
+            "rather than at the JONSWAP shape assumption. See "
             "raw_data_access/datasets/iowaga.py."
         )
     return diagnostics
 
 
-def _select_window(
-    ds,
-    dates,
-    lat_min,
-    lat_max,
-    lon_min,
-    lon_max,
-    buffer_deg=1.0,
-    normalize_longitudes=True,
-):
-    """Subset the aggregation to the requested time/space window.
-
-    Returns a LIST of still-lazy pieces -- one normally, two when the window
-    straddles the antimeridian. `_load_window` turns that into a single
-    dataset. Keeping them separate is what lets each side be fetched as its
-    own contiguous OPeNDAP request; see `_load_window`.
-
-    This is where the OPeNDAP win is realized: nothing has travelled over the
-    wire yet, and when it does only these indices do.
-
-    Why not `mom6_forge.utils.longitude_slicer`, which glorys.py uses for the
-    same job: it handles the seam by `roll`ing the dataset and then indexing
-    the rolled copy. That is right for a dataset already in memory, but a roll
-    of a remote 46752 x 32 x 317 x 720 aggregation would pull the entire globe
-    across the network -- exactly what OPeNDAP subsetting exists to avoid.
-    The shared `convert_lons_to_180_range` IS used, so the two products agree
-    on longitude convention even though they cannot share the slicer.
-
-    The +/- buffer_deg padding matches era5.py's convention and exists for
-    the same reason -- a boundary bounding box from
-    mom6_forge.Grid.get_bounding_boxes is a near-zero-width strip, which
-    would otherwise select zero or one grid points.
-
-    Latitude is sliced with an explicit ascending/descending check rather
-    than assuming a direction: xarray's .sel with a slice silently returns
-    nothing if the slice runs opposite to the coordinate's order.
-    """
-    if normalize_longitudes:
-        lon_min, lon_max = convert_lons_to_180_range(lon_min, lon_max)
-
-    ds = ds.isel(time=_time_index_slice(ds["time"].values, dates))
-
-    lat_slice = slice(lat_min - buffer_deg, lat_max + buffer_deg)
-    if ds["latitude"].values[0] > ds["latitude"].values[-1]:
-        lat_slice = slice(lat_slice.stop, lat_slice.start)
-    ds = ds.sel(latitude=lat_slice)
-
-    west = lon_min - buffer_deg
-    east = lon_max + buffer_deg
-    if west < east:
-        pieces = [ds.sel(longitude=slice(west, east))]
-    else:
-        # Crosses the antimeridian: [west, 180] plus [-180, east]. Two
-        # contiguous slices rather than one that would select nothing, since
-        # the longitude axis is a monotonic -180..179.5.
-        pieces = [
-            ds.sel(longitude=slice(west, 180.0)),
-            ds.sel(longitude=slice(-180.0, east)),
-        ]
-
-    n_lon = sum(piece.sizes.get("longitude", 0) for piece in pieces)
-    if ds.sizes.get("latitude", 0) == 0 or n_lon == 0:
-        raise ValueError(
-            f"No IOWAGA grid points in lat [{lat_min}, {lat_max}] lon "
-            f"[{lon_min}, {lon_max}] (buffer {buffer_deg} deg). The grid is "
-            "0.5 degree, spanning -78 to 80 north."
-        )
-    return [piece for piece in pieces if piece.sizes.get("longitude", 0) > 0]
+def partition_variable_names(n_partitions=N_PARTITIONS):
+    """The variables the reconstruction reads, plus the `hs` reference."""
+    names = [
+        f"{field}{index}" for field in PARTITION_FIELDS for index in range(n_partitions)
+    ]
+    return names + [REFERENCE_FIELD]
 
 
-def _time_index_slice(time_values, dates):
-    """Contiguous integer slice covering `dates`, from a local time array.
-
-    Used instead of `.sel(time=slice(...))` for two reasons, both specific to
-    this aggregation:
-
-    1. Its time axis is non-monotonic past 2018 (see
-       DEFAULT_DATASET_COVERAGE). Pandas refuses to value-slice a
-       non-monotonic DatetimeIndex and raises a KeyError whose text names
-       nothing relevant; `check_coverage` should have caught the date range
-       first, and this asserts that invariant with a message that explains
-       itself.
-    2. An integer slice is a single contiguous OPeNDAP request, whereas
-       value-based selection on a remote index can degrade into fancy
-       indexing.
-
-    The coordinate array is already local -- xarray reads coordinates eagerly
-    when it opens the dataset -- so this costs no extra network traffic.
-    """
-    times = pd.DatetimeIndex(np.asarray(time_values))
-    start, stop = pd.Timestamp(dates[0]), pd.Timestamp(dates[-1])
-
-    first = int(np.searchsorted(times.values, np.datetime64(start), side="left"))
-    last = int(np.searchsorted(times.values, np.datetime64(stop), side="right"))
-    if last <= first:
-        raise ValueError(f"No IOWAGA time steps between {dates[0]} and {dates[-1]}.")
-
-    span = times[first:last]
-    if not span.is_monotonic_increasing:
-        raise ValueError(
-            f"The IOWAGA aggregation's time axis is not monotonic between "
-            f"{dates[0]} and {dates[-1]}, so a slice of it cannot be trusted. "
-            "This affects 2018 onward, where the service repeats each month "
-            "roughly twice and out of order. Use the "
-            "data-dataref.ifremer.fr file tree for those dates."
-        )
-    return slice(first, last)
-
-
-def _load_window(pieces):
-    """Load the lazy pieces from `_select_window` and join them.
-
-    Each piece is loaded on its own BEFORE concatenation, which matters when
-    a window straddles the antimeridian. Concatenating two lazy
-    OPeNDAP-backed selections and loading the result makes xarray fetch
-    through the combined (non-contiguous) index and is roughly an order of
-    magnitude slower than issuing one contiguous request per side; the join
-    is then a cheap in-memory operation.
-    """
-    loaded = [piece.load() for piece in pieces]
-    if len(loaded) == 1:
-        return loaded[0]
-    return xr.concat(loaded, dim="longitude")
-
-
-def spectra_from_iowaga(
+def spectra_from_partitions(
     ds,
     n_directions=DEFAULT_N_DIRECTIONS,
+    frequency=None,
     direction=None,
+    gamma=DEFAULT_GAMMA,
+    n_partitions=N_PARTITIONS,
     check_hs=True,
     dtype=np.float32,
 ):
-    """Build E(f, theta) from a loaded IOWAGA window.
+    """Reconstruct E(f, theta) from a loaded window of partition fields.
 
     Pure -- no I/O -- so it is unit-testable from a fabricated dataset with
     no network, mirroring how the ERA5 products separate their assembly step.
+
+    Each partition contributes a JONSWAP shape peaked at 1/ptp, renormalized
+    so its own significant height is exactly phs, times a cosine-2s lobe on
+    pdir/pspr. Absent partitions (NaN phs or ptp, or zero height) contribute
+    nothing. Because the partitions are energy-complete no residual system is
+    synthesized -- unlike the ERA5 route, which must invent one.
 
     Returns a Dataset with exactly ONE data variable, `efth`, on dims
     (time, latitude, longitude, frequency, direction). The single-variable
     part is a hard requirement, not style: forcing/ww3.py::
     _extract_all_stations does `(var_name,) = ds.data_vars`, so a second
-    variable breaks the WW3 pipeline with an unpacking error. Diagnostics go
-    in attrs.
+    variable breaks the WW3 pipeline with an unpacking error.
     """
-    for required in ("ef", "dir", "spr"):
-        if required not in ds:
-            raise KeyError(
-                f"IOWAGA window is missing {required!r}, which the 2D "
-                f"reconstruction needs. Variables present: "
-                f"{sorted(ds.data_vars)}."
-            )
-
-    frequency = np.asarray(ds["f"].values, dtype=np.float64)
+    frequency = (
+        iowaga_frequencies()
+        if frequency is None
+        else np.asarray(frequency, dtype=np.float64)
+    )
     if direction is None:
         direction = np.arange(n_directions, dtype=np.float64) * (360.0 / n_directions)
     direction = np.asarray(direction, dtype=np.float64)
+    n_directions = direction.size
 
-    ef = ds["ef"].transpose("time", "latitude", "longitude", "f")
-    ef_linear = decode_ef_spectrum(ef)
+    dims = ("time", "latitude", "longitude")
+    shape = tuple(ds.sizes[d] for d in dims)
+    efth = np.zeros(shape + (frequency.size, n_directions), dtype=np.float64)
+
+    used = []
+    for index in range(n_partitions):
+        names = {field: f"{field}{index}" for field in PARTITION_FIELDS}
+        if not all(name in ds for name in names.values()):
+            continue
+        used.append(index)
+
+        hs = np.asarray(ds[names["phs"]].transpose(*dims).values, dtype=np.float64)
+        tp = np.asarray(ds[names["ptp"]].transpose(*dims).values, dtype=np.float64)
+        pdir = np.asarray(ds[names["pdir"]].transpose(*dims).values, dtype=np.float64)
+        pspr = np.asarray(ds[names["pspr"]].transpose(*dims).values, dtype=np.float64)
+
+        with np.errstate(divide="ignore", invalid="ignore"):
+            peak_frequency = 1.0 / tp
+        present = np.isfinite(hs) & (hs > 0.0) & np.isfinite(peak_frequency)
+        if not present.any():
+            continue
+
+        shape_f = jonswap_shape(frequency, peak_frequency, gamma=gamma)
+        # Renormalize each partition to its own Hs: m0 = (hs/4)^2, and the
+        # directional lobe integrates to 1, so scaling the frequency shape is
+        # enough. Numerical trapezoid over the same grid that gets written,
+        # so the height comes back exactly rather than to a tolerance.
+        m0_shape = np.trapezoid(shape_f, x=frequency, axis=-1)
+        with np.errstate(divide="ignore", invalid="ignore"):
+            scale = np.where(m0_shape > 0.0, np.square(hs / 4.0) / m0_shape, 0.0)
+        scale = np.where(present, scale, 0.0)
+        energy_f = np.nan_to_num(shape_f * scale[..., None])
+
+        lobe = cosine_2s_spread(direction, pdir, pspr)
+        efth += energy_f[..., :, None] * lobe[..., None, :]
+
+    if not used:
+        raise KeyError(
+            "No complete partition found. The reconstruction needs "
+            f"{'/'.join(PARTITION_FIELDS)}<i> for at least one i; the window "
+            f"has {sorted(ds.data_vars)}."
+        )
 
     diagnostics = {}
-    if check_hs and "hs" in ds:
+    if check_hs and REFERENCE_FIELD in ds:
         diagnostics = verify_hs_against_source(
-            ef_linear.rename({"f": "frequency"}),
-            frequency,
-            ds["hs"].transpose("time", "latitude", "longitude").values,
+            efth, frequency, n_directions, ds[REFERENCE_FIELD].transpose(*dims).values
         )
     elif check_hs:
-        diagnostics = {"hs_check": "skipped -- no `hs` in the fetched window"}
-
-    lobe = cosine_2s_spread(
-        direction,
-        ds["dir"].transpose("time", "latitude", "longitude").values,
-        ds["spr"].transpose("time", "latitude", "longitude").values,
-    )
-
-    # (t, y, x, f) x (t, y, x, theta) -> (t, y, x, f, theta). Land is NaN in
-    # ef; zero it so those stations are simply zero-energy, which
-    # forcing/ww3.py tolerates, rather than NaN, which ww3_bounc does not.
-    efth = (
-        np.nan_to_num(np.asarray(ef_linear.values, dtype=np.float64))[..., :, None]
-        * lobe[..., None, :]
-    )
+        diagnostics = {"hs_check": f"skipped -- no `{REFERENCE_FIELD}` in the window"}
 
     provenance = {
         "reconstruction": (
-            "observed IOWAGA 1D frequency spectrum x cosine-2s directional "
-            "lobe from the frequency-integrated mean direction and spread"
+            "per-partition JONSWAP frequency shape x cosine-2s directional "
+            "lobe, summed over the hindcast's spectral partitions"
         ),
-        "source": "IOWAGA WAVEWATCH-III hindcast via Ifremer THREDDS OPeNDAP",
-        "source_variables": "ef,dir,spr",
-        "ef_decoding": "E(f) = 10**ef - 1e-12",
-        "directional_limitation": (
-            "dir and spr are frequency-integrated, so every frequency band "
-            "shares one mean direction and spread; crossing seas collapse to "
-            "a single smeared lobe"
+        "source": "IOWAGA GLOBMULTI_ERA5_GLOBCUR_01 (Ifremer/LOPS) via data-dataref",
+        "source_variables": ",".join(
+            f"{field}{i}" for field in PARTITION_FIELDS for i in used
         ),
-        "n_directions": int(direction.size),
-        **{k: v for k, v in diagnostics.items()},
+        "n_partitions_used": len(used),
+        "gamma": gamma,
+        "peak_period_is_true_peak": "yes (ptp = period at spectral density maximum)",
+        "per_partition_directional_spread": "yes (pspr per partition)",
+        "residual_system_synthesized": "no (partitions are energy-complete)",
+        "n_directions": int(n_directions),
+        **diagnostics,
         **{
             k: v
             for k, v in ds.attrs.items()
-            if k in ("title", "source", "WAVEWATCH_III_version_number", "area")
+            if k in ("title", "area", "WAVEWATCH_III_version_number", "forcing_wind")
         },
     }
 
     return xr.Dataset(
         {
             "efth": (
-                ("time", "latitude", "longitude", "frequency", "direction"),
+                dims + ("frequency", "direction"),
                 efth.astype(dtype),
                 {
                     "units": EFTH_UNITS,
                     "long_name": (
-                        "2D wave energy density spectrum (observed 1D "
-                        "spectrum with a synthesized directional lobe)"
+                        "2D wave energy density spectrum reconstructed from "
+                        "WAVEWATCH-III spectral partitions"
                     ),
                     **provenance,
                 },
@@ -653,58 +639,120 @@ def spectra_from_iowaga(
     )
 
 
+def _select_window(
+    ds,
+    dates,
+    lat_min,
+    lat_max,
+    lon_min,
+    lon_max,
+    buffer_deg=1.0,
+    normalize_longitudes=True,
+):
+    """Subset one opened monthly file to the requested window.
+
+    The +/- buffer_deg padding matches era5.py's convention and exists for
+    the same reason -- a boundary bounding box from
+    mom6_forge.Grid.get_bounding_boxes is a near-zero-width strip, which
+    would otherwise select zero or one grid points.
+
+    Latitude is sliced with an explicit ascending/descending check rather
+    than assuming a direction: xarray's .sel with a slice silently returns
+    nothing if the slice runs opposite to the coordinate's order.
+
+    A window crossing the antimeridian is taken as two slices and joined,
+    since the longitude axis is monotonic and one slice across the seam
+    selects nothing. `mom6_forge.utils.longitude_slicer` would also do this,
+    but it rolls the whole array; the file is already local here and the
+    two-slice form keeps the intent obvious. The shared
+    `convert_lons_to_180_range` IS used, so this agrees with glorys.py on
+    longitude convention.
+    """
+    if normalize_longitudes:
+        lon_min, lon_max = convert_lons_to_180_range(lon_min, lon_max)
+
+    ds = ds.sel(time=slice(pd.Timestamp(dates[0]), pd.Timestamp(dates[-1])))
+
+    lat_slice = slice(lat_min - buffer_deg, lat_max + buffer_deg)
+    if ds["latitude"].values[0] > ds["latitude"].values[-1]:
+        lat_slice = slice(lat_slice.stop, lat_slice.start)
+    ds = ds.sel(latitude=lat_slice)
+
+    west, east = lon_min - buffer_deg, lon_max + buffer_deg
+    if west < east:
+        ds = ds.sel(longitude=slice(west, east))
+    else:
+        ds = xr.concat(
+            [
+                ds.sel(longitude=slice(west, 180.0)),
+                ds.sel(longitude=slice(-180.0, east)),
+            ],
+            dim="longitude",
+        )
+
+    if ds.sizes.get("latitude", 0) == 0 or ds.sizes.get("longitude", 0) == 0:
+        raise ValueError(
+            f"No IOWAGA grid points in lat [{lat_min}, {lat_max}] lon "
+            f"[{lon_min}, {lon_max}] (buffer {buffer_deg} deg). The "
+            f"{GRID_NAME} grid is 0.5 degree, spanning -78 to 83 north."
+        )
+    return ds
+
+
 class IOWAGA(WW3ForcingProduct):
     product_name = "iowaga"
     description = (
-        "IOWAGA WAVEWATCH-III global wave hindcast (Ifremer/LOPS), read "
-        "through the THREDDS OPeNDAP service so the time/space window is "
-        "subset server-side instead of downloading ~2.8 GB monthly global "
-        "files. Supplies WW3 boundary spectra E(f, theta) built from the "
-        "hindcast's observed 1D frequency spectrum combined with a "
-        "cosine-2s directional lobe. NOTE: OPeNDAP carries the ECMWF-forced "
-        "hindcast (1991-2019), not the newer ERA5-forced "
-        "GLOBMULTI_ERA5_GLOBCUR_01 (1993-2024), which is file-server only."
+        "IOWAGA GLOBMULTI_ERA5_GLOBCUR_01 wave hindcast (Ifremer/LOPS): "
+        "WAVEWATCH-III v7.08 with Alday et al. (2021) physics, ERA5 winds and "
+        "CMEMS-GLOBCURRENT currents, 0.5 degree global, 3-hourly, 1993 to "
+        "present. Supplies WW3 boundary spectra E(f, theta) reconstructed "
+        "from the hindcast's six-way spectral partitioning -- each partition "
+        "a JONSWAP shape on its own true peak period and its own directional "
+        "spread. The partitions are energy-complete, so total significant "
+        "height is reproduced without synthesizing a residual system."
     )
-    link = "https://tds3.ifremer.fr/thredds/catalogs/IOWAGA-WW3-HINDCAST/IOWAGA-WW3-HINDCAST.xml"
+    link = "https://doi.org/10.12770/857a3337-f59a-481a-bf98-5561e8b61e7b"
     time_var_name = "time"
     time_units = "hours"
     calendar = GREGORIAN
 
     @classmethod
     def validate_method(cls, method_name, **kwargs):
-        """Not auto-validatable: it needs the live Ifremer THREDDS service.
+        """Not auto-validatable: it needs the live Ifremer file server.
 
         docs/source/raw_data_access/check_raw_data.py calls
         ProductRegistry.validate_function on every registered product from a
-        nightly runner. A toy call here would make a real OPeNDAP request to
-        a third-party server, so the nightly job's result would track
-        Ifremer's uptime rather than this repo's correctness. Return False,
-        which is what BaseProduct.validate_method returns on error anyway.
+        nightly runner. A toy call here would download a 2.8 GB monthly file
+        from a third-party server, so the nightly job's result would track
+        Ifremer's uptime and burn bandwidth. Return False, which is what
+        BaseProduct.validate_method returns on error anyway.
         """
         cls.logger.info(
-            "%s cannot be auto-validated: it needs the live "
-            "tds3.ifremer.fr THREDDS service.",
+            "%s cannot be auto-validated: it downloads ~2.8 GB monthly files "
+            "from data-dataref.ifremer.fr.",
             cls.product_name,
         )
         return False
 
     @accessmethod(
         description=(
-            "Subsets the IOWAGA hindcast over OPeNDAP to the requested "
-            "window and writes a 2D wave spectrum E(f, theta) in the same "
-            "(time, latitude, longitude, frequency, direction) shape as the "
-            "ERA5 wave-spectra products, so it is a drop-in replacement for "
-            "them. No API key and no local staging of global files."
+            "Downloads IOWAGA GLOBMULTI_ERA5_GLOBCUR_01 monthly field files "
+            "and reconstructs a 2D wave spectrum E(f, theta) from their "
+            "six-way spectral partitioning, in the same (time, latitude, "
+            "longitude, frequency, direction) shape as the ERA5 wave-spectra "
+            "products -- so it is a drop-in replacement for them. No API key."
         ),
         type="python",
         how_to_use=(
             "Set ww3_obc_product_name='iowaga' and "
             "ww3_obc_function_name='get_iowaga_2d_spectra' on "
-            "WW3Configurator. Needs outbound HTTPS to tds3.ifremer.fr and no "
-            "credentials. Knobs (dataset, n_directions, buffer_deg, "
-            "check_hs) are passed through WW3Configurator's "
-            "ww3_obc_extra_args. Dates must fall in 1991-07-01..2019-12-31; "
-            "for later dates use the data-dataref file server instead."
+            "WW3Configurator. Needs outbound HTTPS to "
+            "data-dataref.ifremer.fr and no credentials. Each month of the "
+            "requested range is downloaded (~2.8 GB), subset, and deleted "
+            "before the next, so peak transient disk is one file; pass "
+            "keep_raw=True to retain them. Knobs (n_directions, gamma, "
+            "buffer_deg, n_chunks, raw_folder, keep_raw, check_hs) go through "
+            "WW3Configurator's ww3_obc_extra_args."
         ),
     )
     def get_iowaga_2d_spectra(
@@ -717,60 +765,84 @@ class IOWAGA(WW3ForcingProduct):
         output_folder=Path(""),
         output_filename="iowaga_spectra.nc",
         variables=None,
-        dataset=DEFAULT_DATASET,
         n_directions=DEFAULT_N_DIRECTIONS,
+        gamma=DEFAULT_GAMMA,
         buffer_deg=1.0,
+        n_chunks=DEFAULT_N_CHUNKS,
+        raw_folder=None,
+        keep_raw=False,
         check_hs=True,
         normalize_longitudes=True,
     ):
-        # `variables` exists only to satisfy ForcingProduct.required_args.
-        # It cannot select what gets fetched: the reconstruction needs
-        # exactly ef/dir/spr (plus hs for the self-check), and forcing/ww3.py
-        # calls the shared OBC engine with a hardcoded variables=[], so
-        # honouring it would mean requesting nothing on every real call.
+        # `variables` exists only to satisfy ForcingProduct.required_args. It
+        # cannot select what gets read: the reconstruction always needs the
+        # full partition set, and forcing/ww3.py calls the shared OBC engine
+        # with a hardcoded variables=[], so honouring it would mean reading
+        # nothing on every real pipeline call.
         if variables:
             raise ValueError(
-                "iowaga does not take a `variables` list -- the 2D "
-                "reconstruction always needs ef, dir and spr (and hs for its "
-                f"self-check). Got variables={variables!r}."
+                "iowaga does not take a `variables` list -- the reconstruction "
+                "always needs the full partition set "
+                f"({'/'.join(PARTITION_FIELDS)}0-{N_PARTITIONS - 1}) plus "
+                f"`{REFERENCE_FIELD}`. Got variables={variables!r}."
             )
 
-        check_coverage(dates, dataset)
+        check_coverage(dates)
 
         output_folder = Path(output_folder)
         output_folder.mkdir(parents=True, exist_ok=True)
         output_path = output_folder / output_filename
+        staging = Path(raw_folder) if raw_folder else output_folder / "iowaga_raw"
+        staging.mkdir(parents=True, exist_ok=True)
 
-        wanted = ["ef", "dir", "spr", "hs"]
-        with xr.open_dataset(build_opendap_url(dataset)) as remote:
-            available = [v for v in wanted if v in remote.data_vars]
-            missing = set(wanted[:3]) - set(available)
-            if missing:
-                raise KeyError(
-                    f"{dataset} does not publish {sorted(missing)}, which the "
-                    "2D reconstruction needs. Note the THREDDS catalogue's "
-                    "variable list is the union over the product family and "
-                    "over-advertises; this checks the live dataset. "
-                    f"Available: {sorted(remote.data_vars)}."
-                )
-            pieces = _select_window(
-                remote[available],
-                dates=dates,
-                lat_min=lat_min,
-                lat_max=lat_max,
-                lon_min=lon_min,
-                lon_max=lon_max,
-                buffer_deg=buffer_deg,
-                normalize_longitudes=normalize_longitudes,
+        wanted = partition_variable_names()
+        windows = []
+        for year, month in months_in_range(dates):
+            url = build_month_url(year, month)
+            raw_path = staging / Path(url).name
+            download_month(url, raw_path, n_chunks=n_chunks)
+            try:
+                with xr.open_dataset(raw_path) as monthly:
+                    missing = [v for v in wanted if v not in monthly.data_vars]
+                    if missing:
+                        raise KeyError(
+                            f"{raw_path.name} is missing {missing}, which the "
+                            "partition reconstruction needs. Available: "
+                            f"{sorted(monthly.data_vars)}."
+                        )
+                    window = _select_window(
+                        monthly[wanted],
+                        dates=dates,
+                        lat_min=lat_min,
+                        lat_max=lat_max,
+                        lon_min=lon_min,
+                        lon_max=lon_max,
+                        buffer_deg=buffer_deg,
+                        normalize_longitudes=normalize_longitudes,
+                    )
+                    if window.sizes.get("time", 0):
+                        windows.append(window.load())
+            finally:
+                # One month on disk at a time, so a multi-year request does
+                # not accumulate ~2.8 GB per month of staging.
+                if not keep_raw:
+                    raw_path.unlink(missing_ok=True)
+
+        if not windows:
+            raise ValueError(
+                f"No IOWAGA time steps between {dates[0]} and {dates[-1]}."
             )
-            # The one network transfer: only the selected window travels,
-            # as one contiguous request per piece.
-            window = _load_window(pieces)
+        combined = windows[0] if len(windows) == 1 else xr.concat(windows, dim="time")
 
-        spectra = spectra_from_iowaga(
-            window, n_directions=n_directions, check_hs=check_hs
+        spectra = spectra_from_partitions(
+            combined, n_directions=n_directions, gamma=gamma, check_hs=check_hs
         )
         spectra.to_netcdf(
             output_path, encoding={"efth": {"zlib": True, "complevel": 1}}
         )
+        if not keep_raw:
+            try:
+                staging.rmdir()  # only if it is now empty
+            except OSError:
+                pass
         return output_path
