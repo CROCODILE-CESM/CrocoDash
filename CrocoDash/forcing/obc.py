@@ -374,11 +374,6 @@ def _merge_boundary(boundary_label: str, regridded_files: list, output_folder) -
     return output_path
 
 
-# ---------------------------------------------------------------------------
-# Entry point
-# ---------------------------------------------------------------------------
-
-
 def process_obc_conditions(
     start_date,
     end_date,
