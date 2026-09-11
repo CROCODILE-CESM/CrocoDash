@@ -149,3 +149,148 @@ def test_split_bgc_tracers_resume_rejects_truncated_per_tracer_file(tmp_path):
 
     with pytest.raises(RuntimeError, match="not valid NetCDF"):
         _split_bgc_tracers_into_files(tmp_path, conversion, tracers)
+
+
+# ---------------------------------------------------------------------------
+# Entry points: what MOM6 hands to the model-agnostic engines
+# ---------------------------------------------------------------------------
+
+PRODUCT_INFO = {
+    "u_var_name": "uo",
+    "v_var_name": "vo",
+    "eta_var_name": "zos",
+    "tracer_var_names": {"temp": "thetao", "salt": "so"},
+    "dataset_path": "/some/path",
+}
+VARS = ["uo", "vo", "zos", "thetao", "so"]
+
+
+def _recorder(recorded):
+    def _engine(**kwargs):
+        recorded.update(kwargs)
+        return "engine-result"
+
+    return _engine
+
+
+def test_process_mom6_obc_wires_mom6_pieces_into_the_engine(tmp_path, monkeypatch):
+    """obc.py knows nothing about MOM6: the Segment regrid step, the download
+    request built from the product's var names, and the BGC split (which runs
+    after the merge, on its output) all have to come from here."""
+    recorded, split = {}, []
+    monkeypatch.setattr(mom6.obc, "process_obc_conditions", _recorder(recorded))
+    monkeypatch.setattr(
+        mom6, "_split_bgc_tracers_into_files", lambda **kw: split.append(kw)
+    )
+    kwargs = dict(
+        start_date="2020-01-01",
+        end_date="2020-01-15",
+        boundary_number_conversion={"east": 1},
+        product_name="glorys",
+        function_name="get_glorys_data_from_rda",
+        product_info=dict(PRODUCT_INFO),
+        hgrid_path=str(tmp_path / "hgrid.nc"),
+        raw_dataset_path=str(tmp_path),
+        regridded_dataset_path=str(tmp_path),
+        output_path=str(tmp_path),
+        bathymetry_path=str(tmp_path / "topo.nc"),
+    )
+
+    assert mom6.process_mom6_obc(**kwargs) == "engine-result"
+    assert recorded["regrid_chunk_fn"] is mom6._regrid_obc_chunk
+    assert recorded["variables"] == VARS
+    assert recorded["extra_args"] == {"dataset_path": "/some/path"}
+    assert recorded["bathymetry_path"] == kwargs["bathymetry_path"]
+    assert split == [
+        {
+            "output_path": str(tmp_path),
+            "boundary_number_conversion": {"east": 1},
+            "marbl_var_names": {},
+        }
+    ]
+
+    # preview only reports filenames: no request to build, nothing merged to split.
+    recorded.clear()
+    split.clear()
+    mom6.process_mom6_obc(**kwargs, preview=True)
+    assert (recorded["preview"], recorded["variables"], split) == (True, None, [])
+
+    # _regrid_obc_chunk hardwires regional_mom6's fill; anything else must fail
+    # up front rather than be silently ignored.
+    kwargs["product_info"]["boundary_fill_method"] = "something_else"
+    with pytest.raises(ValueError, match="is not supported"):
+        mom6.process_mom6_obc(**kwargs)
+
+
+def test_process_mom6_ic_binds_grid_paths_onto_the_regrid_step(tmp_path, monkeypatch):
+    """ic.py's engine signature has no hgrid/vgrid/bathymetry -- MOM6 binds its
+    own onto _regrid_ic with partial before handing it over."""
+    recorded = {}
+    monkeypatch.setattr(mom6.ic_mod, "process_initial_condition", _recorder(recorded))
+    (tmp_path / "vgrid.nc").touch()
+    kwargs = dict(
+        product_name="glorys",
+        function_name="get_glorys_data_from_rda",
+        product_information=dict(PRODUCT_INFO),
+        start_date="2020-01-01",
+        hgrid_path=str(tmp_path / "hgrid.nc"),
+        vgrid_path=str(tmp_path / "vgrid.nc"),
+        dataset_varnames={},
+        raw_data_dir=str(tmp_path),
+        output_data_dir=str(tmp_path),
+        bathymetry_path=str(tmp_path / "topo.nc"),
+    )
+
+    assert mom6.process_mom6_ic(**kwargs) == "engine-result"
+    assert recorded["regrid_fn"].func is mom6._regrid_ic
+    assert recorded["regrid_fn"].keywords == {
+        k: kwargs[k] for k in ("hgrid_path", "vgrid_path", "bathymetry_path")
+    }
+    assert recorded["variables"] == VARS
+
+    mom6.process_mom6_ic(**kwargs, preview=True)
+    assert (recorded["preview"], recorded["variables"]) == (True, None)
+
+    # _regrid_ic reads dz off the vgrid; a missing one otherwise fails deep
+    # inside regional_mom6.
+    kwargs["vgrid_path"] = str(tmp_path / "gone.nc")
+    with pytest.raises(FileNotFoundError, match="Vgrid file must exist"):
+        mom6.process_mom6_ic(**kwargs)
+
+
+def test_fill_missing_and_write_leaves_no_gaps_for_mom6_to_read(tmp_path):
+    """Holes inside the ocean mask are objectively interpolated, land (left at
+    0.0 by mom6_forge's fill) is interpolated away, and levels below the source
+    data are carried down -- nothing NaN reaches the file MOM6 reads. 3D goes
+    level by level because that fill is a 2D solve, with depth as axis 0.
+    """
+    mask = xr.DataArray(np.ones((4, 5)), dims=("ny", "nx"))
+    mask[0, :] = 0  # a row of land
+    eta = np.full((4, 5), 5.0)
+    eta[0, :], eta[2, 2] = np.nan, np.nan  # land, then a hole in the ocean
+    temp = np.full((3, 4, 5), 8.0)
+    temp[2], temp[1, 2, 2] = np.nan, np.nan  # a level below the data, then a hole
+    xr.Dataset(
+        {"eta_t": (("ny", "nx"), eta), "temp": (("zl", "ny", "nx"), temp)},
+        coords={"zl": np.arange(3.0)},
+    ).to_netcdf(tmp_path / "init.nc")
+
+    mom6._fill_missing_and_write(
+        tmp_path / "init.nc",
+        tmp_path / "filled.nc",
+        [
+            {"name": name, "mask": mask, "dims": dims, "encoding": encoding}
+            for name, dims, encoding in [
+                ("eta_t", ("nx", "ny"), {"_FillValue": None}),
+                ("temp", ("nx", "ny", "zl"), {"_FillValue": -1e20}),
+            ]
+        ],
+    )
+
+    with xr.open_dataset(tmp_path / "filled.nc") as filled:
+        assert not np.isnan(filled["eta_t"].values).any()
+        assert not np.isnan(filled["temp"].values).any()
+        assert filled["eta_t"].values[2, 2] == pytest.approx(5.0)
+        assert filled["temp"].values[1, 2, 2] == pytest.approx(8.0)
+        assert filled["temp"].values[2, 1, 1] == pytest.approx(8.0)
+        assert "_FillValue" not in filled["eta_t"].encoding
