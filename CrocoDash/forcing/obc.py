@@ -281,16 +281,14 @@ def _get_boundary(
     function_name: str,
     variables: list,
     extra_args: dict,
-    custom_segments: dict,
 ) -> list:
-    """Download all raw data for one boundary, chunked by get_step_days."""
+    """Download all raw data for one boundary, chunked by get_step_days.
+
+    ``latlon`` is computed by the caller (tmask-derived where a bathymetry is
+    available, and custom-segment aware) -- do not recompute it here."""
     output_dir = Path(output_dir)
 
     data_access_fn = utils.get_data_access_function(product_name, function_name)
-
-    # Get the bounding box for the specified boundary from the hgrid
-    hgrid = xr.open_dataset(hgrid_path)
-    latlon = _boundary_bounding_box(hgrid, boundary, custom_segments)
 
     for chunk_start, chunk_end in _make_date_pairs(start_date, end_date, get_step_days):
         start_str = chunk_start.strftime("%Y-%m-%d")
@@ -521,13 +519,19 @@ def process_obc_conditions(
                 git=False,
             )
             boundary_bboxes = {
-                b: _ocean_bbox_for_boundary(hgrid_ds, topo.supergridmask, b)
+                b: (
+                    _boundary_bounding_box(hgrid_ds, b, custom_segments)
+                    if b in custom_segments
+                    else _ocean_bbox_for_boundary(hgrid_ds, topo.supergridmask, b)
+                )
                 for b in boundaries
             }
             logger.info("Using tmask-derived bounding boxes for OBC data download.")
         else:
-            full_bboxes = Grid.get_bounding_boxes(hgrid_ds)
-            boundary_bboxes = {b: full_bboxes[b] for b in boundaries}
+            boundary_bboxes = {
+                b: _boundary_bounding_box(hgrid_ds, b, custom_segments)
+                for b in boundaries
+            }
             logger.info(
                 "No bathymetry_path given; using full supergrid bounding boxes."
             )
@@ -551,7 +555,6 @@ def process_obc_conditions(
             function_name=function_name,
             variables=variables,
             extra_args=extra_args,
-            custom_segments=custom_segments,
         )
 
     regridded_files_by_boundary = {}
