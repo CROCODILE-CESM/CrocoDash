@@ -28,7 +28,7 @@ from CrocoDash.forcing.base import *
 from CrocoDash.grid import Grid
 from CrocoDash.topo import Topo
 from CrocoDash.raw_data_access.registry import ProductRegistry
-from CrocoDash.raw_data_access.base import ForcingProduct
+from CrocoDash.raw_data_access.base import Calendar, MOM6ForcingProduct
 from regional_mom6.segment import Segment
 
 logger = logging.setup_logger(__name__)
@@ -126,8 +126,8 @@ def _regrid_obc_chunk(
             regridding_method="bilinear",
             fill_method=rm6.regridding.fill_missing_data,
             regridders=regridders,
+            calendar=dataset_varnames["calendar"]["mom6"],
             repeat_year_forcing=False,
-            calendar=dataset_varnames["mom6_calendar"],
             time_units=dataset_varnames["time_units"],
         )
         return seg._regridders
@@ -138,6 +138,105 @@ def _regrid_obc_chunk(
 # ---------------------------------------------------------------------------
 # IC regrid step
 # ---------------------------------------------------------------------------
+
+
+def _split_bgc_tracers_into_files(
+    output_path, boundary_number_conversion: dict, marbl_var_names: dict
+):
+    """Move each BGC tracer out of the per-boundary OBC files into its own file.
+
+    MOM6's generic tracer code reads BGC open-boundary data from one file per
+    tracer holding every segment (``<tracer>_obc_segment.nc``), whereas the
+    physical tracers are read per boundary from
+    ``forcing_obc_segment_NNN.nc``. The regrid step writes the BGC tracers into
+    those per-boundary files alongside temp/salt, so without this step the
+    per-tracer files MOM6 is pointed at never exist.
+
+    The tracers are *moved*, not copied: ``OBC_SEGMENT_NNN_DATA`` names only
+    U/V/SSH/TEMP/SALT out of the per-boundary file, so BGC copies left behind
+    there are never read and would put every field on disk twice.
+
+    Mirrors regional_mom6's ``reformat_bgc_tracers_into_files``, which only runs
+    inside rm6's own ``setup_ocean_state_boundaries`` and so is never reached by
+    this pipeline.
+    """
+    if not marbl_var_names:
+        return []
+
+    output_path = Path(output_path)
+    seg_ids = [f"{n:03d}" for n in boundary_number_conversion.values()]
+    seg_files = {seg: output_path / f"forcing_obc_segment_{seg}.nc" for seg in seg_ids}
+    out_files = [output_path / f"{var}_obc_segment.nc" for var in marbl_var_names]
+
+    # Step 3 strips the BGC tracers out of the per-boundary files, so on a
+    # re-run they are no longer there to be read. Every other phase of the OBC
+    # pipeline resumes by skipping completed work; do the same here.
+    if all(f.exists() for f in out_files):
+        for f in out_files:
+            if not utils.is_valid_netcdf(f):
+                raise RuntimeError(
+                    f"BGC per-tracer file {f} exists but is not valid NetCDF. "
+                    "Delete it and re-run."
+                )
+        logger.info("BGC SPLIT: per-tracer files already exist. Skipping.")
+        return out_files
+
+    # 1. Open each per-boundary file once. These are the largest files the
+    #    pipeline produces, and opening inside the tracer loop below would
+    #    reopen every one of them once per tracer.
+    seg_datasets = {seg: xr.open_dataset(f) for seg, f in seg_files.items()}
+
+    # 2. Write one file per tracer, gathering that tracer across all segments.
+    written = []
+    try:
+        for var in marbl_var_names:
+            ds_var = xr.Dataset()
+            for seg in seg_ids:
+                ds = seg_datasets[seg]
+                var_name = f"{var}_segment_{seg}"
+                if var_name not in ds:
+                    raise KeyError(
+                        f"BGC tracer variable {var_name!r} not found in "
+                        f"{seg_files[seg]}. Expected it there because {var!r} was "
+                        "included in the regridded tracer set."
+                    )
+                # Left lazy so to_netcdf streams from the open source file
+                # rather than materialising every segment first.
+                ds_var[var_name] = ds[var_name]
+                dz_var_name = f"dz_{var_name}"
+                if dz_var_name in ds:
+                    ds_var[dz_var_name] = ds[dz_var_name]
+
+            out_file = output_path / f"{var}_obc_segment.nc"
+            ds_var.to_netcdf(out_file, unlimited_dims="time")
+            written.append(out_file)
+            logger.info("BGC SPLIT: wrote %s", out_file.name)
+    finally:
+        for ds in seg_datasets.values():
+            ds.close()
+
+    # 3. Drop the now-redundant copies from the per-boundary files. Must follow
+    #    step 2, which streams its output from these same files.
+    for seg in seg_ids:
+        seg_file = seg_files[seg]
+        with xr.open_dataset(seg_file) as ds:
+            drop = [
+                name
+                for var in marbl_var_names
+                for name in (f"{var}_segment_{seg}", f"dz_{var}_segment_{seg}")
+                if name in ds
+            ]
+            if not drop:
+                continue
+            # A NetCDF file cannot be rewritten while open, so stage a copy and
+            # swap it in. os.replace is atomic: an interrupted run leaves either
+            # the old file or the new one, never a truncated one.
+            tmp = seg_file.with_name(seg_file.name + ".tmp")
+            ds.drop_vars(drop).to_netcdf(tmp, unlimited_dims="time")
+        os.replace(tmp, seg_file)
+        logger.info("BGC SPLIT: dropped %d BGC vars from %s", len(drop), seg_file.name)
+
+    return written
 
 
 def _fill_missing_and_write(input_path, output_path, var_specs, z_dim="zl"):
@@ -452,11 +551,17 @@ class ConditionsConfigurator(BaseConfigurator):
 
         ProductRegistry.load()
         product_name = kwargs["product_name"]
-        if not (
-            ProductRegistry.product_exists(product_name)
-            and ProductRegistry.product_is_of_type(product_name, ForcingProduct)
-        ):
-            raise ValueError("Product / Data Path is not supported quite yet")
+        if not ProductRegistry.product_exists(product_name):
+            raise ValueError(
+                f"Unknown forcing product '{product_name}'. Known products: "
+                f"{sorted(ProductRegistry.products)}."
+            )
+        if not ProductRegistry.product_is_of_type(product_name, MOM6ForcingProduct):
+            raise ValueError(
+                f"Product '{product_name}' ({ProductRegistry.get_product(product_name).__name__}) "
+                "is not a MOM6ForcingProduct, so it can't be used as the conditions configurator's product_name "
+                "(MOM6's initial/boundary condition forcing). If this is a CICE forcing product, pass it as cice_product_name instead."
+            )
 
     @staticmethod
     def _segment_index(boundaries, boundary):
@@ -487,6 +592,8 @@ class ConditionsConfigurator(BaseConfigurator):
         )
         start_dt = datetime.strptime(start_date, self._DATE_FORMAT)
         end_dt = datetime.strptime(end_date, self._DATE_FORMAT)
+
+        # Setting both get and regrid to the entire modeling period. Power users can modify this as they need!
         step = (end_dt - start_dt).days + 1
         self.set_output_param("get_step_days", step)
         self.set_output_param("regrid_step_days", step)
@@ -565,17 +672,6 @@ class ConditionsConfigurator(BaseConfigurator):
                 f"SALT=file:forcing_obc_segment_{seg_ix}.nc(salt)"
             )
 
-            if self.registry and self.registry.is_active("bgc"):
-                for tracer_mom6_name, source_var in product.marbl_var_names.items():
-                    tracer_param = UserNLConfigParam(
-                        f"OBC_DATA_{tracer_mom6_name}",
-                        comment="Open boundary conditions",
-                    )
-                    tracer_param.set_item(
-                        f"{tracer_mom6_name}_obc_segment.nc({source_var})"
-                    )
-                    dynamic_params.append(tracer_param)
-
             data_str = standard_data_str
             if self.registry and self.registry.is_active("tides"):
                 data_str += (
@@ -593,6 +689,20 @@ class ConditionsConfigurator(BaseConfigurator):
             )
             data_param.set_item(data_str)
             dynamic_params.append(data_param)
+
+        # ---- BGC tracer OBC params ----
+        # Each BGC tracer lives in a single {tracer}_obc_segment.nc holding all
+        # boundaries, so these are emitted once per tracer, not per segment.
+        if self.registry and self.registry.is_active("bgc"):
+            for tracer_mom6_name, source_var in product.marbl_var_names.items():
+                tracer_param = UserNLConfigParam(
+                    f"OBC_DATA_{tracer_mom6_name}",
+                    comment="Open boundary conditions",
+                )
+                tracer_param.set_item(
+                    f"{tracer_mom6_name}_obc_segment.nc({source_var})"
+                )
+                dynamic_params.append(tracer_param)
 
         self.output_params = self.output_params + dynamic_params
 
@@ -631,6 +741,15 @@ class ConditionsConfigurator(BaseConfigurator):
                     param = UserNLConfigParam(name, comment="Open boundary conditions")
                     param.set_item(data["outputs"][name])
                     obj.output_params.append(param)
+        # BGC tracer params are keyed by tracer, not by segment, and are only
+        # present when the bgc configurator was active. Recover them by name so
+        # a round-trip preserves them without needing the registry or product.
+        existing = {param.name for param in obj.output_params}
+        for name, value in data["outputs"].items():
+            if name.startswith("OBC_DATA_") and name not in existing:
+                param = UserNLConfigParam(name, comment="Open boundary conditions")
+                param.set_item(value)
+                obj.output_params.append(param)
         return obj
 
     # ---- process (extraction) ----
@@ -662,6 +781,7 @@ class ConditionsConfigurator(BaseConfigurator):
                 output_path=ctx.output_path,
                 regrid_chunk_fn=regrid_chunk_fn,
                 custom_segments=custom_segments,
+                bathymetry_path=ctx.topo_path,
                 get_step_days=int(self.get_output_param("get_step_days")),
                 regrid_step_days=int(self.get_output_param("regrid_step_days")),
                 preview=True,
@@ -674,7 +794,7 @@ class ConditionsConfigurator(BaseConfigurator):
                 f"fill_method '{product_info['boundary_fill_method']}' is not supported."
             )
 
-        return obc.process_obc_conditions(
+        result = obc.process_obc_conditions(
             start_date=self.get_input_param("start_date"),
             end_date=self.get_input_param("end_date"),
             boundary_number_conversion=self.get_output_param(
@@ -691,10 +811,20 @@ class ConditionsConfigurator(BaseConfigurator):
             output_path=ctx.output_path,
             regrid_chunk_fn=regrid_chunk_fn,
             custom_segments=custom_segments,
+            bathymetry_path=ctx.topo_path,
             get_step_days=int(self.get_output_param("get_step_days")),
             regrid_step_days=int(self.get_output_param("regrid_step_days")),
             preview=False,
         )
+
+        _split_bgc_tracers_into_files(
+            output_path=ctx.output_path,
+            boundary_number_conversion=self.get_output_param(
+                "boundary_number_conversion"
+            ),
+            marbl_var_names=product_info.get("marbl_var_names", {}),
+        )
+        return result
 
     def process_ic(self, ctx):
         """Process the MOM6 initial condition (t=0) through forcing.ic's GET →

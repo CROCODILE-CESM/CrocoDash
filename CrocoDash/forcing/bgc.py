@@ -202,7 +202,8 @@ class BGCRiverNutrientsConfigurator(BaseConfigurator):
         InputValueParam("case_session_id", comment="Case session identifier"),
         InputValueParam("case_grid_name", comment="Case grid name"),
         InputValueParam(
-            "cf_calendar", comment="CF calendar for the river nutrients output file"
+            "calendar",
+            comment="Calendar names (cf/cesm/mom6) for the river nutrients output",
         ),
     ]
     output_params = [
@@ -225,15 +226,17 @@ class BGCRiverNutrientsConfigurator(BaseConfigurator):
         case_session_id,
         case_grid_name,
         case_forcing_product=None,
-        cf_calendar=None,
+        calendar=None,
     ):
-        if case_forcing_product is not None and cf_calendar is None:
-            cf_calendar = case_forcing_product.cf_calendar
+        # All three names travel together: the writer needs cftime's spelling
+        # for its date arithmetic and MOM6's for the attribute it writes.
+        if calendar is None and case_forcing_product is not None:
+            calendar = case_forcing_product.calendar
         super().__init__(
             global_river_nutrients_filepath=global_river_nutrients_filepath,
             case_session_id=case_session_id,
             case_grid_name=case_grid_name,
-            cf_calendar=cf_calendar,
+            calendar=calendar_as_dict(calendar),
         )
 
     def validate_args(self, **kwargs):
@@ -261,7 +264,7 @@ class BGCRiverNutrientsConfigurator(BaseConfigurator):
         river_nutrients_nnsm_filepath = ctx.output_path / self.get_output_param(
             "RIV_FLUX_FILE"
         )
-        calendar = self.get_input_param("cf_calendar") or "noleap"
+        calendar = Calendar(**self.get_input_param("calendar"))
 
         # Open Dataset & Create Regridder
         global_river_nutrients = xr.open_dataset(
@@ -316,7 +319,8 @@ class BGCRiverNutrientsConfigurator(BaseConfigurator):
         # Write out
         print("Writing out river nutrients...")
         # new time value as cftime - Required
-        new_time_val = cftime.datetime(1900, 1, 1, 0, 0, 0, calendar=calendar)
+        # cftime's own calendar vocabulary, not FMS's -- see Calendar.
+        new_time_val = cftime.datetime(1900, 1, 1, 0, 0, 0, calendar=calendar.cf)
 
         # select only variables that have 'time' as a dimension
         vars_with_time = [
@@ -361,7 +365,7 @@ class BGCRiverNutrientsConfigurator(BaseConfigurator):
         for var in vars:
             river_nutrients_remapped_time_added[var].attrs["units"] = "mmol/cm^2/s"
         time_units = "days since 0001-01-01 00:00:00"
-        time_calendar = calendar
+        time_calendar = calendar.cf
         time_num = cftime.date2num(
             river_nutrients_remapped_time_added["time"].values,
             units=time_units,
@@ -386,7 +390,9 @@ class BGCRiverNutrientsConfigurator(BaseConfigurator):
         river_nutrients_remapped_cleaned["time"].attrs.update(
             {
                 "units": time_units,
-                "calendar": calendar,
+                # Written to disk and read back by MOM6/FMS, so this is the one
+                # place in this function that needs the mom6 spelling.
+                "calendar": calendar.mom6,
                 "long_name": "time",
             }
         )

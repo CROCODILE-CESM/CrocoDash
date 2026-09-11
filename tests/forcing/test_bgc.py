@@ -7,6 +7,7 @@ import pytest
 import xarray as xr
 
 from CrocoDash.forcing.base import WorkflowContext
+from CrocoDash.raw_data_access.base import NOLEAP
 from CrocoDash.forcing.bgc import (
     BGCICConfigurator,
     BGCIronForcingConfigurator,
@@ -93,6 +94,7 @@ def test_bgcrivernutrients_process(tmp_path, is_glade_file_system, gen_grid_topo
         global_river_nutrients_filepath="/glade/campaign/cesm/cesmdata/cseg/inputdata/ocn/mom/croc/rof/river_nutrients/river_nutrients.GNEWS_GNM.glofas.20250916.64bit.nc",
         case_session_id="abc123",
         case_grid_name="panama1",
+        calendar=NOLEAP,
     )
     configurator.set_output_param("RIV_FLUX_FILE", "riv_flux.nc")
 
@@ -232,6 +234,7 @@ def test_bgcrivernutrients_process_mocked(tmp_path, monkeypatch):
         global_river_nutrients_filepath=str(src_path),
         case_session_id="abc123",
         case_grid_name="test",
+        calendar=NOLEAP,
     )
     configurator.set_output_param("RIV_FLUX_FILE", "riv_flux.nc")
 

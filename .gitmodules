@@ -4,6 +4,6 @@
 [submodule "CrocoDash/visualCaseGen"]
 	path = CrocoDash/visualCaseGen
 	url = https://github.com/ESMCI/visualCaseGen.git
-[submodule "demos"]
-	path = demos
+[submodule "gallery"]
+	path = gallery
 	url = https://github.com/CROCODILE-CESM/CrocoGallery
