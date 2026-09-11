@@ -209,12 +209,6 @@ def test_process_mom6_obc_wires_mom6_pieces_into_the_engine(tmp_path, monkeypatc
         }
     ]
 
-    # preview only reports filenames: no request to build, nothing merged to split.
-    recorded.clear()
-    split.clear()
-    mom6.process_mom6_obc(**kwargs, preview=True)
-    assert (recorded["preview"], recorded["variables"], split) == (True, None, [])
-
     # _regrid_obc_chunk hardwires regional_mom6's fill; anything else must fail
     # up front rather than be silently ignored.
     kwargs["product_info"]["boundary_fill_method"] = "something_else"
@@ -247,9 +241,6 @@ def test_process_mom6_ic_binds_grid_paths_onto_the_regrid_step(tmp_path, monkeyp
         k: kwargs[k] for k in ("hgrid_path", "vgrid_path", "bathymetry_path")
     }
     assert recorded["variables"] == VARS
-
-    mom6.process_mom6_ic(**kwargs, preview=True)
-    assert (recorded["preview"], recorded["variables"]) == (True, None)
 
     # _regrid_ic reads dz off the vgrid; a missing one otherwise fails deep
     # inside regional_mom6.

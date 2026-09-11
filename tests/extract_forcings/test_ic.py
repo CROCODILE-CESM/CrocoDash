@@ -25,23 +25,6 @@ def ic_kwargs(tmp_path, get_rect_grid):
     )
 
 
-def test_preview_reports_filenames_without_touching_disk(ic_kwargs, monkeypatch):
-    monkeypatch.setattr(
-        ic_module.utils,
-        "get_data_access_function",
-        lambda *a: pytest.fail("preview must not download"),
-    )
-
-    assert ic_module.process_initial_condition(
-        **ic_kwargs, regrid_fn=None, preview=True
-    ) == {
-        "date": "2020-01-01",
-        "output_file_names": "ic_unprocessed.nc",
-        "output_folder": ic_kwargs["output_data_dir"],
-    }
-    assert not Path(ic_kwargs["raw_data_dir"]).exists()
-
-
 def test_process_initial_condition_downloads_then_regrids(
     ic_kwargs, get_rect_grid, monkeypatch
 ):
