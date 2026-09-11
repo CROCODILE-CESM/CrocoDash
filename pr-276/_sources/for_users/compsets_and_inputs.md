@@ -2,7 +2,7 @@
 
 ## Case State File
 
-At the end of `Case.__init__`, CrocoDash writes a `crocodash_state.json` file into the caseroot. It records the construction parameters needed to reconstruct or inspect the case later:
+At the end of `Case.__init__`, CrocoDash writes a `_crocodash_state.json` file into the caseroot. It records the construction parameters needed to reconstruct or inspect the case later:
 
 ```json
 {
