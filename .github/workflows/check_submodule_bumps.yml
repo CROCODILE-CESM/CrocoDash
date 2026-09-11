@@ -25,7 +25,7 @@ jobs:
 
           git fetch origin main
 
-          SUBMODULES="CrocoDash/rm6 CrocoDash/visualCaseGen demos"
+          SUBMODULES="CrocoDash/rm6 CrocoDash/visualCaseGen gallery"
           CHANGED_MODULES=""
 
           for sm in $SUBMODULES; do
