@@ -405,10 +405,10 @@ case needs, and optional configurators (like tides) derive their reference dates
 <section id="tidal-forcing">
 <h3>Tidal Forcing<a class="headerlink" href="#tidal-forcing" title="Link to this heading">#</a></h3>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">case</span><span class="o">.</span><span class="n">configure_forcings</span><span class="p">(</span>
-    <span class="n">date_range</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;2020-01-01 00:00:00&quot;</span><span class="p">,</span> <span class="s2">&quot;2020-02-01 00:00:00&quot;</span><span class="p">],</span>
-    <span class="n">tpxo_elevation_filepath</span><span class="o">=</span><span class="s2">&quot;/path/to/h_tpxo9.v1.nc&quot;</span><span class="p">,</span>
-    <span class="n">tpxo_velocity_filepath</span><span class="o">=</span><span class="s2">&quot;/path/to/u_tpxo9.v1.nc&quot;</span><span class="p">,</span>
-    <span class="n">tidal_constituents</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;M2&quot;</span><span class="p">,</span> <span class="s2">&quot;K1&quot;</span><span class="p">],</span>
+    <span class="n">date_range</span><span class="o">=</span><span class="p">[</span><span class="s2">"2020-01-01 00:00:00"</span><span class="p">,</span> <span class="s2">"2020-02-01 00:00:00"</span><span class="p">],</span>
+    <span class="n">tpxo_elevation_filepath</span><span class="o">=</span><span class="s2">"/path/to/h_tpxo9.v1.nc"</span><span class="p">,</span>
+    <span class="n">tpxo_velocity_filepath</span><span class="o">=</span><span class="s2">"/path/to/u_tpxo9.v1.nc"</span><span class="p">,</span>
+    <span class="n">tidal_constituents</span><span class="o">=</span><span class="p">[</span><span class="s2">"M2"</span><span class="p">,</span> <span class="s2">"K1"</span><span class="p">],</span>
 <span class="p">)</span>
 </pre></div>
 </div>
@@ -416,9 +416,9 @@ case needs, and optional configurators (like tides) derive their reference dates
 <section id="biogeochemistry-bgc">
 <h3>Biogeochemistry (BGC)<a class="headerlink" href="#biogeochemistry-bgc" title="Link to this heading">#</a></h3>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">case</span><span class="o">.</span><span class="n">configure_forcings</span><span class="p">(</span>
-    <span class="n">date_range</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;2020-01-01 00:00:00&quot;</span><span class="p">,</span> <span class="s2">&quot;2020-02-01 00:00:00&quot;</span><span class="p">],</span>
-    <span class="c1"># BGC configuration if &quot;MARBL&quot; in compset</span>
-    <span class="n">marbl_ic_filepath</span><span class="o">=</span><span class="s2">&quot;/path/to/bgc_ic.nc&quot;</span><span class="p">,</span>
+    <span class="n">date_range</span><span class="o">=</span><span class="p">[</span><span class="s2">"2020-01-01 00:00:00"</span><span class="p">,</span> <span class="s2">"2020-02-01 00:00:00"</span><span class="p">],</span>
+    <span class="c1"># BGC configuration if "MARBL" in compset</span>
+    <span class="n">marbl_ic_filepath</span><span class="o">=</span><span class="s2">"/path/to/bgc_ic.nc"</span><span class="p">,</span>
     <span class="c1"># ... other BGC options</span>
 <span class="p">)</span>
 </pre></div>
@@ -427,9 +427,9 @@ case needs, and optional configurators (like tides) derive their reference dates
 <section id="runoff">
 <h3>Runoff<a class="headerlink" href="#runoff" title="Link to this heading">#</a></h3>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">case</span><span class="o">.</span><span class="n">configure_forcings</span><span class="p">(</span>
-    <span class="n">date_range</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;2020-01-01 00:00:00&quot;</span><span class="p">,</span> <span class="s2">&quot;2020-02-01 00:00:00&quot;</span><span class="p">],</span>
-    <span class="c1"># Runoff configuration if &quot;DROF&quot; in compset</span>
-    <span class="n">rof_esmf_mesh_filepath</span><span class="o">=</span><span class="s2">&quot;/path/to/glofas_mesh.nc&quot;</span><span class="p">,</span>
+    <span class="n">date_range</span><span class="o">=</span><span class="p">[</span><span class="s2">"2020-01-01 00:00:00"</span><span class="p">,</span> <span class="s2">"2020-02-01 00:00:00"</span><span class="p">],</span>
+    <span class="c1"># Runoff configuration if "DROF" in compset</span>
+    <span class="n">rof_esmf_mesh_filepath</span><span class="o">=</span><span class="s2">"/path/to/glofas_mesh.nc"</span><span class="p">,</span>
     <span class="c1"># Optional smoothing parameters in km — must be given together, or omitted</span>
     <span class="c1"># to let CrocoDash suggest values from the ocean mesh resolution:</span>
     <span class="n">rmax</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
@@ -445,20 +445,20 @@ case needs, and optional configurators (like tides) derive their reference dates
 <p>Before calling <code class="docutils literal notranslate"><span class="pre">configure_forcings()</span></code>, you can check what configuration options are required for your compset. It will also be printed on case initialization:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">CrocoDash.forcing_configurations</span><span class="w"> </span><span class="kn">import</span> <span class="n">ForcingConfigRegistry</span>
 
-<span class="n">compset</span> <span class="o">=</span> <span class="s2">&quot;1850_DATM%NYF_SLND_SICE_MOM6%MARBL-BIO%REGIONAL_DROF</span><span class="si">%G</span><span class="s2">LOFAS_SGLC_SWAV&quot;</span>
+<span class="n">compset</span> <span class="o">=</span> <span class="s2">"1850_DATM%NYF_SLND_SICE_MOM6%MARBL-BIO%REGIONAL_DROF</span><span class="si">%G</span><span class="s2">LOFAS_SGLC_SWAV"</span>
 
 <span class="c1"># Find required configurations</span>
 <span class="n">required</span> <span class="o">=</span> <span class="n">ForcingConfigRegistry</span><span class="o">.</span><span class="n">find_required_configurators</span><span class="p">(</span><span class="n">compset</span><span class="p">)</span>
 <span class="k">for</span> <span class="n">config_class</span> <span class="ow">in</span> <span class="n">required</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Required: </span><span class="si">{</span><span class="n">config_class</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Required: </span><span class="si">{</span><span class="n">config_class</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="n">user_args</span> <span class="o">=</span> <span class="n">ForcingConfigRegistry</span><span class="o">.</span><span class="n">get_user_args</span><span class="p">(</span><span class="n">config_class</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Requires these inputs: </span><span class="si">{</span><span class="n">user_args</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Requires these inputs: </span><span class="si">{</span><span class="n">user_args</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
 <span class="c1"># Find optional configurations</span>
 <span class="n">valid</span> <span class="o">=</span> <span class="n">ForcingConfigRegistry</span><span class="o">.</span><span class="n">find_valid_configurators</span><span class="p">(</span><span class="n">compset</span><span class="p">)</span>
 <span class="k">for</span> <span class="n">config_class</span> <span class="ow">in</span> <span class="n">valid</span><span class="p">:</span>
     <span class="k">if</span> <span class="n">config_class</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">required</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Optional: </span><span class="si">{</span><span class="n">config_class</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Optional: </span><span class="si">{</span><span class="n">config_class</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
