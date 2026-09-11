@@ -1,7 +1,9 @@
 from pathlib import Path
 
-import regional_mom6 as rmom6
-from CrocoDash.vgrid import VGrid
+import pandas as pd
+import xarray as xr
+from regional_mom6.regional_mom6 import prepare_tpxo_tidal_forcing
+from CrocoDash.forcing.obc import boundary_key, get_segment
 from CrocoDash.forcing.base import *
 
 
@@ -62,6 +64,11 @@ class TidesConfigurator(BaseConfigurator):
         date_range=None,
         start_date=None,
     ):
+        # Store boundary-key strings only -- a live Segment (custom boundary)
+        # isn't JSON-serializable, and ConditionsConfigurator's config.json
+        # output (conditions.outputs.custom_segments) already carries its
+        # full spec for reconstruction at process() time.
+        boundaries = [boundary_key(b) for b in boundaries]
         if date_range is not None:
             # Set the input params
             super().__init__(
@@ -121,27 +128,50 @@ class TidesConfigurator(BaseConfigurator):
         ]
 
     def process(self, ctx):
-        # hgrid_type/vgrid_type take mom6_forge Grid/VGrid objects directly --
-        # "from_file" + a separate hgrid_path/vgrid_path kwarg no longer
-        # exists; "from_file" instead means "lazily read mom_input_dir/
-        # hgrid.nc", which isn't this experiment's own supergrid filename.
-        expt = rmom6.experiment(
-            date_range=("1850-01-01 00:00:00", "1851-01-01 00:00:00"),  # Dummy times
-            resolution=None,
-            number_vertical_layers=None,
-            layer_thickness_ratio=None,
-            depth=ctx.ocn_topo.max_depth,
-            mom_run_dir=ctx.inputdir,
-            mom_input_dir=ctx.output_path,
-            hgrid_type=ctx.grid,
-            vgrid_type=VGrid.from_file(str(ctx.vgrid_path)),
-            minimum_depth=ctx.ocn_topo.min_depth,
-            tidal_constituents=self.get_input_param("tidal_constituents"),
-            expt_name="tides",
-            boundaries=self.get_input_param("boundaries"),
+        """Regrid tidal forcing onto each boundary, driving
+        regional_mom6.segment.Segment directly (Segment.cardinal/from_hgrid
+        via get_segment) -- no regional_mom6.experiment involved. TPXO
+        loading/preprocessing is shared with experiment.setup_boundary_tides
+        via prepare_tpxo_tidal_forcing.
+
+        custom_segments (boundary key -> Segment.to_spec()) comes from
+        ConditionsConfigurator's own config.json output, not this
+        configurator's -- the same physical boundaries are shared between
+        MOM6's OBC and its tidal forcing, so there's only one spec to carry,
+        same cross-configurator pattern BGCRiverNutrients uses for runoff's
+        mapping file (see driver.py's _PROCESS_ORDER_OVERRIDES).
+        """
+        boundaries = self.get_input_param("boundaries")
+        custom_segments = (
+            ctx.config.get("conditions", {}).get("outputs", {}).get("custom_segments")
+            or {}
         )
-        expt.setup_boundary_tides(
-            tpxo_elevation_filepath=self.get_input_param("tpxo_elevation_filepath"),
-            tpxo_velocity_filepath=self.get_input_param("tpxo_velocity_filepath"),
-            tidal_constituents=self.get_input_param("tidal_constituents"),
+        hgrid = xr.open_dataset(ctx.supergrid_path)
+
+        tpxo_h, tpxo_u, tpxo_v = prepare_tpxo_tidal_forcing(
+            self.get_input_param("tpxo_elevation_filepath"),
+            self.get_input_param("tpxo_velocity_filepath"),
+            self.get_input_param("tidal_constituents"),
         )
+
+        date_range = pd.to_datetime(
+            ["1850-01-01 00:00:00", "1851-01-01 00:00:00"]
+        )  # Dummy times
+        for idx, boundary in enumerate(boundaries):
+            seg_ix = str(idx + 1).zfill(3)
+            segment = get_segment(
+                hgrid,
+                boundary,
+                segment_name=f"segment_{seg_ix}",
+                topo=ctx.ocn_topo,
+                custom_segments=custom_segments,
+            )
+            segment.regrid_tides(
+                tpxo_v,
+                tpxo_u,
+                tpxo_h,
+                None,
+                outfolder=ctx.output_path,
+                startdate=date_range[0],
+                repeat_year_forcing=False,
+            )
