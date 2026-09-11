@@ -159,7 +159,6 @@ class GLORYS(ForcingProduct):
         """
         Script to run the GLORYS data query for the CLI
         """
-        last_pair = kwargs.pop("last_pair", False)
         modify_existing = False
         if os.path.exists(output_folder / Path("get_glorys_data.sh")):
             modify_existing = True
@@ -170,7 +169,6 @@ class GLORYS(ForcingProduct):
             os.path.splitext(output_filename)[0],
             output_folder,
             modify_existing=modify_existing,
-            last_pair=last_pair,
         )
         GLORYS.logger.info(
             f"This data access method returns a script at path {path} to run to get access data "
