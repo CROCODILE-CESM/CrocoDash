@@ -44,7 +44,7 @@ def test_process_tides(mock_tides, tmp_path, gen_grid_topo_vgrid, dummy_tidal_da
     assert mock_tides.called
 
 
-@patch("mom6_forge.chl.interpolate_and_fill_seawifs", autospec=True)
+@patch("regional_mom6.chl.interpolate_and_fill_seawifs", autospec=True)
 def test_process_chl(mock_chl, is_glade_file_system, tmp_path, gen_grid_topo_vgrid):
 
     grid, topo, vgrid = gen_grid_topo_vgrid
