@@ -92,14 +92,19 @@ class GLORYS(ForcingProduct):
         ds_in_files = sorted(ds_in_files)
 
         ds = xr.open_mfdataset(
-            ds_in_files, decode_times=False, engine="h5netcdf", parallel=True
+            ds_in_files,
+            decode_times=False,
+            engine="h5netcdf",
+            parallel=False,
         )[variables]
 
         ds = ds.sel(latitude=slice(lat_min - buf, lat_max + buf))
         dataset = longitude_slicer(
             ds, [lon_min - buf, lon_max + buf], longitude_coords="longitude"
         )
+
         dataset.to_netcdf(path)
+        GLORYS.logger.info(f"Download of {path} complete.")
         return path
 
     @accessmethod(
@@ -152,6 +157,7 @@ class GLORYS(ForcingProduct):
         output_filename,
         variables=None,
         name=None,
+        **kwargs,
     ) -> None:
         """
         Script to run the GLORYS data query for the CLI
@@ -168,6 +174,6 @@ class GLORYS(ForcingProduct):
             modify_existing=modify_existing,
         )
         GLORYS.logger.info(
-            f"This data access method retuns a script at path {path} to run to get access data "
+            f"This data access method returns a script at path {path} to run to get access data "
         )
         return path
