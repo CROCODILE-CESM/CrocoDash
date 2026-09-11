@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from mom6_forge import chl as m6f_chl
+from regional_mom6 import chl as rm6_chl
 
 from CrocoDash.forcing.base import *
 from CrocoDash.raw_data_access.base import Calendar
@@ -80,7 +80,7 @@ class ChlConfigurator(BaseConfigurator):
         super().configure()
 
     def process(self, ctx):
-        m6f_chl.interpolate_and_fill_seawifs(
+        rm6_chl.interpolate_and_fill_seawifs(
             ctx.grid,
             ctx.ocn_topo,
             self.get_input_param("chl_processed_filepath"),
