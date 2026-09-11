@@ -297,16 +297,16 @@ def _get_boundary(
         end_str = chunk_end.strftime("%Y-%m-%d")
         output_filename = f"{boundary}_unprocessed.{start_str}_{end_str}.nc"
 
-            utils.fetch_raw_chunk(
-                data_access_fn=data_access_fn,
-                dates=[start_str, end_str],
-                latlon=latlon,
-                name=boundary,
-                output_folder=output_dir,
-                output_filename=output_filename,
-                variables=variables,
-                extra_args=extra_args,
-            )
+        utils.fetch_raw_chunk(
+            data_access_fn=data_access_fn,
+            dates=[start_str, end_str],
+            latlon=latlon,
+            name=boundary,
+            output_folder=output_dir,
+            output_filename=output_filename,
+            variables=variables,
+            extra_args=extra_args,
+        )
 
 
 def _regrid_boundary(
