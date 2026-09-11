@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from regional_mom6 import rm6_chl
+from regional_mom6 import chl as rm6_chl
 
 from CrocoDash.forcing.base import *
 from CrocoDash.raw_data_access.base import Calendar
