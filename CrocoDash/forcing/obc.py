@@ -30,7 +30,7 @@ import dask
 import pandas as pd
 import xarray as xr
 from CrocoDash import logging
-from CrocoDash.extract_forcings import utils
+from CrocoDash.forcing import utils
 from CrocoDash.grid import Grid
 from CrocoDash.topo import Topo
 

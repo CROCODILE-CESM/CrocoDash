@@ -5,15 +5,15 @@ import xarray as xr
 from datetime import datetime
 from pathlib import Path
 
-import CrocoDash.extract_forcings.obc as obc_module
-from CrocoDash.extract_forcings.obc import (
+import CrocoDash.forcing.obc as obc_module
+from CrocoDash.forcing.obc import (
     process_obc_conditions,
     _merge_boundary,
     _validate_coverage,
     _ocean_bbox_for_boundary,
 )
-from CrocoDash.extract_forcings.utils import is_valid_netcdf
-from CrocoDash.extract_forcings.mom6 import _regrid_obc_chunk
+from CrocoDash.forcing.utils import is_valid_netcdf
+from CrocoDash.forcing.mom6 import _regrid_obc_chunk
 from CrocoDash.grid import Grid
 from CrocoDash.topo import Topo
 

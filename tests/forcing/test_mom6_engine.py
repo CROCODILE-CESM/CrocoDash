@@ -2,10 +2,11 @@ import pytest
 import numpy as np
 import pandas as pd
 import xarray as xr
+from types import SimpleNamespace
 
-from CrocoDash.extract_forcings import mom6
-from CrocoDash.extract_forcings.mom6 import _split_bgc_tracers_into_files
-from CrocoDash.forcing_configurations.configurations import ConditionsConfigurator
+from CrocoDash.forcing import mom6
+from CrocoDash.forcing.mom6 import _split_bgc_tracers_into_files
+from CrocoDash.raw_data_access.registry import ProductRegistry
 
 
 def test_build_forcing_request_merges_function_args():
@@ -31,7 +32,7 @@ def test_build_forcing_request_merges_function_args():
 
 
 def _conditions(product_name):
-    return ConditionsConfigurator(
+    return mom6.ConditionsConfigurator(
         boundaries=["north"],
         product_name=product_name,
         function_name="get_glorys_data_script_for_cli",
@@ -152,101 +153,124 @@ def test_split_bgc_tracers_resume_rejects_truncated_per_tracer_file(tmp_path):
 
 
 # ---------------------------------------------------------------------------
-# Entry points: what MOM6 hands to the model-agnostic engines
+# OBC wiring
 # ---------------------------------------------------------------------------
 
-PRODUCT_INFO = {
-    "u_var_name": "uo",
-    "v_var_name": "vo",
-    "eta_var_name": "zos",
-    "tracer_var_names": {"temp": "thetao", "salt": "so"},
-    "dataset_path": "/some/path",
-}
-VARS = ["uo", "vo", "zos", "thetao", "so"]
+
+def _bc_context(tmp_path, preview=False):
+    """The attributes ConditionsConfigurator.process_bc reads off the context."""
+    return SimpleNamespace(
+        preview=preview,
+        supergrid_path=tmp_path / "supergrid.nc",
+        topo_path=tmp_path / "topog.nc",
+        raw_data_dir=tmp_path / "raw",
+        regridded_data_dir=tmp_path / "regridded",
+        output_path=tmp_path / "ocnice",
+    )
 
 
-def _recorder(recorded):
-    def _engine(**kwargs):
-        recorded.update(kwargs)
-        return "engine-result"
+@pytest.mark.parametrize("preview", [False, True])
+def test_process_bc_forwards_bathymetry_path(tmp_path, monkeypatch, preview):
+    """obc.process_obc_conditions derives a per-boundary download bbox from the
+    topography's ocean mask, but only when handed bathymetry_path -- otherwise
+    it silently falls back to the full supergrid extent and every boundary
+    downloads the whole domain. Both the preview and real calls must pass it.
+    """
+    cfg = _conditions("glorys")
+    cfg.set_output_param(
+        "information", ProductRegistry.get_product("glorys").write_metadata()
+    )
+    cfg.set_output_param("function_args", {})
+    cfg.set_output_param("boundary_number_conversion", {"north": 1})
+    cfg.set_output_param("get_step_days", 5)
+    cfg.set_output_param("regrid_step_days", 5)
 
-    return _engine
+    captured = {}
+    monkeypatch.setattr(
+        mom6.obc, "process_obc_conditions", lambda **kw: captured.update(kw)
+    )
+    monkeypatch.setattr(mom6, "_split_bgc_tracers_into_files", lambda **kw: [])
+
+    ctx = _bc_context(tmp_path, preview=preview)
+    cfg.process_bc(ctx)
+
+    assert captured["bathymetry_path"] == ctx.topo_path
 
 
-def test_process_mom6_obc_wires_mom6_pieces_into_the_engine(tmp_path, monkeypatch):
+def _configured(**outputs):
+    """A configurator carrying the output params process_bc/process_ic read."""
+    cfg = _conditions("glorys")
+    cfg.set_output_param(
+        "information", ProductRegistry.get_product("glorys").write_metadata()
+    )
+    cfg.set_output_param("function_args", {})
+    for key, value in outputs.items():
+        cfg.set_output_param(key, value)
+    return cfg
+
+
+def test_process_bc_hands_the_engine_mom6s_own_pieces(tmp_path, monkeypatch):
     """obc.py knows nothing about MOM6: the Segment regrid step, the download
     request built from the product's var names, and the BGC split (which runs
     after the merge, on its output) all have to come from here."""
-    recorded, split = {}, []
-    monkeypatch.setattr(mom6.obc, "process_obc_conditions", _recorder(recorded))
+    cfg = _configured(
+        boundary_number_conversion={"north": 1}, get_step_days=5, regrid_step_days=5
+    )
+    captured, split = {}, []
+    monkeypatch.setattr(
+        mom6.obc, "process_obc_conditions", lambda **kw: captured.update(kw)
+    )
     monkeypatch.setattr(
         mom6, "_split_bgc_tracers_into_files", lambda **kw: split.append(kw)
     )
-    kwargs = dict(
-        start_date="2020-01-01",
-        end_date="2020-01-15",
-        boundary_number_conversion={"east": 1},
-        product_name="glorys",
-        function_name="get_glorys_data_from_rda",
-        product_info=dict(PRODUCT_INFO),
-        hgrid_path=str(tmp_path / "hgrid.nc"),
-        raw_dataset_path=str(tmp_path),
-        regridded_dataset_path=str(tmp_path),
-        output_path=str(tmp_path),
-        bathymetry_path=str(tmp_path / "topo.nc"),
-    )
+    ctx = _bc_context(tmp_path)
 
-    assert mom6.process_mom6_obc(**kwargs) == "engine-result"
-    assert recorded["regrid_chunk_fn"] is mom6._regrid_obc_chunk
-    assert recorded["variables"] == VARS
-    assert recorded["extra_args"] == {"dataset_path": "/some/path"}
-    assert recorded["bathymetry_path"] == kwargs["bathymetry_path"]
+    cfg.process_bc(ctx)
+
+    assert captured["regrid_chunk_fn"] is mom6._regrid_obc_chunk
+    assert captured["variables"] == ["uo", "vo", "zos", "thetao", "so"]
     assert split == [
         {
-            "output_path": str(tmp_path),
-            "boundary_number_conversion": {"east": 1},
+            "output_path": ctx.output_path,
+            "boundary_number_conversion": {"north": 1},
             "marbl_var_names": {},
         }
     ]
 
-    # _regrid_obc_chunk hardwires regional_mom6's fill; anything else must fail
-    # up front rather than be silently ignored.
-    kwargs["product_info"]["boundary_fill_method"] = "something_else"
+    # _regrid_obc_chunk hardwires regional_mom6's fill; anything else has to
+    # fail up front rather than be silently ignored.
+    cfg.get_output_param("information")["boundary_fill_method"] = "something_else"
     with pytest.raises(ValueError, match="is not supported"):
-        mom6.process_mom6_obc(**kwargs)
+        cfg.process_bc(ctx)
 
 
-def test_process_mom6_ic_binds_grid_paths_onto_the_regrid_step(tmp_path, monkeypatch):
+def test_process_ic_binds_grid_paths_onto_the_regrid_step(tmp_path, monkeypatch):
     """ic.py's engine signature has no hgrid/vgrid/bathymetry -- MOM6 binds its
     own onto _regrid_ic with partial before handing it over."""
-    recorded = {}
-    monkeypatch.setattr(mom6.ic_mod, "process_initial_condition", _recorder(recorded))
-    (tmp_path / "vgrid.nc").touch()
-    kwargs = dict(
-        product_name="glorys",
-        function_name="get_glorys_data_from_rda",
-        product_information=dict(PRODUCT_INFO),
-        start_date="2020-01-01",
-        hgrid_path=str(tmp_path / "hgrid.nc"),
-        vgrid_path=str(tmp_path / "vgrid.nc"),
-        dataset_varnames={},
-        raw_data_dir=str(tmp_path),
-        output_data_dir=str(tmp_path),
-        bathymetry_path=str(tmp_path / "topo.nc"),
+    cfg = _configured()
+    captured = {}
+    monkeypatch.setattr(
+        mom6.ic_mod, "process_initial_condition", lambda **kw: captured.update(kw)
     )
+    ctx = _bc_context(tmp_path)
+    ctx.vgrid_path = tmp_path / "vgrid.nc"
+    ctx.vgrid_path.touch()
 
-    assert mom6.process_mom6_ic(**kwargs) == "engine-result"
-    assert recorded["regrid_fn"].func is mom6._regrid_ic
-    assert recorded["regrid_fn"].keywords == {
-        k: kwargs[k] for k in ("hgrid_path", "vgrid_path", "bathymetry_path")
+    cfg.process_ic(ctx)
+
+    assert captured["regrid_fn"].func is mom6._regrid_ic
+    assert captured["regrid_fn"].keywords == {
+        "hgrid_path": ctx.supergrid_path,
+        "vgrid_path": ctx.vgrid_path,
+        "bathymetry_path": ctx.topo_path,
     }
-    assert recorded["variables"] == VARS
+    assert captured["variables"] == ["uo", "vo", "zos", "thetao", "so"]
 
     # _regrid_ic reads dz off the vgrid; a missing one otherwise fails deep
     # inside regional_mom6.
-    kwargs["vgrid_path"] = str(tmp_path / "gone.nc")
+    ctx.vgrid_path = tmp_path / "gone.nc"
     with pytest.raises(FileNotFoundError, match="Vgrid file must exist"):
-        mom6.process_mom6_ic(**kwargs)
+        cfg.process_ic(ctx)
 
 
 def test_fill_missing_and_write_leaves_no_gaps_for_mom6_to_read(tmp_path):

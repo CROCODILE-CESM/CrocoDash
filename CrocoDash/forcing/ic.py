@@ -10,7 +10,7 @@ from pathlib import Path
 from datetime import datetime, timedelta
 from CrocoDash import logging
 from CrocoDash.grid import Grid
-from CrocoDash.extract_forcings import utils
+from CrocoDash.forcing import utils
 import dask
 import xarray as xr
 import pandas as pd

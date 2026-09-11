@@ -7,8 +7,7 @@ Subpackages
 .. toctree::
    :maxdepth: 4
 
-   CrocoDash.extract_forcings
-   CrocoDash.forcing_configurations
+   CrocoDash.forcing
    CrocoDash.raw_data_access
 
 Submodules
