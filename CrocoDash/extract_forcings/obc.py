@@ -414,7 +414,6 @@ def _get_boundary(
     product_name: str,
     function_name: str,
     variables: list,
-    last_boundary: bool,
     extra_args: dict,
 ) -> list:
     """Download all raw data for one boundary, chunked by get_step_days."""
@@ -424,43 +423,24 @@ def _get_boundary(
 
     # Spread work across processes. If no chunking is prescribed it falls back
     # to one processor. For get_glorys_data_script_for_cli(), generate CLI
-    # script that runs on multiple processes
+    # script that runs serially
     if function_name == "get_glorys_data_script_for_cli":
-        f = []
-        extra_args["last_pair"] = False
-        if len(pairs) > 1:
-            f.extend(
-                [
-                    _get_one_chunk(
-                        chunk_start,
-                        chunk_end,
-                        boundary,
-                        product_name,
-                        function_name,
-                        latlon,
-                        output_dir,
-                        variables,
-                        extra_args,
-                    )
-                    for chunk_start, chunk_end in pairs[:-1]
-                ]
-            )
+        for chunk_start, chunk_end in pairs:
+            start_str = chunk_start.strftime("%Y-%m-%d")
+            end_str = chunk_end.strftime("%Y-%m-%d")
+            output_filename = f"{boundary}_unprocessed.{start_str}_{end_str}.nc"
+            data_access_fn = utils.get_data_access_function(product_name, function_name)
 
-        if last_boundary:
-            extra_args["last_pair"] = True
-        f.append(
-            _get_one_chunk(
-                pairs[-1][0],
-                pairs[-1][1],
-                boundary,
-                product_name,
-                function_name,
-                latlon,
-                output_dir,
-                variables,
-                extra_args,
+            utils.fetch_raw_chunk(
+                data_access_fn=data_access_fn,
+                dates=[start_str, end_str],
+                latlon=latlon,
+                name=boundary,
+                output_folder=output_dir,
+                output_filename=output_filename,
+                variables=variables,
+                extra_args=extra_args,
             )
-        )
     else:
         num_workers = min(available_cpus(), len(pairs))
         with ProcessPoolExecutor(max_workers=num_workers) as ex:
@@ -759,10 +739,7 @@ def process_obc_conditions(
     regridded_path.mkdir(exist_ok=True)
     output_path.mkdir(exist_ok=True)
 
-    last_boundary = False
     for j, boundary in enumerate(boundaries):
-        if j == (len(boundaries) - 1):
-            last_boundary = True
         seg_id = boundary_number_conversion[boundary]
 
         logger.info("GET [%s]: %s → %s", boundary, start_date.date(), end_date.date())
@@ -776,7 +753,6 @@ def process_obc_conditions(
             product_name=product_name,
             function_name=function_name,
             variables=variables,
-            last_boundary=last_boundary,
             extra_args=extra_args,
         )
 
