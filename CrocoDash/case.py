@@ -18,11 +18,6 @@ from ProConPy.dev_utils import ConstraintViolation
 from visualCaseGen.initialize import initialize as initialize_visualCaseGen
 from visualCaseGen.custom_widget_types.case_creator import CaseCreator, ERROR, RESET
 from visualCaseGen.custom_widget_types.case_tools import xmlchange
-from mom6_forge import chl, mapping
-import xesmf as xe
-import xarray as xr
-import numpy as np
-import cftime
 from CrocoDash.extract_forcings.driver import run_workflow
 
 from CrocoDash import case_state
@@ -642,6 +637,10 @@ class Case:
             print("tidal_constituents not found so using only M2")
             self.tidal_constituents = ["M2"]
 
+        # hgrid_type/vgrid_type take mom6_forge Grid/VGrid objects directly
+        # now -- "from_file" + a separate hgrid_path/vgrid_path kwarg no
+        # longer exists, and hgrid/vgrid are read-only properties derived
+        # from them (no more assigning after construction).
         expt = rmom6.experiment(
             date_range=date_range,
             resolution=None,
@@ -650,17 +649,13 @@ class Case:
             depth=self.ocn_topo.max_depth,
             mom_run_dir=self._cime_case.get_value("RUNDIR"),
             mom_input_dir=self.inputdir / "ocnice",
-            hgrid_type="from_file",
-            hgrid_path=self.supergrid_path,
-            vgrid_type="from_file",
-            vgrid_path=self.vgrid_path,
+            hgrid_type=self.ocn_grid,
+            vgrid_type=self.ocn_vgrid,
             minimum_depth=self.ocn_topo.min_depth,
             tidal_constituents=self.tidal_constituents,
             expt_name=self.caseroot.name,
             boundaries=self.boundaries,
         )
-        expt.hgrid = self.ocn_grid.supergrid.to_ds()
-        # expt.vgrid = self.ocn_vgrid.gen_vgrid_ds() # Not implemented yet
         return expt
 
     def _configure_case(self, atm_grid_name, rof_grid_name, ntasks_ocn_specified=False):

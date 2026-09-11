@@ -2,7 +2,7 @@
 Data Access Module -> CESM ocean output
 
 Two products, split because they have different variable/coordinate naming
-conventions (and so need different ForcingProduct metadata):
+conventions (and so need different MOM6ForcingProduct metadata):
 - CESM_POP_OUTPUT: CESM-POP tseries output (CESM-HR FOSI, CESM2-LENS2)
 - CESM_MOM_OUTPUT: native MOM6 output (e.g. parent-run history/diag_table
   output for nesting a child domain)
@@ -26,7 +26,7 @@ from CrocoDash.raw_data_access.base import *
 from CrocoDash.raw_data_access.datasets.utils import make_dates_end_inclusive
 
 
-class CESM_POP_OUTPUT(ForcingProduct):
+class CESM_POP_OUTPUT(MOM6ForcingProduct):
     product_name = "cesm_pop_output"
     description = "CESM ocean output (POP2 grid) for use as IC and OBC, including CESM-HR FOSI and CESM2 Large Ensemble (LENS2)"
     link = "https://gdex.ucar.edu/datasets/d267000/"
@@ -153,7 +153,7 @@ class CESM_POP_OUTPUT(ForcingProduct):
         )
 
 
-class CESM_MOM_OUTPUT(ForcingProduct):
+class CESM_MOM_OUTPUT(MOM6ForcingProduct):
     product_name = "cesm_mom_output"
     description = (
         "Native MOM6 output (full history/diagnostic files, or diag_table-"

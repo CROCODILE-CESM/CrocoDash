@@ -7,6 +7,7 @@ import pandas as pd
 from pathlib import Path
 from CrocoDash.grid import Grid
 from CrocoDash.raw_data_access.registry import ProductRegistry
+from CrocoDash.raw_data_access.base import MOM6ForcingProduct
 
 
 def test_get_cesm_single_variable_data_fosi(skip_if_not_glade, tmp_path):
@@ -237,6 +238,35 @@ def test_get_mom6_single_variable_data_registered():
     assert "get_mom6_single_variable_data" in ProductRegistry.list_access_methods(
         "cesm_mom_output"
     )
+
+
+@pytest.mark.parametrize("product", [co.CESM_POP_OUTPUT, co.CESM_MOM_OUTPUT])
+def test_cesm_output_products_are_mom6_forcing_products(product):
+    # Both feed the MOM6 IC/OBC pipeline, so they must inherit the
+    # MOM6ForcingProduct contract (eta_var_name, boundary_fill_method, and the
+    # marbl-aware write_metadata below). Subclassing plain ForcingProduct
+    # instead lets them register fine and only fails at process_forcings time.
+    assert issubclass(product, MOM6ForcingProduct)
+
+
+@pytest.mark.parametrize("product", [co.CESM_POP_OUTPUT, co.CESM_MOM_OUTPUT])
+def test_cesm_output_write_metadata_accepts_marbl_flag(product, tmp_path):
+    # This is the exact call the MOM6 forcing driver makes; on a plain
+    # ForcingProduct it raises TypeError on the keyword argument.
+    meta = product.write_metadata(
+        file_path=tmp_path / f"{product.product_name}.json",
+        include_marbl_tracers=False,
+    )
+    assert {"temp", "salt"} <= set(meta["tracer_var_names"])
+    assert meta["eta_var_name"] == product.eta_var_name
+    assert "DIC" not in meta["tracer_var_names"]
+
+
+def test_cesm_pop_output_write_metadata_merges_marbl_tracers(tmp_path):
+    meta = co.CESM_POP_OUTPUT.write_metadata(
+        file_path=tmp_path / "cesm_pop_output.json", include_marbl_tracers=True
+    )
+    assert {"temp", "salt", "DIC", "ALK", "O2"} <= set(meta["tracer_var_names"])
 
 
 def test_parse_dataset(tmp_path, dummy_forcing_factory):

@@ -1,6 +1,5 @@
 import json
-import pytest
-from unittest.mock import patch, MagicMock, call
+from unittest.mock import patch
 from argparse import Namespace
 from pathlib import Path
 
@@ -153,12 +152,9 @@ def _make_state(tmp_path):
     }
 
 
-@patch("CrocoDash.extract_forcings.driver.initial_condition")
-@patch("CrocoDash.extract_forcings.driver.obc")
+@patch("CrocoDash.extract_forcings.driver.mom6")
 @patch("CrocoDash.extract_forcings.driver.case_state")
-def test_run_workflow_ic_bc_calls_obc_and_initial_condition(
-    mock_cs, mock_obc, mock_initial_condition, tmp_path
-):
+def test_run_workflow_ic_bc_calls_mom6(mock_cs, mock_mom6, tmp_path):
     config = _make_config()
     state = _make_state(tmp_path)
     mock_cs.read.return_value = state
@@ -167,23 +163,20 @@ def test_run_workflow_ic_bc_calls_obc_and_initial_condition(
 
     run_workflow(config_path=config_path, ic=True, bc=True)
 
-    assert mock_obc.process_obc_conditions.called
-    assert mock_initial_condition.process_initial_condition.called
+    assert mock_mom6.process_mom6_obc.called
+    assert mock_mom6.process_mom6_ic.called
     # bathymetry_path must reach the OBC call too, not just IC -- otherwise
     # process_obc_conditions always falls back to the full supergrid bbox
     # and the tmask-derived per-boundary bbox feature is a silent no-op.
     assert (
-        mock_obc.process_obc_conditions.call_args.kwargs["bathymetry_path"]
+        mock_mom6.process_mom6_obc.call_args.kwargs["bathymetry_path"]
         == state["topo_path"]
     )
 
 
-@patch("CrocoDash.extract_forcings.driver.initial_condition")
-@patch("CrocoDash.extract_forcings.driver.obc")
+@patch("CrocoDash.extract_forcings.driver.mom6")
 @patch("CrocoDash.extract_forcings.driver.case_state")
-def test_run_workflow_no_components_returns_early(
-    mock_cs, mock_obc, mock_initial_condition, tmp_path, capsys
-):
+def test_run_workflow_no_components_returns_early(mock_cs, mock_mom6, tmp_path, capsys):
     config = _make_config()
     state = _make_state(tmp_path)
     mock_cs.read.return_value = state
@@ -193,7 +186,7 @@ def test_run_workflow_no_components_returns_early(
     result = run_workflow(config_path=config_path)
 
     assert result is None
-    assert not mock_obc.process_obc_conditions.called
+    assert not mock_mom6.process_mom6_obc.called
     captured = capsys.readouterr()
     assert "No components selected" in captured.out
 
@@ -246,12 +239,9 @@ def test_run_workflow_runoff_calls_rof_module(mock_cs, mock_rof, tmp_path):
     mock_rof.generate_rof_ocn_map.assert_called_once()
 
 
-@patch("CrocoDash.extract_forcings.driver.initial_condition")
-@patch("CrocoDash.extract_forcings.driver.obc")
+@patch("CrocoDash.extract_forcings.driver.mom6")
 @patch("CrocoDash.extract_forcings.driver.case_state")
-def test_run_workflow_returns_timings(
-    mock_cs, mock_obc, mock_initial_condition, tmp_path
-):
+def test_run_workflow_returns_timings(mock_cs, mock_mom6, tmp_path):
     config = _make_config()
     state = _make_state(tmp_path)
     mock_cs.read.return_value = state
