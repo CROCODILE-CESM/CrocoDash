@@ -1,4 +1,6 @@
 import os
+import sys
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -99,7 +101,6 @@ def test_get_era5_2d_spectra(tmp_path):
         output_filename="era5_spectra_test.nc",
     )
     assert os.path.exists(path)
-    import xarray as xr
 
     ds = xr.open_dataset(path)
     try:
@@ -165,3 +166,146 @@ def test_assemble_era5_dataset_decodes_log10_and_missing():
     assert np.allclose(real, 10.0**-2.0)
     missing = ds["efth"].sel(direction=22.5, frequency=0.0345).values
     assert np.allclose(missing, 0.0)
+
+
+def test_era5_client_scopes_cdsapi_rc_to_the_era5_key(tmp_path, monkeypatch):
+    """The default ~/.cdsapirc here points at EWDS (GLOFAS's service), not CDS
+    proper, so ERA5 requests fail against it. The client points CDSAPI_RC at
+    the ERA5 rc for the constructor call only, restores it afterwards, and
+    leaves an RC the caller scoped themselves alone."""
+    seen = []
+    monkeypatch.setattr(
+        era5.cdsapi, "Client", lambda: seen.append(os.environ.get("CDSAPI_RC"))
+    )
+    rc = tmp_path / ".cdsapirc_era5"
+    rc.write_text("url: https://cds.climate.copernicus.eu/api\n")
+
+    monkeypatch.delenv("CDSAPI_RC", raising=False)
+    era5._era5_cdsapi_client(rc)
+    assert seen[-1] == str(rc)
+    assert "CDSAPI_RC" not in os.environ
+
+    monkeypatch.setenv("CDSAPI_RC", "/caller/rc")
+    era5._era5_cdsapi_client(rc)
+    assert seen[-1] == "/caller/rc"
+    assert os.environ["CDSAPI_RC"] == "/caller/rc"
+
+    monkeypatch.delenv("CDSAPI_RC")
+    era5._era5_cdsapi_client(tmp_path / "absent")
+    assert seen[-1] is None
+
+
+class _FakeEccodes:
+    """Hands out one message at a time, the way codes_grib_new_from_file does.
+    Messages are plain dicts; every getter just reads a key off one."""
+
+    def __init__(self, messages):
+        self._messages = list(messages)
+        self.released = []
+
+    def codes_grib_new_from_file(self, f):
+        return self._messages.pop(0) if self._messages else None
+
+    def codes_get(self, gid, key):
+        return gid[key]
+
+    codes_get_array = codes_get
+
+    def codes_get_values(self, gid):
+        return gid["values"]
+
+    def codes_release(self, gid):
+        self.released.append(gid)
+
+
+def _grib_message(direction_number, frequency_number, data_date, data_time):
+    return {
+        "coefsFirst": [7.5, 22.5],
+        "coefsSecond": [0.0345, 0.038],
+        "Ni": 2,
+        "Nj": 1,
+        "latitudeOfFirstGridPointInDegrees": 69.0,
+        "latitudeOfLastGridPointInDegrees": 69.0,
+        "longitudeOfFirstGridPointInDegrees": -170.0,
+        "longitudeOfLastGridPointInDegrees": -169.5,
+        "directionNumber": direction_number,
+        "frequencyNumber": frequency_number,
+        "dataDate": data_date,
+        "dataTime": data_time,
+        "missingValue": 9999.0,
+        "values": np.full(2, -2.0),
+    }
+
+
+def test_read_era5_grib_messages_builds_grid_and_time_axis(tmp_path, monkeypatch):
+    """The grid is read off the first message only, and dataDate/dataTime
+    (HHMM packed into an int) become the time axis -- arriving out of order on
+    the wire, sorted on the way out. Every message is released either way."""
+    fake = _FakeEccodes(
+        [
+            _grib_message(1, 1, 20200101, 630),
+            _grib_message(2, 1, 20200101, 0),
+        ]
+    )
+    monkeypatch.setitem(sys.modules, "eccodes", fake)
+    path = tmp_path / "spectra.grib"
+    path.write_bytes(b"")
+
+    out = era5._read_era5_grib_messages(path)
+
+    assert (out["n_lat"], out["n_lon"]) == (1, 2)
+    assert np.allclose(out["latitudes"], [69.0])
+    assert np.allclose(out["longitudes"], [-170.0, -169.5])
+    assert np.allclose(out["directions"], [7.5, 22.5])
+    assert out["times"] == [
+        pd.Timestamp("2020-01-01T00:00"),
+        pd.Timestamp("2020-01-01T06:30"),
+    ]
+    assert set(out["raw"]) == {
+        (1, 1, pd.Timestamp("2020-01-01T06:30")),
+        (2, 1, pd.Timestamp("2020-01-01T00:00")),
+    }
+    assert len(fake.released) == 2
+
+
+def test_read_era5_grib_messages_rejects_an_empty_file(tmp_path, monkeypatch):
+    """A zero-message file means the retrieve came back empty -- decoding it
+    into an all-NaN dataset would hide that from ww3.py."""
+    monkeypatch.setitem(sys.modules, "eccodes", _FakeEccodes([]))
+    path = tmp_path / "empty.grib"
+    path.write_bytes(b"")
+
+    with pytest.raises(ValueError, match="No GRIB messages found"):
+        era5._read_era5_grib_messages(path)
+
+
+def test_get_era5_2d_spectra_returns_netcdf_and_drops_the_grib(tmp_path, monkeypatch):
+    """The access method hands back NetCDF, never the intermediate GRIB --
+    ww3.py doesn't touch eccodes."""
+    retrieved = {}
+
+    class _FakeClient:
+        def retrieve(self, dataset, request, target):
+            retrieved.update(dataset=dataset, request=request, target=Path(target))
+            Path(target).write_bytes(b"grib")
+
+    monkeypatch.setattr(era5, "_era5_cdsapi_client", lambda rc: _FakeClient())
+    monkeypatch.setitem(
+        sys.modules, "eccodes", _FakeEccodes([_grib_message(1, 1, 20200101, 0)])
+    )
+
+    path = era5.ERA5_WAVE_SPECTRA.get_era5_2d_spectra(
+        dates=["2020-01-01", "2020-01-01"],
+        lat_min=_LAT_MIN,
+        lat_max=_LAT_MAX,
+        lon_min=_LON_MIN,
+        lon_max=_LON_MAX,
+        output_folder=tmp_path / "out",
+        output_filename="spectra.nc",
+    )
+
+    assert retrieved["dataset"] == "reanalysis-era5-complete"
+    assert retrieved["request"]["param"] == "251.140"
+    assert path == tmp_path / "out" / "spectra.nc"
+    assert path.exists()
+    assert not retrieved["target"].exists()
