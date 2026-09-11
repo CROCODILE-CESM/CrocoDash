@@ -1326,50 +1326,54 @@ automatically.</p>
 </section>
 <section id="module-CrocoDash.forcing.cice">
 <span id="crocodash-forcing-cice-module"></span><h2>CrocoDash.forcing.cice module<a class="headerlink" href="#module-CrocoDash.forcing.cice" title="Link to this heading">#</a></h2>
-<p>CICE forcing for CrocoDash: a single expanded-grid restoring file.</p>
-<p>CICE’s restoring mechanism (<code class="docutils literal notranslate"><span class="pre">ice_restoring.F90</span></code>) relaxes boundary-adjacent
-cells toward a target ice state over time – the user is separately
-extending that Fortran to read the restoring target from an external file
-(not visible in this repo yet). <code class="docutils literal notranslate"><span class="pre">CICEConfigurator.process</span></code> produces that
-file: it must cover the case’s regional domain plus a halo (<code class="docutils literal notranslate"><span class="pre">n_halo_cells</span></code>
-on every side, required for the restoring routine), built from a CICE-shaped
-forcing product (real global restart, or a fast synthetic stand-in – see
-<code class="docutils literal notranslate"><span class="pre">cice_product_name</span></code>/<code class="docutils literal notranslate"><span class="pre">cice_function_name</span></code> below) regridded onto every
-point of that expanded grid. Producing it is opt-in: naming neither product
-nor function skips <code class="docutils literal notranslate"><span class="pre">process</span></code> entirely and leaves <code class="docutils literal notranslate"><span class="pre">restore_ice</span></code> off, so
-CICE runs with zero-gradient boundaries and no restoring. Like a real CICE restart/initial-condition
-file, the output carries no <code class="docutils literal notranslate"><span class="pre">time</span></code> dimension at all – just the single
-static snapshot (for <code class="docutils literal notranslate"><span class="pre">cice_restart</span></code>), regridded once.</p>
+<p>CICE forcing for CrocoDash: one expanded-grid restart serving as both the
+initial condition and the restoring target.</p>
+<p>CICE’s restoring mechanism (<code class="docutils literal notranslate"><span class="pre">ice_restoring.F90</span></code>) relaxes the
+boundary-adjacent ghost cells toward a target ice state over time.
+<code class="docutils literal notranslate"><span class="pre">CICEConfigurator.process</span></code> produces the file that supplies it: the case’s
+regional domain plus an <code class="docutils literal notranslate"><span class="pre">n_halo_cells</span></code> halo on every side, built from a
+CICE-shaped forcing product (a real global restart, or a fast synthetic
+stand-in – see <code class="docutils literal notranslate"><span class="pre">cice_product_name</span></code>/<code class="docutils literal notranslate"><span class="pre">cice_function_name</span></code> below) regridded
+onto every point of that expanded grid. <code class="docutils literal notranslate"><span class="pre">configure</span></code> then points CICE’s
+<code class="docutils literal notranslate"><span class="pre">ice_ic</span></code> at that file and sets <code class="docutils literal notranslate"><span class="pre">restart_ext</span> <span class="pre">=</span> <span class="pre">.true.</span></code>, so CICE reads it as
+a restart <em>including</em> its ghost ring (<code class="docutils literal notranslate"><span class="pre">ni</span> <span class="pre">=</span> <span class="pre">nx_global</span> <span class="pre">+</span> <span class="pre">2*nghost</span></code>,
+<code class="docutils literal notranslate"><span class="pre">nj</span> <span class="pre">=</span> <span class="pre">ny_global</span> <span class="pre">+</span> <span class="pre">2*nghost</span></code> – see <code class="docutils literal notranslate"><span class="pre">ice_restart.F90</span></code>).</p>
+<p>The ghost-ring values that land this way are what gets restored toward, given
+the restoring-for-OBCs support in Dave Bailey’s CICE checkout, which sits on
+top of this. Note that stock <code class="docutils literal notranslate"><span class="pre">ice_restoring.F90</span></code> does <em>not</em> consume that
+ring: its active <code class="docutils literal notranslate"><span class="pre">restore_ic</span> <span class="pre">=</span> <span class="pre">'initial'</span></code> path extrapolates the innermost
+physical row/column outward into the ghost cells instead (the commented-out
+“easy way”, <code class="docutils literal notranslate"><span class="pre">aicen_rest</span> <span class="pre">=</span> <span class="pre">aicen</span></code>, is what would use it).</p>
+<p><code class="docutils literal notranslate"><span class="pre">nghost</span></code> is 1 in CICE (<code class="docutils literal notranslate"><span class="pre">ice_blocks.F90</span></code>), hence <code class="docutils literal notranslate"><span class="pre">n_halo_cells</span></code>
+defaulting to 1: the generated file has to match that extended-restart shape
+exactly or CICE won’t read it. It stays configurable because the halo also
+sets the restoring zone’s physical width, but any value other than 1 makes
+the file unusable as an <code class="docutils literal notranslate"><span class="pre">ice_ic</span></code>.</p>
+<p>Restoring is opt-in two ways over: pass <code class="docutils literal notranslate"><span class="pre">restore_ice=False</span></code>, or name
+neither product nor function, and <code class="docutils literal notranslate"><span class="pre">process</span></code> generates nothing, <code class="docutils literal notranslate"><span class="pre">ice_ic</span></code>
+stays <code class="docutils literal notranslate"><span class="pre">'default'</span></code>, and CICE runs with zero-gradient boundaries and no
+restoring – a valid configuration, with ice still free to advect out of the
+domain. <code class="docutils literal notranslate"><span class="pre">restore_ice</span></code> defaults to True, so naming a product is enough to
+turn restoring on.</p>
+<p>Like a real CICE restart/initial-condition file, the output carries no
+<code class="docutils literal notranslate"><span class="pre">time</span></code> dimension at all – just the single static snapshot, regridded once
+– on CICE’s own <code class="docutils literal notranslate"><span class="pre">nj</span></code>/<code class="docutils literal notranslate"><span class="pre">ni</span></code> dimension names, which is what its restart
+reader expects.</p>
 <p>Unlike MOM6/WW3’s OBC, there’s no boundary-only regrid and no date-chunking
 need (one static snapshot, no real time evolution to fetch incrementally),
 so this doesn’t route through obc.py’s shared GET-&gt;chunk-&gt;REGRID-&gt;MERGE
 engine at all – just resolves the requested product/function via the same
 <code class="docutils literal notranslate"><span class="pre">ProductRegistry</span></code> lookup MOM6/WW3 use (<code class="docutils literal notranslate"><span class="pre">utils.get_data_access_function</span></code>)
 instead of hardcoding a single product.</p>
-<p>The precise file/variable-naming contract the (not-yet-visible) Fortran
-restoring-file reader will expect is unverified – this produces a file
-using CICE’s own restart variable names (unchanged, since we’re only
-windowing+regridding them) over the expanded grid. Revisit once that
-Fortran work is available to check against.</p>
-<p>Cross-checked against the CICE Consortium’s own restoring implementation
-(<code class="docutils literal notranslate"><span class="pre">ice_restoring.F90</span></code>, <code class="docutils literal notranslate"><span class="pre">ice_restoring_data_restartfiles</span></code>): that reader
-expects <code class="docutils literal notranslate"><span class="pre">aicen</span></code>/<code class="docutils literal notranslate"><span class="pre">vicen</span></code>/<code class="docutils literal notranslate"><span class="pre">vsnon</span></code>/<code class="docutils literal notranslate"><span class="pre">trcrn</span></code> (category-indexed, ncat=5)
-on the <em>same</em> grid as the regional domain plus the <code class="docutils literal notranslate"><span class="pre">restart_ext</span></code> ghost
-cells (<code class="docutils literal notranslate"><span class="pre">nx_global+2</span></code>/<code class="docutils literal notranslate"><span class="pre">ny_global+2</span></code> – one ring of padding, a fixed
-file-format requirement, not a physical restoring-zone choice). We don’t
-enumerate those variable names – every variable in the source restart
-passes through unfiltered (T-point and U-point alike), a superset of what
-that reader currently needs. <code class="docutils literal notranslate"><span class="pre">n_halo_cells</span></code> here controls the restoring
-zone’s physical width, not the <code class="docutils literal notranslate"><span class="pre">restart_ext</span></code> padding; it happens to
-exceed the 1-cell minimum today, but nothing yet guarantees the outermost
-ring is genuine ghost padding rather than real regridded data – revisit
-once the Fortran extension lands. <code class="docutils literal notranslate"><span class="pre">uvel</span></code>/<code class="docutils literal notranslate"><span class="pre">vvel</span></code> (B-grid, upper-right
-cell corner) are already plumbed through here but not yet consumed by any
-reader – out of scope for the restoring file until the Consortium adds
-velocity restoring.</p>
+<p>Every variable in the source restart passes through unfiltered (T-point and
+U-point alike) – a superset of the <code class="docutils literal notranslate"><span class="pre">aicen</span></code>/<code class="docutils literal notranslate"><span class="pre">vicen</span></code>/<code class="docutils literal notranslate"><span class="pre">vsnon</span></code>/<code class="docutils literal notranslate"><span class="pre">trcrn</span></code>
+(category-indexed, ncat=5) that <code class="docutils literal notranslate"><span class="pre">ice_restoring.F90</span></code>’s restoring arrays
+actually read. <code class="docutils literal notranslate"><span class="pre">uvel</span></code>/<code class="docutils literal notranslate"><span class="pre">vvel</span></code> (B-grid, at the cell corner) are plumbed
+through here but not consumed by any restoring path yet; the Consortium
+doesn’t restore velocity.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="CrocoDash.forcing.cice.CICEConfigurator">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.forcing.cice.</span></span><span class="sig-name descname"><span class="pre">CICEConfigurator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cice_product_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cice_function_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cice_function_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_halo_cells</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.cice.CICEConfigurator" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.forcing.cice.</span></span><span class="sig-name descname"><span class="pre">CICEConfigurator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cice_product_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cice_function_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cice_function_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_halo_cells</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">restore_ice</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">case_inputdir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.cice.CICEConfigurator" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#CrocoDash.forcing.base.BaseConfigurator" title="CrocoDash.forcing.base.BaseConfigurator"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseConfigurator</span></code></a></p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="CrocoDash.forcing.cice.CICEConfigurator.allowed_compsets">
@@ -1397,7 +1401,7 @@ all and validate_output_filepaths() passes vacuously.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="CrocoDash.forcing.cice.CICEConfigurator.input_params">
-<span class="sig-name descname"><span class="pre">input_params</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#CrocoDash.forcing.base.Param" title="CrocoDash.forcing.base.Param"><span class="pre">Param</span></a><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[InputValueParam(name='cice_product_name'),</span> <span class="pre">InputValueParam(name='cice_function_name'),</span> <span class="pre">InputValueParam(name='cice_function_args'),</span> <span class="pre">InputValueParam(name='n_halo_cells')]</span></em><a class="headerlink" href="#CrocoDash.forcing.cice.CICEConfigurator.input_params" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">input_params</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#CrocoDash.forcing.base.Param" title="CrocoDash.forcing.base.Param"><span class="pre">Param</span></a><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[InputValueParam(name='cice_product_name'),</span> <span class="pre">InputValueParam(name='cice_function_name'),</span> <span class="pre">InputValueParam(name='cice_function_args'),</span> <span class="pre">InputValueParam(name='n_halo_cells'),</span> <span class="pre">InputValueParam(name='restore_ice'),</span> <span class="pre">InputValueParam(name='case_inputdir')]</span></em><a class="headerlink" href="#CrocoDash.forcing.cice.CICEConfigurator.input_params" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -1407,7 +1411,7 @@ all and validate_output_filepaths() passes vacuously.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="CrocoDash.forcing.cice.CICEConfigurator.output_params">
-<span class="sig-name descname"><span class="pre">output_params</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#CrocoDash.forcing.base.OutputParam" title="CrocoDash.forcing.base.OutputParam"><span class="pre">OutputParam</span></a><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[UserNLConfigParam(name='ice_ic'),</span> <span class="pre">UserNLConfigParam(name='ns_boundary_type'),</span> <span class="pre">UserNLConfigParam(name='ew_boundary_type'),</span> <span class="pre">UserNLConfigParam(name='close_boundaries'),</span> <span class="pre">UserNLConfigParam(name='advect'),</span> <span class="pre">UserNLConfigParam(name='restore_ice'),</span> <span class="pre">UserNLConfigParam(name='trestore')]</span></em><a class="headerlink" href="#CrocoDash.forcing.cice.CICEConfigurator.output_params" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">output_params</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#CrocoDash.forcing.base.OutputParam" title="CrocoDash.forcing.base.OutputParam"><span class="pre">OutputParam</span></a><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[UserNLConfigParam(name='ice_ic'),</span> <span class="pre">UserNLConfigParam(name='ns_boundary_type'),</span> <span class="pre">UserNLConfigParam(name='ew_boundary_type'),</span> <span class="pre">UserNLConfigParam(name='close_boundaries'),</span> <span class="pre">UserNLConfigParam(name='advect'),</span> <span class="pre">UserNLConfigParam(name='restart_ext'),</span> <span class="pre">UserNLConfigParam(name='restore_ice'),</span> <span class="pre">UserNLConfigParam(name='trestore')]</span></em><a class="headerlink" href="#CrocoDash.forcing.cice.CICEConfigurator.output_params" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
