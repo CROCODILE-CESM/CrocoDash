@@ -60,7 +60,7 @@ This flexibility lets you:
 
 ## Large datasets
 
-Large regional domains require large datasets. CrocoDash automatically switches to parallel downloading and regridding of Glorys data if multiple CPUs are available and a regridding step is provided in `config.json` ([see example here](https://crocodile-cesm.github.io/CrocoGallery/latest/crocodash/process-forcings/)). External infrastructure may set limits: for example, if using `get_glorys_data_from_cds_api` or `get_glorys_data_script_for_cli`, Copernicus Marine Services may throw a "Too many requests" error if too many CPUs are used and they all contact the server at once. `get_glorys_data_from_rda` does not have this limitation but implies permission to access to NCAR's RDA repository. Regridding has no limitations per se.
+Large regional domains require large datasets. CrocoDash automatically switches to parallel downloading and regridding of Glorys data if multiple CPUs are available and a regridding step is provided in `config.json` ([see example here](https://crocodile-cesm.github.io/CrocoGallery/latest/crocodash/process-forcings/)). External infrastructure may set limits: for example, if using `get_glorys_data_from_cds_api`, Copernicus Marine Services may throw a "Too many requests" error if too many CPUs are used and they all contact the server at once. `get_glorys_data_from_rda` does not have this limitation but implies permission to access to NCAR's RDA repository. Regridding has no limitations per se.
 
 ## Python API
 
