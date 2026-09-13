@@ -60,7 +60,6 @@ from CrocoDash.forcing import utils
 from CrocoDash.forcing.base import *
 from CrocoDash.raw_data_access.registry import ProductRegistry
 from CrocoDash.raw_data_access.base import CICEForcingProduct
-from mom6_forge._supergrid import SupergridBase
 
 # Where process() writes CICE's forcing file, and therefore where
 # get_output_filepaths() looks for it. Kept in one place so the writer and the
@@ -369,8 +368,8 @@ class CICEConfigurator(BaseConfigurator):
         ``_resolve_forcing_source``.
 
         When they are given, covers the case's domain plus a one-T-cell halo
-        on every side (grown via ``SupergridBase._create_expanded_supergrid``),
-        windowed from that CICE forcing product
+        on every side (grown via ``SupergridBase.expand``), windowed from
+        that CICE forcing product
         (resolved via the same ``ProductRegistry`` lookup MOM6/WW3 use --
         ``restart_path``/``grid_path`` for the real ``cice_restart`` product go
         in ``cice_function_args``) and regridded onto that expanded grid. Like
@@ -390,12 +389,7 @@ class CICEConfigurator(BaseConfigurator):
 
         hgrid_ds = xr.open_dataset(ctx.supergrid_path)
         grid = Grid.from_supergrid_ds(hgrid_ds)
-        padded = SupergridBase._create_expanded_supergrid(
-            grid.supergrid.x, grid.supergrid.y
-        )
-        grid.supergrid = type(grid.supergrid)._init_from_xy(
-            padded.x.values, padded.y.values, grid_type=grid.supergrid.grid_type
-        )
+        grid.supergrid = grid.supergrid.expand()
 
         bbox = Grid.get_bounding_boxes(grid)["ic"]
 
