@@ -1421,8 +1421,8 @@ all and validate_output_filepaths() passes vacuously.</p>
 <code class="docutils literal notranslate"><span class="pre">cice_function_name</span></code> – restoring is opt-in, see
 <code class="docutils literal notranslate"><span class="pre">_resolve_forcing_source</span></code>.</p>
 <p>When they are given, covers the case’s domain plus a one-T-cell halo
-on every side (grown via <code class="docutils literal notranslate"><span class="pre">SupergridBase._create_expanded_supergrid</span></code>),
-windowed from that CICE forcing product
+on every side (grown via <code class="docutils literal notranslate"><span class="pre">SupergridBase.expand</span></code>), windowed from
+that CICE forcing product
 (resolved via the same <code class="docutils literal notranslate"><span class="pre">ProductRegistry</span></code> lookup MOM6/WW3 use –
 <code class="docutils literal notranslate"><span class="pre">restart_path</span></code>/<code class="docutils literal notranslate"><span class="pre">grid_path</span></code> for the real <code class="docutils literal notranslate"><span class="pre">cice_restart</span></code> product go
 in <code class="docutils literal notranslate"><span class="pre">cice_function_args</span></code>) and regridded onto that expanded grid. Like
