@@ -160,13 +160,6 @@ def test_configure_restoring_without_a_case_inputdir_raises():
         _configure_without_a_case(configurator)
 
 
-def test_default_halo_matches_cice_nghost():
-    """CICE reads ice_ic with restart_ext = .true., i.e. at
-    ni = nx_global + 2*nghost with nghost == 1 -- so the default halo has to be
-    1 or the generated file is the wrong shape to be read at all."""
-    assert CICEConfigurator().get_input_param("n_halo_cells") == 1
-
-
 @pytest.mark.parametrize(
     "kwargs, given, missing",
     [
@@ -232,7 +225,6 @@ def test_process_cice_forcing_produces_output(
             "restart_path": _CICE_RESTART_PATH,
             "grid_path": _CICE_GRID_PATH,
         },
-        n_halo_cells=n_halo_cells,
     )
     configurator.process(_make_ctx(tmp_path, supergrid_path=tmp_path / "grid.nc"))
 
@@ -268,7 +260,6 @@ def test_process_cice_forcing_with_reference_ice(tmp_path, gen_grid_topo_vgrid):
     configurator = CICEConfigurator(
         cice_product_name="reference_ice",
         cice_function_name="get_reference_ice_data",
-        n_halo_cells=n_halo_cells,
     )
     configurator.process(_make_ctx(tmp_path, supergrid_path=tmp_path / "grid.nc"))
 
@@ -326,7 +317,6 @@ def test_get_output_filepaths_agrees_with_process(tmp_path, gen_grid_topo_vgrid)
     configurator = CICEConfigurator(
         cice_product_name="reference_ice",
         cice_function_name="get_reference_ice_data",
-        n_halo_cells=1,
     )
     configurator.process(_make_ctx(tmp_path, supergrid_path=tmp_path / "grid.nc"))
 

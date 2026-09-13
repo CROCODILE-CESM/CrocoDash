@@ -4,7 +4,7 @@ initial condition and the restoring target.
 CICE's restoring mechanism (``ice_restoring.F90``) relaxes the
 boundary-adjacent ghost cells toward a target ice state over time.
 ``CICEConfigurator.process`` produces the file that supplies it: the case's
-regional domain plus an ``n_halo_cells`` halo on every side, built from a
+regional domain plus a one-T-cell halo on every side, built from a
 CICE-shaped forcing product (a real global restart, or a fast synthetic
 stand-in -- see ``cice_product_name``/``cice_function_name`` below) regridded
 onto every point of that expanded grid. ``configure`` then points CICE's
@@ -19,11 +19,9 @@ ring: its active ``restore_ic = 'initial'`` path extrapolates the innermost
 physical row/column outward into the ghost cells instead (the commented-out
 "easy way", ``aicen_rest = aicen``, is what would use it).
 
-``nghost`` is 1 in CICE (``ice_blocks.F90``), hence ``n_halo_cells``
-defaulting to 1: the generated file has to match that extended-restart shape
-exactly or CICE won't read it. It stays configurable because the halo also
-sets the restoring zone's physical width, but any value other than 1 makes
-the file unusable as an ``ice_ic``.
+``nghost`` is 1 in CICE (``ice_blocks.F90``), hence the halo is fixed at one
+T-cell: the generated file has to match that extended-restart shape exactly
+or CICE won't read it, so there's no user-facing knob for it.
 
 Restoring is opt-in two ways over: pass ``restore_ice=False``, or name
 neither product nor function, and ``process`` generates nothing, ``ice_ic``
@@ -62,6 +60,7 @@ from CrocoDash.forcing import utils
 from CrocoDash.forcing.base import *
 from CrocoDash.raw_data_access.registry import ProductRegistry
 from CrocoDash.raw_data_access.base import CICEForcingProduct
+from mom6_forge._supergrid import SupergridBase
 
 # Where process() writes CICE's forcing file, and therefore where
 # get_output_filepaths() looks for it. Kept in one place so the writer and the
@@ -185,16 +184,6 @@ class CICEConfigurator(BaseConfigurator):
             ),
         ),
         InputValueParam(
-            "n_halo_cells",
-            comment=(
-                "Halo width (T-cells per side) for CICE's restoring forcing. "
-                "Must be 1 to match CICE's own nghost, since configure() points "
-                "ice_ic at the generated file and CICE reads it with "
-                "restart_ext = .true. (ni = nx_global + 2*nghost); any other "
-                "value produces a file CICE won't read."
-            ),
-        ),
-        InputValueParam(
             "restore_ice",
             comment=(
                 "Whether to restore the boundary-adjacent ghost cells toward the "
@@ -229,7 +218,6 @@ class CICEConfigurator(BaseConfigurator):
         cice_product_name=None,
         cice_function_name=None,
         cice_function_args=None,
-        n_halo_cells=1,
         restore_ice=True,
         case_inputdir=None,
     ):
@@ -237,7 +225,6 @@ class CICEConfigurator(BaseConfigurator):
             cice_product_name=cice_product_name,
             cice_function_name=cice_function_name,
             cice_function_args=cice_function_args or {},
-            n_halo_cells=n_halo_cells,
             restore_ice=restore_ice,
             case_inputdir=case_inputdir,
         )
@@ -381,9 +368,9 @@ class CICEConfigurator(BaseConfigurator):
         ``cice_function_name`` -- restoring is opt-in, see
         ``_resolve_forcing_source``.
 
-        When they are given, covers the case's domain plus an
-        ``n_halo_cells``-cell halo on every side (grown via
-        ``SupergridBase.expand``), windowed from that CICE forcing product
+        When they are given, covers the case's domain plus a one-T-cell halo
+        on every side (grown via ``SupergridBase._create_expanded_supergrid``),
+        windowed from that CICE forcing product
         (resolved via the same ``ProductRegistry`` lookup MOM6/WW3 use --
         ``restart_path``/``grid_path`` for the real ``cice_restart`` product go
         in ``cice_function_args``) and regridded onto that expanded grid. Like
@@ -403,8 +390,12 @@ class CICEConfigurator(BaseConfigurator):
 
         hgrid_ds = xr.open_dataset(ctx.supergrid_path)
         grid = Grid.from_supergrid_ds(hgrid_ds)
-        n_halo_cells = self.get_input_param("n_halo_cells")
-        grid.supergrid = grid.supergrid.expand(n_halo_cells)
+        padded = SupergridBase._create_expanded_supergrid(
+            grid.supergrid.x, grid.supergrid.y
+        )
+        grid.supergrid = type(grid.supergrid)._init_from_xy(
+            padded.x.values, padded.y.values, grid_type=grid.supergrid.grid_type
+        )
 
         bbox = Grid.get_bounding_boxes(grid)["ic"]
 
