@@ -29,6 +29,10 @@ KNOWN_INCLUSIVE_WITHOUT_HELPER = {
     # inclusive regardless of time-of-day — nothing to normalize.
     ("glorys", "get_glorys_data_from_rda"),
     ("glofas", "get_global_data_with_python"),
+    # A restart has no real time series and the output has no `time`
+    # dimension at all (a CICE restart/initial-condition file is a single
+    # static snapshot) -- `dates` isn't used for any date-based filtering.
+    ("cice_restart", "get_cice_restart_subset"),
     # Reparses `dates` via parse_dataset's filename-based day matching
     # (date_format/regex on the file list), same whole-day-inclusive
     # construction as the RDA/GLOFAS entries above.
@@ -42,10 +46,13 @@ KNOWN_INCLUSIVE_WITHOUT_HELPER = {
     ("dummy", "dummy_method"),
     ("dummy_forcing", "fetch_dummy"),
     # Reparses `dates` via pd.date_range (freq="D"), which is whole-day
-    # inclusive regardless of time-of-day — same reasoning as glorys above.
-    # Pure in-memory synthetic generation, not a real API call, so there's
-    # no end_datetime cutoff to normalize.
+    # inclusive regardless of time-of-day. Pure in-memory synthetic
+    # generation, not a real API call, so there's no end_datetime cutoff to
+    # normalize.
     ("reference_ocean", "get_reference_ocean_data"),
+    # Same reasoning as cice_restart above -- the output has no `time`
+    # dimension at all, so `dates` isn't used for any date-based filtering.
+    ("reference_ice", "get_reference_ice_data"),
 }
 
 

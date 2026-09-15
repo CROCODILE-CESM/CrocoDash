@@ -13,14 +13,14 @@ The `crocodash template` command writes a ready-to-use starter file sourced from
 # Jupyter notebook with <KEY> placeholders for manual editing
 crocodash template --output my_case.ipynb
 
-# Jupyter notebook with Derecho/GLADE paths pre-filled
-crocodash template --output my_case.ipynb --machine derecho
+# Jupyter notebook with GLADE paths pre-filled
+crocodash template --output my_case.ipynb --machine glade
 
-# Python script with Derecho paths pre-filled
-crocodash template --output my_case.py --machine derecho
+# Python script with GLADE paths pre-filled
+crocodash template --output my_case.py --machine glade
 
-# YAML config with Derecho paths pre-filled
-crocodash template --output my_case.yaml --machine derecho
+# YAML config with GLADE paths pre-filled
+crocodash template --output my_case.yaml --machine glade
 ```
 
 For `--kind case`, the output *format* is picked by `--output`'s suffix: `.yaml`/`.yml` for a config, `.ipynb` for a notebook, anything else for a `.py` script.
@@ -54,7 +54,7 @@ Machine path registries are defined in `crocogallery/known_paths.json` inside th
 Passing an unknown machine name prints the available options:
 
 ```
-KeyError: Unknown machine 'bogus'. Available: derecho
+KeyError: Unknown machine 'bogus'. Available: glade
 ```
 
 ---
