@@ -338,7 +338,11 @@ def test_process_bc_hands_the_engine_mom6s_own_pieces(tmp_path, monkeypatch):
 
     cfg.process_bc(ctx)
 
-    assert captured["regrid_chunk_fn"] is mom6._regrid_obc_chunk
+    # This branch binds custom_segments onto the chunk regridder before
+    # handing it over -- an interior boundary can't be rebuilt from its
+    # name alone -- so the engine gets a partial, not the bare function.
+    assert captured["regrid_chunk_fn"].func is mom6._regrid_obc_chunk
+    assert captured["regrid_chunk_fn"].keywords == {"custom_segments": {}}
     assert captured["variables"] == ["uo", "vo", "zos", "thetao", "so"]
     assert split == [
         {
