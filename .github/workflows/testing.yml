@@ -82,6 +82,14 @@ jobs:
         with:
           environment-name: CrocoDash
           environment-file: environment.yml
+          # Serial ESMF. The mpi_* builds (which `xesmf` alone resolves to) call
+          # MPI_Init on first use, which intermittently aborts on GitHub runners
+          # and kills pytest outright -- no traceback, no test verdict, just a
+          # process-level exit (15/143). CrocoDash only uses ESMF serially, via
+          # xesmf, so the MPI stack is not needed here. Same fix as
+          # NCAR/mom6_forge#107.
+          create-args: >-
+            esmf=*=nompi_*
           cache-environment: true
           cache-downloads: true
           # Serial ESMF. `esmpy` alone resolves esmf to an mpi_* build, which
