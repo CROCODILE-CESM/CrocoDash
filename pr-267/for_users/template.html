@@ -371,14 +371,14 @@ document.write(`
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Jupyter notebook with &lt;KEY&gt; placeholders for manual editing</span>
 crocodash<span class="w"> </span>template<span class="w"> </span>--output<span class="w"> </span>my_case.ipynb
 
-<span class="c1"># Jupyter notebook with Derecho/GLADE paths pre-filled</span>
-crocodash<span class="w"> </span>template<span class="w"> </span>--output<span class="w"> </span>my_case.ipynb<span class="w"> </span>--machine<span class="w"> </span>derecho
+<span class="c1"># Jupyter notebook with GLADE paths pre-filled</span>
+crocodash<span class="w"> </span>template<span class="w"> </span>--output<span class="w"> </span>my_case.ipynb<span class="w"> </span>--machine<span class="w"> </span>glade
 
-<span class="c1"># Python script with Derecho paths pre-filled</span>
-crocodash<span class="w"> </span>template<span class="w"> </span>--output<span class="w"> </span>my_case.py<span class="w"> </span>--machine<span class="w"> </span>derecho
+<span class="c1"># Python script with GLADE paths pre-filled</span>
+crocodash<span class="w"> </span>template<span class="w"> </span>--output<span class="w"> </span>my_case.py<span class="w"> </span>--machine<span class="w"> </span>glade
 
-<span class="c1"># YAML config with Derecho paths pre-filled</span>
-crocodash<span class="w"> </span>template<span class="w"> </span>--output<span class="w"> </span>my_case.yaml<span class="w"> </span>--machine<span class="w"> </span>derecho
+<span class="c1"># YAML config with GLADE paths pre-filled</span>
+crocodash<span class="w"> </span>template<span class="w"> </span>--output<span class="w"> </span>my_case.yaml<span class="w"> </span>--machine<span class="w"> </span>glade
 </pre></div>
 </div>
 <p>For <code class="docutils literal notranslate"><span class="pre">--kind</span> <span class="pre">case</span></code>, the output <em>format</em> is picked by <code class="docutils literal notranslate"><span class="pre">--output</span></code>’s suffix: <code class="docutils literal notranslate"><span class="pre">.yaml</span></code>/<code class="docutils literal notranslate"><span class="pre">.yml</span></code> for a config, <code class="docutils literal notranslate"><span class="pre">.ipynb</span></code> for a notebook, anything else for a <code class="docutils literal notranslate"><span class="pre">.py</span></code> script.</p>
@@ -403,7 +403,7 @@ crocodash<span class="w"> </span>template<span class="w"> </span>--output<span c
 <h2>Available machines<a class="headerlink" href="#available-machines" title="Link to this heading">#</a></h2>
 <p>Machine path registries are defined in <code class="docutils literal notranslate"><span class="pre">crocogallery/known_paths.json</span></code> inside the CrocoGallery repo. To add a new environment (e.g. <code class="docutils literal notranslate"><span class="pre">&quot;casper&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;local&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;manish&quot;</span></code>), add a new top-level key with the relevant path mappings — no Python changes needed.</p>
 <p>Passing an unknown machine name prints the available options:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="ne">KeyError</span><span class="p">:</span> <span class="n">Unknown</span> <span class="n">machine</span> <span class="s1">'bogus'</span><span class="o">.</span> <span class="n">Available</span><span class="p">:</span> <span class="n">derecho</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="ne">KeyError</span><span class="p">:</span> <span class="n">Unknown</span> <span class="n">machine</span> <span class="s1">'bogus'</span><span class="o">.</span> <span class="n">Available</span><span class="p">:</span> <span class="n">glade</span>
 </pre></div>
 </div>
 </section>
