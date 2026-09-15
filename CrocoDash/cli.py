@@ -135,7 +135,7 @@ def _template(args):
         )
         print(f"Template written to: {output}")
         if not args.machine:
-            print("Tip: rerun with --machine derecho to pre-fill known dataset paths.")
+            print("Tip: rerun with --machine glade to pre-fill known dataset paths.")
     except KeyError as e:
         # KeyError.__str__ reprs its (possibly multi-line) argument, which
         # turns embedded newlines into literal "\n" -- print the original
@@ -340,7 +340,7 @@ def main():
     template_parser.add_argument(
         "--machine",
         default=None,
-        help="Pre-fill known dataset paths for this machine (e.g. derecho). Omit to leave <KEY> placeholders.",
+        help="Pre-fill known dataset paths for this machine (e.g. glade). Omit to leave <KEY> placeholders.",
     )
     from crocogallery.template import DEFAULT_TEMPLATE_NOTEBOOK_ID
 
