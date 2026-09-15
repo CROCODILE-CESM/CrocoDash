@@ -1,4 +1,10 @@
-"""OBC (Open Boundary Condition) forcing extraction for CrocoDash.
+"""OBC (Open Boundary Condition) forcing extraction engine for CrocoDash.
+
+Model-agnostic: this module gets raw data and chunks/merges it, but knows
+nothing about how to regrid it. Callers (``mom6.py``, ``cice.py``, ``ww3.py``)
+supply a ``regrid_chunk_fn`` that turns one raw chunk into that target's own
+per-segment output file -- everything else (GET, date-chunking, idempotency,
+MERGE) is shared.
 
 Three-phase pipeline per boundary:
 
@@ -7,9 +13,9 @@ Three-phase pipeline per boundary:
              (API limits, download size). Each chunk is written as
              ``{boundary}_unprocessed.{start}_{end}.nc``.
 2. REGRID — validate raw coverage from filenames, then open all raw files
-             lazily and regrid in ``regrid_step``-sized slices. Chunk size is
-             driven by memory and xESMF performance. GET and REGRID chunks are
-             fully independent.
+             lazily and regrid (via the caller-supplied ``regrid_chunk_fn``) in
+             ``regrid_step``-sized slices. Chunk size is driven by memory and
+             xESMF performance. GET and REGRID chunks are fully independent.
 3. MERGE  — concatenate regridded chunks into ``forcing_obc_segment_NNN.nc``.
 
 GET and REGRID phase automatically switch to multiprocessing when chunking and
@@ -25,8 +31,8 @@ from pathlib import Path
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
 import math
+import dask
 import pandas as pd
-import regional_mom6 as rm6
 import xarray as xr
 from CrocoDash import logging
 from CrocoDash.extract_forcings import utils
@@ -245,32 +251,48 @@ def _regrid_per_process(
     seg_id,
     hgrid_path,
     output_folder,
+    scratch_folder,
     dataset_varnames,
-    fill_method,
+    regrid_chunk_fn,
+    start_date,
 ):
+    """Regrid this worker's slice of the chunk list.
+
+    Runs in its own process, so it opens its own hgrid and keeps its own
+    regridder cache -- ESMF weights are computed on this worker's first chunk
+    and reused for the rest of its slice. ``scratch_folder`` is where
+    ``regrid_chunk_fn`` is pointed: it writes to the fixed filename
+    ``forcing_obc_segment_{seg_id:03d}.nc``, so concurrent workers need
+    separate folders or they would overwrite each other. Finished chunks are
+    moved into ``output_folder`` under their dated name, so the on-disk result
+    does not depend on how many workers ran.
+    """
+    output_folder = Path(output_folder)
+    scratch_folder = Path(scratch_folder)
+    scratch_folder.mkdir(parents=True, exist_ok=True)
+    (scratch_folder / "weights").mkdir(exist_ok=True)
 
     logger.info("PROC [%d] - REGRID [%s]: Spun up new proc", proc_id, boundary)
-    output_folder = Path(output_folder + f"_{seg_id:03d}_{proc_id:02d}")
-    output_folder.mkdir(exist_ok=True)
-    (output_folder / "weights").mkdir(exist_ok=True)
 
     regridders = None
     proc_regridded_files = []
 
     with xr.open_dataset(hgrid_path) as hgrid:
-        for pair in chunk_pairs:
+        for chunk_start, chunk_end in chunk_pairs:
             chunk_dated_output, regridders = _regrid_one_chunk(
                 proc_id,
-                pair[0],
-                pair[1],
+                chunk_start,
+                chunk_end,
                 boundary,
                 raw_files,
                 seg_id,
                 hgrid,
                 output_folder,
+                scratch_folder,
                 dataset_varnames,
-                fill_method,
+                regrid_chunk_fn,
                 regridders,
+                start_date,
             )
             proc_regridded_files.append(chunk_dated_output)
 
@@ -286,16 +308,20 @@ def _regrid_one_chunk(
     seg_id,
     hgrid,
     output_folder,
+    scratch_folder,
     dataset_varnames,
-    fill_method,
+    regrid_chunk_fn,
     regridders,
+    start_date,
 ):
     """Regrid one chunk so that it can be called by multiple processes at once.
 
-    Each regrid_step slice is written to a temp file (required by the rm6
-    interface), then removed after regridding.
+    Only the raw files overlapping this chunk are opened, so each worker holds
+    its own small slice rather than the whole boundary. The chunk is handed to
+    ``regrid_chunk_fn`` as an in-memory ``xr.Dataset`` -- if that target's
+    regrid step needs a file on disk (as regional_mom6's does), writing and
+    cleaning it up is its own business, not this engine's.
     """
-
     start_str = chunk_start_date.strftime("%Y-%m-%d")
     end_str = chunk_end_date.strftime("%Y-%m-%d")
     logger.info(
@@ -305,8 +331,20 @@ def _regrid_one_chunk(
         start_str,
         end_str,
     )
+
+    dated_output = (
+        output_folder / f"forcing_obc_segment_{seg_id:03d}_{start_str}_{end_str}.nc"
+    )
+    if dated_output.exists():
+        if not utils.is_valid_netcdf(dated_output):
+            raise RuntimeError(
+                f"Regridded file {dated_output} exists but is not valid NetCDF. "
+                "Delete it and re-run."
+            )
+        logger.info(f"Regridded file {dated_output.name} already exists. Skipping.")
+        return dated_output, regridders
+
     logger.info("PROC [%d] - REGRID [%s]: Validating coverage", proc_id, boundary)
-    # Keep only files related to this chunk
     parse_raw_dates = lambda f, boundary=boundary: _parse_raw_filename_dates(
         f, boundary
     )
@@ -323,21 +361,7 @@ def _regrid_one_chunk(
         chunk_end_date,
     )
 
-    dated_output = (
-        output_folder / f"forcing_obc_segment_{seg_id:03d}_{start_str}_{end_str}.nc"
-    )
-
-    logger.info("PROC [%d] - REGRID [%s]: Checking if file exists", proc_id, boundary)
-    if dated_output.exists():
-        if not utils.is_valid_netcdf(dated_output):
-            raise RuntimeError(
-                f"Regridded file {dated_output} exists but is not valid NetCDF. "
-                "Delete it and re-run."
-            )
-        logger.info(f"Regridded file {dated_output.name} already exists. Skipping.")
-        return dated_output, regridders
-
-    # Opens chunk raw files lazily via open_mfdataset
+    logger.info("PROC [%d] - REGRID [%s]: Performing regrid", proc_id, boundary)
     with xr.open_mfdataset(
         [str(f) for f in sorted(chunk_raw_files)],
         combine="nested",
@@ -345,41 +369,24 @@ def _regrid_one_chunk(
         coords="minimal",
         parallel=False,
     ) as ds_full:
-
-        tmp_file = output_folder / f"_tmp_{boundary}_{start_str}_{end_str}.nc"
         # Daily-mean products like GLORYS timestamp each day's value at noon, so
         # slice by date strings (pandas partial-string indexing treats the end
         # string as covering that whole calendar day) to include chunk_end's own
         # data point instead of a midnight-anchored datetime slice excluding it.
-        ds_full.sel(time=slice(start_str, end_str)).to_netcdf(tmp_file)
+        chunk_ds = ds_full.sel(time=slice(start_str, end_str))
 
-    # Regridder weights are computed once per processor on the first chunk and reused.
-    try:
-        logger.info("PROC [%d] - REGRID [%s]: Performing regrid", proc_id, boundary)
-        seg = rm6.segment(
+        regridders = regrid_chunk_fn(
+            ds=chunk_ds,
             hgrid=hgrid,
-            bathymetry_path=None,
-            outfolder=output_folder,
-            segment_name=f"segment_{seg_id:03d}",
-            orientation=boundary,
-            startdate=chunk_start_date,
-            repeat_year_forcing=False,
-        )
-        seg.regrid_velocity_tracers(
-            infile=tmp_file,
-            varnames=dataset_varnames,
-            arakawa_grid=None,
-            rotational_method=rm6.rotation.RotationMethod.EXPAND_GRID,
-            regridding_method="bilinear",
-            fill_method=fill_method,
+            boundary=boundary,
+            seg_id=seg_id,
+            outfolder=scratch_folder,
+            dataset_varnames=dataset_varnames,
+            start_date=start_date,
             regridders=regridders,
-            calendar=dataset_varnames["calendar"]["mom6"],
-            time_units=dataset_varnames["time_units"],
         )
-        temp_path = output_folder / f"forcing_obc_segment_{seg_id:03d}.nc"
-        os.rename(temp_path, dated_output)
-    finally:
-        tmp_file.unlink(missing_ok=True)
+
+    os.replace(scratch_folder / f"forcing_obc_segment_{seg_id:03d}.nc", dated_output)
 
     logger.info(
         "PROC [%d] - REGRID [%s]: Regridding done for %s",
@@ -387,7 +394,7 @@ def _regrid_one_chunk(
         boundary,
         dated_output,
     )
-    return dated_output, seg.regridders
+    return dated_output, regridders
 
 
 def available_cpus():
@@ -473,17 +480,64 @@ def _regrid_boundary(
     hgrid_path,
     output_folder,
     dataset_varnames: dict,
-    fill_method,
+    regrid_chunk_fn,
 ) -> list:
-    """Regrid all raw files for one boundary, sliced by regrid_step_days."""
-    pairs = list(_make_date_pairs(start_date, end_date, regrid_step_days))
-    # Spread work across processes. If no chunking is prescribed it falls back
-    # to one processor.
+    """Regrid all raw files for one boundary, sliced by regrid_step_days.
 
-    num_workers = min(available_cpus(), len(pairs))
-    pairs_per_workers = math.ceil(len(pairs) / num_workers)
+    Each regrid_step slice is handed to ``regrid_chunk_fn`` (the
+    target-specific regrid step -- see ``mom6.py``/``cice.py``/``ww3.py``) as
+    a plain in-memory ``xr.Dataset`` -- no file, no cleanup for this engine to
+    manage. If a target's own regrid step needs a file on disk (as
+    regional_mom6's does), that's its own business: write one, use it, remove
+    it. ``regrid_chunk_fn`` is expected to write its output to
+    ``<its outfolder> / f"forcing_obc_segment_{seg_id:03d}.nc"`` and return the
+    updated regridder cache to reuse on the next chunk (regridder weights are
+    typically computed once and reused).
+
+    Chunks are spread across processes. Weight reuse is per worker, not global:
+    each worker computes the regridder on its first chunk and reuses it for the
+    rest of its own slice. One worker (the single-CPU case) is the plain
+    sequential engine, regridding straight into ``output_folder``.
+    """
+    output_folder = Path(output_folder)
+    (output_folder / "weights").mkdir(exist_ok=True)
+
+    pairs = list(_make_date_pairs(start_date, end_date, regrid_step_days))
+    if not pairs:
+        return []
+
+    num_workers = max(1, min(available_cpus(), len(pairs)))
+
+    if num_workers == 1:
+        return sorted(
+            _regrid_per_process(
+                0,
+                pairs,
+                boundary,
+                raw_files,
+                seg_id,
+                hgrid_path,
+                output_folder,
+                output_folder,
+                dataset_varnames,
+                regrid_chunk_fn,
+                start_date,
+            ),
+            key=os.path.basename,
+        )
+
+    per_worker = math.ceil(len(pairs) / num_workers)
+    worker_slices = [
+        pairs[j : j + per_worker] for j in range(0, len(pairs), per_worker)
+    ]
+    logger.info(
+        "REGRID [%s]: %d chunks across %d processes",
+        boundary,
+        len(pairs),
+        len(worker_slices),
+    )
+
     regridded_files = []
-    logger.info("REGRID [%s]: ready for multi processes", boundary)
     with ProcessPoolExecutor(max_workers=num_workers) as ex:
         futures = [
             ex.submit(
@@ -495,15 +549,12 @@ def _regrid_boundary(
                 seg_id,
                 hgrid_path,
                 output_folder,
+                output_folder / f"_proc_{seg_id:03d}_{proc_id:02d}",
                 dataset_varnames,
-                fill_method,
+                regrid_chunk_fn,
+                start_date,
             )
-            for proc_id, chunk_pairs in enumerate(
-                [
-                    pairs[j : j + pairs_per_workers]
-                    for j in range(0, len(pairs), pairs_per_workers)
-                ]
-            )
+            for proc_id, chunk_pairs in enumerate(worker_slices)
         ]
         for f in as_completed(futures):
             regridded_files.extend(f.result())
@@ -532,108 +583,16 @@ def _merge_boundary(boundary_label: str, regridded_files: list, output_folder) -
         coords="minimal",
         parallel=False,
     )
-    ds.to_netcdf(output_path)
+    # open_mfdataset makes this dask-backed, so the write is exposed to the
+    # same intermittent HDF5/threaded-scheduler deadlock documented at
+    # mom6.py's _regrid_obc_chunk. Not observed here -- guarded because it is
+    # the identical pattern, and a deadlock that strikes one write in four is
+    # not something to leave to chance two functions away from a known one.
+    with dask.config.set(scheduler="synchronous"):
+        ds.to_netcdf(output_path)
     ds.close()
     logger.info(f"Saved merged boundary at {output_path}")
     return output_path
-
-
-# ---------------------------------------------------------------------------
-# Entry point
-# ---------------------------------------------------------------------------
-
-
-def _split_bgc_tracers_into_files(
-    output_path, boundary_number_conversion: dict, marbl_var_names: dict
-):
-    """Move each BGC tracer out of the per-boundary OBC files into its own file.
-
-    MOM6's generic tracer code reads BGC open-boundary data from one file per
-    tracer holding every segment (``<tracer>_obc_segment.nc``), whereas the
-    physical tracers are read per boundary from
-    ``forcing_obc_segment_NNN.nc``. The regrid step writes the BGC tracers into
-    those per-boundary files alongside temp/salt, so without this step the
-    per-tracer files MOM6 is pointed at never exist.
-
-    The tracers are *moved*, not copied: ``OBC_SEGMENT_NNN_DATA`` names only
-    U/V/SSH/TEMP/SALT out of the per-boundary file, so BGC copies left behind
-    there are never read and would put every field on disk twice.
-
-    Mirrors regional_mom6's ``reformat_bgc_tracers_into_files``, which only runs
-    inside rm6's own ``setup_ocean_state_boundaries`` and so is never reached by
-    this pipeline.
-    """
-    if not marbl_var_names:
-        return []
-
-    output_path = Path(output_path)
-    seg_ids = [f"{n:03d}" for n in boundary_number_conversion.values()]
-    seg_files = {seg: output_path / f"forcing_obc_segment_{seg}.nc" for seg in seg_ids}
-    out_files = [output_path / f"{var}_obc_segment.nc" for var in marbl_var_names]
-
-    # Step 3 strips the BGC tracers out of the per-boundary files, so on a
-    # re-run they are no longer there to be read. Every other phase of the OBC
-    # pipeline resumes by skipping completed work; do the same here.
-    if all(f.exists() for f in out_files):
-        logger.info("BGC SPLIT: per-tracer files already exist. Skipping.")
-        return out_files
-
-    # 1. Open each per-boundary file once. These are the largest files the
-    #    pipeline produces, and opening inside the tracer loop below would
-    #    reopen every one of them once per tracer.
-    seg_datasets = {seg: xr.open_dataset(f) for seg, f in seg_files.items()}
-
-    # 2. Write one file per tracer, gathering that tracer across all segments.
-    written = []
-    try:
-        for var in marbl_var_names:
-            ds_var = xr.Dataset()
-            for seg in seg_ids:
-                ds = seg_datasets[seg]
-                var_name = f"{var}_segment_{seg}"
-                if var_name not in ds:
-                    raise KeyError(
-                        f"BGC tracer variable {var_name!r} not found in "
-                        f"{seg_files[seg]}. Expected it there because {var!r} was "
-                        "included in the regridded tracer set."
-                    )
-                # Left lazy so to_netcdf streams from the open source file
-                # rather than materialising every segment first.
-                ds_var[var_name] = ds[var_name]
-                dz_var_name = f"dz_{var_name}"
-                if dz_var_name in ds:
-                    ds_var[dz_var_name] = ds[dz_var_name]
-
-            out_file = output_path / f"{var}_obc_segment.nc"
-            ds_var.to_netcdf(out_file, unlimited_dims="time")
-            written.append(out_file)
-            logger.info("BGC SPLIT: wrote %s", out_file.name)
-    finally:
-        for ds in seg_datasets.values():
-            ds.close()
-
-    # 3. Drop the now-redundant copies from the per-boundary files. Must follow
-    #    step 2, which streams its output from these same files.
-    for seg in seg_ids:
-        seg_file = seg_files[seg]
-        with xr.open_dataset(seg_file) as ds:
-            drop = [
-                name
-                for var in marbl_var_names
-                for name in (f"{var}_segment_{seg}", f"dz_{var}_segment_{seg}")
-                if name in ds
-            ]
-            if not drop:
-                continue
-            # A NetCDF file cannot be rewritten while open, so stage a copy and
-            # swap it in. os.replace is atomic: an interrupted run leaves either
-            # the old file or the new one, never a truncated one.
-            tmp = seg_file.with_name(seg_file.name + ".tmp")
-            ds.drop_vars(drop).to_netcdf(tmp, unlimited_dims="time")
-        os.replace(tmp, seg_file)
-        logger.info("BGC SPLIT: dropped %d BGC vars from %s", len(drop), seg_file.name)
-
-    return written
 
 
 def process_obc_conditions(
@@ -642,14 +601,16 @@ def process_obc_conditions(
     boundary_number_conversion: dict,
     product_name: str,
     function_name: str,
-    product_info: dict,
+    variables: list,
+    extra_args: dict,
+    dataset_varnames: dict,
     hgrid_path,
     raw_dataset_path,
     regridded_dataset_path,
     output_path,
+    regrid_chunk_fn,
     get_step_days=None,
     regrid_step_days: int = 30,
-    function_args: dict = None,
     bathymetry_path=None,
     preview: bool = False,
 ):
@@ -665,19 +626,22 @@ def process_obc_conditions(
     Args:
         start_date: Forcing start date (datetime or any pandas-parseable string).
         end_date: Forcing end date (datetime or any pandas-parseable string).
-        boundary_number_conversion: Boundary name -> MOM6 segment number.
+        boundary_number_conversion: Boundary name -> target-model segment number.
         product_name: Forcing data product name.
         function_name: Download function name for the product.
-        product_info: Product variable-name metadata (a.k.a. dataset_varnames).
+        variables: Variable names to request from the download function
+            (already resolved by the caller from its own product metadata).
+        extra_args: Extra kwargs for the download function (already resolved
+            by the caller).
+        dataset_varnames: Opaque metadata dict forwarded to ``regrid_chunk_fn``
+            -- this module never reads its keys itself.
         hgrid_path: Path to the hgrid supergrid file.
         raw_dataset_path: Directory for raw downloaded data.
         regridded_dataset_path: Directory for per-chunk regridded data.
-        output_path: Directory for final, merged MOM6-ready output files.
+        output_path: Directory for final, merged output files.
+        regrid_chunk_fn: Target-specific regrid step -- see ``_regrid_boundary``.
         get_step_days: GET chunk size in days; None = full range in one request.
         regrid_step_days: REGRID chunk size in days.
-        function_args: Overrides for the access function's non-required
-            arguments (e.g. `member`), as resolved by
-            configure_forcings()'s function_overrides.
         bathymetry_path: Optional path to the case's bathymetry file. When
             given, download bounding boxes are computed from the bathymetry
             ocean tmask (tighter than the full supergrid edge extent). When
@@ -700,8 +664,6 @@ def process_obc_conditions(
             "get_pairs": _make_date_pairs(start_date, end_date, get_step_days),
             "regrid_pairs": _make_date_pairs(start_date, end_date, regrid_step_days),
         }
-
-    variables, extra_args = utils.build_forcing_request(product_info, function_args)
 
     # Compute per-boundary download bboxes using the bathymetry tmask so we only
     # request data over ocean cells (tighter than the full supergrid edge extent).
@@ -728,12 +690,6 @@ def process_obc_conditions(
             logger.info(
                 "No bathymetry_path given; using full supergrid bounding boxes."
             )
-
-    fill_method = rm6.regridding.fill_missing_data
-    if product_info.get("boundary_fill_method", "regional_mom6") != "regional_mom6":
-        raise ValueError(
-            f"fill_method '{product_info['boundary_fill_method']}' is not supported."
-        )
 
     raw_path.mkdir(exist_ok=True)
     regridded_path.mkdir(exist_ok=True)
@@ -775,7 +731,7 @@ def process_obc_conditions(
             end_date,
         )
 
-        logger.info("REGRID [%s]: %d-day slices", boundary, regrid_step_days)
+        logger.info("REGRID [%s]: %s-day slices", boundary, regrid_step_days)
         regridded_files_by_boundary[boundary] = _regrid_boundary(
             boundary=boundary,
             seg_id=seg_id,
@@ -785,8 +741,8 @@ def process_obc_conditions(
             regrid_step_days=regrid_step_days,
             hgrid_path=str(hgrid_path),
             output_folder=str(regridded_path),
-            dataset_varnames=product_info,
-            fill_method=fill_method,
+            dataset_varnames=dataset_varnames,
+            regrid_chunk_fn=regrid_chunk_fn,
         )
 
     for boundary in boundaries:
@@ -806,11 +762,5 @@ def process_obc_conditions(
             regridded_files=regridded_files,
             output_folder=str(output_path),
         )
-
-    _split_bgc_tracers_into_files(
-        output_path=output_path,
-        boundary_number_conversion=boundary_number_conversion,
-        marbl_var_names=product_info.get("marbl_var_names", {}),
-    )
 
     logger.info("OBC processing complete.")

@@ -6,10 +6,14 @@ from CrocoDash.vgrid import VGrid
 
 @pytest.fixture(scope="session")
 def get_rect_grid():
+    # Must stay in sync with tests/generate_small_test_case.py, which produced
+    # the panama1 reference data on GLADE (ESMF mesh, GLOFAS map, OBC segments,
+    # chl). A mismatch here surfaces as opaque errors deep inside xesmf/sparse
+    # when those files are reused as weights.
     grid = Grid(
-        resolution=0.1,
+        resolution=0.05,
         xstart=278.0,
-        lenx=4.0,
+        lenx=3.0,
         ystart=7.0,
         leny=3.0,
         name="panama1",

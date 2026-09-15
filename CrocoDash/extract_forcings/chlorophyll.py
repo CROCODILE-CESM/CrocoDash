@@ -1,4 +1,4 @@
-from mom6_forge import chl
+from regional_mom6 import chl
 
 from CrocoDash.raw_data_access.base import Calendar, NOLEAP
 
@@ -16,7 +16,7 @@ def process_chl(
         ocn_topo,
         chl_processed_filepath,
         inputdir / "ocnice" / output_filepath,
-        # mom6_forge stamps this straight onto the output time coordinate,
+        # regional_mom6 stamps this straight onto the output time coordinate,
         # which MOM6/FMS then reads, so it needs the mom6 spelling.
         calendar=calendar.mom6,
     )

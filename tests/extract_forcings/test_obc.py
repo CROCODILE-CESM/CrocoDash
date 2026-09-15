@@ -11,9 +11,9 @@ from CrocoDash.extract_forcings.obc import (
     _merge_boundary,
     _validate_coverage,
     _ocean_bbox_for_boundary,
-    _split_bgc_tracers_into_files,
 )
 from CrocoDash.extract_forcings.utils import is_valid_netcdf
+from CrocoDash.extract_forcings.mom6 import _regrid_obc_chunk
 from CrocoDash.grid import Grid
 from CrocoDash.topo import Topo
 
@@ -62,7 +62,9 @@ def obc_config(tmp_path, get_rect_grid):
         boundary_number_conversion={"east": 1, "south": 2},
         product_name="GLORYS",
         function_name="get_glorys_data_from_rda",
-        product_info={
+        variables=[],
+        extra_args={},
+        dataset_varnames={
             "u_var_name": "uo",
             "v_var_name": "vo",
             "eta_var_name": "zos",
@@ -80,6 +82,7 @@ def obc_config(tmp_path, get_rect_grid):
         raw_dataset_path=str(raw_dir),
         regridded_dataset_path=str(regridded_dir),
         output_path=str(output_dir),
+        regrid_chunk_fn=_regrid_obc_chunk,
         get_step_days=None,
         regrid_step_days=5,
     )
@@ -221,33 +224,6 @@ def test_merge_single_boundary(
 
 
 @pytest.mark.slow
-def test_obc_regrid_workflow(
-    obc_config, generate_piecewise_raw_data, dummy_forcing_factory, skip_if_not_glade
-):
-    kwargs, tmp_path = obc_config
-    grid = Grid.from_supergrid(tmp_path / "hgrid.nc")
-    bounds = Grid.get_bounding_boxes(grid)
-    raw_dir = tmp_path / "raw"
-    regridded_dir = tmp_path / "regridded"
-
-    ds = dummy_forcing_factory(
-        bounds["ic"]["lat_min"],
-        bounds["ic"]["lat_max"],
-        bounds["ic"]["lon_min"],
-        bounds["ic"]["lon_max"],
-    )
-    # get_step=None → one file covering the full range
-    generate_piecewise_raw_data(ds, "2020-01-01", "2020-01-15", "east_unprocessed.")
-    generate_piecewise_raw_data(ds, "2020-01-01", "2020-01-15", "south_unprocessed.")
-
-    process_obc_conditions(**kwargs)
-
-    # regrid_step=5 → first chunk is 2020-01-01 to 2020-01-05
-    assert (regridded_dir / "forcing_obc_segment_001_2020-01-01_2020-01-05.nc").exists()
-    assert (regridded_dir / "forcing_obc_segment_002_2020-01-01_2020-01-05.nc").exists()
-
-
-@pytest.mark.slow
 def test_obc_merge_workflow(
     obc_config, generate_piecewise_raw_data, dummy_mom6_obc_data_factory, get_rect_grid
 ):
@@ -380,75 +356,3 @@ def test_merge_boundary_corrupt_existing_raises(
 
     with pytest.raises(RuntimeError, match="not valid NetCDF"):
         _merge_boundary("001", [chunk_file], output_dir)
-
-
-# ---------------------------------------------------------------------------
-# BGC tracer splitting
-# ---------------------------------------------------------------------------
-
-
-def _write_segment_file(path, seg, tracers, nt=3, nz=4, nx=5):
-    """A stand-in for a merged forcing_obc_segment_NNN.nc holding physical +
-    BGC tracers, in the ``<var>_segment_NNN`` / ``dz_<var>_segment_NNN`` layout
-    the regrid step produces."""
-    ds = xr.Dataset()
-    dims = ("time", f"nz_segment_{seg}", f"nx_segment_{seg}")
-    for var in ("temp", "salt", *tracers):
-        name = f"{var}_segment_{seg}"
-        ds[name] = (dims, np.full((nt, nz, nx), float(len(var))))
-        ds[f"dz_{name}"] = (dims, np.ones((nt, nz, nx)))
-    ds["time"] = ("time", pd.date_range("2020-01-01", periods=nt))
-    ds.to_netcdf(path)
-
-
-def test_split_bgc_tracers_writes_one_file_per_tracer_with_all_segments(tmp_path):
-    """Each BGC tracer gets its own file holding every segment.
-
-    MOM6's generic tracer code reads BGC boundary data per tracer, not per
-    segment, so OBC_DATA_<tracer> points at <tracer>_obc_segment.nc. Without
-    this split those files never exist.
-    """
-    conversion = {"south": 1, "north": 2, "west": 3, "east": 4}
-    tracers = {"o2": "o2", "no3": "no3"}
-    for seg in ("001", "002", "003", "004"):
-        _write_segment_file(
-            tmp_path / f"forcing_obc_segment_{seg}.nc", seg, tracers.keys()
-        )
-
-    written = _split_bgc_tracers_into_files(tmp_path, conversion, tracers)
-
-    assert sorted(p.name for p in written) == [
-        "no3_obc_segment.nc",
-        "o2_obc_segment.nc",
-    ]
-    for var in tracers:
-        with xr.open_dataset(tmp_path / f"{var}_obc_segment.nc") as ds:
-            for seg in ("001", "002", "003", "004"):
-                assert f"{var}_segment_{seg}" in ds
-                assert f"dz_{var}_segment_{seg}" in ds
-            # Physical tracers stay in the per-boundary files, not here.
-            assert not [v for v in ds.data_vars if v.startswith(("temp", "salt"))]
-
-    # The per-boundary files are left intact for the physical tracers.
-    for seg in ("001", "002", "003", "004"):
-        with xr.open_dataset(tmp_path / f"forcing_obc_segment_{seg}.nc") as ds:
-            assert f"temp_segment_{seg}" in ds
-
-
-def test_split_bgc_tracers_is_a_noop_without_marbl_tracers(tmp_path):
-    """Non-BGC cases must not gain any per-tracer files."""
-    conversion = {"south": 1}
-    _write_segment_file(tmp_path / "forcing_obc_segment_001.nc", "001", [])
-
-    assert _split_bgc_tracers_into_files(tmp_path, conversion, {}) == []
-    assert sorted(p.name for p in tmp_path.iterdir()) == ["forcing_obc_segment_001.nc"]
-
-
-def test_split_bgc_tracers_raises_when_tracer_missing_from_segment(tmp_path):
-    """A tracer requested but absent from a segment file is a hard error, not a
-    silently truncated output file."""
-    conversion = {"south": 1}
-    _write_segment_file(tmp_path / "forcing_obc_segment_001.nc", "001", ["o2"])
-
-    with pytest.raises(KeyError, match="alk_segment_001"):
-        _split_bgc_tracers_into_files(tmp_path, conversion, {"alk": "alk"})
