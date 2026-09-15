@@ -10,7 +10,6 @@ and a hand-rolled expansion would silently emit paths that do not exist.
 
 import os
 import sys
-from functools import lru_cache
 
 
 def _cdeps_root(cesmroot):
@@ -36,9 +35,13 @@ def _ensure_cime(cesmroot):
     _add_to_path(os.path.join(str(cesmroot), "cime"))
 
 
-@lru_cache(maxsize=None)
 def _streams(cesmroot, component):
-    """A StreamCDEPS object for ``component`` ("datm" or "drof")."""
+    """A StreamCDEPS object for ``component`` ("datm" or "drof").
+
+    Rebuilt on every call rather than memoized here: CIME's ``GenericXML``
+    keeps its own cache of parsed trees, so repeated construction costs
+    well under a millisecond.
+    """
     _ensure_cime(cesmroot)
     shared_config = os.path.join(_cdeps_root(cesmroot), "cime_config")
     # stream_cdeps.py is a loose module in the CDEPS config dir, not a package.
@@ -54,7 +57,6 @@ def _streams(cesmroot, component):
     )
 
 
-@lru_cache(maxsize=None)
 def stream_names(cesmroot, component, mode):
     """The stream names active for a DATM_MODE/DROF_MODE, in buildnml's order.
 
