@@ -1,16 +1,17 @@
 """
 Data Access Module -> Reference (fast, deterministic synthetic forcing)
 
-REFERENCE_OCEAN (MOM6) generates plausible-looking forcing data purely in
-memory via numpy, with no network access, credentials, or campaign-storage
-dependency. Each access method is a pure function of its own (dates,
-lat/lon bbox) arguments: same inputs always produce the same output, so
-this is safe to use in tests (real assertions, not just "did it not crash")
-and in demo notebooks that should look identical on every run.
+Two products -- REFERENCE_OCEAN (MOM6), REFERENCE_WAVES (WW3) -- that
+generate plausible-looking forcing data purely in memory via numpy, with no
+network access, credentials, or campaign-storage dependency. Each access
+method is a pure function of its own (dates, lat/lon bbox) arguments: same
+inputs always produce the same output, so these are safe to use in tests
+(real assertions, not just "did it not crash") and in demo notebooks that
+should look identical on every run.
 
-This is not meant to be physically accurate -- just close enough in shape
-(a warm-at-equator thermocline) that the real MOM6 regrid pipeline has
-something sensible to chew on, fast.
+These are not meant to be physically accurate -- just close enough in shape
+(a warm-at-equator thermocline, a JONSWAP-shaped wave spectrum) that the
+real MOM6/WW3 regrid pipelines have something sensible to chew on, fast.
 """
 
 from pathlib import Path
@@ -186,6 +187,102 @@ class REFERENCE_OCEAN(MOM6ForcingProduct):
         )
         if variables:
             ds = ds[[v for v in variables if v in ds.data_vars]]
+
+        output_folder = Path(output_folder)
+        output_folder.mkdir(parents=True, exist_ok=True)
+        output_path = output_folder / output_filename
+        ds.to_netcdf(output_path)
+        return output_path
+
+
+class REFERENCE_WAVES(WW3ForcingProduct):
+    product_name = "reference_waves"
+    description = (
+        "Fast, deterministic synthetic WW3 boundary wave spectra (JONSWAP-"
+        "shaped frequency spectrum, cosine-2s directional spreading) for "
+        "testing and demos -- no CDS/network access required."
+    )
+    link = "n/a"
+    time_var_name = "time"
+    time_units = None
+    calendar = GREGORIAN
+
+    @accessmethod(
+        description=(
+            "Generates a synthetic multi-station 2D wave spectrum (JONSWAP "
+            "frequency shape, cosine-2s directional spreading) over the "
+            "requested bbox/dates, in the same (time, latitude, longitude, "
+            "frequency, direction) shape the real decoded ERA5 product uses."
+        ),
+        type="python",
+    )
+    def get_reference_wave_spectra(
+        dates: list,
+        lat_min,
+        lat_max,
+        lon_min,
+        lon_max,
+        name=None,
+        output_folder=Path(""),
+        output_filename="reference_waves.nc",
+        variables=None,
+    ):
+        n_stations = 3
+        lons = np.linspace(lon_min, lon_max, n_stations)
+        lats = np.array([(lat_min + lat_max) / 2])
+        # Whole-day inclusive on both ends: date_range(..., freq="6h") alone
+        # would stop at the last day's 00:00 and drop its 06/12/18:00 steps,
+        # so build every 6-hour step of every whole day in the range instead
+        # (same "every hour of every requested day" convention era5.py uses).
+        days = pd.date_range(dates[0], dates[-1], freq="D")
+        time = pd.date_range(days[0], days[-1] + pd.Timedelta(hours=18), freq="6h")
+        freq = np.linspace(0.03, 0.25, 12)
+        direction = np.linspace(0.0, 360.0, 16, endpoint=False)
+
+        # Standard JONSWAP spectrum: a 2m/8s swell (Hs=2, Tp=8), Phillips
+        # constant alpha=0.0081 and peak-enhancement gamma=3.3 are the
+        # textbook defaults.
+        g, hs, tp, alpha, gamma = 9.81, 2.0, 8.0, 0.0081, 3.3
+        fp = 1.0 / tp
+        sigma = np.where(freq <= fp, 0.07, 0.09)
+        jonswap = (
+            alpha
+            * g**2
+            * (2 * np.pi) ** -4
+            * freq**-5
+            * np.exp(-1.25 * (fp / freq) ** 4)
+            * gamma ** np.exp(-((freq - fp) ** 2) / (2 * sigma**2 * fp**2))
+        )
+
+        # Cosine-2s directional spreading around a fixed dominant direction
+        # (waves "coming from" the west), normalized to integrate to ~1 over
+        # the full circle.
+        theta0, s = 270.0, 8
+        dtheta = np.deg2rad(direction[1] - direction[0])
+        spreading = np.cos(np.deg2rad((direction - theta0) / 2.0)) ** (2 * s)
+        spreading = spreading / (spreading.sum() * dtheta)
+
+        base_spectrum = jonswap[:, None] * spreading[None, :]
+        efth = np.broadcast_to(
+            base_spectrum,
+            (len(time), len(lats), len(lons), len(freq), len(direction)),
+        ).copy()
+
+        ds = xr.Dataset(
+            {
+                "wave_spectra": (
+                    ("time", "latitude", "longitude", "frequency", "direction"),
+                    efth,
+                )
+            },
+            coords={
+                "time": time,
+                "latitude": lats,
+                "longitude": lons,
+                "frequency": freq,
+                "direction": direction,
+            },
+        )
 
         output_folder = Path(output_folder)
         output_folder.mkdir(parents=True, exist_ok=True)
