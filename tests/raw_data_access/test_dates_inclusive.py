@@ -41,6 +41,11 @@ KNOWN_INCLUSIVE_WITHOUT_HELPER = {
     # date handling.
     ("dummy", "dummy_method"),
     ("dummy_forcing", "fetch_dummy"),
+    # Reparses `dates` via pd.date_range (freq="D"), which is whole-day
+    # inclusive regardless of time-of-day — same reasoning as glorys above.
+    # Pure in-memory synthetic generation, not a real API call, so there's
+    # no end_datetime cutoff to normalize.
+    ("reference_ocean", "get_reference_ocean_data"),
 }
 
 

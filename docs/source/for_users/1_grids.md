@@ -39,8 +39,7 @@ Notable features worth knowing about:
   rectilinear (lon/lat) and curvilinear grids.
 - **ESMF mesh + SCRIP output** — the `Topo` object writes CICE grids, SCRIP
   grids, and ESMF meshes directly, which is what CESM needs for coupling.
-- **Chlorophyll and runoff mapping helpers** — `mom6_forge.chl` and
-  `mom6_forge.mapping` are used internally by `extract_forcings`, but are also
+- **runoff mapping helpers** —  `mom6_forge.mapping` is used internally by `extract_forcings`, but are also
   available if you need them directly.
 
 ## Importing
