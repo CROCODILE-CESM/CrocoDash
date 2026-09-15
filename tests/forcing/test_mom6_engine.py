@@ -195,3 +195,117 @@ def test_process_bc_forwards_bathymetry_path(tmp_path, monkeypatch, preview):
     cfg.process_bc(ctx)
 
     assert captured["bathymetry_path"] == ctx.topo_path
+
+
+def _configured(**outputs):
+    """A configurator carrying the output params process_bc/process_ic read."""
+    cfg = _conditions("glorys")
+    cfg.set_output_param(
+        "information", ProductRegistry.get_product("glorys").write_metadata()
+    )
+    cfg.set_output_param("function_args", {})
+    for key, value in outputs.items():
+        cfg.set_output_param(key, value)
+    return cfg
+
+
+def test_process_bc_hands_the_engine_mom6s_own_pieces(tmp_path, monkeypatch):
+    """obc.py knows nothing about MOM6: the Segment regrid step, the download
+    request built from the product's var names, and the BGC split (which runs
+    after the merge, on its output) all have to come from here."""
+    cfg = _configured(
+        boundary_number_conversion={"north": 1}, get_step_days=5, regrid_step_days=5
+    )
+    captured, split = {}, []
+    monkeypatch.setattr(
+        mom6.obc, "process_obc_conditions", lambda **kw: captured.update(kw)
+    )
+    monkeypatch.setattr(
+        mom6, "_split_bgc_tracers_into_files", lambda **kw: split.append(kw)
+    )
+    ctx = _bc_context(tmp_path)
+
+    cfg.process_bc(ctx)
+
+    assert captured["regrid_chunk_fn"] is mom6._regrid_obc_chunk
+    assert captured["variables"] == ["uo", "vo", "zos", "thetao", "so"]
+    assert split == [
+        {
+            "output_path": ctx.output_path,
+            "boundary_number_conversion": {"north": 1},
+            "marbl_var_names": {},
+        }
+    ]
+
+    # _regrid_obc_chunk hardwires regional_mom6's fill; anything else has to
+    # fail up front rather than be silently ignored.
+    cfg.get_output_param("information")["boundary_fill_method"] = "something_else"
+    with pytest.raises(ValueError, match="is not supported"):
+        cfg.process_bc(ctx)
+
+
+def test_process_ic_binds_grid_paths_onto_the_regrid_step(tmp_path, monkeypatch):
+    """ic.py's engine signature has no hgrid/vgrid/bathymetry -- MOM6 binds its
+    own onto _regrid_ic with partial before handing it over."""
+    cfg = _configured()
+    captured = {}
+    monkeypatch.setattr(
+        mom6.ic_mod, "process_initial_condition", lambda **kw: captured.update(kw)
+    )
+    ctx = _bc_context(tmp_path)
+    ctx.vgrid_path = tmp_path / "vgrid.nc"
+    ctx.vgrid_path.touch()
+
+    cfg.process_ic(ctx)
+
+    assert captured["regrid_fn"].func is mom6._regrid_ic
+    assert captured["regrid_fn"].keywords == {
+        "hgrid_path": ctx.supergrid_path,
+        "vgrid_path": ctx.vgrid_path,
+        "bathymetry_path": ctx.topo_path,
+    }
+    assert captured["variables"] == ["uo", "vo", "zos", "thetao", "so"]
+
+    # _regrid_ic reads dz off the vgrid; a missing one otherwise fails deep
+    # inside regional_mom6.
+    ctx.vgrid_path = tmp_path / "gone.nc"
+    with pytest.raises(FileNotFoundError, match="Vgrid file must exist"):
+        cfg.process_ic(ctx)
+
+
+def test_fill_missing_and_write_leaves_no_gaps_for_mom6_to_read(tmp_path):
+    """Holes inside the ocean mask are objectively interpolated, land (left at
+    0.0 by mom6_forge's fill) is interpolated away, and levels below the source
+    data are carried down -- nothing NaN reaches the file MOM6 reads. 3D goes
+    level by level because that fill is a 2D solve, with depth as axis 0.
+    """
+    mask = xr.DataArray(np.ones((4, 5)), dims=("ny", "nx"))
+    mask[0, :] = 0  # a row of land
+    eta = np.full((4, 5), 5.0)
+    eta[0, :], eta[2, 2] = np.nan, np.nan  # land, then a hole in the ocean
+    temp = np.full((3, 4, 5), 8.0)
+    temp[2], temp[1, 2, 2] = np.nan, np.nan  # a level below the data, then a hole
+    xr.Dataset(
+        {"eta_t": (("ny", "nx"), eta), "temp": (("zl", "ny", "nx"), temp)},
+        coords={"zl": np.arange(3.0)},
+    ).to_netcdf(tmp_path / "init.nc")
+
+    mom6._fill_missing_and_write(
+        tmp_path / "init.nc",
+        tmp_path / "filled.nc",
+        [
+            {"name": name, "mask": mask, "dims": dims, "encoding": encoding}
+            for name, dims, encoding in [
+                ("eta_t", ("nx", "ny"), {"_FillValue": None}),
+                ("temp", ("nx", "ny", "zl"), {"_FillValue": -1e20}),
+            ]
+        ],
+    )
+
+    with xr.open_dataset(tmp_path / "filled.nc") as filled:
+        assert not np.isnan(filled["eta_t"].values).any()
+        assert not np.isnan(filled["temp"].values).any()
+        assert filled["eta_t"].values[2, 2] == pytest.approx(5.0)
+        assert filled["temp"].values[1, 2, 2] == pytest.approx(8.0)
+        assert filled["temp"].values[2, 1, 1] == pytest.approx(8.0)
+        assert "_FillValue" not in filled["eta_t"].encoding
