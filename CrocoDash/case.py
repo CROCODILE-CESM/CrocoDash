@@ -754,20 +754,8 @@ class Case:
 
         # Only the first modifier was set above, so COMPSET_LNAME currently carries a
         # truncated OCN entry (e.g. MOM6%REGIONAL rather than MOM6%REGIONAL%MARBL-BIO).
-        #
         # This works around a visualCaseGen bug rather than a VCG limitation: VCG does
-        # intend to support multiple modifiers (the Component Options stage offers a
-        # multi-select mode, and every COMP_*_OPTION widget is a
-        # MultiCheckbox(allow_multi_select=True) that joins its selections with "%").
-        # But ProConPy honors that delimiter only in its validity check; the solver
-        # bookkeeping ignores it, so register_options asserts
-        #   Or(v == "(none)", v == "REGIONAL", v == "MARBL-BIO", ...)
-        # while register_assignment asserts v == "REGIONAL%MARBL-BIO", and the two
-        # contradict. The unsat then surfaces against COMPSET_LNAME -- which is
-        # innocent -- with an empty "Reasons:" list, because only relational
-        # constraints are added via assert_and_track. Drop this once VCG handles
-        # delimited values.
-        #
+        # intend to support multiple modifiers
         # Assign the full name directly now that the options stage is complete:
         # COMPSET_LNAME has no options of its own, so this is unconstrained.
         cvars["COMPSET_LNAME"].value = compset_lname
