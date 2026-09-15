@@ -44,6 +44,14 @@ CrocoDash.raw\_data\_access.datasets.glorys module
    :show-inheritance:
    :undoc-members:
 
+CrocoDash.raw\_data\_access.datasets.reference module
+-----------------------------------------------------
+
+.. automodule:: CrocoDash.raw_data_access.datasets.reference
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 CrocoDash.raw\_data\_access.datasets.seawifs module
 ---------------------------------------------------
 
