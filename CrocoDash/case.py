@@ -741,6 +741,8 @@ class Case:
         # Stage: Component Physics Options (i.e., modifiers for the physics, e.g. %JRA, %MARBL-BIO, etc.)
         if Stage.active().title.startswith("Component Options"):
             for comp_class, phys in components.items():
+                # Only the first modifier is set here; see the COMPSET_LNAME
+                # assignment below for why.
                 opt = phys.split("%")[1] if "%" in phys else None
                 if opt is not None:
                     cvars[f"COMP_{comp_class}_OPTION"].value = opt
@@ -750,10 +752,24 @@ class Case:
         # Confirm successful configuration of custom component set
         assert Stage.active().title == "2. Grid"
 
-        # VCG's Z3 solver cannot handle multi-select option values (e.g., "REGIONAL%MARBL-BIO")
-        # as assignment assertions, so only the first modifier was set above. Directly assign
-        # the full correct COMPSET_LNAME now that the options stage is complete and its
-        # options assertions have been cleared.
+        # Only the first modifier was set above, so COMPSET_LNAME currently carries a
+        # truncated OCN entry (e.g. MOM6%REGIONAL rather than MOM6%REGIONAL%MARBL-BIO).
+        #
+        # This works around a visualCaseGen bug rather than a VCG limitation: VCG does
+        # intend to support multiple modifiers (the Component Options stage offers a
+        # multi-select mode, and every COMP_*_OPTION widget is a
+        # MultiCheckbox(allow_multi_select=True) that joins its selections with "%").
+        # But ProConPy honors that delimiter only in its validity check; the solver
+        # bookkeeping ignores it, so register_options asserts
+        #   Or(v == "(none)", v == "REGIONAL", v == "MARBL-BIO", ...)
+        # while register_assignment asserts v == "REGIONAL%MARBL-BIO", and the two
+        # contradict. The unsat then surfaces against COMPSET_LNAME -- which is
+        # innocent -- with an empty "Reasons:" list, because only relational
+        # constraints are added via assert_and_track. Drop this once VCG handles
+        # delimited values.
+        #
+        # Assign the full name directly now that the options stage is complete:
+        # COMPSET_LNAME has no options of its own, so this is unconstrained.
         cvars["COMPSET_LNAME"].value = compset_lname
 
     def _configure_custom_grid(self, atm_grid_name, rof_grid_name):
