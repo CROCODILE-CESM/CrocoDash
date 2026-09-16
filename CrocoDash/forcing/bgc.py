@@ -178,13 +178,13 @@ class BGCIronForcingConfigurator(BaseConfigurator):
             "history": "Created with xarray (this file is empty)",
         }
         ds.to_netcdf(
-            ctx.inputdir / "ocnice" / self.get_output_param("MARBL_FESEDFLUX_FILE")
+            ctx.inputdir / "ocn" / self.get_output_param("MARBL_FESEDFLUX_FILE")
         )
         ds.to_netcdf(
-            ctx.inputdir / "ocnice" / self.get_output_param("MARBL_FEVENTFLUX_FILE")
+            ctx.inputdir / "ocn" / self.get_output_param("MARBL_FEVENTFLUX_FILE")
         )
         ds.to_netcdf(
-            ctx.inputdir / "ocnice" / self.get_output_param("MARBL_FESEDFLUXRED_FILE")
+            ctx.inputdir / "ocn" / self.get_output_param("MARBL_FESEDFLUXRED_FILE")
         )
 
 

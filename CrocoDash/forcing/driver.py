@@ -65,7 +65,7 @@ def _build_context(config, state, inputdir, preview=False):
         topo_path=state["topo_path"],
         raw_data_dir=extract_forcings_dir / "raw_data",
         regridded_data_dir=extract_forcings_dir / "regridded_data",
-        output_path=inputdir / "ocnice",
+        output_path=inputdir / "ocn",
         config=config,
         preview=preview,
     )
