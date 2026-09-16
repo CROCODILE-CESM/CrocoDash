@@ -239,7 +239,11 @@ def test_run_workflow_auto_enables_dependency(mock_cs, tmp_path):
                     "global_river_nutrients_filepath": str(src),
                     "case_session_id": "s",
                     "case_grid_name": "g",
-                    "cf_calendar": "noleap",
+                    "calendar": {
+                        "cf": "noleap",
+                        "cesm": "NO_LEAP",
+                        "mom6": "noleap",
+                    },
                 },
                 "outputs": {"READ_RIV_FLUXES": "True", "RIV_FLUX_FILE": "riv.nc"},
             },

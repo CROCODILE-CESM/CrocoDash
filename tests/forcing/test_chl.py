@@ -2,9 +2,10 @@ from unittest.mock import patch
 
 from CrocoDash.forcing.base import WorkflowContext
 from CrocoDash.forcing.chl import ChlConfigurator
+from CrocoDash.raw_data_access.base import NOLEAP
 
 
-@patch("CrocoDash.forcing.chl.m6f_chl.interpolate_and_fill_seawifs", autospec=True)
+@patch("CrocoDash.forcing.chl.rm6_chl.interpolate_and_fill_seawifs", autospec=True)
 def test_chl_process(mock_chl, tmp_path, gen_grid_topo_vgrid):
     grid, topo, vgrid = gen_grid_topo_vgrid
     chl_path = tmp_path / "chl_source.nc"
@@ -14,6 +15,7 @@ def test_chl_process(mock_chl, tmp_path, gen_grid_topo_vgrid):
         chl_processed_filepath=chl_path,
         case_grid_name="test",
         case_session_id="abc123",
+        calendar=NOLEAP,
     )
     # Set just the output param process() needs, bypassing configure()'s
     # super().configure() (which append_user_nl's into a real case dir).

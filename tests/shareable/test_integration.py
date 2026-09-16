@@ -4,7 +4,20 @@ from unittest.mock import patch
 import subprocess
 from pathlib import Path
 import pytest
-import pytest
+
+
+# ForkBundle.fork() is interactive. These stand in for a recipient who presses
+# Enter at every prompt: ask_string/ask_yes_no both return the value they were
+# given as `default`. Patching them with a fixed return_value instead is a trap
+# -- return_value="" makes _guide_yaml_review overwrite every field (caseroot,
+# machine, compset) with the empty string, and a fixed True/False also answers
+# the final "Proceed with this configuration?" and the "$EDITOR?" prompt.
+def press_enter_string(prompt, default=""):
+    return default
+
+
+def press_enter_yes_no(prompt, default=True):
+    return default
 
 
 @pytest.mark.slow
@@ -36,24 +49,21 @@ def test_pass_from_inspect_to_fork_no_change(get_case_with_cf, tmp_path):
     rcc = CaseBundle(case.caseroot)
     rcc.identify_non_standard_case_info(rcc.cesmroot, case.machine, case.project)
     loc = rcc.bundle(tmp_path)
-    with patch("CrocoDash.shareable.ask_yes_no", return_value=False), patch(
-        "CrocoDash.shareable.ask_string", return_value=""
-    ), patch("CrocoDash.shareable.copy_xml_files_from_case"), patch(
-        "CrocoDash.shareable.copy_user_nl_params_from_case"
-    ), patch(
-        "CrocoDash.shareable.copy_source_mods_from_case"
-    ), patch(
-        "CrocoDash.shareable.apply_xmlchanges_to_case"
+    with patch("CrocoDash.shareable.ask_yes_no", side_effect=press_enter_yes_no), patch(
+        "CrocoDash.shareable.ask_string", side_effect=press_enter_string
     ):
         fcb = ForkBundle(loc)
-        fcb.fork(
+        new_case = fcb.fork(
             rcc.cesmroot,
             case.machine,
             case.project,
             tmp_path / "caseroot",
             tmp_path / "inputdir",
         )
-        assert fcb
+        # Every copy-plan prompt defaults to False, so nothing is transferred.
+        assert not any(fcb.plan.values())
+        assert new_case is not None
+        assert Path(new_case.caseroot).exists()
 
 
 @pytest.mark.slow
@@ -81,8 +91,8 @@ def test_pass_from_inspect_to_fork_with_changes(get_case_with_cf, tmp_path):
     rcc = CaseBundle(case.caseroot)
     rcc.identify_non_standard_case_info(rcc.cesmroot, case.machine, case.project)
     loc = rcc.bundle(tmp_path)
-    with patch("CrocoDash.shareable.ask_yes_no", return_value=True), patch(
-        "CrocoDash.shareable.ask_string", return_value=""
+    with patch("CrocoDash.shareable.ask_yes_no", side_effect=press_enter_yes_no), patch(
+        "CrocoDash.shareable.ask_string", side_effect=press_enter_string
     ):
         fcb = ForkBundle(loc)
         fcb.fork(
@@ -91,7 +101,12 @@ def test_pass_from_inspect_to_fork_with_changes(get_case_with_cf, tmp_path):
             case.project,
             tmp_path / "caseroot",
             tmp_path / "inputdir",
-            compset=case.compset_lname,
+            plan={
+                "xml_files": True,
+                "user_nl": True,
+                "source_mods": True,
+                "xmlchanges": True,
+            },
         )
         path_to_case = fcb.case.caseroot
         assert (path_to_case / "test.xml").exists()

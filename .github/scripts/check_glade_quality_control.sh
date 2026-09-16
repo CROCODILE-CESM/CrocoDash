@@ -15,7 +15,7 @@ exempt_pattern=$(printf "|%s" "${EXEMPTIONS[@]}")
 exempt_pattern="${exempt_pattern:1}"  # remove leading '|'
 
 # Run grep on desired directories
-matches=$(grep -rnw --include="*.py" -e "/glade" CrocoDash/ tests/ demos/ || true)
+matches=$(grep -rnw --include="*.py" -e "/glade" CrocoDash/ tests/ gallery/ || true)
 
 # Filter out matches that are in exempted files
 violations=""

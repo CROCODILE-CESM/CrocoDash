@@ -112,3 +112,24 @@ def test_ask_input_response():
         result = ask_string("Enter something: ")
 
     assert result == "test input"
+
+
+def test_ask_yes_no_returns_default_on_eof():
+    """No stdin at all must fall back to the default, not hardcoded False.
+
+    ForkBundle.fork()'s final "Proceed with this configuration?" is
+    default=True, so returning False regardless of the default made fork
+    unusable non-interactively -- it always raised "Fork cancelled by user."
+    """
+    with patch("builtins.input", side_effect=EOFError):
+        assert ask_yes_no("Proceed?", default=True) is True
+        assert ask_yes_no("Proceed?", default=False) is False
+        # The implicit default is True, which is what the _resolve_copy_plan
+        # prompts rely on.
+        assert ask_yes_no("Proceed?") is True
+
+
+def test_ask_string_returns_default_on_eof():
+    """ask_yes_no's behaviour above is deliberately the same as this."""
+    with patch("builtins.input", side_effect=EOFError):
+        assert ask_string("Name: ", default="fallback") == "fallback"

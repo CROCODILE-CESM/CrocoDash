@@ -16,15 +16,15 @@ jobs:
         uses: actions/checkout@v4
         with:
             submodules: recursive
-      - uses: conda-incubator/setup-miniconda@v3
+      - uses: mamba-org/setup-micromamba@v2
         with:
-          activate-environment: CrocoDash
-          environment-file: environment.yml  
+          environment-name: CrocoDash
+          environment-file: environment.yml
+          cache-environment: true
+          cache-downloads: true
       - name: Run link checker
-        run: |
-          source $(conda info --base)/etc/profile.d/conda.sh 
-          conda activate CrocoDash 
-          python docs/source/raw_data_access/check_raw_data.py
+        run: python docs/source/raw_data_access/check_raw_data.py
+        shell: bash -el {0}
       - run: find docs/source/_static -name ".gitignore" -delete
       - name: Upload report to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4

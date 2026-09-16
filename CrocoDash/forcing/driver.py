@@ -56,7 +56,7 @@ def _load(config_path):
     return config, state, inputdir
 
 
-def _build_context(config, state, inputdir):
+def _build_context(config, state, inputdir, preview=False):
     extract_forcings_dir = inputdir / "extract_forcings"
     return WorkflowContext(
         inputdir=inputdir,
@@ -67,6 +67,7 @@ def _build_context(config, state, inputdir):
         regridded_data_dir=extract_forcings_dir / "regridded_data",
         output_path=inputdir / "ocnice",
         config=config,
+        preview=preview,
     )
 
 
@@ -88,7 +89,7 @@ def run_workflow(config_path, preview=False, **flags):
     """
     config_path = Path(config_path)
     config, state, inputdir = _load(config_path)
-    ctx = _build_context(config, state, inputdir)
+    ctx = _build_context(config, state, inputdir, preview=preview)
 
     targets = ForcingConfigRegistry.resolve_process_targets(config)
     requested = {name for name, enabled in flags.items() if enabled and name in targets}
@@ -123,10 +124,8 @@ def run_workflow(config_path, preview=False, **flags):
     for flag_name in order:
         configurator, method_name = targets[flag_name]
         _t = time.perf_counter()
-        if preview:
-            getattr(configurator, method_name)(ctx)
-        else:
-            getattr(configurator, method_name)(ctx)
+        # Each process_*() decides what preview means for it, off ctx.preview.
+        getattr(configurator, method_name)(ctx)
         timings[flag_name] = time.perf_counter() - _t
 
     if timings:
