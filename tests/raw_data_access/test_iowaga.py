@@ -20,11 +20,13 @@ from CrocoDash.raw_data_access.datasets.iowaga import (
     DEFAULT_N_DIRECTIONS,
     N_PARTITIONS,
     IOWAGA,
+    DEFAULT_POINT_BLOCK,
+    T0M1_FIELD,
+    T02_FIELD,
     build_month_url,
     check_coverage,
-    cosine_2s_spread,
     iowaga_frequencies,
-    jonswap_shape,
+    iowaga_spectral_grid,
     months_in_range,
     partition_variable_names,
     significant_height_from_efth,
@@ -46,28 +48,54 @@ def make_window(
     lon_start=-33.0,
     lat_ascending=True,
     hs=None,
+    t0m1=None,
+    t02=None,
+    drop=(),
 ):
     """A window shaped like a real IOWAGA monthly file, restricted to a box.
 
-    `partitions` is a tuple of (phs, ptp, pdir, pspr) per partition; absent
-    partitions are written as NaN, matching how the real files mark them.
+    `partitions` is a tuple of (phs, ptp, pdir, pspr) or
+    (phs, ptp, pdir, pspr, pws) per partition; absent partitions are written
+    as NaN, matching how the real files mark them. `pws` defaults the way the
+    archive orders them -- partition 0 is the wind sea, 1-5 are swell.
+
     `hs` defaults to the energy-complete total, sqrt(sum phs_i^2), which is
-    what the real files carry.
+    what the real files carry. `t0m1` and `t02` default to energy-weighted
+    values consistent with the partitions, so the per-point shape fit has a
+    solvable constraint rather than one it has to rail against a bound to
+    satisfy; `drop` removes variables to exercise the missing-field paths.
     """
     shape = (n_time, n_lat, n_lon)
     dims = ("time", "latitude", "longitude")
     data = {}
     for index in range(N_PARTITIONS):
         if index < len(partitions):
-            phs, ptp, pdir, pspr = partitions[index]
+            values = list(partitions[index])
+            if len(values) == 4:
+                values.append(1.0 if index == 0 else 0.0)
+            phs, ptp, pdir, pspr, pws = values
         else:
-            phs = ptp = pdir = pspr = np.nan
-        for field, value in zip(("phs", "ptp", "pdir", "pspr"), (phs, ptp, pdir, pspr)):
+            phs = ptp = pdir = pspr = pws = np.nan
+        for field, value in zip(
+            ("phs", "ptp", "pdir", "pspr", "pws"), (phs, ptp, pdir, pspr, pws)
+        ):
             data[f"{field}{index}"] = (dims, np.full(shape, value, dtype=np.float64))
 
+    m0 = np.array([p[0] ** 2 for p in partitions], dtype=np.float64)
+    tp = np.array([p[1] for p in partitions], dtype=np.float64)
     if hs is None:
-        hs = float(np.sqrt(sum(p[0] ** 2 for p in partitions)))
+        hs = float(np.sqrt(m0.sum()))
+    # Tm-10 ~ 0.9 Tp and Tm02 ~ 0.75 Tp for a JONSWAP-like shape; combined
+    # across partitions by energy, which is how the moments actually add.
+    if t0m1 is None:
+        t0m1 = float((m0 * 0.90 * tp).sum() / m0.sum())
+    if t02 is None:
+        t02 = float((m0 * 0.75 * tp).sum() / m0.sum())
     data["hs"] = (dims, np.full(shape, hs, dtype=np.float64))
+    data[T0M1_FIELD] = (dims, np.full(shape, t0m1, dtype=np.float64))
+    data[T02_FIELD] = (dims, np.full(shape, t02, dtype=np.float64))
+    for name in drop:
+        data.pop(name, None)
 
     lat = np.linspace(47.0, 47.0 + 0.5 * (n_lat - 1), n_lat)
     if not lat_ascending:
@@ -88,75 +116,11 @@ def make_window(
 
 def hs_from_efth(ds):
     return significant_height_from_efth(
-        ds["efth"].values, ds["frequency"].values, ds.sizes["direction"]
+        ds["efth"].values,
+        iowaga_spectral_grid(
+            frequency=ds["frequency"].values, direction=ds["direction"].values
+        ),
     )
-
-
-# --------------------------------------------------------------------------
-# JONSWAP frequency shape
-# --------------------------------------------------------------------------
-
-
-def test_jonswap_peaks_near_the_requested_peak_frequency():
-    frequency = iowaga_frequencies()
-    fp = np.array([1.0 / 12.0])
-    shape = jonswap_shape(frequency, fp)
-    peak = frequency[int(np.argmax(shape[0]))]
-    # The grid is geometric with ratio 1.1, so the nearest bin is within 10%.
-    assert abs(peak - fp[0]) / fp[0] < 0.10
-
-
-def test_jonswap_returns_zeros_for_an_absent_partition():
-    """Absent partitions arrive as NaN peak frequency and must not propagate."""
-    shape = jonswap_shape(iowaga_frequencies(), np.array([np.nan]))
-    assert np.isfinite(shape).all()
-    assert np.allclose(shape, 0.0)
-
-
-def test_jonswap_is_finite_for_extreme_periods():
-    frequency = iowaga_frequencies()
-    shape = jonswap_shape(frequency, np.array([1.0 / 30.0, 1.0 / 1.5, 0.0]))
-    assert np.isfinite(shape).all()
-
-
-# --------------------------------------------------------------------------
-# directional distribution
-# --------------------------------------------------------------------------
-
-
-@pytest.mark.parametrize("spread", [1.0, 5.0, 15.0, 30.0, 60.0, 90.0, 0.0, np.nan])
-def test_cosine_2s_spread_integrates_to_one(spread):
-    """Normalization is what makes each partition's Hs exact, so it must hold
-    for every spread including the degenerate ones."""
-    direction = np.arange(24) * 15.0
-    lobe = cosine_2s_spread(direction, np.array([45.0]), np.array([spread]))
-    assert np.allclose(lobe.sum(axis=-1) * (2 * np.pi / 24), 1.0)
-
-
-def test_cosine_2s_spread_peaks_at_mean_direction():
-    direction = np.arange(24) * 15.0
-    lobe = cosine_2s_spread(direction, np.array([135.0]), np.array([20.0]))
-    assert direction[int(np.argmax(lobe))] == 135.0
-
-
-def test_cosine_2s_spread_narrow_lobe_does_not_underflow():
-    """Regression test for computing the lobe in log space.
-
-    A 1-degree spread puts s in the thousands; cos(x)**(2s) evaluated
-    directly underflows to zero in every bin, including the peak.
-    """
-    direction = np.arange(24) * 15.0
-    lobe = cosine_2s_spread(direction, np.array([90.0]), np.array([1.0]))
-    assert lobe.max() > 0.0
-    assert np.isfinite(lobe).all()
-    assert np.isclose(lobe.max(), 1.0 / (2 * np.pi / 24))
-
-
-def test_cosine_2s_spread_nan_direction_is_uniform_not_nan():
-    direction = np.arange(24) * 15.0
-    lobe = cosine_2s_spread(direction, np.array([np.nan]), np.array([20.0]))
-    assert np.isfinite(lobe).all()
-    assert np.allclose(lobe, lobe[..., 0])
 
 
 # --------------------------------------------------------------------------
@@ -258,7 +222,11 @@ def test_output_direction_axis_documents_the_convention():
 
 def test_reconstruction_raises_without_any_partition():
     window = make_window().drop_vars(
-        [f"{f}{i}" for f in ("phs", "ptp", "pdir", "pspr") for i in range(N_PARTITIONS)]
+        [
+            f"{f}{i}"
+            for f in ("phs", "ptp", "pdir", "pspr", "pws")
+            for i in range(N_PARTITIONS)
+        ]
     )
     with pytest.raises(KeyError, match="No complete partition"):
         spectra_from_partitions(window)
@@ -288,11 +256,139 @@ def test_verify_hs_passes_on_a_faithful_reconstruction():
     out = spectra_from_partitions(make_window(partitions=((2.0, 12.0, 210.0, 25.0),)))
     diagnostics = verify_hs_against_source(
         out["efth"].values,
-        out["frequency"].values,
-        out.sizes["direction"],
+        iowaga_spectral_grid(),
         np.full(out["efth"].shape[:3], 2.0),
     )
     assert diagnostics["hs_check"] == "passed"
+
+
+# --------------------------------------------------------------------------
+# the fitted shape
+# --------------------------------------------------------------------------
+
+
+def test_t0m1_is_required():
+    """It is the only constraint the shape fit is solved against."""
+    with pytest.raises(KeyError, match="not optional"):
+        spectra_from_partitions(make_window(drop=(T0M1_FIELD,)))
+
+
+def test_peakedness_responds_to_the_archived_t0m1():
+    """The point of fitting rather than assuming a shape.
+
+    Same partitions, different archived Tm-10: the reconstruction must come
+    back with a different spectral shape and the SAME significant height,
+    because Hs is set by renormalization and the shape by the fit.
+    """
+    partitions = ((3.0, 12.0, 210.0, 25.0),)
+    peaked = spectra_from_partitions(make_window(partitions=partitions, t0m1=9.5))
+    broad = spectra_from_partitions(make_window(partitions=partitions, t0m1=11.5))
+
+    assert np.allclose(hs_from_efth(peaked), hs_from_efth(broad), rtol=3e-3)
+    assert not np.allclose(
+        peaked["efth"].values, broad["efth"].values, rtol=1e-2, atol=1e-6
+    )
+
+
+def test_wind_sea_fraction_selects_the_frequency_family():
+    """`pws` blends the two families, so it has to change the shape."""
+    windsea = spectra_from_partitions(
+        make_window(partitions=((2.5, 10.0, 180.0, 25.0, 1.0),))
+    )
+    swell = spectra_from_partitions(
+        make_window(partitions=((2.5, 10.0, 180.0, 25.0, 0.0),))
+    )
+    assert np.allclose(hs_from_efth(windsea), hs_from_efth(swell), rtol=3e-3)
+    assert not np.allclose(
+        windsea["efth"].values, swell["efth"].values, rtol=1e-2, atol=1e-6
+    )
+    assert windsea["efth"].attrs["windsea_family"] == "elfouhaily"
+    assert swell["efth"].attrs["swell_family"] == "ochi_hubble"
+
+
+def test_masked_points_are_skipped_not_fitted():
+    """Land and ice carry NaN moments; a NaN constraint has no solution.
+
+    Those points must come back as exact zeros and must not enter the fit --
+    letting one through would poison the chunk-modal tail exponent that the
+    wet points in the same block share.
+    """
+    window = make_window(n_time=2, n_lat=2, n_lon=3)
+    for name in (T0M1_FIELD, T02_FIELD, "hs"):
+        masked = window[name].values.copy()
+        masked[:, 0, :] = np.nan
+        window[name] = (window[name].dims, masked)
+
+    out = spectra_from_partitions(window)
+    efth = out["efth"].values
+    assert np.all(efth[:, 0, :] == 0.0)
+    # Per-bin, not every bin: far from the lobe the density underflows to an
+    # honest zero in float32. It is the total energy that has to be there.
+    assert np.all(efth[:, 1, :].sum(axis=(-2, -1)) > 0.0)
+    assert np.isfinite(efth).all()
+    # 2 times x 1 wet row x 3 lons
+    assert out["efth"].attrs["fit_n_points"] == 6
+
+
+def test_blocking_is_a_memory_knob_only():
+    """`point_block` bounds the dense float64 intermediate, nothing else.
+
+    The window is uniform on purpose: with a family that has a tail axis the
+    tail exponent is chosen per block by modal vote, so on a heterogeneous
+    window the block size is not strictly neutral. It is neutral here, and
+    with the default Elfouhaily wind sea -- which has an intrinsic tail and
+    no tail stage at all -- it is neutral everywhere.
+    """
+    window = make_window(n_time=3, n_lat=4, n_lon=5)
+    whole = spectra_from_partitions(window, point_block=DEFAULT_POINT_BLOCK)
+    blocked = spectra_from_partitions(window, point_block=7)
+    np.testing.assert_array_equal(whole["efth"].values, blocked["efth"].values)
+
+
+def test_fit_diagnostics_are_summarised_into_scalars():
+    """The one-variable contract means per-point diagnostics cannot be fields."""
+    out = spectra_from_partitions(make_window())
+    assert list(out.data_vars) == ["efth"]
+    for key in (
+        "fit_n_points",
+        "fit_residual_median",
+        "mean_n_partitions",
+        "energy_closure_median",
+        "fraction_underconstrained_windsea",
+    ):
+        assert np.isscalar(out["efth"].attrs[key])
+
+
+def test_tail_fit_is_reported_as_off_without_t02():
+    out = spectra_from_partitions(make_window(drop=(T02_FIELD,)))
+    assert out["efth"].attrs["tail_exponent_fitted"].startswith("no")
+
+
+# --------------------------------------------------------------------------
+# spectral grid validation
+# --------------------------------------------------------------------------
+
+
+def test_non_geometric_frequency_axis_is_rejected():
+    """ww3recon takes df from the first two entries, so this must not pass."""
+    with pytest.raises(ValueError, match="geometric ladder"):
+        spectra_from_partitions(make_window(), frequency=np.linspace(0.04, 0.5, 20))
+
+
+def test_non_uniform_direction_axis_is_rejected():
+    with pytest.raises(ValueError, match="uniformly spaced"):
+        spectra_from_partitions(
+            make_window(), direction=np.array([0.0, 10.0, 45.0, 90.0, 200.0])
+        )
+
+
+def test_native_grid_matches_the_archive():
+    grid = iowaga_spectral_grid()
+    assert grid.n_freq == 36 and grid.n_dir == DEFAULT_N_DIRECTIONS
+    np.testing.assert_allclose(grid.f, iowaga_frequencies())
+    # WW3's own bin width for a geometric ladder, not a trapezoid.
+    ratio = grid.f[1] / grid.f[0]
+    np.testing.assert_allclose(grid.df, grid.f * (ratio - 1.0 / ratio) / 2.0)
 
 
 # --------------------------------------------------------------------------
@@ -370,13 +466,15 @@ def test_build_month_url_matches_the_published_layout():
     assert url.startswith("https://data-dataref.ifremer.fr/")
 
 
-def test_partition_variable_names_covers_every_partition_plus_hs():
+def test_partition_variable_names_covers_every_partition_plus_the_moments():
     names = partition_variable_names()
-    assert len(names) == 4 * N_PARTITIONS + 1
+    assert len(names) == 5 * N_PARTITIONS + 3
     for index in range(N_PARTITIONS):
-        for field in ("phs", "ptp", "pdir", "pspr"):
+        for field in ("phs", "ptp", "pdir", "pspr", "pws"):
             assert f"{field}{index}" in names
-    assert "hs" in names
+    # The shape fit needs the whole-spectrum moments, so they have to be part
+    # of what gets downloaded -- not just the partitions.
+    assert {"hs", T0M1_FIELD, T02_FIELD} <= set(names)
 
 
 def test_coverage_rejects_dates_before_the_hindcast_starts():
@@ -459,3 +557,5 @@ def test_live_download_and_reconstruction(tmp_path):
         assert ds["efth"].attrs["hs_check"] == "passed"
         assert np.isfinite(ds["efth"].values).all()
         assert float(ds["efth"].max()) > 0.0
+        assert ds["efth"].attrs["shape_parameters_fitted"].startswith("yes")
+        assert ds["efth"].attrs["fit_n_points"] > 0

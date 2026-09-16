@@ -41,24 +41,41 @@ So: gridded partitions from the file server, reconstructed into spectra.
 How the 2D spectrum is built
 ----------------------------
 The monthly files carry a six-way spectral partitioning -- partition 0 is the
-wind sea, 1-5 are swell systems ordered by energy -- with four fields each
+wind sea, 1-5 are swell systems ordered by energy -- with five fields each
 that are exactly what a parametric reconstruction needs:
 
     phs0-5   significant height of the partition          m
     ptp0-5   PEAK period of the partition                 s
     pdir0-5  mean direction, coming-from, cw from north   degree
     pspr0-5  directional spread of the partition          degree
+    pws0-5   wind-sea fraction within the partition       1
 
-Each partition becomes a JONSWAP frequency shape peaked at 1/ptp, scaled so
-its significant height is exactly phs, multiplied by a cosine-2s directional
-lobe centred on pdir with spread pspr. The partitions are then summed.
+plus three whole-spectrum fields, `hs`, `t0m1` and `t02`.
+
+Each partition becomes a normalised frequency shape peaked at 1/ptp -- blended
+between a wind-sea family and a swell family by `pws` -- scaled so its
+significant height is exactly phs, multiplied by a cosine-2s directional lobe
+centred on pdir with spread pspr. The partitions are then summed.
+
+The shape itself is NOT assumed. The reconstruction is Hell's `ww3recon`
+(vendored at `raw_data_access/ww3recon/`, see its `__init__` for provenance
+and for what was deliberately left out), which fits two free shape parameters
+-- wind-sea peakedness and swell width -- per point by matching the archive's
+own `t0m1`, then calibrates the high-frequency exponent against `t02` in a
+second stage. `t0m1` is weighted toward the low-frequency flank where
+peakedness lives, which is what makes it the informative constraint; `t02` is
+tail-dominated, which is what makes it the right one for the exponent.
+
+Only one constraint is available for two unknowns, so weak priors break the
+degeneracy. Points containing only one family are exactly determined and are
+flagged `underconstrained_ws`/`underconstrained_sw` in the summary attrs.
 
 Two things make this materially better than the equivalent reconstruction
 from ERA5 bulk statistics (`era5_wave_stats.py`):
 
   * `ptp` is a true peak period -- its standard_name is
     `sea_surface_wave_period_at_variance_spectral_density_maximum` -- which
-    is exactly the parameter JONSWAP's peak frequency wants. The ERA5 route
+    is exactly the parameter the frequency shape's peak wants. The ERA5 route
     has only Tm(-1,0) and must assume a moment order to convert.
   * Every partition carries its **own** directional spread. ERA5 publishes no
     per-swell-partition width and has to reuse the total-swell width across
@@ -73,15 +90,49 @@ hs > 0.5 m is **1.0000**. Nothing is lost to an unrepresented residual, so
 unlike the ERA5 route there is no need to synthesize one. Absent partitions
 are NaN (not zero) and are simply skipped.
 
-What is still assumed: the frequency SHAPE within each partition is JONSWAP
-rather than observed. Significant height, peak period and mean direction are
-reproduced by construction; the spectral shape between them is parametric.
+What is still assumed: the frequency shape within each partition comes from a
+parametric family rather than being observed. Significant height, peak period
+and mean direction are reproduced by construction, and peakedness and tail
+slope are now fitted rather than assumed, but the family is still a choice.
+The defaults (Elfouhaily wind sea, Ochi-Hubble swell) were selected by Hell on
+four IOWAGA sites for January 1993 -- a four-site, one-month result, not a
+global or seasonal sweep. Swap them with `windsea_family`/`swell_family` and
+rank them on your own domain before relying on the shape.
+
 `spectra_from_partitions` cross-checks the result against the file's own `hs`
-on every real call -- see `verify_hs_against_source`.
+on every real call -- see `verify_hs_against_source`. Note that the check
+integrates with WW3's geometric bin width, the same rule the reconstruction
+normalises against; integrating with a trapezoid instead would report the gap
+between two quadrature rules as a bias in the reconstruction.
+
+Validation against IOWAGA's own 2D spectra
+------------------------------------------
+The archive publishes true WW3 2D spectra at ~10,800 virtual buoys, which is
+the only ground truth there is for this. This module was scored against them
+for all 248 timesteps of January 1993, at the nearest gridded cell to three
+buoys spanning three regimes (`dev/iowaga/validate_against_truth.py`):
+
+| site                    | spectral corr | p10  | Hs bias |
+|-------------------------|---------------|------|---------|
+| mid N Atlantic 30W 52N  | 0.873         | 0.80 | +0.01%  |
+| equatorial Pacific 140W | 0.904         | 0.85 | +0.03%  |
+| Southern Ocean 90W 58S  | 0.867         | 0.80 | +0.00%  |
+
+That is three sites and one month, so it is a sanity floor rather than a skill
+estimate: no seasonal coverage, no shallow water, no ice, and the buoy is
+compared against the grid cell containing it, so some of the residual is
+sampling rather than reconstruction. Re-run the harness on your own domain
+before relying on the shape.
+
+The same run is what pins the direction convention: comparing against the
+truth spectra with the direction axis mirrored instead of rotated scores
+0.15-0.17 at all three sites. A convention error is not subtle here, but it is
+also not visibly wrong in any single plot, which is why it is checked
+numerically rather than by eye.
 
 Cost, and why the whole file comes down
 ----------------------------------------
-The monthly global files are ~2.8 GB and the 25 variables used here are 29%
+The monthly global files are ~2.8 GB and the 33 variables used here are ~38%
 of the data, so a lazy range-read would save ~3.5x. That is not done, for a
 concrete reason: the files are NETCDF4 chunked `[1, 323, 720]`, i.e. one
 chunk is a whole global timestep, so spatial subsetting saves nothing within
@@ -130,6 +181,12 @@ import xarray as xr
 
 from CrocoDash.raw_data_access.base import *
 from CrocoDash.raw_data_access.datasets.utils import convert_lons_to_180_range
+from CrocoDash.raw_data_access.ww3recon import (
+    PartitionSet,
+    ReconstructionConfig,
+    Reconstructor,
+    SpectralGrid,
+)
 
 FILE_SERVER_BASE = "https://data-dataref.ifremer.fr/ww3/GLOBMULTI_ERA5_GLOBCUR_01"
 GRID_NAME = "GLOB-30M"
@@ -141,10 +198,19 @@ GRID_NAME = "GLOB-30M"
 DATASET_START = "1993-01-01T00:00:00"
 
 N_PARTITIONS = 6
-PARTITION_FIELDS = ("phs", "ptp", "pdir", "pspr")
+# `pws` (the wind-sea fraction within each partition) is read as well as the
+# four shape parameters: it decides how each partition is blended between the
+# wind-sea and swell frequency families.
+PARTITION_FIELDS = ("phs", "ptp", "pdir", "pspr", "pws")
 # `hs` is fetched too, purely so verify_hs_against_source has an independent
 # reference; it takes no part in the reconstruction.
 REFERENCE_FIELD = "hs"
+# Whole-spectrum mean periods. `t0m1` is REQUIRED -- it is the single
+# constraint the per-point peakedness fit is solved against, and without it
+# there is nothing to fit. `t02` is optional and drives the second-stage
+# tail-exponent fit; without it the tail stays at the family default.
+T0M1_FIELD = "t0m1"
+T02_FIELD = "t02"
 
 # IOWAGA's native spectral discretization, read off its own point-output
 # spectra files: 36 frequencies, f0 = 0.0339 Hz, geometric ratio 1.1, and 24
@@ -155,14 +221,21 @@ IOWAGA_FREQUENCY_RATIO = 1.1
 IOWAGA_N_FREQUENCIES = 36
 DEFAULT_N_DIRECTIONS = 24
 
-# JONSWAP peak-enhancement factor. 3.3 is the mean value from the original
-# JONSWAP fit and the same default era5_wave_stats.py uses, so the two
-# products' reconstructions differ in their inputs rather than their shape
-# assumption.
-DEFAULT_GAMMA = 3.3
-# JONSWAP spectral width parameters either side of the peak (Hasselmann 1973).
-JONSWAP_SIGMA_BELOW = 0.07
-JONSWAP_SIGMA_ABOVE = 0.09
+# Frequency-shape families, passed through to ww3recon. These defaults are
+# Hell's, selected on four IOWAGA sites for January 1993: Elfouhaily wind sea
+# plus Ochi-Hubble swell scored 0.901 mean spectral correlation against the
+# archive's own point-output spectra, where every Gaussian-swell combination
+# scored ~0.69. The swell family is the choice that matters -- the four
+# wind-sea families land within 0.004 of each other. This is a four-site,
+# one-month result, not a global sweep.
+DEFAULT_WINDSEA_FAMILY = "elfouhaily"
+DEFAULT_SWELL_FAMILY = "ochi_hubble"
+
+# Points reconstructed per block. The reconstruction is a dense
+# (n_points, n_frequency, n_direction) float64 array, so this is what bounds
+# peak memory: 20000 points on the native 36x24 grid is ~140 MB, independent
+# of how large a domain or how long a date range was asked for.
+DEFAULT_POINT_BLOCK = 20000
 
 EFTH_UNITS = "m2 s rad-1"
 FREQUENCY_UNITS = "s-1"
@@ -345,100 +418,78 @@ def download_month(url, destination, n_chunks=DEFAULT_N_CHUNKS):
     return destination
 
 
-def jonswap_shape(frequency, peak_frequency, gamma=DEFAULT_GAMMA):
-    """Unnormalized JONSWAP frequency shape, broadcast over `peak_frequency`.
+def iowaga_spectral_grid(
+    frequency=None, direction=None, n_directions=DEFAULT_N_DIRECTIONS
+):
+    """Build the `ww3recon.SpectralGrid` the reconstruction runs on.
 
-    Returns shape peak_frequency.shape + (n_frequency,). The scale factor is
-    left out entirely because the caller renormalizes to a known significant
-    height, so alpha and g would cancel; only the shape matters here.
-
-    Guarded with `np.errstate` and finished with `nan_to_num` because absent
-    partitions arrive as NaN peak frequencies, which must come back as a row
-    of zeros rather than propagating into the sum.
+    The grid is validated here rather than trusted, because `SpectralGrid`
+    derives its integration weights from the first two entries alone:
+    `df_i = f_i (r - 1/r) / 2` with `r = f[1] / f[0]`, and `dtheta` from
+    `theta[1] - theta[0]`. Those are WW3's own rules and exactly right on the
+    native ladder, but they are silently wrong on a frequency axis that is not
+    geometric or a direction axis that is not uniform -- every moment would
+    pick up a systematic error with nothing raising. `frequency` and
+    `direction` are public keyword arguments on `spectra_from_partitions`, so
+    this checks what it was handed.
     """
+    if frequency is None:
+        frequency = iowaga_frequencies()
     frequency = np.asarray(frequency, dtype=np.float64)
-    fp = np.asarray(peak_frequency, dtype=np.float64)[..., None]
-    f = frequency.reshape((1,) * (fp.ndim - 1) + (frequency.size,))
+    if direction is None:
+        direction = np.arange(n_directions, dtype=np.float64) * (360.0 / n_directions)
+    direction = np.asarray(direction, dtype=np.float64)
 
-    with np.errstate(divide="ignore", invalid="ignore", over="ignore"):
-        pierson = np.power(f, -5.0) * np.exp(-1.25 * np.power(fp / f, 4.0))
-        sigma = np.where(f <= fp, JONSWAP_SIGMA_BELOW, JONSWAP_SIGMA_ABOVE)
-        exponent = -np.square(f - fp) / (2.0 * np.square(sigma * fp))
-        shape = pierson * np.power(gamma, np.exp(exponent))
+    if frequency.size < 2 or direction.size < 2:
+        raise ValueError(
+            "The spectral grid needs at least two frequencies and two "
+            f"directions; got {frequency.size} and {direction.size}."
+        )
 
-    return np.nan_to_num(shape, nan=0.0, posinf=0.0, neginf=0.0)
+    ratios = frequency[1:] / frequency[:-1]
+    if not np.all(frequency > 0.0) or not np.allclose(ratios, ratios[0], rtol=1e-6):
+        raise ValueError(
+            "The frequency axis must be a positive geometric ladder -- "
+            "ww3recon integrates with WW3's own bin width "
+            "df_i = f_i (r - 1/r) / 2, taken from the first two entries, so a "
+            "non-geometric axis biases every moment silently. Got ratios "
+            f"spanning {ratios.min():.6f} to {ratios.max():.6f}."
+        )
+
+    steps = np.diff(direction)
+    if not np.allclose(steps, steps[0], rtol=1e-6):
+        raise ValueError(
+            "The direction axis must be uniformly spaced -- ww3recon takes a "
+            "single scalar dtheta from the first two entries. Got steps "
+            f"spanning {steps.min():.6f} to {steps.max():.6f} degrees."
+        )
+
+    return SpectralGrid(
+        f=frequency,
+        theta=np.deg2rad(direction),
+        direction_convention="from (clockwise from north)",
+    )
 
 
-def cosine_2s_spread(direction_deg, mean_direction_deg, spread_deg):
-    """Normalized cosine-2s directional distribution D(theta), in rad^-1.
+def significant_height_from_efth(efth, grid):
+    """Hs = 4 sqrt(int int E df dtheta) from a (..., f, theta) spectrum.
 
-    D(theta) = N * cos^(2s)((theta - theta_m) / 2), with s recovered from the
-    circular directional spread by the standard relation for this family,
-    sigma^2 = 2 / (s + 1), i.e. s = 2 / sigma^2 - 1 with sigma in radians.
-
-    Computed in log space -- 2s * log(cos(dtheta/2)) with the max subtracted
-    before exponentiating -- rather than as a direct power. A narrow swell
-    with a spread of a degree or two gives s in the thousands, and
-    cos(x)**(2s) evaluated directly underflows to zero in *every* bin
-    including the peak, silently producing an all-zero spectrum.
-
-    Normalization is done numerically against the actual direction grid, not
-    by the analytic Gamma-function constant, so that sum(D) * dtheta == 1 on
-    the discrete bins that get written. That is what makes each partition's
-    significant height come out exactly right rather than to within a
-    quadrature error.
-
-    NaN (an absent partition, or land) or a non-positive spread yields a
-    uniform lobe so those points stay finite; the partition's height is zero
-    there anyway, so the choice adds no energy.
+    Integrates with the same rule the reconstruction normalizes against --
+    summation over WW3's geometric bin widths `grid.df`, not a trapezoid over
+    the frequency axis. That match matters: ww3recon scales each partition so
+    that `(S * df).sum()` reproduces its own `phs`, so checking the result
+    with a trapezoid instead would measure the difference between two
+    quadrature rules on a 1.1 geometric ladder and report it as a bias in the
+    reconstruction.
     """
-    direction = np.deg2rad(np.asarray(direction_deg, dtype=np.float64))
-    n_dir = direction.size
-    dtheta = 2.0 * np.pi / n_dir
-
-    mean_direction = np.deg2rad(np.asarray(mean_direction_deg, dtype=np.float64))
-    spread = np.deg2rad(np.asarray(spread_deg, dtype=np.float64))
-
-    with np.errstate(divide="ignore", invalid="ignore"):
-        s = 2.0 / np.square(spread) - 1.0
-    degenerate = ~np.isfinite(s) | (s <= 0.0) | ~np.isfinite(mean_direction)
-    s = np.where(degenerate, 0.0, s)
-
-    delta = (
-        direction.reshape((1,) * mean_direction.ndim + (n_dir,))
-        - mean_direction[..., None]
-    )
-    half = 0.5 * np.where(np.isfinite(delta), delta, 0.0)
-
-    cos_half = np.cos(half)
-    positive = cos_half > 0.0
-    with np.errstate(divide="ignore", invalid="ignore"):
-        log_lobe = 2.0 * s[..., None] * np.log(np.where(positive, cos_half, 1.0))
-    log_lobe = np.where(positive, log_lobe, -np.inf)
-
-    log_lobe -= np.nanmax(
-        np.where(np.isfinite(log_lobe), log_lobe, -np.inf), axis=-1, keepdims=True
-    )
-    lobe = np.exp(log_lobe)
-    lobe = np.where(np.isfinite(lobe), lobe, 0.0)
-    lobe = np.where(degenerate[..., None], 1.0, lobe)
-
-    total = lobe.sum(axis=-1, keepdims=True) * dtheta
-    with np.errstate(divide="ignore", invalid="ignore"):
-        return np.where(total > 0.0, lobe / total, 1.0 / (n_dir * dtheta))
-
-
-def significant_height_from_efth(efth, frequency, n_directions):
-    """Hs = 4 sqrt(int int E df dtheta) from a (..., f, theta) spectrum."""
-    dtheta = 2.0 * np.pi / n_directions
-    m0 = np.trapezoid(np.asarray(efth).sum(axis=-1) * dtheta, x=frequency, axis=-1)
+    density = np.asarray(efth, dtype=np.float64).sum(axis=-1) * grid.dtheta
+    m0 = (density * grid.df).sum(axis=-1)
     return 4.0 * np.sqrt(np.clip(m0, 0.0, None))
 
 
 def verify_hs_against_source(
     efth,
-    frequency,
-    n_directions,
+    grid,
     source_hs,
     rtol=HS_CHECK_RTOL,
     min_hs=HS_CHECK_MIN_HS,
@@ -454,7 +505,7 @@ def verify_hs_against_source(
     Only points with source Hs above `min_hs` are scored -- at near-zero
     energy the relative error is dominated by rounding.
     """
-    reconstructed = significant_height_from_efth(efth, frequency, n_directions)
+    reconstructed = significant_height_from_efth(efth, grid)
     published = np.asarray(source_hs, dtype=np.float64)
 
     scored = np.isfinite(reconstructed) & np.isfinite(published) & (published > min_hs)
@@ -482,20 +533,26 @@ def verify_hs_against_source(
             f"height recomputed from the reconstructed spectrum is off by a "
             f"median {median_bias:+.1%} against the file's own `hs` over "
             f"{n_scored} points (tolerance {rtol:.0%}). The partitions are "
-            "energy-complete, so this points at a structural problem -- a "
-            "renamed field, a mis-indexed partition, or a lost wave system -- "
-            "rather than at the JONSWAP shape assumption. See "
+            "energy-complete and each one is renormalized to its own `phs`, so "
+            "this points at a structural problem -- a renamed field, a "
+            "mis-indexed partition, or a lost wave system -- rather than at the "
+            "choice of frequency shape family. See "
             "raw_data_access/datasets/iowaga.py."
         )
     return diagnostics
 
 
 def partition_variable_names(n_partitions=N_PARTITIONS):
-    """The variables the reconstruction reads, plus the `hs` reference."""
+    """The variables the reconstruction reads.
+
+    The per-partition shape parameters, plus the three whole-spectrum fields:
+    `hs` for the energy-closure diagnostic and the self-check, `t0m1` for the
+    peakedness fit, `t02` for the tail-exponent fit.
+    """
     names = [
         f"{field}{index}" for field in PARTITION_FIELDS for index in range(n_partitions)
     ]
-    return names + [REFERENCE_FIELD]
+    return names + [REFERENCE_FIELD, T0M1_FIELD, T02_FIELD]
 
 
 def spectra_from_partitions(
@@ -503,9 +560,12 @@ def spectra_from_partitions(
     n_directions=DEFAULT_N_DIRECTIONS,
     frequency=None,
     direction=None,
-    gamma=DEFAULT_GAMMA,
+    windsea_family=DEFAULT_WINDSEA_FAMILY,
+    swell_family=DEFAULT_SWELL_FAMILY,
+    fit_tail=True,
     n_partitions=N_PARTITIONS,
     check_hs=True,
+    point_block=DEFAULT_POINT_BLOCK,
     dtype=np.float32,
 ):
     """Reconstruct E(f, theta) from a loaded window of partition fields.
@@ -513,63 +573,77 @@ def spectra_from_partitions(
     Pure -- no I/O -- so it is unit-testable from a fabricated dataset with
     no network, mirroring how the ERA5 products separate their assembly step.
 
-    Each partition contributes a JONSWAP shape peaked at 1/ptp, renormalized
-    so its own significant height is exactly phs, times a cosine-2s lobe on
-    pdir/pspr. Absent partitions (NaN phs or ptp, or zero height) contribute
-    nothing. Because the partitions are energy-complete no residual system is
+    The reconstruction itself is Hell's `ww3recon`, vendored at
+    `raw_data_access/ww3recon/`. Each partition contributes a normalized
+    frequency shape peaked at 1/ptp -- blended between the wind-sea and swell
+    families by `pws` rather than hard-switched, so a time series crossing the
+    threshold stays continuous -- scaled so its own significant height is
+    exactly `phs`, times a cosine-2s lobe on `pdir`/`pspr`. Partitions are
+    summed, which makes the assembly label-invariant: partition index swapping
+    between neighbouring cells is harmless.
+
+    What this buys over a fixed-shape reconstruction is the peakedness. Two
+    shape parameters (wind-sea peakedness and swell width) are fitted per
+    point by matching the archive's own `t0m1`, and the high-frequency
+    exponent is calibrated in a second stage against `t02`. A fixed gamma = 3.3
+    assumes a peak shape; this measures it, per point, against a number the
+    hindcast already published.
+
+    Absent partitions (NaN phs or ptp, or zero height) contribute nothing.
+    Because the partitions are energy-complete no residual system is
     synthesized -- unlike the ERA5 route, which must invent one.
+
+    Land and ice-masked points, where `t0m1` is NaN, are skipped rather than
+    fitted and come back as exact zeros. They are not passed to the fit at
+    all: a NaN constraint has no solution, and letting one through would
+    poison the chunk-modal tail exponent that neighbouring wet points share.
 
     Returns a Dataset with exactly ONE data variable, `efth`, on dims
     (time, latitude, longitude, frequency, direction). The single-variable
     part is a hard requirement, not style: forcing/ww3.py::
     _extract_all_stations does `(var_name,) = ds.data_vars`, so a second
-    variable breaks the WW3 pipeline with an unpacking error.
+    variable breaks the WW3 pipeline with an unpacking error. That is why the
+    per-point fit diagnostics are reduced to summary statistics in the attrs
+    instead of being emitted as fields.
     """
-    frequency = (
-        iowaga_frequencies()
-        if frequency is None
-        else np.asarray(frequency, dtype=np.float64)
-    )
+    # The direction axis is defaulted here rather than read back out of the
+    # grid: `SpectralGrid` stores radians, and a degrees -> radians -> degrees
+    # round trip puts float noise into the written coordinate (210 comes back
+    # as 210.00000000000003). The grid gets the radians; the output coordinate
+    # keeps exactly the degrees that were asked for.
     if direction is None:
         direction = np.arange(n_directions, dtype=np.float64) * (360.0 / n_directions)
     direction = np.asarray(direction, dtype=np.float64)
+    grid = iowaga_spectral_grid(frequency=frequency, direction=direction)
+    frequency = grid.f
     n_directions = direction.size
 
     dims = ("time", "latitude", "longitude")
     shape = tuple(ds.sizes[d] for d in dims)
-    efth = np.zeros(shape + (frequency.size, n_directions), dtype=np.float64)
+    n_points = int(np.prod(shape))
 
+    if T0M1_FIELD not in ds:
+        raise KeyError(
+            f"`{T0M1_FIELD}` is missing from the window. It is not optional: "
+            "the per-point shape fit is solved against the archived Tm-10, and "
+            "with no constraint there is nothing to fit. Available: "
+            f"{sorted(ds.data_vars)}."
+        )
+
+    def _flat(name):
+        return np.asarray(ds[name].transpose(*dims).values, dtype=np.float64).reshape(
+            n_points
+        )
+
+    columns = {field: [] for field in PARTITION_FIELDS}
     used = []
     for index in range(n_partitions):
         names = {field: f"{field}{index}" for field in PARTITION_FIELDS}
         if not all(name in ds for name in names.values()):
             continue
         used.append(index)
-
-        hs = np.asarray(ds[names["phs"]].transpose(*dims).values, dtype=np.float64)
-        tp = np.asarray(ds[names["ptp"]].transpose(*dims).values, dtype=np.float64)
-        pdir = np.asarray(ds[names["pdir"]].transpose(*dims).values, dtype=np.float64)
-        pspr = np.asarray(ds[names["pspr"]].transpose(*dims).values, dtype=np.float64)
-
-        with np.errstate(divide="ignore", invalid="ignore"):
-            peak_frequency = 1.0 / tp
-        present = np.isfinite(hs) & (hs > 0.0) & np.isfinite(peak_frequency)
-        if not present.any():
-            continue
-
-        shape_f = jonswap_shape(frequency, peak_frequency, gamma=gamma)
-        # Renormalize each partition to its own Hs: m0 = (hs/4)^2, and the
-        # directional lobe integrates to 1, so scaling the frequency shape is
-        # enough. Numerical trapezoid over the same grid that gets written,
-        # so the height comes back exactly rather than to a tolerance.
-        m0_shape = np.trapezoid(shape_f, x=frequency, axis=-1)
-        with np.errstate(divide="ignore", invalid="ignore"):
-            scale = np.where(m0_shape > 0.0, np.square(hs / 4.0) / m0_shape, 0.0)
-        scale = np.where(present, scale, 0.0)
-        energy_f = np.nan_to_num(shape_f * scale[..., None])
-
-        lobe = cosine_2s_spread(direction, pdir, pspr)
-        efth += energy_f[..., :, None] * lobe[..., None, :]
+        for field, name in names.items():
+            columns[field].append(_flat(name))
 
     if not used:
         raise KeyError(
@@ -578,29 +652,130 @@ def spectra_from_partitions(
             f"has {sorted(ds.data_vars)}."
         )
 
+    stacked = {field: np.stack(values, axis=1) for field, values in columns.items()}
+    t0m1 = _flat(T0M1_FIELD)
+    t02 = _flat(T02_FIELD) if T02_FIELD in ds else None
+    hs = _flat(REFERENCE_FIELD) if REFERENCE_FIELD in ds else None
+
+    # Mirrors PartitionSet.active, so a point is only fitted if it carries
+    # something to fit.
+    active = (
+        np.isfinite(stacked["phs"])
+        & (stacked["phs"] > 1e-4)
+        & np.isfinite(stacked["ptp"])
+    )
+    wet = np.isfinite(t0m1) & (t0m1 > 0.0) & active.any(axis=1)
+
+    efth = np.zeros((n_points, frequency.size, n_directions), dtype=dtype)
     diagnostics = {}
+
+    n_wet = int(wet.sum())
+    if n_wet:
+        config = ReconstructionConfig(
+            windsea_family=windsea_family,
+            swell_family=swell_family,
+            fit_tail=fit_tail,
+            chunk_size=point_block,
+        )
+        reconstructor = Reconstructor(grid, config)
+        wet_index = np.flatnonzero(wet)
+
+        collected = {
+            key: [] for key in ("fit_residual", "energy_closure", "n_partitions")
+        }
+        flagged = {
+            key: 0
+            for key in ("underconstrained_ws", "underconstrained_sw", "low_closure")
+        }
+        tail_exponents = []
+
+        # Blocked rather than handed over whole: `reconstruct` allocates a
+        # dense float64 (n_points, n_freq, n_dir) for its result, which for a
+        # multi-month regional window is several GB. Each block is cast down
+        # to `dtype` and dropped immediately.
+        for lo in range(0, n_wet, point_block):
+            block = wet_index[lo : lo + point_block]
+            result = reconstructor.reconstruct(
+                PartitionSet(
+                    phs=stacked["phs"][block],
+                    ptp=stacked["ptp"][block],
+                    pdir=stacked["pdir"][block],
+                    pspr=stacked["pspr"][block],
+                    pws=stacked["pws"][block],
+                    hs=None if hs is None else hs[block],
+                    t0m1=t0m1[block],
+                    t02=None if t02 is None else t02[block],
+                )
+            )
+            efth[block] = result["spectrum"].astype(dtype)
+            for key in collected:
+                collected[key].append(np.asarray(result[key], dtype=np.float64))
+            for key in flagged:
+                flagged[key] += int(np.asarray(result[key]).sum())
+            tail_exponents.append(np.asarray(result["tail_exponent"], dtype=np.float64))
+
+        merged = {k: np.concatenate(v) for k, v in collected.items()}
+        tail = np.concatenate(tail_exponents)
+        diagnostics = {
+            "fit_n_points": n_wet,
+            "fit_residual_median": float(np.nanmedian(merged["fit_residual"])),
+            "fit_residual_p95": float(np.nanpercentile(merged["fit_residual"], 95)),
+            "mean_n_partitions": float(np.nanmean(merged["n_partitions"])),
+            "fraction_underconstrained_windsea": flagged["underconstrained_ws"] / n_wet,
+            "fraction_underconstrained_swell": flagged["underconstrained_sw"] / n_wet,
+            "windsea_family": result["ws_family"],
+            "swell_family": result["sw_family"],
+            "windsea_shape_parameter": result["ws_param_name"],
+            "swell_shape_parameter": result["sw_param_name"],
+        }
+        if np.isfinite(tail).any():
+            diagnostics["tail_exponent_median"] = float(np.nanmedian(tail))
+        if hs is not None:
+            closure = merged["energy_closure"]
+            diagnostics["energy_closure_median"] = float(np.nanmedian(closure))
+            diagnostics["fraction_low_energy_closure"] = flagged["low_closure"] / n_wet
+
+    efth = efth.reshape(shape + (frequency.size, n_directions))
+
     if check_hs and REFERENCE_FIELD in ds:
-        diagnostics = verify_hs_against_source(
-            efth, frequency, n_directions, ds[REFERENCE_FIELD].transpose(*dims).values
+        diagnostics.update(
+            verify_hs_against_source(
+                efth, grid, ds[REFERENCE_FIELD].transpose(*dims).values
+            )
         )
     elif check_hs:
-        diagnostics = {"hs_check": f"skipped -- no `{REFERENCE_FIELD}` in the window"}
+        diagnostics["hs_check"] = f"skipped -- no `{REFERENCE_FIELD}` in the window"
 
     provenance = {
         "reconstruction": (
-            "per-partition JONSWAP frequency shape x cosine-2s directional "
-            "lobe, summed over the hindcast's spectral partitions"
+            "ww3recon (M. C. Hell, WHOI, v0.2.0), vendored at "
+            "raw_data_access/ww3recon: per-partition frequency shape blended "
+            "by the wind-sea fraction, times a cosine-2s directional lobe, "
+            "summed over the hindcast's spectral partitions; the two shape "
+            "parameters fitted per point against the archived t0m1, and the "
+            "tail exponent against t02"
         ),
         "source": "IOWAGA GLOBMULTI_ERA5_GLOBCUR_01 (Ifremer/LOPS) via data-dataref",
         "source_variables": ",".join(
             f"{field}{i}" for field in PARTITION_FIELDS for i in used
-        ),
+        )
+        + f",{REFERENCE_FIELD},{T0M1_FIELD}"
+        + (f",{T02_FIELD}" if t02 is not None else ""),
         "n_partitions_used": len(used),
-        "gamma": gamma,
+        "shape_parameters_fitted": "yes (per point, against t0m1)",
+        "tail_exponent_fitted": (
+            "yes (against t02)"
+            if fit_tail and t02 is not None
+            else "no (family default)"
+        ),
         "peak_period_is_true_peak": "yes (ptp = period at spectral density maximum)",
         "per_partition_directional_spread": "yes (pspr per partition)",
         "residual_system_synthesized": "no (partitions are energy-complete)",
         "n_directions": int(n_directions),
+        "reconstruction_validation": (
+            "family defaults selected on four IOWAGA sites for January 1993; "
+            "not validated globally or across seasons"
+        ),
         **diagnostics,
         **{
             k: v
@@ -613,7 +788,7 @@ def spectra_from_partitions(
         {
             "efth": (
                 dims + ("frequency", "direction"),
-                efth.astype(dtype),
+                efth,
                 {
                     "units": EFTH_UNITS,
                     "long_name": (
@@ -707,9 +882,11 @@ class IOWAGA(WW3ForcingProduct):
         "CMEMS-GLOBCURRENT currents, 0.5 degree global, 3-hourly, 1993 to "
         "present. Supplies WW3 boundary spectra E(f, theta) reconstructed "
         "from the hindcast's six-way spectral partitioning -- each partition "
-        "a JONSWAP shape on its own true peak period and its own directional "
-        "spread. The partitions are energy-complete, so total significant "
-        "height is reproduced without synthesizing a residual system."
+        "on its own true peak period, its own directional spread and its own "
+        "wind-sea fraction, with the peak shape fitted per point against the "
+        "archived t0m1 rather than assumed. The partitions are "
+        "energy-complete, so total significant height is reproduced without "
+        "synthesizing a residual system."
     )
     link = "https://doi.org/10.12770/857a3337-f59a-481a-bf98-5561e8b61e7b"
     time_var_name = "time"
@@ -750,8 +927,9 @@ class IOWAGA(WW3ForcingProduct):
             "data-dataref.ifremer.fr and no credentials. Each month of the "
             "requested range is downloaded (~2.8 GB), subset, and deleted "
             "before the next, so peak transient disk is one file; pass "
-            "keep_raw=True to retain them. Knobs (n_directions, gamma, "
-            "buffer_deg, n_chunks, raw_folder, keep_raw, check_hs) go through "
+            "keep_raw=True to retain them. Knobs (n_directions, "
+            "windsea_family, swell_family, fit_tail, buffer_deg, n_chunks, "
+            "raw_folder, keep_raw, check_hs, point_block) go through "
             "WW3Configurator's ww3_obc_extra_args."
         ),
     )
@@ -766,12 +944,15 @@ class IOWAGA(WW3ForcingProduct):
         output_filename="iowaga_spectra.nc",
         variables=None,
         n_directions=DEFAULT_N_DIRECTIONS,
-        gamma=DEFAULT_GAMMA,
+        windsea_family=DEFAULT_WINDSEA_FAMILY,
+        swell_family=DEFAULT_SWELL_FAMILY,
+        fit_tail=True,
         buffer_deg=1.0,
         n_chunks=DEFAULT_N_CHUNKS,
         raw_folder=None,
         keep_raw=False,
         check_hs=True,
+        point_block=DEFAULT_POINT_BLOCK,
         normalize_longitudes=True,
     ):
         # `variables` exists only to satisfy ForcingProduct.required_args. It
@@ -784,7 +965,8 @@ class IOWAGA(WW3ForcingProduct):
                 "iowaga does not take a `variables` list -- the reconstruction "
                 "always needs the full partition set "
                 f"({'/'.join(PARTITION_FIELDS)}0-{N_PARTITIONS - 1}) plus "
-                f"`{REFERENCE_FIELD}`. Got variables={variables!r}."
+                f"`{REFERENCE_FIELD}`, `{T0M1_FIELD}` and `{T02_FIELD}`. "
+                f"Got variables={variables!r}."
             )
 
         check_coverage(dates)
@@ -835,7 +1017,13 @@ class IOWAGA(WW3ForcingProduct):
         combined = windows[0] if len(windows) == 1 else xr.concat(windows, dim="time")
 
         spectra = spectra_from_partitions(
-            combined, n_directions=n_directions, gamma=gamma, check_hs=check_hs
+            combined,
+            n_directions=n_directions,
+            windsea_family=windsea_family,
+            swell_family=swell_family,
+            fit_tail=fit_tail,
+            check_hs=check_hs,
+            point_block=point_block,
         )
         spectra.to_netcdf(
             output_path, encoding={"efth": {"zlib": True, "complevel": 1}}
