@@ -45,7 +45,7 @@ def test_bgcic_process_copies_file(tmp_path):
 
 
 def test_bgcironforcing_process(tmp_path):
-    (tmp_path / "ocnice").mkdir()
+    (tmp_path / "ocn").mkdir()
     depth, ny, nx = 103, 60, 60
 
     configurator = BGCIronForcingConfigurator(
@@ -60,11 +60,11 @@ def test_bgcironforcing_process(tmp_path):
 
     configurator.process(ctx)
 
-    assert (tmp_path / "ocnice" / "fesed.nc").exists()
-    assert (tmp_path / "ocnice" / "fevent.nc").exists()
+    assert (tmp_path / "ocn" / "fesed.nc").exists()
+    assert (tmp_path / "ocn" / "fevent.nc").exists()
     for path, main_var in [
-        (tmp_path / "ocnice" / "fesed.nc", "FESEDFLUXIN"),
-        (tmp_path / "ocnice" / "fevent.nc", "FESEDFLUXIN"),
+        (tmp_path / "ocn" / "fesed.nc", "FESEDFLUXIN"),
+        (tmp_path / "ocn" / "fevent.nc", "FESEDFLUXIN"),
     ]:
         ds = xr.open_dataset(path)
 

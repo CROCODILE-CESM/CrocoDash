@@ -332,39 +332,43 @@ class Case:
 
         inputdir.mkdir(parents=True, exist_ok=False)
 
-        ocnice = inputdir / "ocnice"
-        ocnice.mkdir()
+        ocn_dir = inputdir / "ocn"
+        ocn_dir.mkdir()
 
         # suffix for the MOM6 grid files
         session_id = cvars["MB_ATTEMPT_ID"].value
         suffix = f"{ocn_grid.name}_{session_id}"
 
         # MOM6 supergrid file
-        self.supergrid_path = str(ocnice / f"ocean_hgrid_{suffix}.nc")
+        self.supergrid_path = str(ocn_dir / f"ocean_hgrid_{suffix}.nc")
         ocn_grid.write_supergrid(self.supergrid_path)
 
         # MOM6 topography file
-        self.topo_path = str(ocnice / f"ocean_topog_{suffix}.nc")
+        self.topo_path = str(ocn_dir / f"ocean_topog_{suffix}.nc")
         ocn_topo.write_topo(self.topo_path)
 
         # MOM6 vertical grid file
-        self.vgrid_path = str(ocnice / f"ocean_vgrid_{suffix}.nc")
+        self.vgrid_path = str(ocn_dir / f"ocean_vgrid_{suffix}.nc")
         ocn_vgrid.write(self.vgrid_path)
 
         # SCRIP grid file (needed for runoff remapping)
-        ocn_topo.write_scrip_grid(ocnice / f"scrip_{suffix}.nc")
+        ocn_topo.write_scrip_grid(ocn_dir / f"scrip_{suffix}.nc")
 
         # ESMF mesh file:
-        self.esmf_mesh_path = str(ocnice / f"ESMF_mesh_{suffix}.nc")
+        self.esmf_mesh_path = str(ocn_dir / f"ESMF_mesh_{suffix}.nc")
         ocn_topo.write_esmf_mesh(self.esmf_mesh_path)
 
         # CICE grid file (if needed)
         if self.cice_in_compset:
-            self.ocn_topo.write_cice_grid(ocnice / f"cice_grid_{suffix}.nc")
+            ice_dir = inputdir / "ice"
+            ice_dir.mkdir(exist_ok=True)
+            self.ocn_topo.write_cice_grid(ice_dir / f"cice_grid_{suffix}.nc")
 
         # WW3 grid file (if needed)
         if self.ww3_in_compset:
-            self.ocn_topo.write_ww3_input(ocnice, grid_alias=ocn_grid.name)
+            wav_dir = inputdir / "wav"
+            wav_dir.mkdir(exist_ok=True)
+            self.ocn_topo.write_ww3_input(wav_dir, grid_alias=ocn_grid.name)
 
     def _create_newcase(self):
         """Create the case instance."""
@@ -635,7 +639,7 @@ class Case:
             layer_thickness_ratio=None,
             depth=self.ocn_topo.max_depth,
             mom_run_dir=self._cime_case.get_value("RUNDIR"),
-            mom_input_dir=self.inputdir / "ocnice",
+            mom_input_dir=self.inputdir / "ocn",
             hgrid_type=self.ocn_grid,
             vgrid_type=self.ocn_vgrid,
             minimum_depth=self.ocn_topo.min_depth,
@@ -969,7 +973,7 @@ class Case:
 
         # Ensure configurations are done
         for name, configurator in self.fcr.active_configurators.items():
-            if not configurator.validate_output_filepaths(self.inputdir / "ocnice"):
+            if not configurator.validate_output_filepaths(self.inputdir / "ocn"):
                 print(
                     f"{name} is not valid yet — process this forcing and generate "
                     f"the files using your case's extract_forcings module: "

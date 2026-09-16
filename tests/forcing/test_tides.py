@@ -5,7 +5,7 @@ from CrocoDash.forcing.tides import TidesConfigurator
 
 
 def _make_ctx(tmp_path, grid, topo, vgrid_path):
-    (tmp_path / "ocnice").mkdir()
+    (tmp_path / "ocn").mkdir()
     ctx = WorkflowContext(
         inputdir=tmp_path,
         supergrid_path=tmp_path / "grid.nc",
@@ -13,7 +13,7 @@ def _make_ctx(tmp_path, grid, topo, vgrid_path):
         topo_path=tmp_path / "topo.nc",
         raw_data_dir=tmp_path,
         regridded_data_dir=tmp_path,
-        output_path=tmp_path / "ocnice",
+        output_path=tmp_path / "ocn",
         config={},
     )
     # Inject the real fixture objects directly rather than round-tripping
