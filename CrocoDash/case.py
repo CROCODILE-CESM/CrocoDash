@@ -575,6 +575,9 @@ class Case:
         ------
         RuntimeError
             If `configure_forcings()` was not called before this method.
+        TypeError
+            If a `process_*` kwarg is passed that doesn't match any active
+            configurator's `process_components` flag name.
         FileNotFoundError
             If required unprocessed files are missing in the expected directories.
 
@@ -597,6 +600,13 @@ class Case:
             config = json.load(f)
 
         flag_names = ForcingConfigRegistry.resolve_process_targets(config).keys()
+        valid_kwargs = {f"process_{name}" for name in flag_names}
+        unrecognized = sorted(set(kwargs) - valid_kwargs)
+        if unrecognized:
+            raise TypeError(
+                f"process_forcings() got unrecognized keyword argument(s): {unrecognized}. "
+                f"Valid arguments are: {sorted(valid_kwargs)}."
+            )
         flags = {name: kwargs.get(f"process_{name}", True) for name in flag_names}
 
         run_workflow(config_path=config_path, **flags)
