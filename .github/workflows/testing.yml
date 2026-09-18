@@ -175,28 +175,54 @@ jobs:
           APPTAINER_DOCKER_USERNAME: ${{ github.actor }}
           APPTAINER_DOCKER_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # Pinned to a crocontainer commit, not `latest`, so a container-side
+          # change can't silently alter this job. Bump it when crocontainer
+          # main moves: the tag is sha-<7 chars of the crocontainer commit>,
+          # and the weekly build workflow there republishes it. sha-4cfce86
+          # was five commits stale and predated both the `crocodash fork` CLI
+          # that run_case.sh now calls and rm6's ruamel.yaml dependency.
           apptainer build --sandbox workspace_sandbox/ \
-            docker://ghcr.io/crocodile-cesm/crocontainer:sha-4cfce86
+            docker://ghcr.io/crocodile-cesm/crocontainer:sha-0c9e3fb
 
       # Copy the current CrocoDash into the sandbox container to ensure the latest code is used
       - uses: actions/checkout@v4
         with:
           submodules: recursive
           path: CrocoDash
-      - name: Check if environment.yml changed
-        id: compare
-        run: |
-          if diff workspace_sandbox/workspace/CrocoDash/environment.yml CrocoDash/environment.yml; then
-            echo "No changes in environment.yml"
-            echo "env_changed=false" >> $GITHUB_OUTPUT
-          else
-            echo "environment.yml changed!"
-            echo "env_changed=true" >> $GITHUB_OUTPUT
-          fi
       - name: Copy CrocoDash into container
         run: |
               rm -rf workspace_sandbox/workspace/CrocoDash
               cp -r CrocoDash workspace_sandbox/workspace/
+
+      # The image's conda env is frozen at whatever CrocoDash the crocontainer
+      # submodule pointed at when the image was built, but the step above
+      # replaces that source with the current checkout. The editable installs
+      # pick up new *code* for free; new *dependencies* they don't -- the env
+      # keeps whatever was resolved at image-build time. That is how rm6's
+      # ruamel.yaml (added after the pinned image) turned into a
+      # ModuleNotFoundError here. Re-running the editable installs reconciles
+      # the env with the source we just copied in; it is a near-no-op when
+      # nothing changed. Keep this list in sync with environment.yml's pip
+      # section (mom6_forge first -- rm6 depends on it).
+      - name: Install copied CrocoDash's dependencies into the container env
+        run: |
+          apptainer exec --writable workspace_sandbox/ /bin/bash -c '
+            source /opt/conda/etc/profile.d/conda.sh
+            conda activate CrocoDash
+            cd /workspace/CrocoDash
+            # rm6 takes its version from setuptools_scm, and the git metadata
+            # does not survive the copy into the sandbox (the submodule
+            # gitlinks point back at the runner workspace). Same stand-in the
+            # crocontainer Dockerfile uses.
+            printf "Metadata-Version: 2.1\nName: rm6\nVersion: 0.1.0\n" > CrocoDash/rm6/PKG-INFO
+            pip install \
+              -e ./CrocoDash/visualCaseGen/external/mom6_forge/ \
+              -e ./CrocoDash/rm6/ \
+              -e ./CrocoDash/visualCaseGen/external/ipyfilechooser/ \
+              -e ./CrocoDash/visualCaseGen/ \
+              -e ./gallery/ \
+              -e ./
+          '
       
         # This is warning that CIRRUS runners may not pull the most up-to-date image from crocontainer, you may need a new tag name. 
       - name: Run CESM
