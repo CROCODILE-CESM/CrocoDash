@@ -233,7 +233,7 @@ jobs:
       - name: Run CESM
         run: |
           mkdir ${{ github.workspace }}/cesm_scratch
-          # --no-home / HOME=/root make Apptainer behave like Docker here.
+          # Exporting HOME=/root makes Apptainer behave like Docker here.
           # ccs_config's ubuntu-latest machine defines DIN_LOC_ROOT and
           # CIME_OUTPUT_ROOT as $ENV{HOME}/cesm/..., and the image is built and
           # tested under Docker, where HOME is /root -- exactly the two paths
@@ -246,10 +246,12 @@ jobs:
           # run_case.sh's `xmlchange DIN_LOC_ROOT` cannot repair this on its
           # own: ATM_DOMAIN_MESH and LND_DOMAIN_MESH are expanded when the case
           # is created, before that xmlchange runs.
+          # The export has to happen inside the container shell -- Apptainer
+          # sets HOME itself after injecting --env, so `--env HOME=/root` is
+          # silently overridden. --no-home just keeps the host home unmounted.
           apptainer exec \
             --writable \
             --no-home \
-            --env HOME=/root \
             --env GIT_AUTHOR_NAME="${{ github.actor }}" \
             --env GIT_AUTHOR_EMAIL="${{ github.actor_id }}+${{ github.actor }}@github.com" \
             --env GIT_COMMITTER_NAME="${{ github.actor }}" \
@@ -258,7 +260,7 @@ jobs:
             --bind ${{ github.workspace }}/cesm_scratch:/root/cesm/scratch \
             --bind ${{ github.workspace }}/bundle_output/actions_case_case_bundle:/workspace/bundle \
             workspace_sandbox/ \
-            /bin/bash /workspace/run_case.sh
+            /bin/bash -c 'export HOME=/root && exec /bin/bash /workspace/run_case.sh'
 
       # `case.submit --no-batch` reports a failed run by printing
       #   Exception from case_run: ERROR: RUN FAIL: Command 'mpiexec ...' failed
