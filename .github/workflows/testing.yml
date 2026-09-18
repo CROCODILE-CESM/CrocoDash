@@ -181,8 +181,13 @@ jobs:
           # and the weekly build workflow there republishes it. sha-4cfce86
           # was five commits stale and predated both the `crocodash fork` CLI
           # that run_case.sh now calls and rm6's ruamel.yaml dependency.
+          # TEMPORARY: crocontainer#9 branch build, not yet on its main. The
+          # published sha-0c9e3fb image bakes CESM full_regional_cesm_alpha09d
+          # (cime6.2.2) while visualCaseGen now asserts cime6.4.1, so it fails
+          # in _check_cime_compatibility(). Repin to the merged sha- tag once
+          # crocontainer#9 lands.
           apptainer build --sandbox workspace_sandbox/ \
-            docker://ghcr.io/crocodile-cesm/crocontainer:sha-0c9e3fb
+            docker://ghcr.io/crocodile-cesm/crocontainer:sha-6e7a1edb44cf16ad09620e462f271464b5a4be51-amd64
 
       # Copy the current CrocoDash into the sandbox container to ensure the latest code is used
       - uses: actions/checkout@v4
