@@ -37,15 +37,24 @@ KNOWN_INCLUSIVE_WITHOUT_HELPER = {
     # `dates` is an unused placeholder — downloads one fixed pre-processed
     # file via a static URL, no date-based filtering happens at all.
     ("glofas", "get_processed_global_glofas_script_for_cli"),
+    # Reparses `dates` into whole-day "YYYY-MM-DD" MARS date-range strings
+    # (time-of-day is dropped) combined with an explicit "00/to/23/by/1"
+    # hourly `time` key covering every hour of every requested day — whole-
+    # day inclusive by construction, same reasoning as GLORYS's RDA path.
+    ("era5_wave_spectra", "get_era5_2d_spectra"),
     # Test fixtures from test_base_registry.py — placeholder data, not real
     # date handling.
     ("dummy", "dummy_method"),
     ("dummy_forcing", "fetch_dummy"),
-    # Reparses `dates` via pd.date_range (freq="D"), which is whole-day
+    # Test fixture from test_ww3.py — synthetic ERA5-shaped data, not real
+    # date handling.
+    ("test_fake_era5_spectra", "get_fake_spectra"),
+    # Reparse `dates` via pd.date_range (freq="D"/"6h"), which is whole-day
     # inclusive regardless of time-of-day — same reasoning as glorys above.
     # Pure in-memory synthetic generation, not a real API call, so there's
     # no end_datetime cutoff to normalize.
     ("reference_ocean", "get_reference_ocean_data"),
+    ("reference_waves", "get_reference_wave_spectra"),
 }
 
 
