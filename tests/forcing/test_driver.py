@@ -5,7 +5,12 @@ from unittest.mock import patch
 
 import pytest
 
-from CrocoDash.forcing.base import BaseConfigurator, InputValueParam, register
+from CrocoDash.forcing.base import (
+    BaseConfigurator,
+    ConfigOutputParam,
+    InputValueParam,
+    register,
+)
 from CrocoDash.forcing.driver import _load, resolve_components, run_workflow
 
 # =============================================================================
@@ -84,7 +89,7 @@ class _DummyChainBConfigurator(BaseConfigurator):
     process_components = {"chainb": "process"}
     depends_on_outputs = {"dummychainc": ["out"]}
     input_params = []
-    output_params = []
+    output_params = [ConfigOutputParam("out")]
 
     def __init__(self):
         super().__init__()
@@ -101,7 +106,7 @@ class _DummyChainCConfigurator(BaseConfigurator):
     name = "dummychainc"
     process_components = {"chainc": "process"}
     input_params = []
-    output_params = []
+    output_params = [ConfigOutputParam("out")]
 
     def __init__(self):
         super().__init__()
@@ -331,8 +336,16 @@ def test_run_workflow_auto_enables_multi_level_chain(mock_cs, tmp_path):
         tmp_path,
         extra_keys={
             "dummychaina": {"name": "dummychaina", "inputs": {}, "outputs": {}},
-            "dummychainb": {"name": "dummychainb", "inputs": {}, "outputs": {}},
-            "dummychainc": {"name": "dummychainc", "inputs": {}, "outputs": {}},
+            "dummychainb": {
+                "name": "dummychainb",
+                "inputs": {},
+                "outputs": {"out": "b"},
+            },
+            "dummychainc": {
+                "name": "dummychainc",
+                "inputs": {},
+                "outputs": {"out": "c"},
+            },
         },
     )
 
