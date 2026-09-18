@@ -233,8 +233,23 @@ jobs:
       - name: Run CESM
         run: |
           mkdir ${{ github.workspace }}/cesm_scratch
+          # --no-home / HOME=/root make Apptainer behave like Docker here.
+          # ccs_config's ubuntu-latest machine defines DIN_LOC_ROOT and
+          # CIME_OUTPUT_ROOT as $ENV{HOME}/cesm/..., and the image is built and
+          # tested under Docker, where HOME is /root -- exactly the two paths
+          # bound below. Apptainer instead keeps the host's HOME, so both
+          # resolved to /home/runner/cesm/... and neither bind was reachable:
+          # inputdata was simply missing, and CESM aborted with
+          #   dshr_mesh_init ERROR: model_meshfile
+          #   /home/runner/cesm/inputdata/share/meshes/T62_040121_ESMFmesh.nc
+          #   does not exist
+          # run_case.sh's `xmlchange DIN_LOC_ROOT` cannot repair this on its
+          # own: ATM_DOMAIN_MESH and LND_DOMAIN_MESH are expanded when the case
+          # is created, before that xmlchange runs.
           apptainer exec \
             --writable \
+            --no-home \
+            --env HOME=/root \
             --env GIT_AUTHOR_NAME="${{ github.actor }}" \
             --env GIT_AUTHOR_EMAIL="${{ github.actor_id }}+${{ github.actor }}@github.com" \
             --env GIT_COMMITTER_NAME="${{ github.actor }}" \
@@ -244,11 +259,34 @@ jobs:
             --bind ${{ github.workspace }}/bundle_output/actions_case_case_bundle:/workspace/bundle \
             workspace_sandbox/ \
             /bin/bash /workspace/run_case.sh
+
+      # `case.submit --no-batch` reports a failed run by printing
+      #   Exception from case_run: ERROR: RUN FAIL: Command 'mpiexec ...' failed
+      # and then exiting 0, so neither run_case.sh's `set -e` nor this job
+      # notices. That is how this job reported success over a run that aborted
+      # in MPI_ABORT before the first timestep. CaseStatus is the record CIME
+      # itself keeps, and the sandbox is a plain directory on the runner, so
+      # read it directly.
+      - name: Verify the model actually ran
+        if: always()
+        run: |
+          STATUS=workspace_sandbox/workspace/case/CaseStatus
+          if [ ! -f "$STATUS" ]; then
+            echo "::error::$STATUS missing -- the case was never created"
+            exit 1
+          fi
+          cat "$STATUS"
+          grep -q "case.run success" "$STATUS" || {
+            echo "::error::CaseStatus records no successful case.run"
+            exit 1
+          }
+
       - name: Upload CESM logs/data
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: cesm-${{ github.run_id }}
-          path: |
-            /home/runner/cesm/scratch/case/run/
-            /home/runner/cesm/archive/case/
+          # CIME_OUTPUT_ROOT is /root/cesm/scratch, which is the bind below.
+          # No archive path: run_case.sh sets DOUT_S=False, and DOUT_S_ROOT
+          # ($HOME/cesm/archive) is not bound out in any case.
+          path: ${{ github.workspace }}/cesm_scratch/case/run/
