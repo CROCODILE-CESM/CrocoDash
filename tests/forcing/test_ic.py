@@ -4,7 +4,7 @@ import xarray as xr
 from datetime import datetime
 from pathlib import Path
 
-import CrocoDash.extract_forcings.ic as ic_module
+import CrocoDash.forcing.ic as ic_module
 from CrocoDash.grid import Grid
 
 

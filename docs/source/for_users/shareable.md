@@ -69,7 +69,7 @@ already. The bundle folder contains:
 
 - `crocodash_case.yaml` — the full recipe (grid, topo, vgrid, case, forcings)
 - `non_standard_case_info.json` — the diff
-- `ocnice/` — all ocean/ice input files and grid files
+- `ocn/` — all ocean input files and grid files
 - `user_nl_*`, `replay.sh`
 - `xml_files/` and `SourceMods/` — any non-standard modifications
 

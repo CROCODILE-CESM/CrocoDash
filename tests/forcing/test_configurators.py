@@ -1,4 +1,4 @@
-from CrocoDash.forcing_configurations.base import *
+from CrocoDash.forcing.base import *
 from ProConPy.config_var import cvars
 from CrocoDash.raw_data_access.base import NOLEAP
 import pytest

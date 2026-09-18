@@ -9,7 +9,7 @@ import regional_mom6 as rmom6
 from CrocoDash.grid import Grid
 from CrocoDash.topo import Topo
 from CrocoDash.vgrid import VGrid
-from CrocoDash.forcing_configurations.base import ForcingConfigRegistry
+from CrocoDash.forcing.base import ForcingConfigRegistry
 from CrocoDash.raw_data_access.registry import ProductRegistry
 from CrocoDash.raw_data_access.base import ForcingProduct
 from ProConPy.config_var import ConfigVar, cvars
@@ -18,7 +18,7 @@ from ProConPy.dev_utils import ConstraintViolation
 from visualCaseGen.initialize import initialize as initialize_visualCaseGen
 from visualCaseGen.custom_widget_types.case_creator import CaseCreator, ERROR, RESET
 from visualCaseGen.custom_widget_types.case_tools import xmlchange
-from CrocoDash.extract_forcings.driver import run_workflow
+from CrocoDash.forcing.driver import run_workflow
 
 from CrocoDash import case_state
 
@@ -332,39 +332,43 @@ class Case:
 
         inputdir.mkdir(parents=True, exist_ok=False)
 
-        ocnice = inputdir / "ocnice"
-        ocnice.mkdir()
+        ocn_dir = inputdir / "ocn"
+        ocn_dir.mkdir()
 
         # suffix for the MOM6 grid files
         session_id = cvars["MB_ATTEMPT_ID"].value
         suffix = f"{ocn_grid.name}_{session_id}"
 
         # MOM6 supergrid file
-        self.supergrid_path = str(ocnice / f"ocean_hgrid_{suffix}.nc")
+        self.supergrid_path = str(ocn_dir / f"ocean_hgrid_{suffix}.nc")
         ocn_grid.write_supergrid(self.supergrid_path)
 
         # MOM6 topography file
-        self.topo_path = str(ocnice / f"ocean_topog_{suffix}.nc")
+        self.topo_path = str(ocn_dir / f"ocean_topog_{suffix}.nc")
         ocn_topo.write_topo(self.topo_path)
 
         # MOM6 vertical grid file
-        self.vgrid_path = str(ocnice / f"ocean_vgrid_{suffix}.nc")
+        self.vgrid_path = str(ocn_dir / f"ocean_vgrid_{suffix}.nc")
         ocn_vgrid.write(self.vgrid_path)
 
         # SCRIP grid file (needed for runoff remapping)
-        ocn_topo.write_scrip_grid(ocnice / f"scrip_{suffix}.nc")
+        ocn_topo.write_scrip_grid(ocn_dir / f"scrip_{suffix}.nc")
 
         # ESMF mesh file:
-        self.esmf_mesh_path = str(ocnice / f"ESMF_mesh_{suffix}.nc")
+        self.esmf_mesh_path = str(ocn_dir / f"ESMF_mesh_{suffix}.nc")
         ocn_topo.write_esmf_mesh(self.esmf_mesh_path)
 
         # CICE grid file (if needed)
         if self.cice_in_compset:
-            self.ocn_topo.write_cice_grid(ocnice / f"cice_grid_{suffix}.nc")
+            ice_dir = inputdir / "ice"
+            ice_dir.mkdir(exist_ok=True)
+            self.ocn_topo.write_cice_grid(ice_dir / f"cice_grid_{suffix}.nc")
 
         # WW3 grid file (if needed)
         if self.ww3_in_compset:
-            self.ocn_topo.write_ww3_input(ocnice, grid_alias=ocn_grid.name)
+            wav_dir = inputdir / "wav"
+            wav_dir.mkdir(exist_ok=True)
+            self.ocn_topo.write_ww3_input(wav_dir, grid_alias=ocn_grid.name)
 
     def _create_newcase(self):
         """Create the case instance."""
@@ -469,7 +473,7 @@ class Case:
         # Validate date_range's raw shape and set case-level state. Everything else
         # (boundaries/product_name validity, IC/OBC user_nl params, config.json
         # "conditions" entry) is handled by ConditionsConfigurator's validate_args()/
-        # configure() (see forcing_configurations/configurations.py).
+        # configure() (see forcing/mom6.py).
         if not (
             isinstance(date_range, list)
             and all(isinstance(date, str) for date in date_range)
@@ -552,11 +556,9 @@ class Case:
         )
         self._configure_forcings_called = True
 
-    def process_forcings(
-        self, process_initial_condition=True, process_velocity_tracers=True, **kwargs
-    ):
+    def process_forcings(self, **kwargs):
         """
-        Process boundary conditions, initial conditions, and other forcings for a MOM6 case. It's a wrapper around extract_forcings/case_setup/driver.py
+        Process boundary conditions, initial conditions, and other forcings for a MOM6 case. It's a wrapper around forcing/driver.py
 
         This method configures a regional MOM6 case's ocean state boundaries and initial conditions
         using previously downloaded data setup in configure_forcings. The method expects `configure_forcings()` to be
@@ -564,26 +566,28 @@ class Case:
 
         Parameters
         ----------
-        process_initial_condition : bool, optional
-            Whether to process the initial condition file. Default is True.
-        process_velocity_tracers : bool, optional
-            Whether to process velocity and tracer boundary conditions. Default is True.
-            This will be overridden and set to False if the large data workflow in configure_forcings is enabled.
         kwargs : bool, optional
-            Whether to process the other forcings, of the form process_{configurator.name} = False.
+            Whether to run each process component, of the form
+            `process_{flag_name}=False` (e.g. `process_ic=False`,
+            `process_bgcic=False`). Defaults to True for every component
+            that's actually active for this case's compset -- components
+            that aren't active are silently skipped regardless. Valid
+            `{flag_name}`s come from every active configurator's
+            `process_components` (see `CrocoDash.forcing.base`).
 
         Raises
         ------
         RuntimeError
             If `configure_forcings()` was not called before this method.
+        TypeError
+            If a `process_*` kwarg is passed that doesn't match any active
+            configurator's `process_components` flag name.
         FileNotFoundError
             If required unprocessed files are missing in the expected directories.
 
         Notes
         -----
         - This method uses variable name mappings specified in the forcing product configuration.
-        - If the large data workflow has been enabled, velocity and tracer OBCs are not processed
-          within this method and must be handled externally.
         - Applies forcing-related namelist and XML updates at the end of the method.
 
         See Also
@@ -595,24 +599,21 @@ class Case:
                 "configure_forcings() must be called before process_forcings()."
             )
 
-        process_bgc = kwargs.get("process_bgc", True)
-        process_tides = kwargs.get("process_tides", True)
-        process_chl = kwargs.get("process_chl", True)
-        process_runoff = kwargs.get("process_runoff", True)
-        process_bgc_river_nutrients = kwargs.get("process_bgc_river_nutrients", True)
+        config_path = self.extract_forcings_path / "config.json"
+        with open(config_path) as f:
+            config = json.load(f)
 
-        run_workflow(
-            config_path=self.extract_forcings_path / "config.json",
-            ic=process_initial_condition,
-            bc=process_velocity_tracers,
-            bgcic=process_bgc and self.fcr.is_active("bgc"),
-            bgcironforcing=process_bgc and self.fcr.is_active("bgc"),
-            tides=process_tides and self.fcr.is_active("tides"),
-            chl_=process_chl and self.fcr.is_active("chl"),
-            runoff=process_runoff and self.fcr.is_active("runoff"),
-            bgcrivernutrients=process_bgc_river_nutrients
-            and self.fcr.is_active("BGCRiverNutrients"),
-        )
+        flag_names = ForcingConfigRegistry.resolve_process_targets(config).keys()
+        valid_kwargs = {f"process_{name}" for name in flag_names}
+        unrecognized = sorted(set(kwargs) - valid_kwargs)
+        if unrecognized:
+            raise TypeError(
+                f"process_forcings() got unrecognized keyword argument(s): {unrecognized}. "
+                f"Valid arguments are: {sorted(valid_kwargs)}."
+            )
+        flags = {name: kwargs.get(f"process_{name}", True) for name in flag_names}
+
+        run_workflow(config_path=config_path, **flags)
 
         print(f"Case is ready to be built: {self.caseroot}")
 
@@ -648,7 +649,7 @@ class Case:
             layer_thickness_ratio=None,
             depth=self.ocn_topo.max_depth,
             mom_run_dir=self._cime_case.get_value("RUNDIR"),
-            mom_input_dir=self.inputdir / "ocnice",
+            mom_input_dir=self.inputdir / "ocn",
             hgrid_type=self.ocn_grid,
             vgrid_type=self.ocn_vgrid,
             minimum_depth=self.ocn_topo.min_depth,
@@ -982,7 +983,7 @@ class Case:
 
         # Ensure configurations are done
         for name, configurator in self.fcr.active_configurators.items():
-            if not configurator.validate_output_filepaths(self.inputdir / "ocnice"):
+            if not configurator.validate_output_filepaths(self.inputdir / "ocn"):
                 print(
                     f"{name} is not valid yet — process this forcing and generate "
                     f"the files using your case's extract_forcings module: "
