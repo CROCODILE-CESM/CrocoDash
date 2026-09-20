@@ -143,7 +143,7 @@ def write_ww3_boundary_spectrum(file_path, lat, lon, freq, direction, efth, time
 # Where process() writes WW3's generated inputs, and therefore where
 # get_output_filepaths() looks for them. Kept in one place so the writer, the
 # WW3_GRID_INP_DIR setting and the reader cannot drift apart.
-WAVE_SUBDIR = "wave"
+WAVE_SUBDIR = "wav"
 
 
 def write_ww3_bounc_nml(

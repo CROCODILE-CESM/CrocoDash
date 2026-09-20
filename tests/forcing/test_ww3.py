@@ -137,7 +137,7 @@ def test_process_ww3_obc_skipped_without_product(tmp_path, gen_grid_topo_vgrid):
 
     # No spec.list / ww3_bounc.nml / point files -- but WW3_GRID_INP_DIR still
     # has to name a directory that exists, since CIME's ww3 buildnml reads it.
-    wave_dir = tmp_path / "wave"
+    wave_dir = tmp_path / WAVE_SUBDIR
     assert wave_dir.is_dir()
     assert list(wave_dir.iterdir()) == []
 
@@ -345,7 +345,7 @@ def test_process_ww3_obc_multi_station(tmp_path, gen_grid_topo_vgrid):
     )
     configurator.process(_make_ctx(tmp_path, supergrid_path=hgrid_path))
 
-    wave = tmp_path / "wave"
+    wave = tmp_path / WAVE_SUBDIR
     # 2 boundaries x 3 real stations each = 6 total, not 2.
     spec_lines = (wave / "spec.list").read_text().splitlines()
     assert spec_lines == [f"ww3.point{i}_spec.nc" for i in range(1, 7)]
@@ -377,7 +377,7 @@ def test_process_ww3_obc_with_reference_waves(tmp_path, gen_grid_topo_vgrid):
     )
     configurator.process(_make_ctx(tmp_path, supergrid_path=hgrid_path))
 
-    wave = tmp_path / "wave"
+    wave = tmp_path / WAVE_SUBDIR
     spec_lines = (wave / "spec.list").read_text().splitlines()
     assert spec_lines == [f"ww3.point{i}_spec.nc" for i in range(1, 7)]
 
