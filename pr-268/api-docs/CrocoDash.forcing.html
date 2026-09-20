@@ -343,6 +343,18 @@ document.write(`
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#submodules">Submodules</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.forcing.atm">CrocoDash.forcing.atm module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.atm.StreamYearConfigurator"><code class="docutils literal notranslate"><span class="pre">StreamYearConfigurator</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.atm.StreamYearConfigurator.allowed_compsets"><code class="docutils literal notranslate"><span class="pre">StreamYearConfigurator.allowed_compsets</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.atm.StreamYearConfigurator.configure"><code class="docutils literal notranslate"><span class="pre">StreamYearConfigurator.configure()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.atm.StreamYearConfigurator.input_params"><code class="docutils literal notranslate"><span class="pre">StreamYearConfigurator.input_params</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.atm.StreamYearConfigurator.name"><code class="docutils literal notranslate"><span class="pre">StreamYearConfigurator.name</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.atm.StreamYearConfigurator.output_params"><code class="docutils literal notranslate"><span class="pre">StreamYearConfigurator.output_params</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.atm.StreamYearConfigurator.required_for_compsets"><code class="docutils literal notranslate"><span class="pre">StreamYearConfigurator.required_for_compsets</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.forcing.base">CrocoDash.forcing.base module</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.BaseConfigurator"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.BaseConfigurator.allowed_compsets"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.allowed_compsets</span></code></a></li>
@@ -496,6 +508,12 @@ document.write(`
 </li>
 </ul>
 </li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.forcing.cdeps_streams">CrocoDash.forcing.cdeps_streams module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.cdeps_streams.coverage"><code class="docutils literal notranslate"><span class="pre">coverage()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.cdeps_streams.datafiles"><code class="docutils literal notranslate"><span class="pre">datafiles()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.cdeps_streams.stream_names"><code class="docutils literal notranslate"><span class="pre">stream_names()</span></code></a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.forcing.chl">CrocoDash.forcing.chl module</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.chl.ChlConfigurator"><code class="docutils literal notranslate"><span class="pre">ChlConfigurator</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.chl.ChlConfigurator.configure"><code class="docutils literal notranslate"><span class="pre">ChlConfigurator.configure()</span></code></a></li>
@@ -616,6 +634,57 @@ document.write(`
 <h1>CrocoDash.forcing package<a class="headerlink" href="#crocodash-forcing-package" title="Link to this heading">#</a></h1>
 <section id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading">#</a></h2>
+</section>
+<section id="module-CrocoDash.forcing.atm">
+<span id="crocodash-forcing-atm-module"></span><h2>CrocoDash.forcing.atm module<a class="headerlink" href="#module-CrocoDash.forcing.atm" title="Link to this heading">#</a></h2>
+<p>Align data-model (DATM/DROF) forcing streams with the case’s run dates.</p>
+<p>CDEPS hardcodes <code class="docutils literal notranslate"><span class="pre">year_align=1</span></code> and the full year span for every JRA stream in
+<code class="docutils literal notranslate"><span class="pre">stream_definition_{datm,drof}.xml</span></code>, and the <code class="docutils literal notranslate"><span class="pre">DATM_YR_ALIGN</span></code>/<code class="docutils literal notranslate"><span class="pre">_START</span></code>/
+<code class="docutils literal notranslate"><span class="pre">_END</span></code> xml variables are only read by the CLM/GSWP3/NEON/CPLHIST stream sets
+– no JRA, NYF or ERA5 entry references them. So a JRA case silently reads an
+arbitrary data year, and <code class="docutils literal notranslate"><span class="pre">xmlchange</span></code> cannot fix it. The only lever CDEPS
+offers is <code class="docutils literal notranslate"><span class="pre">user_nl_&lt;comp&gt;_streams</span></code>, which this configurator writes.</p>
+<p>Narrowing the file list matters as much as the alignment: the <code class="docutils literal notranslate"><span class="pre">&lt;datafiles&gt;</span></code>
+list is expanded from the stream definition’s own year tags <em>before</em> user mods
+are merged, so retagging the years alone still leaves all 59 JRA files
+enumerated, and CDEPS opens each one to build its time axis.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="CrocoDash.forcing.atm.StreamYearConfigurator">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.forcing.atm.</span></span><span class="sig-name descname"><span class="pre">StreamYearConfigurator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">case_cesmroot</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_date</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_date</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stream_year_padding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">narrow_stream_files</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.atm.StreamYearConfigurator" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#CrocoDash.forcing.base.BaseConfigurator" title="CrocoDash.forcing.base.BaseConfigurator"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseConfigurator</span></code></a></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.forcing.atm.StreamYearConfigurator.allowed_compsets">
+<span class="sig-name descname"><span class="pre">allowed_compsets</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['DATM']</span></em><a class="headerlink" href="#CrocoDash.forcing.atm.StreamYearConfigurator.allowed_compsets" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.forcing.atm.StreamYearConfigurator.configure">
+<span class="sig-name descname"><span class="pre">configure</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.atm.StreamYearConfigurator.configure" title="Link to this definition">#</a></dt>
+<dd><p>Bind input values to parameters and files.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.forcing.atm.StreamYearConfigurator.input_params">
+<span class="sig-name descname"><span class="pre">input_params</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#CrocoDash.forcing.base.Param" title="CrocoDash.forcing.base.Param"><span class="pre">Param</span></a><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[InputValueParam(name='case_cesmroot'),</span> <span class="pre">InputValueParam(name='start_date'),</span> <span class="pre">InputValueParam(name='end_date'),</span> <span class="pre">InputValueParam(name='stream_year_padding'),</span> <span class="pre">InputValueParam(name='narrow_stream_files')]</span></em><a class="headerlink" href="#CrocoDash.forcing.atm.StreamYearConfigurator.input_params" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.forcing.atm.StreamYearConfigurator.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'StreamYears'</span></em><a class="headerlink" href="#CrocoDash.forcing.atm.StreamYearConfigurator.name" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.forcing.atm.StreamYearConfigurator.output_params">
+<span class="sig-name descname"><span class="pre">output_params</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#CrocoDash.forcing.base.OutputParam" title="CrocoDash.forcing.base.OutputParam"><span class="pre">OutputParam</span></a><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[ConfigOutputParam(name='datm_streams'),</span> <span class="pre">ConfigOutputParam(name='drof_streams')]</span></em><a class="headerlink" href="#CrocoDash.forcing.atm.StreamYearConfigurator.output_params" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="CrocoDash.forcing.atm.StreamYearConfigurator.required_for_compsets">
+<span class="sig-name descname"><span class="pre">required_for_compsets</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['DATM%JRA']</span></em><a class="headerlink" href="#CrocoDash.forcing.atm.StreamYearConfigurator.required_for_compsets" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
 </section>
 <section id="module-CrocoDash.forcing.base">
 <span id="crocodash-forcing-base-module"></span><h2>CrocoDash.forcing.base module<a class="headerlink" href="#module-CrocoDash.forcing.base" title="Link to this heading">#</a></h2>
@@ -894,7 +963,7 @@ never configured this case).</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="CrocoDash.forcing.base.ForcingConfigRegistry.registered_types">
-<span class="sig-name descname"><span class="pre">registered_types</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">type</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[&lt;class</span> <span class="pre">'CrocoDash.forcing.bgc.BGCConfigurator'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'CrocoDash.forcing.bgc.CICEConfigurator'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'CrocoDash.forcing.bgc.BGCICConfigurator'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'CrocoDash.forcing.bgc.BGCIronForcingConfigurator'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'CrocoDash.forcing.bgc.BGCRiverNutrientsConfigurator'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'CrocoDash.forcing.chl.ChlConfigurator'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'CrocoDash.forcing.mom6.ConditionsConfigurator'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'CrocoDash.forcing.runoff.RunoffConfigurator'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'CrocoDash.forcing.tides.TidesConfigurator'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'CrocoDash.forcing.ww3.WW3Configurator'&gt;]</span></em><a class="headerlink" href="#CrocoDash.forcing.base.ForcingConfigRegistry.registered_types" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">registered_types</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">type</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[&lt;class</span> <span class="pre">'CrocoDash.forcing.atm.StreamYearConfigurator'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'CrocoDash.forcing.bgc.BGCConfigurator'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'CrocoDash.forcing.bgc.CICEConfigurator'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'CrocoDash.forcing.bgc.BGCICConfigurator'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'CrocoDash.forcing.bgc.BGCIronForcingConfigurator'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'CrocoDash.forcing.bgc.BGCRiverNutrientsConfigurator'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'CrocoDash.forcing.chl.ChlConfigurator'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'CrocoDash.forcing.mom6.ConditionsConfigurator'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'CrocoDash.forcing.runoff.RunoffConfigurator'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'CrocoDash.forcing.tides.TidesConfigurator'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'CrocoDash.forcing.ww3.WW3Configurator'&gt;]</span></em><a class="headerlink" href="#CrocoDash.forcing.base.ForcingConfigRegistry.registered_types" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
@@ -1319,6 +1388,41 @@ automatically.</p>
 <span class="sig-name descname"><span class="pre">required_for_compsets</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['CICE']</span></em><a class="headerlink" href="#CrocoDash.forcing.bgc.CICEConfigurator.required_for_compsets" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
+</dd></dl>
+
+</section>
+<section id="module-CrocoDash.forcing.cdeps_streams">
+<span id="crocodash-forcing-cdeps-streams-module"></span><h2>CrocoDash.forcing.cdeps_streams module<a class="headerlink" href="#module-CrocoDash.forcing.cdeps_streams" title="Link to this heading">#</a></h2>
+<p>Read CDEPS stream definitions through CIME’s own parsers.</p>
+<p>These are thin wrappers over <code class="docutils literal notranslate"><span class="pre">StreamCDEPS</span></code> and <code class="docutils literal notranslate"><span class="pre">NamelistDefinition</span></code> rather
+than XML parsing of our own, so that the stream list and the expanded file
+paths stay identical to what the CDEPS <code class="docutils literal notranslate"><span class="pre">buildnml</span></code> would generate. That
+matters for streams whose files carry more than one datestamp: JRA v1.5 splits
+1958-2023 across four <code class="docutils literal notranslate"><span class="pre">&lt;file&gt;</span></code> entries stamped 210504/220505/230718/240531,
+and a hand-rolled expansion would silently emit paths that do not exist.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.forcing.cdeps_streams.coverage">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.forcing.cdeps_streams.</span></span><span class="sig-name descname"><span class="pre">coverage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cesmroot</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">component</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stream_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cime_case</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.cdeps_streams.coverage" title="Link to this definition">#</a></dt>
+<dd><p>The (year_first, year_last) the stream definition itself declares.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.forcing.cdeps_streams.datafiles">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.forcing.cdeps_streams.</span></span><span class="sig-name descname"><span class="pre">datafiles</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cesmroot</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">component</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stream_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year_first</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year_last</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cime_case</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.cdeps_streams.datafiles" title="Link to this definition">#</a></dt>
+<dd><p>Resolved file paths covering [year_first, year_last].</p>
+<p>Mirrors the <code class="docutils literal notranslate"><span class="pre">stream_datafiles</span></code> branch of <code class="docutils literal notranslate"><span class="pre">StreamCDEPS.create_stream_xml</span></code>:
+each <code class="docutils literal notranslate"><span class="pre">&lt;file&gt;</span></code> contributes only the years its own first_year/last_year
+attributes cover, so multi-datestamp streams resolve correctly.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.forcing.cdeps_streams.stream_names">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.forcing.cdeps_streams.</span></span><span class="sig-name descname"><span class="pre">stream_names</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cesmroot</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">component</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.cdeps_streams.stream_names" title="Link to this definition">#</a></dt>
+<dd><p>The stream names active for a DATM_MODE/DROF_MODE, in buildnml’s order.</p>
+<p>The mode-to-streams mapping is matched by regex on the mode name, so this
+cannot be replaced by prefixing: CORE_IAF_JRA_1p5_2023 yields streams named
+CORE_IAF_JRA_1p5_2023.GCGCS.PREC, and the DROF mode IAF_JRA yields
+rof.iaf_jra.</p>
 </dd></dl>
 
 </section>
@@ -2079,6 +2183,18 @@ needs to import it by name.</p>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#submodules">Submodules</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.forcing.atm">CrocoDash.forcing.atm module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.atm.StreamYearConfigurator"><code class="docutils literal notranslate"><span class="pre">StreamYearConfigurator</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.atm.StreamYearConfigurator.allowed_compsets"><code class="docutils literal notranslate"><span class="pre">StreamYearConfigurator.allowed_compsets</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.atm.StreamYearConfigurator.configure"><code class="docutils literal notranslate"><span class="pre">StreamYearConfigurator.configure()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.atm.StreamYearConfigurator.input_params"><code class="docutils literal notranslate"><span class="pre">StreamYearConfigurator.input_params</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.atm.StreamYearConfigurator.name"><code class="docutils literal notranslate"><span class="pre">StreamYearConfigurator.name</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.atm.StreamYearConfigurator.output_params"><code class="docutils literal notranslate"><span class="pre">StreamYearConfigurator.output_params</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.atm.StreamYearConfigurator.required_for_compsets"><code class="docutils literal notranslate"><span class="pre">StreamYearConfigurator.required_for_compsets</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.forcing.base">CrocoDash.forcing.base module</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.BaseConfigurator"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.BaseConfigurator.allowed_compsets"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.allowed_compsets</span></code></a></li>
@@ -2230,6 +2346,12 @@ needs to import it by name.</p>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.bgc.CICEConfigurator.required_for_compsets"><code class="docutils literal notranslate"><span class="pre">CICEConfigurator.required_for_compsets</span></code></a></li>
 </ul>
 </li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.forcing.cdeps_streams">CrocoDash.forcing.cdeps_streams module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.cdeps_streams.coverage"><code class="docutils literal notranslate"><span class="pre">coverage()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.cdeps_streams.datafiles"><code class="docutils literal notranslate"><span class="pre">datafiles()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.cdeps_streams.stream_names"><code class="docutils literal notranslate"><span class="pre">stream_names()</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.forcing.chl">CrocoDash.forcing.chl module</a><ul class="nav section-nav flex-column">

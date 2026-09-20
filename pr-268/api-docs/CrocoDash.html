@@ -442,6 +442,18 @@ document.write(`
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="CrocoDash.forcing.html">CrocoDash.forcing package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="CrocoDash.forcing.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="CrocoDash.forcing.html#module-CrocoDash.forcing.atm">CrocoDash.forcing.atm module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.atm.StreamYearConfigurator"><code class="docutils literal notranslate"><span class="pre">StreamYearConfigurator</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.atm.StreamYearConfigurator.allowed_compsets"><code class="docutils literal notranslate"><span class="pre">StreamYearConfigurator.allowed_compsets</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.atm.StreamYearConfigurator.configure"><code class="docutils literal notranslate"><span class="pre">StreamYearConfigurator.configure()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.atm.StreamYearConfigurator.input_params"><code class="docutils literal notranslate"><span class="pre">StreamYearConfigurator.input_params</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.atm.StreamYearConfigurator.name"><code class="docutils literal notranslate"><span class="pre">StreamYearConfigurator.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.atm.StreamYearConfigurator.output_params"><code class="docutils literal notranslate"><span class="pre">StreamYearConfigurator.output_params</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.atm.StreamYearConfigurator.required_for_compsets"><code class="docutils literal notranslate"><span class="pre">StreamYearConfigurator.required_for_compsets</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="CrocoDash.forcing.html#module-CrocoDash.forcing.base">CrocoDash.forcing.base module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.base.BaseConfigurator"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.base.BaseConfigurator.allowed_compsets"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.allowed_compsets</span></code></a></li>
@@ -593,6 +605,12 @@ document.write(`
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.bgc.CICEConfigurator.required_for_compsets"><code class="docutils literal notranslate"><span class="pre">CICEConfigurator.required_for_compsets</span></code></a></li>
 </ul>
 </li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="CrocoDash.forcing.html#module-CrocoDash.forcing.cdeps_streams">CrocoDash.forcing.cdeps_streams module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.cdeps_streams.coverage"><code class="docutils literal notranslate"><span class="pre">coverage()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.cdeps_streams.datafiles"><code class="docutils literal notranslate"><span class="pre">datafiles()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.cdeps_streams.stream_names"><code class="docutils literal notranslate"><span class="pre">stream_names()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="CrocoDash.forcing.html#module-CrocoDash.forcing.chl">CrocoDash.forcing.chl module</a><ul>
@@ -899,6 +917,8 @@ that aren’t active are silently skipped regardless. Valid
 <dt class="field-even">Raises<span class="colon">:</span></dt>
 <dd class="field-even"><ul class="simple">
 <li><p><strong>RuntimeError</strong> – If <cite>configure_forcings()</cite> was not called before this method.</p></li>
+<li><p><strong>TypeError</strong> – If a <cite>process_*</cite> kwarg is passed that doesn’t match any active
+    configurator’s <cite>process_components</cite> flag name.</p></li>
 <li><p><strong>FileNotFoundError</strong> – If required unprocessed files are missing in the expected directories.</p></li>
 </ul>
 </dd>
@@ -1166,7 +1186,7 @@ that can be handed off to another user.</p>
 <span class="sig-name descname"><span class="pre">bundle</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_folder_location</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">machine</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">project</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.shareable.CaseBundle.bundle" title="Link to this definition">#</a></dt>
 <dd><p>Package this case into a portable bundle folder.</p>
 <p>Runs identify_non_standard_case_info() automatically if not already called.
-The bundle contains the full recipe YAML, the non-standard diff, all ocnice
+The bundle contains the full recipe YAML, the non-standard diff, all ocean
 input files, user_nl files, replay.sh, and any SourceMods or extra XML files.</p>
 </dd></dl>
 
