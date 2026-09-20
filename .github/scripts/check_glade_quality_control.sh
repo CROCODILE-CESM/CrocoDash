@@ -6,6 +6,7 @@ EXEMPTIONS=(
   "CrocoDash/raw_data_access/datasets/cesm_ocean_output.py"
   "tests/fixtures/state.py"
   "tests/forcing/test_bgc.py"
+  "tests/forcing/test_atm.py"
 )
 
 echo "Checking for hardcoded '/glade' paths..."
