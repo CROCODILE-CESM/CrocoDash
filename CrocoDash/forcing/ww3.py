@@ -342,15 +342,11 @@ class WW3Configurator(BaseConfigurator):
         InputValueParam(
             "ww3_obc_product_name",
             comment=(
-                "Name of the WW3 OBC input data product, mirroring "
-                "Case.configure_forcings's product_name/function_name pattern for "
-                "the main IC/OBC product. Boundary spectra are opt-in: leaving this "
-                "unset (None) skips WW3 OBC generation entirely and WW3 runs with "
-                "its own in-core calm boundaries, which is a valid configuration. "
-                "Set it -- together with ww3_obc_function_name -- to generate "
-                "boundary spectra, e.g. 'era5_wave_spectra' / 'get_era5_2d_spectra' "
-                "(raw_data_access/datasets/era5.py), which needs a separate "
-                "cds.climate.copernicus.eu API key."
+                "WW3 boundary-spectra product, e.g. 'era5_wave_spectra' (needs a "
+                "cds.climate.copernicus.eu API key) or 'reference_waves' (synthetic), "
+                "together with ww3_obc_function_name. Required for a WW3 case; pass "
+                "'none' to run without boundary spectra, in which case the open "
+                "boundary ring stays calm."
             ),
         ),
         InputValueParam(
@@ -422,26 +418,42 @@ class WW3Configurator(BaseConfigurator):
         ):
             raise TypeError("boundaries must be a list of strings.")
 
-        # None means "generate no boundary spectra at all" -- process() skips
-        # itself entirely (WW3 runs unforced at its boundaries). Anything else
-        # must be a registered WW3 forcing product: the boundary spectra
-        # written here follow WW3ForcingProduct's spectral contract, so a MOM6
-        # (or any other) forcing product can't stand in.
         product_name = kwargs["ww3_obc_product_name"]
-        if product_name:
-            ProductRegistry.load()
-            if not ProductRegistry.product_exists(product_name):
+        function_name = kwargs["ww3_obc_function_name"]
+        if product_name is None:
+            if function_name is not None:
                 raise ValueError(
-                    f"Unknown forcing product '{product_name}'. Known products: "
-                    f"{sorted(ProductRegistry.products)}."
+                    "ww3_obc_function_name was given but ww3_obc_product_name was not."
                 )
-            if not ProductRegistry.product_is_of_type(product_name, WW3ForcingProduct):
+            raise ValueError(
+                "ww3_obc_product_name is required for a WW3 case: name a WW3 forcing "
+                "product together with ww3_obc_function_name, or pass 'none' to run "
+                "without boundary spectra."
+            )
+        if product_name == "none":
+            if function_name is not None:
                 raise ValueError(
-                    f"Product '{product_name}' ({ProductRegistry.get_product(product_name).__name__}) "
-                    "is not a WW3ForcingProduct, so it can't be used as "
-                    "ww3_obc_product_name (WW3's boundary spectra). If this is a MOM6 "
-                    "initial/boundary condition product, pass it as product_name instead."
+                    "ww3_obc_function_name must not be given when "
+                    "ww3_obc_product_name is 'none'."
                 )
+            return
+        ProductRegistry.load()
+        if not ProductRegistry.product_exists(product_name):
+            raise ValueError(
+                f"Unknown forcing product '{product_name}'. Known products: "
+                f"{sorted(ProductRegistry.products)}."
+            )
+        if not ProductRegistry.product_is_of_type(product_name, WW3ForcingProduct):
+            raise ValueError(
+                f"Product '{product_name}' ({ProductRegistry.get_product(product_name).__name__}) "
+                "is not a WW3ForcingProduct, so it can't be used as "
+                "ww3_obc_product_name (WW3's boundary spectra). If this is a MOM6 "
+                "initial/boundary condition product, pass it as product_name instead."
+            )
+        if function_name is None:
+            raise ValueError(
+                "ww3_obc_product_name was given but ww3_obc_function_name was not."
+            )
 
     def configure(self):
         self.set_output_param(
@@ -488,15 +500,11 @@ class WW3Configurator(BaseConfigurator):
         time to queue/process on CDS. Passing get_step_days=1 splits each
         boundary's GET step into one request per calendar day instead.
 
-        Boundary spectra are opt-in. WW3 runs perfectly well without open
-        boundary forcing -- an unforced run just starts from in-core calm
-        conditions -- so this step does nothing unless the caller names both
-        ww3_obc_product_name and ww3_obc_function_name. Defaulting to the
-        real ERA5 2D-spectra product instead would make every WW3 case
-        depend on a separate cds.climate.copernicus.eu API key that most
-        users don't have, to produce forcing they may not have asked for.
+        ww3_obc_product_name is required: a WW3 forcing product together with
+        ww3_obc_function_name, or 'none' to skip boundary spectra (the open
+        boundary ring then stays calm).
 
-        When both are given, routes through obc.py's shared GET -> chunk ->
+        Routes through obc.py's shared GET -> chunk ->
         REGRID -> MERGE engine. The product must match a WW3ForcingProduct-
         derived class's spectral contract (enforced in validate_args); e.g.
         'era5_wave_spectra' / 'get_era5_2d_spectra'
@@ -529,28 +537,9 @@ class WW3Configurator(BaseConfigurator):
         output_dir = Path(ctx.inputdir) / WAVE_SUBDIR
         output_dir.mkdir(parents=True, exist_ok=True)
 
-        if not product_name and not function_name:
-            print(
-                "[info] WW3: no ww3_obc_product_name/ww3_obc_function_name given -- "
-                "skipping boundary spectra. WW3 will run without open boundary "
-                "forcing (in-core calm conditions). Pass both to generate them."
-            )
+        if product_name == "none":
+            print("[info] WW3: ww3_obc_product_name='none' -- no boundary spectra.")
             return
-
-        # Half-specified is always a mistake: silently skipping would hide a
-        # typo'd or forgotten argument behind a case that still runs.
-        if not product_name or not function_name:
-            missing, given = (
-                ("ww3_obc_product_name", "ww3_obc_function_name")
-                if not product_name
-                else ("ww3_obc_function_name", "ww3_obc_product_name")
-            )
-            raise ValueError(
-                f"WW3 boundary spectra need both ww3_obc_product_name and "
-                f"ww3_obc_function_name; {given} was given but {missing} was not. "
-                f"Pass both to generate spectra, or neither to run WW3 without "
-                f"open boundary forcing."
-            )
 
         boundaries = self.get_input_param("boundaries")
         conditions = ctx.config["conditions"]

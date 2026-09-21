@@ -119,16 +119,16 @@ def test_write_spec_list(tmp_path):
 # =============================================================================
 
 
-def test_process_ww3_obc_skipped_without_product(tmp_path, gen_grid_topo_vgrid):
-    """Boundary spectra are opt-in: with neither product nor function named,
-    process() must generate nothing at all rather than fall back to a default
-    product. WW3 runs fine unforced at its boundaries, and defaulting to ERA5
-    would make every WW3 case need a CDS API key."""
+def test_process_ww3_obc_skipped_with_none_product(tmp_path, gen_grid_topo_vgrid):
+    """ww3_obc_product_name='none' is the explicit opt-out: process() must
+    generate nothing at all rather than fall back to a default product."""
     grid, topo, vgrid = gen_grid_topo_vgrid
     hgrid_path = tmp_path / "hgrid.nc"
     grid.write_supergrid(hgrid_path)
 
-    configurator = WW3Configurator(case_inputdir=tmp_path, boundaries=["west"])
+    configurator = WW3Configurator(
+        case_inputdir=tmp_path, boundaries=["west"], ww3_obc_product_name="none"
+    )
 
     with patch("CrocoDash.forcing.ww3.obc.process_obc_conditions") as mock_process:
         configurator.process(_make_ctx(tmp_path, supergrid_path=hgrid_path))
@@ -157,25 +157,12 @@ def test_process_ww3_obc_skipped_without_product(tmp_path, gen_grid_topo_vgrid):
         ),
     ],
 )
-def test_process_ww3_obc_half_specified_raises(
-    tmp_path, gen_grid_topo_vgrid, kwargs, given, missing
-):
+def test_process_ww3_obc_half_specified_raises(tmp_path, kwargs, given, missing):
     """Only one of the pair given is a typo or a forgotten argument, not a
-    request to skip -- skipping silently would hide it behind a case that
-    still runs."""
-    grid, topo, vgrid = gen_grid_topo_vgrid
-    hgrid_path = tmp_path / "hgrid.nc"
-    grid.write_supergrid(hgrid_path)
-
-    configurator = WW3Configurator(
-        case_inputdir=tmp_path, boundaries=["west"], **kwargs
-    )
-
-    with patch("CrocoDash.forcing.ww3.obc.process_obc_conditions") as mock_process:
-        with pytest.raises(ValueError, match=f"{given} was given but {missing}"):
-            configurator.process(_make_ctx(tmp_path, supergrid_path=hgrid_path))
-
-    mock_process.assert_not_called()
+    request to skip -- rejected up front rather than hidden behind a case
+    that still runs."""
+    with pytest.raises(ValueError, match=f"{given} was given but {missing}"):
+        WW3Configurator(case_inputdir=tmp_path, boundaries=["west"], **kwargs)
 
 
 def _make_synthetic_era5_window(n_stations=3):
@@ -412,11 +399,13 @@ def test_process_ww3_obc_with_reference_waves(tmp_path, gen_grid_topo_vgrid):
 # =============================================================================
 
 
-def test_ww3_configurator_defaults_to_none_product():
-    # None (unset) means "skip boundary spectra entirely" (handled in
-    # process()) -- a valid WW3 configuration, not something validate_args
-    # should reject.
-    WW3Configurator(case_inputdir="dummy", boundaries=["west"])
+def test_ww3_configurator_requires_product():
+    # Leaving ww3_obc_product_name unset is an error; 'none' is the opt-out.
+    with pytest.raises(ValueError, match="ww3_obc_product_name is required"):
+        WW3Configurator(case_inputdir="dummy", boundaries=["west"])
+    WW3Configurator(
+        case_inputdir="dummy", boundaries=["west"], ww3_obc_product_name="none"
+    )
 
 
 def test_ww3_configurator_rejects_non_ww3_product():
@@ -444,11 +433,13 @@ def test_ww3_configurator_accepts_matching_product():
         case_inputdir="dummy",
         boundaries=["west"],
         ww3_obc_product_name="era5_wave_spectra",
+        ww3_obc_function_name="get_era5_2d_spectra",
     )
     WW3Configurator(
         case_inputdir="dummy",
         boundaries=["west"],
         ww3_obc_product_name="reference_waves",
+        ww3_obc_function_name="get_reference_wave_spectra",
     )
 
 
@@ -479,14 +470,18 @@ def _populate_wave_dir(inputdir, n_stations=2):
 
 def test_get_output_filepaths_empty_when_not_yet_processed(tmp_path):
     (tmp_path / "ocnice").mkdir()
-    configurator = WW3Configurator(case_inputdir=tmp_path, boundaries=["west"])
+    configurator = WW3Configurator(
+        case_inputdir=tmp_path, boundaries=["west"], ww3_obc_product_name="none"
+    )
     assert configurator.get_output_filepaths(tmp_path / "ocnice") == []
 
 
 def test_get_output_filepaths_returns_every_generated_file(tmp_path):
     """Spectra count is not known up front, so this globs rather than names."""
     _populate_wave_dir(tmp_path, n_stations=3)
-    configurator = WW3Configurator(case_inputdir=tmp_path, boundaries=["west"])
+    configurator = WW3Configurator(
+        case_inputdir=tmp_path, boundaries=["west"], ww3_obc_product_name="none"
+    )
 
     names = {
         Path(p).name for p in configurator.get_output_filepaths(tmp_path / "ocnice")
@@ -504,7 +499,9 @@ def test_get_output_filepaths_returns_every_generated_file(tmp_path):
 def test_get_output_filepaths_skips_subdirectories(tmp_path):
     wave_dir = _populate_wave_dir(tmp_path, n_stations=1)
     (wave_dir / "scratch").mkdir()
-    configurator = WW3Configurator(case_inputdir=tmp_path, boundaries=["west"])
+    configurator = WW3Configurator(
+        case_inputdir=tmp_path, boundaries=["west"], ww3_obc_product_name="none"
+    )
 
     paths = configurator.get_output_filepaths(tmp_path / "ocnice")
     assert all(Path(p).is_file() for p in paths)
@@ -519,7 +516,9 @@ def test_output_filepaths_dir_matches_ww3_grid_inp_dir(tmp_path):
     independently before they were given a shared constant.
     """
     _populate_wave_dir(tmp_path, n_stations=1)
-    configurator = WW3Configurator(case_inputdir=tmp_path, boundaries=["west"])
+    configurator = WW3Configurator(
+        case_inputdir=tmp_path, boundaries=["west"], ww3_obc_product_name="none"
+    )
     # configure() ends in super().configure(), which applies each XML param
     # against a live CASEROOT. Only the value it sets matters here.
     with patch("CrocoDash.forcing.base.xmlchange"):
