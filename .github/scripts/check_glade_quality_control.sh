@@ -9,6 +9,7 @@ EXEMPTIONS=(
   "tests/forcing/test_bgc.py"
   "tests/raw_data_access/test_cice.py"
   "tests/forcing/test_cice.py"
+  "tests/forcing/test_atm.py"
 )
 
 echo "Checking for hardcoded '/glade' paths..."

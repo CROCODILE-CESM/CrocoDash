@@ -369,3 +369,9 @@ class CICEForcingProduct(VelocityTracerForcingProduct):
     so this extends VelocityTracerForcingProduct rather than ForcingProduct
     directly -- any concrete CICE product regridded via
     regional_mom6.Segment reuses the same var-map contract MOM6 does."""
+
+
+class WW3ForcingProduct(ForcingProduct):
+    """Extension point for WW3's own regridding var-name metadata, beyond
+    ForcingProduct's generic time-axis contract. No velocity/tracer grid
+    metadata here -- WW3 boundary spectra have no such grid."""

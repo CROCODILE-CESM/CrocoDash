@@ -5,7 +5,12 @@ from unittest.mock import patch
 
 import pytest
 
-from CrocoDash.forcing.base import BaseConfigurator, InputValueParam, register
+from CrocoDash.forcing.base import (
+    BaseConfigurator,
+    ConfigOutputParam,
+    InputValueParam,
+    register,
+)
 from CrocoDash.forcing.driver import _load, resolve_components, run_workflow
 
 # =============================================================================
@@ -56,6 +61,64 @@ class _DummyMultiFlagConfigurator(BaseConfigurator):
 
 
 _DummyMultiFlagConfigurator.calls = []
+
+
+@register
+class _DummyChainAConfigurator(BaseConfigurator):
+    """chaina -> chainb -> chainc, to exercise multi-level auto-enable/order."""
+
+    name = "dummychaina"
+    process_components = {"chaina": "process"}
+    depends_on_outputs = {"dummychainb": ["out"]}
+    input_params = []
+    output_params = []
+
+    def __init__(self):
+        super().__init__()
+
+    def configure(self):
+        pass
+
+    def process(self, ctx):
+        _CHAIN_CALLS.append("chaina")
+
+
+@register
+class _DummyChainBConfigurator(BaseConfigurator):
+    name = "dummychainb"
+    process_components = {"chainb": "process"}
+    depends_on_outputs = {"dummychainc": ["out"]}
+    input_params = []
+    output_params = [ConfigOutputParam("out")]
+
+    def __init__(self):
+        super().__init__()
+
+    def configure(self):
+        pass
+
+    def process(self, ctx):
+        _CHAIN_CALLS.append("chainb")
+
+
+@register
+class _DummyChainCConfigurator(BaseConfigurator):
+    name = "dummychainc"
+    process_components = {"chainc": "process"}
+    input_params = []
+    output_params = [ConfigOutputParam("out")]
+
+    def __init__(self):
+        super().__init__()
+
+    def configure(self):
+        pass
+
+    def process(self, ctx):
+        _CHAIN_CALLS.append("chainc")
+
+
+_CHAIN_CALLS = []
 
 
 def _make_state(tmp_path):
@@ -258,3 +321,34 @@ def test_run_workflow_auto_enables_dependency(mock_cs, tmp_path):
     # runoff must run before bgcrivernutrients, and be auto-enabled even
     # though it wasn't explicitly requested.
     assert calls == ["runoff", "bgcrivernutrients"]
+
+
+@patch("CrocoDash.forcing.driver.case_state")
+def test_run_workflow_auto_enables_multi_level_chain(mock_cs, tmp_path):
+    """Requesting chaina (which needs chainb, which needs chainc) must
+    auto-enable both ancestors and run them in dependency order, regardless
+    of PYTHONHASHSEED -- a set was previously used to build the order, which
+    made it non-deterministic, and the auto-enable loop only walked one
+    level deep."""
+    _CHAIN_CALLS.clear()
+    mock_cs.read.return_value = _make_state(tmp_path)
+    config_path = _write_config(
+        tmp_path,
+        extra_keys={
+            "dummychaina": {"name": "dummychaina", "inputs": {}, "outputs": {}},
+            "dummychainb": {
+                "name": "dummychainb",
+                "inputs": {},
+                "outputs": {"out": "b"},
+            },
+            "dummychainc": {
+                "name": "dummychainc",
+                "inputs": {},
+                "outputs": {"out": "c"},
+            },
+        },
+    )
+
+    run_workflow(config_path=config_path, chaina=True)
+
+    assert _CHAIN_CALLS == ["chainc", "chainb", "chaina"]
