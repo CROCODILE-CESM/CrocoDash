@@ -108,6 +108,14 @@ CrocoDash.forcing.utils module
    :show-inheritance:
    :undoc-members:
 
+CrocoDash.forcing.ww3 module
+----------------------------
+
+.. automodule:: CrocoDash.forcing.ww3
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 Module contents
 ---------------
 
