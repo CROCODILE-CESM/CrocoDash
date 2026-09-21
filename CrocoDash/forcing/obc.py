@@ -424,13 +424,32 @@ def _regrid_one_chunk(
     return dated_output, regridders
 
 
+LOGIN_NODE_MAX_WORKERS = 4
+
+
 def available_cpus():
-    """Get number of available processes to spun"""
+    """Get the number of worker processes to spawn.
+
+    CROCODASH_MAX_WORKERS, if set, wins outright. Otherwise,
+    sched_getaffinity(0) reports the whole node's core count -- correct
+    inside a PBS batch job, since PBS cpusets bind it to the actual
+    allocation, but badly wrong on a login node (e.g. 128 on Derecho, where
+    a single user is really capped to a handful of cores and ~10GB). PBS_JOBID
+    is only set inside a batch job, so it's used here to tell the two apart.
+    """
+    override = os.environ.get("CROCODASH_MAX_WORKERS")
+    if override:
+        return max(1, int(override))
+
     try:
-        return len(os.sched_getaffinity(0))
+        cpus = len(os.sched_getaffinity(0))
     except AttributeError:
-        # Fallback for systems without sched_getaffinity
-        return 12
+        # Fallback for systems without sched_getaffinity (e.g. macOS)
+        return os.cpu_count() or 1
+
+    if "PBS_JOBID" in os.environ:
+        return cpus
+    return min(cpus, LOGIN_NODE_MAX_WORKERS)
 
 
 # ---------------------------------------------------------------------------

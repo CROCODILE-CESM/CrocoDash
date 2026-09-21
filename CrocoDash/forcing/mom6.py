@@ -12,7 +12,6 @@ metadata into a download request).
 """
 
 import os
-from datetime import datetime
 from functools import partial
 from pathlib import Path
 
@@ -542,8 +541,6 @@ class ConditionsConfigurator(BaseConfigurator):
             )
 
     def configure(self):
-        start_date = self.get_input_param("start_date")
-        end_date = self.get_input_param("end_date")
         boundaries = self.get_input_param("boundaries")
         product_name = self.get_input_param("product_name").lower()
         compset = self.get_input_param("compset")
@@ -555,13 +552,12 @@ class ConditionsConfigurator(BaseConfigurator):
             "information",
             product.write_metadata(include_marbl_tracers="%MARBL" in compset),
         )
-        start_dt = datetime.strptime(start_date, self._DATE_FORMAT)
-        end_dt = datetime.strptime(end_date, self._DATE_FORMAT)
-
-        # Setting both get and regrid to the entire modeling period. Power users can modify this as they need!
-        step = (end_dt - start_dt).days + 1
-        self.set_output_param("get_step_days", step)
-        self.set_output_param("regrid_step_days", step)
+        # 30-day GET/REGRID chunks by default, so a generated case actually
+        # gets multiple chunks and exercises the parallel GET/REGRID paths in
+        # obc.py instead of falling through to their serial, single-chunk
+        # path. Power users can override either in config.json.
+        self.set_output_param("get_step_days", 30)
+        self.set_output_param("regrid_step_days", 30)
         self.set_output_param(
             "boundary_number_conversion",
             {b: i + 1 for i, b in enumerate(boundaries)},
