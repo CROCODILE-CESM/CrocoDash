@@ -227,9 +227,14 @@ class REFERENCE_WAVES(WW3ForcingProduct):
         output_filename="reference_waves.nc",
         variables=None,
     ):
+        # Spread the stations along the long axis of the boundary window.
         n_stations = 3
-        lons = np.linspace(lon_min, lon_max, n_stations)
-        lats = np.array([(lat_min + lat_max) / 2])
+        if (lon_max - lon_min) >= (lat_max - lat_min):
+            lons = np.linspace(lon_min, lon_max, n_stations)
+            lats = np.array([(lat_min + lat_max) / 2])
+        else:
+            lons = np.array([(lon_min + lon_max) / 2])
+            lats = np.linspace(lat_min, lat_max, n_stations)
         # Whole-day inclusive on both ends: date_range(..., freq="6h") alone
         # would stop at the last day's 00:00 and drop its 06/12/18:00 steps,
         # so build every 6-hour step of every whole day in the range instead

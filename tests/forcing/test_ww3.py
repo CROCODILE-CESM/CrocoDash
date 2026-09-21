@@ -304,11 +304,16 @@ class _FakeERA5Spectra(WW3ForcingProduct):
         freq = np.array([0.05, 0.1, 0.15])
         direction = np.array([0.0, 120.0, 240.0])
         n_stations = 3
-        lons = np.linspace(lon_min, lon_max, n_stations)
-        lats = np.array([(lat_min + lat_max) / 2])
-        efth = np.zeros((len(time), 1, n_stations, len(freq), len(direction)))
+        if (lon_max - lon_min) >= (lat_max - lat_min):
+            lons = np.linspace(lon_min, lon_max, n_stations)
+            lats = np.array([(lat_min + lat_max) / 2])
+        else:
+            lons = np.array([(lon_min + lon_max) / 2])
+            lats = np.linspace(lat_min, lat_max, n_stations)
+        efth = np.zeros((len(time), len(lats), len(lons), len(freq), len(direction)))
         for k in range(n_stations):
-            efth[:, 0, k, :, :] = 100.0 + k
+            j, i = (k, 0) if len(lats) > 1 else (0, k)
+            efth[:, j, i, :, :] = 100.0 + k
 
         ds = xr.Dataset(
             {

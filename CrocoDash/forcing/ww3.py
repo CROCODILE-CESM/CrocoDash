@@ -567,7 +567,9 @@ class WW3Configurator(BaseConfigurator):
         # This splits the per-boundary file into per-point file (which is
         # what ww3_bounc actually reads) and writes the spec.list and
         # ww3_bounc.nml that point files need to be listed in and read by.
+        # Write each station location once; ww3_bounc cannot handle duplicates.
         spectra_names = []
+        seen = set()
         for boundary in boundaries:
             seg_id = boundary_number_conversion[boundary]
             merged = xr.open_dataset(
@@ -575,6 +577,10 @@ class WW3Configurator(BaseConfigurator):
             )
             for k in range(merged.sizes["station"]):
                 station = merged.isel(station=k)
+                loc = (float(station["station_lat"]), float(station["station_lon"]))
+                if loc in seen:
+                    continue
+                seen.add(loc)
                 name = f"ww3.point{len(spectra_names) + 1}_spec.nc"
                 write_ww3_boundary_spectrum(
                     output_dir / name,
