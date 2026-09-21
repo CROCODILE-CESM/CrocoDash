@@ -184,8 +184,7 @@
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../api-docs/modules.html">CrocoDash API Docs</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../api-docs/CrocoDash.html">CrocoDash package</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
-<li class="toctree-l3"><a class="reference internal" href="../api-docs/CrocoDash.extract_forcings.html">CrocoDash.extract_forcings package</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../api-docs/CrocoDash.forcing_configurations.html">CrocoDash.forcing_configurations package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api-docs/CrocoDash.forcing.html">CrocoDash.forcing package</a></li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../api-docs/CrocoDash.raw_data_access.html">CrocoDash.raw_data_access package</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l4"><a class="reference internal" href="../api-docs/CrocoDash.raw_data_access.datasets.html">CrocoDash.raw_data_access.datasets package</a></li>
 </ul>
@@ -370,7 +369,7 @@ document.write(`
 <ol class="arabic simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">case.configure_forcings(...)</span></code> — writes <code class="docutils literal notranslate"><span class="pre">inputdir/extract_forcings/config.json</span></code> with your case-specific forcing setup</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">case.process_forcings(...)</span></code> — reads that config and runs the extraction pipeline</p></li>
-<li><p>Outputs land in <code class="docutils literal notranslate"><span class="pre">inputdir/ocnice/</span></code></p></li>
+<li><p>Outputs land in <code class="docutils literal notranslate"><span class="pre">inputdir/ocn/</span></code></p></li>
 </ol>
 <p>The key insight: <strong>you don’t have to run this from a Jupyter notebook</strong>. After <code class="docutils literal notranslate"><span class="pre">configure_forcings</span></code> completes you can submit the extraction as a batch job using the CLI:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>crocodash<span class="w"> </span>process<span class="w"> </span>--caseroot<span class="w"> </span>~/croc_cases/mycase<span class="w"> </span>--all
@@ -382,7 +381,7 @@ document.write(`
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>inputdir/
 ├── extract_forcings/
 │   └── config.json        # Written by case.configure_forcings
-└── ocnice/                # Output goes here
+└── ocn/                   # Output goes here
     ├── init_eta_filled.nc
     ├── init_vel_filled.nc
     ├── init_tracers_filled.nc
@@ -451,7 +450,7 @@ merge_piecewise_dataset   (concatenate chunks into final OBC files)
     ↓
 [tides / bgc / runoff / chl modules run independently]
     ↓
-inputdir/ocnice/
+inputdir/ocn/
 </pre></div>
 </div>
 </section>
