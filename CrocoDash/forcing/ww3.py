@@ -242,9 +242,9 @@ def _extract_all_stations(ds):
     regular (time, latitude, longitude, frequency, direction) grid -- ERA5's
     native Reduced Lat-Lon wave grid, regridded server-side via the request's
     "grid" key (see era5.py). Every (latitude, longitude) point in the window
-    becomes its own station via a stack -- including ones that turn out to be
-    all-zero (e.g. land, or genuinely no wave energy at that hour); harmless
-    zero-energy stations, not filtered out here.
+    becomes its own station via a stack. Stations that are all-zero for the
+    whole window (ERA5's land sentinel decodes to 0) are dropped: ww3_bounc
+    blends stations by distance, so a land station would damp its neighbours.
 
     Raises a clear error (not a silent misextraction) if `ds` doesn't match
     this shape, since a fake/test product could still get it wrong.
@@ -267,6 +267,10 @@ def _extract_all_stations(ds):
         )
     stacked = da.stack(station=("latitude", "longitude"))
     stacked = stacked.transpose("station", "time", "frequency", "direction")
+    wet = (stacked != 0).any(dim=("time", "frequency", "direction")).values
+    if not wet.any():
+        raise ValueError("Every station in the window is all-zero (land?).")
+    stacked = stacked.isel(station=wet)
     return (
         stacked["longitude"].values,
         stacked["latitude"].values,
@@ -274,6 +278,14 @@ def _extract_all_stations(ds):
         stacked["direction"].values,
         stacked.values,
     )
+
+
+def _wrap_lons_like(lons, ref_lons):
+    """Put lons on the same longitude branch as ref_lons ([0, 360) or [-180, 180))."""
+    lons = np.asarray(lons, dtype=float) % 360.0
+    if np.min(ref_lons) < 0.0:
+        lons = np.where(lons >= 180.0, lons - 360.0, lons)
+    return lons
 
 
 def _regrid_chunk_era5(
@@ -295,6 +307,8 @@ def _regrid_chunk_era5(
     so regridders is passed through unchanged.
     """
     lons, lats, freq, direction, efth = _extract_all_stations(ds)
+    if hgrid is not None:
+        lons = _wrap_lons_like(lons, hgrid["x"].values)
     time = ds["time"].values
 
     out = xr.Dataset(
@@ -348,6 +362,14 @@ class WW3Configurator(BaseConfigurator):
             ),
         ),
         InputValueParam(
+            "ww3_obc_function_overrides",
+            comment=(
+                "Overrides for ww3_obc_function_name's defaulted arguments, "
+                "e.g. {'cdsapi_rc_path': '~/.cdsapirc_cds'}. Defaults (None) to "
+                "the function's own defaults."
+            ),
+        ),
+        InputValueParam(
             "get_step_days",
             comment=(
                 "Chunk the GET step by this many days per request (e.g. 1 for "
@@ -369,14 +391,6 @@ class WW3Configurator(BaseConfigurator):
             "WW3_GRID_INP_DIR",
             comment="Directory containing WW3 grid input files",
         ),
-        XMLConfigParam(
-            "HIST_OPTION",
-            comment="CPl History outputs Wave Data",
-        ),
-        XMLConfigParam(
-            "HIST_N",
-            comment="CPl History outputs Wave Data",
-        ),
     ]
 
     def __init__(
@@ -385,6 +399,7 @@ class WW3Configurator(BaseConfigurator):
         boundaries,
         ww3_obc_product_name=None,
         ww3_obc_function_name=None,
+        ww3_obc_function_overrides=None,
         get_step_days=None,
         regrid_step_days=None,
     ):
@@ -393,12 +408,19 @@ class WW3Configurator(BaseConfigurator):
             boundaries=boundaries,
             ww3_obc_product_name=ww3_obc_product_name,
             ww3_obc_function_name=ww3_obc_function_name,
+            ww3_obc_function_overrides=ww3_obc_function_overrides,
             get_step_days=get_step_days,
             regrid_step_days=regrid_step_days,
         )
 
     def validate_args(self, **kwargs):
         super().validate_args(**kwargs)
+
+        boundaries = kwargs["boundaries"]
+        if not isinstance(boundaries, list) or not all(
+            isinstance(b, str) for b in boundaries
+        ):
+            raise TypeError("boundaries must be a list of strings.")
 
         # None means "generate no boundary spectra at all" -- process() skips
         # itself entirely (WW3 runs unforced at its boundaries). Anything else
@@ -426,8 +448,6 @@ class WW3Configurator(BaseConfigurator):
             "WW3_GRID_INP_DIR",
             str(Path(self.get_input_param("case_inputdir")) / WAVE_SUBDIR),
         )
-        self.set_output_param("HIST_OPTION", "nhours")
-        self.set_output_param("HIST_N", "1")
         super().configure()
 
     def get_output_filepaths(self, ocn_ice_directory):
@@ -446,8 +466,8 @@ class WW3Configurator(BaseConfigurator):
         references spec.list. The directory is the unit that stays coherent,
         which is also why WW3_GRID_INP_DIR points at it.
 
-        ocn_ice_directory is <inputdir>/ocnice; process() writes to
-        <inputdir>/wave, hence the sibling lookup.
+        ocn_ice_directory is <inputdir>/ocn; process() writes to
+        <inputdir>/wav (WAVE_SUBDIR), hence the sibling lookup.
         """
         wave_dir = Path(ocn_ice_directory).parent / WAVE_SUBDIR
         if not wave_dir.is_dir():
@@ -457,7 +477,7 @@ class WW3Configurator(BaseConfigurator):
     def process(self, ctx):
         """
         Generate WW3 boundary spectra, spec.list, and ww3_bounc.nml into
-        <inputdir>/wave.
+        <inputdir>/wav (WAVE_SUBDIR).
 
         get_step_days/regrid_step_days: passed straight through to obc.py's
         GET/REGRID chunking (see forcing/mom6.py's process_bc for the same
@@ -553,7 +573,7 @@ class WW3Configurator(BaseConfigurator):
             product_name=product_name,
             function_name=function_name,
             variables=[],
-            extra_args={},
+            extra_args=self.get_input_param("ww3_obc_function_overrides") or {},
             dataset_varnames={},
             hgrid_path=ctx.supergrid_path,
             raw_dataset_path=raw_dir,
@@ -568,6 +588,8 @@ class WW3Configurator(BaseConfigurator):
         # what ww3_bounc actually reads) and writes the spec.list and
         # ww3_bounc.nml that point files need to be listed in and read by.
         # Write each station location once; ww3_bounc cannot handle duplicates.
+        for stale in output_dir.glob("ww3.point*_spec.nc"):
+            stale.unlink()
         spectra_names = []
         seen = set()
         for boundary in boundaries:

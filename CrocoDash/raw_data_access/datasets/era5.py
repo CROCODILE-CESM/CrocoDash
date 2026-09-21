@@ -136,6 +136,10 @@ def build_era5_spectra_request(
       still honors "format"; use the current key name).
     """
     start, end = pd.to_datetime(dates[0]), pd.to_datetime(dates[-1])
+    # CDS wants -180..180; CrocoDash grids are often 0..360.
+    lon_min, lon_max = (((l + 180.0) % 360.0) - 180.0 for l in (lon_min, lon_max))
+    if lon_min > lon_max:
+        raise NotImplementedError("Boundary windows crossing 180E are not supported.")
     return {
         "class": "ea",
         "expver": "1",
@@ -322,7 +326,7 @@ class ERA5_WAVE_SPECTRA(WW3ForcingProduct):
             "service (e.g. EWDS, used by GLOFAS) and $CDSAPI_RC isn't set, "
             "this falls back to cdsapi_rc_path automatically; set "
             "cdsapi_rc_path to wherever your real CDS config actually "
-            "lives (via Case.configure_forcings's function_overrides) if "
+            "lives (via configure_forcings's ww3_obc_function_overrides) if "
             "that's not ~/.cdsapirc_era5."
         ),
         type="python",

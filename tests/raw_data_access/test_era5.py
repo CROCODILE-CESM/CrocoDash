@@ -5,6 +5,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import pytest
+import xarray as xr
 
 from CrocoDash.raw_data_access.datasets import era5
 from CrocoDash.raw_data_access.registry import ProductRegistry

@@ -246,6 +246,14 @@ def test_extract_all_stations_shape_mismatch_raises():
         ww3._extract_all_stations(bad)
 
 
+def test_wrap_lons_like():
+    lons = np.array([190.0, 205.0, 10.0])
+    assert np.allclose(
+        ww3._wrap_lons_like(lons, np.array([-170.0, -155.0])), [-170, -155, 10]
+    )
+    assert np.allclose(ww3._wrap_lons_like(lons - 360, np.array([190.0, 205.0])), lons)
+
+
 def test_regrid_chunk_era5_writes_all_stations(tmp_path):
     ds = _make_synthetic_era5_window(n_stations=3)
 
