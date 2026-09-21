@@ -1,5 +1,7 @@
-from CrocoDash.forcing_configurations.base import *
-from CrocoDash.forcing_configurations.configurations import *
+from CrocoDash.forcing.base import *
+
+from types import SimpleNamespace
+from unittest.mock import patch
 
 import pytest
 
@@ -63,6 +65,32 @@ class Dummy1(BaseConfigurator):
 
     def configure(self):
         self.dummy1 = 1
+
+
+class DummyXML(BaseConfigurator):
+    """Exercises the XMLConfigParam is_non_local path without declaring a
+    case_is_non_local input param -- see test_is_non_local_* below. Not
+    @register'd: it only needs direct construction, and registering it would
+    make it an active configurator in every other test in this module too."""
+
+    name = "dummyxml"
+
+    input_params = [
+        InputValueParam(
+            "dummy",
+            comment="Boop Boop",
+        )
+    ]
+    output_params = [
+        XMLConfigParam("DUMMY_XML_VAR", comment="Boop Boop"),
+    ]
+
+    def __init__(self, dummy):
+        super().__init__(dummy=dummy)
+
+    def configure(self):
+        self.set_output_param("DUMMY_XML_VAR", "value")
+        super().configure()
 
 
 @pytest.fixture
@@ -131,3 +159,42 @@ def test_FCR_configure(fcr_add_dummy1):
     fcr = fcr_add_dummy1
     fcr.run_configurators(None)
     assert fcr["dummy1"].dummy1 == 1
+
+
+@patch("CrocoDash.forcing.base.xmlchange")
+def test_is_non_local_defaults_false_without_case(mock_xmlchange):
+    """Direct construction (no registry/case, e.g. in a unit test) -- an
+    XMLConfigParam output still applies, defaulting is_non_local False,
+    without DummyXML declaring a case_is_non_local input param."""
+    obj = DummyXML("x")
+    obj.configure()
+    mock_xmlchange.assert_called_once_with("DUMMY_XML_VAR", "value", is_non_local=False)
+
+
+@patch("CrocoDash.forcing.base.xmlchange")
+def test_is_non_local_propagates_from_registry_case(mock_xmlchange):
+    """A configurator whose registry points at a non-local Case -- is_non_local
+    reaches XMLConfigParam.apply() automatically, sourced from the Case
+    rather than threaded through DummyXML's own inputs."""
+    obj = DummyXML("x")
+    obj.registry = SimpleNamespace(case=SimpleNamespace(is_non_local=True))
+    obj.configure()
+    mock_xmlchange.assert_called_once_with("DUMMY_XML_VAR", "value", is_non_local=True)
+
+
+def test_depends_on_outputs_targets_exist():
+    """Every declared cross-configurator dependency (depends_on_outputs)
+    must name a real, registered configurator and a real output param on
+    it -- catches a stale reference (e.g. after a rename) statically,
+    instead of a bare KeyError only surfacing at process-time deep inside
+    ForcingConfigRegistry.get_configurator_output()."""
+    for configurator_cls in ForcingConfigRegistry.registered_types:
+        for dep_name, output_names in configurator_cls.depends_on_outputs.items():
+            dep_cls = ForcingConfigRegistry.get_configurator_from_name(dep_name)
+            declared_outputs = {p.name for p in dep_cls.output_params}
+            missing = set(output_names) - declared_outputs
+            assert not missing, (
+                f"{configurator_cls.__name__}.depends_on_outputs references "
+                f"{dep_name!r}.{sorted(missing)}, but {dep_cls.__name__} has no "
+                f"such output_params (has: {sorted(declared_outputs)})"
+            )

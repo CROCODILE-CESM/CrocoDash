@@ -16,7 +16,7 @@ import yaml
 
 from CrocoDash.case import Case
 from CrocoDash import case_state
-from CrocoDash.forcing_configurations.base import ForcingConfigRegistry
+from CrocoDash.forcing.base import ForcingConfigRegistry
 from CrocoDash.grid import Grid
 from CrocoDash.topo import Topo
 from CrocoDash.vgrid import VGrid
