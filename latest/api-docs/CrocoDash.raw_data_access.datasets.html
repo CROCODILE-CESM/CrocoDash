@@ -850,6 +850,15 @@ conventions (and so need different MOM6ForcingProduct metadata):
 <span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.datasets.cesm_ocean_output.</span></span><span class="sig-name descname"><span class="pre">bbox_mask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'lat'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'lon'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">buffer_deg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.cesm_ocean_output.bbox_mask" title="Link to this definition">#</a></dt>
 <dd><p>Boolean lat/lon mask for subsetting a dataset, handling both 0-360 and
 -180-180 longitude conventions.</p>
+<p><code class="docutils literal notranslate"><span class="pre">lon_min</span></code>/<code class="docutils literal notranslate"><span class="pre">lon_max</span></code> name a contiguous arc running eastward from
+<code class="docutils literal notranslate"><span class="pre">lon_min</span></code>, the way <code class="docutils literal notranslate"><span class="pre">Grid.get_bounding_boxes</span></code> returns one. An arc that
+crosses the antimeridian ends past 180 – 170 to 190, say – because no
+pair of in-range ends can describe one. Normalising each end on its own
+turns that into 170 to -170 and selects nothing, so measure each source
+longitude as an offset eastward from the start of the arc instead: a point
+is inside when its offset is no wider than the arc. Taking that offset
+modulo 360 puts both the source’s convention and the crossing to rest, so
+neither needs a branch of its own.</p>
 </dd></dl>
 
 <dl class="py function">
