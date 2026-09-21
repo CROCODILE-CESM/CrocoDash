@@ -157,10 +157,10 @@ class CaseBundle:
 
         # init_args needed for bundle() grid-file copying (esmf_mesh via glob)
         state = case_state.read(self.caseroot)
-        inputdir_ocnice = str(Path(state["inputdir"]) / "ocnice")
-        esmf_file = next(Path(inputdir_ocnice).glob("ESMF_mesh_*.nc"), None)
+        inputdir_ocn = str(Path(state["inputdir"]) / "ocn")
+        esmf_file = next(Path(inputdir_ocn).glob("ESMF_mesh_*.nc"), None)
         self.init_args = {
-            "inputdir_ocnice": inputdir_ocnice,
+            "inputdir_ocn": inputdir_ocn,
             "supergrid_path": Path(state["supergrid_path"]).name,
             "vgrid_path": Path(state["vgrid_path"]).name,
             "topo_path": Path(state["topo_path"]).name,
@@ -289,7 +289,7 @@ class CaseBundle:
         Package this case into a portable bundle folder.
 
         Runs identify_non_standard_case_info() automatically if not already called.
-        The bundle contains the full recipe YAML, the non-standard diff, all ocnice
+        The bundle contains the full recipe YAML, the non-standard diff, all ocean
         input files, user_nl files, replay.sh, and any SourceMods or extra XML files.
         """
         if not hasattr(self, "non_standard_case_info"):
@@ -298,7 +298,7 @@ class CaseBundle:
                 machine if machine is not None else self.case_machine,
                 project if project is not None else self.case_project,
             )
-        ocnice_dir = self.get_user_nl_value("mom", "INPUTDIR")
+        ocn_dir = self.get_user_nl_value("mom", "INPUTDIR")
         case_subfolder = (
             Path(output_folder_location) / f"{self.caseroot.name}_case_bundle"
         )
@@ -311,29 +311,29 @@ class CaseBundle:
         logger.info("Copying replay.sh...")
         shutil.copy(self.caseroot / "replay.sh", case_subfolder / "replay.sh")
 
-        ocnice_target = case_subfolder / "ocnice"
-        ocnice_target.mkdir(parents=False, exist_ok=True)
+        ocn_target = case_subfolder / "ocn"
+        ocn_target.mkdir(parents=False, exist_ok=True)
 
-        for f in Path(ocnice_dir).iterdir():
+        for f in Path(ocn_dir).iterdir():
             if f.name.startswith(INPUTDIR_FILE_PREFIXES):
                 logger.info(f"Copying {f}")
-                shutil.copy(f, ocnice_target)
+                shutil.copy(f, ocn_target)
 
         for config, value in self.forcing_config.items():
             if config in {"conditions", "caseroot"}:
                 continue
             configurator = ForcingConfigRegistry.get_configurator(value)
-            for path in configurator.get_output_filepaths(ocnice_dir):
+            for path in configurator.get_output_filepaths(ocn_dir):
                 logger.info(f"Copying {config} file: {path}...")
-                shutil.copy(path, ocnice_target)
+                shutil.copy(path, ocn_target)
 
         for key in ("supergrid_path", "topo_path", "vgrid_path", "esmf_mesh_path"):
             filename = self.init_args.get(key)
             if filename:
-                src = Path(ocnice_dir) / filename
+                src = Path(ocn_dir) / filename
                 if src.exists():
                     logger.info(f"Copying grid file: {src}")
-                    shutil.copy(src, ocnice_target / src.name)
+                    shutil.copy(src, ocn_target / src.name)
 
         logger.info("Writing out crocodash_case.yaml...")
         with open(case_subfolder / "crocodash_case.yaml", "w") as f:
@@ -394,12 +394,16 @@ def duplicate_case(caseroot, new_caseroot, new_inputdir, bundle_dir=None):
 
     result = create_case_from_yaml(config, override=True, configure_only=True)
 
-    old_ocnice = Path(rcc.init_args["inputdir_ocnice"])
-    if old_ocnice.exists():
-        new_ocnice = Path(new_inputdir) / "ocnice"
-        new_ocnice.mkdir(parents=True, exist_ok=True)
-        for src in old_ocnice.iterdir():
-            dst = new_ocnice / src.name
+    # Grid files are split across ocn/, ice/ and wav/ (visualCaseGen expects
+    # them there); carry over whichever of those the source case wrote.
+    old_ocn = Path(rcc.init_args["inputdir_ocn"])
+    for old_dir in (old_ocn, *(old_ocn.parent / d for d in ("ice", "wav"))):
+        if not old_dir.exists():
+            continue
+        new_dir = Path(new_inputdir) / old_dir.name
+        new_dir.mkdir(parents=True, exist_ok=True)
+        for src in old_dir.iterdir():
+            dst = new_dir / src.name
             if not dst.exists():
                 shutil.copy(src, dst)
 
@@ -478,7 +482,7 @@ class ForkBundle:
 
     def _validate_bundle(self):
         missing = []
-        ocnice = self.bundle_location / "ocnice"
+        ocn = self.bundle_location / "ocn"
 
         for f in self.differences.xml_files_missing_in_new:
             if not (self.bundle_location / "xml_files" / f).exists():
@@ -488,8 +492,8 @@ class ForkBundle:
             if not (self.bundle_location / "SourceMods" / f).exists():
                 missing.append(str(self.bundle_location / "SourceMods" / f))
 
-        if not ocnice.exists():
-            missing.append(str(ocnice))
+        if not ocn.exists():
+            missing.append(str(ocn))
 
         if missing:
             raise FileNotFoundError(
@@ -542,9 +546,9 @@ class ForkBundle:
         self.case = create_case_from_yaml(config, override=True, configure_only=True)
 
         logger.info("Copying forcing files from bundle...")
-        bundle_ocnice = self.bundle_location / "ocnice"
-        for src in bundle_ocnice.iterdir():
-            dst = Path(self.case.inputdir) / "ocnice" / src.name
+        bundle_ocn = self.bundle_location / "ocn"
+        for src in bundle_ocn.iterdir():
+            dst = Path(self.case.inputdir) / "ocn" / src.name
             if not dst.exists():
                 shutil.copy(src, dst)
 
@@ -568,18 +572,18 @@ class ForkBundle:
         if "supergrid_path" in config.get("grid", {}):
             config["grid"]["supergrid_path"] = str(
                 self.bundle_location
-                / "ocnice"
+                / "ocn"
                 / Path(config["grid"]["supergrid_path"]).name
             )
         if config.get("topo", {}).get("source", {}).get("type") == "from_file":
             config["topo"]["source"]["topo_file_path"] = str(
                 self.bundle_location
-                / "ocnice"
+                / "ocn"
                 / Path(config["topo"]["source"]["topo_file_path"]).name
             )
         if config.get("vgrid", {}).get("type") == "from_file":
             config["vgrid"]["filename"] = str(
-                self.bundle_location / "ocnice" / Path(config["vgrid"]["filename"]).name
+                self.bundle_location / "ocn" / Path(config["vgrid"]["filename"]).name
             )
         return config
 

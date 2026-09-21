@@ -64,7 +64,7 @@ from CrocoDash.raw_data_access.base import CICEForcingProduct
 # Where process() writes CICE's forcing file, and therefore where
 # get_output_filepaths() looks for it. Kept in one place so the writer and the
 # reader cannot drift apart.
-SEA_ICE_SUBDIR = "sea_ice"
+SEA_ICE_SUBDIR = "ice"
 FORCING_FILENAME = "cice_forcing.nc"
 
 # CICE's B-grid stores velocity (uvel/vvel) and its own mask (iceumask) at
@@ -343,8 +343,8 @@ class CICEConfigurator(BaseConfigurator):
             )
         return Path(case_inputdir) / SEA_ICE_SUBDIR / FORCING_FILENAME
 
-    def get_output_filepaths(self, ocn_ice_directory):
-        """CICE's forcing file, which lives beside ocnice/ rather than in it.
+    def get_output_filepaths(self, ocn_directory):
+        """CICE's forcing file, which lives beside ocn/ rather than in it.
 
         The base implementation walks output_params for is_file entries, but all
         of CICE's are namelist settings -- the forcing file's location is fixed
@@ -352,16 +352,16 @@ class CICEConfigurator(BaseConfigurator):
         the base returns nothing, so CaseBundle.bundle() copies no CICE file at
         all and validate_output_filepaths() passes vacuously.
 
-        ocn_ice_directory is <inputdir>/ocnice; process() writes to
-        <inputdir>/sea_ice, hence the sibling lookup.
+        ocn_directory is <inputdir>/ocn; process() writes to
+        <inputdir>/ice, hence the sibling lookup.
         """
-        path = Path(ocn_ice_directory).parent / SEA_ICE_SUBDIR / FORCING_FILENAME
+        path = Path(ocn_directory).parent / SEA_ICE_SUBDIR / FORCING_FILENAME
         return [path] if path.exists() else []
 
     def process(self, ctx):
         """
         Generate CICE's single restoring forcing file into
-        <inputdir>/sea_ice/cice_forcing.nc.
+        <inputdir>/ice/cice_forcing.nc.
 
         Does nothing unless the caller named both ``cice_product_name`` and
         ``cice_function_name`` -- restoring is opt-in, see

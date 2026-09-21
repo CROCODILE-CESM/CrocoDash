@@ -98,7 +98,7 @@ def test_load_state_from_crocodash_init_args(get_case_with_cf):
     rcc = CaseBundle(case.caseroot)
     init_args = rcc.init_args
 
-    assert str(case.inputdir / "ocnice") == str(init_args["inputdir_ocnice"])
+    assert str(case.inputdir / "ocn") == str(init_args["inputdir_ocn"])
     assert str(init_args["supergrid_path"]).startswith("ocean_hgrid_pana")
     assert str(init_args["topo_path"]).startswith("ocean_topog_pana")
     assert str(init_args["vgrid_path"]).startswith("ocean_vgrid_pana")
@@ -155,9 +155,7 @@ def test_read_user_nl_mom_lines_as_obj(get_CrocoDash_case):
     rcc = CaseBundle(case.caseroot)
     rcc.caseroot = case.caseroot
     user_nl_mom_obj = rcc._read_user_nl_lines_as_obj("mom")
-    assert user_nl_mom_obj["Global"]["INPUTDIR"]["value"] == str(
-        case.inputdir / "ocnice"
-    )
+    assert user_nl_mom_obj["Global"]["INPUTDIR"]["value"] == str(case.inputdir / "ocn")
 
 
 def test_get_case_obj(get_CrocoDash_case):
@@ -199,10 +197,10 @@ def test_bundle_with_modifications(CrocoDash_case_factory, tmp_path_factory, tmp
         tpxo_velocity_filepath="s3://crocodile-cesm/CrocoDash/data/tpxo/u_tpxo9.v1.zarr/",
     )
 
-    # Create fake files in ocnice directory
-    ocnice_dir = Path(case.inputdir) / "ocnice"
-    (ocnice_dir / "forcing_obc_segment_fake.nc").touch()
-    (ocnice_dir / "tz_fake.nc").touch()
+    # Create fake files in ocn directory
+    ocn_dir = Path(case.inputdir) / "ocn"
+    (ocn_dir / "forcing_obc_segment_fake.nc").touch()
+    (ocn_dir / "tz_fake.nc").touch()
 
     output_dir = tmp_path / "bundle_output_modified"
     output_dir.mkdir()
@@ -249,12 +247,12 @@ def test_bundle_with_modifications(CrocoDash_case_factory, tmp_path_factory, tmp
     assert differences["xml_files_missing_in_new"] == ["custom_settings.xml"]
     assert differences["source_mods_missing_files"] == ["src.mom/custom_module.F90"]
 
-    # Check that ocnice directory was copied
-    ocnice_dir = case_bundle / "ocnice"
-    assert ocnice_dir.exists(), "ocnice directory should be copied from inputdir"
-    # Verify ocnice has expected structure
-    assert (ocnice_dir / "forcing_obc_segment_fake.nc").exists()
-    assert (ocnice_dir / "tz_fake.nc").exists()
+    # Check that ocn directory was copied
+    ocn_dir = case_bundle / "ocn"
+    assert ocn_dir.exists(), "ocn directory should be copied from inputdir"
+    # Verify ocn has expected structure
+    assert (ocn_dir / "forcing_obc_segment_fake.nc").exists()
+    assert (ocn_dir / "tz_fake.nc").exists()
 
     # Verify content of XML file
     with open(xml_files_dir / "custom_settings.xml") as f:
@@ -281,7 +279,7 @@ def test_read_user_nls(fake_RCC_empty_case, get_CrocoDash_case):
     assert "mom" in rcc.user_nl_objs.keys()
     assert "datm" in rcc.user_nl_objs.keys()
     assert rcc.get_user_nl_value("mom", "INPUTDIR") == str(
-        get_CrocoDash_case.inputdir / "ocnice"
+        get_CrocoDash_case.inputdir / "ocn"
     )
 
 

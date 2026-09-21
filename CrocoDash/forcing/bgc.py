@@ -38,6 +38,32 @@ class BGCConfigurator(BaseConfigurator):
 
 
 @register
+class CICEConfigurator(BaseConfigurator):
+    name = "CICE"
+    required_for_compsets = ["CICE"]
+    allowed_compsets = ["CICE"]
+    input_params = []
+    output_params = [
+        UserNLConfigParam("ice_ic", user_nl_name="cice"),
+        UserNLConfigParam("ns_boundary_type", user_nl_name="cice"),
+        UserNLConfigParam("ew_boundary_type", user_nl_name="cice"),
+        UserNLConfigParam("close_boundaries", user_nl_name="cice"),
+    ]
+
+    def __init__(
+        self,
+    ):
+        super().__init__()
+
+    def configure(self):
+        self.set_output_param("ice_ic", "'UNSET'")
+        self.set_output_param("ns_boundary_type", "'open'")
+        self.set_output_param("ew_boundary_type", "'cyclic'")
+        self.set_output_param("close_boundaries", ".false.")
+        super().configure()
+
+
+@register
 class BGCICConfigurator(BaseConfigurator):
     name = "BGCIC"
     process_components = {"bgcic": "process"}
@@ -152,13 +178,13 @@ class BGCIronForcingConfigurator(BaseConfigurator):
             "history": "Created with xarray (this file is empty)",
         }
         ds.to_netcdf(
-            ctx.inputdir / "ocnice" / self.get_output_param("MARBL_FESEDFLUX_FILE")
+            ctx.inputdir / "ocn" / self.get_output_param("MARBL_FESEDFLUX_FILE")
         )
         ds.to_netcdf(
-            ctx.inputdir / "ocnice" / self.get_output_param("MARBL_FEVENTFLUX_FILE")
+            ctx.inputdir / "ocn" / self.get_output_param("MARBL_FEVENTFLUX_FILE")
         )
         ds.to_netcdf(
-            ctx.inputdir / "ocnice" / self.get_output_param("MARBL_FESEDFLUXRED_FILE")
+            ctx.inputdir / "ocn" / self.get_output_param("MARBL_FESEDFLUXRED_FILE")
         )
 
 

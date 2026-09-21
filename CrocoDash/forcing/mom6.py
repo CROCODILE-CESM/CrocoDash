@@ -19,6 +19,7 @@ from pathlib import Path
 import dask
 import netCDF4
 import regional_mom6 as rm6
+from regional_mom6.segment import Segment
 import mom6_forge as m6b
 import xarray as xr
 from CrocoDash import logging
@@ -95,18 +96,17 @@ def _regrid_obc_chunk(
     with dask.config.set(scheduler="synchronous"):
         ds.to_netcdf(tmp_file)
     try:
-        seg = rm6.segment(
-            hgrid=hgrid,
-            bathymetry_path=None,
-            outfolder=outfolder,
-            segment_name=f"segment_{seg_id:03d}",
+        seg = Segment.cardinal(
+            hgrid,
             orientation=boundary,
-            startdate=start_date,
-            repeat_year_forcing=False,
+            segment_name=f"segment_{seg_id:03d}",
         )
         seg.regrid_velocity_tracers(
             infile=tmp_file,
             varnames=dataset_varnames,
+            outfolder=outfolder,
+            startdate=start_date,
+            repeat_year_forcing=False,
             arakawa_grid=None,
             regridding_method="bilinear",
             fill_method=rm6.regridding.fill_missing_data,
@@ -121,7 +121,7 @@ def _regrid_obc_chunk(
             # is malformed for some other reason still fails loudly.
             ignore_degenerate=True,
         )
-        return seg.regridders
+        return seg._regridders
     finally:
         tmp_file.unlink(missing_ok=True)
 

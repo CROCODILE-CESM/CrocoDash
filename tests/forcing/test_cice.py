@@ -228,7 +228,7 @@ def test_process_cice_forcing_produces_output(
     )
     configurator.process(_make_ctx(tmp_path, supergrid_path=tmp_path / "grid.nc"))
 
-    ds = xr.open_dataset(tmp_path / "sea_ice" / "cice_forcing.nc")
+    ds = xr.open_dataset(tmp_path / "ice" / "cice_forcing.nc")
 
     # nj/ni, not ny/nx: these are the dimension names CICE's restart reader
     # expects, since configure() points ice_ic at this file.
@@ -263,7 +263,7 @@ def test_process_cice_forcing_with_reference_ice(tmp_path, gen_grid_topo_vgrid):
     )
     configurator.process(_make_ctx(tmp_path, supergrid_path=tmp_path / "grid.nc"))
 
-    ds = xr.open_dataset(tmp_path / "sea_ice" / "cice_forcing.nc")
+    ds = xr.open_dataset(tmp_path / "ice" / "cice_forcing.nc")
 
     # nj/ni, not ny/nx: these are the dimension names CICE's restart reader
     # expects, since configure() points ice_ic at this file.
@@ -289,19 +289,19 @@ def test_process_cice_forcing_with_reference_ice(tmp_path, gen_grid_topo_vgrid):
 
 
 def test_get_output_filepaths_finds_the_forcing_file(tmp_path):
-    """The file lives beside ocnice/, not in it."""
-    sea_ice = tmp_path / SEA_ICE_SUBDIR
-    sea_ice.mkdir()
-    expected = sea_ice / FORCING_FILENAME
+    """The file lives beside ocn/, not in it."""
+    ice_dir = tmp_path / SEA_ICE_SUBDIR
+    ice_dir.mkdir()
+    expected = ice_dir / FORCING_FILENAME
     expected.touch()
 
-    paths = CICEConfigurator().get_output_filepaths(tmp_path / "ocnice")
+    paths = CICEConfigurator().get_output_filepaths(tmp_path / "ocn")
     assert [Path(p) for p in paths] == [expected]
 
 
 def test_get_output_filepaths_empty_when_not_yet_processed(tmp_path):
-    (tmp_path / "ocnice").mkdir()
-    assert CICEConfigurator().get_output_filepaths(tmp_path / "ocnice") == []
+    (tmp_path / "ocn").mkdir()
+    assert CICEConfigurator().get_output_filepaths(tmp_path / "ocn") == []
 
 
 def test_get_output_filepaths_agrees_with_process(tmp_path, gen_grid_topo_vgrid):
@@ -320,7 +320,7 @@ def test_get_output_filepaths_agrees_with_process(tmp_path, gen_grid_topo_vgrid)
     )
     configurator.process(_make_ctx(tmp_path, supergrid_path=tmp_path / "grid.nc"))
 
-    paths = configurator.get_output_filepaths(tmp_path / "ocnice")
+    paths = configurator.get_output_filepaths(tmp_path / "ocn")
     assert len(paths) == 1
     assert Path(paths[0]).exists()
-    assert configurator.validate_output_filepaths(tmp_path / "ocnice")
+    assert configurator.validate_output_filepaths(tmp_path / "ocn")

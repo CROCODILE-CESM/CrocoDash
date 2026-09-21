@@ -19,6 +19,7 @@ Typical Python usage::
 
 """
 
+import graphlib
 import json
 import time
 from pathlib import Path
@@ -65,7 +66,7 @@ def _build_context(config, state, inputdir, preview=False):
         topo_path=state["topo_path"],
         raw_data_dir=extract_forcings_dir / "raw_data",
         regridded_data_dir=extract_forcings_dir / "regridded_data",
-        output_path=inputdir / "ocnice",
+        output_path=inputdir / "ocn",
         config=config,
         preview=preview,
     )
@@ -96,29 +97,37 @@ def run_workflow(config_path, preview=False, **flags):
 
     order_overrides = _resolve_process_order_overrides(targets)
 
-    for flag_name, deps in order_overrides.items():
-        if flag_name not in requested:
-            continue
-        for dep in deps:
-            if dep in targets and dep not in requested:
+    # Auto-enable dependencies transitively: requesting a flag also requests
+    # everything it depends on, however many levels deep.
+    frontier = list(requested)
+    while frontier:
+        flag_name = frontier.pop()
+        for dep in order_overrides.get(flag_name, []):
+            if dep not in requested:
                 print(
                     f"[info] '{flag_name}' requires '{dep}' to run first -- "
                     "enabling it automatically"
                 )
                 requested.add(dep)
+                frontier.append(dep)
 
     if not requested:
         print("No components selected.")
         return
 
-    # Stable order: anything named as a dependency runs before its dependents.
-    order = []
-    for flag_name in requested:
-        for dep in order_overrides.get(flag_name, []):
-            if dep in requested and dep not in order:
-                order.append(dep)
-        if flag_name not in order:
-            order.append(flag_name)
+    # order_overrides is already {node: predecessors}, so hand it straight to
+    # TopologicalSorter for a stable order instead of looping over `requested`
+    # (a set, whose iteration order isn't meaningful). Every requested flag is
+    # passed as a key -- including ones with no declared deps -- so
+    # TopologicalSorter doesn't drop flags that never appear in
+    # order_overrides.
+    graph = {flag_name: order_overrides.get(flag_name, []) for flag_name in requested}
+    try:
+        order = list(graphlib.TopologicalSorter(graph).static_order())
+    except graphlib.CycleError as exc:
+        raise RuntimeError(
+            f"Circular process-order dependency among forcing components: {exc.args[1]}"
+        ) from exc
 
     timings = {}
     for flag_name in order:
