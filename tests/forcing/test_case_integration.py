@@ -71,9 +71,7 @@ def test_case_integration_config_cice_round_trip(CrocoDash_case_factory, tmp_pat
     cice_outputs = config["cice"]["outputs"]
     assert cice_outputs["restore_ice"] == ".true."
     assert cice_outputs["restart_ext"] == ".true."
-    assert (
-        cice_outputs["ice_ic"] == f"'{case.inputdir / 'ice' / 'cice_forcing.nc'}'"
-    )
+    assert cice_outputs["ice_ic"] == f"'{case.inputdir / 'ice' / 'cice_forcing.nc'}'"
 
 
 def test_driver_works(CrocoDash_case_factory, tmp_path):
