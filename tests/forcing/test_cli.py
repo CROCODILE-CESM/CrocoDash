@@ -83,6 +83,7 @@ def test_process_all_args_available():
                 "--tides",
                 "--chl",
                 "--cice",
+                "--ww3",
                 "--skip",
                 "tides",
             ],
