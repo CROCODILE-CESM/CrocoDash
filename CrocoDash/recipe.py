@@ -195,10 +195,9 @@ def generate_configure_forcing_args(forcing_config, remove_configs=None):
         if key in {"conditions", "caseroot"} or key in remove_configs:
             continue
         configurator_cls = ForcingConfigRegistry.get_configurator_from_name(key)
-        # Round-trip every constructor arg the original case recorded, not just
-        # the required ones: configurators whose args all carry defaults (e.g.
-        # CICE) would otherwise come back with nothing at all, silently
-        # reverting to defaults instead of reproducing the original case.
+        # Round-trip every ctor arg, not just required ones -- an all-optional
+        # configurator (e.g. CICE) would otherwise silently fall back to
+        # defaults instead of reproducing the original case.
         all_args, required_args = ForcingConfigRegistry.get_ctor_signature(
             configurator_cls
         )
