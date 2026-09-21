@@ -205,11 +205,10 @@ class CICEConfigurator(BaseConfigurator):
         UserNLConfigParam("ice_ic", user_nl_name="cice"),
         UserNLConfigParam("ns_boundary_type", user_nl_name="cice"),
         UserNLConfigParam("ew_boundary_type", user_nl_name="cice"),
-        UserNLConfigParam("close_boundaries", user_nl_name="cice"),
-        UserNLConfigParam("advect", user_nl_name="cice"),
+        UserNLConfigParam("advection", user_nl_name="cice"),
         UserNLConfigParam("restart_ext", user_nl_name="cice"),
         UserNLConfigParam("restore_ice", user_nl_name="cice"),
-        UserNLConfigParam("trestore", user_nl_name="cice"),
+        UserNLConfigParam("restore_timescale", user_nl_name="cice"),
     ]
 
     def __init__(
@@ -295,8 +294,7 @@ class CICEConfigurator(BaseConfigurator):
     def configure(self):
         self.set_output_param("ns_boundary_type", "'zero_gradient'")
         self.set_output_param("ew_boundary_type", "'zero_gradient'")
-        self.set_output_param("close_boundaries", ".false.")
-        self.set_output_param("advect", "'upwind'")
+        self.set_output_param("advection", "'upwind'")
         # Set unconditionally, not just when restoring: CICE's own
         # set_nml.bczerogradient option pairs zero_gradient boundaries with
         # restart_ext = .true., and it's what makes the ghost ring exist on
@@ -313,7 +311,7 @@ class CICEConfigurator(BaseConfigurator):
         product_name, _ = self._resolve_forcing_source()
         restoring = bool(product_name)
         self.set_output_param("restore_ice", ".true." if restoring else ".false.")
-        self.set_output_param("trestore", 90)
+        self.set_output_param("restore_timescale", 90)
 
         # ice_ic points at the expanded-grid restart process() writes, so its
         # ghost ring is read in (restart_ext above) and becomes the restoring
