@@ -25,6 +25,7 @@ Each phase is idempotent: existing output files are detected and skipped,
 so a failed run can be safely re-started.
 """
 
+import multiprocessing
 import os
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -158,6 +159,28 @@ def _files_within_range(
     ]
 
 
+def _files_overlapping_range(
+    files: list, parse_dates, start_date: datetime, end_date: datetime
+) -> list:
+    """Keep files whose filename date range overlaps [start_date, end_date].
+
+    Used to pick raw files for one regrid chunk. GET and REGRID chunk sizes
+    are independent, so a single raw file (e.g. get_step_days=30) can span
+    several regrid chunks (e.g. regrid_step_days=5) -- containment (as
+    _files_within_range checks) would drop it for every chunk narrower than
+    itself. The overlapping files are opened with xr.open_mfdataset and then
+    trimmed with .sel(time=slice(...)) to the chunk's exact window, so
+    overlap is all that's needed here; full, gapless coverage of the whole
+    range is already validated once in process_obc_conditions before any
+    chunk is ever built.
+    """
+    return [
+        f
+        for f in files
+        if parse_dates(f)[0] <= end_date and parse_dates(f)[1] >= start_date
+    ]
+
+
 def _validate_coverage(
     files: list,
     parse_dates,
@@ -231,16 +254,21 @@ def _get_one_chunk(
     output_filename = f"{boundary}_unprocessed.{start_str}_{end_str}.nc"
     data_access_fn = utils.get_data_access_function(product_name, function_name)
 
-    return utils.fetch_raw_chunk(
-        data_access_fn=data_access_fn,
-        dates=[start_str, end_str],
-        latlon=latlon,
-        name=boundary,
-        output_folder=output_dir,
-        output_filename=output_filename,
-        variables=variables,
-        extra_args=extra_args,
-    )
+    # copernicusmarine's to_netcdf() runs dask.compute() internally, which
+    # otherwise routes through the distributed scheduler and fails
+    # serializing botocore.client.S3. Same guard as _merge_boundary; each
+    # worker process needs its own since this runs inside the pool.
+    with dask.config.set(scheduler="synchronous"):
+        return utils.fetch_raw_chunk(
+            data_access_fn=data_access_fn,
+            dates=[start_str, end_str],
+            latlon=latlon,
+            name=boundary,
+            output_folder=output_dir,
+            output_filename=output_filename,
+            variables=variables,
+            extra_args=extra_args,
+        )
 
 
 def _regrid_per_process(
@@ -344,22 +372,21 @@ def _regrid_one_chunk(
         logger.info(f"Regridded file {dated_output.name} already exists. Skipping.")
         return dated_output, regridders
 
-    logger.info("PROC [%d] - REGRID [%s]: Validating coverage", proc_id, boundary)
+    logger.info("PROC [%d] - REGRID [%s]: Selecting raw files", proc_id, boundary)
     parse_raw_dates = lambda f, boundary=boundary: _parse_raw_filename_dates(
         f, boundary
     )
-    chunk_raw_files = _validate_coverage(
-        _files_within_range(
-            sorted(raw_files),
-            parse_raw_dates,
-            chunk_start_date,
-            chunk_end_date,
-        ),
+    chunk_raw_files = _files_overlapping_range(
+        sorted(raw_files),
         parse_raw_dates,
-        boundary,
         chunk_start_date,
         chunk_end_date,
     )
+    if not chunk_raw_files:
+        raise FileNotFoundError(
+            f"No files for [{boundary}] chunk {start_str}_{end_str} -- "
+            "preceding GET phase produced no output overlapping this range."
+        )
 
     logger.info("PROC [%d] - REGRID [%s]: Performing regrid", proc_id, boundary)
     with xr.open_mfdataset(
@@ -449,8 +476,10 @@ def _get_boundary(
                 extra_args=extra_args,
             )
     else:
-        num_workers = min(available_cpus(), len(pairs))
-        with ProcessPoolExecutor(max_workers=num_workers) as ex:
+        num_workers = max(1, min(available_cpus(), len(pairs)))
+        with ProcessPoolExecutor(
+            max_workers=num_workers, mp_context=multiprocessing.get_context("fork")
+        ) as ex:
             futures = [
                 ex.submit(
                     _get_one_chunk,
@@ -538,7 +567,9 @@ def _regrid_boundary(
     )
 
     regridded_files = []
-    with ProcessPoolExecutor(max_workers=num_workers) as ex:
+    with ProcessPoolExecutor(
+        max_workers=num_workers, mp_context=multiprocessing.get_context("fork")
+    ) as ex:
         futures = [
             ex.submit(
                 _regrid_per_process,
