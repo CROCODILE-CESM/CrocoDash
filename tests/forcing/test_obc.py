@@ -9,6 +9,7 @@ import CrocoDash.forcing.obc as obc_module
 from CrocoDash.forcing.obc import (
     process_obc_conditions,
     _merge_boundary,
+    _regrid_boundary,
     _validate_coverage,
     _ocean_bbox_for_boundary,
 )
@@ -216,6 +217,75 @@ def test_merge_single_boundary(
     ds = xr.open_dataset(result)
     assert "time" in ds.dims
     ds.close()
+
+
+# ---------------------------------------------------------------------------
+# Unit test: _regrid_boundary's num_workers > 1 branch
+# ---------------------------------------------------------------------------
+
+
+def _fake_regrid_chunk_fn(ds, hgrid, boundary, seg_id, outfolder, **_kwargs):
+    """Stand-in regrid_chunk_fn: writes the chunk straight through.
+
+    Must be a module-level function (not a local closure) so it can be
+    pickled to the ProcessPoolExecutor workers.
+    """
+    outfolder = Path(outfolder)
+    outfolder.mkdir(parents=True, exist_ok=True)
+    ds.to_netcdf(outfolder / f"forcing_obc_segment_{seg_id:03d}.nc")
+    return {}
+
+
+def test_regrid_boundary_uses_multiple_workers(tmp_path, get_rect_grid, monkeypatch):
+    """The num_workers > 1 branch (worker slicing + os.replace) is only taken
+    when available_cpus() > 1 and there's more than one regrid chunk. CI's
+    other coverage of _regrid_boundary is either @pytest.mark.slow or
+    monkeypatches _regrid_boundary away entirely, so this branch is never
+    exercised for real. available_cpus() is pinned here so the test doesn't
+    depend on how many cores the CI runner happens to have.
+
+    Using one raw file spanning the whole range (get_step_days=None) against
+    two narrower regrid chunks also exercises the get/regrid chunk-size
+    independence _files_overlapping_range restores -- with the old
+    containment-based filter this raw file would be dropped for every chunk
+    narrower than itself.
+    """
+    monkeypatch.setattr(obc_module, "available_cpus", lambda: 2)
+
+    grid = get_rect_grid
+    hgrid_path = tmp_path / "hgrid.nc"
+    grid.write_supergrid(hgrid_path)
+
+    raw_dir = tmp_path / "raw"
+    raw_dir.mkdir()
+    output_dir = tmp_path / "regridded"
+    output_dir.mkdir()
+
+    start_date, end_date = datetime(2020, 1, 1), datetime(2020, 1, 4)
+    times = pd.date_range("2020-01-01 12:00", periods=4, freq="D")
+    raw_ds = xr.Dataset({"var": ("time", np.arange(4))}, coords={"time": times})
+    raw_file = raw_dir / "east_unprocessed.2020-01-01_2020-01-04.nc"
+    raw_ds.to_netcdf(raw_file)
+
+    result = _regrid_boundary(
+        boundary="east",
+        seg_id=1,
+        raw_files=[raw_file],
+        start_date=start_date,
+        end_date=end_date,
+        regrid_step_days=2,
+        hgrid_path=str(hgrid_path),
+        output_folder=str(output_dir),
+        dataset_varnames={},
+        regrid_chunk_fn=_fake_regrid_chunk_fn,
+    )
+
+    assert sorted(Path(p).name for p in result) == [
+        "forcing_obc_segment_001_2020-01-01_2020-01-02.nc",
+        "forcing_obc_segment_001_2020-01-03_2020-01-04.nc",
+    ]
+    for p in result:
+        assert Path(p).exists()
 
 
 # ---------------------------------------------------------------------------

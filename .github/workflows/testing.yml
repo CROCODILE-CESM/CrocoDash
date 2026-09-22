@@ -12,6 +12,12 @@ env:
 jobs:
   pytest:
     runs-on: ubuntu-latest
+    # Backstop only. A deadlocked worker has no natural end, so without a cap
+    # this job runs until GitHub's 6h limit kills it -- four pushes in a row on
+    # feat/add-parallel-fetching-of-glorys burned the full 6h each. A green run
+    # is 2-6 min, or ~20 on a cold CESM cache; the real early warning is the
+    # per-test faulthandler timeout on the pytest step below.
+    timeout-minutes: 60
     env:
       # Deliberately a sibling of the checkout, not nested inside it:
       # git-fleximod looks for a .gitmodules file starting at CWD and walks
@@ -105,7 +111,13 @@ jobs:
       - name: Run Pytest
         shell: bash -el {0}
         run: |
-          pytest --ignore=CrocoDash/visualCaseGen --ignore=CrocoDash/rm6 -vv --tb=short --cov=CrocoDash --cov-report=xml --cov-branch --durations=10
+          # faulthandler_* are pytest built-ins, no plugin needed: if any single
+          # test sits for 5 min, dump every thread's traceback and abort. A hung
+          # test otherwise prints nothing at all -- the run that motivated this
+          # stopped dead after a PASSED line and gave up 6h later with no clue
+          # which test it was in.
+          pytest --ignore=CrocoDash/visualCaseGen --ignore=CrocoDash/rm6 -vv --tb=short --cov=CrocoDash --cov-report=xml --cov-branch --durations=10 \
+            -o faulthandler_timeout=300 -o faulthandler_exit_on_timeout=true
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
