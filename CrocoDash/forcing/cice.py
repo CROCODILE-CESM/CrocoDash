@@ -209,6 +209,13 @@ class CICEConfigurator(BaseConfigurator):
         UserNLConfigParam("restart_ext", user_nl_name="cice"),
         UserNLConfigParam("restore_ice", user_nl_name="cice"),
         UserNLConfigParam("restore_timescale", user_nl_name="cice"),
+        UserNLConfigParam("restart_aero", user_nl_name="cice"),
+        UserNLConfigParam("restart_age", user_nl_name="cice"),
+        UserNLConfigParam("restart_fy", user_nl_name="cice"),
+        UserNLConfigParam("restart_fsd", user_nl_name="cice"),
+        UserNLConfigParam("restart_lvl", user_nl_name="cice"),
+        UserNLConfigParam("restart_ponds_sealvl", user_nl_name="cice"),
+        UserNLConfigParam("restart_snow", user_nl_name="cice"),
     ]
 
     def __init__(
@@ -301,6 +308,15 @@ class CICEConfigurator(BaseConfigurator):
         # disk at all -- which is what ice_ic needs below. Harmless without
         # restoring, since ice_ic = 'default' means no restart is read.
         self.set_output_param("restart_ext", ".true.")
+
+        # Use tracers from CESM run
+        self.set_output_param("restart_aero", ".true.")
+        self.set_output_param("restart_age", ".true.")
+        self.set_output_param("restart_fsd", ".true.")
+        self.set_output_param("restart_fy", ".true.")
+        self.set_output_param("restart_lvl", ".true.")
+        self.set_output_param("restart_pond_sealvl", ".true.")
+        self.set_output_param("restart_snow", ".true.")
 
         # The namelist restore_ice tracks whether process() will actually
         # produce the domain+halo restart to restore toward -- turning it on
