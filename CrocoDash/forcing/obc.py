@@ -33,6 +33,7 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 
 import math
 import dask
+import dask.threaded
 import pandas as pd
 import xarray as xr
 from CrocoDash import logging
@@ -452,6 +453,34 @@ def available_cpus():
     return min(cpus, LOGIN_NODE_MAX_WORKERS)
 
 
+def _init_fork_worker():
+    """Reset inherited dask state in a freshly forked pool worker.
+
+    The pools below fork, and fork() carries over only the calling thread.
+    dask caches its threaded scheduler pool in the module global
+    ``dask.threaded.default_pool`` and registers no ``os.register_at_fork``
+    hook, so a child inherits a ``ThreadPoolExecutor`` whose ``_threads`` still
+    lists the parent's workers -- threads that do not exist here.
+    ``_adjust_thread_count()`` therefore starts no replacements, and the first
+    dask compute in the child blocks forever in ``dask.local.queue_get``
+    waiting on a worker that will never run. It needs only one threaded dask
+    compute anywhere in the parent beforehand to arm: a MERGE of an earlier
+    boundary is enough, which is why this strands whole runs rather than
+    single chunks.
+
+    Pinning the synchronous scheduler is what actually keeps the worker off
+    that pool. Dropping the pool as well means that if anything downstream
+    asks for the threaded scheduler explicitly, it builds a live pool of its
+    own instead of resurrecting the dead inherited one.
+
+    Serialising dask here costs nothing: the parallelism is the processes, and
+    N workers each spinning up CPU_COUNT threads only oversubscribes the node.
+    """
+    dask.threaded.default_pool = None
+    dask.threaded.pools.clear()
+    dask.config.set(scheduler="synchronous")
+
+
 # ---------------------------------------------------------------------------
 # Phase functions — one call per boundary
 # ---------------------------------------------------------------------------
@@ -497,7 +526,9 @@ def _get_boundary(
     else:
         num_workers = max(1, min(available_cpus(), len(pairs)))
         with ProcessPoolExecutor(
-            max_workers=num_workers, mp_context=multiprocessing.get_context("fork")
+            max_workers=num_workers,
+            mp_context=multiprocessing.get_context("fork"),
+            initializer=_init_fork_worker,
         ) as ex:
             futures = [
                 ex.submit(
@@ -587,7 +618,9 @@ def _regrid_boundary(
 
     regridded_files = []
     with ProcessPoolExecutor(
-        max_workers=num_workers, mp_context=multiprocessing.get_context("fork")
+        max_workers=num_workers,
+        mp_context=multiprocessing.get_context("fork"),
+        initializer=_init_fork_worker,
     ) as ex:
         futures = [
             ex.submit(
