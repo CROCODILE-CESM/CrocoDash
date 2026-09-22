@@ -592,11 +592,6 @@ enumerated, and CDEPS opens each one to build its time axis.</p>
 </section>
 <section id="module-CrocoDash.forcing.base">
 <span id="crocodash-forcing-base-module"></span><h2>CrocoDash.forcing.base module<a class="headerlink" href="#module-CrocoDash.forcing.base" title="Link to this heading">#</a></h2>
-<p>Core types for the forcing layer.</p>
-<p>Holds <cite>BaseConfigurator</cite> (the class every forcing type subclasses), the
-<cite>Param</cite> hierarchy that declares a configurator’s inputs and its case-side
-outputs, and <cite>ForcingConfigRegistry</cite>, which decides which configurators a
-compset needs and drives them.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="CrocoDash.forcing.base.BaseConfigurator">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.forcing.base.</span></span><span class="sig-name descname"><span class="pre">BaseConfigurator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.base.BaseConfigurator" title="Link to this definition">#</a></dt>
@@ -642,14 +637,12 @@ compset needs and drives them.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.forcing.base.BaseConfigurator.get_input_param">
 <span class="sig-name descname"><span class="pre">get_input_param</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="headerlink" href="#CrocoDash.forcing.base.BaseConfigurator.get_input_param" title="Link to this definition">#</a></dt>
-<dd><p>Return the bound <em>value</em> of the named input param.</p>
-</dd></dl>
+<dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.forcing.base.BaseConfigurator.get_input_param_object">
 <span class="sig-name descname"><span class="pre">get_input_param_object</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#CrocoDash.forcing.base.InputParam" title="CrocoDash.forcing.base.InputParam"><span class="pre">InputParam</span></a></span></span><a class="headerlink" href="#CrocoDash.forcing.base.BaseConfigurator.get_input_param_object" title="Link to this definition">#</a></dt>
-<dd><p>Return the named input <cite>Param</cite> object itself, not its value.</p>
-</dd></dl>
+<dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.forcing.base.BaseConfigurator.get_output_filepaths">
@@ -660,14 +653,12 @@ compset needs and drives them.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.forcing.base.BaseConfigurator.get_output_param">
 <span class="sig-name descname"><span class="pre">get_output_param</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="headerlink" href="#CrocoDash.forcing.base.BaseConfigurator.get_output_param" title="Link to this definition">#</a></dt>
-<dd><p>Return the set <em>value</em> of the named output param.</p>
-</dd></dl>
+<dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.forcing.base.BaseConfigurator.get_output_param_object">
 <span class="sig-name descname"><span class="pre">get_output_param_object</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#CrocoDash.forcing.base.OutputParam" title="CrocoDash.forcing.base.OutputParam"><span class="pre">OutputParam</span></a></span></span><a class="headerlink" href="#CrocoDash.forcing.base.BaseConfigurator.get_output_param_object" title="Link to this definition">#</a></dt>
-<dd><p>Return the named output <cite>Param</cite> object itself, not its value.</p>
-</dd></dl>
+<dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="CrocoDash.forcing.base.BaseConfigurator.input_params">
@@ -785,17 +776,6 @@ under a configurator’s <cite>outputs</cite>, for values consumed only via conf
 <dt class="sig sig-object py" id="CrocoDash.forcing.base.ForcingConfigRegistry">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.forcing.base.</span></span><span class="sig-name descname"><span class="pre">ForcingConfigRegistry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">compset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">case</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.base.ForcingConfigRegistry" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Registry of every <cite>BaseConfigurator</cite> subclass, and the per-case driver
-that decides which of them are active.</p>
-<p>Used two ways:</p>
-<ul class="simple">
-<li><p><strong>As a class</strong>, for compset introspection with no case in hand:
-<cite>find_required_configurators()</cite>, <cite>find_valid_configurators()</cite>,
-<cite>get_user_args()</cite>, <cite>return_missing_inputs()</cite>.</p></li>
-<li><p><strong>As an instance</strong>, built by <cite>Case.configure_forcings()</cite>, which
-instantiates the active configurators, runs them, and serializes the
-result to <cite>config.json</cite>.</p></li>
-</ul>
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.forcing.base.ForcingConfigRegistry.all_process_flags">
 <em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">all_process_flags</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.base.ForcingConfigRegistry.all_process_flags" title="Link to this definition">#</a></dt>
@@ -818,10 +798,7 @@ needing working configurator instances the way actual dispatch does.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.forcing.base.ForcingConfigRegistry.find_active_configurators">
 <span class="sig-name descname"><span class="pre">find_active_configurators</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">compset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.base.ForcingConfigRegistry.find_active_configurators" title="Link to this definition">#</a></dt>
-<dd><p>Populate <cite>self.active_configurators</cite> for this compset.</p>
-<p>A required configurator with missing inputs raises; an optional one is
-skipped with a log line. Called from <cite>__init__</cite>.</p>
-</dd></dl>
+<dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.forcing.base.ForcingConfigRegistry.find_required_configurators">
@@ -838,20 +815,17 @@ skipped with a log line. Called from <cite>__init__</cite>.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.forcing.base.ForcingConfigRegistry.get_active_configurators">
 <span class="sig-name descname"><span class="pre">get_active_configurators</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.base.ForcingConfigRegistry.get_active_configurators" title="Link to this definition">#</a></dt>
-<dd><p>Return the names of the configurators active for this case.</p>
-</dd></dl>
+<dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.forcing.base.ForcingConfigRegistry.get_configurator">
 <em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_configurator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj_dict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.base.ForcingConfigRegistry.get_configurator" title="Link to this definition">#</a></dt>
-<dd><p>Rebuild a configurator instance from its serialized <cite>config.json</cite> entry.</p>
-</dd></dl>
+<dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.forcing.base.ForcingConfigRegistry.get_configurator_from_name">
 <em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_configurator_from_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.base.ForcingConfigRegistry.get_configurator_from_name" title="Link to this definition">#</a></dt>
-<dd><p>Look up a registered configurator class by its <cite>name</cite> attribute.</p>
-</dd></dl>
+<dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.forcing.base.ForcingConfigRegistry.get_configurator_output">
@@ -868,24 +842,17 @@ never configured this case).</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.forcing.base.ForcingConfigRegistry.get_ctor_signature">
 <em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_ctor_signature</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">configurator_cls</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.base.ForcingConfigRegistry.get_ctor_signature" title="Link to this definition">#</a></dt>
-<dd><p>Return <cite>(all_arg_names, required_arg_names)</cite> for a configurator’s
-<cite>__init__</cite>, where “required” means “has no default”.</p>
-</dd></dl>
+<dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.forcing.base.ForcingConfigRegistry.get_user_args">
 <em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_user_args</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">configurator_cls</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.base.ForcingConfigRegistry.get_user_args" title="Link to this definition">#</a></dt>
-<dd><p>Return the arguments a <em>user</em> must pass to <cite>configure_forcings()</cite> for
-this configurator: its required constructor args, minus the
-<cite>case_</cite>-prefixed ones the registry injects automatically.</p>
-</dd></dl>
+<dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.forcing.base.ForcingConfigRegistry.instantiate_configurator">
 <em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">instantiate_configurator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">configurator_cls</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.base.ForcingConfigRegistry.instantiate_configurator" title="Link to this definition">#</a></dt>
-<dd><p>Construct <cite>configurator_cls</cite>, pulling each of its constructor args
-out of <cite>inputs</cite> and ignoring anything it does not declare.</p>
-</dd></dl>
+<dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.forcing.base.ForcingConfigRegistry.is_active">
@@ -896,9 +863,7 @@ out of <cite>inputs</cite> and ignoring anything it does not declare.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.forcing.base.ForcingConfigRegistry.register">
 <em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">register</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">configurator_cls</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">type</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.base.ForcingConfigRegistry.register" title="Link to this definition">#</a></dt>
-<dd><p>Add a configurator class to the registry. Use the <cite>&#64;register</cite>
-decorator rather than calling this directly.</p>
-</dd></dl>
+<dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="CrocoDash.forcing.base.ForcingConfigRegistry.registered_types">
@@ -917,16 +882,12 @@ dispatch generically instead of a hand-maintained if-ladder.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.forcing.base.ForcingConfigRegistry.return_missing_inputs">
 <em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">return_missing_inputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">configurator_cls</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.base.ForcingConfigRegistry.return_missing_inputs" title="Link to this definition">#</a></dt>
-<dd><p>Return the required constructor args of <cite>configurator_cls</cite> that are
-absent from the <cite>inputs</cite> dict.</p>
-</dd></dl>
+<dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.forcing.base.ForcingConfigRegistry.run_configurators">
 <span class="sig-name descname"><span class="pre">run_configurators</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.base.ForcingConfigRegistry.run_configurators" title="Link to this definition">#</a></dt>
-<dd><p>Call <cite>configure()</cite> on every active configurator and merge each one’s
-<cite>serialize()</cite> output into <cite>config.json</cite> at <cite>config_path</cite>.</p>
-</dd></dl>
+<dd></dd></dl>
 
 </dd></dl>
 
@@ -1102,8 +1063,6 @@ new file here – nothing else needs to import it by name.</p>
 </section>
 <section id="module-CrocoDash.forcing.bgc">
 <span id="crocodash-forcing-bgc-module"></span><h2>CrocoDash.forcing.bgc module<a class="headerlink" href="#module-CrocoDash.forcing.bgc" title="Link to this heading">#</a></h2>
-<p>MARBL biogeochemistry configurators: BGC, BGC initial conditions, iron
-forcing, river nutrients, and the CICE coupling they share.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="CrocoDash.forcing.bgc.BGCConfigurator">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.forcing.bgc.</span></span><span class="sig-name descname"><span class="pre">BGCConfigurator</span></span><a class="headerlink" href="#CrocoDash.forcing.bgc.BGCConfigurator" title="Link to this definition">#</a></dt>
