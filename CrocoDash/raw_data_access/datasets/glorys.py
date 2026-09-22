@@ -95,7 +95,7 @@ class GLORYS(MOM6ForcingProduct):
             ds_in_files,
             decode_times=False,
             engine="h5netcdf",
-            parallel=False,
+            parallel=True,
         )[variables]
 
         ds = ds.sel(latitude=slice(lat_min - buf, lat_max + buf))
