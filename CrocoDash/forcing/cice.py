@@ -214,7 +214,7 @@ class CICEConfigurator(BaseConfigurator):
         UserNLConfigParam("restart_fy", user_nl_name="cice"),
         UserNLConfigParam("restart_fsd", user_nl_name="cice"),
         UserNLConfigParam("restart_lvl", user_nl_name="cice"),
-        UserNLConfigParam("restart_ponds_sealvl", user_nl_name="cice"),
+        UserNLConfigParam("restart_pond_sealvl", user_nl_name="cice"),
         UserNLConfigParam("restart_snow", user_nl_name="cice"),
     ]
 
