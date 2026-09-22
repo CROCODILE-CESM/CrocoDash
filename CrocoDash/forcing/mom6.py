@@ -552,11 +552,21 @@ class ConditionsConfigurator(BaseConfigurator):
             "information",
             product.write_metadata(include_marbl_tracers="%MARBL" in compset),
         )
-        # 30-day GET/REGRID chunks by default, so a generated case actually
-        # gets multiple chunks and exercises the parallel GET/REGRID paths in
-        # obc.py instead of falling through to their serial, single-chunk
-        # path. Power users can override either in config.json.
-        self.set_output_param("get_step_days", 30)
+        # GET and REGRID chunk sizes are independent, and neither changes the
+        # result -- a 1-day and a 3-day chunking of the same range were verified
+        # to produce bit-identical forcing files. They only set how much
+        # concurrency obc.py's pools have to work with.
+        #
+        # GET is network-bound, so it wants more chunks than REGRID: at a 30-day
+        # step anything shorter than a month came out as a single chunk and
+        # downloaded serially. A week gives a fortnight-long case two concurrent
+        # fetches and a year fifty-odd, without splitting long runs into
+        # thousands of requests.
+        #
+        # REGRID stays at 30 days. Its per-chunk cost is real work rather than
+        # waiting, so slicing it finer mostly buys more chunk files to merge.
+        # Power users can override either in config.json.
+        self.set_output_param("get_step_days", 7)
         self.set_output_param("regrid_step_days", 30)
         self.set_output_param(
             "boundary_number_conversion",
