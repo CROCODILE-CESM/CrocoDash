@@ -55,6 +55,12 @@ KNOWN_INCLUSIVE_WITHOUT_HELPER = {
     # no end_datetime cutoff to normalize.
     ("reference_ocean", "get_reference_ocean_data"),
     ("reference_waves", "get_reference_wave_spectra"),
+    # Reparses `dates` in `requested_timestamps`, which normalizes both ends
+    # to whole days and then extends the last one to 18:00 so that day's
+    # 06/12/18Z restarts are kept -- whole-day inclusive by construction,
+    # and covered directly by
+    # test_cesm_ww3_jra.py::test_requested_timestamps_covers_whole_days_at_both_ends.
+    ("cesm-ww3-jra", "get_cesm_ww3_jra_spectra"),
 }
 
 

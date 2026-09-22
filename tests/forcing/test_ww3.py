@@ -497,6 +497,61 @@ def test_process_ww3_obc_with_reference_waves(tmp_path, gen_grid_topo_vgrid):
             ds.close()
 
 
+def test_process_ww3_obc_with_cesm_ww3_jra(
+    skip_if_not_glade, tmp_path, gen_grid_topo_vgrid
+):
+    """The whole GET -> REGRID -> MERGE -> spec.list path against the real
+    global WW3 database on GLADE.
+
+    The unit tests in tests/raw_data_access/test_cesm_ww3_jra.py pin the
+    conventions against a fabricated restart; this one checks that a real
+    600-variable restart, a real coastal window and a real ww3_bounc input
+    set actually come out the other end. Skipped off GLADE.
+    """
+    grid, topo, vgrid = gen_grid_topo_vgrid
+    hgrid_path = tmp_path / "hgrid.nc"
+    grid.write_supergrid(hgrid_path)
+
+    configurator = WW3Configurator(
+        case_inputdir=tmp_path,
+        boundaries=["west", "east"],
+        ww3_obc_product_name="CESM-WW3-JRA",
+        ww3_obc_function_name="get_cesm_ww3_jra_spectra",
+    )
+    ctx = _make_ctx(
+        tmp_path,
+        supergrid_path=hgrid_path,
+        config={
+            "conditions": {
+                "inputs": {"start_date": "2019-06-05", "end_date": "2019-06-05"}
+            }
+        },
+    )
+    configurator.process(ctx)
+
+    wave = tmp_path / WAVE_SUBDIR
+    spectra = sorted(wave.glob("ww3.point*_spec.nc"))
+    assert spectra, "no boundary spectra were written"
+    assert (wave / "ww3_bounc.nml").exists()
+    assert len((wave / "spec.list").read_text().splitlines()) == len(spectra)
+
+    for path in spectra:
+        ds = xr.open_dataset(path, decode_times=False)
+        try:
+            # ww3_bounc reads these by name; the grid's own discretization.
+            assert ds.sizes["frequency"] == 25
+            assert ds.sizes["direction"] == 24
+            assert ds.sizes["time"] == 4  # 6-hourly over one whole day
+            assert np.isfinite(ds["efth"].values).all()
+            assert np.all(ds["efth"].values >= 0)
+            assert np.any(ds["efth"].values > 0)
+            # "to" convention, WW3 index order, passed through unrotated.
+            assert float(ds["direction"][0]) == pytest.approx(90.0)
+            assert float(ds["direction"][6]) == pytest.approx(0.0)
+        finally:
+            ds.close()
+
+
 # =============================================================================
 # validate_args / smoke
 # =============================================================================
