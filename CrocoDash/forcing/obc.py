@@ -43,6 +43,11 @@ from CrocoDash.topo import Topo
 
 logger = logging.setup_logger(__name__)
 
+# Set by _regrid_boundary just before it forks its pool, so every worker
+# inherits one already-built regridder set instead of generating ESMF weights
+# of its own. Only ever read in a forked child; cleared once the pool is done.
+_PREBUILT_REGRIDDERS = None
+
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -303,7 +308,10 @@ def _regrid_per_process(
 
     logger.info("PROC [%d] - REGRID [%s]: Spun up new proc", proc_id, boundary)
 
-    regridders = None
+    # Inherited across fork() from the parent's first-chunk build, so this worker
+    # skips ESMF weight generation entirely. None on the serial path and on a
+    # resumed run, where it builds its own on the first chunk exactly as before.
+    regridders = _PREBUILT_REGRIDDERS
     proc_regridded_files = []
 
     with xr.open_dataset(hgrid_path) as hgrid:
@@ -573,10 +581,11 @@ def _regrid_boundary(
     updated regridder cache to reuse on the next chunk (regridder weights are
     typically computed once and reused).
 
-    Chunks are spread across processes. Weight reuse is per worker, not global:
-    each worker computes the regridder on its first chunk and reuses it for the
-    rest of its own slice. One worker (the single-CPU case) is the plain
-    sequential engine, regridding straight into ``output_folder``.
+    Chunks are spread across processes. The first chunk is regridded here in
+    the parent so the regridder is built exactly once; fork() then hands that
+    same set to every worker, which is why the pool does not pay for ESMF
+    weight generation per process. One worker (the single-CPU case) is the
+    plain sequential engine, regridding straight into ``output_folder``.
     """
     output_folder = Path(output_folder)
     (output_folder / "weights").mkdir(exist_ok=True)
@@ -605,42 +614,83 @@ def _regrid_boundary(
             key=os.path.basename,
         )
 
-    per_worker = math.ceil(len(pairs) / num_workers)
+    # Build the regridder once, here in the parent, by doing the first chunk
+    # before anything forks. ESMF weight generation dominates a chunk -- ~3.5s
+    # against ~0.1s for the regrid itself on a small domain -- and the cache is
+    # per worker, so a pool of N workers used to pay for N weight builds. That
+    # was enough to make the parallel path lose outright to the serial one
+    # below roughly eight chunks per boundary. fork() gives the children the
+    # parent's copy, so they all start warm off this single build. Only plain
+    # arrays cross the fork: xesmf keeps the weights, not a live ESMF handle,
+    # and the parent has already driven ESMF during IC processing regardless.
+    #
+    # On a resumed run the first chunk is already on disk, so _regrid_one_chunk
+    # returns without building anything and hands back the None it was given.
+    # The workers then each build their own, exactly as they used to.
+    global _PREBUILT_REGRIDDERS
+    with xr.open_dataset(hgrid_path) as hgrid:
+        first_file, _PREBUILT_REGRIDDERS = _regrid_one_chunk(
+            0,
+            pairs[0][0],
+            pairs[0][1],
+            boundary,
+            raw_files,
+            seg_id,
+            hgrid,
+            output_folder,
+            output_folder,
+            dataset_varnames,
+            regrid_chunk_fn,
+            None,
+            start_date,
+        )
+
+    remaining = pairs[1:]
+    if not remaining:
+        _PREBUILT_REGRIDDERS = None
+        return [first_file]
+
+    num_workers = max(1, min(available_cpus(), len(remaining)))
+    per_worker = math.ceil(len(remaining) / num_workers)
     worker_slices = [
-        pairs[j : j + per_worker] for j in range(0, len(pairs), per_worker)
+        remaining[j : j + per_worker] for j in range(0, len(remaining), per_worker)
     ]
     logger.info(
-        "REGRID [%s]: %d chunks across %d processes",
+        "REGRID [%s]: %d chunks (1 in-parent + %d across %d processes)",
         boundary,
         len(pairs),
+        len(remaining),
         len(worker_slices),
     )
 
-    regridded_files = []
-    with ProcessPoolExecutor(
-        max_workers=num_workers,
-        mp_context=multiprocessing.get_context("fork"),
-        initializer=_init_fork_worker,
-    ) as ex:
-        futures = [
-            ex.submit(
-                _regrid_per_process,
-                proc_id,
-                chunk_pairs,
-                boundary,
-                raw_files,
-                seg_id,
-                hgrid_path,
-                output_folder,
-                output_folder / f"_proc_{seg_id:03d}_{proc_id:02d}",
-                dataset_varnames,
-                regrid_chunk_fn,
-                start_date,
-            )
-            for proc_id, chunk_pairs in enumerate(worker_slices)
-        ]
-        for f in as_completed(futures):
-            regridded_files.extend(f.result())
+    regridded_files = [first_file]
+    try:
+        with ProcessPoolExecutor(
+            max_workers=num_workers,
+            mp_context=multiprocessing.get_context("fork"),
+            initializer=_init_fork_worker,
+        ) as ex:
+            futures = [
+                ex.submit(
+                    _regrid_per_process,
+                    proc_id,
+                    chunk_pairs,
+                    boundary,
+                    raw_files,
+                    seg_id,
+                    hgrid_path,
+                    output_folder,
+                    output_folder / f"_proc_{seg_id:03d}_{proc_id:02d}",
+                    dataset_varnames,
+                    regrid_chunk_fn,
+                    start_date,
+                )
+                for proc_id, chunk_pairs in enumerate(worker_slices)
+            ]
+            for f in as_completed(futures):
+                regridded_files.extend(f.result())
+    finally:
+        _PREBUILT_REGRIDDERS = None
 
     return sorted(regridded_files, key=os.path.basename)
 
