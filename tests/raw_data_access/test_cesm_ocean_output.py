@@ -336,3 +336,57 @@ def test_subset_dataset(dummy_forcing_factory, get_rect_grid, tmp_path):
     assert ds["latitude"].max() < boundary_info["ic"]["lat_max"] + 2
     assert ds["latitude"].min() > boundary_info["ic"]["lat_min"] - 2
     assert len(ds.time) == 64
+
+
+@pytest.mark.parametrize(
+    "source_lon",
+    [
+        pytest.param(np.arange(-180.0, 180.0), id="source_in_-180_180"),
+        pytest.param(np.arange(0.0, 360.0), id="source_in_0_360"),
+    ],
+)
+@pytest.mark.parametrize(
+    ("lon_min", "lon_max", "label"),
+    [
+        (20.0, 40.0, "away_from_any_seam"),
+        (-10.0, 10.0, "straddling_the_prime_meridian"),
+        (170.0, 190.0, "crossing_the_antimeridian"),
+        (-180.0, 180.0, "the_whole_globe"),
+    ],
+)
+def test_bbox_mask_selects_the_arc_whatever_the_conventions(
+    source_lon, lon_min, lon_max, label
+):
+    """lon_min/lon_max name a contiguous arc running east from lon_min, the way
+    Grid.get_bounding_boxes returns one. An arc that crosses the antimeridian
+    ends past 180, and the whole globe is -180 to 180; neither survives having
+    each end normalised on its own, which used to select one meridian's worth of
+    points, or none at all."""
+    ds = xr.Dataset(coords={"lat": np.arange(-10.0, 11.0), "lon": source_lon})
+
+    mask = co.bbox_mask(ds, -5.0, 5.0, lon_min, lon_max)
+
+    width = lon_max - lon_min
+    inside = (
+        np.ones_like(source_lon, dtype=bool)
+        if width >= 360
+        else ((source_lon - lon_min) % 360 <= width)
+    )
+    expected_lat = (ds.lat.values >= -5.0) & (ds.lat.values <= 5.0)
+    assert int(mask.sum()) == int(inside.sum() * expected_lat.sum()), label
+    assert set(np.round(ds.lon.values[mask.any("lat").values], 6)) == set(
+        np.round(source_lon[inside], 6)
+    )
+
+
+def test_bbox_mask_buffer_widens_the_arc_at_both_ends():
+    """A buffer has to grow the arc, not push it off the branch it lives on."""
+    ds = xr.Dataset(
+        coords={"lat": np.arange(-10.0, 11.0), "lon": np.arange(-180.0, 180.0)}
+    )
+
+    tight = co.bbox_mask(ds, -5.0, 5.0, 170.0, 190.0)
+    buffered = co.bbox_mask(ds, -5.0, 5.0, 170.0, 190.0, buffer_deg=1)
+
+    assert int(buffered.sum()) > int(tight.sum())
+    assert bool((buffered | tight == buffered).all()), "buffer must only add points"

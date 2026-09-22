@@ -578,20 +578,27 @@ def bbox_mask(
     """
     Boolean lat/lon mask for subsetting a dataset, handling both 0-360 and
     -180-180 longitude conventions.
+
+    ``lon_min``/``lon_max`` name a contiguous arc running eastward from
+    ``lon_min``, the way ``Grid.get_bounding_boxes`` returns one. An arc that
+    crosses the antimeridian ends past 180 -- 170 to 190, say -- because no
+    pair of in-range ends can describe one. Normalising each end on its own
+    turns that into 170 to -170 and selects nothing, so measure each source
+    longitude as an offset eastward from the start of the arc instead: a point
+    is inside when its offset is no wider than the arc. Taking that offset
+    modulo 360 puts both the source's convention and the crossing to rest, so
+    neither needs a branch of its own.
     """
     lat_min_buf, lat_max_buf = lat_min - buffer_deg, lat_max + buffer_deg
     lon_min_buf, lon_max_buf = lon_min - buffer_deg, lon_max + buffer_deg
-    if ds[lon_name].max() > 180:
-        lon_min_buf, lon_max_buf = lon_min_buf % 360, lon_max_buf % 360
+
+    width = lon_max_buf - lon_min_buf
+    if width >= 360:
+        lon_inside = xr.ones_like(ds[lon_name], dtype=bool)
     else:
-        lon_min_buf = ((lon_min_buf + 180) % 360) - 180
-        lon_max_buf = ((lon_max_buf + 180) % 360) - 180
-    mask = (
-        (ds[lat_name] >= lat_min_buf)
-        & (ds[lat_name] <= lat_max_buf)
-        & (ds[lon_name] >= lon_min_buf)
-        & (ds[lon_name] <= lon_max_buf)
-    )
+        lon_inside = (ds[lon_name] - lon_min_buf) % 360 <= width
+
+    mask = (ds[lat_name] >= lat_min_buf) & (ds[lat_name] <= lat_max_buf) & lon_inside
     return mask.compute()
 
 
