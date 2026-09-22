@@ -209,6 +209,10 @@ class CICEConfigurator(BaseConfigurator):
         UserNLConfigParam("restart_ext", user_nl_name="cice"),
         UserNLConfigParam("restore_ice", user_nl_name="cice"),
         UserNLConfigParam("restore_timescale", user_nl_name="cice"),
+        UserNLConfigParam("restore_mask", user_nl_name="cice"),
+        UserNLConfigParam("restore_width", user_nl_name="cice"),
+        UserNLConfigParam("restore_data", user_nl_name="cice"),
+        UserNLConfigParam("restore_flds", user_nl_name="cice"),
         UserNLConfigParam("restart_aero", user_nl_name="cice"),
         UserNLConfigParam("restart_age", user_nl_name="cice"),
         UserNLConfigParam("restart_fy", user_nl_name="cice"),
@@ -328,6 +332,30 @@ class CICEConfigurator(BaseConfigurator):
         restoring = bool(product_name)
         self.set_output_param("restore_ice", ".true." if restoring else ".false.")
         self.set_output_param("restore_timescale", 90)
+
+        # ice_restoring_init aborts unless restore_mask is one of
+        # all|none|constant|linear -- CICE defaults it to 'unknown'
+        # (ice_init.F90), so restore_ice = .true. without these is a hard
+        # failure, not a silent fallback. Same for restore_data, which aborts
+        # the same way in ice_restoring_getdata.
+        #
+        # 'constant' + restore_width = 1 confines restoring to the outermost
+        # one-cell ring, which is the halo process() builds into the file.
+        # 'initial' restores toward the state read at init (ice_ic, i.e. the
+        # generated file); 'restartfiles' would demand one file per timestep,
+        # and process() writes a single static snapshot.
+        #
+        # restore_flds must name the individual fields: CICE calls
+        # ice_restoring_interior with setfld='state'/'velocity', and 'state'
+        # only matches entries listed as aicen/vicen/vsnon/trcrn. Left at its
+        # 'none' default, num_restore_flds == 0 and restoring silently does
+        # nothing at all.
+        self.set_output_param("restore_mask", "'constant'")
+        self.set_output_param("restore_width", 1)
+        self.set_output_param("restore_data", "'initial'")
+        self.set_output_param(
+            "restore_flds", "'aicen','vicen','vsnon','trcrn','velocity'"
+        )
 
         # ice_ic points at the expanded-grid restart process() writes, so its
         # ghost ring is read in (restart_ext above) and becomes the restoring
