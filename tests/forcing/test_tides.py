@@ -37,7 +37,7 @@ def test_tides_configurator_serializes_custom_segment_boundary():
 
 
 def _make_ctx(tmp_path, ocn_topo, custom_segments=None):
-    (tmp_path / "ocnice").mkdir(exist_ok=True)
+    (tmp_path / "ocn").mkdir(exist_ok=True)
     ctx = WorkflowContext(
         inputdir=tmp_path,
         supergrid_path=tmp_path / "grid.nc",
@@ -45,7 +45,7 @@ def _make_ctx(tmp_path, ocn_topo, custom_segments=None):
         topo_path=tmp_path / "topo.nc",
         raw_data_dir=tmp_path,
         regridded_data_dir=tmp_path,
-        output_path=tmp_path / "ocnice",
+        output_path=tmp_path / "ocn",
         config={"conditions": {"outputs": {"custom_segments": custom_segments or {}}}},
     )
     # cached_property allows a plain attribute set to short-circuit the

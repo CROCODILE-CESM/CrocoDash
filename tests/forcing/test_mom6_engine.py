@@ -276,7 +276,7 @@ def _bc_context(tmp_path, preview=False):
         topo_path=tmp_path / "topog.nc",
         raw_data_dir=tmp_path / "raw",
         regridded_data_dir=tmp_path / "regridded",
-        output_path=tmp_path / "ocnice",
+        output_path=tmp_path / "ocn",
     )
 
 

@@ -92,6 +92,16 @@ jobs:
             esmf=*=nompi_*
           cache-environment: true
           cache-downloads: true
+          # Serial ESMF. `esmpy` alone resolves esmf to an mpi_* build, which
+          # calls MPI_Init on first use; on GitHub runners UCX fails to open
+          # the ib_verbs interface and MPI aborts, killing the step (the
+          # "Run setup_case.py" topo regrid died this way with exit 15).
+          # CrocoDash only uses ESMF serially, via xesmf, so the MPI stack
+          # buys nothing here. The cache key below carries a "nompi" tag so
+          # this pin can't be masked by a cached env built with the mpi_*
+          # build.
+          create-args: >-
+            esmf=*=nompi_*
           # environment.yml only pins the top-level deps -- the editable
           # submodule installs (rm6, mom6_forge, visualCaseGen,
           # ipyfilechooser) declare their own dependencies in their own
