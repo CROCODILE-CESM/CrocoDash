@@ -325,10 +325,7 @@ class CaseBundle:
             configurator = ForcingConfigRegistry.get_configurator(value)
             for path in configurator.get_output_filepaths(ocn_dir):
                 logger.info(f"Copying {config} file: {path}...")
-                # keep the layout under inputdir (ocn/, wav/, ...)
-                target = case_subfolder / Path(path).relative_to(Path(ocn_dir).parent)
-                target.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copy(path, target)
+                shutil.copy(path, ocn_target)
 
         for key in ("supergrid_path", "topo_path", "vgrid_path", "esmf_mesh_path"):
             filename = self.init_args.get(key)
@@ -549,11 +546,6 @@ class ForkBundle:
         self.case = create_case_from_yaml(config, override=True, configure_only=True)
 
         logger.info("Copying forcing files from bundle...")
-        bundle_wav = self.bundle_location / "wav"
-        if bundle_wav.is_dir():
-            shutil.copytree(
-                bundle_wav, Path(self.case.inputdir) / "wav", dirs_exist_ok=True
-            )
         bundle_ocn = self.bundle_location / "ocn"
         for src in bundle_ocn.iterdir():
             dst = Path(self.case.inputdir) / "ocn" / src.name

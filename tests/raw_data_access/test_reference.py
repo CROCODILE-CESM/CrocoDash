@@ -2,11 +2,7 @@ import numpy as np
 import pytest
 import xarray as xr
 from CrocoDash.raw_data_access.registry import ProductRegistry
-from CrocoDash.raw_data_access.datasets.reference import (
-    REFERENCE_OCEAN,
-    REFERENCE_ICE,
-    REFERENCE_WAVES,
-)
+from CrocoDash.raw_data_access.datasets.reference import REFERENCE_OCEAN, REFERENCE_ICE
 
 BBOX = dict(lat_min=10.0, lat_max=15.0, lon_min=-30.0, lon_max=-25.0)
 DATES = ["2020-01-01", "2020-01-02"]
@@ -14,7 +10,7 @@ DATES = ["2020-01-01", "2020-01-02"]
 
 def test_reference_products_registered():
     ProductRegistry.load()
-    for name in ("reference_ocean", "reference_ice", "reference_waves"):
+    for name in ("reference_ocean", "reference_ice"):
         assert name in ProductRegistry.list_products()
 
 
@@ -23,7 +19,6 @@ def test_reference_products_registered():
     [
         (REFERENCE_OCEAN, "get_reference_ocean_data"),
         (REFERENCE_ICE, "get_reference_ice_data"),
-        (REFERENCE_WAVES, "get_reference_wave_spectra"),
     ],
 )
 def test_write_metadata_has_required_fields(cls, method_name):
@@ -38,7 +33,6 @@ def test_write_metadata_has_required_fields(cls, method_name):
     [
         (REFERENCE_OCEAN, "get_reference_ocean_data"),
         (REFERENCE_ICE, "get_reference_ice_data"),
-        (REFERENCE_WAVES, "get_reference_wave_spectra"),
     ],
 )
 def test_validate_method_toy_call_succeeds(cls, method_name):
@@ -101,17 +95,3 @@ def test_reference_ice_edge_tapers_with_latitude(tmp_path):
     # Equatorward edge (row 0) has no ice, poleward edge (last row) is fully iced.
     assert np.allclose(aicen.isel(nj=0).values, 0.0)
     assert np.allclose(aicen.isel(nj=-1).values, 1.0)
-
-
-def test_reference_waves_shape_and_peak(tmp_path):
-    path = REFERENCE_WAVES.get_reference_wave_spectra(
-        dates=DATES, output_folder=tmp_path, output_filename="waves.nc", **BBOX
-    )
-    ds = xr.open_dataset(path)
-    (var_name,) = ds.data_vars
-    da = ds[var_name]
-    assert set(da.dims) == {"time", "latitude", "longitude", "frequency", "direction"}
-    # JONSWAP spectrum should peak near fp = 1/Tp = 0.125 Hz, not at the edges.
-    spectrum_by_freq = da.isel(time=0, latitude=0, longitude=0).sum(dim="direction")
-    peak_freq = float(ds["frequency"][spectrum_by_freq.argmax(dim="frequency")])
-    assert 0.08 < peak_freq < 0.2
