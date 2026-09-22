@@ -11,7 +11,15 @@ import xarray as xr
 from CrocoDash.forcing import ww3
 from CrocoDash.forcing.base import WorkflowContext
 from CrocoDash.forcing.ww3 import WAVE_SUBDIR, WW3Configurator
-from CrocoDash.raw_data_access.base import WW3ForcingProduct, accessmethod, GREGORIAN
+from CrocoDash.raw_data_access.base import (
+    DIRECTION_COMING_FROM,
+    DIRECTION_TO,
+    GREGORIAN,
+    LAND_NAN,
+    LAND_ZERO,
+    WW3ForcingProduct,
+    accessmethod,
+)
 
 
 def _make_ctx(tmp_path, **overrides):
@@ -213,6 +221,50 @@ def test_extract_all_stations_keeps_every_point():
         assert np.all(efth[k] == 100.0 + k)
 
 
+def test_extract_all_stations_drops_zero_stations_for_a_land_zero_product():
+    ds = _make_synthetic_era5_window(n_stations=3)
+    ds["wave_spectra"][:, :, 1, :, :] = 0.0  # middle station reads as land
+    lons, lats, freq, direction, efth = ww3._extract_all_stations(
+        ds, land_marker=LAND_ZERO
+    )
+    assert len(lons) == 2
+
+
+def test_extract_all_stations_keeps_zero_stations_for_a_land_nan_product():
+    """The sea-ice case: every bin is exactly zero, but the point is water
+    and zero is the boundary condition ww3_bounc must be given."""
+    ds = _make_synthetic_era5_window(n_stations=3)
+    ds["wave_spectra"][:, :, 1, :, :] = 0.0  # iced over, not land
+    lons, lats, freq, direction, efth = ww3._extract_all_stations(
+        ds, land_marker=LAND_NAN
+    )
+    assert len(lons) == 3
+    assert np.all(efth[1] == 0.0)
+
+
+def test_extract_all_stations_drops_nan_stations_for_a_land_nan_product():
+    ds = _make_synthetic_era5_window(n_stations=3)
+    ds["wave_spectra"][:, :, 1, :, :] = np.nan
+    lons, lats, freq, direction, efth = ww3._extract_all_stations(
+        ds, land_marker=LAND_NAN
+    )
+    assert len(lons) == 2
+    assert np.isfinite(efth).all()
+
+
+def test_extract_all_stations_raises_only_when_every_station_is_land():
+    ds = _make_synthetic_era5_window(n_stations=3)
+    ds["wave_spectra"][:] = np.nan
+    with pytest.raises(ValueError, match="all-NaN"):
+        ww3._extract_all_stations(ds, land_marker=LAND_NAN)
+
+
+def test_extract_all_stations_rejects_an_unknown_land_marker():
+    ds = _make_synthetic_era5_window(n_stations=3)
+    with pytest.raises(ValueError, match="Unknown land marker"):
+        ww3._extract_all_stations(ds, land_marker="masked")
+
+
 def test_extract_all_stations_shape_mismatch_raises():
     # Missing the "direction" dim entirely -- should trigger the check.
     bad = xr.Dataset(
@@ -241,16 +293,65 @@ def test_wrap_lons_like():
     assert np.allclose(ww3._wrap_lons_like(lons - 360, np.array([190.0, 205.0])), lons)
 
 
-def test_regrid_chunk_era5_writes_all_stations(tmp_path):
+def test_to_direction_to_leaves_a_to_product_alone():
+    direction = np.array([90.0, 75.0, 0.0, 345.0])
+    assert np.all(ww3.to_direction_to(direction, DIRECTION_TO) == direction)
+
+
+def test_to_direction_to_rotates_a_coming_from_product_by_180():
+    direction = np.array([0.0, 90.0, 190.0, 359.0])
+    assert ww3.to_direction_to(direction, DIRECTION_COMING_FROM) == pytest.approx(
+        [180.0, 270.0, 10.0, 179.0]
+    )
+
+
+def test_to_direction_to_rejects_an_unknown_convention():
+    with pytest.raises(ValueError, match="Unknown direction convention"):
+        ww3.to_direction_to(np.array([0.0]), "nautical-ish")
+
+
+def test_regrid_chunk_spectra_converts_a_coming_from_product(tmp_path):
+    """The axis moves; efth does not -- it is indexed by that axis."""
     ds = _make_synthetic_era5_window(n_stations=3)
 
-    ww3._regrid_chunk_era5(
+    ww3._regrid_chunk_spectra(
+        ds=ds,
+        hgrid=None,
+        boundary="west",
+        seg_id=4,
+        outfolder=tmp_path,
+        dataset_varnames={
+            "direction_convention": DIRECTION_COMING_FROM,
+            "land_marker": LAND_ZERO,
+        },
+        start_date="2020-01-01",
+        regridders=None,
+    )
+
+    out = xr.open_dataset(tmp_path / "forcing_obc_segment_004.nc")
+    try:
+        assert out["direction"].values == pytest.approx(
+            np.mod(ds["direction"].values + 180.0, 360.0)
+        )
+        for k in range(3):
+            assert np.all(out["efth"].isel(station=k).values == 100.0 + k)
+    finally:
+        out.close()
+
+
+def test_regrid_chunk_spectra_writes_all_stations(tmp_path):
+    ds = _make_synthetic_era5_window(n_stations=3)
+
+    ww3._regrid_chunk_spectra(
         ds=ds,
         hgrid=None,
         boundary="west",
         seg_id=3,
         outfolder=tmp_path,
-        dataset_varnames={},
+        dataset_varnames={
+            "direction_convention": DIRECTION_TO,
+            "land_marker": LAND_ZERO,
+        },
         start_date="2020-01-01",
         regridders=None,
     )
@@ -281,6 +382,8 @@ class _FakeERA5Spectra(WW3ForcingProduct):
     time_var_name = "time"
     time_units = None
     calendar = GREGORIAN
+    direction_convention = DIRECTION_COMING_FROM
+    land_marker = LAND_ZERO
 
     @accessmethod
     def get_fake_spectra(

@@ -6,7 +6,13 @@ import xarray as xr
 from CrocoDash.forcing import obc
 from CrocoDash.forcing.base import *
 from CrocoDash.raw_data_access.registry import ProductRegistry
-from CrocoDash.raw_data_access.base import WW3ForcingProduct
+from CrocoDash.raw_data_access.base import (
+    DIRECTION_COMING_FROM,
+    DIRECTION_TO,
+    LAND_NAN,
+    LAND_ZERO,
+    WW3ForcingProduct,
+)
 
 
 def write_ww3_boundary_spectrum(file_path, lat, lon, freq, direction, efth, time=None):
@@ -75,9 +81,12 @@ def write_ww3_boundary_spectrum(file_path, lat, lon, freq, direction, efth, time
         ww3_bounc auto-remaps (the SPCONV/W3CSPC path) onto the grid's own
         discretization if these differ, so mismatching is not fatal.
     direction : array-like, shape (NTH,)
-        Direction bins, degrees, "coming from" convention (clockwise from
-        true north) -- ww3_bounc converts this internally
-        (THETA = mod(2.5*pi - deg2rad(direction), 2*pi)).
+        Direction bins, degrees, propagating-towards ("to") convention,
+        clockwise from true north -- ww3_bounc converts this internally
+        (THETA = mod(2.5*pi - deg2rad(direction), 2*pi), ww3_bounc.F90:581),
+        which is the exact inverse of what ww3_ounp writes out
+        (mod(450 - th_deg, 360), ww3_ounp.F90:3245). Callers hand this axis
+        over already converted -- see to_direction_to.
     efth : array-like, shape (NT, NK, NTH)
         2D variance density spectrum per timestep, m^2 s / rad.
     time : array-like of np.datetime64, optional
@@ -138,6 +147,32 @@ def write_ww3_boundary_spectrum(file_path, lat, lon, freq, direction, efth, time
 
     ds.to_netcdf(file_path, mode="w", format="NETCDF4")
     return ds
+
+
+def to_direction_to(direction, convention):
+    """Rotate a spectrum's direction axis into the "to" convention.
+
+    ``write_ww3_boundary_spectrum`` writes the axis through unchanged, and
+    ww3_bounc rebuilds WW3's internal THETA from it as
+    ``mod(2.5*pi - deg2rad(direction), 2*pi)`` (ww3_bounc.F90:581) -- the
+    exact inverse of what ww3_ounp writes (ww3_ounp.F90:3245). So the number
+    in the file has to be the direction the waves are propagating TOWARDS. A
+    product that reports "coming from" is the same spectrum rotated 180
+    degrees, and only the product knows which it is -- hence
+    ``WW3ForcingProduct.direction_convention``.
+
+    Only the axis labels move; ``efth`` is indexed by that axis and is left
+    alone. The resulting order can be non-monotonic, which ww3_bounc handles
+    (it remaps via W3CSPC whenever THETA(1) != TH(1)).
+    """
+    if convention == DIRECTION_TO:
+        return np.asarray(direction)
+    if convention == DIRECTION_COMING_FROM:
+        return np.mod(np.asarray(direction) + 180.0, 360.0)
+    raise ValueError(
+        f"Unknown direction convention {convention!r}; expected "
+        f"{DIRECTION_TO!r} or {DIRECTION_COMING_FROM!r}."
+    )
 
 
 # Where process() writes WW3's generated inputs, and therefore where
@@ -223,31 +258,41 @@ def write_spec_list(file_dir, spectra_paths, spec_list_filename="spec.list"):
             f.write(f"{p}\n")
 
 
-def _extract_all_stations(ds):
+def _extract_all_stations(ds, land_marker=LAND_ZERO):
     """Pull every real spatial point's full (time, frequency, direction)
-    spectrum out of a decoded ERA5 wave-spectra window -- no reduction to a
+    spectrum out of a decoded wave-spectra window -- no reduction to a
     single point. A boundary's window (see mom6_forge.Grid.get_bounding_boxes)
     is a thin strip running the whole length of that edge, so it typically
-    contains several real ERA5 grid points; each becomes its own station,
+    contains several real source grid points; each becomes its own station,
     left for ww3_bounc's own linear interpolation (see WW3Configurator.process)
     to blend between, rather than being collapsed here.
 
     Grabs ds's one data variable by position rather than a hardcoded name,
-    matching whatever `raw_data_access.datasets.era5.decode_era5_spectra_grib`
-    (or a test's fake product) named it, as long as the file has exactly one
-    data variable (guaranteed for era5.py's real product since the GET step
-    only ever requests one param).
+    matching whatever the product named it (era5.py writes "efth",
+    reference.py "wave_spectra"), as long as the file has exactly one data
+    variable -- which every WW3ForcingProduct guarantees, a spectrum being
+    the only thing any of them emits.
 
     Confirmed against a real ERA5 pull (2026-08-03): the decoded dataset is a
     regular (time, latitude, longitude, frequency, direction) grid -- ERA5's
     native Reduced Lat-Lon wave grid, regridded server-side via the request's
-    "grid" key (see era5.py). Every (latitude, longitude) point in the window
-    becomes its own station via a stack. Stations that are all-zero for the
-    whole window (ERA5's land sentinel decodes to 0) are dropped: ww3_bounc
-    blends stations by distance, so a land station would damp its neighbours.
+    "grid" key (see era5.py). cesm_ww3_jra.py's windows are regular by
+    construction. Every (latitude, longitude) point in the window becomes its
+    own station via a stack. Land stations are dropped, because ww3_bounc
+    blends stations by distance and a land station would damp its neighbours.
+
+    How land is recognized depends on the product, which is why
+    ``land_marker`` is required metadata. ERA5 has no mask -- its land
+    sentinel decodes to 0 -- so for LAND_ZERO products an all-zero station
+    is land. That rule cannot be applied blindly: a sea-ice-covered boundary
+    carries exactly zero wave energy at every bin, and dropping it would
+    leave ww3_bounc extrapolating swell into the ice from open-water
+    stations far away, when zero is precisely the right boundary condition.
+    So LAND_NAN products (cesm_ww3_jra.py, which has WW3's own mapsta) mark
+    land as NaN, and their genuine zeros are kept as real stations.
 
     Raises a clear error (not a silent misextraction) if `ds` doesn't match
-    this shape, since a fake/test product could still get it wrong.
+    this shape, since a new or test product could still get it wrong.
 
     Returns
     -------
@@ -262,15 +307,30 @@ def _extract_all_stations(ds):
     missing = expected - set(da.dims)
     if missing:
         raise ValueError(
-            f"ERA5 spectrum dataset missing expected dims {missing}; found "
+            f"Wave spectrum dataset missing expected dims {missing}; found "
             f"{da.dims}."
         )
     stacked = da.stack(station=("latitude", "longitude"))
     stacked = stacked.transpose("station", "time", "frequency", "direction")
-    wet = (stacked != 0).any(dim=("time", "frequency", "direction")).values
+    spectral_dims = ("time", "frequency", "direction")
+    if land_marker == LAND_NAN:
+        wet = stacked.notnull().any(dim=spectral_dims).values
+        reason = "all-NaN (land)"
+    elif land_marker == LAND_ZERO:
+        wet = (stacked != 0).any(dim=spectral_dims).values
+        reason = "all-zero, which this product uses to mark land"
+    else:
+        raise ValueError(
+            f"Unknown land marker {land_marker!r}; expected "
+            f"{LAND_NAN!r} or {LAND_ZERO!r}."
+        )
     if not wet.any():
-        raise ValueError("Every station in the window is all-zero (land?).")
+        raise ValueError(f"Every station in the window is {reason}.")
     stacked = stacked.isel(station=wet)
+    # A kept station is water, so any residual NaN is a hole in the source
+    # rather than land; zero is the only defensible value to hand ww3_bounc,
+    # which has no missing-value concept of its own.
+    stacked = stacked.fillna(0.0)
     return (
         stacked["longitude"].values,
         stacked["latitude"].values,
@@ -288,27 +348,34 @@ def _wrap_lons_like(lons, ref_lons):
     return lons
 
 
-def _regrid_chunk_era5(
+def _regrid_chunk_spectra(
     ds, hgrid, boundary, seg_id, outfolder, dataset_varnames, start_date, regridders
 ):
-    """WW3's regrid step: keeps every real ERA5 point in the fetched
+    """WW3's regrid step: keeps every real source point in the fetched
     (buffered) boundary window as its own station, each carrying its own
-    unmodified spectrum -- no spatial reduction, no spectral interpolation
-    onto WW3's own frequency/direction bins (ww3_bounc's SPCONV/W3CSPC path
-    remaps arbitrary bins at read time), no direction-convention or unit
-    conversion (ERA5's documented "coming from"/clockwise-from-north
-    convention and its m^2 s rad^-1 units already match what
-    write_ww3_boundary_spectrum expects -- this rests on ECMWF's documented
-    convention, not an independent physical sanity check against a known
-    reference spectrum).
+    unmodified spectrum -- no spatial reduction and no spectral
+    interpolation onto WW3's own frequency/direction bins (ww3_bounc's
+    SPCONV/W3CSPC path remaps arbitrary bins at read time). Units are passed
+    through as well: every WW3ForcingProduct emits m^2 s rad^-1, which is
+    what write_ww3_boundary_spectrum expects.
+
+    The direction axis is the one thing that is converted, because it is the
+    one thing products disagree about: ``dataset_varnames["direction_
+    convention"]`` says which convention this product emits, and the file
+    ww3_bounc reads has to be in "to" -- see to_direction_to.
+    ``dataset_varnames["land_marker"]`` likewise says how to tell that
+    product's land from a becalmed or ice-covered sea point.
 
     Writes a station-dimensioned output to outfolder /
     f"forcing_obc_segment_{seg_id:03d}.nc". No regridder weights to cache,
     so regridders is passed through unchanged.
     """
-    lons, lats, freq, direction, efth = _extract_all_stations(ds)
+    lons, lats, freq, direction, efth = _extract_all_stations(
+        ds, land_marker=dataset_varnames["land_marker"]
+    )
     if hgrid is not None:
         lons = _wrap_lons_like(lons, hgrid["x"].values)
+    direction = to_direction_to(direction, dataset_varnames["direction_convention"])
     time = ds["time"].values
 
     out = xr.Dataset(
@@ -342,11 +409,14 @@ class WW3Configurator(BaseConfigurator):
         InputValueParam(
             "ww3_obc_product_name",
             comment=(
-                "WW3 boundary-spectra product, e.g. 'era5_wave_spectra' (needs a "
-                "cds.climate.copernicus.eu API key) or 'reference_waves' (synthetic), "
-                "together with ww3_obc_function_name. Required for a WW3 case; pass "
-                "'none' to run without boundary spectra, in which case the open "
-                "boundary ring stays calm."
+                "WW3 boundary-spectra product, together with "
+                "ww3_obc_function_name. One of 'CESM-WW3-JRA' (a JRA-forced "
+                "global WW3 run's spectra on GLADE -- no credentials, same "
+                "winds as the case's own forcing), 'era5_wave_spectra' (needs "
+                "a cds.climate.copernicus.eu API key) or 'reference_waves' "
+                "(synthetic, for tests and demos). Required for a WW3 case; "
+                "pass 'none' to run without boundary spectra, in which case "
+                "the open boundary ring stays calm."
             ),
         ),
         InputValueParam(
@@ -507,8 +577,8 @@ class WW3Configurator(BaseConfigurator):
         Routes through obc.py's shared GET -> chunk ->
         REGRID -> MERGE engine. The product must match a WW3ForcingProduct-
         derived class's spectral contract (enforced in validate_args); e.g.
-        'era5_wave_spectra' / 'get_era5_2d_spectra'
-        (raw_data_access/datasets/era5.py).
+        'CESM-WW3-JRA' / 'get_cesm_ww3_jra_spectra'
+        (raw_data_access/datasets/cesm_ww3_jra.py).
 
         Each boundary's merged output carries a "station" dimension -- one
         real point per boundary window, not reduced to a single value.
@@ -531,6 +601,7 @@ class WW3Configurator(BaseConfigurator):
         """
         product_name = self.get_input_param("ww3_obc_product_name")
         function_name = self.get_input_param("ww3_obc_function_name")
+        ProductRegistry.load()
 
         # WW3_GRID_INP_DIR points here whether or not there are boundary
         # spectra in it, so make it real before the opt-out below.
@@ -563,12 +634,17 @@ class WW3Configurator(BaseConfigurator):
             function_name=function_name,
             variables=[],
             extra_args=self.get_input_param("ww3_obc_function_overrides") or {},
-            dataset_varnames={},
+            dataset_varnames={
+                "direction_convention": ProductRegistry.get_product(
+                    product_name
+                ).direction_convention,
+                "land_marker": ProductRegistry.get_product(product_name).land_marker,
+            },
             hgrid_path=ctx.supergrid_path,
             raw_dataset_path=raw_dir,
             regridded_dataset_path=regridded_dir,
             output_path=merged_dir,
-            regrid_chunk_fn=_regrid_chunk_era5,
+            regrid_chunk_fn=_regrid_chunk_spectra,
             get_step_days=self.get_input_param("get_step_days"),
             regrid_step_days=self.get_input_param("regrid_step_days"),
         )

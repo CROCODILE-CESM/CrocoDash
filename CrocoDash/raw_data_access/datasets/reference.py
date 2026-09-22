@@ -206,6 +206,11 @@ class REFERENCE_WAVES(WW3ForcingProduct):
     time_var_name = "time"
     time_units = None
     calendar = GREGORIAN
+    # The synthetic spectrum below is built around waves "coming from" the
+    # west (theta0 = 270), so that is what it declares.
+    direction_convention = DIRECTION_COMING_FROM
+    # Synthetic: every station is open water, so this never fires.
+    land_marker = LAND_ZERO
 
     @accessmethod(
         description=(

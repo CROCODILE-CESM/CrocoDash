@@ -303,6 +303,18 @@ class ERA5_WAVE_SPECTRA(WW3ForcingProduct):
     time_var_name = "time"
     time_units = "hours"
     calendar = GREGORIAN
+    # ECMWF's documented convention for param 251.140, and what this module's
+    # own decode asserts on the `direction` coordinate it writes. It is NOT
+    # independently verified against a known reference spectrum (see the
+    # module docstring), and it is the assumption that makes forcing/ww3.py
+    # rotate this product 180 degrees before writing a boundary spectrum --
+    # because what ww3_bounc consumes is the "to" direction. If a check ever
+    # shows ECMWF actually publishes "to" here, this single attribute is the
+    # thing to change.
+    direction_convention = DIRECTION_COMING_FROM
+    # ERA5 ships no mask with the spectra: its land sentinel decodes to 0
+    # (see _assemble_era5_dataset), so zero is all there is to go on.
+    land_marker = LAND_ZERO
 
     @accessmethod(
         description=(
