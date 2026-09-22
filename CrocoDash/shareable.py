@@ -2,7 +2,7 @@
 shareable — case portability across user boundaries.
 
 Built on top of recipe.py, which handles programmatic case creation from YAML.
-This module adds the layer for sharing a configured case with another user:
+This module adds the layer for sharing a configured case with another user::
 
   Person A (sender)
     CaseBundle(caseroot)

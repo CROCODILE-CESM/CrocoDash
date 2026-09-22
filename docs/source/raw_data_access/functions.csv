@@ -9,6 +9,7 @@ glofas,get_processed_global_glofas_script_for_cli,script,Generates bash script f
 glorys,get_glorys_data_from_rda,python,Gathers GLORYS data from RDA on computers with access to glade/rda
 glorys,get_glorys_data_from_cds_api,python,Python request with copernicusmarine api
 glorys,get_glorys_data_script_for_cli,script,Generates bash script for direct CLI run with the copernicusmarine package
+reference_ocean,get_reference_ocean_data,python,"Generates a synthetic ocean dataset over the requested bbox/dates: temperature warm at the equator and decaying exponentially with depth, near-constant salinity, a smooth sinusoidal sea-surface height, and small sinusoidal currents. One value per day."
 seawifs,get_global_seawifs_script_for_cli,script,Generates bash script for direct CLI access to chlorophyll data (No Package Required)
 seawifs,get_processed_global_seawifs_script_for_cli,script,Generates bash script for direct CLI access to processed chlorophyll data (No Package Required)
 srtm,get_srtm_data_with_python,python,Python download of the SRTM15+ global bathymetry NetCDF file

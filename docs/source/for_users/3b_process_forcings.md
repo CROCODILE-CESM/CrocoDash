@@ -1,10 +1,10 @@
 # 3b. Process Forcings (`case.process_forcings`)
 
-The final part of the CrocoDash workflow is extracting and processing all the forcing data your simulation needs. This includes initial conditions, boundary conditions, tidal forcings, biogeochemistry data, and more. You process all of this data through the `case.process_forcings` call. `case.process_forcings` wraps a submodule of CrocoDash called extract_forcings. Extract_forcings is a set of scripts to process each forcing, like initial/boundary conditions, tides, etc... You trigger this from Python via `case.process_forcings()`, or from the shell via `crocodash process`.
+The final part of the CrocoDash workflow is extracting and processing all the forcing data your simulation needs. This includes initial conditions, boundary conditions, tidal forcings, biogeochemistry data, and more. You process all of this data through the `case.process_forcings` call. `case.process_forcings` wraps the `CrocoDash.forcing` package, which holds one configurator per forcing type (initial/boundary conditions, tides, BGC, runoff, chlorophyll) plus the driver that dispatches to them. You trigger this from Python via `case.process_forcings()`, or from the shell via `crocodash process`.
 
 ## Workflow Overview
 
-1. `case.configure_forcings(...)` — writes `inputdir/extract_forcings/config.json` with your case-specific forcing setup
+1. `case.configure_forcings(...)` — writes `inputdir/extract_forcings/config.json` with your case-specific forcing setup (the directory keeps its historical name; the code lives in the installed `CrocoDash.forcing` package, not in that folder)
 2. `case.process_forcings(...)` — reads that config and runs the extraction pipeline
 3. Outputs land in `inputdir/ocn/`
 
@@ -37,20 +37,28 @@ See [CLI reference](cli.md#crocodash-process) for full flag documentation.
 crocodash process --caseroot ~/croc_cases/mycase --all
 
 # Run only specific forcings
-crocodash process  --tides
-crocodash process  --runoff
-crocodash process  --bgc
+crocodash process --caseroot ~/croc_cases/mycase --tides
+crocodash process --caseroot ~/croc_cases/mycase --runoff
+crocodash process --caseroot ~/croc_cases/mycase --bgcic
 
 # Run multiple forcings
-crocodash process  --tides --runoff --bgc
+crocodash process --caseroot ~/croc_cases/mycase --tides --runoff --bgcic
 
 # Run all except certain forcings
-crocodash process  --all --skip bgcic
-crocodash process  --all --skip conditions bgcic
+crocodash process --caseroot ~/croc_cases/mycase --all --skip bgcic
+crocodash process --caseroot ~/croc_cases/mycase --all --skip ic bgcic
 
-# Skip entire processing phases
-crocodash process  --all --skip conditions
+# Skip both initial and boundary conditions
+crocodash process --caseroot ~/croc_cases/mycase --all --skip ic bc
 ```
+
+:::{note}
+`--skip` matches **component flag names** (`ic`, `bc`, `tides`, `chl`, `runoff`,
+`bgcic`, `bgcironforcing`, `bgcrivernutrients`), not configurator names. Passing a
+configurator name such as `--skip conditions` is silently ignored — the flags it
+answers to are `ic` and `bc`. There is also no bare `--bgc` flag: BGC is three
+separate components.
+:::
 
 This flexibility lets you:
 - Test individual components without running everything
@@ -63,10 +71,10 @@ This flexibility lets you:
 You can also call the driver directly from Python:
 
 ```python
-from CrocoDash.extract_forcings.driver import run_workflow
+from CrocoDash.forcing.driver import run_workflow
 
 run_workflow(
-    config_path="~/scratch/croc_input/mycase/extract_forcings/config.json",
+    config_path="/glade/u/home/<user>/scratch/croc_input/mycase/extract_forcings/config.json",
     ic=True,
     bc=True,
     tides=True,
@@ -78,16 +86,35 @@ run_workflow(
 ```
 config.json + _crocodash_state.json
     ↓
-get_dataset_piecewise     (download raw OBC/IC data in time-stepped chunks)
+ForcingConfigRegistry.resolve_process_targets()
+    ↓  {flag: (configurator, method)}
+GET     — download raw OBC/IC data in time-stepped chunks   (forcing/obc.py, forcing/ic.py)
     ↓
-regrid_dataset_piecewise  (regrid to model grid, fill missing data)
+REGRID  — regrid to the model grid, fill missing data       (forcing/mom6.py)
     ↓
-merge_piecewise_dataset   (concatenate chunks into final OBC files)
+MERGE   — concatenate chunks into final OBC files           (forcing/obc.py)
     ↓
-[tides / bgc / runoff / chl modules run independently]
+[tides / bgc / runoff / chl configurators run independently]
     ↓
 inputdir/ocn/
 ```
+
+Each CLI flag maps onto one configurator method via that class's
+`process_components` declaration:
+
+| Flag | Configurator | Method | Module |
+|---|---|---|---|
+| `--ic` | `ConditionsConfigurator` | `process_ic` | `forcing/mom6.py` |
+| `--bc` | `ConditionsConfigurator` | `process_bc` | `forcing/mom6.py` |
+| `--tides` | `TidesConfigurator` | `process` | `forcing/tides.py` |
+| `--chl` | `ChlConfigurator` | `process` | `forcing/chl.py` |
+| `--runoff` | `RunoffConfigurator` | `process` | `forcing/runoff.py` |
+| `--bgcic` | `BGCICConfigurator` | `process` | `forcing/bgc.py` |
+| `--bgcironforcing` | `BGCIronForcingConfigurator` | `process` | `forcing/bgc.py` |
+| `--bgcrivernutrients` | `BGCRiverNutrientsConfigurator` | `process` | `forcing/bgc.py` |
+
+Adding a `process_components` entry to a new configurator surfaces its CLI flag
+automatically — there is no hand-maintained flag list.
 
 ## Design Philosophy
 
@@ -95,10 +122,12 @@ CrocoDash delegates heavy lifting to specialist packages:
 
 | Task | Tool | Module |
 |------|------|--------|
-| OBC regridding | [regional-mom6](https://github.com/COSIMA/regional-mom6) | `obc.py` |
-| Initial condition regridding | [regional-mom6](https://github.com/COSIMA/regional-mom6) | `initial_condition.py` |
-| IC land-fill | [mom6_forge](https://github.com/NCAR/mom6_forge) | `initial_condition.py` |
-| Chlorophyll, fill, mapping | [mom6_forge](https://github.com/NCAR/mom6_forge) | Various modules |
+| OBC chunking / merge | CrocoDash | `forcing/obc.py` |
+| IC chunking | CrocoDash | `forcing/ic.py` |
+| OBC + IC regridding | [regional-mom6](https://github.com/CROCODILE-CESM/regional-mom6) | `forcing/mom6.py` |
+| IC land-fill | [mom6_forge](https://github.com/NCAR/mom6_forge) | `forcing/mom6.py` |
+| Chlorophyll | [regional-mom6](https://github.com/CROCODILE-CESM/regional-mom6) | `forcing/chl.py` |
+| Runoff mapping | [mom6_forge](https://github.com/NCAR/mom6_forge) | `forcing/runoff.py` |
 | Data formatting | `netCDF4`, `xarray` | Throughout |
 
 For more detail on OBC regridding, see the
@@ -108,5 +137,5 @@ For more detail on OBC regridding, see the
 
 - [3a. Configure Forcings](3a_configure_forcings.md) — the step that writes the `config.json` this driver consumes
 - [Datasets](datasets.md) — the raw data sources the driver downloads from
-- [Architecture](../for_developers/architecture.md) — where `extract_forcings` lives in the code and how to extend it
+- [Architecture](../for_developers/architecture.md) — where `CrocoDash.forcing` lives in the code and how to extend it
 - [Submodule API Usage](../for_developers/submodule_api_usage.md) — exact `regional-mom6` / `mom6_forge` functions called during processing

@@ -25,18 +25,10 @@ class SeaWIFS(BaseProduct):
         ----------
         username : str
             NASA Earthdata username (password will be prompted at runtime).
-        date : str, optional
-            Currently unused; placeholder for future date-based filtering.
-        lat_min : float, optional
-            Currently unused; placeholder for future spatial filtering.
-        lat_max : float, optional
-            Currently unused; placeholder for future spatial filtering.
-        lon_min : float, optional
-            Currently unused; placeholder for future spatial filtering.
-        lon_max : float, optional
-            Currently unused; placeholder for future spatial filtering.
         output_folder : str, optional
             Directory where downloaded files will be saved.
+        output_filename : str, optional
+            Currently unused; the script names the downloaded file itself.
 
         """
 
@@ -69,20 +61,11 @@ class SeaWIFS(BaseProduct):
         output_filename="processed_seawifs.nc",
     ):
         """
-        Downloads chlor_a data from the CESM inputdata repository by generating a script users can run in their terminal.
+        Downloads processed chlor_a data from the CESM inputdata repository by
+        generating a script users can run in their terminal.
+
         Parameters
         ----------
-
-        date : str, optional
-            Currently unused; placeholder for future date-based filtering.
-        lat_min : float, optional
-            Currently unused; placeholder for future spatial filtering.
-        lat_max : float, optional
-            Currently unused; placeholder for future spatial filtering.
-        lon_min : float, optional
-            Currently unused; placeholder for future spatial filtering.
-        lon_max : float, optional
-            Currently unused; placeholder for future spatial filtering.
         output_folder : str, optional
             Directory where downloaded files will be saved.
         output_filename : str, optional

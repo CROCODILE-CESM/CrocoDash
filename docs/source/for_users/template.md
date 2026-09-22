@@ -13,14 +13,21 @@ The `crocodash template` command writes a ready-to-use starter file sourced from
 # Jupyter notebook with <KEY> placeholders for manual editing
 crocodash template --output my_case.ipynb
 
-# Jupyter notebook with Derecho/GLADE paths pre-filled
-crocodash template --output my_case.ipynb --machine derecho
+# Jupyter notebook with GLADE (Derecho/Casper) paths pre-filled
+crocodash template --output my_case.ipynb --machine glade
 
-# Python script with Derecho paths pre-filled
-crocodash template --output my_case.py --machine derecho
+# Python script with GLADE paths pre-filled
+crocodash template --output my_case.py --machine glade
 
-# YAML config with Derecho paths pre-filled
-crocodash template --output my_case.yaml --machine derecho
+# YAML config with GLADE paths pre-filled
+crocodash template --output my_case.yaml --machine glade
+
+# Start from a different gallery notebook instead of the default tutorial
+crocodash template --output my_marbl_case.ipynb --machine glade \
+  --notebook crocodash.projects.marbl
+
+# See every notebook you can start from
+crocodash template --list-notebooks
 ```
 
 For `--kind case`, the output *format* is picked by `--output`'s suffix: `.yaml`/`.yml` for a config, `.ipynb` for a notebook, anything else for a `.py` script.
@@ -41,20 +48,43 @@ A `.pbs` output suffix selects the PBS template on its own, the same way `.yaml`
 
 ## `--machine`
 
-The `--machine` flag replaces `<KEY>` placeholders (e.g. `<GEBCO>`, `<TPXO_H>`) with real dataset paths for the given machine. Omit it to leave placeholders and fill them in manually. It only applies to `--kind case` — the pbs template's placeholders (`<PROJECT_CODE>`, `caseroot`) aren't dataset paths, so `--machine` has no effect on `--kind pbs` output.
+The `--machine` flag replaces `<KEY>` placeholders (e.g. `<GEBCO>`, `<TPXO_H>`) with real dataset paths for the given machine. The only registry shipped today is `glade`, which covers both Derecho and Casper. Omit the flag to leave placeholders and fill them in manually. It only applies to `--kind case` — the pbs template's placeholders (`<PROJECT_CODE>`, `caseroot`) aren't dataset paths, so `--machine` has no effect on `--kind pbs` output.
 
 A few `known_paths.json` keys (`CESM`, `inputdir`, `casedir`) are also placeholder tokens rather than real paths, so they're always left as `<KEY>` for manual editing regardless of `--machine`.
 
 ---
 
+## `--notebook` and `--list-notebooks`
+
+`--kind case` templates are rendered from a **gallery notebook**, so you can
+start from any of them rather than just the default tutorial
+(`crocodash.tutorial`):
+
+```bash
+crocodash template --list-notebooks          # print every available ID
+crocodash template --output my_case.ipynb --notebook crocodash.projects.ww3
+```
+
+IDs are the notebook's path in the CrocoGallery repo with `/` replaced by `.`
+and the extension dropped — `crocodash/projects/marbl.ipynb` is
+`crocodash.projects.marbl`.
+
+`--notebook` only affects `--kind case` output formats that are rendered from a
+notebook (`.ipynb` and `.py`). For `.yaml` and for `--kind pbs`, the template is
+a standalone file and `--notebook` is ignored, with a message saying so.
+
+`--output` is required unless you pass `--list-notebooks`.
+
+---
+
 ## Available machines
 
-Machine path registries are defined in `crocogallery/known_paths.json` inside the CrocoGallery repo. To add a new environment (e.g. `"casper"`, `"local"`, `"manish"`), add a new top-level key with the relevant path mappings — no Python changes needed.
+Machine path registries are defined in `crocogallery/known_paths.json` inside the CrocoGallery repo. Today there is one: `glade`. To add a new environment (e.g. `"local"`, `"perlmutter"`), add a new top-level key with the relevant path mappings — no Python changes needed.
 
 Passing an unknown machine name prints the available options:
 
 ```
-KeyError: Unknown machine 'bogus'. Available: derecho
+KeyError: Unknown machine 'bogus'. Available: glade
 ```
 
 ---

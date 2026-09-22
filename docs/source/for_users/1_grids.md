@@ -23,9 +23,9 @@ interactive construction:
 
 | Object | Programmatic API | Interactive widget |
 |---|---|---|
-| Horizontal grid (`Grid`) | `Grid(...)`, `Grid.from_supergrid(...)` | `GridCreator` |
-| Bathymetry (`Topo`) | `Topo(...)`, `Topo.from_topo_file(...)` | `TopoEditor` |
-| Vertical grid (`VGrid`) | `VGrid.hyperbolic(...)`, `VGrid.from_file(...)` | `VGridCreator` |
+| Horizontal grid (`Grid`) | `Grid(...)`, `Grid.from_supergrid(...)`, `Grid.subgrid_from_supergrid(...)`, `Grid.from_projection(...)` | `GridCreator` |
+| Bathymetry (`Topo`) | `Topo(...)`, `Topo.from_topo_file(...)`, `Topo.set_from_dataset(...)`, `Topo.set_flat(...)` | `TopoEditor` |
+| Vertical grid (`VGrid`) | `VGrid.uniform(...)`, `VGrid.hyperbolic(...)`, `VGrid.from_file(...)` | `VGridCreator` |
 
 Notable features worth knowing about:
 
@@ -37,10 +37,12 @@ Notable features worth knowing about:
   so you can replay, share, or undo bathymetry changes reproducibly.
 - **Curvilinear grids** — `Grid.from_supergrid(...)` works for both
   rectilinear (lon/lat) and curvilinear grids.
+- **Polar domains** — `Grid.from_projection(...)` builds an Arctic or Antarctic
+  grid on a polar stereographic projection.
 - **ESMF mesh + SCRIP output** — the `Topo` object writes CICE grids, SCRIP
   grids, and ESMF meshes directly, which is what CESM needs for coupling.
-- **runoff mapping helpers** —  `mom6_forge.mapping` is used internally by `extract_forcings`, but are also
-  available if you need them directly.
+- **runoff mapping helpers** — `mom6_forge.mapping` is used internally by
+  `CrocoDash.forcing.runoff`, but is also available if you need it directly.
 
 ## Importing
 
@@ -54,6 +56,42 @@ The only difference from vanilla mom6_forge is the import path. Replace the
 | `import mom6_forge.vgrid` | `import CrocoDash.vgrid` |
 
 Everything else — class names, method signatures, parameters — is identical.
+
+## API reference
+
+The three grid classes and their widgets, as CrocoDash re-exports them. These
+are mom6_forge's classes unchanged — this section exists because Sphinx does not
+follow `import *` re-exports into the auto-generated
+[API docs](../api-docs/CrocoDash.rst).
+
+```{eval-rst}
+.. autoclass:: CrocoDash.grid.Grid
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. autoclass:: CrocoDash.topo.Topo
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. autoclass:: CrocoDash.vgrid.VGrid
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. autoclass:: CrocoDash.grid_creator.GridCreator
+   :members:
+   :show-inheritance:
+
+.. autoclass:: CrocoDash.topo_editor.TopoEditor
+   :members:
+   :show-inheritance:
+
+.. autoclass:: CrocoDash.vgrid_creator.VGridCreator
+   :members:
+   :show-inheritance:
+```
 
 ## Next step
 

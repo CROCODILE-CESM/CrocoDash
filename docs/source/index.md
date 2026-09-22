@@ -20,7 +20,7 @@ editing and a `raw_data_access` registry for downloading public datasets.
 ## Get started
 
 1. Install — see the [installation](installation.md) page.
-2. Walk through the [tutorials](https://crocodile-cesm.github.io/CrocoGallery/latest/notebooks/tutorials/crocodash-tutorial/) for an easy introduction.
+2. Walk through the [tutorials](https://crocodile-cesm.github.io/CrocoGallery/latest/crocodash/tutorial) for an easy introduction.
 3. Browse the [gallery of demos](https://crocodile-cesm.github.io/CrocoGallery/latest/) for more use cases.
 4. Read the [user guide](for_users/index.md) for step-by-step docs.
 
@@ -39,7 +39,7 @@ Common Errors <https://github.com/CROCODILE-CESM/CrocoDash/discussions/84>
 
 ## License
 
-CrocoDash is released under the [Apache 2.0 License](https://github.com/CROCODILE-CESM/CrocoDash/blob/main/LICENSE).
+CrocoDash is released under the [Apache 2.0 License](https://github.com/CROCODILE-CESM/CrocoDash/blob/main/LICENSE.md).
 
 ## Citation
 
