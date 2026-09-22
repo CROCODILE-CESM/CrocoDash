@@ -1,3 +1,5 @@
+import os
+
 import pytest
 import numpy as np
 import pandas as pd
@@ -224,28 +226,40 @@ def test_merge_single_boundary(
 # ---------------------------------------------------------------------------
 
 
-def _fake_regrid_chunk_fn(ds, hgrid, boundary, seg_id, outfolder, **_kwargs):
-    """Stand-in regrid_chunk_fn: writes the chunk straight through.
+def _fake_regrid_chunk_fn(
+    ds, hgrid, boundary, seg_id, outfolder, regridders=None, **_kwargs
+):
+    """Stand-in regrid_chunk_fn: writes the chunk straight through, recording
+    who wrote it and which regridder set it was handed.
 
-    Must be a module-level function (not a local closure) so it can be
-    pickled to the ProcessPoolExecutor workers.
+    Must be a module-level function (not a local closure) so it can be pickled
+    to the ProcessPoolExecutor workers.
     """
     outfolder = Path(outfolder)
     outfolder.mkdir(parents=True, exist_ok=True)
+    ds = ds.assign_attrs(writer_pid=os.getpid(), saw_regridders=repr(regridders))
     ds.to_netcdf(outfolder / f"forcing_obc_segment_{seg_id:03d}.nc")
-    return {}
+    return {"built_by": os.getpid()}
 
 
 def test_regrid_boundary_uses_multiple_workers(tmp_path, get_rect_grid, monkeypatch):
-    """The num_workers > 1 branch (worker slicing + os.replace) is only taken
-    when available_cpus() > 1 and there's more than one regrid chunk. CI's
-    other coverage of _regrid_boundary is either @pytest.mark.slow or
+    """The num_workers > 1 branch: worker slicing, os.replace, and the
+    build-once/inherit-across-fork regridder handoff.
+
+    CI's other coverage of _regrid_boundary is either @pytest.mark.slow or
     monkeypatches _regrid_boundary away entirely, so this branch is never
     exercised for real. available_cpus() is pinned here so the test doesn't
     depend on how many cores the CI runner happens to have.
 
+    Six days in 2-day chunks gives three chunks: the parent takes the first and
+    two workers take one each. That shape is the point -- ESMF weight
+    generation dominates a chunk, so the parent builds the regridder once and
+    fork() hands that same set to both workers rather than each building its
+    own. The assertions below pin that down: the parent's chunk saw no
+    regridders, and both worker chunks saw the set the parent built.
+
     Using one raw file spanning the whole range (get_step_days=None) against
-    two narrower regrid chunks also exercises the get/regrid chunk-size
+    narrower regrid chunks also exercises the get/regrid chunk-size
     independence _files_overlapping_range restores -- with the old
     containment-based filter this raw file would be dropped for every chunk
     narrower than itself.
@@ -261,10 +275,10 @@ def test_regrid_boundary_uses_multiple_workers(tmp_path, get_rect_grid, monkeypa
     output_dir = tmp_path / "regridded"
     output_dir.mkdir()
 
-    start_date, end_date = datetime(2020, 1, 1), datetime(2020, 1, 4)
-    times = pd.date_range("2020-01-01 12:00", periods=4, freq="D")
-    raw_ds = xr.Dataset({"var": ("time", np.arange(4))}, coords={"time": times})
-    raw_file = raw_dir / "east_unprocessed.2020-01-01_2020-01-04.nc"
+    start_date, end_date = datetime(2020, 1, 1), datetime(2020, 1, 6)
+    times = pd.date_range("2020-01-01 12:00", periods=6, freq="D")
+    raw_ds = xr.Dataset({"var": ("time", np.arange(6))}, coords={"time": times})
+    raw_file = raw_dir / "east_unprocessed.2020-01-01_2020-01-06.nc"
     raw_ds.to_netcdf(raw_file)
 
     result = _regrid_boundary(
@@ -280,12 +294,31 @@ def test_regrid_boundary_uses_multiple_workers(tmp_path, get_rect_grid, monkeypa
         regrid_chunk_fn=_fake_regrid_chunk_fn,
     )
 
-    assert sorted(Path(p).name for p in result) == [
-        "forcing_obc_segment_001_2020-01-01_2020-01-02.nc",
+    by_name = {Path(p).name: Path(p) for p in result}
+    first = "forcing_obc_segment_001_2020-01-01_2020-01-02.nc"
+    assert sorted(by_name) == [
+        first,
         "forcing_obc_segment_001_2020-01-03_2020-01-04.nc",
+        "forcing_obc_segment_001_2020-01-05_2020-01-06.nc",
     ]
-    for p in result:
-        assert Path(p).exists()
+    for path in by_name.values():
+        assert path.exists()
+
+    attrs = {}
+    for name, path in by_name.items():
+        with xr.open_dataset(path) as ds:
+            attrs[name] = (ds.attrs["writer_pid"], ds.attrs["saw_regridders"])
+
+    # The parent took the first chunk and built the regridder: it was handed
+    # nothing to start from.
+    assert attrs[first] == (os.getpid(), "None")
+
+    # Both remaining chunks ran in their own process, and both inherited the
+    # parent's single build instead of constructing one apiece.
+    workers = [v for k, v in attrs.items() if k != first]
+    assert len({pid for pid, _ in workers}) == 2
+    assert all(pid != os.getpid() for pid, _ in workers)
+    assert all(saw == repr({"built_by": os.getpid()}) for _, saw in workers)
 
 
 # ---------------------------------------------------------------------------
