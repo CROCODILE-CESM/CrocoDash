@@ -32,6 +32,7 @@ import xarray as xr
 from CrocoDash import logging
 from CrocoDash.forcing import utils
 from CrocoDash.grid import Grid
+from regional_mom6.segment import Segment
 from CrocoDash.topo import Topo
 
 logger = logging.setup_logger(__name__)
@@ -40,6 +41,40 @@ logger = logging.setup_logger(__name__)
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
+
+def boundary_key(boundary):
+    """The string identifier for a boundary entry: itself if a cardinal
+    string, or its ``.segment_name`` if a live ``Segment`` (e.g. built via
+    ``Segment.from_lonlat``/``from_hgrid`` when defining a non-cardinal
+    boundary)."""
+    return boundary.segment_name if isinstance(boundary, Segment) else boundary
+
+
+def get_segment(hgrid, boundary, segment_name, topo=None, custom_segments=None):
+    """Build a Segment for one boundary entry, always renamed to
+    ``segment_name`` (MOM6's own ``segment_00N`` numbering).
+
+    ``boundary`` may be:
+      - a cardinal string ("north"/"south"/"east"/"west") -- built via
+        ``Segment.cardinal``.
+      - a live ``Segment`` instance -- re-cut via ``Segment.from_spec`` using
+        its own ``to_spec()``. This is the case in the same process that
+        defined ``Case.boundaries`` (e.g. ``case.py``'s
+        ``configure_forcings``).
+      - a plain boundary-key string paired with ``custom_segments`` -- the
+        ``conditions.outputs.custom_segments`` dict read back from
+        config.json (key -> ``Segment.to_spec()`` output), for code that
+        only has the config, e.g. ``process_obc_conditions``/``tides.py``'s
+        ``process`` running as a separate call.
+    """
+    if isinstance(boundary, Segment):
+        return Segment.from_spec(hgrid, boundary.to_spec(), segment_name, topo=topo)
+    if custom_segments is not None and boundary in custom_segments:
+        return Segment.from_spec(
+            hgrid, custom_segments[boundary], segment_name, topo=topo
+        )
+    return Segment.cardinal(hgrid, boundary, segment_name, topo=topo)
 
 
 def _make_date_pairs(start: datetime, end: datetime, step_days):
@@ -213,6 +248,28 @@ def _validate_coverage(
 # ---------------------------------------------------------------------------
 
 
+def _boundary_bounding_box(hgrid, boundary: str, custom_segments: dict) -> dict:
+    """The lon/lat bounding box to download raw forcing data for -- one of
+    the 4 cardinal edges (from Grid.get_bounding_boxes), or, for a custom
+    (partial/interior) segment, computed straight from that Segment's own
+    lon/lat."""
+    if boundary not in custom_segments:
+        return Grid.get_bounding_boxes(hgrid)[boundary]
+
+    segment = get_segment(
+        hgrid,
+        boundary,
+        segment_name=f"segment_{boundary}",
+        custom_segments=custom_segments,
+    )
+    return {
+        "lon_min": float(segment.lon.min()),
+        "lon_max": float(segment.lon.max()),
+        "lat_min": float(segment.lat.min()),
+        "lat_max": float(segment.lat.max()),
+    }
+
+
 def _get_boundary(
     boundary: str,
     start_date: datetime,
@@ -225,34 +282,29 @@ def _get_boundary(
     variables: list,
     extra_args: dict,
 ) -> list:
-    """Download all raw data for one boundary, chunked by get_step_days."""
+    """Download all raw data for one boundary, chunked by get_step_days.
+
+    ``latlon`` is computed by the caller (tmask-derived where a bathymetry is
+    available, and custom-segment aware) -- do not recompute it here."""
     output_dir = Path(output_dir)
 
     data_access_fn = utils.get_data_access_function(product_name, function_name)
 
-    # copernicusmarine opens S3-backed zarr and calls dask.compute() internally
-    # during to_netcdf(). Without this, that compute() routes to the distributed
-    # scheduler, which tries to serialize botocore.client.S3 across processes and
-    # fails. synchronous keeps it in-process. The outer parallelism (one worker
-    # per boundary/chunk) is unaffected.
-    with dask.config.set(scheduler="synchronous"):
-        for chunk_start, chunk_end in _make_date_pairs(
-            start_date, end_date, get_step_days
-        ):
-            start_str = chunk_start.strftime("%Y-%m-%d")
-            end_str = chunk_end.strftime("%Y-%m-%d")
-            output_filename = f"{boundary}_unprocessed.{start_str}_{end_str}.nc"
+    for chunk_start, chunk_end in _make_date_pairs(start_date, end_date, get_step_days):
+        start_str = chunk_start.strftime("%Y-%m-%d")
+        end_str = chunk_end.strftime("%Y-%m-%d")
+        output_filename = f"{boundary}_unprocessed.{start_str}_{end_str}.nc"
 
-            utils.fetch_raw_chunk(
-                data_access_fn=data_access_fn,
-                dates=[start_str, end_str],
-                latlon=latlon,
-                name=boundary,
-                output_folder=output_dir,
-                output_filename=output_filename,
-                variables=variables,
-                extra_args=extra_args,
-            )
+        utils.fetch_raw_chunk(
+            data_access_fn=data_access_fn,
+            dates=[start_str, end_str],
+            latlon=latlon,
+            name=boundary,
+            output_folder=output_dir,
+            output_filename=output_filename,
+            variables=variables,
+            extra_args=extra_args,
+        )
 
 
 def _regrid_boundary(
@@ -392,6 +444,7 @@ def process_obc_conditions(
     regrid_step_days: int = 30,
     bathymetry_path=None,
     preview: bool = False,
+    custom_segments: dict = None,
 ):
     """Process boundary conditions through the GET → REGRID → MERGE pipeline.
 
@@ -428,6 +481,12 @@ def process_obc_conditions(
             boundary.
         preview: If True, return a dict of expected date pairs without
             executing any downloads or regridding.
+        custom_segments: Boundary key -> Segment.to_spec(), for non-cardinal
+            (interior) boundaries -- read back from config.json's
+            conditions.outputs.custom_segments. Needed to compute the right
+            bounding box for the GET step via get_segment(); the REGRID
+            step's own segment rebuild is the caller's business (bind it
+            into regrid_chunk_fn, e.g. via functools.partial).
     """
     start_date = pd.to_datetime(start_date).to_pydatetime()
     end_date = pd.to_datetime(end_date).to_pydatetime()
@@ -436,6 +495,7 @@ def process_obc_conditions(
     regridded_path = Path(regridded_dataset_path)
     output_path = Path(output_path)
     boundaries = list(boundary_number_conversion.keys())
+    custom_segments = custom_segments or {}
 
     if preview:
         return {
@@ -459,13 +519,19 @@ def process_obc_conditions(
                 git=False,
             )
             boundary_bboxes = {
-                b: _ocean_bbox_for_boundary(hgrid_ds, topo.supergridmask, b)
+                b: (
+                    _boundary_bounding_box(hgrid_ds, b, custom_segments)
+                    if b in custom_segments
+                    else _ocean_bbox_for_boundary(hgrid_ds, topo.supergridmask, b)
+                )
                 for b in boundaries
             }
             logger.info("Using tmask-derived bounding boxes for OBC data download.")
         else:
-            full_bboxes = Grid.get_bounding_boxes(hgrid_ds)
-            boundary_bboxes = {b: full_bboxes[b] for b in boundaries}
+            boundary_bboxes = {
+                b: _boundary_bounding_box(hgrid_ds, b, custom_segments)
+                for b in boundaries
+            }
             logger.info(
                 "No bathymetry_path given; using full supergrid bounding boxes."
             )
