@@ -23,12 +23,13 @@ physical row/column outward into the ghost cells instead (the commented-out
 T-cell: the generated file has to match that extended-restart shape exactly
 or CICE won't read it, so there's no user-facing knob for it.
 
-Restoring is opt-in two ways over: pass ``restore_ice=False``, or name
-neither product nor function, and ``process`` generates nothing, ``ice_ic``
-stays ``'default'``, and CICE runs with zero-gradient boundaries and no
-restoring -- a valid configuration, with ice still free to advect out of the
-domain. ``restore_ice`` defaults to True, so naming a product is enough to
-turn restoring on.
+Restoring is off by default and takes all three of ``restore_ice=True``,
+``cice_product_name`` and ``cice_function_name``. Leave any of them unset and
+``process`` generates nothing, ``ice_ic`` stays ``'default'`` (CICE's own
+latitude/SST initialization, needing no restart file on disk at all), and CICE
+runs with zero-gradient boundaries and no restoring -- a valid configuration,
+with ice still free to advect out of the domain. A partial combination raises
+in ``validate_args`` rather than quietly generating nothing.
 
 Like a real CICE restart/initial-condition file, the output carries no
 ``time`` dimension at all -- just the single static snapshot, regridded once
@@ -186,11 +187,13 @@ class CICEConfigurator(BaseConfigurator):
             "restore_ice",
             comment=(
                 "Whether to restore the boundary-adjacent ghost cells toward the "
-                "generated expanded-grid restart. True by default, so naming a "
-                "cice_product_name/cice_function_name pair is enough to turn "
-                "restoring on. False skips generating the file altogether and "
-                "leaves ice_ic at 'default': CICE then runs with zero-gradient "
-                "boundaries and no restoring, ice still free to advect out."
+                "generated expanded-grid restart. False by default, so restoring "
+                "needs this set to True *and* a cice_product_name/"
+                "cice_function_name pair -- naming the pair alone raises. "
+                "False skips generating the file altogether and leaves "
+                "ice_ic at 'default': CICE then runs with zero-gradient "
+                "boundaries and no restoring, ice still free to advect out, and "
+                "no restart file is required anywhere."
             ),
         ),
         InputValueParam(
@@ -227,7 +230,7 @@ class CICEConfigurator(BaseConfigurator):
         cice_product_name=None,
         cice_function_name=None,
         cice_function_args=None,
-        restore_ice=True,
+        restore_ice=False,
         case_inputdir=None,
     ):
         super().__init__(
@@ -247,6 +250,26 @@ class CICEConfigurator(BaseConfigurator):
         # CICEForcingProduct's own B-grid var-name metadata, so a MOM6 (or any
         # other) forcing product can't stand in here.
         product_name = kwargs["cice_product_name"]
+
+        # All three or none. A partial combination is a typo or a forgotten
+        # argument, and used to generate nothing silently -- running a
+        # different configuration than the caller described.
+        given = {
+            "restore_ice=True": bool(kwargs["restore_ice"]),
+            "cice_product_name": bool(product_name),
+            "cice_function_name": bool(kwargs["cice_function_name"]),
+        }
+        if any(given.values()) and not all(given.values()):
+            have = sorted(k for k, v in given.items() if v)
+            missing = sorted(k for k, v in given.items() if not v)
+            raise ValueError(
+                "CICE restoring needs all three of restore_ice=True, "
+                f"cice_product_name and cice_function_name; got {have} but "
+                f"{missing} unset. Pass all three to generate the restoring "
+                "forcing file, or none of them to run CICE without restoring "
+                "(ice_ic = 'default', no restart file needed)."
+            )
+
         if product_name:
             ProductRegistry.load()
             if not ProductRegistry.product_exists(product_name):
@@ -281,9 +304,6 @@ class CICEConfigurator(BaseConfigurator):
         product_name = self.get_input_param("cice_product_name")
         function_name = self.get_input_param("cice_function_name")
 
-        if product_name and function_name and not self.get_input_param("restore_ice"):
-            return None, None
-
         if not product_name and not function_name:
             return None, None
 
@@ -313,15 +333,6 @@ class CICEConfigurator(BaseConfigurator):
         # restoring, since ice_ic = 'default' means no restart is read.
         self.set_output_param("restart_ext", ".true.")
 
-        # Use tracers from CESM run
-        self.set_output_param("restart_aero", ".true.")
-        self.set_output_param("restart_age", ".true.")
-        self.set_output_param("restart_fsd", ".true.")
-        self.set_output_param("restart_fy", ".true.")
-        self.set_output_param("restart_lvl", ".true.")
-        self.set_output_param("restart_pond_sealvl", ".true.")
-        self.set_output_param("restart_snow", ".true.")
-
         # The namelist restore_ice tracks whether process() will actually
         # produce the domain+halo restart to restore toward -- turning it on
         # without that file would point CICE at a restoring target that
@@ -333,23 +344,27 @@ class CICEConfigurator(BaseConfigurator):
         self.set_output_param("restore_ice", ".true." if restoring else ".false.")
         self.set_output_param("restore_timescale", 90)
 
-        # ice_restoring_init aborts unless restore_mask is one of
-        # all|none|constant|linear -- CICE defaults it to 'unknown'
-        # (ice_init.F90), so restore_ice = .true. without these is a hard
-        # failure, not a silent fallback. Same for restore_data, which aborts
-        # the same way in ice_restoring_getdata.
-        #
-        # 'constant' + restore_width = 1 confines restoring to the outermost
-        # one-cell ring, which is the halo process() builds into the file.
-        # 'initial' restores toward the state read at init (ice_ic, i.e. the
-        # generated file); 'restartfiles' would demand one file per timestep,
-        # and process() writes a single static snapshot.
-        #
-        # restore_flds must name the individual fields: CICE calls
-        # ice_restoring_interior with setfld='state'/'velocity', and 'state'
-        # only matches entries listed as aicen/vicen/vsnon/trcrn. Left at its
-        # 'none' default, num_restore_flds == 0 and restoring silently does
-        # nothing at all.
+        # Only when there is a restart to read: with ice_ic = 'default' these
+        # make CICE read tracers from a file it never opened, segfaulting in
+        # PIO.
+        tracer_restarts = ".true." if restoring else ".false."
+        for _tracer in (
+            "restart_aero",
+            "restart_age",
+            "restart_fsd",
+            "restart_fy",
+            "restart_lvl",
+            "restart_pond_sealvl",
+            "restart_snow",
+        ):
+            self.set_output_param(_tracer, tracer_restarts)
+
+        # CICE aborts unless restore_mask and restore_data are set (both
+        # default to 'unknown'), and restores nothing unless restore_flds
+        # names the individual fields. 'constant' + width 1 confines restoring
+        # to the one-cell halo process() builds; 'initial' restores toward
+        # ice_ic, since process() writes one static snapshot rather than the
+        # per-timestep files 'restartfiles' expects.
         self.set_output_param("restore_mask", "'constant'")
         self.set_output_param("restore_width", 1)
         self.set_output_param("restore_data", "'initial'")
