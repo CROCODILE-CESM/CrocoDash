@@ -219,6 +219,36 @@ def test_merge_single_boundary(
     ds.close()
 
 
+def test_merge_rejects_non_monotonic_time(
+    tmp_path, dummy_mom6_obc_data_factory, get_rect_grid
+):
+    """Chunks that do not line up on a common epoch must be caught at merge.
+    """
+    grid = get_rect_grid
+    bounds = Grid.get_bounding_boxes(grid)
+    east = dummy_mom6_obc_data_factory(
+        bounds["ic"]["lat_min"],
+        bounds["ic"]["lat_max"],
+        bounds["ic"]["lon_min"],
+        bounds["ic"]["lon_max"],
+        "001",
+        3,
+    )
+    regridded_dir = tmp_path / "regridded"
+    regridded_dir.mkdir()
+    # Both chunks start at t=0 -- the shape a zero-based per-chunk axis makes.
+    for name in (
+        "forcing_obc_segment_001_2020-01-01_2020-01-03.nc",
+        "forcing_obc_segment_001_2020-01-04_2020-01-06.nc",
+    ):
+        east.to_netcdf(regridded_dir / name)
+    output_dir = tmp_path / "output"
+    output_dir.mkdir()
+
+    with pytest.raises(ValueError, match="not monotonically increasing"):
+        _merge_boundary("001", sorted(regridded_dir.glob("*.nc")), output_dir)
+
+
 # ---------------------------------------------------------------------------
 # Unit test: _regrid_boundary's num_workers > 1 branch
 # ---------------------------------------------------------------------------

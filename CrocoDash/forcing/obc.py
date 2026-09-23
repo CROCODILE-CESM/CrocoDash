@@ -34,6 +34,7 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 import math
 import dask
 import dask.threaded
+import numpy as np
 import pandas as pd
 import xarray as xr
 from CrocoDash import logging
@@ -666,6 +667,18 @@ def _merge_boundary(boundary_label: str, regridded_files: list, output_folder) -
         coords="minimal",
         parallel=False,
     )
+    # The merged time axis must be monotonically increasing, which it only is
+    # if every chunk was written against the same epoch.
+    times = ds["time"].values
+    ascending = np.diff(times) > 0
+    if ascending.size and not ascending.all():
+        bad = int(np.argmin(ascending))
+        ds.close()
+        raise ValueError(
+            f"Merged OBC time axis for {boundary_label} is not monotonically "
+            f"increasing: t[{bad}]={times[bad]} >= t[{bad + 1}]={times[bad + 1]}. "
+            "The per-chunk axes did not line up on a common epoch."
+        )
     # open_mfdataset makes this dask-backed, so the write is exposed to the
     # same intermittent HDF5/threaded-scheduler deadlock documented at
     # mom6.py's _regrid_obc_chunk. Not observed here -- guarded because it is
