@@ -71,7 +71,15 @@ def build_forcing_request(
 
 
 def _regrid_obc_chunk(
-    ds, hgrid, boundary, seg_id, outfolder, dataset_varnames, start_date, regridders
+    ds,
+    hgrid,
+    boundary,
+    seg_id,
+    outfolder,
+    dataset_varnames,
+    start_date,
+    regridders,
+    bathymetry_path=None,
 ):
     """Regrid one OBC chunk via regional_mom6's Segment. Writes to
     ``outfolder / f"forcing_obc_segment_{seg_id:03d}.nc"`` -- the filename
@@ -81,8 +89,31 @@ def _regrid_obc_chunk(
     ``xr.open_mfdataset`` on ``infile`` internally), so unlike the engine that
     handed us ``ds``, we do need a real file here -- write one, use it, clean
     it up. That's this function's own business, not the generic engine's.
+
+    ``bathymetry_path`` isn't part of obc.py's generic engine signature --
+    process_bc binds it via functools.partial. Without it the segment has no
+    mask and no depth, so rm6 writes the full source column at every point
+    instead of thinning dz to the local water column. The Topo is rebuilt
+    here rather than bound as an object because this runs in forked workers
+    that receive the function pickled; a path is cheap to ship, a Topo is not.
     """
     outfolder = Path(outfolder)
+    topo = None
+    if bathymetry_path is not None:
+        with xr.open_dataset(bathymetry_path) as bds:
+            if "min_depth" not in bds.attrs:
+                logger.warning(
+                    "%s has no min_depth global attribute; assuming 0.0, so any "
+                    "cell shallower than MOM6's MINIMUM_DEPTH is treated as wet "
+                    "in the OBC segments.",
+                    bathymetry_path,
+                )
+            min_depth = bds.attrs.get("min_depth", 0.0)
+        topo = Topo.from_topo_file(
+            grid=Grid.from_supergrid_ds(hgrid),
+            topo_file_path=bathymetry_path,
+            min_depth=min_depth,
+        )
     tmp_file = outfolder / f"_tmp_{boundary}_segment_{seg_id:03d}.nc"
     # Serialised deliberately. This dataset is dask-backed, and writing it
     # through dask's threaded scheduler deadlocks intermittently inside
@@ -99,6 +130,7 @@ def _regrid_obc_chunk(
             hgrid,
             orientation=boundary,
             segment_name=f"segment_{seg_id:03d}",
+            topo=topo,
         )
         seg.regrid_velocity_tracers(
             infile=tmp_file,
@@ -455,6 +487,7 @@ class ConditionsConfigurator(BaseConfigurator):
             "OBC_TRACER_RESERVOIR_LENGTH_SCALE_IN", comment="Open boundary conditions"
         ),
         UserNLConfigParam("BRUSHCUTTER_MODE", comment="Open boundary conditions"),
+        UserNLConfigParam("ENABLE_BUGS_BY_DEFAULT", comment="Open boundary conditions"),
         # Derived, config.json-only values consumed by process_ic/process_bc.
         # No case-side effect (see ConfigOutputParam).
         ConfigOutputParam(
@@ -599,6 +632,7 @@ class ConditionsConfigurator(BaseConfigurator):
         self.set_output_param("OBC_TRACER_RESERVOIR_LENGTH_SCALE_OUT", "3.0E+04")
         self.set_output_param("OBC_TRACER_RESERVOIR_LENGTH_SCALE_IN", "3000.0")
         self.set_output_param("BRUSHCUTTER_MODE", "True")
+        self.set_output_param("ENABLE_BUGS_BY_DEFAULT", "False")
 
         # ---- dynamic, per-boundary OBC params ----
         dynamic_params = []
@@ -774,7 +808,7 @@ class ConditionsConfigurator(BaseConfigurator):
             raw_dataset_path=ctx.raw_data_dir,
             regridded_dataset_path=ctx.regridded_data_dir,
             output_path=ctx.output_path,
-            regrid_chunk_fn=_regrid_obc_chunk,
+            regrid_chunk_fn=partial(_regrid_obc_chunk, bathymetry_path=ctx.topo_path),
             bathymetry_path=ctx.topo_path,
             get_step_days=int(self.get_output_param("get_step_days")),
             regrid_step_days=int(self.get_output_param("regrid_step_days")),
