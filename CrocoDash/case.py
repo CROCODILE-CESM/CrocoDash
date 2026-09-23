@@ -17,10 +17,18 @@ from ProConPy.stage import Stage
 from ProConPy.dev_utils import ConstraintViolation
 from visualCaseGen.initialize import initialize as initialize_visualCaseGen
 from visualCaseGen.custom_widget_types.case_creator import CaseCreator, ERROR, RESET
-from visualCaseGen.custom_widget_types.case_tools import xmlchange
+from visualCaseGen.custom_widget_types.case_tools import xmlchange, append_user_nl
 from CrocoDash.forcing.driver import run_workflow
 
 from CrocoDash import case_state
+
+# Seconds in each NCPL_BASE_PERIOD; year/decade assume a NO_LEAP calendar.
+_NCPL_BASE_SECONDS = {
+    "hour": 3600,
+    "day": 86400,
+    "year": 365 * 86400,
+    "decade": 3650 * 86400,
+}
 
 
 class Case:
@@ -178,6 +186,10 @@ class Case:
         self._cime_case = self.cime.get_case(
             self.caseroot, non_local=self.cc._is_non_local()
         )
+
+        # Needs the case: it reads WAV_NCPL and writes user_nl_ww3.
+        if self.ww3_in_compset:
+            self._set_ww3_timesteps()
 
         self.is_non_local = self.cc._is_non_local()
 
@@ -369,6 +381,36 @@ class Case:
             wav_dir = inputdir / "wav"
             wav_dir.mkdir(exist_ok=True)
             self.ocn_topo.write_ww3_input(wav_dir, grid_alias=ocn_grid.name)
+
+    def _set_ww3_timesteps(self):
+        """Scale the WW3 time steps to the grid via user_nl_ww3."""
+
+        base_period = self._cime_case.get_value("NCPL_BASE_PERIOD")
+        if base_period not in _NCPL_BASE_SECONDS:
+            raise ValueError(f"Invalid NCPL_BASE_PERIOD {base_period}")
+        calendar = self._cime_case.get_value("CALENDAR")
+        if base_period in ("year", "decade") and calendar != "NO_LEAP":
+            raise ValueError(
+                f"Invalid CALENDAR {calendar} for NCPL_BASE_PERIOD {base_period}"
+            )
+
+        basedt = _NCPL_BASE_SECONDS[base_period]
+        wav_ncpl = int(self._cime_case.get_value("WAV_NCPL"))
+        cpl_dt, remainder = divmod(basedt, wav_ncpl)
+        if remainder:
+            raise ValueError("WAV_NCPL doesn't divide the base dt evenly")
+
+        dt = self.ocn_topo.ww3_timesteps(float(cpl_dt))
+        append_user_nl(
+            "ww3",
+            [(k, f"{dt[k]:.1f}") for k in ("dtmax", "dtcfl", "dtcfli", "dtmin")],
+            do_exec=True,
+            comment=(
+                f"WW3 time steps from the grid's smallest cell and the {cpl_dt} s "
+                "coupling interval (CESM defaults are per wav_grid alias, not "
+                "per resolution)"
+            ),
+        )
 
     def _create_newcase(self):
         """Create the case instance."""
