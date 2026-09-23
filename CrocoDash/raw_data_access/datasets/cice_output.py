@@ -40,9 +40,9 @@ def find_cice_index_window(
     expected for realistic regional domains, since CESM's tripole grids
     place both displaced poles over land specifically to avoid this.
     """
-    grid = xr.open_dataset(grid_path)
-    tlon = np.rad2deg(grid["tlon"].values)
-    tlat = np.rad2deg(grid["tlat"].values)
+    with xr.open_dataset(grid_path) as grid:
+        tlon = np.rad2deg(grid["tlon"].values)
+        tlat = np.rad2deg(grid["tlat"].values)
     ni = tlon.shape[1]
 
     lon_row = xr.Dataset(
@@ -117,8 +117,8 @@ class CICE_RESTART(CICEForcingProduct):
             "grid file, e.g. /glade/campaign/cesm/community/omwg/grids/"
             "tx2_3v3_grid.nc for the tx2_3v3 grid. This isn't a real dated "
             "forcing product yet -- a restart is a single snapshot with no "
-            "time axis of its own, so the snapshot is just copied forward "
-            "onto a daily `time` axis spanning `dates`. `variables` defaults "
+            "time axis of its own, and it is written out as-is, with no "
+            "`time` axis added and `dates` ignored. `variables` defaults "
             "to keeping every variable in the restart, since which state "
             "variables exist depends on compile-time CICE options (tracer/"
             "layer counts) that this function has no way to know in advance."
@@ -148,8 +148,8 @@ class CICE_RESTART(CICEForcingProduct):
             grid_path, lat_min, lat_max, lon_min, lon_max, buffer_deg=buffer_deg
         )
 
-        restart = xr.open_dataset(restart_path, decode_times=False)
-        subset = restart.isel(nj=slice(nj_min, nj_max + 1), ni=ni_idx)
+        with xr.open_dataset(restart_path, decode_times=False) as restart:
+            subset = restart.isel(nj=slice(nj_min, nj_max + 1), ni=ni_idx).load()
         if variables:
             keep = [v for v in variables if v in subset.data_vars]
             missing = [v for v in variables if v not in subset.data_vars]
@@ -165,13 +165,13 @@ class CICE_RESTART(CICEForcingProduct):
         # forcing/cice.py's _regrid_cice_full_grid) has real coordinates
         # to interpolate from without re-opening the grid file itself. Always
         # attached, regardless of the `variables` filter above.
-        grid_ds = xr.open_dataset(grid_path)
-        grid_window = grid_ds.isel(nj=slice(nj_min, nj_max + 1), ni=ni_idx)
-        for coord_name in ("tlon", "tlat", "ulon", "ulat"):
-            subset[coord_name] = (
-                ("nj", "ni"),
-                np.rad2deg(grid_window[coord_name].values),
-            )
+        with xr.open_dataset(grid_path) as grid_ds:
+            grid_window = grid_ds.isel(nj=slice(nj_min, nj_max + 1), ni=ni_idx)
+            for coord_name in ("tlon", "tlat", "ulon", "ulat"):
+                subset[coord_name] = (
+                    ("nj", "ni"),
+                    np.rad2deg(grid_window[coord_name].values),
+                )
 
         # Not a real forcing product -- there's no actual time evolution to
         # source, and a CICE restart/initial-condition file is a single

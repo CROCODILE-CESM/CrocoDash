@@ -55,6 +55,7 @@ def test_case_integration_config_cice_round_trip(CrocoDash_case_factory, tmp_pat
         boundaries=["north", "south"],
         cice_product_name="reference_ice",
         cice_function_name="get_reference_ice_data",
+        restore_ice=True,
     )
     with open(case.inputdir / "extract_forcings" / "config.json", "r") as f:
         config = json.load(f)

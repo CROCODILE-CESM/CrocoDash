@@ -203,7 +203,11 @@ class REFERENCE_ICE(CICEForcingProduct):
         "Fast, deterministic synthetic CICE forcing (ice concentration/"
         "volume/surface temp and a small drift velocity) for testing and "
         "demos -- generates its own grid, no real CICE restart/grid file "
-        "required."
+        "required. Exercises the CrocoDash regrid path only: it writes a "
+        "single category (ncat=1) and five variables, where CICE needs "
+        "ncat=5 plus the rest of the restart state (vsnon, trcrn, ...), so "
+        "CICE cannot actually start from the file this produces. Use "
+        "'cice_restart' against a real global restart for a runnable case."
     )
     link = "n/a"
     # No real time evolution any more than CICE_RESTART has (see

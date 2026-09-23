@@ -46,9 +46,9 @@ instead of hardcoding a single product.
 Every variable in the source restart passes through unfiltered (T-point and
 U-point alike) -- a superset of the ``aicen``/``vicen``/``vsnon``/``trcrn``
 (category-indexed, ncat=5) that ``ice_restoring.F90``'s restoring arrays
-actually read. ``uvel``/``vvel`` (B-grid, at the cell corner) are plumbed
-through here but not consumed by any restoring path yet; the Consortium
-doesn't restore velocity.
+actually read. ``uvel``/``vvel`` (B-grid, at the T-cell's NE corner) are
+restored too: the NUOPC driver calls ``ice_restoring_interior('velocity')``
+(CICE_RunMod.F90), and ``configure`` lists ``velocity`` in ``restore_flds``.
 """
 
 from pathlib import Path
@@ -69,9 +69,10 @@ SEA_ICE_SUBDIR = "ice"
 FORCING_FILENAME = "cice_forcing.nc"
 
 # CICE's B-grid stores velocity (uvel/vvel) and its own mask (iceumask) at
-# each T-cell's own NW corner -- grid.qlon/qlat, offset by one row/column
-# (T-cell (j, i)'s NW corner is qlon[j+1, i]) -- not grid.ulon/ulat (MOM6's
-# C-grid u-point, a different physical location). The EVP internal stress
+# each T-cell's own NE corner -- ULON/ULAT are "longitude/latitude of velocity
+# pts, NE corner of T pts" (ice_grid.F90) -- so grid.qlon/qlat offset by one
+# row AND one column (T-cell (j, i)'s NE corner is qlon[j+1, i+1]), not
+# grid.ulon/ulat (MOM6's C-grid u-point, a different physical location). The EVP internal stress
 # state (stressp_N/stressm_N/stress12_N -- one field per cell corner) lives
 # at that same corner point, not the T-cell center, even though the restart
 # stores each numbered field with T-cell (nj, ni) shape -- so these regrid
@@ -131,8 +132,8 @@ def _regrid_cice_full_grid(ds, grid):
         u_vars,
         ds["ulon"].values,
         ds["ulat"].values,
-        grid.qlon.values[1:, :-1],
-        grid.qlat.values[1:, :-1],
+        grid.qlon.values[1:, 1:],
+        grid.qlat.values[1:, 1:],
     )
     if u_vars:
         u_out = u_out.rename({"lon": "u_lon", "lat": "u_lat"})
@@ -290,37 +291,21 @@ class CICEConfigurator(BaseConfigurator):
         (None, None) when the caller asked for none.
 
         Restoring is opt-in: CICE runs perfectly well without it (zero-gradient
-        boundaries, no restoring), so naming neither product nor function means
+        boundaries, no restoring), so asking for none of the three means
         "generate nothing". Defaulting to the real ``cice_restart`` product
         instead would make every CICE case depend on a real global
         restart_path/grid_path most users don't have, to produce a restoring
         target they may not have asked for.
 
-        Half-specified is always a mistake -- a typo'd or forgotten argument --
-        so it raises rather than silently skipping behind a case that still
-        runs. That check runs before the ``restore_ice`` gate below, so an
-        explicit ``restore_ice=False`` doesn't swallow the typo.
+        ``validate_args`` has already rejected every partial combination, so
+        this only has to distinguish all-three from none.
         """
-        product_name = self.get_input_param("cice_product_name")
-        function_name = self.get_input_param("cice_function_name")
-
-        if not product_name and not function_name:
+        if not self.get_input_param("restore_ice"):
             return None, None
-
-        if not product_name or not function_name:
-            missing, given = (
-                ("cice_product_name", "cice_function_name")
-                if not product_name
-                else ("cice_function_name", "cice_product_name")
-            )
-            raise ValueError(
-                f"CICE restoring forcing needs both cice_product_name and "
-                f"cice_function_name; {given} was given but {missing} was not. "
-                f"Pass both to generate the forcing file, or neither to run CICE "
-                f"without restoring."
-            )
-
-        return product_name, function_name
+        return (
+            self.get_input_param("cice_product_name"),
+            self.get_input_param("cice_function_name"),
+        )
 
     def configure(self):
         self.set_output_param("ns_boundary_type", "'zero_gradient'")
@@ -339,8 +324,7 @@ class CICEConfigurator(BaseConfigurator):
         # doesn't exist. So it's the *conjunction* of the caller's restore_ice
         # and a named product, not the input flag alone. trestore is CICE's own
         # documented default timescale, and is inert when restore_ice is off.
-        product_name, _ = self._resolve_forcing_source()
-        restoring = bool(product_name)
+        restoring = bool(self._resolve_forcing_source()[0])
         self.set_output_param("restore_ice", ".true." if restoring else ".false.")
         self.set_output_param("restore_timescale", 90)
 

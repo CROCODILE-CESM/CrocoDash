@@ -8,6 +8,7 @@ import pytest
 import xarray as xr
 
 from CrocoDash.forcing.base import WorkflowContext
+from CrocoDash.forcing import cice as cice_mod
 from CrocoDash.forcing.cice import (
     CICEConfigurator,
     FORCING_FILENAME,
@@ -22,6 +23,19 @@ _CICE_RESTART_PATH = (
     "/glade/u/home/dbailey/"
     "b.e30_alpha09b.B1850C_MTso.ne30_t233_wgx3.360.cice.r.0201-01-01-00000.nc"
 )
+
+
+def _restoring(**kwargs):
+    """The full opt-in trio, since restoring needs all three of restore_ice,
+    cice_product_name and cice_function_name (any partial combination raises).
+    Defaults to the synthetic reference_ice pair; override either by keyword.
+    """
+    return {
+        "cice_product_name": "reference_ice",
+        "cice_function_name": "get_reference_ice_data",
+        "restore_ice": True,
+        **kwargs,
+    }
 
 
 def _skip_if_cice_reference_files_missing():
@@ -60,17 +74,17 @@ def test_cice_configurator_rejects_non_cice_product():
     # A registered product of the wrong flavor (a MOM6 forcing product) and an
     # entirely unknown name are both rejected, with distinct messages.
     with pytest.raises(ValueError, match="not a CICEForcingProduct"):
-        CICEConfigurator(cice_product_name="reference_ocean")
+        CICEConfigurator(**_restoring(cice_product_name="reference_ocean"))
 
     with pytest.raises(ValueError, match="Unknown forcing product"):
-        CICEConfigurator(cice_product_name="not_a_real_product")
+        CICEConfigurator(**_restoring(cice_product_name="not_a_real_product"))
 
 
 def test_cice_configurator_accepts_matching_product():
     # Doesn't raise -- both the real restart product and the fast synthetic
     # stand-in are valid CICEForcingProducts.
-    CICEConfigurator(cice_product_name="reference_ice")
-    CICEConfigurator(cice_product_name="cice_restart")
+    CICEConfigurator(**_restoring(cice_product_name="reference_ice"))
+    CICEConfigurator(**_restoring(cice_product_name="cice_restart"))
 
 
 def test_cice_configurator_defaults_to_none_product():
@@ -100,13 +114,13 @@ def test_configure_leaves_restore_ice_off_without_a_product():
 
 
 def test_configure_turns_restore_ice_on_with_a_product(tmp_path):
-    """restore_ice defaults to True, so naming a product is enough: the
-    namelist flag goes on and ice_ic points at the expanded-grid restart
-    process() will write."""
+    """With all three opt-in arguments given, the namelist flag goes on and
+    ice_ic points at the expanded-grid restart process() will write."""
     configurator = CICEConfigurator(
         cice_product_name="reference_ice",
         cice_function_name="get_reference_ice_data",
         case_inputdir=tmp_path,
+        restore_ice=True,
     )
     _configure_without_a_case(configurator)
     assert configurator.get_output_param("restore_ice") == ".true."
@@ -116,33 +130,26 @@ def test_configure_turns_restore_ice_on_with_a_product(tmp_path):
     )
 
 
-def test_configure_restore_ice_false_overrides_a_named_product(tmp_path):
-    """The explicit off switch wins over a named product: no restoring, and
-    ice_ic left alone, so CICE runs zero-gradient with ice free to advect
-    out."""
-    configurator = CICEConfigurator(
-        cice_product_name="reference_ice",
-        cice_function_name="get_reference_ice_data",
-        case_inputdir=tmp_path,
-        restore_ice=False,
-    )
-    _configure_without_a_case(configurator)
-    assert configurator.get_output_param("restore_ice") == ".false."
-    assert configurator.get_output_param("ice_ic") == "'default'"
-    assert configurator._resolve_forcing_source() == (None, None)
+def test_configure_named_product_without_restore_ice_raises(tmp_path):
+    """Naming the product/function pair but leaving restore_ice at its False
+    default used to generate nothing silently -- indistinguishable from a case
+    that never asked for restoring. All three or none."""
+    with pytest.raises(ValueError, match="needs all three"):
+        CICEConfigurator(
+            cice_product_name="reference_ice",
+            cice_function_name="get_reference_ice_data",
+            case_inputdir=tmp_path,
+            restore_ice=False,
+        )
 
 
-@pytest.mark.parametrize("restore_ice", [True, False])
-def test_configure_always_sets_restart_ext(restore_ice, tmp_path):
+@pytest.mark.parametrize("restoring", [True, False])
+def test_configure_always_sets_restart_ext(restoring, tmp_path):
     """CICE's own set_nml.bczerogradient pairs zero_gradient boundaries with
     restart_ext = .true., and the ghost ring only exists on disk with it --
     so it goes on regardless of whether restoring is active."""
-    configurator = CICEConfigurator(
-        cice_product_name="reference_ice",
-        cice_function_name="get_reference_ice_data",
-        case_inputdir=tmp_path,
-        restore_ice=restore_ice,
-    )
+    kwargs = _restoring(cice_product_name="reference_ice") if restoring else {}
+    configurator = CICEConfigurator(case_inputdir=tmp_path, **kwargs)
     _configure_without_a_case(configurator)
     assert configurator.get_output_param("restart_ext") == ".true."
     assert configurator.get_output_param("ns_boundary_type") == "'zero_gradient'"
@@ -152,36 +159,77 @@ def test_configure_always_sets_restart_ext(restore_ice, tmp_path):
 def test_configure_restoring_without_a_case_inputdir_raises():
     """There's nowhere for ice_ic to point without it -- fail with a named
     error rather than writing a bogus relative path into user_nl_cice."""
-    configurator = CICEConfigurator(
-        cice_product_name="reference_ice",
-        cice_function_name="get_reference_ice_data",
-    )
+    configurator = CICEConfigurator(**_restoring(cice_product_name="reference_ice"))
     with pytest.raises(ValueError, match="case_inputdir is unset"):
         _configure_without_a_case(configurator)
 
 
 @pytest.mark.parametrize(
-    "kwargs, given, missing",
+    "kwargs",
     [
-        (
-            {"cice_product_name": "reference_ice"},
-            "cice_product_name",
-            "cice_function_name",
-        ),
-        (
-            {"cice_function_name": "get_reference_ice_data"},
-            "cice_function_name",
-            "cice_product_name",
-        ),
+        {"cice_product_name": "reference_ice"},
+        {"cice_function_name": "get_reference_ice_data"},
+        {"restore_ice": True},
+        {"restore_ice": True, "cice_product_name": "reference_ice"},
+        {
+            "cice_product_name": "reference_ice",
+            "cice_function_name": "get_reference_ice_data",
+        },
     ],
+    ids=["product", "function", "restore_ice", "restore+product", "pair-no-restore"],
 )
-def test_cice_half_specified_raises(kwargs, given, missing):
-    """Only one of the pair given is a typo or a forgotten argument, not a
+def test_cice_partially_specified_raises(kwargs):
+    """Restoring takes all three of restore_ice, cice_product_name and
+    cice_function_name. Any subset is a typo or a forgotten argument, not a
     request to skip -- skipping silently would hide it behind a case that
-    still runs."""
-    configurator = CICEConfigurator(**kwargs)
-    with pytest.raises(ValueError, match=f"{given} was given but {missing}"):
-        configurator._resolve_forcing_source()
+    still runs, with no forcing file and ice_ic left at 'default'."""
+    with pytest.raises(ValueError, match="needs all three"):
+        CICEConfigurator(**kwargs)
+
+
+def test_cice_none_of_the_three_is_valid():
+    """The other half of the rule: asking for none of it is a real
+    configuration, not an error -- CICE cold-starts with no restart file."""
+    configurator = CICEConfigurator()
+    assert configurator._resolve_forcing_source() == (None, None)
+
+
+def test_u_point_vars_regrid_onto_the_ne_corner(tmp_path, gen_grid_topo_vgrid):
+    """CICE's ULON/ULAT are "longitude/latitude of velocity pts, NE corner of
+    T pts" (ice_grid.F90), so uvel/vvel/iceumask and the stress fields must be
+    sampled north-east of each T centre. The old code used qlon[1:, :-1], the
+    NW corner, putting every velocity point one cell too far west -- a silent
+    data error, since shapes and dtypes are identical either way.
+
+    Asserted as the NE-of-centre invariant rather than against a literal
+    slice, because process() regrids onto the halo-expanded grid, not the
+    supergrid passed in.
+    """
+    grid, _, _ = gen_grid_topo_vgrid
+    grid.write_supergrid(tmp_path / "grid.nc")
+
+    seen = {}
+    real = cice_mod._regrid_point_group
+
+    def _spy(ds, vars_, src_lon, src_lat, tgt_lon, tgt_lat):
+        if vars_:
+            key = "u" if any(cice_mod._is_u_point_var(v) for v in vars_) else "t"
+            seen[key] = (tgt_lon, tgt_lat)
+        return real(ds, vars_, src_lon, src_lat, tgt_lon, tgt_lat)
+
+    with patch.object(cice_mod, "_regrid_point_group", _spy):
+        CICEConfigurator(**_restoring()).process(
+            _make_ctx(tmp_path, supergrid_path=tmp_path / "grid.nc")
+        )
+
+    assert {"t", "u"} <= set(seen), f"expected both point groups, got {sorted(seen)}"
+    (t_lon, t_lat), (u_lon, u_lat) = seen["t"], seen["u"]
+    assert u_lon.shape == t_lon.shape
+
+    # NE corner: strictly east and strictly north of the T centre. The NW-corner
+    # bug inverts the longitude comparison while leaving latitude alone.
+    assert (u_lon > t_lon).all(), "U points are not east of T centres (NW corner?)"
+    assert (u_lat > t_lat).all(), "U points are not north of T centres"
 
 
 # =============================================================================
@@ -225,6 +273,7 @@ def test_process_cice_forcing_produces_output(
             "restart_path": _CICE_RESTART_PATH,
             "grid_path": _CICE_GRID_PATH,
         },
+        restore_ice=True,
     )
     configurator.process(_make_ctx(tmp_path, supergrid_path=tmp_path / "grid.nc"))
 
@@ -257,10 +306,7 @@ def test_process_cice_forcing_with_reference_ice(tmp_path, gen_grid_topo_vgrid):
     n_halo_cells = 1
     ny, nx = grid.tlat.shape
 
-    configurator = CICEConfigurator(
-        cice_product_name="reference_ice",
-        cice_function_name="get_reference_ice_data",
-    )
+    configurator = CICEConfigurator(**_restoring())
     configurator.process(_make_ctx(tmp_path, supergrid_path=tmp_path / "grid.nc"))
 
     ds = xr.open_dataset(tmp_path / "ice" / "cice_forcing.nc")
@@ -314,10 +360,7 @@ def test_get_output_filepaths_agrees_with_process(tmp_path, gen_grid_topo_vgrid)
     grid, _, _ = gen_grid_topo_vgrid
     grid.write_supergrid(tmp_path / "grid.nc")
 
-    configurator = CICEConfigurator(
-        cice_product_name="reference_ice",
-        cice_function_name="get_reference_ice_data",
-    )
+    configurator = CICEConfigurator(**_restoring(cice_product_name="reference_ice"))
     configurator.process(_make_ctx(tmp_path, supergrid_path=tmp_path / "grid.nc"))
 
     paths = configurator.get_output_filepaths(tmp_path / "ocn")
