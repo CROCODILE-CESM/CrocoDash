@@ -929,6 +929,7 @@ document.write(`
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.topo.Topo.generate_mask_from_naturalearth"><code class="docutils literal notranslate"><span class="pre">Topo.generate_mask_from_naturalearth()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.topo.Topo.generate_mask_from_stats_ocean_frac"><code class="docutils literal notranslate"><span class="pre">Topo.generate_mask_from_stats_ocean_frac()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.topo.Topo.has_version_control"><code class="docutils literal notranslate"><span class="pre">Topo.has_version_control</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.topo.Topo.keep_largest_basin"><code class="docutils literal notranslate"><span class="pre">Topo.keep_largest_basin()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.topo.Topo.land_fillval"><code class="docutils literal notranslate"><span class="pre">Topo.land_fillval</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.topo.Topo.masked_depth"><code class="docutils literal notranslate"><span class="pre">Topo.masked_depth</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.topo.Topo.max_depth"><code class="docutils literal notranslate"><span class="pre">Topo.max_depth</span></code></a></li>
@@ -1457,6 +1458,17 @@ down to the lat/lon ranges required for efficient regridding:</p>
 </ul>
 </dd>
 </dl>
+<p>Each box is <code class="docutils literal notranslate"><span class="pre">{&quot;lon_min&quot;,</span> <span class="pre">&quot;lon_max&quot;,</span> <span class="pre">&quot;lat_min&quot;,</span> <span class="pre">&quot;lat_max&quot;,</span>
+<span class="pre">&quot;crosses_antimeridian&quot;}</span></code>. <code class="docutils literal notranslate"><span class="pre">lon_min</span></code> is always a longitude in
+[-180, 180) and <code class="docutils literal notranslate"><span class="pre">lon_max</span></code> is <code class="docutils literal notranslate"><span class="pre">lon_min</span></code> plus the width of the
+box, so the pair always names a contiguous eastward arc and
+<code class="docutils literal notranslate"><span class="pre">lon_max</span> <span class="pre">-</span> <span class="pre">lon_min</span></code> is its width.</p>
+<p>A box straddling the antimeridian therefore carries
+<code class="docutils literal notranslate"><span class="pre">lon_max</span> <span class="pre">&gt;</span> <span class="pre">180</span></code> – 170 to 190, say – and sets
+<code class="docutils literal notranslate"><span class="pre">crosses_antimeridian</span></code>. A caller selecting with
+<code class="docutils literal notranslate"><span class="pre">lon_min</span> <span class="pre">&lt;=</span> <span class="pre">lon</span> <span class="pre">&lt;=</span> <span class="pre">lon_max</span></code> from a source on [-180, 180] has to
+branch on that flag and take the two pieces separately. Wrapping
+<code class="docutils literal notranslate"><span class="pre">lon_max</span></code> down to -170 first and comparing would select nothing.</p>
 </p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
@@ -1695,6 +1707,11 @@ If version control is disabled, the command is executed directly without recordi
 <dt class="sig sig-object py" id="CrocoDash.topo.Topo.basintmask">
 <em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">basintmask</span></span><a class="headerlink" href="#CrocoDash.topo.Topo.basintmask" title="Link to this definition">#</a></dt>
 <dd><p>Ocean domain mask at T grid. Seperate number for each connected water cell, 0 if land.</p>
+<p>Labels are contiguous, starting at 1, and the basin of greatest total area
+carries the highest label. The remaining labels are in no particular order.</p>
+<p>On a zonally periodic grid (cyclic_x), the components touching the i=0 and
+i=nx-1 columns of a common row are merged, so a basin straddling the seam is
+labeled once rather than twice.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -1804,12 +1821,14 @@ averaging (up to 100 passes).</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.topo.Topo.erase_disconnected_basin">
 <span class="sig-name descname"><span class="pre">erase_disconnected_basin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">i</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">j</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.topo.Topo.erase_disconnected_basin" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
+<dd><p>Erase every basin but the one containing cell (i, j). A no-op if that cell is land.</p>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.topo.Topo.erase_selected_basin">
 <span class="sig-name descname"><span class="pre">erase_selected_basin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">i</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">j</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.topo.Topo.erase_selected_basin" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
+<dd><p>Erase the basin containing cell (i, j). A no-op if that cell is land.</p>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.topo.Topo.fill_inland_lakes_and_channels">
@@ -1940,6 +1959,16 @@ bathymetry object for use by this and other downstream methods.</p>
 <dt class="sig sig-object py" id="CrocoDash.topo.Topo.has_version_control">
 <em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">has_version_control</span></span><a class="headerlink" href="#CrocoDash.topo.Topo.has_version_control" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.topo.Topo.keep_largest_basin">
+<span class="sig-name descname"><span class="pre">keep_largest_basin</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.topo.Topo.keep_largest_basin" title="Link to this definition">#</a></dt>
+<dd><p>Remove every disconnected ocean basin except the largest one.</p>
+<p>Basins are the connected components of the ocean mask (4-connectivity, and
+wrapping in x when the grid is cyclic). basintmask gives the basin of greatest
+total area the highest label, so that one is kept and every other basin is
+masked out as land. This is a no-op when the domain holds at most one basin.</p>
+</dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="CrocoDash.topo.Topo.land_fillval">
@@ -2274,7 +2303,7 @@ channel_widths.write(channel_file_path).</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.topo.Topo.write_ww3_input">
-<span class="sig-name descname"><span class="pre">write_ww3_input</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_alias</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">open_boundary</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.topo.Topo.write_ww3_input" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">write_ww3_input</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_alias</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundary_edges</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">open_boundary</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.topo.Topo.write_ww3_input" title="Link to this definition">#</a></dt>
 <dd><p>Write the text-based WW3 input files ww3_grid.inp, [grid_alias]_x.inp, [grid_alias]_y.inp,
 [grid_alias]_mapsta.inp, [grid_alias]_bottom.inp, which are to be read by the WW3
 mod_def creator before runtime to generate the WW3 grid files.</p>
@@ -2283,12 +2312,26 @@ mod_def creator before runtime to generate the WW3 grid files.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>file_dir</strong> (<em>str</em>) – Directory to write the WW3 input files to.</p></li>
 <li><p><strong>grid_alias</strong> (<em>str</em>) – The alias for the grid, which will be used in the file names of the WW3 input files.</p></li>
-<li><p><strong>open_boundary</strong> (<em>bool</em><em>, </em><em>optional</em>) – Give ocean cells on the open edges status 2 (active boundary) so WW3 can
-take boundary spectra from nest.ww3. Defaults to True for a non-cyclic
-(regional) grid and False for a cyclic one. Cyclic-x grids have no
-east/west edges and tripolar grids no north edge. Without nest.ww3,
-WW3 warns and leaves them calm.</p></li>
+<li><p><strong>boundary_edges</strong> (<em>None</em><em>, </em><em>str</em><em> or </em><em>iterable</em><em> of </em><em>str</em><em>, </em><em>optional</em>) – Domain edges whose ocean cells become WW3 active boundary points
+(mapsta status 2): any of “south” (j=0), “north” (j=ny-1), “west”
+(i=0), “east” (i=nx-1). None (default) selects all four edges of a
+non-cyclic (regional) grid and no edge of a cyclic-x grid, so a
+global grid does not declare boundary points it has no data for; a
+zonally periodic band that is open to the south and north lists
+them explicitly. An empty list writes a plain land/sea mask; ww3_grid then excludes
+the perimeter sea cells. Spectral boundary data reach status-2
+points via ww3_bounc / nest.ww3; without it they stay at zero
+energy, so whatever generates the spectra should list the edges it
+covers.</p></li>
+<li><p><strong>open_boundary</strong> (<em>bool</em><em>, </em><em>optional</em>) – Deprecated; use boundary_edges. True is the default edge set,
+False is no edges.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If boundary_edges names an unknown edge, names the east or west
+    edge on a grid that is reentrant in x, or the grid is tripolar
+    (the closure written has no ‘TRPL’ case). Raised before anything
+    is written.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -2762,6 +2805,7 @@ mom6_forge functions CrocoDash calls (useful when upgrading mom6_forge)</p></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.topo.Topo.generate_mask_from_naturalearth"><code class="docutils literal notranslate"><span class="pre">Topo.generate_mask_from_naturalearth()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.topo.Topo.generate_mask_from_stats_ocean_frac"><code class="docutils literal notranslate"><span class="pre">Topo.generate_mask_from_stats_ocean_frac()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.topo.Topo.has_version_control"><code class="docutils literal notranslate"><span class="pre">Topo.has_version_control</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.topo.Topo.keep_largest_basin"><code class="docutils literal notranslate"><span class="pre">Topo.keep_largest_basin()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.topo.Topo.land_fillval"><code class="docutils literal notranslate"><span class="pre">Topo.land_fillval</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.topo.Topo.masked_depth"><code class="docutils literal notranslate"><span class="pre">Topo.masked_depth</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.topo.Topo.max_depth"><code class="docutils literal notranslate"><span class="pre">Topo.max_depth</span></code></a></li>
