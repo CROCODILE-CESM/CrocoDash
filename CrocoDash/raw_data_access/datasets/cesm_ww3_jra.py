@@ -113,11 +113,11 @@ logger = setup_logger(__name__)
 # Both are overridable per call (via configure_forcings's
 # ww3_obc_function_overrides) so that any other CESM/WW3 run with 6-hourly
 # netCDF restarts -- e.g. the 0.5-degree `wi_jra.glo0p5.001` sibling -- can be
-# read by the same code.
-_DEFAULT_DATABASE_ROOT = "/glade/derecho/scratch/altuntas/wi_jra.glo1p0.001/run"
-_DEFAULT_GRID_FILE = (
-    "/glade/derecho/scratch/altuntas/croc_input/ww3glo1p0/wav/ocean_topog_ww3glo1p0.nc"
-)
+# read by the same code. The database's README (next to restarts/) describes
+# the producing run.
+_DEFAULT_DATABASE = "/glade/campaign/cgd/oce/projects/CROCODILE/data/wi_jra.glo1p0.001"
+_DEFAULT_DATABASE_ROOT = f"{_DEFAULT_DATABASE}/restarts"
+_DEFAULT_GRID_FILE = f"{_DEFAULT_DATABASE}/grid/ocean_topog_ww3glo1p0.nc"
 
 # Spectral discretization of the default database's grid, from the
 # `XFR FR1 NK NTH RTH0` line of its ww3_grid.inp (`1.1  0.04118  25  24  0.0`).
