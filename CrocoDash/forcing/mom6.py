@@ -614,9 +614,14 @@ class ConditionsConfigurator(BaseConfigurator):
         self.set_output_param("TEMP_SALT_INIT_VERTICAL_REMAP_ONLY", True)
         self.set_output_param("DEPRESS_INITIAL_SURFACE", True)
         self.set_output_param("VELOCITY_CONFIG", "file")
-        self.set_output_param("TEMP_SALT_Z_INIT_FILE", "init_tracers.nc")
-        self.set_output_param("SURFACE_HEIGHT_IC_FILE", "init_eta.nc")
-        self.set_output_param("VELOCITY_FILE", "init_vel.nc")
+        # Point MOM6 at the FILLED initial conditions. setup_initial_conditions() always
+        # writes both the raw init_*.nc and the land-filled init_*_filled.nc; the raw files
+        # still carry the source dataset's missing values on cells that are wet in the model
+        # grid but dry (or absent) in the source. MOM6 ingests those as data and aborts during
+        # initialization with SST = -1.0E+20 on the affected cells.
+        self.set_output_param("TEMP_SALT_Z_INIT_FILE", "init_tracers_filled.nc")
+        self.set_output_param("SURFACE_HEIGHT_IC_FILE", "init_eta_filled.nc")
+        self.set_output_param("VELOCITY_FILE", "init_vel_filled.nc")
         self.set_output_param("Z_INIT_FILE_PTEMP_VAR", "temp")
         self.set_output_param("Z_INIT_FILE_SALT_VAR", "salt")
         self.set_output_param("SURFACE_HEIGHT_IC_VAR", "eta_t")

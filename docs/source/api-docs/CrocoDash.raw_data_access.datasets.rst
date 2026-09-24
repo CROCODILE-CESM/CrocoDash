@@ -20,6 +20,14 @@ CrocoDash.raw\_data\_access.datasets.cesm\_ww3\_jra module
    :show-inheritance:
    :undoc-members:
 
+CrocoDash.raw\_data\_access.datasets.cice\_output module
+--------------------------------------------------------
+
+.. automodule:: CrocoDash.raw_data_access.datasets.cice_output
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 CrocoDash.raw\_data\_access.datasets.empty\_products module
 -----------------------------------------------------------
 
