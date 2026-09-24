@@ -1040,21 +1040,33 @@ whole sequence.</p>
 MARBL BGC and GLOFAS runoff (e.g. <code class="docutils literal notranslate"><span class="pre">CR1850MARBL_JRA_GLOFAS</span></code>):</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">The</span> <span class="n">following</span> <span class="n">additional</span> <span class="n">configuration</span> <span class="n">options</span> <span class="n">are</span> <span class="n">required</span> <span class="n">to</span> <span class="n">run</span> <span class="ow">and</span> <span class="n">must</span> <span class="n">be</span>
 <span class="n">provided</span> <span class="k">with</span> <span class="nb">any</span> <span class="n">listed</span> <span class="n">arguments</span> <span class="ow">in</span> <span class="n">configure_forcings</span><span class="p">:</span>
+  <span class="o">-</span> <span class="n">StreamYears</span><span class="p">:</span> <span class="n">no</span> <span class="n">arguments</span>
   <span class="o">-</span> <span class="n">BGC</span><span class="p">:</span> <span class="n">no</span> <span class="n">arguments</span>
   <span class="o">-</span> <span class="n">BGCIC</span><span class="p">:</span> <span class="n">marbl_ic_filepath</span>
+  <span class="o">-</span> <span class="n">BGCIronForcing</span><span class="p">:</span> <span class="n">no</span> <span class="n">arguments</span>
+  <span class="o">-</span> <span class="n">conditions</span><span class="p">:</span> <span class="n">boundaries</span><span class="p">,</span> <span class="n">product_name</span><span class="p">,</span> <span class="n">function_name</span><span class="p">,</span> <span class="n">compset</span>
   <span class="o">-</span> <span class="n">Runoff</span><span class="p">:</span> <span class="n">no</span> <span class="n">arguments</span>
 </pre></div>
 </div>
 <p>Each line is one configurator class plus the keyword arguments you’ll need to
-pass to <code class="docutils literal notranslate"><span class="pre">case.configure_forcings(...)</span></code> in the next step (arguments starting
-with <code class="docutils literal notranslate"><span class="pre">case_</span></code> are filled in automatically and never appear here). Note that
-configurators like <code class="docutils literal notranslate"><span class="pre">tides</span></code> aren’t tied to any compset component, so they’re
+pass to <code class="docutils literal notranslate"><span class="pre">case.configure_forcings(...)</span></code> in the next step. Only arguments with no
+default are listed, and arguments starting with <code class="docutils literal notranslate"><span class="pre">case_</span></code> are filled in
+automatically and never appear here.</p>
+<p>Two configurators show up for essentially every case, so don’t be surprised by
+them:</p>
+<ul class="simple">
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">conditions</span></code></strong> is required by any compset containing <code class="docutils literal notranslate"><span class="pre">MOM6</span></code> — it drives the
+initial and boundary condition extraction. Its arguments all have sensible
+defaults on <code class="docutils literal notranslate"><span class="pre">configure_forcings</span></code> itself, so in practice you only owe it
+<code class="docutils literal notranslate"><span class="pre">date_range</span></code>.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">StreamYears</span></code></strong> is required by any <code class="docutils literal notranslate"><span class="pre">DATM%JRA</span></code> compset, and takes no
+arguments.</p></li>
+</ul>
+<p>Configurators like <code class="docutils literal notranslate"><span class="pre">tides</span></code> aren’t tied to any compset component, so they’re
 never “required” — they’re optional and you add them whenever you want tidal
-forcing. Standalone compsets with no BGC/CICE/runoff component (e.g. <code class="docutils literal notranslate"><span class="pre">CR_JRA</span></code>)
-print nothing here at all. See <a class="reference internal" href="3a_configure_forcings.html"><span class="std std-doc">Configure Forcings</span></a>
-for the full story.</p>
+forcing. See <a class="reference internal" href="3a_configure_forcings.html"><span class="std std-doc">Configure Forcings</span></a> for the full story.</p>
 <p>You can reproduce this list at any time:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">CrocoDash.forcing_configurations</span><span class="w"> </span><span class="kn">import</span> <span class="n">ForcingConfigRegistry</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">CrocoDash.forcing.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">ForcingConfigRegistry</span>
 <span class="n">required</span> <span class="o">=</span> <span class="n">ForcingConfigRegistry</span><span class="o">.</span><span class="n">find_required_configurators</span><span class="p">(</span><span class="n">case</span><span class="o">.</span><span class="n">compset_lname</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -1078,6 +1090,9 @@ for the full story.</p>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">case.bgc_in_compset</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">&quot;%MARBL&quot;</span></code> appears in the compset longname</p></td>
 </tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">case.ww3_in_compset</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;WW3&quot;</span></code> appears in the compset longname</p></td>
+</tr>
 </tbody>
 </table>
 </div>
@@ -1089,7 +1104,7 @@ configurators use internally to decide which configurators are compatible.</p>
 <ul class="simple">
 <li><p><strong><code class="docutils literal notranslate"><span class="pre">Given</span> <span class="pre">caseroot</span> <span class="pre">...</span> <span class="pre">already</span> <span class="pre">exists!</span></code></strong> — pass <code class="docutils literal notranslate"><span class="pre">override=True</span></code> <em>or</em> pick a fresh path. <code class="docutils literal notranslate"><span class="pre">override=True</span></code> is safe for iteration but will remove the prior case directory.</p></li>
 <li><p><strong><code class="docutils literal notranslate"><span class="pre">compset</span> <span class="pre">must</span> <span class="pre">be</span> <span class="pre">a</span> <span class="pre">valid</span> <span class="pre">CESM</span> <span class="pre">compset</span> <span class="pre">long</span> <span class="pre">name</span> <span class="pre">or</span> <span class="pre">alias.</span></code></strong> — aliases are resolved against your CESM checkout’s compset list. If the alias isn’t in the available compsets, you either have the wrong <code class="docutils literal notranslate"><span class="pre">cesmroot</span></code> or your CESM checkout doesn’t include the CROCODILE compset fork.</p></li>
-<li><p><strong>Only MOM6-based compsets are supported.</strong> CrocoDash enforces <code class="docutils literal notranslate"><span class="pre">MOM6</span></code>, <code class="docutils literal notranslate"><span class="pre">SLND</span></code>, <code class="docutils literal notranslate"><span class="pre">SGLC</span></code>, and <code class="docutils literal notranslate"><span class="pre">SWAV</span></code> in the compset longname. Active land/glacier/wave models are not supported.</p></li>
+<li><p><strong>Only MOM6-based compsets are supported.</strong> CrocoDash enforces <code class="docutils literal notranslate"><span class="pre">MOM6</span></code>, <code class="docutils literal notranslate"><span class="pre">SLND</span></code>, and <code class="docutils literal notranslate"><span class="pre">SGLC</span></code> in the compset longname, and rejects <code class="docutils literal notranslate"><span class="pre">DWAV</span></code>. Active land and glacier models are not supported. Waves are: use <code class="docutils literal notranslate"><span class="pre">SWAV</span></code> for stub waves or <code class="docutils literal notranslate"><span class="pre">WW3</span></code> for the active wave model.</p></li>
 <li><p><strong>Machine requires a project.</strong> If your machine has accounting, <code class="docutils literal notranslate"><span class="pre">project=</span></code> is not optional.</p></li>
 </ul>
 </section>

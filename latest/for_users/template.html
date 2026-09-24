@@ -345,6 +345,7 @@ document.write(`
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#case-templates-kind-case">Case templates (<code class="docutils literal notranslate"><span class="pre">--kind</span> <span class="pre">case</span></code>)</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pbs-submission-script-kind-pbs">PBS submission script (<code class="docutils literal notranslate"><span class="pre">--kind</span> <span class="pre">pbs</span></code>)</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#machine"><code class="docutils literal notranslate"><span class="pre">--machine</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#notebook-and-list-notebooks"><code class="docutils literal notranslate"><span class="pre">--notebook</span></code> and <code class="docutils literal notranslate"><span class="pre">--list-notebooks</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#available-machines">Available machines</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#what-gets-filled-in">What gets filled in</a></li>
 </ul>
@@ -371,14 +372,21 @@ document.write(`
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Jupyter notebook with &lt;KEY&gt; placeholders for manual editing</span>
 crocodash<span class="w"> </span>template<span class="w"> </span>--output<span class="w"> </span>my_case.ipynb
 
-<span class="c1"># Jupyter notebook with Derecho/GLADE paths pre-filled</span>
-crocodash<span class="w"> </span>template<span class="w"> </span>--output<span class="w"> </span>my_case.ipynb<span class="w"> </span>--machine<span class="w"> </span>derecho
+<span class="c1"># Jupyter notebook with GLADE (Derecho/Casper) paths pre-filled</span>
+crocodash<span class="w"> </span>template<span class="w"> </span>--output<span class="w"> </span>my_case.ipynb<span class="w"> </span>--machine<span class="w"> </span>glade
 
-<span class="c1"># Python script with Derecho paths pre-filled</span>
-crocodash<span class="w"> </span>template<span class="w"> </span>--output<span class="w"> </span>my_case.py<span class="w"> </span>--machine<span class="w"> </span>derecho
+<span class="c1"># Python script with GLADE paths pre-filled</span>
+crocodash<span class="w"> </span>template<span class="w"> </span>--output<span class="w"> </span>my_case.py<span class="w"> </span>--machine<span class="w"> </span>glade
 
-<span class="c1"># YAML config with Derecho paths pre-filled</span>
-crocodash<span class="w"> </span>template<span class="w"> </span>--output<span class="w"> </span>my_case.yaml<span class="w"> </span>--machine<span class="w"> </span>derecho
+<span class="c1"># YAML config with GLADE paths pre-filled</span>
+crocodash<span class="w"> </span>template<span class="w"> </span>--output<span class="w"> </span>my_case.yaml<span class="w"> </span>--machine<span class="w"> </span>glade
+
+<span class="c1"># Start from a different gallery notebook instead of the default tutorial</span>
+crocodash<span class="w"> </span>template<span class="w"> </span>--output<span class="w"> </span>my_marbl_case.ipynb<span class="w"> </span>--machine<span class="w"> </span>glade<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--notebook<span class="w"> </span>crocodash.projects.marbl
+
+<span class="c1"># See every notebook you can start from</span>
+crocodash<span class="w"> </span>template<span class="w"> </span>--list-notebooks
 </pre></div>
 </div>
 <p>For <code class="docutils literal notranslate"><span class="pre">--kind</span> <span class="pre">case</span></code>, the output <em>format</em> is picked by <code class="docutils literal notranslate"><span class="pre">--output</span></code>’s suffix: <code class="docutils literal notranslate"><span class="pre">.yaml</span></code>/<code class="docutils literal notranslate"><span class="pre">.yml</span></code> for a config, <code class="docutils literal notranslate"><span class="pre">.ipynb</span></code> for a notebook, anything else for a <code class="docutils literal notranslate"><span class="pre">.py</span></code> script.</p>
@@ -395,15 +403,33 @@ crocodash<span class="w"> </span>template<span class="w"> </span>--output<span c
 <hr class="docutils" />
 <section id="machine">
 <h2><code class="docutils literal notranslate"><span class="pre">--machine</span></code><a class="headerlink" href="#machine" title="Link to this heading">#</a></h2>
-<p>The <code class="docutils literal notranslate"><span class="pre">--machine</span></code> flag replaces <code class="docutils literal notranslate"><span class="pre">&lt;KEY&gt;</span></code> placeholders (e.g. <code class="docutils literal notranslate"><span class="pre">&lt;GEBCO&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;TPXO_H&gt;</span></code>) with real dataset paths for the given machine. Omit it to leave placeholders and fill them in manually. It only applies to <code class="docutils literal notranslate"><span class="pre">--kind</span> <span class="pre">case</span></code> — the pbs template’s placeholders (<code class="docutils literal notranslate"><span class="pre">&lt;PROJECT_CODE&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">caseroot</span></code>) aren’t dataset paths, so <code class="docutils literal notranslate"><span class="pre">--machine</span></code> has no effect on <code class="docutils literal notranslate"><span class="pre">--kind</span> <span class="pre">pbs</span></code> output.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">--machine</span></code> flag replaces <code class="docutils literal notranslate"><span class="pre">&lt;KEY&gt;</span></code> placeholders (e.g. <code class="docutils literal notranslate"><span class="pre">&lt;GEBCO&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;TPXO_H&gt;</span></code>) with real dataset paths for the given machine. The only registry shipped today is <code class="docutils literal notranslate"><span class="pre">glade</span></code>, which covers both Derecho and Casper. Omit the flag to leave placeholders and fill them in manually. It only applies to <code class="docutils literal notranslate"><span class="pre">--kind</span> <span class="pre">case</span></code> — the pbs template’s placeholders (<code class="docutils literal notranslate"><span class="pre">&lt;PROJECT_CODE&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">caseroot</span></code>) aren’t dataset paths, so <code class="docutils literal notranslate"><span class="pre">--machine</span></code> has no effect on <code class="docutils literal notranslate"><span class="pre">--kind</span> <span class="pre">pbs</span></code> output.</p>
 <p>A few <code class="docutils literal notranslate"><span class="pre">known_paths.json</span></code> keys (<code class="docutils literal notranslate"><span class="pre">CESM</span></code>, <code class="docutils literal notranslate"><span class="pre">inputdir</span></code>, <code class="docutils literal notranslate"><span class="pre">casedir</span></code>) are also placeholder tokens rather than real paths, so they’re always left as <code class="docutils literal notranslate"><span class="pre">&lt;KEY&gt;</span></code> for manual editing regardless of <code class="docutils literal notranslate"><span class="pre">--machine</span></code>.</p>
+</section>
+<hr class="docutils" />
+<section id="notebook-and-list-notebooks">
+<h2><code class="docutils literal notranslate"><span class="pre">--notebook</span></code> and <code class="docutils literal notranslate"><span class="pre">--list-notebooks</span></code><a class="headerlink" href="#notebook-and-list-notebooks" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">--kind</span> <span class="pre">case</span></code> templates are rendered from a <strong>gallery notebook</strong>, so you can
+start from any of them rather than just the default tutorial
+(<code class="docutils literal notranslate"><span class="pre">crocodash.tutorial</span></code>):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>crocodash<span class="w"> </span>template<span class="w"> </span>--list-notebooks<span class="w">          </span><span class="c1"># print every available ID</span>
+crocodash<span class="w"> </span>template<span class="w"> </span>--output<span class="w"> </span>my_case.ipynb<span class="w"> </span>--notebook<span class="w"> </span>crocodash.projects.ww3
+</pre></div>
+</div>
+<p>IDs are the notebook’s path in the CrocoGallery repo with <code class="docutils literal notranslate"><span class="pre">/</span></code> replaced by <code class="docutils literal notranslate"><span class="pre">.</span></code>
+and the extension dropped — <code class="docutils literal notranslate"><span class="pre">crocodash/projects/marbl.ipynb</span></code> is
+<code class="docutils literal notranslate"><span class="pre">crocodash.projects.marbl</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">--notebook</span></code> only affects <code class="docutils literal notranslate"><span class="pre">--kind</span> <span class="pre">case</span></code> output formats that are rendered from a
+notebook (<code class="docutils literal notranslate"><span class="pre">.ipynb</span></code> and <code class="docutils literal notranslate"><span class="pre">.py</span></code>). For <code class="docutils literal notranslate"><span class="pre">.yaml</span></code> and for <code class="docutils literal notranslate"><span class="pre">--kind</span> <span class="pre">pbs</span></code>, the template is
+a standalone file and <code class="docutils literal notranslate"><span class="pre">--notebook</span></code> is ignored, with a message saying so.</p>
+<p><code class="docutils literal notranslate"><span class="pre">--output</span></code> is required unless you pass <code class="docutils literal notranslate"><span class="pre">--list-notebooks</span></code>.</p>
 </section>
 <hr class="docutils" />
 <section id="available-machines">
 <h2>Available machines<a class="headerlink" href="#available-machines" title="Link to this heading">#</a></h2>
-<p>Machine path registries are defined in <code class="docutils literal notranslate"><span class="pre">crocogallery/known_paths.json</span></code> inside the CrocoGallery repo. To add a new environment (e.g. <code class="docutils literal notranslate"><span class="pre">&quot;casper&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;local&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;manish&quot;</span></code>), add a new top-level key with the relevant path mappings — no Python changes needed.</p>
+<p>Machine path registries are defined in <code class="docutils literal notranslate"><span class="pre">crocogallery/known_paths.json</span></code> inside the CrocoGallery repo. Today there is one: <code class="docutils literal notranslate"><span class="pre">glade</span></code>. To add a new environment (e.g. <code class="docutils literal notranslate"><span class="pre">&quot;local&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;perlmutter&quot;</span></code>), add a new top-level key with the relevant path mappings — no Python changes needed.</p>
 <p>Passing an unknown machine name prints the available options:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="ne">KeyError</span><span class="p">:</span> <span class="n">Unknown</span> <span class="n">machine</span> <span class="s1">'bogus'</span><span class="o">.</span> <span class="n">Available</span><span class="p">:</span> <span class="n">derecho</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="ne">KeyError</span><span class="p">:</span> <span class="n">Unknown</span> <span class="n">machine</span> <span class="s1">'bogus'</span><span class="o">.</span> <span class="n">Available</span><span class="p">:</span> <span class="n">glade</span>
 </pre></div>
 </div>
 </section>
@@ -487,6 +513,7 @@ crocodash<span class="w"> </span>template<span class="w"> </span>--output<span c
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#case-templates-kind-case">Case templates (<code class="docutils literal notranslate"><span class="pre">--kind</span> <span class="pre">case</span></code>)</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pbs-submission-script-kind-pbs">PBS submission script (<code class="docutils literal notranslate"><span class="pre">--kind</span> <span class="pre">pbs</span></code>)</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#machine"><code class="docutils literal notranslate"><span class="pre">--machine</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#notebook-and-list-notebooks"><code class="docutils literal notranslate"><span class="pre">--notebook</span></code> and <code class="docutils literal notranslate"><span class="pre">--list-notebooks</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#available-machines">Available machines</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#what-gets-filled-in">What gets filled in</a></li>
 </ul>
