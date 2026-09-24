@@ -332,6 +332,64 @@ def test_regrid_obc_chunk_warns_without_min_depth_attr(
     assert captured["topo"].min_depth == 0.0
 
 
+def test_reference_ocean_obc_thins_dz_to_the_sea_floor(get_rect_grid, tmp_path):
+    """The no-download reference_ocean product runs through the real OBC
+    GET -> REGRID -> MERGE pipeline, and with the bathymetry bound on (as
+    process_bc does) each segment column's thicknesses sum to its sea floor."""
+    from functools import partial
+
+    grid = get_rect_grid
+    hgrid_path = tmp_path / "hgrid.nc"
+    grid.write_supergrid(hgrid_path)
+    # A sloping sea floor, so a column that wasn't thinned would show up.
+    topo = mom6.Topo(grid=grid, min_depth=9.5, git=False)
+    depth = np.broadcast_to(np.linspace(50.0, 3000.0, grid.nx), (grid.ny, grid.nx))
+    topo.send_entire_depth_change_to_tcm(
+        xr.DataArray(depth.copy(), dims=["ny", "nx"], attrs={"units": "m"})
+    )
+    bathymetry_path = tmp_path / "topog.nc"
+    topo.write_topo(bathymetry_path)
+
+    dirs = {k: tmp_path / k for k in ("raw", "regridded", "output")}
+    for d in dirs.values():
+        d.mkdir()
+    ProductRegistry.load()
+    mom6.obc.process_obc_conditions(
+        start_date="2020-01-01",
+        end_date="2020-01-02",
+        boundary_number_conversion={"south": 1},
+        product_name="reference_ocean",
+        function_name="get_reference_ocean_data",
+        variables=None,
+        extra_args={},
+        dataset_varnames=ProductRegistry.get_product(
+            "reference_ocean"
+        ).write_metadata(),
+        hgrid_path=str(hgrid_path),
+        raw_dataset_path=str(dirs["raw"]),
+        regridded_dataset_path=str(dirs["regridded"]),
+        output_path=str(dirs["output"]),
+        regrid_chunk_fn=partial(
+            mom6._regrid_obc_chunk, bathymetry_path=bathymetry_path
+        ),
+        bathymetry_path=bathymetry_path,
+        regrid_step_days=2,
+    )
+
+    with xr.open_dataset(dirs["output"] / "forcing_obc_segment_001.nc") as ds:
+        assert np.isfinite(ds["temp_segment_001"].values).all()
+        column = (
+            ds["dz_temp_segment_001"].isel(time=0).sum("nz_temp_segment_001").values
+        )
+    seg = mom6.Segment.cardinal(
+        xr.open_dataset(hgrid_path), "south", "segment_001", topo=topo
+    )
+    expected = np.asarray(seg.depth).ravel()
+    wet = np.isfinite(expected) & (expected > 0)
+    assert wet.sum() > 10
+    np.testing.assert_allclose(column.ravel()[wet], expected[wet], rtol=1e-6)
+
+
 def test_conditions_turns_off_legacy_bugs(monkeypatch):
     """Thinned segment dz diverges with MOM6's legacy OBC bug flags on."""
     written = []
