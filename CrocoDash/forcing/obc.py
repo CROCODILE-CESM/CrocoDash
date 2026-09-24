@@ -767,12 +767,10 @@ def process_obc_conditions(
         assert not Grid.is_cyclic_x(hgrid_ds), "bboxes not supported for cyclic grids."
         if bathymetry_path:
             grid_obj = Grid.from_supergrid(hgrid_path)
-            with xr.open_dataset(bathymetry_path) as bds:
-                min_depth = bds.attrs.get("min_depth", 0.0)
             topo = Topo.from_topo_file(
                 grid=grid_obj,
                 topo_file_path=bathymetry_path,
-                min_depth=min_depth,
+                min_depth=utils.read_min_depth(bathymetry_path),
                 git=False,
             )
             boundary_bboxes = {

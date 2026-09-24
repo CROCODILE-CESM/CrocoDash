@@ -390,6 +390,87 @@ def test_reference_ocean_obc_thins_dz_to_the_sea_floor(get_rect_grid, tmp_path):
     np.testing.assert_allclose(column.ravel()[wet], expected[wet], rtol=1e-6)
 
 
+def test_conditions_points_mom6_at_the_filled_ics(monkeypatch):
+    """The raw init_*.nc can carry the source's missing values on wet cells;
+    MOM6 must read the filled ones."""
+    written = []
+    monkeypatch.setattr(
+        mom6, "append_user_nl", lambda model, pairs, **kw: written.extend(pairs)
+    )
+    monkeypatch.setattr(mom6.BaseConfigurator, "configure", lambda self: None)
+    _conditions("glorys").configure()
+    files = {k: v for k, v in written if k.endswith("_FILE")}
+    assert files["TEMP_SALT_Z_INIT_FILE"] == "init_tracers_filled.nc"
+    assert files["SURFACE_HEIGHT_IC_FILE"] == "init_eta_filled.nc"
+    assert files["VELOCITY_FILE"] == "init_vel_filled.nc"
+
+
+def test_read_min_depth(tmp_path, caplog):
+    """Every topog read goes through one helper: the attribute when present,
+    0.0 with a warning when a hand-made file lacks it."""
+    from CrocoDash.forcing.utils import read_min_depth
+
+    xr.Dataset(attrs={"min_depth": 9.5}).to_netcdf(tmp_path / "with.nc")
+    xr.Dataset().to_netcdf(tmp_path / "without.nc")
+    assert read_min_depth(tmp_path / "with.nc") == 9.5
+    with caplog.at_level("WARNING"):
+        assert read_min_depth(tmp_path / "without.nc") == 0.0
+    assert "no min_depth global attribute" in caplog.text
+
+
+def test_all_written_needs_every_file(tmp_path):
+    """A run killed between writing the eta and tracer files must not be
+    skipped on the next attempt."""
+    paths = [tmp_path / f"{n}.nc" for n in ("a", "b", "c")]
+    assert not mom6._all_written(paths)
+    xr.Dataset({"x": ("t", [0.0])}).to_netcdf(paths[0])
+    assert not mom6._all_written(paths)
+    for p in paths[1:]:
+        xr.Dataset({"x": ("t", [0.0])}).to_netcdf(p)
+    assert mom6._all_written(paths)
+    paths[1].write_bytes(b"truncated")
+    with pytest.raises(RuntimeError, match="not valid NetCDF"):
+        mom6._all_written(paths)
+
+
+def test_regrid_ic_gives_the_vgrid_check_the_real_min_depth(
+    get_rect_grid, tmp_path, monkeypatch
+):
+    """create_empty() defaults minimum_depth to 4 m, which made _make_vgrid
+    warn about a minimum depth the case doesn't have."""
+    grid = get_rect_grid
+    grid.write_supergrid(tmp_path / "hgrid.nc")
+    topo = mom6.Topo(grid=grid, min_depth=9.5, git=False)
+    topo.set_flat(100.0)
+    topo.write_topo(tmp_path / "topog.nc")
+    xr.Dataset({"dz": ("z", np.full(5, 20.0))}).to_netcdf(tmp_path / "vgrid.nc")
+
+    seen = {}
+    real_create_empty = mom6.rm6.experiment.create_empty
+
+    def create_empty():
+        expt = real_create_empty()
+        expt._make_vgrid = lambda dz: seen.setdefault("min_depth", expt.minimum_depth)
+        expt.setup_initial_condition = lambda *a, **k: (_ for _ in ()).throw(
+            RuntimeError("stop")
+        )
+        return expt
+
+    monkeypatch.setattr(mom6.rm6.experiment, "create_empty", create_empty)
+    with pytest.raises(RuntimeError, match="stop"):
+        mom6._regrid_ic(
+            raw_file=tmp_path / "raw.nc",
+            hgrid=xr.open_dataset(tmp_path / "hgrid.nc"),
+            start_date="2020-01-01",
+            output_dir=tmp_path,
+            dataset_varnames={},
+            hgrid_path=tmp_path / "hgrid.nc",
+            vgrid_path=tmp_path / "vgrid.nc",
+            bathymetry_path=tmp_path / "topog.nc",
+        )
+    assert seen["min_depth"] == 9.5
+
+
 def test_conditions_turns_off_legacy_bugs(monkeypatch):
     """Thinned segment dz diverges with MOM6's legacy OBC bug flags on."""
     written = []

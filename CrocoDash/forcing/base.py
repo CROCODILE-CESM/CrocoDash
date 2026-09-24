@@ -97,12 +97,14 @@ class WorkflowContext:
 
     @cached_property
     def ocn_topo(self):
-        import xarray as xr
         from CrocoDash.topo import Topo
+        from CrocoDash.forcing.utils import read_min_depth
 
-        topo_ds = xr.open_dataset(self.topo_path, decode_times=False)
         return Topo.from_topo_file(
-            self.grid, self.topo_path, min_depth=topo_ds.attrs["min_depth"], git=False
+            self.grid,
+            self.topo_path,
+            min_depth=read_min_depth(self.topo_path),
+            git=False,
         )
 
 
