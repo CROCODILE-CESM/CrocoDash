@@ -470,9 +470,6 @@ class Case:
             key raises a ValueError. Without this, the function's own defaults are used,
             which previously could only be changed by hand-editing `config.json` between
             `configure_forcings()` and `process_forcings()`.
-        product_info: str | Path | dict, optional
-            The equivalent MOM6 names to Product Names. Example:  xh -> lat time -> valid_time salinity -> salt, as well as any other information required for product parsing
-            The `None` option assumes the information is in raw_data_access/config under {product_name}.json. Every other option is copied there.
         kwargs :
             These are the configuration options (please see accepted arguments in the configuration classes)
         Raises

@@ -13,7 +13,7 @@ the [Accessing Raw Data page](datasets.md#crocodash-data-access-module) for the
 
 ## Overview
 
-Forcing configuration is managed by the `forcing_configurations.py` module through a registry-based system:
+Forcing configuration is managed by the `CrocoDash.forcing` package through a registry-based system:
 
 1. **Each configuration option** (Tides, BGC, Rivers, etc.) is a separate class that inherits from `BaseConfigurator`
 2. **The `ForcingConfigRegistry`** automatically registers all these options and determines which are required or valid based on your compset
@@ -69,7 +69,7 @@ case.configure_forcings(
 Before calling `configure_forcings()`, you can check what configuration options are required for your compset. It will also be printed on case initialization:
 
 ```python
-from CrocoDash.forcing_configurations import ForcingConfigRegistry
+from CrocoDash.forcing.base import ForcingConfigRegistry
 
 compset = "1850_DATM%NYF_SLND_SICE_MOM6%MARBL-BIO%REGIONAL_DROF%GLOFAS_SGLC_SWAV"
 
@@ -92,7 +92,7 @@ for config_class in valid:
 Useful functions for understanding configuration requirements:
 
 ```python
-from CrocoDash.forcing_configurations import ForcingConfigRegistry
+from CrocoDash.forcing.base import ForcingConfigRegistry
 
 # Find required configurators for your compset
 required = ForcingConfigRegistry.find_required_configurators(compset)
@@ -112,7 +112,7 @@ is_compatible = configurator_class.validate_compset_compatibility(compset)
 
 ## Helper Docs
 
-The [Forcing Configuration API Documentation](../api-docs/CrocoDash.forcing_configurations.rst) are a great way to look at all of the information provided in the helper functions.
+The [Forcing API Documentation](../api-docs/CrocoDash.forcing.rst) is a great way to look at all of the information provided in the helper functions.
 
 
 ## In the Case Workflow
@@ -123,7 +123,7 @@ When you call `case.configure_forcings(**kwargs)`, CrocoDash automatically:
 2. **Checks** that you've provided all required inputs
 3. **Instantiates** the appropriate configurators
 4. **Applies** settings to your CESM case
-5. **Serializes** configuration for use by `extract_forcings`
+5. **Serializes** configuration for use by the processing driver (`CrocoDash.forcing.driver`)
 
 If something is missing, you'll get an error message telling you exactly what's needed.
 
@@ -131,7 +131,7 @@ If something is missing, you'll get an error message telling you exactly what's 
 
 Your configuration will be saved to JSON for reproducibility in the `extract_forcings/config.json` file in your input directory:
 
-The JSON structure organizes inputs and outputs by configurator name, allowing `extract_forcings` to generate forcing and boundary condition files.
+The JSON structure organizes inputs and outputs by configurator name, allowing the processing driver to generate forcing and boundary condition files.
 
 ## Understanding Your Compset
 

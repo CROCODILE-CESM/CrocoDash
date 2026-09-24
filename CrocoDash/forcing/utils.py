@@ -22,8 +22,8 @@ def parse_dataset_folder(
     folder : str or Path
         Path to the folder containing the dataset files.
     input_dataset_regex : str
-        Regular expression pattern to match dataset filenames.
-        Example: `"(north|east|south|west)_unprocessed\\.(\\d{8})_(\\d{8})\\.nc"`
+        Regular expression pattern to match dataset filenames, for example
+        ``(north|east|south|west)_unprocessed\\.(\\d{8})_(\\d{8})\\.nc``
     date_format : str
         Date format string used to parse dates in filenames (e.g., "%Y%m%d").
 
@@ -31,15 +31,19 @@ def parse_dataset_folder(
     -------
     dict
         Dictionary mapping boundaries to a list of tuples with:
-        - Start date (`datetime`)
-        - End date (`datetime`)
-        - Full file path (`Path`)
 
-        Example:
-        {
-            "north": [(datetime(2000, 1, 1), datetime(2000, 1, 2), Path("/path/to/north_20000101_20000102.nc"))],
-            "east": [(datetime(2000, 1, 3), datetime(2000, 1, 4), Path("/path/to/east_20000103_20000104.nc"))]
-        }
+        - Start date (``datetime``)
+        - End date (``datetime``)
+        - Full file path (``Path``)
+
+        For example::
+
+            {
+                "north": [(datetime(2000, 1, 1), datetime(2000, 1, 2),
+                           Path("/path/to/north_20000101_20000102.nc"))],
+                "east": [(datetime(2000, 1, 3), datetime(2000, 1, 4),
+                          Path("/path/to/east_20000103_20000104.nc"))],
+            }
 
     """
     # Dictionary to store boundary info

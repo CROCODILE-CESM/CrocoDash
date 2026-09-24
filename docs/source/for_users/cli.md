@@ -5,6 +5,7 @@ CrocoDash ships a `crocodash` command (installed automatically with `pip install
 ## Quick reference
 
 ```
+crocodash template          --output my_case.{yaml,ipynb,py,pbs} [--machine glade] [--notebook ID]
 crocodash create            --config mycase.yaml [--override]
 crocodash dump              --caseroot /path/to/case
 crocodash process  [--caseroot /path/to/case] [--all | --ic --bc ...]  [--skip ...]
@@ -113,6 +114,26 @@ crocodash create --config mycase_copy.yaml --override
 The dumped YAML uses `supergrid_path`/`from_file` references pointing at the existing grid/topo/vgrid files. To create a fully independent copy, either update those paths or re-generate the grid from parameters.
 
 ---
+
+## `crocodash template`
+
+Writes a ready-to-use starter file — a YAML config, a notebook, a Python script,
+or a PBS submission script. See **[Templates](template.md)** for the full page.
+
+```bash
+crocodash template --output my_case.yaml --machine glade   # starter config
+crocodash template --output my_case.ipynb --machine glade  # starter notebook
+crocodash template --output submit_forcings.pbs            # PBS batch script
+crocodash template --list-notebooks                        # available sources
+```
+
+| Flag | Description |
+|------|-------------|
+| `--output PATH` | Output path; its suffix picks the format. Required unless `--list-notebooks`. |
+| `--kind {case,pbs}` | `case` (default) or `pbs`. A `.pbs` suffix selects `pbs` on its own. |
+| `--machine NAME` | Pre-fill dataset paths for this machine (`glade`). Omit to leave `<KEY>` placeholders. |
+| `--notebook ID` | Gallery notebook to render from (default `crocodash.tutorial`). |
+| `--list-notebooks` | Print every available notebook ID and exit. |
 
 ---
 
