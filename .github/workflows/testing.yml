@@ -195,20 +195,47 @@ jobs:
         with:
           submodules: recursive
           path: CrocoDash
-      - name: Check if environment.yml changed
+      # The image's CrocoDash env was built from whatever CrocoDash commit
+      # crocontainer pins, which lags main. Code changes are picked up by the
+      # copy below (everything is an editable install), but dependency changes
+      # are not -- so compare the same dependency files the pytest job hashes
+      # into its env cache key, and rebuild the env in the sandbox if any differ.
+      - name: Check if CrocoDash dependencies changed
         id: compare
         run: |
-          if diff workspace_sandbox/workspace/CrocoDash/environment.yml CrocoDash/environment.yml; then
-            echo "No changes in environment.yml"
-            echo "env_changed=false" >> $GITHUB_OUTPUT
-          else
-            echo "environment.yml changed!"
-            echo "env_changed=true" >> $GITHUB_OUTPUT
-          fi
+          env_changed=false
+          for f in environment.yml \
+                   gallery/pyproject.toml \
+                   CrocoDash/rm6/pyproject.toml \
+                   CrocoDash/rm6/environment-ci.yml \
+                   CrocoDash/visualCaseGen/pyproject.toml \
+                   CrocoDash/visualCaseGen/environment.yml \
+                   CrocoDash/visualCaseGen/external/mom6_forge/pyproject.toml \
+                   CrocoDash/visualCaseGen/external/mom6_forge/environment.yml \
+                   CrocoDash/visualCaseGen/external/mom6_forge/setup.py \
+                   CrocoDash/visualCaseGen/external/ipyfilechooser/setup.py; do
+            if ! cmp -s "workspace_sandbox/workspace/CrocoDash/$f" "CrocoDash/$f"; then
+              echo "Changed: $f"
+              diff "workspace_sandbox/workspace/CrocoDash/$f" "CrocoDash/$f" || true
+              env_changed=true
+            fi
+          done
+          echo "env_changed=$env_changed" >> $GITHUB_OUTPUT
       - name: Copy CrocoDash into container
         run: |
               rm -rf workspace_sandbox/workspace/CrocoDash
               cp -r CrocoDash workspace_sandbox/workspace/
+      - name: Rebuild CrocoDash env in container
+        if: steps.compare.outputs.env_changed == 'true'
+        run: |
+          # Mirrors the env build in crocontainer's Dockerfile
+          apptainer exec --writable workspace_sandbox/ /bin/bash -c '
+            set -e
+            printf "Metadata-Version: 2.1\nName: rm6\nVersion: 0.1.0\n" > /workspace/CrocoDash/CrocoDash/rm6/PKG-INFO
+            /opt/conda/bin/conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main
+            /opt/conda/bin/conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
+            /opt/conda/bin/conda env create -f /workspace/CrocoDash/environment.yml -y
+          '
       
         # This is warning that CIRRUS runners may not pull the most up-to-date image from crocontainer, you may need a new tag name. 
       - name: Run CESM
