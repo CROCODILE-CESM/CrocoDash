@@ -27,7 +27,13 @@ jobs:
         # Regenerates docs/source/api-docs/ with the same invocation documented
         # in docs/source/for_developers/edit_docs.md. If anything changes, the
         # committed API docs are stale — fail the job with a helpful hint.
+        #
+        # The directory is wiped first: sphinx-apidoc only writes the files it
+        # generates, so a committed .rst for a module that no longer exists is
+        # left untouched and `git diff` would never see it. Wiping turns that
+        # orphan into a deletion the diff does catch.
         run: |
+          rm -rf docs/source/api-docs
           sphinx-apidoc \
             -o docs/source/api-docs \
             -H "CrocoDash API Docs" \

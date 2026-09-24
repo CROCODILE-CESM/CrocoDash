@@ -669,16 +669,16 @@ class BaseConfigurator(ABC):
             output_dict["outputs"][param.name] = self.make_serializable(param.value)
         return output_dict
 
-    def get_input_param(self, name: str) -> OutputParam:
+    def get_input_param(self, name: str) -> Any:
         return self.get_input_param_object(name).value
 
-    def get_input_param_object(self, name: str) -> OutputParam:
+    def get_input_param_object(self, name: str) -> InputParam:
         try:
             return next(p for p in self.input_params if p.name == name)
         except StopIteration:
             raise UndeclaredParamError(f"Input param '{name}' not found")
 
-    def get_output_param(self, name: str) -> OutputParam:
+    def get_output_param(self, name: str) -> Any:
         return self.get_output_param_object(name).value
 
     def get_output_param_object(self, name: str) -> OutputParam:

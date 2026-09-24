@@ -188,7 +188,7 @@ jobs:
           APPTAINER_DOCKER_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
         run: |
           apptainer build --sandbox workspace_sandbox/ \
-            docker://ghcr.io/crocodile-cesm/crocontainer:sha-4cfce86
+            docker://ghcr.io/crocodile-cesm/crocontainer:sha-0c9e3fb
 
       # Copy the current CrocoDash into the sandbox container to ensure the latest code is used
       - uses: actions/checkout@v4

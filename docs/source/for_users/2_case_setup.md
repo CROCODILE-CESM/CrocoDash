@@ -99,24 +99,37 @@ MARBL BGC and GLOFAS runoff (e.g. `CR1850MARBL_JRA_GLOFAS`):
 ```
 The following additional configuration options are required to run and must be
 provided with any listed arguments in configure_forcings:
+  - StreamYears: no arguments
   - BGC: no arguments
   - BGCIC: marbl_ic_filepath
+  - BGCIronForcing: no arguments
+  - conditions: boundaries, product_name, function_name, compset
   - Runoff: no arguments
 ```
 
 Each line is one configurator class plus the keyword arguments you'll need to
-pass to `case.configure_forcings(...)` in the next step (arguments starting
-with `case_` are filled in automatically and never appear here). Note that
-configurators like `tides` aren't tied to any compset component, so they're
+pass to `case.configure_forcings(...)` in the next step. Only arguments with no
+default are listed, and arguments starting with `case_` are filled in
+automatically and never appear here.
+
+Two configurators show up for essentially every case, so don't be surprised by
+them:
+
+- **`conditions`** is required by any compset containing `MOM6` — it drives the
+  initial and boundary condition extraction. Its arguments all have sensible
+  defaults on `configure_forcings` itself, so in practice you only owe it
+  `date_range`.
+- **`StreamYears`** is required by any `DATM%JRA` compset, and takes no
+  arguments.
+
+Configurators like `tides` aren't tied to any compset component, so they're
 never "required" — they're optional and you add them whenever you want tidal
-forcing. Standalone compsets with no BGC/CICE/runoff component (e.g. `CR_JRA`)
-print nothing here at all. See [Configure Forcings](3a_configure_forcings.md)
-for the full story.
+forcing. See [Configure Forcings](3a_configure_forcings.md) for the full story.
 
 You can reproduce this list at any time:
 
 ```python
-from CrocoDash.forcing_configurations import ForcingConfigRegistry
+from CrocoDash.forcing.base import ForcingConfigRegistry
 required = ForcingConfigRegistry.find_required_configurators(case.compset_lname)
 ```
 
@@ -129,6 +142,7 @@ required = ForcingConfigRegistry.find_required_configurators(case.compset_lname)
 | `case.cice_in_compset` | `"CICE"` appears in the compset longname |
 | `case.runoff_in_compset` | `"SROF"` is **not** in the compset longname (i.e. active/data runoff) |
 | `case.bgc_in_compset` | `"%MARBL"` appears in the compset longname |
+| `case.ww3_in_compset` | `"WW3"` appears in the compset longname |
 
 These are handy for branching in user scripts and are also what the forcing
 configurators use internally to decide which configurators are compatible.
@@ -137,7 +151,7 @@ configurators use internally to decide which configurators are compatible.
 
 - **`Given caseroot ... already exists!`** — pass `override=True` *or* pick a fresh path. `override=True` is safe for iteration but will remove the prior case directory.
 - **`compset must be a valid CESM compset long name or alias.`** — aliases are resolved against your CESM checkout's compset list. If the alias isn't in the available compsets, you either have the wrong `cesmroot` or your CESM checkout doesn't include the CROCODILE compset fork.
-- **Only MOM6-based compsets are supported.** CrocoDash enforces `MOM6`, `SLND`, `SGLC`, and `SWAV` in the compset longname. Active land/glacier/wave models are not supported.
+- **Only MOM6-based compsets are supported.** CrocoDash enforces `MOM6`, `SLND`, and `SGLC` in the compset longname, and rejects `DWAV`. Active land and glacier models are not supported. Waves are: use `SWAV` for stub waves or `WW3` for the active wave model.
 - **Machine requires a project.** If your machine has accounting, `project=` is not optional.
 
 ## Next steps
