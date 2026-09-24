@@ -1,16 +1,19 @@
 """
 Data Access Module -> Reference (fast, deterministic synthetic forcing)
 
-REFERENCE_OCEAN (MOM6) generates plausible-looking forcing data purely in
-memory via numpy, with no network access, credentials, or campaign-storage
-dependency. Each access method is a pure function of its own (dates,
-lat/lon bbox) arguments: same inputs always produce the same output, so
-this is safe to use in tests (real assertions, not just "did it not crash")
-and in demo notebooks that should look identical on every run.
+Three products -- REFERENCE_OCEAN (MOM6), REFERENCE_ICE (CICE),
+REFERENCE_WAVES (WW3) -- that
+generate plausible-looking forcing data purely in memory via numpy, with no
+network access, credentials, or campaign-storage dependency. Each access
+method is a pure function of its own (dates, lat/lon bbox) arguments: same
+inputs always produce the same output, so these are safe to use in tests
+(real assertions, not just "did it not crash") and in demo notebooks that
+should look identical on every run.
 
-This is not meant to be physically accurate -- just close enough in shape
-(a warm-at-equator thermocline) that the real MOM6 regrid pipeline has
-something sensible to chew on, fast.
+These are not meant to be physically accurate -- just close enough in shape
+(a warm-at-equator thermocline, an ice edge that tapers with latitude,
+a JONSWAP-shaped wave spectrum) that the real MOM6/CICE/WW3 regrid
+pipelines have something sensible to chew on, fast.
 """
 
 from pathlib import Path
@@ -186,6 +189,216 @@ class REFERENCE_OCEAN(MOM6ForcingProduct):
         )
         if variables:
             ds = ds[[v for v in variables if v in ds.data_vars]]
+
+        output_folder = Path(output_folder)
+        output_folder.mkdir(parents=True, exist_ok=True)
+        output_path = output_folder / output_filename
+        ds.to_netcdf(output_path)
+        return output_path
+
+
+class REFERENCE_ICE(CICEForcingProduct):
+    product_name = "reference_ice"
+    description = (
+        "Fast, deterministic synthetic CICE forcing (ice concentration/"
+        "volume/surface temp and a small drift velocity) for testing and "
+        "demos -- generates its own grid, no real CICE restart/grid file "
+        "required. Exercises the CrocoDash regrid path only: it writes a "
+        "single category (ncat=1) and five variables, where CICE needs "
+        "ncat=5 plus the rest of the restart state (vsnon, trcrn, ...), so "
+        "CICE cannot actually start from the file this produces. Use "
+        "'cice_restart' against a real global restart for a runnable case."
+    )
+    link = "n/a"
+    # No real time evolution any more than CICE_RESTART has (see
+    # cice_output.py) -- these only exist to satisfy ForcingProduct's
+    # generic contract, and `calendar` is the arbitrary-but-harmless
+    # GREGORIAN for the same reason given there.
+    time_var_name = None
+    time_units = None
+    calendar = GREGORIAN
+    u_x_coord = "ni"
+    u_y_coord = "nj"
+    v_x_coord = "ni"
+    v_y_coord = "nj"
+    tracer_x_coord = "ni"
+    tracer_y_coord = "nj"
+    u_var_name = "uvel"
+    v_var_name = "vvel"
+    tracer_var_names = {}
+    depth_coord = None
+
+    @accessmethod(
+        description=(
+            "Generates a synthetic single-category CICE-shaped dataset over "
+            "the requested bbox/dates: its own regular tlon/tlat/ulon/ulat "
+            "mesh (no real CICE grid file needed), ice concentration tapering "
+            "linearly from the bbox's poleward edge to zero at its equatorward "
+            "edge, matching ice volume/surface temp, and a small drift "
+            "velocity."
+        ),
+        type="python",
+    )
+    def get_reference_ice_data(
+        dates: list,
+        lat_min,
+        lat_max,
+        lon_min,
+        lon_max,
+        name=None,
+        output_folder=Path(""),
+        output_filename="reference_ice.nc",
+        variables=None,
+        resolution_deg=0.5,
+    ):
+        # Coarse by default to keep the downstream ESMF regrid cheap -- pass a
+        # smaller resolution_deg for a finer (more expensive) source grid.
+        lon = np.arange(lon_min, lon_max + resolution_deg, resolution_deg)
+        lat = np.arange(lat_min, lat_max + resolution_deg, resolution_deg)
+        tlon, tlat = np.meshgrid(lon, lat)
+
+        # 0 at the bbox's equatorward edge (min |lat|), 1 at its poleward edge
+        # (max |lat|) -- hemisphere-agnostic via abs(), so this works for
+        # either a northern or southern-hemisphere bounding box.
+        edge = (np.abs(tlat) - np.abs(tlat).min()) / (
+            np.abs(tlat).max() - np.abs(tlat).min() + 1e-9
+        )
+        aicen = edge[None, :, :]  # single category (ncat=1)
+        vicen = 2.0 * aicen
+        # -1.8C under thick ice, warming toward the open-water ice edge.
+        Tsfcn = -1.8 * aicen - 1.0 * (1.0 - aicen)
+        uvel = np.full_like(tlon, 0.02)
+        vvel = np.full_like(tlon, 0.02)
+
+        ds = xr.Dataset(
+            {
+                "aicen": (("ncat", "nj", "ni"), aicen),
+                "vicen": (("ncat", "nj", "ni"), vicen),
+                "Tsfcn": (("ncat", "nj", "ni"), Tsfcn),
+                "uvel": (("nj", "ni"), uvel),
+                "vvel": (("nj", "ni"), vvel),
+            },
+        )
+        ds["tlon"] = (("nj", "ni"), tlon)
+        ds["tlat"] = (("nj", "ni"), tlat)
+        # No real staggering here (synthetic mesh, not a real B-grid) -- offset
+        # by half a cell as a placeholder U-point location.
+        ds["ulon"] = (("nj", "ni"), tlon + resolution_deg / 2)
+        ds["ulat"] = (("nj", "ni"), tlat + resolution_deg / 2)
+
+        if variables:
+            keep = [v for v in variables if v in ds.data_vars]
+            ds = ds[keep + ["tlon", "tlat", "ulon", "ulat"]]
+
+        # No real time evolution to source, and (same convention
+        # CICE_RESTART.get_cice_restart_subset uses) a CICE restart/initial-
+        # condition file is a single static snapshot with no `time`
+        # dimension of its own -- so this doesn't add one.
+        output_folder = Path(output_folder)
+        output_folder.mkdir(parents=True, exist_ok=True)
+        output_path = output_folder / output_filename
+        ds.to_netcdf(output_path)
+        return [output_path]
+
+
+class REFERENCE_WAVES(WW3ForcingProduct):
+    product_name = "reference_waves"
+    description = (
+        "Fast, deterministic synthetic WW3 boundary wave spectra (JONSWAP-"
+        "shaped frequency spectrum, cosine-2s directional spreading) for "
+        "testing and demos -- no CDS/network access required."
+    )
+    link = "n/a"
+    time_var_name = "time"
+    time_units = None
+    calendar = GREGORIAN
+    # The synthetic spectrum below is built around waves "coming from" the
+    # west (theta0 = 270), so that is what it declares.
+    direction_convention = DIRECTION_COMING_FROM
+    # Synthetic: every station is open water, so this never fires.
+    land_marker = LAND_ZERO
+
+    @accessmethod(
+        description=(
+            "Generates a synthetic multi-station 2D wave spectrum (JONSWAP "
+            "frequency shape, cosine-2s directional spreading) over the "
+            "requested bbox/dates, in the same (time, latitude, longitude, "
+            "frequency, direction) shape the real decoded ERA5 product uses."
+        ),
+        type="python",
+    )
+    def get_reference_wave_spectra(
+        dates: list,
+        lat_min,
+        lat_max,
+        lon_min,
+        lon_max,
+        name=None,
+        output_folder=Path(""),
+        output_filename="reference_waves.nc",
+        variables=None,
+    ):
+        # Spread the stations along the long axis of the boundary window.
+        n_stations = 3
+        if (lon_max - lon_min) >= (lat_max - lat_min):
+            lons = np.linspace(lon_min, lon_max, n_stations)
+            lats = np.array([(lat_min + lat_max) / 2])
+        else:
+            lons = np.array([(lon_min + lon_max) / 2])
+            lats = np.linspace(lat_min, lat_max, n_stations)
+        # Whole-day inclusive on both ends: date_range(..., freq="6h") alone
+        # would stop at the last day's 00:00 and drop its 06/12/18:00 steps,
+        # so build every 6-hour step of every whole day in the range instead
+        # (same "every hour of every requested day" convention era5.py uses).
+        days = pd.date_range(dates[0], dates[-1], freq="D")
+        time = pd.date_range(days[0], days[-1] + pd.Timedelta(hours=18), freq="6h")
+        freq = np.linspace(0.03, 0.25, 12)
+        direction = np.linspace(0.0, 360.0, 16, endpoint=False)
+
+        # Standard JONSWAP spectrum: a 2m/8s swell (Hs=2, Tp=8), Phillips
+        # constant alpha=0.0081 and peak-enhancement gamma=3.3 are the
+        # textbook defaults.
+        g, hs, tp, alpha, gamma = 9.81, 2.0, 8.0, 0.0081, 3.3
+        fp = 1.0 / tp
+        sigma = np.where(freq <= fp, 0.07, 0.09)
+        jonswap = (
+            alpha
+            * g**2
+            * (2 * np.pi) ** -4
+            * freq**-5
+            * np.exp(-1.25 * (fp / freq) ** 4)
+            * gamma ** np.exp(-((freq - fp) ** 2) / (2 * sigma**2 * fp**2))
+        )
+
+        # Cosine-2s directional spreading around a fixed dominant direction
+        # (waves "coming from" the west), normalized to integrate to ~1 over
+        # the full circle.
+        theta0, s = 270.0, 8
+        dtheta = np.deg2rad(direction[1] - direction[0])
+        spreading = np.cos(np.deg2rad((direction - theta0) / 2.0)) ** (2 * s)
+        spreading = spreading / (spreading.sum() * dtheta)
+
+        base_spectrum = jonswap[:, None] * spreading[None, :]
+        efth = np.broadcast_to(
+            base_spectrum,
+            (len(time), len(lats), len(lons), len(freq), len(direction)),
+        ).copy()
+
+        ds = xr.Dataset(
+            {
+                "wave_spectra": (
+                    ("time", "latitude", "longitude", "frequency", "direction"),
+                    efth,
+                )
+            },
+            coords={
+                "time": time,
+                "latitude": lats,
+                "longitude": lons,
+                "frequency": freq,
+                "direction": direction,
+            },
+        )
 
         output_folder = Path(output_folder)
         output_folder.mkdir(parents=True, exist_ok=True)

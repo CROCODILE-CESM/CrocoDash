@@ -12,7 +12,6 @@ metadata into a download request).
 """
 
 import os
-from datetime import datetime
 from functools import partial
 from pathlib import Path
 
@@ -542,8 +541,6 @@ class ConditionsConfigurator(BaseConfigurator):
             )
 
     def configure(self):
-        start_date = self.get_input_param("start_date")
-        end_date = self.get_input_param("end_date")
         boundaries = self.get_input_param("boundaries")
         product_name = self.get_input_param("product_name").lower()
         compset = self.get_input_param("compset")
@@ -555,13 +552,22 @@ class ConditionsConfigurator(BaseConfigurator):
             "information",
             product.write_metadata(include_marbl_tracers="%MARBL" in compset),
         )
-        start_dt = datetime.strptime(start_date, self._DATE_FORMAT)
-        end_dt = datetime.strptime(end_date, self._DATE_FORMAT)
-
-        # Setting both get and regrid to the entire modeling period. Power users can modify this as they need!
-        step = (end_dt - start_dt).days + 1
-        self.set_output_param("get_step_days", step)
-        self.set_output_param("regrid_step_days", step)
+        # GET and REGRID chunk sizes are independent, and neither changes the
+        # result -- a 1-day and a 3-day chunking of the same range were verified
+        # to produce bit-identical forcing files. They only set how much
+        # concurrency obc.py's pools have to work with.
+        #
+        # GET is network-bound, so it wants more chunks than REGRID: at a 30-day
+        # step anything shorter than a month came out as a single chunk and
+        # downloaded serially. A week gives a fortnight-long case two concurrent
+        # fetches and a year fifty-odd, without splitting long runs into
+        # thousands of requests.
+        #
+        # REGRID stays at 30 days. Its per-chunk cost is real work rather than
+        # waiting, so slicing it finer mostly buys more chunk files to merge.
+        # Power users can override either in config.json.
+        self.set_output_param("get_step_days", 7)
+        self.set_output_param("regrid_step_days", 30)
         self.set_output_param(
             "boundary_number_conversion",
             {b: i + 1 for i, b in enumerate(boundaries)},
@@ -575,9 +581,14 @@ class ConditionsConfigurator(BaseConfigurator):
         self.set_output_param("TEMP_SALT_INIT_VERTICAL_REMAP_ONLY", True)
         self.set_output_param("DEPRESS_INITIAL_SURFACE", True)
         self.set_output_param("VELOCITY_CONFIG", "file")
-        self.set_output_param("TEMP_SALT_Z_INIT_FILE", "init_tracers.nc")
-        self.set_output_param("SURFACE_HEIGHT_IC_FILE", "init_eta.nc")
-        self.set_output_param("VELOCITY_FILE", "init_vel.nc")
+        # Point MOM6 at the FILLED initial conditions. setup_initial_conditions() always
+        # writes both the raw init_*.nc and the land-filled init_*_filled.nc; the raw files
+        # still carry the source dataset's missing values on cells that are wet in the model
+        # grid but dry (or absent) in the source. MOM6 ingests those as data and aborts during
+        # initialization with SST = -1.0E+20 on the affected cells.
+        self.set_output_param("TEMP_SALT_Z_INIT_FILE", "init_tracers_filled.nc")
+        self.set_output_param("SURFACE_HEIGHT_IC_FILE", "init_eta_filled.nc")
+        self.set_output_param("VELOCITY_FILE", "init_vel_filled.nc")
         self.set_output_param("Z_INIT_FILE_PTEMP_VAR", "temp")
         self.set_output_param("Z_INIT_FILE_SALT_VAR", "salt")
         self.set_output_param("SURFACE_HEIGHT_IC_VAR", "eta_t")

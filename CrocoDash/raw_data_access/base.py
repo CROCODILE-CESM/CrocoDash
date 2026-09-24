@@ -360,3 +360,68 @@ class MOM6ForcingProduct(VelocityTracerForcingProduct):
                 json.dump(base, f, indent=2)
 
         return base
+
+
+# The two directional conventions a 2D wave spectrum can be written in.
+# Both are in degrees clockwise from true north; they differ by exactly 180.
+#
+# What ww3_bounc consumes is DIRECTION_TO: it rebuilds WW3's internal
+# (Cartesian, CCW-from-east, direction-of-propagation) THETA as
+# ``THETA = mod(2.5*pi - deg2rad(direction), 2*pi)`` (ww3_bounc.F90:581),
+# which is the exact inverse of what ww3_ounp writes,
+# ``mod(450 - th_deg, 360)`` (ww3_ounp.F90:3245). So a product declaring
+# DIRECTION_COMING_FROM has to be rotated 180 degrees before it is written
+# into a boundary spectrum file -- see forcing/ww3.py::to_direction_to.
+DIRECTION_TO = "to"
+DIRECTION_COMING_FROM = "coming_from"
+
+# How a product marks the cells that carry no spectrum because there is no
+# water there. This cannot be inferred either, and conflating it with a
+# genuine zero is a real failure mode: a sea-ice-covered boundary carries
+# exactly zero wave energy and is a perfectly valid boundary condition, so
+# "all zero" must not be allowed to mean "nothing here" for a product whose
+# land is marked some other way. See forcing/ww3.py::_extract_all_stations.
+LAND_NAN = "nan"
+LAND_ZERO = "zero"
+
+
+class WW3ForcingProduct(ForcingProduct):
+    """Extension point for WW3's own regridding var-name metadata, beyond
+    ForcingProduct's generic time-axis contract. No velocity/tracer grid
+    metadata here -- WW3 boundary spectra have no such grid.
+
+    ``direction_convention`` and ``land_marker`` are required because they
+    are the two pieces of spectral metadata that cannot be inferred from the
+    data. A spectrum and the same spectrum rotated 180 degrees are both
+    perfectly plausible files; so are a land cell and a becalmed one. Only
+    the product knows which it is emitting.
+    """
+
+    required_metadata = ForcingProduct.required_metadata + [
+        "direction_convention",
+        "land_marker",
+    ]
+
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        if cls._is_abstract:
+            return
+        for field, allowed in (
+            ("direction_convention", (DIRECTION_TO, DIRECTION_COMING_FROM)),
+            ("land_marker", (LAND_NAN, LAND_ZERO)),
+        ):
+            value = getattr(cls, field)
+            if value not in allowed:
+                raise ValueError(
+                    f"{cls.__name__}.{field} must be one of "
+                    f"{'/'.join(repr(a) for a in allowed)}, got {value!r}."
+                )
+
+
+class CICEForcingProduct(VelocityTracerForcingProduct):
+    """CICE's own regridding var-name metadata. CICE's B-grid velocity
+    (uvel/vvel) and tracer-like state both live on the same (nj, ni) index
+    space (no MOM6-style C-grid staggering across separately named dims),
+    so this extends VelocityTracerForcingProduct rather than ForcingProduct
+    directly -- any concrete CICE product regridded via
+    regional_mom6.Segment reuses the same var-map contract MOM6 does."""

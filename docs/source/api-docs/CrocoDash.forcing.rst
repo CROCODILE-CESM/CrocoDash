@@ -44,6 +44,14 @@ CrocoDash.forcing.chl module
    :show-inheritance:
    :undoc-members:
 
+CrocoDash.forcing.cice module
+-----------------------------
+
+.. automodule:: CrocoDash.forcing.cice
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 CrocoDash.forcing.driver module
 -------------------------------
 
@@ -96,6 +104,14 @@ CrocoDash.forcing.utils module
 ------------------------------
 
 .. automodule:: CrocoDash.forcing.utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+CrocoDash.forcing.ww3 module
+----------------------------
+
+.. automodule:: CrocoDash.forcing.ww3
    :members:
    :show-inheritance:
    :undoc-members:
