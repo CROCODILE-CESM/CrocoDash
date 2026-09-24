@@ -34,12 +34,23 @@ The only job of the %REGIONAL flag on MOM6 in the compset longnames below is to 
 | CR1850MARBL_JRA | 1850_DATM%JRA_SLND_SICE_MOM6%REGIONAL%MARBL-BIO_SROF_SGLC_SWAV | ocean coupled with MARBL BGC model with data atmosphere from JRA |
 | CR_JRA_GLOFAS | 1850_DATM%JRA_SLND_SICE_MOM6%REGIONAL_DROF%GLOFAS_SGLC_SWAV | Standalone ocean with data atmosphere from JRA and data runoff from GLOFAS |
 | CR1850MARBL_JRA_GLOFAS | 1850_DATM%JRA_SLND_SICE_MOM6%REGIONAL%MARBL-BIO_DROF%GLOFAS_SGLC_SWAV | ocean coupled with MARBL BGC model with data atmosphere from JRA and data runoff from GLOFAS|
+| CWR_JRA | 1850_DATM%JRA_SLND_SICE_MOM6%REGIONAL_SROF_SGLC_WW3 | Standalone ocean coupled with WW3 wave model with data atmosphere from JRA |
+| CWR1850MARBL_JRA | 1850_DATM%JRA_SLND_SICE_MOM6%REGIONAL%MARBL-BIO_SROF_SGLC_WW3 | ocean coupled with MARBL BGC model and WW3 wave model with data atmosphere from JRA |
+| CWR_JRA_GLOFAS | 1850_DATM%JRA_SLND_SICE_MOM6%REGIONAL_DROF%GLOFAS_SGLC_WW3 | Standalone ocean coupled with WW3 wave model with data atmosphere from JRA and data runoff from GLOFAS |
+| CWR1850MARBL_JRA_GLOFAS | 1850_DATM%JRA_SLND_SICE_MOM6%REGIONAL%MARBL-BIO_DROF%GLOFAS_SGLC_WW3 | ocean coupled with MARBL BGC model and WW3 wave model with data atmosphere from JRA and data runoff from GLOFAS |
 | GR_JRA | 1850_DATM%JRA_SLND_CICE_MOM6%REGIONAL_SROF_SGLC_SWAV | ocean coupled with CICE sea ice model with data atmosphere from JRA |
 | GR1850MARBL_JRA | 1850_DATM%JRA_SLND_CICE_MOM6%REGIONAL%MARBL-BIO_SROF_SGLC_SWAV | ocean coupled with MARBL BGC model and CICE sea ice model with data atmosphere from JRA |
 | GR_JRA_GLOFAS | 1850_DATM%JRA_SLND_CICE_MOM6%REGIONAL_DROF%GLOFAS_SGLC_SWAV | ocean coupled with CICE sea ice model with data atmosphere from JRA and data runoff from GLOFAS |
 | GR1850MARBL_JRA_GLOFAS | 1850_DATM%JRA_SLND_CICE_MOM6%REGIONAL%MARBL-BIO_DROF%GLOFAS_SGLC_SWAV | ocean coupled with MARBL BGC model and CICE sea ice model with data atmosphere from JRA and data runoff from GLOFAS|
+| GWR_JRA | 1850_DATM%JRA_SLND_CICE_MOM6%REGIONAL_SROF_SGLC_WW3 | ocean coupled with CICE sea ice model and WW3 wave model with data atmosphere from JRA |
+| GWR1850MARBL_JRA | 1850_DATM%JRA_SLND_CICE_MOM6%REGIONAL%MARBL-BIO_SROF_SGLC_WW3 | ocean coupled with MARBL BGC model, CICE sea ice model, and WW3 wave model with data atmosphere from JRA |
+| GWR_JRA_GLOFAS | 1850_DATM%JRA_SLND_CICE_MOM6%REGIONAL_DROF%GLOFAS_SGLC_WW3 | ocean coupled with CICE sea ice model and WW3 wave model with data atmosphere from JRA and data runoff from GLOFAS |
+| GWR1850MARBL_JRA_GLOFAS | 1850_DATM%JRA_SLND_CICE_MOM6%REGIONAL%MARBL-BIO_DROF%GLOFAS_SGLC_WW3 | ocean coupled with MARBL BGC model, CICE sea ice model, and WW3 wave model with data atmosphere from JRA and data runoff from GLOFAS |
 
 
+The `W` in `CWR_*`/`GWR_*` denotes an active wave model (WW3) in place of the stub
+`SWAV`. For these compsets CrocoDash reuses the regional ocean grid as the wave grid
+and runs the WW3 grid preprocessor, so no separate wave grid needs to be supplied.
 
 ## Input Parameters
 
