@@ -222,8 +222,7 @@ def test_merge_single_boundary(
 def test_merge_rejects_non_monotonic_time(
     tmp_path, dummy_mom6_obc_data_factory, get_rect_grid
 ):
-    """Chunks that do not line up on a common epoch must be caught at merge.
-    """
+    """Chunks that do not line up on a common epoch must be caught at merge."""
     grid = get_rect_grid
     bounds = Grid.get_bounding_boxes(grid)
     east = dummy_mom6_obc_data_factory(

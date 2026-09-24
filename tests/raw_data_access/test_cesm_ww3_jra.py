@@ -7,6 +7,8 @@ direction axis and its order, the NO_LEAP mapping -- checkable against
 closed-form answers, which is exactly what a real restart cannot give you.
 """
 
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -16,6 +18,8 @@ from netCDF4 import Dataset
 from CrocoDash.raw_data_access.base import DIRECTION_TO, LAND_NAN, WW3ForcingProduct
 from CrocoDash.raw_data_access.registry import ProductRegistry
 from CrocoDash.raw_data_access.datasets.cesm_ww3_jra import (
+    _DEFAULT_DATABASE_ROOT,
+    _DEFAULT_GRID_FILE,
     CESM_WW3_JRA,
     action_to_energy,
     available_range,
@@ -79,10 +83,10 @@ def _write_restart(path, stamp, scale=1.0):
         m[0, :, :] = mapsta
 
 
-def _write_grid(path):
-    x, y = np.meshgrid(LONS, LATS)
-    depth = np.full((NY, NX), DEPTH)
-    mask = np.ones((NY, NX), dtype=np.int32)
+def _write_grid(path, ny=NY, depth=DEPTH, attrs=None):
+    x, y = np.meshgrid(LONS, LATS[:ny])
+    depth = np.full((ny, NX), depth)
+    mask = np.ones((ny, NX), dtype=np.int32)
     mask[:, LAND_I] = 0
     depth[:, LAND_I] = 0.0
     ds = xr.Dataset(
@@ -92,7 +96,7 @@ def _write_grid(path):
             "depth": (("ny", "nx"), depth),
             "mask": (("ny", "nx"), mask),
         },
-        attrs={"min_depth": 10.0},
+        attrs={"min_depth": 10.0} if attrs is None else attrs,
     )
     ds.to_netcdf(path)
 
@@ -368,6 +372,84 @@ def test_window_crossing_the_cyclic_seam_stays_monotonic(database):
         )
 
 
+@pytest.mark.parametrize(
+    "lon_min, lon_max",
+    [(0.0, 360.0), (10.0, 370.0), (0.1, 360.1), (10.3, 370.3), (-10.0, 360.0)],
+)
+def test_a_full_turn_of_longitude_reads_every_column(database, lon_min, lon_max):
+    """A full turn wraps its ends onto (nearly) the same longitude -- only
+    exactly so for integer pairs; it must read the whole circle, not
+    collapse to the few columns around lon_min."""
+    ds = _extract(database, lon_min=lon_min, lon_max=lon_max)
+    assert ds.sizes["longitude"] == NX
+
+
+def test_a_grid_file_of_another_shape_is_rejected(database, tmp_path):
+    """Indices computed on the wrong grid would still be in range for a
+    larger restart and silently read the wrong cells."""
+    grid = tmp_path / "other_topog.nc"
+    _write_grid(grid, ny=NY - 1)
+    with pytest.raises(ValueError, match="grid_file"):
+        _extract(database, grid_file=str(grid))
+
+
+@pytest.mark.parametrize("lon_max", [361.0, 1.0], ids=["ascending", "descending"])
+def test_a_descending_pair_reads_eastward_across_the_seam(database, lon_max):
+    """359..1 is the same 2-degree window as 359..361 -- 4 of the 6 columns
+    without padding. Reading a descending pair as a full turn would give 6."""
+    ds = _extract(
+        database,
+        lon_min=359.0,
+        lon_max=lon_max,
+        buffer_deg=0.0,
+        max_buffer_deg=0.0,
+    )
+    assert ds.sizes["longitude"] == 4
+
+
+@pytest.mark.parametrize("attrs", [{}, {"min_depth": 0.0}], ids=["missing", "zero"])
+def test_a_grid_file_without_a_positive_min_depth_floors_at_its_shallowest_wet_depth(
+    database, tmp_path, caplog, attrs
+):
+    """Zero is common (the tutorial's Topo uses min_depth=0); that grid has
+    to work."""
+    grid = tmp_path / "no_min_depth.nc"
+    _write_grid(grid, attrs=attrs)
+    with caplog.at_level("WARNING"):
+        ds = _extract(database, grid_file=str(grid))
+    assert "shallowest wet depth" in caplog.text
+    assert np.isfinite(ds["efth"].drop_sel(longitude=LONS[LAND_I]).values).all()
+
+
+def test_a_grid_file_with_no_positive_depth_is_named_in_the_error(database, tmp_path):
+    grid = tmp_path / "all_land.nc"
+    _write_grid(grid, depth=0.0, attrs={})
+    with pytest.raises(ValueError, match="all_land.nc has no positive depth"):
+        _extract(database, grid_file=str(grid))
+
+
+@pytest.mark.filterwarnings("error::RuntimeWarning")
+def test_energy_overflowing_float32_is_an_error_not_inf(database, tmp_path):
+    """A near-zero depth gives a finite float64 energy that overflows the
+    float32 store; inf is not land, so it would reach ww3_bounc. The error
+    has to surface even under -W error, not the cast's overflow warning."""
+    grid = tmp_path / "shallow_topog.nc"
+    _write_grid(grid, depth=1e-300, attrs={"min_depth": 1e-300})
+    with pytest.raises(ValueError, match="not finite in float32"):
+        _extract(database, grid_file=str(grid), lon_min=1.0, lon_max=2.0)
+
+
+def test_a_fill_value_at_a_sea_cell_is_blamed_on_the_mask(database):
+    """The wet mask comes from the first restart; a later one with a fill
+    value where that mask says sea is a mask disagreement, not a depth
+    problem."""
+    root, _ = database
+    with Dataset(root / f"{CASE}.ww3.r.2020-02-27-21600.nc", "a") as nc:
+        nc.variables["va0001"][0, 1, 1] = np.float32(9.96921e36)
+    with pytest.raises(ValueError, match="disagree on the land mask"):
+        _extract(database)
+
+
 def test_dates_outside_the_database_are_rejected(database):
     with pytest.raises(ValueError, match="covers"):
         _extract(database, dates=["2020-02-25", "2020-02-26"])
@@ -428,6 +510,16 @@ def test_product_is_a_ww3_forcing_product_declaring_the_to_convention():
     assert ProductRegistry.product_is_of_type("CESM-WW3-JRA", WW3ForcingProduct)
     assert CESM_WW3_JRA.direction_convention == DIRECTION_TO
     assert CESM_WW3_JRA.land_marker == LAND_NAN
+
+
+@pytest.mark.skipif(
+    not (Path(_DEFAULT_DATABASE_ROOT).is_dir() and Path(_DEFAULT_GRID_FILE).is_file()),
+    reason="production database and grid file are on GLADE scratch",
+)
+def test_registry_toy_call_is_inside_the_database():
+    """The generic toy dates (2000) predate the database, which made the
+    registry-wide validation test fail on this product."""
+    assert ProductRegistry.validate_function("cesm-ww3-jra", "get_cesm_ww3_jra_spectra")
 
 
 def test_write_metadata_has_required_fields():

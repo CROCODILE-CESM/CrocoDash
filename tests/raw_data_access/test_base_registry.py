@@ -151,6 +151,22 @@ def test_forcing_validate_method():
     assert DummyForcing.validate_method("fetch_dummy")
 
 
+def test_validate_method_removes_its_temporary_directory(tmp_path, monkeypatch):
+    temp_dir = tmp_path / "toy"
+    temp_dir.mkdir()
+    monkeypatch.setattr("tempfile.mkdtemp", lambda: str(temp_dir))
+    assert DummyForcing.validate_method("fetch_dummy")
+    assert not temp_dir.exists()
+
+
+def test_forcing_validate_method_passes_overrides_through():
+    """A product overriding validate_method (e.g. for in-range dates) relies
+    on ForcingProduct forwarding its kwargs to the toy call."""
+    assert DummyForcing.validate_method("fetch_dummy", variables="SST").startswith(
+        "Fetched SST"
+    )
+
+
 def test_get_access_function(tmp_path):
     func = ProductRegistry.get_access_function("dummy", "dummy_method")
     func(dates="asdasd", output_folder=tmp_path, output_filename="asdasd")

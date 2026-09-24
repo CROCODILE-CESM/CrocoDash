@@ -107,6 +107,8 @@ from netCDF4 import Dataset
 
 from CrocoDash.raw_data_access.base import *
 
+logger = setup_logger(__name__)
+
 # The production database and the static geometry of the grid it was run on.
 # Both are overridable per call (via configure_forcings's
 # ww3_obc_function_overrides) so that any other CESM/WW3 run with 6-hourly
@@ -322,6 +324,21 @@ def _axis_indices(coord, lo, hi, cyclic, n):
     return np.arange(i0, i1 + 1)
 
 
+def _window_runs(j_idx, i_idx, nx):
+    """Row bounds and contiguous column runs of a lat/lon window.
+
+    Returns ``(j0, j1, wrapped, runs)``: the row slice, the column indices
+    modded into the array, and the positions in ``wrapped`` that form each
+    contiguous run -- one hyperslab per run, so a window crossing the cyclic
+    seam is read as a handful of slabs rather than a fancy-indexed read.
+    """
+    j0, j1 = int(j_idx[0]), int(j_idx[-1]) + 1
+    wrapped = np.mod(i_idx, nx)
+    breaks = np.flatnonzero(np.diff(wrapped) != 1) + 1
+    runs = np.split(np.arange(len(wrapped)), breaks)
+    return j0, j1, wrapped, runs
+
+
 def _read_window(path, spec_count, j_idx, i_idx, nx):
     """Read every ``vaNNNN`` over one lat/lon window of one restart.
 
@@ -330,11 +347,7 @@ def _read_window(path, spec_count, j_idx, i_idx, nx):
     reassembled, because a strided/fancy netCDF read of 600 variables is
     much slower than a handful of hyperslabs.
     """
-    j0, j1 = int(j_idx[0]), int(j_idx[-1]) + 1
-    wrapped = np.mod(i_idx, nx)
-    # Contiguous runs of the (wrapped) column indices: one hyperslab each.
-    breaks = np.flatnonzero(np.diff(wrapped) != 1) + 1
-    runs = np.split(np.arange(len(wrapped)), breaks)
+    j0, j1, wrapped, runs = _window_runs(j_idx, i_idx, nx)
 
     out = np.empty((len(j_idx), len(i_idx), spec_count), dtype=np.float32)
     with Dataset(path) as nc:
@@ -360,10 +373,7 @@ def _read_mapsta_window(path, j_idx, i_idx, nx):
     fill value, but reading the sign rather than just the mask is what the
     convention actually says.
     """
-    j0, j1 = int(j_idx[0]), int(j_idx[-1]) + 1
-    wrapped = np.mod(i_idx, nx)
-    breaks = np.flatnonzero(np.diff(wrapped) != 1) + 1
-    runs = np.split(np.arange(len(wrapped)), breaks)
+    j0, j1, wrapped, runs = _window_runs(j_idx, i_idx, nx)
 
     out = np.zeros((len(j_idx), len(i_idx)), dtype=bool)
     with Dataset(path) as nc:
@@ -388,12 +398,33 @@ def _read_static_grid(grid_file):
     all, both depend on it. A curvilinear global WW3 grid would need a
     search instead, and should fail loudly here rather than silently pick
     the wrong cells.
+
+    `min_depth` floors the depth fed to `group_velocity`, which needs it
+    strictly positive: a depth near zero makes Cg tiny and the converted
+    energy overflow float32 to inf. A grid file whose `min_depth` is missing
+    or not positive falls back to its shallowest wet depth, with a warning.
+    Zero is common: the tutorial builds its Topo with min_depth=0, and
+    Topo.from_topo_file defaults to it. The default grid carries 10.0.
     """
     with xr.open_dataset(grid_file) as ds:
         x = ds["x"].values
         y = ds["y"].values
         depth = ds["depth"].values
-        min_depth = float(ds.attrs.get("min_depth", 0.0))
+        min_depth = ds.attrs.get("min_depth")
+
+    if min_depth is None or not float(min_depth) > 0:
+        wet_depths = depth[depth > 0]
+        if wet_depths.size == 0:
+            raise ValueError(f"{grid_file} has no positive depth anywhere.")
+        logger.warning(
+            "%s has min_depth=%s; using its shallowest wet depth, %s m, as "
+            "the floor for the group velocity.",
+            grid_file,
+            min_depth,
+            float(wet_depths.min()),
+        )
+        min_depth = wet_depths.min()
+    min_depth = float(min_depth)
 
     if not (np.allclose(x, x[0][None, :]) and np.allclose(y, y[:, 0][:, None])):
         raise ValueError(
@@ -428,6 +459,13 @@ class CESM_WW3_JRA(WW3ForcingProduct):
     # rather than by being zero -- which here means a real, becalmed or
     # ice-covered sea point. See the ice note in the module docstring.
     land_marker = LAND_NAN
+
+    @classmethod
+    def validate_method(cls, method_name, **kwargs):
+        # The generic toy dates (2000) predate the database.
+        return super().validate_method(
+            method_name, **{"dates": ["2019-01-01", "2019-01-01"], **kwargs}
+        )
 
     @accessmethod(
         description=(
@@ -511,10 +549,17 @@ class CESM_WW3_JRA(WW3ForcingProduct):
         # window's own longitudes unwrapped so they stay monotonic across the
         # seam (forcing/ww3.py::_wrap_lons_like puts them back on the
         # supergrid's branch afterwards).
+        # Keep the requested span rather than rebuilding it from two wrapped
+        # ends: 0.1..360.1 or -10..360 is a full turn although its ends wrap
+        # onto (nearly) the same longitude, and _axis_indices clamps anything
+        # that wide to the whole axis. The window always runs eastward from
+        # lon_min, so a descending pair wraps: 350..10 crosses the seam
+        # (20 degrees), 100..10 reads 270.
         lo = lon_min % 360.0
-        hi = lon_max % 360.0
-        if hi < lo:
-            hi += 360.0
+        span = lon_max - lon_min
+        if span < 0:
+            span %= 360.0
+        hi = lo + span
 
         paths = [Path(database_root) / restart_filename(case_name, s) for s in stamps]
         missing = [p for p in paths if not p.exists()]
@@ -523,6 +568,19 @@ class CESM_WW3_JRA(WW3ForcingProduct):
                 f"{len(missing)} restart(s) missing from {database_root}, first: "
                 f"{missing[0].name}. The database may have a gap."
             )
+
+        with Dataset(paths[0]) as nc:
+            restart_shape = nc.variables["mapsta"].shape[-2:]
+            nk = int(nc.variables["nk"][...])
+            nth = int(nc.variables["nth"][...])
+        if restart_shape != depth.shape:
+            raise ValueError(
+                f"Restarts in {database_root} are {restart_shape[0]}x"
+                f"{restart_shape[1]} (ny x nx) but grid_file {grid_file} is "
+                f"{ny}x{nx}. Point grid_file at the topography of the WW3 grid "
+                "that produced the restarts."
+            )
+        spec_count = nk * nth
 
         buffer = float(buffer_deg)
         while True:
@@ -539,11 +597,6 @@ class CESM_WW3_JRA(WW3ForcingProduct):
                 f"[{lat_min}, {lat_max}] x [{lon_min}, {lon_max}] -- the whole "
                 "window is land or outside the database's latitude range."
             )
-
-        with Dataset(paths[0]) as nc:
-            nk = int(nc.variables["nk"][...])
-            nth = int(nc.variables["nth"][...])
-        spec_count = nk * nth
 
         frequency, sigma, direction = spectral_axes(
             nk, nth, fr1=fr1, xfr=xfr, direction_offset=direction_offset
@@ -567,7 +620,22 @@ class CESM_WW3_JRA(WW3ForcingProduct):
             # wave energy -- an ice-covered boundary in winter, which is a
             # valid boundary condition and has to survive as a real station.
             energy[~wet] = np.nan
-            efth[t] = energy
+            # A finite float64 can still overflow the float32 store to inf;
+            # that is reported below rather than warned about here.
+            with np.errstate(over="ignore"):
+                efth[t] = energy
+            if np.isnan(va[wet]).any():
+                raise ValueError(
+                    f"{path.name} has fill values at cells the mapsta of "
+                    f"{paths[0].name} marks as sea; the restarts disagree on "
+                    "the land mask."
+                )
+            if not np.isfinite(efth[t][wet]).all():
+                raise ValueError(
+                    f"Wave energy at wet cells of {path.name} is not finite in "
+                    "float32: the group velocity is near zero there. Check the "
+                    f"depths and min_depth in {grid_file}."
+                )
 
         ds = xr.Dataset(
             {

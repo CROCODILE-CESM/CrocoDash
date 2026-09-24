@@ -497,6 +497,63 @@ def test_process_ww3_obc_with_reference_waves(tmp_path, gen_grid_topo_vgrid):
             ds.close()
 
 
+def test_process_ww3_obc_none_clears_a_previous_runs_spectra(
+    tmp_path, gen_grid_topo_vgrid
+):
+    """Re-processing with 'none' must leave wav/ without spectra: ww3_bounc
+    would otherwise rebuild nest.ww3 from the earlier run's files. Anything
+    else in wav/ is not process()'s to delete."""
+    grid, topo, vgrid = gen_grid_topo_vgrid
+    hgrid_path = tmp_path / "hgrid.nc"
+    grid.write_supergrid(hgrid_path)
+    ctx = _make_ctx(tmp_path, supergrid_path=hgrid_path)
+
+    WW3Configurator(
+        case_inputdir=tmp_path,
+        boundaries=["west"],
+        ww3_obc_product_name="reference_waves",
+        ww3_obc_function_name="get_reference_wave_spectra",
+    ).process(ctx)
+    wave = tmp_path / WAVE_SUBDIR
+    assert (wave / "spec.list").exists()
+    (wave / "ww3_grid.inp").write_text("keep me\n")
+
+    WW3Configurator(
+        case_inputdir=tmp_path, boundaries=["west"], ww3_obc_product_name="none"
+    ).process(ctx)
+
+    assert sorted(p.name for p in wave.iterdir()) == ["ww3_grid.inp"]
+
+
+def test_process_ww3_obc_failed_rerun_keeps_the_previous_spectra(
+    tmp_path, gen_grid_topo_vgrid
+):
+    """A re-run that fails (network, a database gap) must not leave the case
+    with no boundary spectra, which WW3 would silently run as calm."""
+    grid, topo, vgrid = gen_grid_topo_vgrid
+    hgrid_path = tmp_path / "hgrid.nc"
+    grid.write_supergrid(hgrid_path)
+    ctx = _make_ctx(tmp_path, supergrid_path=hgrid_path)
+    configurator = WW3Configurator(
+        case_inputdir=tmp_path,
+        boundaries=["west"],
+        ww3_obc_product_name="reference_waves",
+        ww3_obc_function_name="get_reference_wave_spectra",
+    )
+    configurator.process(ctx)
+    wave = tmp_path / WAVE_SUBDIR
+    before = sorted(p.name for p in wave.iterdir())
+
+    with patch(
+        "CrocoDash.forcing.ww3.obc.process_obc_conditions",
+        side_effect=RuntimeError("network down"),
+    ):
+        with pytest.raises(RuntimeError, match="network down"):
+            configurator.process(ctx)
+
+    assert sorted(p.name for p in wave.iterdir()) == before
+
+
 def test_process_ww3_obc_with_cesm_ww3_jra(
     skip_if_not_glade, tmp_path, gen_grid_topo_vgrid
 ):

@@ -140,14 +140,14 @@ class BaseProduct:
     @classmethod
     def validate_method(cls, method_name, **kwargs):
         """Default validation just makes a toy call with a temporary directory."""
+        if method_name not in cls._access_methods:
+            raise ValueError(f"{method_name} not in {cls.__name__}")
         temp_dir = tempfile.mkdtemp()
         default_args = {
             "output_folder": temp_dir,
             "output_filename": "test_file.notreal",
         }
         final_args = {**default_args, **kwargs}
-        if method_name not in cls._access_methods:
-            raise ValueError(f"{method_name} not in {cls.__name__}")
 
         func = cls._access_methods[method_name].__func__
 
@@ -159,8 +159,8 @@ class BaseProduct:
                 f"Validation failed for {cls.product_name}.{method_name}: {e}"
             )
             return False
-        shutil.rmtree(temp_dir)
-        return True
+        finally:
+            shutil.rmtree(temp_dir, ignore_errors=True)
 
     @classmethod
     def write_metadata(cls, file_path: str = None) -> dict:
@@ -277,7 +277,7 @@ class ForcingProduct(DatedBaseProduct):
         }
 
         # Delegate to the base implementation
-        return super().validate_method(method_name, **extra_defaults)
+        return super().validate_method(method_name, **{**extra_defaults, **kwargs})
 
 
 class VelocityTracerForcingProduct(ForcingProduct):

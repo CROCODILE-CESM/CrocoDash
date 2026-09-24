@@ -236,6 +236,15 @@ def write_ww3_bounc_nml(
         )
 
 
+def _remove_boundary_spectra(file_dir):
+    """Remove the point spectra, spec.list and ww3_bounc.nml from file_dir."""
+    file_dir = Path(file_dir)
+    for stale in file_dir.glob("ww3.point*_spec.nc"):
+        stale.unlink()
+    for name in ("spec.list", "ww3_bounc.nml"):
+        (file_dir / name).unlink(missing_ok=True)
+
+
 def write_spec_list(file_dir, spectra_paths, spec_list_filename="spec.list"):
     """
     Write the spec.list file that ww3_bounc.nml's BOUND%FILE points at: one
@@ -609,6 +618,8 @@ class WW3Configurator(BaseConfigurator):
         output_dir.mkdir(parents=True, exist_ok=True)
 
         if product_name == "none":
+            # A previous run's spectra would otherwise still reach ww3_bounc.
+            _remove_boundary_spectra(output_dir)
             print("[info] WW3: ww3_obc_product_name='none' -- no boundary spectra.")
             return
 
@@ -653,8 +664,9 @@ class WW3Configurator(BaseConfigurator):
         # what ww3_bounc actually reads) and writes the spec.list and
         # ww3_bounc.nml that point files need to be listed in and read by.
         # Write each station location once; ww3_bounc cannot handle duplicates.
-        for stale in output_dir.glob("ww3.point*_spec.nc"):
-            stale.unlink()
+        # The old set is only removed now that the new one has been built, so
+        # a failed re-run leaves the previous spectra in place.
+        _remove_boundary_spectra(output_dir)
         spectra_names = []
         seen = set()
         for boundary in boundaries:
