@@ -18,6 +18,7 @@ from ProConPy.dev_utils import ConstraintViolation
 from visualCaseGen.initialize import initialize as initialize_visualCaseGen
 from visualCaseGen.custom_widget_types.case_creator import CaseCreator, ERROR, RESET
 from visualCaseGen.custom_widget_types.case_tools import xmlchange, append_user_nl
+from CrocoDash.forcing import cice
 from CrocoDash.forcing.driver import run_workflow
 
 from CrocoDash import case_state
@@ -187,9 +188,11 @@ class Case:
             self.caseroot, non_local=self.cc._is_non_local()
         )
 
-        # Needs the case: it reads WAV_NCPL and writes user_nl_ww3.
+        # Need the case: they read <COMP>_NCPL and write user_nl_<comp>.
         if self.ww3_in_compset:
             self._set_ww3_timesteps()
+        if self.cice_in_compset:
+            self._set_cice_ndtd()
 
         self.is_non_local = self.cc._is_non_local()
 
@@ -382,9 +385,8 @@ class Case:
             wav_dir.mkdir(exist_ok=True)
             self.ocn_topo.write_ww3_input(wav_dir, grid_alias=ocn_grid.name)
 
-    def _set_ww3_timesteps(self):
-        """Scale the WW3 time steps to the grid via user_nl_ww3."""
-
+    def _coupling_interval(self, comp):
+        """Coupling interval of a component in seconds, from <COMP>_NCPL."""
         base_period = self._cime_case.get_value("NCPL_BASE_PERIOD")
         if base_period not in _NCPL_BASE_SECONDS:
             raise ValueError(f"Invalid NCPL_BASE_PERIOD {base_period}")
@@ -395,11 +397,16 @@ class Case:
             )
 
         basedt = _NCPL_BASE_SECONDS[base_period]
-        wav_ncpl = int(self._cime_case.get_value("WAV_NCPL"))
-        cpl_dt, remainder = divmod(basedt, wav_ncpl)
+        ncpl = int(self._cime_case.get_value(f"{comp}_NCPL"))
+        cpl_dt, remainder = divmod(basedt, ncpl)
         if remainder:
-            raise ValueError("WAV_NCPL doesn't divide the base dt evenly")
+            raise ValueError(f"{comp}_NCPL doesn't divide the base dt evenly")
+        return cpl_dt
 
+    def _set_ww3_timesteps(self):
+        """Scale the WW3 time steps to the grid via user_nl_ww3."""
+
+        cpl_dt = self._coupling_interval("WAV")
         dt = self.ocn_topo.ww3_timesteps(float(cpl_dt))
         append_user_nl(
             "ww3",
@@ -409,6 +416,23 @@ class Case:
                 f"WW3 time steps from the grid's smallest cell and the {cpl_dt} s "
                 "coupling interval (CESM defaults are per wav_grid alias, not "
                 "per resolution)"
+            ),
+        )
+
+    def _set_cice_ndtd(self):
+        """Scale CICE's dynamics substeps (ndtd) to the grid via user_nl_cice."""
+
+        ice_dt = self._coupling_interval("ICE")
+        min_dx = min(float(self.ocn_grid.dxt.min()), float(self.ocn_grid.dyt.min()))
+        ndtd = cice.dynamics_substeps(ice_dt, min_dx)
+        append_user_nl(
+            "cice",
+            [("ndtd", str(ndtd))],
+            do_exec=True,
+            comment=(
+                f"CICE dynamics substeps: ice at {cice.MAX_ICE_SPEED} m/s crosses at "
+                f"most {cice.MAX_CELL_FRACTION} of the smallest cell ({min_dx:.0f} m) "
+                f"per substep of the {ice_dt} s ice time step"
             ),
         )
 

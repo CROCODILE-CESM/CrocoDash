@@ -51,6 +51,7 @@ restored too: the NUOPC driver calls ``ice_restoring_interior('velocity')``
 (CICE_RunMod.F90), and ``configure`` lists ``velocity`` in ``restore_flds``.
 """
 
+import math
 from pathlib import Path
 
 import xarray as xr
@@ -79,6 +80,34 @@ FORCING_FILENAME = "cice_forcing.nc"
 # through the corner grid too, not the T-point path. Everything else with
 # (nj, ni) or (ncat, nj, ni) dims (aicen/vicen/..., coszen, ...) is
 # genuinely T-cell-centered, confirmed by inspecting the real restart file.
+# CICE dynamics substeps (ndtd): sized so that ice moving at MAX_ICE_SPEED
+# crosses at most MAX_CELL_FRACTION of the smallest cell per substep. CICE
+# otherwise takes one dynamics/advection/ridging step per coupling interval,
+# which on a ~5 km regional grid made big_alaska.019 abort in ridging
+# ("aice0 < 0"). The speed is a conservative bound (019 peaked at 0.72 m/s);
+# raise ndtd in user_nl_cice if faster ice is expected.
+MAX_ICE_SPEED = 1.0  # [m/s]
+MAX_CELL_FRACTION = 0.25
+
+
+def dynamics_substeps(ice_dt, min_dx):
+    """ndtd for an ice time step of ice_dt seconds on a grid whose smallest cell
+    is min_dx meters."""
+    return max(1, math.ceil(MAX_ICE_SPEED * ice_dt / (MAX_CELL_FRACTION * min_dx)))
+
+
+# Restoring namelist variables. Only written when restoring: they exist only in
+# CICE from cesm3_cice6_6_3_22 on, and CIME rejects unknown user_nl variables,
+# so writing them unconditionally broke every CICE case on an older CICE.
+RESTORE_PARAMS = (
+    "restore_ice",
+    "restore_timescale",
+    "restore_mask",
+    "restore_width",
+    "restore_data",
+    "restore_flds",
+)
+
 U_POINT_VARS = {"uvel", "vvel", "iceumask"}
 U_POINT_VAR_PREFIXES = ("stressp_", "stressm_", "stress12_")
 
@@ -211,12 +240,6 @@ class CICEConfigurator(BaseConfigurator):
         UserNLConfigParam("ew_boundary_type", user_nl_name="cice"),
         UserNLConfigParam("advection", user_nl_name="cice"),
         UserNLConfigParam("restart_ext", user_nl_name="cice"),
-        UserNLConfigParam("restore_ice", user_nl_name="cice"),
-        UserNLConfigParam("restore_timescale", user_nl_name="cice"),
-        UserNLConfigParam("restore_mask", user_nl_name="cice"),
-        UserNLConfigParam("restore_width", user_nl_name="cice"),
-        UserNLConfigParam("restore_data", user_nl_name="cice"),
-        UserNLConfigParam("restore_flds", user_nl_name="cice"),
         UserNLConfigParam("restart_aero", user_nl_name="cice"),
         UserNLConfigParam("restart_age", user_nl_name="cice"),
         UserNLConfigParam("restart_fy", user_nl_name="cice"),
@@ -325,8 +348,10 @@ class CICEConfigurator(BaseConfigurator):
         # and a named product, not the input flag alone. trestore is CICE's own
         # documented default timescale, and is inert when restore_ice is off.
         restoring = bool(self._resolve_forcing_source()[0])
-        self.set_output_param("restore_ice", ".true." if restoring else ".false.")
-        self.set_output_param("restore_timescale", 90)
+        if restoring:
+            self._add_restore_params()
+            self.set_output_param("restore_ice", ".true.")
+            self.set_output_param("restore_timescale", 90)
 
         # Only when there is a restart to read: with ice_ic = 'default' these
         # make CICE read tracers from a file it never opened, segfaulting in
@@ -349,12 +374,13 @@ class CICEConfigurator(BaseConfigurator):
         # to the one-cell halo process() builds; 'initial' restores toward
         # ice_ic, since process() writes one static snapshot rather than the
         # per-timestep files 'restartfiles' expects.
-        self.set_output_param("restore_mask", "'constant'")
-        self.set_output_param("restore_width", 1)
-        self.set_output_param("restore_data", "'initial'")
-        self.set_output_param(
-            "restore_flds", "'aicen','vicen','vsnon','trcrn','velocity'"
-        )
+        if restoring:
+            self.set_output_param("restore_mask", "'constant'")
+            self.set_output_param("restore_width", 1)
+            self.set_output_param("restore_data", "'initial'")
+            self.set_output_param(
+                "restore_flds", "'aicen','vicen','vsnon','trcrn','velocity'"
+            )
 
         # ice_ic points at the expanded-grid restart process() writes, so its
         # ghost ring is read in (restart_ext above) and becomes the restoring
@@ -383,6 +409,27 @@ class CICEConfigurator(BaseConfigurator):
                 "CICEConfigurator directly."
             )
         return Path(case_inputdir) / SEA_ICE_SUBDIR / FORCING_FILENAME
+
+    def _add_restore_params(self):
+        """Declare the restoring namelist variables on this instance (see
+        RESTORE_PARAMS for why they aren't class-level output params)."""
+        existing = {p.name for p in self.output_params}
+        self.output_params = self.output_params + [
+            UserNLConfigParam(name, user_nl_name="cice")
+            for name in RESTORE_PARAMS
+            if name not in existing
+        ]
+
+    @classmethod
+    def deserialize(cls, data):
+        """Rebuild the restoring params too, when the saved case restored."""
+        obj = super().deserialize(data)
+        if any(name in data["outputs"] for name in RESTORE_PARAMS):
+            obj._add_restore_params()
+            for name in RESTORE_PARAMS:
+                if name in data["outputs"]:
+                    obj.set_output_param(name, data["outputs"][name])
+        return obj
 
     def get_output_filepaths(self, ocn_directory):
         """CICE's forcing file, which lives beside ocn/ rather than in it.
