@@ -100,6 +100,14 @@ CrocoDash.forcing.tides module
    :show-inheritance:
    :undoc-members:
 
+CrocoDash.forcing.user\_nl\_blocks module
+-----------------------------------------
+
+.. automodule:: CrocoDash.forcing.user_nl_blocks
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 CrocoDash.forcing.utils module
 ------------------------------
 
