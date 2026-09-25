@@ -18,15 +18,23 @@ authors:
     email: altuntas@ucar.edu
     affiliation: NCAR
     orcid: 'https://orcid.org/0000-0003-1708-9518'
-  - given-names: Mike
-    family-names: Levy
-    email: mlevy@ucar.edu
-    affiliation: NCAR
   - given-names: Aidan
     family-names: Janney
     email: ajanney@ucar.edu
     affiliation: CU - Boulder
     orcid: 'https://orcid.org/0009-0006-5304-0104'
+  - given-names: Mike
+    family-names: Levy
+    email: mlevy@ucar.edu
+    affiliation: NCAR
+  - given-names: Enrico
+    family-names: Milanese
+    email: enrico.milanese@whoi.edu 
+    affiliation: WHOI
+  - given-names: Dave
+    family-names: Bailey
+    email: dbailey@ucar.edu
+    affiliation: NCAR
   - given-names: Andrew
     family-names: Kwong
     email: akwong@ucar.edu
