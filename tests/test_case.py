@@ -147,44 +147,60 @@ def test_a_configuration_error_raises_instead_of_returning_a_half_built_case(
         CrocoDash_case_factory(tmp_path)
 
 
-def test_a_failed_create_newcase_raises_and_leaves_the_previous_case(
-    CrocoDash_case_factory, tmp_path, monkeypatch
+def _fail_create_case(monkeypatch, exc):
+    from visualCaseGen.custom_widget_types.case_creator import CaseCreator
+
+    def fail(self, do_exec):
+        raise exc
+
+    monkeypatch.setattr(CaseCreator, "create_case", fail)
+
+
+@pytest.mark.parametrize(
+    "exc",
+    [RuntimeError("create_newcase failed"), KeyboardInterrupt()],
+    ids=["error", "ctrl-c"],
+)
+def test_a_failed_create_leaves_nothing_behind(
+    CrocoDash_case_factory, tmp_path, monkeypatch, exc
 ):
     """Carrying on after a failed create_newcase only moves the error to
     get_case on a caseroot that was never made. The failed attempt must not
-    leave its own half-made dirs behind, nor lose the case it was replacing
-    (the factory creates with override=True)."""
-    from visualCaseGen.custom_widget_types.case_creator import CaseCreator
-
+    leave half-made dirs that make a retry fail with "already exists"; with
+    override=True (as the factory uses) the previous case is gone either way."""
     previous = tmp_path / "inputdir"
     previous.mkdir()
     (previous / "marker").write_text("previous case")
 
-    def fail(self, do_exec):
-        raise RuntimeError("create_newcase failed")
-
-    monkeypatch.setattr(CaseCreator, "create_case", fail)
-    with pytest.raises(RuntimeError, match="create_newcase failed"):
+    _fail_create_case(monkeypatch, exc)
+    with pytest.raises(type(exc)):
         CrocoDash_case_factory(tmp_path)
-    assert (previous / "marker").read_text() == "previous case"
-    assert sorted(p.name for p in tmp_path.iterdir()) == ["inputdir"]
+    assert list(tmp_path.iterdir()) == []
 
 
-def test_an_interrupted_create_restores_the_previous_case(
-    CrocoDash_case_factory, tmp_path, monkeypatch
-):
-    """Ctrl-C in a notebook raises KeyboardInterrupt, not an Exception."""
-    from visualCaseGen.custom_widget_types.case_creator import CaseCreator
+def test_override_says_what_it_removes(tmp_path, capsys):
+    from CrocoDash.case import _remove_previous
 
-    previous = tmp_path / "inputdir"
-    previous.mkdir()
-    (previous / "marker").write_text("previous case")
+    old = tmp_path / "old_case"
+    old.mkdir()
+    _remove_previous(old)
+    _remove_previous(tmp_path / "never_existed")
+    assert not old.exists()
+    assert capsys.readouterr().out == f"Removing previous case files: {old}\n"
 
-    def interrupt(self, do_exec):
-        raise KeyboardInterrupt
 
-    monkeypatch.setattr(CaseCreator, "create_case", interrupt)
-    with pytest.raises(KeyboardInterrupt):
-        CrocoDash_case_factory(tmp_path)
-    assert (previous / "marker").read_text() == "previous case"
-    assert sorted(p.name for p in tmp_path.iterdir()) == ["inputdir"]
+def test_a_failed_attempt_leaves_a_preexisting_dir_alone(tmp_path):
+    """The build/run dir may be an earlier case's, left behind (M2) with
+    override=False; create_newcase refuses it, and it is not ours to delete."""
+    from CrocoDash.case import _remove_failed_attempt
+
+    bld_run, caseroot, inputdir = (tmp_path / n for n in ("bld_run", "case", "input"))
+    bld_run.mkdir()
+    (bld_run / "marker").write_text("earlier run")
+    caseroot.mkdir()
+    inputdir.mkdir()
+    _remove_failed_attempt(
+        [inputdir, caseroot, bld_run, caseroot], preexisting={bld_run}
+    )
+    assert sorted(p.name for p in tmp_path.iterdir()) == ["bld_run"]
+    assert (bld_run / "marker").read_text() == "earlier run"

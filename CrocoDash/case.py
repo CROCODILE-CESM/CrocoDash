@@ -22,10 +22,28 @@ from CrocoDash.forcing import cice
 from CrocoDash.forcing.driver import run_workflow
 
 from CrocoDash import case_state
-from CrocoDash.case_dirs import CaseDirs
 from CrocoDash.logging import quiet_visualcasegen_info
 
 quiet_visualcasegen_info()
+
+
+def _remove_previous(path):
+    """Delete a directory left by an earlier case of the same name (override=True)."""
+    if path.exists():
+        print(f"Removing previous case files: {path}")
+        shutil.rmtree(path)
+
+
+def _remove_failed_attempt(paths, preexisting):
+    """Delete the dirs a failed Case() created, so that retrying it is not
+    refused with "already exists". One that was already there before the
+    attempt (the build/run dir, with override=False) is not ours to delete.
+    """
+    for path in paths:
+        if path not in preexisting and path.exists():
+            print(f"Removing files from the failed attempt: {path}")
+            shutil.rmtree(path, ignore_errors=True)
+
 
 # Seconds in each NCPL_BASE_PERIOD; year/decade assume a NO_LEAP calendar.
 _NCPL_BASE_SECONDS = {
@@ -178,14 +196,15 @@ class Case:
         except Exception as e:
             raise RuntimeError(f"Case configuration failed: {e}") from e
 
-        case_dirs = CaseDirs(
-            [
-                self.inputdir,
-                self.caseroot,
-                Path(self.cime.cime_output_root) / self.caseroot.name,
-            ],
-            override,
-        )
+        case_dirs = [
+            self.inputdir,
+            self.caseroot,
+            Path(self.cime.cime_output_root) / self.caseroot.name,
+        ]
+        if override:
+            for path in case_dirs:
+                _remove_previous(path)
+        preexisting = {path for path in case_dirs if path.exists()}
         try:
             # Before creating the case, we need to create the grid input files (except for mapping files,
             # which will be created later in process_forcings if needed).
@@ -211,9 +230,8 @@ class Case:
 
             self._write_state()
         except BaseException:
-            case_dirs.undo()
+            _remove_failed_attempt(case_dirs, preexisting)
             raise
-        case_dirs.discard_previous()
 
         required_configurators = ForcingConfigRegistry.find_required_configurators(
             self.compset_lname

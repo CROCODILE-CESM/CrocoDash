@@ -21,14 +21,6 @@ CrocoDash.case module
    :show-inheritance:
    :undoc-members:
 
-CrocoDash.case\_dirs module
----------------------------
-
-.. automodule:: CrocoDash.case_dirs
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
 CrocoDash.case\_state module
 ----------------------------
 
