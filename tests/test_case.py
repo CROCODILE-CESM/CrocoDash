@@ -131,3 +131,60 @@ def test_set_cice_ndtd_scales_with_grid_and_ice_step(monkeypatch, ncpl, dx_m, ex
 def test_coupling_interval_rejects_uneven_ncpl():
     with pytest.raises(ValueError, match="ICE_NCPL doesn't divide"):
         _stub_case_for_ncpl(7, 5450.0)._coupling_interval("ICE")
+
+
+def test_a_configuration_error_raises_instead_of_returning_a_half_built_case(
+    CrocoDash_case_factory, tmp_path, monkeypatch
+):
+    import CrocoDash.case as case_mod
+    from ProConPy.dev_utils import ConstraintViolation
+
+    def fail(self, *args, **kwargs):
+        raise ConstraintViolation("no such grid")
+
+    monkeypatch.setattr(case_mod.Case, "_configure_case", fail)
+    with pytest.raises(RuntimeError, match="Case configuration failed: no such grid"):
+        CrocoDash_case_factory(tmp_path)
+
+
+def test_a_failed_create_newcase_raises_and_leaves_the_previous_case(
+    CrocoDash_case_factory, tmp_path, monkeypatch
+):
+    """Carrying on after a failed create_newcase only moves the error to
+    get_case on a caseroot that was never made. The failed attempt must not
+    leave its own half-made dirs behind, nor lose the case it was replacing
+    (the factory creates with override=True)."""
+    from visualCaseGen.custom_widget_types.case_creator import CaseCreator
+
+    previous = tmp_path / "inputdir"
+    previous.mkdir()
+    (previous / "marker").write_text("previous case")
+
+    def fail(self, do_exec):
+        raise RuntimeError("create_newcase failed")
+
+    monkeypatch.setattr(CaseCreator, "create_case", fail)
+    with pytest.raises(RuntimeError, match="create_newcase failed"):
+        CrocoDash_case_factory(tmp_path)
+    assert (previous / "marker").read_text() == "previous case"
+    assert sorted(p.name for p in tmp_path.iterdir()) == ["inputdir"]
+
+
+def test_an_interrupted_create_restores_the_previous_case(
+    CrocoDash_case_factory, tmp_path, monkeypatch
+):
+    """Ctrl-C in a notebook raises KeyboardInterrupt, not an Exception."""
+    from visualCaseGen.custom_widget_types.case_creator import CaseCreator
+
+    previous = tmp_path / "inputdir"
+    previous.mkdir()
+    (previous / "marker").write_text("previous case")
+
+    def interrupt(self, do_exec):
+        raise KeyboardInterrupt
+
+    monkeypatch.setattr(CaseCreator, "create_case", interrupt)
+    with pytest.raises(KeyboardInterrupt):
+        CrocoDash_case_factory(tmp_path)
+    assert (previous / "marker").read_text() == "previous case"
+    assert sorted(p.name for p in tmp_path.iterdir()) == ["inputdir"]

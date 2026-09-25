@@ -16,12 +16,13 @@ from ProConPy.config_var import ConfigVar, cvars
 from ProConPy.stage import Stage
 from ProConPy.dev_utils import ConstraintViolation
 from visualCaseGen.initialize import initialize as initialize_visualCaseGen
-from visualCaseGen.custom_widget_types.case_creator import CaseCreator, ERROR, RESET
+from visualCaseGen.custom_widget_types.case_creator import CaseCreator
 from visualCaseGen.custom_widget_types.case_tools import xmlchange, append_user_nl
 from CrocoDash.forcing import cice
 from CrocoDash.forcing.driver import run_workflow
 
 from CrocoDash import case_state
+from CrocoDash.case_dirs import CaseDirs
 
 # Seconds in each NCPL_BASE_PERIOD; year/decade assume a NO_LEAP calendar.
 _NCPL_BASE_SECONDS = {
@@ -172,33 +173,44 @@ class Case:
                 ntasks_ocn_specified=ntasks_ocn is not None,
             )
         except Exception as e:
-            print(f"\n{ERROR}Case Configuration Error:{RESET}")
-            print(f"  {str(e)}")
-            return
+            raise RuntimeError(f"Case configuration failed: {e}") from e
 
-        # Before creating the case, we need to create the grid input files (except for mapping files,
-        # which will be created later in process_forcings if needed).
-        self._create_grid_input_files()
-
-        # Having set the configuration variables and created the grid input files, we can now create the case instance.
-        self._create_newcase()
-
-        # After creating the case, instantiate the CIME case object for later use.
-        self._cime_case = self.cime.get_case(
-            self.caseroot, non_local=self.cc._is_non_local()
+        case_dirs = CaseDirs(
+            [
+                self.inputdir,
+                self.caseroot,
+                Path(self.cime.cime_output_root) / self.caseroot.name,
+            ],
+            override,
         )
+        try:
+            # Before creating the case, we need to create the grid input files (except for mapping files,
+            # which will be created later in process_forcings if needed).
+            self._create_grid_input_files()
 
-        # Need the case: they read <COMP>_NCPL and write user_nl_<comp>.
-        if self.ww3_in_compset:
-            self._set_ww3_timesteps()
-        if self.cice_in_compset:
-            self._set_cice_ndtd()
+            # Having set the configuration variables and created the grid input files, we can now create the case instance.
+            self._create_newcase()
 
-        self.is_non_local = self.cc._is_non_local()
+            # After creating the case, instantiate the CIME case object for later use.
+            self._cime_case = self.cime.get_case(
+                self.caseroot, non_local=self.cc._is_non_local()
+            )
 
-        self._apply_final_xmlchanges(ntasks_ocn, job_queue, job_wallclock_time)
+            # Need the case: they read <COMP>_NCPL and write user_nl_<comp>.
+            if self.ww3_in_compset:
+                self._set_ww3_timesteps()
+            if self.cice_in_compset:
+                self._set_cice_ndtd()
 
-        self._write_state()
+            self.is_non_local = self.cc._is_non_local()
+
+            self._apply_final_xmlchanges(ntasks_ocn, job_queue, job_wallclock_time)
+
+            self._write_state()
+        except BaseException:
+            case_dirs.undo()
+            raise
+        case_dirs.discard_previous()
 
         required_configurators = ForcingConfigRegistry.find_required_configurators(
             self.compset_lname
@@ -341,10 +353,6 @@ class Case:
         ocn_topo = self.ocn_topo
         ocn_vgrid = self.ocn_vgrid
 
-        if self.override is True:
-            if inputdir.exists():
-                shutil.rmtree(inputdir)
-
         inputdir.mkdir(parents=True, exist_ok=False)
 
         ocn_dir = inputdir / "ocn"
@@ -438,13 +446,6 @@ class Case:
 
     def _create_newcase(self):
         """Create the case instance."""
-        # If override is True, clean up the existing caseroot and output directories
-        if self.override is True:
-            if self.caseroot.exists():
-                shutil.rmtree(self.caseroot)
-            if (Path(self.cime.cime_output_root) / self.caseroot.name).exists():
-                shutil.rmtree(Path(self.cime.cime_output_root) / self.caseroot.name)
-
         if not self.caseroot.parent.exists():
             self.caseroot.parent.mkdir(parents=True, exist_ok=False)
 
@@ -454,9 +455,9 @@ class Case:
 
         try:
             self.cc.create_case(do_exec=True)
-        except Exception as e:
-            print(f"{ERROR}{str(e)}{RESET}")
+        except Exception:
             self.cc.revert_launch(do_exec=True)
+            raise
 
     def configure_forcings(
         self,
