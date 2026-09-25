@@ -410,7 +410,7 @@ class UserNLConfigParam(OutputParam):
         super().__init__(name, comment, is_file=is_file)
         self.user_nl_name = user_nl_name
 
-    def apply(self):
+    def apply(self, log_title=True):
         if self.value is None:
             raise ValueError(f"Value for parameter {self.name} has not been set.")
 
@@ -420,6 +420,7 @@ class UserNLConfigParam(OutputParam):
             param,
             do_exec=True,
             comment=self.comment,
+            log_title=log_title,
         )
         self.executed = True
 
@@ -625,11 +626,17 @@ class BaseConfigurator(ABC):
     @abstractmethod
     def configure(self):
         """Bind input values to parameters and files."""
+        # One "Adding parameter changes to user_nl_<x>" title per file, not
+        # per parameter; each parameter still writes its own comment.
+        titled = set()
         for p in self.output_params:
             if isinstance(p, XMLConfigParam):
                 p.is_non_local = self.is_non_local
-            p.apply()
-        pass
+            if isinstance(p, UserNLConfigParam):
+                p.apply(log_title=p.user_nl_name not in titled)
+                titled.add(p.user_nl_name)
+            else:
+                p.apply()
 
     @classmethod
     def inspect(cls, caseroot):

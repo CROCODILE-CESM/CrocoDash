@@ -198,3 +198,41 @@ def test_depends_on_outputs_targets_exist():
                 f"{dep_name!r}.{sorted(missing)}, but {dep_cls.__name__} has no "
                 f"such output_params (has: {sorted(declared_outputs)})"
             )
+
+
+class DummyUserNL(BaseConfigurator):
+    """Not @register'd, for the same reason as DummyXML."""
+
+    name = "dummyusernl"
+    input_params = [InputValueParam("dummy", comment="Boop Boop")]
+    output_params = [
+        UserNLConfigParam("ice_a", user_nl_name="cice", comment="first"),
+        UserNLConfigParam("ocn_a", user_nl_name="mom", comment="ocean"),
+        UserNLConfigParam("ice_b", user_nl_name="cice", comment="second"),
+        UserNLConfigParam("ice_c", user_nl_name="cice", comment="third"),
+    ]
+
+    def __init__(self, dummy):
+        super().__init__(dummy=dummy)
+
+    def configure(self):
+        for i, p in enumerate(self.output_params):
+            self.set_output_param(p.name, i)
+        super().configure()
+
+
+@patch("CrocoDash.forcing.base.append_user_nl")
+def test_user_nl_title_is_printed_once_per_file(mock_append):
+    """Each parameter still writes its own comment and value; only the
+    "Adding parameter changes to user_nl_<x>" title is not repeated."""
+    DummyUserNL("x").configure()
+    calls = [
+        (c.args[0], c.args[1], c.kwargs["comment"], c.kwargs["log_title"])
+        for c in mock_append.call_args_list
+    ]
+    assert calls == [
+        ("cice", [("ice_a", 0)], "first", True),
+        ("mom", [("ocn_a", 1)], "ocean", True),
+        ("cice", [("ice_b", 2)], "second", False),
+        ("cice", [("ice_c", 3)], "third", False),
+    ]
