@@ -382,6 +382,21 @@ class CICEConfigurator(BaseConfigurator):
                 "restore_flds", "'aicen','vicen','vsnon','trcrn','velocity'"
             )
 
+        self.set_output_param("histfreq", "'m','d','x','x','x'")
+        for _fsd_hist in (
+            "f_afsd",
+            "f_afsdn",
+            "f_dafsd_latg",
+            "f_dafsd_latm",
+            "f_dafsd_newi",
+            "f_dafsd_wave",
+            "f_dafsd_weld",
+            "f_diam_ww",
+            "f_fsdperim",
+            "f_fsdrad",
+        ):
+            self.set_output_param(_fsd_hist, "'mdxxx'")
+
         # ice_ic points at the expanded-grid restart process() writes, so its
         # ghost ring is read in (restart_ext above) and becomes the restoring
         # target. 'default' -- CICE's own latitude/SST-dependent internal
