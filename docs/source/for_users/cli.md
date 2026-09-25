@@ -132,7 +132,7 @@ crocodash template --list-notebooks                        # available sources
 | `--output PATH` | Output path; its suffix picks the format. Required unless `--list-notebooks`. |
 | `--kind {case,pbs}` | `case` (default) or `pbs`. A `.pbs` suffix selects `pbs` on its own. |
 | `--machine NAME` | Pre-fill dataset paths for this machine (`glade`). Omit to leave `<KEY>` placeholders. |
-| `--notebook ID` | Gallery notebook to render from (default `crocodash.tutorial`). |
+| `--notebook ID` | Gallery notebook to render from (default `crocodash.tutorial-ocn`). |
 | `--list-notebooks` | Print every available notebook ID and exit. |
 
 ---
