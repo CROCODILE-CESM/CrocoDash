@@ -390,7 +390,7 @@ class CICEConfigurator(BaseConfigurator):
             self.set_output_param("restore_width", 1)
             self.set_output_param("restore_data", "'initial'")
             self.set_output_param(
-                "restore_flds", "'aicen','vicen','vsnon','trcrn','velocity'"
+                "restore_flds", "'state'"
             )
 
         self.set_output_param("histfreq", "'m','d','x','x','x'")
