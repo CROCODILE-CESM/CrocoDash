@@ -44,6 +44,10 @@ authors:
     family-names: Hung
     email: hmnguyen@ucar.edu
     affiliation: University of South Florida
+  - given-names: Dan
+    family-names: Amrhein
+    email: damrhein@ucar.edu 
+    affiliation: NCAR
 doi: 10.5281/zenodo.17342301
 repository-code: 'https://github.com/CROCODILE-CESM/CrocoDash'
 url: 'https://crocodile-cesm.github.io/CrocoDash/'
