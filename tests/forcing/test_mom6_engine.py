@@ -4,7 +4,7 @@ import pandas as pd
 import xarray as xr
 from types import SimpleNamespace
 
-from CrocoDash.forcing import mom6
+from CrocoDash.forcing import mom6, user_nl_blocks
 from CrocoDash.forcing.mom6 import _split_bgc_tracers_into_files
 from CrocoDash.raw_data_access.registry import ProductRegistry
 
@@ -395,9 +395,12 @@ def test_conditions_points_mom6_at_the_filled_ics(monkeypatch):
     MOM6 must read the filled ones."""
     written = []
     monkeypatch.setattr(
-        mom6, "append_user_nl", lambda model, pairs, **kw: written.extend(pairs)
+        user_nl_blocks,
+        "write",
+        lambda owner, model, groups, **kw: written.extend(
+            pair for _, pairs in groups for pair in pairs
+        ),
     )
-    monkeypatch.setattr(mom6.BaseConfigurator, "configure", lambda self: None)
     _conditions("glorys").configure()
     files = {k: v for k, v in written if k.endswith("_FILE")}
     assert files["TEMP_SALT_Z_INIT_FILE"] == "init_tracers_filled.nc"
@@ -474,12 +477,15 @@ def test_regrid_ic_gives_the_vgrid_check_the_real_min_depth(
 def test_conditions_turns_off_legacy_bugs(monkeypatch):
     """Thinned segment dz diverges with MOM6's legacy OBC bug flags on."""
     written = []
-    # configure() appends to a live case's user_nl_mom; only what it writes
+    # configure() writes into a live case's user_nl_mom; only what it writes
     # matters here.
     monkeypatch.setattr(
-        mom6, "append_user_nl", lambda model, pairs, **kw: written.extend(pairs)
+        user_nl_blocks,
+        "write",
+        lambda owner, model, groups, **kw: written.extend(
+            pair for _, pairs in groups for pair in pairs
+        ),
     )
-    monkeypatch.setattr(mom6.BaseConfigurator, "configure", lambda self: None)
     cfg = _conditions("glorys")
     cfg.configure()
     assert ("ENABLE_BUGS_BY_DEFAULT", "False") in written
@@ -550,3 +556,75 @@ def test_fill_missing_and_write_leaves_no_gaps_for_mom6_to_read(tmp_path):
         assert filled["temp"].values[1, 2, 2] == pytest.approx(8.0)
         assert filled["temp"].values[2, 1, 1] == pytest.approx(8.0)
         assert "_FillValue" not in filled["eta_t"].encoding
+
+
+def _touch_forcing_outputs(inputdir):
+    """What process_ic/process_bc leave on disk (override=False layout)."""
+    ocn = inputdir / "ocn"
+    raw = inputdir / "extract_forcings" / "raw_data"
+    regridded = inputdir / "extract_forcings" / "regridded_data"
+    for d in (ocn, raw, regridded):
+        d.mkdir(parents=True, exist_ok=True)
+    made = [
+        ocn / f"init_{name}{suffix}.nc"
+        for name in ("eta", "vel", "tracers")
+        for suffix in ("", "_filled")
+    ]
+    made += [ocn / "forcing_obc_segment_001.nc", ocn / "DIC_obc_segment.nc"]
+    made += [raw / "ic_unprocessed.nc", regridded / "forcing_obc_segment_001_x_y.nc"]
+    kept = [ocn / "ocean_hgrid.nc", ocn / "tu_segment_001.nc"]
+    for path in made + kept:
+        path.touch()
+    return ocn, raw.parent, kept
+
+
+def _conditions_config(start_date="20200101", obc_data='"U=file:a.nc(u)"'):
+    return {
+        "caseroot": "/case",
+        "conditions": {
+            "name": "conditions",
+            "inputs": {"start_date": start_date, "boundaries": ["north"]},
+            "outputs": {
+                "boundary_number_conversion": {"north": 1},
+                "get_step_days": 7,
+                "OBC_SEGMENT_001_DATA": obc_data,
+                "preview": False,
+            },
+        },
+    }
+
+
+def test_conditions_keeps_its_outputs_while_the_configuration_is_unchanged(tmp_path):
+    """Resuming a crashed process_forcings() relies on the existing files."""
+    _touch_forcing_outputs(tmp_path)
+    config = _conditions_config()
+    assert _conditions("glorys").stale_outputs(config, config, tmp_path) == []
+
+
+def test_conditions_keeps_its_outputs_when_only_tides_change(tmp_path):
+    """Tides add their own files to OBC_SEGMENT_NNN_DATA, but change neither
+    the IC nor the OBC files -- toggling them must not force a re-download."""
+    _touch_forcing_outputs(tmp_path)
+    previous = _conditions_config()
+    current = _conditions_config(obc_data='"U=file:a.nc(u),Uamp=file:tu.nc(uamp)"')
+    assert _conditions("glorys").stale_outputs(previous, current, tmp_path) == []
+
+
+@pytest.mark.parametrize(
+    "previous", [{}, {"caseroot": "/case"}, _conditions_config(start_date="20200102")]
+)
+def test_conditions_drops_its_outputs_once_the_configuration_changed(
+    tmp_path, previous
+):
+    """The final files carry no date, product or boundary in their names, and
+    process_ic/process_bc skip whatever exists -- so they'd be reused silently.
+    The raw/regridded intermediates go too (undated IC snapshot, chunks of
+    another product or segment order, overlapping chunks of another range)."""
+    ocn, extract, kept = _touch_forcing_outputs(tmp_path)
+    stale = _conditions("glorys").stale_outputs(
+        previous, _conditions_config(), tmp_path
+    )
+    assert sorted(stale) == sorted(
+        [p for p in ocn.iterdir() if p not in kept]
+        + [extract / "raw_data", extract / "regridded_data"]
+    )

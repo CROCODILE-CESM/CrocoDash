@@ -1,6 +1,7 @@
 from CrocoDash.forcing.base import *
 
 from types import SimpleNamespace
+from ProConPy.config_var import cvars
 from unittest.mock import patch
 
 import pytest
@@ -221,18 +222,28 @@ class DummyUserNL(BaseConfigurator):
         super().configure()
 
 
-@patch("CrocoDash.forcing.base.append_user_nl")
-def test_user_nl_title_is_printed_once_per_file(mock_append):
-    """Each parameter still writes its own comment and value; only the
-    "Adding parameter changes to user_nl_<x>" title is not repeated."""
+def test_user_nl_block_per_file(tmp_path, monkeypatch, capsys):
+    """A configurator's parameters for one file go into one CrocoDash block,
+    each with its own comment, and the "Adding parameter changes to
+    user_nl_<x>" title is printed once per file."""
+    monkeypatch.setitem(cvars, "CASEROOT", SimpleNamespace(value=tmp_path))
+    monkeypatch.setitem(cvars, "NINST", SimpleNamespace(value=1))
     DummyUserNL("x").configure()
-    calls = [
-        (c.args[0], c.args[1], c.kwargs["comment"], c.kwargs["log_title"])
-        for c in mock_append.call_args_list
+
+    cice = (tmp_path / "user_nl_cice").read_text().splitlines()
+    assert sum(line.startswith("! >>> CrocoDash") for line in cice) == 1
+    assert [line for line in cice if line and not line.startswith("! ")] == [
+        "ice_a = 0",
+        "ice_b = 2",
+        "ice_c = 3",
     ]
-    assert calls == [
-        ("cice", [("ice_a", 0)], "first", True),
-        ("mom", [("ocn_a", 1)], "ocean", True),
-        ("cice", [("ice_b", 2)], "second", False),
-        ("cice", [("ice_c", 3)], "third", False),
+    assert [line for line in cice if line in ("! first", "! second", "! third")] == [
+        "! first",
+        "! second",
+        "! third",
     ]
+    assert "ocn_a = 1" in (tmp_path / "user_nl_mom").read_text()
+
+    out = capsys.readouterr().out
+    assert out.count("Adding parameter changes to user_nl_cice") == 1
+    assert out.count("Adding parameter changes to user_nl_mom") == 1
