@@ -374,6 +374,7 @@ document.write(`
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.grid">CrocoDash.grid module</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.grid_creator">CrocoDash.grid_creator module</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.logging">CrocoDash.logging module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.logging.quiet_visualcasegen_info"><code class="docutils literal notranslate"><span class="pre">quiet_visualcasegen_info()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.logging.setup_logger"><code class="docutils literal notranslate"><span class="pre">setup_logger()</span></code></a></li>
 </ul>
 </li>
@@ -622,6 +623,7 @@ document.write(`
 <li class="toctree-l3"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.cice.CICEConfigurator"><code class="docutils literal notranslate"><span class="pre">CICEConfigurator</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.cice.CICEConfigurator.allowed_compsets"><code class="docutils literal notranslate"><span class="pre">CICEConfigurator.allowed_compsets</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.cice.CICEConfigurator.configure"><code class="docutils literal notranslate"><span class="pre">CICEConfigurator.configure()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.cice.CICEConfigurator.deserialize"><code class="docutils literal notranslate"><span class="pre">CICEConfigurator.deserialize()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.cice.CICEConfigurator.get_output_filepaths"><code class="docutils literal notranslate"><span class="pre">CICEConfigurator.get_output_filepaths()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.cice.CICEConfigurator.input_params"><code class="docutils literal notranslate"><span class="pre">CICEConfigurator.input_params</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.cice.CICEConfigurator.name"><code class="docutils literal notranslate"><span class="pre">CICEConfigurator.name</span></code></a></li>
@@ -632,6 +634,7 @@ document.write(`
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.cice.CICEConfigurator.validate_args"><code class="docutils literal notranslate"><span class="pre">CICEConfigurator.validate_args()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.cice.dynamics_substeps"><code class="docutils literal notranslate"><span class="pre">dynamics_substeps()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="CrocoDash.forcing.html#module-CrocoDash.forcing.driver">CrocoDash.forcing.driver module</a><ul>
@@ -701,6 +704,7 @@ document.write(`
 <li class="toctree-l3"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.utils.get_data_access_function"><code class="docutils literal notranslate"><span class="pre">get_data_access_function()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.utils.is_valid_netcdf"><code class="docutils literal notranslate"><span class="pre">is_valid_netcdf()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.utils.parse_dataset_folder"><code class="docutils literal notranslate"><span class="pre">parse_dataset_folder()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.utils.read_min_depth"><code class="docutils literal notranslate"><span class="pre">read_min_depth()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="CrocoDash.forcing.html#module-CrocoDash.forcing.ww3">CrocoDash.forcing.ww3 module</a><ul>
@@ -1037,6 +1041,19 @@ keep their real traceback.</p>
 <section id="module-CrocoDash.logging">
 <span id="crocodash-logging-module"></span><h2>CrocoDash.logging module<a class="headerlink" href="#module-CrocoDash.logging" title="Link to this heading">#</a></h2>
 <p>This module (logging) contains logging functions that are used across the CrocoDash package.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.logging.quiet_visualcasegen_info">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.logging.</span></span><span class="sig-name descname"><span class="pre">quiet_visualcasegen_info</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.logging.quiet_visualcasegen_info" title="Link to this definition">#</a></dt>
+<dd><p>Hide visualCaseGen’s INFO messages (stage changes, widget updates).</p>
+<p>These narrate visualCaseGen’s GUI wizard, which a CrocoDash user never
+sees. visualCaseGen names its loggers with leading whitespace (”    stage”,
+“  csp_solver”) and nothing else does, so only those are raised to
+WARNING: its warnings still show, and so does every other logger.</p>
+<p>Meant to be called once, right after visualCaseGen is imported (all its
+loggers exist by then). A logger whose level is already set is left
+alone, and any level can still be changed afterwards.</p>
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="CrocoDash.logging.setup_logger">
 <span class="sig-prename descclassname"><span class="pre">CrocoDash.logging.</span></span><span class="sig-name descname"><span class="pre">setup_logger</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.logging.setup_logger" title="Link to this definition">#</a></dt>
@@ -1413,6 +1430,7 @@ a portable bundle as a side effect.</p>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.grid">CrocoDash.grid module</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.grid_creator">CrocoDash.grid_creator module</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.logging">CrocoDash.logging module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.logging.quiet_visualcasegen_info"><code class="docutils literal notranslate"><span class="pre">quiet_visualcasegen_info()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.logging.setup_logger"><code class="docutils literal notranslate"><span class="pre">setup_logger()</span></code></a></li>
 </ul>
 </li>

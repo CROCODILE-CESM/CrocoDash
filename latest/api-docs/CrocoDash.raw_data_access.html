@@ -514,6 +514,7 @@ document.write(`
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.cesm_ww3_jra.CESM_WW3_JRA.product_name"><code class="docutils literal notranslate"><span class="pre">CESM_WW3_JRA.product_name</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.cesm_ww3_jra.CESM_WW3_JRA.time_units"><code class="docutils literal notranslate"><span class="pre">CESM_WW3_JRA.time_units</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.cesm_ww3_jra.CESM_WW3_JRA.time_var_name"><code class="docutils literal notranslate"><span class="pre">CESM_WW3_JRA.time_var_name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.cesm_ww3_jra.CESM_WW3_JRA.validate_method"><code class="docutils literal notranslate"><span class="pre">CESM_WW3_JRA.validate_method()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.cesm_ww3_jra.action_to_energy"><code class="docutils literal notranslate"><span class="pre">action_to_energy()</span></code></a></li>
@@ -795,6 +796,9 @@ document.write(`
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.base.BaseProduct.validate_method">
 <em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">validate_method</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">method_name</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.base.BaseProduct.validate_method" title="Link to this definition">#</a></dt>
 <dd><p>Default validation just makes a toy call with a temporary directory.</p>
+<p>Returns True if the call succeeds, False if it raises. The call’s own
+result is not passed on: whatever it wrote went to the temporary
+directory, which is removed before this returns.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -869,6 +873,9 @@ OBC step; it does not come through here.</p>
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.base.DatedBaseProduct.validate_method">
 <em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">validate_method</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">method_name</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.base.DatedBaseProduct.validate_method" title="Link to this definition">#</a></dt>
 <dd><p>Default validation just makes a toy call with a temporary directory.</p>
+<p>Returns True if the call succeeds, False if it raises. The call’s own
+result is not passed on: whatever it wrote went to the temporary
+directory, which is removed before this returns.</p>
 </dd></dl>
 
 </dd></dl>
@@ -900,6 +907,9 @@ tracer grid-point metadata is NOT here – see
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.base.ForcingProduct.validate_method">
 <em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">validate_method</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">method_name</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.base.ForcingProduct.validate_method" title="Link to this definition">#</a></dt>
 <dd><p>Default validation just makes a toy call with a temporary directory.</p>
+<p>Returns True if the call succeeds, False if it raises. The call’s own
+result is not passed on: whatever it wrote went to the temporary
+directory, which is removed before this returns.</p>
 </dd></dl>
 
 </dd></dl>

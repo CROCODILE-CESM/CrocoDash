@@ -958,6 +958,8 @@ document.write(`
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.topo.Topo.write_scrip_grid"><code class="docutils literal notranslate"><span class="pre">Topo.write_scrip_grid()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.topo.Topo.write_topo"><code class="docutils literal notranslate"><span class="pre">Topo.write_topo()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.topo.Topo.write_ww3_input"><code class="docutils literal notranslate"><span class="pre">Topo.write_ww3_input()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.topo.Topo.ww3_min_grid_spacing"><code class="docutils literal notranslate"><span class="pre">Topo.ww3_min_grid_spacing()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.topo.Topo.ww3_timesteps"><code class="docutils literal notranslate"><span class="pre">Topo.ww3_timesteps()</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.vgrid.VGrid"><code class="docutils literal notranslate"><span class="pre">VGrid</span></code></a><ul class="nav section-nav flex-column">
@@ -2303,7 +2305,7 @@ channel_widths.write(channel_file_path).</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.topo.Topo.write_ww3_input">
-<span class="sig-name descname"><span class="pre">write_ww3_input</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_alias</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundary_edges</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">open_boundary</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.topo.Topo.write_ww3_input" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">write_ww3_input</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_alias</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundary_edges</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">open_boundary</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cpl_dt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1800.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.topo.Topo.write_ww3_input" title="Link to this definition">#</a></dt>
 <dd><p>Write the text-based WW3 input files ww3_grid.inp, [grid_alias]_x.inp, [grid_alias]_y.inp,
 [grid_alias]_mapsta.inp, [grid_alias]_bottom.inp, which are to be read by the WW3
 mod_def creator before runtime to generate the WW3 grid files.</p>
@@ -2325,6 +2327,8 @@ energy, so whatever generates the spectra should list the edges it
 covers.</p></li>
 <li><p><strong>open_boundary</strong> (<em>bool</em><em>, </em><em>optional</em>) – Deprecated; use boundary_edges. True is the default edge set,
 False is no edges.</p></li>
+<li><p><strong>cpl_dt</strong> (<em>float</em><em>, </em><em>optional</em>) – Wave coupling interval in seconds (WAV_NCPL), which the time steps
+are derived from. Defaults to the CESM value of 1800 s.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
@@ -2332,6 +2336,25 @@ False is no edges.</p></li>
     edge on a grid that is reentrant in x, or the grid is tripolar
     (the closure written has no ‘TRPL’ case). Raised before anything
     is written.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.topo.Topo.ww3_min_grid_spacing">
+<span class="sig-name descname"><span class="pre">ww3_min_grid_spacing</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.topo.Topo.ww3_min_grid_spacing" title="Link to this definition">#</a></dt>
+<dd><p>Smallest cell spacing on the grid, in meters.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.topo.Topo.ww3_timesteps">
+<span class="sig-name descname"><span class="pre">ww3_timesteps</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cpl_dt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1800.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.topo.Topo.ww3_timesteps" title="Link to this definition">#</a></dt>
+<dd><p>WW3 time steps for this grid.</p>
+<p>See <code class="xref py py-func docutils literal notranslate"><span class="pre">ww3_timesteps_from_spacing()</span></code> for the CFL reasoning.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>cpl_dt</strong> (<em>float</em><em>, </em><em>optional</em>) – Wave coupling interval in seconds (WAV_NCPL), 1800 s in CESM by
+default. <code class="docutils literal notranslate"><span class="pre">dtmax</span></code> is derived from it rather than taken as given.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -2834,6 +2857,8 @@ mom6_forge functions CrocoDash calls (useful when upgrading mom6_forge)</p></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.topo.Topo.write_scrip_grid"><code class="docutils literal notranslate"><span class="pre">Topo.write_scrip_grid()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.topo.Topo.write_topo"><code class="docutils literal notranslate"><span class="pre">Topo.write_topo()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.topo.Topo.write_ww3_input"><code class="docutils literal notranslate"><span class="pre">Topo.write_ww3_input()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.topo.Topo.ww3_min_grid_spacing"><code class="docutils literal notranslate"><span class="pre">Topo.ww3_min_grid_spacing()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.topo.Topo.ww3_timesteps"><code class="docutils literal notranslate"><span class="pre">Topo.ww3_timesteps()</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.vgrid.VGrid"><code class="docutils literal notranslate"><span class="pre">VGrid</span></code></a><ul class="nav section-nav flex-column">
