@@ -139,7 +139,12 @@ class BaseProduct:
     # Default validation — can be overridden
     @classmethod
     def validate_method(cls, method_name, **kwargs):
-        """Default validation just makes a toy call with a temporary directory."""
+        """Default validation just makes a toy call with a temporary directory.
+
+        Returns True if the call succeeds, False if it raises. The call's own
+        result is not passed on: whatever it wrote went to the temporary
+        directory, which is removed before this returns.
+        """
         if method_name not in cls._access_methods:
             raise ValueError(f"{method_name} not in {cls.__name__}")
         temp_dir = tempfile.mkdtemp()
@@ -153,7 +158,7 @@ class BaseProduct:
 
         # Default “toy call” signature:
         try:
-            return func(**final_args)
+            func(**final_args)
         except Exception as e:
             cls.logger.error(
                 f"Validation failed for {cls.product_name}.{method_name}: {e}"
@@ -161,6 +166,7 @@ class BaseProduct:
             return False
         finally:
             shutil.rmtree(temp_dir, ignore_errors=True)
+        return True
 
     @classmethod
     def write_metadata(cls, file_path: str = None) -> dict:

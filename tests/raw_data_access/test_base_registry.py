@@ -159,12 +159,31 @@ def test_validate_method_removes_its_temporary_directory(tmp_path, monkeypatch):
     assert not temp_dir.exists()
 
 
-def test_forcing_validate_method_passes_overrides_through():
+def test_forcing_validate_method_passes_overrides_through(monkeypatch):
     """A product overriding validate_method (e.g. for in-range dates) relies
     on ForcingProduct forwarding its kwargs to the toy call."""
-    assert DummyForcing.validate_method("fetch_dummy", variables="SST").startswith(
-        "Fetched SST"
+    received = {}
+    monkeypatch.setitem(
+        DummyForcing._access_methods,
+        "fetch_dummy",
+        staticmethod(lambda **kwargs: received.update(kwargs)),
     )
+    assert DummyForcing.validate_method("fetch_dummy", variables="SST") is True
+    assert received["variables"] == "SST"
+
+
+def test_validate_method_returns_a_bool_not_the_toy_calls_result():
+    """The toy call's result (typically a path) points into the temporary
+    directory, which is gone by the time validate_method returns."""
+    assert DummyForcing.validate_method("fetch_dummy") is True
+
+
+def test_validate_method_returns_false_when_the_toy_call_raises(monkeypatch):
+    def fail(**kwargs):
+        raise RuntimeError("no credentials")
+
+    monkeypatch.setitem(DummyForcing._access_methods, "fetch_dummy", staticmethod(fail))
+    assert DummyForcing.validate_method("fetch_dummy") is False
 
 
 def test_get_access_function(tmp_path):
