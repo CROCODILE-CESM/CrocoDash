@@ -128,7 +128,13 @@ class REFERENCE_OCEAN(MOM6ForcingProduct):
         # methods use) so there's always a real 2D grid to regrid from.
         lon = np.arange(lon_min - 1.0, lon_max + 1.0 + resolution_deg, resolution_deg)
         lat = np.arange(lat_min - 1.0, lat_max + 1.0 + resolution_deg, resolution_deg)
-        depth = np.array([0, 10, 25, 50, 100, 200, 500, 1000, 2000, 4000], dtype=float)
+        # Layer centers, like GLORYS's depth axis: regional_mom6 rebuilds layer
+        # thicknesses from the centers, so the axis must not start at the surface.
+        # These are the midpoints of the interfaces below.
+        interfaces = np.array(
+            [0, 10, 25, 50, 100, 200, 500, 1000, 2000, 4000, 6000], dtype=float
+        )
+        depth = 0.5 * (interfaces[:-1] + interfaces[1:])
         time = pd.date_range(dates[0], dates[-1], freq="D")
         shape_4d = (len(time), len(depth), len(lat), len(lon))
 

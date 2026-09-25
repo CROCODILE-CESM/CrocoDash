@@ -34,6 +34,7 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 import math
 import dask
 import dask.threaded
+import numpy as np
 import pandas as pd
 import xarray as xr
 from CrocoDash import logging
@@ -666,6 +667,20 @@ def _merge_boundary(boundary_label: str, regridded_files: list, output_folder) -
         coords="minimal",
         parallel=False,
     )
+    # The merged time axis must be monotonically increasing, which it only is
+    # if every chunk was written against the same epoch.
+    # Compared pairwise rather than via np.diff: noleap axes decode to cftime
+    # objects, whose differences are timedeltas that cannot be compared to 0.
+    times = ds["time"].values
+    ascending = times[1:] > times[:-1]
+    if ascending.size and not ascending.all():
+        bad = int(np.argmin(ascending))
+        ds.close()
+        raise ValueError(
+            f"Merged OBC time axis for {boundary_label} is not monotonically "
+            f"increasing: t[{bad}]={times[bad]} >= t[{bad + 1}]={times[bad + 1]}. "
+            "The per-chunk axes did not line up on a common epoch."
+        )
     # open_mfdataset makes this dask-backed, so the write is exposed to the
     # same intermittent HDF5/threaded-scheduler deadlock documented at
     # mom6.py's _regrid_obc_chunk. Not observed here -- guarded because it is
@@ -754,12 +769,10 @@ def process_obc_conditions(
         assert not Grid.is_cyclic_x(hgrid_ds), "bboxes not supported for cyclic grids."
         if bathymetry_path:
             grid_obj = Grid.from_supergrid(hgrid_path)
-            with xr.open_dataset(bathymetry_path) as bds:
-                min_depth = bds.attrs.get("min_depth", 0.0)
             topo = Topo.from_topo_file(
                 grid=grid_obj,
                 topo_file_path=bathymetry_path,
-                min_depth=min_depth,
+                min_depth=utils.read_min_depth(bathymetry_path),
                 git=False,
             )
             boundary_bboxes = {

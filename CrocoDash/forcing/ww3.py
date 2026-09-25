@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 import numpy as np
@@ -182,7 +183,12 @@ WAVE_SUBDIR = "wav"
 
 
 def write_ww3_bounc_nml(
-    file_dir, spec_list_filename="spec.list", mode="WRITE", interp=2, verbose=1
+    file_dir,
+    spec_list_filename="spec.list",
+    mode="WRITE",
+    interp=2,
+    verbose=1,
+    nml_filename="ww3_bounc.nml",
 ):
     """
     Write ww3_bounc.nml, the BOUND_NML namelist that drives the ww3_bounc
@@ -194,6 +200,8 @@ def write_ww3_bounc_nml(
         Directory to write ww3_bounc.nml to.
     spec_list_filename: str
         Name of the spec-list file BOUND%FILE should point at.
+    nml_filename: str
+        Name of the file written, ww3_bounc.nml unless staged under another.
     mode: str
         'WRITE' to build nest.ww3 from spectra files, 'READ' to diagnose an
         existing nest.ww3 instead.
@@ -205,7 +213,7 @@ def write_ww3_bounc_nml(
     file_dir = Path(file_dir)
     file_dir.mkdir(parents=True, exist_ok=True)
 
-    with open(file_dir / "ww3_bounc.nml", "w") as f:
+    with open(file_dir / nml_filename, "w") as f:
         f.write(
             "! -------------------------------------------------------------------- !\n"
             "! WAVEWATCH III - ww3_bounc.nml - Boundary input post-processing        !\n"
@@ -234,6 +242,27 @@ def write_ww3_bounc_nml(
             "! WAVEWATCH III - end of namelist                                      !\n"
             "! -------------------------------------------------------------------- !\n"
         )
+
+
+_STAGED = ".new"  # suffix of a new set not yet renamed into place
+
+
+def _remove_staged_spectra(file_dir):
+    """Remove a staged (``*.new``) set left in file_dir, complete or not."""
+    file_dir = Path(file_dir)
+    for pattern in ("ww3.point*_spec.nc", "spec.list", "ww3_bounc.nml"):
+        for staged in file_dir.glob(pattern + _STAGED):
+            staged.unlink()
+
+
+def _remove_boundary_spectra(file_dir):
+    """Remove the point spectra, spec.list and ww3_bounc.nml from file_dir."""
+    file_dir = Path(file_dir)
+    _remove_staged_spectra(file_dir)
+    for stale in file_dir.glob("ww3.point*_spec.nc"):
+        stale.unlink()
+    for name in ("spec.list", "ww3_bounc.nml"):
+        (file_dir / name).unlink(missing_ok=True)
 
 
 def write_spec_list(file_dir, spectra_paths, spec_list_filename="spec.list"):
@@ -609,6 +638,8 @@ class WW3Configurator(BaseConfigurator):
         output_dir.mkdir(parents=True, exist_ok=True)
 
         if product_name == "none":
+            # A previous run's spectra would otherwise still reach ww3_bounc.
+            _remove_boundary_spectra(output_dir)
             print("[info] WW3: ww3_obc_product_name='none' -- no boundary spectra.")
             return
 
@@ -653,33 +684,53 @@ class WW3Configurator(BaseConfigurator):
         # what ww3_bounc actually reads) and writes the spec.list and
         # ww3_bounc.nml that point files need to be listed in and read by.
         # Write each station location once; ww3_bounc cannot handle duplicates.
-        for stale in output_dir.glob("ww3.point*_spec.nc"):
-            stale.unlink()
+        # The new set is written into wav/ under staged (*.new) names and only
+        # renamed into place once complete, so a failed re-run leaves the
+        # previous set untouched, and the renames, all within one folder,
+        # cannot half-happen.
+        _remove_staged_spectra(output_dir)  # left by an interrupted run
         spectra_names = []
         seen = set()
-        for boundary in boundaries:
-            seg_id = boundary_number_conversion[boundary]
-            merged = xr.open_dataset(
-                merged_dir / f"forcing_obc_segment_{seg_id:03d}.nc"
+        try:
+            for boundary in boundaries:
+                seg_id = boundary_number_conversion[boundary]
+                with xr.open_dataset(
+                    merged_dir / f"forcing_obc_segment_{seg_id:03d}.nc"
+                ) as merged:
+                    for k in range(merged.sizes["station"]):
+                        station = merged.isel(station=k)
+                        loc = (
+                            float(station["station_lat"]),
+                            float(station["station_lon"]),
+                        )
+                        if loc in seen:
+                            continue
+                        seen.add(loc)
+                        name = f"ww3.point{len(spectra_names) + 1}_spec.nc"
+                        write_ww3_boundary_spectrum(
+                            output_dir / (name + _STAGED),
+                            float(station["station_lat"]),
+                            float(station["station_lon"]),
+                            station["frequency"].values,
+                            station["direction"].values,
+                            station["efth"].values,
+                            time=station["time"].values,
+                        )
+                        spectra_names.append(name)
+            write_spec_list(
+                output_dir, spectra_names, spec_list_filename="spec.list" + _STAGED
             )
-            for k in range(merged.sizes["station"]):
-                station = merged.isel(station=k)
-                loc = (float(station["station_lat"]), float(station["station_lon"]))
-                if loc in seen:
-                    continue
-                seen.add(loc)
-                name = f"ww3.point{len(spectra_names) + 1}_spec.nc"
-                write_ww3_boundary_spectrum(
-                    output_dir / name,
-                    float(station["station_lat"]),
-                    float(station["station_lon"]),
-                    station["frequency"].values,
-                    station["direction"].values,
-                    station["efth"].values,
-                    time=station["time"].values,
-                )
-                spectra_names.append(name)
-            merged.close()
+            write_ww3_bounc_nml(
+                output_dir, interp=2, nml_filename="ww3_bounc.nml" + _STAGED
+            )
+        except BaseException:
+            _remove_staged_spectra(output_dir)
+            raise
 
-        write_spec_list(output_dir, spectra_names)
-        write_ww3_bounc_nml(output_dir, interp=2)
+        # spec.list, which ww3_bounc reads the file list from, goes last.
+        for name in [*spectra_names, "ww3_bounc.nml", "spec.list"]:
+            os.replace(output_dir / (name + _STAGED), output_dir / name)
+        keep = set(spectra_names)
+        for stale in output_dir.glob("ww3.point*_spec.nc"):
+            if stale.name not in keep:
+                stale.unlink()

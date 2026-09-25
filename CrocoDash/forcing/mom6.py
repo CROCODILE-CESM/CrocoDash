@@ -71,7 +71,15 @@ def build_forcing_request(
 
 
 def _regrid_obc_chunk(
-    ds, hgrid, boundary, seg_id, outfolder, dataset_varnames, start_date, regridders
+    ds,
+    hgrid,
+    boundary,
+    seg_id,
+    outfolder,
+    dataset_varnames,
+    start_date,
+    regridders,
+    bathymetry_path=None,
 ):
     """Regrid one OBC chunk via regional_mom6's Segment. Writes to
     ``outfolder / f"forcing_obc_segment_{seg_id:03d}.nc"`` -- the filename
@@ -81,8 +89,22 @@ def _regrid_obc_chunk(
     ``xr.open_mfdataset`` on ``infile`` internally), so unlike the engine that
     handed us ``ds``, we do need a real file here -- write one, use it, clean
     it up. That's this function's own business, not the generic engine's.
+
+    ``bathymetry_path`` isn't part of obc.py's generic engine signature --
+    process_bc binds it via functools.partial. Without it the segment has no
+    mask and no depth, so rm6 writes the full source column at every point
+    instead of thinning dz to the local water column. The Topo is rebuilt
+    here rather than bound as an object because this runs in forked workers
+    that receive the function pickled; a path is cheap to ship, a Topo is not.
     """
     outfolder = Path(outfolder)
+    topo = None
+    if bathymetry_path is not None:
+        topo = Topo.from_topo_file(
+            grid=Grid.from_supergrid_ds(hgrid),
+            topo_file_path=bathymetry_path,
+            min_depth=utils.read_min_depth(bathymetry_path),
+        )
     tmp_file = outfolder / f"_tmp_{boundary}_segment_{seg_id:03d}.nc"
     # Serialised deliberately. This dataset is dask-backed, and writing it
     # through dask's threaded scheduler deadlocks intermittently inside
@@ -99,6 +121,7 @@ def _regrid_obc_chunk(
             hgrid,
             orientation=boundary,
             segment_name=f"segment_{seg_id:03d}",
+            topo=topo,
         )
         seg.regrid_velocity_tracers(
             infile=tmp_file,
@@ -269,6 +292,17 @@ def final_cleanliness_fill(var, x_dim, y_dim, z_dim=None):
     return var
 
 
+def _all_written(paths):
+    """True if every file exists; a run killed partway leaves only some of them.
+    An existing file that isn't valid NetCDF is an error rather than a skip."""
+    for p in paths:
+        if p.exists() and not utils.is_valid_netcdf(p):
+            raise RuntimeError(
+                f"{p} exists but is not valid NetCDF. Delete it and re-run."
+            )
+    return all(p.exists() for p in paths)
+
+
 def _regrid_ic(
     raw_file,
     hgrid,
@@ -282,6 +316,7 @@ def _regrid_ic(
     """MOM6's IC regrid step. hgrid_path/vgrid_path/bathymetry_path aren't
     part of ic.py's generic engine signature -- process_ic below binds them
     via functools.partial before handing this to the engine as regrid_fn."""
+    min_depth = utils.read_min_depth(bathymetry_path)
     expt = rm6.experiment.create_empty()
     # hgrid/vgrid are read-only properties derived from m6f_hgrid/m6f_vgrid
     # (mom6_forge Grid/VGrid objects) -- set those instead. _make_vgrid
@@ -289,25 +324,20 @@ def _regrid_ic(
     expt.m6f_hgrid = Grid.from_supergrid_ds(hgrid)
     expt.mom_input_dir = output_dir
     expt.date_range = [start_date, None]
+    # _make_vgrid checks the vertical grid against minimum_depth, which
+    # create_empty() leaves at rm6's default of 4 m.
+    expt.minimum_depth = min_depth
     vgrid_from_file = xr.open_dataset(vgrid_path)
     expt._make_vgrid(vgrid_from_file.dz.data)
 
-    eta_path = expt.mom_input_dir / "init_eta.nc"
-    if eta_path.exists():
-        if not utils.is_valid_netcdf(eta_path):
-            raise RuntimeError(
-                f"{eta_path} exists but is not valid NetCDF. Delete it and re-run."
-            )
+    output_dir = Path(output_dir)
+    names = ("init_eta", "init_vel", "init_tracers")
+    if _all_written([output_dir / f"{n}.nc" for n in names]):
         logger.info("Initial condition files already exist. They will be skipped.")
     else:
         expt.setup_initial_condition(raw_file, dataset_varnames, arakawa_grid=None)
 
-    eta_filled_path = expt.mom_input_dir / "init_eta_filled.nc"
-    if eta_filled_path.exists():
-        if not utils.is_valid_netcdf(eta_filled_path):
-            raise RuntimeError(
-                f"{eta_filled_path} exists but is not valid NetCDF. Delete it and re-run."
-            )
+    if _all_written([output_dir / f"{n}_filled.nc" for n in names]):
         logger.info(
             "Initial condition filled files already exist. They will be skipped."
         )
@@ -317,8 +347,6 @@ def _regrid_ic(
     logger.info("Start mom6_forge fill...")
     grid = Grid.from_supergrid(hgrid_path)
 
-    with xr.open_dataset(bathymetry_path) as ds:
-        min_depth = ds.attrs.get("min_depth")
     bathymetry = Topo.from_topo_file(
         grid=grid, topo_file_path=bathymetry_path, min_depth=min_depth
     )
@@ -455,6 +483,7 @@ class ConditionsConfigurator(BaseConfigurator):
             "OBC_TRACER_RESERVOIR_LENGTH_SCALE_IN", comment="Open boundary conditions"
         ),
         UserNLConfigParam("BRUSHCUTTER_MODE", comment="Open boundary conditions"),
+        UserNLConfigParam("ENABLE_BUGS_BY_DEFAULT", comment="Open boundary conditions"),
         # Derived, config.json-only values consumed by process_ic/process_bc.
         # No case-side effect (see ConfigOutputParam).
         ConfigOutputParam(
@@ -581,10 +610,11 @@ class ConditionsConfigurator(BaseConfigurator):
         self.set_output_param("TEMP_SALT_INIT_VERTICAL_REMAP_ONLY", True)
         self.set_output_param("DEPRESS_INITIAL_SURFACE", True)
         self.set_output_param("VELOCITY_CONFIG", "file")
-        # Point MOM6 at the FILLED initial conditions. setup_initial_conditions() always
-        # writes both the raw init_*.nc and the land-filled init_*_filled.nc; the raw files
-        # still carry the source dataset's missing values on cells that are wet in the model
-        # grid but dry (or absent) in the source. MOM6 ingests those as data and aborts during
+        # Point MOM6 at the FILLED initial conditions. _regrid_ic writes both the raw
+        # init_*.nc (via regional_mom6's setup_initial_condition) and the land-filled
+        # init_*_filled.nc (via _fill_missing_and_write); the raw files still carry the
+        # source dataset's missing values on cells that are wet in the model grid but dry
+        # (or absent) in the source. MOM6 ingests those as data and aborts during
         # initialization with SST = -1.0E+20 on the affected cells.
         self.set_output_param("TEMP_SALT_Z_INIT_FILE", "init_tracers_filled.nc")
         self.set_output_param("SURFACE_HEIGHT_IC_FILE", "init_eta_filled.nc")
@@ -604,6 +634,7 @@ class ConditionsConfigurator(BaseConfigurator):
         self.set_output_param("OBC_TRACER_RESERVOIR_LENGTH_SCALE_OUT", "3.0E+04")
         self.set_output_param("OBC_TRACER_RESERVOIR_LENGTH_SCALE_IN", "3000.0")
         self.set_output_param("BRUSHCUTTER_MODE", "True")
+        self.set_output_param("ENABLE_BUGS_BY_DEFAULT", "False")
 
         # ---- dynamic, per-boundary OBC params ----
         dynamic_params = []
@@ -779,7 +810,7 @@ class ConditionsConfigurator(BaseConfigurator):
             raw_dataset_path=ctx.raw_data_dir,
             regridded_dataset_path=ctx.regridded_data_dir,
             output_path=ctx.output_path,
-            regrid_chunk_fn=_regrid_obc_chunk,
+            regrid_chunk_fn=partial(_regrid_obc_chunk, bathymetry_path=ctx.topo_path),
             bathymetry_path=ctx.topo_path,
             get_step_days=int(self.get_output_param("get_step_days")),
             regrid_step_days=int(self.get_output_param("regrid_step_days")),

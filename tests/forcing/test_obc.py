@@ -219,6 +219,72 @@ def test_merge_single_boundary(
     ds.close()
 
 
+def test_merge_rejects_non_monotonic_time(
+    tmp_path, dummy_mom6_obc_data_factory, get_rect_grid
+):
+    """Chunks that do not line up on a common epoch must be caught at merge."""
+    grid = get_rect_grid
+    bounds = Grid.get_bounding_boxes(grid)
+    east = dummy_mom6_obc_data_factory(
+        bounds["ic"]["lat_min"],
+        bounds["ic"]["lat_max"],
+        bounds["ic"]["lon_min"],
+        bounds["ic"]["lon_max"],
+        "001",
+        3,
+    )
+    regridded_dir = tmp_path / "regridded"
+    regridded_dir.mkdir()
+    # Both chunks start at t=0 -- the shape a zero-based per-chunk axis makes.
+    for name in (
+        "forcing_obc_segment_001_2020-01-01_2020-01-03.nc",
+        "forcing_obc_segment_001_2020-01-04_2020-01-06.nc",
+    ):
+        east.to_netcdf(regridded_dir / name)
+    output_dir = tmp_path / "output"
+    output_dir.mkdir()
+
+    with pytest.raises(ValueError, match="not monotonically increasing"):
+        _merge_boundary("001", sorted(regridded_dir.glob("*.nc")), output_dir)
+
+
+def _noleap_chunk(path, days):
+    import cftime
+
+    time = [cftime.DatetimeNoLeap(2000, 1, d) for d in days]
+    xr.Dataset(
+        {"temp_segment_001": (("time", "nx_segment_001"), np.ones((len(days), 2)))},
+        coords={"time": time},
+    ).to_netcdf(path)
+
+
+def test_merge_accepts_a_noleap_time_axis(tmp_path):
+    """CESM output products run on a noleap calendar, which decodes to cftime
+    objects; the time-order check must not choke on them."""
+    regridded_dir = tmp_path / "regridded"
+    regridded_dir.mkdir()
+    _noleap_chunk(regridded_dir / "forcing_obc_segment_001_a.nc", [1, 2, 3])
+    _noleap_chunk(regridded_dir / "forcing_obc_segment_001_b.nc", [4, 5, 6])
+    output_dir = tmp_path / "output"
+    output_dir.mkdir()
+
+    result = _merge_boundary("001", sorted(regridded_dir.glob("*.nc")), output_dir)
+    with xr.open_dataset(result) as ds:
+        assert ds.sizes["time"] == 6
+
+
+def test_merge_rejects_a_non_monotonic_noleap_time_axis(tmp_path):
+    regridded_dir = tmp_path / "regridded"
+    regridded_dir.mkdir()
+    _noleap_chunk(regridded_dir / "forcing_obc_segment_001_a.nc", [1, 2, 3])
+    _noleap_chunk(regridded_dir / "forcing_obc_segment_001_b.nc", [1, 2, 3])
+    output_dir = tmp_path / "output"
+    output_dir.mkdir()
+
+    with pytest.raises(ValueError, match="not monotonically increasing"):
+        _merge_boundary("001", sorted(regridded_dir.glob("*.nc")), output_dir)
+
+
 # ---------------------------------------------------------------------------
 # Unit test: _regrid_boundary's num_workers > 1 branch
 # ---------------------------------------------------------------------------

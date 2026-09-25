@@ -84,3 +84,123 @@ def test_configure_forcings_invalid_function_overrides(get_CrocoDash_case):
             boundaries=["north"],
             function_overrides={"bogus_key": 1},
         )
+
+
+def _stub_case_for_ncpl(ncpl, dx_m, base_period="day"):
+    """A Case with only what _set_cice_ndtd/_coupling_interval read."""
+    from types import SimpleNamespace
+    import numpy as np
+    import CrocoDash.case as case_mod
+
+    case = case_mod.Case.__new__(case_mod.Case)
+    values = {
+        "NCPL_BASE_PERIOD": base_period,
+        "CALENDAR": "GREGORIAN",
+        "ICE_NCPL": ncpl,
+        "WAV_NCPL": ncpl,
+    }
+    case._cime_case = SimpleNamespace(get_value=lambda name: values[name])
+    cells = np.full((4, 4), dx_m)
+    case.ocn_grid = SimpleNamespace(dxt=cells, dyt=cells * 1.2)
+    return case
+
+
+@pytest.mark.parametrize(
+    "ncpl, dx_m, expected",
+    [
+        (24, 5450.0, 3),  # big_alaska.019: 1/8 deg near 67N, hourly ice step
+        (48, 5450.0, 2),  # half-hour ice step
+        (24, 100_000.0, 1),  # ~1 deg: one step is already enough
+    ],
+)
+def test_set_cice_ndtd_scales_with_grid_and_ice_step(monkeypatch, ncpl, dx_m, expected):
+    """One hourly dynamics step on a ~5 km grid made big_alaska.019 abort in
+    ridging (aice0 < 0); three substeps ran."""
+    import CrocoDash.case as case_mod
+
+    written = {}
+    monkeypatch.setattr(
+        case_mod,
+        "append_user_nl",
+        lambda model, pairs, **kw: written.update({model: dict(pairs)}),
+    )
+    _stub_case_for_ncpl(ncpl, dx_m)._set_cice_ndtd()
+    assert written["cice"]["ndtd"] == str(expected)
+
+
+def test_coupling_interval_rejects_uneven_ncpl():
+    with pytest.raises(ValueError, match="ICE_NCPL doesn't divide"):
+        _stub_case_for_ncpl(7, 5450.0)._coupling_interval("ICE")
+
+
+def test_a_configuration_error_raises_instead_of_returning_a_half_built_case(
+    CrocoDash_case_factory, tmp_path, monkeypatch
+):
+    import CrocoDash.case as case_mod
+    from ProConPy.dev_utils import ConstraintViolation
+
+    def fail(self, *args, **kwargs):
+        raise ConstraintViolation("no such grid")
+
+    monkeypatch.setattr(case_mod.Case, "_configure_case", fail)
+    with pytest.raises(RuntimeError, match="Case configuration failed: no such grid"):
+        CrocoDash_case_factory(tmp_path)
+
+
+def _fail_create_case(monkeypatch, exc):
+    from visualCaseGen.custom_widget_types.case_creator import CaseCreator
+
+    def fail(self, do_exec):
+        raise exc
+
+    monkeypatch.setattr(CaseCreator, "create_case", fail)
+
+
+@pytest.mark.parametrize(
+    "exc",
+    [RuntimeError("create_newcase failed"), KeyboardInterrupt()],
+    ids=["error", "ctrl-c"],
+)
+def test_a_failed_create_leaves_nothing_behind(
+    CrocoDash_case_factory, tmp_path, monkeypatch, exc
+):
+    """Carrying on after a failed create_newcase only moves the error to
+    get_case on a caseroot that was never made. The failed attempt must not
+    leave half-made dirs that make a retry fail with "already exists"; with
+    override=True (as the factory uses) the previous case is gone either way."""
+    previous = tmp_path / "inputdir"
+    previous.mkdir()
+    (previous / "marker").write_text("previous case")
+
+    _fail_create_case(monkeypatch, exc)
+    with pytest.raises(type(exc)):
+        CrocoDash_case_factory(tmp_path)
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_override_says_what_it_removes(tmp_path, capsys):
+    from CrocoDash.case import _remove_previous
+
+    old = tmp_path / "old_case"
+    old.mkdir()
+    _remove_previous(old)
+    _remove_previous(tmp_path / "never_existed")
+    assert not old.exists()
+    assert capsys.readouterr().out == f"Removing previous case files: {old}\n"
+
+
+def test_a_failed_attempt_leaves_a_preexisting_dir_alone(tmp_path):
+    """The build/run dir may be an earlier case's, left behind (M2) with
+    override=False; create_newcase refuses it, and it is not ours to delete."""
+    from CrocoDash.case import _remove_failed_attempt
+
+    bld_run, caseroot, inputdir = (tmp_path / n for n in ("bld_run", "case", "input"))
+    bld_run.mkdir()
+    (bld_run / "marker").write_text("earlier run")
+    caseroot.mkdir()
+    inputdir.mkdir()
+    _remove_failed_attempt(
+        [inputdir, caseroot, bld_run, caseroot], preexisting={bld_run}
+    )
+    assert sorted(p.name for p in tmp_path.iterdir()) == ["bld_run"]
+    assert (bld_run / "marker").read_text() == "earlier run"

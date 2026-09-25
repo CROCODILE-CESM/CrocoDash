@@ -1,5 +1,6 @@
 """Tests for WW3Configurator and its process()-adjacent helpers."""
 
+import os
 from pathlib import Path
 from unittest.mock import patch
 
@@ -495,6 +496,222 @@ def test_process_ww3_obc_with_reference_waves(tmp_path, gen_grid_topo_vgrid):
             assert np.any(ds["efth"].values > 0)
         finally:
             ds.close()
+
+
+def test_process_ww3_obc_none_clears_a_previous_runs_spectra(
+    tmp_path, gen_grid_topo_vgrid
+):
+    """Re-processing with 'none' must leave wav/ without spectra: ww3_bounc
+    would otherwise rebuild nest.ww3 from the earlier run's files. Anything
+    else in wav/ is not process()'s to delete."""
+    grid, topo, vgrid = gen_grid_topo_vgrid
+    hgrid_path = tmp_path / "hgrid.nc"
+    grid.write_supergrid(hgrid_path)
+    ctx = _make_ctx(tmp_path, supergrid_path=hgrid_path)
+
+    WW3Configurator(
+        case_inputdir=tmp_path,
+        boundaries=["west"],
+        ww3_obc_product_name="reference_waves",
+        ww3_obc_function_name="get_reference_wave_spectra",
+    ).process(ctx)
+    wave = tmp_path / WAVE_SUBDIR
+    assert (wave / "spec.list").exists()
+    (wave / "ww3_grid.inp").write_text("keep me\n")
+
+    WW3Configurator(
+        case_inputdir=tmp_path, boundaries=["west"], ww3_obc_product_name="none"
+    ).process(ctx)
+
+    assert sorted(p.name for p in wave.iterdir()) == ["ww3_grid.inp"]
+
+
+def test_process_ww3_obc_failed_rerun_keeps_the_previous_spectra(
+    tmp_path, gen_grid_topo_vgrid
+):
+    """A re-run that fails (network, a database gap) must not leave the case
+    with no boundary spectra, which WW3 would silently run as calm."""
+    grid, topo, vgrid = gen_grid_topo_vgrid
+    hgrid_path = tmp_path / "hgrid.nc"
+    grid.write_supergrid(hgrid_path)
+    ctx = _make_ctx(tmp_path, supergrid_path=hgrid_path)
+    configurator = WW3Configurator(
+        case_inputdir=tmp_path,
+        boundaries=["west"],
+        ww3_obc_product_name="reference_waves",
+        ww3_obc_function_name="get_reference_wave_spectra",
+    )
+    configurator.process(ctx)
+    wave = tmp_path / WAVE_SUBDIR
+    before = sorted(p.name for p in wave.iterdir())
+
+    with patch(
+        "CrocoDash.forcing.ww3.obc.process_obc_conditions",
+        side_effect=RuntimeError("network down"),
+    ):
+        with pytest.raises(RuntimeError, match="network down"):
+            configurator.process(ctx)
+
+    assert sorted(p.name for p in wave.iterdir()) == before
+
+
+def test_process_ww3_obc_failure_while_writing_keeps_the_previous_spectra(
+    tmp_path, gen_grid_topo_vgrid
+):
+    """Writing the point files is the last step that can fail; the previous
+    set must survive it intact, and a good run leaves no staging behind."""
+    grid, topo, vgrid = gen_grid_topo_vgrid
+    hgrid_path = tmp_path / "hgrid.nc"
+    grid.write_supergrid(hgrid_path)
+    ctx = _make_ctx(tmp_path, supergrid_path=hgrid_path)
+    configurator = WW3Configurator(
+        case_inputdir=tmp_path,
+        boundaries=["west"],
+        ww3_obc_product_name="reference_waves",
+        ww3_obc_function_name="get_reference_wave_spectra",
+    )
+    configurator.process(ctx)
+    wave = tmp_path / WAVE_SUBDIR
+    before = {p.name: p.read_bytes() for p in wave.iterdir()}
+    assert not (tmp_path / "extract_forcings" / "ww3" / "boundary_spectra").exists()
+
+    real_write = ww3.write_ww3_boundary_spectrum
+    calls = []
+
+    def fail_on_second(*args, **kwargs):
+        calls.append(args[0])
+        if len(calls) == 2:
+            raise OSError("disk full")
+        return real_write(*args, **kwargs)
+
+    with patch(
+        "CrocoDash.forcing.ww3.write_ww3_boundary_spectrum", side_effect=fail_on_second
+    ):
+        with pytest.raises(OSError, match="disk full"):
+            configurator.process(ctx)
+
+    assert {p.name: p.read_bytes() for p in wave.iterdir()} == before
+
+
+def _reference_waves(tmp_path, boundaries=("west",)):
+    return WW3Configurator(
+        case_inputdir=tmp_path,
+        boundaries=list(boundaries),
+        ww3_obc_product_name="reference_waves",
+        ww3_obc_function_name="get_reference_wave_spectra",
+    )
+
+
+def test_process_ww3_obc_failure_writing_spec_list_keeps_the_previous_spectra(
+    tmp_path, gen_grid_topo_vgrid
+):
+    """spec.list is written last: failing there, after every point file, must
+    still leave the previous set as it was and nothing staged behind."""
+    grid, topo, vgrid = gen_grid_topo_vgrid
+    hgrid_path = tmp_path / "hgrid.nc"
+    grid.write_supergrid(hgrid_path)
+    ctx = _make_ctx(tmp_path, supergrid_path=hgrid_path)
+    _reference_waves(tmp_path).process(ctx)
+    wave = tmp_path / WAVE_SUBDIR
+    before = {p.name: p.read_bytes() for p in wave.iterdir()}
+
+    with patch("CrocoDash.forcing.ww3.write_spec_list", side_effect=OSError("quota")):
+        with pytest.raises(OSError, match="quota"):
+            _reference_waves(tmp_path, ("west", "east")).process(ctx)
+
+    assert {p.name: p.read_bytes() for p in wave.iterdir()} == before
+
+
+def test_staged_files_left_by_an_interrupted_run_are_cleared(
+    tmp_path, gen_grid_topo_vgrid
+):
+    grid, topo, vgrid = gen_grid_topo_vgrid
+    hgrid_path = tmp_path / "hgrid.nc"
+    grid.write_supergrid(hgrid_path)
+    ctx = _make_ctx(tmp_path, supergrid_path=hgrid_path)
+    wave = tmp_path / WAVE_SUBDIR
+    wave.mkdir(parents=True)
+    for name in ("ww3.point9_spec.nc.new", "spec.list.new", "ww3_bounc.nml.new"):
+        (wave / name).write_text("from a killed run")
+
+    _reference_waves(tmp_path).process(ctx)
+    assert not list(wave.glob("*.new"))
+    nml = (wave / "ww3_bounc.nml").read_text()
+    assert "  BOUND%FILE                 = 'spec.list'" in nml
+    assert "spec.list.new" not in nml
+
+    (wave / "spec.list.new").write_text("from a killed run")
+    WW3Configurator(
+        case_inputdir=tmp_path, boundaries=["west"], ww3_obc_product_name="none"
+    ).process(ctx)
+    assert not list(wave.glob("*"))
+
+
+def _dir_on_another_filesystem(near):
+    """A fresh dir on a different device than ``near``, or None."""
+    import tempfile
+
+    for candidate in ("/dev/shm", tempfile.gettempdir()):
+        if (
+            os.path.isdir(candidate)
+            and os.access(candidate, os.W_OK)
+            and os.stat(candidate).st_dev != os.stat(near).st_dev
+        ):
+            return Path(tempfile.mkdtemp(dir=candidate))
+    return None
+
+
+def test_process_ww3_obc_extract_forcings_on_another_filesystem(
+    tmp_path, gen_grid_topo_vgrid
+):
+    """A user may symlink extract_forcings/ to scratch; re-running must still
+    replace the spectra in wav/, not fail after deleting them."""
+    import shutil
+
+    elsewhere = _dir_on_another_filesystem(tmp_path)
+    if elsewhere is None:
+        pytest.skip("no writable directory on a second filesystem")
+    try:
+        (tmp_path / "extract_forcings").symlink_to(elsewhere)
+        grid, topo, vgrid = gen_grid_topo_vgrid
+        hgrid_path = tmp_path / "hgrid.nc"
+        grid.write_supergrid(hgrid_path)
+        ctx = _make_ctx(tmp_path, supergrid_path=hgrid_path)
+        configurator = WW3Configurator(
+            case_inputdir=tmp_path,
+            boundaries=["west"],
+            ww3_obc_product_name="reference_waves",
+            ww3_obc_function_name="get_reference_wave_spectra",
+        )
+        configurator.process(ctx)
+        configurator.process(ctx)
+        wave = tmp_path / WAVE_SUBDIR
+        listed = (wave / "spec.list").read_text().split()
+        assert listed and all((wave / name).is_file() for name in listed)
+    finally:
+        shutil.rmtree(elsewhere)
+
+
+def test_process_ww3_obc_rerun_with_fewer_stations_drops_the_extra_points(
+    tmp_path, gen_grid_topo_vgrid
+):
+    grid, topo, vgrid = gen_grid_topo_vgrid
+    hgrid_path = tmp_path / "hgrid.nc"
+    grid.write_supergrid(hgrid_path)
+    ctx = _make_ctx(tmp_path, supergrid_path=hgrid_path)
+    wave = tmp_path / WAVE_SUBDIR
+    points = lambda: sorted(p.name for p in wave.glob("ww3.point*_spec.nc"))
+    for boundaries in (["west", "east"], ["west"]):
+        WW3Configurator(
+            case_inputdir=tmp_path,
+            boundaries=boundaries,
+            ww3_obc_product_name="reference_waves",
+            ww3_obc_function_name="get_reference_wave_spectra",
+        ).process(ctx)
+        listed = sorted((wave / "spec.list").read_text().split())
+        assert points() == listed
+
+    assert len(listed) == 3  # west only, after 6 for west + east
 
 
 def test_process_ww3_obc_with_cesm_ww3_jra(

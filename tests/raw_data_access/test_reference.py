@@ -59,6 +59,23 @@ def test_reference_ocean_shape_and_thermocline(tmp_path):
     assert np.all(surface > deep)
 
 
+def test_reference_ocean_depth_is_layer_centers(tmp_path):
+    """regional_mom6 rebuilds OBC layer thicknesses from the depth axis as
+    layer centers, and rejects an axis that starts at the surface."""
+    from regional_mom6.regridding import generate_dz_from_centers
+
+    path = REFERENCE_OCEAN.get_reference_ocean_data(
+        dates=DATES, output_folder=tmp_path, output_filename="ocean.nc", **BBOX
+    )
+    ds = xr.open_dataset(path)
+    assert ds["depth"].values[0] > 0
+    dz = generate_dz_from_centers(ds, "depth").values
+    assert np.all(dz > 0)
+    np.testing.assert_allclose(
+        np.cumsum(dz), [10, 25, 50, 100, 200, 500, 1000, 2000, 4000, 6000]
+    )
+
+
 def test_reference_ocean_variables_filter(tmp_path):
     path = REFERENCE_OCEAN.get_reference_ocean_data(
         dates=DATES,

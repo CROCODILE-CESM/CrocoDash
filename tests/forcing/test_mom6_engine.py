@@ -227,7 +227,11 @@ def test_process_bc_hands_the_engine_mom6s_own_pieces(tmp_path, monkeypatch):
 
     cfg.process_bc(ctx)
 
-    assert captured["regrid_chunk_fn"] is mom6._regrid_obc_chunk
+    # The bathymetry rides along on the regrid step (the engine's signature
+    # has no topo), so rm6 can mask the segment and thin its dz.
+    fn = captured["regrid_chunk_fn"]
+    assert fn.func is mom6._regrid_obc_chunk
+    assert fn.keywords == {"bathymetry_path": ctx.topo_path}
     assert captured["variables"] == ["uo", "vo", "zos", "thetao", "so"]
     assert split == [
         {
@@ -242,6 +246,243 @@ def test_process_bc_hands_the_engine_mom6s_own_pieces(tmp_path, monkeypatch):
     cfg.get_output_param("information")["boundary_fill_method"] = "something_else"
     with pytest.raises(ValueError, match="is not supported"):
         cfg.process_bc(ctx)
+
+
+@pytest.mark.parametrize("with_bathymetry", [True, False])
+def test_regrid_obc_chunk_builds_the_segment_with_a_topo(
+    get_rect_grid, tmp_path, monkeypatch, with_bathymetry
+):
+    """Without a topo the segment has no mask and no depth, and rm6 writes the
+    full source column at every point instead of thinning dz to the sea floor."""
+    grid = get_rect_grid
+    grid.write_supergrid(tmp_path / "hgrid.nc")
+    hgrid = xr.open_dataset(tmp_path / "hgrid.nc")
+    bathymetry_path = None
+    if with_bathymetry:
+        topo = mom6.Topo(grid=grid, min_depth=9.5, git=False)
+        topo.set_flat(100.0)
+        bathymetry_path = tmp_path / "topog.nc"
+        topo.write_topo(bathymetry_path)
+
+    captured = {}
+
+    def fake_cardinal(*args, **kwargs):
+        captured.update(kwargs)
+        raise RuntimeError("stop before regridding")
+
+    monkeypatch.setattr(mom6.Segment, "cardinal", fake_cardinal)
+    ds = xr.Dataset({"x": ("t", [0.0])})
+    with pytest.raises(RuntimeError, match="stop before regridding"):
+        mom6._regrid_obc_chunk(
+            ds, hgrid, "north", 1, tmp_path, {}, None, None, bathymetry_path
+        )
+
+    if with_bathymetry:
+        assert captured["topo"].min_depth == 9.5
+        assert captured["topo"].tmask.shape == (grid.ny, grid.nx)
+    else:
+        assert captured["topo"] is None
+    # The temp file is cleaned up even when the regrid step fails.
+    assert not list(tmp_path.glob("_tmp_*"))
+
+
+def test_regrid_obc_chunk_leaves_no_temp_file_on_bad_topo(get_rect_grid, tmp_path):
+    """A topog that fails to load must not strand the chunk's temp file."""
+    get_rect_grid.write_supergrid(tmp_path / "hgrid.nc")
+    hgrid = xr.open_dataset(tmp_path / "hgrid.nc")
+    bad_topo = tmp_path / "topog.nc"
+    bad_topo.write_text("not netcdf")
+
+    ds = xr.Dataset({"x": ("t", [0.0])})
+    with pytest.raises(Exception):
+        mom6._regrid_obc_chunk(
+            ds, hgrid, "north", 1, tmp_path, {}, None, None, bad_topo
+        )
+    assert not list(tmp_path.glob("_tmp_*"))
+
+
+def test_regrid_obc_chunk_warns_without_min_depth_attr(
+    get_rect_grid, tmp_path, monkeypatch, caplog
+):
+    """A topog without min_depth still regrids, at 0.0, but says so."""
+    grid = get_rect_grid
+    grid.write_supergrid(tmp_path / "hgrid.nc")
+    hgrid = xr.open_dataset(tmp_path / "hgrid.nc")
+    topo = mom6.Topo(grid=grid, min_depth=9.5, git=False)
+    topo.set_flat(100.0)
+    topo.write_topo(tmp_path / "full.nc")
+    with xr.open_dataset(tmp_path / "full.nc") as full:
+        stripped = full.load()
+    del stripped.attrs["min_depth"]
+    stripped.to_netcdf(tmp_path / "topog.nc")
+
+    captured = {}
+
+    def fake_cardinal(*args, **kwargs):
+        captured.update(kwargs)
+        raise RuntimeError("stop before regridding")
+
+    monkeypatch.setattr(mom6.Segment, "cardinal", fake_cardinal)
+    ds = xr.Dataset({"x": ("t", [0.0])})
+    with caplog.at_level("WARNING"), pytest.raises(RuntimeError, match="stop"):
+        mom6._regrid_obc_chunk(
+            ds, hgrid, "north", 1, tmp_path, {}, None, None, tmp_path / "topog.nc"
+        )
+    assert "no min_depth global attribute" in caplog.text
+    assert captured["topo"].min_depth == 0.0
+
+
+def test_reference_ocean_obc_thins_dz_to_the_sea_floor(get_rect_grid, tmp_path):
+    """The no-download reference_ocean product runs through the real OBC
+    GET -> REGRID -> MERGE pipeline, and with the bathymetry bound on (as
+    process_bc does) each segment column's thicknesses sum to its sea floor."""
+    from functools import partial
+
+    grid = get_rect_grid
+    hgrid_path = tmp_path / "hgrid.nc"
+    grid.write_supergrid(hgrid_path)
+    # A sloping sea floor, so a column that wasn't thinned would show up.
+    topo = mom6.Topo(grid=grid, min_depth=9.5, git=False)
+    depth = np.broadcast_to(np.linspace(50.0, 3000.0, grid.nx), (grid.ny, grid.nx))
+    topo.send_entire_depth_change_to_tcm(
+        xr.DataArray(depth.copy(), dims=["ny", "nx"], attrs={"units": "m"})
+    )
+    bathymetry_path = tmp_path / "topog.nc"
+    topo.write_topo(bathymetry_path)
+
+    dirs = {k: tmp_path / k for k in ("raw", "regridded", "output")}
+    for d in dirs.values():
+        d.mkdir()
+    ProductRegistry.load()
+    mom6.obc.process_obc_conditions(
+        start_date="2020-01-01",
+        end_date="2020-01-02",
+        boundary_number_conversion={"south": 1},
+        product_name="reference_ocean",
+        function_name="get_reference_ocean_data",
+        variables=None,
+        extra_args={},
+        dataset_varnames=ProductRegistry.get_product(
+            "reference_ocean"
+        ).write_metadata(),
+        hgrid_path=str(hgrid_path),
+        raw_dataset_path=str(dirs["raw"]),
+        regridded_dataset_path=str(dirs["regridded"]),
+        output_path=str(dirs["output"]),
+        regrid_chunk_fn=partial(
+            mom6._regrid_obc_chunk, bathymetry_path=bathymetry_path
+        ),
+        bathymetry_path=bathymetry_path,
+        regrid_step_days=2,
+    )
+
+    with xr.open_dataset(dirs["output"] / "forcing_obc_segment_001.nc") as ds:
+        assert np.isfinite(ds["temp_segment_001"].values).all()
+        column = (
+            ds["dz_temp_segment_001"].isel(time=0).sum("nz_temp_segment_001").values
+        )
+    seg = mom6.Segment.cardinal(
+        xr.open_dataset(hgrid_path), "south", "segment_001", topo=topo
+    )
+    expected = np.asarray(seg.depth).ravel()
+    wet = np.isfinite(expected) & (expected > 0)
+    assert wet.sum() > 10
+    np.testing.assert_allclose(column.ravel()[wet], expected[wet], rtol=1e-6)
+
+
+def test_conditions_points_mom6_at_the_filled_ics(monkeypatch):
+    """The raw init_*.nc can carry the source's missing values on wet cells;
+    MOM6 must read the filled ones."""
+    written = []
+    monkeypatch.setattr(
+        mom6, "append_user_nl", lambda model, pairs, **kw: written.extend(pairs)
+    )
+    monkeypatch.setattr(mom6.BaseConfigurator, "configure", lambda self: None)
+    _conditions("glorys").configure()
+    files = {k: v for k, v in written if k.endswith("_FILE")}
+    assert files["TEMP_SALT_Z_INIT_FILE"] == "init_tracers_filled.nc"
+    assert files["SURFACE_HEIGHT_IC_FILE"] == "init_eta_filled.nc"
+    assert files["VELOCITY_FILE"] == "init_vel_filled.nc"
+
+
+def test_read_min_depth(tmp_path, caplog):
+    """Every topog read goes through one helper: the attribute when present,
+    0.0 with a warning when a hand-made file lacks it."""
+    from CrocoDash.forcing.utils import read_min_depth
+
+    xr.Dataset(attrs={"min_depth": 9.5}).to_netcdf(tmp_path / "with.nc")
+    xr.Dataset().to_netcdf(tmp_path / "without.nc")
+    assert read_min_depth(tmp_path / "with.nc") == 9.5
+    with caplog.at_level("WARNING"):
+        assert read_min_depth(tmp_path / "without.nc") == 0.0
+    assert "no min_depth global attribute" in caplog.text
+
+
+def test_all_written_needs_every_file(tmp_path):
+    """A run killed between writing the eta and tracer files must not be
+    skipped on the next attempt."""
+    paths = [tmp_path / f"{n}.nc" for n in ("a", "b", "c")]
+    assert not mom6._all_written(paths)
+    xr.Dataset({"x": ("t", [0.0])}).to_netcdf(paths[0])
+    assert not mom6._all_written(paths)
+    for p in paths[1:]:
+        xr.Dataset({"x": ("t", [0.0])}).to_netcdf(p)
+    assert mom6._all_written(paths)
+    paths[1].write_bytes(b"truncated")
+    with pytest.raises(RuntimeError, match="not valid NetCDF"):
+        mom6._all_written(paths)
+
+
+def test_regrid_ic_gives_the_vgrid_check_the_real_min_depth(
+    get_rect_grid, tmp_path, monkeypatch
+):
+    """create_empty() defaults minimum_depth to 4 m, which made _make_vgrid
+    warn about a minimum depth the case doesn't have."""
+    grid = get_rect_grid
+    grid.write_supergrid(tmp_path / "hgrid.nc")
+    topo = mom6.Topo(grid=grid, min_depth=9.5, git=False)
+    topo.set_flat(100.0)
+    topo.write_topo(tmp_path / "topog.nc")
+    xr.Dataset({"dz": ("z", np.full(5, 20.0))}).to_netcdf(tmp_path / "vgrid.nc")
+
+    seen = {}
+    real_create_empty = mom6.rm6.experiment.create_empty
+
+    def create_empty():
+        expt = real_create_empty()
+        expt._make_vgrid = lambda dz: seen.setdefault("min_depth", expt.minimum_depth)
+        expt.setup_initial_condition = lambda *a, **k: (_ for _ in ()).throw(
+            RuntimeError("stop")
+        )
+        return expt
+
+    monkeypatch.setattr(mom6.rm6.experiment, "create_empty", create_empty)
+    with pytest.raises(RuntimeError, match="stop"):
+        mom6._regrid_ic(
+            raw_file=tmp_path / "raw.nc",
+            hgrid=xr.open_dataset(tmp_path / "hgrid.nc"),
+            start_date="2020-01-01",
+            output_dir=tmp_path,
+            dataset_varnames={},
+            hgrid_path=tmp_path / "hgrid.nc",
+            vgrid_path=tmp_path / "vgrid.nc",
+            bathymetry_path=tmp_path / "topog.nc",
+        )
+    assert seen["min_depth"] == 9.5
+
+
+def test_conditions_turns_off_legacy_bugs(monkeypatch):
+    """Thinned segment dz diverges with MOM6's legacy OBC bug flags on."""
+    written = []
+    # configure() appends to a live case's user_nl_mom; only what it writes
+    # matters here.
+    monkeypatch.setattr(
+        mom6, "append_user_nl", lambda model, pairs, **kw: written.extend(pairs)
+    )
+    monkeypatch.setattr(mom6.BaseConfigurator, "configure", lambda self: None)
+    cfg = _conditions("glorys")
+    cfg.configure()
+    assert ("ENABLE_BUGS_BY_DEFAULT", "False") in written
 
 
 def test_process_ic_binds_grid_paths_onto_the_regrid_step(tmp_path, monkeypatch):

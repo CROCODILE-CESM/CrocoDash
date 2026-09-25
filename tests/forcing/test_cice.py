@@ -12,6 +12,7 @@ from CrocoDash.forcing import cice as cice_mod
 from CrocoDash.forcing.cice import (
     CICEConfigurator,
     FORCING_FILENAME,
+    RESTORE_PARAMS,
     SEA_ICE_SUBDIR,
 )
 
@@ -109,8 +110,38 @@ def test_configure_leaves_restore_ice_off_without_a_product():
     internal initialization for the same reason."""
     configurator = CICEConfigurator()
     _configure_without_a_case(configurator)
-    assert configurator.get_output_param("restore_ice") == ".false."
+    # Not written at all (CICE's own default is .false.): the restore_* namelist
+    # variables only exist from cesm3_cice6_6_3_22 on, and CIME rejects unknown
+    # user_nl variables, so writing them would break a CICE case on an older CICE.
+    declared = {p.name for p in configurator.output_params}
+    assert not declared & set(RESTORE_PARAMS)
     assert configurator.get_output_param("ice_ic") == "'default'"
+
+
+@pytest.mark.parametrize("restoring", [False, True])
+def test_restore_params_survive_a_config_json_round_trip(tmp_path, restoring):
+    """config.json only holds the restore_* params when the case restores, and
+    deserialize() must rebuild the configurator either way."""
+    kwargs = (
+        dict(
+            cice_product_name="reference_ice",
+            cice_function_name="get_reference_ice_data",
+            case_inputdir=tmp_path,
+            restore_ice=True,
+        )
+        if restoring
+        else {}
+    )
+    configurator = CICEConfigurator(**kwargs)
+    _configure_without_a_case(configurator)
+    data = configurator.serialize()
+    assert (set(RESTORE_PARAMS) <= set(data["outputs"])) == restoring
+
+    rebuilt = CICEConfigurator.deserialize(data)
+    assert rebuilt.serialize() == data
+    if restoring:
+        assert rebuilt.get_output_param("restore_ice") == ".true."
+        assert rebuilt.get_output_param("restore_flds").startswith("'aicen'")
 
 
 def test_configure_turns_restore_ice_on_with_a_product(tmp_path):
@@ -367,3 +398,20 @@ def test_get_output_filepaths_agrees_with_process(tmp_path, gen_grid_topo_vgrid)
     assert len(paths) == 1
     assert Path(paths[0]).exists()
     assert configurator.validate_output_filepaths(tmp_path / "ocn")
+
+
+@pytest.mark.parametrize(
+    "ice_dt, min_dx, expected",
+    [(3600, 5450.0, 3), (1800, 5450.0, 2), (3600, 100_000.0, 1), (3600, 14_400.0, 1)],
+)
+def test_dynamics_substeps(ice_dt, min_dx, expected):
+    """At most a quarter cell per substep for ice at MAX_ICE_SPEED; never zero."""
+    from CrocoDash.forcing.cice import (
+        MAX_CELL_FRACTION,
+        MAX_ICE_SPEED,
+        dynamics_substeps,
+    )
+
+    ndtd = dynamics_substeps(ice_dt, min_dx)
+    assert ndtd == expected
+    assert MAX_ICE_SPEED * ice_dt / ndtd <= MAX_CELL_FRACTION * min_dx

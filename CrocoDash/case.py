@@ -16,11 +16,42 @@ from ProConPy.config_var import ConfigVar, cvars
 from ProConPy.stage import Stage
 from ProConPy.dev_utils import ConstraintViolation
 from visualCaseGen.initialize import initialize as initialize_visualCaseGen
-from visualCaseGen.custom_widget_types.case_creator import CaseCreator, ERROR, RESET
-from visualCaseGen.custom_widget_types.case_tools import xmlchange
+from visualCaseGen.custom_widget_types.case_creator import CaseCreator
+from visualCaseGen.custom_widget_types.case_tools import xmlchange, append_user_nl
+from CrocoDash.forcing import cice
 from CrocoDash.forcing.driver import run_workflow
 
 from CrocoDash import case_state
+from CrocoDash.logging import quiet_visualcasegen_info
+
+quiet_visualcasegen_info()
+
+
+def _remove_previous(path):
+    """Delete a directory left by an earlier case of the same name (override=True)."""
+    if path.exists():
+        print(f"Removing previous case files: {path}")
+        shutil.rmtree(path)
+
+
+def _remove_failed_attempt(paths, preexisting):
+    """Delete the dirs a failed Case() created, so that retrying it is not
+    refused with "already exists". One that was already there before the
+    attempt (the build/run dir, with override=False) is not ours to delete.
+    """
+    for path in paths:
+        if path not in preexisting and path.exists():
+            print(f"Removing files from the failed attempt: {path}")
+            shutil.rmtree(path, ignore_errors=True)
+
+
+# Seconds in each NCPL_BASE_PERIOD; year/decade assume a NO_LEAP calendar.
+_NCPL_BASE_SECONDS = {
+    "hour": 3600,
+    "day": 86400,
+    "year": 365 * 86400,
+    "decade": 3650 * 86400,
+}
 
 
 class Case:
@@ -163,27 +194,44 @@ class Case:
                 ntasks_ocn_specified=ntasks_ocn is not None,
             )
         except Exception as e:
-            print(f"\n{ERROR}Case Configuration Error:{RESET}")
-            print(f"  {str(e)}")
-            return
+            raise RuntimeError(f"Case configuration failed: {e}") from e
 
-        # Before creating the case, we need to create the grid input files (except for mapping files,
-        # which will be created later in process_forcings if needed).
-        self._create_grid_input_files()
+        case_dirs = [
+            self.inputdir,
+            self.caseroot,
+            Path(self.cime.cime_output_root) / self.caseroot.name,
+        ]
+        if override:
+            for path in case_dirs:
+                _remove_previous(path)
+        preexisting = {path for path in case_dirs if path.exists()}
+        try:
+            # Before creating the case, we need to create the grid input files (except for mapping files,
+            # which will be created later in process_forcings if needed).
+            self._create_grid_input_files()
 
-        # Having set the configuration variables and created the grid input files, we can now create the case instance.
-        self._create_newcase()
+            # Having set the configuration variables and created the grid input files, we can now create the case instance.
+            self._create_newcase()
 
-        # After creating the case, instantiate the CIME case object for later use.
-        self._cime_case = self.cime.get_case(
-            self.caseroot, non_local=self.cc._is_non_local()
-        )
+            # After creating the case, instantiate the CIME case object for later use.
+            self._cime_case = self.cime.get_case(
+                self.caseroot, non_local=self.cc._is_non_local()
+            )
 
-        self.is_non_local = self.cc._is_non_local()
+            # Need the case: they read <COMP>_NCPL and write user_nl_<comp>.
+            if self.ww3_in_compset:
+                self._set_ww3_timesteps()
+            if self.cice_in_compset:
+                self._set_cice_ndtd()
 
-        self._apply_final_xmlchanges(ntasks_ocn, job_queue, job_wallclock_time)
+            self.is_non_local = self.cc._is_non_local()
 
-        self._write_state()
+            self._apply_final_xmlchanges(ntasks_ocn, job_queue, job_wallclock_time)
+
+            self._write_state()
+        except BaseException:
+            _remove_failed_attempt(case_dirs, preexisting)
+            raise
 
         required_configurators = ForcingConfigRegistry.find_required_configurators(
             self.compset_lname
@@ -326,10 +374,6 @@ class Case:
         ocn_topo = self.ocn_topo
         ocn_vgrid = self.ocn_vgrid
 
-        if self.override is True:
-            if inputdir.exists():
-                shutil.rmtree(inputdir)
-
         inputdir.mkdir(parents=True, exist_ok=False)
 
         ocn_dir = inputdir / "ocn"
@@ -370,15 +414,59 @@ class Case:
             wav_dir.mkdir(exist_ok=True)
             self.ocn_topo.write_ww3_input(wav_dir, grid_alias=ocn_grid.name)
 
+    def _coupling_interval(self, comp):
+        """Coupling interval of a component in seconds, from <COMP>_NCPL."""
+        base_period = self._cime_case.get_value("NCPL_BASE_PERIOD")
+        if base_period not in _NCPL_BASE_SECONDS:
+            raise ValueError(f"Invalid NCPL_BASE_PERIOD {base_period}")
+        calendar = self._cime_case.get_value("CALENDAR")
+        if base_period in ("year", "decade") and calendar != "NO_LEAP":
+            raise ValueError(
+                f"Invalid CALENDAR {calendar} for NCPL_BASE_PERIOD {base_period}"
+            )
+
+        basedt = _NCPL_BASE_SECONDS[base_period]
+        ncpl = int(self._cime_case.get_value(f"{comp}_NCPL"))
+        cpl_dt, remainder = divmod(basedt, ncpl)
+        if remainder:
+            raise ValueError(f"{comp}_NCPL doesn't divide the base dt evenly")
+        return cpl_dt
+
+    def _set_ww3_timesteps(self):
+        """Scale the WW3 time steps to the grid via user_nl_ww3."""
+
+        cpl_dt = self._coupling_interval("WAV")
+        dt = self.ocn_topo.ww3_timesteps(float(cpl_dt))
+        append_user_nl(
+            "ww3",
+            [(k, f"{dt[k]:.1f}") for k in ("dtmax", "dtcfl", "dtcfli", "dtmin")],
+            do_exec=True,
+            comment=(
+                f"WW3 time steps from the grid's smallest cell and the {cpl_dt} s "
+                "coupling interval (CESM defaults are per wav_grid alias, not "
+                "per resolution)"
+            ),
+        )
+
+    def _set_cice_ndtd(self):
+        """Scale CICE's dynamics substeps (ndtd) to the grid via user_nl_cice."""
+
+        ice_dt = self._coupling_interval("ICE")
+        min_dx = min(float(self.ocn_grid.dxt.min()), float(self.ocn_grid.dyt.min()))
+        ndtd = cice.dynamics_substeps(ice_dt, min_dx)
+        append_user_nl(
+            "cice",
+            [("ndtd", str(ndtd))],
+            do_exec=True,
+            comment=(
+                f"CICE dynamics substeps: ice at {cice.MAX_ICE_SPEED} m/s crosses at "
+                f"most {cice.MAX_CELL_FRACTION} of the smallest cell ({min_dx:.0f} m) "
+                f"per substep of the {ice_dt} s ice time step"
+            ),
+        )
+
     def _create_newcase(self):
         """Create the case instance."""
-        # If override is True, clean up the existing caseroot and output directories
-        if self.override is True:
-            if self.caseroot.exists():
-                shutil.rmtree(self.caseroot)
-            if (Path(self.cime.cime_output_root) / self.caseroot.name).exists():
-                shutil.rmtree(Path(self.cime.cime_output_root) / self.caseroot.name)
-
         if not self.caseroot.parent.exists():
             self.caseroot.parent.mkdir(parents=True, exist_ok=False)
 
@@ -388,9 +476,9 @@ class Case:
 
         try:
             self.cc.create_case(do_exec=True)
-        except Exception as e:
-            print(f"{ERROR}{str(e)}{RESET}")
+        except Exception:
             self.cc.revert_launch(do_exec=True)
+            raise
 
     def configure_forcings(
         self,
