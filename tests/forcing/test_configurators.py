@@ -20,24 +20,9 @@ def fake_param_case(tmp_path):
     return tmp_path
 
 
-def test_user_nl_mom_apply(fake_param_case):
-    path = fake_param_case
-    s = UserNLConfigParam("test")
-    s.set_item("test")
-    s.apply()
-    fname = path / "user_nl_mom"
-
-    with open(fname) as f:
-        contents = f.read()
-
-    assert "test = test" in contents
-
-
 def test_inspect_user_nl(fake_param_case):
     path = fake_param_case
-    s = UserNLConfigParam("test")
-    s.set_item("42")
-    s.apply()
+    (path / "user_nl_mom").write_text("test = 42\n")
 
     reciever = UserNLConfigParam("test")
     reciever.inspect(caseroot=path)

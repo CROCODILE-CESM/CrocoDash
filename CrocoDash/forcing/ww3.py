@@ -585,6 +585,28 @@ class WW3Configurator(BaseConfigurator):
             return []
         return sorted(p for p in wave_dir.iterdir() if p.is_file())
 
+    def stale_outputs(self, previous_config, current_config, inputdir):
+        """The spectra in <inputdir>/wav are rewritten on every process() run,
+        but from extract_forcings/ww3, whose raw, regridded and merged files are
+        skipped when they exist -- and only the raw and regridded names carry a
+        date. So that staging directory goes once this configurator's inputs or
+        the conditions dates it reads have changed, or there is no record."""
+
+        def fingerprint(config):
+            if self.name.lower() not in config or "conditions" not in config:
+                return None
+            dates = config["conditions"]["inputs"]
+            return (
+                config[self.name.lower()]["inputs"],
+                dates["start_date"],
+                dates["end_date"],
+            )
+
+        staging_dir = inputdir / "extract_forcings" / "ww3"
+        if fingerprint(previous_config) == fingerprint(current_config):
+            return []
+        return [staging_dir] if staging_dir.exists() else []
+
     def process(self, ctx):
         """
         Generate WW3 boundary spectra, spec.list, and ww3_bounc.nml into

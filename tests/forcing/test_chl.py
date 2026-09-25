@@ -18,7 +18,7 @@ def test_chl_process(mock_chl, tmp_path, gen_grid_topo_vgrid):
         calendar=NOLEAP,
     )
     # Set just the output param process() needs, bypassing configure()'s
-    # super().configure() (which append_user_nl's into a real case dir).
+    # super().configure() (which writes into a real case dir's user_nl_mom).
     configurator.set_output_param("CHL_FILE", "chl.nc")
 
     ctx = WorkflowContext(

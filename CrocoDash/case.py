@@ -18,7 +18,7 @@ from ProConPy.dev_utils import ConstraintViolation
 from visualCaseGen.initialize import initialize as initialize_visualCaseGen
 from visualCaseGen.custom_widget_types.case_creator import CaseCreator
 from visualCaseGen.custom_widget_types.case_tools import xmlchange, append_user_nl
-from CrocoDash.forcing import cice
+from CrocoDash.forcing import cice, user_nl_blocks
 from CrocoDash.forcing.driver import run_workflow
 
 from CrocoDash import case_state
@@ -528,32 +528,38 @@ class Case:
             contains a key that is not a valid overridable argument of `function_name`.
         AssertionError
             If the selected data product is not categorized as a forcing product.
+        RuntimeError
+            If another case was created after this one in the same session (see Notes).
 
         Notes
         -----
         - Downloads forcing data (or creates a script) for each boundary and the initial condition unless the large data workflow is used.
         - In large data workflow mode, creates a folder structure and `config.json` file for later manual processing.
         - This method must be called before `process_forcings()`.
+        - Calling it again replaces the previous forcing configuration. Its user_nl
+          entries sit in `! >>> CrocoDash configure_forcings` blocks, which every call
+          rewrites; values set outside those blocks are kept and take precedence.
+          Files `process_forcings()` made for a different configuration are removed,
+          so that it regenerates them.
+        - With several cases in one session, call it on each case right after
+          creating it: it writes through visualCaseGen's global state, which belongs
+          to the case created last, and raises a RuntimeError on any other case.
 
         See Also
         --------
         process_forcings : Executes the actual boundary, initial condition, and tide setup based on the configuration.
         """
 
-        if self._configure_forcings_called:
-            print(
-                "WARNING: configure_forcings() has already been called. "
-                "Parameters will be written to user_nl_mom again, creating duplicates. "
-                "You will need to manually remove the duplicate entries from user_nl_mom "
-                "before running the case."
-            )
-
         # Set up Forcings Folder
         self.extract_forcings_path = self.inputdir / "extract_forcings"
-        if self.override is True:
-            if self.extract_forcings_path.exists():
-                shutil.rmtree(self.extract_forcings_path)
-        self.extract_forcings_path.mkdir(parents=True, exist_ok=True)
+        config_path = self.extract_forcings_path / "config.json"
+        # What an earlier call configured, to tell which of the files its
+        # process_forcings() made still match.
+        try:
+            with open(config_path) as f:
+                previous_config = json.load(f)
+        except (OSError, ValueError):
+            previous_config = {}
 
         # Validate date_range's raw shape and set case-level state. Everything else
         # (boundaries/product_name validity, IC/OBC user_nl params, config.json
@@ -609,15 +615,54 @@ class Case:
             "function_args": function_args,
         }
 
+        # Every user_nl and xml change below goes through visualCaseGen's global
+        # state, which belongs to the case created last in this session.
+        active_caseroot = Path(cvars["CASEROOT"].value)
+        if active_caseroot != self.caseroot:
+            raise RuntimeError(
+                f"configure_forcings() was called on {self.caseroot.name}, but "
+                f"{active_caseroot.name} was created after it in this session, and "
+                "the namelist and xml changes would be written into that case. "
+                "Call configure_forcings() on each case right after creating it, "
+                "before creating the next one."
+            )
+
         self.session_id = cvars["MB_ATTEMPT_ID"].value
         self.grid_name = self.ocn_grid.name
 
-        config_path = self.extract_forcings_path / "config.json"
-        with open(config_path, "w") as f:
-            json.dump({"caseroot": str(self.caseroot)}, f, indent=4)
-
         self.fcr = ForcingConfigRegistry(self.compset_lname, inputs, self)
-        self.fcr.run_configurators(config_path)
+        # Every input is validated by now, so replace the previous call's
+        # user_nl entries. If anything from here on fails, the user_nl files
+        # are put back, and config.json -- the record stale_outputs() compares
+        # against -- is left as it was.
+        user_nl_before = user_nl_blocks.snapshot(self.caseroot)
+        try:
+            edited = user_nl_blocks.strip(self.caseroot)
+            config = {"caseroot": str(self.caseroot)}
+            config |= self.fcr.run_configurators(None)
+            user_nl_blocks.report_edits(self.caseroot, edited)
+
+            stale = self.fcr.stale_outputs(previous_config, config, self.inputdir)
+            for path in stale:
+                if path.is_dir():
+                    shutil.rmtree(path)
+                else:
+                    path.unlink()
+            if self.override is True and self.extract_forcings_path.exists():
+                shutil.rmtree(self.extract_forcings_path)
+            # Last, so that it never describes files that are still to be removed.
+            self.extract_forcings_path.mkdir(parents=True, exist_ok=True)
+            with open(config_path, "w") as f:
+                json.dump(config, f, indent=4)
+        except BaseException:
+            user_nl_blocks.restore(self.caseroot, user_nl_before)
+            raise
+        if stale:
+            print(
+                "Removed forcing files made for another configuration "
+                "(process_forcings() regenerates them): "
+                + ", ".join(str(path.relative_to(self.inputdir)) for path in stale)
+            )
 
         xmlchange(
             "CALENDAR",
@@ -639,6 +684,10 @@ class Case:
             (self.date_range[1] - self.date_range[0]).days,
             is_non_local=self.cc._is_non_local(),
         )
+        if self._configure_forcings_called:
+            print(
+                "configure_forcings() replaced this case's previous forcing configuration."
+            )
         self._configure_forcings_called = True
 
     def process_forcings(self, **kwargs):
