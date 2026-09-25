@@ -58,7 +58,7 @@ A few `known_paths.json` keys (`CESM`, `inputdir`, `casedir`) are also placehold
 
 `--kind case` templates are rendered from a **gallery notebook**, so you can
 start from any of them rather than just the default tutorial
-(`crocodash.tutorial`):
+(`crocodash.tutorial-ocn`):
 
 ```bash
 crocodash template --list-notebooks          # print every available ID

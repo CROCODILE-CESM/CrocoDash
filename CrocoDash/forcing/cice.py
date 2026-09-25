@@ -247,6 +247,17 @@ class CICEConfigurator(BaseConfigurator):
         UserNLConfigParam("restart_lvl", user_nl_name="cice"),
         UserNLConfigParam("restart_pond_sealvl", user_nl_name="cice"),
         UserNLConfigParam("restart_snow", user_nl_name="cice"),
+        UserNLConfigParam("histfreq", user_nl_name="cice"),
+        UserNLConfigParam("f_afsd", user_nl_name="cice"),
+        UserNLConfigParam("f_afsdn", user_nl_name="cice"),
+        UserNLConfigParam("f_dafsd_latg", user_nl_name="cice"),
+        UserNLConfigParam("f_dafsd_latm", user_nl_name="cice"),
+        UserNLConfigParam("f_dafsd_newi", user_nl_name="cice"),
+        UserNLConfigParam("f_dafsd_wave", user_nl_name="cice"),
+        UserNLConfigParam("f_dafsd_weld", user_nl_name="cice"),
+        UserNLConfigParam("f_diam_ww", user_nl_name="cice"),
+        UserNLConfigParam("f_fsdperim", user_nl_name="cice"),
+        UserNLConfigParam("f_fsdrad", user_nl_name="cice"),
     ]
 
     def __init__(
@@ -381,6 +392,21 @@ class CICEConfigurator(BaseConfigurator):
             self.set_output_param(
                 "restore_flds", "'aicen','vicen','vsnon','trcrn','velocity'"
             )
+
+        self.set_output_param("histfreq", "'m','d','x','x','x'")
+        for _fsd_hist in (
+            "f_afsd",
+            "f_afsdn",
+            "f_dafsd_latg",
+            "f_dafsd_latm",
+            "f_dafsd_newi",
+            "f_dafsd_wave",
+            "f_dafsd_weld",
+            "f_diam_ww",
+            "f_fsdperim",
+            "f_fsdrad",
+        ):
+            self.set_output_param(_fsd_hist, "'mdxxx'")
 
         # ice_ic points at the expanded-grid restart process() writes, so its
         # ghost ring is read in (restart_ext above) and becomes the restoring
