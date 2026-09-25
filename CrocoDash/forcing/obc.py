@@ -669,8 +669,10 @@ def _merge_boundary(boundary_label: str, regridded_files: list, output_folder) -
     )
     # The merged time axis must be monotonically increasing, which it only is
     # if every chunk was written against the same epoch.
+    # Compared pairwise rather than via np.diff: noleap axes decode to cftime
+    # objects, whose differences are timedeltas that cannot be compared to 0.
     times = ds["time"].values
-    ascending = np.diff(times) > 0
+    ascending = times[1:] > times[:-1]
     if ascending.size and not ascending.all():
         bad = int(np.argmin(ascending))
         ds.close()

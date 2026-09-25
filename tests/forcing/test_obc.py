@@ -248,6 +248,43 @@ def test_merge_rejects_non_monotonic_time(
         _merge_boundary("001", sorted(regridded_dir.glob("*.nc")), output_dir)
 
 
+def _noleap_chunk(path, days):
+    import cftime
+
+    time = [cftime.DatetimeNoLeap(2000, 1, d) for d in days]
+    xr.Dataset(
+        {"temp_segment_001": (("time", "nx_segment_001"), np.ones((len(days), 2)))},
+        coords={"time": time},
+    ).to_netcdf(path)
+
+
+def test_merge_accepts_a_noleap_time_axis(tmp_path):
+    """CESM output products run on a noleap calendar, which decodes to cftime
+    objects; the time-order check must not choke on them."""
+    regridded_dir = tmp_path / "regridded"
+    regridded_dir.mkdir()
+    _noleap_chunk(regridded_dir / "forcing_obc_segment_001_a.nc", [1, 2, 3])
+    _noleap_chunk(regridded_dir / "forcing_obc_segment_001_b.nc", [4, 5, 6])
+    output_dir = tmp_path / "output"
+    output_dir.mkdir()
+
+    result = _merge_boundary("001", sorted(regridded_dir.glob("*.nc")), output_dir)
+    with xr.open_dataset(result) as ds:
+        assert ds.sizes["time"] == 6
+
+
+def test_merge_rejects_a_non_monotonic_noleap_time_axis(tmp_path):
+    regridded_dir = tmp_path / "regridded"
+    regridded_dir.mkdir()
+    _noleap_chunk(regridded_dir / "forcing_obc_segment_001_a.nc", [1, 2, 3])
+    _noleap_chunk(regridded_dir / "forcing_obc_segment_001_b.nc", [1, 2, 3])
+    output_dir = tmp_path / "output"
+    output_dir.mkdir()
+
+    with pytest.raises(ValueError, match="not monotonically increasing"):
+        _merge_boundary("001", sorted(regridded_dir.glob("*.nc")), output_dir)
+
+
 # ---------------------------------------------------------------------------
 # Unit test: _regrid_boundary's num_workers > 1 branch
 # ---------------------------------------------------------------------------
