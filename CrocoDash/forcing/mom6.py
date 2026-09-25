@@ -418,23 +418,6 @@ class ConditionsConfigurator(BaseConfigurator):
 
     _DATE_FORMAT = "%Y%m%d"
 
-    # Static output params that don't vary by boundary count.
-    _IC_PARAM_NAMES = {
-        "INIT_LAYERS_FROM_Z_FILE",
-        "Z_INIT_ALE_REMAPPING",
-        "TEMP_SALT_INIT_VERTICAL_REMAP_ONLY",
-        "DEPRESS_INITIAL_SURFACE",
-        "VELOCITY_CONFIG",
-        "TEMP_SALT_Z_INIT_FILE",
-        "SURFACE_HEIGHT_IC_FILE",
-        "VELOCITY_FILE",
-        "Z_INIT_FILE_PTEMP_VAR",
-        "Z_INIT_FILE_SALT_VAR",
-        "SURFACE_HEIGHT_IC_VAR",
-        "U_IC_VAR",
-        "V_IC_VAR",
-    }
-
     input_params = [
         InputValueParam("start_date", comment="Forcing start date"),
         InputValueParam("end_date", comment="Forcing end date"),
@@ -710,27 +693,10 @@ class ConditionsConfigurator(BaseConfigurator):
 
         self.output_params = self.output_params + dynamic_params
 
-        # ---- apply: batch into exactly 2 append_user_nl calls (preserves today's
-        # "Initial conditions" / "Open boundary conditions" banner formatting) ----
-        ic_params, obc_params = [], []
-        for param in self.output_params:
-            if not isinstance(param, UserNLConfigParam):
-                continue
-            (ic_params if param.name in self._IC_PARAM_NAMES else obc_params).append(
-                (param.name, param.value)
-            )
-
-        append_user_nl("mom", ic_params, do_exec=True, comment="Initial conditions")
-        append_user_nl(
-            "mom",
-            obc_params,
-            do_exec=True,
-            comment="Open boundary conditions",
-            log_title=False,
-        )
-        for param in self.output_params:
-            if isinstance(param, UserNLConfigParam):
-                param.executed = True
+        # The initial-condition params come first, so the user_nl block holds
+        # just the two comments "Initial conditions" and "Open boundary
+        # conditions" (see BaseConfigurator.configure).
+        super().configure()
 
     @classmethod
     def deserialize(cls, data):
@@ -755,6 +721,60 @@ class ConditionsConfigurator(BaseConfigurator):
                 param.set_item(value)
                 obj.output_params.append(param)
         return obj
+
+    # The outputs that, with every input, determine what process_ic/process_bc
+    # produce. The user_nl values are left out: they follow from these, apart
+    # from the tidal file names in OBC_SEGMENT_NNN_DATA, which don't change the
+    # IC or OBC files. The chunk sizes name the raw and regridded chunks.
+    _PROCESS_OUTPUTS = (
+        "information",
+        "boundary_number_conversion",
+        "function_args",
+        "get_step_days",
+        "regrid_step_days",
+    )
+
+    @classmethod
+    def _fingerprint(cls, entry):
+        if entry is None:
+            return None
+        outputs = entry.get("outputs", {})
+        return {
+            "inputs": entry.get("inputs"),
+            "outputs": {k: outputs.get(k) for k in cls._PROCESS_OUTPUTS},
+        }
+
+    def stale_outputs(self, previous_config, current_config, inputdir):
+        """process_ic/process_bc skip every file they find already written --
+        that is what makes resuming a crashed run cheap -- and nothing in the
+        file names ties the files to the configuration. So once what they are
+        made from changed, or there is no record of it, these go:
+
+        - in <inputdir>/ocn, the IC (init_*.nc, init_*_filled.nc), the merged
+          OBCs (forcing_obc_segment_NNN.nc) and the BGC per-tracer OBCs
+          (<tracer>_obc_segment.nc);
+        - extract_forcings/raw_data and regridded_data, which only these two
+          steps use: raw_data/ic_unprocessed.nc has no date in its name, no
+          chunk names the product or its arguments, the regridded chunks are
+          named by segment number rather than boundary, and chunks of another
+          date range overlap the new ones, which the OBC coverage check rejects.
+        """
+        key = self.name.lower()
+        if self._fingerprint(previous_config.get(key)) == self._fingerprint(
+            current_config[key]
+        ):
+            return []
+        ocn = inputdir / "ocn"
+        extract = inputdir / "extract_forcings"
+        candidates = [
+            ocn / f"init_{name}{suffix}.nc"
+            for name in ("eta", "vel", "tracers")
+            for suffix in ("", "_filled")
+        ]
+        candidates += sorted(ocn.glob("forcing_obc_segment_[0-9][0-9][0-9].nc"))
+        candidates += sorted(ocn.glob("*_obc_segment.nc"))
+        candidates += [extract / "raw_data", extract / "regridded_data"]
+        return [path for path in candidates if path.exists()]
 
     # ---- process (extraction) ----
 

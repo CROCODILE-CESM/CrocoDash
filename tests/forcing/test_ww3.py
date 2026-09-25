@@ -903,3 +903,34 @@ def test_output_filepaths_dir_matches_ww3_grid_inp_dir(tmp_path):
     found = configurator.get_output_filepaths(tmp_path / "ocnice")
     assert found, "the wave dir was populated, so this must not be empty"
     assert {Path(p).parent for p in found} == {declared}
+
+
+def _ww3_config(end_date="20200110", product="reference_waves"):
+    return {
+        "conditions": {"inputs": {"start_date": "20200101", "end_date": end_date}},
+        "ww3": {"inputs": {"boundaries": ["west"], "ww3_obc_product_name": product}},
+    }
+
+
+@pytest.mark.parametrize(
+    "previous, stale",
+    [
+        (_ww3_config(), False),
+        (_ww3_config(end_date="20200105"), True),
+        (_ww3_config(product="era5_wave_spectra"), True),
+        ({}, True),
+    ],
+)
+def test_ww3_staging_is_stale_once_its_inputs_or_the_dates_changed(
+    tmp_path, previous, stale
+):
+    """process() skips the raw, regridded and merged files it finds in
+    extract_forcings/ww3, and the merged ones carry no date -- so a new date
+    range would rebuild the spectra from the old merge."""
+    staging = tmp_path / "extract_forcings" / "ww3" / "merged"
+    staging.mkdir(parents=True)
+    configurator = WW3Configurator(
+        case_inputdir=tmp_path, boundaries=["west"], ww3_obc_product_name="none"
+    )
+    result = configurator.stale_outputs(previous, _ww3_config(), tmp_path)
+    assert result == ([staging.parent] if stale else [])

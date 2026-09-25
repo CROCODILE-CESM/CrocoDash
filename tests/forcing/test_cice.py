@@ -97,9 +97,9 @@ def test_cice_configurator_defaults_to_none_product():
 
 def _configure_without_a_case(configurator):
     """Run configure() with the namelist write stubbed out -- CICE's outputs
-    are all UserNLConfigParams, whose apply() would otherwise append into a
-    real case directory."""
-    with patch("CrocoDash.forcing.base.append_user_nl"):
+    are all UserNLConfigParams, which would otherwise be written into a real
+    case directory."""
+    with patch("CrocoDash.forcing.user_nl_blocks.write"):
         configurator.configure()
 
 
