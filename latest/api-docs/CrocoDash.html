@@ -482,6 +482,7 @@ document.write(`
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.base.BaseConfigurator.serialize"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.serialize()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.base.BaseConfigurator.set_input_param"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.set_input_param()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.base.BaseConfigurator.set_output_param"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.set_output_param()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.base.BaseConfigurator.stale_outputs"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.stale_outputs()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.base.BaseConfigurator.validate_args"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.validate_args()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.base.BaseConfigurator.validate_compset_compatibility"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.validate_compset_compatibility()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.base.BaseConfigurator.validate_output_filepaths"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.validate_output_filepaths()</span></code></a></li>
@@ -511,6 +512,7 @@ document.write(`
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.base.ForcingConfigRegistry.resolve_process_targets"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.resolve_process_targets()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.base.ForcingConfigRegistry.return_missing_inputs"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.return_missing_inputs()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.base.ForcingConfigRegistry.run_configurators"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.run_configurators()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.base.ForcingConfigRegistry.stale_outputs"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.stale_outputs()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.base.InputFileParam"><code class="docutils literal notranslate"><span class="pre">InputFileParam</span></code></a><ul>
@@ -523,7 +525,6 @@ document.write(`
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.base.OutputParam"><code class="docutils literal notranslate"><span class="pre">OutputParam</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.base.OutputParam.apply"><code class="docutils literal notranslate"><span class="pre">OutputParam.apply()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.base.OutputParam.inspect"><code class="docutils literal notranslate"><span class="pre">OutputParam.inspect()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.base.OutputParam.set_item"><code class="docutils literal notranslate"><span class="pre">OutputParam.set_item()</span></code></a></li>
 </ul>
@@ -534,8 +535,8 @@ document.write(`
 </li>
 <li class="toctree-l3"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.base.UndeclaredParamError"><code class="docutils literal notranslate"><span class="pre">UndeclaredParamError</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.base.UserNLConfigParam"><code class="docutils literal notranslate"><span class="pre">UserNLConfigParam</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.base.UserNLConfigParam.apply"><code class="docutils literal notranslate"><span class="pre">UserNLConfigParam.apply()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.base.UserNLConfigParam.inspect"><code class="docutils literal notranslate"><span class="pre">UserNLConfigParam.inspect()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.base.UserNLConfigParam.pair"><code class="docutils literal notranslate"><span class="pre">UserNLConfigParam.pair()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.base.WorkflowContext"><code class="docutils literal notranslate"><span class="pre">WorkflowContext</span></code></a><ul>
@@ -657,6 +658,7 @@ document.write(`
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.mom6.ConditionsConfigurator.process_components"><code class="docutils literal notranslate"><span class="pre">ConditionsConfigurator.process_components</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.mom6.ConditionsConfigurator.process_ic"><code class="docutils literal notranslate"><span class="pre">ConditionsConfigurator.process_ic()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.mom6.ConditionsConfigurator.required_for_compsets"><code class="docutils literal notranslate"><span class="pre">ConditionsConfigurator.required_for_compsets</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.mom6.ConditionsConfigurator.stale_outputs"><code class="docutils literal notranslate"><span class="pre">ConditionsConfigurator.stale_outputs()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.mom6.ConditionsConfigurator.validate_args"><code class="docutils literal notranslate"><span class="pre">ConditionsConfigurator.validate_args()</span></code></a></li>
 </ul>
 </li>
@@ -698,6 +700,14 @@ document.write(`
 </li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="CrocoDash.forcing.html#module-CrocoDash.forcing.user_nl_blocks">CrocoDash.forcing.user_nl_blocks module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.user_nl_blocks.report_edits"><code class="docutils literal notranslate"><span class="pre">report_edits()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.user_nl_blocks.restore"><code class="docutils literal notranslate"><span class="pre">restore()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.user_nl_blocks.snapshot"><code class="docutils literal notranslate"><span class="pre">snapshot()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.user_nl_blocks.strip"><code class="docutils literal notranslate"><span class="pre">strip()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.user_nl_blocks.write"><code class="docutils literal notranslate"><span class="pre">write()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="CrocoDash.forcing.html#module-CrocoDash.forcing.utils">CrocoDash.forcing.utils module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.utils.check_date_continuity"><code class="docutils literal notranslate"><span class="pre">check_date_continuity()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.utils.fetch_raw_chunk"><code class="docutils literal notranslate"><span class="pre">fetch_raw_chunk()</span></code></a></li>
@@ -718,6 +728,7 @@ document.write(`
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.ww3.WW3Configurator.process"><code class="docutils literal notranslate"><span class="pre">WW3Configurator.process()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.ww3.WW3Configurator.process_components"><code class="docutils literal notranslate"><span class="pre">WW3Configurator.process_components</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.ww3.WW3Configurator.required_for_compsets"><code class="docutils literal notranslate"><span class="pre">WW3Configurator.required_for_compsets</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.ww3.WW3Configurator.stale_outputs"><code class="docutils literal notranslate"><span class="pre">WW3Configurator.stale_outputs()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.ww3.WW3Configurator.validate_args"><code class="docutils literal notranslate"><span class="pre">WW3Configurator.validate_args()</span></code></a></li>
 </ul>
 </li>
@@ -880,6 +891,7 @@ which previously could only be changed by hand-editing <cite>config.json</cite> 
     Also raised if an invalid product or function is provided, or if <cite>function_overrides</cite>
     contains a key that is not a valid overridable argument of <cite>function_name</cite>.</p></li>
 <li><p><strong>AssertionError</strong> – If the selected data product is not categorized as a forcing product.</p></li>
+<li><p><strong>RuntimeError</strong> – If another case was created after this one in the same session (see Notes).</p></li>
 </ul>
 </dd>
 </dl>
@@ -888,6 +900,14 @@ which previously could only be changed by hand-editing <cite>config.json</cite> 
 <li><p>Downloads forcing data (or creates a script) for each boundary and the initial condition unless the large data workflow is used.</p></li>
 <li><p>In large data workflow mode, creates a folder structure and <cite>config.json</cite> file for later manual processing.</p></li>
 <li><p>This method must be called before <cite>process_forcings()</cite>.</p></li>
+<li><p>Calling it again replaces the previous forcing configuration. Its user_nl
+entries sit in <cite>! &gt;&gt;&gt; CrocoDash configure_forcings</cite> blocks, which every call
+rewrites; values set outside those blocks are kept and take precedence.
+Files <cite>process_forcings()</cite> made for a different configuration are removed,
+so that it regenerates them.</p></li>
+<li><p>With several cases in one session, call it on each case right after
+creating it: it writes through visualCaseGen’s global state, which belongs
+to the case created last, and raises a RuntimeError on any other case.</p></li>
 </ul>
 <div class="admonition seealso">
 <p class="admonition-title">See also</p>

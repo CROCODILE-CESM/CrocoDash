@@ -382,6 +382,7 @@ document.write(`
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.BaseConfigurator.serialize"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.serialize()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.BaseConfigurator.set_input_param"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.set_input_param()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.BaseConfigurator.set_output_param"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.set_output_param()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.BaseConfigurator.stale_outputs"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.stale_outputs()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.BaseConfigurator.validate_args"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.validate_args()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.BaseConfigurator.validate_compset_compatibility"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.validate_compset_compatibility()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.BaseConfigurator.validate_output_filepaths"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.validate_output_filepaths()</span></code></a></li>
@@ -411,6 +412,7 @@ document.write(`
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.ForcingConfigRegistry.resolve_process_targets"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.resolve_process_targets()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.ForcingConfigRegistry.return_missing_inputs"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.return_missing_inputs()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.ForcingConfigRegistry.run_configurators"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.run_configurators()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.ForcingConfigRegistry.stale_outputs"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.stale_outputs()</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.InputFileParam"><code class="docutils literal notranslate"><span class="pre">InputFileParam</span></code></a><ul class="nav section-nav flex-column">
@@ -423,7 +425,6 @@ document.write(`
 </ul>
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.OutputParam"><code class="docutils literal notranslate"><span class="pre">OutputParam</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.OutputParam.apply"><code class="docutils literal notranslate"><span class="pre">OutputParam.apply()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.OutputParam.inspect"><code class="docutils literal notranslate"><span class="pre">OutputParam.inspect()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.OutputParam.set_item"><code class="docutils literal notranslate"><span class="pre">OutputParam.set_item()</span></code></a></li>
 </ul>
@@ -434,8 +435,8 @@ document.write(`
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.UndeclaredParamError"><code class="docutils literal notranslate"><span class="pre">UndeclaredParamError</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.UserNLConfigParam"><code class="docutils literal notranslate"><span class="pre">UserNLConfigParam</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.UserNLConfigParam.apply"><code class="docutils literal notranslate"><span class="pre">UserNLConfigParam.apply()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.UserNLConfigParam.inspect"><code class="docutils literal notranslate"><span class="pre">UserNLConfigParam.inspect()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.UserNLConfigParam.pair"><code class="docutils literal notranslate"><span class="pre">UserNLConfigParam.pair()</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.WorkflowContext"><code class="docutils literal notranslate"><span class="pre">WorkflowContext</span></code></a><ul class="nav section-nav flex-column">
@@ -557,6 +558,7 @@ document.write(`
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.mom6.ConditionsConfigurator.process_components"><code class="docutils literal notranslate"><span class="pre">ConditionsConfigurator.process_components</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.mom6.ConditionsConfigurator.process_ic"><code class="docutils literal notranslate"><span class="pre">ConditionsConfigurator.process_ic()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.mom6.ConditionsConfigurator.required_for_compsets"><code class="docutils literal notranslate"><span class="pre">ConditionsConfigurator.required_for_compsets</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.mom6.ConditionsConfigurator.stale_outputs"><code class="docutils literal notranslate"><span class="pre">ConditionsConfigurator.stale_outputs()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.mom6.ConditionsConfigurator.validate_args"><code class="docutils literal notranslate"><span class="pre">ConditionsConfigurator.validate_args()</span></code></a></li>
 </ul>
 </li>
@@ -598,6 +600,14 @@ document.write(`
 </li>
 </ul>
 </li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.forcing.user_nl_blocks">CrocoDash.forcing.user_nl_blocks module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.user_nl_blocks.report_edits"><code class="docutils literal notranslate"><span class="pre">report_edits()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.user_nl_blocks.restore"><code class="docutils literal notranslate"><span class="pre">restore()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.user_nl_blocks.snapshot"><code class="docutils literal notranslate"><span class="pre">snapshot()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.user_nl_blocks.strip"><code class="docutils literal notranslate"><span class="pre">strip()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.user_nl_blocks.write"><code class="docutils literal notranslate"><span class="pre">write()</span></code></a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.forcing.utils">CrocoDash.forcing.utils module</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.utils.check_date_continuity"><code class="docutils literal notranslate"><span class="pre">check_date_continuity()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.utils.fetch_raw_chunk"><code class="docutils literal notranslate"><span class="pre">fetch_raw_chunk()</span></code></a></li>
@@ -618,6 +628,7 @@ document.write(`
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.ww3.WW3Configurator.process"><code class="docutils literal notranslate"><span class="pre">WW3Configurator.process()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.ww3.WW3Configurator.process_components"><code class="docutils literal notranslate"><span class="pre">WW3Configurator.process_components</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.ww3.WW3Configurator.required_for_compsets"><code class="docutils literal notranslate"><span class="pre">WW3Configurator.required_for_compsets</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.ww3.WW3Configurator.stale_outputs"><code class="docutils literal notranslate"><span class="pre">WW3Configurator.stale_outputs()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.ww3.WW3Configurator.validate_args"><code class="docutils literal notranslate"><span class="pre">WW3Configurator.validate_args()</span></code></a></li>
 </ul>
 </li>
@@ -841,6 +852,19 @@ reach <cite>apply()</cite> – it’s always False when there’s no live Case
 <dd></dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.forcing.base.BaseConfigurator.stale_outputs">
+<span class="sig-name descname"><span class="pre">stale_outputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">previous_config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">current_config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputdir</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.base.BaseConfigurator.stale_outputs" title="Link to this definition">#</a></dt>
+<dd><p>Files an earlier process step left that the current configuration
+must not reuse, for configure_forcings() to remove.</p>
+<p>previous_config/current_config are the whole config.json contents from
+the earlier configure_forcings() call ({} if there is no record) and
+from this one, since a process step can read a sibling’s entry (the
+conditions dates, say). Only a process step that skips outputs it
+finds on disk needs to override this; every other one rewrites its
+files anyway.</p>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.forcing.base.BaseConfigurator.validate_args">
 <span class="sig-name descname"><span class="pre">validate_args</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.base.BaseConfigurator.validate_args" title="Link to this definition">#</a></dt>
 <dd><p>Validate provided inputs against declared input_params.</p>
@@ -869,8 +893,7 @@ under a configurator’s <cite>outputs</cite>, for values consumed only via conf
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.forcing.base.ConfigOutputParam.apply">
 <span class="sig-name descname"><span class="pre">apply</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.base.ConfigOutputParam.apply" title="Link to this definition">#</a></dt>
-<dd><p>Apply the configuration change.</p>
-</dd></dl>
+<dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.forcing.base.ConfigOutputParam.inspect">
@@ -997,6 +1020,12 @@ dispatch generically instead of a hand-maintained if-ladder.</p>
 <span class="sig-name descname"><span class="pre">run_configurators</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.base.ForcingConfigRegistry.run_configurators" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.forcing.base.ForcingConfigRegistry.stale_outputs">
+<span class="sig-name descname"><span class="pre">stale_outputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">previous_config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">current_config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputdir</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.base.ForcingConfigRegistry.stale_outputs" title="Link to this definition">#</a></dt>
+<dd><p>Every active configurator’s stale_outputs().</p>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py class">
@@ -1036,12 +1065,8 @@ dispatch generically instead of a hand-maintained if-ladder.</p>
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.forcing.base.</span></span><span class="sig-name descname"><span class="pre">OutputParam</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">comment</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.base.OutputParam" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#CrocoDash.forcing.base.Param" title="CrocoDash.forcing.base.Param"><code class="xref py py-class docutils literal notranslate"><span class="pre">Param</span></code></a></p>
 <p>Base class for a single configuration parameter applied to a CESM/MOM6 case.</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="CrocoDash.forcing.base.OutputParam.apply">
-<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">apply</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.base.OutputParam.apply" title="Link to this definition">#</a></dt>
-<dd><p>Apply the configuration change.</p>
-</dd></dl>
-
+<p>Subclasses apply themselves (<code class="docutils literal notranslate"><span class="pre">apply()</span></code>), except UserNLConfigParam, which
+BaseConfigurator.configure() writes through user_nl_blocks.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.forcing.base.OutputParam.inspect">
 <em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">inspect</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">caseroot</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.base.OutputParam.inspect" title="Link to this definition">#</a></dt>
@@ -1085,17 +1110,18 @@ configurator’s own business logic.</p>
 <dt class="sig sig-object py" id="CrocoDash.forcing.base.UserNLConfigParam">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.forcing.base.</span></span><span class="sig-name descname"><span class="pre">UserNLConfigParam</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user_nl_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'mom'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">comment</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.base.UserNLConfigParam" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#CrocoDash.forcing.base.OutputParam" title="CrocoDash.forcing.base.OutputParam"><code class="xref py py-class docutils literal notranslate"><span class="pre">OutputParam</span></code></a></p>
-<p>Parameter written to a <cite>user_nl_&lt;component&gt;</cite> file (default: user_nl_mom).</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="CrocoDash.forcing.base.UserNLConfigParam.apply">
-<span class="sig-name descname"><span class="pre">apply</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">log_title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.base.UserNLConfigParam.apply" title="Link to this definition">#</a></dt>
-<dd><p>Apply the configuration change.</p>
-</dd></dl>
-
+<p>Parameter written to a <cite>user_nl_&lt;component&gt;</cite> file (default: user_nl_mom),
+inside its configurator’s CrocoDash block (see BaseConfigurator.configure).</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.forcing.base.UserNLConfigParam.inspect">
 <span class="sig-name descname"><span class="pre">inspect</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">caseroot</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.base.UserNLConfigParam.inspect" title="Link to this definition">#</a></dt>
 <dd><p>Inspect the current value of this parameter in the case located at caseroot.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.forcing.base.UserNLConfigParam.pair">
+<span class="sig-name descname"><span class="pre">pair</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.base.UserNLConfigParam.pair" title="Link to this definition">#</a></dt>
+<dd><p>The (name, value) this parameter writes.</p>
 </dd></dl>
 
 </dd></dl>
@@ -1131,8 +1157,7 @@ the raw/regridded/output directories for this case.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.forcing.base.XMLConfigParam.apply">
 <span class="sig-name descname"><span class="pre">apply</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.base.XMLConfigParam.apply" title="Link to this definition">#</a></dt>
-<dd><p>Apply the configuration change.</p>
-</dd></dl>
+<dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.forcing.base.XMLConfigParam.inspect">
@@ -1747,6 +1772,25 @@ utilities as the regrid step.</p>
 <dd></dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.forcing.mom6.ConditionsConfigurator.stale_outputs">
+<span class="sig-name descname"><span class="pre">stale_outputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">previous_config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">current_config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputdir</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.mom6.ConditionsConfigurator.stale_outputs" title="Link to this definition">#</a></dt>
+<dd><p>process_ic/process_bc skip every file they find already written –
+that is what makes resuming a crashed run cheap – and nothing in the
+file names ties the files to the configuration. So once what they are
+made from changed, or there is no record of it, these go:</p>
+<ul class="simple">
+<li><p>in &lt;inputdir&gt;/ocn, the IC (init_*.nc, init_*_filled.nc), the merged
+OBCs (forcing_obc_segment_NNN.nc) and the BGC per-tracer OBCs
+(&lt;tracer&gt;_obc_segment.nc);</p></li>
+<li><p>extract_forcings/raw_data and regridded_data, which only these two
+steps use: raw_data/ic_unprocessed.nc has no date in its name, no
+chunk names the product or its arguments, the regridded chunks are
+named by segment number rather than boundary, and chunks of another
+date range overlap the new ones, which the OBC coverage check rejects.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.forcing.mom6.ConditionsConfigurator.validate_args">
 <span class="sig-name descname"><span class="pre">validate_args</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.mom6.ConditionsConfigurator.validate_args" title="Link to this definition">#</a></dt>
 <dd><p>Validate provided inputs against declared input_params.</p>
@@ -1965,6 +2009,67 @@ executing any downloads or regridding.</p></li>
 </dd></dl>
 
 </section>
+<section id="module-CrocoDash.forcing.user_nl_blocks">
+<span id="crocodash-forcing-user-nl-blocks-module"></span><h2>CrocoDash.forcing.user_nl_blocks module<a class="headerlink" href="#module-CrocoDash.forcing.user_nl_blocks" title="Link to this heading">#</a></h2>
+<p>CrocoDash-managed blocks in a case’s <code class="docutils literal notranslate"><span class="pre">user_nl_*</span></code> files.</p>
+<p><code class="docutils literal notranslate"><span class="pre">Case.configure_forcings()</span></code> may be called again on the same case (a notebook
+cell rerun, or a new date range), so the user_nl entries it writes go inside
+marked blocks, one per configurator and file:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>! &gt;&gt;&gt; CrocoDash configure_forcings: conditions [sha:1a2b3c4d] (rewritten ...)
+...
+! &lt;&lt;&lt; CrocoDash configure_forcings: conditions
+</pre></div>
+</div>
+<p>Every call first removes all such blocks (<code class="docutils literal notranslate"><span class="pre">strip</span></code>), then writes its own
+(<code class="docutils literal notranslate"><span class="pre">write</span></code>), so the files end up as if only the latest call had happened.
+Lines outside the blocks are left alone: what case creation wrote (INPUTDIR,
+the WW3 time steps, CICE’s ndtd) and whatever the user added.</p>
+<p>A variable the user sets outside the blocks takes precedence: <code class="docutils literal notranslate"><span class="pre">write</span></code> leaves
+it out of CrocoDash’s block. Otherwise user_nl_mom would list it twice, which
+stops the MOM6 build, and CICE, WW3 and CDEPS would take whichever line comes
+last.</p>
+<p>The marker lines are <code class="docutils literal notranslate"><span class="pre">!</span></code> comments, which MOM_interface’s user_nl parser,
+CIME’s namelist parser and CDEPS’s stream-mod parser all skip.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.forcing.user_nl_blocks.report_edits">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.forcing.user_nl_blocks.</span></span><span class="sig-name descname"><span class="pre">report_edits</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">caseroot</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">edited</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.user_nl_blocks.report_edits" title="Link to this definition">#</a></dt>
+<dd><p>Warn about the hand edits <code class="docutils literal notranslate"><span class="pre">strip</span></code> found, once the blocks have been
+rewritten: the lines each edited block lost, and those it got back.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.forcing.user_nl_blocks.restore">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.forcing.user_nl_blocks.</span></span><span class="sig-name descname"><span class="pre">restore</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">caseroot</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">contents</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.user_nl_blocks.restore" title="Link to this definition">#</a></dt>
+<dd><p>Put the user_nl files back as <code class="docutils literal notranslate"><span class="pre">snapshot</span></code> found them, so that a
+configure_forcings() call that fails leaves them as they were.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.forcing.user_nl_blocks.snapshot">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.forcing.user_nl_blocks.</span></span><span class="sig-name descname"><span class="pre">snapshot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">caseroot</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.user_nl_blocks.snapshot" title="Link to this definition">#</a></dt>
+<dd><p>The contents of every user_nl file in <code class="docutils literal notranslate"><span class="pre">caseroot</span></code>, for <code class="docutils literal notranslate"><span class="pre">restore</span></code>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.forcing.user_nl_blocks.strip">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.forcing.user_nl_blocks.</span></span><span class="sig-name descname"><span class="pre">strip</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">caseroot</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.user_nl_blocks.strip" title="Link to this definition">#</a></dt>
+<dd><p>Remove every CrocoDash block from the user_nl files in <code class="docutils literal notranslate"><span class="pre">caseroot</span></code>.</p>
+<p>Returns <code class="docutils literal notranslate"><span class="pre">[(file</span> <span class="pre">name,</span> <span class="pre">owner,</span> <span class="pre">body</span> <span class="pre">lines)]</span></code> for the blocks whose contents
+differ from what CrocoDash wrote, i.e. that were edited by hand, so that
+<code class="docutils literal notranslate"><span class="pre">report_edits</span></code> can say what was replaced.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.forcing.user_nl_blocks.write">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.forcing.user_nl_blocks.</span></span><span class="sig-name descname"><span class="pre">write</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">owner</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">groups</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.user_nl_blocks.write" title="Link to this definition">#</a></dt>
+<dd><p>Write <code class="docutils literal notranslate"><span class="pre">owner</span></code>’s block into user_nl_&lt;model&gt; (each instance’s file).</p>
+<p><code class="docutils literal notranslate"><span class="pre">groups</span></code> is <code class="docutils literal notranslate"><span class="pre">[(comment</span> <span class="pre">or</span> <span class="pre">None,</span> <span class="pre">[(var,</span> <span class="pre">val),</span> <span class="pre">...]),</span> <span class="pre">...]</span></code>; the block
+holds them as consecutive append_user_nl calls would write them, and the
+log shows them the same way. Variables the file already sets outside the
+blocks are left out (see the module docstring).</p>
+</dd></dl>
+
+</section>
 <section id="module-CrocoDash.forcing.utils">
 <span id="crocodash-forcing-utils-module"></span><h2>CrocoDash.forcing.utils module<a class="headerlink" href="#module-CrocoDash.forcing.utils" title="Link to this heading">#</a></h2>
 <dl class="py function">
@@ -2140,6 +2245,16 @@ in w3iobcmd.F90 sets FLBPI=.FALSE. for the rest of the run).</p>
 <dt class="sig sig-object py" id="CrocoDash.forcing.ww3.WW3Configurator.required_for_compsets">
 <span class="sig-name descname"><span class="pre">required_for_compsets</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['WW3']</span></em><a class="headerlink" href="#CrocoDash.forcing.ww3.WW3Configurator.required_for_compsets" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="CrocoDash.forcing.ww3.WW3Configurator.stale_outputs">
+<span class="sig-name descname"><span class="pre">stale_outputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">previous_config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">current_config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputdir</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.ww3.WW3Configurator.stale_outputs" title="Link to this definition">#</a></dt>
+<dd><p>The spectra in &lt;inputdir&gt;/wav are rewritten on every process() run,
+but from extract_forcings/ww3, whose raw, regridded and merged files are
+skipped when they exist – and only the raw and regridded names carry a
+date. So that staging directory goes once this configurator’s inputs or
+the conditions dates it reads have changed, or there is no record.</p>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.forcing.ww3.WW3Configurator.validate_args">
@@ -2381,6 +2496,7 @@ needs to import it by name.</p>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.BaseConfigurator.serialize"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.serialize()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.BaseConfigurator.set_input_param"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.set_input_param()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.BaseConfigurator.set_output_param"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.set_output_param()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.BaseConfigurator.stale_outputs"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.stale_outputs()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.BaseConfigurator.validate_args"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.validate_args()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.BaseConfigurator.validate_compset_compatibility"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.validate_compset_compatibility()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.BaseConfigurator.validate_output_filepaths"><code class="docutils literal notranslate"><span class="pre">BaseConfigurator.validate_output_filepaths()</span></code></a></li>
@@ -2410,6 +2526,7 @@ needs to import it by name.</p>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.ForcingConfigRegistry.resolve_process_targets"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.resolve_process_targets()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.ForcingConfigRegistry.return_missing_inputs"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.return_missing_inputs()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.ForcingConfigRegistry.run_configurators"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.run_configurators()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.ForcingConfigRegistry.stale_outputs"><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.stale_outputs()</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.InputFileParam"><code class="docutils literal notranslate"><span class="pre">InputFileParam</span></code></a><ul class="nav section-nav flex-column">
@@ -2422,7 +2539,6 @@ needs to import it by name.</p>
 </ul>
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.OutputParam"><code class="docutils literal notranslate"><span class="pre">OutputParam</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.OutputParam.apply"><code class="docutils literal notranslate"><span class="pre">OutputParam.apply()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.OutputParam.inspect"><code class="docutils literal notranslate"><span class="pre">OutputParam.inspect()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.OutputParam.set_item"><code class="docutils literal notranslate"><span class="pre">OutputParam.set_item()</span></code></a></li>
 </ul>
@@ -2433,8 +2549,8 @@ needs to import it by name.</p>
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.UndeclaredParamError"><code class="docutils literal notranslate"><span class="pre">UndeclaredParamError</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.UserNLConfigParam"><code class="docutils literal notranslate"><span class="pre">UserNLConfigParam</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.UserNLConfigParam.apply"><code class="docutils literal notranslate"><span class="pre">UserNLConfigParam.apply()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.UserNLConfigParam.inspect"><code class="docutils literal notranslate"><span class="pre">UserNLConfigParam.inspect()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.UserNLConfigParam.pair"><code class="docutils literal notranslate"><span class="pre">UserNLConfigParam.pair()</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.WorkflowContext"><code class="docutils literal notranslate"><span class="pre">WorkflowContext</span></code></a><ul class="nav section-nav flex-column">
@@ -2556,6 +2672,7 @@ needs to import it by name.</p>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.mom6.ConditionsConfigurator.process_components"><code class="docutils literal notranslate"><span class="pre">ConditionsConfigurator.process_components</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.mom6.ConditionsConfigurator.process_ic"><code class="docutils literal notranslate"><span class="pre">ConditionsConfigurator.process_ic()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.mom6.ConditionsConfigurator.required_for_compsets"><code class="docutils literal notranslate"><span class="pre">ConditionsConfigurator.required_for_compsets</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.mom6.ConditionsConfigurator.stale_outputs"><code class="docutils literal notranslate"><span class="pre">ConditionsConfigurator.stale_outputs()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.mom6.ConditionsConfigurator.validate_args"><code class="docutils literal notranslate"><span class="pre">ConditionsConfigurator.validate_args()</span></code></a></li>
 </ul>
 </li>
@@ -2597,6 +2714,14 @@ needs to import it by name.</p>
 </li>
 </ul>
 </li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.forcing.user_nl_blocks">CrocoDash.forcing.user_nl_blocks module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.user_nl_blocks.report_edits"><code class="docutils literal notranslate"><span class="pre">report_edits()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.user_nl_blocks.restore"><code class="docutils literal notranslate"><span class="pre">restore()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.user_nl_blocks.snapshot"><code class="docutils literal notranslate"><span class="pre">snapshot()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.user_nl_blocks.strip"><code class="docutils literal notranslate"><span class="pre">strip()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.user_nl_blocks.write"><code class="docutils literal notranslate"><span class="pre">write()</span></code></a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.forcing.utils">CrocoDash.forcing.utils module</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.utils.check_date_continuity"><code class="docutils literal notranslate"><span class="pre">check_date_continuity()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.utils.fetch_raw_chunk"><code class="docutils literal notranslate"><span class="pre">fetch_raw_chunk()</span></code></a></li>
@@ -2617,6 +2742,7 @@ needs to import it by name.</p>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.ww3.WW3Configurator.process"><code class="docutils literal notranslate"><span class="pre">WW3Configurator.process()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.ww3.WW3Configurator.process_components"><code class="docutils literal notranslate"><span class="pre">WW3Configurator.process_components</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.ww3.WW3Configurator.required_for_compsets"><code class="docutils literal notranslate"><span class="pre">WW3Configurator.required_for_compsets</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.ww3.WW3Configurator.stale_outputs"><code class="docutils literal notranslate"><span class="pre">WW3Configurator.stale_outputs()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.ww3.WW3Configurator.validate_args"><code class="docutils literal notranslate"><span class="pre">WW3Configurator.validate_args()</span></code></a></li>
 </ul>
 </li>
