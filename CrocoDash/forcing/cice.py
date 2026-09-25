@@ -247,6 +247,17 @@ class CICEConfigurator(BaseConfigurator):
         UserNLConfigParam("restart_lvl", user_nl_name="cice"),
         UserNLConfigParam("restart_pond_sealvl", user_nl_name="cice"),
         UserNLConfigParam("restart_snow", user_nl_name="cice"),
+        UserNLConfigParam("histfreq", user_nl_name="cice"),
+        UserNLConfigParam("f_afsd", user_nl_name="cice"),
+        UserNLConfigParam("f_afsdn", user_nl_name="cice"),
+        UserNLConfigParam("f_dafsd_latg", user_nl_name="cice"),
+        UserNLConfigParam("f_dafsd_latm", user_nl_name="cice"),
+        UserNLConfigParam("f_dafsd_newi", user_nl_name="cice"),
+        UserNLConfigParam("f_dafsd_wave", user_nl_name="cice"),
+        UserNLConfigParam("f_dafsd_weld", user_nl_name="cice"),
+        UserNLConfigParam("f_diam_ww", user_nl_name="cice"),
+        UserNLConfigParam("f_fsdperim", user_nl_name="cice"),
+        UserNLConfigParam("f_fsdrad", user_nl_name="cice"),
     ]
 
     def __init__(
