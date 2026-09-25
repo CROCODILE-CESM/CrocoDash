@@ -23,6 +23,9 @@ from CrocoDash.forcing.driver import run_workflow
 
 from CrocoDash import case_state
 from CrocoDash.case_dirs import CaseDirs
+from CrocoDash.logging import quiet_visualcasegen_info
+
+quiet_visualcasegen_info()
 
 # Seconds in each NCPL_BASE_PERIOD; year/decade assume a NO_LEAP calendar.
 _NCPL_BASE_SECONDS = {
