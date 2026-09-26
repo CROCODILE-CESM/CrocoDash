@@ -291,10 +291,16 @@ class REFERENCE_ICE(CICEForcingProduct):
         # by half a cell as a placeholder U-point location.
         ds["ulon"] = (("nj", "ni"), tlon + resolution_deg / 2)
         ds["ulat"] = (("nj", "ni"), tlat + resolution_deg / 2)
+        # This mesh is a plain regular lon/lat grid (np.meshgrid above), so its
+        # local x/y axes are already aligned with true east/north everywhere --
+        # a real, not placeholder, ANGLE of 0 (see forcing/cice.py's
+        # _regrid_cice_full_grid, which requires this field to rotate uvel/vvel
+        # and fails loudly without it).
+        ds["angle"] = (("nj", "ni"), np.zeros_like(tlon))
 
         if variables:
             keep = [v for v in variables if v in ds.data_vars]
-            ds = ds[keep + ["tlon", "tlat", "ulon", "ulat"]]
+            ds = ds[keep + ["tlon", "tlat", "ulon", "ulat", "angle"]]
 
         # No real time evolution to source, and (same convention
         # CICE_RESTART.get_cice_restart_subset uses) a CICE restart/initial-
