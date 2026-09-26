@@ -1768,8 +1768,8 @@ xesmf conservative regridding.</p>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>True if Cressman / stats-based masking is recommended (ratio &gt;= 12x),
-False otherwise.</p>
+<dd class="field-even"><p>True if Cressman / stats-based masking is recommended (ratio &gt;= 12x
+and the clipped source dataset has at most 1e6 points), False otherwise.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>bool</p>
@@ -1790,7 +1790,7 @@ is computed. Source ocean points within <code class="docutils literal notranslat
 Only source points with positive depth (ocean) contribute, so depth
 estimates are never contaminated by land elevations.</p>
 <p>Weights are computed by <code class="xref py py-func docutils literal notranslate"><span class="pre">compute_cressman_weights()</span></code>,
-saved to an ESMF-compatible netCDF, and applied through <code class="docutils literal notranslate"><span class="pre">xe.Regridder</span></code> —
+optionally saved to an ESMF-compatible netCDF, and applied through <code class="docutils literal notranslate"><span class="pre">xe.Regridder</span></code> —
 all orchestrated by <code class="xref py py-func docutils literal notranslate"><span class="pre">regrid_dataset_via_cressman()</span></code>.
 Cells that receive no source coverage are filled by iterative neighbour
 averaging (up to 100 passes).</p>
@@ -1799,8 +1799,8 @@ averaging (up to 100 passes).</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>smooth_scl</strong> (<em>float</em>) – Smoothing scale multiplier for the Cressman radius. Default <code class="docutils literal notranslate"><span class="pre">2.0</span></code>.</p></li>
 <li><p><strong>cressman_exp</strong> (<em>float</em>) – Exponent for the Cressman weight function. Default <code class="docutils literal notranslate"><span class="pre">2.0</span></code>.</p></li>
-<li><p><strong>weights_path</strong> (<em>str</em><em> or </em><em>Path</em><em> or </em><em>None</em>) – Where to save the ESMF weights netCDF. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, a file named
-<code class="docutils literal notranslate"><span class="pre">cressman_weights.nc</span></code> is written next to the bathymetry file.</p></li>
+<li><p><strong>weights_path</strong> (<em>str</em><em> or </em><em>Path</em><em> or </em><em>None</em>) – Where to save the ESMF weights netCDF. If <code class="docutils literal notranslate"><span class="pre">None</span></code> (default), the
+weights are kept in memory and nothing is written.</p></li>
 </ul>
 </dd>
 </dl>

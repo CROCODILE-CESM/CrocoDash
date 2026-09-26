@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Welcome to the CrocoDash Documentation! &#8212; CrocoDash  documentation</title>
+    <title>CrocoDash &#8212; CrocoDash  documentation</title>
   
   
   
@@ -333,7 +333,7 @@ document.write(`
               
 
 <div id="jb-print-docs-body" class="onlyprint">
-    <h1>Welcome to the CrocoDash Documentation!</h1>
+    <h1>CrocoDash</h1>
     <!-- Table of contents -->
     <div id="print-main-content">
         <div id="jb-print-toc">
@@ -344,6 +344,7 @@ document.write(`
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#description">Description</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#quick-install">Quick install</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#get-started">Get started</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#license">License</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#citation">Citation</a></li>
@@ -358,11 +359,12 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="welcome-to-the-crocodash-documentation">
-<h1>Welcome to the CrocoDash Documentation!<a class="headerlink" href="#welcome-to-the-crocodash-documentation" title="Link to this heading">#</a></h1>
+  <section id="crocodash">
+<h1>CrocoDash<a class="headerlink" href="#crocodash" title="Link to this heading">#</a></h1>
 <p>CrocoDash is a Python package designed to setup regional Modular Ocean Model 6 (MOM6) cases within the Community Earth System Model (CESM).
 CrocoDash takes advantage and integrates several MOM6 and CESM tools into an unified workflow for regional MOM6 case configuration.
 CrocoDash is part of the CROCODILE project. Please see the <a class="reference external" href="https://github.com/CROCODILE-CESM">project description</a> for scientific motivation.</p>
+<p>Full documentation: <a class="reference external" href="https://crocodile-cesm.github.io/CrocoDash/">https://crocodile-cesm.github.io/CrocoDash/</a></p>
 <section id="description">
 <h2>Description<a class="headerlink" href="#description" title="Link to this heading">#</a></h2>
 <p>CrocoDash brings regional MOM6 inside CESM. It’s a lightweight package that
@@ -376,14 +378,35 @@ orchestrates four steps, one module per step:</p>
 <p>CrocoDash also ships helpers like an interactive <code class="docutils literal notranslate"><span class="pre">TopoEditor</span></code> for bathymetry
 editing and a <code class="docutils literal notranslate"><span class="pre">raw_data_access</span></code> registry for downloading public datasets.</p>
 </section>
+<section id="quick-install">
+<h2>Quick install<a class="headerlink" href="#quick-install" title="Link to this heading">#</a></h2>
+<ol class="arabic simple">
+<li><p>Clone <em>with</em> the submodules:
+<code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">clone</span> <span class="pre">--recurse-submodules</span> <span class="pre">https://github.com/CROCODILE-CESM/CrocoDash.git</span> <span class="pre">-b</span> <span class="pre">v1.0.0</span></code></p></li>
+<li><p>Create the environment (this fails if the submodules aren’t cloned):
+<code class="docutils literal notranslate"><span class="pre">conda</span> <span class="pre">env</span> <span class="pre">create</span> <span class="pre">-f</span> <span class="pre">environment.yml</span> <span class="pre">--yes</span></code></p></li>
+<li><p>Activate the environment:
+<code class="docutils literal notranslate"><span class="pre">conda</span> <span class="pre">activate</span> <span class="pre">CrocoDash</span></code></p></li>
+<li><p>Test the installation:
+<code class="docutils literal notranslate"><span class="pre">pytest</span> <span class="pre">tests/test_installation.py</span></code></p></li>
+</ol>
+<p>CrocoDash also needs a CESM install. See the <a class="reference external" href="https://crocodile-cesm.github.io/CrocoDash/latest/installation.html">installation</a> page for the full steps.</p>
+</section>
 <section id="get-started">
 <h2>Get started<a class="headerlink" href="#get-started" title="Link to this heading">#</a></h2>
 <ol class="arabic simple">
-<li><p>Install — see the <a class="reference internal" href="installation.html"><span class="std std-doc">installation</span></a> page.</p></li>
-<li><p>Walk through the <a class="reference external" href="https://crocodile-cesm.github.io/CrocoGallery/latest/crocodash/tutorial">tutorials</a> for an easy introduction.</p></li>
+<li><p>Walk through the <a class="reference external" href="https://crocodile-cesm.github.io/CrocoGallery/latest/crocodash/tutorial-ocn">tutorials</a> for an easy introduction.</p></li>
 <li><p>Browse the <a class="reference external" href="https://crocodile-cesm.github.io/CrocoGallery/latest/">gallery of demos</a> for more use cases.</p></li>
-<li><p>Read the <a class="reference internal" href="for_users/index.html"><span class="std std-doc">user guide</span></a> for step-by-step docs.</p></li>
+<li><p>Read the <a class="reference external" href="https://crocodile-cesm.github.io/CrocoDash/latest/for_users/index.html">user guide</a> for step-by-step docs.</p></li>
 </ol>
+</section>
+<section id="license">
+<h2>License<a class="headerlink" href="#license" title="Link to this heading">#</a></h2>
+<p>CrocoDash is released under the <a class="reference external" href="https://github.com/CROCODILE-CESM/CrocoDash/blob/main/LICENSE.md">Apache 2.0 License</a>.</p>
+</section>
+<section id="citation">
+<h2>Citation<a class="headerlink" href="#citation" title="Link to this heading">#</a></h2>
+<p>If you use CrocoDash in your research, please cite it! A <code class="docutils literal notranslate"><span class="pre">CITATION.cff</span></code> file is included in the repository. You can also cite it directly from GitHub using the “Cite this repository” button on the <a class="reference external" href="https://github.com/CROCODILE-CESM/CrocoDash">CrocoDash GitHub page</a>.</p>
 <div class="toctree-wrapper compound">
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
@@ -395,14 +418,6 @@ editing and a <code class="docutils literal notranslate"><span class="pre">raw_d
 <li class="toctree-l1"><a class="reference external" href="https://github.com/CROCODILE-CESM/CrocoDash/discussions/84">Common Errors</a></li>
 </ul>
 </div>
-</section>
-<section id="license">
-<h2>License<a class="headerlink" href="#license" title="Link to this heading">#</a></h2>
-<p>CrocoDash is released under the <a class="reference external" href="https://github.com/CROCODILE-CESM/CrocoDash/blob/main/LICENSE.md">Apache 2.0 License</a>.</p>
-</section>
-<section id="citation">
-<h2>Citation<a class="headerlink" href="#citation" title="Link to this heading">#</a></h2>
-<p>If you use CrocoDash in your research, please cite it! A <code class="docutils literal notranslate"><span class="pre">CITATION.cff</span></code> file is included in the repository. You can also cite it directly from GitHub using the “Cite this repository” button on the <a class="reference external" href="https://github.com/CROCODILE-CESM/CrocoDash">CrocoDash GitHub page</a>.</p>
 </section>
 </section>
 
@@ -443,6 +458,7 @@ editing and a <code class="docutils literal notranslate"><span class="pre">raw_d
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#description">Description</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#quick-install">Quick install</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#get-started">Get started</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#license">License</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#citation">Citation</a></li>
