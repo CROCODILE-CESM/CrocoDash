@@ -46,9 +46,10 @@ instead of hardcoding a single product.
 Every variable in the source restart passes through unfiltered (T-point and
 U-point alike) -- a superset of the ``aicen``/``vicen``/``vsnon``/``trcrn``
 (category-indexed, ncat=5) that ``ice_restoring.F90``'s restoring arrays
-actually read. ``uvel``/``vvel`` (B-grid, at the T-cell's NE corner) are
-restored too: the NUOPC driver calls ``ice_restoring_interior('velocity')``
-(CICE_RunMod.F90), and ``configure`` lists ``velocity`` in ``restore_flds``.
+actually read. ``configure`` sets ``restore_flds = 'state'``, which restores
+exactly those four; ``uvel``/``vvel`` are not restored, since the NUOPC
+driver's ``ice_restoring_interior('velocity')`` call (CICE_RunMod.F90) only
+acts when ``restore_flds`` lists ``velocity``.
 """
 
 import math
