@@ -141,7 +141,7 @@ def test_restore_params_survive_a_config_json_round_trip(tmp_path, restoring):
     assert rebuilt.serialize() == data
     if restoring:
         assert rebuilt.get_output_param("restore_ice") == ".true."
-        assert rebuilt.get_output_param("restore_flds").startswith("'aicen'")
+        assert rebuilt.get_output_param("restore_flds") == "'state'"
 
 
 def test_configure_turns_restore_ice_on_with_a_product(tmp_path):
