@@ -1,6 +1,7 @@
 from CrocoDash.forcing.base import *
 
 from types import SimpleNamespace
+from ProConPy.config_var import cvars
 from unittest.mock import patch
 
 import pytest
@@ -198,3 +199,51 @@ def test_depends_on_outputs_targets_exist():
                 f"{dep_name!r}.{sorted(missing)}, but {dep_cls.__name__} has no "
                 f"such output_params (has: {sorted(declared_outputs)})"
             )
+
+
+class DummyUserNL(BaseConfigurator):
+    """Not @register'd, for the same reason as DummyXML."""
+
+    name = "dummyusernl"
+    input_params = [InputValueParam("dummy", comment="Boop Boop")]
+    output_params = [
+        UserNLConfigParam("ice_a", user_nl_name="cice", comment="first"),
+        UserNLConfigParam("ocn_a", user_nl_name="mom", comment="ocean"),
+        UserNLConfigParam("ice_b", user_nl_name="cice", comment="second"),
+        UserNLConfigParam("ice_c", user_nl_name="cice", comment="third"),
+    ]
+
+    def __init__(self, dummy):
+        super().__init__(dummy=dummy)
+
+    def configure(self):
+        for i, p in enumerate(self.output_params):
+            self.set_output_param(p.name, i)
+        super().configure()
+
+
+def test_user_nl_block_per_file(tmp_path, monkeypatch, capsys):
+    """A configurator's parameters for one file go into one CrocoDash block,
+    each with its own comment, and the "Adding parameter changes to
+    user_nl_<x>" title is printed once per file."""
+    monkeypatch.setitem(cvars, "CASEROOT", SimpleNamespace(value=tmp_path))
+    monkeypatch.setitem(cvars, "NINST", SimpleNamespace(value=1))
+    DummyUserNL("x").configure()
+
+    cice = (tmp_path / "user_nl_cice").read_text().splitlines()
+    assert sum(line.startswith("! >>> CrocoDash") for line in cice) == 1
+    assert [line for line in cice if line and not line.startswith("! ")] == [
+        "ice_a = 0",
+        "ice_b = 2",
+        "ice_c = 3",
+    ]
+    assert [line for line in cice if line in ("! first", "! second", "! third")] == [
+        "! first",
+        "! second",
+        "! third",
+    ]
+    assert "ocn_a = 1" in (tmp_path / "user_nl_mom").read_text()
+
+    out = capsys.readouterr().out
+    assert out.count("Adding parameter changes to user_nl_cice") == 1
+    assert out.count("Adding parameter changes to user_nl_mom") == 1

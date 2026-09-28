@@ -14,7 +14,7 @@ enumerated, and CDEPS opens each one to build its time axis.
 """
 
 from CrocoDash.forcing.base import *
-from CrocoDash.forcing import cdeps_streams
+from CrocoDash.forcing import cdeps_streams, user_nl_blocks
 from CrocoDash.logging import setup_logger
 
 logger = setup_logger(__name__)
@@ -130,7 +130,7 @@ class StreamYearConfigurator(BaseConfigurator):
     def _apply(self, component, plan):
         """Write one component's mods to user_nl_<component>_streams.
 
-        `append_user_nl` does no validation on its target, so passing
+        `user_nl_blocks.write` does no validation on its target, so passing
         "datm_streams" writes user_nl_datm_streams, and each pair is formatted
         as `name = value` -- exactly the `<stream>:<key> = <value>` syntax
         CDEPS's stream parser expects.
@@ -141,15 +141,11 @@ class StreamYearConfigurator(BaseConfigurator):
                 pairs.append((f"{name}:{key}", mods[key]))
             if "datafiles" in mods:
                 pairs.append((f"{name}:datafiles", ",".join(mods["datafiles"])))
-        append_user_nl(
-            f"{component}_streams",
-            pairs,
-            do_exec=True,
-            comment=(
-                f"Align {plan['mode']} streams with the run dates "
-                "(CrocoDash: CDEPS defaults to year_align=1)"
-            ),
+        comment = (
+            f"Align {plan['mode']} streams with the run dates "
+            "(CrocoDash: CDEPS defaults to year_align=1)"
         )
+        user_nl_blocks.write(self.name, f"{component}_streams", [(comment, pairs)])
 
     def configure(self):
         start_year = int(self.get_input_param("start_date")[:4])

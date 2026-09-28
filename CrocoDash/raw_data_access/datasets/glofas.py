@@ -25,11 +25,12 @@ class GLOFAS(DatedBaseProduct):
 
         Parameters
         ----------
-
-        date : str, optional
-            What dates to download.
+        dates : list of str
+            Two-element ``[start, end]`` range; every day in the range is requested.
         output_folder : str, optional
             Directory where downloaded files will be saved.
+        output_filename : str, optional
+            Filename to write inside ``output_folder``.
 
         """
         dataset = "cems-glofas-historical"
@@ -67,20 +68,13 @@ class GLOFAS(DatedBaseProduct):
         output_filename="processed_glofas.nc",
     ):
         """
-        Downloads chlor_a data from the CESM inputdata repository by generating a script users can run in their terminal.
+        Downloads pre-processed global GloFAS discharge data from the CESM
+        inputdata repository by generating a script users can run in their terminal.
+
         Parameters
         ----------
-
-        date : str, optional
-            Currently unused; placeholder for future date-based filtering.
-        lat_min : float, optional
-            Currently unused; placeholder for future spatial filtering.
-        lat_max : float, optional
-            Currently unused; placeholder for future spatial filtering.
-        lon_min : float, optional
-            Currently unused; placeholder for future spatial filtering.
-        lon_max : float, optional
-            Currently unused; placeholder for future spatial filtering.
+        dates : str, optional
+            Currently unused; the published file is a fixed global dataset.
         output_folder : str, optional
             Directory where downloaded files will be saved.
         output_filename : str, optional

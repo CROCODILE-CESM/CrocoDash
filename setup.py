@@ -4,7 +4,7 @@ if __name__ == "__main__":
     setup(
         name="CrocoDash",
         packages=["CrocoDash"],
-        version="0.1",
+        version="1.0.0",
         package_dir={"CrocoDash": "CrocoDash"},
         entry_points={
             "console_scripts": [

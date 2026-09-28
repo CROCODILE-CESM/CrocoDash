@@ -9,6 +9,7 @@ import CrocoDash.forcing.obc as obc_module
 from CrocoDash.forcing.obc import (
     process_obc_conditions,
     _merge_boundary,
+    _regrid_boundary,
     _validate_coverage,
     _ocean_bbox_for_boundary,
 )
@@ -216,6 +217,141 @@ def test_merge_single_boundary(
     ds = xr.open_dataset(result)
     assert "time" in ds.dims
     ds.close()
+
+
+def test_merge_rejects_non_monotonic_time(
+    tmp_path, dummy_mom6_obc_data_factory, get_rect_grid
+):
+    """Chunks that do not line up on a common epoch must be caught at merge."""
+    grid = get_rect_grid
+    bounds = Grid.get_bounding_boxes(grid)
+    east = dummy_mom6_obc_data_factory(
+        bounds["ic"]["lat_min"],
+        bounds["ic"]["lat_max"],
+        bounds["ic"]["lon_min"],
+        bounds["ic"]["lon_max"],
+        "001",
+        3,
+    )
+    regridded_dir = tmp_path / "regridded"
+    regridded_dir.mkdir()
+    # Both chunks start at t=0 -- the shape a zero-based per-chunk axis makes.
+    for name in (
+        "forcing_obc_segment_001_2020-01-01_2020-01-03.nc",
+        "forcing_obc_segment_001_2020-01-04_2020-01-06.nc",
+    ):
+        east.to_netcdf(regridded_dir / name)
+    output_dir = tmp_path / "output"
+    output_dir.mkdir()
+
+    with pytest.raises(ValueError, match="not monotonically increasing"):
+        _merge_boundary("001", sorted(regridded_dir.glob("*.nc")), output_dir)
+
+
+def _noleap_chunk(path, days):
+    import cftime
+
+    time = [cftime.DatetimeNoLeap(2000, 1, d) for d in days]
+    xr.Dataset(
+        {"temp_segment_001": (("time", "nx_segment_001"), np.ones((len(days), 2)))},
+        coords={"time": time},
+    ).to_netcdf(path)
+
+
+def test_merge_accepts_a_noleap_time_axis(tmp_path):
+    """CESM output products run on a noleap calendar, which decodes to cftime
+    objects; the time-order check must not choke on them."""
+    regridded_dir = tmp_path / "regridded"
+    regridded_dir.mkdir()
+    _noleap_chunk(regridded_dir / "forcing_obc_segment_001_a.nc", [1, 2, 3])
+    _noleap_chunk(regridded_dir / "forcing_obc_segment_001_b.nc", [4, 5, 6])
+    output_dir = tmp_path / "output"
+    output_dir.mkdir()
+
+    result = _merge_boundary("001", sorted(regridded_dir.glob("*.nc")), output_dir)
+    with xr.open_dataset(result) as ds:
+        assert ds.sizes["time"] == 6
+
+
+def test_merge_rejects_a_non_monotonic_noleap_time_axis(tmp_path):
+    regridded_dir = tmp_path / "regridded"
+    regridded_dir.mkdir()
+    _noleap_chunk(regridded_dir / "forcing_obc_segment_001_a.nc", [1, 2, 3])
+    _noleap_chunk(regridded_dir / "forcing_obc_segment_001_b.nc", [1, 2, 3])
+    output_dir = tmp_path / "output"
+    output_dir.mkdir()
+
+    with pytest.raises(ValueError, match="not monotonically increasing"):
+        _merge_boundary("001", sorted(regridded_dir.glob("*.nc")), output_dir)
+
+
+# ---------------------------------------------------------------------------
+# Unit test: _regrid_boundary's num_workers > 1 branch
+# ---------------------------------------------------------------------------
+
+
+def _fake_regrid_chunk_fn(ds, hgrid, boundary, seg_id, outfolder, **_kwargs):
+    """Stand-in regrid_chunk_fn: writes the chunk straight through.
+
+    Must be a module-level function (not a local closure) so it can be
+    pickled to the ProcessPoolExecutor workers.
+    """
+    outfolder = Path(outfolder)
+    outfolder.mkdir(parents=True, exist_ok=True)
+    ds.to_netcdf(outfolder / f"forcing_obc_segment_{seg_id:03d}.nc")
+    return {}
+
+
+def test_regrid_boundary_uses_multiple_workers(tmp_path, get_rect_grid, monkeypatch):
+    """The num_workers > 1 branch (worker slicing + os.replace) is only taken
+    when available_cpus() > 1 and there's more than one regrid chunk. CI's
+    other coverage of _regrid_boundary is either @pytest.mark.slow or
+    monkeypatches _regrid_boundary away entirely, so this branch is never
+    exercised for real. available_cpus() is pinned here so the test doesn't
+    depend on how many cores the CI runner happens to have.
+
+    Using one raw file spanning the whole range (get_step_days=None) against
+    two narrower regrid chunks also exercises the get/regrid chunk-size
+    independence _files_overlapping_range restores -- with the old
+    containment-based filter this raw file would be dropped for every chunk
+    narrower than itself.
+    """
+    monkeypatch.setattr(obc_module, "available_cpus", lambda: 2)
+
+    grid = get_rect_grid
+    hgrid_path = tmp_path / "hgrid.nc"
+    grid.write_supergrid(hgrid_path)
+
+    raw_dir = tmp_path / "raw"
+    raw_dir.mkdir()
+    output_dir = tmp_path / "regridded"
+    output_dir.mkdir()
+
+    start_date, end_date = datetime(2020, 1, 1), datetime(2020, 1, 4)
+    times = pd.date_range("2020-01-01 12:00", periods=4, freq="D")
+    raw_ds = xr.Dataset({"var": ("time", np.arange(4))}, coords={"time": times})
+    raw_file = raw_dir / "east_unprocessed.2020-01-01_2020-01-04.nc"
+    raw_ds.to_netcdf(raw_file)
+
+    result = _regrid_boundary(
+        boundary="east",
+        seg_id=1,
+        raw_files=[raw_file],
+        start_date=start_date,
+        end_date=end_date,
+        regrid_step_days=2,
+        hgrid_path=str(hgrid_path),
+        output_folder=str(output_dir),
+        dataset_varnames={},
+        regrid_chunk_fn=_fake_regrid_chunk_fn,
+    )
+
+    assert sorted(Path(p).name for p in result) == [
+        "forcing_obc_segment_001_2020-01-01_2020-01-02.nc",
+        "forcing_obc_segment_001_2020-01-03_2020-01-04.nc",
+    ]
+    for p in result:
+        assert Path(p).exists()
 
 
 # ---------------------------------------------------------------------------

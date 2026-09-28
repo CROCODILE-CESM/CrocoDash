@@ -8,6 +8,27 @@ from CrocoDash.raw_data_access.registry import ProductRegistry
 
 logger = logging.setup_logger(__name__)
 
+
+def read_min_depth(bathymetry_path) -> float:
+    """The ``min_depth`` global attribute of a topog file.
+
+    Topog files written by mom6_forge always carry it. A hand-made file may not;
+    then 0.0 is assumed, so any cell shallower than MOM6's MINIMUM_DEPTH is
+    treated as wet, and a warning says so.
+    """
+    import xarray as xr
+
+    with xr.open_dataset(bathymetry_path) as ds:
+        if "min_depth" in ds.attrs:
+            return float(ds.attrs["min_depth"])
+    logger.warning(
+        "%s has no min_depth global attribute; assuming 0.0, so any cell "
+        "shallower than MOM6's MINIMUM_DEPTH is treated as wet.",
+        bathymetry_path,
+    )
+    return 0.0
+
+
 _NETCDF_MAGIC = (b"\x89HDF", b"CDF\x01", b"CDF\x02")
 
 
@@ -22,8 +43,8 @@ def parse_dataset_folder(
     folder : str or Path
         Path to the folder containing the dataset files.
     input_dataset_regex : str
-        Regular expression pattern to match dataset filenames.
-        Example: `"(north|east|south|west)_unprocessed\\.(\\d{8})_(\\d{8})\\.nc"`
+        Regular expression pattern to match dataset filenames, for example
+        ``(north|east|south|west)_unprocessed\\.(\\d{8})_(\\d{8})\\.nc``
     date_format : str
         Date format string used to parse dates in filenames (e.g., "%Y%m%d").
 
@@ -31,15 +52,19 @@ def parse_dataset_folder(
     -------
     dict
         Dictionary mapping boundaries to a list of tuples with:
-        - Start date (`datetime`)
-        - End date (`datetime`)
-        - Full file path (`Path`)
 
-        Example:
-        {
-            "north": [(datetime(2000, 1, 1), datetime(2000, 1, 2), Path("/path/to/north_20000101_20000102.nc"))],
-            "east": [(datetime(2000, 1, 3), datetime(2000, 1, 4), Path("/path/to/east_20000103_20000104.nc"))]
-        }
+        - Start date (``datetime``)
+        - End date (``datetime``)
+        - Full file path (``Path``)
+
+        For example::
+
+            {
+                "north": [(datetime(2000, 1, 1), datetime(2000, 1, 2),
+                           Path("/path/to/north_20000101_20000102.nc"))],
+                "east": [(datetime(2000, 1, 3), datetime(2000, 1, 4),
+                          Path("/path/to/east_20000103_20000104.nc"))],
+            }
 
     """
     # Dictionary to store boundary info

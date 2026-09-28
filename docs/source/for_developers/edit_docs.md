@@ -48,6 +48,7 @@ what CI runs, so its output is what will be compared against your commit:
 
 ```bash
 cd docs
+rm -rf source/api-docs
 sphinx-apidoc \
   -o source/api-docs \
   -H "CrocoDash API Docs" \
@@ -64,6 +65,10 @@ make html
   overwrites any hand-edited title).
 - `../CrocoDash/rm6` and `../CrocoDash/visualCaseGen` — exclude vendored
   submodules that ship their own documentation.
+- `rm -rf source/api-docs` first — `sphinx-apidoc` only writes the files it
+  generates, so an `.rst` left over from a module that has since been renamed or
+  removed survives a regeneration untouched. Wiping the directory is what makes
+  those orphans show up (as deletions) in the CI diff.
 
 **Why this is needed:** The API docs are auto-generated from your Python
 docstrings. When you add new modules, Sphinx needs to scan them and create

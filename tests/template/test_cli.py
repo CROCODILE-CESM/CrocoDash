@@ -30,16 +30,16 @@ def test_template_notebook_no_machine(tmp_path):
 
 def test_template_notebook_with_machine(tmp_path):
     output = tmp_path / "out.ipynb"
-    run_main(["template", "--output", str(output), "--machine", "derecho"])
+    run_main(["template", "--output", str(output), "--machine", "glade"])
     assert output.exists()
     nb = nbformat.read(output, as_version=4)
     code = "\n".join(c.source for c in nb.cells if c.cell_type == "code")
     assert "<GEBCO>" not in code, "Placeholders should be replaced with --machine"
     # Assert *a* known path was injected (load from source rather than hardcoding)
-    derecho_paths = load_paths("derecho")
+    glade_paths = load_paths("glade")
     assert any(
-        v in code for v in derecho_paths.values()
-    ), "Expected at least one derecho path value to appear in output"
+        v in code for v in glade_paths.values()
+    ), "Expected at least one glade path value to appear in output"
 
 
 # --- .py output ---
@@ -56,12 +56,12 @@ def test_template_python_no_machine(tmp_path):
 
 def test_template_python_with_machine(tmp_path):
     output = tmp_path / "out.py"
-    run_main(["template", "--output", str(output), "--machine", "derecho"])
+    run_main(["template", "--output", str(output), "--machine", "glade"])
     assert output.exists()
     text = output.read_text()
     assert "<GEBCO>" not in text
-    derecho_paths = load_paths("derecho")
-    assert any(v in text for v in derecho_paths.values())
+    glade_paths = load_paths("glade")
+    assert any(v in text for v in glade_paths.values())
     assert text.startswith("# %%"), "First cell must start with # %% marker"
     assert text.count("# %%") > 1, "Multiple cells should each have a # %% marker"
 
@@ -71,7 +71,7 @@ def test_template_python_is_valid_python(tmp_path):
     # which must be commented out, or the .py output fails to even parse.
     import py_compile
 
-    for extra_args in ([], ["--machine", "derecho"]):
+    for extra_args in ([], ["--machine", "glade"]):
         output = tmp_path / f"out_{len(extra_args)}.py"
         run_main(["template", "--output", str(output)] + extra_args)
         py_compile.compile(str(output), doraise=True)
@@ -83,7 +83,7 @@ def test_template_machine_leaves_non_path_keys_as_placeholders(tmp_path):
     # them is worse than leaving <KEY> since nothing then signals they still
     # need manual editing.
     output = tmp_path / "out.yaml"
-    run_main(["template", "--output", str(output), "--machine", "derecho"])
+    run_main(["template", "--output", str(output), "--machine", "glade"])
     text = output.read_text()
     assert "<CESM>" in text
     assert "<inputdir>" in text
@@ -111,7 +111,7 @@ def test_template_yaml_with_machine(tmp_path):
     import yaml
 
     output = tmp_path / "out.yaml"
-    run_main(["template", "--output", str(output), "--machine", "derecho"])
+    run_main(["template", "--output", str(output), "--machine", "glade"])
     assert output.exists()
     text = output.read_text()
     assert "<GEBCO>" not in text, "Dataset path placeholders should be replaced"
@@ -141,7 +141,7 @@ def test_template_pbs_no_machine(tmp_path):
 def test_template_pbs_with_machine(tmp_path):
     output = tmp_path / "out.pbs"
     run_main(
-        ["template", "--output", str(output), "--kind", "pbs", "--machine", "derecho"]
+        ["template", "--output", str(output), "--kind", "pbs", "--machine", "glade"]
     )
     assert output.exists()
     text = output.read_text()

@@ -3,6 +3,7 @@ Data Access Module -> CESM ocean output
 
 Two products, split because they have different variable/coordinate naming
 conventions (and so need different MOM6ForcingProduct metadata):
+
 - CESM_POP_OUTPUT: CESM-POP tseries output (CESM-HR FOSI, CESM2-LENS2)
 - CESM_MOM_OUTPUT: native MOM6 output (e.g. parent-run history/diag_table
   output for nesting a child domain)
@@ -617,7 +618,9 @@ def subset_dataset(
     grid_coords: dict | None = None,
 ) -> None:
     """
-    Subsets (and merges) the dataset based on the provided variable names and geographical bounds into the output path
+    Subsets (and merges) the dataset based on the provided variable names and
+    geographical bounds into the output path.
+
     Args:
         variable_info (dict): A dictionary with variable names as keys and their file paths as values.
         output_path (str | Path): The path where the subsetted dataset will be saved.

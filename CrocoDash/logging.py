@@ -37,3 +37,24 @@ def setup_logger(name):
         # Add the handler to the logger
         logger.addHandler(handler)
     return logger
+
+
+def quiet_visualcasegen_info():
+    """Hide visualCaseGen's INFO messages (stage changes, widget updates).
+
+    These narrate visualCaseGen's GUI wizard, which a CrocoDash user never
+    sees. visualCaseGen names its loggers with leading whitespace ("\tstage",
+    "  csp_solver") and nothing else does, so only those are raised to
+    WARNING: its warnings still show, and so does every other logger.
+
+    Meant to be called once, right after visualCaseGen is imported (all its
+    loggers exist by then). A logger whose level is already set is left
+    alone, and any level can still be changed afterwards.
+    """
+    for name, logger in list(logging.Logger.manager.loggerDict.items()):
+        if (
+            name[:1].isspace()
+            and isinstance(logger, logging.Logger)
+            and logger.level == logging.NOTSET
+        ):
+            logger.setLevel(logging.WARNING)

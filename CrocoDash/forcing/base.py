@@ -2,10 +2,8 @@ from pathlib import Path
 from typing import List, Dict
 from abc import ABC, abstractmethod
 from functools import cached_property
-from visualCaseGen.custom_widget_types.case_tools import (
-    xmlchange,
-    append_user_nl,
-)
+from visualCaseGen.custom_widget_types.case_tools import xmlchange
+from CrocoDash.forcing import user_nl_blocks
 from CrocoDash.logging import setup_logger
 import inspect
 from typing import Optional, Any
@@ -97,12 +95,14 @@ class WorkflowContext:
 
     @cached_property
     def ocn_topo(self):
-        import xarray as xr
         from CrocoDash.topo import Topo
+        from CrocoDash.forcing.utils import read_min_depth
 
-        topo_ds = xr.open_dataset(self.topo_path, decode_times=False)
         return Topo.from_topo_file(
-            self.grid, self.topo_path, min_depth=topo_ds.attrs["min_depth"], git=False
+            self.grid,
+            self.topo_path,
+            min_depth=read_min_depth(self.topo_path),
+            git=False,
         )
 
 
@@ -246,6 +246,17 @@ class ForcingConfigRegistry:
                 json.dump(general_config, f, indent=4)
         return general_config
 
+    def stale_outputs(self, previous_config, current_config, inputdir):
+        """Every active configurator's stale_outputs()."""
+        # Compare like with like: previous_config was read back from JSON.
+        current_config = json.loads(json.dumps(current_config))
+        stale = []
+        for configurator in self.active_configurators.values():
+            stale += configurator.stale_outputs(
+                previous_config, current_config, Path(inputdir)
+            )
+        return stale
+
     def get_active_configurators(self):
         return self.active_configurators.keys()
 
@@ -371,6 +382,9 @@ class InputFileParam(InputParam):
 class OutputParam(Param):
     """
     Base class for a single configuration parameter applied to a CESM/MOM6 case.
+
+    Subclasses apply themselves (``apply()``), except UserNLConfigParam, which
+    BaseConfigurator.configure() writes through user_nl_blocks.
     """
 
     def __init__(self, name: str, comment: Optional[str] = None, is_file: bool = False):
@@ -383,11 +397,6 @@ class OutputParam(Param):
         self.value = value
 
     @abstractmethod
-    def apply(self):
-        """Apply the configuration change."""
-        pass
-
-    @abstractmethod
     def inspect(cls, caseroot):
         """Inspect the current value of this parameter in the case located at caseroot."""
         pass
@@ -395,7 +404,8 @@ class OutputParam(Param):
 
 class UserNLConfigParam(OutputParam):
     """
-    Parameter written to a `user_nl_<component>` file (default: user_nl_mom).
+    Parameter written to a `user_nl_<component>` file (default: user_nl_mom),
+    inside its configurator's CrocoDash block (see BaseConfigurator.configure).
     """
 
     def __init__(
@@ -408,18 +418,11 @@ class UserNLConfigParam(OutputParam):
         super().__init__(name, comment, is_file=is_file)
         self.user_nl_name = user_nl_name
 
-    def apply(self):
+    def pair(self):
+        """The (name, value) this parameter writes."""
         if self.value is None:
             raise ValueError(f"Value for parameter {self.name} has not been set.")
-
-        param = [(self.name, self.value)]
-        append_user_nl(
-            self.user_nl_name,
-            param,
-            do_exec=True,
-            comment=self.comment,
-        )
-        self.executed = True
+        return (self.name, self.value)
 
     def inspect(self, caseroot):
         if self.value is not None:
@@ -623,11 +626,40 @@ class BaseConfigurator(ABC):
     @abstractmethod
     def configure(self):
         """Bind input values to parameters and files."""
+        # A configurator's user_nl parameters go into one CrocoDash block per
+        # file, which the next configure_forcings() call replaces (see
+        # user_nl_blocks). Consecutive parameters with the same comment share
+        # one comment line.
+        groups = {}
         for p in self.output_params:
             if isinstance(p, XMLConfigParam):
                 p.is_non_local = self.is_non_local
-            p.apply()
-        pass
+            if isinstance(p, UserNLConfigParam):
+                file_groups = groups.setdefault(p.user_nl_name, [])
+                if file_groups and file_groups[-1][0] == p.comment:
+                    file_groups[-1][1].append(p.pair())
+                else:
+                    file_groups.append((p.comment, [p.pair()]))
+            else:
+                p.apply()
+        for user_nl_name, file_groups in groups.items():
+            user_nl_blocks.write(self.name, user_nl_name, file_groups)
+        for p in self.output_params:
+            if isinstance(p, UserNLConfigParam):
+                p.executed = True
+
+    def stale_outputs(self, previous_config, current_config, inputdir):
+        """Files an earlier process step left that the current configuration
+        must not reuse, for configure_forcings() to remove.
+
+        previous_config/current_config are the whole config.json contents from
+        the earlier configure_forcings() call ({} if there is no record) and
+        from this one, since a process step can read a sibling's entry (the
+        conditions dates, say). Only a process step that skips outputs it
+        finds on disk needs to override this; every other one rewrites its
+        files anyway.
+        """
+        return []
 
     @classmethod
     def inspect(cls, caseroot):
@@ -669,16 +701,16 @@ class BaseConfigurator(ABC):
             output_dict["outputs"][param.name] = self.make_serializable(param.value)
         return output_dict
 
-    def get_input_param(self, name: str) -> OutputParam:
+    def get_input_param(self, name: str) -> Any:
         return self.get_input_param_object(name).value
 
-    def get_input_param_object(self, name: str) -> OutputParam:
+    def get_input_param_object(self, name: str) -> InputParam:
         try:
             return next(p for p in self.input_params if p.name == name)
         except StopIteration:
             raise UndeclaredParamError(f"Input param '{name}' not found")
 
-    def get_output_param(self, name: str) -> OutputParam:
+    def get_output_param(self, name: str) -> Any:
         return self.get_output_param_object(name).value
 
     def get_output_param_object(self, name: str) -> OutputParam:

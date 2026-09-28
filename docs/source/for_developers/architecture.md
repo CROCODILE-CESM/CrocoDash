@@ -10,8 +10,8 @@ modify, or extend it. For the day-to-day user workflow see the
 |---|---|---|
 | 1. Grids (hgrid / topo / vgrid) | `grid`, `topo`, `vgrid`, `topo_editor` | [mom6_forge](https://github.com/NCAR/mom6_forge) |
 | 2. Case setup | `case` | [VisualCaseGen](https://github.com/ESMCI/VisualCaseGen) + CESM CIME |
-| 3a. Configure forcings | `forcing_configurations` | (internal) |
-| 3b. Process forcings | `extract_forcings` | [regional-mom6](https://github.com/CROCODILE-CESM/regional-mom6), `mom6_forge` |
+| 3a. Configure forcings | `forcing` (configurator classes) | (internal) |
+| 3b. Process forcings | `forcing` (`driver.py` + `process_*` methods) | [regional-mom6](https://github.com/CROCODILE-CESM/regional-mom6), `mom6_forge` |
 
 Supporting modules you'll touch when extending CrocoDash:
 
@@ -26,7 +26,7 @@ Supporting modules you'll touch when extending CrocoDash:
 Two pieces of CrocoDash are **registry-based** so users and contributors can
 extend them without touching core code:
 
-- **`ForcingConfigRegistry`** (`forcing_configurations`) — each forcing
+- **`ForcingConfigRegistry`** (`forcing.base`) — each forcing
   configuration (Tides, BGC, Rivers, …) is a `BaseConfigurator` subclass that
   auto-registers via the `@register` decorator. The registry knows which
   configurators are required, valid, or forbidden for a given compset.
@@ -47,10 +47,13 @@ applies `xmlchange`/`user_nl_*` edits, and writes a JSON manifest. Processing
 downloads large datasets, regrids, and writes netCDF. In practice these happen
 on different machines (or at least different wall-clock budgets).
 
-The extraction system is also **fully standalone**: after `configure_forcings`,
-a self-contained copy of `extract_forcings/` is placed under the case's
-`inputdir/`. A user can submit `python driver.py --all` from that directory
-without touching CrocoDash again. This makes HPC submission straightforward.
+The extraction step is also **runnable without Python**: after
+`configure_forcings`, the case's `inputdir/extract_forcings/` holds
+`config.json` (plus the `raw_data/` and `regridded_data/` caches once you've run
+once). The processing *code* stays in the installed CrocoDash package — nothing
+is copied per-case — and you drive it with the `crocodash process` CLI entry
+point, from a batch script or any shell. This makes HPC submission
+straightforward.
 
 ### Re-exports from mom6_forge
 
@@ -71,9 +74,10 @@ straight through.
 Forcing compatibility rules live with the configurators, not scattered through
 the workflow. Examples enforced there:
 
-- Chlorophyll cannot be provided if BGC is not in the compset
-- River nutrients cannot be implemented without runoff and BGC in the compset
-- BGC configurators require `%MARBL` in the compset longname
+- Chlorophyll is forbidden when BGC is in the compset — MARBL computes its own
+  (`ChlConfigurator.forbidden_compsets = ["MARBL"]`)
+- River nutrients require both runoff and BGC in the compset
+- BGC configurators require `MARBL` in the compset longname
 
 When you add a new configurator, declare its compatibility via
 `required_for_compsets`, `allowed_compsets`, and `forbidden_compsets` — don't
@@ -104,11 +108,12 @@ Case(grid, topo, vgrid, compset, ...)
   process_forcings(...)
           │
           ▼
-  extract_forcings/driver.py
-     ├─► get_dataset_piecewise      (raw_data_access)
-     ├─► regrid_dataset_piecewise   (regional-mom6 segments)
-     ├─► merge_piecewise_dataset
-     ├─► bgc / runoff / tides / chl (mom6_forge helpers)
+  forcing/driver.py::run_workflow
+     │  (dispatches via each configurator's process_components)
+     ├─► GET     obc.py / ic.py          (raw_data_access)
+     ├─► REGRID  mom6.py                 (regional-mom6 Segment)
+     ├─► MERGE   obc.py
+     ├─► tides.py / bgc.py / runoff.py / chl.py
           │
           ▼
                                ──►  inputdir/ocn/... forcing files
@@ -118,12 +123,13 @@ Case(grid, topo, vgrid, compset, ...)
 
 | You want to… | Edit… |
 |---|---|
-| Add a new CESM-compatible forcing (e.g. salt restoring) | new file in `forcing_configurations/`, inherits `BaseConfigurator`, decorated with `@register` |
-| Add a new raw data source | new file in `raw_data_access/datasets/`, inherits `ForcingProduct`, decorated with `@accessmethod` |
-| Change the regridding of OBCs | `extract_forcings/regrid_dataset_piecewise.py` (it's where we call `rm6.segment.regrid_velocity_tracers`) |
-| Change bathymetry fill behaviour | `extract_forcings/regrid_dataset_piecewise.py::final_cleanliness_fill` (and look at `m6b.utils.fill_missing_data`) |
+| Add a new CESM-compatible forcing (e.g. salt restoring) | new file in `forcing/`, inherits `BaseConfigurator`, decorated with `@register` |
+| Add a new raw data source | new file in `raw_data_access/datasets/`, inherits `MOM6ForcingProduct` (or `BaseProduct`), with an `@accessmethod` function |
+| Change the regridding of OBCs | `forcing/mom6.py::_regrid_obc_chunk` (it's where we call `Segment.regrid_velocity_tracers`) |
+| Change bathymetry fill behaviour | `forcing/mom6.py::final_cleanliness_fill` (and look at `m6b.utils.fill_missing_data`) |
 | Add a new `xmlchange` or `user_nl_*` edit | the relevant configurator's `output_params` + `configure` method |
-| Change the CLI flags of `extract_forcings` | `extract_forcings/case_setup/driver.py::parse_args` / `resolve_components` |
+| Give a new configurator a `crocodash process` flag | its `process_components = {"<flag>": "<method>"}` — `cli.py` builds the flag list from `ForcingConfigRegistry.all_process_flags()` |
+| Change how `--all`/`--skip` resolve | `forcing/driver.py::resolve_components` |
 
 ## What CrocoDash does NOT do itself
 
@@ -164,16 +170,17 @@ Other useful flags:
 | `-s` | don't swallow `print()` |
 | `-k EXPR` | only run tests whose name matches `EXPR` |
 
-When developing `extract_forcings`:
+When developing the `forcing` package:
 
 - Use small date ranges and small domains
-- Prefer `preview=True` in the config to dry-run
-- Use the `--skip` CLI flag on `driver.py` to iterate on one component
+- Set `preview: true` under `conditions.outputs` in `config.json` to dry-run
+- Use the `--skip` flag on `crocodash process` to iterate on one component
 
 When developing `raw_data_access`:
 
-- New dataset classes must inherit from `ForcingProduct` and declare all
-  `required_metadata` / `required_args`.
+- New dataset classes must inherit from the right base (`MOM6ForcingProduct`
+  for OBC/IC products, `BaseProduct` or `DatedBaseProduct` otherwise) and
+  declare all `required_metadata` / `required_args`, including a `Calendar`.
 - Validation runs at import time — if metadata is missing, your tests will
   fail on import, which is the intended behaviour.
 

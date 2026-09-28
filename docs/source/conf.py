@@ -40,6 +40,11 @@ extensions = [
 # Let MyST recognise ```{mermaid}``` fenced blocks as directives.
 myst_enable_extensions = ["colon_fence"]
 
+# Generate anchors for headings up to level 3 so cross-file links of the form
+# [text](some_page.md#a-heading-slug) resolve. Without this MyST only knows
+# about explicit (target)= labels and silently emits xref warnings.
+myst_heading_anchors = 3
+
 templates_path = ["_templates"]
 exclude_patterns = []
 

@@ -2,6 +2,8 @@
 
 import logging as stdlib_logging
 
+import pytest
+
 from CrocoDash import logging as cd_logging
 
 
@@ -51,3 +53,51 @@ def test_setup_logger_is_idempotent():
         for h in list(logger_b.handlers):
             logger_b.removeHandler(h)
         logger_b.propagate = True
+
+
+@pytest.fixture
+def restore_levels():
+    """Put back every logger level a test changes, for the rest of the run."""
+    saved = {
+        name: logger.level
+        for name, logger in list(stdlib_logging.Logger.manager.loggerDict.items())
+        if isinstance(logger, stdlib_logging.Logger)
+    }
+    yield
+    for name, logger in list(stdlib_logging.Logger.manager.loggerDict.items()):
+        if isinstance(logger, stdlib_logging.Logger):
+            logger.setLevel(saved.get(name, stdlib_logging.NOTSET))
+
+
+def test_quiet_visualcasegen_info_hides_only_visualcasegen_info(caplog, restore_levels):
+    """visualCaseGen's loggers are the whitespace-padded ones: their INFO goes,
+    their warnings stay, and other loggers are left alone."""
+    vcg = stdlib_logging.getLogger("\tfake_vcg_stage")
+    other = stdlib_logging.getLogger("CrocoDash.fake_module")
+    other.setLevel(stdlib_logging.INFO)
+    cd_logging.quiet_visualcasegen_info()
+    with caplog.at_level(stdlib_logging.INFO):
+        vcg.info("Enabling stage 1. Component Set.")
+        vcg.warning("a real visualCaseGen warning")
+        other.info("[REQUIRED] Activating StreamYears")
+    messages = [r.getMessage() for r in caplog.records]
+    assert "Enabling stage 1. Component Set." not in messages
+    assert "a real visualCaseGen warning" in messages
+    assert "[REQUIRED] Activating StreamYears" in messages
+
+
+def test_quiet_visualcasegen_info_keeps_a_level_already_set(restore_levels):
+    vcg = stdlib_logging.getLogger("\tfake_vcg_verbose")
+    vcg.setLevel(stdlib_logging.DEBUG)
+    cd_logging.quiet_visualcasegen_info()
+    assert vcg.level == stdlib_logging.DEBUG
+
+
+def test_importing_case_quiets_the_real_visualcasegen_loggers():
+    """Guards the whitespace naming this relies on: if visualCaseGen renames
+    its loggers, this fails instead of the INFO lines silently coming back."""
+    import CrocoDash.case  # noqa: F401 -- the import does the quieting
+
+    stage = stdlib_logging.Logger.manager.loggerDict.get("\tstage")
+    assert isinstance(stage, stdlib_logging.Logger)
+    assert stage.getEffectiveLevel() == stdlib_logging.WARNING

@@ -12,7 +12,6 @@ metadata into a download request).
 """
 
 import os
-from datetime import datetime
 from functools import partial
 from pathlib import Path
 
@@ -81,6 +80,7 @@ def _regrid_obc_chunk(
     dataset_varnames,
     start_date,
     regridders,
+    bathymetry_path=None,
     custom_segments=None,
 ):
     """Regrid one OBC chunk via regional_mom6's Segment. Writes to
@@ -97,8 +97,22 @@ def _regrid_obc_chunk(
     ``xr.open_mfdataset`` on ``infile`` internally), so unlike the engine that
     handed us ``ds``, we do need a real file here -- write one, use it, clean
     it up. That's this function's own business, not the generic engine's.
+
+    ``bathymetry_path`` isn't part of obc.py's generic engine signature --
+    process_bc binds it via functools.partial. Without it the segment has no
+    mask and no depth, so rm6 writes the full source column at every point
+    instead of thinning dz to the local water column. The Topo is rebuilt
+    here rather than bound as an object because this runs in forked workers
+    that receive the function pickled; a path is cheap to ship, a Topo is not.
     """
     outfolder = Path(outfolder)
+    topo = None
+    if bathymetry_path is not None:
+        topo = Topo.from_topo_file(
+            grid=Grid.from_supergrid_ds(hgrid),
+            topo_file_path=bathymetry_path,
+            min_depth=utils.read_min_depth(bathymetry_path),
+        )
     tmp_file = outfolder / f"_tmp_{boundary}_segment_{seg_id:03d}.nc"
     # Serialised deliberately. This dataset is dask-backed, and writing it
     # through dask's threaded scheduler deadlocks intermittently inside
@@ -116,6 +130,7 @@ def _regrid_obc_chunk(
             boundary,
             segment_name=f"segment_{seg_id:03d}",
             custom_segments=custom_segments,
+            topo=topo,
         )
         seg.regrid_velocity_tracers(
             infile=tmp_file,
@@ -279,6 +294,17 @@ def final_cleanliness_fill(var, x_dim, y_dim, z_dim=None):
     return var
 
 
+def _all_written(paths):
+    """True if every file exists; a run killed partway leaves only some of them.
+    An existing file that isn't valid NetCDF is an error rather than a skip."""
+    for p in paths:
+        if p.exists() and not utils.is_valid_netcdf(p):
+            raise RuntimeError(
+                f"{p} exists but is not valid NetCDF. Delete it and re-run."
+            )
+    return all(p.exists() for p in paths)
+
+
 def _regrid_ic(
     raw_file,
     hgrid,
@@ -292,6 +318,7 @@ def _regrid_ic(
     """MOM6's IC regrid step. hgrid_path/vgrid_path/bathymetry_path aren't
     part of ic.py's generic engine signature -- process_ic below binds them
     via functools.partial before handing this to the engine as regrid_fn."""
+    min_depth = utils.read_min_depth(bathymetry_path)
     expt = rm6.experiment.create_empty()
     # hgrid/vgrid are read-only properties derived from m6f_hgrid/m6f_vgrid
     # (mom6_forge Grid/VGrid objects) -- set those instead. _make_vgrid
@@ -299,25 +326,20 @@ def _regrid_ic(
     expt.m6f_hgrid = Grid.from_supergrid_ds(hgrid)
     expt.mom_input_dir = output_dir
     expt.date_range = [start_date, None]
+    # _make_vgrid checks the vertical grid against minimum_depth, which
+    # create_empty() leaves at rm6's default of 4 m.
+    expt.minimum_depth = min_depth
     vgrid_from_file = xr.open_dataset(vgrid_path)
     expt._make_vgrid(vgrid_from_file.dz.data)
 
-    eta_path = expt.mom_input_dir / "init_eta.nc"
-    if eta_path.exists():
-        if not utils.is_valid_netcdf(eta_path):
-            raise RuntimeError(
-                f"{eta_path} exists but is not valid NetCDF. Delete it and re-run."
-            )
+    output_dir = Path(output_dir)
+    names = ("init_eta", "init_vel", "init_tracers")
+    if _all_written([output_dir / f"{n}.nc" for n in names]):
         logger.info("Initial condition files already exist. They will be skipped.")
     else:
         expt.setup_initial_condition(raw_file, dataset_varnames, arakawa_grid=None)
 
-    eta_filled_path = expt.mom_input_dir / "init_eta_filled.nc"
-    if eta_filled_path.exists():
-        if not utils.is_valid_netcdf(eta_filled_path):
-            raise RuntimeError(
-                f"{eta_filled_path} exists but is not valid NetCDF. Delete it and re-run."
-            )
+    if _all_written([output_dir / f"{n}_filled.nc" for n in names]):
         logger.info(
             "Initial condition filled files already exist. They will be skipped."
         )
@@ -327,8 +349,6 @@ def _regrid_ic(
     logger.info("Start mom6_forge fill...")
     grid = Grid.from_supergrid(hgrid_path)
 
-    with xr.open_dataset(bathymetry_path) as ds:
-        min_depth = ds.attrs.get("min_depth")
     bathymetry = Topo.from_topo_file(
         grid=grid, topo_file_path=bathymetry_path, min_depth=min_depth
     )
@@ -400,23 +420,6 @@ class ConditionsConfigurator(BaseConfigurator):
 
     _DATE_FORMAT = "%Y%m%d"
 
-    # Static output params that don't vary by boundary count.
-    _IC_PARAM_NAMES = {
-        "INIT_LAYERS_FROM_Z_FILE",
-        "Z_INIT_ALE_REMAPPING",
-        "TEMP_SALT_INIT_VERTICAL_REMAP_ONLY",
-        "DEPRESS_INITIAL_SURFACE",
-        "VELOCITY_CONFIG",
-        "TEMP_SALT_Z_INIT_FILE",
-        "SURFACE_HEIGHT_IC_FILE",
-        "VELOCITY_FILE",
-        "Z_INIT_FILE_PTEMP_VAR",
-        "Z_INIT_FILE_SALT_VAR",
-        "SURFACE_HEIGHT_IC_VAR",
-        "U_IC_VAR",
-        "V_IC_VAR",
-    }
-
     input_params = [
         InputValueParam("start_date", comment="Forcing start date"),
         InputValueParam("end_date", comment="Forcing end date"),
@@ -471,6 +474,7 @@ class ConditionsConfigurator(BaseConfigurator):
             "OBC_TRACER_RESERVOIR_LENGTH_SCALE_IN", comment="Open boundary conditions"
         ),
         UserNLConfigParam("BRUSHCUTTER_MODE", comment="Open boundary conditions"),
+        UserNLConfigParam("ENABLE_BUGS_BY_DEFAULT", comment="Open boundary conditions"),
         # Derived, config.json-only values consumed by process_ic/process_bc.
         # No case-side effect (see ConfigOutputParam).
         ConfigOutputParam(
@@ -577,8 +581,6 @@ class ConditionsConfigurator(BaseConfigurator):
             )
 
     def configure(self):
-        start_date = self.get_input_param("start_date")
-        end_date = self.get_input_param("end_date")
         boundaries = self.get_input_param("boundaries")
         product_name = self.get_input_param("product_name").lower()
         compset = self.get_input_param("compset")
@@ -590,13 +592,22 @@ class ConditionsConfigurator(BaseConfigurator):
             "information",
             product.write_metadata(include_marbl_tracers="%MARBL" in compset),
         )
-        start_dt = datetime.strptime(start_date, self._DATE_FORMAT)
-        end_dt = datetime.strptime(end_date, self._DATE_FORMAT)
-
-        # Setting both get and regrid to the entire modeling period. Power users can modify this as they need!
-        step = (end_dt - start_dt).days + 1
-        self.set_output_param("get_step_days", step)
-        self.set_output_param("regrid_step_days", step)
+        # GET and REGRID chunk sizes are independent, and neither changes the
+        # result -- a 1-day and a 3-day chunking of the same range were verified
+        # to produce bit-identical forcing files. They only set how much
+        # concurrency obc.py's pools have to work with.
+        #
+        # GET is network-bound, so it wants more chunks than REGRID: at a 30-day
+        # step anything shorter than a month came out as a single chunk and
+        # downloaded serially. A week gives a fortnight-long case two concurrent
+        # fetches and a year fifty-odd, without splitting long runs into
+        # thousands of requests.
+        #
+        # REGRID stays at 30 days. Its per-chunk cost is real work rather than
+        # waiting, so slicing it finer mostly buys more chunk files to merge.
+        # Power users can override either in config.json.
+        self.set_output_param("get_step_days", 7)
+        self.set_output_param("regrid_step_days", 30)
         self.set_output_param(
             "boundary_number_conversion",
             {b: i + 1 for i, b in enumerate(boundaries)},
@@ -611,9 +622,15 @@ class ConditionsConfigurator(BaseConfigurator):
         self.set_output_param("TEMP_SALT_INIT_VERTICAL_REMAP_ONLY", True)
         self.set_output_param("DEPRESS_INITIAL_SURFACE", True)
         self.set_output_param("VELOCITY_CONFIG", "file")
-        self.set_output_param("TEMP_SALT_Z_INIT_FILE", "init_tracers.nc")
-        self.set_output_param("SURFACE_HEIGHT_IC_FILE", "init_eta.nc")
-        self.set_output_param("VELOCITY_FILE", "init_vel.nc")
+        # Point MOM6 at the FILLED initial conditions. _regrid_ic writes both the raw
+        # init_*.nc (via regional_mom6's setup_initial_condition) and the land-filled
+        # init_*_filled.nc (via _fill_missing_and_write); the raw files still carry the
+        # source dataset's missing values on cells that are wet in the model grid but dry
+        # (or absent) in the source. MOM6 ingests those as data and aborts during
+        # initialization with SST = -1.0E+20 on the affected cells.
+        self.set_output_param("TEMP_SALT_Z_INIT_FILE", "init_tracers_filled.nc")
+        self.set_output_param("SURFACE_HEIGHT_IC_FILE", "init_eta_filled.nc")
+        self.set_output_param("VELOCITY_FILE", "init_vel_filled.nc")
         self.set_output_param("Z_INIT_FILE_PTEMP_VAR", "temp")
         self.set_output_param("Z_INIT_FILE_SALT_VAR", "salt")
         self.set_output_param("SURFACE_HEIGHT_IC_VAR", "eta_t")
@@ -629,6 +646,7 @@ class ConditionsConfigurator(BaseConfigurator):
         self.set_output_param("OBC_TRACER_RESERVOIR_LENGTH_SCALE_OUT", "3.0E+04")
         self.set_output_param("OBC_TRACER_RESERVOIR_LENGTH_SCALE_IN", "3000.0")
         self.set_output_param("BRUSHCUTTER_MODE", "True")
+        self.set_output_param("ENABLE_BUGS_BY_DEFAULT", "False")
 
         # ---- dynamic, per-boundary OBC params ----
         # Position strings come straight from a regional_mom6.segment.Segment
@@ -706,27 +724,10 @@ class ConditionsConfigurator(BaseConfigurator):
 
         self.output_params = self.output_params + dynamic_params
 
-        # ---- apply: batch into exactly 2 append_user_nl calls (preserves today's
-        # "Initial conditions" / "Open boundary conditions" banner formatting) ----
-        ic_params, obc_params = [], []
-        for param in self.output_params:
-            if not isinstance(param, UserNLConfigParam):
-                continue
-            (ic_params if param.name in self._IC_PARAM_NAMES else obc_params).append(
-                (param.name, param.value)
-            )
-
-        append_user_nl("mom", ic_params, do_exec=True, comment="Initial conditions")
-        append_user_nl(
-            "mom",
-            obc_params,
-            do_exec=True,
-            comment="Open boundary conditions",
-            log_title=False,
-        )
-        for param in self.output_params:
-            if isinstance(param, UserNLConfigParam):
-                param.executed = True
+        # The initial-condition params come first, so the user_nl block holds
+        # just the two comments "Initial conditions" and "Open boundary
+        # conditions" (see BaseConfigurator.configure).
+        super().configure()
 
     @classmethod
     def deserialize(cls, data):
@@ -752,6 +753,60 @@ class ConditionsConfigurator(BaseConfigurator):
                 obj.output_params.append(param)
         return obj
 
+    # The outputs that, with every input, determine what process_ic/process_bc
+    # produce. The user_nl values are left out: they follow from these, apart
+    # from the tidal file names in OBC_SEGMENT_NNN_DATA, which don't change the
+    # IC or OBC files. The chunk sizes name the raw and regridded chunks.
+    _PROCESS_OUTPUTS = (
+        "information",
+        "boundary_number_conversion",
+        "function_args",
+        "get_step_days",
+        "regrid_step_days",
+    )
+
+    @classmethod
+    def _fingerprint(cls, entry):
+        if entry is None:
+            return None
+        outputs = entry.get("outputs", {})
+        return {
+            "inputs": entry.get("inputs"),
+            "outputs": {k: outputs.get(k) for k in cls._PROCESS_OUTPUTS},
+        }
+
+    def stale_outputs(self, previous_config, current_config, inputdir):
+        """process_ic/process_bc skip every file they find already written --
+        that is what makes resuming a crashed run cheap -- and nothing in the
+        file names ties the files to the configuration. So once what they are
+        made from changed, or there is no record of it, these go:
+
+        - in <inputdir>/ocn, the IC (init_*.nc, init_*_filled.nc), the merged
+          OBCs (forcing_obc_segment_NNN.nc) and the BGC per-tracer OBCs
+          (<tracer>_obc_segment.nc);
+        - extract_forcings/raw_data and regridded_data, which only these two
+          steps use: raw_data/ic_unprocessed.nc has no date in its name, no
+          chunk names the product or its arguments, the regridded chunks are
+          named by segment number rather than boundary, and chunks of another
+          date range overlap the new ones, which the OBC coverage check rejects.
+        """
+        key = self.name.lower()
+        if self._fingerprint(previous_config.get(key)) == self._fingerprint(
+            current_config[key]
+        ):
+            return []
+        ocn = inputdir / "ocn"
+        extract = inputdir / "extract_forcings"
+        candidates = [
+            ocn / f"init_{name}{suffix}.nc"
+            for name in ("eta", "vel", "tracers")
+            for suffix in ("", "_filled")
+        ]
+        candidates += sorted(ocn.glob("forcing_obc_segment_[0-9][0-9][0-9].nc"))
+        candidates += sorted(ocn.glob("*_obc_segment.nc"))
+        candidates += [extract / "raw_data", extract / "regridded_data"]
+        return [path for path in candidates if path.exists()]
+
     # ---- process (extraction) ----
 
     def process_bc(self, ctx):
@@ -761,7 +816,11 @@ class ConditionsConfigurator(BaseConfigurator):
         function_args = self.get_output_param("function_args") or {}
         preview = ctx.preview
         custom_segments = self.get_output_param("custom_segments") or {}
-        regrid_chunk_fn = partial(_regrid_obc_chunk, custom_segments=custom_segments)
+        regrid_chunk_fn = partial(
+            _regrid_obc_chunk,
+            custom_segments=custom_segments,
+            bathymetry_path=ctx.topo_path,
+        )
 
         if preview:
             return obc.process_obc_conditions(
