@@ -425,6 +425,7 @@ make<span class="w"> </span>html
 auto-documentation from docstrings. Use <strong>exactly</strong> this command — it matches
 what CI runs, so its output is what will be compared against your commit:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>docs
+rm<span class="w"> </span>-rf<span class="w"> </span>source/api-docs
 sphinx-apidoc<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-o<span class="w"> </span>source/api-docs<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-H<span class="w"> </span><span class="s2">"CrocoDash API Docs"</span><span class="w"> </span><span class="se">\</span>
@@ -441,6 +442,10 @@ make<span class="w"> </span>html
 overwrites any hand-edited title).</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">../CrocoDash/rm6</span></code> and <code class="docutils literal notranslate"><span class="pre">../CrocoDash/visualCaseGen</span></code> — exclude vendored
 submodules that ship their own documentation.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">rm</span> <span class="pre">-rf</span> <span class="pre">source/api-docs</span></code> first — <code class="docutils literal notranslate"><span class="pre">sphinx-apidoc</span></code> only writes the files it
+generates, so an <code class="docutils literal notranslate"><span class="pre">.rst</span></code> left over from a module that has since been renamed or
+removed survives a regeneration untouched. Wiping the directory is what makes
+those orphans show up (as deletions) in the CI diff.</p></li>
 </ul>
 <p><strong>Why this is needed:</strong> The API docs are auto-generated from your Python
 docstrings. When you add new modules, Sphinx needs to scan them and create

@@ -395,11 +395,11 @@ modify, or extend it. For the day-to-day user workflow see the
 <td><p><a class="reference external" href="https://github.com/ESMCI/VisualCaseGen">VisualCaseGen</a> + CESM CIME</p></td>
 </tr>
 <tr class="row-even"><td><p>3a. Configure forcings</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">forcing_configurations</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">forcing</span></code> (configurator classes)</p></td>
 <td><p>(internal)</p></td>
 </tr>
 <tr class="row-odd"><td><p>3b. Process forcings</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">extract_forcings</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">forcing</span></code> (<code class="docutils literal notranslate"><span class="pre">driver.py</span></code> + <code class="docutils literal notranslate"><span class="pre">process_*</span></code> methods)</p></td>
 <td><p><a class="reference external" href="https://github.com/CROCODILE-CESM/regional-mom6">regional-mom6</a>, <code class="docutils literal notranslate"><span class="pre">mom6_forge</span></code></p></td>
 </tr>
 </tbody>
@@ -419,7 +419,7 @@ modify, or extend it. For the day-to-day user workflow see the
 <p>Two pieces of CrocoDash are <strong>registry-based</strong> so users and contributors can
 extend them without touching core code:</p>
 <ul class="simple">
-<li><p><strong><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry</span></code></strong> (<code class="docutils literal notranslate"><span class="pre">forcing_configurations</span></code>) — each forcing
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry</span></code></strong> (<code class="docutils literal notranslate"><span class="pre">forcing.base</span></code>) — each forcing
 configuration (Tides, BGC, Rivers, …) is a <code class="docutils literal notranslate"><span class="pre">BaseConfigurator</span></code> subclass that
 auto-registers via the <code class="docutils literal notranslate"><span class="pre">&#64;register</span></code> decorator. The registry knows which
 configurators are required, valid, or forbidden for a given compset.</p></li>
@@ -440,10 +440,13 @@ decoupled on purpose. Configuration is lightweight — it validates arguments,
 applies <code class="docutils literal notranslate"><span class="pre">xmlchange</span></code>/<code class="docutils literal notranslate"><span class="pre">user_nl_*</span></code> edits, and writes a JSON manifest. Processing
 downloads large datasets, regrids, and writes netCDF. In practice these happen
 on different machines (or at least different wall-clock budgets).</p>
-<p>The extraction system is also <strong>fully standalone</strong>: after <code class="docutils literal notranslate"><span class="pre">configure_forcings</span></code>,
-a self-contained copy of <code class="docutils literal notranslate"><span class="pre">extract_forcings/</span></code> is placed under the case’s
-<code class="docutils literal notranslate"><span class="pre">inputdir/</span></code>. A user can submit <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">driver.py</span> <span class="pre">--all</span></code> from that directory
-without touching CrocoDash again. This makes HPC submission straightforward.</p>
+<p>The extraction step is also <strong>runnable without Python</strong>: after
+<code class="docutils literal notranslate"><span class="pre">configure_forcings</span></code>, the case’s <code class="docutils literal notranslate"><span class="pre">inputdir/extract_forcings/</span></code> holds
+<code class="docutils literal notranslate"><span class="pre">config.json</span></code> (plus the <code class="docutils literal notranslate"><span class="pre">raw_data/</span></code> and <code class="docutils literal notranslate"><span class="pre">regridded_data/</span></code> caches once you’ve run
+once). The processing <em>code</em> stays in the installed CrocoDash package — nothing
+is copied per-case — and you drive it with the <code class="docutils literal notranslate"><span class="pre">crocodash</span> <span class="pre">process</span></code> CLI entry
+point, from a batch script or any shell. This makes HPC submission
+straightforward.</p>
 </section>
 <section id="re-exports-from-mom6-forge">
 <h3>Re-exports from mom6_forge<a class="headerlink" href="#re-exports-from-mom6-forge" title="Link to this heading">#</a></h3>
@@ -462,9 +465,10 @@ straight through.</p>
 <p>Forcing compatibility rules live with the configurators, not scattered through
 the workflow. Examples enforced there:</p>
 <ul class="simple">
-<li><p>Chlorophyll cannot be provided if BGC is not in the compset</p></li>
-<li><p>River nutrients cannot be implemented without runoff and BGC in the compset</p></li>
-<li><p>BGC configurators require <code class="docutils literal notranslate"><span class="pre">%MARBL</span></code> in the compset longname</p></li>
+<li><p>Chlorophyll is forbidden when BGC is in the compset — MARBL computes its own
+(<code class="docutils literal notranslate"><span class="pre">ChlConfigurator.forbidden_compsets</span> <span class="pre">=</span> <span class="pre">[&quot;MARBL&quot;]</span></code>)</p></li>
+<li><p>River nutrients require both runoff and BGC in the compset</p></li>
+<li><p>BGC configurators require <code class="docutils literal notranslate"><span class="pre">MARBL</span></code> in the compset longname</p></li>
 </ul>
 <p>When you add a new configurator, declare its compatibility via
 <code class="docutils literal notranslate"><span class="pre">required_for_compsets</span></code>, <code class="docutils literal notranslate"><span class="pre">allowed_compsets</span></code>, and <code class="docutils literal notranslate"><span class="pre">forbidden_compsets</span></code> — don’t
@@ -495,11 +499,12 @@ write ad-hoc <code class="docutils literal notranslate"><span class="pre">if/els
   process_forcings(...)
           │
           ▼
-  extract_forcings/driver.py
-     ├─► get_dataset_piecewise      (raw_data_access)
-     ├─► regrid_dataset_piecewise   (regional-mom6 segments)
-     ├─► merge_piecewise_dataset
-     ├─► bgc / runoff / tides / chl (mom6_forge helpers)
+  forcing/driver.py::run_workflow
+     │  (dispatches via each configurator's process_components)
+     ├─► GET     obc.py / ic.py          (raw_data_access)
+     ├─► REGRID  mom6.py                 (regional-mom6 Segment)
+     ├─► MERGE   obc.py
+     ├─► tides.py / bgc.py / runoff.py / chl.py
           │
           ▼
                                ──►  inputdir/ocn/... forcing files
@@ -516,22 +521,25 @@ write ad-hoc <code class="docutils literal notranslate"><span class="pre">if/els
 </thead>
 <tbody>
 <tr class="row-even"><td><p>Add a new CESM-compatible forcing (e.g. salt restoring)</p></td>
-<td><p>new file in <code class="docutils literal notranslate"><span class="pre">forcing_configurations/</span></code>, inherits <code class="docutils literal notranslate"><span class="pre">BaseConfigurator</span></code>, decorated with <code class="docutils literal notranslate"><span class="pre">&#64;register</span></code></p></td>
+<td><p>new file in <code class="docutils literal notranslate"><span class="pre">forcing/</span></code>, inherits <code class="docutils literal notranslate"><span class="pre">BaseConfigurator</span></code>, decorated with <code class="docutils literal notranslate"><span class="pre">&#64;register</span></code></p></td>
 </tr>
 <tr class="row-odd"><td><p>Add a new raw data source</p></td>
-<td><p>new file in <code class="docutils literal notranslate"><span class="pre">raw_data_access/datasets/</span></code>, inherits <code class="docutils literal notranslate"><span class="pre">ForcingProduct</span></code>, decorated with <code class="docutils literal notranslate"><span class="pre">&#64;accessmethod</span></code></p></td>
+<td><p>new file in <code class="docutils literal notranslate"><span class="pre">raw_data_access/datasets/</span></code>, inherits <code class="docutils literal notranslate"><span class="pre">MOM6ForcingProduct</span></code> (or <code class="docutils literal notranslate"><span class="pre">BaseProduct</span></code>), with an <code class="docutils literal notranslate"><span class="pre">&#64;accessmethod</span></code> function</p></td>
 </tr>
 <tr class="row-even"><td><p>Change the regridding of OBCs</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">extract_forcings/regrid_dataset_piecewise.py</span></code> (it’s where we call <code class="docutils literal notranslate"><span class="pre">rm6.segment.regrid_velocity_tracers</span></code>)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">forcing/mom6.py::_regrid_obc_chunk</span></code> (it’s where we call <code class="docutils literal notranslate"><span class="pre">Segment.regrid_velocity_tracers</span></code>)</p></td>
 </tr>
 <tr class="row-odd"><td><p>Change bathymetry fill behaviour</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">extract_forcings/regrid_dataset_piecewise.py::final_cleanliness_fill</span></code> (and look at <code class="docutils literal notranslate"><span class="pre">m6b.utils.fill_missing_data</span></code>)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">forcing/mom6.py::final_cleanliness_fill</span></code> (and look at <code class="docutils literal notranslate"><span class="pre">m6b.utils.fill_missing_data</span></code>)</p></td>
 </tr>
 <tr class="row-even"><td><p>Add a new <code class="docutils literal notranslate"><span class="pre">xmlchange</span></code> or <code class="docutils literal notranslate"><span class="pre">user_nl_*</span></code> edit</p></td>
 <td><p>the relevant configurator’s <code class="docutils literal notranslate"><span class="pre">output_params</span></code> + <code class="docutils literal notranslate"><span class="pre">configure</span></code> method</p></td>
 </tr>
-<tr class="row-odd"><td><p>Change the CLI flags of <code class="docutils literal notranslate"><span class="pre">extract_forcings</span></code></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">extract_forcings/case_setup/driver.py::parse_args</span></code> / <code class="docutils literal notranslate"><span class="pre">resolve_components</span></code></p></td>
+<tr class="row-odd"><td><p>Give a new configurator a <code class="docutils literal notranslate"><span class="pre">crocodash</span> <span class="pre">process</span></code> flag</p></td>
+<td><p>its <code class="docutils literal notranslate"><span class="pre">process_components</span> <span class="pre">=</span> <span class="pre">{&quot;&lt;flag&gt;&quot;:</span> <span class="pre">&quot;&lt;method&gt;&quot;}</span></code> — <code class="docutils literal notranslate"><span class="pre">cli.py</span></code> builds the flag list from <code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.all_process_flags()</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p>Change how <code class="docutils literal notranslate"><span class="pre">--all</span></code>/<code class="docutils literal notranslate"><span class="pre">--skip</span></code> resolve</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">forcing/driver.py::resolve_components</span></code></p></td>
 </tr>
 </tbody>
 </table>
@@ -600,16 +608,17 @@ pytest<span class="w"> </span>--ignore<span class="o">=</span>CrocoDash/visualCa
 </tbody>
 </table>
 </div>
-<p>When developing <code class="docutils literal notranslate"><span class="pre">extract_forcings</span></code>:</p>
+<p>When developing the <code class="docutils literal notranslate"><span class="pre">forcing</span></code> package:</p>
 <ul class="simple">
 <li><p>Use small date ranges and small domains</p></li>
-<li><p>Prefer <code class="docutils literal notranslate"><span class="pre">preview=True</span></code> in the config to dry-run</p></li>
-<li><p>Use the <code class="docutils literal notranslate"><span class="pre">--skip</span></code> CLI flag on <code class="docutils literal notranslate"><span class="pre">driver.py</span></code> to iterate on one component</p></li>
+<li><p>Set <code class="docutils literal notranslate"><span class="pre">preview:</span> <span class="pre">true</span></code> under <code class="docutils literal notranslate"><span class="pre">conditions.outputs</span></code> in <code class="docutils literal notranslate"><span class="pre">config.json</span></code> to dry-run</p></li>
+<li><p>Use the <code class="docutils literal notranslate"><span class="pre">--skip</span></code> flag on <code class="docutils literal notranslate"><span class="pre">crocodash</span> <span class="pre">process</span></code> to iterate on one component</p></li>
 </ul>
 <p>When developing <code class="docutils literal notranslate"><span class="pre">raw_data_access</span></code>:</p>
 <ul class="simple">
-<li><p>New dataset classes must inherit from <code class="docutils literal notranslate"><span class="pre">ForcingProduct</span></code> and declare all
-<code class="docutils literal notranslate"><span class="pre">required_metadata</span></code> / <code class="docutils literal notranslate"><span class="pre">required_args</span></code>.</p></li>
+<li><p>New dataset classes must inherit from the right base (<code class="docutils literal notranslate"><span class="pre">MOM6ForcingProduct</span></code>
+for OBC/IC products, <code class="docutils literal notranslate"><span class="pre">BaseProduct</span></code> or <code class="docutils literal notranslate"><span class="pre">DatedBaseProduct</span></code> otherwise) and
+declare all <code class="docutils literal notranslate"><span class="pre">required_metadata</span></code> / <code class="docutils literal notranslate"><span class="pre">required_args</span></code>, including a <code class="docutils literal notranslate"><span class="pre">Calendar</span></code>.</p></li>
 <li><p>Validation runs at import time — if metadata is missing, your tests will
 fail on import, which is the intended behaviour.</p></li>
 </ul>

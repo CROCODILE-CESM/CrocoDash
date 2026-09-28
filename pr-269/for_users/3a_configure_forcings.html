@@ -382,7 +382,7 @@ the <a class="reference internal" href="datasets.html#crocodash-data-access-modu
 </div>
 <section id="overview">
 <h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">#</a></h2>
-<p>Forcing configuration is managed by the <code class="docutils literal notranslate"><span class="pre">forcing_configurations.py</span></code> module through a registry-based system:</p>
+<p>Forcing configuration is managed by the <code class="docutils literal notranslate"><span class="pre">CrocoDash.forcing</span></code> package through a registry-based system:</p>
 <ol class="arabic simple">
 <li><p><strong>Each configuration option</strong> (Tides, BGC, Rivers, etc.) is a separate class that inherits from <code class="docutils literal notranslate"><span class="pre">BaseConfigurator</span></code></p></li>
 <li><p><strong>The <code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry</span></code></strong> automatically registers all these options and determines which are required or valid based on your compset</p></li>
@@ -443,7 +443,7 @@ case needs, and optional configurators (like tides) derive their reference dates
 <section id="how-to-check-what-s-required">
 <h2>How to Check What’s Required<a class="headerlink" href="#how-to-check-what-s-required" title="Link to this heading">#</a></h2>
 <p>Before calling <code class="docutils literal notranslate"><span class="pre">configure_forcings()</span></code>, you can check what configuration options are required for your compset. It will also be printed on case initialization:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">CrocoDash.forcing_configurations</span><span class="w"> </span><span class="kn">import</span> <span class="n">ForcingConfigRegistry</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">CrocoDash.forcing.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">ForcingConfigRegistry</span>
 
 <span class="n">compset</span> <span class="o">=</span> <span class="s2">"1850_DATM%NYF_SLND_SICE_MOM6%MARBL-BIO%REGIONAL_DROF</span><span class="si">%G</span><span class="s2">LOFAS_SGLC_SWAV"</span>
 
@@ -465,7 +465,7 @@ case needs, and optional configurators (like tides) derive their reference dates
 <section id="helper-functions">
 <h2>Helper Functions<a class="headerlink" href="#helper-functions" title="Link to this heading">#</a></h2>
 <p>Useful functions for understanding configuration requirements:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">CrocoDash.forcing_configurations</span><span class="w"> </span><span class="kn">import</span> <span class="n">ForcingConfigRegistry</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">CrocoDash.forcing.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">ForcingConfigRegistry</span>
 
 <span class="c1"># Find required configurators for your compset</span>
 <span class="n">required</span> <span class="o">=</span> <span class="n">ForcingConfigRegistry</span><span class="o">.</span><span class="n">find_required_configurators</span><span class="p">(</span><span class="n">compset</span><span class="p">)</span>
@@ -486,7 +486,7 @@ case needs, and optional configurators (like tides) derive their reference dates
 </section>
 <section id="helper-docs">
 <h2>Helper Docs<a class="headerlink" href="#helper-docs" title="Link to this heading">#</a></h2>
-<p>The <a class="reference internal" href="#../api-docs/CrocoDash.forcing_configurations.rst"><span class="xref myst">Forcing Configuration API Documentation</span></a> are a great way to look at all of the information provided in the helper functions.</p>
+<p>The <a class="reference internal" href="../api-docs/CrocoDash.forcing.html"><span class="std std-doc">Forcing API Documentation</span></a> is a great way to look at all of the information provided in the helper functions.</p>
 </section>
 <section id="in-the-case-workflow">
 <h2>In the Case Workflow<a class="headerlink" href="#in-the-case-workflow" title="Link to this heading">#</a></h2>
@@ -496,14 +496,14 @@ case needs, and optional configurators (like tides) derive their reference dates
 <li><p><strong>Checks</strong> that you’ve provided all required inputs</p></li>
 <li><p><strong>Instantiates</strong> the appropriate configurators</p></li>
 <li><p><strong>Applies</strong> settings to your CESM case</p></li>
-<li><p><strong>Serializes</strong> configuration for use by <code class="docutils literal notranslate"><span class="pre">extract_forcings</span></code></p></li>
+<li><p><strong>Serializes</strong> configuration for use by the processing driver (<code class="docutils literal notranslate"><span class="pre">CrocoDash.forcing.driver</span></code>)</p></li>
 </ol>
 <p>If something is missing, you’ll get an error message telling you exactly what’s needed.</p>
 </section>
 <section id="configuration-json-files">
 <h2>Configuration JSON Files<a class="headerlink" href="#configuration-json-files" title="Link to this heading">#</a></h2>
 <p>Your configuration will be saved to JSON for reproducibility in the <code class="docutils literal notranslate"><span class="pre">extract_forcings/config.json</span></code> file in your input directory:</p>
-<p>The JSON structure organizes inputs and outputs by configurator name, allowing <code class="docutils literal notranslate"><span class="pre">extract_forcings</span></code> to generate forcing and boundary condition files.</p>
+<p>The JSON structure organizes inputs and outputs by configurator name, allowing the processing driver to generate forcing and boundary condition files.</p>
 </section>
 <section id="understanding-your-compset">
 <h2>Understanding Your Compset<a class="headerlink" href="#understanding-your-compset" title="Link to this heading">#</a></h2>
