@@ -533,14 +533,35 @@ class CESM_WW3_JRA(WW3ForcingProduct):
         first, last = available_range(database_root, case_name)
         stamps = requested_timestamps(dates)
 
+        # Out-of-range requests are served by the nearest in-range restart at
+        # the same time of day, and stamped with the requested time so the
+        # consumer sees an unbroken series. The producing run starts cold and
+        # its first few weeks are spin-up, so a request before `first` will be
+        # served spin-up spectra -- warned about, not refused.
         if stamps[0] < first or stamps[-1] > last:
-            raise ValueError(
-                f"Requested {stamps[0]:%Y-%m-%d %H:%M} .. {stamps[-1]:%Y-%m-%d %H:%M} "
-                f"but database '{case_name}' covers "
-                f"{first:%Y-%m-%d %H:%M} .. {last:%Y-%m-%d %H:%M}. Note the run "
-                "starts cold, so its first few weeks are spin-up and should not "
-                "be used as forcing."
+            logger.warning(
+                "Requested %s .. %s but database '%s' covers %s .. %s; "
+                "out-of-range stamps will be served by the nearest available "
+                "restart (same hour of day) and labelled with the requested time.",
+                f"{stamps[0]:%Y-%m-%d %H:%M}",
+                f"{stamps[-1]:%Y-%m-%d %H:%M}",
+                case_name,
+                f"{first:%Y-%m-%d %H:%M}",
+                f"{last:%Y-%m-%d %H:%M}",
             )
+
+        def _clamp_to_available(stamp):
+            """Nearest in-range restart stamp at the same hour of day."""
+            if first <= stamp <= last:
+                return stamp
+            target = min(max(stamp, first), last)
+            hour = stamp.hour - (stamp.hour % 6)
+            candidate = target.normalize() + pd.Timedelta(hours=hour)
+            if candidate < first:
+                candidate += pd.Timedelta(days=1)
+            elif candidate > last:
+                candidate -= pd.Timedelta(days=1)
+            return candidate
 
         lons, lats, depth, min_depth = _read_static_grid(grid_file)
         ny, nx = depth.shape
@@ -561,7 +582,10 @@ class CESM_WW3_JRA(WW3ForcingProduct):
             span %= 360.0
         hi = lo + span
 
-        paths = [Path(database_root) / restart_filename(case_name, s) for s in stamps]
+        paths = [
+            Path(database_root) / restart_filename(case_name, _clamp_to_available(s))
+            for s in stamps
+        ]
         missing = [p for p in paths if not p.exists()]
         if missing:
             raise FileNotFoundError(
