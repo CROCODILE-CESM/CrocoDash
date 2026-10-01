@@ -24,7 +24,17 @@ class BGCConfigurator(BaseConfigurator):
         UserNLConfigParam(
             "MAX_FIELDS",
             comment="Maximum number of tracer fields, bumped to accomodate MARBL tracers",
-        )
+        ),
+        UserNLConfigParam(
+            "READ_RIV_FLUXES",
+            comment="Read river nutrient fluxes (only when BGCRiverNutrients provides them)",
+            user_nl_name="mom",
+        ),
+        UserNLConfigParam(
+            "lvariable_NtoC",
+            comment="Use a fixed N:C ratio in MARBL",
+            user_nl_name="marbl",
+        ),
     ]
 
     def __init__(
@@ -34,6 +44,16 @@ class BGCConfigurator(BaseConfigurator):
 
     def configure(self):
         self.set_output_param("MAX_FIELDS", 200)
+        # MOM_interface defaults READ_RIV_FLUXES to True for every MARBL case,
+        # which fails without a river flux file, so it is set here whether or
+        # not BGCRiverNutrients is active (and only here, so user_nl_mom never
+        # lists it twice).
+        has_river_fluxes = self.registry is not None and self.registry.is_active(
+            "bgcrivernutrients"
+        )
+        self.set_output_param("READ_RIV_FLUXES", str(has_river_fluxes))
+        # CESM doesn't create user_nl_marbl; writing this creates it.
+        self.set_output_param("lvariable_NtoC", ".false.")
         super().configure()
 
 
@@ -88,21 +108,10 @@ class BGCIronForcingConfigurator(BaseConfigurator):
     ]
     output_params = [
         UserNLConfigParam(
-            "MARBL_FESEDFLUX_FILE",
-            comment="MARBL sedimentary iron flux file",
+            "MARBL_FE_INTERIOR_SOURCE_FILE",
+            comment="MARBL iron sediment and vent source file",
             user_nl_name="mom",
             is_file=True,
-        ),
-        UserNLConfigParam(
-            "MARBL_FEVENTFLUX_FILE",
-            comment="MARBL event iron flux file",
-            user_nl_name="mom",
-            is_file=True,
-        ),
-        UserNLConfigParam(
-            "MARBL_FESEDFLUXRED_FILE",
-            comment="MARBL sediment iron flux (reduced) file",
-            user_nl_name="mom",
         ),
     ]
 
@@ -110,55 +119,63 @@ class BGCIronForcingConfigurator(BaseConfigurator):
         super().__init__(case_session_id=case_session_id, case_grid_name=case_grid_name)
 
     def configure(self):
-        feventflux_filepath = f"feventflux_5gmol_{self.get_input_param('case_grid_name')}_{self.get_input_param('case_session_id')}.nc"
-        fesedflux_filepath = f"fesedflux_total_reduce_oxic_{self.get_input_param('case_grid_name')}_{self.get_input_param('case_session_id')}.nc"
-        fesedfluxred_filepath = f"fesedfluxred_{self.get_input_param('case_grid_name')}_{self.get_input_param('case_session_id')}.nc"
-        self.set_output_param("MARBL_FESEDFLUX_FILE", fesedflux_filepath)
-        self.set_output_param("MARBL_FEVENTFLUX_FILE", feventflux_filepath)
-        self.set_output_param("MARBL_FESEDFLUXRED_FILE", fesedfluxred_filepath)
+        self.set_output_param(
+            "MARBL_FE_INTERIOR_SOURCE_FILE",
+            f"fe_sources_{self.get_input_param('case_grid_name')}_{self.get_input_param('case_session_id')}.nc",
+        )
         super().configure()
 
     def process(self, ctx):
-        """Create dummy iron forcing files for MARBL."""
+        """Create a zero iron source file for MARBL, laid out like CESM's
+        fe_sources_*.nc files (FE_SOURCE_SED, FE_SOURCE_REDSED and
+        FE_SOURCE_VENT on DEPTH x ny x nx)."""
         nx, ny = ctx.grid.nx, ctx.grid.ny
         depth = 103
         depth_edges = depth + 1
         dz = 6000.0 / depth
         DEPTH = np.linspace(dz / 2, 6000.0 - dz / 2, depth)
         DEPTH_EDGES = np.linspace(0, 6000, depth_edges)
+        long_names = {
+            "FE_SOURCE_SED": "Fe Sediment Flux",
+            "FE_SOURCE_REDSED": "Fe Red Sediment Flux",
+            "FE_SOURCE_VENT": "Fe Vent Flux",
+        }
         ds = xr.Dataset(
             {
                 "DEPTH": (["DEPTH"], DEPTH),
                 "DEPTH_EDGES": (["DEPTH_EDGES"], DEPTH_EDGES),
-                "FESEDFLUXIN": (
-                    ["DEPTH", "ny", "nx"],
-                    np.zeros((depth, ny, nx), dtype=np.float32),
-                ),
-                "KMT": (["ny", "nx"], np.zeros((ny, nx), dtype=np.int32)),
-                "TAREA": (["ny", "nx"], np.zeros((ny, nx), dtype=np.float64)),
+                "geolat": (["ny", "nx"], np.asarray(ctx.grid.tlat, dtype=np.float32)),
+                "geolon": (["ny", "nx"], np.asarray(ctx.grid.tlon, dtype=np.float32)),
             }
         )
-        # Assign attributes
+        for var, long_name in long_names.items():
+            ds[var] = (
+                ["DEPTH", "ny", "nx"],
+                np.zeros((depth, ny, nx), dtype=np.float32),
+            )
+            ds[var].attrs = {
+                "_FillValue": 1.0e20,
+                "units": "micromol/m^2/d",
+                "long_name": long_name,
+                "coordinates": "geolat geolon",
+            }
         ds["DEPTH"].attrs = {"units": "m", "edges": "DEPTH_EDGES"}
         ds["DEPTH_EDGES"].attrs = {"units": "m"}
-        ds["FESEDFLUXIN"].attrs = {
-            "_FillValue": 1.0e20,
-            "units": "micromol/m^2/d",
-            "long_name": "Fe sediment flux (total)",
+        ds["geolat"].attrs = {
+            "units": "degrees_north",
+            "long_name": "Latitude of tracer (T) points",
         }
-        ds["TAREA"].attrs = {"units": "m^2"}
-        # Add global attributes
+        ds["geolon"].attrs = {
+            "units": "degrees_east",
+            "long_name": "Longitude of tracer (T) points",
+        }
         ds.attrs = {
-            "history": "Created with xarray (this file is empty)",
+            "history": "Created by CrocoDash (all iron sources are zero)",
         }
         ds.to_netcdf(
-            ctx.inputdir / "ocn" / self.get_output_param("MARBL_FESEDFLUX_FILE")
-        )
-        ds.to_netcdf(
-            ctx.inputdir / "ocn" / self.get_output_param("MARBL_FEVENTFLUX_FILE")
-        )
-        ds.to_netcdf(
-            ctx.inputdir / "ocn" / self.get_output_param("MARBL_FESEDFLUXRED_FILE")
+            ctx.inputdir
+            / "ocn"
+            / self.get_output_param("MARBL_FE_INTERIOR_SOURCE_FILE")
         )
 
 
@@ -180,12 +197,9 @@ class BGCRiverNutrientsConfigurator(BaseConfigurator):
             comment="Calendar names (cf/cesm/mom6) for the river nutrients output",
         ),
     ]
+    # READ_RIV_FLUXES is set by BGCConfigurator, which sees whether this
+    # configurator is active.
     output_params = [
-        UserNLConfigParam(
-            "READ_RIV_FLUXES",
-            comment="Enable river nutrient fluxes in MOM6",
-            user_nl_name="mom",
-        ),
         UserNLConfigParam(
             "RIV_FLUX_FILE",
             comment="River nutrient flux file",
@@ -221,7 +235,6 @@ class BGCRiverNutrientsConfigurator(BaseConfigurator):
 
     def configure(self):
         river_nutrients_nnsm_filepath = f"river_nutrients_{self.get_input_param('case_grid_name')}_{self.get_input_param('case_session_id')}_nnsm.nc"
-        self.set_output_param("READ_RIV_FLUXES", "True")
         self.set_output_param("RIV_FLUX_FILE", river_nutrients_nnsm_filepath)
 
         super().configure()

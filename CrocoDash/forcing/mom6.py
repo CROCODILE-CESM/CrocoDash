@@ -578,8 +578,16 @@ class ConditionsConfigurator(BaseConfigurator):
         # REGRID stays at 30 days. Its per-chunk cost is real work rather than
         # waiting, so slicing it finer mostly buys more chunk files to merge.
         # Power users can override either in config.json.
-        self.set_output_param("get_step_days", 7)
-        self.set_output_param("regrid_step_days", 30)
+        #
+        # CESM_POP_OUTPUT is fetched and regridded as one chunk: each of its
+        # GET chunks holds the whole source file rather than just that chunk's
+        # dates, so chunking it gives non-monotonic time and empty OBC files.
+        if product_name == "cesm_pop_output":
+            self.set_output_param("get_step_days", 100000)
+            self.set_output_param("regrid_step_days", 100000)
+        else:
+            self.set_output_param("get_step_days", 7)
+            self.set_output_param("regrid_step_days", 30)
         self.set_output_param(
             "boundary_number_conversion",
             {b: i + 1 for i, b in enumerate(boundaries)},

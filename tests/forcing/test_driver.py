@@ -308,7 +308,7 @@ def test_run_workflow_auto_enables_dependency(mock_cs, tmp_path):
                         "mom6": "noleap",
                     },
                 },
-                "outputs": {"READ_RIV_FLUXES": "True", "RIV_FLUX_FILE": "riv.nc"},
+                "outputs": {"RIV_FLUX_FILE": "riv.nc"},
             },
         },
     )
