@@ -9,6 +9,7 @@ import xarray as xr
 from CrocoDash.forcing.base import WorkflowContext
 from CrocoDash.raw_data_access.base import NOLEAP
 from CrocoDash.forcing.bgc import (
+    BGCConfigurator,
     BGCICConfigurator,
     BGCIronForcingConfigurator,
     BGCRiverNutrientsConfigurator,
@@ -45,43 +46,57 @@ def test_bgcic_process_copies_file(tmp_path):
 
 
 def test_bgcironforcing_process(tmp_path):
+    import numpy as np
+
     (tmp_path / "ocn").mkdir()
-    depth, ny, nx = 103, 60, 60
+    depth, ny, nx = 103, 60, 50
 
     configurator = BGCIronForcingConfigurator(
         case_session_id="abc123", case_grid_name="test"
     )
-    configurator.set_output_param("MARBL_FESEDFLUX_FILE", "fesed.nc")
-    configurator.set_output_param("MARBL_FEVENTFLUX_FILE", "fevent.nc")
-    configurator.set_output_param("MARBL_FESEDFLUXRED_FILE", "fesedred.nc")
+    configurator.set_output_param("MARBL_FE_INTERIOR_SOURCE_FILE", "fe_sources.nc")
 
     ctx = _make_ctx(tmp_path)
-    ctx.grid = SimpleNamespace(nx=nx, ny=ny)
+    ctx.grid = SimpleNamespace(
+        nx=nx, ny=ny, tlat=np.zeros((ny, nx)), tlon=np.zeros((ny, nx))
+    )
 
     configurator.process(ctx)
 
-    assert (tmp_path / "ocn" / "fesed.nc").exists()
-    assert (tmp_path / "ocn" / "fevent.nc").exists()
-    for path, main_var in [
-        (tmp_path / "ocn" / "fesed.nc", "FESEDFLUXIN"),
-        (tmp_path / "ocn" / "fevent.nc", "FESEDFLUXIN"),
-    ]:
-        ds = xr.open_dataset(path)
-
+    assert sorted(p.name for p in (tmp_path / "ocn").iterdir()) == ["fe_sources.nc"]
+    with xr.open_dataset(tmp_path / "ocn" / "fe_sources.nc") as ds:
         assert ds.sizes["DEPTH"] == depth
+        assert ds.sizes["DEPTH_EDGES"] == depth + 1
         assert ds.sizes["ny"] == ny
         assert ds.sizes["nx"] == nx
-        assert ds.sizes["DEPTH_EDGES"] == depth + 1
+        for var in ["FE_SOURCE_SED", "FE_SOURCE_REDSED", "FE_SOURCE_VENT"]:
+            assert ds[var].dims == ("DEPTH", "ny", "nx")
+            assert ds[var].attrs["units"] == "micromol/m^2/d"
+            assert (ds[var] == 0).all()
+        assert "geolat" in ds and "geolon" in ds
 
-        assert main_var in ds
-        assert "DEPTH" in ds
-        assert "DEPTH_EDGES" in ds
-        assert "KMT" in ds
-        assert "TAREA" in ds
 
-        assert ds[main_var].shape == (depth, ny, nx)
+@pytest.mark.parametrize(
+    "registry, read_riv_fluxes",
+    [
+        (None, "False"),
+        (SimpleNamespace(is_active=lambda name: False), "False"),
+        (SimpleNamespace(is_active=lambda name: name == "bgcrivernutrients"), "True"),
+    ],
+)
+def test_bgc_configure_user_nl(registry, read_riv_fluxes):
+    configurator = BGCConfigurator()
+    configurator.registry = registry
 
-        ds.close()
+    with patch("CrocoDash.forcing.base.user_nl_blocks.write") as write:
+        configurator.configure()
+
+    written = {
+        model: {var: val for _, pairs in groups for var, val in pairs}
+        for _, model, groups in (c.args for c in write.call_args_list)
+    }
+    assert written["mom"]["READ_RIV_FLUXES"] == read_riv_fluxes
+    assert written["marbl"] == {"lvariable_NtoC": ".false."}
 
 
 @pytest.mark.slow
