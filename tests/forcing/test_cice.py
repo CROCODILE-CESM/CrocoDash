@@ -7,6 +7,8 @@ import numpy as np
 import pytest
 import xarray as xr
 
+from mom6_forge.grid import Grid
+
 from CrocoDash.forcing.base import WorkflowContext
 from CrocoDash.forcing import cice as cice_mod
 from CrocoDash.forcing.cice import (
@@ -415,3 +417,229 @@ def test_dynamics_substeps(ice_dt, min_dx, expected):
     ndtd = dynamics_substeps(ice_dt, min_dx)
     assert ndtd == expected
     assert MAX_ICE_SPEED * ice_dt / ndtd <= MAX_CELL_FRACTION * min_dx
+
+
+# =============================================================================
+# uvel/vvel rotation (_regrid_cice_full_grid) -- P2, found in v09: CICE
+# restart uvel/vvel are components along the SOURCE grid's own local axes,
+# not east/north, so a nearest-neighbor regrid onto a differently-oriented
+# TARGET grid needs source-axes -> earth -> target-axes, same as the
+# regional_mom6 IC/OBC velocity-rotation fix. Below, "grid-frame" always means
+# CICE's own ANGLE convention (ice_grid.F90: "angle between local x direction
+# and true east"), independently re-derived from ice_import_export.F90's
+# ANGLET formula in _rotate's docstring.
+# =============================================================================
+
+
+def _independent_grid_to_earth(u, v, angle):
+    """ice_import_export.F90's earth->grid formula, solved for its own
+    inverse by hand (not by calling _rotate) -- an independent re-derivation
+    of the sign convention _rotate implements, not just its mirror image.
+    Its earth->grid is u_g = u_e*cos(a) + v_e*sin(a); v_g = v_e*cos(a) -
+    u_e*sin(a). That 2x2 (rotation) matrix's inverse is its transpose, giving
+    grid->earth: u_e = u_g*cos(a) - v_g*sin(a); v_e = u_g*sin(a) + v_g*cos(a).
+    """
+    c, s = np.cos(angle), np.sin(angle)
+    return u * c - v * s, u * s + v * c
+
+
+def test_rotate_matches_independent_cice_angle_convention():
+    rng = np.random.default_rng(0)
+    u, v, angle = (
+        rng.uniform(-5, 5, 20),
+        rng.uniform(-5, 5, 20),
+        rng.uniform(-np.pi, np.pi, 20),
+    )
+    got = cice_mod._rotate(u, v, angle)
+    want = _independent_grid_to_earth(u, v, angle)
+    np.testing.assert_allclose(got, want)
+
+
+def test_rotate_is_identity_at_zero_angle():
+    u, v = np.array([3.0, -1.0]), np.array([0.0, 2.0])
+    got_u, got_v = cice_mod._rotate(u, v, np.zeros_like(u))
+    np.testing.assert_allclose(got_u, u)
+    np.testing.assert_allclose(got_v, v)
+
+
+def _make_cice_ds(grid, uvel_earth, vvel_earth, extra=None):
+    """A synthetic CICE restart-shaped Dataset from a mom6_forge Grid, with
+    uvel/vvel set (via the grid's own ANGLE) to reproduce a known earth-frame
+    velocity (uvel_earth, vvel_earth) -- plus a mask and one stress-tensor
+    corner's worth of fields per U_POINT_VAR_PREFIXES.
+
+    Plain data variables throughout (not xr coords), matching exactly how
+    get_cice_restart_subset attaches tlon/tlat/ulon/ulat/angle in production
+    (``ds[name] = ...`` does not create a coordinate) -- the thing
+    _regrid_cice_full_grid's t_vars/u_vars filtering has to exclude from
+    regridding.
+    """
+    tlon, tlat = grid.tlon.values, grid.tlat.values
+    ulon, ulat = grid.qlon.values[1:, 1:], grid.qlat.values[1:, 1:]
+    angle = np.radians(grid.angle_q.values[1:, 1:])
+    u_grid, v_grid = _independent_grid_to_earth(uvel_earth, vvel_earth, -angle)
+    ny, nx = tlon.shape
+    data = {
+        "uvel": (("nj", "ni"), u_grid),
+        "vvel": (("nj", "ni"), v_grid),
+        "iceumask": (("nj", "ni"), np.ones((ny, nx))),
+        "stressp_1": (("nj", "ni"), np.full((ny, nx), 3.0)),
+        "stressm_1": (("nj", "ni"), np.full((ny, nx), 5.0)),
+        "stress12_1": (("nj", "ni"), np.full((ny, nx), 7.0)),
+        "aicen": (("ncat", "nj", "ni"), np.full((1, ny, nx), 0.5)),
+        "tlon": (("nj", "ni"), tlon),
+        "tlat": (("nj", "ni"), tlat),
+        "ulon": (("nj", "ni"), ulon),
+        "ulat": (("nj", "ni"), ulat),
+        "angle": (("nj", "ni"), angle),
+    }
+    if extra:
+        data.update(extra)
+    return xr.Dataset(data)
+
+
+def _direction_deg(u, v):
+    return np.degrees(np.arctan2(v, u))
+
+
+def test_regrid_cice_full_grid_rotates_velocity_onto_target_axes():
+    """Source and target are two differently-rotated rectangles (30 deg and
+    -20 deg): a uniform eastward earth-frame flow set on the source must come
+    back, after the regrid, matching the analytic target-frame truth -- not
+    the source's own (unrotated) grid-frame numbers, which is what the P2 bug
+    silently regridded as scalars.
+    """
+    source_grid = Grid.from_center(
+        center_lat=70.0,
+        center_lon=-40.0,
+        width_m=400_000,
+        height_m=400_000,
+        resolution_m=50_000,
+        angle_deg=30.0,
+    )
+    target_grid = Grid.from_center(
+        center_lat=72.0,
+        center_lon=-38.0,
+        width_m=300_000,
+        height_m=300_000,
+        resolution_m=40_000,
+        angle_deg=-20.0,
+    )
+    ds = _make_cice_ds(source_grid, uvel_earth=1.0, vvel_earth=0.0)
+
+    out = cice_mod._regrid_cice_full_grid(ds, target_grid)
+
+    target_angle = np.radians(target_grid.angle_q.values[1:, 1:])
+    u_truth, v_truth = _independent_grid_to_earth(1.0, 0.0, -target_angle)
+    truth_dir = _direction_deg(u_truth, v_truth)
+    got_dir = _direction_deg(out["uvel"].values, out["vvel"].values)
+    err = (got_dir - truth_dir + 180.0) % 360.0 - 180.0
+    assert np.max(np.abs(err)) < 1e-6, f"max direction error {np.max(np.abs(err))} deg"
+
+    # The pre-fix bug regridded uvel/vvel as unrotated scalars, so it would
+    # have reproduced the *source* grid-frame numbers instead -- confirm the
+    # fixed output is not just that (source and target angles differ by 50
+    # deg here, so a real rotation must have happened).
+    source_grid_u = np.cos(np.radians(30.0))
+    assert not np.allclose(out["uvel"].values, source_grid_u, atol=0.05)
+
+
+class _ZeroAngleGrid:
+    """A stand-in exposing only what _regrid_cice_full_grid reads off
+    ``grid``, with a real Grid's coordinates but its ANGLE forced to exactly
+    zero -- a real Grid.from_center(angle_deg=0.0) still has a small nonzero
+    angle_q from genuine great-circle grid curvature (a few tenths of a
+    degree, growing with box size and center_lat), which would make an
+    identity check against it flaky rather than exact."""
+
+    def __init__(self, real_grid):
+        self.tlon, self.tlat = real_grid.tlon, real_grid.tlat
+        self.qlon, self.qlat = real_grid.qlon, real_grid.qlat
+        self.angle_q = xr.zeros_like(real_grid.angle_q)
+
+
+def test_regrid_cice_full_grid_is_a_noop_at_zero_angle():
+    """Zero-angle identity: an unrotated source onto an unrotated target
+    reproduces the un-rotated (old-code) result exactly."""
+    source_grid = _ZeroAngleGrid(
+        Grid.from_center(
+            center_lat=10.0,
+            center_lon=20.0,
+            width_m=400_000,
+            height_m=400_000,
+            resolution_m=50_000,
+            angle_deg=0.0,
+        )
+    )
+    target_grid = _ZeroAngleGrid(
+        Grid.from_center(
+            center_lat=10.0,
+            center_lon=20.0,
+            width_m=300_000,
+            height_m=300_000,
+            resolution_m=40_000,
+            angle_deg=0.0,
+        )
+    )
+    ds = _make_cice_ds(source_grid, uvel_earth=1.0, vvel_earth=-0.4)
+
+    out = cice_mod._regrid_cice_full_grid(ds, target_grid)
+
+    np.testing.assert_allclose(out["uvel"].values, 1.0, atol=1e-8)
+    np.testing.assert_allclose(out["vvel"].values, -0.4, atol=1e-8)
+
+
+def test_regrid_cice_full_grid_zeros_stress_tensor_keeps_trace():
+    """stressm_N/stress12_N are true tensor components (rotate with 2*theta,
+    not theta) -- zeroed rather than left as wrongly-rotated scalars.
+    stressp_N (the trace) is rotation-invariant and needs no special
+    handling, so it survives as the plain regridded scalar."""
+    source_grid = Grid.from_center(
+        center_lat=70.0,
+        center_lon=-40.0,
+        width_m=400_000,
+        height_m=400_000,
+        resolution_m=50_000,
+        angle_deg=25.0,
+    )
+    target_grid = Grid.from_center(
+        center_lat=70.0,
+        center_lon=-40.0,
+        width_m=300_000,
+        height_m=300_000,
+        resolution_m=40_000,
+        angle_deg=25.0,
+    )
+    ds = _make_cice_ds(source_grid, uvel_earth=1.0, vvel_earth=0.0)
+
+    out = cice_mod._regrid_cice_full_grid(ds, target_grid)
+
+    np.testing.assert_allclose(out["stressm_1"].values, 0.0)
+    np.testing.assert_allclose(out["stress12_1"].values, 0.0)
+    np.testing.assert_allclose(out["stressp_1"].values, 3.0)
+
+
+def test_regrid_cice_full_grid_missing_angle_raises():
+    """uvel/vvel with no source ANGLE to rotate by is a silent-wrong-answer
+    trap (the P2 bug), not something to fall back on -- fail loudly instead."""
+    source_grid = Grid.from_center(
+        center_lat=70.0,
+        center_lon=-40.0,
+        width_m=400_000,
+        height_m=400_000,
+        resolution_m=50_000,
+        angle_deg=15.0,
+    )
+    target_grid = Grid.from_center(
+        center_lat=70.0,
+        center_lon=-40.0,
+        width_m=300_000,
+        height_m=300_000,
+        resolution_m=40_000,
+        angle_deg=15.0,
+    )
+    ds = _make_cice_ds(source_grid, uvel_earth=1.0, vvel_earth=0.0)
+    ds = ds.drop_vars("angle")
+
+    with pytest.raises(ValueError, match="angle"):
+        cice_mod._regrid_cice_full_grid(ds, target_grid)
