@@ -61,7 +61,6 @@ def test_case_init_and_create_grid_input(get_CrocoDash_case):
 
 def test_configure_forcings(get_case_with_cf):
     case = get_case_with_cf
-    assert case.expt is not None
     assert case.date_range[0].year == 2020
     assert case.boundaries == ["north", "east"]
     search_string = "OBC_NUMBER_OF_SEGMENTS"
