@@ -834,8 +834,10 @@ def process_obc_conditions(
     # Compute per-boundary download bboxes using the bathymetry tmask so we only
     # request data over ocean cells (tighter than the full supergrid edge extent).
     with xr.open_dataset(hgrid_path) as hgrid_ds:
-        assert not Grid.is_cyclic_x(hgrid_ds), "bboxes not supported for cyclic grids."
-        if bathymetry_path:
+        # The tmask bboxes are a plain lon min/max over an edge's wet cells,
+        # which means nothing on a cyclic-x grid whose north/south edges go
+        # all the way round; get_bounding_boxes returns the full circle there.
+        if bathymetry_path and not Grid.is_cyclic_x(hgrid_ds):
             grid_obj = Grid.from_supergrid(hgrid_path)
             topo = Topo.from_topo_file(
                 grid=grid_obj,
@@ -858,7 +860,8 @@ def process_obc_conditions(
                 for b in boundaries
             }
             logger.info(
-                "No bathymetry_path given; using full supergrid bounding boxes."
+                "No bathymetry_path given, or cyclic-x grid; using full supergrid "
+                "bounding boxes."
             )
 
     raw_path.mkdir(exist_ok=True)
