@@ -262,10 +262,15 @@ class BGCRiverNutrientsConfigurator(BaseConfigurator):
         glofas_grid_t_points["lat"] = global_river_nutrients.lat
         glofas_grid_t_points["lat"].attrs["units"] = "degrees"
         print("Creating regridder for river nutrients...")
+        # The river nutrient source is global, so regrid it as periodic:
+        # otherwise model cells within half a source cell of 0/360 fall in
+        # its seam gap and come out unmapped (NaN) -- always one column on a
+        # cyclic-x grid, and any regional domain crossing the meridian.
         regridder = xe.Regridder(
             glofas_grid_t_points,
             grid_t_points,
             method="bilinear",
+            periodic=True,
             reuse_weights=True,
             filename=mapping_file,
         )
