@@ -1,0 +1,6 @@
+case:
+  cesmroot: <CESM>
+  caseroot: <casedir>
+  inputdir: <inputdir>
+topo:
+  bathymetry_path: <GEBCO>

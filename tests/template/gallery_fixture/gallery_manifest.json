@@ -1,0 +1,11 @@
+{
+  "notebooks": {
+    "crocodash.features.add_chl": "crocodash/features/add_chl.ipynb",
+    "crocodash.tutorial-ocn": "crocodash/tutorial-ocn.ipynb"
+  },
+  "assets": {
+    "starter_case.yaml": "crocodash/advanced/starter_case.yaml",
+    "submit_forcings.pbs": "crocodash/advanced/submit_forcings.pbs"
+  },
+  "known_paths": "crocogallery/known_paths.json"
+}

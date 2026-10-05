@@ -77,9 +77,28 @@ a standalone file and `--notebook` is ignored, with a message saying so.
 
 ---
 
+## Where templates come from: `--gallery-ref` and `--gallery-path`
+
+Templates are not bundled with CrocoDash. Each time you run `crocodash template`, it downloads what it needs (the notebook, `known_paths.json`, and the pbs/yaml files) from the [CrocoGallery repo](https://github.com/CROCODILE-CESM/CrocoGallery), so it needs network access.
+
+By default it fetches the gallery version pinned to your CrocoDash release, so the notebooks match the CrocoDash API you have installed.
+
+```bash
+# Newest gallery notebooks (may need a newer CrocoDash than you have)
+crocodash template --output my_case.ipynb --gallery-ref main
+
+# Offline, or developing gallery notebooks: read a local CrocoGallery checkout
+crocodash template --output my_case.ipynb --gallery-path ~/CrocoGallery
+export CROCODASH_GALLERY_PATH=~/CrocoGallery   # same, for every run
+```
+
+If the download fails (no network, firewalled compute node), the error message points you at `--gallery-path`.
+
+---
+
 ## Available machines
 
-Machine path registries are defined in `crocogallery/known_paths.json` inside the CrocoGallery repo. Today there is one: `glade`. To add a new environment (e.g. `"local"`, `"perlmutter"`), add a new top-level key with the relevant path mappings — no Python changes needed.
+Machine path registries are defined in `crocogallery/known_paths.json` inside the CrocoGallery repo, and are fetched along with the notebooks (see below). Today there is one: `glade`. To add a new environment (e.g. `"local"`, `"perlmutter"`), add a new top-level key with the relevant path mappings — no Python changes needed.
 
 Passing an unknown machine name prints the available options:
 

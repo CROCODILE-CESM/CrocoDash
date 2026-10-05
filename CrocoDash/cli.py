@@ -99,18 +99,24 @@ def _duplicate_case(args):
 
 
 def _template(args):
-    """Thin wrapper over crocogallery's template renderer.
+    """Thin wrapper over CrocoDash.template's renderer.
 
-    The gallery owns the template sources -- notebooks, known_paths.json, and
-    the loose pbs/yaml assets -- so it owns the rendering too. This only maps
-    CLI arguments onto that call and keeps the error output friendly.
+    The template sources -- notebooks, known_paths.json, and the loose pbs/yaml
+    assets -- live in CrocoGallery and are fetched from a pinned ref (or read
+    from a local checkout). This only maps CLI arguments onto that call and
+    keeps the error output friendly.
     """
-    from crocogallery import list_notebooks, write_template
-    from crocogallery.template import DEFAULT_TEMPLATE_NOTEBOOK_ID, uses_notebook
+    from CrocoDash.template import (
+        DEFAULT_TEMPLATE_NOTEBOOK_ID,
+        GallerySource,
+        uses_notebook,
+        write_template,
+    )
 
     try:
+        source = GallerySource(path=args.gallery_path, ref=args.gallery_ref)
         if args.list_notebooks:
-            for nb_id in sorted(list_notebooks()):
+            for nb_id in sorted(source.list_notebooks()):
                 print(nb_id)
             return
 
@@ -132,6 +138,7 @@ def _template(args):
             notebook_id=args.notebook,
             machine=args.machine,
             kind=args.kind,
+            source=source,
         )
         print(f"Template written to: {output}")
         if not args.machine:
@@ -342,7 +349,11 @@ def main():
         default=None,
         help="Pre-fill known dataset paths for this machine (e.g. glade). Omit to leave <KEY> placeholders.",
     )
-    from crocogallery.template import DEFAULT_TEMPLATE_NOTEBOOK_ID
+    from CrocoDash.template import (
+        DEFAULT_TEMPLATE_NOTEBOOK_ID,
+        GALLERY_PATH_ENV,
+        GALLERY_REF,
+    )
 
     template_parser.add_argument(
         "--notebook",
@@ -359,6 +370,24 @@ def main():
         default=False,
         dest="list_notebooks",
         help="Print all available gallery notebook IDs and exit.",
+    )
+    template_parser.add_argument(
+        "--gallery-ref",
+        default=GALLERY_REF,
+        help=(
+            "CrocoGallery git ref (tag, commit, or branch) to fetch templates from "
+            f"(default: {GALLERY_REF}, the version pinned to this CrocoDash). "
+            "Pass 'main' for the newest notebooks, which may need a newer CrocoDash."
+        ),
+    )
+    template_parser.add_argument(
+        "--gallery-path",
+        default=None,
+        help=(
+            "Read templates from a local CrocoGallery checkout instead of "
+            f"downloading them (also settable via ${GALLERY_PATH_ENV}). "
+            "Use this offline or when developing gallery notebooks."
+        ),
     )
     template_parser.set_defaults(func=_template, subparser=template_parser)
 

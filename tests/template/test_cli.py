@@ -5,8 +5,22 @@ from unittest.mock import patch
 import nbformat
 import pytest
 
-from crocogallery import list_notebooks, load_paths
-from crocogallery.template import DEFAULT_TEMPLATE_NOTEBOOK_ID
+from CrocoDash.template import (
+    DEFAULT_TEMPLATE_NOTEBOOK_ID,
+    GALLERY_PATH_ENV,
+    GallerySource,
+    load_paths,
+)
+
+# A minimal stand-in for a CrocoGallery checkout, so these tests never touch
+# the network. It mirrors the real gallery's layout and manifest.
+FIXTURE_GALLERY = Path(__file__).parent / "gallery_fixture"
+
+
+@pytest.fixture(autouse=True)
+def fixture_gallery(monkeypatch):
+    monkeypatch.setenv(GALLERY_PATH_ENV, str(FIXTURE_GALLERY))
+    return GallerySource(path=FIXTURE_GALLERY)
 
 
 def run_main(argv):
@@ -28,7 +42,7 @@ def test_template_notebook_no_machine(tmp_path):
     assert "<GEBCO>" in code, "Placeholders should remain when --machine is not set"
 
 
-def test_template_notebook_with_machine(tmp_path):
+def test_template_notebook_with_machine(tmp_path, fixture_gallery):
     output = tmp_path / "out.ipynb"
     run_main(["template", "--output", str(output), "--machine", "glade"])
     assert output.exists()
@@ -36,7 +50,7 @@ def test_template_notebook_with_machine(tmp_path):
     code = "\n".join(c.source for c in nb.cells if c.cell_type == "code")
     assert "<GEBCO>" not in code, "Placeholders should be replaced with --machine"
     # Assert *a* known path was injected (load from source rather than hardcoding)
-    glade_paths = load_paths("glade")
+    glade_paths = load_paths("glade", fixture_gallery)
     assert any(
         v in code for v in glade_paths.values()
     ), "Expected at least one glade path value to appear in output"
@@ -54,13 +68,13 @@ def test_template_python_no_machine(tmp_path):
     assert text.startswith("# %%"), "First cell must start with # %% marker"
 
 
-def test_template_python_with_machine(tmp_path):
+def test_template_python_with_machine(tmp_path, fixture_gallery):
     output = tmp_path / "out.py"
     run_main(["template", "--output", str(output), "--machine", "glade"])
     assert output.exists()
     text = output.read_text()
     assert "<GEBCO>" not in text
-    glade_paths = load_paths("glade")
+    glade_paths = load_paths("glade", fixture_gallery)
     assert any(v in text for v in glade_paths.values())
     assert text.startswith("# %%"), "First cell must start with # %% marker"
     assert text.count("# %%") > 1, "Multiple cells should each have a # %% marker"
@@ -185,17 +199,13 @@ def test_template_yaml_unknown_machine(tmp_path, capsys):
 # --- --notebook flag ---
 
 
-def test_template_custom_notebook(tmp_path):
+def test_template_custom_notebook(tmp_path, fixture_gallery):
     """Any gallery notebook can be used as the template source."""
-    notebooks = list_notebooks()
+    notebooks = fixture_gallery.list_notebooks()
     # pick a notebook other than the default -- list_notebooks() only ever
     # returns .ipynb paths, so no suffix filter is needed here
     alt_id = next(
-        (
-            nid
-            for nid in sorted(notebooks)
-            if nid != "crocodash.tutorials.crocodash_tutorial"
-        ),
+        (nid for nid in sorted(notebooks) if nid != DEFAULT_TEMPLATE_NOTEBOOK_ID),
         None,
     )
     if alt_id is None:
@@ -261,3 +271,74 @@ def test_template_yaml_ignores_custom_notebook(tmp_path, capsys):
     )
     assert output.exists()
     assert "ignored" in capsys.readouterr().out
+
+
+# --- gallery source ---
+
+
+def test_template_gallery_path_flag(tmp_path, monkeypatch):
+    # --gallery-path works on its own, without the env var.
+    monkeypatch.delenv(GALLERY_PATH_ENV)
+    output = tmp_path / "out.py"
+    run_main(
+        ["template", "--output", str(output), "--gallery-path", str(FIXTURE_GALLERY)]
+    )
+    assert "<GEBCO>" in output.read_text()
+
+
+def test_template_bad_gallery_path(tmp_path, capsys):
+    output = tmp_path / "out.py"
+    with pytest.raises(SystemExit) as exc_info:
+        run_main(["template", "--output", str(output), "--gallery-path", str(tmp_path)])
+    assert exc_info.value.code == 1
+    assert "gallery_manifest.json" in capsys.readouterr().err
+    assert not output.exists()
+
+
+def _fake_urlopen(requested):
+    """urlopen stand-in that serves files out of the fixture gallery."""
+    import io
+
+    def urlopen(url, timeout=None):
+        requested.append(url)
+        relpath = url.split("/", 6)[6]  # strip https://host/org/repo/ref/
+        return io.BytesIO((FIXTURE_GALLERY / relpath).read_bytes())
+
+    return urlopen
+
+
+def test_template_remote_fetch(tmp_path, monkeypatch):
+    import urllib.request
+
+    monkeypatch.delenv(GALLERY_PATH_ENV)
+    requested = []
+    monkeypatch.setattr(urllib.request, "urlopen", _fake_urlopen(requested))
+
+    ref = "v0.0.0-test"
+    output = tmp_path / "out.ipynb"
+    run_main(["template", "--output", str(output), "--gallery-ref", ref])
+    local = tmp_path / "local.ipynb"
+    run_main(
+        ["template", "--output", str(local), "--gallery-path", str(FIXTURE_GALLERY)]
+    )
+    assert requested
+    assert all(f"/CrocoGallery/{ref}/" in url for url in requested)
+    assert output.read_text() == local.read_text()
+
+
+def test_template_remote_unreachable(tmp_path, monkeypatch, capsys):
+    import urllib.error
+    import urllib.request
+
+    monkeypatch.delenv(GALLERY_PATH_ENV)
+
+    def offline(url, timeout=None):
+        raise urllib.error.URLError("network is unreachable")
+
+    monkeypatch.setattr(urllib.request, "urlopen", offline)
+    output = tmp_path / "out.py"
+    with pytest.raises(SystemExit) as exc_info:
+        run_main(["template", "--output", str(output)])
+    assert exc_info.value.code == 1
+    assert "--gallery-path" in capsys.readouterr().err
+    assert not output.exists()

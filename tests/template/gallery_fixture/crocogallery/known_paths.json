@@ -1,0 +1,11 @@
+{
+  "glade": {
+    "GEBCO": "/fake/data/GEBCO.nc",
+    "TPXO_H": "/fake/data/h_tpxo.nc",
+    "CHL": "/fake/data/chl.nc",
+    "CESM": "Checkout",
+    "inputdir": "fill_in_id",
+    "casedir": "fill_in_cd",
+    "PROJECT": "PROJ0001"
+  }
+}
