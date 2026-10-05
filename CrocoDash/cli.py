@@ -98,63 +98,6 @@ def _duplicate_case(args):
     print(f"Duplicated case created at: {new_case.caseroot}")
 
 
-def _template(args):
-    """Thin wrapper over CrocoDash.template's renderer.
-
-    The template sources -- notebooks, known_paths.json, and the loose pbs/yaml
-    assets -- live in CrocoGallery and are fetched from a pinned ref (or read
-    from a local checkout). This only maps CLI arguments onto that call and
-    keeps the error output friendly.
-    """
-    from CrocoDash.template import (
-        DEFAULT_TEMPLATE_NOTEBOOK_ID,
-        GallerySource,
-        uses_notebook,
-        write_template,
-    )
-
-    try:
-        source = GallerySource(path=args.gallery_path, ref=args.gallery_ref)
-        if args.list_notebooks:
-            for nb_id in sorted(source.list_notebooks()):
-                print(nb_id)
-            return
-
-        if not args.output:
-            args.subparser.error(
-                "--output is required unless --list-notebooks is given."
-            )
-
-        if args.notebook != DEFAULT_TEMPLATE_NOTEBOOK_ID and not uses_notebook(
-            args.output, args.kind
-        ):
-            print(
-                f"[info] --notebook is ignored for --kind={args.kind!r} output "
-                f"{Path(args.output).suffix!r}; those templates are standalone files."
-            )
-
-        output = write_template(
-            args.output,
-            notebook_id=args.notebook,
-            machine=args.machine,
-            kind=args.kind,
-            source=source,
-        )
-        print(f"Template written to: {output}")
-        if not args.machine:
-            print("Tip: rerun with --machine glade to pre-fill known dataset paths.")
-    except KeyError as e:
-        # KeyError.__str__ reprs its (possibly multi-line) argument, which
-        # turns embedded newlines into literal "\n" -- print the original
-        # message instead so multi-line "available options" listings stay
-        # readable, then exit cleanly instead of a raw traceback.
-        print(e.args[0] if e.args else str(e), file=sys.stderr)
-        sys.exit(1)
-    except FileNotFoundError as e:
-        print(str(e), file=sys.stderr)
-        sys.exit(1)
-
-
 def _fork(args):
     from CrocoDash.shareable import ForkBundle
 
@@ -322,74 +265,6 @@ def main():
         help='JSON object controlling what non-standard CESM state to copy, e.g. \'{"xml_files": true, "user_nl": true, "source_mods": false, "xmlchanges": true}\'.',
     )
     fork_parser.set_defaults(func=_fork)
-
-    # --- template ---
-    template_parser = subparsers.add_parser(
-        "template",
-        help="Write a starter CrocoDash case file, or a PBS submission script.",
-    )
-    template_parser.add_argument(
-        "--kind",
-        choices=["case", "pbs"],
-        default="case",
-        help=(
-            "Kind of template to write. 'case' (default) writes a case definition "
-            "-- format picked by --output's suffix (.yaml for a config, .ipynb for "
-            "a notebook, .py for a script). 'pbs' writes a PBS batch script for "
-            "submitting `crocodash process` to an HPC queue."
-        ),
-    )
-    template_parser.add_argument(
-        "--output",
-        default=None,
-        help="Output path. For --kind case: .yaml, .ipynb, or .py. For --kind pbs: any path, or a .pbs suffix (which also selects the pbs template without needing --kind pbs). Required unless --list-notebooks is given.",
-    )
-    template_parser.add_argument(
-        "--machine",
-        default=None,
-        help="Pre-fill known dataset paths for this machine (e.g. glade). Omit to leave <KEY> placeholders.",
-    )
-    from CrocoDash.template import (
-        DEFAULT_TEMPLATE_NOTEBOOK_ID,
-        GALLERY_PATH_ENV,
-        GALLERY_REF,
-    )
-
-    template_parser.add_argument(
-        "--notebook",
-        default=DEFAULT_TEMPLATE_NOTEBOOK_ID,
-        help=(
-            "Gallery notebook ID to use as the template source "
-            f"(default: {DEFAULT_TEMPLATE_NOTEBOOK_ID}). "
-            "Pass --list-notebooks to see all available IDs."
-        ),
-    )
-    template_parser.add_argument(
-        "--list-notebooks",
-        action="store_true",
-        default=False,
-        dest="list_notebooks",
-        help="Print all available gallery notebook IDs and exit.",
-    )
-    template_parser.add_argument(
-        "--gallery-ref",
-        default=GALLERY_REF,
-        help=(
-            "CrocoGallery git ref (tag, commit, or branch) to fetch templates from "
-            f"(default: {GALLERY_REF}, the version pinned to this CrocoDash). "
-            "Pass 'main' for the newest notebooks, which may need a newer CrocoDash."
-        ),
-    )
-    template_parser.add_argument(
-        "--gallery-path",
-        default=None,
-        help=(
-            "Read templates from a local CrocoGallery checkout instead of "
-            f"downloading them (also settable via ${GALLERY_PATH_ENV}). "
-            "Use this offline or when developing gallery notebooks."
-        ),
-    )
-    template_parser.set_defaults(func=_template, subparser=template_parser)
 
     args = parser.parse_args()
     try:

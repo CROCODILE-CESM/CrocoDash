@@ -1,5 +1,0 @@
-#!/bin/bash
-#PBS -A <PROJECT_CODE>
-#PBS -q main
-
-crocodash process --caseroot caseroot --all

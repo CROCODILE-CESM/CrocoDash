@@ -5,7 +5,7 @@
 CrocoDash documentation is built using [Sphinx](https://www.sphinx-doc.org/) and written in [MyST (Markedly Structured Text)](https://myst-parser.readthedocs.io/) Markdown format. The documentation lives in two places: 
 
 1. in the `docs/source` folder and is hosted on GitHub Pages.
-2. In a separate github repo called CrocoGallery (not a submodule of CrocoDash; `crocodash template` fetches its notebooks over HTTP at a pinned ref, see `CrocoDash/template.py`), which hosts tutorials and a gallery for CrocoDash. This is also hosted on github pages, and is officially a Jupyter Book, which also runs in MyST. This is built and published similar to CrocoDash, but the frameowrk jupyter book is a bit different.
+2. In a separate github repo called CrocoGallery, which hosts tutorials and a gallery for CrocoDash. This is also hosted on github pages, and is officially a Jupyter Book, which also runs in MyST. This is built and published similar to CrocoDash, but the frameowrk jupyter book is a bit different.
 
 ## Building Documentation
 
