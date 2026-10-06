@@ -351,7 +351,11 @@ class BGCRiverNutrientsConfigurator(BaseConfigurator):
         # add units to all data vars
         for var in vars:
             river_nutrients_remapped_time_added[var].attrs["units"] = "mmol/cm^2/s"
-        time_units = "days since 0001-01-01 00:00:00"
+        # Reference date after 1582: before it, cftime's "standard" calendar is
+        # Julian while FMS's "gregorian" is proleptic Gregorian, so a
+        # 0001-01-01 reference put every record 2 days late in MOM6 and the
+        # first one (1900-01-01) after the run's start.
+        time_units = "days since 1900-01-01 00:00:00"
         time_calendar = calendar.cf
         time_num = cftime.date2num(
             river_nutrients_remapped_time_added["time"].values,
