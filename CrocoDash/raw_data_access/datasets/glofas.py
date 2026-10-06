@@ -9,6 +9,7 @@ class GLOFAS(DatedBaseProduct):
     product_name = "glofas"
     description = "	GLOFAS (Global Flood Awareness System) is a public river discharge/runoff Product"
     link = "https://ewds.climate.copernicus.eu/datasets/cems-glofas-historical?tab=download"
+    time_sampling = TimeSampling("D", "mean", "center")
 
     @accessmethod(
         description="Gets glofas raw data through the cdsapi package",

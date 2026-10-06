@@ -452,6 +452,8 @@ class CESM_WW3_JRA(WW3ForcingProduct):
     time_var_name = "time"
     time_units = "hours"
     calendar = GREGORIAN
+    # Six-hourly restart snapshots.
+    time_sampling = TimeSampling("6h", "point", "start")
     # Certain, not inherited: both ends of this convention are the same code
     # base -- see convention 4 in the module docstring.
     direction_convention = DIRECTION_TO

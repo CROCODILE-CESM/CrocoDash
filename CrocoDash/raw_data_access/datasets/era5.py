@@ -303,6 +303,7 @@ class ERA5_WAVE_SPECTRA(WW3ForcingProduct):
     time_var_name = "time"
     time_units = "hours"
     calendar = GREGORIAN
+    time_sampling = TimeSampling("h", "point", "start")
     # ECMWF's documented convention for param 251.140, and what this module's
     # own decode asserts on the `direction` coordinate it writes. It is NOT
     # independently verified against a known reference spectrum (see the

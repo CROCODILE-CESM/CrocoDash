@@ -8,6 +8,7 @@ class DummyProduct(DatedBaseProduct):
     product_name = "dummy"
     description = "A dummy product for testing"
     link = "dummy_link"
+    time_sampling = None
 
     @accessmethod
     def dummy_method(dates, output_folder, output_filename):
@@ -34,6 +35,7 @@ class DummyForcing(MOM6ForcingProduct):
     boundary_fill_method = "nearest"
     time_units = "days since 2000-01-01"
     calendar = GREGORIAN
+    time_sampling = TimeSampling("D")
 
     @accessmethod
     def fetch_dummy(
@@ -132,6 +134,7 @@ def test_tracer_names_check():
             boundary_fill_method = "nearest"
             time_units = "days since 2000-01-01"
             calendar = GREGORIAN
+            time_sampling = TimeSampling("D")
 
 
 def test_write_metadata():
@@ -209,3 +212,81 @@ def test_validate_all_registered_access_methods():
                 failures.append(f"{product_name}.{method_name}")
 
     assert not failures, f"validate_method failed for: {failures}"
+
+
+def test_time_sampling_must_be_declared():
+    with pytest.raises(ValueError, match="time_sampling"):
+
+        class Undeclared(DatedBaseProduct):
+            product_name = "undeclared_time_sampling"
+            description = "d"
+            link = "l"
+
+
+def test_time_sampling_must_be_a_time_sampling():
+    with pytest.raises(AssertionError, match="TimeSampling"):
+
+        class Bare(DatedBaseProduct):
+            product_name = "bare_time_sampling"
+            description = "d"
+            link = "l"
+            time_sampling = "D"
+
+
+def test_accessmethod_time_sampling_is_checked_too():
+    with pytest.raises(AssertionError, match="TimeSampling"):
+
+        class BadOverride(DatedBaseProduct):
+            product_name = "bad_override_time_sampling"
+            description = "d"
+            link = "l"
+            time_sampling = None
+
+            @accessmethod(time_sampling="MS")
+            def get(dates, output_folder, output_filename):
+                pass
+
+
+def test_user_specified_time_sampling_is_accepted():
+    class UserSpecified(DatedBaseProduct):
+        product_name = "user_specified_time_sampling"
+        description = "d"
+        link = "l"
+        time_sampling = USER_SPECIFIED
+
+    assert UserSpecified.write_metadata()["time_sampling"] == USER_SPECIFIED
+
+
+@pytest.mark.parametrize(
+    ("frequency", "days"), [("D", 1), ("MS", 31), ("6h", 0.25), ("YS", 366)]
+)
+def test_max_period_days(frequency, days):
+    assert TimeSampling(frequency).max_period_days == days
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"frequency": "not-a-freq"},
+        {"frequency": "D", "cell_method": "sum"},
+        {"frequency": "D", "anchor": "middle"},
+    ],
+)
+def test_time_sampling_rejects_bad_values(kwargs):
+    with pytest.raises(ValueError):
+        TimeSampling(**kwargs)
+
+
+def test_time_sampling_is_written_into_metadata():
+    assert DummyForcing.write_metadata()["time_sampling"] == {
+        "frequency": "D",
+        "cell_method": "mean",
+        "anchor": "center",
+    }
+
+
+def test_every_registered_dated_product_declares_time_sampling():
+    ProductRegistry.load()
+    for product in ProductRegistry.products.values():
+        if issubclass(product, DatedBaseProduct):
+            assert "time_sampling" in vars(product), product.__name__
