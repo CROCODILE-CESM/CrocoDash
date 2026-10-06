@@ -24,6 +24,7 @@ import dataclasses
 from dataclasses import dataclass
 import inspect
 import json
+import pandas as pd
 from CrocoDash.logging import setup_logger
 import tempfile
 import shutil
@@ -61,13 +62,69 @@ GREGORIAN = Calendar(cf="standard", cesm="GREGORIAN", mom6="gregorian")
 NOLEAP = Calendar(cf="noleap", cesm="NO_LEAP", mom6="noleap")
 
 
-def accessmethod(func=None, *, description=None, type=None, how_to_use=None):
+@dataclass(frozen=True)
+class TimeSampling:
+    """How a dated product samples time, so callers can size their requests to it.
+
+    frequency is a pandas frequency alias ("D", "MS", "6h", ...).
+    cell_method says what a record holds: "mean" for an average over its
+    interval (GLORYS daily means), "point" for an instantaneous value (ERA5).
+    anchor is where in that interval the record's timestamp sits: GLORYS
+    stamps daily means at noon ("center"), CESM-POP stamps monthly means at
+    the end of the month ("end").
+    """
+
+    frequency: str
+    cell_method: str = "mean"
+    anchor: str = "center"
+
+    def __post_init__(self):
+        try:
+            pd.date_range("2001-01-01", periods=2, freq=self.frequency)
+        except ValueError as e:
+            raise ValueError(
+                f"{self.frequency!r} is not a pandas frequency alias: {e}"
+            ) from e
+        if self.cell_method not in ("mean", "point"):
+            raise ValueError("cell_method must be 'mean' or 'point'")
+        if self.anchor not in ("start", "center", "end"):
+            raise ValueError("anchor must be 'start', 'center' or 'end'")
+
+    @property
+    def max_period_days(self) -> float:
+        """Longest gap between records, in days (31 for monthly, 366 for yearly).
+
+        Calendar offsets like "MS" have no fixed length, so this measures the
+        spacing of a few years of generated stamps rather than the offset.
+        """
+        stamps = pd.date_range("2001-01-01", "2005-01-01", freq=self.frequency)
+        if len(stamps) < 2:
+            stamps = pd.date_range("2001-01-01", periods=2, freq=self.frequency)
+        return stamps.to_series().diff().max() / pd.Timedelta(days=1)
+
+    def describe(self) -> str:
+        values = "means" if self.cell_method == "mean" else "instantaneous values"
+        return f"{self.frequency} {values}, stamped at interval {self.anchor}"
+
+
+# Declared by a product whose cadence depends on the source the user points it
+# at (e.g. a dataset_path of model output), so the user must give it as freq.
+USER_SPECIFIED = "user_specified"
+
+
+def accessmethod(
+    func=None, *, description=None, type=None, how_to_use=None, time_sampling=None
+):
+    """time_sampling overrides the product's own for a method that reads a
+    differently sampled source."""
+
     def decorator(f):
         f = staticmethod(f)
         f._is_access_method = True
         f._description = description
         f._type = type
         f._how_to_use = how_to_use
+        f._time_sampling = time_sampling
         return f
 
     # Case 1: decorator used WITHOUT args: @accessmethod
@@ -204,11 +261,36 @@ class BaseProduct:
 
 
 class DatedBaseProduct(BaseProduct):
-    """Specific enforcement needs for Dated Products"""
+    """Specific enforcement needs for Dated Products.
 
+    Every dated product declares its ``time_sampling``: a TimeSampling,
+    USER_SPECIFIED when the cadence depends on the source the user points it
+    at, or None for a static snapshot that ignores ``dates``.
+    """
+
+    required_metadata = BaseProduct.required_metadata + ["time_sampling"]
     required_args = BaseProduct.required_args + [
         "dates",
     ]
+
+    def __init_subclass__(cls, **kwargs):
+        # Checked before BaseProduct registers the class, so a bad declaration
+        # never reaches the registry. A missing one is left to BaseProduct's
+        # required_metadata check.
+        if getattr(cls, "product_name", None):
+            declared = [getattr(cls, "time_sampling", None)] + [
+                getattr(attr, "_time_sampling", None)
+                for attr in cls.__dict__.values()
+                if getattr(attr, "_is_access_method", False)
+            ]
+            for ts in declared:
+                assert (
+                    ts is None or ts == USER_SPECIFIED or isinstance(ts, TimeSampling)
+                ), (
+                    f"{cls.__name__} must declare time_sampling as a TimeSampling, "
+                    f"USER_SPECIFIED or None (got {ts!r})."
+                )
+        super().__init_subclass__(**kwargs)
 
     @classmethod
     def validate_method(cls, method_name, **kwargs):
