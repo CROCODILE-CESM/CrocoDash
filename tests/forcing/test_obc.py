@@ -506,6 +506,7 @@ def test_regrid_names_the_chunk_and_the_fix_when_it_has_no_records(
         {"var": ("time", [0, 1])},
         coords={"time": pd.to_datetime(["2020-01-01", "2020-03-01"])},
     ).to_netcdf(raw_file)
+    (tmp_path / "regridded").mkdir()
 
     with pytest.raises(ValueError, match="No records between 2020-01-02"):
         _regrid_boundary(
