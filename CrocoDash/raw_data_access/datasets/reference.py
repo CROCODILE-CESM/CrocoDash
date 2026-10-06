@@ -36,6 +36,7 @@ class REFERENCE_OCEAN(MOM6ForcingProduct):
     time_var_name = "time"
     time_units = "days"
     calendar = GREGORIAN
+    time_sampling = TimeSampling("D", "mean", "start")
     boundary_fill_method = "regional_mom6"
     tracer_x_coord = "longitude"
     tracer_y_coord = "latitude"
@@ -292,6 +293,7 @@ class REFERENCE_ICE(CICEForcingProduct):
     time_var_name = None
     time_units = None
     calendar = GREGORIAN
+    time_sampling = None  # static snapshot; dates are ignored
     u_x_coord = "ni"
     u_y_coord = "nj"
     v_x_coord = "ni"
@@ -397,6 +399,7 @@ class REFERENCE_WAVES(WW3ForcingProduct):
     time_var_name = "time"
     time_units = None
     calendar = GREGORIAN
+    time_sampling = TimeSampling("6h", "point", "start")
     # The synthetic spectrum below is built around waves "coming from" the
     # west (theta0 = 270), so that is what it declares.
     direction_convention = DIRECTION_COMING_FROM
