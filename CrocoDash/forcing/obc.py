@@ -50,10 +50,12 @@ logger = logging.setup_logger(__name__)
 # ---------------------------------------------------------------------------
 
 
-def _make_date_pairs(start: datetime, end: datetime, step_days):
+def _make_date_pairs(start: datetime, end: datetime, step_days, min_days: int = 1):
     """Return non-overlapping (chunk_start, chunk_end) pairs covering [start, end].
 
-    step_days=None returns a single pair spanning the full range.
+    step_days=None returns a single pair spanning the full range. A trailing
+    chunk shorter than min_days joins the one before it, so with min_days set
+    to the data's record spacing no chunk falls between two records.
     """
     if step_days is None:
         return [(start, end)]
@@ -63,6 +65,8 @@ def _make_date_pairs(start: datetime, end: datetime, step_days):
         chunk_end = min(cur + timedelta(days=int(step_days) - 1), end)
         pairs.append((cur, chunk_end))
         cur = chunk_end + timedelta(days=1)
+    if len(pairs) > 1 and (pairs[-1][1] - pairs[-1][0]).days + 1 < min_days:
+        pairs[-2:] = [(pairs[-2][0], pairs[-1][1])]
     return pairs
 
 
@@ -403,6 +407,13 @@ def _regrid_one_chunk(
         # string as covering that whole calendar day) to include chunk_end's own
         # data point instead of a midnight-anchored datetime slice excluding it.
         chunk_ds = ds_full.sel(time=slice(start_str, end_str))
+        if chunk_ds.sizes.get("time", 1) == 0:
+            raise ValueError(
+                f"[{boundary}] No records between {start_str} and {end_str}. If the "
+                "product's records are further apart than its declared "
+                "time_sampling, give their spacing with "
+                "function_overrides={'freq': ...}."
+            )
 
         regridders = regrid_chunk_fn(
             ds=chunk_ds,
@@ -498,11 +509,12 @@ def _get_boundary(
     function_name: str,
     variables: list,
     extra_args: dict,
+    min_chunk_days: int = 1,
 ) -> list:
     """Download all raw data for one boundary, chunked by get_step_days."""
     output_dir = Path(output_dir)
 
-    pairs = list(_make_date_pairs(start_date, end_date, get_step_days))
+    pairs = list(_make_date_pairs(start_date, end_date, get_step_days, min_chunk_days))
 
     # Spread work across processes. If no chunking is prescribed it falls back
     # to one processor. For get_glorys_data_script_for_cli(), generate CLI
@@ -561,6 +573,7 @@ def _regrid_boundary(
     output_folder,
     dataset_varnames: dict,
     regrid_chunk_fn,
+    min_chunk_days: int = 1,
 ) -> list:
     """Regrid all raw files for one boundary, sliced by regrid_step_days.
 
@@ -582,7 +595,9 @@ def _regrid_boundary(
     output_folder = Path(output_folder)
     (output_folder / "weights").mkdir(exist_ok=True)
 
-    pairs = list(_make_date_pairs(start_date, end_date, regrid_step_days))
+    pairs = list(
+        _make_date_pairs(start_date, end_date, regrid_step_days, min_chunk_days)
+    )
     if not pairs:
         return []
 
@@ -711,6 +726,7 @@ def process_obc_conditions(
     regrid_step_days: int = 30,
     bathymetry_path=None,
     preview: bool = False,
+    min_chunk_days: int = 1,
 ):
     """Process boundary conditions through the GET → REGRID → MERGE pipeline.
 
@@ -740,6 +756,8 @@ def process_obc_conditions(
         regrid_chunk_fn: Target-specific regrid step -- see ``_regrid_boundary``.
         get_step_days: GET chunk size in days; None = full range in one request.
         regrid_step_days: REGRID chunk size in days.
+        min_chunk_days: Shortest GET/REGRID chunk; a shorter trailing chunk
+            joins the one before it. Set to the data's record spacing.
         bathymetry_path: Optional path to the case's bathymetry file. When
             given, download bounding boxes are computed from the bathymetry
             ocean tmask (tighter than the full supergrid edge extent). When
@@ -759,8 +777,12 @@ def process_obc_conditions(
     if preview:
         return {
             "boundaries": boundaries,
-            "get_pairs": _make_date_pairs(start_date, end_date, get_step_days),
-            "regrid_pairs": _make_date_pairs(start_date, end_date, regrid_step_days),
+            "get_pairs": _make_date_pairs(
+                start_date, end_date, get_step_days, min_chunk_days
+            ),
+            "regrid_pairs": _make_date_pairs(
+                start_date, end_date, regrid_step_days, min_chunk_days
+            ),
         }
 
     # Compute per-boundary download bboxes using the bathymetry tmask so we only
@@ -806,6 +828,7 @@ def process_obc_conditions(
             function_name=function_name,
             variables=variables,
             extra_args=extra_args,
+            min_chunk_days=min_chunk_days,
         )
 
     regridded_files_by_boundary = {}
@@ -839,6 +862,7 @@ def process_obc_conditions(
             output_folder=str(regridded_path),
             dataset_varnames=dataset_varnames,
             regrid_chunk_fn=regrid_chunk_fn,
+            min_chunk_days=min_chunk_days,
         )
 
     for boundary in boundaries:

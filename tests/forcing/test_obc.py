@@ -492,3 +492,31 @@ def test_merge_boundary_corrupt_existing_raises(
 
     with pytest.raises(RuntimeError, match="not valid NetCDF"):
         _merge_boundary("001", [chunk_file], output_dir)
+
+
+def test_regrid_names_the_chunk_and_the_fix_when_it_has_no_records(
+    tmp_path, get_rect_grid
+):
+    hgrid_path = tmp_path / "hgrid.nc"
+    get_rect_grid.write_supergrid(hgrid_path)
+    raw_dir = tmp_path / "raw"
+    raw_dir.mkdir()
+    raw_file = raw_dir / "east_unprocessed.2020-01-01_2020-03-31.nc"
+    xr.Dataset(
+        {"var": ("time", [0, 1])},
+        coords={"time": pd.to_datetime(["2020-01-01", "2020-03-01"])},
+    ).to_netcdf(raw_file)
+
+    with pytest.raises(ValueError, match="No records between 2020-01-02"):
+        _regrid_boundary(
+            boundary="east",
+            seg_id=1,
+            raw_files=[raw_file],
+            start_date=datetime(2020, 1, 2),
+            end_date=datetime(2020, 1, 31),
+            regrid_step_days=30,
+            hgrid_path=str(hgrid_path),
+            output_folder=str(tmp_path / "regridded"),
+            dataset_varnames={},
+            regrid_chunk_fn=_fake_regrid_chunk_fn,
+        )

@@ -20,14 +20,19 @@ import netCDF4
 import regional_mom6 as rm6
 from regional_mom6.segment import Segment
 import mom6_forge as m6b
+import pandas as pd
 import xarray as xr
 from CrocoDash import logging
-from CrocoDash.forcing import ic as ic_mod, obc, utils
+from CrocoDash.forcing import ic as ic_mod, obc, time_windows, utils
 from CrocoDash.forcing.base import *
 from CrocoDash.grid import Grid
 from CrocoDash.topo import Topo
 from CrocoDash.raw_data_access.registry import ProductRegistry
-from CrocoDash.raw_data_access.base import Calendar, MOM6ForcingProduct
+from CrocoDash.raw_data_access.base import (
+    Calendar,
+    MOM6ForcingProduct,
+    resolve_time_sampling,
+)
 
 logger = logging.setup_logger(__name__)
 
@@ -480,6 +485,16 @@ class ConditionsConfigurator(BaseConfigurator):
             "regrid_step_days", comment="Chunk size (days) for forcing regridding"
         ),
         ConfigOutputParam(
+            "min_chunk_days", comment="Shortest GET/REGRID chunk (one record spacing)"
+        ),
+        ConfigOutputParam(
+            "obc_start_date", comment="Start of the boundary data fetched"
+        ),
+        ConfigOutputParam("obc_end_date", comment="End of the boundary data fetched"),
+        ConfigOutputParam(
+            "ic_lookback_days", comment="Days before the start the IC fetch reaches"
+        ),
+        ConfigOutputParam(
             "boundary_number_conversion",
             comment="Boundary name -> MOM6 segment number",
         ),
@@ -564,22 +579,28 @@ class ConditionsConfigurator(BaseConfigurator):
             "information",
             product.write_metadata(include_marbl_tracers="%MARBL" in compset),
         )
-        # GET and REGRID chunk sizes are independent, and neither changes the
-        # result -- a 1-day and a 3-day chunking of the same range were verified
-        # to produce bit-identical forcing files. They only set how much
-        # concurrency obc.py's pools have to work with.
-        #
-        # GET is network-bound, so it wants more chunks than REGRID: at a 30-day
-        # step anything shorter than a month came out as a single chunk and
-        # downloaded serially. A week gives a fortnight-long case two concurrent
-        # fetches and a year fifty-odd, without splitting long runs into
-        # thousands of requests.
-        #
-        # REGRID stays at 30 days. Its per-chunk cost is real work rather than
-        # waiting, so slicing it finer mostly buys more chunk files to merge.
-        # Power users can override either in config.json.
-        self.set_output_param("get_step_days", 7)
-        self.set_output_param("regrid_step_days", 30)
+        # Chunk sizes and fetch windows follow the product's time sampling
+        # (see forcing/time_windows.py). Power users can override the chunk
+        # sizes in config.json.
+        function_name = self.get_input_param("function_name")
+        freq = (self.get_input_param("function_args") or {}).get("freq")
+        sampling = resolve_time_sampling(product, function_name, freq)
+        native = time_windows.native_sampling(product, function_name, freq)
+        chunks = time_windows.chunk_days(sampling)
+        for key, value in chunks.items():
+            self.set_output_param(key, value)
+        start, end = (
+            pd.to_datetime(self.get_input_param(k), format=self._DATE_FORMAT)
+            for k in ("start_date", "end_date")
+        )
+        obc_start, obc_end = time_windows.obc_window(sampling, start, end)
+        self.set_output_param("obc_start_date", obc_start.strftime(self._DATE_FORMAT))
+        self.set_output_param("obc_end_date", obc_end.strftime(self._DATE_FORMAT))
+        self.set_output_param("ic_lookback_days", time_windows.ic_lookback_days(native))
+        for line in time_windows.describe(
+            product_name, function_name, sampling, native, freq, start, end, chunks
+        ):
+            print(line)
         self.set_output_param(
             "boundary_number_conversion",
             {b: i + 1 for i, b in enumerate(boundaries)},
@@ -732,6 +753,10 @@ class ConditionsConfigurator(BaseConfigurator):
         "function_args",
         "get_step_days",
         "regrid_step_days",
+        "min_chunk_days",
+        "obc_start_date",
+        "obc_end_date",
+        "ic_lookback_days",
     )
 
     @classmethod
@@ -778,6 +803,16 @@ class ConditionsConfigurator(BaseConfigurator):
 
     # ---- process (extraction) ----
 
+    def _obc_dates(self):
+        """The boundary data's date range; a config.json written before it was
+        recorded falls back to the run's."""
+        return {
+            "start_date": self.get_output_param("obc_start_date")
+            or self.get_input_param("start_date"),
+            "end_date": self.get_output_param("obc_end_date")
+            or self.get_input_param("end_date"),
+        }
+
     def process_bc(self, ctx):
         """Process MOM6 boundary conditions through forcing.obc's GET → REGRID →
         MERGE engine, using regional_mom6's Segment as the regrid step."""
@@ -787,8 +822,7 @@ class ConditionsConfigurator(BaseConfigurator):
 
         if preview:
             return obc.process_obc_conditions(
-                start_date=self.get_input_param("start_date"),
-                end_date=self.get_input_param("end_date"),
+                **self._obc_dates(),
                 boundary_number_conversion=self.get_output_param(
                     "boundary_number_conversion"
                 ),
@@ -805,6 +839,7 @@ class ConditionsConfigurator(BaseConfigurator):
                 bathymetry_path=ctx.topo_path,
                 get_step_days=int(self.get_output_param("get_step_days")),
                 regrid_step_days=int(self.get_output_param("regrid_step_days")),
+                min_chunk_days=self.get_output_param("min_chunk_days") or 1,
                 preview=True,
             )
 
@@ -816,8 +851,7 @@ class ConditionsConfigurator(BaseConfigurator):
             )
 
         result = obc.process_obc_conditions(
-            start_date=self.get_input_param("start_date"),
-            end_date=self.get_input_param("end_date"),
+            **self._obc_dates(),
             boundary_number_conversion=self.get_output_param(
                 "boundary_number_conversion"
             ),
@@ -834,6 +868,7 @@ class ConditionsConfigurator(BaseConfigurator):
             bathymetry_path=ctx.topo_path,
             get_step_days=int(self.get_output_param("get_step_days")),
             regrid_step_days=int(self.get_output_param("regrid_step_days")),
+            min_chunk_days=self.get_output_param("min_chunk_days") or 1,
             preview=False,
         )
 
@@ -894,4 +929,5 @@ class ConditionsConfigurator(BaseConfigurator):
             output_data_dir=ctx.output_path,
             regrid_fn=regrid_fn,
             preview=False,
+            lookback_days=self.get_output_param("ic_lookback_days") or 0,
         )

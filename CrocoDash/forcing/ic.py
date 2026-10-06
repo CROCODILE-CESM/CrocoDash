@@ -30,6 +30,7 @@ def process_initial_condition(
     output_data_dir: str | Path,
     regrid_fn,
     preview: bool = False,
+    lookback_days: int = 0,
 ):
     """
     Process the initial condition (t=0) through the GET → REGRID pipeline.
@@ -53,6 +54,9 @@ def process_initial_condition(
             idempotency (this engine has no per-chunk state to check --
             IC is a single snapshot, not a date-chunked series).
         preview: Return metadata dict without executing, default False.
+        lookback_days: How far before start_date the request reaches, so
+            coarse (e.g. monthly) data still returns the record at or before
+            it. Default 0.
     """
     if not isinstance(start_date, datetime):
         start_date = pd.to_datetime(start_date).to_pydatetime()
@@ -61,6 +65,9 @@ def process_initial_condition(
     end_ic_date = start_date + timedelta(days=1)
     end_ic_date_str = end_ic_date.strftime("%Y-%m-%d")
     start_date_str = start_date.strftime("%Y-%m-%d")
+    request_start_str = (start_date - timedelta(days=lookback_days)).strftime(
+        "%Y-%m-%d"
+    )
 
     if preview:
         return {
@@ -91,7 +98,7 @@ def process_initial_condition(
         data_access_function=data_access_function,
         latlon_info=latlon_info,
         raw_data_dir=raw_data_dir,
-        start_date_str=start_date_str,
+        start_date_str=request_start_str,
         end_date_str=end_ic_date_str,
         variables=variables,
         extra_args=extra_args,
