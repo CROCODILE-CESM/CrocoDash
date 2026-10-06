@@ -100,6 +100,14 @@ CrocoDash.forcing.tides module
    :show-inheritance:
    :undoc-members:
 
+CrocoDash.forcing.time\_windows module
+--------------------------------------
+
+.. automodule:: CrocoDash.forcing.time_windows
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 CrocoDash.forcing.user\_nl\_blocks module
 -----------------------------------------
 
