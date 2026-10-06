@@ -12,6 +12,7 @@ class GLOFAS(DatedBaseProduct):
     time_sampling = TimeSampling("D", "mean", "center")
 
     @accessmethod(
+        freq_handling="subsample",
         description="Gets glofas raw data through the cdsapi package",
         type="python",
         how_to_use="Requires a CDS API key — register at https://cds.climate.copernicus.eu and configure ~/.cdsapirc before use.",
@@ -20,6 +21,7 @@ class GLOFAS(DatedBaseProduct):
         dates,
         output_folder=Path(""),
         output_filename="glofas_data.nc",
+        freq=None,
     ):
         """
         Downloads glofas data using cdsapi library. Note that users need to have an account with copernicus and have cdsapi installed and configured.
@@ -34,9 +36,12 @@ class GLOFAS(DatedBaseProduct):
             Filename to write inside ``output_folder``.
 
         """
+        freq = resolve_time_sampling(
+            GLOFAS, "get_global_data_with_python", freq
+        ).frequency
         dataset = "cems-glofas-historical"
         start, end = pd.to_datetime(dates[0]), pd.to_datetime(dates[1])
-        dates = pd.date_range(start=start, end=end)
+        dates = sample_dates(start, end, freq)
         hyear = sorted(list({d.strftime("%Y") for d in dates}))
         hmonth = sorted(list({d.strftime("%m") for d in dates}))
         hday = sorted(list({d.strftime("%d") for d in dates}))
@@ -67,6 +72,7 @@ class GLOFAS(DatedBaseProduct):
         dates="UNUSED",
         output_folder=Path(""),
         output_filename="processed_glofas.nc",
+        freq=None,
     ):
         """
         Downloads pre-processed global GloFAS discharge data from the CESM
@@ -82,6 +88,9 @@ class GLOFAS(DatedBaseProduct):
             filename in output directory
 
         """
+        resolve_time_sampling(
+            GLOFAS, "get_processed_global_glofas_script_for_cli", freq
+        )
 
         return utils.write_bash_curl_script(
             url="https://svn-ccsm-inputdata.cgd.ucar.edu/trunk/inputdata/ocn/mom/croc/rof/glofas/processed_glofas_data.nc",

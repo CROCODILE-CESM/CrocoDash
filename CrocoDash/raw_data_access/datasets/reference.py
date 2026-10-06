@@ -100,6 +100,7 @@ class REFERENCE_OCEAN(MOM6ForcingProduct):
     }
 
     @accessmethod(
+        freq_handling="subsample",
         description=(
             "Generates a synthetic ocean dataset over the requested bbox/dates: "
             "temperature warm at the equator and decaying exponentially with "
@@ -119,6 +120,7 @@ class REFERENCE_OCEAN(MOM6ForcingProduct):
         output_filename="reference_ocean.nc",
         variables=None,
         resolution_deg=0.5,
+        freq=None,
     ):
         # Coarse by default to keep the downstream ESMF regrid cheap -- pass a
         # smaller resolution_deg for a finer (more expensive) source grid.
@@ -127,6 +129,9 @@ class REFERENCE_OCEAN(MOM6ForcingProduct):
         # an east/west boundary, or lat_min == lat_max for north/south) --
         # pad by 1 degree on every side (same convention GLORYS's own access
         # methods use) so there's always a real 2D grid to regrid from.
+        freq = resolve_time_sampling(
+            REFERENCE_OCEAN, "get_reference_ocean_data", freq
+        ).frequency
         lon = np.arange(lon_min - 1.0, lon_max + 1.0 + resolution_deg, resolution_deg)
         lat = np.arange(lat_min - 1.0, lat_max + 1.0 + resolution_deg, resolution_deg)
         # Layer centers, like GLORYS's depth axis: regional_mom6 rebuilds layer
@@ -136,7 +141,7 @@ class REFERENCE_OCEAN(MOM6ForcingProduct):
             [0, 10, 25, 50, 100, 200, 500, 1000, 2000, 4000, 6000], dtype=float
         )
         depth = 0.5 * (interfaces[:-1] + interfaces[1:])
-        time = pd.date_range(dates[0], dates[-1], freq="D")
+        time = sample_dates(dates[0], dates[-1], freq)
         shape_4d = (len(time), len(depth), len(lat), len(lon))
 
         # Warm at the equator, decaying exponentially from the surface to an
@@ -327,9 +332,11 @@ class REFERENCE_ICE(CICEForcingProduct):
         output_filename="reference_ice.nc",
         variables=None,
         resolution_deg=0.5,
+        freq=None,
     ):
         # Coarse by default to keep the downstream ESMF regrid cheap -- pass a
         # smaller resolution_deg for a finer (more expensive) source grid.
+        resolve_time_sampling(REFERENCE_ICE, "get_reference_ice_data", freq)
         lon = np.arange(lon_min, lon_max + resolution_deg, resolution_deg)
         lat = np.arange(lat_min, lat_max + resolution_deg, resolution_deg)
         tlon, tlat = np.meshgrid(lon, lat)
@@ -425,8 +432,10 @@ class REFERENCE_WAVES(WW3ForcingProduct):
         output_folder=Path(""),
         output_filename="reference_waves.nc",
         variables=None,
+        freq=None,
     ):
         # Spread the stations along the long axis of the boundary window.
+        resolve_time_sampling(REFERENCE_WAVES, "get_reference_wave_spectra", freq)
         n_stations = 3
         if (lon_max - lon_min) >= (lat_max - lat_min):
             lons = np.linspace(lon_min, lon_max, n_stations)

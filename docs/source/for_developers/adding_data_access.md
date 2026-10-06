@@ -167,6 +167,14 @@ class MyDataset(MOM6ForcingProduct):
 
 An access method that reads a differently sampled source can override it with
 `@accessmethod(time_sampling=TimeSampling(...))`.
+
+Every dated access method also takes an optional `freq=None` (users set it with
+`function_overrides={"freq": "MS"}`) and calls `resolve_time_sampling` first.
+Mark it `@accessmethod(freq_handling="subsample")` if it can fetch every `freq`
+instead of every record (see GLORYS's RDA method, which uses `sample_dates`), or
+`freq_handling="declare"` if `freq` names the cadence of the source the user
+points it at (the CESM tseries readers). Otherwise a `freq` other than the
+native one is refused.
 :::
 
 ## Step 5: Validation and Tests
