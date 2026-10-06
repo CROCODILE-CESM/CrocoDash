@@ -22,6 +22,7 @@ import xarray as xr
 import cftime
 import dask.base
 import pandas as pd
+import numpy as np
 
 from CrocoDash.raw_data_access.base import *
 from CrocoDash.raw_data_access.datasets.utils import make_dates_end_inclusive
@@ -447,6 +448,7 @@ def read_single_variable_tseries_data(
             start_date.strftime(date_format),
             end_date.strftime(date_format),
         ),
+        time_range=(start_date, end_date),
         preview=preview,
         apply_month_shift=apply_month_shift,
         grid_coords=grid_coords,
@@ -631,6 +633,7 @@ def subset_dataset(
     preview: bool = False,
     apply_month_shift: bool = True,
     grid_coords: dict | None = None,
+    time_range: tuple | None = None,
 ) -> None:
     """
     Subsets (and merges) the dataset based on the provided variable names and
@@ -648,6 +651,9 @@ def subset_dataset(
         lon_name (str): Default longitude coordinate name, used for any variable
             not listed in grid_coords. Default is "lon".
         dates (tuple): Just used for the file naming
+        time_range (tuple | None): (start, end) of the request, whole days
+            inclusive. When given, only records in it are kept instead of every
+            record in the source files. Default None keeps every record.
         preview (bool): If True, only previews the subsetting without saving. Default is False.
         apply_month_shift (bool): Apply the CESM-POP tseries average-endpoint
             timestamp correction. Default True (matches CESM-POP); set False for
@@ -684,6 +690,8 @@ def subset_dataset(
 
         # Load the dataset for the variable
         ds = xr.open_mfdataset(file_paths, decode_timedelta=False)
+        if time_range is not None:
+            ds = select_time_range(ds, *time_range, apply_month_shift)
 
         # Convert time. Saving to netcdf is not working with cftime objects.
         ds = convert_cftime_to_numeric(
@@ -753,6 +761,39 @@ def first_value(da_var):
         return arr.ravel()[0].compute()
     else:
         return arr.ravel()[0]
+
+
+def select_time_range(ds, start, end, apply_month_shift, time_var_name="time"):
+    """Keep the records from start through the end of end's day.
+
+    The tseries files hold whole years or decades, so without this every
+    request carries all of them. Times are compared in the month-shifted frame
+    the records are written in. No-op if the time coordinate isn't decoded.
+    """
+    times = ds[time_var_name].values
+    if len(times) == 0:
+        return ds
+    end = pd.Timestamp(end).normalize() + pd.Timedelta(days=1)
+    start = pd.Timestamp(start)
+    if isinstance(times[0], cftime.datetime):
+        if apply_month_shift:
+            times = [subtract_month(t) for t in times]
+        lo, hi = (_to_cftime(t, times[0].calendar) for t in (start, end))
+        keep = [lo <= t < hi for t in times]
+    elif np.issubdtype(times.dtype, np.datetime64):
+        keep = (times >= start.to_datetime64()) & (times < end.to_datetime64())
+    else:
+        return ds
+    return ds.isel({time_var_name: np.flatnonzero(keep)})
+
+
+def _to_cftime(ts, calendar):
+    """A pandas Timestamp as a cftime date; Feb 29 rolls to Mar 1 where the
+    calendar has no leap days."""
+    try:
+        return cftime.datetime(ts.year, ts.month, ts.day, calendar=calendar)
+    except ValueError:
+        return cftime.datetime(ts.year, 3, 1, calendar=calendar)
 
 
 def subtract_month(dt):
