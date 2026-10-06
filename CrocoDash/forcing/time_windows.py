@@ -54,9 +54,11 @@ def chunk_days(ts: TimeSampling) -> dict:
 
 
 def obc_window(ts: TimeSampling, start, end):
-    """The date range to fetch boundary data for: data coarser than daily is
-    padded by one record spacing each side, so its records bracket the run."""
-    pad = timedelta(days=period_days(ts) if ts.max_period_days > 1 else 0)
+    """The date range to fetch boundary data for, padded by one record spacing
+    each side so its records bracket the run: MOM6 interpolates linearly
+    between records and stops on a model time outside them, and a daily mean
+    stamped at noon would otherwise start half a day after the run."""
+    pad = timedelta(days=period_days(ts))
     return start - pad, end + pad
 
 

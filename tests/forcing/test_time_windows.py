@@ -12,13 +12,16 @@ MONTHLY = TimeSampling("MS", "mean", "end")
 START, END = datetime(2020, 1, 10), datetime(2020, 1, 20)
 
 
-def test_daily_data_keeps_the_original_chunking_and_windows():
+def test_daily_data_keeps_the_original_chunking_and_is_padded_a_day():
     assert tw.chunk_days(DAILY) == {
         "get_step_days": 7,
         "regrid_step_days": 30,
         "min_chunk_days": 1,
     }
-    assert tw.obc_window(DAILY, START, END) == (START, END)
+    assert tw.obc_window(DAILY, START, END) == (
+        datetime(2020, 1, 9),
+        datetime(2020, 1, 21),
+    )
     assert tw.ic_lookback_days(DAILY) == 0
 
 
