@@ -447,3 +447,23 @@ def test_subset_dataset_keeps_only_the_requested_time_range(tmp_path):
         time_range=(pd.Timestamp("2000-01-01"), pd.Timestamp("2000-02-28")),
     )
     assert xr.open_dataset(out).sizes["time"] == 2
+
+
+def test_select_time_range_rolls_feb_29_to_mar_1_on_noleap():
+    ds = co.select_time_range(
+        _monthly_pop_ds(), "2000-02-29", "2000-03-01", apply_month_shift=True
+    )
+    assert _shifted_months(ds) == [(2000, 3)]
+
+
+@pytest.mark.parametrize(
+    "time",
+    [
+        pytest.param(np.array([], dtype="datetime64[ns]"), id="empty"),
+        pytest.param(np.array([0.0, 31.0]), id="not_decoded"),
+    ],
+)
+def test_select_time_range_leaves_what_it_cannot_slice_alone(time):
+    ds = xr.Dataset({"SSH": ("time", np.arange(len(time)))}, coords={"time": time})
+    out = co.select_time_range(ds, "2000-01-01", "2000-01-31", apply_month_shift=False)
+    assert out.sizes["time"] == len(time)
