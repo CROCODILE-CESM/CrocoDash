@@ -120,10 +120,11 @@ def frequency_step(freq: str) -> pd.Timedelta:
 
 
 def sample_dates(start, end, freq: str) -> pd.DatetimeIndex:
-    """The days to fetch from [start, end] at freq. The window's first day is
-    always kept, so a window shorter than one period still returns a record."""
+    """The days to fetch from [start, end] at freq. A window too short to hold
+    one (e.g. an initial condition's single day) falls back to its first day."""
     start, end = pd.Timestamp(start).normalize(), pd.Timestamp(end).normalize()
-    return pd.DatetimeIndex([start]).union(pd.date_range(start, end, freq=freq))
+    dates = pd.date_range(start, end, freq=freq)
+    return dates if len(dates) else pd.DatetimeIndex([start])
 
 
 def resolve_time_sampling(product, method_name: str, freq: str | None = None):

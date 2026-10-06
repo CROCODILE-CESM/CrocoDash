@@ -366,9 +366,11 @@ def test_static_product_takes_no_freq():
         resolve_time_sampling(product, "get_cice_restart_subset", "D")
 
 
-def test_sample_dates_keeps_the_window_start():
-    assert list(sample_dates("2020-01-10", "2020-03-05", "MS").strftime("%m-%d")) == [
-        "01-10",
-        "02-01",
-        "03-01",
-    ]
+def test_sample_dates_strides_from_the_freq_anchor():
+    dates = sample_dates("2020-01-10", "2020-03-05", "MS")
+    assert list(dates.strftime("%m-%d")) == ["02-01", "03-01"]
+
+
+def test_sample_dates_falls_back_to_the_window_start():
+    dates = sample_dates("2020-01-10", "2020-01-11", "MS")
+    assert list(dates.strftime("%m-%d")) == ["01-10"]
