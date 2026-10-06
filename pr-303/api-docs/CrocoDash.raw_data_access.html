@@ -1070,8 +1070,8 @@ the source the user points it at. A USER_SPECIFIED product needs freq.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.base.sample_dates">
 <span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.base.</span></span><span class="sig-name descname"><span class="pre">sample_dates</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freq</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DatetimeIndex</span></span></span><a class="headerlink" href="#CrocoDash.raw_data_access.base.sample_dates" title="Link to this definition">#</a></dt>
-<dd><p>The days to fetch from [start, end] at freq. The window’s first day is
-always kept, so a window shorter than one period still returns a record.</p>
+<dd><p>The days to fetch from [start, end] at freq. A window too short to hold
+one (e.g. an initial condition’s single day) falls back to its first day.</p>
 </dd></dl>
 
 </section>
