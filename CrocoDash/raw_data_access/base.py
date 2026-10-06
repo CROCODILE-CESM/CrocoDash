@@ -21,7 +21,7 @@ How it was solved:
 from CrocoDash.raw_data_access.registry import ProductRegistry
 import dataclasses
 import dataclasses
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 import inspect
 import json
 import pandas as pd
@@ -112,11 +112,76 @@ class TimeSampling:
 USER_SPECIFIED = "user_specified"
 
 
+def frequency_step(freq: str) -> pd.Timedelta:
+    """Mean spacing of a pandas frequency alias, to order frequencies by
+    coarseness ("MS" has no fixed length, so it can't come from the offset)."""
+    stamps = pd.date_range("2001-01-01", periods=13, freq=freq)
+    return (stamps[-1] - stamps[0]) / (len(stamps) - 1)
+
+
+def sample_dates(start, end, freq: str) -> pd.DatetimeIndex:
+    """The days to fetch from [start, end] at freq. The window's first day is
+    always kept, so a window shorter than one period still returns a record."""
+    start, end = pd.Timestamp(start).normalize(), pd.Timestamp(end).normalize()
+    return pd.DatetimeIndex([start]).union(pd.date_range(start, end, freq=freq))
+
+
+def resolve_time_sampling(product, method_name: str, freq: str | None = None):
+    """The TimeSampling a call to product.method_name(freq=freq) returns.
+
+    Raises if freq can't be honoured: a method only sub-samples when declared
+    @accessmethod(freq_handling="subsample"), never finer than its native
+    cadence; with freq_handling="declare", freq instead names the cadence of
+    the source the user points it at. A USER_SPECIFIED product needs freq.
+    """
+    method = product._access_methods[method_name]
+    declared = getattr(method, "_time_sampling", None) or product.time_sampling
+    handling = getattr(method, "_freq_handling", None)
+    name = f"{product.product_name}.{method_name}"
+    if freq is not None:
+        frequency_step(freq)  # raises on an invalid alias
+    if declared is None:
+        if freq is not None:
+            raise ValueError(f"{name} returns a static snapshot; it takes no freq.")
+        return None
+    if declared == USER_SPECIFIED:
+        if freq is None:
+            raise ValueError(
+                f"{name} reads whatever cadence the data you point it at has, so "
+                "it must be given: pass function_overrides={'freq': ...}, e.g. "
+                "'MS' for monthly or 'D' for daily output."
+            )
+        return TimeSampling(freq)
+    if freq is None or handling == "declare":
+        return declared if freq is None else replace(declared, frequency=freq)
+    if frequency_step(freq) == frequency_step(declared.frequency):
+        return declared
+    if handling != "subsample":
+        raise NotImplementedError(
+            f"{name} returns every {declared.frequency} record in the requested "
+            f"range and cannot sub-sample it; drop freq or pass freq="
+            f"{declared.frequency!r}."
+        )
+    if frequency_step(freq) < frequency_step(declared.frequency):
+        raise ValueError(
+            f"{name} has {declared.frequency} data; freq={freq!r} is finer than "
+            "that, so it would silently return fewer records than asked for."
+        )
+    return replace(declared, frequency=freq)
+
+
 def accessmethod(
-    func=None, *, description=None, type=None, how_to_use=None, time_sampling=None
+    func=None,
+    *,
+    description=None,
+    type=None,
+    how_to_use=None,
+    time_sampling=None,
+    freq_handling=None,
 ):
     """time_sampling overrides the product's own for a method that reads a
-    differently sampled source."""
+    differently sampled source. freq_handling says what a dated method does
+    with its freq argument -- see resolve_time_sampling."""
 
     def decorator(f):
         f = staticmethod(f)
@@ -125,6 +190,7 @@ def accessmethod(
         f._type = type
         f._how_to_use = how_to_use
         f._time_sampling = time_sampling
+        f._freq_handling = freq_handling
         return f
 
     # Case 1: decorator used WITHOUT args: @accessmethod
@@ -278,10 +344,22 @@ class DatedBaseProduct(BaseProduct):
         # never reaches the registry. A missing one is left to BaseProduct's
         # required_metadata check.
         if getattr(cls, "product_name", None):
-            declared = [getattr(cls, "time_sampling", None)] + [
-                getattr(attr, "_time_sampling", None)
-                for attr in cls.__dict__.values()
+            methods = {
+                name: attr
+                for name, attr in cls.__dict__.items()
                 if getattr(attr, "_is_access_method", False)
+            }
+            # freq must have a default: the framework only passes it when the
+            # user overrides it, so a required one breaks every ordinary call.
+            for name, attr in methods.items():
+                param = inspect.signature(attr.__func__).parameters.get("freq")
+                if param is None or param.default is inspect.Parameter.empty:
+                    raise ValueError(
+                        f"Access method '{name}' in {cls.product_name} must take "
+                        "an optional freq argument (freq=None)."
+                    )
+            declared = [getattr(cls, "time_sampling", None)] + [
+                getattr(attr, "_time_sampling", None) for attr in methods.values()
             ]
             for ts in declared:
                 assert (
