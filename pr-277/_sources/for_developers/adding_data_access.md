@@ -6,10 +6,34 @@ The Data Access Module is an expandible, verifyable, object-oriented module with
 
 The data access module is located in `CrocoDash/raw_data_access/` and consists of:
 
-- **`base.py`** - `ForcingProduct` and `BaseProduct` base classes that all data sources inherit from
-- **`registry.py`** - Central registry for data products and access functions
-- **`datasets/`** - Individual dataset implementations (one file per product)
-- **`utils.py`** - Utility functions for data handling
+- **`base.py`** - the base-class hierarchy every data source inherits from, plus
+  the `@accessmethod` decorator and the `Calendar` type
+- **`registry.py`** - `ProductRegistry`, the central registry for data products
+  and access functions
+- **`datasets/`** - individual dataset implementations (one file per product),
+  plus `datasets/utils.py` for shared dataset helpers
+
+### The base-class hierarchy
+
+Pick the most specific base that fits — each level adds required metadata:
+
+```
+BaseProduct                    product_name, description, link
+ └─ DatedBaseProduct           + a `dates` download arg
+     └─ ForcingProduct         + lat/lon/variables bbox contract,
+                                 time_var_name, time_units, calendar
+         └─ VelocityTracerForcingProduct
+                               + u/v/tracer coordinate and variable names
+             └─ MOM6ForcingProduct
+                               + eta_var_name, boundary_fill_method
+```
+
+| Your product is… | Inherit from |
+|---|---|
+| An OBC/IC source for MOM6 (GLORYS, CESM output, …) | `MOM6ForcingProduct` |
+| A gridded, time-varying forcing for some other model | `VelocityTracerForcingProduct` or `ForcingProduct` |
+| A dated but non-gridded product (GLOFAS) | `DatedBaseProduct` |
+| A static file (GEBCO, SRTM, SeaWiFS, TPXO) | `BaseProduct` |
 
 ## Adding a New Dataset
 
@@ -23,18 +47,17 @@ Create a new Python file in `CrocoDash/raw_data_access/datasets/` named after yo
 from pathlib import Path
 from typing import Tuple, Optional
 import xarray as xr
-from CrocoDash.raw_data_access.base import ForcingProduct # Could be not a forcing product to.
+# `import *` brings in the base classes, `accessmethod`, and the shared
+# Calendar constants (GREGORIAN, NOLEAP, ...).
+from CrocoDash.raw_data_access.base import *
 import requests
 
-class MyDataset(ForcingProduct):
+class MyDataset(MOM6ForcingProduct):
     """
     Access data from MyDataSource.
-    
+
     This class downloads and caches data from MyDataSource for use in CrocoDash.
     """
-
-
-
 ```
 
 ### Step 2: Create your access function
@@ -46,14 +69,19 @@ You can create an access function for your data by defining a function in your c
 class ForcingProduct(DatedBaseProduct):
     """Specific enforcement needs for Forcing Products"""
 
-    required_args = BaseProduct.required_args + [
+    required_args = DatedBaseProduct.required_args + [
         "variables",
         "lon_max",
         "lat_max",
         "lon_min",
         "lat_min",
+        "name",
     ]
 ```
+
+`required_args` accumulates down the chain, so a `ForcingProduct` access
+function must accept `output_folder` and `output_filename` (from `BaseProduct`)
+and `dates` (from `DatedBaseProduct`) as well as the five above.
 
 ### Step 3: Register the Dataset
 
@@ -61,10 +89,18 @@ You register the dataset by adding the accessmethod wrapper to your access funct
 
 ```python
 @accessmethod(
-        description="Gathers your data from what",
-        type="what type, python, script, etc...",
-    )
+    description="Gathers your data from what",
+    type="python",  # "python" or "script"
+    how_to_use="Any setup notes shown to the user, e.g. credentials needed",
+)
+def get_my_data(output_folder, output_filename, dates, variables,
+                lat_min, lat_max, lon_min, lon_max, name):
+    ...
 ```
+
+`@accessmethod` wraps the function in a `staticmethod` for you, which is why it
+takes neither `self` nor `cls`. Its `description` and `type` are what appear in
+the generated [Datasets](../for_users/datasets.md) table.
 
 ## Step 4: Set required metadata.
 
@@ -72,30 +108,52 @@ Each class has a certain amount of metadata that is required. Classes inherited 
 
 ```python
 class ForcingProduct(DatedBaseProduct):
-    """Specific enforcement needs for Forcing Products"""
-
     required_metadata = DatedBaseProduct.required_metadata + [
         "time_var_name",
-        "u_x_coord",
-        "u_y_coord",
-        "v_x_coord",
-        "v_y_coord",
-        "tracer_x_coord",
-        "tracer_y_coord",
-        "depth_coord",
-        "u_var_name",
-        "v_var_name",
-        "eta_var_name",
-        "tracer_var_names",
-        "boundary_fill_method",
         "time_units",
+        "calendar",
     ]
 
+
+class VelocityTracerForcingProduct(ForcingProduct):
+    required_metadata = ForcingProduct.required_metadata + [
+        "u_x_coord", "u_y_coord",
+        "v_x_coord", "v_y_coord",
+        "tracer_x_coord", "tracer_y_coord",
+        "u_var_name", "v_var_name",
+        "tracer_var_names",
+        "depth_coord",
+    ]
+
+
+class MOM6ForcingProduct(VelocityTracerForcingProduct):
+    required_metadata = VelocityTracerForcingProduct.required_metadata + [
+        "eta_var_name",
+        "boundary_fill_method",
+    ]
 ```
+
+:::{important}
+`calendar` must be a **`Calendar` instance**, not a bare string — use a
+module-level constant such as `GREGORIAN` or `NOLEAP` from
+`raw_data_access.base`. One `Calendar` carries the cf/cesm/mom6 names together
+so they cannot disagree, and `ForcingProduct.__init_subclass__` asserts on it at
+import time:
+
+```python
+class MyDataset(MOM6ForcingProduct):
+    product_name = "MYDATA"
+    calendar = GREGORIAN
+    ...
+```
+
+`MOM6ForcingProduct` additionally asserts that `tracer_var_names` is a dict
+containing at least `temp` and `salt`.
+:::
 
 ## Step 5: Validation and Tests
 
-When you test your class, it will automatically get registed with the registry and run validation. It will fail on import if you miss metadata or required args in your registed access function.
+When you test your class, it will automatically get registered with the registry and run validation. It will fail on import if you miss metadata or required args in your registered access function, or if `calendar` is missing or is not a `Calendar`.
 
 Create a test file in `tests/raw_data_access` to test your dataset:
 
@@ -119,9 +177,14 @@ Run your tests:
 pytest tests/raw_data_access/test_my_dataset.py -v
 ```
 
-## ForcingProduct Base Class
+## Choosing a Base Class
 
-The dataset classes for OBC and IC generation should inherit from `ForcingProduct`. Other things like tides or chlorophyll may only inherit from DatedBaseProduct or BaseProduct.
+The dataset classes that feed CrocoDash's MOM6 OBC/IC pipeline (`GLORYS`,
+`CESM_POP_OUTPUT`, `CESM_MOM_OUTPUT`, `REFERENCE_OCEAN`) inherit from
+`MOM6ForcingProduct`. Products that are only a static file or a non-gridded
+download — tides, chlorophyll, bathymetry, runoff — inherit from
+`DatedBaseProduct` or `BaseProduct` instead, and are not held to the
+velocity/tracer metadata contract. See the table in **Module Overview** above.
 
 ## Error Handling Best Practices
 

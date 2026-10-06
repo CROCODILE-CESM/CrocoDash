@@ -184,8 +184,7 @@
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../api-docs/modules.html">CrocoDash API Docs</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../api-docs/CrocoDash.html">CrocoDash package</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
-<li class="toctree-l3"><a class="reference internal" href="../api-docs/CrocoDash.extract_forcings.html">CrocoDash.extract_forcings package</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../api-docs/CrocoDash.forcing_configurations.html">CrocoDash.forcing_configurations package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api-docs/CrocoDash.forcing.html">CrocoDash.forcing package</a></li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../api-docs/CrocoDash.raw_data_access.html">CrocoDash.raw_data_access package</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l4"><a class="reference internal" href="../api-docs/CrocoDash.raw_data_access.datasets.html">CrocoDash.raw_data_access.datasets package</a></li>
 </ul>
@@ -398,7 +397,7 @@ document.write(`
 </section>
 <section id="available-compset-aliases">
 <h2>Available Compset Aliases<a class="headerlink" href="#available-compset-aliases" title="Link to this heading">#</a></h2>
-<p>Regional compsets are available by checking out the CROCODILE-CESM/CESM fork. You can always use the long names of the compsets instead.</p>
+<p>Regional compsets are available by checking out the <code class="docutils literal notranslate"><span class="pre">crocodash</span></code> branch of the CROCODILE-CESM/CESM fork. You can always use the long names of the compsets instead.</p>
 <p>The only job of the %REGIONAL flag on MOM6 in the compset longnames below is to set an xml variable MOM6_DOMAIN_TYPE=REGIONAL, which shifts input parameters to regional defaults.</p>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
@@ -409,68 +408,76 @@ document.write(`
 </thead>
 <tbody>
 <tr class="row-even"><td><p>CR_JRA</p></td>
-<td><p>1850_DATM%JRA_SLND_SICE_MOM6%REGIONAL_SROF_SGLC_SWAV</p></td>
-<td><p>Standalone ocean with data atmosphere from JRA</p></td>
+<td><p>1850_DATM%JRA-1p5-2023_SLND_DICE%SSMI_MOM6%REGIONAL_SROF_SGLC_SWAV</p></td>
+<td><p>Standalone ocean with data sea ice from SSMI and data atmosphere from JRA</p></td>
 </tr>
-<tr class="row-odd"><td><p>CR1850MARBL_JRA</p></td>
-<td><p>1850_DATM%JRA_SLND_SICE_MOM6%REGIONAL%MARBL-BIO_SROF_SGLC_SWAV</p></td>
-<td><p>ocean coupled with MARBL BGC model with data atmosphere from JRA</p></td>
+<tr class="row-odd"><td><p>CR_JRA_RYF</p></td>
+<td><p>2000_DATM%JRA-RYF9091_SLND_DICE%SSMI_MOM6%REGIONAL_SROF_SGLC_SWAV</p></td>
+<td><p>Standalone ocean with data sea ice from SSMI and repeat-year (1990-91) data atmosphere from JRA</p></td>
 </tr>
-<tr class="row-even"><td><p>CR_JRA_GLOFAS</p></td>
-<td><p>1850_DATM%JRA_SLND_SICE_MOM6%REGIONAL_DROF%GLOFAS_SGLC_SWAV</p></td>
-<td><p>Standalone ocean with data atmosphere from JRA and data runoff from GLOFAS</p></td>
+<tr class="row-even"><td><p>CR1850MARBL_JRA</p></td>
+<td><p>1850_DATM%JRA-1p5-2023_SLND_DICE%SSMI_MOM6%REGIONAL%MARBL-BIO_SROF_SGLC_SWAV</p></td>
+<td><p>Ocean coupled with MARBL BGC model with data sea ice from SSMI and data atmosphere from JRA</p></td>
 </tr>
-<tr class="row-odd"><td><p>CR1850MARBL_JRA_GLOFAS</p></td>
-<td><p>1850_DATM%JRA_SLND_SICE_MOM6%REGIONAL%MARBL-BIO_DROF%GLOFAS_SGLC_SWAV</p></td>
-<td><p>ocean coupled with MARBL BGC model with data atmosphere from JRA and data runoff from GLOFAS</p></td>
+<tr class="row-odd"><td><p>CR_JRA_GLOFAS</p></td>
+<td><p>1850_DATM%JRA-1p5-2023_SLND_DICE%SSMI_MOM6%REGIONAL_DROF%GLOFAS_SGLC_SWAV</p></td>
+<td><p>Standalone ocean with data sea ice from SSMI, data atmosphere from JRA, and data runoff from GLOFAS</p></td>
 </tr>
-<tr class="row-even"><td><p>CWR_JRA</p></td>
-<td><p>1850_DATM%JRA_SLND_SICE_MOM6%REGIONAL_SROF_SGLC_WW3</p></td>
-<td><p>Standalone ocean coupled with WW3 wave model with data atmosphere from JRA</p></td>
+<tr class="row-even"><td><p>CR1850MARBL_JRA_GLOFAS</p></td>
+<td><p>1850_DATM%JRA-1p5-2023_SLND_DICE%SSMI_MOM6%REGIONAL%MARBL-BIO_DROF%GLOFAS_SGLC_SWAV</p></td>
+<td><p>Ocean coupled with MARBL BGC model with data sea ice from SSMI, data atmosphere from JRA, and data runoff from GLOFAS</p></td>
+</tr>
+<tr class="row-odd"><td><p>CWR_JRA</p></td>
+<td><p>1850_DATM%JRA-1p5-2023_SLND_DICE%SSMI_MOM6%REGIONAL_SROF_SGLC_WW3</p></td>
+<td><p>Ocean coupled with WW3 wave model with data sea ice from SSMI and data atmosphere from JRA</p></td>
+</tr>
+<tr class="row-even"><td><p>CWR_JRA_RYF</p></td>
+<td><p>2000_DATM%JRA-RYF9091_SLND_DICE%SSMI_MOM6%REGIONAL_SROF_SGLC_WW3</p></td>
+<td><p>Ocean coupled with WW3 wave model with data sea ice from SSMI and repeat-year (1990-91) data atmosphere from JRA</p></td>
 </tr>
 <tr class="row-odd"><td><p>CWR1850MARBL_JRA</p></td>
-<td><p>1850_DATM%JRA_SLND_SICE_MOM6%REGIONAL%MARBL-BIO_SROF_SGLC_WW3</p></td>
-<td><p>ocean coupled with MARBL BGC model and WW3 wave model with data atmosphere from JRA</p></td>
+<td><p>1850_DATM%JRA-1p5-2023_SLND_DICE%SSMI_MOM6%REGIONAL%MARBL-BIO_SROF_SGLC_WW3</p></td>
+<td><p>Ocean coupled with MARBL BGC model and WW3 wave model with data sea ice from SSMI and data atmosphere from JRA</p></td>
 </tr>
 <tr class="row-even"><td><p>CWR_JRA_GLOFAS</p></td>
-<td><p>1850_DATM%JRA_SLND_SICE_MOM6%REGIONAL_DROF%GLOFAS_SGLC_WW3</p></td>
-<td><p>Standalone ocean coupled with WW3 wave model with data atmosphere from JRA and data runoff from GLOFAS</p></td>
+<td><p>1850_DATM%JRA-1p5-2023_SLND_DICE%SSMI_MOM6%REGIONAL_DROF%GLOFAS_SGLC_WW3</p></td>
+<td><p>Ocean coupled with WW3 wave model with data sea ice from SSMI, data atmosphere from JRA, and data runoff from GLOFAS</p></td>
 </tr>
 <tr class="row-odd"><td><p>CWR1850MARBL_JRA_GLOFAS</p></td>
-<td><p>1850_DATM%JRA_SLND_SICE_MOM6%REGIONAL%MARBL-BIO_DROF%GLOFAS_SGLC_WW3</p></td>
-<td><p>ocean coupled with MARBL BGC model and WW3 wave model with data atmosphere from JRA and data runoff from GLOFAS</p></td>
+<td><p>1850_DATM%JRA-1p5-2023_SLND_DICE%SSMI_MOM6%REGIONAL%MARBL-BIO_DROF%GLOFAS_SGLC_WW3</p></td>
+<td><p>Ocean coupled with MARBL BGC model and WW3 wave model with data sea ice from SSMI, data atmosphere from JRA, and data runoff from GLOFAS</p></td>
 </tr>
 <tr class="row-even"><td><p>GR_JRA</p></td>
-<td><p>1850_DATM%JRA_SLND_CICE_MOM6%REGIONAL_SROF_SGLC_SWAV</p></td>
-<td><p>ocean coupled with CICE sea ice model with data atmosphere from JRA</p></td>
+<td><p>1850_DATM%JRA-1p5-2023_SLND_CICE_MOM6%REGIONAL_SROF_SGLC_SWAV</p></td>
+<td><p>Ocean coupled with CICE sea ice model with data atmosphere from JRA</p></td>
 </tr>
 <tr class="row-odd"><td><p>GR1850MARBL_JRA</p></td>
-<td><p>1850_DATM%JRA_SLND_CICE_MOM6%REGIONAL%MARBL-BIO_SROF_SGLC_SWAV</p></td>
-<td><p>ocean coupled with MARBL BGC model and CICE sea ice model with data atmosphere from JRA</p></td>
+<td><p>1850_DATM%JRA-1p5-2023_SLND_CICE_MOM6%REGIONAL%MARBL-BIO_SROF_SGLC_SWAV</p></td>
+<td><p>Ocean coupled with MARBL BGC model and CICE sea ice model with data atmosphere from JRA</p></td>
 </tr>
 <tr class="row-even"><td><p>GR_JRA_GLOFAS</p></td>
-<td><p>1850_DATM%JRA_SLND_CICE_MOM6%REGIONAL_DROF%GLOFAS_SGLC_SWAV</p></td>
-<td><p>ocean coupled with CICE sea ice model with data atmosphere from JRA and data runoff from GLOFAS</p></td>
+<td><p>1850_DATM%JRA-1p5-2023_SLND_CICE_MOM6%REGIONAL_DROF%GLOFAS_SGLC_SWAV</p></td>
+<td><p>Ocean coupled with CICE sea ice model with data atmosphere from JRA and data runoff from GLOFAS</p></td>
 </tr>
 <tr class="row-odd"><td><p>GR1850MARBL_JRA_GLOFAS</p></td>
-<td><p>1850_DATM%JRA_SLND_CICE_MOM6%REGIONAL%MARBL-BIO_DROF%GLOFAS_SGLC_SWAV</p></td>
-<td><p>ocean coupled with MARBL BGC model and CICE sea ice model with data atmosphere from JRA and data runoff from GLOFAS</p></td>
+<td><p>1850_DATM%JRA-1p5-2023_SLND_CICE_MOM6%REGIONAL%MARBL-BIO_DROF%GLOFAS_SGLC_SWAV</p></td>
+<td><p>Ocean coupled with MARBL BGC model and CICE sea ice model with data atmosphere from JRA and data runoff from GLOFAS</p></td>
 </tr>
 <tr class="row-even"><td><p>GWR_JRA</p></td>
-<td><p>1850_DATM%JRA_SLND_CICE_MOM6%REGIONAL_SROF_SGLC_WW3</p></td>
-<td><p>ocean coupled with CICE sea ice model and WW3 wave model with data atmosphere from JRA</p></td>
+<td><p>1850_DATM%JRA-1p5-2023_SLND_CICE_MOM6%REGIONAL_SROF_SGLC_WW3</p></td>
+<td><p>Ocean coupled with CICE sea ice model and WW3 wave model with data atmosphere from JRA</p></td>
 </tr>
 <tr class="row-odd"><td><p>GWR1850MARBL_JRA</p></td>
-<td><p>1850_DATM%JRA_SLND_CICE_MOM6%REGIONAL%MARBL-BIO_SROF_SGLC_WW3</p></td>
-<td><p>ocean coupled with MARBL BGC model, CICE sea ice model, and WW3 wave model with data atmosphere from JRA</p></td>
+<td><p>1850_DATM%JRA-1p5-2023_SLND_CICE_MOM6%REGIONAL%MARBL-BIO_SROF_SGLC_WW3</p></td>
+<td><p>Ocean coupled with MARBL BGC model, CICE sea ice model, and WW3 wave model with data atmosphere from JRA</p></td>
 </tr>
 <tr class="row-even"><td><p>GWR_JRA_GLOFAS</p></td>
-<td><p>1850_DATM%JRA_SLND_CICE_MOM6%REGIONAL_DROF%GLOFAS_SGLC_WW3</p></td>
-<td><p>ocean coupled with CICE sea ice model and WW3 wave model with data atmosphere from JRA and data runoff from GLOFAS</p></td>
+<td><p>1850_DATM%JRA-1p5-2023_SLND_CICE_MOM6%REGIONAL_DROF%GLOFAS_SGLC_WW3</p></td>
+<td><p>Ocean coupled with CICE sea ice model and WW3 wave model with data atmosphere from JRA and data runoff from GLOFAS</p></td>
 </tr>
 <tr class="row-odd"><td><p>GWR1850MARBL_JRA_GLOFAS</p></td>
-<td><p>1850_DATM%JRA_SLND_CICE_MOM6%REGIONAL%MARBL-BIO_DROF%GLOFAS_SGLC_WW3</p></td>
-<td><p>ocean coupled with MARBL BGC model, CICE sea ice model, and WW3 wave model with data atmosphere from JRA and data runoff from GLOFAS</p></td>
+<td><p>1850_DATM%JRA-1p5-2023_SLND_CICE_MOM6%REGIONAL%MARBL-BIO_DROF%GLOFAS_SGLC_WW3</p></td>
+<td><p>Ocean coupled with MARBL BGC model, CICE sea ice model, and WW3 wave model with data atmosphere from JRA and data runoff from GLOFAS</p></td>
 </tr>
 </tbody>
 </table>
