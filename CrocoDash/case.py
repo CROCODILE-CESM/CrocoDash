@@ -909,12 +909,20 @@ class Case:
         cvars["OCN_GRID_MODE"].value = "Create New"
 
         assert Stage.active().title == "Custom Ocean Grid"
-        cvars["OCN_GRID_EXTENT"].value = "Regional"
-        cvars["OCN_CYCLIC_X"].value = "False"
+        # A cyclic-x grid (e.g. a Southern Ocean band closed by Antarctica,
+        # open to the north) is still a regional domain with OBCs, but MOM6
+        # must join its east/west seam (REENTRANT_X, set from OCN_CYCLIC_X).
+        # visualCaseGen only allows a reentrant domain under the "Global"
+        # extent, whose other requirement (OCN_LENX == 360) such a grid meets.
+        cyclic_x = self.ocn_grid.supergrid.is_cyclic_x
+        cvars["OCN_GRID_EXTENT"].value = "Global" if cyclic_x else "Regional"
+        cvars["OCN_CYCLIC_X"].value = str(cyclic_x)
         cvars["OCN_NX"].value = self.ocn_grid.nx
         cvars["OCN_NY"].value = self.ocn_grid.ny
         cvars["OCN_LENX"].value = (
-            self.ocn_grid.tlon.max().item() - self.ocn_grid.tlon.min().item()
+            360.0
+            if cyclic_x
+            else self.ocn_grid.tlon.max().item() - self.ocn_grid.tlon.min().item()
         )
         cvars["OCN_LENY"].value = (
             self.ocn_grid.tlat.max().item() - self.ocn_grid.tlat.min().item()

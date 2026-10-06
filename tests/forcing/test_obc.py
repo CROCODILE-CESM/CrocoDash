@@ -149,6 +149,53 @@ def test_process_obc_conditions_uses_tmask_bbox_for_get(
     assert captured_latlon["south"] != pytest.approx(full_south_bbox)
 
 
+def test_process_obc_conditions_cyclic_grid_fetches_full_circle(
+    obc_config, monkeypatch, tmp_path
+):
+    """A cyclic-x grid (a Southern Ocean band, closed by land in the south)
+    with only a north boundary: the download box must go all the way round,
+    not a tmask lon min/max, and the grid must not trip a cyclic assert."""
+    kwargs, _ = obc_config
+    grid = Grid(
+        lenx=360.0,
+        leny=40.0,
+        resolution=10.0,
+        xstart=0.0,
+        ystart=-80.0,
+        cyclic_x=True,
+        name="cyclic_band",
+    )
+    hgrid_path = tmp_path / "cyclic_hgrid.nc"
+    grid.write_supergrid(hgrid_path)
+    topo = Topo(grid=grid, min_depth=9.5, git=False)
+    depth = np.full((grid.ny, grid.nx), 1000.0)
+    depth[0, :] = 0.0  # Antarctica
+    depth[-1, : grid.nx // 2] = 0.0  # half the north edge is land
+    topo.send_entire_depth_change_to_tcm(
+        xr.DataArray(depth, dims=["ny", "nx"], attrs={"units": "m"})
+    )
+    bathymetry_path = tmp_path / "cyclic_topo.nc"
+    topo.write_topo(bathymetry_path)
+
+    captured_latlon = {}
+
+    def fake_get_boundary(boundary, latlon, **_kwargs):
+        captured_latlon[boundary] = latlon
+        return []
+
+    monkeypatch.setattr(obc_module, "_get_boundary", fake_get_boundary)
+    monkeypatch.setattr(obc_module, "_regrid_boundary", lambda **_k: [])
+    monkeypatch.setattr(obc_module, "_validate_coverage", lambda *a, **k: [])
+    monkeypatch.setattr(obc_module, "_merge_boundary", lambda *a, **k: None)
+
+    kwargs.update(hgrid_path=str(hgrid_path), boundary_number_conversion={"north": 1})
+    process_obc_conditions(**kwargs, bathymetry_path=bathymetry_path)
+
+    north = captured_latlon["north"]
+    assert (north["lon_min"], north["lon_max"]) == (-180.0, 180.0)
+    assert north["lat_min"] == pytest.approx(-40.0)
+
+
 # ---------------------------------------------------------------------------
 # Preview: verify get_pairs and regrid_pairs are computed correctly
 # ---------------------------------------------------------------------------

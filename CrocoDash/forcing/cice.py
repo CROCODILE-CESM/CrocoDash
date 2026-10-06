@@ -174,6 +174,15 @@ def _regrid_cice_full_grid(ds, grid):
     return xr.merge([t_out, u_out]).rename({"ny": "nj", "nx": "ni"})
 
 
+def _is_cyclic_x(supergrid_path):
+    """Whether the ocean grid wraps around in longitude. Its east and west
+    edges are then one periodic seam, not open boundaries."""
+    if not supergrid_path or not Path(supergrid_path).exists():
+        return False
+    with xr.open_dataset(supergrid_path) as hgrid:
+        return Grid.is_cyclic_x(hgrid)
+
+
 @register
 class CICEConfigurator(BaseConfigurator):
     name = "CICE"
@@ -234,6 +243,13 @@ class CICEConfigurator(BaseConfigurator):
                 "and therefore the absolute path configure() gives ice_ic."
             ),
         ),
+        InputValueParam(
+            "case_supergrid_path",
+            comment=(
+                "Path to the ocean hgrid supergrid file; a cyclic-x (zonally "
+                "reentrant) grid gets cyclic east/west boundaries."
+            ),
+        ),
     ]
     output_params = [
         UserNLConfigParam("ice_ic", user_nl_name="cice"),
@@ -268,6 +284,7 @@ class CICEConfigurator(BaseConfigurator):
         cice_function_args=None,
         restore_ice=False,
         case_inputdir=None,
+        case_supergrid_path=None,
     ):
         super().__init__(
             cice_product_name=cice_product_name,
@@ -275,6 +292,7 @@ class CICEConfigurator(BaseConfigurator):
             cice_function_args=cice_function_args or {},
             restore_ice=restore_ice,
             case_inputdir=case_inputdir,
+            case_supergrid_path=case_supergrid_path,
         )
 
     def validate_args(self, **kwargs):
@@ -304,6 +322,16 @@ class CICEConfigurator(BaseConfigurator):
                 f"{missing} unset. Pass all three to generate the restoring "
                 "forcing file, or none of them to run CICE without restoring "
                 "(ice_ic = 'default', no restart file needed)."
+            )
+
+        # CICE's restore_mask applies to the whole outer ring of the domain,
+        # with no per-edge option. On a cyclic-x grid that ring includes the
+        # first and last columns, which are the periodic seam, not a boundary.
+        if kwargs["restore_ice"] and _is_cyclic_x(kwargs.get("case_supergrid_path")):
+            raise ValueError(
+                "CICE restoring isn't supported on a cyclic-x (zonally "
+                "reentrant) grid: CICE would also restore the columns either "
+                "side of the periodic seam. Leave restore_ice unset."
             )
 
         if product_name:
@@ -344,7 +372,14 @@ class CICEConfigurator(BaseConfigurator):
 
     def configure(self):
         self.set_output_param("ns_boundary_type", "'zero_gradient'")
-        self.set_output_param("ew_boundary_type", "'zero_gradient'")
+        self.set_output_param(
+            "ew_boundary_type",
+            (
+                "'cyclic'"
+                if _is_cyclic_x(self.get_input_param("case_supergrid_path"))
+                else "'zero_gradient'"
+            ),
+        )
         self.set_output_param("advection", "'upwind'")
         # Set unconditionally, not just when restoring: CICE's own
         # set_nml.bczerogradient option pairs zero_gradient boundaries with

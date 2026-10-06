@@ -187,6 +187,45 @@ def test_configure_always_sets_restart_ext(restoring, tmp_path):
     assert configurator.get_output_param("ew_boundary_type") == "'zero_gradient'"
 
 
+def _write_cyclic_supergrid(tmp_path):
+    from CrocoDash.grid import Grid
+
+    grid = Grid(
+        lenx=360.0,
+        leny=20.0,
+        resolution=10.0,
+        xstart=-287.0,
+        ystart=-70.0,
+        cyclic_x=True,
+        name="cyclic",
+    )
+    path = tmp_path / "ocean_hgrid_cyclic.nc"
+    grid.write_supergrid(path)
+    return path
+
+
+def test_configure_cyclic_grid_gets_cyclic_east_west(tmp_path):
+    """On a grid that wraps around in longitude the east and west edges are
+    one periodic seam, so CICE must wrap there too."""
+    configurator = CICEConfigurator(
+        case_inputdir=tmp_path,
+        case_supergrid_path=str(_write_cyclic_supergrid(tmp_path)),
+    )
+    _configure_without_a_case(configurator)
+    assert configurator.get_output_param("ew_boundary_type") == "'cyclic'"
+    assert configurator.get_output_param("ns_boundary_type") == "'zero_gradient'"
+
+
+def test_restoring_on_cyclic_grid_raises(tmp_path):
+    """CICE's restore_mask covers the whole outer ring, seam columns included."""
+    with pytest.raises(ValueError, match="cyclic-x"):
+        CICEConfigurator(
+            case_inputdir=tmp_path,
+            case_supergrid_path=str(_write_cyclic_supergrid(tmp_path)),
+            **_restoring(),
+        )
+
+
 def test_configure_restoring_without_a_case_inputdir_raises():
     """There's nowhere for ice_ic to point without it -- fail with a named
     error rather than writing a bogus relative path into user_nl_cice."""
