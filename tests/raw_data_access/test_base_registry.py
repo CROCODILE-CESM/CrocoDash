@@ -11,7 +11,7 @@ class DummyProduct(DatedBaseProduct):
     time_sampling = None
 
     @accessmethod
-    def dummy_method(dates, output_folder, output_filename):
+    def dummy_method(dates, output_folder, output_filename, freq=None):
         return f"{dates[0]}{dates[1]}{output_folder}/{output_filename}"
 
 
@@ -48,6 +48,7 @@ class DummyForcing(MOM6ForcingProduct):
         lat_min,
         name=None,
         variables="SSH",
+        freq=None,
     ):
         return f"Fetched {variables} to {output_folder}/{output_filename}"
 
@@ -243,7 +244,7 @@ def test_accessmethod_time_sampling_is_checked_too():
             time_sampling = None
 
             @accessmethod(time_sampling="MS")
-            def get(dates, output_folder, output_filename):
+            def get(dates, output_folder, output_filename, freq=None):
                 pass
 
 
@@ -290,3 +291,84 @@ def test_every_registered_dated_product_declares_time_sampling():
     for product in ProductRegistry.products.values():
         if issubclass(product, DatedBaseProduct):
             assert "time_sampling" in vars(product), product.__name__
+
+
+class _Sampled(DatedBaseProduct):
+    product_name = "sampled_for_freq_tests"
+    description = "d"
+    link = "l"
+    time_sampling = TimeSampling("D")
+
+    @accessmethod(freq_handling="subsample")
+    def strided(dates, output_folder, output_filename, freq=None):
+        pass
+
+    @accessmethod
+    def ranged(dates, output_folder, output_filename, freq=None):
+        pass
+
+    @accessmethod(freq_handling="declare")
+    def declared(dates, output_folder, output_filename, freq=None):
+        pass
+
+
+def test_freq_must_be_an_optional_argument():
+    with pytest.raises(ValueError, match="optional freq"):
+
+        class NoFreq(DatedBaseProduct):
+            product_name = "no_freq"
+            description = "d"
+            link = "l"
+            time_sampling = None
+
+            @accessmethod
+            def get(dates, output_folder, output_filename):
+                pass
+
+
+def test_resolve_time_sampling_defaults_to_the_declared_one():
+    assert resolve_time_sampling(_Sampled, "ranged") == TimeSampling("D")
+
+
+def test_resolve_time_sampling_subsamples_coarser():
+    assert resolve_time_sampling(_Sampled, "strided", "MS").frequency == "MS"
+
+
+def test_resolve_time_sampling_rejects_finer_than_native():
+    with pytest.raises(ValueError, match="finer"):
+        resolve_time_sampling(_Sampled, "strided", "6h")
+
+
+def test_resolve_time_sampling_refuses_freq_a_method_cannot_honour():
+    assert resolve_time_sampling(_Sampled, "ranged", "D") == TimeSampling("D")
+    with pytest.raises(NotImplementedError, match="cannot sub-sample"):
+        resolve_time_sampling(_Sampled, "ranged", "MS")
+
+
+def test_resolve_time_sampling_declare_takes_freq_as_the_source_cadence():
+    assert resolve_time_sampling(_Sampled, "declared", "6h").frequency == "6h"
+
+
+def test_user_specified_product_needs_freq():
+    ProductRegistry.load()
+    product = ProductRegistry.get_product("cesm_mom_output")
+    method = "get_mom6_single_variable_data"
+    with pytest.raises(ValueError, match="function_overrides"):
+        resolve_time_sampling(product, method)
+    assert resolve_time_sampling(product, method, "D") == TimeSampling("D")
+
+
+def test_static_product_takes_no_freq():
+    ProductRegistry.load()
+    product = ProductRegistry.get_product("cice_restart")
+    assert resolve_time_sampling(product, "get_cice_restart_subset") is None
+    with pytest.raises(ValueError, match="static"):
+        resolve_time_sampling(product, "get_cice_restart_subset", "D")
+
+
+def test_sample_dates_keeps_the_window_start():
+    assert list(sample_dates("2020-01-10", "2020-03-05", "MS").strftime("%m-%d")) == [
+        "01-10",
+        "02-01",
+        "03-01",
+    ]

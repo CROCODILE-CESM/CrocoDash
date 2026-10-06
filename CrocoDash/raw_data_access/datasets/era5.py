@@ -355,6 +355,7 @@ class ERA5_WAVE_SPECTRA(WW3ForcingProduct):
         output_filename="era5_spectra.nc",
         variables=None,
         cdsapi_rc_path=_DEFAULT_ERA5_CDSAPI_RC,
+        freq=None,
     ):
         """
         Downloads ERA5's true 2D wave spectra for the requested date range
@@ -367,6 +368,7 @@ class ERA5_WAVE_SPECTRA(WW3ForcingProduct):
         Returns the NetCDF path, not the intermediate GRIB -- downstream
         code (extract_forcings/ww3.py) never touches GRIB/eccodes directly.
         """
+        resolve_time_sampling(ERA5_WAVE_SPECTRA, "get_era5_2d_spectra", freq)
         request = build_era5_spectra_request(dates, lat_min, lat_max, lon_min, lon_max)
 
         output_folder = Path(output_folder)

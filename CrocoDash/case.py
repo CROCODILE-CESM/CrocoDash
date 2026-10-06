@@ -11,7 +11,7 @@ from CrocoDash.topo import Topo
 from CrocoDash.vgrid import VGrid
 from CrocoDash.forcing.base import ForcingConfigRegistry
 from CrocoDash.raw_data_access.registry import ProductRegistry
-from CrocoDash.raw_data_access.base import ForcingProduct
+from CrocoDash.raw_data_access.base import ForcingProduct, resolve_time_sampling
 from ProConPy.config_var import ConfigVar, cvars
 from ProConPy.stage import Stage
 from ProConPy.dev_utils import ConstraintViolation
@@ -598,6 +598,13 @@ class Case:
                     f"valid overridable args are {sorted(function_args)}"
                 )
             function_args.update(function_overrides)
+        # Fail here, not deep inside process_forcings, on a freq the access
+        # method can't honour or a product that needs one.
+        resolve_time_sampling(
+            ProductRegistry.get_product(self.forcing_product_name),
+            function_name,
+            function_args.get("freq"),
+        )
 
         # function_args is written straight to config.json (via ConditionsConfigurator's
         # "function_args" ConfigOutputParam); coerce Path values (e.g. a dataset_path

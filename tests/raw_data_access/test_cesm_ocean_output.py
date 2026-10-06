@@ -108,6 +108,7 @@ def test_get_mom6_output_data_missing_dataset_path(tmp_path):
     with pytest.raises(FileNotFoundError):
         co.CESM_MOM_OUTPUT.get_mom6_output_data(
             dates=["2000-01-01", "2000-01-10"],
+            freq="D",
             lat_min=20,
             lat_max=25,
             lon_min=-90,
@@ -121,6 +122,7 @@ def test_get_mom6_output_data_no_matching_files(tmp_path):
     with pytest.raises(FileNotFoundError):
         co.CESM_MOM_OUTPUT.get_mom6_output_data(
             dates=["2000-01-01", "2000-01-10"],
+            freq="D",
             lat_min=20,
             lat_max=25,
             lon_min=-90,
@@ -139,6 +141,7 @@ def test_get_mom6_output_data_reads_multi_var_file(tmp_path):
 
     paths = co.CESM_MOM_OUTPUT.get_mom6_output_data(
         dates=["2000-01-01", "2000-01-10"],
+        freq="D",
         lat_min=lat_min,
         lat_max=lat_max,
         lon_min=lon_min,
@@ -167,6 +170,7 @@ def test_get_mom6_output_data_drops_missing_variables(tmp_path):
 
     paths = co.CESM_MOM_OUTPUT.get_mom6_output_data(
         dates=["2000-01-01", "2000-01-10"],
+        freq="D",
         lat_min=lat_min,
         lat_max=lat_max,
         lon_min=lon_min,
@@ -216,6 +220,7 @@ def test_get_mom6_single_variable_data(tmp_path):
 
     co.CESM_MOM_OUTPUT.get_mom6_single_variable_data(
         dates=["2000-01-01", "2000-01-10"],
+        freq="D",
         lat_min=lat_min,
         lat_max=lat_max,
         lon_min=lon_min,

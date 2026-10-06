@@ -399,6 +399,7 @@ class _FakeERA5Spectra(WW3ForcingProduct):
         output_folder=Path(""),
         output_filename="fake_era5.nc",
         variables=None,
+        freq=None,
     ):
         start, end = pd.to_datetime(dates[0]), pd.to_datetime(dates[1])
         time = pd.date_range(start, end, freq="6h")
