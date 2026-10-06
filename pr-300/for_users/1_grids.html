@@ -1619,7 +1619,10 @@ Warning: cartopy module must be installed seperately</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>path</strong> (<em>str</em>) – Path to the full supergrid file to be carved out.</p></li>
 <li><p><strong>llc</strong> (<em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em>) – Lower left corner coordinates (lat, lon) of the subdomain to extract</p></li>
-<li><p><strong>urc</strong> (<em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em>) – Upper right corner coordinates (lat, lon) of the subset to extract</p></li>
+<li><p><strong>urc</strong> (<em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em>) – Upper right corner coordinates (lat, lon) of the subset to extract.
+On a cyclic-x grid, a box spanning 360 degrees of longitude (e.g.
+<code class="docutils literal notranslate"><span class="pre">llc=(-90,</span> <span class="pre">-287)</span></code>, <code class="docutils literal notranslate"><span class="pre">urc=(-30,</span> <span class="pre">73)</span></code>) keeps every column, so the
+subgrid is cyclic too.</p></li>
 <li><p><strong>name</strong> (<em>str</em>) – Name of the subgrid</p></li>
 </ul>
 </dd>
