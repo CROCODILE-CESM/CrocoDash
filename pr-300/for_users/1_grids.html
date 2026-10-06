@@ -1460,6 +1460,10 @@ down to the lat/lon ranges required for efficient regridding:</p>
 </ul>
 </dd>
 </dl>
+<p>On a cyclic-x grid, “east” and “west” are left out – those
+columns are the periodic seam, not an outer edge – and “ic”,
+“north” and “south” span the full circle (<code class="docutils literal notranslate"><span class="pre">lon_min=-180</span></code>,
+<code class="docutils literal notranslate"><span class="pre">lon_max=180</span></code>).</p>
 <p>Each box is <code class="docutils literal notranslate"><span class="pre">{&quot;lon_min&quot;,</span> <span class="pre">&quot;lon_max&quot;,</span> <span class="pre">&quot;lat_min&quot;,</span> <span class="pre">&quot;lat_max&quot;,</span>
 <span class="pre">&quot;crosses_antimeridian&quot;}</span></code>. <code class="docutils literal notranslate"><span class="pre">lon_min</span></code> is always a longitude in
 [-180, 180) and <code class="docutils literal notranslate"><span class="pre">lon_max</span></code> is <code class="docutils literal notranslate"><span class="pre">lon_min</span></code> plus the width of the
