@@ -203,17 +203,86 @@ class REFERENCE_OCEAN(MOM6ForcingProduct):
         return output_path
 
 
+# One ice-covered column (all five thickness categories present) sampled from
+# a CESM3 CICE restart (b.e30_alpha09b.B1850C_MTso.ne30_t233_wgx3.360, year
+# 201, Arctic), rounded. REFERENCE_ICE spreads this column's per-category
+# state over its synthetic ice edge so CICE gets a self-consistent restart:
+# thermodynamic tracers (enthalpy, salinity, surface temperature) that agree
+# with each other, rather than made-up numbers CICE's thermodynamics rejects.
+NCAT = 5
+NILYR = 8  # ice layers (sice/qice)
+NSLYR = 3  # snow layers (qsno, and smice/smliq/rhos/rsnw)
+NFSD = 12  # floe size categories (fsd)
+N_AERO = 3  # aerosol species
+# Share of the column's ice area in each category, and each category's ice
+# and snow thickness [m] (vicen/aicen, vsnon/aicen).
+_REF_ICE_CATEGORY_FRACTION = [0.4118, 0.1441, 0.1505, 0.1616, 0.1320]
+_REF_ICE_THICKNESS = [0.3193, 0.8529, 1.9265, 3.3811, 7.5573]
+_REF_SNOW_THICKNESS = [0.04403, 0.02522, 0.03417, 0.06354, 0.2818]
+# Per-category (ncat=5) tracers, as CICE stores them in a restart.
+_REF_ICE_TRACERS = {
+    "Tsfcn": [-6.997, -5.966, -7.349, -9.472, -10.38],
+    "iage": [7.651e6, 8.324e6, 9.011e6, 9.395e6, 1.020e7],
+    "FY": [0.9999, 0.9996, 0.9969, 0.9973, 0.9966],
+    "alvl": [0.9306, 0.6954, 0.1250, 0.06163, 0.02815],
+    "vlvl": [0.8380, 0.5866, 0.1098, 0.05896, 0.02688],
+    "apnd": [0.4981, 0.2974, 0.2597, 0.2549, 0.2770],
+    "hpnd": [0.02510, 0.04004, 0.07895, 0.1360, 0.3304],
+    "ipnd": [0.4251, 0.1313, 0.02579, 0.03495, 0.009330],
+    "dhs": [0.002310, 0.003290, 0.009960, 0.01456, 0.2321],
+    "sice001": [1.966, 1.749, 2.415, 3.015, 5.149],
+    "sice002": [1.886, 1.842, 2.634, 3.269, 4.722],
+    "sice003": [1.723, 1.816, 2.697, 3.297, 4.184],
+    "sice004": [1.601, 1.777, 2.597, 3.152, 3.621],
+    "sice005": [1.530, 1.720, 2.433, 2.951, 3.078],
+    "sice006": [1.500, 1.649, 2.244, 2.672, 2.628],
+    "sice007": [1.503, 1.577, 2.076, 2.356, 2.464],
+    "sice008": [1.565, 1.711, 2.287, 2.499, 3.589],
+    "qice001": [-1.520e8, -1.429e8, -2.035e8, -2.364e8, -2.750e8],
+    "qice002": [-1.871e8, -2.066e8, -2.491e8, -2.668e8, -2.880e8],
+    "qice003": [-2.245e8, -2.353e8, -2.620e8, -2.755e8, -2.904e8],
+    "qice004": [-2.527e8, -2.517e8, -2.697e8, -2.796e8, -2.894e8],
+    "qice005": [-2.712e8, -2.643e8, -2.754e8, -2.811e8, -2.870e8],
+    "qice006": [-2.823e8, -2.758e8, -2.802e8, -2.814e8, -2.834e8],
+    "qice007": [-2.890e8, -2.855e8, -2.846e8, -2.826e8, -2.761e8],
+    "qice008": [-2.929e8, -2.906e8, -2.856e8, -2.822e8, -2.591e8],
+    "qsno001": [-1.144e8, -1.139e8, -1.148e8, -1.162e8, -1.158e8],
+    "qsno002": [-1.130e8, -1.130e8, -1.138e8, -1.149e8, -1.129e8],
+    "qsno003": [-1.117e8, -1.121e8, -1.128e8, -1.136e8, -1.118e8],
+    # All ice in the smallest floe size category.
+    "fsd001": [1.0] * NCAT,
+}
+# Restart fields that are zero for this synthetic state (no aerosols, no snow
+# redistribution, no freezing onset, ...) but that CICE still reads.
+_ZERO_CATEGORY_FIELDS = (
+    ["ffrac"]
+    + [
+        f"{v}{k:03d}"
+        for k in range(1, NSLYR + 1)
+        for v in ("smice", "smliq", "rhos", "rsnw")
+    ]
+    + [f"fsd{k:03d}" for k in range(2, NFSD + 1)]
+    + [
+        f"{v}{k:03d}"
+        for k in range(1, N_AERO + 1)
+        for v in ("aerosnossl", "aerosnoint", "aeroicessl", "aeroiceint")
+    ]
+)
+_ZERO_2D_FIELDS = (
+    ["coszen", "scale_factor", "swvdr", "swvdf", "swidr", "swidf"]
+    + ["strocnxT", "strocnyT", "frz_onset", "fsnow"]
+    + [f"{v}_{k}" for v in ("stressp", "stressm", "stress12") for k in range(1, 5)]
+)
+
+
 class REFERENCE_ICE(CICEForcingProduct):
     product_name = "reference_ice"
     description = (
-        "Fast, deterministic synthetic CICE forcing (ice concentration/"
-        "volume/surface temp and a small drift velocity) for testing and "
-        "demos -- generates its own grid, no real CICE restart/grid file "
-        "required. Exercises the CrocoDash regrid path only: it writes a "
-        "single category (ncat=1) and five variables, where CICE needs "
-        "ncat=5 plus the rest of the restart state (vsnon, trcrn, ...), so "
-        "CICE cannot actually start from the file this produces. Use "
-        "'cice_restart' against a real global restart for a runnable case."
+        "Fast, deterministic synthetic CICE forcing for testing and demos -- "
+        "generates its own grid, no real CICE restart/grid file required. "
+        "Writes a complete CICE restart (ncat=5, every field CICE reads), "
+        "built from one real ice column spread over a synthetic ice edge, so "
+        "CICE can start from it."
     )
     link = "n/a"
     # No real time evolution any more than CICE_RESTART has (see
@@ -236,12 +305,12 @@ class REFERENCE_ICE(CICEForcingProduct):
 
     @accessmethod(
         description=(
-            "Generates a synthetic single-category CICE-shaped dataset over "
-            "the requested bbox/dates: its own regular tlon/tlat/ulon/ulat "
-            "mesh (no real CICE grid file needed), ice concentration tapering "
-            "linearly from the bbox's poleward edge to zero at its equatorward "
-            "edge, matching ice volume/surface temp, and a small drift "
-            "velocity."
+            "Generates a synthetic CICE restart over the requested bbox/dates: "
+            "its own regular tlon/tlat/ulon/ulat mesh (no real CICE grid file "
+            "needed), total ice concentration tapering linearly from the "
+            "bbox's poleward edge to zero at its equatorward edge, split over "
+            "five thickness categories with a real ice column's thicknesses "
+            "and thermodynamic state, and a small drift velocity."
         ),
         type="python",
     )
@@ -263,28 +332,38 @@ class REFERENCE_ICE(CICEForcingProduct):
         lat = np.arange(lat_min, lat_max + resolution_deg, resolution_deg)
         tlon, tlat = np.meshgrid(lon, lat)
 
-        # 0 at the bbox's equatorward edge (min |lat|), 1 at its poleward edge
-        # (max |lat|) -- hemisphere-agnostic via abs(), so this works for
-        # either a northern or southern-hemisphere bounding box.
+        # Total concentration: 0 at the bbox's equatorward edge (min |lat|), 1
+        # at its poleward edge (max |lat|) -- hemisphere-agnostic via abs(),
+        # so this works for either a northern or southern-hemisphere bbox.
         edge = (np.abs(tlat) - np.abs(tlat).min()) / (
             np.abs(tlat).max() - np.abs(tlat).min() + 1e-9
         )
-        aicen = edge[None, :, :]  # single category (ncat=1)
-        vicen = 2.0 * aicen
-        # -1.8C under thick ice, warming toward the open-water ice edge.
-        Tsfcn = -1.8 * aicen - 1.0 * (1.0 - aicen)
-        uvel = np.full_like(tlon, 0.02)
-        vvel = np.full_like(tlon, 0.02)
+        iced = edge > 0
 
-        ds = xr.Dataset(
-            {
-                "aicen": (("ncat", "nj", "ni"), aicen),
-                "vicen": (("ncat", "nj", "ni"), vicen),
-                "Tsfcn": (("ncat", "nj", "ni"), Tsfcn),
-                "uvel": (("nj", "ni"), uvel),
-                "vvel": (("nj", "ni"), vvel),
-            },
-        )
+        def per_category(values):
+            return np.asarray(values)[:, None, None] * np.ones_like(edge)
+
+        aicen = per_category(_REF_ICE_CATEGORY_FRACTION) * edge
+        data = {
+            "aicen": aicen,
+            "vicen": aicen * per_category(_REF_ICE_THICKNESS),
+            "vsnon": aicen * per_category(_REF_SNOW_THICKNESS),
+        }
+        # Tracers are per unit ice/snow, so they take the column's values
+        # wherever there is ice and are zero in open water, as in a real
+        # restart.
+        for var, values in _REF_ICE_TRACERS.items():
+            data[var] = np.where(iced, per_category(values), 0.0)
+        for var in _ZERO_CATEGORY_FIELDS:
+            data[var] = np.zeros_like(aicen)
+
+        ds = xr.Dataset({var: (("ncat", "nj", "ni"), v) for var, v in data.items()})
+        ds["uvel"] = (("nj", "ni"), np.where(iced, 0.02, 0.0))
+        ds["vvel"] = (("nj", "ni"), np.where(iced, 0.02, 0.0))
+        ds["iceumask"] = (("nj", "ni"), iced.astype(float))
+        for var in _ZERO_2D_FIELDS:
+            ds[var] = (("nj", "ni"), np.zeros_like(edge))
+
         ds["tlon"] = (("nj", "ni"), tlon)
         ds["tlat"] = (("nj", "ni"), tlat)
         # No real staggering here (synthetic mesh, not a real B-grid) -- offset

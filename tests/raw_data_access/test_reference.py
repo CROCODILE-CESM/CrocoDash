@@ -114,10 +114,34 @@ def test_reference_ice_edge_tapers_with_latitude(tmp_path):
     # no `time` dimension at all.
     assert set(ds.sizes) >= {"ncat", "nj", "ni"}
     assert "time" not in ds.dims
-    aicen = ds["aicen"].isel(ncat=0)
+    aice = ds["aicen"].sum("ncat")
     # Equatorward edge (row 0) has no ice, poleward edge (last row) is fully iced.
-    assert np.allclose(aicen.isel(nj=0).values, 0.0)
-    assert np.allclose(aicen.isel(nj=-1).values, 1.0)
+    assert np.allclose(aice.isel(nj=0).values, 0.0)
+    assert np.allclose(aice.isel(nj=-1).values, 1.0)
+
+
+def test_reference_ice_is_a_full_cice_restart(tmp_path):
+    """CICE reads every category and thermodynamic field from ice_ic, so the
+    file must carry ncat=5 and the full layered state, not just aicen/vicen."""
+    paths = REFERENCE_ICE.get_reference_ice_data(
+        dates=DATES,
+        lat_min=60.0,
+        lat_max=70.0,
+        lon_min=-30.0,
+        lon_max=-25.0,
+        output_folder=tmp_path,
+        output_filename="ice.nc",
+    )
+    ds = xr.open_dataset(paths[0])
+    assert ds.sizes["ncat"] == 5
+    for var in ("vsnon", "Tsfcn", "qice008", "sice008", "qsno003", "fsd012"):
+        assert ds[var].dims == ("ncat", "nj", "ni")
+    for var in ("iceumask", "stress12_4", "strocnxT"):
+        assert ds[var].dims == ("nj", "ni")
+    # Thermodynamic tracers are set where there is ice and zero in open water.
+    iced = ds["aicen"].sum("ncat") > 0
+    assert (ds["qice001"].where(iced) < 0).sum() > 0
+    assert float(abs(ds["qice001"].where(~iced, 0.0)).sum()) == 0.0
 
 
 def test_reference_waves_shape_and_peak(tmp_path):
