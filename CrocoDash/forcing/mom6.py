@@ -36,6 +36,10 @@ from CrocoDash.raw_data_access.base import (
 
 logger = logging.setup_logger(__name__)
 
+# rm6's mask_dataset fills OBC land points with -1e20; values at or below this
+# are land, not data.
+_LAND_FILL_THRESHOLD = -1e19
+
 
 def build_forcing_request(
     product_info: dict, function_args: dict = None
@@ -222,10 +226,14 @@ def _split_bgc_tracers_into_files(
                 # tracers positive (e.g. NO3 and DOC in oxygen-minimum zones,
                 # phytoplankton below the euphotic zone). MARBL clips them
                 # internally, so a negative boundary value breaks its column
-                # conservation checks. clip keeps NaN land points and is lazy,
-                # so to_netcdf still streams from the open source file.
-                ds_var[var_name] = ds[var_name].clip(min=0, keep_attrs=True)
-                ds_var[var_name].encoding = ds[var_name].encoding
+                # conservation checks. Land points keep rm6's -1e20 fill
+                # (and any NaN), and this stays lazy, so to_netcdf still
+                # streams from the open source file.
+                da = ds[var_name]
+                ds_var[var_name] = da.clip(min=0, keep_attrs=True).where(
+                    da > _LAND_FILL_THRESHOLD, da
+                )
+                ds_var[var_name].encoding = da.encoding
                 dz_var_name = f"dz_{var_name}"
                 if dz_var_name in ds:
                     ds_var[dz_var_name] = ds[dz_var_name]
