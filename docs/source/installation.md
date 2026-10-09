@@ -10,7 +10,7 @@ The first step in running an ocean model inside the CESM is setting up the CESM!
 
 1. Clone the CESM Repo
 
-   CROCODILE has its own fork of the CESM available here: <https://github.com/CROCODILE-CESM/CESM>. Go ahead and clone its `crocodash` branch as shown below: that's the branch CrocoDash is built and tested against (see [Tested configurations](for_users/tested_configurations.md)). I'm gonna call mine CROCESM.
+   CROCODILE has its own fork of the CESM available here: <https://github.com/CROCODILE-CESM/CESM>. Go ahead and clone its `crocodash` branch as shown below: that's the branch CrocoDash is built and tested against (see [Tested configurations](for_developers/tested_configurations.md)). I'm gonna call mine CROCESM.
 
    ```bash
    git clone https://github.com/CROCODILE-CESM/CESM CROCESM -b crocodash
