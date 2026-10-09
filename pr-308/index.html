@@ -167,6 +167,7 @@
 <li class="toctree-l2"><a class="reference internal" href="for_users/3a_configure_forcings.html">3a. Configure Forcings (case.configure_forcings)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="for_users/3b_process_forcings.html">3b. Process Forcings (<code class="docutils literal notranslate"><span class="pre">case.process_forcings</span></code>)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="for_users/compsets_and_inputs.html">Regional Compsets &amp; Input Parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="for_users/tested_configurations.html">Tested configurations</a></li>
 <li class="toctree-l2"><a class="reference internal" href="for_users/datasets.html">Accessing Raw Data (raw_data_access)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="for_users/shareable.html">Sharing Cases</a></li>
 <li class="toctree-l2"><a class="reference internal" href="for_users/template.html">Templates</a></li>
@@ -343,7 +344,6 @@ document.write(`
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#tested-configurations">Tested configurations</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#description">Description</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#quick-install">Quick install</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#get-started">Get started</a></li>
@@ -366,41 +366,6 @@ document.write(`
 CrocoDash takes advantage and integrates several MOM6 and CESM tools into an unified workflow for regional MOM6 case configuration.
 CrocoDash is part of the CROCODILE project. Please see the <a class="reference external" href="https://github.com/CROCODILE-CESM">project description</a> for scientific motivation.</p>
 <p>Full documentation: <a class="reference external" href="https://crocodile-cesm.github.io/CrocoDash/">https://crocodile-cesm.github.io/CrocoDash/</a></p>
-<section id="tested-configurations">
-<h2>Tested configurations<a class="headerlink" href="#tested-configurations" title="Link to this heading">#</a></h2>
-<p>Each week, cases built by CrocoDash <code class="docutils literal notranslate"><span class="pre">main</span></code> run MOM_interface’s regional smoke tests on Derecho, against the <code class="docutils literal notranslate"><span class="pre">crocodash</span></code> branch of <a class="reference external" href="https://github.com/CROCODILE-CESM/CESM">CROCODILE-CESM/CESM</a> (see <a class="reference external" href="https://github.com/CROCODILE-CESM/crocontainer/tree/main/cesm_tests">crocontainer’s <code class="docutils literal notranslate"><span class="pre">cesm_tests</span></code></a>):</p>
-<div class="pst-scrollable-table-container"><table class="table">
-<thead>
-<tr class="row-odd"><th class="head"><p>Compset</p></th>
-<th class="head"><p>Components</p></th>
-<th class="head"><p>SMS_D_Ld2</p></th>
-</tr>
-</thead>
-<tbody>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">CR_JRA_GLOFAS</span></code></p></td>
-<td><p>MOM6 + GLOFAS runoff</p></td>
-<td><p><img alt="" src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/CROCODILE-CESM/crocontainer/test-results/SMS_D_Ld2.CR_JRA_GLOFAS.json" /></p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">CR1850MARBL_JRA_GLOFAS</span></code></p></td>
-<td><p>+ MARBL</p></td>
-<td><p><img alt="" src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/CROCODILE-CESM/crocontainer/test-results/SMS_D_Ld2.CR1850MARBL_JRA_GLOFAS.json" /></p></td>
-</tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">GR_JRA_GLOFAS</span></code></p></td>
-<td><p>+ CICE</p></td>
-<td><p><img alt="" src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/CROCODILE-CESM/crocontainer/test-results/SMS_D_Ld2.GR_JRA_GLOFAS.json" /></p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">CWR_JRA_GLOFAS</span></code></p></td>
-<td><p>+ WW3</p></td>
-<td><p><img alt="" src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/CROCODILE-CESM/crocontainer/test-results/SMS_D_Ld2.CWR_JRA_GLOFAS.json" /></p></td>
-</tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">GWR1850MARBL_JRA_GLOFAS</span></code></p></td>
-<td><p>MOM6 + CICE + WW3 + MARBL + GLOFAS</p></td>
-<td><p><img alt="" src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/CROCODILE-CESM/crocontainer/test-results/SMS_D_Ld2.GWR1850MARBL_JRA_GLOFAS.json" /></p></td>
-</tr>
-</tbody>
-</table>
-</div>
-</section>
 <section id="description">
 <h2>Description<a class="headerlink" href="#description" title="Link to this heading">#</a></h2>
 <p>CrocoDash brings regional MOM6 inside CESM. It’s a lightweight package that
@@ -493,7 +458,6 @@ editing and a <code class="docutils literal notranslate"><span class="pre">raw_d
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#tested-configurations">Tested configurations</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#description">Description</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#quick-install">Quick install</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#get-started">Get started</a></li>
