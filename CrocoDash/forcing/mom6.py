@@ -218,9 +218,14 @@ def _split_bgc_tracers_into_files(
                         f"{seg_files[seg]}. Expected it there because {var!r} was "
                         "included in the regridded tracer set."
                     )
-                # Left lazy so to_netcdf streams from the open source file
-                # rather than materialising every segment first.
-                ds_var[var_name] = ds[var_name]
+                # Clipped at zero: source models such as POP don't keep BGC
+                # tracers positive (e.g. NO3 and DOC in oxygen-minimum zones,
+                # phytoplankton below the euphotic zone). MARBL clips them
+                # internally, so a negative boundary value breaks its column
+                # conservation checks. clip keeps NaN land points and is lazy,
+                # so to_netcdf still streams from the open source file.
+                ds_var[var_name] = ds[var_name].clip(min=0, keep_attrs=True)
+                ds_var[var_name].encoding = ds[var_name].encoding
                 dz_var_name = f"dz_{var_name}"
                 if dz_var_name in ds:
                     ds_var[dz_var_name] = ds[dz_var_name]

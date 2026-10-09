@@ -113,6 +113,28 @@ def test_split_bgc_tracers_writes_one_file_per_tracer_with_all_segments(tmp_path
             assert f"temp_segment_{seg}" in ds
 
 
+def test_split_bgc_tracers_clips_negative_values_to_zero(tmp_path):
+    """Negative BGC boundary values are written as zero, NaN land points kept.
+
+    POP output has negative NO3/DOC/phytoplankton; MARBL clips them itself, so
+    passing them through breaks its column conservation checks.
+    """
+    conversion = {"south": 1}
+    _write_segment_file(tmp_path / "forcing_obc_segment_001.nc", "001", ["no3"])
+    with xr.open_dataset(tmp_path / "forcing_obc_segment_001.nc") as ds:
+        ds = ds.load()
+    ds["no3_segment_001"][0, 0, :3] = [-0.5, np.nan, 2.0]
+    ds.to_netcdf(tmp_path / "forcing_obc_segment_001.nc")
+
+    _split_bgc_tracers_into_files(tmp_path, conversion, {"no3": "no3"})
+
+    with xr.open_dataset(tmp_path / "no3_obc_segment.nc") as ds:
+        first = ds["no3_segment_001"][0, 0, :3].values
+    assert first[0] == 0.0
+    assert np.isnan(first[1])
+    assert first[2] == 2.0
+
+
 def test_split_bgc_tracers_is_a_noop_without_marbl_tracers(tmp_path):
     """Non-BGC cases must not gain any per-tracer files."""
     conversion = {"south": 1}
