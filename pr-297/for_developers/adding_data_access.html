@@ -386,7 +386,7 @@ plus <code class="docutils literal notranslate"><span class="pre">datasets/utils
 <h3>The base-class hierarchy<a class="headerlink" href="#the-base-class-hierarchy" title="Link to this heading">#</a></h3>
 <p>Pick the most specific base that fits — each level adds required metadata:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>BaseProduct                    product_name, description, link
- └─ DatedBaseProduct           + a `dates` download arg
+ └─ DatedBaseProduct           + a `dates` download arg, time_sampling
      └─ ForcingProduct         + lat/lon/variables bbox contract,
                                  time_var_name, time_units, calendar
          └─ VelocityTracerForcingProduct
@@ -526,10 +526,33 @@ import time:</p>
 <p><code class="docutils literal notranslate"><span class="pre">MOM6ForcingProduct</span></code> additionally asserts that <code class="docutils literal notranslate"><span class="pre">tracer_var_names</span></code> is a dict
 containing at least <code class="docutils literal notranslate"><span class="pre">temp</span></code> and <code class="docutils literal notranslate"><span class="pre">salt</span></code>.</p>
 </div>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p>Every dated product declares a <strong><code class="docutils literal notranslate"><span class="pre">time_sampling</span></code></strong>: a <code class="docutils literal notranslate"><span class="pre">TimeSampling</span></code> saying how
+often its records come, whether each is a mean over its interval or an
+instantaneous value, and where in the interval the timestamp sits. Use
+<code class="docutils literal notranslate"><span class="pre">USER_SPECIFIED</span></code> when the cadence depends on the source the user points the
+product at (CESM-MOM output), so the user must pass it as <code class="docutils literal notranslate"><span class="pre">freq</span></code>, and <code class="docutils literal notranslate"><span class="pre">None</span></code>
+only for a static snapshot that ignores <code class="docutils literal notranslate"><span class="pre">dates</span></code>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">MyDataset</span><span class="p">(</span><span class="n">MOM6ForcingProduct</span><span class="p">):</span>
+    <span class="c1"># Daily means, stamped at noon</span>
+    <span class="n">time_sampling</span> <span class="o">=</span> <span class="n">TimeSampling</span><span class="p">(</span><span class="s2">"D"</span><span class="p">,</span> <span class="n">cell_method</span><span class="o">=</span><span class="s2">"mean"</span><span class="p">,</span> <span class="n">anchor</span><span class="o">=</span><span class="s2">"center"</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>An access method that reads a differently sampled source can override it with
+<code class="docutils literal notranslate"><span class="pre">&#64;accessmethod(time_sampling=TimeSampling(...))</span></code>.</p>
+<p>Every dated access method also takes an optional <code class="docutils literal notranslate"><span class="pre">freq=None</span></code> (users set it with
+<code class="docutils literal notranslate"><span class="pre">function_overrides={&quot;freq&quot;:</span> <span class="pre">&quot;MS&quot;}</span></code>) and calls <code class="docutils literal notranslate"><span class="pre">resolve_time_sampling</span></code> first.
+Mark it <code class="docutils literal notranslate"><span class="pre">&#64;accessmethod(freq_handling=&quot;subsample&quot;)</span></code> if it can fetch every <code class="docutils literal notranslate"><span class="pre">freq</span></code>
+instead of every record (see GLORYS’s RDA method, which uses <code class="docutils literal notranslate"><span class="pre">sample_dates</span></code>), or
+<code class="docutils literal notranslate"><span class="pre">freq_handling=&quot;declare&quot;</span></code> if <code class="docutils literal notranslate"><span class="pre">freq</span></code> names the cadence of the source the user
+points it at (the CESM tseries readers). Otherwise a <code class="docutils literal notranslate"><span class="pre">freq</span></code> other than the
+native one is refused.</p>
+</div>
 </section>
 <section id="step-5-validation-and-tests">
 <h2>Step 5: Validation and Tests<a class="headerlink" href="#step-5-validation-and-tests" title="Link to this heading">#</a></h2>
-<p>When you test your class, it will automatically get registered with the registry and run validation. It will fail on import if you miss metadata or required args in your registered access function, or if <code class="docutils literal notranslate"><span class="pre">calendar</span></code> is missing or is not a <code class="docutils literal notranslate"><span class="pre">Calendar</span></code>.</p>
+<p>When you test your class, it will automatically get registered with the registry and run validation. It will fail on import if you miss metadata or required args in your registered access function, or if <code class="docutils literal notranslate"><span class="pre">calendar</span></code> is missing or is not a <code class="docutils literal notranslate"><span class="pre">Calendar</span></code>, or <code class="docutils literal notranslate"><span class="pre">time_sampling</span></code> is missing or is not a <code class="docutils literal notranslate"><span class="pre">TimeSampling</span></code>, <code class="docutils literal notranslate"><span class="pre">USER_SPECIFIED</span></code> or <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
 <p>Create a test file in <code class="docutils literal notranslate"><span class="pre">tests/raw_data_access</span></code> to test your dataset:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># tests/raw_data_access/test_my_dataset.py</span>
 
