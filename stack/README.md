@@ -28,6 +28,11 @@ pip check
 checkout, then any of `model2obs`, `pyDARTdiags`, `dartobsgen` found in the
 given directory (default: the directory containing this CrocoDash checkout).
 
+ESMF's build is left to the solver, so the lock can carry an MPI build and
+users can run regridding in parallel. Only the CI test job swaps in the
+serial (`nompi_*`) build of the same version, because MPI aborts on GitHub
+runners.
+
 ## CI (`.github/workflows/stack.yml`)
 
 - **Push touching `stack/`** — tests the committed lock against every package.

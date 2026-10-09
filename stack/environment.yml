@@ -24,10 +24,6 @@ dependencies:
   - python=3.11.*  # CrocoDash environment.yml: <3.12
 
   # --- ESMF / regridding ---------------------------------------------------
-  # Serial ESMF. The mpi_* builds call MPI_Init on first use, which aborts on
-  # GitHub runners and buys nothing: everything here uses ESMF serially via
-  # xesmf.
-  - esmf=*=nompi_*
   - esmpy>=8.6.1,<8.7.0  # CrocoDash
   - xesmf>=0.8.10,<0.10.0  # mom6_forge, visualCaseGen
 

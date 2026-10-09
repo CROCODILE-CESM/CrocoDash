@@ -126,11 +126,21 @@ jobs:
           cache-environment: true
           cache-downloads: true
 
+      # The lock leaves ESMF's build free so users can run it under MPI, but
+      # on GitHub runners an mpi_* ESMF calls MPI_Init on first use, UCX fails
+      # to open ib_verbs and MPI aborts the step. Swap in the serial build of
+      # the SAME locked version, CI only.
+      - name: Use serial ESMF on the runner
+        shell: bash -el {0}
+        run: |
+          ver=$(micromamba list -n croc-stack --json | python -c "import json,sys; print(next(p['version'] for p in json.load(sys.stdin) if p['name']=='esmf'))")
+          micromamba install -y -n croc-stack -c conda-forge "esmf=${ver}=nompi_*"
+
       - name: Install packages (no deps)
         shell: bash -el {0}
         run: CrocoDash/stack/install_packages.sh
 
-      # --- CrocoDash only: CESM checkout, shared cache key with testing.yml ---
+      # --- CrocoDash only: CESM checkout + externals, cached (own key: different path than testing.yml) ---
       - name: Get latest CESM branch SHA
         if: matrix.package == 'CrocoDash'
         id: get-sha
