@@ -32,6 +32,7 @@ flowchart LR
 These are not part of the linear workflow but you'll reach for them often:
 
 - **[Compsets & Inputs](compsets_and_inputs.md)** — available CESM compsets, and how to customize MOM6 parameters via `user_nl_mom`.
+- **[Tested configurations](tested_configurations.md)** — the coupled compsets CrocoDash is tested with each week, and their latest results.
 - **[Datasets](datasets.md)** — which raw datasets CrocoDash can download, and how the `raw_data_access` registry works.
 - **[Additional resources](additional_resources.md)** — talks, videos, and external tutorials.
 
@@ -50,6 +51,7 @@ These are not part of the linear workflow but you'll reach for them often:
 :maxdepth: 1
 
 compsets_and_inputs
+tested_configurations
 datasets
 shareable
 template
