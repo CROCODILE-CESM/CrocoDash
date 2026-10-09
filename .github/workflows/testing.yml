@@ -6,7 +6,7 @@ permissions:
   contents: write
 env:
   CESM_REPO: CROCODILE-CESM/CESM
-  CESM_REF: full_regional_cesm
+  CESM_REF: crocodash
   CIME_MACHINE: ubuntu-latest
   USER: ${{ github.actor }}
 jobs:
@@ -52,7 +52,7 @@ jobs:
         id: get-sha
         run: |
           # Fetch the SHA of the remote branch
-          SHA=$(git ls-remote https://github.com/CROCODILE-CESM/CESM refs/heads/full_regional_cesm | cut -f1)
+          SHA=$(git ls-remote https://github.com/CROCODILE-CESM/CESM refs/heads/crocodash | cut -f1)
           echo "sha=$SHA" >> $GITHUB_OUTPUT
       - name: Cache CESM checkout + externals
         id: restore-cesm-cache
