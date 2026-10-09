@@ -1,0 +1,225 @@
+name: Shared Stack
+
+# One locked environment (stack/conda-lock.yml) for CrocoDash, model2obs,
+# pyDARTdiags and dartobsgen. See stack/README.md.
+#
+# - push touching stack/: test the committed lockfile against every package.
+# - weekly schedule, or dispatch with relock=true: re-solve stack/environment.yml,
+#   test the NEW lock against every package, and open a PR with it only if
+#   everything passes. The PR is opened with GITHUB_TOKEN, so it will not
+#   trigger CI itself -- the tests that justify it are the run that opened it.
+
+on:
+  push:
+    paths:
+      - "stack/**"
+      - ".github/workflows/stack.yml"
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+    inputs:
+      relock:
+        description: "Re-solve the lockfile and open a PR if all packages pass"
+        type: boolean
+        default: false
+
+env:
+  RELOCK: ${{ github.event_name == 'schedule' || inputs.relock == true }}
+
+jobs:
+  lock:
+    runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.diff.outputs.changed }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # Also re-solve when no lockfile is committed yet (bootstrapping).
+      - name: Decide whether to re-solve
+        run: |
+          if [ "$RELOCK" = true ] || [ ! -f stack/conda-lock.yml ]; then
+            echo "RELOCK=true" >> $GITHUB_ENV
+          fi
+
+      - uses: mamba-org/setup-micromamba@v2
+        if: env.RELOCK == 'true'
+        with:
+          environment-name: locker
+          create-args: conda-lock
+          init-shell: bash
+
+      - name: Re-solve lockfile
+        if: env.RELOCK == 'true'
+        shell: bash -el {0}
+        run: conda-lock lock --micromamba -f stack/environment.yml --lockfile stack/conda-lock.yml
+
+      - name: Did the lock change?
+        id: diff
+        run: |
+          if [ -z "$(git status --porcelain -- stack/conda-lock.yml)" ]; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: stack-lock
+          path: stack/conda-lock.yml
+
+  test:
+    needs: lock
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - package: CrocoDash
+            # Same invocation as testing.yml, minus coverage.
+            test: >-
+              pytest --ignore=CrocoDash/visualCaseGen --ignore=CrocoDash/rm6 -vv --tb=short
+              -o faulthandler_timeout=300 -o faulthandler_exit_on_timeout=true
+          - package: model2obs
+            test: pytest -ra --tb=short
+          - package: pyDARTdiags
+            test: pytest tests/
+          - package: dartobsgen
+            test: pytest test/
+    env:
+      # CrocoDash's tests need a CESM checkout; same layout as testing.yml.
+      CESM_REF: full_regional_cesm
+      CIME_MACHINE: ubuntu-latest
+      USER: ${{ github.actor }}
+      CESMROOT: ${{ github.workspace }}/CESM
+      DIN_LOC_ROOT: ${{ github.workspace }}/cesm_data
+      CIME_OUTPUT_ROOT: ${{ github.workspace }}/cesm_data
+    steps:
+      # All four repos side by side, which is the layout install_packages.sh
+      # expects. The other three always test their default branch.
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          path: CrocoDash
+      - uses: actions/checkout@v4
+        with:
+          repository: CROCODILE-CESM/model2obs
+          path: model2obs
+      - uses: actions/checkout@v4
+        with:
+          repository: NCAR/pyDARTdiags
+          path: pyDARTdiags
+      - uses: actions/checkout@v4
+        with:
+          repository: CROCODILE-CESM/dartobsgen
+          path: dartobsgen
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: stack-lock
+          path: lock
+
+      - uses: mamba-org/setup-micromamba@v2
+        with:
+          environment-name: croc-stack
+          environment-file: lock/conda-lock.yml
+          cache-environment: true
+          cache-downloads: true
+
+      - name: Install packages (no deps)
+        shell: bash -el {0}
+        run: CrocoDash/stack/install_packages.sh
+
+      # --- CrocoDash only: CESM checkout, shared cache key with testing.yml ---
+      - name: Get latest CESM branch SHA
+        if: matrix.package == 'CrocoDash'
+        id: get-sha
+        run: echo "sha=$(git ls-remote https://github.com/CROCODILE-CESM/CESM refs/heads/$CESM_REF | cut -f1)" >> $GITHUB_OUTPUT
+      - name: Cache CESM checkout + externals
+        if: matrix.package == 'CrocoDash'
+        id: cesm-cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.CESMROOT }}
+          key: cesm-stack-${{ runner.os }}-${{ env.CESM_REF }}-${{ steps.get-sha.outputs.sha }}
+      - name: Checkout CESM and run git-fleximod update
+        if: matrix.package == 'CrocoDash' && steps.cesm-cache.outputs.cache-hit != 'true'
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git clone --depth 1 --branch $CESM_REF https://github.com/CROCODILE-CESM/CESM $CESMROOT
+          cd $CESMROOT
+          ./bin/git-fleximod update
+          git -C cime fetch --tags || true
+          git -C cime describe --tags >/dev/null 2>&1 || git -C cime tag cime6.2.2
+
+      - name: Test ${{ matrix.package }}
+        shell: bash -el {0}
+        working-directory: ${{ matrix.package }}
+        run: ${{ matrix.test }}
+
+  pip-check:
+    # Reports any package whose declared requirements disagree with the lock
+    # (e.g. an upper cap below the locked version). Separate from `test` so a
+    # metadata mismatch does not hide which test suites actually pass.
+    needs: lock
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          path: CrocoDash
+      - uses: actions/checkout@v4
+        with:
+          repository: CROCODILE-CESM/model2obs
+          path: model2obs
+      - uses: actions/checkout@v4
+        with:
+          repository: NCAR/pyDARTdiags
+          path: pyDARTdiags
+      - uses: actions/checkout@v4
+        with:
+          repository: CROCODILE-CESM/dartobsgen
+          path: dartobsgen
+      - uses: actions/download-artifact@v4
+        with:
+          name: stack-lock
+          path: lock
+      - uses: mamba-org/setup-micromamba@v2
+        with:
+          environment-name: croc-stack
+          environment-file: lock/conda-lock.yml
+          cache-environment: true
+          cache-downloads: true
+      - name: Install packages and pip check
+        shell: bash -el {0}
+        run: |
+          CrocoDash/stack/install_packages.sh
+          pip check
+
+  open-pr:
+    needs: [lock, test, pip-check]
+    # (job-level `if` cannot read the workflow `env`, hence the repeat)
+    if: (github.event_name == 'schedule' || inputs.relock == true) && needs.lock.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: stack-lock
+          path: stack
+      - uses: peter-evans/create-pull-request@v7
+        with:
+          branch: stack/relock
+          commit-message: "stack: re-solve conda-lock.yml"
+          title: "stack: re-solve conda-lock.yml"
+          body: |
+            Weekly re-solve of `stack/environment.yml`.
+
+            Every package's tests and `pip check` passed against this exact lockfile in
+            ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            (this PR does not trigger CI itself).
+          add-paths: stack/conda-lock.yml
