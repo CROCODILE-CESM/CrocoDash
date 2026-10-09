@@ -23,6 +23,8 @@ extension points have dedicated guides:
 - **[Submodule API usage](submodule_api_usage.md)** — every function CrocoDash
   calls from `regional-mom6`, `mom6_forge`, and `visualCaseGen`. Keep this
   handy when upstreams change.
+- **[Tested configurations](tested_configurations.md)** — the coupled compsets
+  CrocoDash is tested with each week on Derecho, and their latest results.
 - **[Writing documentation](edit_docs.md)** — how to build and contribute to
   these docs.
 
@@ -33,6 +35,7 @@ architecture
 adding_data_access
 adding_forcing_configurations
 submodule_api_usage
+tested_configurations
 edit_docs
 Semi-Official ChangeLog <https://github.com/CROCODILE-CESM/CrocoDash/discussions/138>
 ```
