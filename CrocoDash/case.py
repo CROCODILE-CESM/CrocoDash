@@ -117,7 +117,8 @@ class Case:
         ntasks_ocn : int, optional
             Number of tasks for the ocean model. If None, defaults to VisualCaseGen Grid Calculation.
         job_queue: str, optional
-            The queue to submit the CESM case to. If None, defaults to the CESM defaults (usually main)
+            The queue to submit the CESM case to. If None, defaults to the CESM defaults (usually main).
+            Ignored, with a warning, on a machine with no batch system (e.g. ubuntu-latest).
         job_wallclock_time: str, optional
             Must be in the form hh:mm:ss. If None, defaults to the CESM defaults
         """
@@ -1105,7 +1106,15 @@ class Case:
             xmlchange("NTASKS_OCN", ntasks_ocn, is_non_local=self.cc._is_non_local())
         # This will trigger for both the run and the archiver.
         if job_queue is not None:
-            xmlchange("JOB_QUEUE", job_queue, is_non_local=self.cc._is_non_local())
+            # A machine with no batch system (e.g. ubuntu-latest) has no queues,
+            # and xmlchange rejects any JOB_QUEUE there.
+            if self._cime_case.get_value("BATCH_SYSTEM") == "none":
+                print(
+                    f"WARNING: ignoring job_queue={job_queue!r}: machine "
+                    f"{self.machine} has no batch system."
+                )
+            else:
+                xmlchange("JOB_QUEUE", job_queue, is_non_local=self.cc._is_non_local())
         if job_wallclock_time is not None:
             xmlchange(
                 "JOB_WALLCLOCK_TIME",
