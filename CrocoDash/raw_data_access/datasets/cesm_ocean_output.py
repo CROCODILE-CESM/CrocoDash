@@ -51,6 +51,9 @@ class CESM_POP_OUTPUT(MOM6ForcingProduct):
     eta_var_name = "SSH"
     time_units = "days since 1850-01-01"
     calendar = NOLEAP
+    # The default dataset_path is tseries/month_1: monthly means stamped at
+    # the end of the month (subtract_month moves them back on read).
+    time_sampling = TimeSampling("MS", "mean", "end")
     depth_coord = ["z_t", "z_t_150m"]
     delimiter = "."
     tracer_var_names = {"temp": "TEMP", "salt": "SALT"}
@@ -182,6 +185,9 @@ class CESM_MOM_OUTPUT(MOM6ForcingProduct):
     eta_var_name = "zos"
     depth_coord = "z_l"
     calendar = NOLEAP
+    # The cadence is whatever the dataset_path given holds, so it can't be
+    # declared here.
+    time_sampling = USER_SPECIFIED
     tracer_var_names = {"temp": "thetao", "salt": "so"}
 
     @accessmethod(

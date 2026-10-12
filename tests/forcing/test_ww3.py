@@ -18,6 +18,7 @@ from CrocoDash.raw_data_access.base import (
     GREGORIAN,
     LAND_NAN,
     LAND_ZERO,
+    TimeSampling,
     WW3ForcingProduct,
     accessmethod,
 )
@@ -383,6 +384,7 @@ class _FakeERA5Spectra(WW3ForcingProduct):
     time_var_name = "time"
     time_units = None
     calendar = GREGORIAN
+    time_sampling = TimeSampling("h", "point", "start")
     direction_convention = DIRECTION_COMING_FROM
     land_marker = LAND_ZERO
 

@@ -39,6 +39,8 @@ class GLORYS(MOM6ForcingProduct):
     depth_coord = "depth"
     tracer_var_names = {"temp": "thetao", "salt": "so"}
     calendar = GREGORIAN
+    # Daily means, stamped at noon.
+    time_sampling = TimeSampling("D", "mean", "center")
 
     @accessmethod(
         description="Gathers GLORYS data from RDA on computers with access to glade/rda",
