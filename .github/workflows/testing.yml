@@ -133,6 +133,8 @@ jobs:
             --password ${{ secrets.GLORYS_PASSWORD }}
           mkdir -p ${{ github.workspace }}/croc_cases
           mkdir -p ${{ github.workspace }}/croc_input
+          # The boundary data window is padded a day each side of the run, so
+          # a Jan 2-4 run reads exactly the Jan 1-5 raw files staged from S3.
           python -u tests/generate_small_test_case.py \
             --cesmroot ${{ env.CESMROOT }} \
             --caseroot ${{ github.workspace }}/croc_cases \
@@ -140,7 +142,9 @@ jobs:
             --casename actions_case \
             --machine ubuntu-latest \
             --project PLACEHOLDER \
-            --forcing-fn get_glorys_data_script_for_cli
+            --forcing-fn get_glorys_data_script_for_cli \
+            --date-start "2020-01-02 00:00:00" \
+            --date-end "2020-01-04 00:00:00"
 
       - name: Bundle case with crocodash bundle
         if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'

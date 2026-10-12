@@ -79,6 +79,12 @@ def test_all_configurators_smoke(fake_param_case, fake_cime, fake_forcing_produc
                 ctor_args[a] = fake_cime
             elif "forcing_product" in a:
                 ctor_args[a] = fake_forcing_product
+            elif a == "function_name":
+                # configure() resolves the method's time sampling, so it must
+                # name a real access method of product_name.
+                ctor_args[a] = "get_glorys_data_from_rda"
+            elif a == "function_args":
+                ctor_args[a] = {}
             elif a == "calendar":
                 # Typed arg: the configurators expand it with asdict(), so the
                 # generic dummy_str fallback below would not do.
