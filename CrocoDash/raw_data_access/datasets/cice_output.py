@@ -140,7 +140,9 @@ class CICE_RESTART(CICEForcingProduct):
         grid_path="please_provide_a_path",
         buffer_deg=1.5,
         preview=False,
+        freq=None,
     ):
+        resolve_time_sampling(CICE_RESTART, "get_cice_restart_subset", freq)
         for label, p in (("restart_path", restart_path), ("grid_path", grid_path)):
             if p is None or not Path(p).exists():
                 raise FileNotFoundError(f"Provided {label} {p} does not exist.")
