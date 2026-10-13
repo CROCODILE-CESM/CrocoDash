@@ -484,9 +484,6 @@ class ConditionsConfigurator(BaseConfigurator):
             comment="Boundary name -> MOM6 segment number",
         ),
         ConfigOutputParam(
-            "preview", comment="Whether process_ic/process_bc should preview only"
-        ),
-        ConfigOutputParam(
             "function_args",
             comment="Resolved (defaults + overrides) args for the download function",
         ),
@@ -584,7 +581,6 @@ class ConditionsConfigurator(BaseConfigurator):
             "boundary_number_conversion",
             {b: i + 1 for i, b in enumerate(boundaries)},
         )
-        self.set_output_param("preview", False)
         self.set_output_param("function_args", self.get_input_param("function_args"))
 
         # ---- static initial condition / OBC params ----
@@ -806,31 +802,6 @@ class ConditionsConfigurator(BaseConfigurator):
         MERGE engine, using regional_mom6's Segment as the regrid step."""
         product_info = self.get_output_param("information")
         function_args = self.get_output_param("function_args") or {}
-        preview = ctx.preview
-
-        if preview:
-            return obc.process_obc_conditions(
-                start_date=self.get_input_param("start_date"),
-                end_date=self.get_input_param("end_date"),
-                boundary_number_conversion=self.get_output_param(
-                    "boundary_number_conversion"
-                ),
-                product_name=self.get_input_param("product_name").upper(),
-                function_name=self.get_input_param("function_name"),
-                variables=None,
-                extra_args=None,
-                dataset_varnames=product_info,
-                hgrid_path=ctx.supergrid_path,
-                raw_dataset_path=ctx.raw_data_dir,
-                regridded_dataset_path=ctx.regridded_data_dir,
-                output_path=ctx.output_path,
-                regrid_chunk_fn=_regrid_obc_chunk,
-                bathymetry_path=ctx.topo_path,
-                get_step_days=int(self.get_output_param("get_step_days")),
-                regrid_step_days=int(self.get_output_param("regrid_step_days")),
-                preview=True,
-            )
-
         variables, extra_args = build_forcing_request(product_info, function_args)
 
         if product_info.get("boundary_fill_method", "regional_mom6") != "regional_mom6":
@@ -857,7 +828,6 @@ class ConditionsConfigurator(BaseConfigurator):
             bathymetry_path=ctx.topo_path,
             get_step_days=int(self.get_output_param("get_step_days")),
             regrid_step_days=int(self.get_output_param("regrid_step_days")),
-            preview=False,
         )
 
         _split_bgc_tracers_into_files(
@@ -880,28 +850,12 @@ class ConditionsConfigurator(BaseConfigurator):
 
         product_info = self.get_output_param("information")
         function_args = self.get_output_param("function_args") or {}
-        preview = ctx.preview
         regrid_fn = partial(
             _regrid_ic,
             hgrid_path=ctx.supergrid_path,
             vgrid_path=ctx.vgrid_path,
             bathymetry_path=ctx.topo_path,
         )
-
-        if preview:
-            return ic_mod.process_initial_condition(
-                product_name=self.get_input_param("product_name").upper(),
-                function_name=self.get_input_param("function_name"),
-                variables=None,
-                extra_args=None,
-                dataset_varnames=product_info,
-                start_date=self.get_input_param("start_date"),
-                hgrid_path=ctx.supergrid_path,
-                raw_data_dir=ctx.raw_data_dir,
-                output_data_dir=ctx.output_path,
-                regrid_fn=regrid_fn,
-                preview=True,
-            )
 
         variables, extra_args = build_forcing_request(product_info, function_args)
 
@@ -916,5 +870,4 @@ class ConditionsConfigurator(BaseConfigurator):
             raw_data_dir=ctx.raw_data_dir,
             output_data_dir=ctx.output_path,
             regrid_fn=regrid_fn,
-            preview=False,
         )

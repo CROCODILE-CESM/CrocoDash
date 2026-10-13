@@ -66,6 +66,23 @@ This flexibility lets you:
 - Submit to a batch queue and re-run from the CLI after a failure
 - Resume a partially-completed run
 
+To see what a run covers without running anything, add `--preview`. It lists
+each selected component with the files it writes, marked `present` or `missing`:
+
+```bash
+crocodash process --caseroot ~/croc_cases/mycase --all --preview
+```
+
+```
+[preview] ic
+    present  ocn/init_tracers_filled.nc
+    present  ocn/init_eta_filled.nc
+    present  ocn/init_vel_filled.nc
+[preview] bc
+    missing  ocn/forcing_obc_segment_001.nc
+    ...
+```
+
 ## Large datasets
 
 Large regional domains require large datasets. CrocoDash automatically switches to parallel downloading and regridding of Glorys data if multiple CPUs are available and a regridding step is provided in `config.json` ([see example here](https://crocodile-cesm.github.io/CrocoGallery/latest/crocodash/process-forcings/)). External infrastructure may set limits: for example, if using `get_glorys_data_from_cds_api`, Copernicus Marine Services may throw a "Too many requests" error if too many CPUs are used and they all contact the server at once. `get_glorys_data_from_rda` does not have this limitation but implies permission to access to NCAR's RDA repository. Regridding has no limitations per se.

@@ -121,6 +121,30 @@ class _DummyChainCConfigurator(BaseConfigurator):
 _CHAIN_CALLS = []
 
 
+@register
+class _DummyFilesConfigurator(BaseConfigurator):
+    """Declares one output file. dummyfiles_x has no default so the registry
+    never activates this class in a real case built later in the session."""
+
+    name = "dummyfiles"
+    process_components = {"dummyfiles": "process"}
+    input_params = [InputValueParam("dummyfiles_x", comment="dummy")]
+    output_params = []
+    calls = []
+
+    def __init__(self, dummyfiles_x):
+        super().__init__(dummyfiles_x=dummyfiles_x)
+
+    def configure(self):
+        pass
+
+    def output_files(self, ctx):
+        return {"dummyfiles": [ctx.output_path / "dummy.nc"]}
+
+    def process(self, ctx):
+        _DummyFilesConfigurator.calls.append(ctx)
+
+
 def _make_state(tmp_path):
     return {
         "inputdir": str(tmp_path),
@@ -352,3 +376,26 @@ def test_run_workflow_auto_enables_multi_level_chain(mock_cs, tmp_path):
     run_workflow(config_path=config_path, chaina=True)
 
     assert _CHAIN_CALLS == ["chainc", "chainb", "chaina"]
+
+
+@patch("CrocoDash.forcing.base.case_state")
+def test_run_workflow_preview_runs_nothing(mock_cs, tmp_path, capsys):
+    _DummyFilesConfigurator.calls.clear()
+    mock_cs.read.return_value = _make_state(tmp_path)
+    config_path = _write_config(
+        tmp_path,
+        extra_keys={
+            "dummyfiles": {
+                "name": "dummyfiles",
+                "inputs": {"dummyfiles_x": "1"},
+                "outputs": {},
+            }
+        },
+    )
+
+    run_workflow(config_path=config_path, preview=True, dummyfiles=True)
+
+    assert _DummyFilesConfigurator.calls == []
+    out = capsys.readouterr().out
+    assert "[preview] dummyfiles" in out
+    assert "missing  ocn/dummy.nc" in out

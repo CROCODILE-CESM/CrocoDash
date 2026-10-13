@@ -76,7 +76,6 @@ class WorkflowContext:
         regridded_data_dir: Path,
         output_path: Path,
         config: dict,
-        preview: bool = False,
     ):
         self.inputdir = Path(inputdir)
         self.supergrid_path = Path(supergrid_path)
@@ -86,7 +85,6 @@ class WorkflowContext:
         self.regridded_data_dir = Path(regridded_data_dir)
         self.output_path = Path(output_path)
         self.config = config
-        self.preview = preview
 
     @cached_property
     def grid(self):
@@ -125,7 +123,7 @@ class ReadCrocoDashCase:
         else:
             self.forcing_config = {}
 
-    def workflow_context(self, config=None, preview=False):
+    def workflow_context(self, config=None):
         """The WorkflowContext every process step gets, for this case and
         config (by default the case's own config.json)."""
         extract_forcings = self.inputdir / "extract_forcings"
@@ -138,7 +136,6 @@ class ReadCrocoDashCase:
             regridded_data_dir=extract_forcings / "regridded_data",
             output_path=self.ocn_dir,
             config=self.forcing_config if config is None else config,
-            preview=preview,
         )
 
     def configurators(self):

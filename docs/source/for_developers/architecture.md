@@ -173,7 +173,7 @@ Other useful flags:
 When developing the `forcing` package:
 
 - Use small date ranges and small domains
-- Set `preview: true` under `conditions.outputs` in `config.json` to dry-run
+- Run `crocodash process --all --preview` to see each component's files without running anything
 - Use the `--skip` flag on `crocodash process` to iterate on one component
 
 When developing `raw_data_access`:

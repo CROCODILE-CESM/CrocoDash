@@ -710,7 +710,6 @@ def process_obc_conditions(
     get_step_days=None,
     regrid_step_days: int = 30,
     bathymetry_path=None,
-    preview: bool = False,
 ):
     """Process boundary conditions through the GET → REGRID → MERGE pipeline.
 
@@ -745,8 +744,6 @@ def process_obc_conditions(
             ocean tmask (tighter than the full supergrid edge extent). When
             omitted, falls back to the full supergrid bounding box per
             boundary.
-        preview: If True, return a dict of expected date pairs without
-            executing any downloads or regridding.
     """
     start_date = pd.to_datetime(start_date).to_pydatetime()
     end_date = pd.to_datetime(end_date).to_pydatetime()
@@ -755,13 +752,6 @@ def process_obc_conditions(
     regridded_path = Path(regridded_dataset_path)
     output_path = Path(output_path)
     boundaries = list(boundary_number_conversion.keys())
-
-    if preview:
-        return {
-            "boundaries": boundaries,
-            "get_pairs": _make_date_pairs(start_date, end_date, get_step_days),
-            "regrid_pairs": _make_date_pairs(start_date, end_date, regrid_step_days),
-        }
 
     # Compute per-boundary download bboxes using the bathymetry tmask so we only
     # request data over ocean cells (tighter than the full supergrid edge extent).
