@@ -11,7 +11,7 @@ from CrocoDash.forcing.base import (
     InputValueParam,
     register,
 )
-from CrocoDash.forcing.driver import _load, resolve_components, run_workflow
+from CrocoDash.forcing.driver import resolve_components, run_workflow
 
 # =============================================================================
 # Dummy configurators exercising the generic process_components dispatch
@@ -182,7 +182,7 @@ def test_resolve_components_skip_case_insensitive():
 # =============================================================================
 
 
-@patch("CrocoDash.forcing.driver.case_state")
+@patch("CrocoDash.forcing.base.case_state")
 def test_run_workflow_dispatches_by_flag(mock_cs, tmp_path):
     _DummyDriverConfigurator.calls.clear()
     mock_cs.read.return_value = _make_state(tmp_path)
@@ -198,7 +198,7 @@ def test_run_workflow_dispatches_by_flag(mock_cs, tmp_path):
     assert len(_DummyDriverConfigurator.calls) == 1
 
 
-@patch("CrocoDash.forcing.driver.case_state")
+@patch("CrocoDash.forcing.base.case_state")
 def test_run_workflow_skips_unrequested_flag(mock_cs, tmp_path):
     _DummyDriverConfigurator.calls.clear()
     mock_cs.read.return_value = _make_state(tmp_path)
@@ -214,7 +214,7 @@ def test_run_workflow_skips_unrequested_flag(mock_cs, tmp_path):
     assert len(_DummyDriverConfigurator.calls) == 0
 
 
-@patch("CrocoDash.forcing.driver.case_state")
+@patch("CrocoDash.forcing.base.case_state")
 def test_run_workflow_one_to_many_dispatch(mock_cs, tmp_path):
     _DummyMultiFlagConfigurator.calls.clear()
     mock_cs.read.return_value = _make_state(tmp_path)
@@ -231,7 +231,7 @@ def test_run_workflow_one_to_many_dispatch(mock_cs, tmp_path):
     assert tags == {"a", "b"}
 
 
-@patch("CrocoDash.forcing.driver.case_state")
+@patch("CrocoDash.forcing.base.case_state")
 def test_run_workflow_no_components_returns_early(mock_cs, tmp_path, capsys):
     mock_cs.read.return_value = _make_state(tmp_path)
     config_path = _write_config(tmp_path)
@@ -243,7 +243,7 @@ def test_run_workflow_no_components_returns_early(mock_cs, tmp_path, capsys):
     assert "No components selected" in captured.out
 
 
-@patch("CrocoDash.forcing.driver.case_state")
+@patch("CrocoDash.forcing.base.case_state")
 def test_run_workflow_returns_timings(mock_cs, tmp_path):
     _DummyDriverConfigurator.calls.clear()
     mock_cs.read.return_value = _make_state(tmp_path)
@@ -260,7 +260,7 @@ def test_run_workflow_returns_timings(mock_cs, tmp_path):
     assert "dummyflag" in result
 
 
-@patch("CrocoDash.forcing.driver.case_state")
+@patch("CrocoDash.forcing.base.case_state")
 def test_run_workflow_auto_enables_dependency(mock_cs, tmp_path):
     """bgcrivernutrients auto-enables runoff -- the one documented exception
     to fully-generic dispatch (see _PROCESS_ORDER_OVERRIDES)."""
@@ -323,7 +323,7 @@ def test_run_workflow_auto_enables_dependency(mock_cs, tmp_path):
     assert calls == ["runoff", "bgcrivernutrients"]
 
 
-@patch("CrocoDash.forcing.driver.case_state")
+@patch("CrocoDash.forcing.base.case_state")
 def test_run_workflow_auto_enables_multi_level_chain(mock_cs, tmp_path):
     """Requesting chaina (which needs chainb, which needs chainc) must
     auto-enable both ancestors and run them in dependency order, regardless

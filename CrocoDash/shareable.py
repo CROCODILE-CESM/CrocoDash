@@ -120,7 +120,7 @@ class BundleDifferences:
 # ---------------------------------------------------------------------------
 
 
-class CaseBundle:
+class CaseBundle(ReadCrocoDashCase):
     """
     Sender-side entry point for sharing a CrocoDash case.
 
@@ -138,7 +138,7 @@ class CaseBundle:
     """
 
     def __init__(self, caseroot):
-        self.caseroot = Path(caseroot)
+        super().__init__(caseroot)
         # Load YAML first — cesmroot, machine, project come from there
         self._load_state_from_crocodash()
         # CIME object needed only for user_nl parsing
@@ -156,25 +156,14 @@ class CaseBundle:
         self.case_project = self.case_yaml["case"].get("project")
 
         # init_args needed for bundle() grid-file copying (esmf_mesh via glob)
-        state = case_state.read(self.caseroot)
-        inputdir_ocn = str(Path(state["inputdir"]) / "ocn")
-        esmf_file = next(Path(inputdir_ocn).glob("ESMF_mesh_*.nc"), None)
+        esmf_file = next(self.ocn_dir.glob("ESMF_mesh_*.nc"), None)
         self.init_args = {
-            "inputdir_ocn": inputdir_ocn,
-            "supergrid_path": Path(state["supergrid_path"]).name,
-            "vgrid_path": Path(state["vgrid_path"]).name,
-            "topo_path": Path(state["topo_path"]).name,
+            "inputdir_ocn": str(self.ocn_dir),
+            "supergrid_path": Path(self.state["supergrid_path"]).name,
+            "vgrid_path": Path(self.state["vgrid_path"]).name,
+            "topo_path": Path(self.state["topo_path"]).name,
             "esmf_mesh_path": esmf_file.name if esmf_file else None,
         }
-
-        forcing_config_path = (
-            Path(state["inputdir"]) / "extract_forcings" / "config.json"
-        )
-        if forcing_config_path.exists():
-            with open(forcing_config_path) as f:
-                self.forcing_config = json.load(f)
-        else:
-            self.forcing_config = {}
 
     def _read_xmlchanges(self):
         replay_path = self.caseroot / "replay.sh"

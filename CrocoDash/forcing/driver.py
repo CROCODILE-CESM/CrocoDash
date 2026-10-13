@@ -22,10 +22,8 @@ Typical Python usage::
 import graphlib
 import json
 import time
-from pathlib import Path
 
-from CrocoDash import case_state
-from CrocoDash.forcing.base import ForcingConfigRegistry, WorkflowContext
+from CrocoDash.forcing.base import ForcingConfigRegistry, ReadCrocoDashCase
 
 
 def _resolve_process_order_overrides(targets):
@@ -47,31 +45,6 @@ def _resolve_process_order_overrides(targets):
     return overrides
 
 
-def _load(config_path):
-    """Load config.json, read case state, and derive common paths."""
-    with open(config_path) as f:
-        config = json.load(f)
-    caseroot = config["caseroot"]
-    state = case_state.read(caseroot)
-    inputdir = Path(state["inputdir"])
-    return config, state, inputdir
-
-
-def _build_context(config, state, inputdir, preview=False):
-    extract_forcings_dir = inputdir / "extract_forcings"
-    return WorkflowContext(
-        inputdir=inputdir,
-        supergrid_path=state["supergrid_path"],
-        vgrid_path=state["vgrid_path"],
-        topo_path=state["topo_path"],
-        raw_data_dir=extract_forcings_dir / "raw_data",
-        regridded_data_dir=extract_forcings_dir / "regridded_data",
-        output_path=inputdir / "ocn",
-        config=config,
-        preview=preview,
-    )
-
-
 def run_workflow(config_path, preview=False, **flags):
     """
     Execute the forcing extraction workflow.
@@ -88,9 +61,10 @@ def run_workflow(config_path, preview=False, **flags):
         types present in ``config.json`` declare -- see
         ``ForcingConfigRegistry.resolve_process_targets``.
     """
-    config_path = Path(config_path)
-    config, state, inputdir = _load(config_path)
-    ctx = _build_context(config, state, inputdir, preview=preview)
+    with open(config_path) as f:
+        config = json.load(f)
+    case = ReadCrocoDashCase(config["caseroot"])
+    ctx = case.workflow_context(config, preview=preview)
 
     targets = ForcingConfigRegistry.resolve_process_targets(config)
     requested = {name for name, enabled in flags.items() if enabled and name in targets}
