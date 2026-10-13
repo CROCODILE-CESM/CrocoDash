@@ -28,7 +28,6 @@ class ChlConfigurator(BaseConfigurator):
             "CHL_FILE",
             comment="Chlorophyll data file",
             user_nl_name="mom",
-            is_file=True,
         ),
         UserNLConfigParam(
             "CHL_FROM_FILE", comment="Enable chlorophyll from file", user_nl_name="mom"
@@ -78,6 +77,9 @@ class ChlConfigurator(BaseConfigurator):
         self.set_output_param("VAR_PEN_SW", "TRUE")
         self.set_output_param("PEN_SW_NBANDS", 3)
         super().configure()
+
+    def output_files(self, ctx):
+        return {"chl": [ctx.output_path / self.get_output_param("CHL_FILE")]}
 
     def process(self, ctx):
         rm6_chl.interpolate_and_fill_seawifs(

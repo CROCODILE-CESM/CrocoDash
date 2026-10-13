@@ -776,6 +776,29 @@ class ConditionsConfigurator(BaseConfigurator):
         candidates += [extract / "raw_data", extract / "regridded_data"]
         return [path for path in candidates if path.exists()]
 
+    def output_files(self, ctx):
+        """The filled ICs MOM6 reads, one merged OBC file per segment, and with
+        MARBL one OBC file per BGC tracer. Tides' files, which the OBC strings
+        also name, are declared by TidesConfigurator."""
+        segments = sorted(self.get_output_param("boundary_number_conversion").values())
+        tracers = (self.get_output_param("information") or {}).get(
+            "marbl_var_names", {}
+        )
+        return {
+            "ic": [
+                ctx.output_path / self.get_output_param(name)
+                for name in (
+                    "TEMP_SALT_Z_INIT_FILE",
+                    "SURFACE_HEIGHT_IC_FILE",
+                    "VELOCITY_FILE",
+                )
+            ],
+            "bc": [
+                ctx.output_path / f"forcing_obc_segment_{n:03d}.nc" for n in segments
+            ]
+            + [ctx.output_path / f"{tracer}_obc_segment.nc" for tracer in tracers],
+        }
+
     # ---- process (extraction) ----
 
     def process_bc(self, ctx):

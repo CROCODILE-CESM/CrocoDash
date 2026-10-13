@@ -55,7 +55,7 @@ def test_bgcironforcing_process(tmp_path):
     configurator.set_output_param("MARBL_FEVENTFLUX_FILE", "fevent.nc")
     configurator.set_output_param("MARBL_FESEDFLUXRED_FILE", "fesedred.nc")
 
-    ctx = _make_ctx(tmp_path)
+    ctx = _make_ctx(tmp_path, output_path=tmp_path / "ocn")
     ctx.grid = SimpleNamespace(nx=nx, ny=ny)
 
     configurator.process(ctx)
