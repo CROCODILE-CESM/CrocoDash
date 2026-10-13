@@ -581,6 +581,15 @@ class WW3Configurator(BaseConfigurator):
             ]
         }
 
+    @classmethod
+    def process_fingerprint(cls, config):
+        # process() also reads the run dates from the conditions entry.
+        dates = config.get("conditions", {}).get("inputs", {})
+        return {
+            **super().process_fingerprint(config),
+            "conditions_dates": [dates.get("start_date"), dates.get("end_date")],
+        }
+
     def stale_outputs(self, previous_config, current_config, inputdir):
         """The spectra in <inputdir>/wav are rewritten on every process() run,
         but from extract_forcings/ww3, whose raw, regridded and merged files are

@@ -19,7 +19,7 @@ from visualCaseGen.initialize import initialize as initialize_visualCaseGen
 from visualCaseGen.custom_widget_types.case_creator import CaseCreator
 from visualCaseGen.custom_widget_types.case_tools import xmlchange, append_user_nl
 from CrocoDash.forcing import cice, user_nl_blocks
-from CrocoDash.forcing.driver import run_workflow
+from CrocoDash.forcing.driver import run_workflow, read_record, is_done, summarize_paths
 
 from CrocoDash import case_state
 from CrocoDash.logging import quiet_visualcasegen_info
@@ -663,6 +663,7 @@ class Case:
                 "(process_forcings() regenerates them): "
                 + ", ".join(str(path.relative_to(self.inputdir)) for path in stale)
             )
+        self._print_forcing_files(config)
 
         xmlchange(
             "CALENDAR",
@@ -690,7 +691,7 @@ class Case:
             )
         self._configure_forcings_called = True
 
-    def process_forcings(self, **kwargs):
+    def process_forcings(self, force=False, **kwargs):
         """
         Process boundary conditions, initial conditions, and other forcings for a MOM6 case. It's a wrapper around forcing/driver.py
 
@@ -698,8 +699,13 @@ class Case:
         using previously downloaded data setup in configure_forcings. The method expects `configure_forcings()` to be
         called beforehand.
 
+        Components already done -- recorded as finished for the current
+        configuration, with all their files still present -- are skipped.
+
         Parameters
         ----------
+        force : bool, optional
+            Rerun the selected components even when they are already done.
         kwargs : bool, optional
             Whether to run each process component, of the form
             `process_{flag_name}=False` (e.g. `process_ic=False`,
@@ -747,7 +753,7 @@ class Case:
             )
         flags = {name: kwargs.get(f"process_{name}", True) for name in flag_names}
 
-        run_workflow(config_path=config_path, **flags)
+        run_workflow(config_path=config_path, force=force, **flags)
 
         print(f"Case is ready to be built: {self.caseroot}")
 
@@ -1112,6 +1118,26 @@ class Case:
                 job_wallclock_time,
                 is_non_local=self.cc._is_non_local(),
             )
+
+    def _print_forcing_files(self, config):
+        """Each process step's files, and whether it is already done."""
+        ctx = ReadCrocoDashCase(self.caseroot).workflow_context(config)
+        record = read_record(self.inputdir)
+        lines = []
+        for configurator in self.fcr.active_configurators.values():
+            for flag_name, paths in configurator.output_files(ctx).items():
+                state = (
+                    "done"
+                    if is_done(configurator, flag_name, ctx, record)
+                    else "to generate"
+                )
+                relative = [
+                    Path(path).relative_to(self.inputdir).as_posix() for path in paths
+                ]
+                files = summarize_paths(relative) or "(no files)"
+                lines.append(f"  {flag_name:<18} {state:<12} {files}")
+        if lines:
+            print("Forcing files process_forcings() generates:\n" + "\n".join(lines))
 
     def validate_case(self):
         # Ensure configurations are done

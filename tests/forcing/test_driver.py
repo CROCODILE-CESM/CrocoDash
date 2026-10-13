@@ -11,7 +11,7 @@ from CrocoDash.forcing.base import (
     InputValueParam,
     register,
 )
-from CrocoDash.forcing.driver import resolve_components, run_workflow
+from CrocoDash.forcing.driver import read_record, resolve_components, run_workflow
 
 # =============================================================================
 # Dummy configurators exercising the generic process_components dispatch
@@ -123,14 +123,16 @@ _CHAIN_CALLS = []
 
 @register
 class _DummyFilesConfigurator(BaseConfigurator):
-    """Declares one output file. dummyfiles_x has no default so the registry
-    never activates this class in a real case built later in the session."""
+    """Declares one output file, which process() writes unless `write` is off.
+    dummyfiles_x has no default so the registry never activates this class
+    in a real case built later in the session."""
 
     name = "dummyfiles"
     process_components = {"dummyfiles": "process"}
     input_params = [InputValueParam("dummyfiles_x", comment="dummy")]
     output_params = []
     calls = []
+    write = True
 
     def __init__(self, dummyfiles_x):
         super().__init__(dummyfiles_x=dummyfiles_x)
@@ -143,6 +145,9 @@ class _DummyFilesConfigurator(BaseConfigurator):
 
     def process(self, ctx):
         _DummyFilesConfigurator.calls.append(ctx)
+        if _DummyFilesConfigurator.write:
+            ctx.output_path.mkdir(parents=True, exist_ok=True)
+            (ctx.output_path / "dummy.nc").touch()
 
 
 def _make_state(tmp_path):
@@ -318,7 +323,10 @@ def test_run_workflow_auto_enables_dependency(mock_cs, tmp_path):
                     "rof_grid_name": "GLOFAS",
                     "rof_esmf_mesh_filepath": "/fake2.nc",
                 },
-                "outputs": {"ROF2OCN_LIQ_RMAPNAME": None, "ROF2OCN_ICE_RMAPNAME": None},
+                "outputs": {
+                    "ROF2OCN_LIQ_RMAPNAME": str(tmp_path / "mapping" / "map.nc"),
+                    "ROF2OCN_ICE_RMAPNAME": str(tmp_path / "mapping" / "map.nc"),
+                },
             },
             "bgcrivernutrients": {
                 "name": "BGCRiverNutrients",
@@ -397,5 +405,92 @@ def test_run_workflow_preview_runs_nothing(mock_cs, tmp_path, capsys):
 
     assert _DummyFilesConfigurator.calls == []
     out = capsys.readouterr().out
-    assert "[preview] dummyfiles" in out
+    assert "[preview] dummyfiles: run" in out
     assert "missing  ocn/dummy.nc" in out
+
+
+# =============================================================================
+# run_workflow: done-record, skipping, missing files
+# =============================================================================
+
+
+def _files_config(tmp_path, x="1"):
+    return _write_config(
+        tmp_path,
+        extra_keys={
+            "dummyfiles": {
+                "name": "dummyfiles",
+                "inputs": {"dummyfiles_x": x},
+                "outputs": {},
+            }
+        },
+    )
+
+
+@pytest.fixture
+def files_configurator():
+    _DummyFilesConfigurator.calls.clear()
+    _DummyFilesConfigurator.write = True
+    yield _DummyFilesConfigurator
+    _DummyFilesConfigurator.write = True
+
+
+@patch("CrocoDash.forcing.base.case_state")
+def test_run_workflow_records_a_finished_step(mock_cs, tmp_path, files_configurator):
+    mock_cs.read.return_value = _make_state(tmp_path)
+
+    run_workflow(config_path=_files_config(tmp_path), dummyfiles=True)
+
+    entry = read_record(tmp_path)["dummyfiles"]
+    assert entry["files"] == ["ocn/dummy.nc"]
+    assert entry["fingerprint"]["dummyfiles"]["inputs"] == {"dummyfiles_x": "1"}
+
+
+@patch("CrocoDash.forcing.base.case_state")
+def test_run_workflow_skips_a_finished_step(
+    mock_cs, tmp_path, files_configurator, capsys
+):
+    mock_cs.read.return_value = _make_state(tmp_path)
+    config_path = _files_config(tmp_path)
+
+    run_workflow(config_path=config_path, dummyfiles=True)
+    run_workflow(config_path=config_path, dummyfiles=True)
+
+    assert len(files_configurator.calls) == 1
+    assert "[skip] dummyfiles: already done" in capsys.readouterr().out
+
+
+@pytest.mark.parametrize("change", ["fingerprint", "missing_file", "force"])
+@patch("CrocoDash.forcing.base.case_state")
+def test_run_workflow_reruns_a_finished_step(
+    mock_cs, tmp_path, files_configurator, change
+):
+    mock_cs.read.return_value = _make_state(tmp_path)
+    run_workflow(config_path=_files_config(tmp_path), dummyfiles=True)
+
+    force = False
+    config_path = _files_config(tmp_path)
+    if change == "fingerprint":
+        config_path = _files_config(tmp_path, x="2")
+    elif change == "missing_file":
+        (tmp_path / "ocn" / "dummy.nc").unlink()
+    else:
+        force = True
+    run_workflow(config_path=config_path, force=force, dummyfiles=True)
+
+    assert len(files_configurator.calls) == 2
+
+
+@patch("CrocoDash.forcing.base.case_state")
+def test_run_workflow_reports_and_does_not_record_missing_files(
+    mock_cs, tmp_path, files_configurator, capsys
+):
+    mock_cs.read.return_value = _make_state(tmp_path)
+    files_configurator.write = False
+
+    run_workflow(config_path=_files_config(tmp_path), dummyfiles=True)
+
+    assert (
+        "[incomplete] dummyfiles didn't write ocn/dummy.nc" in capsys.readouterr().out
+    )
+    assert "dummyfiles" not in read_record(tmp_path)

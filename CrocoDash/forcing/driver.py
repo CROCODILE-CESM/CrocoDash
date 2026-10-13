@@ -11,6 +11,11 @@ manifest) -- there's no hand-maintained per-type ``if`` branch to update
 when a new forcing type is added. The CLI entry point is ``crocodash
 process`` (see ``CrocoDash.cli``).
 
+Each step that finishes with every file it declares (``output_files()``) is
+recorded in ``extract_forcings/process_record.json`` against its
+``process_fingerprint()``. A later run skips a step whose fingerprint is
+unchanged and whose files are all still there; ``force=True`` reruns it.
+
 Typical Python usage::
 
     from CrocoDash.forcing.driver import run_workflow
@@ -21,9 +26,13 @@ Typical Python usage::
 
 import graphlib
 import json
+import os
 import time
+from pathlib import Path
 
 from CrocoDash.forcing.base import ForcingConfigRegistry, ReadCrocoDashCase
+
+RECORD_FILENAME = "process_record.json"
 
 
 def _resolve_process_order_overrides(targets):
@@ -45,7 +54,56 @@ def _resolve_process_order_overrides(targets):
     return overrides
 
 
-def run_workflow(config_path, preview=False, **flags):
+def _record_path(inputdir):
+    return Path(inputdir) / "extract_forcings" / RECORD_FILENAME
+
+
+def read_record(inputdir):
+    """{flag: {"fingerprint": ..., "files": [...]}} for every process step
+    recorded as done ({} before the first run, or after override=True)."""
+    try:
+        with open(_record_path(inputdir)) as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return {}
+
+
+def _write_record(inputdir, record):
+    path = _record_path(inputdir)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_name(path.name + ".tmp")
+    with open(tmp, "w") as f:
+        json.dump(record, f, indent=4)
+    os.replace(tmp, path)
+
+
+def _fingerprint(configurator, config):
+    # Compare like with like: the recorded fingerprint was read back from JSON.
+    return json.loads(json.dumps(configurator.process_fingerprint(config), default=str))
+
+
+def is_done(configurator, flag_name, ctx, record):
+    """True when flag_name was recorded as done for the configuration in
+    ctx.config and every file it declares is still there."""
+    entry = record.get(flag_name)
+    return (
+        entry is not None
+        and entry.get("fingerprint") == _fingerprint(configurator, ctx.config)
+        and not configurator.missing_output_files(ctx, flag_name)
+    )
+
+
+def _relative(paths, inputdir):
+    return [Path(path).relative_to(inputdir).as_posix() for path in paths]
+
+
+def summarize_paths(paths, limit=5):
+    if len(paths) <= limit:
+        return ", ".join(paths)
+    return ", ".join(paths[:limit]) + f", ... ({len(paths)} files)"
+
+
+def run_workflow(config_path, preview=False, force=False, **flags):
     """
     Execute the forcing extraction workflow.
 
@@ -54,8 +112,10 @@ def run_workflow(config_path, preview=False, **flags):
     config_path : str or Path
         Path to the ``config.json`` written by ``Case.configure_forcings``.
     preview : bool
-        Print each selected step and whether its files are present, without
+        Print what would run or be skipped, and each step's files, without
         running anything.
+    force : bool
+        Rerun the selected steps even when they are recorded as done.
     **flags : bool
         Which process components to run, e.g. ``ic=True, bc=True, tides=True``.
         Valid names are whatever ``process_components`` keys the forcing
@@ -66,6 +126,7 @@ def run_workflow(config_path, preview=False, **flags):
         config = json.load(f)
     case = ReadCrocoDashCase(config["caseroot"])
     ctx = case.workflow_context(config)
+    inputdir = ctx.inputdir
 
     targets = ForcingConfigRegistry.resolve_process_targets(config)
     requested = {name for name, enabled in flags.items() if enabled and name in targets}
@@ -104,23 +165,60 @@ def run_workflow(config_path, preview=False, **flags):
             f"Circular process-order dependency among forcing components: {exc.args[1]}"
         ) from exc
 
+    record = read_record(inputdir)
+    done = {
+        flag_name
+        for flag_name in order
+        if not force and is_done(targets[flag_name][0], flag_name, ctx, record)
+    }
+
     if preview:
         for flag_name in order:
             configurator, _ = targets[flag_name]
-            print(f"[preview] {flag_name}")
+            verdict = "skip, already done" if flag_name in done else "run"
+            print(f"[preview] {flag_name}: {verdict}")
             present = configurator.get_output_filepaths(ctx, flag_name)
-            for path in present:
-                print(f"    present  {path.relative_to(ctx.inputdir)}")
-            for path in configurator.missing_output_files(ctx, flag_name):
-                print(f"    missing  {path.relative_to(ctx.inputdir)}")
+            missing = configurator.missing_output_files(ctx, flag_name)
+            for path in _relative(present, inputdir):
+                print(f"    present  {path}")
+            for path in _relative(missing, inputdir):
+                print(f"    missing  {path}")
         return {}
 
     timings = {}
     for flag_name in order:
         configurator, method_name = targets[flag_name]
+        if flag_name in done:
+            n_files = len(configurator.get_output_filepaths(ctx, flag_name))
+            print(
+                f"[skip] {flag_name}: already done, {n_files} file(s) present "
+                "(force=True / --force reruns it)"
+            )
+            continue
         _t = time.perf_counter()
         getattr(configurator, method_name)(ctx)
         timings[flag_name] = time.perf_counter() - _t
+
+        missing = configurator.missing_output_files(ctx, flag_name)
+        if missing:
+            # Not recorded as done, so the next run repeats it.
+            print(
+                f"[incomplete] {flag_name} didn't write "
+                f"{summarize_paths(_relative(missing, inputdir))}"
+            )
+            record.pop(flag_name, None)
+        else:
+            written = _relative(
+                configurator.get_output_filepaths(ctx, flag_name), inputdir
+            )
+            if written:
+                print(f"[{flag_name}] wrote {summarize_paths(written)}")
+            record[flag_name] = {
+                "fingerprint": _fingerprint(configurator, config),
+                "files": written,
+            }
+        # After every step, so a later failure keeps the steps already done.
+        _write_record(inputdir, record)
 
     if timings:
         parts = [f"{k}: {v:.1f}s" for k, v in timings.items()]
@@ -137,7 +235,7 @@ def resolve_components(args, config):
     components = {
         k: v
         for k, v in vars(args).items()
-        if isinstance(v, bool) and k not in {"all", "preview"}
+        if isinstance(v, bool) and k not in {"all", "preview", "force"}
     }
     skip = {s.lower() for s in args.skip}
 
