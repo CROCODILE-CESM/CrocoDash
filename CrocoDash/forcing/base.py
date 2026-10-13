@@ -12,6 +12,7 @@ import subprocess
 import json
 import dataclasses
 from CrocoDash.raw_data_access.base import Calendar
+from CrocoDash import case_state
 
 logger = setup_logger(__name__)
 
@@ -103,6 +104,41 @@ class WorkflowContext:
             self.topo_path,
             min_depth=read_min_depth(self.topo_path),
             git=False,
+        )
+
+
+class ReadCrocoDashCase:
+    """A CrocoDash case read back from disk: its state file and forcing
+    configuration, without CIME. The forcing driver reads a case through
+    this, and CaseBundle builds on it."""
+
+    def __init__(self, caseroot):
+        self.caseroot = Path(caseroot)
+        self.state = case_state.read(self.caseroot)
+        self.inputdir = Path(self.state["inputdir"])
+        # MOM6's INPUTDIR, where the ocean forcing files go.
+        self.ocn_dir = self.inputdir / "ocn"
+        config_path = self.inputdir / "extract_forcings" / "config.json"
+        if config_path.exists():
+            with open(config_path) as f:
+                self.forcing_config = json.load(f)
+        else:
+            self.forcing_config = {}
+
+    def workflow_context(self, config=None, preview=False):
+        """The WorkflowContext every process step gets, for this case and
+        config (by default the case's own config.json)."""
+        extract_forcings = self.inputdir / "extract_forcings"
+        return WorkflowContext(
+            inputdir=self.inputdir,
+            supergrid_path=self.state["supergrid_path"],
+            vgrid_path=self.state["vgrid_path"],
+            topo_path=self.state["topo_path"],
+            raw_data_dir=extract_forcings / "raw_data",
+            regridded_data_dir=extract_forcings / "regridded_data",
+            output_path=self.ocn_dir,
+            config=self.forcing_config if config is None else config,
+            preview=preview,
         )
 
 
