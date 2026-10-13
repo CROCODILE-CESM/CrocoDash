@@ -234,6 +234,13 @@ class CICEConfigurator(BaseConfigurator):
                 "and therefore the absolute path configure() gives ice_ic."
             ),
         ),
+        InputValueParam(
+            "case_cyclic_x",
+            comment=(
+                "Whether the ocean grid is reentrant in x, in which case CICE's "
+                "east/west boundary is cyclic rather than zero-gradient."
+            ),
+        ),
     ]
     output_params = [
         UserNLConfigParam("ice_ic", user_nl_name="cice"),
@@ -268,6 +275,7 @@ class CICEConfigurator(BaseConfigurator):
         cice_function_args=None,
         restore_ice=False,
         case_inputdir=None,
+        case_cyclic_x=False,
     ):
         super().__init__(
             cice_product_name=cice_product_name,
@@ -275,6 +283,7 @@ class CICEConfigurator(BaseConfigurator):
             cice_function_args=cice_function_args or {},
             restore_ice=restore_ice,
             case_inputdir=case_inputdir,
+            case_cyclic_x=case_cyclic_x,
         )
 
     def validate_args(self, **kwargs):
@@ -344,7 +353,10 @@ class CICEConfigurator(BaseConfigurator):
 
     def configure(self):
         self.set_output_param("ns_boundary_type", "'zero_gradient'")
-        self.set_output_param("ew_boundary_type", "'zero_gradient'")
+        self.set_output_param(
+            "ew_boundary_type",
+            "'cyclic'" if self.get_input_param("case_cyclic_x") else "'zero_gradient'",
+        )
         self.set_output_param("advection", "'upwind'")
         # Set unconditionally, not just when restoring: CICE's own
         # set_nml.bczerogradient option pairs zero_gradient boundaries with
