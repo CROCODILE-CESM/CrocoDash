@@ -374,7 +374,7 @@ document.write(`
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">crocodash</span> <span class="n">template</span>          <span class="o">--</span><span class="n">output</span> <span class="n">my_case</span><span class="o">.</span><span class="p">{</span><span class="n">yaml</span><span class="p">,</span><span class="n">ipynb</span><span class="p">,</span><span class="n">py</span><span class="p">,</span><span class="n">pbs</span><span class="p">}</span> <span class="p">[</span><span class="o">--</span><span class="n">machine</span> <span class="n">glade</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">notebook</span> <span class="n">ID</span><span class="p">]</span>
 <span class="n">crocodash</span> <span class="n">create</span>            <span class="o">--</span><span class="n">config</span> <span class="n">mycase</span><span class="o">.</span><span class="n">yaml</span> <span class="p">[</span><span class="o">--</span><span class="n">override</span><span class="p">]</span>
 <span class="n">crocodash</span> <span class="n">dump</span>              <span class="o">--</span><span class="n">caseroot</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">case</span>
-<span class="n">crocodash</span> <span class="n">process</span>  <span class="p">[</span><span class="o">--</span><span class="n">caseroot</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">case</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="nb">all</span> <span class="o">|</span> <span class="o">--</span><span class="n">ic</span> <span class="o">--</span><span class="n">bc</span> <span class="o">...</span><span class="p">]</span>  <span class="p">[</span><span class="o">--</span><span class="n">skip</span> <span class="o">...</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">preview</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">force</span><span class="p">]</span>
+<span class="n">crocodash</span> <span class="n">process</span>  <span class="p">[</span><span class="o">--</span><span class="n">caseroot</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">case</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="nb">all</span> <span class="o">|</span> <span class="o">--</span><span class="n">ic</span> <span class="o">--</span><span class="n">bc</span> <span class="o">...</span><span class="p">]</span>  <span class="p">[</span><span class="o">--</span><span class="n">skip</span> <span class="o">...</span><span class="p">]</span>
 <span class="n">crocodash</span> <span class="n">bundle</span>            <span class="o">--</span><span class="n">caseroot</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">case</span> <span class="o">--</span><span class="n">output</span><span class="o">-</span><span class="nb">dir</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">bundle_dir</span> <span class="o">...</span>
 <span class="n">crocodash</span> <span class="n">fork</span>              <span class="o">--</span><span class="n">bundle</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">bundle</span> <span class="o">--</span><span class="n">caseroot</span> <span class="o">...</span> <span class="o">--</span><span class="n">inputdir</span> <span class="o">...</span> <span class="o">--</span><span class="n">cesmroot</span> <span class="o">...</span> <span class="o">--</span><span class="n">machine</span> <span class="o">...</span> <span class="o">--</span><span class="n">project</span> <span class="o">...</span>
 <span class="n">crocodash</span> <span class="n">duplicate</span>         <span class="o">--</span><span class="n">source</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">case</span> <span class="o">--</span><span class="n">case</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">new_case</span> <span class="o">--</span><span class="n">inputdir</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">new_inputdir</span>
@@ -524,12 +524,6 @@ crocodash<span class="w"> </span>process<span class="w"> </span>--caseroot<span 
 <span class="c1"># Skip components even when running --all</span>
 crocodash<span class="w"> </span>process<span class="w"> </span>--caseroot<span class="w"> </span>~/croc_cases/mycase<span class="w"> </span>--all<span class="w"> </span>--skip<span class="w"> </span>tides<span class="w"> </span>runoff
 
-<span class="c1"># See what would run or be skipped, and each component's files, without running anything</span>
-crocodash<span class="w"> </span>process<span class="w"> </span>--caseroot<span class="w"> </span>~/croc_cases/mycase<span class="w"> </span>--all<span class="w"> </span>--preview
-
-<span class="c1"># Rerun components that are already done</span>
-crocodash<span class="w"> </span>process<span class="w"> </span>--caseroot<span class="w"> </span>~/croc_cases/mycase<span class="w"> </span>--bc<span class="w"> </span>--force
-
 <span class="c1"># Run from inside the extract_forcings/ directory — no --caseroot needed</span>
 <span class="nb">cd</span><span class="w"> </span>~/scratch/croc_input/mycase/extract_forcings
 crocodash<span class="w"> </span>process<span class="w"> </span>--all
@@ -580,16 +574,9 @@ crocodash<span class="w"> </span>process<span class="w"> </span>--all
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">--skip</span> <span class="pre">NAME...</span></code></p></td>
 <td><p>Skip one or more components by name (case-insensitive).</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">--preview</span></code></p></td>
-<td><p>List each selected component as <code class="docutils literal notranslate"><span class="pre">run</span></code> or <code class="docutils literal notranslate"><span class="pre">skip</span></code>, with its files marked <code class="docutils literal notranslate"><span class="pre">present</span></code> or <code class="docutils literal notranslate"><span class="pre">missing</span></code>, without running anything.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">--force</span></code></p></td>
-<td><p>Rerun the selected components even when they are already done.</p></td>
-</tr>
 </tbody>
 </table>
 </div>
-<p>Components that are already done – finished for the current configuration, with all their files still present – are skipped. See <a class="reference internal" href="3b_process_forcings.html#finished-components-are-skipped"><span class="std std-ref">Process Forcings</span></a>.</p>
 </section>
 <section id="auto-detection">
 <h3>Auto-detection<a class="headerlink" href="#auto-detection" title="Link to this heading">#</a></h3>

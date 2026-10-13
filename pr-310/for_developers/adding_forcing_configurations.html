@@ -348,10 +348,7 @@ document.write(`
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-3-define-output-parameters">Step 3: Define Output Parameters</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-4-implement-the-init-method">Step 4: Implement the <code class="docutils literal notranslate"><span class="pre">__init__</span></code> Method</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-5-implement-the-configure-method">Step 5: Implement the <code class="docutils literal notranslate"><span class="pre">configure</span></code> Method</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-5b-declare-a-process-step-if-your-forcing-generates-files">Step 5b: Declare a Process Step (if your forcing generates files)</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#declare-the-files-it-writes">Declare the files it writes</a></li>
-</ul>
-</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-5b-declare-a-process-step-if-your-forcing-generates-files">Step 5b: Declare a Process Step (if your forcing generates files)</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-6-add-compset-compatibility-logic-optional">Step 6: Add Compset Compatibility Logic (Optional)</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#complete-example">Complete Example</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#important-considerations">Important Considerations</a><ul class="nav section-nav flex-column">
@@ -622,38 +619,6 @@ back through <code class="docutils literal notranslate"><span class="pre">config
 <code class="docutils literal notranslate"><span class="pre">ForcingConfigRegistry.get_configurator_output()</span></code>. Declaring it lets <code class="docutils literal notranslate"><span class="pre">driver.py</span></code>
 derive processing order automatically, and lets a test statically confirm the
 named output actually exists on the target class.</p>
-<section id="declare-the-files-it-writes">
-<h3>Declare the files it writes<a class="headerlink" href="#declare-the-files-it-writes" title="Link to this heading">#</a></h3>
-<p>Every process step declares the model input files it writes in <code class="docutils literal notranslate"><span class="pre">output_files()</span></code>,
-as <code class="docutils literal notranslate"><span class="pre">{flag:</span> <span class="pre">[path,</span> <span class="pre">...]}</span></code> relative to the case input directory. Build the names
-from your own param values, so each name lives in one place:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>    <span class="k">def</span><span class="w"> </span><span class="nf">output_files</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">{</span><span class="s2">"mycomponent"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"ocn/"</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_output_param</span><span class="p">(</span><span class="s2">"my_component_data_file"</span><span class="p">)]}</span>
-</pre></div>
-</div>
-<ul class="simple">
-<li><p>Use exact names, and a glob only where the number of files depends on the
-data (WW3 declares <code class="docutils literal notranslate"><span class="pre">wav/ww3.point*_spec.nc</span></code>).</p></li>
-<li><p>Leave out files the model never reads, such as regrid weights and
-intermediates. Put scratch under <code class="docutils literal notranslate"><span class="pre">extract_forcings/&lt;name&gt;/</span></code> where you can.</p></li>
-<li><p>Read only your own inputs and outputs: the driver calls this on a
-configurator rebuilt from <code class="docutils literal notranslate"><span class="pre">config.json</span></code>.</p></li>
-</ul>
-<p>The declaration has to agree with the case settings in both directions. Every
-declared file must be one that some <code class="docutils literal notranslate"><span class="pre">user_nl</span></code> or xml value points at, and every
-file in the input directory that such a value points at must be declared by some
-configurator. <code class="docutils literal notranslate"><span class="pre">configure_forcings</span></code> checks this and warns with
-<code class="docutils literal notranslate"><span class="pre">OutputFilesWarning</span></code>, which the test suite turns into an error. After each
-process step, the driver also warns if a declared file wasn’t written.</p>
-<p>The driver records a step as done once all its files exist, and skips it on
-later runs while its <code class="docutils literal notranslate"><span class="pre">process_fingerprint()</span></code> is unchanged. By default that is
-your <code class="docutils literal notranslate"><span class="pre">config.json</span></code> entry plus those named in <code class="docutils literal notranslate"><span class="pre">depends_on_outputs</span></code>. If your step
-reads anything else from <code class="docutils literal notranslate"><span class="pre">ctx.config</span></code> (CICE and WW3 read the conditions dates),
-override <code class="docutils literal notranslate"><span class="pre">process_fingerprint()</span></code>, or a change there won’t rerun your step.</p>
-<p>Finally, add your flag to <code class="docutils literal notranslate"><span class="pre">_BUILDERS</span></code> in <code class="docutils literal notranslate"><span class="pre">tests/forcing/test_output_files.py</span></code>. A
-fast test fails until you do; the slow test (<code class="docutils literal notranslate"><span class="pre">--runslow</span></code>) runs your step and
-checks it wrote every file it declares.</p>
-</section>
 </section>
 <section id="step-6-add-compset-compatibility-logic-optional">
 <h2>Step 6: Add Compset Compatibility Logic (Optional)<a class="headerlink" href="#step-6-add-compset-compatibility-logic-optional" title="Link to this heading">#</a></h2>
@@ -759,29 +724,24 @@ checks it wrote every file it declares.</p>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">Path</span><span class="p">(</span><span class="n">data_file</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
             <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Ice data file not found: </span><span class="si">{</span><span class="n">data_file</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
-        <span class="c1"># Point the case at the copy process() puts in the case input directory</span>
-        <span class="n">dest</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">case_inputdir</span><span class="p">)</span> <span class="o">/</span> <span class="s2">"ice"</span> <span class="o">/</span> <span class="n">Path</span><span class="p">(</span><span class="n">data_file</span><span class="p">)</span><span class="o">.</span><span class="n">name</span>
+        <span class="c1"># Copy to case input directory if provided</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">case_inputdir</span><span class="p">:</span>
+            <span class="n">dest</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">case_inputdir</span><span class="p">)</span> <span class="o">/</span> <span class="n">Path</span><span class="p">(</span><span class="n">data_file</span><span class="p">)</span><span class="o">.</span><span class="n">name</span>
+            <span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
+            <span class="n">shutil</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">data_file</span><span class="p">,</span> <span class="n">dest</span><span class="p">)</span>
+            <span class="n">data_file</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">dest</span><span class="p">)</span>
 
         <span class="c1"># Set outputs, then let the base class apply them</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">set_output_param</span><span class="p">(</span><span class="s2">"ICE_DATA_FILE"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">dest</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_output_param</span><span class="p">(</span><span class="s2">"ICE_DATA_FILE"</span><span class="p">,</span> <span class="n">data_file</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_output_param</span><span class="p">(</span><span class="s2">"ice_conc_min"</span><span class="p">,</span> <span class="n">threshold</span><span class="p">)</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">configure</span><span class="p">()</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">output_files</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">"""The file process() writes, relative to the case input directory."""</span>
-        <span class="n">name</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_output_param</span><span class="p">(</span><span class="s2">"ICE_DATA_FILE"</span><span class="p">))</span><span class="o">.</span><span class="n">name</span>
-        <span class="k">return</span> <span class="p">{</span><span class="s2">"iceforcing"</span><span class="p">:</span> <span class="p">[</span><span class="sa">f</span><span class="s2">"ice/</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">]}</span>
-
     <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">"""Copy the ice data into the case (runs under `crocodash process`)."""</span>
-        <span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
-
-        <span class="n">dest</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">inputdir</span> <span class="o">/</span> <span class="s2">"ice"</span> <span class="o">/</span> <span class="n">Path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ice_data_file</span><span class="p">)</span><span class="o">.</span><span class="n">name</span>
-        <span class="n">dest</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="n">shutil</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ice_data_file</span><span class="p">,</span> <span class="n">dest</span><span class="p">)</span>
+<span class="w">        </span><span class="sd">"""Generate the ice forcing file (runs under `crocodash process`)."""</span>
+        <span class="o">...</span>
 </pre></div>
 </div>
-<p>Four details in that example are easy to get wrong, and all four are checked
+<p>Three details in that example are easy to get wrong, and all three are checked
 at runtime:</p>
 <ol class="arabic simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">case_inputdir</span></code> appears in <strong>both</strong> <code class="docutils literal notranslate"><span class="pre">input_params</span></code> and <code class="docutils literal notranslate"><span class="pre">__init__</span></code>.</p></li>
@@ -789,8 +749,6 @@ at runtime:</p>
 <li><p>The bare <code class="docutils literal notranslate"><span class="pre">except</span> <span class="pre">ValueError</span></code> around <code class="docutils literal notranslate"><span class="pre">float(...)</span></code> would otherwise also swallow
 the “must be between 0 and 1” error and re-raise it with a misleading
 message, so the range check sits outside the <code class="docutils literal notranslate"><span class="pre">try</span></code>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">output_files()</span></code> names the file <code class="docutils literal notranslate"><span class="pre">ICE_DATA_FILE</span></code> points at, and <code class="docutils literal notranslate"><span class="pre">process()</span></code>
-writes it – see <a class="reference internal" href="#declare-the-files-it-writes"><span class="std std-ref">Declare the files it writes</span></a>.</p></li>
 </ol>
 </section>
 <section id="important-considerations">
@@ -914,10 +872,7 @@ configurators are instantiated:</p>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-3-define-output-parameters">Step 3: Define Output Parameters</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-4-implement-the-init-method">Step 4: Implement the <code class="docutils literal notranslate"><span class="pre">__init__</span></code> Method</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-5-implement-the-configure-method">Step 5: Implement the <code class="docutils literal notranslate"><span class="pre">configure</span></code> Method</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-5b-declare-a-process-step-if-your-forcing-generates-files">Step 5b: Declare a Process Step (if your forcing generates files)</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#declare-the-files-it-writes">Declare the files it writes</a></li>
-</ul>
-</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-5b-declare-a-process-step-if-your-forcing-generates-files">Step 5b: Declare a Process Step (if your forcing generates files)</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-6-add-compset-compatibility-logic-optional">Step 6: Add Compset Compatibility Logic (Optional)</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#complete-example">Complete Example</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#important-considerations">Important Considerations</a><ul class="nav section-nav flex-column">

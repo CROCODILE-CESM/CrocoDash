@@ -345,7 +345,6 @@ document.write(`
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow-overview">Workflow Overview</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#directory-structure">Directory Structure</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#command-line-interface">Command-Line Interface</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#finished-components-are-skipped">Finished components are skipped</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#large-datasets">Large datasets</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#python-api">Python API</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-processing-pipeline">The Processing Pipeline</a></li>
@@ -424,41 +423,10 @@ separate components.</p>
 <p>This flexibility lets you:</p>
 <ul class="simple">
 <li><p>Test individual components without running everything</p></li>
-<li><p>Re-run one forcing type if your source data changed (with <code class="docutils literal notranslate"><span class="pre">--force</span></code>, since its configuration didn’t)</p></li>
+<li><p>Re-run one forcing type if your source data changed</p></li>
 <li><p>Submit to a batch queue and re-run from the CLI after a failure</p></li>
 <li><p>Resume a partially-completed run</p></li>
 </ul>
-</section>
-<section id="finished-components-are-skipped">
-<h2>Finished components are skipped<a class="headerlink" href="#finished-components-are-skipped" title="Link to this heading">#</a></h2>
-<p>Every component declares the files it writes. When a component finishes with all of them,
-<code class="docutils literal notranslate"><span class="pre">process_forcings</span></code> records it in <code class="docutils literal notranslate"><span class="pre">extract_forcings/process_record.json</span></code>. The next run skips it
-while its configuration is unchanged and its files are still there:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">skip</span><span class="p">]</span> <span class="n">ic</span><span class="p">:</span> <span class="n">already</span> <span class="n">done</span><span class="p">,</span> <span class="mi">3</span> <span class="n">file</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="n">present</span> <span class="p">(</span><span class="n">force</span><span class="o">=</span><span class="kc">True</span> <span class="o">/</span> <span class="o">--</span><span class="n">force</span> <span class="n">reruns</span> <span class="n">it</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>A component runs again when <code class="docutils literal notranslate"><span class="pre">configure_forcings</span></code> changes its configuration, when one of its
-files is missing, or when you ask for it:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>crocodash<span class="w"> </span>process<span class="w"> </span>--caseroot<span class="w"> </span>~/croc_cases/mycase<span class="w"> </span>--bc<span class="w"> </span>--force
-</pre></div>
-</div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">case</span><span class="o">.</span><span class="n">process_forcings</span><span class="p">(</span><span class="n">force</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>To see what a run would do without running anything:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>crocodash<span class="w"> </span>process<span class="w"> </span>--caseroot<span class="w"> </span>~/croc_cases/mycase<span class="w"> </span>--all<span class="w"> </span>--preview
-</pre></div>
-</div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">preview</span><span class="p">]</span> <span class="n">ic</span><span class="p">:</span> <span class="n">skip</span><span class="p">,</span> <span class="n">already</span> <span class="n">done</span>
-    <span class="n">present</span>  <span class="n">ocn</span><span class="o">/</span><span class="n">init_tracers_filled</span><span class="o">.</span><span class="n">nc</span>
-    <span class="n">present</span>  <span class="n">ocn</span><span class="o">/</span><span class="n">init_eta_filled</span><span class="o">.</span><span class="n">nc</span>
-    <span class="n">present</span>  <span class="n">ocn</span><span class="o">/</span><span class="n">init_vel_filled</span><span class="o">.</span><span class="n">nc</span>
-<span class="p">[</span><span class="n">preview</span><span class="p">]</span> <span class="n">bc</span><span class="p">:</span> <span class="n">run</span>
-    <span class="n">missing</span>  <span class="n">ocn</span><span class="o">/</span><span class="n">forcing_obc_segment_001</span><span class="o">.</span><span class="n">nc</span>
-    <span class="o">...</span>
-</pre></div>
-</div>
-<p><code class="docutils literal notranslate"><span class="pre">configure_forcings</span></code> prints the same list of files, and which components are already done, when it finishes.</p>
 </section>
 <section id="large-datasets">
 <h2>Large datasets<a class="headerlink" href="#large-datasets" title="Link to this heading">#</a></h2>
@@ -656,7 +624,6 @@ automatically — there is no hand-maintained flag list.</p>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow-overview">Workflow Overview</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#directory-structure">Directory Structure</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#command-line-interface">Command-Line Interface</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#finished-components-are-skipped">Finished components are skipped</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#large-datasets">Large datasets</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#python-api">Python API</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-processing-pipeline">The Processing Pipeline</a></li>

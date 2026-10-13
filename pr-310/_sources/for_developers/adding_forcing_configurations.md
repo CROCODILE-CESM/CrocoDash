@@ -253,41 +253,6 @@ back through `config.json` via
 derive processing order automatically, and lets a test statically confirm the
 named output actually exists on the target class.
 
-### Declare the files it writes
-
-Every process step declares the model input files it writes in `output_files()`,
-as `{flag: [path, ...]}` relative to the case input directory. Build the names
-from your own param values, so each name lives in one place:
-
-```python
-    def output_files(self):
-        return {"mycomponent": ["ocn/" + self.get_output_param("my_component_data_file")]}
-```
-
-- Use exact names, and a glob only where the number of files depends on the
-  data (WW3 declares `wav/ww3.point*_spec.nc`).
-- Leave out files the model never reads, such as regrid weights and
-  intermediates. Put scratch under `extract_forcings/<name>/` where you can.
-- Read only your own inputs and outputs: the driver calls this on a
-  configurator rebuilt from `config.json`.
-
-The declaration has to agree with the case settings in both directions. Every
-declared file must be one that some `user_nl` or xml value points at, and every
-file in the input directory that such a value points at must be declared by some
-configurator. `configure_forcings` checks this and warns with
-`OutputFilesWarning`, which the test suite turns into an error. After each
-process step, the driver also warns if a declared file wasn't written.
-
-The driver records a step as done once all its files exist, and skips it on
-later runs while its `process_fingerprint()` is unchanged. By default that is
-your `config.json` entry plus those named in `depends_on_outputs`. If your step
-reads anything else from `ctx.config` (CICE and WW3 read the conditions dates),
-override `process_fingerprint()`, or a change there won't rerun your step.
-
-Finally, add your flag to `_BUILDERS` in `tests/forcing/test_output_files.py`. A
-fast test fails until you do; the slow test (`--runslow`) runs your step and
-checks it wrote every file it declares.
-
 ## Step 6: Add Compset Compatibility Logic (Optional)
 
 Define when your configurator is required or allowed:
@@ -394,29 +359,24 @@ class IceForcing(BaseConfigurator):
         if not Path(data_file).exists():
             raise FileNotFoundError(f"Ice data file not found: {data_file}")
 
-        # Point the case at the copy process() puts in the case input directory
-        dest = Path(self.case_inputdir) / "ice" / Path(data_file).name
+        # Copy to case input directory if provided
+        if self.case_inputdir:
+            dest = Path(self.case_inputdir) / Path(data_file).name
+            import shutil
+            shutil.copy(data_file, dest)
+            data_file = str(dest)
 
         # Set outputs, then let the base class apply them
-        self.set_output_param("ICE_DATA_FILE", str(dest))
+        self.set_output_param("ICE_DATA_FILE", data_file)
         self.set_output_param("ice_conc_min", threshold)
         super().configure()
 
-    def output_files(self):
-        """The file process() writes, relative to the case input directory."""
-        name = Path(self.get_output_param("ICE_DATA_FILE")).name
-        return {"iceforcing": [f"ice/{name}"]}
-
     def process(self, ctx):
-        """Copy the ice data into the case (runs under `crocodash process`)."""
-        import shutil
-
-        dest = ctx.inputdir / "ice" / Path(self.ice_data_file).name
-        dest.parent.mkdir(exist_ok=True)
-        shutil.copy(self.ice_data_file, dest)
+        """Generate the ice forcing file (runs under `crocodash process`)."""
+        ...
 ```
 
-Four details in that example are easy to get wrong, and all four are checked
+Three details in that example are easy to get wrong, and all three are checked
 at runtime:
 
 1. `case_inputdir` appears in **both** `input_params` and `__init__`.
@@ -424,8 +384,6 @@ at runtime:
 3. The bare `except ValueError` around `float(...)` would otherwise also swallow
    the "must be between 0 and 1" error and re-raise it with a misleading
    message, so the range check sits outside the `try`.
-4. `output_files()` names the file `ICE_DATA_FILE` points at, and `process()`
-   writes it -- see [Declare the files it writes](#declare-the-files-it-writes).
 
 ## Important Considerations
 
