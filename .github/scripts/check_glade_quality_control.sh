@@ -8,6 +8,7 @@ EXEMPTIONS=(
   "CrocoDash/raw_data_access/datasets/cesm_ww3_jra.py"
   "tests/fixtures/state.py"
   "tests/forcing/test_bgc.py"
+  "tests/forcing/test_output_files.py"
   "tests/forcing/test_atm.py"
   "tests/raw_data_access/test_cice.py"
   "tests/forcing/test_cice.py"
