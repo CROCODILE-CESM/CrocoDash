@@ -356,13 +356,11 @@ def test_process_cice_forcing_with_reference_ice(tmp_path, gen_grid_topo_vgrid):
 
 
 # ---------------------------------------------------------------------------
-# get_output_filepaths
+# output_files
 # ---------------------------------------------------------------------------
 #
-# CICE's output_params are all namelist settings, so the base implementation
-# (which walks output_params for is_file entries) finds nothing. Left that way,
-# CaseBundle.bundle() silently ships a bundle with no CICE forcing in it and
-# validate_output_filepaths() passes without checking anything.
+# CICE's forcing file lives beside ocn/, in ice/, and exists only when
+# restoring is on: process() writes nothing otherwise.
 
 
 def test_get_output_filepaths_finds_the_forcing_file(tmp_path):
@@ -372,19 +370,22 @@ def test_get_output_filepaths_finds_the_forcing_file(tmp_path):
     expected = ice_dir / FORCING_FILENAME
     expected.touch()
 
-    paths = CICEConfigurator().get_output_filepaths(tmp_path / "ocn")
-    assert [Path(p) for p in paths] == [expected]
+    paths = CICEConfigurator(**_restoring()).get_output_filepaths(_make_ctx(tmp_path))
+    assert paths == [expected]
+    # Without restoring there is nothing to declare.
+    assert CICEConfigurator().get_output_filepaths(_make_ctx(tmp_path)) == []
 
 
 def test_get_output_filepaths_empty_when_not_yet_processed(tmp_path):
-    (tmp_path / "ocn").mkdir()
-    assert CICEConfigurator().get_output_filepaths(tmp_path / "ocn") == []
+    configurator = CICEConfigurator(**_restoring())
+    assert configurator.get_output_filepaths(_make_ctx(tmp_path)) == []
+    assert not configurator.validate_output_filepaths(_make_ctx(tmp_path))
 
 
 def test_get_output_filepaths_agrees_with_process(tmp_path, gen_grid_topo_vgrid):
-    """The writer and the reader must point at the same path.
+    """The writer and the declaration must point at the same path.
 
-    This is the regression that matters: process() and get_output_filepaths()
+    This is the regression that matters: process() and the declared path
     each built the path independently before they were given shared constants,
     so either could move without the other noticing.
     """
@@ -392,12 +393,13 @@ def test_get_output_filepaths_agrees_with_process(tmp_path, gen_grid_topo_vgrid)
     grid.write_supergrid(tmp_path / "grid.nc")
 
     configurator = CICEConfigurator(**_restoring(cice_product_name="reference_ice"))
-    configurator.process(_make_ctx(tmp_path, supergrid_path=tmp_path / "grid.nc"))
+    ctx = _make_ctx(tmp_path, supergrid_path=tmp_path / "grid.nc")
+    configurator.process(ctx)
 
-    paths = configurator.get_output_filepaths(tmp_path / "ocn")
+    paths = configurator.get_output_filepaths(ctx)
     assert len(paths) == 1
-    assert Path(paths[0]).exists()
-    assert configurator.validate_output_filepaths(tmp_path / "ocn")
+    assert paths[0].exists()
+    assert configurator.validate_output_filepaths(ctx)
 
 
 @pytest.mark.parametrize(

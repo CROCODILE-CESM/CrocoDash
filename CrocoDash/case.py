@@ -9,7 +9,7 @@ import regional_mom6 as rmom6
 from CrocoDash.grid import Grid
 from CrocoDash.topo import Topo
 from CrocoDash.vgrid import VGrid
-from CrocoDash.forcing.base import ForcingConfigRegistry
+from CrocoDash.forcing.base import ForcingConfigRegistry, ReadCrocoDashCase
 from CrocoDash.raw_data_access.registry import ProductRegistry
 from CrocoDash.raw_data_access.base import ForcingProduct
 from ProConPy.config_var import ConfigVar, cvars
@@ -1114,10 +1114,10 @@ class Case:
             )
 
     def validate_case(self):
-
         # Ensure configurations are done
+        ctx = ReadCrocoDashCase(self.caseroot).workflow_context()
         for name, configurator in self.fcr.active_configurators.items():
-            if not configurator.validate_output_filepaths(self.inputdir / "ocn"):
+            if not configurator.validate_output_filepaths(ctx):
                 print(
                     f"{name} is not valid yet — process this forcing and generate "
                     f"the files using your case's extract_forcings module: "

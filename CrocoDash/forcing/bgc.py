@@ -54,7 +54,6 @@ class BGCICConfigurator(BaseConfigurator):
             "MARBL_TRACERS_IC_FILE",
             comment="MARBL initial conditions file",
             user_nl_name="mom",
-            is_file=True,
         )
     ]
 
@@ -67,6 +66,11 @@ class BGCICConfigurator(BaseConfigurator):
             Path(self.get_input_param("marbl_ic_filepath")).name,
         )
         super().configure()
+
+    def output_files(self, ctx):
+        return {
+            "bgcic": [ctx.output_path / self.get_output_param("MARBL_TRACERS_IC_FILE")]
+        }
 
     def process(self, ctx):
         """Copy the MARBL initial condition file into place."""
@@ -91,13 +95,11 @@ class BGCIronForcingConfigurator(BaseConfigurator):
             "MARBL_FESEDFLUX_FILE",
             comment="MARBL sedimentary iron flux file",
             user_nl_name="mom",
-            is_file=True,
         ),
         UserNLConfigParam(
             "MARBL_FEVENTFLUX_FILE",
             comment="MARBL event iron flux file",
             user_nl_name="mom",
-            is_file=True,
         ),
         UserNLConfigParam(
             "MARBL_FESEDFLUXRED_FILE",
@@ -117,6 +119,18 @@ class BGCIronForcingConfigurator(BaseConfigurator):
         self.set_output_param("MARBL_FEVENTFLUX_FILE", feventflux_filepath)
         self.set_output_param("MARBL_FESEDFLUXRED_FILE", fesedfluxred_filepath)
         super().configure()
+
+    def output_files(self, ctx):
+        return {
+            "bgcironforcing": [
+                ctx.output_path / self.get_output_param(name)
+                for name in (
+                    "MARBL_FESEDFLUX_FILE",
+                    "MARBL_FEVENTFLUX_FILE",
+                    "MARBL_FESEDFLUXRED_FILE",
+                )
+            ]
+        }
 
     def process(self, ctx):
         """Create dummy iron forcing files for MARBL."""
@@ -151,15 +165,9 @@ class BGCIronForcingConfigurator(BaseConfigurator):
         ds.attrs = {
             "history": "Created with xarray (this file is empty)",
         }
-        ds.to_netcdf(
-            ctx.inputdir / "ocn" / self.get_output_param("MARBL_FESEDFLUX_FILE")
-        )
-        ds.to_netcdf(
-            ctx.inputdir / "ocn" / self.get_output_param("MARBL_FEVENTFLUX_FILE")
-        )
-        ds.to_netcdf(
-            ctx.inputdir / "ocn" / self.get_output_param("MARBL_FESEDFLUXRED_FILE")
-        )
+        ds.to_netcdf(ctx.output_path / self.get_output_param("MARBL_FESEDFLUX_FILE"))
+        ds.to_netcdf(ctx.output_path / self.get_output_param("MARBL_FEVENTFLUX_FILE"))
+        ds.to_netcdf(ctx.output_path / self.get_output_param("MARBL_FESEDFLUXRED_FILE"))
 
 
 @register
@@ -190,7 +198,6 @@ class BGCRiverNutrientsConfigurator(BaseConfigurator):
             "RIV_FLUX_FILE",
             comment="River nutrient flux file",
             user_nl_name="mom",
-            is_file=True,
         ),
     ]
 
@@ -225,6 +232,13 @@ class BGCRiverNutrientsConfigurator(BaseConfigurator):
         self.set_output_param("RIV_FLUX_FILE", river_nutrients_nnsm_filepath)
 
         super().configure()
+
+    def output_files(self, ctx):
+        return {
+            "bgcrivernutrients": [
+                ctx.output_path / self.get_output_param("RIV_FLUX_FILE")
+            ]
+        }
 
     def process(self, ctx):
         """Regrid global river nutrients onto the ocean grid via the runoff

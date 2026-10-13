@@ -110,6 +110,22 @@ def test_all_configurators_smoke(fake_param_case, fake_cime, fake_forcing_produc
         deser_instance = config_class.deserialize(ser)
         assert instance == deser_instance
 
+        # Every process step declares its output files, computably from
+        # config.json alone, all inside the inputdir. (Not the dummy
+        # configurators other test modules register.)
+        if not config_class.__module__.startswith("CrocoDash."):
+            continue
+        ctx = SimpleNamespace(
+            inputdir=fake_param_case, output_path=fake_param_case / "ocn"
+        )
+        declared = instance.output_files(ctx)
+        assert set(declared) == set(config_class.process_components), config_class
+        assert deser_instance.output_files(ctx) == declared, config_class
+        paths = [path for flag_paths in declared.values() for path in flag_paths]
+        assert len(paths) == len(set(paths)), config_class
+        for path in paths:
+            assert Path(path).is_relative_to(fake_param_case), path
+
 
 """
 Configurators are only smoke tested because the individual parts of the process are tested above and in test_forcing_configuration_registry.

@@ -44,8 +44,6 @@ from CrocoDash import case_state
 
 logger = setup_logger(__name__)
 
-INPUTDIR_FILE_PREFIXES = ("forcing_obc_segment_", "init_")
-
 
 # ---------------------------------------------------------------------------
 # Helpers for applying non-standard CESM state from a bundle
@@ -303,19 +301,12 @@ class CaseBundle(ReadCrocoDashCase):
         ocn_target = case_subfolder / "ocn"
         ocn_target.mkdir(parents=False, exist_ok=True)
 
-        for f in Path(ocn_dir).iterdir():
-            if f.name.startswith(INPUTDIR_FILE_PREFIXES):
-                logger.info(f"Copying {f}")
-                shutil.copy(f, ocn_target)
-
-        for config, value in self.forcing_config.items():
-            if config in {"conditions", "caseroot"}:
-                continue
-            configurator = ForcingConfigRegistry.get_configurator(value)
-            for path in configurator.get_output_filepaths(ocn_dir):
+        ctx = self.workflow_context()
+        for config, configurator in self.configurators().items():
+            for path in configurator.get_output_filepaths(ctx):
                 logger.info(f"Copying {config} file: {path}...")
                 # keep the layout under inputdir (ocn/, wav/, ...)
-                target = case_subfolder / Path(path).relative_to(Path(ocn_dir).parent)
+                target = case_subfolder / path.relative_to(ctx.inputdir)
                 target.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy(path, target)
 
