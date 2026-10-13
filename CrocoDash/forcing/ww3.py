@@ -4,8 +4,10 @@ from pathlib import Path
 import numpy as np
 import xarray as xr
 
-from CrocoDash.forcing import obc
+from CrocoDash.forcing import obc, utils
 from CrocoDash.forcing.base import *
+from CrocoDash.grid import Grid
+from CrocoDash.topo import Topo
 from CrocoDash.raw_data_access.registry import ProductRegistry
 from CrocoDash.raw_data_access.base import (
     DIRECTION_COMING_FROM,
@@ -431,9 +433,15 @@ class WW3Configurator(BaseConfigurator):
     allowed_compsets = ["WW3"]
     input_params = [
         InputValueParam("case_inputdir", comment="Case input directory"),
+        InputValueParam("case_grid_name", comment="Case grid name"),
+        InputValueParam("case_session_id", comment="Case session identifier"),
         InputValueParam(
             "boundaries",
-            comment="Open boundary sides to generate WW3 spectra for (e.g., ['N', 'S', 'E', 'W'])",
+            comment=(
+                "Open boundary sides, e.g. ['south', 'north', 'west', 'east']. "
+                "These are WW3's open (status 2) edges and the ones spectra are "
+                "generated for; the other edges are closed."
+            ),
         ),
         InputValueParam(
             "ww3_obc_product_name",
@@ -492,6 +500,8 @@ class WW3Configurator(BaseConfigurator):
         self,
         case_inputdir,
         boundaries,
+        case_grid_name=None,
+        case_session_id=None,
         ww3_obc_product_name=None,
         ww3_obc_function_name=None,
         ww3_obc_function_overrides=None,
@@ -500,6 +510,8 @@ class WW3Configurator(BaseConfigurator):
     ):
         super().__init__(
             case_inputdir=case_inputdir,
+            case_grid_name=case_grid_name,
+            case_session_id=case_session_id,
             boundaries=boundaries,
             ww3_obc_product_name=ww3_obc_product_name,
             ww3_obc_function_name=ww3_obc_function_name,
@@ -555,11 +567,36 @@ class WW3Configurator(BaseConfigurator):
             )
 
     def configure(self):
-        self.set_output_param(
-            "WW3_GRID_INP_DIR",
-            str(Path(self.get_input_param("case_inputdir")) / WAVE_SUBDIR),
-        )
+        wave_dir = Path(self.get_input_param("case_inputdir")) / WAVE_SUBDIR
+        self.set_output_param("WW3_GRID_INP_DIR", str(wave_dir))
         super().configure()
+        self.write_grid_inputs(wave_dir)
+
+    def write_grid_inputs(self, wave_dir):
+        """Write ww3_grid.inp and its x/y/bottom/mapsta files for the case grid.
+
+        Only the configured boundaries become open (status 2) edges. ww3_grid
+        drops the sea points of any other edge, so on a cyclic-x grid (whose
+        default is no open edge) the north row would get no wave fields at all,
+        and MOM6 would read the coupler's fill value as Stokes drift there.
+        """
+        inputdir = Path(self.get_input_param("case_inputdir"))
+        grid_name = self.get_input_param("case_grid_name")
+        suffix = f"{grid_name}_{self.get_input_param('case_session_id')}"
+        topo_path = inputdir / "ocn" / f"ocean_topog_{suffix}.nc"
+        topo = Topo.from_topo_file(
+            grid=Grid.from_supergrid(
+                str(inputdir / "ocn" / f"ocean_hgrid_{suffix}.nc")
+            ),
+            topo_file_path=topo_path,
+            min_depth=utils.read_min_depth(topo_path),
+            git=False,
+        )
+        topo.write_ww3_input(
+            wave_dir,
+            grid_alias=grid_name,
+            boundary_edges=self.get_input_param("boundaries"),
+        )
 
     def get_output_filepaths(self, ocn_ice_directory):
         """Everything WW3 generated, which is a whole directory rather than a
