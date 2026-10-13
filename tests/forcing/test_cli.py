@@ -35,7 +35,6 @@ def _write_config(path, extra_keys=None):
                 "boundary_number_conversion": {"north": 1},
                 "get_step_days": "7",
                 "regrid_step_days": "7",
-                "preview": False,
                 "function_args": {},
             },
         },
@@ -179,7 +178,7 @@ def test_process_no_config_in_cwd_raises_helpful_error(tmp_path, monkeypatch, ca
 @patch("CrocoDash.forcing.driver.run_workflow")
 @patch("CrocoDash.forcing.driver.resolve_components")
 @patch("CrocoDash.case_state.read")
-def test_process_preview_from_config(mock_read, mock_resolve, mock_run, tmp_path):
+def test_process_preview_flag(mock_read, mock_resolve, mock_run, tmp_path):
     caseroot = tmp_path / "mycase"
     caseroot.mkdir()
     inputdir = tmp_path / "input"
@@ -202,7 +201,6 @@ def test_process_preview_from_config(mock_read, mock_resolve, mock_run, tmp_path
                 "boundary_number_conversion": {},
                 "get_step_days": "7",
                 "regrid_step_days": "7",
-                "preview": True,
             },
         },
     }
@@ -211,7 +209,7 @@ def test_process_preview_from_config(mock_read, mock_resolve, mock_run, tmp_path
     mock_read.return_value = {"inputdir": str(inputdir)}
     mock_resolve.side_effect = lambda args, cfg: args
 
-    run_main(["process", "--caseroot", str(caseroot), "--ic"])
+    run_main(["process", "--caseroot", str(caseroot), "--ic", "--preview"])
 
     call_kwargs = mock_run.call_args.kwargs
     assert call_kwargs["preview"] is True

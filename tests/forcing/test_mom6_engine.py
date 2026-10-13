@@ -157,10 +157,9 @@ def test_split_bgc_tracers_resume_rejects_truncated_per_tracer_file(tmp_path):
 # ---------------------------------------------------------------------------
 
 
-def _bc_context(tmp_path, preview=False):
+def _bc_context(tmp_path):
     """The attributes ConditionsConfigurator.process_bc reads off the context."""
     return SimpleNamespace(
-        preview=preview,
         supergrid_path=tmp_path / "supergrid.nc",
         topo_path=tmp_path / "topog.nc",
         raw_data_dir=tmp_path / "raw",
@@ -169,12 +168,11 @@ def _bc_context(tmp_path, preview=False):
     )
 
 
-@pytest.mark.parametrize("preview", [False, True])
-def test_process_bc_forwards_bathymetry_path(tmp_path, monkeypatch, preview):
+def test_process_bc_forwards_bathymetry_path(tmp_path, monkeypatch):
     """obc.process_obc_conditions derives a per-boundary download bbox from the
     topography's ocean mask, but only when handed bathymetry_path -- otherwise
     it silently falls back to the full supergrid extent and every boundary
-    downloads the whole domain. Both the preview and real calls must pass it.
+    downloads the whole domain.
     """
     cfg = _conditions("glorys")
     cfg.set_output_param(
@@ -191,7 +189,7 @@ def test_process_bc_forwards_bathymetry_path(tmp_path, monkeypatch, preview):
     )
     monkeypatch.setattr(mom6, "_split_bgc_tracers_into_files", lambda **kw: [])
 
-    ctx = _bc_context(tmp_path, preview=preview)
+    ctx = _bc_context(tmp_path)
     cfg.process_bc(ctx)
 
     assert captured["bathymetry_path"] == ctx.topo_path
@@ -588,7 +586,6 @@ def _conditions_config(start_date="20200101", obc_data='"U=file:a.nc(u)"'):
                 "boundary_number_conversion": {"north": 1},
                 "get_step_days": 7,
                 "OBC_SEGMENT_001_DATA": obc_data,
-                "preview": False,
             },
         },
     }
