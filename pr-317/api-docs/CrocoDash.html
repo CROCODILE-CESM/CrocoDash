@@ -410,11 +410,6 @@ document.write(`
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.ForkBundle.fork"><code class="docutils literal notranslate"><span class="pre">ForkBundle.fork()</span></code></a></li>
 </ul>
 </li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.ReadCrocoDashCase"><code class="docutils literal notranslate"><span class="pre">ReadCrocoDashCase</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.ReadCrocoDashCase.configurators"><code class="docutils literal notranslate"><span class="pre">ReadCrocoDashCase.configurators()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.ReadCrocoDashCase.workflow_context"><code class="docutils literal notranslate"><span class="pre">ReadCrocoDashCase.workflow_context()</span></code></a></li>
-</ul>
-</li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.apply_xmlchanges_to_case"><code class="docutils literal notranslate"><span class="pre">apply_xmlchanges_to_case()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.ask_string"><code class="docutils literal notranslate"><span class="pre">ask_string()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.ask_yes_no"><code class="docutils literal notranslate"><span class="pre">ask_yes_no()</span></code></a></li>
@@ -539,6 +534,11 @@ document.write(`
 </li>
 <li class="toctree-l3"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.base.Param"><code class="docutils literal notranslate"><span class="pre">Param</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.base.Param.set_item"><code class="docutils literal notranslate"><span class="pre">Param.set_item()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.base.ReadCrocoDashCase"><code class="docutils literal notranslate"><span class="pre">ReadCrocoDashCase</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.base.ReadCrocoDashCase.configurators"><code class="docutils literal notranslate"><span class="pre">ReadCrocoDashCase.configurators()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.base.ReadCrocoDashCase.workflow_context"><code class="docutils literal notranslate"><span class="pre">ReadCrocoDashCase.workflow_context()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.base.UndeclaredParamError"><code class="docutils literal notranslate"><span class="pre">UndeclaredParamError</span></code></a></li>
@@ -1235,7 +1235,7 @@ duplicate_case() is a convenience for copying a case within the same user contex
 <dl class="py class">
 <dt class="sig sig-object py" id="CrocoDash.shareable.CaseBundle">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.shareable.</span></span><span class="sig-name descname"><span class="pre">CaseBundle</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">caseroot</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.shareable.CaseBundle" title="Link to this definition">#</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#CrocoDash.shareable.ReadCrocoDashCase" title="CrocoDash.shareable.ReadCrocoDashCase"><code class="xref py py-class docutils literal notranslate"><span class="pre">ReadCrocoDashCase</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.base.ReadCrocoDashCase" title="CrocoDash.forcing.base.ReadCrocoDashCase"><code class="xref py py-class docutils literal notranslate"><span class="pre">ReadCrocoDashCase</span></code></a></p>
 <p>Sender-side entry point for sharing a CrocoDash case.</p>
 <p>Reads a live case and identifies everything that makes it non-standard beyond
 what recipe.py would produce by default: extra XML files, user_nl tweaks,
@@ -1335,28 +1335,6 @@ When omitted the recipient is asked interactively for each category.</p></li>
 </ul>
 </dd>
 </dl>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="CrocoDash.shareable.ReadCrocoDashCase">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.shareable.</span></span><span class="sig-name descname"><span class="pre">ReadCrocoDashCase</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">caseroot</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.shareable.ReadCrocoDashCase" title="Link to this definition">#</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>A CrocoDash case read back from disk: its state file and forcing
-configuration, without CIME. The forcing driver reads a case through
-this, and CaseBundle builds on it.</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="CrocoDash.shareable.ReadCrocoDashCase.configurators">
-<span class="sig-name descname"><span class="pre">configurators</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.shareable.ReadCrocoDashCase.configurators" title="Link to this definition">#</a></dt>
-<dd><p>{config.json key: configurator} for every forcing the case set up.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="CrocoDash.shareable.ReadCrocoDashCase.workflow_context">
-<span class="sig-name descname"><span class="pre">workflow_context</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.shareable.ReadCrocoDashCase.workflow_context" title="Link to this definition">#</a></dt>
-<dd><p>The WorkflowContext every process step gets, for this case and
-config (by default the case’s own config.json).</p>
 </dd></dl>
 
 </dd></dl>
@@ -1530,11 +1508,6 @@ a portable bundle as a side effect.</p>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.ForkBundle"><code class="docutils literal notranslate"><span class="pre">ForkBundle</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.ForkBundle.apply_copy_plan"><code class="docutils literal notranslate"><span class="pre">ForkBundle.apply_copy_plan()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.ForkBundle.fork"><code class="docutils literal notranslate"><span class="pre">ForkBundle.fork()</span></code></a></li>
-</ul>
-</li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.ReadCrocoDashCase"><code class="docutils literal notranslate"><span class="pre">ReadCrocoDashCase</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.ReadCrocoDashCase.configurators"><code class="docutils literal notranslate"><span class="pre">ReadCrocoDashCase.configurators()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.ReadCrocoDashCase.workflow_context"><code class="docutils literal notranslate"><span class="pre">ReadCrocoDashCase.workflow_context()</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.shareable.apply_xmlchanges_to_case"><code class="docutils literal notranslate"><span class="pre">apply_xmlchanges_to_case()</span></code></a></li>

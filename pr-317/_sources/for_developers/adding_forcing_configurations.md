@@ -314,6 +314,7 @@ The registry uses these to:
 Here's a complete example of adding a simple configurator:
 
 ```python
+import shutil
 from pathlib import Path
 from CrocoDash.forcing.base import (
     BaseConfigurator,
@@ -410,8 +411,6 @@ class IceForcing(BaseConfigurator):
 
     def process(self, ctx):
         """Copy the ice data into the case (runs under `crocodash process`)."""
-        import shutil
-
         dest = ctx.inputdir / "ice" / Path(self.ice_data_file).name
         dest.parent.mkdir(exist_ok=True)
         shutil.copy(self.ice_data_file, dest)
