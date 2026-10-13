@@ -2,6 +2,7 @@ import json
 
 from CrocoDash import case_state
 from CrocoDash.forcing.base import ReadCrocoDashCase
+from CrocoDash.shareable import _copy_output_files
 
 
 def _make_case(tmp_path, forcing_config=None):
@@ -47,3 +48,28 @@ def test_read_case_builds_the_workflow_context(tmp_path):
 def test_read_case_before_configure_forcings(tmp_path):
     caseroot, _ = _make_case(tmp_path)
     assert ReadCrocoDashCase(caseroot).forcing_config == {}
+
+
+class _Declares:
+    """A configurator stand-in that declares an ocn/ file and a glob in ice/."""
+
+    def output_files(self, ctx):
+        return {"x": [ctx.output_path / "a.nc", ctx.inputdir / "ice" / "*.nc"]}
+
+
+def test_copy_output_files_restores_every_declared_file(tmp_path):
+    """Fork and duplicate restore declared files outside ocn/ too (ice/ and
+    mapping/ used to be dropped), at the same path under the new inputdir."""
+    source = tmp_path / "bundle"
+    for rel in ("ocn/a.nc", "ice/f1.nc", "ice/f2.nc", "ice/notes.txt"):
+        (source / rel).parent.mkdir(parents=True, exist_ok=True)
+        (source / rel).write_text(rel)
+    caseroot, inputdir = _make_case(tmp_path, {"caseroot": "x"})
+    case = ReadCrocoDashCase(caseroot)
+    case.configurators = lambda: {"x": _Declares()}
+
+    _copy_output_files(source, case)
+
+    copied = sorted(p.relative_to(inputdir).as_posix() for p in inputdir.rglob("*.nc"))
+    assert copied == ["ice/f1.nc", "ice/f2.nc", "ocn/a.nc"]
+    assert not (inputdir / "ice" / "notes.txt").exists()

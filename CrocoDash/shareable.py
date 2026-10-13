@@ -356,6 +356,26 @@ class CaseBundle(ReadCrocoDashCase):
         )
 
 
+def _copy_output_files(source_inputdir, case):
+    """Copy every forcing file case declares in output_files() from
+    source_inputdir (another case's inputdir, or a bundle, which keeps the same
+    layout) into case's inputdir, at the same relative path."""
+    ctx = case.workflow_context()
+    declared = [
+        Path(path)
+        for configurator in case.configurators().values()
+        for paths in configurator.output_files(ctx).values()
+        for path in paths
+    ]
+    for path in declared:
+        rel = path.relative_to(ctx.inputdir)
+        for src in sorted((Path(source_inputdir) / rel.parent).glob(rel.name)):
+            dst = ctx.inputdir / rel.parent / src.name
+            if src.is_file() and not dst.exists():
+                dst.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy(src, dst)
+
+
 def duplicate_case(caseroot, new_caseroot, new_inputdir, bundle_dir=None):
     """
     Copy a CrocoDash case to a new location within the same user context.
@@ -379,8 +399,7 @@ def duplicate_case(caseroot, new_caseroot, new_inputdir, bundle_dir=None):
 
     # Grid files are split across ocn/, ice/ and wav/ (visualCaseGen expects
     # them there); carry over whichever of those the source case wrote.
-    old_ocn = Path(rcc.init_args["inputdir_ocn"])
-    for old_dir in (old_ocn, *(old_ocn.parent / d for d in ("ice", "wav"))):
+    for old_dir in (rcc.ocn_dir, *(rcc.inputdir / d for d in ("ice", "wav"))):
         if not old_dir.exists():
             continue
         new_dir = Path(new_inputdir) / old_dir.name
@@ -389,6 +408,8 @@ def duplicate_case(caseroot, new_caseroot, new_inputdir, bundle_dir=None):
             dst = new_dir / src.name
             if not dst.exists():
                 shutil.copy(src, dst)
+    # Then every generated forcing file, wherever it lives (mapping/ too).
+    _copy_output_files(rcc.inputdir, ReadCrocoDashCase(result.caseroot))
 
     if rcc.non_standard_case_info.xml_files_missing_in_new:
         copy_xml_files_from_case(
@@ -528,17 +549,14 @@ class ForkBundle:
         logger.info("Creating new case from YAML...")
         self.case = create_case_from_yaml(config, override=True, configure_only=True)
 
-        logger.info("Copying forcing files from bundle...")
-        bundle_wav = self.bundle_location / "wav"
-        if bundle_wav.is_dir():
-            shutil.copytree(
-                bundle_wav, Path(self.case.inputdir) / "wav", dirs_exist_ok=True
-            )
-        bundle_ocn = self.bundle_location / "ocn"
-        for src in bundle_ocn.iterdir():
-            dst = Path(self.case.inputdir) / "ocn" / src.name
+        logger.info("Copying grid and forcing files from bundle...")
+        new_case = ReadCrocoDashCase(self.case.caseroot)
+        for src in (self.bundle_location / "ocn").iterdir():
+            dst = new_case.ocn_dir / src.name
             if not dst.exists():
                 shutil.copy(src, dst)
+        # The bundle keeps the inputdir layout (ocn/, ice/, wav/, mapping/).
+        _copy_output_files(self.bundle_location, new_case)
 
         logger.info("Applying non-standard CESM state per plan...")
         self.apply_copy_plan()
