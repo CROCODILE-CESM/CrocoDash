@@ -1,9 +1,167 @@
 from CrocoDash.forcing.base import *
+from CrocoDash.forcing.mom6 import ConditionsConfigurator
+from CrocoDash.forcing.tides import TidesConfigurator
 from ProConPy.config_var import cvars
 from CrocoDash.raw_data_access.base import NOLEAP
 import pytest
+from fnmatch import fnmatchcase
+import re
 from types import SimpleNamespace
 import pandas as pd
+
+# ---------------------------------------------------------------------------
+# Declared output files vs. the files the case settings point at
+# ---------------------------------------------------------------------------
+#
+# The model only reads a file some user_nl or xml value names, so every file a
+# configurator declares in output_files() must be named by one, and every file
+# in the inputdir that one names must be declared.
+
+# A NetCDF file name inside a namelist or xml value, e.g. the
+# "forcing_obc_segment_001.nc" in 'U=file:forcing_obc_segment_001.nc(u)'.
+_NC_FILE_REF = re.compile(r"[^\s\"',:=()]+\.nc\b")
+
+
+def _ctx(inputdir):
+    """The parts of a WorkflowContext output_files() reads."""
+    return SimpleNamespace(inputdir=inputdir, output_path=inputdir / "ocn")
+
+
+def case_file_references(configurators, ctx):
+    """(files, dirs) in ctx.inputdir that the configurators' user_nl and xml
+    values point at. A bare name is relative to MOM6's INPUTDIR,
+    ctx.output_path. A dir is a value that is an absolute path to anything but
+    a NetCDF file (WW3_GRID_INP_DIR). Files outside the inputdir (inputdata)
+    or under extract_forcings/ aren't the case's own."""
+    files, dirs = set(), set()
+    for configurator in configurators:
+        for param in configurator.output_params:
+            if param.value is None or not isinstance(
+                param, (UserNLConfigParam, XMLConfigParam)
+            ):
+                continue
+            value = str(param.value).strip().strip("\"'")
+            # Joining an absolute path onto output_path leaves it as it is.
+            files.update(ctx.output_path / ref for ref in _NC_FILE_REF.findall(value))
+            if Path(value).is_absolute() and not value.endswith(".nc"):
+                dirs.add(Path(value))
+
+    def owned(path):
+        return path.is_relative_to(ctx.inputdir) and not path.is_relative_to(
+            ctx.inputdir / "extract_forcings"
+        )
+
+    return {f for f in files if owned(f)}, {d for d in dirs if owned(d)}
+
+
+def declared_files(configurators, ctx):
+    return {
+        Path(path): configurator.name
+        for configurator in configurators
+        for paths in configurator.output_files(ctx).values()
+        for path in paths
+    }
+
+
+def undeclared_references(configurators, ctx):
+    """Files a case setting points at that no configurator declares."""
+    declared = declared_files(configurators, ctx)
+    files, _ = case_file_references(configurators, ctx)
+    return sorted(
+        f for f in files if not any(fnmatchcase(str(f), str(d)) for d in declared)
+    )
+
+
+def unreferenced_declarations(configurators, ctx):
+    """{path: configurator name} for every declared file no case setting
+    points at, by name or through its directory."""
+    files, dirs = case_file_references(configurators, ctx)
+    return {
+        path: name
+        for path, name in declared_files(configurators, ctx).items()
+        if not (
+            any(fnmatchcase(str(f), str(path)) for f in files)
+            or any(path.is_relative_to(d) for d in dirs)
+        )
+    }
+
+
+class _Settings(BaseConfigurator):
+    """Not @register'd. Carries whatever case settings and declared files
+    (relative to the inputdir) a test gives it."""
+
+    name = "settings"
+    process_components = {"files": "process"}
+    input_params = []
+    output_params = []
+
+    def __init__(self, settings=(), declared=()):
+        super().__init__()
+        self.output_params = []
+        for name, value, kind in settings:
+            param = UserNLConfigParam(name) if kind == "nl" else XMLConfigParam(name)
+            param.set_item(value)
+            self.output_params.append(param)
+        self._declared = list(declared)
+
+    def configure(self):
+        pass
+
+    def output_files(self, ctx):
+        return {"files": [ctx.inputdir / path for path in self._declared]}
+
+
+def test_case_file_references_resolves_names(tmp_path):
+    configurator = _Settings(
+        settings=[
+            # A bare name is relative to MOM6's INPUTDIR, inputdir/ocn.
+            ("CHL_FILE", '"chl.nc"', "nl"),
+            # Several names inside one OBC string.
+            ("OBC_DATA", '"U=file:seg_001.nc(u),SSH=file:tz_001.nc(z)"', "nl"),
+            # Absolute paths under inputdir, quoted or not.
+            ("ice_ic", f"'{tmp_path / 'ice' / 'f.nc'}'", "nl"),
+            ("MAP", str(tmp_path / "mapping" / "m.nc"), "xml"),
+            # A directory.
+            ("WAV_DIR", str(tmp_path / "wav"), "xml"),
+            # Outside inputdir, or scratch under it: not the case's files.
+            ("STREAM", "/inputdata/jra.nc", "nl"),
+            ("RAW", str(tmp_path / "extract_forcings" / "raw.nc"), "xml"),
+        ]
+    )
+    files, dirs = case_file_references([configurator], _ctx(tmp_path))
+    assert files == {
+        tmp_path / "ocn" / "chl.nc",
+        tmp_path / "ocn" / "seg_001.nc",
+        tmp_path / "ocn" / "tz_001.nc",
+        tmp_path / "ice" / "f.nc",
+        tmp_path / "mapping" / "m.nc",
+    }
+    assert dirs == {tmp_path / "wav"}
+
+
+def test_reference_check_agrees_when_settings_and_declarations_match(tmp_path):
+    configurator = _Settings(
+        settings=[
+            ("CHL_FILE", "chl.nc", "nl"),
+            ("WAV_DIR", str(tmp_path / "wav"), "xml"),
+        ],
+        # A glob under a referenced directory counts as referenced.
+        declared=["ocn/chl.nc", "wav/ww3.point*_spec.nc"],
+    )
+    assert undeclared_references([configurator], _ctx(tmp_path)) == []
+    assert unreferenced_declarations([configurator], _ctx(tmp_path)) == {}
+
+
+def test_reference_check_reports_both_directions(tmp_path):
+    configurator = _Settings(
+        settings=[("CHL_FILE", "chl.nc", "nl")], declared=["ocn/other.nc"]
+    )
+    assert undeclared_references([configurator], _ctx(tmp_path)) == [
+        tmp_path / "ocn" / "chl.nc"
+    ]
+    assert unreferenced_declarations([configurator], _ctx(tmp_path)) == {
+        tmp_path / "ocn" / "other.nc": "settings"
+    }
 
 
 @pytest.fixture
@@ -111,13 +269,13 @@ def test_all_configurators_smoke(fake_param_case, fake_cime, fake_forcing_produc
         assert instance == deser_instance
 
         # Every process step declares its output files, computably from
-        # config.json alone, all inside the inputdir. (Not the dummy
-        # configurators other test modules register.)
+        # config.json alone, all inside the inputdir, and every file this
+        # configurator's own case settings point at is one of them. (The other
+        # direction needs the whole registry: conditions' OBC strings name
+        # tides' files.) Not the dummy configurators other test modules register.
         if not config_class.__module__.startswith("CrocoDash."):
             continue
-        ctx = SimpleNamespace(
-            inputdir=fake_param_case, output_path=fake_param_case / "ocn"
-        )
+        ctx = _ctx(fake_param_case)
         declared = instance.output_files(ctx)
         assert set(declared) == set(config_class.process_components), config_class
         assert deser_instance.output_files(ctx) == declared, config_class
@@ -125,6 +283,40 @@ def test_all_configurators_smoke(fake_param_case, fake_cime, fake_forcing_produc
         assert len(paths) == len(set(paths)), config_class
         for path in paths:
             assert Path(path).is_relative_to(fake_param_case), path
+        assert undeclared_references([instance], ctx) == [], config_class
+
+
+def test_conditions_and_tides_files_match_the_obc_strings(fake_param_case):
+    """The conditions OBC strings name its own segment files and tides' tu_/tz_
+    files, so the two directions of the reference check only agree across
+    both configurators."""
+    boundaries = ["south", "north", "east"]
+    conditions = ConditionsConfigurator(
+        boundaries=boundaries,
+        product_name="GLORYS",
+        function_name="get_glorys_data_from_rda",
+        compset="MOM6",
+        date_range=pd.to_datetime(["2000-01-01", "2000-01-02"]),
+    )
+    conditions.registry = SimpleNamespace(is_active=lambda name: name == "tides")
+    conditions.configure()
+    tides = TidesConfigurator(
+        tpxo_elevation_filepath="h.nc",
+        tpxo_velocity_filepath="u.nc",
+        tidal_constituents=["M2"],
+        boundaries=boundaries,
+        start_date="2000, 01, 01",
+    )
+    tides.configure()
+
+    ctx = _ctx(fake_param_case)
+    both = [conditions, tides]
+    assert unreferenced_declarations(both, ctx) == {}
+    assert undeclared_references(both, ctx) == []
+    # On its own, nothing points at the tides files.
+    assert set(unreferenced_declarations([tides], ctx)) == set(
+        tides.output_files(ctx)["tides"]
+    )
 
 
 """
