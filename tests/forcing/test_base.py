@@ -247,3 +247,52 @@ def test_user_nl_block_per_file(tmp_path, monkeypatch, capsys):
     out = capsys.readouterr().out
     assert out.count("Adding parameter changes to user_nl_cice") == 1
     assert out.count("Adding parameter changes to user_nl_mom") == 1
+
+
+# ---------------------------------------------------------------------------
+# Declared output files
+# ---------------------------------------------------------------------------
+
+
+class DummyFiles(BaseConfigurator):
+    """Not @register'd, for the same reason as DummyXML."""
+
+    name = "dummyfiles"
+    process_components = {"files": "process"}
+    input_params = []
+    output_params = []
+
+    def __init__(self):
+        super().__init__()
+
+    def configure(self):
+        pass
+
+    def output_files(self, ctx):
+        return {"files": [ctx.output_path / "a.nc", ctx.inputdir / "wav" / "*.spec"]}
+
+
+def test_output_files_lookup(tmp_path):
+    ctx = SimpleNamespace(inputdir=tmp_path, output_path=tmp_path / "ocn")
+    configurator = DummyFiles()
+    assert configurator.missing_output_files(ctx) == [
+        tmp_path / "ocn" / "a.nc",
+        tmp_path / "wav" / "*.spec",
+    ]
+    assert configurator.get_output_filepaths(ctx) == []
+    assert not configurator.validate_output_filepaths(ctx)
+
+    (tmp_path / "ocn").mkdir()
+    (tmp_path / "ocn" / "a.nc").touch()
+    (tmp_path / "wav").mkdir()
+    (tmp_path / "wav" / "p1.spec").touch()
+    (tmp_path / "wav" / "p2.spec").touch()
+
+    assert configurator.missing_output_files(ctx) == []
+    # A glob matches every file it covers.
+    assert configurator.get_output_filepaths(ctx) == [
+        tmp_path / "ocn" / "a.nc",
+        tmp_path / "wav" / "p1.spec",
+        tmp_path / "wav" / "p2.spec",
+    ]
+    assert configurator.validate_output_filepaths(ctx)
