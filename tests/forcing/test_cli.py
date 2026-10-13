@@ -178,7 +178,7 @@ def test_process_no_config_in_cwd_raises_helpful_error(tmp_path, monkeypatch, ca
 @patch("CrocoDash.forcing.driver.run_workflow")
 @patch("CrocoDash.forcing.driver.resolve_components")
 @patch("CrocoDash.case_state.read")
-def test_process_preview_flag(mock_read, mock_resolve, mock_run, tmp_path):
+def test_process_preview_and_force_flags(mock_read, mock_resolve, mock_run, tmp_path):
     caseroot = tmp_path / "mycase"
     caseroot.mkdir()
     inputdir = tmp_path / "input"
@@ -209,7 +209,8 @@ def test_process_preview_flag(mock_read, mock_resolve, mock_run, tmp_path):
     mock_read.return_value = {"inputdir": str(inputdir)}
     mock_resolve.side_effect = lambda args, cfg: args
 
-    run_main(["process", "--caseroot", str(caseroot), "--ic", "--preview"])
+    run_main(["process", "--caseroot", str(caseroot), "--ic", "--preview", "--force"])
 
     call_kwargs = mock_run.call_args.kwargs
     assert call_kwargs["preview"] is True
+    assert call_kwargs["force"] is True

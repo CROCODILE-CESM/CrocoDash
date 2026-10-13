@@ -278,6 +278,13 @@ file in the input directory that such a value points at must be declared by some
 configurator. The configurator smoke test in `tests/forcing/test_configurators.py`
 checks this.
 
+`process_forcings` records a step as done once all its files exist, and skips
+it on later runs while its `process_fingerprint()` is unchanged. By default
+that is your `config.json` entry plus those named in `depends_on_outputs`. If
+your step reads anything else from `ctx.config` (CICE and WW3 read the
+conditions dates), override `process_fingerprint()`, or a change there won't
+rerun your step.
+
 Also add your flag to `_BUILDERS` in `tests/forcing/test_output_files.py`. A
 fast test fails until you do; the slow test (`--runslow`) runs your step and
 checks it wrote every file it declares.

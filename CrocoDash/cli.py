@@ -70,6 +70,7 @@ def _process(args):
         config_path=config_path,
         **{name: getattr(args, name) for name in flag_names},
         preview=args.preview,
+        force=args.force,
     )
 
 
@@ -238,7 +239,13 @@ def main():
     ef_top.add_argument(
         "--preview",
         action="store_true",
-        help="Show each component's files, present or missing, without running anything",
+        help="Show what would run or be skipped, and each component's files, "
+        "without running anything",
+    )
+    ef_top.add_argument(
+        "--force",
+        action="store_true",
+        help="Rerun components even when they are already done",
     )
     ef_parser.set_defaults(func=_process, subparser=ef_parser)
 

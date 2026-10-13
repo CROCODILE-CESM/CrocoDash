@@ -817,3 +817,14 @@ class BaseConfigurator(ABC):
     def validate_output_filepaths(self, ctx) -> bool:
         """True once every declared output file exists."""
         return not self.missing_output_files(ctx)
+
+    @classmethod
+    def process_fingerprint(cls, config: dict):
+        """What a finished process step is recorded against in
+        extract_forcings/process_record.json: driver.py skips the step while
+        this is unchanged and its files are present. By default, this
+        configurator's own config.json entry and those of the configurators it
+        depends_on_outputs. Override it if a process step reads anything else
+        from config.json."""
+        names = [cls.name, *cls.depends_on_outputs]
+        return {name.lower(): config.get(name.lower()) for name in names}
