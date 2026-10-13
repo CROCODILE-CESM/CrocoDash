@@ -645,6 +645,9 @@ declared file must be one that some <code class="docutils literal notranslate"><
 file in the input directory that such a value points at must be declared by some
 configurator. The configurator smoke test in <code class="docutils literal notranslate"><span class="pre">tests/forcing/test_configurators.py</span></code>
 checks this.</p>
+<p>Also add your flag to <code class="docutils literal notranslate"><span class="pre">_BUILDERS</span></code> in <code class="docutils literal notranslate"><span class="pre">tests/forcing/test_output_files.py</span></code>. A
+fast test fails until you do; the slow test (<code class="docutils literal notranslate"><span class="pre">--runslow</span></code>) runs your step and
+checks it wrote every file it declares.</p>
 </section>
 </section>
 <section id="step-6-add-compset-compatibility-logic-optional">

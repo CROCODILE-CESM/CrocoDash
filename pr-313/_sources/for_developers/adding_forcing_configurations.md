@@ -278,6 +278,10 @@ file in the input directory that such a value points at must be declared by some
 configurator. The configurator smoke test in `tests/forcing/test_configurators.py`
 checks this.
 
+Also add your flag to `_BUILDERS` in `tests/forcing/test_output_files.py`. A
+fast test fails until you do; the slow test (`--runslow`) runs your step and
+checks it wrote every file it declares.
+
 ## Step 6: Add Compset Compatibility Logic (Optional)
 
 Define when your configurator is required or allowed:
