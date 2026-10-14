@@ -1,10 +1,25 @@
 {
   "type": "FeatureCollection",
+  "queryearth": "0.4",
+  "groups": {
+    "GRID": "Grid and numerics",
+    "POLAR": "High latitudes",
+    "OBC": "Open boundaries",
+    "ITF": "Coral Triangle and the Indonesian Throughflow",
+    "BENGUELA": "Benguela upwelling",
+    "MED": "Mediterranean"
+  },
   "dimensions": [
     {
       "name": "resolution",
       "kind": "axis",
       "unit": "km"
+    },
+    {
+      "name": "cell_size_ratio",
+      "kind": "axis",
+      "unit": "max/min",
+      "description": "the largest cell size over the smallest"
     },
     {
       "name": "product",
@@ -26,11 +41,11 @@
   "features": [
     {
       "type": "Feature",
-      "id": "CROC001",
+      "id": "GRID001",
       "geometry": null,
       "time": null,
       "properties": {
-        "code": "CROC001",
+        "code": "GRID001",
         "title": "Turn off GM parametrization at high resolution",
         "message": "Below 8 km, eddies are partly resolved, so GM thickness diffusion is usually turned off.",
         "changes": [
@@ -50,7 +65,39 @@
     },
     {
       "type": "Feature",
-      "id": "CROC010",
+      "id": "GRID002",
+      "geometry": null,
+      "time": null,
+      "properties": {
+        "code": "GRID002",
+        "title": "The time step is set by the smallest cells",
+        "message": "Cell sizes in this grid differ by a factor of 2 or more, and the time step must suit the smallest cells everywhere. A grid with more even cells can run with a longer step: an area-conserving projection, or at high latitudes a polar one.",
+        "level": "info",
+        "instruction": "Build the grid with mom6_forge's Grid.from_projection, using an equal-area projection, EPSG:3995 in the Arctic or EPSG:3031 in the Antarctic.",
+        "references": [
+          {
+            "title": "Expert interview 1: Coral Triangle & Benguela Upwelling",
+            "url": "https://aidanjanney.github.io/RegionalOceanModelingInterviews/transcripts/Edited_Transcript_1.json"
+          }
+        ],
+        "evidence": [
+          {
+            "quote": "You’ll have to set your time step based on the smallest grid cells in your domain"
+          },
+          {
+            "quote": "And if you’re working at higher latitudes, a polar projection would probably make more sense."
+          }
+        ],
+        "dimensions": {
+          "cell_size_ratio": {
+            "ge": 2
+          }
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "POLAR001",
       "geometry": {
         "type": "MultiPolygon",
         "coordinates": [
@@ -122,7 +169,7 @@
       },
       "time": null,
       "properties": {
-        "code": "CROC010",
+        "code": "POLAR001",
         "title": "Consider active sea ice (CICE)",
         "message": "Part of this domain is poleward of 60 degrees, where sea ice forms in winter.",
         "level": "warning",
@@ -143,99 +190,7 @@
     },
     {
       "type": "Feature",
-      "id": "CROC011",
-      "geometry": {
-        "type": "MultiPolygon",
-        "coordinates": [
-          [
-            [
-              [
-                -180.0,
-                60.0
-              ],
-              [
-                0.0,
-                60.0
-              ],
-              [
-                180.0,
-                60.0
-              ],
-              [
-                180.0,
-                90.0
-              ],
-              [
-                0.0,
-                90.0
-              ],
-              [
-                -180.0,
-                90.0
-              ],
-              [
-                -180.0,
-                60.0
-              ]
-            ]
-          ],
-          [
-            [
-              [
-                -180.0,
-                -90.0
-              ],
-              [
-                0.0,
-                -90.0
-              ],
-              [
-                180.0,
-                -90.0
-              ],
-              [
-                180.0,
-                -60.0
-              ],
-              [
-                0.0,
-                -60.0
-              ],
-              [
-                -180.0,
-                -60.0
-              ],
-              [
-                -180.0,
-                -90.0
-              ]
-            ]
-          ]
-        ]
-      },
-      "time": null,
-      "properties": {
-        "code": "CROC011",
-        "title": "Use a polar projection for a high-latitude grid",
-        "message": "Latitude-longitude cells shrink toward the pole, and the time step must suit the smallest cells. A polar stereographic grid keeps cells more even.",
-        "level": "info",
-        "instruction": "Build the grid with mom6_forge's Grid.from_projection, using EPSG:3995 in the Arctic or EPSG:3031 in the Antarctic.",
-        "references": [
-          {
-            "title": "Expert interview 1: Coral Triangle & Benguela Upwelling",
-            "url": "https://aidanjanney.github.io/RegionalOceanModelingInterviews/transcripts/Edited_Transcript_1.json"
-          }
-        ],
-        "evidence": [
-          {
-            "quote": "if you’re working at higher latitudes, a polar projection would probably make more sense."
-          }
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "id": "CROC012",
+      "id": "POLAR002",
       "geometry": {
         "type": "Polygon",
         "coordinates": [
@@ -273,7 +228,7 @@
       },
       "time": null,
       "properties": {
-        "code": "CROC012",
+        "code": "POLAR002",
         "title": "Finer resolution pays off in the Arctic",
         "message": "Global models struggle at high latitudes, where resolution is coarse and data sparse. A regional domain at about 1/10 of a degree can improve the simulation markedly.",
         "level": "info",
@@ -297,7 +252,7 @@
     },
     {
       "type": "Feature",
-      "id": "CROC013",
+      "id": "POLAR003",
       "geometry": {
         "type": "Polygon",
         "coordinates": [
@@ -335,7 +290,7 @@
       },
       "time": null,
       "properties": {
-        "code": "CROC013",
+        "code": "POLAR003",
         "title": "For Antarctic overflows, topography is the main gain",
         "message": "Higher resolution brings better dynamics and better topography. For dense-water overflows the topography matters most, because it sets their pathways; for SST or heat transport the dynamics matter more.",
         "level": "info",
@@ -354,7 +309,584 @@
     },
     {
       "type": "Feature",
-      "id": "CROC101",
+      "id": "OBC001",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -81.0,
+              24.0
+            ],
+            [
+              -79.0,
+              24.0
+            ],
+            [
+              -78.5,
+              28.0
+            ],
+            [
+              -76.5,
+              31.0
+            ],
+            [
+              -74.0,
+              34.0
+            ],
+            [
+              -70.0,
+              36.5
+            ],
+            [
+              -60.0,
+              38.5
+            ],
+            [
+              -45.0,
+              40.5
+            ],
+            [
+              -45.0,
+              43.5
+            ],
+            [
+              -60.0,
+              41.5
+            ],
+            [
+              -70.0,
+              39.5
+            ],
+            [
+              -74.5,
+              36.5
+            ],
+            [
+              -77.0,
+              34.0
+            ],
+            [
+              -79.5,
+              31.0
+            ],
+            [
+              -80.5,
+              27.5
+            ],
+            [
+              -81.0,
+              24.0
+            ]
+          ]
+        ]
+      },
+      "time": null,
+      "properties": {
+        "code": "OBC001",
+        "title": "The domain's edge crosses the Gulf Stream",
+        "message": "Open boundaries work best where strong currents cross them at right angles; where the Gulf Stream enters at a steep angle it reflects and causes artifacts.",
+        "instruction": "Move the edge, or rotate the grid (mom6_forge's Grid.from_center with angle_deg) so the current crosses it squarely.",
+        "references": [
+          {
+            "title": "Expert interview 1: Coral Triangle & Benguela Upwelling",
+            "url": "https://aidanjanney.github.io/RegionalOceanModelingInterviews/transcripts/Edited_Transcript_1.json"
+          }
+        ],
+        "evidence": [
+          {
+            "quote": "Open boundary conditions are more stable when energetic currents cross them perpendicularly."
+          },
+          {
+            "quote": "Rotating your domain so that the main current crosses the boundary perpendicularly helps a lot."
+          }
+        ],
+        "edge": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "OBC002",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              121.0,
+              21.5
+            ],
+            [
+              123.5,
+              21.5
+            ],
+            [
+              128.0,
+              27.0
+            ],
+            [
+              132.0,
+              30.0
+            ],
+            [
+              136.0,
+              32.0
+            ],
+            [
+              141.0,
+              33.5
+            ],
+            [
+              155.0,
+              34.0
+            ],
+            [
+              155.0,
+              37.5
+            ],
+            [
+              141.0,
+              37.0
+            ],
+            [
+              138.0,
+              34.5
+            ],
+            [
+              134.0,
+              33.5
+            ],
+            [
+              130.0,
+              32.0
+            ],
+            [
+              126.0,
+              28.5
+            ],
+            [
+              121.5,
+              25.0
+            ],
+            [
+              121.0,
+              21.5
+            ]
+          ]
+        ]
+      },
+      "time": null,
+      "properties": {
+        "code": "OBC002",
+        "title": "The domain's edge crosses the Kuroshio",
+        "message": "Open boundaries work best where strong currents cross them at right angles; where the Kuroshio enters at a steep angle it reflects and causes artifacts.",
+        "instruction": "Move the edge, or rotate the grid (mom6_forge's Grid.from_center with angle_deg) so the current crosses it squarely.",
+        "references": [
+          {
+            "title": "Expert interview 1: Coral Triangle & Benguela Upwelling",
+            "url": "https://aidanjanney.github.io/RegionalOceanModelingInterviews/transcripts/Edited_Transcript_1.json"
+          }
+        ],
+        "evidence": [
+          {
+            "quote": "Open boundary conditions are more stable when energetic currents cross them perpendicularly."
+          },
+          {
+            "quote": "Rotating your domain so that the main current crosses the boundary perpendicularly helps a lot."
+          }
+        ],
+        "edge": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "OBC003",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              20.0,
+              -36.0
+            ],
+            [
+              21.0,
+              -37.5
+            ],
+            [
+              26.0,
+              -36.5
+            ],
+            [
+              31.0,
+              -33.0
+            ],
+            [
+              35.0,
+              -27.0
+            ],
+            [
+              32.5,
+              -27.0
+            ],
+            [
+              30.0,
+              -31.5
+            ],
+            [
+              25.0,
+              -34.5
+            ],
+            [
+              20.0,
+              -36.0
+            ]
+          ]
+        ]
+      },
+      "time": null,
+      "properties": {
+        "code": "OBC003",
+        "title": "The domain's edge crosses the Agulhas Current",
+        "message": "Open boundaries work best where strong currents cross them at right angles; where the Agulhas Current enters at a steep angle it reflects and causes artifacts.",
+        "instruction": "Move the edge, or rotate the grid (mom6_forge's Grid.from_center with angle_deg) so the current crosses it squarely.",
+        "references": [
+          {
+            "title": "Expert interview 1: Coral Triangle & Benguela Upwelling",
+            "url": "https://aidanjanney.github.io/RegionalOceanModelingInterviews/transcripts/Edited_Transcript_1.json"
+          }
+        ],
+        "evidence": [
+          {
+            "quote": "Open boundary conditions are more stable when energetic currents cross them perpendicularly."
+          },
+          {
+            "quote": "Rotating your domain so that the main current crosses the boundary perpendicularly helps a lot."
+          }
+        ],
+        "edge": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "OBC004",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              150.5,
+              -35.0
+            ],
+            [
+              156.0,
+              -35.0
+            ],
+            [
+              156.0,
+              -24.0
+            ],
+            [
+              152.0,
+              -24.0
+            ],
+            [
+              150.5,
+              -35.0
+            ]
+          ]
+        ]
+      },
+      "time": null,
+      "properties": {
+        "code": "OBC004",
+        "title": "The domain's edge crosses the East Australian Current",
+        "message": "Open boundaries work best where strong currents cross them at right angles; where the East Australian Current enters at a steep angle it reflects and causes artifacts.",
+        "instruction": "Move the edge, or rotate the grid (mom6_forge's Grid.from_center with angle_deg) so the current crosses it squarely.",
+        "references": [
+          {
+            "title": "Expert interview 1: Coral Triangle & Benguela Upwelling",
+            "url": "https://aidanjanney.github.io/RegionalOceanModelingInterviews/transcripts/Edited_Transcript_1.json"
+          }
+        ],
+        "evidence": [
+          {
+            "quote": "Open boundary conditions are more stable when energetic currents cross them perpendicularly."
+          },
+          {
+            "quote": "Rotating your domain so that the main current crosses the boundary perpendicularly helps a lot."
+          }
+        ],
+        "edge": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "OBC005",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -55.0,
+              3.0
+            ],
+            [
+              -44.0,
+              3.0
+            ],
+            [
+              -44.0,
+              10.0
+            ],
+            [
+              -55.0,
+              10.0
+            ],
+            [
+              -55.0,
+              3.0
+            ]
+          ]
+        ]
+      },
+      "time": null,
+      "properties": {
+        "code": "OBC005",
+        "title": "The domain's edge crosses the North Brazil Retroflection",
+        "message": "Strong currents are fine at a boundary; chaotic flow, with eddies in every direction, is not. An edge across the North Brazil Retroflection invites trouble.",
+        "instruction": "Take the whole structure into the domain, or move the edge well away from it.",
+        "references": [
+          {
+            "title": "Expert interview 1: Coral Triangle & Benguela Upwelling",
+            "url": "https://aidanjanney.github.io/RegionalOceanModelingInterviews/transcripts/Edited_Transcript_1.json"
+          }
+        ],
+        "evidence": [
+          {
+            "quote": "What’s problematic is chaotic flow—eddies in every direction."
+          },
+          {
+            "quote": "If the current system includes something like a retroflection, that feature really needs to be included within the domain—placing a boundary right at a retroflection usually leads to trouble."
+          }
+        ],
+        "edge": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "OBC006",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              14.0,
+              -42.0
+            ],
+            [
+              25.0,
+              -42.0
+            ],
+            [
+              25.0,
+              -35.0
+            ],
+            [
+              14.0,
+              -35.0
+            ],
+            [
+              14.0,
+              -42.0
+            ]
+          ]
+        ]
+      },
+      "time": null,
+      "properties": {
+        "code": "OBC006",
+        "title": "The domain's edge crosses the Agulhas Retroflection",
+        "message": "Strong currents are fine at a boundary; chaotic flow, with eddies in every direction, is not. An edge across the Agulhas Retroflection invites trouble.",
+        "instruction": "Take the whole structure into the domain, or move the edge well away from it.",
+        "references": [
+          {
+            "title": "Expert interview 1: Coral Triangle & Benguela Upwelling",
+            "url": "https://aidanjanney.github.io/RegionalOceanModelingInterviews/transcripts/Edited_Transcript_1.json"
+          }
+        ],
+        "evidence": [
+          {
+            "quote": "What’s problematic is chaotic flow—eddies in every direction."
+          },
+          {
+            "quote": "If the current system includes something like a retroflection, that feature really needs to be included within the domain—placing a boundary right at a retroflection usually leads to trouble."
+          }
+        ],
+        "edge": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "OBC007",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              25.0,
+              -43.0
+            ],
+            [
+              70.0,
+              -43.0
+            ],
+            [
+              70.0,
+              -37.0
+            ],
+            [
+              25.0,
+              -37.0
+            ],
+            [
+              25.0,
+              -43.0
+            ]
+          ]
+        ]
+      },
+      "time": null,
+      "properties": {
+        "code": "OBC007",
+        "title": "The domain's edge crosses the Agulhas Return Current",
+        "message": "Strong currents are fine at a boundary; chaotic flow, with eddies in every direction, is not. An edge across the Agulhas Return Current invites trouble.",
+        "instruction": "Take the whole structure into the domain, or move the edge well away from it.",
+        "references": [
+          {
+            "title": "Expert interview 1: Coral Triangle & Benguela Upwelling",
+            "url": "https://aidanjanney.github.io/RegionalOceanModelingInterviews/transcripts/Edited_Transcript_1.json"
+          }
+        ],
+        "evidence": [
+          {
+            "quote": "What’s problematic is chaotic flow—eddies in every direction."
+          },
+          {
+            "quote": "If the current system includes something like a retroflection, that feature really needs to be included within the domain—placing a boundary right at a retroflection usually leads to trouble."
+          }
+        ],
+        "edge": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "OBC008",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -58.0,
+              -42.0
+            ],
+            [
+              -48.0,
+              -42.0
+            ],
+            [
+              -48.0,
+              -34.0
+            ],
+            [
+              -58.0,
+              -34.0
+            ],
+            [
+              -58.0,
+              -42.0
+            ]
+          ]
+        ]
+      },
+      "time": null,
+      "properties": {
+        "code": "OBC008",
+        "title": "The domain's edge crosses the Brazil–Malvinas Confluence",
+        "message": "Strong currents are fine at a boundary; chaotic flow, with eddies in every direction, is not. An edge across the Brazil–Malvinas Confluence invites trouble.",
+        "instruction": "Take the whole structure into the domain, or move the edge well away from it.",
+        "references": [
+          {
+            "title": "Expert interview 1: Coral Triangle & Benguela Upwelling",
+            "url": "https://aidanjanney.github.io/RegionalOceanModelingInterviews/transcripts/Edited_Transcript_1.json"
+          }
+        ],
+        "evidence": [
+          {
+            "quote": "What’s problematic is chaotic flow—eddies in every direction."
+          },
+          {
+            "quote": "If the current system includes something like a retroflection, that feature really needs to be included within the domain—placing a boundary right at a retroflection usually leads to trouble."
+          }
+        ],
+        "edge": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "OBC009",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              8.0,
+              -18.0
+            ],
+            [
+              14.0,
+              -18.0
+            ],
+            [
+              14.0,
+              -14.0
+            ],
+            [
+              8.0,
+              -14.0
+            ],
+            [
+              8.0,
+              -18.0
+            ]
+          ]
+        ]
+      },
+      "time": null,
+      "properties": {
+        "code": "OBC009",
+        "title": "The domain's edge crosses the Angola–Benguela Front",
+        "message": "Strong currents are fine at a boundary; chaotic flow, with eddies in every direction, is not. An edge across the Angola–Benguela Front invites trouble.",
+        "instruction": "Take the whole structure into the domain, or move the edge well away from it.",
+        "references": [
+          {
+            "title": "Expert interview 1: Coral Triangle & Benguela Upwelling",
+            "url": "https://aidanjanney.github.io/RegionalOceanModelingInterviews/transcripts/Edited_Transcript_1.json"
+          }
+        ],
+        "evidence": [
+          {
+            "quote": "What’s problematic is chaotic flow—eddies in every direction."
+          },
+          {
+            "quote": "If the current system includes something like a retroflection, that feature really needs to be included within the domain—placing a boundary right at a retroflection usually leads to trouble."
+          }
+        ],
+        "edge": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "ITF001",
       "geometry": {
         "type": "Polygon",
         "coordinates": [
@@ -400,7 +932,7 @@
       },
       "time": null,
       "properties": {
-        "code": "CROC101",
+        "code": "ITF001",
         "title": "Force tides: tidal mixing dominates here",
         "message": "This region is a maze of shallow basins and narrow straits where tidal mixing dominates, amplified by resonance in the passages. Models without tides make up for it by raising local mixing; with tides, the model mixes where it really happens.",
         "instruction": "Give configure_forcings the TPXO files and these constituents, and check tidal phase and amplitude against the region's tide gauges.",
@@ -432,7 +964,7 @@
     },
     {
       "type": "Feature",
-      "id": "CROC102",
+      "id": "ITF002",
       "geometry": {
         "type": "Polygon",
         "coordinates": [
@@ -462,7 +994,7 @@
       },
       "time": null,
       "properties": {
-        "code": "CROC102",
+        "code": "ITF002",
         "title": "Measure transport through the Indonesian Throughflow straits",
         "message": "The Throughflow branches across several passages, and observations give the transport through each. Matching them is the main test of a model here.",
         "level": "info",
@@ -482,7 +1014,7 @@
     },
     {
       "type": "Feature",
-      "id": "CROC103",
+      "id": "ITF003",
       "geometry": {
         "type": "MultiPolygon",
         "coordinates": [
@@ -586,7 +1118,7 @@
       },
       "time": null,
       "properties": {
-        "code": "CROC103",
+        "code": "ITF003",
         "title": "Expect to edit the bathymetry of the Throughflow straits",
         "message": "Realistic transport through each strait took 20 or more rounds of bathymetry edits; tuning viscosity was not enough. Interpolated, smoothed bathymetry often lowers sills or closes channels where a cell centre falls on land.",
         "instruction": "Smooth for stability first, then restore sills toward their observed depths and open channels the land mask closed. If a strait still carries too much or too little, widen or narrow it, even if that departs a little from the observed bathymetry.",
@@ -605,7 +1137,7 @@
     },
     {
       "type": "Feature",
-      "id": "CROC104",
+      "id": "ITF004",
       "geometry": {
         "type": "Polygon",
         "coordinates": [
@@ -635,7 +1167,7 @@
       },
       "time": null,
       "properties": {
-        "code": "CROC104",
+        "code": "ITF004",
         "title": "Lombok Strait spans only a few cells",
         "message": "Lombok Strait is thousands of metres deep on either side of a sill about 200 m deep. Even at 5 km it spans only a few cells, and its steep slopes cause spurious diapycnal mixing unless smoothed.",
         "instruction": "Count the cells across the strait, set its sill depth to observed estimates after smoothing, and compare its transport with observations.",
@@ -659,7 +1191,7 @@
     },
     {
       "type": "Feature",
-      "id": "CROC105",
+      "id": "ITF005",
       "geometry": {
         "type": "Polygon",
         "coordinates": [
@@ -689,7 +1221,7 @@
       },
       "time": null,
       "properties": {
-        "code": "CROC105",
+        "code": "ITF005",
         "title": "Torres Strait is too coarse to leave open",
         "message": "Torres Strait is very shallow, with near-zero mean transport. At coarse resolution one cell is too wide or too deep and lets far too much through, so many models close it.",
         "confidence": "possible",
@@ -714,7 +1246,7 @@
     },
     {
       "type": "Feature",
-      "id": "CROC106",
+      "id": "ITF006",
       "geometry": {
         "type": "Polygon",
         "coordinates": [
@@ -744,7 +1276,7 @@
       },
       "time": null,
       "properties": {
-        "code": "CROC106",
+        "code": "ITF006",
         "title": "Keep Torres Strait open",
         "message": "At this resolution the model can resolve the tidal reversals that dominate the strait's flow, while its mean transport stays near zero.",
         "level": "info",
@@ -769,7 +1301,7 @@
     },
     {
       "type": "Feature",
-      "id": "CROC107",
+      "id": "ITF007",
       "geometry": {
         "type": "Polygon",
         "coordinates": [
@@ -799,7 +1331,7 @@
       },
       "time": null,
       "properties": {
-        "code": "CROC107",
+        "code": "ITF007",
         "title": "Consider rotating the grid to follow the flow",
         "message": "A Coral Triangle configuration rotated by about 20 degrees lined its boundaries up with the main flows, and was about 30% smaller than a latitude-longitude box.",
         "level": "info",
@@ -819,7 +1351,7 @@
     },
     {
       "type": "Feature",
-      "id": "CROC108",
+      "id": "ITF008",
       "geometry": {
         "type": "Polygon",
         "coordinates": [
@@ -849,7 +1381,7 @@
       },
       "time": null,
       "properties": {
-        "code": "CROC108",
+        "code": "ITF008",
         "title": "Evaluate coral heat stress the way satellites do",
         "message": "Degree Heating Weeks come from satellite SST. Process the model's SST the same way before comparing. A high-resolution model can show local warming, as in upwelling zones, that satellite products miss.",
         "level": "info",
@@ -868,7 +1400,7 @@
     },
     {
       "type": "Feature",
-      "id": "CROC201",
+      "id": "BENGUELA001",
       "geometry": {
         "type": "Polygon",
         "coordinates": [
@@ -898,7 +1430,7 @@
       },
       "time": null,
       "properties": {
-        "code": "CROC201",
+        "code": "BENGUELA001",
         "title": "Benguela: resolution helps, but biases persist",
         "message": "Models keep a warm SST bias here even at high resolution. Local causes include coarse coastal winds that weaken the coastal jet and the upwelling; remote causes include tropical Atlantic SST biases that reach the region through the boundaries. The front between the Angola and Benguela currents, near 16°S, is tied to the bathymetry.",
         "level": "info",
@@ -919,7 +1451,7 @@
     },
     {
       "type": "Feature",
-      "id": "CROC202",
+      "id": "BENGUELA002",
       "geometry": {
         "type": "Polygon",
         "coordinates": [
@@ -949,7 +1481,7 @@
       },
       "time": null,
       "properties": {
-        "code": "CROC202",
+        "code": "BENGUELA002",
         "title": "Coarse winds weaken the Benguela upwelling",
         "message": "This atmospheric forcing is coarse next to the coastal winds that drive the upwelling. Smoothed winds weaken the coastal jet and the upwelling, which warms the SST.",
         "confidence": "possible",
@@ -975,7 +1507,7 @@
     },
     {
       "type": "Feature",
-      "id": "CROC203",
+      "id": "BENGUELA003",
       "geometry": {
         "type": "Polygon",
         "coordinates": [
@@ -1005,7 +1537,7 @@
       },
       "time": null,
       "properties": {
-        "code": "CROC203",
+        "code": "BENGUELA003",
         "title": "Where to put the edges of a Benguela domain",
         "message": "Include the Benguela upwelling and part of the Angola coast. Extend west to at least 0°E, past the Cape of Good Hope, to take in the Agulhas retroflection. Stop short of the tropical Atlantic, where the flow turns zonal and would cross the northern boundary at a steep angle; the expert suggested a northern edge around 7°S.",
         "level": "info",
@@ -1024,7 +1556,7 @@
     },
     {
       "type": "Feature",
-      "id": "CROC301",
+      "id": "MED001",
       "geometry": {
         "type": "Polygon",
         "coordinates": [
@@ -1054,7 +1586,7 @@
       },
       "time": null,
       "properties": {
-        "code": "CROC301",
+        "code": "MED001",
         "title": "Keep the Strait of Gibraltar open",
         "message": "Gibraltar is under 50 km wide, about half a cell at 1 degree, but it is the Mediterranean's only exchange with the Atlantic. Closed, the Mediterranean grows far too salty.",
         "instruction": "Edit the land mask and bathymetry to keep a channel open, and check the exchange and the salinity of the Mediterranean outflow.",

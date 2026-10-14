@@ -37,10 +37,15 @@ RULES = rule_registry()
 
 def _case_query(case):
     """What the rules are asked about a case: its grid's outline, its range of cell
-    sizes in km, and its compset's atmosphere and ice, such as jra and sice."""
+    sizes in km and their ratio, and its compset's atmosphere and ice, such as jra
+    and sice."""
     grid = case.ocn_grid
     cell_km = np.sqrt(grid.tarea.values) / 1000.0
-    dimensions = {"resolution": (float(cell_km.min()), float(cell_km.max()))}
+    smallest, largest = float(cell_km.min()), float(cell_km.max())
+    dimensions = {
+        "resolution": (smallest, largest),
+        "cell_size_ratio": largest / smallest,
+    }
     if atmosphere := re.search(r"DATM%([A-Za-z0-9]+)", case.compset_lname):
         dimensions["atmosphere"] = atmosphere.group(1).lower()
     if ice := re.search(r"_(CICE|DICE|SICE)", case.compset_lname):

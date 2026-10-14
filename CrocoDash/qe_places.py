@@ -111,6 +111,13 @@ def union(*names):
     return sp.polygon(shapely.union_all([PLACES[name].geometry for name in names]))
 
 
+# Names that title case gets wrong
+_NAMES = {
+    "brazil_malvinas_confluence": "Brazil–Malvinas Confluence",
+    "angola_benguela_front": "Angola–Benguela Front",
+}
+
+
 def label(name):
     """A place's name for people: "gulf_stream" -> "the Gulf Stream"."""
-    return "the " + name.replace("_", " ").title().replace("Itf", "ITF")
+    return "the " + _NAMES.get(name, name.replace("_", " ").title())

@@ -4,13 +4,14 @@ Case() and configure_forcings() query these rules and print what applies. Places
 the rules share are in qe_places.py. Most rules come from expert interviews and
 cite the passage they rest on; all are drafts until an expert has reviewed them.
 
+A code's letters are its group, in GROUPS. A new rule takes the next free number
+in its group (registry().next_code("ITF")), and a number is never reused.
+
 `python -m CrocoDash.qe CrocoDash/qe_rules.geojson` writes the rules to a rule
 file that vizqueryearth can show on a globe.
 """
 
-import json
 import sys
-from pathlib import Path
 
 import queryearth as qe
 
@@ -29,12 +30,33 @@ INTERVIEW_1 = {
 }
 
 
-def rule(code, title, message, *, quote=None, space=None, dimensions=None, **fields):
-    """A rule from interview 1, citing the passage it rests on."""
+GROUPS = {
+    "GRID": "Grid and numerics",
+    "POLAR": "High latitudes",
+    "OBC": "Open boundaries",
+    "ITF": "Coral Triangle and the Indonesian Throughflow",
+    "BENGUELA": "Benguela upwelling",
+    "MED": "Mediterranean",
+}
+
+
+def rule(
+    code,
+    title,
+    message,
+    *,
+    quote=None,
+    space=None,
+    dimensions=None,
+    edge=False,
+    **fields,
+):
+    """A rule from interview 1, citing the passage or passages it rests on."""
     if quote is not None:
+        quotes = [quote] if isinstance(quote, str) else quote
         fields.setdefault("references", [INTERVIEW_1])
-        fields.setdefault("evidence", [{"quote": quote}])
-    scope = qe.Scope(space=space, dimensions=dimensions or {})
+        fields.setdefault("evidence", [{"quote": q} for q in quotes])
+    scope = qe.Scope(space=space, dimensions=dimensions or {}, edge=edge)
     return qe.Rule(code=code, title=title, message=message, scope=scope, **fields)
 
 
@@ -42,30 +64,85 @@ def registry() -> qe.Registry:
     """Build the CrocoDash registry."""
     dimensions = [
         qe.Axis("resolution", "km"),  # the grid's range of cell sizes
+        qe.Axis(
+            "cell_size_ratio", "max/min", "the largest cell size over the smallest"
+        ),
         qe.Labels("product"),  # the ocean forcing product, such as glorys
         qe.Labels("variable"),
         qe.Labels("atmosphere"),  # the compset's DATM option, such as jra or nyf
         qe.Labels("ice"),  # the compset's ice component: cice, dice or sice
     ]
-    registry = qe.Registry("crocodash", dimensions=dimensions)
+    registry = qe.Registry("crocodash", dimensions=dimensions, groups=GROUPS)
     for r in RULES:
         registry.add(r)
-    add_computed_rules(registry)
     return registry
 
 
+def crosses_current(code, name):
+    """A rule for a domain whose edge crosses a strong current."""
+    return rule(
+        code,
+        f"The domain's edge crosses {label(name)}",
+        f"Open boundaries work best where strong currents cross them at right angles; "
+        f"where {label(name)} enters at a steep angle it reflects and causes artifacts.",
+        level="warning",
+        instruction="Move the edge, or rotate the grid (mom6_forge's Grid.from_center "
+        "with angle_deg) so the current crosses it squarely.",
+        space=PLACES[name],
+        edge=True,
+        quote=[
+            "Open boundary conditions are more stable when energetic currents cross them perpendicularly.",
+            "Rotating your domain so that the main current crosses the boundary perpendicularly helps a lot.",
+        ],
+    )
+
+
+def crosses_structure(code, name):
+    """A rule for a domain whose edge crosses a retroflection or front."""
+    return rule(
+        code,
+        f"The domain's edge crosses {label(name)}",
+        "Strong currents are fine at a boundary; chaotic flow, with eddies in every "
+        f"direction, is not. An edge across {label(name)} invites trouble.",
+        level="warning",
+        instruction="Take the whole structure into the domain, or move the edge well "
+        "away from it.",
+        space=PLACES[name],
+        edge=True,
+        quote=[
+            "What’s problematic is chaotic flow—eddies in every direction.",
+            "If the current system includes something like a retroflection, that feature really needs to be included within the domain—placing a boundary right at a retroflection usually leads to trouble.",
+        ],
+    )
+
+
 RULES = [
-    # ---- any domain -------------------------------------------------------------------
+    # ---- grid and numerics ----------------------------------------------------------------
     rule(
-        "CROC001",
+        "GRID001",
         "Turn off GM parametrization at high resolution",
         "Below 8 km, eddies are partly resolved, so GM thickness diffusion is usually turned off.",
         changes=[qe.Change("MOM_input", "THICKNESSDIFFUSE", False)],
         dimensions={"resolution": {"lt": 8}},
     ),
+    rule(
+        "GRID002",
+        "The time step is set by the smallest cells",
+        "Cell sizes in this grid differ by a factor of 2 or more, and the time step must "
+        "suit the smallest cells everywhere. A grid with more even cells can run with a "
+        "longer step: an area-conserving projection, or at high latitudes a polar one.",
+        level="info",
+        instruction="Build the grid with mom6_forge's Grid.from_projection, using an "
+        "equal-area projection, EPSG:3995 in the Arctic or EPSG:3031 in the Antarctic.",
+        dimensions={"cell_size_ratio": {"ge": 2}},
+        quote=[
+            "You’ll have to set your time step based on the smallest grid cells in your domain",
+            "And if you’re working at higher latitudes, a polar projection would probably make more sense.",
+        ],
+    ),
     # ---- high latitudes -----------------------------------------------------------------
     rule(
-        "CROC010",
+        "POLAR001",
         "Consider active sea ice (CICE)",
         "Part of this domain is poleward of 60 degrees, where sea ice forms in winter.",
         level="warning",
@@ -74,18 +151,7 @@ RULES = [
         dimensions={"ice": ["sice"]},  # only when the compset has no active ice
     ),
     rule(
-        "CROC011",
-        "Use a polar projection for a high-latitude grid",
-        "Latitude-longitude cells shrink toward the pole, and the time step must suit the "
-        "smallest cells. A polar stereographic grid keeps cells more even.",
-        level="info",
-        instruction="Build the grid with mom6_forge's Grid.from_projection, using "
-        "EPSG:3995 in the Arctic or EPSG:3031 in the Antarctic.",
-        space=union("arctic_60", "antarctic_60"),
-        quote="if you’re working at higher latitudes, a polar projection would probably make more sense.",
-    ),
-    rule(
-        "CROC012",
+        "POLAR002",
         "Finer resolution pays off in the Arctic",
         "Global models struggle at high latitudes, where resolution is coarse and data "
         "sparse. A regional domain at about 1/10 of a degree can improve the simulation "
@@ -98,7 +164,7 @@ RULES = [
         quote="moving to a higher-resolution domain—on the order of 1/10°—can significantly improve simulation quality.",
     ),
     rule(
-        "CROC013",
+        "POLAR003",
         "For Antarctic overflows, topography is the main gain",
         "Higher resolution brings better dynamics and better topography. For dense-water "
         "overflows the topography matters most, because it sets their pathways; for SST "
@@ -107,9 +173,18 @@ RULES = [
         space=PLACES["antarctic_60"],
         quote="if you work on Antarctic overflows,  the improved topography is the bigger gain because it's essential for capturing the pathways of dense water.",
     ),
+    # ---- open boundaries ----------------------------------------------------------------
+    *[
+        crosses_current(f"OBC{i:03d}", name)
+        for i, name in enumerate(STRONG_CURRENTS, 1)
+    ],
+    *[
+        crosses_structure(f"OBC{i:03d}", name)
+        for i, name in enumerate(ENERGETIC_STRUCTURES, len(STRONG_CURRENTS) + 1)
+    ],
     # ---- Coral Triangle and the Indonesian Throughflow ------------------------------------
     rule(
-        "CROC101",
+        "ITF001",
         "Force tides: tidal mixing dominates here",
         "This region is a maze of shallow basins and narrow straits where tidal mixing "
         "dominates, amplified by resonance in the passages. Models without tides make up "
@@ -128,7 +203,7 @@ RULES = [
         quote="the region consists of many small, shallow, and interconnected basins with narrow straits, where intense tidal mixing plays a dominant role.",
     ),
     rule(
-        "CROC102",
+        "ITF002",
         "Measure transport through the Indonesian Throughflow straits",
         "The Throughflow branches across several passages, and observations give the "
         "transport through each. Matching them is the main test of a model here.",
@@ -141,7 +216,7 @@ RULES = [
         quote="One critical evaluation metric is the transport through the main ITF channels.",
     ),
     rule(
-        "CROC103",
+        "ITF003",
         "Expect to edit the bathymetry of the Throughflow straits",
         "Realistic transport through each strait took 20 or more rounds of bathymetry "
         "edits; tuning viscosity was not enough. Interpolated, smoothed bathymetry often "
@@ -155,7 +230,7 @@ RULES = [
         quote="The model required multiple iterations—potentially 20 or more—to arrive at a configuration that gave realistic transports.",
     ),
     rule(
-        "CROC104",
+        "ITF004",
         "Lombok Strait spans only a few cells",
         "Lombok Strait is thousands of metres deep on either side of a sill about 200 m "
         "deep. Even at 5 km it spans only a few cells, and its steep slopes cause spurious "
@@ -170,7 +245,7 @@ RULES = [
         quote="Even at a 5-km resolution, the strait might only span a few grid cells.",
     ),
     rule(
-        "CROC105",
+        "ITF005",
         "Torres Strait is too coarse to leave open",
         "Torres Strait is very shallow, with near-zero mean transport. At coarse "
         "resolution one cell is too wide or too deep and lets far too much through, so "
@@ -186,7 +261,7 @@ RULES = [
         quote="that strait might be represented by a single grid cell that’s too wide or too deep—leading to exaggerated transport.",
     ),
     rule(
-        "CROC106",
+        "ITF006",
         "Keep Torres Strait open",
         "At this resolution the model can resolve the tidal reversals that dominate the "
         "strait's flow, while its mean transport stays near zero.",
@@ -198,7 +273,7 @@ RULES = [
         quote="in higher-resolution configurations, it can be left open, and the model can then resolve tidal reversals",
     ),
     rule(
-        "CROC107",
+        "ITF007",
         "Consider rotating the grid to follow the flow",
         "A Coral Triangle configuration rotated by about 20 degrees lined its boundaries "
         "up with the main flows, and was about 30% smaller than a latitude-longitude box.",
@@ -209,7 +284,7 @@ RULES = [
         quote="rotated the grid by about 20 degrees to better match the orientation of the key flows. That also made the model about 30% smaller",
     ),
     rule(
-        "CROC108",
+        "ITF008",
         "Evaluate coral heat stress the way satellites do",
         "Degree Heating Weeks come from satellite SST. Process the model's SST the same "
         "way before comparing. A high-resolution model can show local warming, as in "
@@ -220,7 +295,7 @@ RULES = [
     ),
     # ---- Benguela -------------------------------------------------------------------------
     rule(
-        "CROC201",
+        "BENGUELA001",
         "Benguela: resolution helps, but biases persist",
         "Models keep a warm SST bias here even at high resolution. Local causes include "
         "coarse coastal winds that weaken the coastal jet and the upwelling; remote "
@@ -236,7 +311,7 @@ RULES = [
         quote="the Benguela still lags behind other upwelling systems in terms of model fidelity",
     ),
     rule(
-        "CROC202",
+        "BENGUELA002",
         "Coarse winds weaken the Benguela upwelling",
         "This atmospheric forcing is coarse next to the coastal winds that drive the "
         "upwelling. Smoothed winds weaken the coastal jet and the upwelling, which warms "
@@ -250,7 +325,7 @@ RULES = [
         quote="insufficient resolution in the coastal wind forcing, which can weaken coastal jets and reduce upwelling.",
     ),
     rule(
-        "CROC203",
+        "BENGUELA003",
         "Where to put the edges of a Benguela domain",
         "Include the Benguela upwelling and part of the Angola coast. Extend west to at "
         "least 0°E, past the Cape of Good Hope, to take in the Agulhas retroflection. "
@@ -261,9 +336,9 @@ RULES = [
         space=PLACES["benguela"],
         quote="the domain might extend slightly west of the Cape of Good Hope to capture the Agulhas retroflection and reach north to just below the Angola–Benguela Front—perhaps around 7°S.",
     ),
-    # ---- straits elsewhere --------------------------------------------------------------
+    # ---- Mediterranean -------------------------------------------------------------------
     rule(
-        "CROC301",
+        "MED001",
         "Keep the Strait of Gibraltar open",
         "Gibraltar is under 50 km wide, about half a cell at 1 degree, but it is the "
         "Mediterranean's only exchange with the Atlantic. Closed, the Mediterranean "
@@ -280,100 +355,9 @@ RULES = [
 ]
 
 
-def add_computed_rules(registry: qe.Registry) -> None:
-    """Rules that depend on the shape of the domain, not just where it is."""
-
-    @registry.rule(
-        "CROC020",
-        level="info",
-        dimensions={"resolution": {"gt": 0}},
-        message="Cell sizes vary a lot in this grid.",
-        references=[INTERVIEW_1],
-        evidence=[
-            {
-                "quote": "You’ll have to set your time step based on the smallest grid cells in your domain"
-            }
-        ],
-    )
-    def smallest_cells(query, match):
-        """The time step is set by the smallest cells"""
-        sizes = match.dimensions["resolution"].overlap[0]
-        if sizes.hi < 2 * sizes.lo:
-            return None
-        return {
-            "message": f"Cells range from {sizes.lo:.1f} to {sizes.hi:.1f} km, so the "
-            f"time step must suit the {sizes.lo:.1f} km cells everywhere. A grid with "
-            "more even cells, such as an area-conserving projection, or a polar one at "
-            "high latitudes, can run with a longer step."
-        }
-
-    @registry.rule(
-        "CROC401",
-        level="warning",
-        space=union(*STRONG_CURRENTS),
-        message="The domain's edge cuts a strong current.",
-        references=[INTERVIEW_1],
-        evidence=[
-            {
-                "quote": "Open boundary conditions are more stable when energetic currents cross them perpendicularly."
-            }
-        ],
-    )
-    def edge_cuts_current(query, match):
-        """The domain's edge cuts a strong current"""
-        cut = _cut(query, STRONG_CURRENTS)
-        if not cut:
-            return None
-        return {
-            "message": f"The open boundary crosses {cut}. Boundaries work best where "
-            "strong currents cross them at right angles; a current entering at a steep "
-            "angle reflects and causes artifacts. Move the edge, or rotate the grid so "
-            "the current crosses it squarely."
-        }
-
-    @registry.rule(
-        "CROC402",
-        level="warning",
-        space=union(*ENERGETIC_STRUCTURES),
-        message="The domain's edge cuts a retroflection or front.",
-        references=[INTERVIEW_1],
-        evidence=[
-            {
-                "quote": "If the current system includes something like a retroflection, that feature really needs to be included within the domain—placing a boundary right at a retroflection usually leads to trouble."
-            }
-        ],
-    )
-    def edge_cuts_structure(query, match):
-        """The domain's edge cuts a retroflection or front"""
-        cut = _cut(query, ENERGETIC_STRUCTURES)
-        if not cut:
-            return None
-        return {
-            "message": f"The open boundary crosses {cut}. Strong currents are fine at a "
-            "boundary; chaotic flow is not. Take the whole structure into the domain, or "
-            "move the edge well away from it."
-        }
-
-
-def _cut(query, names):
-    """The places among names that the edge of the query's domain crosses."""
-    if query.space is None:
-        return ""
-    edge = query.space.geometry.boundary
-    crossed = [label(name) for name in names if edge.intersects(PLACES[name].geometry)]
-    return " and ".join(crossed)
-
-
 def save(path) -> None:
-    """Write the rules to a rule file that declares its dimensions. Computed
-    rules are code, so only the others go in it."""
-    collection = {
-        "type": "FeatureCollection",
-        "dimensions": registry().describe()["dimensions"],
-        "features": [r.to_feature() for r in RULES],
-    }
-    text = json.dumps(collection, indent=2, ensure_ascii=False) + "\n"
-    Path(path).write_text(text, encoding="utf-8")
+    """Write the rules to a rule file, with their groups and dimensions."""
+    registry().to_file(path)
 
 
 if __name__ == "__main__":
