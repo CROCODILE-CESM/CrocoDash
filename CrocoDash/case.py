@@ -4,6 +4,7 @@ import shutil
 from datetime import datetime
 import json
 import math
+import re
 import numpy as np
 import pandas as pd
 import queryearth as qe
@@ -34,12 +35,19 @@ quiet_visualcasegen_info()
 RULES = rule_registry()
 
 
-def _grid_query(grid):
-    """A grid's outline and its range of cell sizes in km, to query the rules with."""
+def _case_query(case):
+    """What the rules are asked about a case: its grid's outline, its range of cell
+    sizes in km, and its compset's atmosphere and ice, such as jra and sice."""
+    grid = case.ocn_grid
     cell_km = np.sqrt(grid.tarea.values) / 1000.0
+    dimensions = {"resolution": (float(cell_km.min()), float(cell_km.max()))}
+    if atmosphere := re.search(r"DATM%([A-Za-z0-9]+)", case.compset_lname):
+        dimensions["atmosphere"] = atmosphere.group(1).lower()
+    if ice := re.search(r"_(CICE|DICE|SICE)", case.compset_lname):
+        dimensions["ice"] = ice.group(1).lower()
     return {
         "space": converters.grid_outline(grid.qlon.values, grid.qlat.values),
-        "dimensions": {"resolution": (float(cell_km.min()), float(cell_km.max()))},
+        "dimensions": dimensions,
     }
 
 
@@ -263,8 +271,8 @@ class Case:
                 args_str = ", ".join(user_args) if user_args else "no arguments"
                 print(f"  - {configurator.name}: {args_str}")
 
-        # Rules that apply to this grid
-        findings = RULES.query(**_grid_query(self.ocn_grid))
+        # Rules that apply to this grid and compset
+        findings = RULES.query(**_case_query(self))
         if findings:
             print(qe.report(findings))
 
@@ -711,8 +719,8 @@ class Case:
             )
         self._configure_forcings_called = True
 
-        # Rules that apply to this grid, run time and forcing product
-        query = _grid_query(self.ocn_grid)
+        # Rules that apply to this grid, compset, run time and forcing product
+        query = _case_query(self)
         query["dimensions"]["product"] = self.forcing_product_name
         findings = RULES.query(**query, time=qe.interval(*self.date_range))
         if findings:
