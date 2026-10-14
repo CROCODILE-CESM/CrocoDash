@@ -4,7 +4,10 @@ import shutil
 from datetime import datetime
 import json
 import math
+import numpy as np
 import pandas as pd
+import queryearth as qe
+from queryearth import converters
 import regional_mom6 as rmom6
 from CrocoDash.grid import Grid
 from CrocoDash.topo import Topo
@@ -23,8 +26,21 @@ from CrocoDash.forcing.driver import run_workflow
 
 from CrocoDash import case_state
 from CrocoDash.logging import quiet_visualcasegen_info
+from CrocoDash.qe import registry as rule_registry
 
 quiet_visualcasegen_info()
+
+# The CrocoDash rules (CrocoDash/qe.py), queried in Case() and configure_forcings().
+RULES = rule_registry()
+
+
+def _grid_query(grid):
+    """A grid's outline and its range of cell sizes in km, to query the rules with."""
+    cell_km = np.sqrt(grid.tarea.values) / 1000.0
+    return {
+        "space": converters.grid_outline(grid.qlon.values, grid.qlat.values),
+        "dimensions": {"resolution": (float(cell_km.min()), float(cell_km.max()))},
+    }
 
 
 def _remove_previous(path):
@@ -246,6 +262,11 @@ class Case:
                 user_args = ForcingConfigRegistry.get_user_args(configurator)
                 args_str = ", ".join(user_args) if user_args else "no arguments"
                 print(f"  - {configurator.name}: {args_str}")
+
+        # Rules that apply to this grid
+        findings = RULES.query(**_grid_query(self.ocn_grid))
+        if findings:
+            print(qe.report(findings))
 
     @property
     def cice_in_compset(self):
@@ -689,6 +710,13 @@ class Case:
                 "configure_forcings() replaced this case's previous forcing configuration."
             )
         self._configure_forcings_called = True
+
+        # Rules that apply to this grid, run time and forcing product
+        query = _grid_query(self.ocn_grid)
+        query["dimensions"]["product"] = self.forcing_product_name
+        findings = RULES.query(**query, time=qe.interval(*self.date_range))
+        if findings:
+            print(qe.report(findings))
 
     def process_forcings(self, **kwargs):
         """

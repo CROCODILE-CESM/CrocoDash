@@ -1,4 +1,4 @@
-name: CrocoDash
+name: cd_qe
 
 channels:
   - conda-forge
