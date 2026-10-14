@@ -3,7 +3,14 @@
 Case() and configure_forcings() query these rules and print what applies. Places
 the rules share are in qe_places.py. Most rules come from expert interviews and
 cite the passage they rest on; all are drafts until an expert has reviewed them.
+
+`python -m CrocoDash.qe CrocoDash/qe_rules.geojson` writes the rules to a rule
+file that vizqueryearth can show on a globe.
 """
+
+import json
+import sys
+from pathlib import Path
 
 import queryearth as qe
 
@@ -357,5 +364,20 @@ def _cut(query, names):
     return " and ".join(crossed)
 
 
+def save(path) -> None:
+    """Write the rules to a rule file that declares its dimensions. Computed
+    rules are code, so only the others go in it."""
+    collection = {
+        "type": "FeatureCollection",
+        "dimensions": registry().describe()["dimensions"],
+        "features": [r.to_feature() for r in RULES],
+    }
+    text = json.dumps(collection, indent=2, ensure_ascii=False) + "\n"
+    Path(path).write_text(text, encoding="utf-8")
+
+
 if __name__ == "__main__":
-    print(qe.report(registry().query(include_conditional=True)))
+    if len(sys.argv) > 1:
+        save(sys.argv[1])
+    else:
+        print(qe.report(registry().query(include_conditional=True)))
