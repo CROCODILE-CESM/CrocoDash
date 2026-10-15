@@ -31,7 +31,7 @@ from CrocoDash.qe import registry as rule_registry
 
 quiet_visualcasegen_info()
 
-# The CrocoDash rules (CrocoGallery crocodash/rules, read by CrocoDash/qe.py),
+# The CrocoDash rules (CrocoDash/qe.py, both rule sets),
 # queried in Case() and configure_forcings().
 RULES = rule_registry()
 
