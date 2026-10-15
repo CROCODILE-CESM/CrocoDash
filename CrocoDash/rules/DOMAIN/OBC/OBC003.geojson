@@ -20,9 +20,10 @@
   "time": null,
   "properties": {
     "code": "OBC003",
-    "title": "The domain's edge crosses the Agulhas Current",
-    "message": "Open boundaries work best where strong currents cross them at right angles; where the Agulhas Current enters at a steep angle it reflects and causes artifacts.",
-    "instruction": "Move the edge, or rotate the grid (mom6_forge's Grid.from_center with angle_deg) so the current crosses it squarely.",
+    "title": "The domain reaches the Agulhas Current",
+    "message": "If an edge of the domain lies across the Agulhas Current, make the current cross it at right angles: where a strong current enters an open boundary at a steep angle, it reflects and causes artifacts.",
+    "level": "info",
+    "instruction": "Check where the Agulhas Current meets the domain's edges. Move an edge, or rotate the grid (mom6_forge's Grid.from_center with angle_deg), so the current crosses it squarely.",
     "references": [
       {
         "title": "Expert interview 1: Coral Triangle & Benguela Upwelling",
@@ -36,7 +37,6 @@
       {
         "quote": "Rotating your domain so that the main current crosses the boundary perpendicularly helps a lot."
       }
-    ],
-    "edge": true
+    ]
   }
 }

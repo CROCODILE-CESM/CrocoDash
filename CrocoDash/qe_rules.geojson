@@ -69,14 +69,8 @@
         "code": "GRID001",
         "title": "Turn off GM parametrization at high resolution",
         "message": "Below 8 km, eddies are partly resolved, so GM thickness diffusion is usually turned off.",
-        "changes": [
-          {
-            "target": "MOM_input",
-            "key": "THICKNESSDIFFUSE",
-            "value": false,
-            "rationale": ""
-          }
-        ],
+        "level": "info",
+        "instruction": "Set THICKNESSDIFFUSE = False in MOM_input.",
         "dimensions": {
           "resolution": {
             "lt": 8
@@ -145,9 +139,10 @@
       "time": null,
       "properties": {
         "code": "OBC001",
-        "title": "The domain's edge crosses the Gulf Stream",
-        "message": "Open boundaries work best where strong currents cross them at right angles; where the Gulf Stream enters at a steep angle it reflects and causes artifacts.",
-        "instruction": "Move the edge, or rotate the grid (mom6_forge's Grid.from_center with angle_deg) so the current crosses it squarely.",
+        "title": "The domain reaches the Gulf Stream",
+        "message": "If an edge of the domain lies across the Gulf Stream, make the current cross it at right angles: where a strong current enters an open boundary at a steep angle, it reflects and causes artifacts.",
+        "level": "info",
+        "instruction": "Check where the Gulf Stream meets the domain's edges. Move an edge, or rotate the grid (mom6_forge's Grid.from_center with angle_deg), so the current crosses it squarely.",
         "references": [
           {
             "title": "Expert interview 1: Coral Triangle & Benguela Upwelling",
@@ -161,8 +156,7 @@
           {
             "quote": "Rotating your domain so that the main current crosses the boundary perpendicularly helps a lot."
           }
-        ],
-        "edge": true
+        ]
       }
     },
     {
@@ -193,9 +187,10 @@
       "time": null,
       "properties": {
         "code": "OBC002",
-        "title": "The domain's edge crosses the Kuroshio",
-        "message": "Open boundaries work best where strong currents cross them at right angles; where the Kuroshio enters at a steep angle it reflects and causes artifacts.",
-        "instruction": "Move the edge, or rotate the grid (mom6_forge's Grid.from_center with angle_deg) so the current crosses it squarely.",
+        "title": "The domain reaches the Kuroshio",
+        "message": "If an edge of the domain lies across the Kuroshio, make the current cross it at right angles: where a strong current enters an open boundary at a steep angle, it reflects and causes artifacts.",
+        "level": "info",
+        "instruction": "Check where the Kuroshio meets the domain's edges. Move an edge, or rotate the grid (mom6_forge's Grid.from_center with angle_deg), so the current crosses it squarely.",
         "references": [
           {
             "title": "Expert interview 1: Coral Triangle & Benguela Upwelling",
@@ -209,8 +204,7 @@
           {
             "quote": "Rotating your domain so that the main current crosses the boundary perpendicularly helps a lot."
           }
-        ],
-        "edge": true
+        ]
       }
     },
     {
@@ -235,9 +229,10 @@
       "time": null,
       "properties": {
         "code": "OBC003",
-        "title": "The domain's edge crosses the Agulhas Current",
-        "message": "Open boundaries work best where strong currents cross them at right angles; where the Agulhas Current enters at a steep angle it reflects and causes artifacts.",
-        "instruction": "Move the edge, or rotate the grid (mom6_forge's Grid.from_center with angle_deg) so the current crosses it squarely.",
+        "title": "The domain reaches the Agulhas Current",
+        "message": "If an edge of the domain lies across the Agulhas Current, make the current cross it at right angles: where a strong current enters an open boundary at a steep angle, it reflects and causes artifacts.",
+        "level": "info",
+        "instruction": "Check where the Agulhas Current meets the domain's edges. Move an edge, or rotate the grid (mom6_forge's Grid.from_center with angle_deg), so the current crosses it squarely.",
         "references": [
           {
             "title": "Expert interview 1: Coral Triangle & Benguela Upwelling",
@@ -251,8 +246,7 @@
           {
             "quote": "Rotating your domain so that the main current crosses the boundary perpendicularly helps a lot."
           }
-        ],
-        "edge": true
+        ]
       }
     },
     {
@@ -273,9 +267,10 @@
       "time": null,
       "properties": {
         "code": "OBC004",
-        "title": "The domain's edge crosses the East Australian Current",
-        "message": "Open boundaries work best where strong currents cross them at right angles; where the East Australian Current enters at a steep angle it reflects and causes artifacts.",
-        "instruction": "Move the edge, or rotate the grid (mom6_forge's Grid.from_center with angle_deg) so the current crosses it squarely.",
+        "title": "The domain reaches the East Australian Current",
+        "message": "If an edge of the domain lies across the East Australian Current, make the current cross it at right angles: where a strong current enters an open boundary at a steep angle, it reflects and causes artifacts.",
+        "level": "info",
+        "instruction": "Check where the East Australian Current meets the domain's edges. Move an edge, or rotate the grid (mom6_forge's Grid.from_center with angle_deg), so the current crosses it squarely.",
         "references": [
           {
             "title": "Expert interview 1: Coral Triangle & Benguela Upwelling",
@@ -289,8 +284,7 @@
           {
             "quote": "Rotating your domain so that the main current crosses the boundary perpendicularly helps a lot."
           }
-        ],
-        "edge": true
+        ]
       }
     },
     {
@@ -311,9 +305,10 @@
       "time": null,
       "properties": {
         "code": "OBC005",
-        "title": "The domain's edge crosses the North Brazil Retroflection",
-        "message": "Strong currents are fine at a boundary; chaotic flow, with eddies in every direction, is not. An edge across the North Brazil Retroflection invites trouble.",
-        "instruction": "Take the whole structure into the domain, or move the edge well away from it.",
+        "title": "The domain reaches the North Brazil Retroflection",
+        "message": "If an edge of the domain lies across the North Brazil Retroflection, expect trouble: strong currents are fine at a boundary, but chaotic flow, with eddies in every direction, is not.",
+        "level": "info",
+        "instruction": "Check where the North Brazil Retroflection meets the domain's edges. Take the whole structure into the domain, or move the edge well away from it.",
         "references": [
           {
             "title": "Expert interview 1: Coral Triangle & Benguela Upwelling",
@@ -327,8 +322,7 @@
           {
             "quote": "If the current system includes something like a retroflection, that feature really needs to be included within the domain—placing a boundary right at a retroflection usually leads to trouble."
           }
-        ],
-        "edge": true
+        ]
       }
     },
     {
@@ -391,20 +385,8 @@
         "code": "ITF001",
         "title": "Force tides: tidal mixing dominates here",
         "message": "This region is a maze of shallow basins and narrow straits where tidal mixing dominates, amplified by resonance in the passages. Models without tides make up for it by raising local mixing; with tides, the model mixes where it really happens.",
-        "instruction": "Give configure_forcings the TPXO files and these constituents, and check tidal phase and amplitude against the region's tide gauges.",
-        "changes": [
-          {
-            "target": "configure_forcings",
-            "key": "tidal_constituents",
-            "value": [
-              "M2",
-              "S2",
-              "K1",
-              "O1"
-            ],
-            "rationale": "Tides here are semidiurnal, diurnal or mixed, so force both kinds"
-          }
-        ],
+        "level": "info",
+        "instruction": "Give configure_forcings the TPXO files and the tidal constituents M2, S2, K1 and O1: tides here are semidiurnal, diurnal or mixed, so force both kinds. Check tidal phase and amplitude against the region's tide gauges.",
         "references": [
           {
             "title": "Expert interview 1: Coral Triangle & Benguela Upwelling",
@@ -670,15 +652,7 @@
         "code": "POLAR001",
         "title": "Consider active sea ice (CICE)",
         "message": "Part of this domain is poleward of 60 degrees, where sea ice forms in winter.",
-        "level": "warning",
-        "changes": [
-          {
-            "target": "compset",
-            "key": "ice",
-            "value": "CICE",
-            "rationale": ""
-          }
-        ],
+        "instruction": "Use CICE as the compset's ice component.",
         "dimensions": {
           "ice": [
             "sice"
@@ -781,9 +755,10 @@
       "time": null,
       "properties": {
         "code": "CLAUDE002",
-        "title": "The domain's edge crosses the Agulhas Retroflection",
-        "message": "Strong currents are fine at a boundary; chaotic flow, with eddies in every direction, is not. An edge across the Agulhas Retroflection invites trouble.",
-        "instruction": "Take the whole structure into the domain, or move the edge well away from it.",
+        "title": "The domain reaches the Agulhas Retroflection",
+        "message": "If an edge of the domain lies across the Agulhas Retroflection, expect trouble: strong currents are fine at a boundary, but chaotic flow, with eddies in every direction, is not.",
+        "level": "info",
+        "instruction": "Check where the Agulhas Retroflection meets the domain's edges. Take the whole structure into the domain, or move the edge well away from it.",
         "references": [
           {
             "title": "Expert interview 1: Coral Triangle & Benguela Upwelling",
@@ -797,8 +772,7 @@
           {
             "quote": "If the current system includes something like a retroflection, that feature really needs to be included within the domain—placing a boundary right at a retroflection usually leads to trouble."
           }
-        ],
-        "edge": true
+        ]
       }
     },
     {
@@ -819,9 +793,10 @@
       "time": null,
       "properties": {
         "code": "CLAUDE003",
-        "title": "The domain's edge crosses the Agulhas Return Current",
-        "message": "Strong currents are fine at a boundary; chaotic flow, with eddies in every direction, is not. An edge across the Agulhas Return Current invites trouble.",
-        "instruction": "Take the whole structure into the domain, or move the edge well away from it.",
+        "title": "The domain reaches the Agulhas Return Current",
+        "message": "If an edge of the domain lies across the Agulhas Return Current, expect trouble: strong currents are fine at a boundary, but chaotic flow, with eddies in every direction, is not.",
+        "level": "info",
+        "instruction": "Check where the Agulhas Return Current meets the domain's edges. Take the whole structure into the domain, or move the edge well away from it.",
         "references": [
           {
             "title": "Expert interview 1: Coral Triangle & Benguela Upwelling",
@@ -835,8 +810,7 @@
           {
             "quote": "If the current system includes something like a retroflection, that feature really needs to be included within the domain—placing a boundary right at a retroflection usually leads to trouble."
           }
-        ],
-        "edge": true
+        ]
       }
     },
     {
@@ -857,9 +831,10 @@
       "time": null,
       "properties": {
         "code": "CLAUDE004",
-        "title": "The domain's edge crosses the Brazil–Malvinas Confluence",
-        "message": "Strong currents are fine at a boundary; chaotic flow, with eddies in every direction, is not. An edge across the Brazil–Malvinas Confluence invites trouble.",
-        "instruction": "Take the whole structure into the domain, or move the edge well away from it.",
+        "title": "The domain reaches the Brazil–Malvinas Confluence",
+        "message": "If an edge of the domain lies across the Brazil–Malvinas Confluence, expect trouble: strong currents are fine at a boundary, but chaotic flow, with eddies in every direction, is not.",
+        "level": "info",
+        "instruction": "Check where the Brazil–Malvinas Confluence meets the domain's edges. Take the whole structure into the domain, or move the edge well away from it.",
         "references": [
           {
             "title": "Expert interview 1: Coral Triangle & Benguela Upwelling",
@@ -873,8 +848,7 @@
           {
             "quote": "If the current system includes something like a retroflection, that feature really needs to be included within the domain—placing a boundary right at a retroflection usually leads to trouble."
           }
-        ],
-        "edge": true
+        ]
       }
     },
     {
@@ -895,9 +869,10 @@
       "time": null,
       "properties": {
         "code": "CLAUDE005",
-        "title": "The domain's edge crosses the Angola–Benguela Front",
-        "message": "Strong currents are fine at a boundary; chaotic flow, with eddies in every direction, is not. An edge across the Angola–Benguela Front invites trouble.",
-        "instruction": "Take the whole structure into the domain, or move the edge well away from it.",
+        "title": "The domain reaches the Angola–Benguela Front",
+        "message": "If an edge of the domain lies across the Angola–Benguela Front, expect trouble: strong currents are fine at a boundary, but chaotic flow, with eddies in every direction, is not.",
+        "level": "info",
+        "instruction": "Check where the Angola–Benguela Front meets the domain's edges. Take the whole structure into the domain, or move the edge well away from it.",
         "references": [
           {
             "title": "Expert interview 1: Coral Triangle & Benguela Upwelling",
@@ -911,8 +886,7 @@
           {
             "quote": "If the current system includes something like a retroflection, that feature really needs to be included within the domain—placing a boundary right at a retroflection usually leads to trouble."
           }
-        ],
-        "edge": true
+        ]
       }
     },
     {

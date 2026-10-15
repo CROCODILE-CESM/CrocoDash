@@ -7,14 +7,8 @@
     "code": "GRID001",
     "title": "Turn off GM parametrization at high resolution",
     "message": "Below 8 km, eddies are partly resolved, so GM thickness diffusion is usually turned off.",
-    "changes": [
-      {
-        "target": "MOM_input",
-        "key": "THICKNESSDIFFUSE",
-        "value": false,
-        "rationale": ""
-      }
-    ],
+    "level": "info",
+    "instruction": "Set THICKNESSDIFFUSE = False in MOM_input.",
     "dimensions": {
       "resolution": {
         "lt": 8

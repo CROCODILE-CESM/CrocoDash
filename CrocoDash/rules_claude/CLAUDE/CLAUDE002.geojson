@@ -16,9 +16,10 @@
   "time": null,
   "properties": {
     "code": "CLAUDE002",
-    "title": "The domain's edge crosses the Agulhas Retroflection",
-    "message": "Strong currents are fine at a boundary; chaotic flow, with eddies in every direction, is not. An edge across the Agulhas Retroflection invites trouble.",
-    "instruction": "Take the whole structure into the domain, or move the edge well away from it.",
+    "title": "The domain reaches the Agulhas Retroflection",
+    "message": "If an edge of the domain lies across the Agulhas Retroflection, expect trouble: strong currents are fine at a boundary, but chaotic flow, with eddies in every direction, is not.",
+    "level": "info",
+    "instruction": "Check where the Agulhas Retroflection meets the domain's edges. Take the whole structure into the domain, or move the edge well away from it.",
     "references": [
       {
         "title": "Expert interview 1: Coral Triangle & Benguela Upwelling",
@@ -32,7 +33,6 @@
       {
         "quote": "If the current system includes something like a retroflection, that feature really needs to be included within the domain—placing a boundary right at a retroflection usually leads to trouble."
       }
-    ],
-    "edge": true
+    ]
   }
 }

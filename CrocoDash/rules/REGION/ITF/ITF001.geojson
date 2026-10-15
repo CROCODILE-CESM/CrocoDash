@@ -22,20 +22,8 @@
     "code": "ITF001",
     "title": "Force tides: tidal mixing dominates here",
     "message": "This region is a maze of shallow basins and narrow straits where tidal mixing dominates, amplified by resonance in the passages. Models without tides make up for it by raising local mixing; with tides, the model mixes where it really happens.",
-    "instruction": "Give configure_forcings the TPXO files and these constituents, and check tidal phase and amplitude against the region's tide gauges.",
-    "changes": [
-      {
-        "target": "configure_forcings",
-        "key": "tidal_constituents",
-        "value": [
-          "M2",
-          "S2",
-          "K1",
-          "O1"
-        ],
-        "rationale": "Tides here are semidiurnal, diurnal or mixed, so force both kinds"
-      }
-    ],
+    "level": "info",
+    "instruction": "Give configure_forcings the TPXO files and the tidal constituents M2, S2, K1 and O1: tides here are semidiurnal, diurnal or mixed, so force both kinds. Check tidal phase and amplitude against the region's tide gauges.",
     "references": [
       {
         "title": "Expert interview 1: Coral Triangle & Benguela Upwelling",

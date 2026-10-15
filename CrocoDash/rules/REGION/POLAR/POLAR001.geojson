@@ -33,15 +33,7 @@
     "code": "POLAR001",
     "title": "Consider active sea ice (CICE)",
     "message": "Part of this domain is poleward of 60 degrees, where sea ice forms in winter.",
-    "level": "warning",
-    "changes": [
-      {
-        "target": "compset",
-        "key": "ice",
-        "value": "CICE",
-        "rationale": ""
-      }
-    ],
+    "instruction": "Use CICE as the compset's ice component.",
     "dimensions": {
       "ice": [
         "sice"
