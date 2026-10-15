@@ -1,0 +1,51 @@
+{
+  "type": "Feature",
+  "id": "POLAR001",
+  "geometry": {
+    "type": "MultiPolygon",
+    "coordinates": [
+      [
+        [
+          [-180.0, 60.0],
+          [0.0, 60.0],
+          [180.0, 60.0],
+          [180.0, 90.0],
+          [0.0, 90.0],
+          [-180.0, 90.0],
+          [-180.0, 60.0]
+        ]
+      ],
+      [
+        [
+          [-180.0, -90.0],
+          [0.0, -90.0],
+          [180.0, -90.0],
+          [180.0, -60.0],
+          [0.0, -60.0],
+          [-180.0, -60.0],
+          [-180.0, -90.0]
+        ]
+      ]
+    ]
+  },
+  "time": null,
+  "properties": {
+    "code": "POLAR001",
+    "title": "Consider active sea ice (CICE)",
+    "message": "Part of this domain is poleward of 60 degrees, where sea ice forms in winter.",
+    "level": "warning",
+    "changes": [
+      {
+        "target": "compset",
+        "key": "ice",
+        "value": "CICE",
+        "rationale": ""
+      }
+    ],
+    "dimensions": {
+      "ice": [
+        "sice"
+      ]
+    }
+  }
+}

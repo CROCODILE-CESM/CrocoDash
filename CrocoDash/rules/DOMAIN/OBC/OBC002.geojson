@@ -1,0 +1,48 @@
+{
+  "type": "Feature",
+  "id": "OBC002",
+  "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+      [
+        [121.0, 21.5],
+        [123.5, 21.5],
+        [128.0, 27.0],
+        [132.0, 30.0],
+        [136.0, 32.0],
+        [141.0, 33.5],
+        [155.0, 34.0],
+        [155.0, 37.5],
+        [141.0, 37.0],
+        [138.0, 34.5],
+        [134.0, 33.5],
+        [130.0, 32.0],
+        [126.0, 28.5],
+        [121.5, 25.0],
+        [121.0, 21.5]
+      ]
+    ]
+  },
+  "time": null,
+  "properties": {
+    "code": "OBC002",
+    "title": "The domain's edge crosses the Kuroshio",
+    "message": "Open boundaries work best where strong currents cross them at right angles; where the Kuroshio enters at a steep angle it reflects and causes artifacts.",
+    "instruction": "Move the edge, or rotate the grid (mom6_forge's Grid.from_center with angle_deg) so the current crosses it squarely.",
+    "references": [
+      {
+        "title": "Expert interview 1: Coral Triangle & Benguela Upwelling",
+        "url": "https://aidanjanney.github.io/RegionalOceanModelingInterviews/transcripts/Edited_Transcript_1.json"
+      }
+    ],
+    "evidence": [
+      {
+        "quote": "Open boundary conditions are more stable when energetic currents cross them perpendicularly."
+      },
+      {
+        "quote": "Rotating your domain so that the main current crosses the boundary perpendicularly helps a lot."
+      }
+    ],
+    "edge": true
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "type": "Feature",
+  "id": "ITF005",
+  "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+      [
+        [141.5, -11.0],
+        [143.5, -11.0],
+        [143.5, -9.0],
+        [141.5, -9.0],
+        [141.5, -11.0]
+      ]
+    ]
+  },
+  "time": null,
+  "properties": {
+    "code": "ITF005",
+    "title": "Torres Strait is too coarse to leave open",
+    "message": "Torres Strait is very shallow, with near-zero mean transport. At coarse resolution one cell is too wide or too deep and lets far too much through, so many models close it.",
+    "confidence": "possible",
+    "instruction": "Close Torres Strait in the bathymetry, or check that its mean transport stays near zero.",
+    "references": [
+      {
+        "title": "Expert interview 1: Coral Triangle & Benguela Upwelling",
+        "url": "https://aidanjanney.github.io/RegionalOceanModelingInterviews/transcripts/Edited_Transcript_1.json"
+      }
+    ],
+    "evidence": [
+      {
+        "quote": "that strait might be represented by a single grid cell that’s too wide or too deep—leading to exaggerated transport."
+      }
+    ],
+    "dimensions": {
+      "resolution": {
+        "gt": 10
+      }
+    }
+  }
+}

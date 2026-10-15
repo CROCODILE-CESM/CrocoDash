@@ -1,0 +1,42 @@
+{
+  "type": "Feature",
+  "id": "OBC003",
+  "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+      [
+        [20.0, -36.0],
+        [21.0, -37.5],
+        [26.0, -36.5],
+        [31.0, -33.0],
+        [35.0, -27.0],
+        [32.5, -27.0],
+        [30.0, -31.5],
+        [25.0, -34.5],
+        [20.0, -36.0]
+      ]
+    ]
+  },
+  "time": null,
+  "properties": {
+    "code": "OBC003",
+    "title": "The domain's edge crosses the Agulhas Current",
+    "message": "Open boundaries work best where strong currents cross them at right angles; where the Agulhas Current enters at a steep angle it reflects and causes artifacts.",
+    "instruction": "Move the edge, or rotate the grid (mom6_forge's Grid.from_center with angle_deg) so the current crosses it squarely.",
+    "references": [
+      {
+        "title": "Expert interview 1: Coral Triangle & Benguela Upwelling",
+        "url": "https://aidanjanney.github.io/RegionalOceanModelingInterviews/transcripts/Edited_Transcript_1.json"
+      }
+    ],
+    "evidence": [
+      {
+        "quote": "Open boundary conditions are more stable when energetic currents cross them perpendicularly."
+      },
+      {
+        "quote": "Rotating your domain so that the main current crosses the boundary perpendicularly helps a lot."
+      }
+    ],
+    "edge": true
+  }
+}

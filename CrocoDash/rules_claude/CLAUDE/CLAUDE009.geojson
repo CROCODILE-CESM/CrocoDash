@@ -1,0 +1,34 @@
+{
+  "type": "Feature",
+  "id": "CLAUDE009",
+  "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+      [
+        [8.0, -35.0],
+        [20.0, -35.0],
+        [20.0, -14.0],
+        [8.0, -14.0],
+        [8.0, -35.0]
+      ]
+    ]
+  },
+  "time": null,
+  "properties": {
+    "code": "CLAUDE009",
+    "title": "Where to put the edges of a Benguela domain",
+    "message": "Include the Benguela upwelling and part of the Angola coast. Extend west to at least 0°E, past the Cape of Good Hope, to take in the Agulhas retroflection. Stop short of the tropical Atlantic, where the flow turns zonal and would cross the northern boundary at a steep angle; the expert suggested a northern edge around 7°S.",
+    "level": "info",
+    "references": [
+      {
+        "title": "Expert interview 1: Coral Triangle & Benguela Upwelling",
+        "url": "https://aidanjanney.github.io/RegionalOceanModelingInterviews/transcripts/Edited_Transcript_1.json"
+      }
+    ],
+    "evidence": [
+      {
+        "quote": "the domain might extend slightly west of the Cape of Good Hope to capture the Agulhas retroflection and reach north to just below the Angola–Benguela Front—perhaps around 7°S."
+      }
+    ]
+  }
+}

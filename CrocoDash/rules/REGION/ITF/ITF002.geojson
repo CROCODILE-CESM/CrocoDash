@@ -1,0 +1,35 @@
+{
+  "type": "Feature",
+  "id": "ITF002",
+  "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+      [
+        [105.0, -15.0],
+        [135.0, -15.0],
+        [135.0, 8.0],
+        [105.0, 8.0],
+        [105.0, -15.0]
+      ]
+    ]
+  },
+  "time": null,
+  "properties": {
+    "code": "ITF002",
+    "title": "Measure transport through the Indonesian Throughflow straits",
+    "message": "The Throughflow branches across several passages, and observations give the transport through each. Matching them is the main test of a model here.",
+    "level": "info",
+    "instruction": "Compute transport through Makassar Strait, Lombok Strait, Ombai Strait and Timor Passage, and compare each with observed estimates such as the INSTANT moorings'. Agree the targets before tuning, and stop when the magnitudes match.",
+    "references": [
+      {
+        "title": "Expert interview 1: Coral Triangle & Benguela Upwelling",
+        "url": "https://aidanjanney.github.io/RegionalOceanModelingInterviews/transcripts/Edited_Transcript_1.json"
+      }
+    ],
+    "evidence": [
+      {
+        "quote": "One critical evaluation metric is the transport through the main ITF channels."
+      }
+    ]
+  }
+}

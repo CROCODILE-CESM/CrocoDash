@@ -1,0 +1,38 @@
+{
+  "type": "Feature",
+  "id": "OBC004",
+  "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+      [
+        [150.5, -35.0],
+        [156.0, -35.0],
+        [156.0, -24.0],
+        [152.0, -24.0],
+        [150.5, -35.0]
+      ]
+    ]
+  },
+  "time": null,
+  "properties": {
+    "code": "OBC004",
+    "title": "The domain's edge crosses the East Australian Current",
+    "message": "Open boundaries work best where strong currents cross them at right angles; where the East Australian Current enters at a steep angle it reflects and causes artifacts.",
+    "instruction": "Move the edge, or rotate the grid (mom6_forge's Grid.from_center with angle_deg) so the current crosses it squarely.",
+    "references": [
+      {
+        "title": "Expert interview 1: Coral Triangle & Benguela Upwelling",
+        "url": "https://aidanjanney.github.io/RegionalOceanModelingInterviews/transcripts/Edited_Transcript_1.json"
+      }
+    ],
+    "evidence": [
+      {
+        "quote": "Open boundary conditions are more stable when energetic currents cross them perpendicularly."
+      },
+      {
+        "quote": "Rotating your domain so that the main current crosses the boundary perpendicularly helps a lot."
+      }
+    ],
+    "edge": true
+  }
+}

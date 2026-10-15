@@ -1,0 +1,41 @@
+{
+  "type": "Feature",
+  "id": "POLAR002",
+  "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+      [
+        [-180.0, 66.5],
+        [0.0, 66.5],
+        [180.0, 66.5],
+        [180.0, 90.0],
+        [0.0, 90.0],
+        [-180.0, 90.0],
+        [-180.0, 66.5]
+      ]
+    ]
+  },
+  "time": null,
+  "properties": {
+    "code": "POLAR002",
+    "title": "Finer resolution pays off in the Arctic",
+    "message": "Global models struggle at high latitudes, where resolution is coarse and data sparse. A regional domain at about 1/10 of a degree can improve the simulation markedly.",
+    "level": "info",
+    "references": [
+      {
+        "title": "Expert interview 1: Coral Triangle & Benguela Upwelling",
+        "url": "https://aidanjanney.github.io/RegionalOceanModelingInterviews/transcripts/Edited_Transcript_1.json"
+      }
+    ],
+    "evidence": [
+      {
+        "quote": "moving to a higher-resolution domain—on the order of 1/10°—can significantly improve simulation quality."
+      }
+    ],
+    "dimensions": {
+      "resolution": {
+        "gt": 10
+      }
+    }
+  }
+}

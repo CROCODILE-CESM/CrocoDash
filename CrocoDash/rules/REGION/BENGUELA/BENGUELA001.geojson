@@ -1,0 +1,36 @@
+{
+  "type": "Feature",
+  "id": "BENGUELA001",
+  "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+      [
+        [8.0, -35.0],
+        [20.0, -35.0],
+        [20.0, -14.0],
+        [8.0, -14.0],
+        [8.0, -35.0]
+      ]
+    ]
+  },
+  "time": null,
+  "properties": {
+    "code": "BENGUELA001",
+    "title": "Benguela: resolution helps, but biases persist",
+    "message": "Models keep a warm SST bias here even at high resolution. Local causes include coarse coastal winds that weaken the coastal jet and the upwelling; remote causes include tropical Atlantic SST biases that reach the region through the boundaries. The front between the Angola and Benguela currents, near 16°S, is tied to the bathymetry.",
+    "level": "info",
+    "confidence": "possible",
+    "instruction": "Get the bathymetry and coastline right, then check the mean state: the currents, the position of the front and the cold SST of the upwelling. Tune the winds and the boundary inflow before mixing or viscosity.",
+    "references": [
+      {
+        "title": "Expert interview 1: Coral Triangle & Benguela Upwelling",
+        "url": "https://aidanjanney.github.io/RegionalOceanModelingInterviews/transcripts/Edited_Transcript_1.json"
+      }
+    ],
+    "evidence": [
+      {
+        "quote": "the Benguela still lags behind other upwelling systems in terms of model fidelity"
+      }
+    ]
+  }
+}

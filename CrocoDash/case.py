@@ -27,13 +27,9 @@ from CrocoDash.forcing.driver import run_workflow
 
 from CrocoDash import case_state
 from CrocoDash.logging import quiet_visualcasegen_info
-from CrocoDash.qe import registry as rule_registry
+from CrocoDash.qe import RULES  # queried in Case() and configure_forcings()
 
 quiet_visualcasegen_info()
-
-# The CrocoDash rules (CrocoDash/qe.py, both rule sets),
-# queried in Case() and configure_forcings().
-RULES = rule_registry()
 
 
 def _case_query(case):

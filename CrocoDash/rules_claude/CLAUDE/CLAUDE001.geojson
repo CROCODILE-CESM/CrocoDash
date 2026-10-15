@@ -1,0 +1,36 @@
+{
+  "type": "Feature",
+  "id": "CLAUDE001",
+  "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+      [
+        [-180.0, -90.0],
+        [0.0, -90.0],
+        [180.0, -90.0],
+        [180.0, -60.0],
+        [0.0, -60.0],
+        [-180.0, -60.0],
+        [-180.0, -90.0]
+      ]
+    ]
+  },
+  "time": null,
+  "properties": {
+    "code": "CLAUDE001",
+    "title": "For Antarctic overflows, topography is the main gain",
+    "message": "Higher resolution brings better dynamics and better topography. For dense-water overflows the topography matters most, because it sets their pathways; for SST or heat transport the dynamics matter more.",
+    "level": "info",
+    "references": [
+      {
+        "title": "Expert interview 1: Coral Triangle & Benguela Upwelling",
+        "url": "https://aidanjanney.github.io/RegionalOceanModelingInterviews/transcripts/Edited_Transcript_1.json"
+      }
+    ],
+    "evidence": [
+      {
+        "quote": "if you work on Antarctic overflows,  the improved topography is the bigger gain because it's essential for capturing the pathways of dense water."
+      }
+    ]
+  }
+}

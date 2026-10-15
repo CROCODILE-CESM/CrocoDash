@@ -1,0 +1,39 @@
+{
+  "type": "Feature",
+  "id": "ITF004",
+  "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+      [
+        [115.4, -9.0],
+        [116.1, -9.0],
+        [116.1, -8.0],
+        [115.4, -8.0],
+        [115.4, -9.0]
+      ]
+    ]
+  },
+  "time": null,
+  "properties": {
+    "code": "ITF004",
+    "title": "Lombok Strait spans only a few cells",
+    "message": "Lombok Strait is thousands of metres deep on either side of a sill about 200 m deep. Even at 5 km it spans only a few cells, and its steep slopes cause spurious diapycnal mixing unless smoothed.",
+    "instruction": "Count the cells across the strait, set its sill depth to observed estimates after smoothing, and compare its transport with observations.",
+    "references": [
+      {
+        "title": "Expert interview 1: Coral Triangle & Benguela Upwelling",
+        "url": "https://aidanjanney.github.io/RegionalOceanModelingInterviews/transcripts/Edited_Transcript_1.json"
+      }
+    ],
+    "evidence": [
+      {
+        "quote": "Even at a 5-km resolution, the strait might only span a few grid cells."
+      }
+    ],
+    "dimensions": {
+      "resolution": {
+        "gt": 2
+      }
+    }
+  }
+}

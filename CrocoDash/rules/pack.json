@@ -1,0 +1,36 @@
+{
+  "queryearth": "0.6",
+  "dimensions": [
+    {
+      "name": "resolution",
+      "kind": "axis",
+      "unit": "km",
+      "description": "the grid's range of cell sizes"
+    },
+    {
+      "name": "cell_size_ratio",
+      "kind": "axis",
+      "unit": "max/min",
+      "description": "the largest cell size over the smallest"
+    },
+    {
+      "name": "product",
+      "kind": "labels",
+      "description": "the ocean forcing product, such as glorys"
+    },
+    {
+      "name": "variable",
+      "kind": "labels"
+    },
+    {
+      "name": "atmosphere",
+      "kind": "labels",
+      "description": "the compset's DATM option, such as jra or nyf"
+    },
+    {
+      "name": "ice",
+      "kind": "labels",
+      "description": "the compset's ice component: cice, dice or sice"
+    }
+  ]
+}

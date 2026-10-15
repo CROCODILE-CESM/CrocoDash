@@ -1,0 +1,41 @@
+{
+  "type": "Feature",
+  "id": "CLAUDE008",
+  "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+      [
+        [8.0, -35.0],
+        [20.0, -35.0],
+        [20.0, -14.0],
+        [8.0, -14.0],
+        [8.0, -35.0]
+      ]
+    ]
+  },
+  "time": null,
+  "properties": {
+    "code": "CLAUDE008",
+    "title": "Coarse winds weaken the Benguela upwelling",
+    "message": "This atmospheric forcing is coarse next to the coastal winds that drive the upwelling. Smoothed winds weaken the coastal jet and the upwelling, which warms the SST.",
+    "confidence": "possible",
+    "instruction": "If the upwelling matters to your study, consider finer winds, and compare the upwelling's SST with observations.",
+    "references": [
+      {
+        "title": "Expert interview 1: Coral Triangle & Benguela Upwelling",
+        "url": "https://aidanjanney.github.io/RegionalOceanModelingInterviews/transcripts/Edited_Transcript_1.json"
+      }
+    ],
+    "evidence": [
+      {
+        "quote": "insufficient resolution in the coastal wind forcing, which can weaken coastal jets and reduce upwelling."
+      }
+    ],
+    "dimensions": {
+      "atmosphere": [
+        "jra",
+        "nyf"
+      ]
+    }
+  }
+}

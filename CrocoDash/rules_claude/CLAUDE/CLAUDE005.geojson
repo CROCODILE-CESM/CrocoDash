@@ -1,0 +1,38 @@
+{
+  "type": "Feature",
+  "id": "CLAUDE005",
+  "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+      [
+        [8.0, -18.0],
+        [14.0, -18.0],
+        [14.0, -14.0],
+        [8.0, -14.0],
+        [8.0, -18.0]
+      ]
+    ]
+  },
+  "time": null,
+  "properties": {
+    "code": "CLAUDE005",
+    "title": "The domain's edge crosses the Angola–Benguela Front",
+    "message": "Strong currents are fine at a boundary; chaotic flow, with eddies in every direction, is not. An edge across the Angola–Benguela Front invites trouble.",
+    "instruction": "Take the whole structure into the domain, or move the edge well away from it.",
+    "references": [
+      {
+        "title": "Expert interview 1: Coral Triangle & Benguela Upwelling",
+        "url": "https://aidanjanney.github.io/RegionalOceanModelingInterviews/transcripts/Edited_Transcript_1.json"
+      }
+    ],
+    "evidence": [
+      {
+        "quote": "What’s problematic is chaotic flow—eddies in every direction."
+      },
+      {
+        "quote": "If the current system includes something like a retroflection, that feature really needs to be included within the domain—placing a boundary right at a retroflection usually leads to trouble."
+      }
+    ],
+    "edge": true
+  }
+}

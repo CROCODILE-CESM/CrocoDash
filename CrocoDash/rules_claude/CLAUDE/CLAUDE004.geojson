@@ -1,0 +1,38 @@
+{
+  "type": "Feature",
+  "id": "CLAUDE004",
+  "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+      [
+        [-58.0, -42.0],
+        [-48.0, -42.0],
+        [-48.0, -34.0],
+        [-58.0, -34.0],
+        [-58.0, -42.0]
+      ]
+    ]
+  },
+  "time": null,
+  "properties": {
+    "code": "CLAUDE004",
+    "title": "The domain's edge crosses the Brazil–Malvinas Confluence",
+    "message": "Strong currents are fine at a boundary; chaotic flow, with eddies in every direction, is not. An edge across the Brazil–Malvinas Confluence invites trouble.",
+    "instruction": "Take the whole structure into the domain, or move the edge well away from it.",
+    "references": [
+      {
+        "title": "Expert interview 1: Coral Triangle & Benguela Upwelling",
+        "url": "https://aidanjanney.github.io/RegionalOceanModelingInterviews/transcripts/Edited_Transcript_1.json"
+      }
+    ],
+    "evidence": [
+      {
+        "quote": "What’s problematic is chaotic flow—eddies in every direction."
+      },
+      {
+        "quote": "If the current system includes something like a retroflection, that feature really needs to be included within the domain—placing a boundary right at a retroflection usually leads to trouble."
+      }
+    ],
+    "edge": true
+  }
+}
