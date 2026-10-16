@@ -275,13 +275,18 @@ class CaseBundle:
             config["case"]["caseroot"] = str(caseroot_tmp)
             config["case"]["inputdir"] = str(inputdir)
 
-            with open(os.devnull, "w") as devnull, redirect_stdout(
-                devnull
-            ), redirect_stderr(devnull):
-                create_case_from_yaml(config, override=True, configure_only=True)
+            try:
+                with open(os.devnull, "w") as devnull, redirect_stdout(
+                    devnull
+                ), redirect_stderr(devnull):
+                    create_case_from_yaml(config, override=True, configure_only=True)
 
-            logger.info("Taking the diff...")
-            self.non_standard_case_info = self.diff(CaseBundle(caseroot_tmp))
+                logger.info("Taking the diff...")
+                self.non_standard_case_info = self.diff(CaseBundle(caseroot_tmp))
+            finally:
+                # tmp_dir takes the caseroot and inputdir with it, but not the
+                # bld and run dirs CIME made for the case.
+                _remove_case_output_dirs(caseroot_tmp)
             return self.non_standard_case_info
 
     def bundle(self, output_folder_location, machine=None, project=None):
@@ -762,3 +767,28 @@ def _run_xmlquery(caseroot, param):
             f"xmlquery {param} failed in {caseroot}:\n{res.stderr.decode().strip()}"
         )
     return res.stdout.decode().strip().split(":")[1].strip()
+
+
+def _remove_case_output_dirs(caseroot):
+    """Remove the build and run dirs CIME made for caseroot, outside of it.
+
+    create_newcase puts EXEROOT and RUNDIR under $CIME_OUTPUT_ROOT/<case name>/,
+    so deleting a caseroot leaves them behind. Each is read from the case and
+    removed only if it is in a directory named after the case, which is then
+    removed too if that leaves it empty.
+    """
+    caseroot = Path(caseroot)
+    if not (caseroot / "xmlquery").exists():  # the case was never created
+        return
+    case_dirs = set()
+    for var in ("EXEROOT", "RUNDIR"):
+        path = Path(_run_xmlquery(caseroot, var))
+        if path.parent.name != caseroot.name:
+            logger.warning(f"Leaving {var} {path}: not in a {caseroot.name} dir")
+            continue
+        logger.info(f"Removing {var} of {caseroot.name}: {path}")
+        shutil.rmtree(path, ignore_errors=True)
+        case_dirs.add(path.parent)
+    for case_dir in case_dirs:
+        if case_dir.is_dir() and not any(case_dir.iterdir()):
+            case_dir.rmdir()

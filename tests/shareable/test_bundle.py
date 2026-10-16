@@ -140,6 +140,12 @@ def test_identify_non_standard_case_information(get_shareable_CrocoDash_case):
     user_nl_path = Path(case1.caseroot) / "user_nl_mom"
     with open(user_nl_path, "a") as f:
         f.write("\nDEBUG=TRUE\n")
+    from CrocoDash.shareable import _run_xmlquery
+
+    # The reference case is built in a TemporaryDirectory, but CIME puts its
+    # bld and run dirs under CIME_OUTPUT_ROOT/temp_case-<uuid>; none may remain.
+    output_root = Path(_run_xmlquery(case1.caseroot, "CIME_OUTPUT_ROOT"))
+    temp_cases_before = set(output_root.glob("temp_case-*"))
     rcc = CaseBundle(case1.caseroot)
     output = rcc.identify_non_standard_case_info(
         case1.cime.cimeroot.parent, case1.machine, case1.project
@@ -148,6 +154,37 @@ def test_identify_non_standard_case_information(get_shareable_CrocoDash_case):
     assert output.user_nl_missing_params["mom"] == ["DEBUG"]
     assert output.source_mods_missing_files == ["src.mom/bleh.dummy"]
     assert output.xmlchanges_missing == ["JOB_PRIORITY"]
+    assert set(output_root.glob("temp_case-*")) == temp_cases_before
+
+
+def test_remove_case_output_dirs_only_removes_the_cases_own(tmp_path, monkeypatch):
+    """EXEROOT and RUNDIR are read from the case, and removed only when they are
+    in a directory named after it; anything else there is left alone."""
+    from CrocoDash import shareable
+
+    caseroot = tmp_path / "tmp" / "temp_case-0123"
+    caseroot.mkdir(parents=True)
+    (caseroot / "xmlquery").touch()
+    output_root = tmp_path / "scratch"
+    case_dir = output_root / caseroot.name
+    (case_dir / "bld" / "lib").mkdir(parents=True)
+    (case_dir / "run").mkdir()
+    (case_dir / "run" / "CASEROOT").write_text(str(caseroot))
+    shared_run = output_root / "run"  # not named after the case: not its own
+    shared_run.mkdir()
+    values = {"EXEROOT": case_dir / "bld", "RUNDIR": shared_run}
+    monkeypatch.setattr(shareable, "_run_xmlquery", lambda root, var: values[var])
+
+    shareable._remove_case_output_dirs(caseroot)
+    assert not (case_dir / "bld").exists()
+    assert (case_dir / "run" / "CASEROOT").exists()  # not the case's RUNDIR
+    assert shared_run.exists()
+
+    values["RUNDIR"] = case_dir / "run"
+    shareable._remove_case_output_dirs(caseroot)
+    assert not case_dir.exists()
+    assert shared_run.exists()
+    assert caseroot.exists()  # the caseroot is the TemporaryDirectory's to remove
 
 
 def test_read_user_nl_mom_lines_as_obj(get_CrocoDash_case):
