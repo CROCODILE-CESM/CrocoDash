@@ -1,7 +1,8 @@
 from CrocoDash.shareable import *
-from CrocoDash.shareable import _get_case_obj
+from CrocoDash.shareable import _get_case_obj, _load_FType_MOM_params
 import pytest
 import subprocess
+import sys
 import yaml
 from pathlib import Path
 
@@ -309,3 +310,21 @@ def test_read_sourcemods(fake_RCC_empty_case, tmp_path):
 
     # Assert
     assert case.sourcemods == expected
+
+
+def test_load_FType_MOM_params_finds_its_siblings(tmp_path):
+    """FType_MOM_params can import a MOM_RPS sibling by bare name, as with
+    ``from param_file_reader import read_MOM_params``. A fresh process (the CLI,
+    the MCP server) doesn't have MOM_RPS on sys.path, so loading it must put it
+    there, and take it off again."""
+    mom_rps = tmp_path / "components" / "mom" / "cime_config" / "MOM_RPS"
+    mom_rps.mkdir(parents=True)
+    sibling = f"sibling_{uuid4().hex}"  # a name no earlier test has imported
+    (mom_rps / f"{sibling}.py").write_text("VALUE = 42\n")
+    (mom_rps / "FType_MOM_params.py").write_text(f"from {sibling} import VALUE\n")
+    path_before = list(sys.path)
+
+    module = _load_FType_MOM_params(tmp_path)
+
+    assert module.VALUE == 42
+    assert sys.path == path_before
