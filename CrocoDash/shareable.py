@@ -218,17 +218,7 @@ class CaseBundle:
 
     def _read_user_nl_lines_as_obj(self, user_nl_comp="mom"):
         if not hasattr(self, "user_nl_reader"):
-            mod_path = str(
-                self.cesmroot
-                / "components"
-                / "mom"
-                / "cime_config"
-                / "MOM_RPS"
-                / "FType_MOM_params.py"
-            )
-            spec = importlib.util.spec_from_file_location("FType_MOM_params", mod_path)
-            self.user_nl_reader = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(self.user_nl_reader)
+            self.user_nl_reader = _load_FType_MOM_params(self.cesmroot)
         return self.user_nl_reader.FType_MOM_params.from_MOM_input(
             str(self.caseroot / f"user_nl_{user_nl_comp}")
         )._data
@@ -743,6 +733,26 @@ def ask_yes_no(prompt: str, default=True) -> bool:
 # ---------------------------------------------------------------------------
 # CIME utilities
 # ---------------------------------------------------------------------------
+
+
+def _load_FType_MOM_params(cesmroot):
+    """MOM_interface's FType_MOM_params module, loaded from cesmroot.
+
+    It can import its MOM_RPS siblings by bare name (``from param_file_reader
+    import read_MOM_params``), which works in buildnml because buildnml puts
+    MOM_RPS on sys.path. Do the same here, but only while the module loads.
+    """
+    mom_rps = str(Path(cesmroot) / "components" / "mom" / "cime_config" / "MOM_RPS")
+    spec = importlib.util.spec_from_file_location(
+        "FType_MOM_params", os.path.join(mom_rps, "FType_MOM_params.py")
+    )
+    module = importlib.util.module_from_spec(spec)
+    sys.path.insert(0, mom_rps)
+    try:
+        spec.loader.exec_module(module)
+    finally:
+        sys.path.remove(mom_rps)
+    return module
 
 
 def _get_case_obj(caseroot):

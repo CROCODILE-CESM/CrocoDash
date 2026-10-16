@@ -1,6 +1,5 @@
 """Reading user_nl files in tests the way the model's own tools do."""
 
-import importlib.util
 from pathlib import Path
 
 
@@ -20,7 +19,6 @@ def mom_parser(cesmroot):
     path = Path(cesmroot) / "components/mom/cime_config/MOM_RPS/FType_MOM_params.py"
     if not path.exists():
         return None
-    spec = importlib.util.spec_from_file_location("FType_MOM_params", path)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module.FType_MOM_params
+    from CrocoDash.shareable import _load_FType_MOM_params
+
+    return _load_FType_MOM_params(cesmroot).FType_MOM_params
