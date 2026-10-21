@@ -186,9 +186,11 @@ jobs:
         env:
           APPTAINER_DOCKER_USERNAME: ${{ github.actor }}
           APPTAINER_DOCKER_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+        # The image's CESM must be the same branch as CESM_REF, which built the
+        # bundle; sha-2da8a5d is crocontainer main built against CESM crocodash.
         run: |
           apptainer build --sandbox workspace_sandbox/ \
-            docker://ghcr.io/crocodile-cesm/crocontainer:sha-0c9e3fb
+            docker://ghcr.io/crocodile-cesm/crocontainer:sha-2da8a5d
 
       # Copy the current CrocoDash into the sandbox container to ensure the latest code is used
       - uses: actions/checkout@v4
@@ -209,6 +211,16 @@ jobs:
         run: |
               rm -rf workspace_sandbox/workspace/CrocoDash
               cp -r CrocoDash workspace_sandbox/workspace/
+      # The image's CrocoDash env was built from its own copy of environment.yml,
+      # so new dependencies (e.g. -e ./gallery/) are missing until it is updated.
+      - name: Update the container's CrocoDash env
+        if: steps.compare.outputs.env_changed == 'true'
+        run: |
+          apptainer exec --writable workspace_sandbox/ bash -c '
+            source /opt/conda/etc/profile.d/conda.sh
+            cd /workspace/CrocoDash
+            printf "Metadata-Version: 2.1\nName: rm6\nVersion: 0.1.0\n" > CrocoDash/rm6/PKG-INFO
+            conda env update -n CrocoDash -f environment.yml'
       
         # This is warning that CIRRUS runners may not pull the most up-to-date image from crocontainer, you may need a new tag name. 
       - name: Run CESM
