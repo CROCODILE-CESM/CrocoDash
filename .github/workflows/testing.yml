@@ -187,10 +187,10 @@ jobs:
           APPTAINER_DOCKER_USERNAME: ${{ github.actor }}
           APPTAINER_DOCKER_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
         # The image's CESM must be the same branch as CESM_REF, which built the
-        # bundle; sha-2da8a5d is crocontainer main built against CESM crocodash.
+        # bundle; sha-acfa305 is crocontainer main built against CESM crocodash.
         run: |
           apptainer build --sandbox workspace_sandbox/ \
-            docker://ghcr.io/crocodile-cesm/crocontainer:sha-2da8a5d
+            docker://ghcr.io/crocodile-cesm/crocontainer:sha-acfa305
 
       # Copy the current CrocoDash into the sandbox container to ensure the latest code is used
       - uses: actions/checkout@v4
@@ -242,6 +242,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: cesm-${{ github.run_id }}
+          # run_case.sh sets HOME=/root, so the case runs in the bound cesm_scratch.
           path: |
-            /home/runner/cesm/scratch/case/run/
-            /home/runner/cesm/archive/case/
+            ${{ github.workspace }}/cesm_scratch/case/run/
+            ${{ github.workspace }}/workspace_sandbox/root/cesm/archive/case/
