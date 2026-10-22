@@ -98,6 +98,7 @@ class CESM_POP_OUTPUT(MOM6ForcingProduct):
     }
 
     @accessmethod(
+        freq_handling="declare",
         description=(
             "Gets CESM single-variable-per-file (tseries) ocean data from a given "
             "path (by default a POP-MARBL run) — the standard CESM postprocessed "
@@ -133,9 +134,11 @@ class CESM_POP_OUTPUT(MOM6ForcingProduct):
         lat_name="TLAT",
         lon_name="TLONG",
         preview=False,
+        freq=None,
     ):
         # CESM-POP tseries output needs the month-shift correction for its
         # average-endpoint timestamp labeling convention.
+        resolve_time_sampling(CESM_POP_OUTPUT, "get_cesm_single_variable_data", freq)
         return read_single_variable_tseries_data(
             dates,
             lat_min,
@@ -191,6 +194,7 @@ class CESM_MOM_OUTPUT(MOM6ForcingProduct):
     tracer_var_names = {"temp": "thetao", "salt": "so"}
 
     @accessmethod(
+        freq_handling="declare",
         description=(
             "Reads native MOM6 output (full history/diagnostic files, or "
             "diag_table-extracted cross-section slices) from any directory and "
@@ -221,7 +225,9 @@ class CESM_MOM_OUTPUT(MOM6ForcingProduct):
         time_var_name="time",
         buffer_deg=1.5,
         preview=False,
+        freq=None,
     ):
+        resolve_time_sampling(CESM_MOM_OUTPUT, "get_mom6_output_data", freq)
         validate_dataset_path(dataset_path)
 
         files = sorted(Path(dataset_path).glob(file_glob))
@@ -305,6 +311,7 @@ class CESM_MOM_OUTPUT(MOM6ForcingProduct):
         return [output_path]
 
     @accessmethod(
+        freq_handling="declare",
         description=(
             "Gets native MOM6 output that's organized in the CESM single-"
             "variable-per-file (tseries) convention instead of one multi-"
@@ -334,8 +341,10 @@ class CESM_MOM_OUTPUT(MOM6ForcingProduct):
         regex=r"(\d{6,8})-(\d{6,8})",
         delimiter=".",
         preview=False,
+        freq=None,
     ):
         # Native MOM6 output doesn't need the CESM-POP month-shift correction.
+        resolve_time_sampling(CESM_MOM_OUTPUT, "get_mom6_single_variable_data", freq)
         return read_single_variable_tseries_data(
             dates,
             lat_min,
