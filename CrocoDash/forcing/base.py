@@ -2,7 +2,6 @@ from pathlib import Path
 from typing import List, Dict
 from abc import ABC, abstractmethod
 from functools import cached_property
-from visualCaseGen.custom_widget_types.case_tools import xmlchange
 from CrocoDash.forcing import user_nl_blocks
 from CrocoDash import case_state
 from CrocoDash.logging import setup_logger
@@ -479,6 +478,41 @@ class UserNLConfigParam(OutputParam):
         raise KeyError(f"Parameter {self.name} not found in {user_nl_path }")
 
 
+def xmlchange(var, val, *, caseroot, is_non_local=False):
+    """Run ``./xmlchange var=val`` in ``caseroot``.
+
+    visualCaseGen's xmlchange changes whichever case was created last in this
+    process; this one changes the case it is given.
+    """
+    cmd = ["./xmlchange", f"{var}={val}"]
+    if is_non_local:
+        cmd.append("--non-local")
+    print(" ".join(cmd))
+    try:
+        res = subprocess.run(cmd, cwd=Path(caseroot), capture_output=True)
+    except OSError as e:
+        raise RuntimeError(f"Could not run ./xmlchange in {caseroot}: {e}") from e
+    if res.returncode != 0:
+        raise RuntimeError(
+            f"{' '.join(cmd)} failed in {caseroot}:\n{res.stderr.decode().strip()}"
+        )
+
+
+def xmlquery(var, *, caseroot):
+    """The case's current value of ``var``, from ``./xmlquery`` in ``caseroot``."""
+    try:
+        res = subprocess.run(
+            ["./xmlquery", var, "--value"], cwd=Path(caseroot), capture_output=True
+        )
+    except OSError as e:
+        raise RuntimeError(f"Could not run ./xmlquery in {caseroot}: {e}") from e
+    if res.returncode != 0:
+        raise RuntimeError(
+            f"./xmlquery {var} failed in {caseroot}:\n{res.stderr.decode().strip()}"
+        )
+    return res.stdout.decode().strip()
+
+
 class XMLConfigParam(OutputParam):
     """
     Parameter applied via xmlchange.
@@ -496,13 +530,14 @@ class XMLConfigParam(OutputParam):
         super().__init__(name, comment, is_file=is_file)
         self.is_non_local = is_non_local
 
-    def apply(self):
+    def apply(self, caseroot):
         if self.value is None:
             raise ValueError(f"Value for parameter {self.name} has not been set.")
 
         xmlchange(
             self.name,
-            str(self.value),
+            self.value,
+            caseroot=caseroot,
             is_non_local=self.is_non_local,
         )
         self.executed = True
@@ -665,12 +700,16 @@ class BaseConfigurator(ABC):
         # A configurator's user_nl parameters go into one CrocoDash block per
         # file, which the next configure_forcings() call replaces (see
         # user_nl_blocks). Consecutive parameters with the same comment share
-        # one comment line.
+        # one comment line. Every change names the registry case's caseroot;
+        # there is none without a live Case (direct construction in tests).
+        case = getattr(self.registry, "case", None)
+        caseroot = getattr(case, "caseroot", None)
         groups = {}
         for p in self.output_params:
             if isinstance(p, XMLConfigParam):
                 p.is_non_local = self.is_non_local
-            if isinstance(p, UserNLConfigParam):
+                p.apply(caseroot)
+            elif isinstance(p, UserNLConfigParam):
                 file_groups = groups.setdefault(p.user_nl_name, [])
                 if file_groups and file_groups[-1][0] == p.comment:
                     file_groups[-1][1].append(p.pair())
@@ -679,7 +718,13 @@ class BaseConfigurator(ABC):
             else:
                 p.apply()
         for user_nl_name, file_groups in groups.items():
-            user_nl_blocks.write(self.name, user_nl_name, file_groups)
+            user_nl_blocks.write(
+                self.name,
+                user_nl_name,
+                file_groups,
+                caseroot=caseroot,
+                ninst=getattr(case, "ninst", 1),
+            )
         for p in self.output_params:
             if isinstance(p, UserNLConfigParam):
                 p.executed = True

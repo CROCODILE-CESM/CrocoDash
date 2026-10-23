@@ -2,10 +2,8 @@
 configure_forcings() replaces its own entries and nothing else."""
 
 from pathlib import Path
-from types import SimpleNamespace
 
 import pytest
-from ProConPy.config_var import cvars
 
 from CrocoDash.forcing import user_nl_blocks
 from tests.user_nl_helpers import keys as _keys, mom_parser
@@ -32,9 +30,7 @@ OBC3 = (
 
 
 @pytest.fixture
-def caseroot(tmp_path, monkeypatch):
-    monkeypatch.setitem(cvars, "CASEROOT", SimpleNamespace(value=tmp_path))
-    monkeypatch.setitem(cvars, "NINST", SimpleNamespace(value=1))
+def caseroot(tmp_path):
     for model, text in CREATION.items():
         (tmp_path / f"user_nl_{model}").write_text(text)
     return tmp_path
@@ -42,11 +38,12 @@ def caseroot(tmp_path, monkeypatch):
 
 def _configure(caseroot, obc=OBC4, tides=True):
     """One configure_forcings() call's worth of writes."""
+    case = dict(caseroot=caseroot, ninst=1)
     edited = user_nl_blocks.strip(caseroot)
-    user_nl_blocks.write("conditions", "mom", [IC, obc])
+    user_nl_blocks.write("conditions", "mom", [IC, obc], **case)
     if tides:
-        user_nl_blocks.write("tides", "mom", [("Tides", [("TIDES", "True")])])
-    user_nl_blocks.write("CICE", "cice", [(None, [("ice_ic", "'default'")])])
+        user_nl_blocks.write("tides", "mom", [("Tides", [("TIDES", "True")])], **case)
+    user_nl_blocks.write("CICE", "cice", [(None, [("ice_ic", "'default'")])], **case)
     user_nl_blocks.report_edits(caseroot, edited)
 
 
@@ -128,12 +125,10 @@ def test_unedited_blocks_give_no_warning(caseroot, capsys):
     assert "WARNING" not in capsys.readouterr().out
 
 
-def test_every_instance_file_is_managed(tmp_path, monkeypatch):
-    monkeypatch.setitem(cvars, "CASEROOT", SimpleNamespace(value=tmp_path))
-    monkeypatch.setitem(cvars, "NINST", SimpleNamespace(value=2))
+def test_every_instance_file_is_managed(tmp_path):
     for _ in range(2):
         user_nl_blocks.strip(tmp_path)
-        user_nl_blocks.write("conditions", "mom", [IC])
+        user_nl_blocks.write("conditions", "mom", [IC], caseroot=tmp_path, ninst=2)
     for name in ("user_nl_mom_0001", "user_nl_mom_0002"):
         assert _keys((tmp_path / name).read_text()) == ["INIT_LAYERS_FROM_Z_FILE"]
 
@@ -157,17 +152,17 @@ def test_stream_mods_set_outside_win_whatever_the_spacing(caseroot):
         ("CORE_IAF_JRA.PREC:year_first", 2014),
         ("CORE_IAF_JRA.PREC:year_last", 2015),
     ]
-    user_nl_blocks.write("StreamYears", "datm_streams", [("Align", pairs)])
+    user_nl_blocks.write(
+        "StreamYears", "datm_streams", [("Align", pairs)], caseroot=caseroot, ninst=1
+    )
     text = path.read_text()
     assert "year_first = 2014" not in text
     assert "CORE_IAF_JRA.PREC:year_last = 2015" in text
 
 
-def test_each_instance_file_keeps_its_own_overrides(tmp_path, monkeypatch, capsys):
-    monkeypatch.setitem(cvars, "CASEROOT", SimpleNamespace(value=tmp_path))
-    monkeypatch.setitem(cvars, "NINST", SimpleNamespace(value=2))
+def test_each_instance_file_keeps_its_own_overrides(tmp_path, capsys):
     (tmp_path / "user_nl_mom_0002").write_text("INIT_LAYERS_FROM_Z_FILE = False\n")
-    user_nl_blocks.write("conditions", "mom", [IC])
+    user_nl_blocks.write("conditions", "mom", [IC], caseroot=tmp_path, ninst=2)
     assert _keys((tmp_path / "user_nl_mom_0001").read_text()) == [
         "INIT_LAYERS_FROM_Z_FILE"
     ]
@@ -184,8 +179,11 @@ def test_restore_undoes_a_failed_call(caseroot):
     before = _files(caseroot)
     contents = user_nl_blocks.snapshot(caseroot)
     user_nl_blocks.strip(caseroot)
-    user_nl_blocks.write("conditions", "mom", [IC, OBC3])
-    user_nl_blocks.write("StreamYears", "datm_streams", [(None, [("s:year_first", 1)])])
+    case = dict(caseroot=caseroot, ninst=1)
+    user_nl_blocks.write("conditions", "mom", [IC, OBC3], **case)
+    user_nl_blocks.write(
+        "StreamYears", "datm_streams", [(None, [("s:year_first", 1)])], **case
+    )
     user_nl_blocks.restore(caseroot, contents)
     assert _files(caseroot) == before
 

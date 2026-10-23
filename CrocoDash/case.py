@@ -17,6 +17,7 @@ from CrocoDash.forcing.base import (
     WorkflowContext,
     read_config,
     write_config,
+    xmlchange,
 )
 from CrocoDash.forcing.utils import read_min_depth
 from CrocoDash.raw_data_access.registry import ProductRegistry
@@ -26,7 +27,7 @@ from ProConPy.stage import Stage
 from ProConPy.dev_utils import ConstraintViolation
 from visualCaseGen.initialize import initialize as initialize_visualCaseGen
 from visualCaseGen.custom_widget_types.case_creator import CaseCreator
-from visualCaseGen.custom_widget_types.case_tools import xmlchange, append_user_nl
+from visualCaseGen.custom_widget_types.case_tools import append_user_nl
 from CrocoDash.forcing import cice, user_nl_blocks
 from CrocoDash.forcing.driver import run_workflow
 
@@ -205,6 +206,10 @@ class Case:
         except Exception as e:
             raise RuntimeError(f"Case configuration failed: {e}") from e
 
+        # Read now: visualCaseGen's state belongs to the case created last.
+        self.session_id = cvars["MB_ATTEMPT_ID"].value
+        self.grid_name = ocn_grid.name
+
         case_dirs = [
             self.inputdir,
             self.caseroot,
@@ -221,10 +226,11 @@ class Case:
 
             # Having set the configuration variables and created the grid input files, we can now create the case instance.
             self._create_newcase()
+            self.is_non_local = self.cc._is_non_local()
 
             # After creating the case, instantiate the CIME case object for later use.
             self._cime_case = self.cime.get_case(
-                self.caseroot, non_local=self.cc._is_non_local()
+                self.caseroot, non_local=self.is_non_local
             )
 
             # Need the case: they read <COMP>_NCPL and write user_nl_<comp>.
@@ -232,8 +238,6 @@ class Case:
                 self._set_ww3_timesteps()
             if self.cice_in_compset:
                 self._set_cice_ndtd()
-
-            self.is_non_local = self.cc._is_non_local()
 
             self._apply_final_xmlchanges(ntasks_ocn, job_queue, job_wallclock_time)
 
@@ -477,8 +481,7 @@ class Case:
         ocn_dir.mkdir()
 
         # suffix for the MOM6 grid files
-        session_id = cvars["MB_ATTEMPT_ID"].value
-        suffix = f"{ocn_grid.name}_{session_id}"
+        suffix = f"{ocn_grid.name}_{self.session_id}"
 
         # MOM6 supergrid file
         self.supergrid_path = str(ocn_dir / f"ocean_hgrid_{suffix}.nc")
@@ -625,8 +628,6 @@ class Case:
             contains a key that is not a valid overridable argument of `function_name`.
         AssertionError
             If the selected data product is not categorized as a forcing product.
-        RuntimeError
-            If another case was created after this one in the same session (see Notes).
 
         Notes
         -----
@@ -638,9 +639,6 @@ class Case:
           rewrites; values set outside those blocks are kept and take precedence.
           Files `process_forcings()` made for a different configuration are removed,
           so that it regenerates them.
-        - With several cases in one session, call it on each case right after
-          creating it: it writes through visualCaseGen's global state, which belongs
-          to the case created last, and raises a RuntimeError on any other case.
 
         See Also
         --------
@@ -712,21 +710,6 @@ class Case:
             "function_args": function_args,
         }
 
-        # Every user_nl and xml change below goes through visualCaseGen's global
-        # state, which belongs to the case created last in this session.
-        active_caseroot = Path(cvars["CASEROOT"].value)
-        if active_caseroot != self.caseroot:
-            raise RuntimeError(
-                f"configure_forcings() was called on {self.caseroot.name}, but "
-                f"{active_caseroot.name} was created after it in this session, and "
-                "the namelist and xml changes would be written into that case. "
-                "Call configure_forcings() on each case right after creating it, "
-                "before creating the next one."
-            )
-
-        self.session_id = cvars["MB_ATTEMPT_ID"].value
-        self.grid_name = self.ocn_grid.name
-
         self.fcr = ForcingConfigRegistry(self.compset_lname, inputs, self)
         # Every input is validated by now, so replace the previous call's
         # user_nl entries. If anything from here on fails, the user_nl files
@@ -761,22 +744,26 @@ class Case:
         xmlchange(
             "CALENDAR",
             self.forcing_product.calendar.cesm,
-            is_non_local=self.cc._is_non_local(),
+            caseroot=self.caseroot,
+            is_non_local=self.is_non_local,
         )
         xmlchange(
             "RUN_STARTDATE",
             str(self.date_range[0])[:10],
-            is_non_local=self.cc._is_non_local(),
+            caseroot=self.caseroot,
+            is_non_local=self.is_non_local,
         )
         xmlchange(
             "STOP_OPTION",
             "ndays",
-            is_non_local=self.cc._is_non_local(),
+            caseroot=self.caseroot,
+            is_non_local=self.is_non_local,
         )
         xmlchange(
             "STOP_N",
             (self.date_range[1] - self.date_range[0]).days,
-            is_non_local=self.cc._is_non_local(),
+            caseroot=self.caseroot,
+            is_non_local=self.is_non_local,
         )
         if self._configure_forcings_called:
             print(
@@ -1205,8 +1192,8 @@ class Case:
                 "supergrid_path": self.supergrid_path,
                 "topo_path": self.topo_path,
                 "vgrid_path": self.vgrid_path,
-                "grid_name": self.ocn_grid.name,
-                "session_id": cvars["MB_ATTEMPT_ID"].value,
+                "grid_name": self.grid_name,
+                "session_id": self.session_id,
                 "compset_lname": self.compset_lname,
                 "machine": self.machine,
                 "esmf_mesh_path": self.esmf_mesh_path,
@@ -1225,20 +1212,32 @@ class Case:
         xmlchange(
             "MOM6_MEMORY_MODE",
             "dynamic_symmetric",
-            is_non_local=self.cc._is_non_local(),
+            caseroot=self.caseroot,
+            is_non_local=self.is_non_local,
         )
 
         # xmlchange("ROOTPE_OCN", 128, is_non_local=self.cc._is_non_local()) -> needs to be before the the setup
         if ntasks_ocn is not None:
-            xmlchange("NTASKS_OCN", ntasks_ocn, is_non_local=self.cc._is_non_local())
+            xmlchange(
+                "NTASKS_OCN",
+                ntasks_ocn,
+                caseroot=self.caseroot,
+                is_non_local=self.is_non_local,
+            )
         # This will trigger for both the run and the archiver.
         if job_queue is not None:
-            xmlchange("JOB_QUEUE", job_queue, is_non_local=self.cc._is_non_local())
+            xmlchange(
+                "JOB_QUEUE",
+                job_queue,
+                caseroot=self.caseroot,
+                is_non_local=self.is_non_local,
+            )
         if job_wallclock_time is not None:
             xmlchange(
                 "JOB_WALLCLOCK_TIME",
                 job_wallclock_time,
-                is_non_local=self.cc._is_non_local(),
+                caseroot=self.caseroot,
+                is_non_local=self.is_non_local,
             )
 
     def validate_case(self):
