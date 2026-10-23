@@ -119,7 +119,7 @@ class RunoffConfigurator(BaseConfigurator):
         super().configure()
 
     def validate_args(self, **kwargs):
-
+        super().validate_args(**kwargs)
         if (kwargs["rmax"] is None) != (kwargs["fold"] is None):
             raise ValueError("Both rmax and fold must be specified together.")
         if kwargs["rmax"] is not None:

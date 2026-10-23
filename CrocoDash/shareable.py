@@ -37,6 +37,7 @@ from uuid import uuid4
 import yaml
 from visualCaseGen.custom_widget_types.case_tools import xmlchange, append_user_nl
 from CrocoDash.forcing.base import *
+from CrocoDash.forcing.base import CONFIG_FILENAME, CONFIG_META_KEYS, read_config
 from CrocoDash.forcing import *
 from CrocoDash.logging import setup_logger
 from CrocoDash.recipe import case_to_yaml, create_case_from_yaml
@@ -168,11 +169,10 @@ class CaseBundle:
         }
 
         forcing_config_path = (
-            Path(state["inputdir"]) / "extract_forcings" / "config.json"
+            Path(state["inputdir"]) / "extract_forcings" / CONFIG_FILENAME
         )
         if forcing_config_path.exists():
-            with open(forcing_config_path) as f:
-                self.forcing_config = json.load(f)
+            self.forcing_config = read_config(forcing_config_path)
         else:
             self.forcing_config = {}
 
@@ -320,7 +320,7 @@ class CaseBundle:
                 shutil.copy(f, ocn_target)
 
         for config, value in self.forcing_config.items():
-            if config in {"conditions", "caseroot"}:
+            if config == "conditions" or config in CONFIG_META_KEYS:
                 continue
             configurator = ForcingConfigRegistry.get_configurator(value)
             for path in configurator.get_output_filepaths(ocn_dir):

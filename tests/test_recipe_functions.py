@@ -530,6 +530,20 @@ def test_configure_forcing_args_conditions_boundaries_win(sample_forcing_config)
     assert args["boundaries"] == ["north"]
 
 
+def test_configure_forcing_args_keeps_function_overrides(sample_forcing_config):
+    """Access-method arguments the user changed survive dump/fork; the ones
+    still at their defaults are left out."""
+    forcing_config = copy.deepcopy(sample_forcing_config)
+    forcing_config["conditions"]["inputs"].update(
+        function_name="get_glorys_data_from_rda",
+        function_args={"buf": 2.0, "name": None},
+    )
+
+    args = generate_configure_forcing_args(forcing_config)
+
+    assert args["function_overrides"] == {"buf": 2.0}
+
+
 def test_configure_forcing_args_missing_required_arg_raises(sample_forcing_config):
     forcing_config = copy.deepcopy(sample_forcing_config)
     del forcing_config["bgcic"]["inputs"]["marbl_ic_filepath"]
