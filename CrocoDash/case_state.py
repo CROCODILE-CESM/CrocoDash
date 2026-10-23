@@ -10,6 +10,7 @@ end of ``Case.__init__``.  This module owns:
 - which state-file keys are *derived* (i.e. cannot be passed straight back to
   ``Case.__init__``) and therefore need explicit handling when reconstructing a
   case from the file (``DERIVED_KEYS``);
+- the ``created`` snapshot of what creating the case left in the caseroot;
 - the ``write``, ``read``, and ``check_version`` functions.
 
 Keeping both ``INIT_ARGS_EXCLUDE`` and ``DERIVED_KEYS`` here makes the
@@ -20,11 +21,9 @@ this is the single file to update.
 import json
 from pathlib import Path
 
-from CrocoDash.logging import setup_logger
-
-logger = setup_logger(__name__)
-
-SCHEMA_VERSION = "1.1.0"
+# 1.2.0 added esmf_mesh_path and created. Older state files are refused: the
+# case has to be recreated (there is no migration).
+SCHEMA_VERSION = "1.2.0"
 FILENAME = "_crocodash_state.json"
 
 # Keys from Case.__init__ locals() that are NOT stored in _init_args.
@@ -61,25 +60,43 @@ DERIVED_KEYS = frozenset(
         "session_id",
         "compset_lname",
         "machine",
+        "esmf_mesh_path",
+        "created",
     }
 )
+
+
+def created_snapshot(caseroot):
+    """What creating the case left in *caseroot*, stored as the state's
+    "created" entry: anything beyond it is a change the user made later."""
+    caseroot = Path(caseroot)
+    replay = caseroot / "replay.sh"
+    return {
+        "replay_lines": (
+            len(replay.read_text().splitlines()) if replay.exists() else 0
+        ),
+        "user_nl": {
+            path.name: path.read_text() for path in sorted(caseroot.glob("user_nl_*"))
+        },
+        "xml_files": sorted(path.name for path in caseroot.glob("*.xml")),
+    }
 
 
 def check_version(state, state_path, supported=SCHEMA_VERSION):
     """Raise ValueError if state's schema_version is incompatible with *supported*.
 
-    Only MAJOR.MINOR must match; a higher PATCH is acceptable.
-    Logs a warning (rather than raising) when schema_version is absent entirely
-    (pre-versioning cases). Also used for the forcing config.json
-    (see CrocoDash.forcing.base.read_config), which passes its own *supported*.
+    Only MAJOR.MINOR must match; a higher PATCH is acceptable. A state file
+    without a schema_version predates versioning and is refused too. Also used
+    for the forcing config.json (see CrocoDash.forcing.base.read_config), which
+    passes its own *supported* and reads an unversioned file as 1.0.0.
     """
     version = state.get("schema_version")
     if version is None:
-        logger.warning(
-            f"{state_path}: no schema_version found; this case was created before "
-            "state versioning was introduced. Compatibility is not guaranteed."
+        raise ValueError(
+            f"{state_path} has no schema_version, so an older version of "
+            "CrocoDash created it. Recreate the case with the current version "
+            "of CrocoDash."
         )
-        return
     try:
         parts = version.split(".")
         major, minor = int(parts[0]), int(parts[1])

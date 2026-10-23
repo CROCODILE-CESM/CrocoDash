@@ -359,7 +359,7 @@ _major, _minor, _patch = STATE_SCHEMA_VERSION.split(".")
     [
         ({"schema_version": STATE_SCHEMA_VERSION}, None, None),
         ({"schema_version": f"{_major}.{_minor}.99"}, None, None),
-        ({}, None, None),
+        ({}, ValueError, None),
         (
             {"schema_version": f"{_major}.{int(_minor) + 1}.{_patch}"},
             ValueError,

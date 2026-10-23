@@ -1,7 +1,9 @@
 from pathlib import Path
+import sys
 import uuid
 import shutil
 from datetime import datetime
+from functools import cached_property
 import math
 import pandas as pd
 import regional_mom6 as rmom6
@@ -10,10 +12,13 @@ from CrocoDash.topo import Topo
 from CrocoDash.vgrid import VGrid
 from CrocoDash.forcing.base import (
     CONFIG_FILENAME,
+    CONFIG_META_KEYS,
     ForcingConfigRegistry,
+    WorkflowContext,
     read_config,
     write_config,
 )
+from CrocoDash.forcing.utils import read_min_depth
 from CrocoDash.raw_data_access.registry import ProductRegistry
 from CrocoDash.raw_data_access.base import ForcingProduct
 from ProConPy.config_var import ConfigVar, cvars
@@ -233,6 +238,9 @@ class Case:
             self._apply_final_xmlchanges(ntasks_ocn, job_queue, job_wallclock_time)
 
             self._write_state()
+            # Read the case back as from_caseroot() does, so that a created
+            # case and a read-back one can't drift apart.
+            self._bind(self.caseroot)
         except BaseException:
             _remove_failed_attempt(case_dirs, preexisting)
             raise
@@ -250,6 +258,91 @@ class Case:
                 user_args = ForcingConfigRegistry.get_user_args(configurator)
                 args_str = ", ".join(user_args) if user_args else "no arguments"
                 print(f"  - {configurator.name}: {args_str}")
+
+    @classmethod
+    def from_caseroot(cls, caseroot, *, cesmroot=None):
+        """Read back a case CrocoDash created, from its caseroot alone.
+
+        Runs no create_newcase, case.setup or visualCaseGen: everything comes
+        from the case's _crocodash_state.json and, once its forcings are
+        configured, its config.json. The grids and the CIME case are loaded on
+        first use. A case read back can process its forcings; configuring them
+        still needs the case created in this session.
+
+        Parameters
+        ----------
+        caseroot : str | Path
+            The caseroot of a case created by this version of CrocoDash. A case
+            created by an older version is refused and has to be recreated.
+        cesmroot : str | Path, optional
+            The CESM tree to use instead of the one the case was created with,
+            e.g. because that one moved. It isn't saved.
+        """
+        case = cls.__new__(cls)
+        case._bind(caseroot, cesmroot=cesmroot)
+        return case
+
+    def _bind(self, caseroot, cesmroot=None):
+        """Set what processing and the properties need from the state file.
+
+        __init__ ends here too, so a created case and one read back with
+        from_caseroot() can't drift apart. These must be plain attributes:
+        configure_forcings() passes every public attribute to the
+        configurators as a case_* input.
+        """
+        state = case_state.read(caseroot)
+        self.caseroot = Path(caseroot)
+        self.inputdir = Path(state["inputdir"])
+        self.cesmroot = Path(cesmroot or state["cesmroot"])
+        self.compset_lname = state["compset_lname"]
+        self.machine = state["machine"]
+        self.project = state["project"]
+        self.ninst = state["ninst"]
+        self.atm_grid_name = state["atm_grid_name"]
+        self.rof_grid_name = state["rof_grid_name"]
+        self.session_id = state["session_id"]
+        self.grid_name = state["grid_name"]
+        self.supergrid_path = state["supergrid_path"]
+        self.topo_path = state["topo_path"]
+        self.vgrid_path = state["vgrid_path"]
+        self.esmf_mesh_path = state["esmf_mesh_path"]
+        # override=True applies to creating the case only; nothing is deleted
+        # after that.
+        self.override = False
+        self.extract_forcings_path = self.inputdir / "extract_forcings"
+        self._configure_forcings_called = (
+            self.extract_forcings_path / CONFIG_FILENAME
+        ).exists()
+
+    # __init__ sets ocn_grid, ocn_topo, ocn_vgrid and _cime_case, which then
+    # shadow these; a case read back loads each from its files when first used.
+
+    @cached_property
+    def ocn_grid(self):
+        return Grid.from_supergrid(self.supergrid_path, name=self.grid_name)
+
+    @cached_property
+    def ocn_topo(self):
+        return Topo.from_topo_file(
+            self.ocn_grid,
+            self.topo_path,
+            min_depth=read_min_depth(self.topo_path),
+            git=False,
+        )
+
+    @cached_property
+    def ocn_vgrid(self):
+        return VGrid.from_file(str(self.vgrid_path))
+
+    @cached_property
+    def _cime_case(self):
+        """The case's read-only CIME case, opened with this case's cesmroot."""
+        cimeroot = (self.cesmroot / "cime").as_posix()
+        if cimeroot not in sys.path:
+            sys.path.append(cimeroot)
+        from CIME.case.case import Case as CIMECase
+
+        return CIMECase(self.caseroot.as_posix(), read_only=True, non_local=True)
 
     @property
     def cice_in_compset(self):
@@ -652,8 +745,6 @@ class Case:
                     shutil.rmtree(path)
                 else:
                     path.unlink()
-            if self.override is True and self.extract_forcings_path.exists():
-                shutil.rmtree(self.extract_forcings_path)
             # Last, so that it never describes files that are still to be removed.
             self.extract_forcings_path.mkdir(parents=True, exist_ok=True)
             write_config(config_path, config)
@@ -736,10 +827,9 @@ class Case:
                 "configure_forcings() must be called before process_forcings()."
             )
 
-        config_path = self.extract_forcings_path / CONFIG_FILENAME
-        config = read_config(config_path)
-
-        flag_names = ForcingConfigRegistry.resolve_process_targets(config).keys()
+        flag_names = ForcingConfigRegistry.resolve_process_targets(
+            self.forcing_config
+        ).keys()
         valid_kwargs = {f"process_{name}" for name in flag_names}
         unrecognized = sorted(set(kwargs) - valid_kwargs)
         if unrecognized:
@@ -749,9 +839,39 @@ class Case:
             )
         flags = {name: kwargs.get(f"process_{name}", True) for name in flag_names}
 
-        run_workflow(config_path=config_path, **flags)
+        run_workflow(self, **flags)
 
         print(f"Case is ready to be built: {self.caseroot}")
+
+    @property
+    def forcing_config(self):
+        """The config.json configure_forcings() wrote, read afresh on every
+        access so that it never goes stale."""
+        return read_config(self.extract_forcings_path / CONFIG_FILENAME)
+
+    def configurators(self):
+        """The configured forcings, rebuilt from config.json:
+        {config.json entry: configurator}."""
+        return {
+            key: ForcingConfigRegistry.get_configurator(entry)
+            for key, entry in self.forcing_config.items()
+            if key not in CONFIG_META_KEYS
+        }
+
+    def workflow_context(self, preview=False):
+        """The WorkflowContext every process step gets: config.json and the
+        case's paths that no single configurator owns."""
+        return WorkflowContext(
+            inputdir=self.inputdir,
+            supergrid_path=self.supergrid_path,
+            vgrid_path=self.vgrid_path,
+            topo_path=self.topo_path,
+            raw_data_dir=self.extract_forcings_path / "raw_data",
+            regridded_data_dir=self.extract_forcings_path / "regridded_data",
+            output_path=self.inputdir / "ocn",
+            config=self.forcing_config,
+            preview=preview,
+        )
 
     @property
     def name(self) -> str:
@@ -1071,7 +1191,11 @@ class Case:
                 cvars["PECOUNT"].value = pecount
 
     def _write_state(self):
-        """Write case creation parameters to _crocodash_state.json in caseroot."""
+        """Write case creation parameters to _crocodash_state.json in caseroot.
+
+        Called after the last creation-time xmlchange and user_nl write, so its
+        "created" snapshot holds everything creating the case left there.
+        """
         case_state.write(
             self.caseroot,
             {
@@ -1085,6 +1209,8 @@ class Case:
                 "session_id": cvars["MB_ATTEMPT_ID"].value,
                 "compset_lname": self.compset_lname,
                 "machine": self.machine,
+                "esmf_mesh_path": self.esmf_mesh_path,
+                "created": case_state.created_snapshot(self.caseroot),
                 # Scalar init args captured at construction time
                 **self._init_args,
             },

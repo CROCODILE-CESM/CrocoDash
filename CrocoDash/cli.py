@@ -32,7 +32,7 @@ def _dump(args):
 
 
 def _process(args):
-    from CrocoDash import case_state
+    from CrocoDash.case import Case
     from CrocoDash.forcing.driver import run_workflow, resolve_components
     from CrocoDash.forcing.base import (
         CONFIG_FILENAME,
@@ -40,27 +40,28 @@ def _process(args):
         read_config,
     )
 
+    # A config.json (given, or found in the current directory) names its case.
     if args.config:
-        config_path = Path(args.config)
+        caseroot = Path(read_config(args.config)["caseroot"])
     elif args.caseroot:
         caseroot = Path(args.caseroot)
-        state = case_state.read(caseroot)
-        config_path = Path(state["inputdir"]) / "extract_forcings" / CONFIG_FILENAME
-        if not config_path.exists():
-            raise CrocoDashCliError(
-                f"Forcing configuration not found at {config_path}\n"
-                "Run case.configure_forcings() before calling 'crocodash process'."
-            )
     elif (Path.cwd() / CONFIG_FILENAME).exists():
         # Ran directly from inside the extract_forcings/ directory
-        config_path = Path.cwd() / CONFIG_FILENAME
+        caseroot = Path(read_config(Path.cwd() / CONFIG_FILENAME)["caseroot"])
     else:
         raise CrocoDashCliError(
             "No config.json found in the current directory and no --config or --caseroot provided.\n"
             "Run from inside an extract_forcings/ directory, or pass --caseroot <path> or --config <path>."
         )
 
-    config = read_config(config_path)
+    case = Case.from_caseroot(caseroot)
+    if not case._configure_forcings_called:
+        raise CrocoDashCliError(
+            "Forcing configuration not found at "
+            f"{case.extract_forcings_path / CONFIG_FILENAME}\n"
+            "Run case.configure_forcings() before calling 'crocodash process'."
+        )
+    config = case.forcing_config
 
     args = resolve_components(args, config)
 
@@ -70,7 +71,7 @@ def _process(args):
         return
 
     run_workflow(
-        config_path=config_path,
+        case,
         **{name: getattr(args, name) for name in flag_names},
         preview=config["conditions"]["outputs"].get("preview", False),
     )
@@ -213,7 +214,7 @@ def main():
     ef_parser.add_argument(
         "--config",
         default=None,
-        help="Direct path to config.json. Takes precedence over --caseroot.",
+        help="Path to a case's config.json; that case is processed. Takes precedence over --caseroot.",
     )
     ef_parser.add_argument(
         "--caseroot",

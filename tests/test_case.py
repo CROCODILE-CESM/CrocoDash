@@ -204,3 +204,64 @@ def test_a_failed_attempt_leaves_a_preexisting_dir_alone(tmp_path):
     )
     assert sorted(p.name for p in tmp_path.iterdir()) == ["bld_run"]
     assert (bld_run / "marker").read_text() == "earlier run"
+
+
+def test_from_caseroot_reads_a_case_back_without_cime(tmp_path):
+    """A case reads back from its state file and config.json alone. Nothing
+    exists at its cesmroot or grid paths, so touching CESM, visualCaseGen or
+    the grid files on the way would fail."""
+    from CrocoDash import case_state
+    from CrocoDash.case import Case
+    from CrocoDash.forcing.base import CONFIG_FILENAME, write_config
+
+    caseroot, inputdir = tmp_path / "case", tmp_path / "input"
+    caseroot.mkdir()
+    (inputdir / "extract_forcings").mkdir(parents=True)
+    case_state.write(
+        caseroot,
+        {
+            "inputdir": str(inputdir),
+            "cesmroot": "/nonexistent/cesm",
+            "supergrid_path": "/nonexistent/ocean_hgrid.nc",
+            "topo_path": "/nonexistent/ocean_topog.nc",
+            "vgrid_path": "/nonexistent/ocean_vgrid.nc",
+            "esmf_mesh_path": "/nonexistent/ESMF_mesh.nc",
+            "grid_name": "g",
+            "session_id": "abc123",
+            "compset_lname": "1850_DATM%JRA_SLND_SICE_MOM6_SROF_SGLC_SWAV",
+            "machine": "derecho",
+            "project": None,
+            "ninst": 1,
+            "atm_grid_name": "TL319",
+            "rof_grid_name": None,
+        },
+    )
+    tides = {
+        "name": "tides",
+        "inputs": {
+            "tpxo_elevation_filepath": "h.nc",
+            "tpxo_velocity_filepath": "u.nc",
+            "tidal_constituents": ["M2"],
+            "start_date": "2020, 01, 01",
+            "boundaries": ["north"],
+        },
+    }
+    write_config(
+        inputdir / "extract_forcings" / CONFIG_FILENAME,
+        {"caseroot": str(caseroot), "tides": tides},
+    )
+
+    case = Case.from_caseroot(caseroot)
+
+    assert case.configurators()["tides"].get_input_param("tidal_constituents") == ["M2"]
+    assert case.workflow_context().inputdir == inputdir
+
+
+def test_from_caseroot_refuses_a_state_older_than_1_2(tmp_path):
+    """Cases from before the state recorded esmf_mesh_path and the created
+    snapshot have to be recreated."""
+    from CrocoDash.case import Case
+
+    (tmp_path / "_crocodash_state.json").write_text('{"schema_version": "1.1.0"}')
+    with pytest.raises(ValueError):
+        Case.from_caseroot(tmp_path)

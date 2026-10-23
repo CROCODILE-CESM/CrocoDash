@@ -105,7 +105,7 @@ def register(cls):
 class WorkflowContext:
     """Workflow-level paths shared by every configurator's process step.
 
-    Built once by driver.run_workflow() from config.json + case_state, and
+    Built once per driver.run_workflow() by Case.workflow_context(), and
     passed into every ``process_*(ctx)`` call. These are paths no single
     configurator owns (they're not part of any configurator's own inputs/
     outputs) but that most process steps need -- grid/topo/vgrid files and

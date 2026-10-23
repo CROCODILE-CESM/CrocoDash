@@ -13,18 +13,20 @@ process`` (see ``CrocoDash.cli``).
 
 Typical Python usage::
 
+    from CrocoDash.case import Case
     from CrocoDash.forcing.driver import run_workflow
 
-    run_workflow(config_path="~/croc_input/mycase/extract_forcings/config.json", bc=True, ic=True)
+    run_workflow(Case.from_caseroot("/path/to/caseroot"), bc=True, ic=True)
 
+run_workflow() takes the case instead of reading it from disk itself:
+case.py imports this module, so importing CrocoDash.case here would be
+circular.
 """
 
 import graphlib
 import time
-from pathlib import Path
 
-from CrocoDash import case_state
-from CrocoDash.forcing.base import ForcingConfigRegistry, WorkflowContext, read_config
+from CrocoDash.forcing.base import ForcingConfigRegistry
 
 
 def _resolve_process_order_overrides(targets):
@@ -46,38 +48,16 @@ def _resolve_process_order_overrides(targets):
     return overrides
 
 
-def _load(config_path):
-    """Load config.json, read case state, and derive common paths."""
-    config = read_config(config_path)
-    caseroot = config["caseroot"]
-    state = case_state.read(caseroot)
-    inputdir = Path(state["inputdir"])
-    return config, state, inputdir
-
-
-def _build_context(config, state, inputdir, preview=False):
-    extract_forcings_dir = inputdir / "extract_forcings"
-    return WorkflowContext(
-        inputdir=inputdir,
-        supergrid_path=state["supergrid_path"],
-        vgrid_path=state["vgrid_path"],
-        topo_path=state["topo_path"],
-        raw_data_dir=extract_forcings_dir / "raw_data",
-        regridded_data_dir=extract_forcings_dir / "regridded_data",
-        output_path=inputdir / "ocn",
-        config=config,
-        preview=preview,
-    )
-
-
-def run_workflow(config_path, preview=False, **flags):
+def run_workflow(case, *, preview=False, **flags):
     """
     Execute the forcing extraction workflow.
 
     Parameters
     ----------
-    config_path : str or Path
-        Path to the ``config.json`` written by ``Case.configure_forcings``.
+    case : CrocoDash.case.Case
+        The case to process, created in this session or read back with
+        ``Case.from_caseroot``. Its ``workflow_context()`` carries the
+        ``config.json`` that ``Case.configure_forcings`` wrote.
     preview : bool
         Preview task graph without executing.
     **flags : bool
@@ -86,11 +66,9 @@ def run_workflow(config_path, preview=False, **flags):
         types present in ``config.json`` declare -- see
         ``ForcingConfigRegistry.resolve_process_targets``.
     """
-    config_path = Path(config_path)
-    config, state, inputdir = _load(config_path)
-    ctx = _build_context(config, state, inputdir, preview=preview)
+    ctx = case.workflow_context(preview=preview)
 
-    targets = ForcingConfigRegistry.resolve_process_targets(config)
+    targets = ForcingConfigRegistry.resolve_process_targets(ctx.config)
     requested = {name for name, enabled in flags.items() if enabled and name in targets}
 
     order_overrides = _resolve_process_order_overrides(targets)

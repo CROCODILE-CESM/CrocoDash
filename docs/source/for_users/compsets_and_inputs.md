@@ -6,6 +6,7 @@ At the end of `Case.__init__`, CrocoDash writes a `_crocodash_state.json` file i
 
 ```json
 {
+  "schema_version": "1.2.0",
   "inputdir": "/path/to/croc_input/mycase",
   "cesmroot": "/path/to/CROCESM",
   "supergrid_path": "/path/to/.../ocean_hgrid_mygrid_abc123.nc",
@@ -15,14 +16,22 @@ At the end of `Case.__init__`, CrocoDash writes a `_crocodash_state.json` file i
   "session_id": "abc123",
   "compset_lname": "1850_DATM%JRA_SLND_SICE_MOM6%REGIONAL_SROF_SGLC_SWAV",
   "machine": "derecho",
+  "esmf_mesh_path": "/path/to/.../ESMF_mesh_mygrid_abc123.nc",
+  "created": {
+    "replay_lines": 68,
+    "user_nl": {"user_nl_mom": "...", "user_nl_cpl": "..."},
+    "xml_files": ["env_archive.xml", "env_batch.xml", "..."]
+  },
   "project": "NCGD0011",
   "atm_grid_name": "TL319"
 }
 ```
 
-This file is read by `crocodash dump` to reconstruct a YAML config, and by `bundle`/`fork`/`duplicate` to avoid re-parsing CIME. It is the paired counterpart to `inputdir/extract_forcings/config.json`, which records forcing configuration written by `configure_forcings`.
+`created` records what creating the case left in the caseroot: the number of lines in `replay.sh`, the text of every `user_nl_*` file, and the names of the `*.xml` files. Anything beyond it is a change made after the case was created.
 
-Both files carry a `schema_version`, each versioned on its own. Reading a file whose MAJOR.MINOR doesn't match what the installed CrocoDash supports raises an error; recreate the case with the current CrocoDash. A `config.json` written before versioning has no `schema_version` and is read as `1.0.0`; a `_crocodash_state.json` without one is accepted with a warning.
+`Case.from_caseroot` (and so `crocodash process`) reads a case back from this file. `crocodash dump` reads it to reconstruct a YAML config, and `bundle`/`fork`/`duplicate` to avoid re-parsing CIME. It is the paired counterpart to `inputdir/extract_forcings/config.json`, which records forcing configuration written by `configure_forcings`.
+
+Both files carry a `schema_version`, each versioned on its own. Reading a file whose MAJOR.MINOR doesn't match what the installed CrocoDash supports raises an error. A `config.json` written before versioning has no `schema_version` and is read as `1.0.0`. A `_crocodash_state.json` older than `1.2.0` (or without a `schema_version`) is refused: recreate the case with the current CrocoDash.
 
 ## Available Compset Aliases
 

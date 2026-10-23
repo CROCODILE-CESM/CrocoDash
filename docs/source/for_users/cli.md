@@ -160,7 +160,7 @@ crocodash process --all
 
 | Flag | Description |
 |------|-------------|
-| `--config PATH` | Direct path to `config.json`. Takes precedence over `--caseroot`. |
+| `--config PATH` | Path to a case's `config.json`; that case is processed. Takes precedence over `--caseroot`. |
 | `--caseroot PATH` | Path to the CESM caseroot. Defaults to cwd if omitted. |
 | `--all` | Enable all components that are present in `config.json`. |
 | `--ic` | Initial conditions. |

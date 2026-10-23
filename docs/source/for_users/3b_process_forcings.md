@@ -72,17 +72,17 @@ Large regional domains require large datasets. CrocoDash automatically switches 
 
 ## Python API
 
-You can also call the driver directly from Python:
+To process an existing case from a new Python session, read it back with
+`Case.from_caseroot`. It rebuilds the case from its caseroot alone (`_crocodash_state.json`
+and the `config.json` that `configure_forcings` wrote), without running `create_newcase`,
+`case.setup` or visualCaseGen. `crocodash process` does the same. If the CESM tree the
+case was created with has moved, pass `cesmroot=`.
 
 ```python
-from CrocoDash.forcing.driver import run_workflow
+from CrocoDash.case import Case
 
-run_workflow(
-    config_path="/glade/u/home/<user>/scratch/croc_input/mycase/extract_forcings/config.json",
-    ic=True,
-    bc=True,
-    tides=True,
-)
+case = Case.from_caseroot("/glade/u/home/<user>/croc_cases/mycase")
+case.process_forcings()  # or e.g. process_bc=False to leave a component out
 ```
 
 ## The Processing Pipeline

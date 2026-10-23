@@ -3,6 +3,7 @@
 import json
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch, MagicMock
 
 import pytest
@@ -44,6 +45,16 @@ def _write_config(path, extra_keys=None):
         config.update(extra_keys)
     path.write_text(json.dumps(config))
     return config
+
+
+def _case(config=None):
+    """What `crocodash process` uses of the case Case.from_caseroot() reads;
+    config None means configure_forcings() never ran."""
+    return SimpleNamespace(
+        _configure_forcings_called=config is not None,
+        extract_forcings_path=Path("/fake/input/extract_forcings"),
+        forcing_config=config,
+    )
 
 
 # =============================================================================
@@ -98,16 +109,12 @@ def test_process_all_args_available():
 # =============================================================================
 
 
-@patch("CrocoDash.case_state.read")
-def test_process_missing_config_raises_helpful_error(mock_read, tmp_path, capsys):
+@patch("CrocoDash.case.Case.from_caseroot")
+def test_process_missing_config_raises_helpful_error(mock_from, tmp_path, capsys):
     """Clear error when configure_forcings hasn't been run yet."""
     caseroot = tmp_path / "mycase"
     caseroot.mkdir()
-    inputdir = tmp_path / "input"
-    inputdir.mkdir()
-    # extract_forcings/ dir does NOT exist — configure_forcings never ran
-
-    mock_read.return_value = {"inputdir": str(inputdir)}
+    mock_from.return_value = _case()
 
     with pytest.raises(SystemExit) as exc_info:
         run_main(["process", "--caseroot", str(caseroot), "--all"])
@@ -121,50 +128,44 @@ def test_process_missing_config_raises_helpful_error(mock_read, tmp_path, capsys
 
 
 @patch("CrocoDash.forcing.driver.run_workflow")
-def test_process_config_flag(mock_run, tmp_path):
-    """--config takes a direct path to config.json, skipping case_state lookup."""
+@patch("CrocoDash.case.Case.from_caseroot")
+def test_process_config_flag(mock_from, mock_run, tmp_path):
+    """--config processes the case its config.json names."""
     config_path = tmp_path / "config.json"
-    _write_config(config_path)
+    mock_from.return_value = _case(_write_config(config_path))
 
     run_main(["process", "--config", str(config_path), "--all"])
 
-    mock_run.assert_called_once()
-    call_kwargs = mock_run.call_args.kwargs
-    assert call_kwargs["config_path"] == config_path
+    mock_from.assert_called_once_with(Path("/fake/case"))
+    assert mock_run.call_args.args == (mock_from.return_value,)
 
 
 @patch("CrocoDash.forcing.driver.run_workflow")
 @patch("CrocoDash.forcing.driver.resolve_components")
-@patch("CrocoDash.case_state.read")
-def test_process_caseroot_flag(mock_read, mock_resolve, mock_run, tmp_path):
+@patch("CrocoDash.case.Case.from_caseroot")
+def test_process_caseroot_flag(mock_from, mock_resolve, mock_run, tmp_path):
     caseroot = tmp_path / "mycase"
     caseroot.mkdir()
-    inputdir = tmp_path / "input"
-    inputdir.mkdir()
-    ef_dir = inputdir / "extract_forcings"
-    ef_dir.mkdir()
-    _write_config(ef_dir / "config.json")
-
-    mock_read.return_value = {"inputdir": str(inputdir)}
+    mock_from.return_value = _case(_write_config(tmp_path / "config.json"))
     mock_resolve.side_effect = lambda args, cfg: args  # pass-through
 
     run_main(["process", "--caseroot", str(caseroot), "--ic"])
 
-    mock_read.assert_called_once_with(caseroot)
+    mock_from.assert_called_once_with(caseroot)
     assert mock_run.called
 
 
 @patch("CrocoDash.forcing.driver.run_workflow")
-def test_process_auto_detect_config_in_cwd(mock_run, tmp_path, monkeypatch):
-    """If cwd contains config.json, use it without --caseroot."""
+@patch("CrocoDash.case.Case.from_caseroot")
+def test_process_auto_detect_config_in_cwd(mock_from, mock_run, tmp_path, monkeypatch):
+    """If cwd contains config.json, process the case it names without --caseroot."""
     monkeypatch.chdir(tmp_path)
-    _write_config(tmp_path / "config.json")
+    mock_from.return_value = _case(_write_config(tmp_path / "config.json"))
 
     run_main(["process", "--all"])
 
+    mock_from.assert_called_once_with(Path("/fake/case"))
     mock_run.assert_called_once()
-    call_kwargs = mock_run.call_args.kwargs
-    assert call_kwargs["config_path"] == tmp_path / "config.json"
 
 
 def test_process_no_config_in_cwd_raises_helpful_error(tmp_path, monkeypatch, capsys):
@@ -178,14 +179,10 @@ def test_process_no_config_in_cwd_raises_helpful_error(tmp_path, monkeypatch, ca
 
 @patch("CrocoDash.forcing.driver.run_workflow")
 @patch("CrocoDash.forcing.driver.resolve_components")
-@patch("CrocoDash.case_state.read")
-def test_process_preview_from_config(mock_read, mock_resolve, mock_run, tmp_path):
+@patch("CrocoDash.case.Case.from_caseroot")
+def test_process_preview_from_config(mock_from, mock_resolve, mock_run, tmp_path):
     caseroot = tmp_path / "mycase"
     caseroot.mkdir()
-    inputdir = tmp_path / "input"
-    inputdir.mkdir()
-    ef_dir = inputdir / "extract_forcings"
-    ef_dir.mkdir()
 
     config = {
         "caseroot": str(caseroot),
@@ -206,9 +203,7 @@ def test_process_preview_from_config(mock_read, mock_resolve, mock_run, tmp_path
             },
         },
     }
-    (ef_dir / "config.json").write_text(json.dumps(config))
-
-    mock_read.return_value = {"inputdir": str(inputdir)}
+    mock_from.return_value = _case(config)
     mock_resolve.side_effect = lambda args, cfg: args
 
     run_main(["process", "--caseroot", str(caseroot), "--ic"])
