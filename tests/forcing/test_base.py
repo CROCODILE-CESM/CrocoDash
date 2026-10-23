@@ -259,7 +259,7 @@ def test_two_cases_in_one_process_each_write_to_their_own_caseroot(tmp_path):
             obj.registry = registry
             configurators.append(obj)
 
-    with patch("CrocoDash.forcing.base.subprocess.run") as run:
+    with patch("subprocess.run") as run:
         run.return_value.returncode = 0
         for obj in configurators:
             obj.configure()

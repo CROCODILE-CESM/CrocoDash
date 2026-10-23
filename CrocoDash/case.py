@@ -9,7 +9,7 @@ import regional_mom6 as rmom6
 from CrocoDash.grid import Grid
 from CrocoDash.topo import Topo
 from CrocoDash.vgrid import VGrid
-from CrocoDash.forcing.base import ForcingConfigRegistry, xmlchange
+from CrocoDash.forcing.base import ForcingConfigRegistry, USER_NL_TAG
 from CrocoDash.raw_data_access.registry import ProductRegistry
 from CrocoDash.raw_data_access.base import ForcingProduct
 from ProConPy.config_var import ConfigVar, cvars
@@ -17,8 +17,9 @@ from ProConPy.stage import Stage
 from ProConPy.dev_utils import ConstraintViolation
 from visualCaseGen.initialize import initialize as initialize_visualCaseGen
 from visualCaseGen.custom_widget_types.case_creator import CaseCreator
-from visualCaseGen.custom_widget_types.case_tools import append_user_nl
-from CrocoDash.forcing import cice, user_nl_blocks
+from visualCaseGen.custom_widget_types.case_tools import append_user_nl, xmlchange
+from visualCaseGen import user_nl_blocks
+from CrocoDash.forcing import cice
 from CrocoDash.forcing.driver import run_workflow
 
 from CrocoDash import case_state
@@ -619,10 +620,10 @@ class Case:
         # against -- is left as it was.
         user_nl_before = user_nl_blocks.snapshot(self.caseroot)
         try:
-            edited = user_nl_blocks.strip(self.caseroot)
+            edited = user_nl_blocks.strip(self.caseroot, USER_NL_TAG)
             config = {"caseroot": str(self.caseroot)}
             config |= self.fcr.run_configurators(None)
-            user_nl_blocks.report_edits(self.caseroot, edited)
+            user_nl_blocks.report_edits(self.caseroot, edited, USER_NL_TAG)
 
             stale = self.fcr.stale_outputs(previous_config, config, self.inputdir)
             for path in stale:

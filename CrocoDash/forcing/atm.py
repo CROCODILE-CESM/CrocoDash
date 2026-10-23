@@ -1,21 +1,16 @@
 """Align data-model (DATM/DROF) forcing streams with the case's run dates.
 
-CDEPS hardcodes ``year_align=1`` and the full year span for every JRA stream in
-``stream_definition_{datm,drof}.xml``, and the ``DATM_YR_ALIGN``/``_START``/
-``_END`` xml variables are only read by the CLM/GSWP3/NEON/CPLHIST stream sets
--- no JRA, NYF or ERA5 entry references them. So a JRA case silently reads an
-arbitrary data year, and ``xmlchange`` cannot fix it. The only lever CDEPS
-offers is ``user_nl_<comp>_streams``, which this configurator writes.
-
-Narrowing the file list matters as much as the alignment: the ``<datafiles>``
-list is expanded from the stream definition's own year tags *before* user mods
-are merged, so retagging the years alone still leaves all 59 JRA files
-enumerated, and CDEPS opens each one to build its time axis.
+CDEPS reads every JRA stream with ``year_align=1`` and the dataset's full year
+span, so a JRA case silently reads an arbitrary data year, and only
+``user_nl_<comp>_streams`` can change that. visualCaseGen's
+``plan_stream_years`` works out the settings for the run; this configurator
+writes them into CrocoDash's block in each component's streams file.
 """
 
 from CrocoDash.forcing.base import *
-from CrocoDash.forcing import cdeps_streams, user_nl_blocks
 from CrocoDash.logging import setup_logger
+from visualCaseGen import user_nl_blocks
+from visualCaseGen.stream_years import plan_stream_years
 
 logger = setup_logger(__name__)
 
@@ -74,59 +69,6 @@ class StreamYearConfigurator(BaseConfigurator):
             narrow_stream_files=narrow_stream_files,
         )
 
-    def _plan(self, component, mode, cime_case, start_year, end_year):
-        """Work out the stream mods for one component, or why there are none.
-
-        Returns a record rather than raising: an unalignable component is
-        reported and left at its CESM defaults, so a case that used to build
-        still builds.
-        """
-        cesmroot = self.get_input_param("case_cesmroot")
-        pad = self.get_input_param("stream_year_padding")
-        narrow = self.get_input_param("narrow_stream_files")
-
-        names = cdeps_streams.stream_names(cesmroot, component, mode)
-        if not names:
-            return {"status": "skipped", "reason": f"no streams defined for {mode}"}
-
-        streams = {}
-        for name in names:
-            avail_first, avail_last = cdeps_streams.coverage(
-                cesmroot, component, name, cime_case
-            )
-            # Single-year streams are climatologies (CORE2_NYF is 1/1/1, the
-            # CORE_RYF*_JRA repeat years are e.g. 1961/1961). There is no
-            # alignment to get right and no files to narrow.
-            if avail_first == avail_last:
-                return {
-                    "status": "skipped",
-                    "reason": f"{mode} is a single-year climatology",
-                }
-            if start_year < avail_first or end_year > avail_last:
-                return {
-                    "status": "skipped",
-                    "reason": (
-                        f"run years {start_year}-{end_year} fall outside the "
-                        f"{avail_first}-{avail_last} covered by {mode}"
-                    ),
-                }
-
-            # year_align == year_first makes the data year equal the model year
-            # for every year in range: dYear = yrFirst + modulo(mYear - yrFirst, n).
-            # The extra leading year is needed to interpolate at the run start.
-            year_first = max(avail_first, start_year - 1 - pad)
-            year_last = min(avail_last, end_year + pad)
-            streams[name] = {
-                "year_first": year_first,
-                "year_last": year_last,
-                "year_align": year_first,
-            }
-            if narrow:
-                streams[name]["datafiles"] = cdeps_streams.datafiles(
-                    cesmroot, component, name, year_first, year_last, cime_case
-                )
-        return {"status": "configured", "mode": mode, "streams": streams}
-
     def _apply(self, component, plan):
         """Write one component's mods to user_nl_<component>_streams.
 
@@ -152,6 +94,7 @@ class StreamYearConfigurator(BaseConfigurator):
             [(comment, pairs)],
             caseroot=case.caseroot,
             ninst=case.ninst,
+            tag=USER_NL_TAG,
         )
 
     def configure(self):
@@ -175,7 +118,16 @@ class StreamYearConfigurator(BaseConfigurator):
             elif not mode:
                 plan = {"status": "skipped", "reason": f"no active {component}"}
             else:
-                plan = self._plan(component, mode, cime_case, start_year, end_year)
+                plan = plan_stream_years(
+                    self.get_input_param("case_cesmroot"),
+                    component,
+                    mode,
+                    cime_case,
+                    start_year,
+                    end_year,
+                    padding=self.get_input_param("stream_year_padding"),
+                    narrow=self.get_input_param("narrow_stream_files"),
+                )
 
             if plan["status"] == "configured":
                 self._apply(component, plan)
