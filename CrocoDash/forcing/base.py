@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod
 from functools import cached_property
 from visualCaseGen.custom_widget_types.case_tools import xmlchange
 from CrocoDash.forcing import user_nl_blocks
+from CrocoDash import case_state
 from CrocoDash.logging import setup_logger
 import inspect
 from typing import Optional, Any
@@ -14,6 +15,47 @@ import dataclasses
 from CrocoDash.raw_data_access.base import Calendar
 
 logger = setup_logger(__name__)
+
+# The forcing configuration Case.configure_forcings() writes to
+# <inputdir>/extract_forcings/config.json: one entry per active configurator,
+# plus the top-level CONFIG_META_KEYS. Read it only through read_config(), which
+# rejects a config.json written by an incompatible CrocoDash (MAJOR.MINOR must
+# match, as for the case state file). Entries are read tolerantly (see
+# BaseConfigurator.deserialize), so bump the MINOR only when that would misread
+# an old file, e.g. after a rename, and add a CONFIG_MIGRATIONS entry for it.
+# See docs/source/for_developers/config_compatibility.md.
+CONFIG_FILENAME = "config.json"
+CONFIG_SCHEMA_VERSION = "1.0.0"
+# What a config.json written before versioning is read as.
+CONFIG_UNVERSIONED = "1.0.0"
+CONFIG_META_KEYS = frozenset({"schema_version", "caseroot"})
+
+
+def write_config(path, config):
+    """Write *config* to *path*, injecting schema_version as the first key."""
+    full_config = {"schema_version": CONFIG_SCHEMA_VERSION, **config}
+    with open(path, "w") as f:
+        json.dump(full_config, f, indent=4)
+
+
+# Upgrades for config.json files an older CrocoDash wrote, keyed by the
+# "MAJOR.MINOR" they upgrade from. Each takes the config dict and returns it at
+# the next version.
+CONFIG_MIGRATIONS = {}
+
+
+def read_config(path):
+    """Read the config.json at *path*, upgrade it if a migration applies,
+    validate its schema version, and return it."""
+    with open(path) as f:
+        config = json.load(f)
+    config.setdefault("schema_version", CONFIG_UNVERSIONED)
+    while (from_version := config["schema_version"].rsplit(".", 1)[0]) in (
+        CONFIG_MIGRATIONS
+    ):
+        config = CONFIG_MIGRATIONS[from_version](config)
+    case_state.check_version(config, path, supported=CONFIG_SCHEMA_VERSION)
+    return config
 
 
 def calendar_as_dict(calendar):
@@ -31,6 +73,11 @@ def calendar_as_dict(calendar):
 
 def is_serializable(v):
     return isinstance(v, (str, int, float, bool, type(None), Path, list, dict))
+
+
+class ReconfigureRequired(ValueError):
+    """config.json lacks something this version of CrocoDash needs, so the
+    case's forcings must be configured again before they can be processed."""
 
 
 class UndeclaredParamError(KeyError):
@@ -227,23 +274,12 @@ class ForcingConfigRegistry:
                 configurator_cls, inputs
             )
 
-    def run_configurators(self, config_path):
-
-        if config_path is not None:
-            with open(config_path) as f:
-                general_config = json.load(f)
-        else:
-            general_config = {}
-
-        # Run Configurators
+    def run_configurators(self):
+        general_config = {}
         for configurator in self.active_configurators.values():
             logger.info(f"Configuring {configurator.name}")
             configurator.configure()
             general_config[configurator.name.lower()] = configurator.serialize()
-
-        if config_path is not None:
-            with open(config_path, "w") as f:
-                json.dump(general_config, f, indent=4)
         return general_config
 
     def stale_outputs(self, previous_config, current_config, inputdir):
@@ -284,7 +320,7 @@ class ForcingConfigRegistry:
         needing working configurator instances the way actual dispatch does."""
         flags = set()
         for key, entry in config.items():
-            if key == "caseroot":
+            if key in CONFIG_META_KEYS:
                 continue
             configurator_cls = cls.get_configurator_from_name(entry["name"])
             flags.update(configurator_cls.process_components.keys())
@@ -298,7 +334,7 @@ class ForcingConfigRegistry:
         dispatch generically instead of a hand-maintained if-ladder."""
         targets = {}
         for key, entry in config.items():
-            if key == "caseroot":
+            if key in CONFIG_META_KEYS:
                 continue
             configurator = cls.get_configurator(entry)
             for flag_name, method_name in configurator.process_components.items():
@@ -675,17 +711,40 @@ class BaseConfigurator(ABC):
 
     @classmethod
     def deserialize(cls, data: Dict[str, Any]):
+        """Rebuild a configurator from its config.json entry.
+
+        Tolerates entries an older or newer CrocoDash wrote: an input missing
+        from the entry takes its constructor default, an output missing from
+        it stays None, and keys the class no longer declares are ignored. A
+        missing input with no default, or an entry the constructor rejects,
+        raises ReconfigureRequired.
+        """
+        inputs, outputs = data.get("inputs", {}), data.get("outputs", {})
+        defaults = inspect.signature(cls.__init__).parameters
         input_kwargs = {}
         for param in cls.input_params:
-            if param.name not in data["inputs"]:
-                raise KeyError(f"Input param '{param.name}' not found in data")
-            input_kwargs[param.name] = data["inputs"][param.name]
+            if param.name in inputs:
+                input_kwargs[param.name] = inputs[param.name]
+            elif (
+                param.name not in defaults
+                or defaults[param.name].default is inspect.Parameter.empty
+            ):
+                raise ReconfigureRequired(
+                    f"config.json's '{cls.name.lower()}' entry has no "
+                    f"'{param.name}', which this version of CrocoDash requires. "
+                    "Rerun configure_forcings() to rewrite config.json."
+                )
 
-        obj = cls(**input_kwargs)
+        try:
+            obj = cls(**input_kwargs)
+        except ValueError as e:
+            raise ReconfigureRequired(
+                f"config.json's '{cls.name.lower()}' entry is no longer valid ({e}). "
+                "Rerun configure_forcings() to rewrite config.json."
+            ) from e
         for param in cls.output_params:
-            if param.name not in data["outputs"]:
-                raise KeyError(f"Output param '{param.name}' not found in data")
-            obj.set_output_param(param.name, data["outputs"][param.name])
+            if param.name in outputs:
+                obj.set_output_param(param.name, outputs[param.name])
         return obj
 
     def make_serializable(self, obj):

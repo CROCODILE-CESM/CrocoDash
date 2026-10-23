@@ -1,10 +1,16 @@
 from CrocoDash.forcing.base import *
 
+import ast
+import json
+import re
 from types import SimpleNamespace
 from ProConPy.config_var import cvars
 from unittest.mock import patch
 
 import pytest
+
+import CrocoDash
+from CrocoDash.raw_data_access.registry import ProductRegistry
 
 
 @register
@@ -112,6 +118,57 @@ def test_deserialize():
     assert obj.get_input_param("dummy") == "Bleh"
 
 
+def test_deserialize_tolerates_entries_from_other_versions():
+    """An entry with an undeclared key and a missing output still loads; one
+    missing a required input asks for configure_forcings() to be rerun."""
+    obj = DummyXML.deserialize({"inputs": {"dummy": "x", "gone": 1}, "outputs": {}})
+    assert obj.get_output_param("DUMMY_XML_VAR") is None
+    with pytest.raises(ReconfigureRequired):
+        DummyXML.deserialize({"inputs": {}, "outputs": {}})
+
+
+def test_read_config_versions(tmp_path):
+    """An unversioned config.json reads as 1.0.0; one from a newer CrocoDash
+    is refused rather than misread."""
+    path = tmp_path / CONFIG_FILENAME
+    path.write_text(json.dumps({"caseroot": "/case"}))
+    assert read_config(path)["schema_version"] == "1.0.0"
+    path.write_text(json.dumps({"schema_version": "1.1.0", "caseroot": "/case"}))
+    with pytest.raises(ValueError):
+        read_config(path)
+
+
+@pytest.mark.parametrize(
+    "path",
+    sorted((Path(__file__).parent / "golden_configs").glob("*.json")),
+    ids=lambda path: path.stem,
+)
+def test_golden_configs_load(path):
+    """config.json files real cases wrote with earlier CrocoDash versions
+    still load. Add one here when a change could break old configs."""
+    ProductRegistry.load()
+    ForcingConfigRegistry.resolve_process_targets(read_config(path))
+
+
+def test_config_json_is_only_read_through_read_config():
+    """A bare "config.json" outside base.py means a reader that skips the
+    version check in read_config()."""
+    package = Path(CrocoDash.__file__).parent
+    offenders = []
+    for path in package.rglob("*.py"):
+        relative = path.relative_to(package)
+        if relative.parts[0] in {"rm6", "visualCaseGen", "gallery"}:
+            continue
+        if relative == Path("forcing/base.py"):
+            continue
+        for node in ast.walk(ast.parse(path.read_text())):
+            if isinstance(node, ast.Constant) and re.fullmatch(
+                r"\S*config\.json", str(node.value)
+            ):
+                offenders.append(f"{relative}:{node.lineno}")
+    assert not offenders, offenders
+
+
 def test_validate_compset_compatability():
     assert Dummy.validate_compset_compatibility("req")
     assert Dummy.validate_compset_compatibility("dummy")
@@ -158,7 +215,7 @@ def test_FCR_find_active_configurators_skip_if_no_args():
 
 def test_FCR_configure(fcr_add_dummy1):
     fcr = fcr_add_dummy1
-    fcr.run_configurators(None)
+    fcr.run_configurators()
     assert fcr["dummy1"].dummy1 == 1
 
 
