@@ -153,28 +153,25 @@ containing at least `temp` and `salt`.
 
 :::{important}
 Every dated product declares a **`time_sampling`**: a `TimeSampling` saying how
-often its records come, whether each is a mean over its interval or an
-instantaneous value, and where in the interval the timestamp sits. Use
-`USER_SPECIFIED` when the cadence depends on the source the user points the
-product at (CESM-MOM output), so the user must pass it as `freq`, and `None`
-only for a static snapshot that ignores `dates`.
+often its records come and whether each is a mean over its interval or an
+instantaneous value. Use `USER_SPECIFIED` when the cadence depends on the
+source the user points the product at (CESM-MOM output), so the user must pass
+it as `freq`, and `None` only for a static snapshot that ignores `dates`.
 
 ```python
 class MyDataset(MOM6ForcingProduct):
-    # Daily means, stamped at noon
-    time_sampling = TimeSampling("D", cell_method="mean", anchor="center")
+    # Daily means
+    time_sampling = TimeSampling("D", cell_method="mean")
 ```
 
-An access method that reads a differently sampled source can override it with
-`@accessmethod(time_sampling=TimeSampling(...))`.
-
-Every dated access method also takes an optional `freq=None` (users set it with
-`function_overrides={"freq": "MS"}`) and calls `resolve_time_sampling` first.
-Mark it `@accessmethod(freq_handling="subsample")` if it can fetch every `freq`
-instead of every record (see GLORYS's RDA method, which uses `sample_dates`), or
+An access method that can do something with a `freq` (users set it with
+`function_overrides={"freq": "MS"}`) takes an optional `freq=None`, calls
+`resolve_time_sampling` first, and says what it does with it:
+`@accessmethod(freq_handling="subsample")` if it can fetch every `freq` instead
+of every record (see GLORYS's RDA method, which uses `sample_dates`), or
 `freq_handling="declare"` if `freq` names the cadence of the source the user
-points it at (the CESM tseries readers). Otherwise a `freq` other than the
-native one is refused.
+points it at (the CESM tseries readers). Any other method takes no `freq` and
+returns its product's own cadence.
 :::
 
 ## Step 5: Validation and Tests

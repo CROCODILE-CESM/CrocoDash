@@ -40,8 +40,7 @@ def test_case_integration_config(CrocoDash_case_factory, tmp_path):
     assert set(config["conditions"].keys()) == {"name", "inputs", "outputs"}
     assert "caseroot" in config
     # GLORYS's default download function has no non-required args to override
-    # Every dated access method takes an optional freq, so it is always a default.
-    assert config["conditions"]["outputs"]["function_args"] == {"freq": None}
+    assert config["conditions"]["outputs"]["function_args"] == {}
 
 
 def test_case_integration_config_cice_round_trip(CrocoDash_case_factory, tmp_path):

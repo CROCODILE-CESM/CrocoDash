@@ -11,7 +11,7 @@ class DummyProduct(DatedBaseProduct):
     time_sampling = None
 
     @accessmethod
-    def dummy_method(dates, output_folder, output_filename, freq=None):
+    def dummy_method(dates, output_folder, output_filename):
         return f"{dates[0]}{dates[1]}{output_folder}/{output_filename}"
 
 
@@ -48,7 +48,6 @@ class DummyForcing(MOM6ForcingProduct):
         lat_min,
         name=None,
         variables="SSH",
-        freq=None,
     ):
         return f"Fetched {variables} to {output_folder}/{output_filename}"
 
@@ -225,37 +224,13 @@ def test_time_sampling_must_be_declared():
 
 
 def test_time_sampling_must_be_a_time_sampling():
-    with pytest.raises(AssertionError, match="TimeSampling"):
+    with pytest.raises(TypeError, match="TimeSampling"):
 
         class Bare(DatedBaseProduct):
             product_name = "bare_time_sampling"
             description = "d"
             link = "l"
             time_sampling = "D"
-
-
-def test_accessmethod_time_sampling_is_checked_too():
-    with pytest.raises(AssertionError, match="TimeSampling"):
-
-        class BadOverride(DatedBaseProduct):
-            product_name = "bad_override_time_sampling"
-            description = "d"
-            link = "l"
-            time_sampling = None
-
-            @accessmethod(time_sampling="MS")
-            def get(dates, output_folder, output_filename, freq=None):
-                pass
-
-
-def test_user_specified_time_sampling_is_accepted():
-    class UserSpecified(DatedBaseProduct):
-        product_name = "user_specified_time_sampling"
-        description = "d"
-        link = "l"
-        time_sampling = USER_SPECIFIED
-
-    assert UserSpecified.write_metadata()["time_sampling"] == USER_SPECIFIED
 
 
 @pytest.mark.parametrize(
@@ -270,7 +245,6 @@ def test_max_period_days(frequency, days):
     [
         {"frequency": "not-a-freq"},
         {"frequency": "D", "cell_method": "sum"},
-        {"frequency": "D", "anchor": "middle"},
     ],
 )
 def test_time_sampling_rejects_bad_values(kwargs):
@@ -282,7 +256,6 @@ def test_time_sampling_is_written_into_metadata():
     assert DummyForcing.write_metadata()["time_sampling"] == {
         "frequency": "D",
         "cell_method": "mean",
-        "anchor": "center",
     }
 
 
@@ -304,26 +277,12 @@ class _Sampled(DatedBaseProduct):
         pass
 
     @accessmethod
-    def ranged(dates, output_folder, output_filename, freq=None):
+    def ranged(dates, output_folder, output_filename):
         pass
 
     @accessmethod(freq_handling="declare")
     def declared(dates, output_folder, output_filename, freq=None):
         pass
-
-
-def test_freq_must_be_an_optional_argument():
-    with pytest.raises(ValueError, match="optional freq"):
-
-        class NoFreq(DatedBaseProduct):
-            product_name = "no_freq"
-            description = "d"
-            link = "l"
-            time_sampling = None
-
-            @accessmethod
-            def get(dates, output_folder, output_filename):
-                pass
 
 
 def test_resolve_time_sampling_defaults_to_the_declared_one():

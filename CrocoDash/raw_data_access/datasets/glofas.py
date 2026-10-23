@@ -9,7 +9,7 @@ class GLOFAS(DatedBaseProduct):
     product_name = "glofas"
     description = "	GLOFAS (Global Flood Awareness System) is a public river discharge/runoff Product"
     link = "https://ewds.climate.copernicus.eu/datasets/cems-glofas-historical?tab=download"
-    time_sampling = TimeSampling("D", "mean", "center")
+    time_sampling = TimeSampling("D", "mean")
 
     @accessmethod(
         freq_handling="subsample",
@@ -72,7 +72,6 @@ class GLOFAS(DatedBaseProduct):
         dates="UNUSED",
         output_folder=Path(""),
         output_filename="processed_glofas.nc",
-        freq=None,
     ):
         """
         Downloads pre-processed global GloFAS discharge data from the CESM
@@ -88,9 +87,6 @@ class GLOFAS(DatedBaseProduct):
             filename in output directory
 
         """
-        resolve_time_sampling(
-            GLOFAS, "get_processed_global_glofas_script_for_cli", freq
-        )
 
         return utils.write_bash_curl_script(
             url="https://svn-ccsm-inputdata.cgd.ucar.edu/trunk/inputdata/ocn/mom/croc/rof/glofas/processed_glofas_data.nc",

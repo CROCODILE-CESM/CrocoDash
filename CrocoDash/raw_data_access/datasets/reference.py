@@ -36,7 +36,7 @@ class REFERENCE_OCEAN(MOM6ForcingProduct):
     time_var_name = "time"
     time_units = "days"
     calendar = GREGORIAN
-    time_sampling = TimeSampling("D", "mean", "start")
+    time_sampling = TimeSampling("D", "mean")
     boundary_fill_method = "regional_mom6"
     tracer_x_coord = "longitude"
     tracer_y_coord = "latitude"
@@ -332,11 +332,9 @@ class REFERENCE_ICE(CICEForcingProduct):
         output_filename="reference_ice.nc",
         variables=None,
         resolution_deg=0.5,
-        freq=None,
     ):
         # Coarse by default to keep the downstream ESMF regrid cheap -- pass a
         # smaller resolution_deg for a finer (more expensive) source grid.
-        resolve_time_sampling(REFERENCE_ICE, "get_reference_ice_data", freq)
         lon = np.arange(lon_min, lon_max + resolution_deg, resolution_deg)
         lat = np.arange(lat_min, lat_max + resolution_deg, resolution_deg)
         tlon, tlat = np.meshgrid(lon, lat)
@@ -406,7 +404,7 @@ class REFERENCE_WAVES(WW3ForcingProduct):
     time_var_name = "time"
     time_units = None
     calendar = GREGORIAN
-    time_sampling = TimeSampling("6h", "point", "start")
+    time_sampling = TimeSampling("6h", "point")
     # The synthetic spectrum below is built around waves "coming from" the
     # west (theta0 = 270), so that is what it declares.
     direction_convention = DIRECTION_COMING_FROM
@@ -432,10 +430,8 @@ class REFERENCE_WAVES(WW3ForcingProduct):
         output_folder=Path(""),
         output_filename="reference_waves.nc",
         variables=None,
-        freq=None,
     ):
         # Spread the stations along the long axis of the boundary window.
-        resolve_time_sampling(REFERENCE_WAVES, "get_reference_wave_spectra", freq)
         n_stations = 3
         if (lon_max - lon_min) >= (lat_max - lat_min):
             lons = np.linspace(lon_min, lon_max, n_stations)

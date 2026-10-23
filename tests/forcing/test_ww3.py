@@ -384,7 +384,7 @@ class _FakeERA5Spectra(WW3ForcingProduct):
     time_var_name = "time"
     time_units = None
     calendar = GREGORIAN
-    time_sampling = TimeSampling("h", "point", "start")
+    time_sampling = TimeSampling("h", "point")
     direction_convention = DIRECTION_COMING_FROM
     land_marker = LAND_ZERO
 
@@ -399,7 +399,6 @@ class _FakeERA5Spectra(WW3ForcingProduct):
         output_folder=Path(""),
         output_filename="fake_era5.nc",
         variables=None,
-        freq=None,
     ):
         start, end = pd.to_datetime(dates[0]), pd.to_datetime(dates[1])
         time = pd.date_range(start, end, freq="6h")

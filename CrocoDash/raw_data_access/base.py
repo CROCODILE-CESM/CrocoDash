@@ -69,14 +69,10 @@ class TimeSampling:
     frequency is a pandas frequency alias ("D", "MS", "6h", ...).
     cell_method says what a record holds: "mean" for an average over its
     interval (GLORYS daily means), "point" for an instantaneous value (ERA5).
-    anchor is where in that interval the record's timestamp sits: GLORYS
-    stamps daily means at noon ("center"), CESM-POP stamps monthly means at
-    the end of the month ("end").
     """
 
     frequency: str
     cell_method: str = "mean"
-    anchor: str = "center"
 
     def __post_init__(self):
         try:
@@ -87,8 +83,6 @@ class TimeSampling:
             ) from e
         if self.cell_method not in ("mean", "point"):
             raise ValueError("cell_method must be 'mean' or 'point'")
-        if self.anchor not in ("start", "center", "end"):
-            raise ValueError("anchor must be 'start', 'center' or 'end'")
 
     @property
     def max_period_days(self) -> float:
@@ -104,7 +98,7 @@ class TimeSampling:
 
     def describe(self) -> str:
         values = "means" if self.cell_method == "mean" else "instantaneous values"
-        return f"{self.frequency} {values}, stamped at interval {self.anchor}"
+        return f"{self.frequency} {values}"
 
 
 # Declared by a product whose cadence depends on the source the user points it
@@ -136,7 +130,7 @@ def resolve_time_sampling(product, method_name: str, freq: str | None = None):
     the source the user points it at. A USER_SPECIFIED product needs freq.
     """
     method = product._access_methods[method_name]
-    declared = getattr(method, "_time_sampling", None) or product.time_sampling
+    declared = product.time_sampling
     handling = getattr(method, "_freq_handling", None)
     name = f"{product.product_name}.{method_name}"
     if freq is not None:
@@ -177,20 +171,23 @@ def accessmethod(
     description=None,
     type=None,
     how_to_use=None,
-    time_sampling=None,
     freq_handling=None,
 ):
-    """time_sampling overrides the product's own for a method that reads a
-    differently sampled source. freq_handling says what a dated method does
-    with its freq argument -- see resolve_time_sampling."""
+    """freq_handling says what a dated method does with a freq argument,
+    "subsample" or "declare" (see resolve_time_sampling); None, the default,
+    for one that takes no freq and returns its product's own cadence."""
 
     def decorator(f):
+        if freq_handling not in (None, "subsample", "declare"):
+            raise ValueError(
+                f"{f.__name__}: freq_handling must be None, 'subsample' or "
+                f"'declare' (got {freq_handling!r})."
+            )
         f = staticmethod(f)
         f._is_access_method = True
         f._description = description
         f._type = type
         f._how_to_use = how_to_use
-        f._time_sampling = time_sampling
         f._freq_handling = freq_handling
         return f
 
@@ -344,31 +341,14 @@ class DatedBaseProduct(BaseProduct):
         # Checked before BaseProduct registers the class, so a bad declaration
         # never reaches the registry. A missing one is left to BaseProduct's
         # required_metadata check.
-        if getattr(cls, "product_name", None):
-            methods = {
-                name: attr
-                for name, attr in cls.__dict__.items()
-                if getattr(attr, "_is_access_method", False)
-            }
-            # freq must have a default: the framework only passes it when the
-            # user overrides it, so a required one breaks every ordinary call.
-            for name, attr in methods.items():
-                param = inspect.signature(attr.__func__).parameters.get("freq")
-                if param is None or param.default is inspect.Parameter.empty:
-                    raise ValueError(
-                        f"Access method '{name}' in {cls.product_name} must take "
-                        "an optional freq argument (freq=None)."
-                    )
-            declared = [getattr(cls, "time_sampling", None)] + [
-                getattr(attr, "_time_sampling", None) for attr in methods.values()
-            ]
-            for ts in declared:
-                assert (
-                    ts is None or ts == USER_SPECIFIED or isinstance(ts, TimeSampling)
-                ), (
-                    f"{cls.__name__} must declare time_sampling as a TimeSampling, "
-                    f"USER_SPECIFIED or None (got {ts!r})."
-                )
+        ts = getattr(cls, "time_sampling", None)
+        if getattr(cls, "product_name", None) and not (
+            ts is None or ts == USER_SPECIFIED or isinstance(ts, TimeSampling)
+        ):
+            raise TypeError(
+                f"{cls.__name__} must declare time_sampling as a TimeSampling, "
+                f"USER_SPECIFIED or None (got {ts!r})."
+            )
         super().__init_subclass__(**kwargs)
 
     @classmethod

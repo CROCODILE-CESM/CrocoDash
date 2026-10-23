@@ -51,9 +51,9 @@ class CESM_POP_OUTPUT(MOM6ForcingProduct):
     eta_var_name = "SSH"
     time_units = "days since 1850-01-01"
     calendar = NOLEAP
-    # The default dataset_path is tseries/month_1: monthly means stamped at
-    # the end of the month (subtract_month moves them back on read).
-    time_sampling = TimeSampling("MS", "mean", "end")
+    # The default dataset_path is tseries/month_1, monthly means; pass freq
+    # for an archive of another cadence (e.g. "D" for day_1).
+    time_sampling = TimeSampling("MS", "mean")
     depth_coord = ["z_t", "z_t_150m"]
     delimiter = "."
     tracer_var_names = {"temp": "TEMP", "salt": "SALT"}
@@ -136,9 +136,13 @@ class CESM_POP_OUTPUT(MOM6ForcingProduct):
         preview=False,
         freq=None,
     ):
-        # CESM-POP tseries output needs the month-shift correction for its
-        # average-endpoint timestamp labeling convention.
-        resolve_time_sampling(CESM_POP_OUTPUT, "get_cesm_single_variable_data", freq)
+        sampling = resolve_time_sampling(
+            CESM_POP_OUTPUT, "get_cesm_single_variable_data", freq
+        )
+        # CESM-POP stamps a monthly mean at the end of its month, so monthly
+        # tseries need the month-shift correction. Other cadences (a day_1
+        # archive with freq="D") are read as stamped.
+        monthly = frequency_step(sampling.frequency) == frequency_step("MS")
         return read_single_variable_tseries_data(
             dates,
             lat_min,
@@ -156,7 +160,7 @@ class CESM_POP_OUTPUT(MOM6ForcingProduct):
             lat_name,
             lon_name,
             preview,
-            apply_month_shift=True,
+            apply_month_shift=monthly,
         )
 
 

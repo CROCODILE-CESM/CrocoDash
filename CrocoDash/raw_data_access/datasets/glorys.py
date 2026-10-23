@@ -40,7 +40,7 @@ class GLORYS(MOM6ForcingProduct):
     tracer_var_names = {"temp": "thetao", "salt": "so"}
     calendar = GREGORIAN
     # Daily means, stamped at noon.
-    time_sampling = TimeSampling("D", "mean", "center")
+    time_sampling = TimeSampling("D", "mean")
 
     @accessmethod(
         freq_handling="subsample",
@@ -127,12 +127,10 @@ class GLORYS(MOM6ForcingProduct):
         output_folder=None,
         output_filename=None,
         variables=["zos", "uo", "vo", "so", "thetao"],
-        freq=None,
     ):
         """
         Using the copernucismarine api, query GLORYS data (any dates)
         """
-        resolve_time_sampling(GLORYS, "get_glorys_data_from_cds_api", freq)
         start_datetime, end_datetime = make_dates_end_inclusive(dates)
         dataset_id = "cmems_mod_glo_phy_my_0.083deg_P1D-m"
         response = copernicusmarine.subset(
@@ -164,13 +162,11 @@ class GLORYS(MOM6ForcingProduct):
         output_filename,
         variables=None,
         name=None,
-        freq=None,
         **kwargs,
     ) -> None:
         """
         Script to run the GLORYS data query for the CLI
         """
-        resolve_time_sampling(GLORYS, "get_glorys_data_script_for_cli", freq)
         modify_existing = False
         if os.path.exists(output_folder / Path("get_glorys_data.sh")):
             modify_existing = True

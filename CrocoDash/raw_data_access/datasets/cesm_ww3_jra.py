@@ -453,7 +453,7 @@ class CESM_WW3_JRA(WW3ForcingProduct):
     time_units = "hours"
     calendar = GREGORIAN
     # Six-hourly restart snapshots.
-    time_sampling = TimeSampling("6h", "point", "start")
+    time_sampling = TimeSampling("6h", "point")
     # Certain, not inherited: both ends of this convention are the same code
     # base -- see convention 4 in the module docstring.
     direction_convention = DIRECTION_TO
@@ -511,7 +511,6 @@ class CESM_WW3_JRA(WW3ForcingProduct):
         buffer_deg=1.5,
         min_stations=2,
         max_buffer_deg=10.0,
-        freq=None,
     ):
         """Extract a boundary window's spectra and write them as NetCDF.
 
@@ -532,7 +531,6 @@ class CESM_WW3_JRA(WW3ForcingProduct):
 
         Returns the written NetCDF path.
         """
-        resolve_time_sampling(CESM_WW3_JRA, "get_cesm_ww3_jra_spectra", freq)
         case_name = case_name or discover_case_name(database_root)
         first, last = available_range(database_root, case_name)
         stamps = requested_timestamps(dates)
