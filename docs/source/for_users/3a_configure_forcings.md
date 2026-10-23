@@ -64,6 +64,27 @@ case.configure_forcings(
 )
 ```
 
+### Data Cadence (data_freq, subsample_freq)
+Two inputs set the cadence of the initial and boundary condition data, as a
+pandas frequency alias (`"D"`, `"MS"`, ...). `data_freq` is the cadence of the
+data the access function reads from a path you give it: it is required for
+`CESM_MOM_OUTPUT`, whose cadence is whatever its files hold, and optional for
+the CESM-POP reader (e.g. `"D"` for a `day_1` archive). It only describes the
+files: they are read the same way whatever its value, and a value that doesn't
+match them is an error. `subsample_freq` thins a product's data to a coarser
+cadence, for the access functions that can (GLORYS from RDA, GLOFAS, the
+reference ocean and the CESM output readers). `configure_forcings` raises an
+error if you pass one the access function doesn't read.
+```python
+case.configure_forcings(
+    date_range=["2020-01-01 00:00:00", "2020-12-31 00:00:00"],
+    product_name="CESM_MOM_OUTPUT",
+    function_name="get_mom6_output_data",
+    function_overrides={"dataset_path": "/path/to/parent/run/history"},
+    data_freq="MS",  # the files hold monthly means
+)
+```
+
 ## How to Check What's Required
 
 Before calling `configure_forcings()`, you can check what configuration options are required for your compset. It will also be printed on case initialization:

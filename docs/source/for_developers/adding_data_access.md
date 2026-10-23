@@ -165,8 +165,9 @@ class MyDataset(MOM6ForcingProduct):
 ```
 
 An access method calls `resolve_time_sampling` first and says, in its
-decorator, which of two arguments it takes (users set them through
-`function_overrides`):
+decorator, which of two arguments it takes. Users set them as
+`configure_forcings`'s `data_freq` and `subsample_freq`, which it passes to the
+method as `data_freq` and `freq`, and rejects one the method doesn't take:
 
 - `@accessmethod(subsample=True)`: it takes `freq=None` and can fetch every
   `freq` instead of every record, e.g. `freq="MS"` for one record a month. Use

@@ -103,7 +103,8 @@ class TimeSampling:
 
 
 # Declared by a product whose cadence depends on the source the user points it
-# at (e.g. a dataset_path of model output), so the user must give it as data_freq.
+# at (e.g. a dataset_path of model output), so the user must give it as
+# configure_forcings's data_freq.
 USER_SPECIFIED = "user_specified"
 
 
@@ -171,8 +172,8 @@ def resolve_time_sampling(
         )
     if frequency_step(freq) < frequency_step(native.frequency):
         raise ValueError(
-            f"{name} has {native.frequency} data; freq={freq!r} is finer than "
-            "that, so it would silently return fewer records than asked for."
+            f"{name} has {native.frequency} data; {freq!r} is finer than that, "
+            "so it would silently return fewer records than asked for."
         )
     return replace(native, frequency=freq)
 

@@ -15,7 +15,7 @@ from CrocoDash.forcing.base import (
     write_config,
 )
 from CrocoDash.raw_data_access.registry import ProductRegistry
-from CrocoDash.raw_data_access.base import ForcingProduct, resolve_time_sampling
+from CrocoDash.raw_data_access.base import ForcingProduct
 from ProConPy.config_var import ConfigVar, cvars
 from ProConPy.stage import Stage
 from ProConPy.dev_utils import ConstraintViolation
@@ -519,9 +519,16 @@ class Case:
             must match one of the function's non-required, defaulted parameters; any other
             key raises a ValueError. Without this, the function's own defaults are used,
             which previously could only be changed by hand-editing `config.json` between
-            `configure_forcings()` and `process_forcings()`.
+            `configure_forcings()` and `process_forcings()`. `freq` and `data_freq` are
+            not keys: use `subsample_freq` and `data_freq`.
         kwargs :
-            These are the configuration options (please see accepted arguments in the configuration classes)
+            These are the configuration options (please see accepted arguments in the configuration classes).
+            Two of them set the cadence of the initial and boundary condition data, as a
+            pandas frequency alias ("D", "MS", ...): `data_freq`, the cadence of the data
+            `function_name` reads from a path you give it (required for a product whose
+            cadence depends on that data, such as CESM_MOM_OUTPUT), and `subsample_freq`,
+            which thins the data to a coarser cadence (only for methods that can, such as
+            `get_glorys_data_from_rda` and the CESM output readers).
         Raises
         ------
         TypeError
@@ -595,6 +602,14 @@ class Case:
             self.forcing_product_name, function_name
         )
         if function_overrides:
+            typed = {"freq", "data_freq"} & set(function_overrides)
+            if typed:
+                raise ValueError(
+                    f"function_overrides can't set {sorted(typed)}: pass data_freq "
+                    "(the cadence of the data the access method reads) or "
+                    "subsample_freq (to thin its data to a coarser cadence) to "
+                    "configure_forcings instead."
+                )
             invalid = set(function_overrides) - set(function_args)
             if invalid:
                 raise ValueError(
@@ -602,14 +617,6 @@ class Case:
                     f"valid overridable args are {sorted(function_args)}"
                 )
             function_args.update(function_overrides)
-        # Fail here, not deep inside process_forcings, on a data_freq or freq
-        # the access method can't honour, or a product that needs a data_freq.
-        resolve_time_sampling(
-            ProductRegistry.get_product(self.forcing_product_name),
-            function_name,
-            function_args.get("data_freq"),
-            function_args.get("freq"),
-        )
 
         # function_args is written straight to config.json (via ConditionsConfigurator's
         # "function_args" ConfigOutputParam); coerce Path values (e.g. a dataset_path

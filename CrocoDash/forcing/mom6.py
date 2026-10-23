@@ -27,7 +27,11 @@ from CrocoDash.forcing.base import *
 from CrocoDash.grid import Grid
 from CrocoDash.topo import Topo
 from CrocoDash.raw_data_access.registry import ProductRegistry
-from CrocoDash.raw_data_access.base import Calendar, MOM6ForcingProduct
+from CrocoDash.raw_data_access.base import (
+    Calendar,
+    MOM6ForcingProduct,
+    resolve_time_sampling,
+)
 
 logger = logging.setup_logger(__name__)
 
@@ -433,6 +437,12 @@ class ConditionsConfigurator(BaseConfigurator):
             "function_args",
             comment="Resolved (defaults + overrides) args for the download function",
         ),
+        InputValueParam(
+            "data_freq", comment="Cadence of the data the download function reads"
+        ),
+        InputValueParam(
+            "subsample_freq", comment="Coarser cadence to thin the product's data to"
+        ),
     ]
 
     output_params = [
@@ -502,6 +512,8 @@ class ConditionsConfigurator(BaseConfigurator):
         start_date=None,
         end_date=None,
         function_args=None,
+        data_freq=None,
+        subsample_freq=None,
     ):
         if date_range is not None:
             start_date = date_range[0].strftime(self._DATE_FORMAT)
@@ -514,6 +526,8 @@ class ConditionsConfigurator(BaseConfigurator):
             function_name=function_name,
             compset=compset,
             function_args=function_args or {},
+            data_freq=data_freq,
+            subsample_freq=subsample_freq,
         )
 
     def validate_args(self, **kwargs):
@@ -538,6 +552,32 @@ class ConditionsConfigurator(BaseConfigurator):
                 "is not a MOM6ForcingProduct, so it can't be used as the conditions configurator's product_name "
                 "(MOM6's initial/boundary condition forcing). If this is a CICE forcing product, pass it as cice_product_name instead."
             )
+
+        # Fail here, not deep inside process_forcings, on a cadence the access
+        # method can't honour or a product that needs one.
+        product = ProductRegistry.get_product(product_name)
+        function_name = kwargs["function_name"]
+        method = ProductRegistry.get_access_function(product_name, function_name)
+        takes = [
+            name for name, flag in self._FREQ_INPUTS.items() if getattr(method, flag)
+        ]
+        for name in self._FREQ_INPUTS:
+            if kwargs[name] is not None and name not in takes:
+                raise ValueError(
+                    f"{product.product_name}.{function_name} takes no {name}"
+                    + (f" (it takes {' and '.join(takes)})" if takes else "")
+                    + ". data_freq is the cadence of the data a method reads from "
+                    "a path you give it; subsample_freq thins a method's data to "
+                    "a coarser cadence."
+                )
+        resolve_time_sampling(
+            product, function_name, kwargs["data_freq"], kwargs["subsample_freq"]
+        )
+
+    # Each cadence input, the @accessmethod flag of the methods that take it
+    # (see resolve_time_sampling), and the argument it is passed to them as.
+    _FREQ_INPUTS = {"data_freq": "_data_freq", "subsample_freq": "_subsample"}
+    _FREQ_ARGS = {"data_freq": "data_freq", "subsample_freq": "freq"}
 
     @staticmethod
     def _segment_index(boundaries, boundary):
@@ -779,14 +819,19 @@ class ConditionsConfigurator(BaseConfigurator):
     # ---- process (extraction) ----
 
     def _function_args(self):
-        """The stored function_args the access function still takes. A
-        config.json from when every dated access method took freq carries
-        "freq": null even for a method that no longer does."""
+        """The access function's arguments: the stored function_args it still
+        takes, and data_freq and subsample_freq (as freq) when set."""
+        product_name = self.get_input_param("product_name")
+        function_name = self.get_input_param("function_name")
         accepted = ProductRegistry.get_function_default_args(
-            self.get_input_param("product_name"), self.get_input_param("function_name")
+            product_name, function_name
         )
         stored = self.get_output_param("function_args") or {}
-        return {k: v for k, v in stored.items() if k in accepted}
+        args = {k: v for k, v in stored.items() if k in accepted}
+        for name, arg in self._FREQ_ARGS.items():
+            if self.get_input_param(name) is not None:
+                args[arg] = self.get_input_param(name)
+        return args
 
     def process_bc(self, ctx):
         """Process MOM6 boundary conditions through forcing.obc's GET → REGRID →
