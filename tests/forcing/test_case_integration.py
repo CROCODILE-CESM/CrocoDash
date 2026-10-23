@@ -1,5 +1,6 @@
 import subprocess
 import json
+from CrocoDash.forcing.base import CONFIG_SCHEMA_VERSION
 
 
 def test_case_integration_driver(CrocoDash_case_factory, tmp_path, skip_if_not_glade):
@@ -39,6 +40,7 @@ def test_case_integration_config(CrocoDash_case_factory, tmp_path):
     # Top-level keys
     assert set(config["conditions"].keys()) == {"name", "inputs", "outputs"}
     assert "caseroot" in config
+    assert config["schema_version"] == CONFIG_SCHEMA_VERSION
     # GLORYS's default download function has no non-required args to override
     assert config["conditions"]["outputs"]["function_args"] == {}
 

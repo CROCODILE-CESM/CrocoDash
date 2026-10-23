@@ -22,6 +22,8 @@ At the end of `Case.__init__`, CrocoDash writes a `_crocodash_state.json` file i
 
 This file is read by `crocodash dump` to reconstruct a YAML config, and by `bundle`/`fork`/`duplicate` to avoid re-parsing CIME. It is the paired counterpart to `inputdir/extract_forcings/config.json`, which records forcing configuration written by `configure_forcings`.
 
+Both files carry a `schema_version`, each versioned on its own. Reading a file whose MAJOR.MINOR doesn't match what the installed CrocoDash supports raises an error; recreate the case with the current CrocoDash. A `config.json` written before versioning has no `schema_version` and is read as `1.0.0`; a `_crocodash_state.json` without one is accepted with a warning.
+
 ## Available Compset Aliases
 
 Regional compsets are available by checking out the `crocodash` branch of the CROCODILE-CESM/CESM fork. You can always use the long names of the compsets instead.
