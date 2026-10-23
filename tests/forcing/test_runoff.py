@@ -5,7 +5,7 @@ from CrocoDash.forcing.runoff import RunoffConfigurator
 
 
 def _make_configurator(tmp_path, rmax=20, fold=40):
-    return RunoffConfigurator(
+    configurator = RunoffConfigurator(
         case_grid_name="test",
         case_session_id="abc123",
         case_compset_lname="DROF",
@@ -13,9 +13,10 @@ def _make_configurator(tmp_path, rmax=20, fold=40):
         case_esmf_mesh_path="/fake/ocn_mesh.nc",
         rmax=rmax,
         fold=fold,
-        rof_grid_name="GLOFAS",
-        rof_esmf_mesh_filepath="/fake/rof_mesh.nc",
     )
+    configurator.set_output_param("rof_grid_name", "GLOFAS")
+    configurator.set_output_param("rof_esmf_mesh_filepath", "/fake/rof_mesh.nc")
+    return configurator
 
 
 def _make_ctx(tmp_path):

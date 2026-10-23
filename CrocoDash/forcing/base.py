@@ -462,6 +462,21 @@ def xmlchange(var, val, *, caseroot, is_non_local=False):
         )
 
 
+def xmlquery(var, *, caseroot):
+    """The case's current value of ``var``, from ``./xmlquery`` in ``caseroot``."""
+    try:
+        res = subprocess.run(
+            ["./xmlquery", var, "--value"], cwd=Path(caseroot), capture_output=True
+        )
+    except OSError as e:
+        raise RuntimeError(f"Could not run ./xmlquery in {caseroot}: {e}") from e
+    if res.returncode != 0:
+        raise RuntimeError(
+            f"./xmlquery {var} failed in {caseroot}:\n{res.stderr.decode().strip()}"
+        )
+    return res.stdout.decode().strip()
+
+
 class XMLConfigParam(OutputParam):
     """
     Parameter applied via xmlchange.

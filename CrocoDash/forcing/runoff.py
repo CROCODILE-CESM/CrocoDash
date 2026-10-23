@@ -20,15 +20,16 @@ class RunoffConfigurator(BaseConfigurator):
             "rmax", comment="Smoothing radius (in meters) for runoff mapping generation"
         ),
         InputValueParam(
-            "rof_grid_name", comment="Name of the runoff grid used in the case"
-        ),
-        InputValueParam(
             "fold", comment="Smoothing fold parameter for runoff mapping generation"
         ),
-        InputFileParam("rof_esmf_mesh_filepath", comment="Runoff ESMF Mesh File Path"),
         InputFileParam("case_esmf_mesh_path", comment="Ocean ESMF Mesh File Path"),
     ]
     output_params = [
+        ConfigOutputParam("rof_grid_name", comment="The case's runoff grid (ROF_GRID)"),
+        ConfigOutputParam(
+            "rof_esmf_mesh_filepath",
+            comment="The case's runoff ESMF mesh (ROF_DOMAIN_MESH)",
+        ),
         XMLConfigParam(
             "ROF2OCN_LIQ_RMAPNAME",
             comment="Runoff to ocean liquid runoff mapping file",
@@ -50,8 +51,6 @@ class RunoffConfigurator(BaseConfigurator):
         case_esmf_mesh_path,
         rmax=None,
         fold=None,
-        rof_grid_name=None,
-        rof_esmf_mesh_filepath=None,
     ):
         """
         rmax : float, optional
@@ -60,9 +59,6 @@ class RunoffConfigurator(BaseConfigurator):
         fold : float, optional
             If passed, specifies the smoothing fold parameter for runoff mapping generation.
             If not provided, a suggested value based on the ocean grid will be used.
-        rof_grid_name, rof_esmf_mesh_filepath : str, optional
-            The runoff grid and its ESMF mesh. If not provided, the case's
-            ROF_GRID and ROF_DOMAIN_MESH are used.
         """
         super().__init__(
             case_grid_name=case_grid_name,
@@ -72,23 +68,20 @@ class RunoffConfigurator(BaseConfigurator):
             fold=fold,
             case_compset_lname=case_compset_lname,
             case_esmf_mesh_path=case_esmf_mesh_path,
-            rof_esmf_mesh_filepath=rof_esmf_mesh_filepath,
-            rof_grid_name=rof_grid_name,
         )
 
     def configure(self):
-        # Unless given, the runoff grid and its mesh are the case's, which
-        # visualCaseGen set when it created the case.
-        cime_case = getattr(getattr(self.registry, "case", None), "_cime_case", None)
-        if cime_case is not None:
-            for name, xml_var in (
-                ("rof_grid_name", "ROF_GRID"),
-                ("rof_esmf_mesh_filepath", "ROF_DOMAIN_MESH"),
-            ):
-                if self.get_input_param(name) is None:
-                    self.set_input_param(name, cime_case.get_value(xml_var))
+        # The map takes runoff from the case's own runoff grid, as it is now:
+        # to use another one (e.g. a subset of the runoff data), set the case's
+        # ROF_GRID / ROF_DOMAIN_MESH. A grid the case doesn't run on would give
+        # the coupler a map that doesn't match.
+        caseroot = self.registry.case.caseroot
+        self.set_output_param("rof_grid_name", xmlquery("ROF_GRID", caseroot=caseroot))
+        self.set_output_param(
+            "rof_esmf_mesh_filepath", xmlquery("ROF_DOMAIN_MESH", caseroot=caseroot)
+        )
         runoff_mapping_file_nnsm = f"glofas_{self.get_input_param('case_grid_name')}_{self.get_input_param('case_session_id')}_nnsm.nc"
-        rof_case_grid_name = self.get_input_param("rof_grid_name")
+        rof_case_grid_name = self.get_output_param("rof_grid_name")
         mapping_file_prefix = (
             f"{rof_case_grid_name}_to_{self.get_input_param('case_grid_name')}_map"
         )
@@ -143,15 +136,18 @@ class RunoffConfigurator(BaseConfigurator):
 
     def process(self, ctx):
         """Generate runoff-to-ocean mapping files if runoff is active in the compset."""
-        rof_grid_name = self.get_input_param("rof_grid_name")
-        rof_esmf_mesh_filepath = self.get_input_param("rof_esmf_mesh_filepath")
+        rof_grid_name = self.get_output_param("rof_grid_name")
+        rof_esmf_mesh_filepath = self.get_output_param("rof_esmf_mesh_filepath")
         ocn_mesh_filepath = self.get_input_param("case_esmf_mesh_path")
         grid_name = self.get_input_param("case_grid_name")
         rmax = self.get_input_param("rmax")
         fold = self.get_input_param("fold")
 
-        assert rof_grid_name is not None, "Couldn't determine runoff grid name."
-        assert rof_esmf_mesh_filepath != "", "Runoff ESMF mesh path could not be found."
+        if not rof_grid_name or not rof_esmf_mesh_filepath:
+            raise ValueError(
+                "config.json has no runoff grid or mesh for this case; rerun "
+                "configure_forcings() to record them."
+            )
 
         mapping_file_prefix = f"{rof_grid_name}_to_{grid_name}_map"
         mapping_dir = ctx.inputdir / "mapping"
