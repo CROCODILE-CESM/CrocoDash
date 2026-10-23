@@ -31,14 +31,15 @@ def test_build_forcing_request_merges_function_args():
 # =============================================================================
 
 
-def _conditions(product_name):
+def _conditions(product_name, function_name="get_glorys_data_script_for_cli", **kwargs):
     return mom6.ConditionsConfigurator(
         boundaries=["north"],
         product_name=product_name,
-        function_name="get_glorys_data_script_for_cli",
+        function_name=function_name,
         compset="1850_DATM%JRA_SLND_SICE_MOM6%REGIONAL_SROF_SGLC_SWAV",
         start_date="20200101",
         end_date="20200102",
+        **kwargs,
     )
 
 
@@ -56,8 +57,15 @@ def test_conditions_configurator_accepts_mom6_products():
     # Doesn't raise -- GLORYS plus the CESM POP/MOM output readers all feed the
     # MOM6 IC/OBC pipeline.
     _conditions("glorys")
-    _conditions("cesm_pop_output")
-    _conditions("cesm_mom_output")
+    _conditions("cesm_pop_output", "get_cesm_single_variable_data")
+    _conditions("cesm_mom_output", "get_mom6_output_data", data_freq="MS")
+
+
+def test_conditions_configurator_requires_data_freq_for_a_user_specified_product():
+    # CESM-MOM output has whatever cadence its files hold, so only the user
+    # can say what it is -- at configure time, not deep inside process_forcings.
+    with pytest.raises(ValueError, match="data_freq"):
+        _conditions("cesm_mom_output", "get_mom6_output_data")
 
 
 # ---------------------------------------------------------------------------

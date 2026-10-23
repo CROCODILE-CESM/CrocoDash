@@ -216,6 +216,11 @@ def generate_configure_forcing_args(forcing_config, remove_configs=None):
         }
         if overrides:
             configure_forcing_args["function_overrides"] = overrides
+    # The cadence inputs that set the access method's freq.
+    for name in ("data_freq", "subsample_freq"):
+        value = forcing_config["conditions"]["inputs"].get(name)
+        if value is not None:
+            configure_forcing_args[name] = value
     for key in forcing_config:
         if key == "conditions" or key in CONFIG_META_KEYS or key in remove_configs:
             continue

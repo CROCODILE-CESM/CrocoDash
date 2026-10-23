@@ -156,7 +156,7 @@ Every dated product declares a **`time_sampling`**: a `TimeSampling` saying how
 often its records come and whether each is a mean over its interval or an
 instantaneous value. Use `USER_SPECIFIED` when the cadence depends on the
 source the user points the product at (CESM-MOM output), so the user must pass
-it as `freq`, and `None` only for a static snapshot that ignores `dates`.
+it as `data_freq`, and `None` only for a static snapshot that ignores `dates`.
 
 ```python
 class MyDataset(MOM6ForcingProduct):
@@ -164,14 +164,15 @@ class MyDataset(MOM6ForcingProduct):
     time_sampling = TimeSampling("D", cell_method="mean")
 ```
 
-An access method that can do something with a `freq` (users set it with
-`function_overrides={"freq": "MS"}`) takes an optional `freq=None`, calls
-`resolve_time_sampling` first, and says what it does with it:
+An access method that can do something with a `freq` takes an optional
+`freq=None`, calls `resolve_time_sampling` first, and says what it does with it:
 `@accessmethod(freq_handling="subsample")` if it can fetch every `freq` instead
 of every record (see GLORYS's RDA method, which uses `sample_dates`), or
 `freq_handling="declare"` if `freq` names the cadence of the source the user
 points it at (the CESM tseries readers). Any other method takes no `freq` and
-returns its product's own cadence.
+returns its product's own cadence. Users don't pass `freq` itself:
+`configure_forcings` hands a "subsample" method its `subsample_freq` and a
+"declare" method its `data_freq`, and rejects the one the method doesn't read.
 :::
 
 ## Step 5: Validation and Tests

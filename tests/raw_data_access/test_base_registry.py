@@ -312,7 +312,7 @@ def test_user_specified_product_needs_freq():
     ProductRegistry.load()
     product = ProductRegistry.get_product("cesm_mom_output")
     method = "get_mom6_single_variable_data"
-    with pytest.raises(ValueError, match="function_overrides"):
+    with pytest.raises(ValueError, match="data_freq"):
         resolve_time_sampling(product, method)
     assert resolve_time_sampling(product, method, "D") == TimeSampling("D")
 

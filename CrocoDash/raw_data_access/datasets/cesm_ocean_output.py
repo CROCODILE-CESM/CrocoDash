@@ -51,7 +51,7 @@ class CESM_POP_OUTPUT(MOM6ForcingProduct):
     eta_var_name = "SSH"
     time_units = "days since 1850-01-01"
     calendar = NOLEAP
-    # The default dataset_path is tseries/month_1, monthly means; pass freq
+    # The default dataset_path is tseries/month_1, monthly means; pass data_freq
     # for an archive of another cadence (e.g. "D" for day_1).
     time_sampling = TimeSampling("MS", "mean")
     depth_coord = ["z_t", "z_t_150m"]

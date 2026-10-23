@@ -102,7 +102,8 @@ class TimeSampling:
 
 
 # Declared by a product whose cadence depends on the source the user points it
-# at (e.g. a dataset_path of model output), so the user must give it as freq.
+# at (e.g. a dataset_path of model output), so the user must give it as
+# configure_forcings's data_freq.
 USER_SPECIFIED = "user_specified"
 
 
@@ -143,8 +144,8 @@ def resolve_time_sampling(product, method_name: str, freq: str | None = None):
         if freq is None:
             raise ValueError(
                 f"{name} reads whatever cadence the data you point it at has, so "
-                "it must be given: pass function_overrides={'freq': ...}, e.g. "
-                "'MS' for monthly or 'D' for daily output."
+                "it must be given: pass data_freq=..., e.g. 'MS' for monthly or "
+                "'D' for daily output."
             )
         return TimeSampling(freq)
     if freq is None or handling == "declare":
@@ -159,8 +160,8 @@ def resolve_time_sampling(product, method_name: str, freq: str | None = None):
         )
     if frequency_step(freq) < frequency_step(declared.frequency):
         raise ValueError(
-            f"{name} has {declared.frequency} data; freq={freq!r} is finer than "
-            "that, so it would silently return fewer records than asked for."
+            f"{name} has {declared.frequency} data; {freq!r} is finer than that, "
+            "so it would silently return fewer records than asked for."
         )
     return replace(declared, frequency=freq)
 
