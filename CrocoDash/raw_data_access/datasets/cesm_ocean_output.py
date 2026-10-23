@@ -748,6 +748,13 @@ def subset_dataset(
         ds = xr.open_mfdataset(file_paths, decode_timedelta=False)
         if time_range is not None:
             ds = select_time_range(ds, *time_range, apply_month_shift)
+            if ds.sizes["time"] == 0:
+                start, end = (pd.Timestamp(t).date() for t in time_range)
+                raise ValueError(
+                    f"No {var_name} records fall between {start} and {end}; the "
+                    "source's records are further apart than the requested "
+                    "window (e.g. monthly output)."
+                )
 
         # Convert time. Saving to netcdf is not working with cftime objects.
         ds = convert_cftime_to_numeric(
