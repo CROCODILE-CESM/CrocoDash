@@ -145,7 +145,14 @@ class StreamYearConfigurator(BaseConfigurator):
             f"Align {plan['mode']} streams with the run dates "
             "(CrocoDash: CDEPS defaults to year_align=1)"
         )
-        user_nl_blocks.write(self.name, f"{component}_streams", [(comment, pairs)])
+        case = self.registry.case
+        user_nl_blocks.write(
+            self.name,
+            f"{component}_streams",
+            [(comment, pairs)],
+            caseroot=case.caseroot,
+            ninst=case.ninst,
+        )
 
     def configure(self):
         start_year = int(self.get_input_param("start_date")[:4])

@@ -1,7 +1,6 @@
 from pathlib import Path
 
 from mom6_forge import mapping
-from ProConPy.config_var import cvars
 
 from CrocoDash.forcing.base import *
 
@@ -49,7 +48,6 @@ class RunoffConfigurator(BaseConfigurator):
         case_compset_lname,
         case_inputdir,
         case_esmf_mesh_path,
-        case_cime=None,
         rmax=None,
         fold=None,
         rof_grid_name=None,
@@ -62,39 +60,33 @@ class RunoffConfigurator(BaseConfigurator):
         fold : float, optional
             If passed, specifies the smoothing fold parameter for runoff mapping generation.
             If not provided, a suggested value based on the ocean grid will be used.
+        rof_grid_name, rof_esmf_mesh_filepath : str, optional
+            The runoff grid and its ESMF mesh. If not provided, the case's
+            ROF_GRID and ROF_DOMAIN_MESH are used.
         """
-        if case_cime is not None:
-            if rof_esmf_mesh_filepath is None:
-                rof_esmf_mesh_filepath = case_cime.get_mesh_path(
-                    "rof", cvars["CUSTOM_ROF_GRID"].value
-                )
-            if rof_grid_name is None:
-                rof_grid_name = cvars["CUSTOM_ROF_GRID"].value
-            super().__init__(
-                case_grid_name=case_grid_name,
-                case_session_id=case_session_id,
-                case_inputdir=case_inputdir,
-                rmax=rmax,
-                fold=fold,
-                case_esmf_mesh_path=case_esmf_mesh_path,
-                case_compset_lname=case_compset_lname,
-                rof_esmf_mesh_filepath=rof_esmf_mesh_filepath,
-                rof_grid_name=rof_grid_name,
-            )
-        else:
-            super().__init__(
-                case_grid_name=case_grid_name,
-                case_session_id=case_session_id,
-                case_inputdir=case_inputdir,
-                rmax=rmax,
-                fold=fold,
-                case_compset_lname=case_compset_lname,
-                case_esmf_mesh_path=case_esmf_mesh_path,
-                rof_esmf_mesh_filepath=rof_esmf_mesh_filepath,
-                rof_grid_name=rof_grid_name,
-            )
+        super().__init__(
+            case_grid_name=case_grid_name,
+            case_session_id=case_session_id,
+            case_inputdir=case_inputdir,
+            rmax=rmax,
+            fold=fold,
+            case_compset_lname=case_compset_lname,
+            case_esmf_mesh_path=case_esmf_mesh_path,
+            rof_esmf_mesh_filepath=rof_esmf_mesh_filepath,
+            rof_grid_name=rof_grid_name,
+        )
 
     def configure(self):
+        # Unless given, the runoff grid and its mesh are the case's, which
+        # visualCaseGen set when it created the case.
+        cime_case = getattr(getattr(self.registry, "case", None), "_cime_case", None)
+        if cime_case is not None:
+            for name, xml_var in (
+                ("rof_grid_name", "ROF_GRID"),
+                ("rof_esmf_mesh_filepath", "ROF_DOMAIN_MESH"),
+            ):
+                if self.get_input_param(name) is None:
+                    self.set_input_param(name, cime_case.get_value(xml_var))
         runoff_mapping_file_nnsm = f"glofas_{self.get_input_param('case_grid_name')}_{self.get_input_param('case_session_id')}_nnsm.nc"
         rof_case_grid_name = self.get_input_param("rof_grid_name")
         mapping_file_prefix = (

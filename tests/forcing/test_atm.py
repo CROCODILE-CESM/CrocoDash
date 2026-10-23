@@ -34,7 +34,9 @@ class FakeCimeCase:
 
 class FakeRegistry:
     def __init__(self, cime_case):
-        self.case = type("FakeCase", (), {"_cime_case": cime_case})()
+        self.case = type(
+            "FakeCase", (), {"_cime_case": cime_case, "caseroot": None, "ninst": 1}
+        )()
 
 
 def build(cesmroot, start, end, cime_case, **kwargs):
