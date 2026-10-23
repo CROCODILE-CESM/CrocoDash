@@ -54,8 +54,8 @@ case.configure_forcings(
 ```python
 case.configure_forcings(
     date_range=["2020-01-01 00:00:00", "2020-02-01 00:00:00"],
-    # Runoff configuration if "DROF" in compset
-    rof_esmf_mesh_filepath="/path/to/glofas_mesh.nc",
+    # Runoff if "DROF" is in the compset: the runoff grid and mesh are the
+    # case's own (ROF_GRID / ROF_DOMAIN_MESH).
     # Optional smoothing parameters in km — must be given together, or omitted
     # to let CrocoDash suggest values from the ocean mesh resolution:
     rmax=8,

@@ -428,8 +428,8 @@ case needs, and optional configurators (like tides) derive their reference dates
 <h3>Runoff<a class="headerlink" href="#runoff" title="Link to this heading">#</a></h3>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">case</span><span class="o">.</span><span class="n">configure_forcings</span><span class="p">(</span>
     <span class="n">date_range</span><span class="o">=</span><span class="p">[</span><span class="s2">"2020-01-01 00:00:00"</span><span class="p">,</span> <span class="s2">"2020-02-01 00:00:00"</span><span class="p">],</span>
-    <span class="c1"># Runoff configuration if "DROF" in compset</span>
-    <span class="n">rof_esmf_mesh_filepath</span><span class="o">=</span><span class="s2">"/path/to/glofas_mesh.nc"</span><span class="p">,</span>
+    <span class="c1"># Runoff if "DROF" is in the compset: the runoff grid and mesh are the</span>
+    <span class="c1"># case's own (ROF_GRID / ROF_DOMAIN_MESH).</span>
     <span class="c1"># Optional smoothing parameters in km — must be given together, or omitted</span>
     <span class="c1"># to let CrocoDash suggest values from the ocean mesh resolution:</span>
     <span class="n">rmax</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
