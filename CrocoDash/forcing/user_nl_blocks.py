@@ -19,20 +19,27 @@ stops the MOM6 build, and CICE, WW3 and CDEPS would take whichever line comes
 last.
 
 The marker lines are ``!`` comments, which MOM_interface's user_nl parser,
-CIME's namelist parser and CDEPS's stream-mod parser all skip.
+CIME's namelist parser and CDEPS's stream-mod parser all skip. ``tag`` names
+the writer in them; its default is the text existing cases' blocks carry.
+
+Every function is given the caseroot (and ``write`` the number of instances),
+so several cases can be configured in one process.
 """
 
 import hashlib
 import re
 from pathlib import Path
 
-from ProConPy.config_var import cvars
-from visualCaseGen.custom_widget_types.case_tools import append_user_nl
-
-_BEGIN = "! >>> CrocoDash configure_forcings: "
-_END = "! <<< CrocoDash configure_forcings: "
+_TAG = "CrocoDash configure_forcings"
 _NOTE = "(rewritten on every call; set your own values outside this block)"
-_BEGIN_RE = re.compile(re.escape(_BEGIN) + r"(\S+) \[sha:([0-9a-f]+)\]")
+
+
+def _begin(tag):
+    return f"! >>> {tag}: "
+
+
+def _end(tag):
+    return f"! <<< {tag}: "
 
 
 def _sha(body):
@@ -48,15 +55,16 @@ def _files(caseroot, model, ninst):
     ]
 
 
-def _parse(lines, path):
+def _parse(lines, path, tag):
     """[(owner, sha, begin, end)] line indices of the blocks in ``lines``."""
+    begin_re = re.compile(re.escape(_begin(tag)) + r"(\S+) \[sha:([0-9a-f]+)\]")
     blocks = []
     i = 0
     while i < len(lines):
-        match = _BEGIN_RE.match(lines[i])
+        match = begin_re.match(lines[i])
         if match:
             owner, sha = match.groups()
-            end_line = f"{_END}{owner}"
+            end_line = f"{_end(tag)}{owner}"
             end = next(
                 (j for j in range(i + 1, len(lines)) if lines[j].rstrip() == end_line),
                 None,
@@ -80,10 +88,10 @@ def _key(name):
     return "".join(name.split()).lower()
 
 
-def _keys_outside_blocks(lines, path):
+def _keys_outside_blocks(lines, path, tag):
     """The (normalized) variables set outside CrocoDash's blocks."""
     inside = set()
-    for _, _, begin, end in _parse(lines, path):
+    for _, _, begin, end in _parse(lines, path, tag):
         inside.update(range(begin, end + 1))
     keys = set()
     for i, line in enumerate(lines):
@@ -96,6 +104,24 @@ def _keys_outside_blocks(lines, path):
 
 def _read_lines(path):
     return path.read_text().splitlines(keepends=True) if path.exists() else []
+
+
+def _log(path, kept, skipped):
+    """Print what ``write`` adds to ``path``, laid out as visualCaseGen's
+    append_user_nl prints it, and the variables it left out."""
+    if kept:
+        print(f"Adding parameter changes to {path.name}:\n")
+    for comment, pairs in kept:
+        if comment:
+            print(f"  ! {comment}")
+        for var, val in pairs:
+            print(f"  {var} = {val}")
+        print("")
+    for var in skipped:
+        print(
+            f"  ! {var}: set outside CrocoDash's block in {path.name}; "
+            "that value is kept"
+        )
 
 
 def snapshot(caseroot):
@@ -117,7 +143,7 @@ def restore(caseroot, contents):
         path.write_text(text)
 
 
-def strip(caseroot):
+def strip(caseroot, tag=_TAG):
     """Remove every CrocoDash block from the user_nl files in ``caseroot``.
 
     Returns ``[(file name, owner, body lines)]`` for the blocks whose contents
@@ -129,7 +155,7 @@ def strip(caseroot):
         if not path.is_file():
             continue
         lines = _read_lines(path)
-        blocks = _parse(lines, path)
+        blocks = _parse(lines, path, tag)
         if not blocks:
             continue
         keep = [True] * len(lines)
@@ -145,21 +171,19 @@ def strip(caseroot):
     return edited
 
 
-def write(owner, model, groups):
-    """Write ``owner``'s block into user_nl_<model> (each instance's file).
+def write(owner, model, groups, *, caseroot, ninst, tag=_TAG):
+    """Write ``owner``'s block into ``caseroot``'s user_nl_<model> (each of
+    the ``ninst`` instances' files).
 
     ``groups`` is ``[(comment or None, [(var, val), ...]), ...]``; the block
     holds them as consecutive append_user_nl calls would write them, and the
     log shows them the same way. Variables the file already sets outside the
     blocks are left out (see the module docstring).
     """
-    caseroot = Path(cvars["CASEROOT"].value)
-    files = _files(caseroot, model, cvars["NINST"].value)
-
     per_file = []
-    for path in files:
+    for path in _files(Path(caseroot), model, ninst):
         lines = _read_lines(path)
-        outside = _keys_outside_blocks(lines, path)
+        outside = _keys_outside_blocks(lines, path, tag)
         kept = []
         for comment, pairs in groups:
             pairs = [(var, val) for var, val in pairs if _key(var) not in outside]
@@ -170,18 +194,10 @@ def write(owner, model, groups):
         ]
         per_file.append((path, lines, kept, skipped))
 
-    # The log is what append_user_nl prints for the first instance's entries
-    # (it repeats them for every instance, as when it writes them itself).
-    for i, (comment, pairs) in enumerate(per_file[0][2]):
-        append_user_nl(model, pairs, do_exec=False, comment=comment, log_title=i == 0)
-    for path, _, _, skipped in per_file:
-        for var in skipped:
-            print(
-                f"  ! {var}: set outside CrocoDash's block in {path.name}; "
-                "that value is kept"
-            )
-
-    for path, lines, kept, _ in per_file:
+    # Every file is parsed before any is written, so a malformed one changes
+    # nothing.
+    for path, lines, kept, skipped in per_file:
+        _log(path, kept, skipped)
         if not kept:
             continue
         body = "".join(
@@ -192,12 +208,12 @@ def write(owner, model, groups):
         separator = "" if not lines or lines[-1].endswith("\n") else "\n"
         with open(path, "a") as f:
             f.write(
-                f"{separator}\n{_BEGIN}{owner} [sha:{_sha(body)}] {_NOTE}\n"
-                f"{body}{_END}{owner}\n"
+                f"{separator}\n{_begin(tag)}{owner} [sha:{_sha(body)}] {_NOTE}\n"
+                f"{body}{_end(tag)}{owner}\n"
             )
 
 
-def report_edits(caseroot, edited):
+def report_edits(caseroot, edited, tag=_TAG):
     """Warn about the hand edits ``strip`` found, once the blocks have been
     rewritten: the lines each edited block lost, and those it got back."""
     for name, owner, body in edited:
@@ -205,7 +221,7 @@ def report_edits(caseroot, edited):
         lines = _read_lines(path)
         new = [
             line.strip()
-            for block_owner, _, begin, end in _parse(lines, path)
+            for block_owner, _, begin, end in _parse(lines, path, tag)
             if block_owner == owner
             for line in lines[begin + 1 : end]
             if line.strip()
