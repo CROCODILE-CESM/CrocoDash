@@ -308,6 +308,22 @@ def _all_written(paths):
     return all(p.exists() for p in paths)
 
 
+def _record_at_start(raw_file, time_name, start_date):
+    """The IC request reaches back lookback_days, so coarse (e.g. monthly)
+    data can hold more than one record, and rm6 takes the first. Keep the
+    last record at or before start_date (the first one if none is), written
+    next to raw_file."""
+    with xr.open_dataset(raw_file) as ds:
+        if time_name not in ds.dims or ds.sizes[time_name] < 2:
+            return raw_file
+        before = ds.sel({time_name: slice(None, f"{start_date:%Y-%m-%d %H:%M:%S}")})
+        index = -1 if before.sizes[time_name] else 0
+        record = (before if index == -1 else ds).isel({time_name: [index]})
+        record_file = Path(raw_file).with_name("ic_record.nc")
+        record.load().to_netcdf(record_file)
+    return record_file
+
+
 def _regrid_ic(
     raw_file,
     hgrid,
@@ -340,7 +356,11 @@ def _regrid_ic(
     if _all_written([output_dir / f"{n}.nc" for n in names]):
         logger.info("Initial condition files already exist. They will be skipped.")
     else:
-        expt.setup_initial_condition(raw_file, dataset_varnames, arakawa_grid=None)
+        expt.setup_initial_condition(
+            _record_at_start(raw_file, dataset_varnames["time_var_name"], start_date),
+            dataset_varnames,
+            arakawa_grid=None,
+        )
 
     if _all_written([output_dir / f"{n}_filled.nc" for n in names]):
         logger.info(
