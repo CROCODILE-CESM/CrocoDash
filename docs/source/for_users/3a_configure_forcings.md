@@ -64,6 +64,32 @@ case.configure_forcings(
 )
 ```
 
+### Interior Open Boundaries
+`boundaries` takes domain edges (`"south"`, `"north"`, `"west"`, `"east"`) and open
+boundaries inside the domain, such as a strait, as regional_mom6 `Segment`s. `ocean_side`
+is the side of the line the model domain is on; MOM6 treats the other side as land.
+```python
+import xarray as xr
+from regional_mom6.segment import Segment
+
+strait = Segment.from_lonlat(
+    xr.open_dataset(case.supergrid_path),
+    axis="nxp",  # a north-south line
+    fixed_lon=-5.6,
+    lat_range=(35.8, 36.2),
+    segment_name="strait",
+    topo=case.ocn_topo,  # checks that both ends of the line are land
+    ocean_side="east",
+)
+case.configure_forcings(
+    date_range=["2020-01-01 00:00:00", "2020-02-01 00:00:00"],
+    boundaries=["north", strait],
+)
+```
+config.json keeps an interior segment as its spec, in supergrid indices
+(`{"name": "strait", "axis": "nxp", "index": ..., "index_range": [..., ...], "ocean_side": "east"}`),
+which `case.forcing_args()`, `crocodash dump` and YAML configs use as well.
+
 ### Data Cadence (data_freq, subsample_freq)
 Two inputs set the cadence of the initial and boundary condition data, as a
 pandas frequency alias (`"D"`, `"MS"`, ...). `data_freq` is the cadence of the

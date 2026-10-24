@@ -1,7 +1,9 @@
+from datetime import datetime
 from pathlib import Path
 
-import regional_mom6 as rmom6
-from CrocoDash.vgrid import VGrid
+import xarray as xr
+from regional_mom6.regional_mom6 import prepare_tpxo_tidal_forcing
+from CrocoDash.forcing import obc
 from CrocoDash.forcing.base import *
 
 
@@ -119,27 +121,21 @@ class TidesConfigurator(BaseConfigurator):
         }
 
     def process(self, ctx):
-        # hgrid_type/vgrid_type take mom6_forge Grid/VGrid objects directly --
-        # "from_file" + a separate hgrid_path/vgrid_path kwarg no longer
-        # exists; "from_file" instead means "lazily read mom_input_dir/
-        # hgrid.nc", which isn't this experiment's own supergrid filename.
-        expt = rmom6.experiment(
-            date_range=("1850-01-01 00:00:00", "1851-01-01 00:00:00"),  # Dummy times
-            resolution=None,
-            number_vertical_layers=None,
-            layer_thickness_ratio=None,
-            depth=ctx.ocn_topo.max_depth,
-            mom_run_dir=ctx.inputdir,
-            mom_input_dir=ctx.output_path,
-            hgrid_type=ctx.grid,
-            vgrid_type=VGrid.from_file(str(ctx.vgrid_path)),
-            minimum_depth=ctx.ocn_topo.min_depth,
-            tidal_constituents=self.get_input_param("tidal_constituents"),
-            expt_name="tides",
-            boundaries=self.get_input_param("boundaries"),
+        """Regrid TPXO onto each boundary's regional_mom6 Segment, interior
+        segments included."""
+        tpxo_h, tpxo_u, tpxo_v = prepare_tpxo_tidal_forcing(
+            self.get_input_param("tpxo_elevation_filepath"),
+            self.get_input_param("tpxo_velocity_filepath"),
+            self.get_input_param("tidal_constituents"),
         )
-        expt.setup_boundary_tides(
-            tpxo_elevation_filepath=self.get_input_param("tpxo_elevation_filepath"),
-            tpxo_velocity_filepath=self.get_input_param("tpxo_velocity_filepath"),
-            tidal_constituents=self.get_input_param("tidal_constituents"),
-        )
+        with xr.open_dataset(ctx.supergrid_path) as hgrid:
+            for n, boundary in enumerate(self.get_input_param("boundaries"), start=1):
+                segment = obc.get_segment(hgrid, boundary, f"segment_{n:03d}")
+                segment.regrid_tides(
+                    tpxo_v,
+                    tpxo_u,
+                    tpxo_h,
+                    None,
+                    outfolder=ctx.output_path,
+                    startdate=datetime(1850, 1, 1),  # Dummy time
+                )

@@ -25,6 +25,7 @@ def sample_forcing_config():
                 "function_name": "get_glorys_data_script_for_cli",
                 "start_date": "20200101",
                 "end_date": "20200109",
+                "boundaries": ["north"],
             },
             "outputs": {
                 "date_format": "%Y%m%d",
@@ -60,6 +61,7 @@ from CrocoDash.recipe import (
 from CrocoDash.case import Case
 from CrocoDash.case_state import check_version as _check_state_schema_version
 from CrocoDash.case_state import SCHEMA_VERSION as STATE_SCHEMA_VERSION
+from CrocoDash.forcing import mom6, user_nl_blocks
 from CrocoDash.forcing.base import CONFIG_FILENAME, write_config
 from CrocoDash.grid import Grid
 from CrocoDash.topo import Topo
@@ -532,6 +534,42 @@ def test_configure_forcing_args_conditions_boundaries_win(
     args = _forcing_args(forcing_config, tmp_path)
 
     assert args["boundaries"] == ["north"]
+
+
+def test_configure_forcing_args_round_trips_an_interior_segment(
+    get_rect_grid, tmp_path, monkeypatch
+):
+    """config.json keeps an interior boundary as its spec, so dump, fork and
+    crocodash configure hand configure_forcings the same segment back."""
+    monkeypatch.setattr(user_nl_blocks, "write", lambda *args, **kwargs: None)
+    supergrid = tmp_path / "hgrid.nc"
+    get_rect_grid.write_supergrid(supergrid)
+    strait = {
+        "name": "strait",
+        "axis": "nxp",
+        "index": 11,
+        "index_range": None,
+        "ocean_side": "west",
+    }
+
+    def configured(boundaries):
+        conditions = mom6.ConditionsConfigurator(
+            boundaries=boundaries,
+            product_name="GLORYS",
+            function_name="get_glorys_data_script_for_cli",
+            compset="1850_DATM%JRA_SLND_SICE_MOM6%REGIONAL_SROF_SGLC_SWAV",
+            start_date="20200101",
+            end_date="20200109",
+            case_supergrid_path=supergrid,
+        )
+        conditions.configure()
+        return conditions.serialize()
+
+    conditions = configured(["north", strait])
+    args = _forcing_args({"caseroot": "/fake/case", "conditions": conditions}, tmp_path)
+
+    assert args["boundaries"] == ["north", strait]
+    assert configured(args["boundaries"])["outputs"] == conditions["outputs"]
 
 
 def test_configure_forcing_args_keeps_function_overrides(

@@ -41,6 +41,7 @@ from CrocoDash import logging
 from CrocoDash.forcing import utils
 from CrocoDash.grid import Grid
 from CrocoDash.topo import Topo
+from regional_mom6.segment import Segment
 
 logger = logging.setup_logger(__name__)
 
@@ -48,6 +49,32 @@ logger = logging.setup_logger(__name__)
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
+
+def boundary_key(boundary):
+    """A boundary's name: an edge's own ("north", ...) or an interior segment
+    spec's "name"."""
+    return boundary["name"] if isinstance(boundary, dict) else boundary
+
+
+def get_segment(hgrid, boundary, segment_name, topo=None):
+    """The regional_mom6 Segment of one boundary, named ``segment_name`` (MOM6's
+    ``segment_NNN``). ``boundary`` is an edge name, or an interior segment's spec:
+    ``{"name": ..., **Segment.to_spec()}``, as config.json stores it."""
+    if isinstance(boundary, dict):
+        return Segment.from_spec(hgrid, boundary, segment_name, topo=topo)
+    return Segment.cardinal(hgrid, boundary, segment_name, topo=topo)
+
+
+def _segment_bbox(hgrid, spec) -> dict:
+    """The lat/lon bounding box of an interior segment's own points."""
+    segment = get_segment(hgrid, spec, spec["name"])
+    return {
+        "lat_min": float(segment.lat.min()),
+        "lat_max": float(segment.lat.max()),
+        "lon_min": float(segment.lon.min()),
+        "lon_max": float(segment.lon.max()),
+    }
 
 
 def _make_date_pairs(start: datetime, end: datetime, step_days, min_days: int = 1):
@@ -725,6 +752,7 @@ def process_obc_conditions(
     regrid_step_days: int = 30,
     bathymetry_path=None,
     min_chunk_days: int = 1,
+    custom_segments: dict = None,
 ):
     """Process boundary conditions through the GET → REGRID → MERGE pipeline.
 
@@ -761,6 +789,10 @@ def process_obc_conditions(
             ocean tmask (tighter than the full supergrid edge extent). When
             omitted, falls back to the full supergrid bounding box per
             boundary.
+        custom_segments: Boundary name -> spec of each interior segment (see
+            ``get_segment``); its data is downloaded over the segment's own
+            bounding box. Rebuilding the segment in the regrid step is the
+            caller's business: bind them into ``regrid_chunk_fn`` too.
     """
     start_date = pd.to_datetime(start_date).to_pydatetime()
     end_date = pd.to_datetime(end_date).to_pydatetime()
@@ -769,6 +801,8 @@ def process_obc_conditions(
     regridded_path = Path(regridded_dataset_path)
     output_path = Path(output_path)
     boundaries = list(boundary_number_conversion.keys())
+    custom_segments = custom_segments or {}
+    edges = [b for b in boundaries if b not in custom_segments]
 
     # Compute per-boundary download bboxes using the bathymetry tmask so we only
     # request data over ocean cells (tighter than the full supergrid edge extent).
@@ -784,15 +818,17 @@ def process_obc_conditions(
             )
             boundary_bboxes = {
                 b: _ocean_bbox_for_boundary(hgrid_ds, topo.supergridmask, b)
-                for b in boundaries
+                for b in edges
             }
             logger.info("Using tmask-derived bounding boxes for OBC data download.")
         else:
             full_bboxes = Grid.get_bounding_boxes(hgrid_ds)
-            boundary_bboxes = {b: full_bboxes[b] for b in boundaries}
+            boundary_bboxes = {b: full_bboxes[b] for b in edges}
             logger.info(
                 "No bathymetry_path given; using full supergrid bounding boxes."
             )
+        for name, spec in custom_segments.items():
+            boundary_bboxes[name] = _segment_bbox(hgrid_ds, spec)
 
     raw_path.mkdir(exist_ok=True)
     regridded_path.mkdir(exist_ok=True)

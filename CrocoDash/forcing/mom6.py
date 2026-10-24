@@ -85,6 +85,7 @@ def _regrid_obc_chunk(
     start_date,
     regridders,
     bathymetry_path=None,
+    custom_segments=None,
 ):
     """Regrid one OBC chunk via regional_mom6's Segment. Writes to
     ``outfolder / f"forcing_obc_segment_{seg_id:03d}.nc"`` -- the filename
@@ -101,6 +102,10 @@ def _regrid_obc_chunk(
     instead of thinning dz to the local water column. The Topo is rebuilt
     here rather than bound as an object because this runs in forked workers
     that receive the function pickled; a path is cheap to ship, a Topo is not.
+
+    ``custom_segments`` (boundary name -> interior segment spec) is bound the
+    same way: the engine hands over only the boundary's name, and an interior
+    segment can't be rebuilt from its name alone.
     """
     outfolder = Path(outfolder)
     topo = None
@@ -122,9 +127,9 @@ def _regrid_obc_chunk(
     with dask.config.set(scheduler="synchronous"):
         ds.to_netcdf(tmp_file)
     try:
-        seg = Segment.cardinal(
+        seg = obc.get_segment(
             hgrid,
-            orientation=boundary,
+            (custom_segments or {}).get(boundary, boundary),
             segment_name=f"segment_{seg_id:03d}",
             topo=topo,
         )
@@ -444,6 +449,10 @@ class ConditionsConfigurator(BaseConfigurator):
         InputValueParam(
             "subsample_freq", comment="Coarser cadence to thin the product's data to"
         ),
+        InputValueParam(
+            "case_supergrid_path",
+            comment="Ocean supergrid, on which interior boundary segments are placed",
+        ),
     ]
 
     output_params = [
@@ -522,6 +531,7 @@ class ConditionsConfigurator(BaseConfigurator):
         function_args=None,
         data_freq=None,
         subsample_freq=None,
+        case_supergrid_path=None,
     ):
         if date_range is not None:
             start_date = date_range[0].strftime(self._DATE_FORMAT)
@@ -536,16 +546,25 @@ class ConditionsConfigurator(BaseConfigurator):
             function_args=function_args or {},
             data_freq=data_freq,
             subsample_freq=subsample_freq,
+            case_supergrid_path=case_supergrid_path,
         )
 
     def validate_args(self, **kwargs):
         super().validate_args(**kwargs)
 
+        # Each boundary is an edge's name or an interior segment's spec (see
+        # obc.get_segment).
         boundaries = kwargs["boundaries"]
-        if not isinstance(boundaries, list):
-            raise TypeError("boundaries must be a list of strings.")
-        if not all(isinstance(boundary, str) for boundary in boundaries):
-            raise TypeError("boundaries must be a list of strings.")
+        if not isinstance(boundaries, list) or not all(
+            isinstance(b, str) or (isinstance(b, dict) and "name" in b)
+            for b in boundaries
+        ):
+            raise TypeError(
+                "boundaries must be a list of edge names and interior segment specs."
+            )
+        names = [obc.boundary_key(b) for b in boundaries]
+        if len(set(names)) != len(names):
+            raise ValueError(f"Boundary names must be unique, got {names}.")
 
         ProductRegistry.load()
         product_name = kwargs["product_name"]
@@ -604,6 +623,7 @@ class ConditionsConfigurator(BaseConfigurator):
 
     def configure(self):
         boundaries = self.get_input_param("boundaries")
+        names = [obc.boundary_key(b) for b in boundaries]
         product_name = self.get_input_param("product_name").lower()
         compset = self.get_input_param("compset")
         product = ProductRegistry.get_product(product_name)
@@ -649,7 +669,7 @@ class ConditionsConfigurator(BaseConfigurator):
             print(line)
         self.set_output_param(
             "boundary_number_conversion",
-            {b: i + 1 for i, b in enumerate(boundaries)},
+            {b: i + 1 for i, b in enumerate(names)},
         )
         self.set_output_param("function_args", self.get_input_param("function_args"))
 
@@ -687,11 +707,16 @@ class ConditionsConfigurator(BaseConfigurator):
 
         # ---- dynamic, per-boundary OBC params ----
         dynamic_params = []
-        for seg in boundaries:
-            seg_ix = str(self._segment_index(boundaries, seg)).zfill(3)
+        for boundary, seg in zip(boundaries, names):
+            seg_ix = str(self._segment_index(names, seg)).zfill(3)
             seg_id = "OBC_SEGMENT_" + seg_ix
 
-            if seg == "south":
+            if isinstance(boundary, dict):
+                # An interior segment: regional_mom6 places it on the supergrid.
+                with xr.open_dataset(self.get_input_param("case_supergrid_path")) as hg:
+                    segment = obc.get_segment(hg, boundary, f"segment_{seg_ix}")
+                index_str = '"' + segment.mom6_obc_position_string()
+            elif seg == "south":
                 index_str = '"J=0,I=0:N'
             elif seg == "north":
                 index_str = '"J=N,I=N:0'
@@ -768,7 +793,7 @@ class ConditionsConfigurator(BaseConfigurator):
     def deserialize(cls, data, caseroot=None):
         """Reconstruct dynamic per-boundary output params alongside the static ones."""
         obj = super().deserialize(data, caseroot)
-        boundaries = obj.get_input_param("boundaries")
+        boundaries = [obc.boundary_key(b) for b in obj.get_input_param("boundaries")]
         for seg in boundaries:
             seg_ix = str(cls._segment_index(boundaries, seg)).zfill(3)
             for suffix in ("", "_VELOCITY_NUDGING_TIMESCALES", "_DATA"):
@@ -810,7 +835,13 @@ class ConditionsConfigurator(BaseConfigurator):
             return None
         outputs = entry.get("outputs", {})
         return {
-            "inputs": entry.get("inputs"),
+            # A case_* input says where the case keeps a file (it moves with a
+            # forked or bundled case), not what the files are made from.
+            "inputs": {
+                k: v
+                for k, v in (entry.get("inputs") or {}).items()
+                if not k.startswith("case_")
+            },
             "outputs": {k: outputs.get(k) for k in cls._PROCESS_OUTPUTS},
         }
 
@@ -908,6 +939,11 @@ class ConditionsConfigurator(BaseConfigurator):
             raise ValueError(
                 f"fill_method '{product_info['boundary_fill_method']}' is not supported."
             )
+        custom_segments = {
+            b["name"]: b
+            for b in self.get_input_param("boundaries")
+            if isinstance(b, dict)
+        }
 
         result = obc.process_obc_conditions(
             **self._obc_dates(),
@@ -923,8 +959,13 @@ class ConditionsConfigurator(BaseConfigurator):
             raw_dataset_path=ctx.raw_data_dir,
             regridded_dataset_path=ctx.regridded_data_dir,
             output_path=ctx.output_path,
-            regrid_chunk_fn=partial(_regrid_obc_chunk, bathymetry_path=ctx.topo_path),
+            regrid_chunk_fn=partial(
+                _regrid_obc_chunk,
+                bathymetry_path=ctx.topo_path,
+                custom_segments=custom_segments,
+            ),
             bathymetry_path=ctx.topo_path,
+            custom_segments=custom_segments,
             get_step_days=int(self.get_output_param("get_step_days")),
             regrid_step_days=int(self.get_output_param("regrid_step_days")),
             min_chunk_days=self.get_output_param("min_chunk_days") or 1,

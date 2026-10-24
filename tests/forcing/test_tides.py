@@ -4,43 +4,45 @@ from CrocoDash.forcing.base import WorkflowContext
 from CrocoDash.forcing.tides import TidesConfigurator
 
 
-def _make_ctx(tmp_path, grid, topo, vgrid_path):
+def _make_ctx(tmp_path):
     (tmp_path / "ocn").mkdir()
-    ctx = WorkflowContext(
+    return WorkflowContext(
         inputdir=tmp_path,
         supergrid_path=tmp_path / "grid.nc",
-        vgrid_path=vgrid_path,
+        vgrid_path=tmp_path / "vgrid.nc",
         topo_path=tmp_path / "topo.nc",
         raw_data_dir=tmp_path,
         regridded_data_dir=tmp_path,
         output_path=tmp_path / "ocn",
         config={},
     )
-    # Inject the real fixture objects directly rather than round-tripping
-    # through real grid/topo files -- cached_property allows a plain
-    # attribute set to short-circuit the lazy file-based computation.
-    ctx.grid = grid
-    ctx.ocn_topo = topo
-    return ctx
 
 
-@patch("regional_mom6.regional_mom6.experiment.setup_boundary_tides", autospec=True)
-def test_tides_process(mock_tides, tmp_path, gen_grid_topo_vgrid, dummy_tidal_data):
-    grid, topo, vgrid = gen_grid_topo_vgrid
+@patch("regional_mom6.segment.Segment.regrid_tides", autospec=True)
+def test_tides_process(mock_regrid_tides, tmp_path, get_rect_grid, dummy_tidal_data):
+    """Every boundary gets tides, an interior segment (given as its spec) as
+    well as an edge, numbered like the conditions OBC strings that name them."""
     elev, vel = dummy_tidal_data
-    grid.write_supergrid(tmp_path / "grid.nc")
-    vgrid_path = tmp_path / "vgrid.nc"
-    vgrid.write(vgrid_path)
+    get_rect_grid.write_supergrid(tmp_path / "grid.nc")
+    elev.to_netcdf(tmp_path / "h.nc")
+    vel.to_netcdf(tmp_path / "u.nc")
+    strait = {
+        "name": "strait",
+        "axis": "nxp",
+        "index": 11,
+        "index_range": None,
+        "ocean_side": "west",
+    }
 
     configurator = TidesConfigurator(
-        tpxo_elevation_filepath=elev,
-        tpxo_velocity_filepath=vel,
+        tpxo_elevation_filepath=tmp_path / "h.nc",
+        tpxo_velocity_filepath=tmp_path / "u.nc",
         tidal_constituents=["M2"],
-        boundaries=["east"],
+        boundaries=["east", strait],
         start_date="2000, 1, 1",
     )
-    ctx = _make_ctx(tmp_path, grid, topo, vgrid_path)
+    configurator.process(_make_ctx(tmp_path))
 
-    configurator.process(ctx)
-
-    assert mock_tides.called
+    segments = [call.args[0] for call in mock_regrid_tides.call_args_list]
+    assert [s.segment_name for s in segments] == ["segment_001", "segment_002"]
+    assert segments[1].to_spec() == {k: v for k, v in strait.items() if k != "name"}

@@ -1,3 +1,5 @@
+from functools import partial
+
 import pytest
 import numpy as np
 import pandas as pd
@@ -234,10 +236,11 @@ def test_process_bc_hands_the_engine_mom6s_own_pieces(tmp_path, monkeypatch):
     cfg.process_bc(ctx)
 
     # The bathymetry rides along on the regrid step (the engine's signature
-    # has no topo), so rm6 can mask the segment and thin its dz.
+    # has no topo), so rm6 can mask the segment and thin its dz; so do the
+    # interior segments, which can't be rebuilt from their names.
     fn = captured["regrid_chunk_fn"]
     assert fn.func is mom6._regrid_obc_chunk
-    assert fn.keywords == {"bathymetry_path": ctx.topo_path}
+    assert fn.keywords == {"bathymetry_path": ctx.topo_path, "custom_segments": {}}
     assert captured["variables"] == ["uo", "vo", "zos", "thetao", "so"]
     assert split == [
         {
@@ -290,6 +293,31 @@ def test_regrid_obc_chunk_builds_the_segment_with_a_topo(
         assert captured["topo"] is None
     # The temp file is cleaned up even when the regrid step fails.
     assert not list(tmp_path.glob("_tmp_*"))
+
+
+def test_regrid_obc_chunk_skips_degenerate_source_cells(
+    get_rect_grid, tmp_path, monkeypatch
+):
+    """Global products have degenerate cells near the poles (GLORYS at its
+    southern edge); unless the regridder skips them, ESMF aborts polar domains."""
+    get_rect_grid.write_supergrid(tmp_path / "hgrid.nc")
+    captured = {}
+    monkeypatch.setattr(
+        mom6.Segment,
+        "regrid_velocity_tracers",
+        lambda self, **kwargs: captured.update(kwargs),
+    )
+    mom6._regrid_obc_chunk(
+        xr.Dataset({"x": ("t", [0.0])}),
+        xr.open_dataset(tmp_path / "hgrid.nc"),
+        "north",
+        1,
+        tmp_path,
+        {"calendar": {"mom6": "julian"}, "time_units": "days"},
+        None,
+        None,
+    )
+    assert captured["ignore_degenerate"] is True
 
 
 def test_regrid_obc_chunk_leaves_no_temp_file_on_bad_topo(get_rect_grid, tmp_path):
@@ -394,6 +422,48 @@ def test_reference_ocean_obc_thins_dz_to_the_sea_floor(get_rect_grid, tmp_path):
     wet = np.isfinite(expected) & (expected > 0)
     assert wet.sum() > 10
     np.testing.assert_allclose(column.ravel()[wet], expected[wet], rtol=1e-6)
+
+
+def test_interior_segment_obc_is_written(get_rect_grid, tmp_path):
+    """A boundary inside the domain, given as its spec, runs through the same
+    GET -> REGRID -> MERGE pipeline as an edge and gets its own segment file."""
+    hgrid_path = tmp_path / "hgrid.nc"
+    get_rect_grid.write_supergrid(hgrid_path)
+    strait = {
+        "name": "strait",
+        "axis": "nxp",
+        "index": 11,
+        "index_range": None,
+        "ocean_side": "west",
+    }
+    dirs = {k: tmp_path / k for k in ("raw", "regridded", "output")}
+    for d in dirs.values():
+        d.mkdir()
+    ProductRegistry.load()
+    mom6.obc.process_obc_conditions(
+        start_date="2020-01-01",
+        end_date="2020-01-02",
+        boundary_number_conversion={"strait": 1},
+        product_name="reference_ocean",
+        function_name="get_reference_ocean_data",
+        variables=None,
+        extra_args={},
+        dataset_varnames=ProductRegistry.get_product(
+            "reference_ocean"
+        ).write_metadata(),
+        hgrid_path=str(hgrid_path),
+        raw_dataset_path=str(dirs["raw"]),
+        regridded_dataset_path=str(dirs["regridded"]),
+        output_path=str(dirs["output"]),
+        regrid_chunk_fn=partial(
+            mom6._regrid_obc_chunk, custom_segments={"strait": strait}
+        ),
+        custom_segments={"strait": strait},
+        regrid_step_days=2,
+    )
+
+    with xr.open_dataset(dirs["output"] / "forcing_obc_segment_001.nc") as ds:
+        assert np.isfinite(ds["temp_segment_001"].values).all()
 
 
 def test_conditions_points_mom6_at_the_filled_ics(monkeypatch):

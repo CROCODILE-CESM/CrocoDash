@@ -59,8 +59,11 @@ def validate_config_structure(config):
     if not (isinstance(dr, list) and len(dr) == 2):
         raise ValueError("forcings.date_range must be a list of exactly 2 date strings")
     if "boundaries" in forcings_cfg:
+        # Interior segments are specs (mappings), checked by configure_forcings.
         valid_boundaries = {"north", "south", "east", "west"}
-        bad = set(forcings_cfg["boundaries"]) - valid_boundaries
+        bad = {
+            b for b in forcings_cfg["boundaries"] if not isinstance(b, dict)
+        } - valid_boundaries
         if bad:
             raise ValueError(f"Invalid boundary values: {bad}")
     if "tidal_constituents" in forcings_cfg:

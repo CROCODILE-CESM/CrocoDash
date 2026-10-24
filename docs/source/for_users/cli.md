@@ -85,6 +85,8 @@ case:
 forcings:
   date_range: ["2020-01-01 00:00:00", "2020-02-01 00:00:00"]
   boundaries: ["south", "east", "west"]
+  # An open boundary inside the domain is a segment spec, in supergrid indices:
+  # boundaries: [south, {name: strait, axis: nxp, index: 41, index_range: [11, 30], ocean_side: east}]
   product_name: "GLORYS"
   function_name: "get_glorys_data_from_rda"
 
