@@ -57,8 +57,7 @@ Imported as `from visualCaseGen import ...`. CrocoDash also reaches into
 | `initialize(...)` (imported as `initialize_visualCaseGen`) | `case.py` | Initialises the visualCaseGen GUI and CIME interface at case setup time |
 | `CaseCreator` | `case.py` | Class that drives interactive CESM case creation |
 | `ERROR`, `RESET` | `case.py` | Status enums used to check and reset the CaseCreator widget state |
-| `xmlchange(...)` | `shareable.py` | Applies `xmlchange` commands to modify CESM XML configuration files (`case.py` and `forcing/` use `forcing.base.xmlchange`, which takes the caseroot) |
-| `append_user_nl(...)` | `case.py`, `shareable.py` | Appends entries to CESM `user_nl_*` namelist files |
+| `append_user_nl(...)` | `case.py` | Appends entries to CESM `user_nl_*` namelist files |
 | `ProConPy.config_var.ConfigVar`, `cvars` | `case.py` (case creation only) | Reads and sets visualCaseGen config variables (compset, grid, `MB_ATTEMPT_ID`, …) |
 | `ProConPy.stage.Stage` | `case.py` | Advances visualCaseGen through its configuration stages |
 | `ProConPy.dev_utils.ConstraintViolation` | `case.py` | Caught to turn solver constraint failures into CrocoDash-level errors |
