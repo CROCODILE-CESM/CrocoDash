@@ -38,7 +38,7 @@ Imported as `from mom6_forge import ...` / `import mom6_forge as m6b`.
 | `VGrid.write(...)` | `case.py` | Writes the MOM6 vertical grid file |
 | `Topo.write_topo` / `write_scrip_grid` / `write_esmf_mesh` | `case.py` | Writes the MOM6 topography, SCRIP grid, and ESMF mesh files CESM needs |
 | `Topo.write_cice_grid(...)` | `case.py` | Writes the CICE grid file when CICE is in the compset |
-| `Topo.write_ww3_input(...)` | `case.py` | Writes WW3's grid-preprocessor `.inp` files when WW3 is in the compset |
+| `Topo.write_ww3_input(...)` | `forcing/ww3.py` | Writes WW3's grid-preprocessor `.inp` files at configure time, with the configured boundaries as the open edges |
 | `mapping.get_suggested_smoothing_params(...)` | `forcing/runoff.py` | Derives `rmax`/`fold` from the ocean mesh resolution when the user omits them |
 | `mapping.get_smoothed_map_filepath(...)` | `forcing/runoff.py` | Generates smoothed runoff-to-ocean mapping file names |
 | `mapping.gen_rof_maps(...)` | `forcing/runoff.py` | Generates the smoothed runoff-to-ocean mapping files |

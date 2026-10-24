@@ -756,7 +756,6 @@ def process_obc_conditions(
     # Compute per-boundary download bboxes using the bathymetry tmask so we only
     # request data over ocean cells (tighter than the full supergrid edge extent).
     with xr.open_dataset(hgrid_path) as hgrid_ds:
-        assert not Grid.is_cyclic_x(hgrid_ds), "bboxes not supported for cyclic grids."
         if bathymetry_path:
             grid_obj = Grid.from_supergrid(hgrid_path)
             topo = Topo.from_topo_file(

@@ -307,6 +307,9 @@ class Case:
         self.rof_grid_name = state["rof_grid_name"]
         self.session_id = state["session_id"]
         self.grid_name = state["grid_name"]
+        # A state written before cyclic_x was recorded is from a case created
+        # as non-cyclic (OCN_CYCLIC_X False).
+        self.cyclic_x = state.get("cyclic_x", False)
         self.supergrid_path = state["supergrid_path"]
         self.topo_path = state["topo_path"]
         self.vgrid_path = state["vgrid_path"]
@@ -512,11 +515,8 @@ class Case:
             ice_dir.mkdir(exist_ok=True)
             self.ocn_topo.write_cice_grid(ice_dir / f"cice_grid_{suffix}.nc")
 
-        # WW3 grid file (if needed)
-        if self.ww3_in_compset:
-            wav_dir = inputdir / "wav"
-            wav_dir.mkdir(exist_ok=True)
-            self.ocn_topo.write_ww3_input(wav_dir, grid_alias=ocn_grid.name)
+        # WW3 grid files are written by configure_forcings (WW3Configurator), once
+        # the open boundaries are known.
 
     def _coupling_interval(self, comp):
         """Coupling interval of a component in seconds, from <COMP>_NCPL."""
@@ -861,6 +861,7 @@ class Case:
             "case_compset_lname": self.compset_lname,
             "case_session_id": self.session_id,
             "case_grid_name": self.grid_name,
+            "case_cyclic_x": self.cyclic_x,
             "case_esmf_mesh_path": self.esmf_mesh_path,
             "case_forcing_product": self.forcing_product,
         }
@@ -1136,12 +1137,19 @@ class Case:
         cvars["OCN_GRID_MODE"].value = "Create New"
 
         assert Stage.active().title == "Custom Ocean Grid"
-        cvars["OCN_GRID_EXTENT"].value = "Regional"
-        cvars["OCN_CYCLIC_X"].value = "False"
+        # A cyclic-x grid (e.g. a Southern Ocean band) still has OBCs, but MOM6
+        # must join its east/west seam: visualCaseGen sets REENTRANT_X from
+        # OCN_CYCLIC_X, and only allows it under the "Global" extent, whose
+        # other requirement (OCN_LENX == 360) such a grid meets.
+        cyclic_x = self.ocn_grid.supergrid.is_cyclic_x
+        cvars["OCN_GRID_EXTENT"].value = "Global" if cyclic_x else "Regional"
+        cvars["OCN_CYCLIC_X"].value = str(cyclic_x)
         cvars["OCN_NX"].value = self.ocn_grid.nx
         cvars["OCN_NY"].value = self.ocn_grid.ny
         cvars["OCN_LENX"].value = (
-            self.ocn_grid.tlon.max().item() - self.ocn_grid.tlon.min().item()
+            360.0
+            if cyclic_x
+            else self.ocn_grid.tlon.max().item() - self.ocn_grid.tlon.min().item()
         )
         cvars["OCN_LENY"].value = (
             self.ocn_grid.tlat.max().item() - self.ocn_grid.tlat.min().item()
@@ -1192,9 +1200,9 @@ class Case:
         """
         if Stage.active().title == "Wave Grid Mode":
             cvars["WAV_GRID_MODE"].value = "Custom Ocean Grid"
-            # The WW3 grid-preprocessor input files are generated separately in
-            # _create_grid_input_files() via ocn_topo.write_ww3_input(); mark the
-            # input-file generation sub-stage complete so the flow proceeds to Launch.
+            # The WW3 grid-preprocessor input files are generated separately by
+            # configure_forcings() (WW3Configurator); mark the input-file
+            # generation sub-stage complete so the flow proceeds to Launch.
             assert Stage.active().title == "Wave Input Files"
             cvars["WW3_INPUT_STATUS"].value = "Complete"
 
@@ -1285,6 +1293,7 @@ class Case:
                 "vgrid_path": self.vgrid_path,
                 "grid_name": self.grid_name,
                 "session_id": self.session_id,
+                "cyclic_x": bool(self.ocn_grid.supergrid.is_cyclic_x),
                 "compset_lname": self.compset_lname,
                 "machine": self.machine,
                 "esmf_mesh_path": self.esmf_mesh_path,

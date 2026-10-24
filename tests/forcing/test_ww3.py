@@ -873,15 +873,42 @@ def test_output_filepaths_dir_matches_ww3_grid_inp_dir(tmp_path):
     """
     _populate_wave_dir(tmp_path, n_stations=1)
     configurator = _reference_waves(tmp_path)
-    # configure() ends in super().configure(), which applies each XML param
-    # against a live CASEROOT. Only the value it sets matters here.
-    with patch("CrocoDash.forcing.base.xmlchange"):
+    # configure() applies each XML param against a live CASEROOT and then
+    # writes the WW3 grid inputs from the case grid. Only the value it sets
+    # matters here.
+    with patch("CrocoDash.forcing.base.xmlchange"), patch.object(
+        WW3Configurator, "write_grid_inputs"
+    ):
         configurator.configure()
 
     declared = Path(configurator.get_output_param("WW3_GRID_INP_DIR"))
     found = configurator.get_output_filepaths(_make_ctx(tmp_path))
     assert found, "the wave dir was populated, so this must not be empty"
     assert {Path(p).parent for p in found} == {declared}
+
+
+def test_configure_opens_only_the_configured_ww3_edges(tmp_path, gen_grid_topo_vgrid):
+    """The configured boundaries are WW3's only open (mapsta 2) edges. Before,
+    the grid inputs were written at case creation with mom6_forge's default,
+    which opens no edge on a cyclic-x grid, and ww3_grid then dropped the north
+    row that MOM6's OBC sits on."""
+    grid, topo, _ = gen_grid_topo_vgrid
+    (tmp_path / "ocn").mkdir()
+    grid.write_supergrid(tmp_path / "ocn" / "ocean_hgrid_g_abc123.nc")
+    topo.write_topo(tmp_path / "ocn" / "ocean_topog_g_abc123.nc")
+    configurator = WW3Configurator(
+        case_inputdir=tmp_path,
+        boundaries=["north"],
+        case_grid_name="g",
+        case_session_id="abc123",
+        ww3_obc_product_name="none",
+    )
+    with patch("CrocoDash.forcing.base.xmlchange"):
+        configurator.configure()
+
+    mapsta = np.loadtxt(tmp_path / WAVE_SUBDIR / "g_mapsta.inp")
+    assert (mapsta[-1] == 2).all()
+    assert not (mapsta[:-1] == 2).any()
 
 
 def _ww3_config(end_date="20200110", product="reference_waves"):

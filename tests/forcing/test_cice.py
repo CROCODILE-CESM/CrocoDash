@@ -187,6 +187,15 @@ def test_configure_always_sets_restart_ext(restoring, tmp_path):
     assert configurator.get_output_param("ew_boundary_type") == "'zero_gradient'"
 
 
+def test_configure_cyclic_grid_sets_a_cyclic_ew_boundary(tmp_path):
+    """A grid reentrant in x has no east/west edge, so CICE must wrap its seam
+    rather than hold it at zero gradient."""
+    configurator = CICEConfigurator(case_inputdir=tmp_path, case_cyclic_x=True)
+    _configure_without_a_case(configurator)
+    assert configurator.get_output_param("ew_boundary_type") == "'cyclic'"
+    assert configurator.get_output_param("ns_boundary_type") == "'zero_gradient'"
+
+
 def test_configure_restoring_without_a_case_inputdir_raises():
     """There's nowhere for ice_ic to point without it -- fail with a named
     error rather than writing a bogus relative path into user_nl_cice."""

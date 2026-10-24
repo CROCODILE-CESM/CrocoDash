@@ -22,7 +22,8 @@ import json
 from pathlib import Path
 
 # 1.2.0 added esmf_mesh_path and created. Older state files are refused: the
-# case has to be recreated (there is no migration).
+# case has to be recreated (there is no migration). cyclic_x was added within
+# 1.2.0 as an optional key: a state without it is read as a non-cyclic case.
 SCHEMA_VERSION = "1.2.0"
 FILENAME = "_crocodash_state.json"
 
@@ -58,6 +59,7 @@ DERIVED_KEYS = frozenset(
         "vgrid_path",
         "grid_name",
         "session_id",
+        "cyclic_x",
         "compset_lname",
         "machine",
         "esmf_mesh_path",
