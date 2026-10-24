@@ -74,6 +74,7 @@ def _process(args):
         case,
         **{name: getattr(args, name) for name in flag_names},
         preview=args.preview,
+        force=args.force,
     )
 
 
@@ -242,7 +243,13 @@ def main():
     ef_top.add_argument(
         "--preview",
         action="store_true",
-        help="Show each component's files, present or missing, without running anything",
+        help="Show whether each component is finished or would run, and its "
+        "files, present or missing, without running anything",
+    )
+    ef_top.add_argument(
+        "--force",
+        action="store_true",
+        help="Rerun components even when they are finished",
     )
     ef_parser.set_defaults(func=_process, subparser=ef_parser)
 

@@ -8,7 +8,7 @@ CrocoDash ships a `crocodash` command (installed automatically with `pip install
 crocodash template          --output my_case.{yaml,ipynb,py,pbs} [--machine glade] [--notebook ID]
 crocodash create            --config mycase.yaml [--override]
 crocodash dump              --caseroot /path/to/case
-crocodash process  [--caseroot /path/to/case] [--all | --ic --bc ...]  [--skip ...] [--preview]
+crocodash process  [--caseroot /path/to/case] [--all | --ic --bc ...]  [--skip ...] [--preview] [--force]
 crocodash bundle            --caseroot /path/to/case --output-dir /path/to/bundle_dir ...
 crocodash fork              --bundle /path/to/bundle --caseroot ... --inputdir ... --cesmroot ... --machine ... --project ...
 crocodash duplicate         --source /path/to/case --case /path/to/new_case --inputdir /path/to/new_inputdir
@@ -151,8 +151,11 @@ crocodash process --caseroot ~/croc_cases/mycase --ic --bc
 # Skip components even when running --all
 crocodash process --caseroot ~/croc_cases/mycase --all --skip tides runoff
 
-# List each component's files, present or missing, without running anything
+# See which components are finished or would run, and their files, without running anything
 crocodash process --caseroot ~/croc_cases/mycase --all --preview
+
+# Rerun components that are already finished
+crocodash process --caseroot ~/croc_cases/mycase --bc --force
 
 # Run from inside the extract_forcings/ directory — no --caseroot needed
 cd ~/scratch/croc_input/mycase/extract_forcings
@@ -175,7 +178,10 @@ crocodash process --all
 | `--tides` | Tidal forcing. |
 | `--chl` | Chlorophyll processing. |
 | `--skip NAME...` | Skip one or more components by name (case-insensitive). |
-| `--preview` | List each selected component with its files marked `present` or `missing`, without running anything. |
+| `--preview` | List each selected component as `finished` or `would run`, with its files marked `present` or `missing`, without running anything. |
+| `--force` | Rerun the selected components even when they are finished. |
+
+A component that already ran with the current configuration, and whose files are all still there, is skipped. See [Process Forcings](3b_process_forcings.md#finished-components-are-skipped).
 
 ### Auto-detection
 

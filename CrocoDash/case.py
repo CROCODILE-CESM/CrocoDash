@@ -784,7 +784,7 @@ class Case:
             )
         self._configure_forcings_called = True
 
-    def process_forcings(self, **kwargs):
+    def process_forcings(self, force=False, **kwargs):
         """
         Process boundary conditions, initial conditions, and other forcings for a MOM6 case. It's a wrapper around forcing/driver.py
 
@@ -792,8 +792,13 @@ class Case:
         using previously downloaded data setup in configure_forcings. The method expects `configure_forcings()` to be
         called beforehand.
 
+        A component that already finished with the current configuration, and
+        whose files are all still there, is skipped.
+
         Parameters
         ----------
+        force : bool, optional
+            Rerun the selected components even when they are finished.
         kwargs : bool, optional
             Whether to run each process component, of the form
             `process_{flag_name}=False` (e.g. `process_ic=False`,
@@ -839,7 +844,7 @@ class Case:
             )
         flags = {name: kwargs.get(f"process_{name}", True) for name in flag_names}
 
-        run_workflow(self, **flags)
+        run_workflow(self, force=force, **flags)
 
         print(f"Case is ready to be built: {self.caseroot}")
 
