@@ -197,10 +197,12 @@ def test_bundle_with_modifications(CrocoDash_case_factory, tmp_path_factory, tmp
         tpxo_velocity_filepath="s3://crocodile-cesm/CrocoDash/data/tpxo/u_tpxo9.v1.zarr/",
     )
 
-    # Create fake files in ocn directory
+    # Create forcing files where the conditions and tides steps write them,
+    # and one that no step declares
     ocn_dir = Path(case.inputdir) / "ocn"
+    (ocn_dir / "forcing_obc_segment_001.nc").touch()
+    (ocn_dir / "tz_segment_001.nc").touch()
     (ocn_dir / "forcing_obc_segment_fake.nc").touch()
-    (ocn_dir / "tz_fake.nc").touch()
 
     output_dir = tmp_path / "bundle_output_modified"
     output_dir.mkdir()
@@ -250,9 +252,10 @@ def test_bundle_with_modifications(CrocoDash_case_factory, tmp_path_factory, tmp
     # Check that ocn directory was copied
     ocn_dir = case_bundle / "ocn"
     assert ocn_dir.exists(), "ocn directory should be copied from inputdir"
-    # Verify ocn has expected structure
-    assert (ocn_dir / "forcing_obc_segment_fake.nc").exists()
-    assert (ocn_dir / "tz_fake.nc").exists()
+    # Only the declared forcing files are bundled
+    assert (ocn_dir / "forcing_obc_segment_001.nc").exists()
+    assert (ocn_dir / "tz_segment_001.nc").exists()
+    assert not (ocn_dir / "forcing_obc_segment_fake.nc").exists()
 
     # Verify content of XML file
     with open(xml_files_dir / "custom_settings.xml") as f:

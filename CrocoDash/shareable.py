@@ -36,18 +36,17 @@ from uuid import uuid4
 
 import yaml
 from CrocoDash.forcing.base import *
-from CrocoDash.forcing.base import CONFIG_FILENAME, CONFIG_META_KEYS, read_config
+from CrocoDash.forcing.base import CONFIG_FILENAME, read_config
 from CrocoDash.forcing import *
 
 # After the star imports: forcing.base has its own xmlchange, which needs a caseroot.
 from visualCaseGen.custom_widget_types.case_tools import xmlchange, append_user_nl
 from CrocoDash.logging import setup_logger
+from CrocoDash.case import Case
 from CrocoDash.recipe import case_to_yaml, create_case_from_yaml
 from CrocoDash import case_state
 
 logger = setup_logger(__name__)
-
-INPUTDIR_FILE_PREFIXES = ("forcing_obc_segment_", "init_")
 
 
 # ---------------------------------------------------------------------------
@@ -302,21 +301,16 @@ class CaseBundle:
         ocn_target = case_subfolder / "ocn"
         ocn_target.mkdir(parents=False, exist_ok=True)
 
-        for f in Path(ocn_dir).iterdir():
-            if f.name.startswith(INPUTDIR_FILE_PREFIXES):
-                logger.info(f"Copying {f}")
-                shutil.copy(f, ocn_target)
-
-        for config, value in self.forcing_config.items():
-            if config == "conditions" or config in CONFIG_META_KEYS:
-                continue
-            configurator = ForcingConfigRegistry.get_configurator(value)
-            for path in configurator.get_output_filepaths(ocn_dir):
-                logger.info(f"Copying {config} file: {path}...")
-                # keep the layout under inputdir (ocn/, wav/, ...)
-                target = case_subfolder / Path(path).relative_to(Path(ocn_dir).parent)
-                target.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copy(path, target)
+        if self.forcing_config:
+            case = Case.from_caseroot(self.caseroot)
+            ctx = case.workflow_context()
+            for config, configurator in case.configurators().items():
+                for path in configurator.get_output_filepaths(ctx):
+                    logger.info(f"Copying {config} file: {path}...")
+                    # keep the layout under inputdir (ocn/, wav/, ...)
+                    target = case_subfolder / path.relative_to(ctx.inputdir)
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy(path, target)
 
         for key in ("supergrid_path", "topo_path", "vgrid_path", "esmf_mesh_path"):
             filename = self.init_args.get(key)

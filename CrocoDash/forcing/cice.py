@@ -65,8 +65,8 @@ from CrocoDash.raw_data_access.registry import ProductRegistry
 from CrocoDash.raw_data_access.base import CICEForcingProduct
 
 # Where process() writes CICE's forcing file, and therefore where
-# get_output_filepaths() looks for it. Kept in one place so the writer and the
-# reader cannot drift apart.
+# output_files() declares it. Kept in one place so the writer and the
+# declaration cannot drift apart.
 SEA_ICE_SUBDIR = "ice"
 FORCING_FILENAME = "cice_forcing.nc"
 
@@ -421,8 +421,8 @@ class CICEConfigurator(BaseConfigurator):
 
         Needed at configure() time (before process() has run) to give ice_ic a
         path, so it's derived from case_inputdir rather than the WorkflowContext
-        process() gets. get_output_filepaths() resolves the same file from the
-        directory it's handed instead, since bundling relocates it.
+        process() gets. output_files() builds the same path from that context
+        instead, since bundling relocates it.
         """
         case_inputdir = self.get_input_param("case_inputdir")
         if not case_inputdir:
@@ -456,20 +456,21 @@ class CICEConfigurator(BaseConfigurator):
                     obj.set_output_param(name, data["outputs"][name])
         return obj
 
-    def get_output_filepaths(self, ocn_directory):
-        """CICE's forcing file, which lives beside ocn/ rather than in it.
+    def output_files(self, ctx):
+        """CICE's forcing file, beside ocn/ rather than in it -- and only when
+        restoring is on, since process() writes nothing otherwise."""
+        restoring = bool(self._resolve_forcing_source()[0])
+        path = Path(ctx.inputdir) / SEA_ICE_SUBDIR / FORCING_FILENAME
+        return {"cice": [path] if restoring else []}
 
-        The base implementation walks output_params for is_file entries, but all
-        of CICE's are namelist settings -- the forcing file's location is fixed
-        by process() rather than carried in a parameter. Without this override
-        the base returns nothing, so CaseBundle.bundle() copies no CICE file at
-        all and validate_output_filepaths() passes vacuously.
-
-        ocn_directory is <inputdir>/ocn; process() writes to
-        <inputdir>/ice, hence the sibling lookup.
-        """
-        path = Path(ocn_directory).parent / SEA_ICE_SUBDIR / FORCING_FILENAME
-        return [path] if path.exists() else []
+    @classmethod
+    def step_settings(cls, config):
+        # process() also reads the run dates from the conditions entry.
+        dates = config.get("conditions", {}).get("inputs", {})
+        return {
+            **super().step_settings(config),
+            "conditions_dates": [dates.get("start_date"), dates.get("end_date")],
+        }
 
     def process(self, ctx):
         """

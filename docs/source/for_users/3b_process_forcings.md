@@ -62,9 +62,47 @@ separate components.
 
 This flexibility lets you:
 - Test individual components without running everything
-- Re-run one forcing type if your source data changed
+- Re-run one forcing type if your source data changed (with `--force`, since its configuration didn't)
 - Submit to a batch queue and re-run from the CLI after a failure
 - Resume a partially-completed run
+
+## Finished components are skipped
+
+Once a component has run, `process_forcings` records it, with its configuration and
+its files, in `extract_forcings/finished_steps.json`. A later run skips it (`[skip] ic`)
+while its configuration is unchanged and none of its files is missing. It runs again
+when `configure_forcings` changed its configuration, when one of its files is gone, or
+when you force it:
+
+```bash
+crocodash process --caseroot ~/croc_cases/mycase --bc --force
+```
+
+```python
+case.process_forcings(force=True)
+```
+
+Before a recorded component runs again, the files it made last time are deleted, so
+they are regenerated rather than reused. `--force` keeps the downloaded and regridded
+data in `extract_forcings/` and rebuilds the final files from it.
+
+To see what a run would do without running anything, add `--preview`. It lists
+each selected component as `finished` or `would run`, with the files it writes
+marked `present` or `missing`:
+
+```bash
+crocodash process --caseroot ~/croc_cases/mycase --all --preview
+```
+
+```
+[preview] ic: finished
+    present  ocn/init_tracers_filled.nc
+    present  ocn/init_eta_filled.nc
+    present  ocn/init_vel_filled.nc
+[preview] bc: would run
+    missing  ocn/forcing_obc_segment_001.nc
+    ...
+```
 
 ## Large datasets
 
