@@ -62,15 +62,18 @@ class ProductRegistry:
 
     @classmethod
     def get_function_default_args(cls, product_name, function_name):
-        """Return a dict of {param: default} for all non-required parameters of an access method."""
+        """Return a dict of {param: default} for all non-required parameters of an
+        access method, except freq: its meaning is set by the method's
+        freq_handling (see resolve_time_sampling), so users give it as
+        data_freq or subsample_freq rather than as a free-form argument."""
         product = cls.get_product(product_name)
         func = product._access_methods[function_name].__func__
         sig = inspect.signature(func)
-        required = set(product.required_args)
+        excluded = set(product.required_args) | {"freq"}
         return {
             name: param.default
             for name, param in sig.parameters.items()
-            if name not in required and param.default is not inspect.Parameter.empty
+            if name not in excluded and param.default is not inspect.Parameter.empty
         }
 
     @classmethod

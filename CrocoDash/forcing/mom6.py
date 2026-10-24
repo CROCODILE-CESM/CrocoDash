@@ -20,14 +20,19 @@ import netCDF4
 import regional_mom6 as rm6
 from regional_mom6.segment import Segment
 import mom6_forge as m6b
+import pandas as pd
 import xarray as xr
 from CrocoDash import logging
-from CrocoDash.forcing import ic as ic_mod, obc, utils
+from CrocoDash.forcing import ic as ic_mod, obc, time_windows, utils
 from CrocoDash.forcing.base import *
 from CrocoDash.grid import Grid
 from CrocoDash.topo import Topo
 from CrocoDash.raw_data_access.registry import ProductRegistry
-from CrocoDash.raw_data_access.base import Calendar, MOM6ForcingProduct
+from CrocoDash.raw_data_access.base import (
+    Calendar,
+    MOM6ForcingProduct,
+    resolve_time_sampling,
+)
 
 logger = logging.setup_logger(__name__)
 
@@ -433,6 +438,12 @@ class ConditionsConfigurator(BaseConfigurator):
             "function_args",
             comment="Resolved (defaults + overrides) args for the download function",
         ),
+        InputValueParam(
+            "data_freq", comment="Cadence of the data the download function reads"
+        ),
+        InputValueParam(
+            "subsample_freq", comment="Coarser cadence to thin the product's data to"
+        ),
     ]
 
     output_params = [
@@ -480,6 +491,16 @@ class ConditionsConfigurator(BaseConfigurator):
             "regrid_step_days", comment="Chunk size (days) for forcing regridding"
         ),
         ConfigOutputParam(
+            "min_chunk_days", comment="Shortest GET/REGRID chunk (one record spacing)"
+        ),
+        ConfigOutputParam(
+            "obc_start_date", comment="Start of the boundary data fetched"
+        ),
+        ConfigOutputParam("obc_end_date", comment="End of the boundary data fetched"),
+        ConfigOutputParam(
+            "ic_lookback_days", comment="Days before the start the IC fetch reaches"
+        ),
+        ConfigOutputParam(
             "boundary_number_conversion",
             comment="Boundary name -> MOM6 segment number",
         ),
@@ -499,6 +520,8 @@ class ConditionsConfigurator(BaseConfigurator):
         start_date=None,
         end_date=None,
         function_args=None,
+        data_freq=None,
+        subsample_freq=None,
     ):
         if date_range is not None:
             start_date = date_range[0].strftime(self._DATE_FORMAT)
@@ -511,6 +534,8 @@ class ConditionsConfigurator(BaseConfigurator):
             function_name=function_name,
             compset=compset,
             function_args=function_args or {},
+            data_freq=data_freq,
+            subsample_freq=subsample_freq,
         )
 
     def validate_args(self, **kwargs):
@@ -535,6 +560,34 @@ class ConditionsConfigurator(BaseConfigurator):
                 "is not a MOM6ForcingProduct, so it can't be used as the conditions configurator's product_name "
                 "(MOM6's initial/boundary condition forcing). If this is a CICE forcing product, pass it as cice_product_name instead."
             )
+
+        # Fail here, not deep inside process_forcings, on a cadence the access
+        # method can't honour or a product that needs one.
+        product = ProductRegistry.get_product(product_name)
+        function_name = kwargs["function_name"]
+        freq_input = self._freq_input(product_name, function_name)
+        for name in self._FREQ_INPUTS.values():
+            if kwargs[name] is not None and name != freq_input:
+                raise ValueError(
+                    f"{product.product_name}.{function_name} takes no {name}"
+                    + (f" (it takes {freq_input})" if freq_input else "")
+                    + ". data_freq is the cadence of the data a method reads from "
+                    "a path you give it; subsample_freq thins a method's data to "
+                    "a coarser cadence."
+                )
+        resolve_time_sampling(
+            product, function_name, kwargs[freq_input] if freq_input else None
+        )
+
+    # The input an access method reads as its freq, by its freq_handling (see
+    # resolve_time_sampling). A USER_SPECIFIED product requires data_freq.
+    _FREQ_INPUTS = {"declare": "data_freq", "subsample": "subsample_freq"}
+
+    @classmethod
+    def _freq_input(cls, product_name, function_name):
+        """The input product_name.function_name reads as its freq, or None."""
+        method = ProductRegistry.get_access_function(product_name, function_name)
+        return cls._FREQ_INPUTS.get(method._freq_handling)
 
     @staticmethod
     def _segment_index(boundaries, boundary):
@@ -561,22 +614,39 @@ class ConditionsConfigurator(BaseConfigurator):
             "information",
             product.write_metadata(include_marbl_tracers="%MARBL" in compset),
         )
-        # GET and REGRID chunk sizes are independent, and neither changes the
-        # result -- a 1-day and a 3-day chunking of the same range were verified
-        # to produce bit-identical forcing files. They only set how much
-        # concurrency obc.py's pools have to work with.
-        #
-        # GET is network-bound, so it wants more chunks than REGRID: at a 30-day
-        # step anything shorter than a month came out as a single chunk and
-        # downloaded serially. A week gives a fortnight-long case two concurrent
-        # fetches and a year fifty-odd, without splitting long runs into
-        # thousands of requests.
-        #
-        # REGRID stays at 30 days. Its per-chunk cost is real work rather than
-        # waiting, so slicing it finer mostly buys more chunk files to merge.
-        # Power users can override either in config.json.
-        self.set_output_param("get_step_days", 7)
-        self.set_output_param("regrid_step_days", 30)
+        # Chunk sizes and fetch windows follow the product's time sampling
+        # (see forcing/time_windows.py).
+        function_name = self.get_input_param("function_name")
+        freq_input = self._freq_input(product_name, function_name)
+        sampling = resolve_time_sampling(
+            product,
+            function_name,
+            self.get_input_param(freq_input) if freq_input else None,
+        )
+        # The source's own sampling: data_freq names it, subsample_freq only
+        # thins it.
+        native = resolve_time_sampling(
+            product, function_name, self.get_input_param("data_freq")
+        )
+        chunks = time_windows.chunk_days(sampling)
+        for key, value in chunks.items():
+            self.set_output_param(key, value)
+        start, end = (
+            pd.to_datetime(self.get_input_param(k), format=self._DATE_FORMAT)
+            for k in ("start_date", "end_date")
+        )
+        variables, extra_args = build_forcing_request(
+            self.get_output_param("information"), self.get_input_param("function_args")
+        )
+        coverage = product.coverage(function_name, variables=variables, **extra_args)
+        obc_start, obc_end = time_windows.obc_window(sampling, start, end, coverage)
+        self.set_output_param("obc_start_date", obc_start.strftime(self._DATE_FORMAT))
+        self.set_output_param("obc_end_date", obc_end.strftime(self._DATE_FORMAT))
+        self.set_output_param("ic_lookback_days", time_windows.ic_lookback_days(native))
+        for line in time_windows.describe(
+            product_name, function_name, sampling, native, start, end, chunks, coverage
+        ):
+            print(line)
         self.set_output_param(
             "boundary_number_conversion",
             {b: i + 1 for i, b in enumerate(boundaries)},
@@ -728,6 +798,10 @@ class ConditionsConfigurator(BaseConfigurator):
         "function_args",
         "get_step_days",
         "regrid_step_days",
+        "min_chunk_days",
+        "obc_start_date",
+        "obc_end_date",
+        "ic_lookback_days",
     )
 
     @classmethod
@@ -797,11 +871,37 @@ class ConditionsConfigurator(BaseConfigurator):
 
     # ---- process (extraction) ----
 
+    def _function_args(self):
+        """The access function's arguments: the stored function_args it still
+        takes, and its freq from data_freq or subsample_freq, whichever it
+        reads, when set."""
+        product_name = self.get_input_param("product_name")
+        function_name = self.get_input_param("function_name")
+        accepted = ProductRegistry.get_function_default_args(
+            product_name, function_name
+        )
+        stored = self.get_output_param("function_args") or {}
+        args = {k: v for k, v in stored.items() if k in accepted}
+        freq_input = self._freq_input(product_name, function_name)
+        if freq_input and self.get_input_param(freq_input) is not None:
+            args["freq"] = self.get_input_param(freq_input)
+        return args
+
+    def _obc_dates(self):
+        """The boundary data's date range; a config.json written before it was
+        recorded falls back to the run's."""
+        return {
+            "start_date": self.get_output_param("obc_start_date")
+            or self.get_input_param("start_date"),
+            "end_date": self.get_output_param("obc_end_date")
+            or self.get_input_param("end_date"),
+        }
+
     def process_bc(self, ctx):
         """Process MOM6 boundary conditions through forcing.obc's GET → REGRID →
         MERGE engine, using regional_mom6's Segment as the regrid step."""
         product_info = self.get_output_param("information")
-        function_args = self.get_output_param("function_args") or {}
+        function_args = self._function_args()
         variables, extra_args = build_forcing_request(product_info, function_args)
 
         if product_info.get("boundary_fill_method", "regional_mom6") != "regional_mom6":
@@ -810,8 +910,7 @@ class ConditionsConfigurator(BaseConfigurator):
             )
 
         result = obc.process_obc_conditions(
-            start_date=self.get_input_param("start_date"),
-            end_date=self.get_input_param("end_date"),
+            **self._obc_dates(),
             boundary_number_conversion=self.get_output_param(
                 "boundary_number_conversion"
             ),
@@ -828,6 +927,7 @@ class ConditionsConfigurator(BaseConfigurator):
             bathymetry_path=ctx.topo_path,
             get_step_days=int(self.get_output_param("get_step_days")),
             regrid_step_days=int(self.get_output_param("regrid_step_days")),
+            min_chunk_days=self.get_output_param("min_chunk_days") or 1,
         )
 
         _split_bgc_tracers_into_files(
@@ -849,7 +949,7 @@ class ConditionsConfigurator(BaseConfigurator):
             )
 
         product_info = self.get_output_param("information")
-        function_args = self.get_output_param("function_args") or {}
+        function_args = self._function_args()
         regrid_fn = partial(
             _regrid_ic,
             hgrid_path=ctx.supergrid_path,
@@ -870,4 +970,5 @@ class ConditionsConfigurator(BaseConfigurator):
             raw_data_dir=ctx.raw_data_dir,
             output_data_dir=ctx.output_path,
             regrid_fn=regrid_fn,
+            lookback_days=self.get_output_param("ic_lookback_days") or 0,
         )

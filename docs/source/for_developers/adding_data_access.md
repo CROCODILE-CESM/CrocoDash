@@ -19,7 +19,7 @@ Pick the most specific base that fits — each level adds required metadata:
 
 ```
 BaseProduct                    product_name, description, link
- └─ DatedBaseProduct           + a `dates` download arg
+ └─ DatedBaseProduct           + a `dates` download arg, time_sampling
      └─ ForcingProduct         + lat/lon/variables bbox contract,
                                  time_var_name, time_units, calendar
          └─ VelocityTracerForcingProduct
@@ -151,9 +151,40 @@ class MyDataset(MOM6ForcingProduct):
 containing at least `temp` and `salt`.
 :::
 
+:::{important}
+Every dated product declares a **`time_sampling`**: a `TimeSampling` saying how
+often its records come and whether each is a mean over its interval or an
+instantaneous value. Use `USER_SPECIFIED` when the cadence depends on the
+source the user points the product at (CESM-MOM output), so the user must pass
+it as `data_freq`, and `None` only for a static snapshot that ignores `dates`.
+
+```python
+class MyDataset(MOM6ForcingProduct):
+    # Daily means
+    time_sampling = TimeSampling("D", cell_method="mean")
+```
+
+An access method that can do something with a `freq` takes an optional
+`freq=None`, calls `resolve_time_sampling` first, and says what it does with it:
+`@accessmethod(freq_handling="subsample")` if it can fetch every `freq` instead
+of every record (see GLORYS's RDA method, which uses `sample_dates`), or
+`freq_handling="declare"` if `freq` names the cadence of the source the user
+points it at (the CESM tseries readers). Any other method takes no `freq` and
+returns its product's own cadence. Users don't pass `freq` itself:
+`configure_forcings` hands a "subsample" method its `subsample_freq` and a
+"declare" method its `data_freq`, and rejects the one the method doesn't read.
+
+The boundary data is fetched for one record spacing either side of the run. If
+your product's data starts or ends on a known date, override the classmethod
+`coverage(method_name, **kwargs)` to return `(first, last)` (either may be
+`None`), and that padding stops there instead of asking for data that doesn't
+exist. GLORYS returns its 1993-01-01 start; the CESM tseries readers read the
+span from their file names.
+:::
+
 ## Step 5: Validation and Tests
 
-When you test your class, it will automatically get registered with the registry and run validation. It will fail on import if you miss metadata or required args in your registered access function, or if `calendar` is missing or is not a `Calendar`.
+When you test your class, it will automatically get registered with the registry and run validation. It will fail on import if you miss metadata or required args in your registered access function, or if `calendar` is missing or is not a `Calendar`, or `time_sampling` is missing or is not a `TimeSampling`, `USER_SPECIFIED` or `None`.
 
 Create a test file in `tests/raw_data_access` to test your dataset:
 

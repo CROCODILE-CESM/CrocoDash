@@ -50,6 +50,9 @@ KNOWN_INCLUSIVE_WITHOUT_HELPER = {
     # date handling.
     ("dummy", "dummy_method"),
     ("dummy_forcing", "fetch_dummy"),
+    ("sampled_for_freq_tests", "strided"),
+    ("sampled_for_freq_tests", "ranged"),
+    ("sampled_for_freq_tests", "declared"),
     # Test fixture from test_ww3.py — synthetic ERA5-shaped data, not real
     # date handling.
     ("test_fake_era5_spectra", "get_fake_spectra"),

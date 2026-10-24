@@ -619,9 +619,16 @@ class Case:
             must match one of the function's non-required, defaulted parameters; any other
             key raises a ValueError. Without this, the function's own defaults are used,
             which previously could only be changed by hand-editing `config.json` between
-            `configure_forcings()` and `process_forcings()`.
+            `configure_forcings()` and `process_forcings()`. `freq` is not a key: use
+            `data_freq` or `subsample_freq`.
         kwargs :
-            These are the configuration options (please see accepted arguments in the configuration classes)
+            These are the configuration options (please see accepted arguments in the configuration classes).
+            Two of them set the cadence of the initial and boundary condition data, as a
+            pandas frequency alias ("D", "MS", ...): `data_freq`, the cadence of the data
+            `function_name` reads from a path you give it (required for a product whose
+            cadence depends on that data, such as CESM_MOM_OUTPUT), and `subsample_freq`,
+            which thins the data to a coarser cadence (only for methods that can, such as
+            `get_glorys_data_from_rda`).
         Raises
         ------
         TypeError
@@ -690,6 +697,12 @@ class Case:
             self.forcing_product_name, function_name
         )
         if function_overrides:
+            if "freq" in function_overrides:
+                raise ValueError(
+                    "function_overrides can't set freq: pass data_freq (the cadence "
+                    "of the data the access method reads) or subsample_freq (to thin "
+                    "its data to a coarser cadence) to configure_forcings instead."
+                )
             invalid = set(function_overrides) - set(function_args)
             if invalid:
                 raise ValueError(
@@ -912,6 +925,11 @@ class Case:
             }
             if overrides:
                 args["function_overrides"] = overrides
+        # The cadence inputs that set the access method's freq.
+        for name in ("data_freq", "subsample_freq"):
+            value = conditions["inputs"].get(name)
+            if value is not None:
+                args[name] = value
         for key, entry in forcing_config.items():
             if key == "conditions" or key in CONFIG_META_KEYS:
                 continue

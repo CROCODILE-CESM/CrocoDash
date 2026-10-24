@@ -51,6 +51,9 @@ class CESM_POP_OUTPUT(MOM6ForcingProduct):
     eta_var_name = "SSH"
     time_units = "days since 1850-01-01"
     calendar = NOLEAP
+    # The default dataset_path is tseries/month_1, monthly means; pass data_freq
+    # for an archive of another cadence (e.g. "D" for day_1).
+    time_sampling = TimeSampling("MS", "mean")
     depth_coord = ["z_t", "z_t_150m"]
     delimiter = "."
     tracer_var_names = {"temp": "TEMP", "salt": "SALT"}
@@ -94,7 +97,12 @@ class CESM_POP_OUTPUT(MOM6ForcingProduct):
         "coccoCaCO3": "coccoCaCO3",
     }
 
+    @classmethod
+    def coverage(cls, method_name, **kwargs):
+        return tseries_coverage(**kwargs)
+
     @accessmethod(
+        freq_handling="declare",
         description=(
             "Gets CESM single-variable-per-file (tseries) ocean data from a given "
             "path (by default a POP-MARBL run) — the standard CESM postprocessed "
@@ -130,9 +138,15 @@ class CESM_POP_OUTPUT(MOM6ForcingProduct):
         lat_name="TLAT",
         lon_name="TLONG",
         preview=False,
+        freq=None,
     ):
-        # CESM-POP tseries output needs the month-shift correction for its
-        # average-endpoint timestamp labeling convention.
+        sampling = resolve_time_sampling(
+            CESM_POP_OUTPUT, "get_cesm_single_variable_data", freq
+        )
+        # CESM-POP stamps a monthly mean at the end of its month, so monthly
+        # tseries need the month-shift correction. Other cadences (a day_1
+        # archive with freq="D") are read as stamped.
+        monthly = frequency_step(sampling.frequency) == frequency_step("MS")
         return read_single_variable_tseries_data(
             dates,
             lat_min,
@@ -150,7 +164,7 @@ class CESM_POP_OUTPUT(MOM6ForcingProduct):
             lat_name,
             lon_name,
             preview,
-            apply_month_shift=True,
+            apply_month_shift=monthly,
         )
 
 
@@ -182,9 +196,20 @@ class CESM_MOM_OUTPUT(MOM6ForcingProduct):
     eta_var_name = "zos"
     depth_coord = "z_l"
     calendar = NOLEAP
+    # The cadence is whatever the dataset_path given holds, so it can't be
+    # declared here.
+    time_sampling = USER_SPECIFIED
     tracer_var_names = {"temp": "thetao", "salt": "so"}
 
+    @classmethod
+    def coverage(cls, method_name, **kwargs):
+        # Only the tseries reader has the dates in its file names.
+        if method_name != "get_mom6_single_variable_data":
+            return super().coverage(method_name, **kwargs)
+        return tseries_coverage(**kwargs)
+
     @accessmethod(
+        freq_handling="declare",
         description=(
             "Reads native MOM6 output (full history/diagnostic files, or "
             "diag_table-extracted cross-section slices) from any directory and "
@@ -215,7 +240,9 @@ class CESM_MOM_OUTPUT(MOM6ForcingProduct):
         time_var_name="time",
         buffer_deg=1.5,
         preview=False,
+        freq=None,
     ):
+        resolve_time_sampling(CESM_MOM_OUTPUT, "get_mom6_output_data", freq)
         validate_dataset_path(dataset_path)
 
         files = sorted(Path(dataset_path).glob(file_glob))
@@ -299,6 +326,7 @@ class CESM_MOM_OUTPUT(MOM6ForcingProduct):
         return [output_path]
 
     @accessmethod(
+        freq_handling="declare",
         description=(
             "Gets native MOM6 output that's organized in the CESM single-"
             "variable-per-file (tseries) convention instead of one multi-"
@@ -328,8 +356,10 @@ class CESM_MOM_OUTPUT(MOM6ForcingProduct):
         regex=r"(\d{6,8})-(\d{6,8})",
         delimiter=".",
         preview=False,
+        freq=None,
     ):
         # Native MOM6 output doesn't need the CESM-POP month-shift correction.
+        resolve_time_sampling(CESM_MOM_OUTPUT, "get_mom6_single_variable_data", freq)
         return read_single_variable_tseries_data(
             dates,
             lat_min,
@@ -366,6 +396,47 @@ def validate_dataset_path(dataset_path):
         raise FileNotFoundError(
             f"Provided dataset path {dataset_path} does not exist. Please provide a valid path through the function arguments"
         )
+
+
+def tseries_coverage(
+    variables,
+    dataset_path=None,
+    member=None,
+    regex=r"(\d{6,8})-(\d{6,8})",
+    delimiter=".",
+    **_,
+):
+    """The first and last days the tseries files under dataset_path cover for
+    every one of variables, read from their file names like the readers do;
+    (None, None) when there are none to read."""
+    if dataset_path is None or not Path(dataset_path).exists():
+        return None, None
+    files_by_var = parse_dataset(
+        variables,
+        dataset_path,
+        "0001-01-01",
+        "9999-12-31",
+        regex=regex,
+        space_character=delimiter,
+    )
+    spans = []
+    for files in files_by_var.values():
+        ranges = []
+        for f in files:
+            m = re.search(regex, os.path.basename(f))
+            if m is None or (member is not None and member not in f):
+                continue
+            first, last = get_date_range_from_filename(f, regex)
+            # A YYYYMM end names the file's last month, which it covers to
+            # the month's last day (CESM-MOM stamps monthly means mid-month).
+            if len(m.group(2)) == 6:
+                last += pd.offsets.MonthEnd(0)
+            ranges.append((first, last))
+        if ranges:
+            spans.append((min(r[0] for r in ranges), max(r[1] for r in ranges)))
+    if not spans:
+        return None, None
+    return max(s[0] for s in spans), min(s[1] for s in spans)
 
 
 def read_single_variable_tseries_data(

@@ -80,6 +80,34 @@ def test_get_cesm_single_variable_data_validation(skip_if_not_glade, tmp_path):
     )
 
 
+def test_get_cesm_single_variable_data_daily_keeps_its_dates(tmp_path):
+    # The month shift is for monthly means stamped at month end; applied to a
+    # day_1 archive it would move every record back a month.
+    time = [cftime.DatetimeNoLeap(2000, 1, day) for day in (30, 31)]
+    xr.Dataset(
+        {"SSH": (("time", "nlat", "nlon"), np.zeros((2, 2, 2)))},
+        coords={
+            "time": time,
+            "TLAT": (("nlat", "nlon"), [[30.0, 30.0], [31.0, 31.0]]),
+            "TLONG": (("nlat", "nlon"), [[289.0, 290.0], [289.0, 290.0]]),
+        },
+    ).to_netcdf(tmp_path / "pop.SSH.20000130-20000131.nc")
+
+    paths = co.CESM_POP_OUTPUT.get_cesm_single_variable_data(
+        ["2000-01-30", "2000-01-31"],
+        30,
+        31,
+        289,
+        290,
+        output_folder=tmp_path,
+        variables=["SSH"],
+        dataset_path=tmp_path,
+        freq="D",
+    )
+
+    assert list(xr.open_dataset(paths[0]).time.values) == time
+
+
 def _write_mom6_history_file(
     path, lat_min=20, lat_max=25, lon_min=-90, lon_max=-85, ntime=10
 ):
@@ -108,6 +136,7 @@ def test_get_mom6_output_data_missing_dataset_path(tmp_path):
     with pytest.raises(FileNotFoundError):
         co.CESM_MOM_OUTPUT.get_mom6_output_data(
             dates=["2000-01-01", "2000-01-10"],
+            freq="D",
             lat_min=20,
             lat_max=25,
             lon_min=-90,
@@ -121,6 +150,7 @@ def test_get_mom6_output_data_no_matching_files(tmp_path):
     with pytest.raises(FileNotFoundError):
         co.CESM_MOM_OUTPUT.get_mom6_output_data(
             dates=["2000-01-01", "2000-01-10"],
+            freq="D",
             lat_min=20,
             lat_max=25,
             lon_min=-90,
@@ -139,6 +169,7 @@ def test_get_mom6_output_data_reads_multi_var_file(tmp_path):
 
     paths = co.CESM_MOM_OUTPUT.get_mom6_output_data(
         dates=["2000-01-01", "2000-01-10"],
+        freq="D",
         lat_min=lat_min,
         lat_max=lat_max,
         lon_min=lon_min,
@@ -167,6 +198,7 @@ def test_get_mom6_output_data_drops_missing_variables(tmp_path):
 
     paths = co.CESM_MOM_OUTPUT.get_mom6_output_data(
         dates=["2000-01-01", "2000-01-10"],
+        freq="D",
         lat_min=lat_min,
         lat_max=lat_max,
         lon_min=lon_min,
@@ -216,6 +248,7 @@ def test_get_mom6_single_variable_data(tmp_path):
 
     co.CESM_MOM_OUTPUT.get_mom6_single_variable_data(
         dates=["2000-01-01", "2000-01-10"],
+        freq="D",
         lat_min=lat_min,
         lat_max=lat_max,
         lon_min=lon_min,

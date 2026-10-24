@@ -66,6 +66,11 @@ def test_all_configurators_smoke(fake_param_case, fake_forcing_product):
                 ctor_args[a] = ["south", "north", "west", "east"]
             elif a == "product_name":
                 ctor_args[a] = "GLORYS"
+            elif a == "function_name":
+                ctor_args[a] = "get_glorys_data_script_for_cli"
+            elif a in ("data_freq", "subsample_freq"):
+                # Validated against the access method, which reads neither.
+                ctor_args[a] = None
             elif a == "ww3_obc_product_name":
                 ctor_args[a] = "reference_waves"
             elif a == "cice_product_name":
@@ -76,6 +81,9 @@ def test_all_configurators_smoke(fake_param_case, fake_forcing_product):
                 ctor_args[a] = dummy_dir
             elif "forcing_product" in a:
                 ctor_args[a] = fake_forcing_product
+            elif a == "function_args":
+                # configure() builds the access request from it.
+                ctor_args[a] = {}
             elif a == "calendar":
                 # Typed arg: the configurators expand it with asdict(), so the
                 # generic dummy_str fallback below would not do.
