@@ -42,6 +42,12 @@ class GLORYS(MOM6ForcingProduct):
     # Daily means, stamped at noon.
     time_sampling = TimeSampling("D", "mean")
 
+    @classmethod
+    def coverage(cls, method_name, **kwargs):
+        # GLORYS starts on 1993-01-01, on RDA and Copernicus alike. Its end
+        # moves as new days are added, so it is left open.
+        return pd.Timestamp("1993-01-01"), None
+
     @accessmethod(
         subsample=True,
         description="Gathers GLORYS data from RDA on computers with access to glade/rda",

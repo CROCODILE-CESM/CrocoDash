@@ -616,8 +616,7 @@ class ConditionsConfigurator(BaseConfigurator):
             product.write_metadata(include_marbl_tracers="%MARBL" in compset),
         )
         # Chunk sizes and fetch windows follow the product's time sampling
-        # (see forcing/time_windows.py). Power users can override the chunk
-        # sizes in config.json.
+        # (see forcing/time_windows.py).
         function_name = self.get_input_param("function_name")
         freq_input = self._freq_input(product_name, function_name)
         sampling = resolve_time_sampling(
@@ -637,12 +636,16 @@ class ConditionsConfigurator(BaseConfigurator):
             pd.to_datetime(self.get_input_param(k), format=self._DATE_FORMAT)
             for k in ("start_date", "end_date")
         )
-        obc_start, obc_end = time_windows.obc_window(sampling, start, end)
+        variables, extra_args = build_forcing_request(
+            self.get_output_param("information"), self.get_input_param("function_args")
+        )
+        coverage = product.coverage(function_name, variables=variables, **extra_args)
+        obc_start, obc_end = time_windows.obc_window(sampling, start, end, coverage)
         self.set_output_param("obc_start_date", obc_start.strftime(self._DATE_FORMAT))
         self.set_output_param("obc_end_date", obc_end.strftime(self._DATE_FORMAT))
         self.set_output_param("ic_lookback_days", time_windows.ic_lookback_days(native))
         for line in time_windows.describe(
-            product_name, function_name, sampling, native, start, end, chunks
+            product_name, function_name, sampling, native, start, end, chunks, coverage
         ):
             print(line)
         self.set_output_param(

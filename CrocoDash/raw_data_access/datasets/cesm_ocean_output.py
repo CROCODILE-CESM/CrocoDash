@@ -98,6 +98,10 @@ class CESM_POP_OUTPUT(MOM6ForcingProduct):
         "coccoCaCO3": "coccoCaCO3",
     }
 
+    @classmethod
+    def coverage(cls, method_name, **kwargs):
+        return tseries_coverage(**kwargs)
+
     @accessmethod(
         subsample=True,
         data_freq=True,
@@ -196,6 +200,13 @@ class CESM_MOM_OUTPUT(MOM6ForcingProduct):
     # declared here.
     time_sampling = USER_SPECIFIED
     tracer_var_names = {"temp": "thetao", "salt": "so"}
+
+    @classmethod
+    def coverage(cls, method_name, **kwargs):
+        # Only the tseries reader has the dates in its file names.
+        if method_name != "get_mom6_single_variable_data":
+            return super().coverage(method_name, **kwargs)
+        return tseries_coverage(**kwargs)
 
     @accessmethod(
         subsample=True,
@@ -391,6 +402,47 @@ def validate_dataset_path(dataset_path):
         raise FileNotFoundError(
             f"Provided dataset path {dataset_path} does not exist. Please provide a valid path through the function arguments"
         )
+
+
+def tseries_coverage(
+    variables,
+    dataset_path=None,
+    member=None,
+    regex=r"(\d{6,8})-(\d{6,8})",
+    delimiter=".",
+    **_,
+):
+    """The first and last days the tseries files under dataset_path cover for
+    every one of variables, read from their file names like the readers do;
+    (None, None) when there are none to read."""
+    if dataset_path is None or not Path(dataset_path).exists():
+        return None, None
+    files_by_var = parse_dataset(
+        variables,
+        dataset_path,
+        "0001-01-01",
+        "9999-12-31",
+        regex=regex,
+        space_character=delimiter,
+    )
+    spans = []
+    for files in files_by_var.values():
+        ranges = []
+        for f in files:
+            m = re.search(regex, os.path.basename(f))
+            if m is None or (member is not None and member not in f):
+                continue
+            first, last = get_date_range_from_filename(f, regex)
+            # A YYYYMM end names the file's last month, which it covers to
+            # the month's last day (CESM-MOM stamps monthly means mid-month).
+            if len(m.group(2)) == 6:
+                last += pd.offsets.MonthEnd(0)
+            ranges.append((first, last))
+        if ranges:
+            spans.append((min(r[0] for r in ranges), max(r[1] for r in ranges)))
+    if not spans:
+        return None, None
+    return max(s[0] for s in spans), min(s[1] for s in spans)
 
 
 def read_single_variable_tseries_data(
