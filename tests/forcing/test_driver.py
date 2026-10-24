@@ -1,4 +1,5 @@
 from argparse import Namespace
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
@@ -10,7 +11,11 @@ from CrocoDash.forcing.base import (
     InputValueParam,
     register,
 )
-from CrocoDash.forcing.driver import resolve_components, run_workflow
+from CrocoDash.forcing.driver import (
+    portable_settings,
+    resolve_components,
+    run_workflow,
+)
 
 # =============================================================================
 # Dummy configurators exercising the generic process_components dispatch
@@ -120,10 +125,42 @@ class _DummyChainCConfigurator(BaseConfigurator):
 _CHAIN_CALLS = []
 
 
-def _case(extra_keys=None):
-    """What run_workflow() uses of a Case: the context for its config.json."""
+@register
+class _DummyFilesConfigurator(BaseConfigurator):
+    """Declares one file, which process() writes, noting whether it was
+    already there. dummyfiles_x has no default, so the registry never
+    activates this class in a real case."""
+
+    name = "dummyfiles"
+    process_components = {"dummyfiles": "process"}
+    input_params = [InputValueParam("dummyfiles_x", comment="dummy")]
+    output_params = []
+    existed = []
+
+    def __init__(self, dummyfiles_x):
+        super().__init__(dummyfiles_x=dummyfiles_x)
+
+    def configure(self):
+        pass
+
+    def output_files(self, ctx):
+        return {"dummyfiles": [ctx.output_path / "dummy.nc"]}
+
+    def process(self, ctx):
+        path = ctx.output_path / "dummy.nc"
+        _DummyFilesConfigurator.existed.append(path.exists())
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.touch()
+
+
+def _case(extra_keys=None, inputdir="/x/input"):
+    """What run_workflow() uses of a Case: its cesmroot and the context for
+    its config.json."""
     config = {"caseroot": "/x", **(extra_keys or {})}
-    return SimpleNamespace(workflow_context=lambda: SimpleNamespace(config=config))
+    ctx = SimpleNamespace(
+        config=config, inputdir=Path(inputdir), output_path=Path(inputdir) / "ocn"
+    )
+    return SimpleNamespace(cesmroot=Path("/cesm"), workflow_context=lambda: ctx)
 
 
 # =============================================================================
@@ -277,6 +314,7 @@ def test_run_workflow_auto_enables_dependency(tmp_path):
         calls.append("bgcrivernutrients")
 
     case = _case(
+        inputdir=tmp_path,
         extra_keys={
             "runoff": {
                 "name": "Runoff",
@@ -291,7 +329,10 @@ def test_run_workflow_auto_enables_dependency(tmp_path):
                     "rof_grid_name": "GLOFAS",
                     "rof_esmf_mesh_filepath": "/fake2.nc",
                 },
-                "outputs": {"ROF2OCN_LIQ_RMAPNAME": None, "ROF2OCN_ICE_RMAPNAME": None},
+                "outputs": {
+                    "ROF2OCN_LIQ_RMAPNAME": "map.nc",
+                    "ROF2OCN_ICE_RMAPNAME": "map.nc",
+                },
             },
             "bgcrivernutrients": {
                 "name": "BGCRiverNutrients",
@@ -346,3 +387,48 @@ def test_run_workflow_auto_enables_multi_level_chain():
     run_workflow(case, chaina=True)
 
     assert _CHAIN_CALLS == ["chainc", "chainb", "chaina"]
+
+
+# =============================================================================
+# run_workflow: finished steps
+# =============================================================================
+
+_FILES_ENTRY = {
+    "dummyfiles": {"name": "dummyfiles", "inputs": {"dummyfiles_x": "1"}, "outputs": {}}
+}
+
+
+def test_run_workflow_skips_a_finished_step(tmp_path):
+    _DummyFilesConfigurator.existed.clear()
+    case = _case(_FILES_ENTRY, inputdir=tmp_path)
+
+    run_workflow(case, dummyfiles=True)
+    run_workflow(case, dummyfiles=True)
+
+    assert _DummyFilesConfigurator.existed == [False]
+
+
+def test_run_workflow_force_reruns_after_removing_old_files(tmp_path):
+    _DummyFilesConfigurator.existed.clear()
+    case = _case(_FILES_ENTRY, inputdir=tmp_path)
+
+    run_workflow(case, dummyfiles=True)
+    run_workflow(case, force=True, dummyfiles=True)
+
+    # The engines keep a file that already exists, so a rerun must not find it.
+    assert _DummyFilesConfigurator.existed == [False, False]
+
+
+def test_portable_settings_equal_across_inputdirs(tmp_path):
+    def settings(inputdir, cesmroot):
+        x = [str(inputdir / "ocn" / "x.nc"), str(cesmroot / "cime")]
+        config = {"dummyfiles": {"name": "dummyfiles", "inputs": {"dummyfiles_x": x}}}
+        return portable_settings(_DummyFilesConfigurator, config, inputdir, cesmroot)
+
+    a = settings(tmp_path / "a", tmp_path / "cesm_a")
+
+    assert a == settings(tmp_path / "b", tmp_path / "cesm_b")
+    assert a["dummyfiles"]["inputs"]["dummyfiles_x"] == [
+        "$INPUTDIR/ocn/x.nc",
+        "$CESMROOT/cime",
+    ]

@@ -795,6 +795,16 @@ class ConditionsConfigurator(BaseConfigurator):
             + [ctx.output_path / f"{tracer}_obc_segment.nc" for tracer in tracers],
         }
 
+    @classmethod
+    def step_settings(cls, config):
+        # The part of the entry stale_outputs() compares, so enabling tides
+        # (which only changes the OBC strings) doesn't rerun ic/bc.
+        key = cls.name.lower()
+        return {
+            **super().step_settings(config),
+            key: cls._fingerprint(config.get(key)),
+        }
+
     # ---- process (extraction) ----
 
     def process_bc(self, ctx):

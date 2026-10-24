@@ -62,34 +62,55 @@ separate components.
 
 This flexibility lets you:
 - Test individual components without running everything
-- Re-run one forcing type if your source data changed
+- Re-run one forcing type if your source data changed (with `--force`, since its configuration didn't)
 - Submit to a batch queue and re-run from the CLI after a failure
 - Resume a partially-completed run
 
-To see what a run covers without running anything, add `--preview`. It lists
-each selected component with the input files it reads and the files it writes,
-each marked `present` or `missing`:
+## Finished components are skipped
+
+Once a component has run, `process_forcings` records it, with its configuration and
+its files, in `extract_forcings/finished_steps.json`. A later run skips it (`[skip] ic`)
+while its configuration is unchanged and none of its files is missing. It runs again
+when `configure_forcings` changed its configuration, when one of its files is gone, or
+when you force it:
+
+```bash
+crocodash process --caseroot ~/croc_cases/mycase --bc --force
+```
+
+```python
+case.process_forcings(force=True)
+```
+
+Before a recorded component runs again, the files it made last time are deleted, so
+they are regenerated rather than reused. `--force` keeps the downloaded and regridded
+data in `extract_forcings/` and rebuilds the final files from it.
+
+To see what a run would do without running anything, add `--preview`. It lists
+each selected component as `finished` or `would run`, with the input files it
+reads and the files it writes, each marked `present` or `missing`:
 
 ```bash
 crocodash process --caseroot ~/croc_cases/mycase --all --preview
 ```
 
 ```
-[preview] ic
+[preview] ic: finished
     output  present  ocn/init_tracers_filled.nc
     output  present  ocn/init_eta_filled.nc
     output  present  ocn/init_vel_filled.nc
-[preview] bc
+[preview] bc: would run
     output  missing  ocn/forcing_obc_segment_001.nc
     ...
-[preview] chl
+[preview] chl: would run
     input   missing  /path/to/SeaWIFS.L3m.MC.CHL.chlor_a.0.25deg.nc
     output  missing  ocn/seawifs-clim-1997-2010-mycase.nc
 ```
 
-A run checks the input files of every selected component before it processes
-anything: a missing one stops it straight away, naming every missing file,
-instead of partway through.
+A run checks the input files of every component that would run before it
+processes anything: a missing one stops it straight away, naming every missing
+file, instead of partway through. A finished component doesn't need its input
+files.
 
 In Python, `case.process_forcings(preview=True)` prints the same.
 

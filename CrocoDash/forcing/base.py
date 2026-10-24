@@ -564,6 +564,11 @@ class BaseConfigurator(ABC):
     # silent, undeclared coupling that only breaks at process-time.
     depends_on_outputs: Dict[str, List[str]] = {}
 
+    # Part of step_settings(). Bump it when a process step's files change for
+    # the same settings (a fix to how they are computed, a new file format), so
+    # that cases processed before the change run the step again.
+    process_version: int = 1
+
     # Injected by ForcingConfigRegistry.__init__ after all active configurators
     # are instantiated; lets a configurator check whether a sibling is active
     # (e.g. ConditionsConfigurator gating its own tides/bgc string-building on
@@ -850,3 +855,20 @@ class BaseConfigurator(ABC):
     def validate_output_filepaths(self, ctx) -> bool:
         """True once every declared output file exists."""
         return not self.missing_output_files(ctx)
+
+    @classmethod
+    def step_settings(cls, config: dict):
+        """What this configurator's process steps make their files from.
+
+        driver.py records it for each finished step in
+        extract_forcings/finished_steps.json, and skips the step on a later run
+        while it is unchanged and the step's files are all there. By default it
+        is process_version, this configurator's config.json entry and the
+        entries of the configurators named in depends_on_outputs. Override it
+        if a process step reads anything else from config.json.
+        """
+        names = [cls.name, *cls.depends_on_outputs]
+        return {
+            "process_version": cls.process_version,
+            **{name.lower(): config.get(name.lower()) for name in names},
+        }

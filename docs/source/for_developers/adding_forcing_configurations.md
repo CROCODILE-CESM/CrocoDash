@@ -267,6 +267,13 @@ Use only your own inputs and outputs and `ctx`'s directories, never a stored
 absolute path. Use a glob only where the number of files depends on the data, and
 leave out files the model never reads, such as regrid weights.
 
+`process_forcings` skips a step that already ran while its `step_settings()` are
+unchanged and its files are all there. By default the settings are your
+`config.json` entry and those named in `depends_on_outputs`. If your step reads
+anything else from `ctx.config` (CICE and WW3 read the conditions dates), override
+`step_settings()`. If you change what a step writes without changing its settings,
+bump the class's `process_version` so existing cases run it again.
+
 ## Step 6: Add Compset Compatibility Logic (Optional)
 
 Define when your configurator is required or allowed:

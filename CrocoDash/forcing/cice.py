@@ -463,6 +463,15 @@ class CICEConfigurator(BaseConfigurator):
         path = Path(ctx.inputdir) / SEA_ICE_SUBDIR / FORCING_FILENAME
         return {"cice": [path] if restoring else []}
 
+    @classmethod
+    def step_settings(cls, config):
+        # process() also reads the run dates from the conditions entry.
+        dates = config.get("conditions", {}).get("inputs", {})
+        return {
+            **super().step_settings(config),
+            "conditions_dates": [dates.get("start_date"), dates.get("end_date")],
+        }
+
     def process(self, ctx):
         """
         Generate CICE's single restoring forcing file into
