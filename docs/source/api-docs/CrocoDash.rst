@@ -69,14 +69,6 @@ CrocoDash.recipe module
    :show-inheritance:
    :undoc-members:
 
-CrocoDash.shareable module
---------------------------
-
-.. automodule:: CrocoDash.shareable
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
 CrocoDash.topo module
 ---------------------
 
