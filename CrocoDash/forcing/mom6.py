@@ -699,9 +699,9 @@ class ConditionsConfigurator(BaseConfigurator):
         super().configure()
 
     @classmethod
-    def deserialize(cls, data):
+    def deserialize(cls, data, caseroot=None):
         """Reconstruct dynamic per-boundary output params alongside the static ones."""
-        obj = super().deserialize(data)
+        obj = super().deserialize(data, caseroot)
         boundaries = obj.get_input_param("boundaries")
         for seg in boundaries:
             seg_ix = str(cls._segment_index(boundaries, seg)).zfill(3)

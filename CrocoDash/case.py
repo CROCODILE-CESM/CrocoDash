@@ -244,7 +244,7 @@ class Case:
             self._write_state()
             # Read the case back as from_caseroot() does, so that a created
             # case and a read-back one can't drift apart.
-            self._bind(self.caseroot)
+            self._bind(self.caseroot, is_non_local=self.is_non_local)
         except BaseException:
             _remove_failed_attempt(case_dirs, preexisting)
             raise
@@ -270,8 +270,8 @@ class Case:
         Runs no create_newcase, case.setup or visualCaseGen: everything comes
         from the case's _crocodash_state.json and, once its forcings are
         configured, its config.json. The grids and the CIME case are loaded on
-        first use. A case read back can process its forcings; configuring them
-        still needs the case created in this session.
+        first use. A case read back can configure and process its forcings:
+        ``case.configure_forcings(**case.forcing_args(changes))``.
 
         Parameters
         ----------
@@ -286,13 +286,14 @@ class Case:
         case._bind(caseroot, cesmroot=cesmroot)
         return case
 
-    def _bind(self, caseroot, cesmroot=None):
-        """Set what processing and the properties need from the state file.
+    def _bind(self, caseroot, cesmroot=None, is_non_local=True):
+        """Set what configuring, processing and the properties need from the
+        state file.
 
         __init__ ends here too, so a created case and one read back with
-        from_caseroot() can't drift apart. These must be plain attributes:
-        configure_forcings() passes every public attribute to the
-        configurators as a case_* input.
+        from_caseroot() can't drift apart. is_non_local is whether CIME's
+        tools run with --non-local: a case read back may be on another machine
+        than its own, so it is True unless the case was just created here.
         """
         state = case_state.read(caseroot)
         self.caseroot = Path(caseroot)
@@ -310,6 +311,7 @@ class Case:
         self.topo_path = state["topo_path"]
         self.vgrid_path = state["vgrid_path"]
         self.esmf_mesh_path = state["esmf_mesh_path"]
+        self.is_non_local = is_non_local
         # override=True applies to creating the case only; nothing is deleted
         # after that.
         self.override = False
@@ -317,6 +319,8 @@ class Case:
         self._configure_forcings_called = (
             self.extract_forcings_path / CONFIG_FILENAME
         ).exists()
+        # configure_forcings() sets it from its product_name.
+        self.forcing_product = None
 
     # __init__ sets ocn_grid, ocn_topo, ocn_vgrid and _cime_case, which then
     # shadow these; a case read back loads each from its files when first used.
@@ -840,10 +844,98 @@ class Case:
         """The configured forcings, rebuilt from config.json:
         {config.json entry: configurator}."""
         return {
-            key: ForcingConfigRegistry.get_configurator(entry)
+            key: ForcingConfigRegistry.get_configurator(entry, self.caseroot)
             for key, entry in self.forcing_config.items()
             if key not in CONFIG_META_KEYS
         }
+
+    def forcing_inputs(self):
+        """This case's values that configurators take as case_* inputs.
+
+        ForcingConfigRegistry adds them to the configure_forcings() arguments,
+        so a case_* input a configurator declares must be provided here.
+        """
+        return {
+            "case_cesmroot": self.cesmroot,
+            "case_inputdir": self.inputdir,
+            "case_compset_lname": self.compset_lname,
+            "case_session_id": self.session_id,
+            "case_grid_name": self.grid_name,
+            "case_esmf_mesh_path": self.esmf_mesh_path,
+            "case_forcing_product": self.forcing_product,
+        }
+
+    def forcing_args(self, changes=None):
+        """The configure_forcings() arguments this case's forcings were
+        configured with, read back from config.json (none if they never were),
+        with ``changes`` applied.
+
+        Pass them back to reconfigure the case:
+        ``case.configure_forcings(**case.forcing_args({"boundaries": ["north"]}))``.
+        A required argument config.json lacks (one a newer CrocoDash added)
+        has to be given in ``changes``.
+        """
+        changes = changes or {}
+        if not self._configure_forcings_called:
+            return dict(changes)
+        forcing_config = self.forcing_config
+        conditions = forcing_config["conditions"]
+        date_format = conditions["outputs"]["date_format"]
+        product_name = conditions["inputs"]["product_name"]
+        function_name = conditions["inputs"]["function_name"]
+        args = {
+            "date_range": [
+                datetime.strptime(conditions["inputs"][key], date_format).strftime(
+                    "%Y-%m-%d %H:%M:%S"
+                )
+                for key in ("start_date", "end_date")
+            ],
+            "boundaries": list(conditions["outputs"]["boundary_number_conversion"]),
+            "product_name": product_name.upper(),
+            "function_name": function_name,
+        }
+        # config.json keeps the access method's merged arguments; hand back only
+        # the ones that differ from its defaults, as configure_forcings takes them.
+        function_args = conditions["inputs"].get("function_args") or {}
+        if function_args:
+            ProductRegistry.load()
+            defaults = {
+                name: value.as_posix() if isinstance(value, Path) else value
+                for name, value in ProductRegistry.get_function_default_args(
+                    product_name.lower(), function_name
+                ).items()
+            }
+            overrides = {
+                name: value
+                for name, value in function_args.items()
+                if name in defaults and value != defaults[name]
+            }
+            if overrides:
+                args["function_overrides"] = overrides
+        for key, entry in forcing_config.items():
+            if key == "conditions" or key in CONFIG_META_KEYS:
+                continue
+            configurator_cls = ForcingConfigRegistry.get_configurator_from_name(key)
+            # Round-trip every ctor arg, not just required ones -- an all-optional
+            # configurator (e.g. CICE) would otherwise silently fall back to
+            # defaults instead of reproducing the original case.
+            all_args, required_args = ForcingConfigRegistry.get_ctor_signature(
+                configurator_cls
+            )
+            stored_inputs = entry.get("inputs", {})
+            for arg in all_args:
+                # case_* args come from forcing_inputs(), not from config.json.
+                if arg.startswith("case_") or arg in args or arg in changes:
+                    continue
+                if arg in stored_inputs:
+                    args[arg] = stored_inputs[arg]
+                elif arg in required_args:
+                    raise ValueError(
+                        f"config.json's '{key}' block is missing required argument "
+                        f"'{arg}' for configurator {configurator_cls.name}; give it "
+                        f"in changes (crocodash configure: --set {arg}=...)."
+                    )
+        return args | changes
 
     def workflow_context(self, preview=False):
         """The WorkflowContext every process step gets: config.json and the

@@ -76,7 +76,18 @@ def is_serializable(v):
 
 class ReconfigureRequired(ValueError):
     """config.json lacks something this version of CrocoDash needs, so the
-    case's forcings must be configured again before they can be processed."""
+    case's forcings must be configured again before they can be processed.
+    Given the case's caseroot, the message names the command that does it."""
+
+    def __init__(self, problem, caseroot=None):
+        if caseroot is None:
+            fix = "Rerun configure_forcings()"
+        else:
+            fix = (
+                f"Run 'crocodash configure --caseroot {caseroot}' (with --set "
+                "key=value for an argument to change or add)"
+            )
+        super().__init__(f"{problem} {fix} to rewrite config.json.")
 
 
 class UndeclaredParamError(KeyError):
@@ -168,12 +179,7 @@ class ForcingConfigRegistry:
         self.case = case
         self.active_configurators = {}
         if case is not None:
-            self.case_info = {
-                f"case_{k}": v
-                for k, v in case.__dict__.items()
-                if not k.startswith("_")
-            }
-            inputs = inputs | self.case_info
+            inputs = inputs | case.forcing_inputs()
         inputs["compset"] = compset
         self.find_active_configurators(self.compset, inputs)
         for configurator in self.active_configurators.values():
@@ -187,8 +193,10 @@ class ForcingConfigRegistry:
         raise ValueError("Configurator Not Found")
 
     @classmethod
-    def get_configurator(cls, obj_dict):
-        return cls.get_configurator_from_name(obj_dict["name"]).deserialize(obj_dict)
+    def get_configurator(cls, obj_dict, caseroot=None):
+        return cls.get_configurator_from_name(obj_dict["name"]).deserialize(
+            obj_dict, caseroot
+        )
 
     @classmethod
     def find_valid_configurators(cls, compset):
@@ -335,7 +343,7 @@ class ForcingConfigRegistry:
         for key, entry in config.items():
             if key in CONFIG_META_KEYS:
                 continue
-            configurator = cls.get_configurator(entry)
+            configurator = cls.get_configurator(entry, config.get("caseroot"))
             for flag_name, method_name in configurator.process_components.items():
                 targets[flag_name] = (configurator, method_name)
         return targets
@@ -498,17 +506,18 @@ def xmlchange(var, val, *, caseroot, is_non_local=False):
         )
 
 
-def xmlquery(var, *, caseroot):
+def xmlquery(var, *, caseroot, is_non_local=False):
     """The case's current value of ``var``, from ``./xmlquery`` in ``caseroot``."""
+    cmd = ["./xmlquery", var, "--value"]
+    if is_non_local:
+        cmd.append("--non-local")
     try:
-        res = subprocess.run(
-            ["./xmlquery", var, "--value"], cwd=Path(caseroot), capture_output=True
-        )
+        res = subprocess.run(cmd, cwd=Path(caseroot), capture_output=True)
     except OSError as e:
         raise RuntimeError(f"Could not run ./xmlquery in {caseroot}: {e}") from e
     if res.returncode != 0:
         raise RuntimeError(
-            f"./xmlquery {var} failed in {caseroot}:\n{res.stderr.decode().strip()}"
+            f"{' '.join(cmd)} failed in {caseroot}:\n{res.stderr.decode().strip()}"
         )
     return res.stdout.decode().strip()
 
@@ -755,14 +764,14 @@ class BaseConfigurator(ABC):
         return obj
 
     @classmethod
-    def deserialize(cls, data: Dict[str, Any]):
+    def deserialize(cls, data: Dict[str, Any], caseroot=None):
         """Rebuild a configurator from its config.json entry.
 
         Tolerates entries an older or newer CrocoDash wrote: an input missing
         from the entry takes its constructor default, an output missing from
         it stays None, and keys the class no longer declares are ignored. A
         missing input with no default, or an entry the constructor rejects,
-        raises ReconfigureRequired.
+        raises ReconfigureRequired, naming the case's caseroot if given.
         """
         inputs, outputs = data.get("inputs", {}), data.get("outputs", {})
         defaults = inspect.signature(cls.__init__).parameters
@@ -776,16 +785,16 @@ class BaseConfigurator(ABC):
             ):
                 raise ReconfigureRequired(
                     f"config.json's '{cls.name.lower()}' entry has no "
-                    f"'{param.name}', which this version of CrocoDash requires. "
-                    "Rerun configure_forcings() to rewrite config.json."
+                    f"'{param.name}', which this version of CrocoDash requires.",
+                    caseroot,
                 )
 
         try:
             obj = cls(**input_kwargs)
         except ValueError as e:
             raise ReconfigureRequired(
-                f"config.json's '{cls.name.lower()}' entry is no longer valid ({e}). "
-                "Rerun configure_forcings() to rewrite config.json."
+                f"config.json's '{cls.name.lower()}' entry is no longer valid ({e}).",
+                caseroot,
             ) from e
         for param in cls.output_params:
             if param.name in outputs:

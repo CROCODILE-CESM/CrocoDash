@@ -137,8 +137,7 @@ class MyConfigurator(BaseConfigurator):
         self,
         data_filepath: str,
         processing_mode: str,
-        case_caseroot: str = None,  # Optional: access Case object attributes
-        case_inputdir: str = None,
+        case_inputdir: str = None,  # Filled in from Case.forcing_inputs()
     ):
         """
         Initialize configurator.
@@ -149,8 +148,6 @@ class MyConfigurator(BaseConfigurator):
             Path to input data file
         processing_mode : str
             Processing mode: 'fast' or 'accurate'
-        case_caseroot : str, optional
-            Case root directory (passed from Case object)
         case_inputdir : str, optional
             Case input directory (passed from Case object)
         """
@@ -162,7 +159,6 @@ class MyConfigurator(BaseConfigurator):
         super().__init__(
             data_filepath=data_filepath,
             processing_mode=processing_mode,
-            case_caseroot=case_caseroot,
             case_inputdir=case_inputdir,
         )
 ```
@@ -170,7 +166,7 @@ class MyConfigurator(BaseConfigurator):
 **Key Points:**
 
 - `__init__` parameters must somehow fill `input_params` names
-- Parameters starting with `case_` come from the `Case` object, the registry automatically injects these
+- Parameters starting with `case_` come from `Case.forcing_inputs()`, which the registry injects automatically
 - Other parameters are user-provided and required unless you have defaults
 - Call `super().__init__(**kwargs)` to let the framework handle parameter binding
 
@@ -422,20 +418,20 @@ def validate_args(self, **kwargs):
 
 ### Accessing Case Information
 
-To access Case object attributes, use the `case_` prefix:
+To get a value of the case, take it as a `case_`-prefixed argument:
 
 ```python
-def __init__(self, some_param: str, case_caseroot: str = None, case_compset: str = None):
-    # case_caseroot and case_compset are optional
-    # They're injected by ForcingConfigRegistry if available
+def __init__(self, some_param: str, case_inputdir: str = None, case_grid_name: str = None):
+    # Injected by ForcingConfigRegistry from Case.forcing_inputs()
     super().__init__(
         some_param=some_param,
-        case_caseroot=case_caseroot,
-        case_compset=case_compset,
+        case_inputdir=case_inputdir,
+        case_grid_name=case_grid_name,
     )
 ```
 
-Available case attributes are whatever objects are on the Case object. Remember
+The values available are the keys of `Case.forcing_inputs()`; to take another one,
+add it there (a test checks that every declared `case_` input is provided). Remember
 that each one must also be declared in `input_params` (see Step 2).
 
 A configurator can also check whether a *sibling* configurator is active through

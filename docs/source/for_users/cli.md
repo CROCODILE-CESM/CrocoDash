@@ -8,6 +8,7 @@ CrocoDash ships a `crocodash` command (installed automatically with `pip install
 crocodash template          --output my_case.{yaml,ipynb,py,pbs} [--machine glade] [--notebook ID]
 crocodash create            --config mycase.yaml [--override]
 crocodash dump              --caseroot /path/to/case
+crocodash configure         --caseroot /path/to/case [--config forcings.yaml] [--set key=value ...]
 crocodash process  [--caseroot /path/to/case] [--all | --ic --bc ...]  [--skip ...]
 crocodash bundle            --caseroot /path/to/case --output-dir /path/to/bundle_dir ...
 crocodash fork              --bundle /path/to/bundle --caseroot ... --inputdir ... --cesmroot ... --machine ... --project ...
@@ -112,6 +113,35 @@ crocodash create --config mycase_copy.yaml --override
 ```
 
 The dumped YAML uses `supergrid_path`/`from_file` references pointing at the existing grid/topo/vgrid files. To create a fully independent copy, either update those paths or re-generate the grid from parameters.
+
+---
+
+## `crocodash configure`
+
+Configures the forcings of an existing case again, in place: no new case is created. It
+starts from the arguments the case's forcings were configured with
+(`case.forcing_args()`), applies the `forcings:` section of `--config` (a YAML file such
+as one `crocodash dump` writes), then each `--set`, and calls `configure_forcings()`.
+Arguments you don't change keep their values. Process the forcings again afterwards.
+
+```bash
+# Move the run to February
+crocodash configure --caseroot ~/croc_cases/mycase \
+    --set "date_range=['2020-02-01 00:00:00', '2020-03-01 00:00:00']"
+
+# Keep only two boundaries, and take the rest from a YAML file
+crocodash configure --caseroot ~/croc_cases/mycase --config forcings.yaml --set boundaries=[north,east]
+
+crocodash process --caseroot ~/croc_cases/mycase --all
+```
+
+| Flag | Description |
+|------|-------------|
+| `--caseroot PATH` | The case to configure. |
+| `--config PATH` | YAML file whose `forcings:` section replaces the matching arguments. |
+| `--set KEY=VALUE` | Set one `configure_forcings()` argument, after `--config`. `VALUE` is read as YAML, so lists and numbers work; quote dates. Repeatable. |
+
+A case whose forcings were never configured needs at least `date_range`.
 
 ---
 

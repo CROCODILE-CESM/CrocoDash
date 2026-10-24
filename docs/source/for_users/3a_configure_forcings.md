@@ -133,6 +133,20 @@ Your configuration will be saved to JSON for reproducibility in the `extract_for
 
 The JSON structure organizes inputs and outputs by configurator name, allowing the processing driver to generate forcing and boundary condition files.
 
+## Reconfiguring an Existing Case
+
+Calling `configure_forcings()` again replaces the case's forcing configuration. To change
+only some arguments, also from a new session, read the case back and pass the arguments
+it was configured with, with your changes applied (`case.forcing_args(changes)`); from the
+shell, [`crocodash configure`](cli.md) does the same:
+
+```python
+from CrocoDash.case import Case
+
+case = Case.from_caseroot("/glade/u/home/<user>/croc_cases/mycase")
+case.configure_forcings(**case.forcing_args({"boundaries": ["north", "east"]}))
+```
+
 ## Understanding Your Compset
 
 Which configurations are required depends on your compset string. Common components:

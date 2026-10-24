@@ -206,13 +206,9 @@ def test_a_failed_attempt_leaves_a_preexisting_dir_alone(tmp_path):
     assert (bld_run / "marker").read_text() == "earlier run"
 
 
-def test_from_caseroot_reads_a_case_back_without_cime(tmp_path):
-    """A case reads back from its state file and config.json alone. Nothing
-    exists at its cesmroot or grid paths, so touching CESM, visualCaseGen or
-    the grid files on the way would fail."""
+def _fake_caseroot(tmp_path):
+    """A caseroot with a 1.2 state file whose cesmroot and grid paths don't exist."""
     from CrocoDash import case_state
-    from CrocoDash.case import Case
-    from CrocoDash.forcing.base import CONFIG_FILENAME, write_config
 
     caseroot, inputdir = tmp_path / "case", tmp_path / "input"
     caseroot.mkdir()
@@ -236,6 +232,17 @@ def test_from_caseroot_reads_a_case_back_without_cime(tmp_path):
             "rof_grid_name": None,
         },
     )
+    return caseroot, inputdir
+
+
+def test_from_caseroot_reads_a_case_back_without_cime(tmp_path):
+    """A case reads back from its state file and config.json alone. Nothing
+    exists at its cesmroot or grid paths, so touching CESM, visualCaseGen or
+    the grid files on the way would fail."""
+    from CrocoDash.case import Case
+    from CrocoDash.forcing.base import CONFIG_FILENAME, write_config
+
+    caseroot, inputdir = _fake_caseroot(tmp_path)
     tides = {
         "name": "tides",
         "inputs": {
@@ -255,6 +262,21 @@ def test_from_caseroot_reads_a_case_back_without_cime(tmp_path):
 
     assert case.configurators()["tides"].get_input_param("tidal_constituents") == ["M2"]
     assert case.workflow_context().inputdir == inputdir
+
+
+def test_forcing_inputs_has_every_case_input_a_configurator_takes(tmp_path):
+    """Configurators get case_* values only from forcing_inputs(), so a case
+    read back must provide them all: a missing one fails configure_forcings()
+    where it is required (Runoff's) and silently takes its default elsewhere."""
+    from CrocoDash.case import Case
+    from CrocoDash.forcing.base import ForcingConfigRegistry
+
+    caseroot, _ = _fake_caseroot(tmp_path)
+    provided = Case.from_caseroot(caseroot).forcing_inputs()
+    for configurator_cls in ForcingConfigRegistry.registered_types:
+        args, _ = ForcingConfigRegistry.get_ctor_signature(configurator_cls)
+        missing = {arg for arg in args if arg.startswith("case_")} - provided.keys()
+        assert not missing, f"{configurator_cls.name} takes {missing}"
 
 
 def test_from_caseroot_refuses_a_state_older_than_1_2(tmp_path):

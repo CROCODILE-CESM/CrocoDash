@@ -76,10 +76,14 @@ class RunoffConfigurator(BaseConfigurator):
         # ROF_GRID / ROF_DOMAIN_MESH. A grid the case doesn't run on would give
         # the coupler a map that doesn't match.
         caseroot = self.registry.case.caseroot
-        self.set_output_param("rof_grid_name", xmlquery("ROF_GRID", caseroot=caseroot))
-        self.set_output_param(
-            "rof_esmf_mesh_filepath", xmlquery("ROF_DOMAIN_MESH", caseroot=caseroot)
-        )
+        for output, var in (
+            ("rof_grid_name", "ROF_GRID"),
+            ("rof_esmf_mesh_filepath", "ROF_DOMAIN_MESH"),
+        ):
+            self.set_output_param(
+                output,
+                xmlquery(var, caseroot=caseroot, is_non_local=self.is_non_local),
+            )
         runoff_mapping_file_nnsm = f"glofas_{self.get_input_param('case_grid_name')}_{self.get_input_param('case_session_id')}_nnsm.nc"
         rof_case_grid_name = self.get_output_param("rof_grid_name")
         mapping_file_prefix = (
