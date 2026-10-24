@@ -73,19 +73,18 @@ from CrocoDash.forcing.base import ForcingConfigRegistry
 
 compset = "1850_DATM%NYF_SLND_SICE_MOM6%MARBL-BIO%REGIONAL_DROF%GLOFAS_SGLC_SWAV"
 
-# Find required configurations
-required = ForcingConfigRegistry.find_required_configurators(compset)
-for config_class in required:
-    print(f"Required: {config_class.name}")
-    user_args = ForcingConfigRegistry.get_user_args(config_class)
-    print(f"  Requires these inputs: {user_args}")
-
-# Find optional configurations
-valid = ForcingConfigRegistry.find_valid_configurators(compset)
-for config_class in valid:
-    if config_class not in required:
-        print(f"Optional: {config_class.name}")
+# Every configure_forcings() argument this compset takes, required ones first
+specs = ForcingConfigRegistry.param_specs(compset)
+for spec in sorted(specs, key=lambda spec: not spec.required):
+    print(
+        f"{spec.name} ({spec.configurator}): required={spec.required}, "
+        f"default={spec.default!r}, choices={spec.choices}\n    {spec.comment}"
+    )
 ```
+
+An optional configurator (tides, say) is active only when all of its arguments
+without a default are given. An argument no active configurator takes is
+ignored, with a warning.
 
 ## Helper Functions
 
@@ -100,8 +99,9 @@ required = ForcingConfigRegistry.find_required_configurators(compset)
 # Find all valid/compatible configurators
 valid = ForcingConfigRegistry.find_valid_configurators(compset)
 
-# Get user-required arguments for a specific configurator
-user_args = ForcingConfigRegistry.get_user_args(configurator_class)
+# Every argument the compset takes (pass config=<config.json dict> to get
+# that case's current values as the defaults)
+specs = ForcingConfigRegistry.param_specs(compset)
 
 # Find what inputs are missing
 missing = ForcingConfigRegistry.return_missing_inputs(configurator_class, inputs_dict)

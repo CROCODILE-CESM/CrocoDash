@@ -168,6 +168,32 @@ def test_config_json_is_only_read_through_read_config():
     assert not offenders, offenders
 
 
+@pytest.mark.parametrize(
+    "compset, required",
+    [
+        ("1850_DATM%JRA_SLND_SICE_MOM6%REGIONAL_SROF_SGLC_SWAV", {"date_range"}),
+        (
+            "1850_DATM%JRA_SLND_SICE_MOM6%MARBL-BIO%REGIONAL_DROF%GLOFAS_SGLC_SWAV",
+            {"date_range", "marbl_ic_filepath"},
+        ),
+    ],
+)
+def test_param_specs_list_what_the_compset_needs(compset, required):
+    """A front-end asks for the required inputs, and never for one the Case
+    fills in or the configurators derive."""
+    specs = ForcingConfigRegistry.param_specs(compset)
+    assert {spec.name for spec in specs if spec.required} == required
+    names = {spec.name for spec in specs}
+    assert not {name for name in names if name.startswith("case_")}
+    assert not names & {
+        "compset",
+        "start_date",
+        "end_date",
+        "calendar",
+        "function_args",
+    }
+
+
 def test_validate_compset_compatability():
     assert Dummy.validate_compset_compatibility("req")
     assert Dummy.validate_compset_compatibility("dummy")

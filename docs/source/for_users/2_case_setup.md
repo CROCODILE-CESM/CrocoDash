@@ -91,46 +91,32 @@ flowchart TD
 You don't need to call any of these individually — instantiating `Case` runs the
 whole sequence.
 
-## Reading the "required configurators" message
+## Reading the "required arguments" message
 
 After `Case(...)` succeeds, you'll see something like this for a compset with
 MARBL BGC and GLOFAS runoff (e.g. `CR1850MARBL_JRA_GLOFAS`):
 
 ```
-The following additional configuration options are required to run and must be
-provided with any listed arguments in configure_forcings:
-  - StreamYears: no arguments
-  - BGC: no arguments
-  - BGCIC: marbl_ic_filepath
-  - BGCIronForcing: no arguments
-  - conditions: boundaries, product_name, function_name, compset
-  - Runoff: no arguments
+configure_forcings() needs these arguments for this compset:
+  - date_range (conditions): Start and end of the forcing, e.g. ['2020-01-01', '2020-02-01']
+  - marbl_ic_filepath (BGCIC): NetCDF file containing MARBL initial conditions
 ```
 
-Each line is one configurator class plus the keyword arguments you'll need to
-pass to `case.configure_forcings(...)` in the next step. Only arguments with no
-default are listed, and arguments starting with `case_` are filled in
-automatically and never appear here.
-
-Two configurators show up for essentially every case, so don't be surprised by
-them:
-
-- **`conditions`** is required by any compset containing `MOM6` — it drives the
-  initial and boundary condition extraction. Its arguments all have sensible
-  defaults on `configure_forcings` itself, so in practice you only owe it
-  `date_range`.
-- **`StreamYears`** is required by any `DATM%JRA` compset, and takes no
-  arguments.
+Each line is an argument you must pass to `case.configure_forcings(...)` in the
+next step, with the configurator that takes it. Arguments with a default aren't
+listed, and neither are the ones CrocoDash fills in itself (the `case_*`
+arguments, and values it derives, like the calendar).
 
 Configurators like `tides` aren't tied to any compset component, so they're
 never "required" — they're optional and you add them whenever you want tidal
 forcing. See [Configure Forcings](3a_configure_forcings.md) for the full story.
 
-You can reproduce this list at any time:
+You can list every argument, with its default and description, at any time:
 
 ```python
 from CrocoDash.forcing.base import ForcingConfigRegistry
-required = ForcingConfigRegistry.find_required_configurators(case.compset_lname)
+for spec in ForcingConfigRegistry.param_specs(case.compset_lname):
+    print(spec.name, spec.required, spec.default, spec.comment)
 ```
 
 ## Compset properties on the `Case`

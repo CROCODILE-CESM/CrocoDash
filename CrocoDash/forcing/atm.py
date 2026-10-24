@@ -34,8 +34,8 @@ class StreamYearConfigurator(BaseConfigurator):
 
     input_params = [
         InputValueParam("case_cesmroot", comment="CESM root directory"),
-        InputValueParam("start_date", comment="Forcing start date"),
-        InputValueParam("end_date", comment="Forcing end date"),
+        InputValueParam("start_date", comment="Forcing start date", derived=True),
+        InputValueParam("end_date", comment="Forcing end date", derived=True),
         InputValueParam(
             "stream_year_padding",
             comment="Extra years of forcing kept either side of the run",

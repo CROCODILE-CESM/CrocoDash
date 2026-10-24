@@ -12,6 +12,7 @@ metadata into a download request).
 """
 
 import os
+from datetime import datetime
 from functools import partial
 from pathlib import Path
 
@@ -30,6 +31,11 @@ from CrocoDash.raw_data_access.registry import ProductRegistry
 from CrocoDash.raw_data_access.base import Calendar, MOM6ForcingProduct
 
 logger = logging.setup_logger(__name__)
+
+# configure_forcings()'s defaults for the conditions inputs.
+DEFAULT_BOUNDARIES = ["south", "north", "west", "east"]
+DEFAULT_PRODUCT_NAME = "GLORYS"
+DEFAULT_FUNCTION_NAME = "get_glorys_data_script_for_cli"
 
 
 def build_forcing_request(
@@ -419,19 +425,33 @@ class ConditionsConfigurator(BaseConfigurator):
     _DATE_FORMAT = "%Y%m%d"
 
     input_params = [
-        InputValueParam("start_date", comment="Forcing start date"),
-        InputValueParam("end_date", comment="Forcing end date"),
-        InputValueParam("boundaries", comment="List of open boundaries to process"),
-        InputValueParam("product_name", comment="Forcing data product name"),
+        InputValueParam("start_date", comment="Forcing start date", derived=True),
+        InputValueParam("end_date", comment="Forcing end date", derived=True),
         InputValueParam(
-            "function_name", comment="Download function name for the product"
+            "boundaries",
+            comment=(
+                "Open boundaries to process (e.g. ['south', 'north', 'west', 'east'])"
+            ),
         ),
         InputValueParam(
-            "compset", comment="Compset lname, used to detect MARBL tracers"
+            "product_name",
+            comment="Forcing data product name",
+            choices=product_choices(MOM6ForcingProduct),
+        ),
+        InputValueParam(
+            "function_name",
+            comment="Download function name for the product",
+            choices=access_method_choices("product_name"),
+        ),
+        InputValueParam(
+            "compset",
+            comment="Compset lname, used to detect MARBL tracers",
+            derived=True,
         ),
         InputValueParam(
             "function_args",
             comment="Resolved (defaults + overrides) args for the download function",
+            derived=True,
         ),
     ]
 
@@ -491,10 +511,10 @@ class ConditionsConfigurator(BaseConfigurator):
 
     def __init__(
         self,
-        boundaries,
-        product_name,
-        function_name,
         compset,
+        boundaries=DEFAULT_BOUNDARIES,
+        product_name=DEFAULT_PRODUCT_NAME,
+        function_name=DEFAULT_FUNCTION_NAME,
         date_range=None,
         start_date=None,
         end_date=None,
@@ -535,6 +555,50 @@ class ConditionsConfigurator(BaseConfigurator):
                 "is not a MOM6ForcingProduct, so it can't be used as the conditions configurator's product_name "
                 "(MOM6's initial/boundary condition forcing). If this is a CICE forcing product, pass it as cice_product_name instead."
             )
+
+    @classmethod
+    def param_specs(cls, required, inputs):
+        """Also configure_forcings()'s date_range and function_overrides, which
+        become the derived start_date/end_date and function_args."""
+        specs = super().param_specs(required, inputs)
+        date_range = None
+        if inputs.get("start_date") and inputs.get("end_date"):
+            date_range = [
+                datetime.strptime(inputs[key], cls._DATE_FORMAT).strftime("%Y-%m-%d")
+                for key in ("start_date", "end_date")
+            ]
+        specs.insert(
+            0,
+            ParamSpec(
+                "date_range",
+                cls.name,
+                required=required,
+                default=date_range,
+                comment=(
+                    "Start and end of the forcing, e.g. ['2020-01-01', '2020-02-01']"
+                ),
+            ),
+        )
+        by_name = {spec.name: spec for spec in specs}
+        product = by_name["product_name"].default
+        function = by_name["function_name"].default
+        if function not in (by_name["function_name"].choices or []):
+            return specs
+        function_args = inputs.get("function_args") or {}
+        for name, default in ProductRegistry.get_function_default_args(
+            product, function
+        ).items():
+            value = function_args.get(name, default)
+            specs.append(
+                ParamSpec(
+                    f"function_overrides.{name}",
+                    cls.name,
+                    required=False,
+                    default=value.as_posix() if isinstance(value, Path) else value,
+                    comment=f"Overrides {function}'s {name} argument",
+                )
+            )
+        return specs
 
     @staticmethod
     def _segment_index(boundaries, boundary):

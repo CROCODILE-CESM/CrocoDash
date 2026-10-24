@@ -433,7 +433,10 @@ class WW3Configurator(BaseConfigurator):
         InputValueParam("case_inputdir", comment="Case input directory"),
         InputValueParam(
             "boundaries",
-            comment="Open boundary sides to generate WW3 spectra for (e.g., ['N', 'S', 'E', 'W'])",
+            comment=(
+                "Open boundaries to generate WW3 spectra for "
+                "(e.g. ['south', 'north', 'west', 'east'])"
+            ),
         ),
         InputValueParam(
             "ww3_obc_product_name",
@@ -447,6 +450,7 @@ class WW3Configurator(BaseConfigurator):
                 "pass 'none' to run without boundary spectra, in which case "
                 "the open boundary ring stays calm."
             ),
+            choices=product_choices(WW3ForcingProduct, "none"),
         ),
         InputValueParam(
             "ww3_obc_function_name",
@@ -455,6 +459,7 @@ class WW3Configurator(BaseConfigurator):
                 "WW3 OBC data product. Must be given whenever ww3_obc_product_name "
                 "is; there is no implicit default. See ww3_obc_product_name."
             ),
+            choices=access_method_choices("ww3_obc_product_name"),
         ),
         InputValueParam(
             "ww3_obc_function_overrides",
@@ -492,7 +497,7 @@ class WW3Configurator(BaseConfigurator):
         self,
         case_inputdir,
         boundaries,
-        ww3_obc_product_name=None,
+        ww3_obc_product_name,
         ww3_obc_function_name=None,
         ww3_obc_function_overrides=None,
         get_step_days=None,
