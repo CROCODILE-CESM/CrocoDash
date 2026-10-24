@@ -24,11 +24,26 @@ def _create(args):
 
 
 def _dump(args):
-    from CrocoDash.recipe import case_to_yaml
+    from CrocoDash.recipe import case_to_yaml, annotated_yaml
     import yaml
 
     config = case_to_yaml(args.caseroot)
-    yaml.dump(config, sys.stdout, default_flow_style=False, sort_keys=False)
+    if args.annotate:
+        from CrocoDash.case import Case
+
+        case = Case.from_caseroot(args.caseroot)
+        sys.stdout.write(annotated_yaml(config, _param_specs(case, case.compset_lname)))
+    else:
+        yaml.dump(config, sys.stdout, default_flow_style=False, sort_keys=False)
+
+
+def _param_specs(case, compset):
+    """The ParamSpecs of compset's forcing arguments, with case's configured
+    values as their defaults."""
+    from CrocoDash.forcing.base import ForcingConfigRegistry
+
+    config = case.forcing_config if case._configure_forcings_called else None
+    return ForcingConfigRegistry.param_specs(compset, config=config)
 
 
 def _configure(args):
@@ -119,18 +134,6 @@ def _bundle(args):
     print(f"Bundle written to: {bundle_path}")
 
 
-def _duplicate_case(args):
-    from CrocoDash.shareable import duplicate_case
-
-    new_case = duplicate_case(
-        caseroot=args.source,
-        new_caseroot=args.case,
-        new_inputdir=args.inputdir,
-        bundle_dir=args.bundle_dir,
-    )
-    print(f"Duplicated case created at: {new_case.caseroot}")
-
-
 def _template(args):
     """Thin wrapper over crocogallery's template renderer.
 
@@ -181,18 +184,230 @@ def _template(args):
         sys.exit(1)
 
 
-def _fork(args):
-    from CrocoDash.case import Case
+# What fork asks about the new case, in this order: the compset decides which
+# forcing arguments there are. All but the compset depend on the machine.
+_CASE_FIELDS = ("caseroot", "inputdir", "cesmroot", "machine", "project", "compset")
 
-    plan = json.loads(args.plan) if args.plan else None
+_FORK_YAML_HEADER = """\
+# A fork of a CrocoDash case. Edit it, then run: crocodash fork --config <this file>
+# case: the new case, at the source's values. Its caseroot and inputdir must not
+#   exist yet; cesmroot, machine and project are this machine's.
+# forcings: the source's configure_forcings() arguments; change any of them.
+# plan: carry over the source's own changes of each kind (true/false), and copy
+#   its forcing files: matching (if their settings still match), all, or none.
+"""
+
+
+def ask_string(prompt, default=""):
+    """The answer typed at prompt, or default for an empty one. EOFError (the
+    end of input) is left to the caller, which keeps its remaining defaults."""
+    return input(prompt).strip() or default
+
+
+def ask_yes_no(prompt, default=True):
+    answer = ask_string(f"{prompt} [{'Y/n' if default else 'y/N'}]: ").lower()
+    if answer in ("y", "yes"):
+        return True
+    if answer in ("n", "no"):
+        return False
+    return default
+
+
+def ask_value(label, default, why_not_default=None, as_yaml=True):
+    """The value typed for label, or default for an empty answer, unless
+    why_not_default says why it can't be used here: then Enter asks again.
+    With as_yaml, the answer is read as YAML, so lists and numbers work."""
+    shown = default if isinstance(default, str) else json.dumps(default, default=str)
+    note = f" ({why_not_default})" if why_not_default else ""
+    while True:
+        answer = ask_string(f"{label} [{shown}]{note}: ")
+        if answer:
+            return _read_yaml(answer) if as_yaml else answer
+        if not why_not_default:
+            return default
+
+
+def _read_yaml(text):
+    """text read as YAML, with dates as strings: an unquoted 2020-01-01 reads
+    as a date, but configure_forcings() takes date strings."""
+    import yaml
+
+    return json.loads(json.dumps(yaml.safe_load(text), default=str))
+
+
+def _ask_case(case):
+    """Ask for each of the new case's fields, offering case's values. A
+    caseroot or inputdir that exists, or a cesmroot that doesn't, has to be
+    replaced."""
+    for field in _CASE_FIELDS:
+        value = case[field]
+        why_not = None
+        if field in ("caseroot", "inputdir") and value and Path(value).exists():
+            why_not = "exists already"
+        elif field == "cesmroot" and value and not Path(value).exists():
+            why_not = "not found on this machine"
+        label = "compset (long name)" if field == "compset" else field
+        case[field] = ask_value(label, value, why_not, as_yaml=False)
+
+
+def _ask_forcings(specs, values):
+    """Ask for each forcing argument specs describe, offering values' (the
+    source's). A path that isn't on this machine, or a required argument
+    without a value, has to be given."""
+    from CrocoDash.recipe import spec_note
+    import textwrap
+
+    print("\nForcings (Enter keeps the source's value; answers are read as YAML):")
+    for spec in specs:
+        value = values.get(spec.name)
+        why_not = None
+        if spec.is_path and isinstance(value, str) and not Path(value).exists():
+            why_not = "not found on this machine"
+        elif spec.required and value is None:
+            why_not = "required"
+        print("\n".join(f"# {line}" for line in textwrap.wrap(spec_note(spec), 76)))
+        values[spec.name] = ask_value(spec.name, value, why_not)
+
+
+def _ask_plan(source, machine, plan):
+    """Ask whether to carry over each kind of the source's own changes that it
+    has, and which of its forcing files to copy."""
+    from CrocoDash.case import _CHANGE_KINDS, _FORCING_FILES_PLANS
+
+    changes = source.user_changes(target_machine=machine)
+    print()
+    for kind in _CHANGE_KINDS:
+        if changes[kind]:
+            plan[kind] = ask_yes_no(
+                f"Carry over the source's {kind} ({', '.join(changes[kind])})?",
+                plan[kind],
+            )
+    forcing_files = None
+    while forcing_files not in _FORCING_FILES_PLANS:
+        forcing_files = ask_value(
+            f"Copy the source's forcing files: {', '.join(_FORCING_FILES_PLANS)}",
+            plan["forcing_files"],
+            as_yaml=False,
+        )
+    plan["forcing_files"] = forcing_files
+
+
+def _fork(args):
+    from CrocoDash.case import Case, _CHANGE_KINDS
+    from CrocoDash.recipe import annotated_yaml, flatten_forcings
+
+    config = {}
+    if args.config:
+        with open(args.config) as f:
+            config = _read_yaml(f.read()) or {}
+    source_path = args.source or config.get("source")
+    if not source_path:
+        raise CrocoDashCliError(
+            "Give the case to fork with --source, or a --config with a source:."
+        )
+    flags = {
+        field: getattr(args, field)
+        for field in _CASE_FIELDS
+        if getattr(args, field, None) is not None
+    }
+    interactive = (
+        not (args.config or args.no_input or args.write_yaml) and sys.stdin.isatty()
+    )
+    if not (interactive or args.config or args.write_yaml) and not (
+        "caseroot" in flags and "inputdir" in flags
+    ):
+        raise CrocoDashCliError(
+            "Without prompts, fork needs the new case's --caseroot and --inputdir."
+        )
+
+    source = Case.from_caseroot(source_path)
+    bundled = source.bundled_from or {}
+    # The source's values, then the YAML's, then the flags'.
+    case = (
+        {
+            "caseroot": bundled.get("caseroot", str(source.caseroot)),
+            "inputdir": bundled.get("inputdir", str(source.inputdir)),
+            "cesmroot": str(source.cesmroot),
+            "machine": source.machine,
+            "project": source.project,
+            "compset": source.compset_lname,
+        }
+        | (config.get("case") or {})
+        | flags
+    )
+    plan = (
+        dict.fromkeys(_CHANGE_KINDS, True)
+        | {"forcing_files": "matching"}
+        | (config.get("plan") or {})
+        | (json.loads(args.plan) if args.plan else {})
+    )
+
+    end_of_input = "\nEnd of input: the rest keep their defaults."
+    if interactive:
+        try:
+            _ask_case(case)
+        except EOFError:
+            print(end_of_input)
+            interactive = False
+    # The compset's forcing arguments, at the source's values unless changed.
+    specs = _param_specs(source, case["compset"])
+    source_values = {spec.name: spec.default for spec in specs} | flatten_forcings(
+        source.forcing_args()
+    )
+    values = source_values | flatten_forcings(config.get("forcings") or {})
+    if interactive:
+        try:
+            _ask_forcings(specs, values)
+            _ask_plan(source, case["machine"], plan)
+        except EOFError:
+            print(end_of_input)
+
+    if args.write_yaml:
+        fork = {
+            "source": str(Path(source_path).absolute()),
+            "case": case,
+            "forcings": source.forcing_args(),
+            "plan": plan,
+        }
+        with open(args.write_yaml, "w") as f:
+            f.write(_FORK_YAML_HEADER + annotated_yaml(fork, specs))
+        print(
+            f"Wrote {args.write_yaml}. Edit it, then run: "
+            f"crocodash fork --config {args.write_yaml}"
+        )
+        return
+
+    missing = [
+        spec.name for spec in specs if spec.required and values.get(spec.name) is None
+    ]
+    if missing:
+        raise CrocoDashCliError(
+            f"The new case's forcings need {', '.join(missing)}: give them at "
+            "the prompts, or in the forcings: of a --config."
+        )
+    # Only what differs from the source's. function_overrides is one argument,
+    # so a change to any of its keys passes them all.
+    prefix = "function_overrides."
+    changed = [
+        name for name, value in values.items() if value != source_values.get(name)
+    ]
+    changes = {name: values[name] for name in changed if not name.startswith(prefix)}
+    if len(changes) < len(changed):
+        changes["function_overrides"] = {
+            name.removeprefix(prefix): value
+            for name, value in values.items()
+            if name.startswith(prefix)
+        }
 
     Case.fork(
-        Case.from_caseroot(args.bundle),
-        args.caseroot,
-        args.inputdir,
-        cesmroot=args.cesmroot,
-        machine=args.machine,
-        project=args.project,
+        source,
+        case["caseroot"],
+        case["inputdir"],
+        cesmroot=case["cesmroot"],
+        machine=case["machine"],
+        project=case["project"],
+        compset=case["compset"],
+        changes=changes,
         plan=plan,
     )
 
@@ -232,6 +447,12 @@ def main():
     )
     dump_parser.add_argument(
         "--caseroot", required=True, help="Path to the existing CESM caseroot."
+    )
+    dump_parser.add_argument(
+        "--annotate",
+        action="store_true",
+        help="Comment each forcing argument (required or optional, what it is, "
+        "its choices), and list the ones the case doesn't set, commented out.",
     )
     dump_parser.set_defaults(func=_dump)
 
@@ -324,57 +545,58 @@ def main():
         bundle_parser.add_argument(flag, default=None, help="Ignored.")
     bundle_parser.set_defaults(func=_bundle)
 
-    # --- duplicate ---
-    duplicate_parser = subparsers.add_parser(
-        "duplicate", help="Duplicate an existing CrocoDash case to a new location."
-    )
-    duplicate_parser.add_argument(
-        "--source",
-        required=True,
-        help="Path to the existing CESM caseroot to duplicate from.",
-    )
-    duplicate_parser.add_argument(
-        "--case",
-        required=True,
-        help="Path for the new duplicated caseroot.",
-    )
-    duplicate_parser.add_argument(
-        "--inputdir",
-        required=True,
-        help="Path for the new input directory.",
-    )
-    duplicate_parser.add_argument(
-        "--bundle-dir",
-        default=None,
-        dest="bundle_dir",
-        help="Where to keep the bundle (default: inside new caseroot).",
-    )
-    duplicate_parser.set_defaults(func=_duplicate_case)
-
     # --- fork ---
     fork_parser = subparsers.add_parser(
-        "fork", help="Create a new case from a CrocoDash bundle."
+        "fork",
+        help="Create a new case from a case or a bundle.",
+        description="Create a new case from a case or a bundle. On a terminal, "
+        "without --config or --no-input, it asks for each case and forcing value, "
+        "offering the source's: Enter keeps it, and the end of input (Ctrl-D) "
+        "keeps the rest.",
     )
     fork_parser.add_argument(
-        "--bundle", required=True, help="Path to the bundle directory."
+        "--source",
+        "--bundle",
+        dest="source",
+        default=None,
+        help="The case to fork: its caseroot, or a bundle (crocodash bundle). "
+        "Not needed with a --config, which names it.",
+    )
+    fork_parser.add_argument("--caseroot", help="Path for the new caseroot.")
+    fork_parser.add_argument("--inputdir", help="Path for the new input directory.")
+    fork_parser.add_argument(
+        "--cesmroot", help="Path to the CESM source root (default: the source's)."
     )
     fork_parser.add_argument(
-        "--caseroot", required=True, help="Path for the new caseroot."
+        "--machine", help="Machine name, e.g. derecho (default: the source's)."
     )
     fork_parser.add_argument(
-        "--inputdir", required=True, help="Path for the new input directory."
+        "--project", help="Project/account number (default: the source's)."
     )
-    fork_parser.add_argument(
-        "--cesmroot", required=True, help="Path to the CESM source root."
-    )
-    fork_parser.add_argument(
-        "--machine", required=True, help="Machine name (e.g. derecho)."
-    )
-    fork_parser.add_argument("--project", required=True, help="Project/account number.")
     fork_parser.add_argument(
         "--plan",
         default=None,
         help='JSON object of what to carry over: the user\'s changes ("xml_files", "user_nl", "source_mods", "xmlchanges"; all by default) and "forcing_files": "matching" (default), "all" or "none", e.g. \'{"xmlchanges": false, "forcing_files": "none"}\'.',
+    )
+    fork_mode = fork_parser.add_mutually_exclusive_group()
+    fork_mode.add_argument(
+        "--write-yaml",
+        dest="write_yaml",
+        metavar="FILE",
+        help="Write the fork, at the source's values, to an annotated YAML file "
+        "to edit, and stop.",
+    )
+    fork_mode.add_argument(
+        "--config",
+        metavar="FILE",
+        help="Fork as a YAML file from --write-yaml says, without prompts.",
+    )
+    fork_mode.add_argument(
+        "--no-input",
+        dest="no_input",
+        action="store_true",
+        help="Take the source's value of everything the flags don't give, "
+        "without prompts.",
     )
     fork_parser.set_defaults(func=_fork)
 

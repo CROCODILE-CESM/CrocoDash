@@ -29,7 +29,7 @@ At the end of `Case.__init__`, CrocoDash writes a `_crocodash_state.json` file i
 
 `created` records what creating the case left in the caseroot: the number of lines in `replay.sh`, the text of every `user_nl_*` file, and the names of the `*.xml` files. Anything beyond it is a change made after the case was created (see `case.user_changes()` under [Editing a Case from Python](#editing-a-case-from-python)).
 
-`Case.from_caseroot` (and so `crocodash configure` and `crocodash process`) reads a case back from this file. `crocodash dump` reads it to reconstruct a YAML config, and `bundle`/`fork`/`duplicate` to avoid re-parsing CIME. It is the paired counterpart to `inputdir/extract_forcings/config.json`, which records forcing configuration written by `configure_forcings`.
+`Case.from_caseroot` (and so `crocodash configure` and `crocodash process`) reads a case back from this file. `crocodash dump` reads it to reconstruct a YAML config, and `bundle`/`fork` to avoid re-parsing CIME. It is the paired counterpart to `inputdir/extract_forcings/config.json`, which records forcing configuration written by `configure_forcings`.
 
 Both files carry a `schema_version`, each versioned on its own. Reading a file whose MAJOR.MINOR doesn't match what the installed CrocoDash supports raises an error. A `config.json` written before versioning has no `schema_version` and is read as `1.0.0`. A `_crocodash_state.json` older than `1.2.0` (or without a `schema_version`) is refused: recreate the case with the current CrocoDash.
 
@@ -206,7 +206,7 @@ case.set_user_nl("mom", {"DT": 1800})  # user_nl_mom
 - SourceMods files;
 - extra xml files.
 
-It leaves out what `configure_forcings` sets. With `target_machine=` set to another machine, it also leaves out the PE layout, batch job, project and directory variables. `other_case.apply_user_changes(changes)` makes those changes in another case; `Case.fork` does both to carry them to a new case (see [Sharing Cases](shareable.md)).
+It leaves out what `configure_forcings` sets. With `target_machine=` set to another machine, it also leaves out the PE layout, batch job, project and directory variables. `other_case.apply_user_changes(changes)` makes those changes in another case; `Case.fork` does both to carry them to a new case (see [Sharing Cases](sharing.md)).
 
 ## Tips and Best Practices
 

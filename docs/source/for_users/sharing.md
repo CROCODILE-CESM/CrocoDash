@@ -57,7 +57,8 @@ new_case.process_forcings()
    source's, and a caseroot with the source's name on the source's machine
    (CIME would give both cases the same build and run directories).
 2. Creates the case with the source's grid, topography, vertical grid and
-   compset. The grid files keep their names.
+   compset (or `compset=`; give the forcing arguments it needs that the source
+   lacks in `changes`). The grid files keep their names.
 3. Makes the changes you made to the source after creating it: its xmlchanges
    (from `replay.sh`), its own `user_nl_*` lines, `SourceMods/` and extra
    `*.xml` files. On another machine, the PE layout, batch job, project and
@@ -83,10 +84,9 @@ new_case = Case.fork(source, "/path/to/new_case", "/path/to/new_inputdir",
 
 ---
 
-## Duplicate (same-user shortcut)
+## Copy a case on its own machine
 
-To copy a case on its own machine, fork its caseroot: cesmroot, machine and
-project default to the source's.
+Fork its caseroot: cesmroot, machine and project default to the source's.
 
 ```python
 new_case = Case.fork(
@@ -112,24 +112,44 @@ This writes `/path/to/output_dir/<case name>_case_bundle/`.
 
 ### Fork
 
-```bash
-crocodash fork \
-  --bundle /path/to/output_dir/mycase_case_bundle \
-  --caseroot /path/to/new_case \
-  --inputdir /path/to/new_inputdir \
-  --cesmroot /path/to/cesm \
-  --machine derecho \
-  --project PROJ123 \
-  --plan '{"xmlchanges": false, "forcing_files": "matching"}'
-```
-
-`--plan` is optional and takes the same keys as `plan=` above.
-
-### Duplicate
+`--source` is a caseroot or a bundle (`--bundle` is the same option):
 
 ```bash
-crocodash duplicate \
-  --source /path/to/existing_case \
-  --case /path/to/new_case \
-  --inputdir /path/to/new_inputdir
+crocodash fork --source /path/to/output_dir/mycase_case_bundle
 ```
+
+On a terminal, fork asks for each value, offering the source's; Enter keeps it:
+
+1. The new case: caseroot, inputdir, cesmroot, machine, project and compset.
+2. Each `configure_forcings()` argument of that compset, with whether it is
+   required, what it is and its choices. Answers are read as YAML, so
+   `[north, east]` is a list.
+3. Whether to carry over each kind of change you made to the source, and which
+   of its forcing files to copy (`matching`, `all` or `none`).
+
+Enter doesn't keep a caseroot or inputdir that already exists, a cesmroot or
+forcing file path that isn't on this machine, or a required argument's empty
+value: type one (the same path, if you mean it). At the end of input (Ctrl-D),
+everything left keeps its default. Only the forcing arguments you change are
+passed to `Case.fork()` as `changes`.
+
+Flags give the defaults: `--caseroot`, `--inputdir`, `--cesmroot`, `--machine`,
+`--project`, and `--plan` (a JSON object with the keys of `plan=` above, e.g.
+`'{"xmlchanges": false, "forcing_files": "none"}'`). To fork without prompts
+(not on a terminal, `--no-input` is the default):
+
+```bash
+# Take the source's value of everything else
+crocodash fork --source /path/to/case --caseroot /path/to/new_case \
+  --inputdir /path/to/new_inputdir --no-input
+
+# Or write the fork to a YAML file, edit it, and fork from it
+crocodash fork --source /path/to/case --write-yaml fork.yaml
+crocodash fork --config fork.yaml
+```
+
+The YAML has `source:`, `case:`, `forcings:` and `plan:` sections. Each forcing
+argument has a comment saying whether it is required, what it is, its choices,
+and whether it is a path (on the source machine); the ones the source doesn't
+set are listed commented out. `crocodash dump --annotate` writes a case's
+forcings the same way.

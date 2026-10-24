@@ -7,6 +7,7 @@ The YAML file can be generated from an existing case using the case_to_yaml func
 
 """
 
+import textwrap
 from pathlib import Path
 
 import xarray as xr
@@ -210,3 +211,70 @@ def case_to_yaml(caseroot):
         config["forcings"] = forcings
 
     return config
+
+
+def flatten_forcings(forcings):
+    """forcings (configure_forcings() arguments) with each key of its
+    function_overrides as an entry "function_overrides.<key>", as ParamSpecs
+    name them."""
+    flat = {
+        key: value for key, value in forcings.items() if key != "function_overrides"
+    }
+    for key, value in (forcings.get("function_overrides") or {}).items():
+        flat[f"function_overrides.{key}"] = value
+    return flat
+
+
+def spec_note(spec):
+    """A ParamSpec in one line, for prompts and annotated YAML."""
+    note = f"{'required' if spec.required else 'optional'} ({spec.configurator})"
+    if spec.comment:
+        note += f": {spec.comment.rstrip('.')}"
+    if spec.choices:
+        note += f". Choices: {', '.join(map(str, spec.choices))}"
+    if spec.is_path:
+        note += ". A path on the source machine"
+    return note
+
+
+def annotated_yaml(config, specs):
+    """config ({section: value}) as YAML text, with a comment from its
+    ParamSpec above each argument of the forcings: section. specs are
+    ForcingConfigRegistry.param_specs()'s; an argument they describe that
+    forcings doesn't set is listed commented out, at its default, so the text
+    still reads as config.
+    """
+
+    def entry(name, value, indent, commented=False):
+        text = yaml.safe_dump({name: value}, default_flow_style=False, sort_keys=False)
+        return textwrap.indent(text, indent + ("# " if commented else ""))
+
+    values = flatten_forcings(config.get("forcings") or {})
+    described = {spec.name: spec for spec in specs}
+    top, overrides = [], []
+    # Arguments no spec describes (a configurator's the compset lacks) last.
+    for full_name in [*described, *(name for name in values if name not in described)]:
+        name = full_name.removeprefix("function_overrides.")
+        lines, indent = (overrides, "    ") if name != full_name else (top, "  ")
+        if full_name in described:
+            note = spec_note(described[full_name])
+            lines += [f"{indent}# {line}\n" for line in textwrap.wrap(note, 76)]
+        if full_name in values:
+            lines.append(entry(name, values[full_name], indent))
+        else:
+            lines.append(entry(name, described[full_name].default, indent, True))
+    if overrides:
+        live = any(not line.lstrip().startswith("#") for line in overrides)
+        top.append("  function_overrides:\n" if live else "  # function_overrides:\n")
+        top += overrides
+
+    text = ""
+    # forcings: where config has it, or last.
+    for section, value in {**config, "forcings": None}.items():
+        if section == "forcings":
+            text += "forcings:\n" + "".join(top)
+        else:
+            text += yaml.safe_dump(
+                {section: value}, default_flow_style=False, sort_keys=False
+            )
+    return text

@@ -7,12 +7,11 @@ CrocoDash ships a `crocodash` command (installed automatically with `pip install
 ```
 crocodash template          --output my_case.{yaml,ipynb,py,pbs} [--machine glade] [--notebook ID]
 crocodash create            --config mycase.yaml [--override]
-crocodash dump              --caseroot /path/to/case
+crocodash dump              --caseroot /path/to/case [--annotate]
 crocodash configure         --caseroot /path/to/case [--config forcings.yaml] [--set key=value ...]
 crocodash process  [--caseroot /path/to/case] [--all | --ic --bc ...]  [--skip ...] [--preview] [--force]
 crocodash bundle            --caseroot /path/to/case --output-dir /path/to/bundle_dir ...
-crocodash fork              --bundle /path/to/bundle --caseroot ... --inputdir ... --cesmroot ... --machine ... --project ...
-crocodash duplicate         --source /path/to/case --case /path/to/new_case --inputdir /path/to/new_inputdir
+crocodash fork              --source /path/to/case_or_bundle [--caseroot ... --inputdir ...] [--write-yaml F | --config F | --no-input]
 ```
 
 ---
@@ -113,6 +112,8 @@ crocodash create --config mycase_copy.yaml --override
 ```
 
 The dumped YAML uses `supergrid_path`/`from_file` references pointing at the existing grid/topo/vgrid files. To create a fully independent copy, either update those paths or re-generate the grid from parameters.
+
+`--annotate` adds a comment above each forcing argument (required or optional, what it is, its choices, whether it is a path) and lists the arguments the case doesn't set, commented out.
 
 ---
 
@@ -219,6 +220,6 @@ If you `cd` into `inputdir/extract_forcings/` (the directory that contains `conf
 
 ---
 
-## `crocodash bundle`, `fork`, `duplicate`
+## `crocodash bundle`, `fork`
 
-For sharing cases with others, see [Shareable Configuration](shareable.md).
+To copy a case, here or to another user or machine, see [Sharing Cases](sharing.md).

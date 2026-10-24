@@ -44,6 +44,7 @@ from visualCaseGen.custom_widget_types.case_tools import xmlchange, append_user_
 from CrocoDash.logging import setup_logger
 from CrocoDash.case import Case
 from CrocoDash.recipe import case_to_yaml, create_case_from_yaml
+from CrocoDash.cli import ask_string, ask_yes_no
 from CrocoDash import case_state
 
 logger = setup_logger(__name__)
@@ -688,38 +689,6 @@ class ForkBundle:
                 self.bundle_location,
                 self.differences.xmlchanges_missing,
             )
-
-
-# ---------------------------------------------------------------------------
-# CLI input helpers
-# ---------------------------------------------------------------------------
-
-
-def ask_string(prompt: str, default="") -> str:
-    try:
-        response = input(prompt).strip()
-        return response if response else default
-    except EOFError:
-        print(f"\nNo input detected, using default: {default!r}")
-        return default
-
-
-def ask_yes_no(prompt: str, default=True) -> bool:
-    try:
-        answer = input(f"{prompt} (yes/no): ").strip().lower()
-    except EOFError:
-        # Fall back to `default`, matching ask_string() above and matching what
-        # pressing enter at an interactive prompt would do. Returning False
-        # regardless of the default made ForkBundle.fork() unusable
-        # non-interactively: its final "Proceed with this configuration?" is
-        # default=True, so an EOF turned into "Fork cancelled by user."
-        print(f"\nNo input detected, using default: {default!r}")
-        return default
-    if answer in ("yes", "y"):
-        return True
-    if answer in ("no", "n"):
-        return False
-    return default
 
 
 # ---------------------------------------------------------------------------

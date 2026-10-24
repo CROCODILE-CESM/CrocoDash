@@ -1333,6 +1333,7 @@ class Case:
         cesmroot=None,
         machine=None,
         project=None,
+        compset=None,
         changes=None,
         plan=None,
     ):
@@ -1352,6 +1353,9 @@ class Case:
             The new case's, if not the source's. On another machine, the
             source's PE layout, batch job, project and directory settings are
             left out.
+        compset : str, optional
+            The new case's, if not the source's. The forcings it needs and the
+            source's lacks have to be given in ``changes``.
         changes : dict, optional
             configure_forcings() arguments to change from the source's, e.g.
             ``{"boundaries": ["north", "east"]}``.
@@ -1434,7 +1438,7 @@ class Case:
             cesmroot=cesmroot or source.cesmroot,
             caseroot=caseroot,
             inputdir=inputdir,
-            compset=source.compset_lname,
+            compset=compset or source.compset_lname,
             ocn_grid=source.ocn_grid,
             ocn_topo=source.ocn_topo,
             ocn_vgrid=source.ocn_vgrid,
