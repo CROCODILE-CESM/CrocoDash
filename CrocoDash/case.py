@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 import sys
 import uuid
 import shutil
@@ -15,6 +16,7 @@ from CrocoDash.forcing.base import (
     CONFIG_META_KEYS,
     ForcingConfigRegistry,
     WorkflowContext,
+    XMLConfigParam,
     read_config,
     write_config,
     xmlchange,
@@ -62,6 +64,81 @@ _NCPL_BASE_SECONDS = {
     "year": 365 * 86400,
     "decade": 3650 * 86400,
 }
+
+# The xml variables configure_forcings() sets from its date_range and product.
+_RUN_DATE_VARIABLES = {"CALENDAR", "RUN_STARTDATE", "STOP_OPTION", "STOP_N"}
+
+# How a case runs on its machine: its PE layout, batch jobs, accounting and
+# directories. They are wrong, or invalid, on another machine (a JOB_QUEUE
+# where there is no batch system), so user_changes() leaves them out when the
+# changes are for a case on another machine.
+_MACHINE_VARIABLES = re.compile(
+    r"(NTASKS|NTHRDS|ROOTPE|PSTRID)(_\w+)?|MAX_(MPI)?TASKS_PER_NODE"
+    r"|JOB_\w+|USER_REQUESTED_\w+|BATCH_SYSTEM|PROJECT|CHARGE_ACCOUNT"
+    r"|CIME_OUTPUT_ROOT|DIN_LOC_ROOT\w*|DOUT_S_ROOT|EXEROOT|RUNDIR"
+)
+
+# The kinds of change user_changes() finds; apply_user_changes()'s plan turns
+# each on or off.
+_CHANGE_KINDS = ("xmlchanges", "user_nl", "source_mods", "xml_files")
+
+
+def _user_nl_name(line):
+    """The variable a user_nl line sets, as user_nl_blocks compares names, or
+    None for a comment, a blank line or a line that sets nothing (such as a
+    ``KPP%`` group marker)."""
+    text = line.strip()
+    if text.startswith("!") or "=" not in text:
+        return None
+    return user_nl_blocks._key(text.split("=", 1)[0])
+
+
+def _block_lines(lines, path):
+    """{line index: owner} of the lines in configure_forcings()'s blocks in a
+    user_nl file's ``lines``, markers included."""
+    return {
+        i: owner
+        for owner, _, begin, end in user_nl_blocks._parse(
+            lines, path, user_nl_blocks._TAG
+        )
+        for i in range(begin, end + 1)
+    }
+
+
+def _upsert_user_nl(path, new_lines):
+    """The text of the user_nl file at ``path`` with ``new_lines`` written
+    outside configure_forcings()'s blocks: a line that sets a variable replaces
+    the file's line for it, or is appended, as is any other line.
+
+    A variable a block sets is refused: set outside too, it would be listed
+    twice (which stops the MOM6 build) until configure_forcings() runs again.
+    """
+    lines = path.read_text().splitlines() if path.exists() else []
+    in_block = _block_lines(lines, path)
+    owners = {_user_nl_name(lines[i]): owner for i, owner in in_block.items()}
+    for new_line in new_lines:
+        name = _user_nl_name(new_line)
+        if name is not None and name in owners:
+            raise ValueError(
+                f"configure_forcings() sets {new_line.split('=', 1)[0].strip()} "
+                f"in {path.name} (its '{owners[name]}' block). Pass the setting "
+                "to configure_forcings() instead."
+            )
+        at = next(
+            (
+                i
+                for i, line in enumerate(lines)
+                if name is not None
+                and i not in in_block
+                and _user_nl_name(line) == name
+            ),
+            None,
+        )
+        if at is None:
+            lines.append(new_line)
+        else:
+            lines[at] = new_line
+    return "\n".join(lines) + "\n"
 
 
 class Case:
@@ -951,6 +1028,145 @@ class Case:
             config=self.forcing_config,
             preview=preview,
         )
+
+    def xmlchange(self, var, value):
+        """Set this case's xml variable ``var`` to ``value``, with CIME's
+        ./xmlchange in the caseroot (which records it in replay.sh)."""
+        xmlchange(var, value, caseroot=self.caseroot, is_non_local=self.is_non_local)
+
+    def set_user_nl(self, model, settings):
+        """Set ``settings`` ({name: value}) in user_nl_<model>, or in every
+        instance's user_nl_<model>_NNNN file, outside configure_forcings()'s
+        blocks: a name the file already sets has its line replaced, a new one
+        is appended.
+
+        A name that configure_forcings() sets is refused; pass it to
+        configure_forcings() instead.
+        """
+        new_lines = [f"{name} = {value}" for name, value in settings.items()]
+        # Every file is checked before any is written.
+        texts = {
+            path: _upsert_user_nl(path, new_lines)
+            for path in user_nl_blocks._files(self.caseroot, model, self.ninst)
+        }
+        for path, text in texts.items():
+            path.write_text(text)
+
+    def user_changes(self, target_machine=None):
+        """The changes made to this case since it was created, other than by
+        CrocoDash, for apply_user_changes() to make in another case.
+
+        A dict of plain values:
+
+        - ``caseroot``: this caseroot, which apply_user_changes() copies the
+          files from;
+        - ``xmlchanges``: {variable: value}, the last value of each variable
+          xmlchange'd since creation (from replay.sh). Variables
+          configure_forcings() sets are left out, and so, when
+          ``target_machine`` is another machine than this case's, are the
+          machine's PE layout, batch job, project and directory variables;
+        - ``user_nl``: {file name: [lines]}, the lines of every user_nl_* file
+          (stream and instance files too) outside configure_forcings()'s
+          blocks that creating the case didn't write;
+        - ``source_mods``: the files under SourceMods/, relative to it, other
+          than CIME's READMEs;
+        - ``xml_files``: the caseroot's *.xml files that creation didn't make.
+        """
+        created = case_state.read(self.caseroot)["created"]
+
+        owned = set(_RUN_DATE_VARIABLES)
+        if self._configure_forcings_called:
+            owned |= {
+                param.name
+                for key in self.forcing_config
+                if key not in CONFIG_META_KEYS
+                for param in ForcingConfigRegistry.get_configurator_from_name(
+                    key
+                ).output_params
+                if isinstance(param, XMLConfigParam)
+            }
+        other_machine = target_machine not in (None, self.machine)
+        replay = self.caseroot / "replay.sh"
+        replay_lines = replay.read_text().splitlines() if replay.exists() else []
+        xmlchanges = {
+            var: value
+            for var, value in case_state.parse_xmlchanges(
+                replay_lines[created["replay_lines"] :]
+            ).items()
+            if var not in owned
+            and not (other_machine and _MACHINE_VARIABLES.fullmatch(var))
+        }
+
+        user_nl = {}
+        for path in sorted(self.caseroot.glob("user_nl_*")):
+            if not path.is_file():
+                continue
+            lines = path.read_text().splitlines()
+            in_block = _block_lines(lines, path)
+            before = {
+                line.strip()
+                for line in created["user_nl"].get(path.name, "").splitlines()
+            }
+            added = [
+                line
+                for i, line in enumerate(lines)
+                if i not in in_block and line.strip() and line.strip() not in before
+            ]
+            if added:
+                user_nl[path.name] = added
+
+        source_mods = self.caseroot / "SourceMods"
+        return {
+            "caseroot": str(self.caseroot),
+            "xmlchanges": xmlchanges,
+            "user_nl": user_nl,
+            "source_mods": sorted(
+                path.relative_to(source_mods).as_posix()
+                for path in source_mods.rglob("*")
+                if path.is_file() and path.name != "README"
+            ),
+            "xml_files": sorted(
+                path.name
+                for path in self.caseroot.glob("*.xml")
+                if path.name not in created["xml_files"]
+            ),
+        }
+
+    def apply_user_changes(self, changes, plan=None):
+        """Make ``changes``, another case's user_changes(), in this case.
+
+        ``plan`` turns kinds of change off, e.g. ``{"xmlchanges": False}``;
+        by default all of "xmlchanges", "user_nl", "source_mods" and
+        "xml_files" are made. SourceMods and xml files are copied from
+        ``changes["caseroot"]``. user_nl lines are written as set_user_nl()
+        writes them, so make the changes before configure_forcings(), which
+        then leaves the variables they set out of its blocks.
+        """
+        plan = dict.fromkeys(_CHANGE_KINDS, True) | (plan or {})
+        unknown = sorted(set(plan) - set(_CHANGE_KINDS))
+        if unknown:
+            raise ValueError(
+                f"Unknown plan key(s) {unknown}; the keys are {list(_CHANGE_KINDS)}."
+            )
+        source = Path(changes["caseroot"])
+        if plan["xml_files"]:
+            for name in changes["xml_files"]:
+                shutil.copy2(source / name, self.caseroot / name)
+        if plan["source_mods"]:
+            for name in changes["source_mods"]:
+                target = self.caseroot / "SourceMods" / name
+                target.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(source / "SourceMods" / name, target)
+        if plan["user_nl"]:
+            texts = {
+                self.caseroot / name: _upsert_user_nl(self.caseroot / name, lines)
+                for name, lines in changes["user_nl"].items()
+            }
+            for path, text in texts.items():
+                path.write_text(text)
+        if plan["xmlchanges"]:
+            for var, value in changes["xmlchanges"].items():
+                self.xmlchange(var, value)
 
     @property
     def name(self) -> str:

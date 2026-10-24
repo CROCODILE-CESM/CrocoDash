@@ -206,13 +206,16 @@ def test_a_failed_attempt_leaves_a_preexisting_dir_alone(tmp_path):
     assert (bld_run / "marker").read_text() == "earlier run"
 
 
-def _fake_caseroot(tmp_path):
-    """A caseroot with a 1.2 state file whose cesmroot and grid paths don't exist."""
+def _fake_caseroot(tmp_path, created_files=None):
+    """A caseroot with a 1.2 state file whose cesmroot and grid paths don't
+    exist, created with ``created_files`` ({name: text}) in it."""
     from CrocoDash import case_state
 
     caseroot, inputdir = tmp_path / "case", tmp_path / "input"
     caseroot.mkdir()
     (inputdir / "extract_forcings").mkdir(parents=True)
+    for name, text in (created_files or {}).items():
+        (caseroot / name).write_text(text)
     case_state.write(
         caseroot,
         {
@@ -230,6 +233,7 @@ def _fake_caseroot(tmp_path):
             "ninst": 1,
             "atm_grid_name": "TL319",
             "rof_grid_name": None,
+            "created": case_state.created_snapshot(caseroot),
         },
     )
     return caseroot, inputdir
@@ -287,3 +291,72 @@ def test_from_caseroot_refuses_a_state_older_than_1_2(tmp_path):
     (tmp_path / "_crocodash_state.json").write_text('{"schema_version": "1.1.0"}')
     with pytest.raises(ValueError):
         Case.from_caseroot(tmp_path)
+
+
+def test_user_changes_are_the_changes_made_after_creation(tmp_path):
+    """Fork carries a user's own changes over to the new case: an xmlchange
+    or user_nl line made after creation, with its value, but not what
+    creating the case or configure_forcings() wrote."""
+    from CrocoDash.case import Case
+    from CrocoDash.forcing import user_nl_blocks
+    from CrocoDash.forcing.base import CONFIG_FILENAME, write_config
+
+    caseroot, inputdir = _fake_caseroot(
+        tmp_path,
+        {
+            "replay.sh": "./xmlchange NTASKS_OCN=20 --non-local\n",
+            "user_nl_mom": "INPUTDIR = /input/ocn\n",
+        },
+    )
+    write_config(
+        inputdir / "extract_forcings" / CONFIG_FILENAME,
+        {"caseroot": str(caseroot), "runoff": {"name": "Runoff"}},
+    )
+    with open(caseroot / "replay.sh", "a") as f:
+        f.write(
+            "./xmlchange STOP_N=31 --non-local\n"
+            "./xmlchange ROF2OCN_LIQ_RMAPNAME=/input/map.nc --non-local\n"
+            "./xmlchange NTASKS_OCN=40\n"
+            "/cesm/cime/CIME/Tools/xmlchange --id DOUT_S --val FALSE\n"
+            './xmlchange --id=RUN_REFCASE --val="my ref" --file env_run.xml\n'
+            "./xmlchange HIST_OPTION=nhours,HIST_N=6 --force  # 6-hourly\n"
+        )
+    with open(caseroot / "user_nl_mom", "a") as f:
+        f.write("DT = 900.0\n")
+    user_nl_blocks.write(
+        "conditions",
+        "mom",
+        [(None, [("OBC_NUMBER_OF_SEGMENTS", "1")])],
+        caseroot=caseroot,
+        ninst=1,
+    )
+    (caseroot / "user_nl_datm_streams").write_text("JRA.PREC:year_first = 1999\n")
+
+    changes = Case.from_caseroot(caseroot).user_changes()
+
+    assert changes["xmlchanges"] == {
+        "NTASKS_OCN": "40",
+        "DOUT_S": "FALSE",
+        "RUN_REFCASE": "my ref",
+        "HIST_OPTION": "nhours",
+        "HIST_N": "6",
+    }
+    assert changes["user_nl"] == {
+        "user_nl_datm_streams": ["JRA.PREC:year_first = 1999"],
+        "user_nl_mom": ["DT = 900.0"],
+    }
+
+
+def test_user_changes_for_another_machine_leave_out_pe_and_job_settings(tmp_path):
+    """The source machine's PE layout and batch job settings are wrong on
+    another machine (a JOB_QUEUE fails where there is no batch system)."""
+    from CrocoDash.case import Case
+
+    caseroot, _ = _fake_caseroot(tmp_path)
+    (caseroot / "replay.sh").write_text(
+        "./xmlchange NTASKS_OCN=64,ROOTPE_OCN=0,JOB_QUEUE=main,DOUT_S=FALSE\n"
+    )
+    case = Case.from_caseroot(caseroot)
+
+    assert case.user_changes("ubuntu-latest")["xmlchanges"] == {"DOUT_S": "FALSE"}
+    assert len(case.user_changes("derecho")["xmlchanges"]) == 4

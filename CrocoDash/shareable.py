@@ -91,16 +91,11 @@ def copy_source_mods_from_case(old_caseroot, new_caseroot, short_filepaths):
 
 def apply_xmlchanges_to_case(old_caseroot, xmlchangeparams):
     replay = Path(old_caseroot) / "replay.sh"
-    with replay.open() as f:
-        for line in f:
-            line = line.strip()
-            if not line.startswith("./xmlchange"):
-                continue
-            _, kv = line.split(None, 1)
-            param, value = kv.split("=", 1)
-            if param in xmlchangeparams:
-                logger.info(f"Running {param}={value} xmlchange to new caseroot")
-                xmlchange(param, value, is_non_local=True)
+    changes = case_state.parse_xmlchanges(replay.read_text().splitlines())
+    for param, value in changes.items():
+        if param in xmlchangeparams:
+            logger.info(f"Running {param}={value} xmlchange to new caseroot")
+            xmlchange(param, value, is_non_local=True)
 
 
 # ---------------------------------------------------------------------------
@@ -180,18 +175,9 @@ class CaseBundle:
 
     def _read_xmlchanges(self):
         replay_path = self.caseroot / "replay.sh"
-        self.xmlchanges = {}
-        for line in replay_path.read_text().splitlines():
-            line = line.strip()
-            if not line or line.startswith("#"):
-                continue
-            if "xmlchange" not in line:
-                continue
-            parts = line.split("xmlchange", 1)[1].strip()
-            if "=" not in parts:
-                continue
-            left, right = parts.split("=", 1)
-            self.xmlchanges[left.strip()] = right.strip().strip('"').strip("'")
+        self.xmlchanges = case_state.parse_xmlchanges(
+            replay_path.read_text().splitlines()
+        )
         return self.xmlchanges
 
     def _read_user_nls(self):
