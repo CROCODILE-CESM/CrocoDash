@@ -8,7 +8,7 @@ CrocoDash ships a `crocodash` command (installed automatically with `pip install
 crocodash template          --output my_case.{yaml,ipynb,py,pbs} [--machine glade] [--notebook ID]
 crocodash create            --config mycase.yaml [--override]
 crocodash dump              --caseroot /path/to/case
-crocodash process  [--caseroot /path/to/case] [--all | --ic --bc ...]  [--skip ...]
+crocodash process  [--caseroot /path/to/case] [--all | --ic --bc ...]  [--skip ...] [--preview]
 crocodash bundle            --caseroot /path/to/case --output-dir /path/to/bundle_dir ...
 crocodash fork              --bundle /path/to/bundle --caseroot ... --inputdir ... --cesmroot ... --machine ... --project ...
 crocodash duplicate         --source /path/to/case --case /path/to/new_case --inputdir /path/to/new_inputdir
@@ -151,6 +151,9 @@ crocodash process --caseroot ~/croc_cases/mycase --ic --bc
 # Skip components even when running --all
 crocodash process --caseroot ~/croc_cases/mycase --all --skip tides runoff
 
+# List each component's files, present or missing, without running anything
+crocodash process --caseroot ~/croc_cases/mycase --all --preview
+
 # Run from inside the extract_forcings/ directory — no --caseroot needed
 cd ~/scratch/croc_input/mycase/extract_forcings
 crocodash process --all
@@ -172,6 +175,7 @@ crocodash process --all
 | `--tides` | Tidal forcing. |
 | `--chl` | Chlorophyll processing. |
 | `--skip NAME...` | Skip one or more components by name (case-insensitive). |
+| `--preview` | List each selected component with its files marked `present` or `missing`, without running anything. |
 
 ### Auto-detection
 

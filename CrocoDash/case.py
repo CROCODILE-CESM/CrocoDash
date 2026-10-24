@@ -858,7 +858,7 @@ class Case:
             if key not in CONFIG_META_KEYS
         }
 
-    def workflow_context(self, preview=False):
+    def workflow_context(self):
         """The WorkflowContext every process step gets: config.json and the
         case's paths that no single configurator owns."""
         return WorkflowContext(
@@ -870,7 +870,6 @@ class Case:
             regridded_data_dir=self.extract_forcings_path / "regridded_data",
             output_path=self.inputdir / "ocn",
             config=self.forcing_config,
-            preview=preview,
         )
 
     @property
@@ -1242,10 +1241,10 @@ class Case:
             )
 
     def validate_case(self):
-
-        # Ensure configurations are done
-        for name, configurator in self.fcr.active_configurators.items():
-            if not configurator.validate_output_filepaths(self.inputdir / "ocn"):
+        """Print each configured forcing whose declared files aren't all there."""
+        ctx = self.workflow_context()
+        for name, configurator in self.configurators().items():
+            if not configurator.validate_output_filepaths(ctx):
                 print(
                     f"{name} is not valid yet — process this forcing and generate "
                     f"the files using your case's extract_forcings module: "

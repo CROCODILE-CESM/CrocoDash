@@ -5,6 +5,9 @@ from ProConPy.config_var import cvars
 
 from CrocoDash.forcing.base import *
 
+# Where process() writes the runoff maps, relative to the case inputdir.
+MAPPING_SUBDIR = "mapping"
+
 
 @register
 class RunoffConfigurator(BaseConfigurator):
@@ -33,12 +36,10 @@ class RunoffConfigurator(BaseConfigurator):
         XMLConfigParam(
             "ROF2OCN_LIQ_RMAPNAME",
             comment="Runoff to ocean liquid runoff mapping file",
-            is_file=True,
         ),
         XMLConfigParam(
             "ROF2OCN_ICE_RMAPNAME",
             comment="Runoff to ocean ice runoff mapping file",
-            is_file=True,
         ),
     ]
 
@@ -100,7 +101,7 @@ class RunoffConfigurator(BaseConfigurator):
         mapping_file_prefix = (
             f"{rof_case_grid_name}_to_{self.get_input_param('case_grid_name')}_map"
         )
-        mapping_dir = Path(self.get_input_param("case_inputdir")) / "mapping"
+        mapping_dir = Path(self.get_input_param("case_inputdir")) / MAPPING_SUBDIR
 
         if self.get_input_param("rmax") is None:
             rmax, fold = mapping.get_suggested_smoothing_params(
@@ -128,26 +129,11 @@ class RunoffConfigurator(BaseConfigurator):
                 "the compset must include an active or data runoff model."
             )
 
-    def get_output_filepaths(self, ocn_ice_directory):
-        # Return just the xml file paths (Can be either direct path or in ocn_ice as well)
-        ocn_ice_directory = Path(ocn_ice_directory)
-
-        params = [
-            self.get_output_param("ROF2OCN_LIQ_RMAPNAME"),
-            self.get_output_param("ROF2OCN_ICE_RMAPNAME"),
-        ]
-
-        valid_paths = []
-        for p in params:
-            if not p:
-                continue
-            p_path = Path(p)
-            if not p_path.exists():
-                p_path = ocn_ice_directory / p_path.name
-            if p_path.exists():
-                valid_paths.append(str(p_path.resolve()))
-
-        return valid_paths
+    def output_files(self, ctx):
+        # The liquid and ice maps are the same file. Named by basename rather
+        # than the stored absolute path, so a relocated inputdir still matches.
+        map_name = Path(self.get_output_param("ROF2OCN_LIQ_RMAPNAME")).name
+        return {"runoff": [ctx.inputdir / MAPPING_SUBDIR / map_name]}
 
     def process(self, ctx):
         """Generate runoff-to-ocean mapping files if runoff is active in the compset."""
@@ -162,7 +148,7 @@ class RunoffConfigurator(BaseConfigurator):
         assert rof_esmf_mesh_filepath != "", "Runoff ESMF mesh path could not be found."
 
         mapping_file_prefix = f"{rof_grid_name}_to_{grid_name}_map"
-        mapping_dir = ctx.inputdir / "mapping"
+        mapping_dir = ctx.inputdir / MAPPING_SUBDIR
         mapping_dir.mkdir(exist_ok=True)
 
         runoff_mapping_file_nnsm = mapping.get_smoothed_map_filepath(

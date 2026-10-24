@@ -819,14 +819,11 @@ def test_ww3_configurator_accepts_matching_product():
 
 
 # =============================================================================
-# WW3Configurator.get_output_filepaths()
+# WW3Configurator.output_files()
 # =============================================================================
 #
-# WW3's output_params are all XML settings -- WW3_GRID_INP_DIR even holds a
-# directory rather than a file -- so the base implementation, which walks
-# output_params for is_file entries, finds nothing. Left that way,
-# CaseBundle.bundle() ships a bundle with no WW3 input in it and
-# validate_output_filepaths() passes without checking anything.
+# process() writes one ww3.pointN_spec.nc per boundary station, so the spectra
+# are declared as a glob beside spec.list and ww3_bounc.nml.
 
 
 def _populate_wave_dir(inputdir, n_stations=2):
@@ -844,22 +841,17 @@ def _populate_wave_dir(inputdir, n_stations=2):
 
 
 def test_get_output_filepaths_empty_when_not_yet_processed(tmp_path):
-    (tmp_path / "ocnice").mkdir()
-    configurator = WW3Configurator(
-        case_inputdir=tmp_path, boundaries=["west"], ww3_obc_product_name="none"
-    )
-    assert configurator.get_output_filepaths(tmp_path / "ocnice") == []
+    configurator = _reference_waves(tmp_path)
+    assert configurator.get_output_filepaths(_make_ctx(tmp_path)) == []
 
 
 def test_get_output_filepaths_returns_every_generated_file(tmp_path):
     """Spectra count is not known up front, so this globs rather than names."""
     _populate_wave_dir(tmp_path, n_stations=3)
-    configurator = WW3Configurator(
-        case_inputdir=tmp_path, boundaries=["west"], ww3_obc_product_name="none"
-    )
+    configurator = _reference_waves(tmp_path)
 
     names = {
-        Path(p).name for p in configurator.get_output_filepaths(tmp_path / "ocnice")
+        Path(p).name for p in configurator.get_output_filepaths(_make_ctx(tmp_path))
     }
     assert names == {
         "ww3.point1_spec.nc",
@@ -868,39 +860,26 @@ def test_get_output_filepaths_returns_every_generated_file(tmp_path):
         "spec.list",
         "ww3_bounc.nml",
     }
-    assert configurator.validate_output_filepaths(tmp_path / "ocnice")
-
-
-def test_get_output_filepaths_skips_subdirectories(tmp_path):
-    wave_dir = _populate_wave_dir(tmp_path, n_stations=1)
-    (wave_dir / "scratch").mkdir()
-    configurator = WW3Configurator(
-        case_inputdir=tmp_path, boundaries=["west"], ww3_obc_product_name="none"
-    )
-
-    paths = configurator.get_output_filepaths(tmp_path / "ocnice")
-    assert all(Path(p).is_file() for p in paths)
-    assert "scratch" not in {Path(p).name for p in paths}
+    assert configurator.validate_output_filepaths(_make_ctx(tmp_path))
 
 
 def test_output_filepaths_dir_matches_ww3_grid_inp_dir(tmp_path):
-    """The reader, the writer and WW3_GRID_INP_DIR must all name one directory.
+    """The declaration, the writer and WW3_GRID_INP_DIR must all name one
+    directory.
 
     configure() hands WW3_GRID_INP_DIR to CIME, process() writes there, and
-    get_output_filepaths() reads there. Three call sites built that path
+    output_files() declares files there. Three call sites built that path
     independently before they were given a shared constant.
     """
     _populate_wave_dir(tmp_path, n_stations=1)
-    configurator = WW3Configurator(
-        case_inputdir=tmp_path, boundaries=["west"], ww3_obc_product_name="none"
-    )
+    configurator = _reference_waves(tmp_path)
     # configure() ends in super().configure(), which applies each XML param
     # against a live CASEROOT. Only the value it sets matters here.
     with patch("CrocoDash.forcing.base.xmlchange"):
         configurator.configure()
 
     declared = Path(configurator.get_output_param("WW3_GRID_INP_DIR"))
-    found = configurator.get_output_filepaths(tmp_path / "ocnice")
+    found = configurator.get_output_filepaths(_make_ctx(tmp_path))
     assert found, "the wave dir was populated, so this must not be empty"
     assert {Path(p).parent for p in found} == {declared}
 

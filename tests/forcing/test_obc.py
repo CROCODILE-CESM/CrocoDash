@@ -150,38 +150,6 @@ def test_process_obc_conditions_uses_tmask_bbox_for_get(
 
 
 # ---------------------------------------------------------------------------
-# Preview: verify get_pairs and regrid_pairs are computed correctly
-# ---------------------------------------------------------------------------
-
-
-def test_preview_get_outputs(obc_config):
-    kwargs, tmp_path = obc_config
-    preview = process_obc_conditions(**kwargs, preview=True)
-
-    # get_step=None → one pair covering the full range
-    assert len(preview["get_pairs"]) == 1
-    assert preview["get_pairs"][0][0] == datetime.strptime("20200101", "%Y%m%d")
-    assert preview["get_pairs"][0][1] == datetime.strptime("20200115", "%Y%m%d")
-
-    # regrid_step=5 → three 5-day chunks: (01-05), (06-10), (11-15)
-    assert len(preview["regrid_pairs"]) == 3
-    assert preview["regrid_pairs"][0] == (
-        datetime.strptime("20200101", "%Y%m%d"),
-        datetime.strptime("20200105", "%Y%m%d"),
-    )
-    assert preview["regrid_pairs"][1] == (
-        datetime.strptime("20200106", "%Y%m%d"),
-        datetime.strptime("20200110", "%Y%m%d"),
-    )
-    assert preview["regrid_pairs"][2] == (
-        datetime.strptime("20200111", "%Y%m%d"),
-        datetime.strptime("20200115", "%Y%m%d"),
-    )
-
-    assert set(preview["boundaries"]) == {"east", "south"}
-
-
-# ---------------------------------------------------------------------------
 # Unit test: _merge_boundary - tests merge without any external data
 # ---------------------------------------------------------------------------
 

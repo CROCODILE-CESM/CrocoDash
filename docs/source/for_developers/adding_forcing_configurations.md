@@ -253,6 +253,20 @@ back through `config.json` via
 derive processing order automatically, and lets a test statically confirm the
 named output actually exists on the target class.
 
+Declare the model input files each process step writes in `output_files(ctx)`,
+as `{flag: [path, ...]}`, built from `ctx` the way your `process_*` method builds
+them:
+
+```python
+    def output_files(self, ctx):
+        return {"mycomponent": [ctx.output_path / self.get_output_param("MY_FILE")]}
+```
+
+`crocodash process --preview`, `Case.validate_case()` and bundling all read it.
+Use only your own inputs and outputs and `ctx`'s directories, never a stored
+absolute path. Use a glob only where the number of files depends on the data, and
+leave out files the model never reads, such as regrid weights.
+
 ## Step 6: Add Compset Compatibility Logic (Optional)
 
 Define when your configurator is required or allowed:

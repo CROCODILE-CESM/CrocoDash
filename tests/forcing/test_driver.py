@@ -123,11 +123,7 @@ _CHAIN_CALLS = []
 def _case(extra_keys=None):
     """What run_workflow() uses of a Case: the context for its config.json."""
     config = {"caseroot": "/x", **(extra_keys or {})}
-    return SimpleNamespace(
-        workflow_context=lambda preview=False: SimpleNamespace(
-            config=config, preview=preview
-        )
-    )
+    return SimpleNamespace(workflow_context=lambda: SimpleNamespace(config=config))
 
 
 # =============================================================================

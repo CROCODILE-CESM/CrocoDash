@@ -122,7 +122,6 @@ class WorkflowContext:
         regridded_data_dir: Path,
         output_path: Path,
         config: dict,
-        preview: bool = False,
     ):
         self.inputdir = Path(inputdir)
         self.supergrid_path = Path(supergrid_path)
@@ -132,7 +131,6 @@ class WorkflowContext:
         self.regridded_data_dir = Path(regridded_data_dir)
         self.output_path = Path(output_path)
         self.config = config
-        self.preview = preview
 
     @cached_property
     def grid(self):
@@ -423,11 +421,10 @@ class OutputParam(Param):
     BaseConfigurator.configure() writes through user_nl_blocks.
     """
 
-    def __init__(self, name: str, comment: Optional[str] = None, is_file: bool = False):
+    def __init__(self, name: str, comment: Optional[str] = None):
         super().__init__(name, comment)
         self.value: Any = None
         self.executed: bool = False
-        self.is_file = is_file
 
     def set_item(self, value: Any):
         self.value = value
@@ -449,9 +446,8 @@ class UserNLConfigParam(OutputParam):
         name: str,
         user_nl_name: str = "mom",
         comment: Optional[str] = None,
-        is_file: bool = False,
     ):
-        super().__init__(name, comment, is_file=is_file)
+        super().__init__(name, comment)
         self.user_nl_name = user_nl_name
 
     def pair(self):
@@ -491,9 +487,8 @@ class XMLConfigParam(OutputParam):
         name: str,
         is_non_local: bool = False,
         comment: Optional[str] = None,
-        is_file: bool = False,
     ):
-        super().__init__(name, comment, is_file=is_file)
+        super().__init__(name, comment)
         self.is_non_local = is_non_local
 
     def apply(self):
@@ -796,19 +791,45 @@ class BaseConfigurator(ABC):
             sub not in compset for sub in cls.forbidden_compsets
         )
 
-    def get_output_filepaths(self, ocn_ice_directory):
-        """Get output files from the output parameters"""
-        potential_output_paths = []
-        for output in self.output_params:
-            if output.is_file:
-                potential_file_path = Path(ocn_ice_directory) / str(output.value)
-                if potential_file_path.exists():
-                    potential_output_paths.append(potential_file_path)
-        return potential_output_paths
+    # ---- output files ----
 
-    def validate_output_filepaths(self, ocn_ice_directory):
-        output_paths = self.get_output_filepaths(ocn_ice_directory)
-        for path in output_paths:
-            if not Path(path).exists():
-                return False
-        return True
+    def output_files(self, ctx) -> Dict[str, List[Path]]:
+        """{process flag: [path, ...]}: every model input file each of this
+        configurator's process steps writes, built from ctx the way the step
+        builds it (e.g. ``ctx.output_path / self.get_output_param("CHL_FILE")``).
+
+        Uses only this configurator's inputs/outputs and ctx's directories, so
+        it is known before anything is processed and holds for a case read
+        back from elsewhere. A file name may be a glob where the number of
+        files depends on the data. Files a step leaves behind that the model
+        never reads (regrid weights, unfilled intermediates) are not listed.
+        """
+        return {}
+
+    def _output_paths(self, ctx, flag=None) -> List[Path]:
+        files = self.output_files(ctx)
+        flags = list(files) if flag is None else [flag]
+        return [Path(path) for f in flags for path in files.get(f, [])]
+
+    def get_output_filepaths(self, ctx, flag=None) -> List[Path]:
+        """The declared output files that exist (all flags, or one), with
+        globs expanded."""
+        return [
+            match
+            for path in self._output_paths(ctx, flag)
+            for match in sorted(path.parent.glob(path.name))
+            if match.is_file()
+        ]
+
+    def missing_output_files(self, ctx, flag=None) -> List[Path]:
+        """Declared paths with nothing on disk: a file that doesn't exist, or a
+        glob that matches no file."""
+        return [
+            path
+            for path in self._output_paths(ctx, flag)
+            if not any(match.is_file() for match in path.parent.glob(path.name))
+        ]
+
+    def validate_output_filepaths(self, ctx) -> bool:
+        """True once every declared output file exists."""
+        return not self.missing_output_files(ctx)

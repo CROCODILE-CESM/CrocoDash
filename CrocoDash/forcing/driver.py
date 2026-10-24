@@ -59,14 +59,15 @@ def run_workflow(case, *, preview=False, **flags):
         ``Case.from_caseroot``. Its ``workflow_context()`` carries the
         ``config.json`` that ``Case.configure_forcings`` wrote.
     preview : bool
-        Preview task graph without executing.
+        Print each selected step and whether its files are present, without
+        running anything.
     **flags : bool
         Which process components to run, e.g. ``ic=True, bc=True, tides=True``.
         Valid names are whatever ``process_components`` keys the forcing
         types present in ``config.json`` declare -- see
         ``ForcingConfigRegistry.resolve_process_targets``.
     """
-    ctx = case.workflow_context(preview=preview)
+    ctx = case.workflow_context()
 
     targets = ForcingConfigRegistry.resolve_process_targets(ctx.config)
     requested = {name for name, enabled in flags.items() if enabled and name in targets}
@@ -105,11 +106,20 @@ def run_workflow(case, *, preview=False, **flags):
             f"Circular process-order dependency among forcing components: {exc.args[1]}"
         ) from exc
 
+    if preview:
+        for flag_name in order:
+            configurator, _ = targets[flag_name]
+            print(f"[preview] {flag_name}")
+            for path in configurator.get_output_filepaths(ctx, flag_name):
+                print(f"    present  {path.relative_to(ctx.inputdir)}")
+            for path in configurator.missing_output_files(ctx, flag_name):
+                print(f"    missing  {path.relative_to(ctx.inputdir)}")
+        return {}
+
     timings = {}
     for flag_name in order:
         configurator, method_name = targets[flag_name]
         _t = time.perf_counter()
-        # Each process_*() decides what preview means for it, off ctx.preview.
         getattr(configurator, method_name)(ctx)
         timings[flag_name] = time.perf_counter() - _t
 
@@ -126,7 +136,9 @@ def resolve_components(args, config):
     available_flags = ForcingConfigRegistry.available_process_flags(config)
 
     components = {
-        k: v for k, v in vars(args).items() if isinstance(v, bool) and k not in {"all"}
+        k: v
+        for k, v in vars(args).items()
+        if isinstance(v, bool) and k not in {"all", "preview"}
     }
     skip = {s.lower() for s in args.skip}
 

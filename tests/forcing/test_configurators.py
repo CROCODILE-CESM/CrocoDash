@@ -54,6 +54,13 @@ def test_all_configurators_smoke(fake_param_case, fake_cime, fake_forcing_produc
     dummy_dir = fake_param_case
     dummy_path.touch()
 
+    # The case as read back from another inputdir than the one it was
+    # configured with (a bundle, say), so a declaration built from a stored
+    # path rather than from ctx lands outside it.
+    moved = fake_param_case / "moved"
+    ctx = SimpleNamespace(inputdir=moved, output_path=moved / "ocn")
+    declared = []
+
     ## Iterate through config classes
     for config_class in ForcingConfigRegistry.registered_types:
         # Test the init and configuration
@@ -109,6 +116,15 @@ def test_all_configurators_smoke(fake_param_case, fake_cime, fake_forcing_produc
         ser = instance.serialize()
         deser_instance = config_class.deserialize(ser)
         assert instance == deser_instance
+
+        # Not the dummy configurators other test modules register.
+        if config_class.__module__.startswith("CrocoDash."):
+            for paths in deser_instance.output_files(ctx).values():
+                declared += paths
+
+    # No two steps declare the same file, and every declared file is the case's own.
+    assert declared and len(set(declared)) == len(declared)
+    assert all(path.is_relative_to(moved) for path in declared)
 
 
 """

@@ -73,7 +73,7 @@ def _process(args):
     run_workflow(
         case,
         **{name: getattr(args, name) for name in flag_names},
-        preview=config["conditions"]["outputs"].get("preview", False),
+        preview=args.preview,
     )
 
 
@@ -238,6 +238,11 @@ def main():
         nargs="*",
         default=[],
         help="Skip components by name (e.g. --skip tides runoff)",
+    )
+    ef_top.add_argument(
+        "--preview",
+        action="store_true",
+        help="Show each component's files, present or missing, without running anything",
     )
     ef_parser.set_defaults(func=_process, subparser=ef_parser)
 
