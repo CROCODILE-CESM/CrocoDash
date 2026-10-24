@@ -56,10 +56,11 @@ from CrocoDash.recipe import (
     case_to_yaml,
     load_config,
     validate_config_structure,
-    generate_configure_forcing_args,
 )
+from CrocoDash.case import Case
 from CrocoDash.case_state import check_version as _check_state_schema_version
 from CrocoDash.case_state import SCHEMA_VERSION as STATE_SCHEMA_VERSION
+from CrocoDash.forcing.base import CONFIG_FILENAME, write_config
 from CrocoDash.grid import Grid
 from CrocoDash.topo import Topo
 from CrocoDash.vgrid import VGrid
@@ -67,6 +68,16 @@ from CrocoDash.vgrid import VGrid
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
+
+def _forcing_args(forcing_config, tmp_path):
+    """Case.forcing_args() of a case whose config.json is forcing_config."""
+    case = Case.__new__(Case)
+    case.extract_forcings_path = tmp_path
+    case._configure_forcings_called = True
+    write_config(tmp_path / CONFIG_FILENAME, forcing_config)
+    return case.forcing_args()
+
 
 MINIMAL_VALID_CONFIG = {
     "grid": {
@@ -465,13 +476,9 @@ def test_case_to_yaml_round_trip(get_case_with_cf, tmp_path):
     assert reloaded["forcings"]["product_name"] == config["forcings"]["product_name"]
 
 
-def test_build_general_configure_forcing_args(sample_forcing_config):
-    """Test generate_configure_forcing_args creates correct argument dict."""
-    forcing_config = sample_forcing_config
-
-    remove_configs = set()
-
-    args = generate_configure_forcing_args(forcing_config, remove_configs)
+def test_build_general_configure_forcing_args(sample_forcing_config, tmp_path):
+    """Test Case.forcing_args creates correct argument dict."""
+    args = _forcing_args(sample_forcing_config, tmp_path)
 
     assert args["date_range"] == ["2020-01-01 00:00:00", "2020-01-09 00:00:00"]
     assert args["boundaries"] == ["north"]
@@ -480,15 +487,10 @@ def test_build_general_configure_forcing_args(sample_forcing_config):
     assert args["tidal_constituents"] == ["M2", "K1"]
     assert "case_specific_param" not in args
 
-    remove_configs = {"tides"}
 
-    args = generate_configure_forcing_args(forcing_config, remove_configs)
-
-    assert "tidal_constituents" not in args
-    assert "marbl_ic_filepath" in args
-
-
-def test_configure_forcing_args_round_trip_optional_args(sample_forcing_config):
+def test_configure_forcing_args_round_trip_optional_args(
+    sample_forcing_config, tmp_path
+):
     """Configurators whose constructor args all carry defaults must still be
     round-tripped. CICE is the case in point: every one of its args is
     optional, so a required-args-only walk returned nothing and a forked case
@@ -508,7 +510,7 @@ def test_configure_forcing_args_round_trip_optional_args(sample_forcing_config):
         }
     }
 
-    args = generate_configure_forcing_args(forcing_config)
+    args = _forcing_args(forcing_config, tmp_path)
 
     assert args["cice_product_name"] == "cice_restart"
     assert args["cice_function_name"] == "get_cice_restart_subset"
@@ -519,18 +521,22 @@ def test_configure_forcing_args_round_trip_optional_args(sample_forcing_config):
     assert args["restore_ice"] is False
 
 
-def test_configure_forcing_args_conditions_boundaries_win(sample_forcing_config):
+def test_configure_forcing_args_conditions_boundaries_win(
+    sample_forcing_config, tmp_path
+):
     """The conditions block is the authority on boundaries; a configurator's own
     stored copy must not overwrite it."""
     forcing_config = copy.deepcopy(sample_forcing_config)
     forcing_config["tides"]["inputs"]["boundaries"] = ["south"]
 
-    args = generate_configure_forcing_args(forcing_config)
+    args = _forcing_args(forcing_config, tmp_path)
 
     assert args["boundaries"] == ["north"]
 
 
-def test_configure_forcing_args_keeps_function_overrides(sample_forcing_config):
+def test_configure_forcing_args_keeps_function_overrides(
+    sample_forcing_config, tmp_path
+):
     """Access-method arguments the user changed survive dump/fork; the ones
     still at their defaults are left out."""
     forcing_config = copy.deepcopy(sample_forcing_config)
@@ -539,14 +545,16 @@ def test_configure_forcing_args_keeps_function_overrides(sample_forcing_config):
         function_args={"buf": 2.0, "name": None},
     )
 
-    args = generate_configure_forcing_args(forcing_config)
+    args = _forcing_args(forcing_config, tmp_path)
 
     assert args["function_overrides"] == {"buf": 2.0}
 
 
-def test_configure_forcing_args_missing_required_arg_raises(sample_forcing_config):
+def test_configure_forcing_args_missing_required_arg_raises(
+    sample_forcing_config, tmp_path
+):
     forcing_config = copy.deepcopy(sample_forcing_config)
     del forcing_config["bgcic"]["inputs"]["marbl_ic_filepath"]
 
     with pytest.raises(ValueError, match="marbl_ic_filepath"):
-        generate_configure_forcing_args(forcing_config)
+        _forcing_args(forcing_config, tmp_path)

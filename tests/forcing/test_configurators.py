@@ -1,5 +1,4 @@
 from CrocoDash.forcing.base import *
-from ProConPy.config_var import cvars
 from CrocoDash.raw_data_access.base import NOLEAP
 import pytest
 from types import SimpleNamespace
@@ -8,13 +7,6 @@ import pandas as pd
 
 @pytest.fixture
 def fake_param_case(tmp_path):
-    cvars["CASEROOT"] = SimpleNamespace(value=None)
-    cvars["CUSTOM_ROF_GRID"] = SimpleNamespace(value=None)
-    cvars["NINST"] = SimpleNamespace(value=None)
-    cvars["NINST"].value = None
-    cvars["CASEROOT"].value = tmp_path
-    cvars["CUSTOM_ROF_GRID"].value = "s"
-
     (tmp_path / "user_nl_mom").touch()
     (tmp_path / "user_nl_cice").touch()
     return tmp_path
@@ -34,7 +26,7 @@ def test_xml_apply(fake_param_case):
     with pytest.raises(RuntimeError):  # This is not a real case
         s = XMLConfigParam("test")
         s.set_item("test")
-        s.apply()
+        s.apply(fake_param_case)
 
 
 def test_all_configurators_args_synced():
@@ -44,7 +36,7 @@ def test_all_configurators_args_synced():
         config_class.check_output_params_exist()
 
 
-def test_all_configurators_smoke(fake_param_case, fake_cime, fake_forcing_product):
+def test_all_configurators_smoke(fake_param_case, fake_forcing_product):
 
     ## Set up some dummy args
     dummy_str = "123"
@@ -82,8 +74,6 @@ def test_all_configurators_smoke(fake_param_case, fake_cime, fake_forcing_produc
                 ctor_args[a] = dummy_path
             elif "dir" in a:
                 ctor_args[a] = dummy_dir
-            elif "cime" in a:
-                ctor_args[a] = fake_cime
             elif "forcing_product" in a:
                 ctor_args[a] = fake_forcing_product
             elif a == "calendar":
@@ -93,6 +83,10 @@ def test_all_configurators_smoke(fake_param_case, fake_cime, fake_forcing_produc
             else:
                 ctor_args[a] = dummy_str
         instance = config_class(**ctor_args)
+        instance.registry = SimpleNamespace(
+            case=SimpleNamespace(caseroot=fake_param_case, ninst=1),
+            is_active=lambda name: False,
+        )
 
         # Smoke test
         if hasattr(instance, "output_params") and any(

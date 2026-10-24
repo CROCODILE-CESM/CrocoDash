@@ -31,6 +31,38 @@ def _dump(args):
     yaml.dump(config, sys.stdout, default_flow_style=False, sort_keys=False)
 
 
+def _configure(args):
+    from CrocoDash.case import Case
+    import yaml
+
+    case = Case.from_caseroot(args.caseroot)
+    # The changes, --config then --set, over the arguments it was configured with.
+    changes = {}
+    if args.config:
+        with open(args.config) as f:
+            forcings = (yaml.safe_load(f) or {}).get("forcings")
+        if not isinstance(forcings, dict):
+            raise CrocoDashCliError(f"{args.config} has no forcings: section.")
+        changes |= forcings
+    for setting in args.set:
+        key, sep, value = setting.partition("=")
+        if not sep:
+            raise CrocoDashCliError(f"--set takes key=value, not {setting!r}.")
+        changes[key.strip()] = yaml.safe_load(value)
+    kwargs = case.forcing_args(changes)
+    if "date_range" not in kwargs:
+        raise CrocoDashCliError(
+            f"The forcings of {case.caseroot} were never configured, so give "
+            "them with --config or --set (date_range at least)."
+        )
+
+    case.configure_forcings(**kwargs)
+    print(
+        "Forcings configured. Process them with: "
+        f"crocodash process --caseroot {case.caseroot} --all"
+    )
+
+
 def _process(args):
     from CrocoDash.case import Case
     from CrocoDash.forcing.driver import run_workflow, resolve_components
@@ -59,7 +91,8 @@ def _process(args):
         raise CrocoDashCliError(
             "Forcing configuration not found at "
             f"{case.extract_forcings_path / CONFIG_FILENAME}\n"
-            "Run case.configure_forcings() before calling 'crocodash process'."
+            "Run case.configure_forcings() or 'crocodash configure' before calling "
+            "'crocodash process'."
         )
     config = case.forcing_config
 
@@ -205,6 +238,30 @@ def main():
         "--caseroot", required=True, help="Path to the existing CESM caseroot."
     )
     dump_parser.set_defaults(func=_dump)
+
+    # --- configure ---
+    configure_parser = subparsers.add_parser(
+        "configure",
+        help="Configure the forcings of an existing CrocoDash case again.",
+    )
+    configure_parser.add_argument(
+        "--caseroot", required=True, help="Path to the existing CESM caseroot."
+    )
+    configure_parser.add_argument(
+        "--config",
+        default=None,
+        help="YAML file whose forcings: section replaces the matching arguments "
+        "(e.g. one written by 'crocodash dump').",
+    )
+    configure_parser.add_argument(
+        "--set",
+        action="append",
+        default=[],
+        metavar="KEY=VALUE",
+        help="Set one configure_forcings() argument, after --config. VALUE is "
+        "read as YAML, e.g. --set boundaries=[north,east]. Repeatable.",
+    )
+    configure_parser.set_defaults(func=_configure)
 
     # --- process ---
     ef_parser = subparsers.add_parser(

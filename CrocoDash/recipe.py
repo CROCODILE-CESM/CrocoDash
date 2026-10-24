@@ -7,7 +7,6 @@ The YAML file can be generated from an existing case using the case_to_yaml func
 
 """
 
-from datetime import datetime
 from pathlib import Path
 
 import xarray as xr
@@ -15,19 +14,9 @@ import yaml
 
 from CrocoDash.case import Case
 from CrocoDash import case_state
-from CrocoDash.forcing.base import (
-    CONFIG_FILENAME,
-    CONFIG_META_KEYS,
-    ForcingConfigRegistry,
-    read_config,
-)
-from CrocoDash.raw_data_access.registry import ProductRegistry
 from CrocoDash.grid import Grid
 from CrocoDash.topo import Topo
 from CrocoDash.vgrid import VGrid
-from CrocoDash.logging import setup_logger
-
-logger = setup_logger(__name__)
 
 _TOPO_SOURCE_TYPES = {"flat", "dataset", "from_file"}
 _VGRID_TYPES = {"uniform", "hyperbolic", "from_file"}
@@ -171,77 +160,6 @@ def create_case_from_yaml(config, override=False, configure_only=False):
     return case
 
 
-def generate_configure_forcing_args(forcing_config, remove_configs=None):
-    """Convert a config.json forcing_config dict into configure_forcings kwargs."""
-    if remove_configs is None:
-        remove_configs = []
-    logger.info("Setup configuration arguments...")
-
-    start_str = forcing_config["conditions"]["inputs"]["start_date"]
-    end_str = forcing_config["conditions"]["inputs"]["end_date"]
-    date_format = forcing_config["conditions"]["outputs"]["date_format"]
-    start_dt = datetime.strptime(start_str, date_format)
-    end_dt = datetime.strptime(end_str, date_format)
-
-    date_range = [
-        start_dt.strftime("%Y-%m-%d %H:%M:%S"),
-        end_dt.strftime("%Y-%m-%d %H:%M:%S"),
-    ]
-
-    product_name = forcing_config["conditions"]["inputs"]["product_name"]
-    function_name = forcing_config["conditions"]["inputs"]["function_name"]
-    configure_forcing_args = {
-        "date_range": date_range,
-        "boundaries": list(
-            forcing_config["conditions"]["outputs"]["boundary_number_conversion"].keys()
-        ),
-        "product_name": product_name.upper(),
-        "function_name": function_name,
-    }
-    # config.json keeps the access method's merged arguments; hand back only
-    # the ones that differ from its defaults, as configure_forcings takes them.
-    function_args = forcing_config["conditions"]["inputs"].get("function_args") or {}
-    if function_args:
-        ProductRegistry.load()
-        defaults = {
-            name: value.as_posix() if isinstance(value, Path) else value
-            for name, value in ProductRegistry.get_function_default_args(
-                product_name.lower(), function_name
-            ).items()
-        }
-        overrides = {
-            name: value
-            for name, value in function_args.items()
-            if name in defaults and value != defaults[name]
-        }
-        if overrides:
-            configure_forcing_args["function_overrides"] = overrides
-    for key in forcing_config:
-        if key == "conditions" or key in CONFIG_META_KEYS or key in remove_configs:
-            continue
-        configurator_cls = ForcingConfigRegistry.get_configurator_from_name(key)
-        # Round-trip every ctor arg, not just required ones -- an all-optional
-        # configurator (e.g. CICE) would otherwise silently fall back to
-        # defaults instead of reproducing the original case.
-        all_args, required_args = ForcingConfigRegistry.get_ctor_signature(
-            configurator_cls
-        )
-        stored_inputs = forcing_config[key].get("inputs", {})
-        for arg in all_args:
-            # case_* args are re-derived from the new Case, not round-tripped.
-            if arg.startswith("case_") or arg in configure_forcing_args:
-                continue
-            if arg in stored_inputs:
-                configure_forcing_args[arg] = stored_inputs[arg]
-            elif arg in required_args:
-                raise ValueError(
-                    f"config.json's '{key}' block is missing required argument "
-                    f"'{arg}' for configurator {configurator_cls.name}; the case "
-                    "cannot be reproduced from it."
-                )
-    return configure_forcing_args
-
-
 def case_to_yaml(caseroot):
     """
     Reconstruct a YAML config dict from an existing case's state files.
@@ -287,9 +205,8 @@ def case_to_yaml(caseroot):
         },
     }
 
-    forcing_config_path = Path(state["inputdir"]) / "extract_forcings" / CONFIG_FILENAME
-    if forcing_config_path.exists():
-        forcing_config = read_config(forcing_config_path)
-        config["forcings"] = generate_configure_forcing_args(forcing_config)
+    forcings = Case.from_caseroot(caseroot).forcing_args()
+    if forcings:
+        config["forcings"] = forcings
 
     return config

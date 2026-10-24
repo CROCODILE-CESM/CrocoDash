@@ -54,8 +54,8 @@ case.configure_forcings(
 ```python
 case.configure_forcings(
     date_range=["2020-01-01 00:00:00", "2020-02-01 00:00:00"],
-    # Runoff configuration if "DROF" in compset
-    rof_esmf_mesh_filepath="/path/to/glofas_mesh.nc",
+    # Runoff if "DROF" is in the compset: the runoff grid and mesh are the
+    # case's own (ROF_GRID / ROF_DOMAIN_MESH).
     # Optional smoothing parameters in km — must be given together, or omitted
     # to let CrocoDash suggest values from the ocean mesh resolution:
     rmax=8,
@@ -132,6 +132,20 @@ If something is missing, you'll get an error message telling you exactly what's 
 Your configuration will be saved to JSON for reproducibility in the `extract_forcings/config.json` file in your input directory:
 
 The JSON structure organizes inputs and outputs by configurator name, allowing the processing driver to generate forcing and boundary condition files.
+
+## Reconfiguring an Existing Case
+
+Calling `configure_forcings()` again replaces the case's forcing configuration. To change
+only some arguments, also from a new session, read the case back and pass the arguments
+it was configured with, with your changes applied (`case.forcing_args(changes)`); from the
+shell, [`crocodash configure`](cli.md) does the same:
+
+```python
+from CrocoDash.case import Case
+
+case = Case.from_caseroot("/glade/u/home/<user>/croc_cases/mycase")
+case.configure_forcings(**case.forcing_args({"boundaries": ["north", "east"]}))
+```
 
 ## Understanding Your Compset
 

@@ -446,9 +446,9 @@ class CICEConfigurator(BaseConfigurator):
         ]
 
     @classmethod
-    def deserialize(cls, data):
+    def deserialize(cls, data, caseroot=None):
         """Rebuild the restoring params too, when the saved case restored."""
-        obj = super().deserialize(data)
+        obj = super().deserialize(data, caseroot)
         if any(name in data["outputs"] for name in RESTORE_PARAMS):
             obj._add_restore_params()
             for name in RESTORE_PARAMS:
