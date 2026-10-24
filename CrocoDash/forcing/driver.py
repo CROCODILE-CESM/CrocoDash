@@ -90,7 +90,9 @@ def read_finished_steps(inputdir):
     return steps
 
 
-def _write_finished_steps(inputdir, steps):
+def write_finished_steps(inputdir, steps):
+    """Record *steps* ({flag: {"settings": ..., "files": [...]}}) as the
+    inputdir's finished steps, replacing what was recorded."""
     path = _finished_steps_path(inputdir)
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_name(path.name + ".tmp")
@@ -260,7 +262,7 @@ def run_workflow(case, *, preview=False, force=False, **flags):
         entry = finished_steps.pop(flag_name, None)
         if entry is not None:
             clean(ctx, configurator, flag_name, entry)
-            _write_finished_steps(ctx.inputdir, finished_steps)
+            write_finished_steps(ctx.inputdir, finished_steps)
 
         _t = time.perf_counter()
         getattr(configurator, method_name)(ctx)
@@ -280,7 +282,7 @@ def run_workflow(case, *, preview=False, force=False, **flags):
                     configurator.get_output_filepaths(ctx, flag_name), ctx.inputdir
                 ),
             }
-            _write_finished_steps(ctx.inputdir, finished_steps)
+            write_finished_steps(ctx.inputdir, finished_steps)
 
     if timings:
         parts = [f"{k}: {v:.1f}s" for k, v in timings.items()]

@@ -206,25 +206,26 @@ def test_a_failed_attempt_leaves_a_preexisting_dir_alone(tmp_path):
     assert (bld_run / "marker").read_text() == "earlier run"
 
 
-def _fake_caseroot(tmp_path, created_files=None):
-    """A caseroot with a 1.2 state file whose cesmroot and grid paths don't
-    exist, created with ``created_files`` ({name: text}) in it."""
+def _fake_caseroot(tmp_path, created_files=None, name="case", **state):
+    """A caseroot ``name`` with a 1.2 state file whose cesmroot and grid paths
+    don't exist, created with ``created_files`` ({name: text}) in it.
+    ``state`` overrides values of the state."""
     from CrocoDash import case_state
 
-    caseroot, inputdir = tmp_path / "case", tmp_path / "input"
+    caseroot, inputdir = tmp_path / name, tmp_path / f"{name}_input"
     caseroot.mkdir()
     (inputdir / "extract_forcings").mkdir(parents=True)
-    for name, text in (created_files or {}).items():
-        (caseroot / name).write_text(text)
+    for file_name, text in (created_files or {}).items():
+        (caseroot / file_name).write_text(text)
     case_state.write(
         caseroot,
         {
             "inputdir": str(inputdir),
             "cesmroot": "/nonexistent/cesm",
-            "supergrid_path": "/nonexistent/ocean_hgrid.nc",
-            "topo_path": "/nonexistent/ocean_topog.nc",
-            "vgrid_path": "/nonexistent/ocean_vgrid.nc",
-            "esmf_mesh_path": "/nonexistent/ESMF_mesh.nc",
+            "supergrid_path": str(inputdir / "ocn" / "ocean_hgrid.nc"),
+            "topo_path": str(inputdir / "ocn" / "ocean_topog.nc"),
+            "vgrid_path": str(inputdir / "ocn" / "ocean_vgrid.nc"),
+            "esmf_mesh_path": str(inputdir / "ocn" / "ESMF_mesh.nc"),
             "grid_name": "g",
             "session_id": "abc123",
             "compset_lname": "1850_DATM%JRA_SLND_SICE_MOM6_SROF_SGLC_SWAV",
@@ -234,6 +235,7 @@ def _fake_caseroot(tmp_path, created_files=None):
             "atm_grid_name": "TL319",
             "rof_grid_name": None,
             "created": case_state.created_snapshot(caseroot),
+            **state,
         },
     )
     return caseroot, inputdir
@@ -360,3 +362,101 @@ def test_user_changes_for_another_machine_leave_out_pe_and_job_settings(tmp_path
 
     assert case.user_changes("ubuntu-latest")["xmlchanges"] == {"DOUT_S": "FALSE"}
     assert len(case.user_changes("derecho")["xmlchanges"]) == 4
+
+
+def _processed_case(tmp_path, monkeypatch):
+    """A case read back from a fake caseroot, with a user change, its OBCs
+    and chlorophyll configured, and processed by steps that only write the
+    files they declare. No DATM, whose stream years need CESM."""
+    import CrocoDash.case as case_mod
+    from CrocoDash.forcing.chl import ChlConfigurator
+    from CrocoDash.forcing.driver import run_workflow
+    from CrocoDash.forcing.mom6 import ConditionsConfigurator
+
+    def write_declared(self, ctx):
+        for path in self._output_paths(ctx):
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(path.name)
+
+    monkeypatch.setattr(case_mod, "xmlchange", lambda *args, **kwargs: None)
+    monkeypatch.setattr(ConditionsConfigurator, "process_ic", write_declared)
+    monkeypatch.setattr(ConditionsConfigurator, "process_bc", write_declared)
+    monkeypatch.setattr(ChlConfigurator, "process", write_declared)
+
+    caseroot, _ = _fake_caseroot(
+        tmp_path, compset_lname="1850_SATM_SLND_SICE_MOM6_SROF_SGLC_SWAV"
+    )
+    (caseroot / "replay.sh").write_text("./xmlchange DOUT_S=FALSE\n")
+    case = case_mod.Case.from_caseroot(caseroot)
+    os.makedirs(os.path.dirname(case.supergrid_path))
+    for path in (
+        case.supergrid_path,
+        case.topo_path,
+        case.vgrid_path,
+        case.esmf_mesh_path,
+    ):
+        open(path, "w").close()
+    case.configure_forcings(
+        date_range=["2020-01-01 00:00:00", "2020-01-05 00:00:00"],
+        boundaries=["south", "north"],
+        chl_processed_filepath=str(tmp_path / "chl.nc"),
+    )
+    run_workflow(case, ic=True, bc=True, chl=True)
+    return case
+
+
+def test_a_bundle_reads_back_like_its_caseroot(tmp_path, monkeypatch):
+    """Fork reads a bundle on another machine: its forcing arguments, user
+    changes and the files its configured forcings declare all come from it."""
+    from CrocoDash.case import Case
+
+    case = _processed_case(tmp_path, monkeypatch)
+    bundled = Case.from_caseroot(case.bundle(tmp_path / "bundle"))
+
+    assert bundled.forcing_args() == case.forcing_args()
+    assert (bundled.session_id, bundled.compset_lname, bundled.machine) == (
+        case.session_id,
+        case.compset_lname,
+        case.machine,
+    )
+    assert bundled.user_changes()["xmlchanges"] == {"DOUT_S": "FALSE"}
+    ctx = bundled.workflow_context()
+    assert ctx.inputdir == tmp_path / "bundle" / "inputdir"
+    assert ctx.supergrid_path.is_relative_to(ctx.inputdir)
+    assert ctx.supergrid_path.is_file()
+    for configurator in bundled.configurators().values():
+        assert not configurator.missing_output_files(ctx)
+
+
+def test_a_fork_copies_only_the_steps_whose_settings_match(tmp_path, monkeypatch):
+    """Swapping two boundaries swaps their segment numbers, so the source's
+    OBC files would be wrong for the fork; its chlorophyll is still right,
+    and is copied and recorded so processing skips it."""
+    from CrocoDash.case import Case
+    from CrocoDash.forcing.driver import read_finished_steps
+
+    source = _processed_case(tmp_path, monkeypatch)
+    # Case() is faked below, so the grids are never read.
+    source.ocn_grid = source.ocn_topo = source.ocn_vgrid = None
+
+    def created(self, *, caseroot, session_id, **kwargs):
+        _fake_caseroot(
+            tmp_path,
+            name=caseroot.name,
+            compset_lname=source.compset_lname,
+            session_id=session_id,
+        )
+        self._bind(caseroot)
+
+    monkeypatch.setattr(Case, "__init__", created)
+    fork = Case.fork(
+        source,
+        tmp_path / "fork",
+        tmp_path / "fork_input",
+        changes={"boundaries": ["north", "south"]},
+    )
+
+    ctx = fork.workflow_context()
+    assert fork.configurators()["chl"].get_output_filepaths(ctx)
+    assert not fork.configurators()["conditions"].get_output_filepaths(ctx)
+    assert list(read_finished_steps(fork.inputdir)) == ["chl"]

@@ -43,6 +43,7 @@ INIT_ARGS_EXCLUDE = frozenset(
         "caseroot",
         "inputdir",
         "override",
+        "session_id",
     }
 )
 

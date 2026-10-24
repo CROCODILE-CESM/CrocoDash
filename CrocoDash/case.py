@@ -1,4 +1,5 @@
 from pathlib import Path
+import json
 import re
 import sys
 import uuid
@@ -31,7 +32,13 @@ from visualCaseGen.initialize import initialize as initialize_visualCaseGen
 from visualCaseGen.custom_widget_types.case_creator import CaseCreator
 from visualCaseGen.custom_widget_types.case_tools import append_user_nl
 from CrocoDash.forcing import cice, user_nl_blocks
-from CrocoDash.forcing.driver import run_workflow
+from CrocoDash.forcing.driver import (
+    FINISHED_STEPS_FILENAME,
+    portable_settings,
+    read_finished_steps,
+    run_workflow,
+    write_finished_steps,
+)
 
 from CrocoDash import case_state
 from CrocoDash.logging import quiet_visualcasegen_info
@@ -81,6 +88,47 @@ _MACHINE_VARIABLES = re.compile(
 # The kinds of change user_changes() finds; apply_user_changes()'s plan turns
 # each on or off.
 _CHANGE_KINDS = ("xmlchanges", "user_nl", "source_mods", "xml_files")
+
+# The source's own run, rather than how it is set up: how far it got and where
+# it builds, runs and archives. fork() leaves them out, since the new case
+# starts a run of its own (CONTINUE_RUN=TRUE would look for restart files it
+# doesn't have) and must not share the source's directories.
+_SOURCE_RUN_VARIABLES = ("CONTINUE_RUN", "RESUBMIT", "EXEROOT", "RUNDIR", "DOUT_S_ROOT")
+
+# What fork()'s plan["forcing_files"] can be.
+_FORCING_FILES_PLANS = ("matching", "all", "none")
+
+# A bundle (Case.bundle()) is a directory with this file, a caseroot/ and an
+# inputdir/. Its MAJOR changes when an older CrocoDash couldn't read it.
+BUNDLE_FILENAME = "bundle.json"
+BUNDLE_SCHEMA_VERSION = "2.0.0"
+
+
+def _read_bundle(path):
+    """The bundle.json of the bundle at ``path``, or None if it isn't one."""
+    path = Path(path)
+    if not (path / BUNDLE_FILENAME).exists():
+        if (path / "crocodash_case.yaml").exists() and (
+            path / "non_standard_case_info.json"
+        ).exists():
+            raise ValueError(
+                f"{path} is a bundle from an older CrocoDash, which this version "
+                "can't read. Bundle its case again with this version (crocodash "
+                "bundle), or create a case from its crocodash_case.yaml "
+                "(crocodash create --config)."
+            )
+        return None
+    with open(path / BUNDLE_FILENAME) as f:
+        bundle = json.load(f)
+    major = str(bundle.get("schema_version")).split(".")[0]
+    if major != BUNDLE_SCHEMA_VERSION.split(".")[0]:
+        raise ValueError(
+            f"{path} is a bundle with schema version "
+            f"{bundle.get('schema_version')!r}, but this version of CrocoDash "
+            f"reads {BUNDLE_SCHEMA_VERSION.split('.')[0]}.x bundles. Use the "
+            "CrocoDash version that made it, or bundle its case again."
+        )
+    return bundle
 
 
 def _user_nl_name(line):
@@ -165,6 +213,7 @@ class Case:
         ntasks_ocn: int | None = None,
         job_queue: str | None = None,
         job_wallclock_time: str | None = None,
+        session_id: str | None = None,
     ):
         """
         Initialize a new regional MOM6 case within the CESM framework.
@@ -207,6 +256,10 @@ class Case:
             The queue to submit the CESM case to. If None, defaults to the CESM defaults (usually main)
         job_wallclock_time: str, optional
             Must be in the form hh:mm:ss. If None, defaults to the CESM defaults
+        session_id: str, optional
+            The id in the names of the case's grid files and of the forcing
+            files named after them. If None, a new one. fork() passes its
+            source's, so that the source's forcing files apply unrenamed.
         """
 
         # Capture scalar init args for state serialization before any local vars are added.
@@ -262,6 +315,8 @@ class Case:
         self.ntasks_ocn = ntasks_ocn
         self.job_queue = job_queue
         self.job_wallclock_time = job_wallclock_time
+        # _configure_custom_ocean_grid() makes one if None.
+        self.session_id = session_id
 
         # Derived from compset argument
         self.compset_alias = compset_alias
@@ -355,6 +410,8 @@ class Case:
         caseroot : str | Path
             The caseroot of a case created by this version of CrocoDash. A case
             created by an older version is refused and has to be recreated.
+            Or a bundle (see bundle()), which reads like its case's caseroot;
+            its files are read from the bundle.
         cesmroot : str | Path, optional
             The CESM tree to use instead of the one the case was created with,
             e.g. because that one moved. It isn't saved.
@@ -371,10 +428,27 @@ class Case:
         from_caseroot() can't drift apart. is_non_local is whether CIME's
         tools run with --non-local: a case read back may be on another machine
         than its own, so it is True unless the case was just created here.
+
+        In a bundle, the state is in its caseroot/, and the paths it names
+        under the case's inputdir are read from the bundle's inputdir/.
         """
+        caseroot = Path(caseroot)
+        bundle = _read_bundle(caseroot)
+        # bundle.json's {caseroot, inputdir, machine} of the bundled case.
+        self.bundled_from = bundle["source"] if bundle else None
+        if bundle:
+            caseroot = caseroot / "caseroot"
         state = case_state.read(caseroot)
-        self.caseroot = Path(caseroot)
-        self.inputdir = Path(state["inputdir"])
+        source_inputdir = Path(state["inputdir"])
+        self.caseroot = caseroot
+        self.inputdir = caseroot.parent / "inputdir" if bundle else source_inputdir
+
+        def local(path):
+            path = Path(path)
+            if path.is_relative_to(source_inputdir):
+                path = self.inputdir / path.relative_to(source_inputdir)
+            return str(path)
+
         self.cesmroot = Path(cesmroot or state["cesmroot"])
         self.compset_lname = state["compset_lname"]
         self.machine = state["machine"]
@@ -384,10 +458,10 @@ class Case:
         self.rof_grid_name = state["rof_grid_name"]
         self.session_id = state["session_id"]
         self.grid_name = state["grid_name"]
-        self.supergrid_path = state["supergrid_path"]
-        self.topo_path = state["topo_path"]
-        self.vgrid_path = state["vgrid_path"]
-        self.esmf_mesh_path = state["esmf_mesh_path"]
+        self.supergrid_path = local(state["supergrid_path"])
+        self.topo_path = local(state["topo_path"])
+        self.vgrid_path = local(state["vgrid_path"])
+        self.esmf_mesh_path = local(state["esmf_mesh_path"])
         self.is_non_local = is_non_local
         # override=True applies to creating the case only; nothing is deleted
         # after that.
@@ -1172,6 +1246,260 @@ class Case:
             for var, value in changes["xmlchanges"].items():
                 self.xmlchange(var, value)
 
+    def bundle(self, output_dir):
+        """Write this case to the new directory ``output_dir``, a bundle that
+        Case.from_caseroot() reads like the caseroot and fork() forks, here or
+        on another machine:
+
+        - ``bundle.json``: its schema version and the case it was made from;
+        - ``caseroot/``: the state file, replay.sh, the user_nl_* and top-level
+          *.xml files, and SourceMods/;
+        - ``inputdir/``: config.json, finished_steps.json, the grid, topography,
+          vertical grid and mesh files the state names, and the output files
+          of every configured forcing that exist, at their inputdir paths.
+
+        Returns the bundle's path.
+        """
+        output_dir = Path(output_dir)
+        grids = [
+            Path(path)
+            for path in (
+                self.supergrid_path,
+                self.topo_path,
+                self.vgrid_path,
+                self.esmf_mesh_path,
+            )
+        ]
+        missing = [str(path) for path in grids if not path.is_file()]
+        if missing:
+            raise FileNotFoundError(f"The case's grid files are missing: {missing}")
+
+        files = grids + [
+            self.extract_forcings_path / CONFIG_FILENAME,
+            self.extract_forcings_path / FINISHED_STEPS_FILENAME,
+        ]
+        if self._configure_forcings_called:
+            ctx = self.workflow_context()
+            for configurator in self.configurators().values():
+                files += configurator.get_output_filepaths(ctx)
+
+        (output_dir / "caseroot").mkdir(parents=True)
+        for path in [
+            self.caseroot / case_state.FILENAME,
+            self.caseroot / "replay.sh",
+            *self.caseroot.glob("user_nl_*"),
+            *self.caseroot.glob("*.xml"),
+        ]:
+            if path.is_file():
+                shutil.copy2(path, output_dir / "caseroot" / path.name)
+        if (self.caseroot / "SourceMods").is_dir():
+            shutil.copytree(
+                self.caseroot / "SourceMods", output_dir / "caseroot" / "SourceMods"
+            )
+        for path in sorted(set(files)):
+            if path.is_file():
+                target = output_dir / "inputdir" / path.relative_to(self.inputdir)
+                target.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(path, target)
+
+        source = self.bundled_from or {
+            "caseroot": str(self.caseroot),
+            "inputdir": str(self.inputdir),
+            "machine": self.machine,
+        }
+        with open(output_dir / BUNDLE_FILENAME, "w") as f:
+            json.dump(
+                {"schema_version": BUNDLE_SCHEMA_VERSION, "source": source},
+                f,
+                indent=2,
+            )
+        return output_dir
+
+    @classmethod
+    def fork(
+        cls,
+        source,
+        caseroot,
+        inputdir,
+        *,
+        cesmroot=None,
+        machine=None,
+        project=None,
+        changes=None,
+        plan=None,
+    ):
+        """Create a new case from ``source``, with its grids, compset and
+        forcings, the user's own changes to it, and the forcing files it
+        already made that still apply. Prints what it carried over.
+
+        Parameters
+        ----------
+        source : Case
+            The case to fork, usually read with Case.from_caseroot() from its
+            caseroot or from a bundle (see bundle()).
+        caseroot, inputdir : str | Path
+            The new case's; neither may exist yet, and the inputdir may not be
+            inside the source's.
+        cesmroot, machine, project : optional
+            The new case's, if not the source's. On another machine, the
+            source's PE layout, batch job, project and directory settings are
+            left out.
+        changes : dict, optional
+            configure_forcings() arguments to change from the source's, e.g.
+            ``{"boundaries": ["north", "east"]}``.
+        plan : dict, optional
+            What to carry over: apply_user_changes()'s kinds of change (all by
+            default), and ``"forcing_files"``: ``"matching"`` (the default)
+            copies the files of each step the source finished whose settings
+            equal the new case's, ``"all"`` those of every finished step, and
+            ``"none"`` none. Copied steps are recorded as finished, so
+            process_forcings() makes only the others.
+
+        The source's CONTINUE_RUN, RESUBMIT, EXEROOT, RUNDIR and DOUT_S_ROOT
+        are never carried over: the new case starts a run of its own, in its
+        own directories.
+
+        Returns the new Case.
+        """
+        caseroot, inputdir = Path(caseroot), Path(inputdir)
+        machine = machine or source.machine
+        same_machine = machine == source.machine
+        plan = dict(plan or {})
+        forcing_files = plan.pop("forcing_files", "matching")
+        if forcing_files not in _FORCING_FILES_PLANS:
+            raise ValueError(
+                f"plan['forcing_files'] must be one of {_FORCING_FILES_PLANS}, "
+                f"not {forcing_files!r}."
+            )
+        unknown = sorted(set(plan) - set(_CHANGE_KINDS))
+        if unknown:
+            raise ValueError(
+                f"Unknown plan key(s) {unknown}; the keys are "
+                f"{[*_CHANGE_KINDS, 'forcing_files']}."
+            )
+
+        # A bundle's case is named by the caseroot it was bundled from.
+        source_name = Path(
+            (source.bundled_from or {}).get("caseroot", source.caseroot)
+        ).name
+        if inputdir.resolve().is_relative_to(source.inputdir.resolve()):
+            raise ValueError(
+                f"The new inputdir {inputdir} is inside the source's inputdir "
+                f"{source.inputdir}."
+            )
+        if caseroot.name == source_name and same_machine:
+            raise ValueError(
+                f"The new case would be named {source_name} on {machine}, like "
+                "its source, so CIME would give both the same build and run "
+                "directories. Give the new caseroot another name."
+            )
+        for path in (caseroot, inputdir):
+            if path.exists():
+                raise ValueError(f"{path} already exists; fork never replaces it.")
+        forcing_args = source.forcing_args(changes)
+        if "date_range" not in forcing_args:
+            raise ValueError(
+                f"The forcings of {source.caseroot} were never configured, so "
+                "give them in changes (date_range at least)."
+            )
+        user_changes = source.user_changes(target_machine=machine)
+        dropped = sorted(
+            source.user_changes()["xmlchanges"].keys()
+            - user_changes["xmlchanges"].keys()
+        )
+        source_run = [
+            var
+            for var in _SOURCE_RUN_VARIABLES
+            if user_changes["xmlchanges"].pop(var, None) is not None
+        ]
+
+        # How the source runs on its machine; wrong on another.
+        machine_args = (
+            {
+                key: case_state.read(source.caseroot).get(key)
+                for key in ("ntasks_ocn", "job_queue", "job_wallclock_time")
+            }
+            if same_machine
+            else {}
+        )
+        case = cls(
+            cesmroot=cesmroot or source.cesmroot,
+            caseroot=caseroot,
+            inputdir=inputdir,
+            compset=source.compset_lname,
+            ocn_grid=source.ocn_grid,
+            ocn_topo=source.ocn_topo,
+            ocn_vgrid=source.ocn_vgrid,
+            atm_grid_name=source.atm_grid_name,
+            rof_grid_name=source.rof_grid_name,
+            ninst=source.ninst,
+            machine=machine,
+            project=project if project is not None else source.project,
+            session_id=source.session_id,
+            **machine_args,
+        )
+        case.apply_user_changes(user_changes, plan)
+        case.configure_forcings(**forcing_args)
+        copied = (
+            case._copy_forcing_files(source, forcing_files)
+            if forcing_files != "none"
+            else []
+        )
+
+        print(f"Forked {source_name} into {case.caseroot}.")
+        for kind in _CHANGE_KINDS:
+            if user_changes[kind]:
+                applied = "" if plan.get(kind, True) else " (not applied, per plan)"
+                print(f"  {kind}: {', '.join(user_changes[kind])}{applied}")
+        if dropped:
+            print(f"  Left out as specific to {source.machine}: {', '.join(dropped)}")
+        if source_run:
+            print(f"  Left out as the source's own run: {', '.join(source_run)}")
+        print(f"  Forcing files copied for: {', '.join(sorted(copied)) or 'none'}")
+        to_process = sorted(
+            ForcingConfigRegistry.available_process_flags(case.forcing_config)
+            - set(copied)
+        )
+        if to_process:
+            print(
+                f"  To process: {', '.join(to_process)} "
+                f"(crocodash process --caseroot {case.caseroot} --all)"
+            )
+        return case
+
+    def _copy_forcing_files(self, source, forcing_files):
+        """Copy the files of the steps ``source`` finished into this case and
+        record those steps as finished here: every step this case has, or with
+        ``forcing_files="matching"`` only those whose recorded settings equal
+        this case's. A step with a recorded file missing is left to process.
+        Returns the steps copied."""
+        config = self.forcing_config
+        targets = ForcingConfigRegistry.resolve_process_targets(config)
+        finished = read_finished_steps(self.inputdir)
+        copied = []
+        for step, entry in read_finished_steps(source.inputdir).items():
+            if step not in targets:
+                continue
+            settings = portable_settings(
+                targets[step][0], config, self.inputdir, self.cesmroot
+            )
+            files = entry.get("files", [])
+            if forcing_files == "matching" and entry.get("settings") != settings:
+                continue
+            if not files or not all(
+                (source.inputdir / name).is_file() for name in files
+            ):
+                continue
+            for name in files:
+                target = self.inputdir / name
+                target.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(source.inputdir / name, target)
+            finished[step] = {"settings": settings, "files": files}
+            copied.append(step)
+        if copied:
+            write_finished_steps(self.inputdir, finished)
+        return copied
+
     @property
     def name(self) -> str:
         return self.caseroot.name
@@ -1368,7 +1696,7 @@ class Case:
             self.ocn_grid.tlat.max().item() - self.ocn_grid.tlat.min().item()
         )
         cvars["CUSTOM_OCN_GRID_NAME"].value = self.ocn_grid.name
-        cvars["MB_ATTEMPT_ID"].value = str(uuid.uuid1())[:6]
+        cvars["MB_ATTEMPT_ID"].value = self.session_id or str(uuid.uuid1())[:6]
         cvars["MOM6_BATHY_STATUS"].value = "Complete"
         if Stage.active().title == "Custom Ocean Grid":
             Stage.active().proceed()

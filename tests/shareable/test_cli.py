@@ -12,9 +12,11 @@ def run_main(argv):
 
 def test_bundle_cli(tmp_path):
     mock_case = MagicMock()
-    mock_case.bundle.return_value = tmp_path / "bundle"
+    mock_case.name = "case"
 
-    with patch("CrocoDash.shareable.CaseBundle", return_value=mock_case) as mock_cls:
+    with patch(
+        "CrocoDash.case.Case.from_caseroot", return_value=mock_case
+    ) as from_caseroot:
         run_main(
             [
                 "bundle",
@@ -31,17 +33,12 @@ def test_bundle_cli(tmp_path):
             ]
         )
 
-    mock_cls.assert_called_once_with("/some/case")
-    mock_case.identify_non_standard_case_info.assert_called_once_with(
-        cesmroot="/some/cesm",
-        machine="derecho",
-        project_number="PROJ123",
-    )
-    mock_case.bundle.assert_called_once_with(str(tmp_path))
+    from_caseroot.assert_called_once_with("/some/case")
+    mock_case.bundle.assert_called_once_with(tmp_path / "case_case_bundle")
 
 
 def test_fork_cli(tmp_path):
-    mock_forker = MagicMock()
+    source = MagicMock()
     plan = {
         "xml_files": True,
         "user_nl": False,
@@ -49,7 +46,9 @@ def test_fork_cli(tmp_path):
         "xmlchanges": True,
     }
 
-    with patch("CrocoDash.shareable.ForkBundle", return_value=mock_forker):
+    with patch("CrocoDash.case.Case.from_caseroot", return_value=source), patch(
+        "CrocoDash.case.Case.fork"
+    ) as fork:
         run_main(
             [
                 "fork",
@@ -70,12 +69,13 @@ def test_fork_cli(tmp_path):
             ]
         )
 
-    mock_forker.fork.assert_called_once_with(
+    fork.assert_called_once_with(
+        source,
+        str(tmp_path / "new_case"),
+        str(tmp_path / "inputdir"),
         cesmroot="/some/cesm",
         machine="derecho",
-        project_number="PROJ123",
-        new_caseroot=str(tmp_path / "new_case"),
-        new_inputdir=str(tmp_path / "inputdir"),
+        project="PROJ123",
         plan=plan,
     )
 

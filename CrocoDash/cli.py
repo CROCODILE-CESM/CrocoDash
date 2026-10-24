@@ -112,15 +112,10 @@ def _process(args):
 
 
 def _bundle(args):
-    from CrocoDash.shareable import CaseBundle  # lazy import for faster startup
+    from CrocoDash.case import Case  # lazy import for faster startup
 
-    case = CaseBundle(args.caseroot)
-    case.identify_non_standard_case_info(
-        cesmroot=args.cesmroot,
-        machine=args.machine,
-        project_number=args.project,
-    )
-    bundle_path = case.bundle(args.output_dir)
+    case = Case.from_caseroot(args.caseroot)
+    bundle_path = case.bundle(Path(args.output_dir) / f"{case.name}_case_bundle")
     print(f"Bundle written to: {bundle_path}")
 
 
@@ -187,17 +182,17 @@ def _template(args):
 
 
 def _fork(args):
-    from CrocoDash.shareable import ForkBundle
+    from CrocoDash.case import Case
 
     plan = json.loads(args.plan) if args.plan else None
 
-    forker = ForkBundle(args.bundle)
-    forker.fork(
+    Case.fork(
+        Case.from_caseroot(args.bundle),
+        args.caseroot,
+        args.inputdir,
         cesmroot=args.cesmroot,
         machine=args.machine,
-        project_number=args.project,
-        new_caseroot=args.caseroot,
-        new_inputdir=args.inputdir,
+        project=args.project,
         plan=plan,
     )
 
@@ -322,17 +317,11 @@ def main():
         "--output-dir",
         required=True,
         dest="output_dir",
-        help="Directory to write the bundle into.",
+        help="Directory to write the bundle into, as <case name>_case_bundle/.",
     )
-    bundle_parser.add_argument(
-        "--cesmroot", required=True, help="Path to the CESM source root."
-    )
-    bundle_parser.add_argument(
-        "--machine", required=True, help="Machine name (e.g. derecho)."
-    )
-    bundle_parser.add_argument(
-        "--project", required=True, help="Project/account number."
-    )
+    # The bundle records the case's own; these are accepted for older scripts.
+    for flag in ("--cesmroot", "--machine", "--project"):
+        bundle_parser.add_argument(flag, default=None, help="Ignored.")
     bundle_parser.set_defaults(func=_bundle)
 
     # --- duplicate ---
@@ -385,7 +374,7 @@ def main():
     fork_parser.add_argument(
         "--plan",
         default=None,
-        help='JSON object controlling what non-standard CESM state to copy, e.g. \'{"xml_files": true, "user_nl": true, "source_mods": false, "xmlchanges": true}\'.',
+        help='JSON object of what to carry over: the user\'s changes ("xml_files", "user_nl", "source_mods", "xmlchanges"; all by default) and "forcing_files": "matching" (default), "all" or "none", e.g. \'{"xmlchanges": false, "forcing_files": "none"}\'.',
     )
     fork_parser.set_defaults(func=_fork)
 

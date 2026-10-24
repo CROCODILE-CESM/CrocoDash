@@ -206,7 +206,7 @@ case.set_user_nl("mom", {"DT": 1800})  # user_nl_mom
 - SourceMods files;
 - extra xml files.
 
-It leaves out what `configure_forcings` sets. With `target_machine=` set to another machine, it also leaves out the PE layout, batch job, project and directory variables. `other_case.apply_user_changes(changes)` makes those changes in another case.
+It leaves out what `configure_forcings` sets. With `target_machine=` set to another machine, it also leaves out the PE layout, batch job, project and directory variables. `other_case.apply_user_changes(changes)` makes those changes in another case; `Case.fork` does both to carry them to a new case (see [Sharing Cases](shareable.md)).
 
 ## Tips and Best Practices
 
