@@ -528,6 +528,37 @@ def test_process_ic_binds_grid_paths_onto_the_regrid_step(tmp_path, monkeypatch)
         cfg.process_ic(ctx)
 
 
+def test_process_steps_hand_the_engines_the_configured_windows(tmp_path, monkeypatch):
+    """Monthly data needs its chunks a record spacing long, its boundary data
+    padded past the run and its IC request reaching back; the engines fall
+    back to daily behaviour if any of them is dropped on the way."""
+    cfg = _configured(
+        boundary_number_conversion={"north": 1},
+        get_step_days=31,
+        regrid_step_days=62,
+        min_chunk_days=31,
+        obc_start_date="20191201",
+        obc_end_date="20200202",
+        ic_lookback_days=30,
+    )
+    bc, ic = {}, {}
+    monkeypatch.setattr(mom6.obc, "process_obc_conditions", lambda **kw: bc.update(kw))
+    monkeypatch.setattr(
+        mom6.ic_mod, "process_initial_condition", lambda **kw: ic.update(kw)
+    )
+    monkeypatch.setattr(mom6, "_split_bgc_tracers_into_files", lambda **kw: [])
+    ctx = _bc_context(tmp_path)
+    ctx.vgrid_path = tmp_path / "vgrid.nc"
+    ctx.vgrid_path.touch()
+
+    cfg.process_bc(ctx)
+    cfg.process_ic(ctx)
+
+    assert bc["min_chunk_days"] == 31
+    assert (bc["start_date"], bc["end_date"]) == ("20191201", "20200202")
+    assert ic["lookback_days"] == 30
+
+
 def test_fill_missing_and_write_leaves_no_gaps_for_mom6_to_read(tmp_path):
     """Holes inside the ocean mask are objectively interpolated, land (left at
     0.0 by mom6_forge's fill) is interpolated away, and levels below the source

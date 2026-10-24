@@ -353,6 +353,14 @@ class DatedBaseProduct(BaseProduct):
         super().__init_subclass__(**kwargs)
 
     @classmethod
+    def coverage(cls, method_name, **kwargs):
+        """The first and last dates method_name holds data for when called
+        with kwargs (its arguments other than dates and the bounding box),
+        either None if unknown, so callers can keep padded requests inside it.
+        """
+        return None, None
+
+    @classmethod
     def validate_method(cls, method_name, **kwargs):
 
         # Add child-class defaults

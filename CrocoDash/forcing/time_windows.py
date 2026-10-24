@@ -44,13 +44,23 @@ def chunk_days(ts: TimeSampling) -> dict:
     }
 
 
-def obc_window(ts: TimeSampling, start, end):
+def obc_window(ts: TimeSampling, start, end, coverage):
     """The date range to fetch boundary data for, padded by one record spacing
     each side so its records bracket the run: MOM6 interpolates linearly
     between records and stops on a model time outside them, and a daily mean
-    stamped at noon would otherwise start half a day after the run."""
+    stamped at noon would otherwise start half a day after the run.
+
+    The padding stops at the first and last dates the product holds,
+    coverage (either may be None). The run itself is never cut, so a run
+    outside the product's data still fails when that data is fetched."""
     pad = timedelta(days=period_days(ts))
-    return start - pad, end + pad
+    first, last = coverage
+    window_start, window_end = start - pad, end + pad
+    if first is not None:
+        window_start = max(window_start, min(first, start))
+    if last is not None:
+        window_end = min(window_end, max(last, end))
+    return window_start, window_end
 
 
 def ic_lookback_days(ts: TimeSampling) -> int:
@@ -59,10 +69,12 @@ def ic_lookback_days(ts: TimeSampling) -> int:
     return period_days(ts) - 1
 
 
-def describe(product_name, function_name, ts, native, start, end, chunks):
+def describe(product_name, function_name, ts, native, start, end, chunks, coverage):
     """Lines telling the user what their request means for this product."""
-    obc_start, obc_end = obc_window(ts, start, end)
-    run_days = (end - start).days + 1
+    obc_start, obc_end = obc_window(ts, start, end, coverage)
+    pad = timedelta(days=period_days(ts))
+    # Counted like STOP_N: a run from Jan 1 to Jan 2 is one day long.
+    run_days = (end - start).days
     lines = [
         f"[info] Conditions forcing from {product_name}.{function_name}: "
         f"{ts.describe()}.",
@@ -75,6 +87,18 @@ def describe(product_name, function_name, ts, native, start, end, chunks):
         lines.append(
             f"[warn] The run is shorter than one {ts.frequency} record spacing, so "
             "its boundary data is just the records either side of it."
+        )
+    if obc_start > start - pad:
+        lines.append(
+            f"[warn] {product_name} has no data before {coverage[0]:%Y-%m-%d}: the "
+            f"boundary data starts {obc_start:%Y-%m-%d}, so its first record may "
+            "come after the run starts."
+        )
+    if obc_end < end + pad:
+        lines.append(
+            f"[warn] {product_name} has no data after {coverage[1]:%Y-%m-%d}: the "
+            f"boundary data ends {obc_end:%Y-%m-%d}, so its last record may come "
+            "before the run ends."
         )
     if ts != native and native.cell_method == "mean":
         lines.append(
