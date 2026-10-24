@@ -24,6 +24,7 @@ class ChlConfigurator(BaseConfigurator):
         InputValueParam(
             "calendar",
             comment="Calendar names (cf/cesm/mom6) for the chlorophyll output",
+            derived=True,
         ),
     ]
     output_params = [

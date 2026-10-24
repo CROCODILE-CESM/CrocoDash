@@ -24,11 +24,15 @@ class TidesConfigurator(BaseConfigurator):
         ),
         InputValueParam(
             "start_date",
-            comment="start_date",
+            comment="Tidal reference date: the start of date_range",
+            derived=True,
         ),
         InputValueParam(
             "boundaries",
-            comment="boundaries to apply tidal forcing (e.g., ['N', 'S', 'E', 'W'])",
+            comment=(
+                "Open boundaries to apply tidal forcing to "
+                "(e.g. ['south', 'north', 'west', 'east'])"
+            ),
         ),
     ]
     output_params = [

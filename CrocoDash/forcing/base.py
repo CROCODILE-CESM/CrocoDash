@@ -13,6 +13,7 @@ import subprocess
 import json
 import dataclasses
 from CrocoDash.raw_data_access.base import Calendar
+from CrocoDash.raw_data_access.registry import ProductRegistry
 
 logger = setup_logger(__name__)
 
@@ -71,8 +72,29 @@ def calendar_as_dict(calendar):
     return calendar
 
 
-def is_serializable(v):
-    return isinstance(v, (str, int, float, bool, type(None), Path, list, dict))
+def product_choices(product_type, *extra):
+    """choices= for a product-name input: the products of product_type, plus extra."""
+    return lambda values: sorted(
+        (
+            product.product_name
+            for product in ProductRegistry.products.values()
+            if issubclass(product, product_type)
+        ),
+        key=str.lower,
+    ) + list(extra)
+
+
+def access_method_choices(product_input):
+    """choices= for a function-name input: the access methods of the product
+    that the product_input input names."""
+
+    def choices(values):
+        product = values.get(product_input)
+        if product and ProductRegistry.product_exists(product):
+            return ProductRegistry.list_access_methods(product)
+        return None
+
+    return choices
 
 
 class ReconfigureRequired(ValueError):
@@ -168,6 +190,7 @@ class ForcingConfigRegistry:
         self.compset = compset
         self.case = case
         self.active_configurators = {}
+        given = set(inputs)
         if case is not None:
             self.case_info = {
                 f"case_{k}": v
@@ -177,8 +200,17 @@ class ForcingConfigRegistry:
             inputs = inputs | self.case_info
         inputs["compset"] = compset
         self.find_active_configurators(self.compset, inputs)
+        taken = set()
         for configurator in self.active_configurators.values():
             configurator.registry = self
+            taken.update(self.get_ctor_signature(type(configurator))[0])
+        ignored = sorted(given - taken)
+        if ignored:
+            logger.warning(
+                f"No active forcing configurator takes {ignored}, so they are "
+                "ignored. A configurator is active only if the compset allows it "
+                "and every argument it needs is given."
+            )
 
     @classmethod
     def get_configurator_from_name(cls, name):
@@ -208,6 +240,29 @@ class ForcingConfigRegistry:
             if configurator_cls.is_required(compset):
                 required_configs.append(configurator_cls)
         return required_configs
+
+    @classmethod
+    def param_specs(cls, compset, config=None):
+        """The arguments configure_forcings() takes for compset: a ParamSpec for
+        each input of every configurator the compset requires or allows.
+
+        Derived inputs and the case_* ones the Case fills in are left out. A
+        name several configurators take (boundaries) is listed once, as the
+        first of them declares it: one value goes to all of them. Given config
+        (a config.json dict), each default is the value it holds instead.
+        """
+        ProductRegistry.load()
+        specs = {}
+        for configurator_cls in cls.registered_types:
+            required = configurator_cls.is_required(compset)
+            if not (
+                required or configurator_cls.validate_compset_compatibility(compset)
+            ):
+                continue
+            entry = (config or {}).get(configurator_cls.name.lower(), {})
+            for spec in configurator_cls.param_specs(required, entry.get("inputs", {})):
+                specs.setdefault(spec.name, spec)
+        return list(specs.values())
 
     @classmethod
     def get_ctor_signature(cls, configurator_cls):
@@ -386,33 +441,60 @@ class Param(ABC):
 
 
 class InputParam(Param):
-    pass
-
-
-class InputValueParam(InputParam):
     """
-    Base class for a single value parameter in our forcing configurations.
+    A configurator input, stored in config.json.
+
+    derived: the configurator computes it from other arguments (start_date
+    from date_range, say), so no one is asked for it.
+    choices: a function of the other inputs' values ({name: value}) that
+    returns the values this one may take, or None when they aren't known.
     """
 
-    def __init__(self, name: str, comment: Optional[str] = None):
+    def __init__(
+        self,
+        name: str,
+        comment: Optional[str] = None,
+        derived: bool = False,
+        choices=None,
+    ):
         super().__init__(name, comment)
-        self.value: Optional[str] = None
+        self.value: Any = None
+        self.derived = derived
+        self.choices = choices
 
     def set_item(self, item):
         self.value = item
 
 
+class InputValueParam(InputParam):
+    """A single value parameter in our forcing configurations."""
+
+
 class InputFileParam(InputParam):
-    """
-    Base class for a single file parameter in our forcing configurations.
+    """A file path parameter: a front-end treats it as machine-specific."""
+
+
+@dataclasses.dataclass
+class ParamSpec:
+    """A configure_forcings() argument, described for a front-end (the Case
+    creation printout, prompts, an annotated YAML, the MCP server).
+
+    required: the compset needs it and it has no default. An optional
+    configurator's inputs are never required; it is active only when all of
+    its inputs without a default are given.
+    default: the constructor default, or the value a config.json holds.
+    is_path: a file path, which may not exist on another machine.
+    choices: the values it may take, when they're known (product names
+    match case-insensitively).
     """
 
-    def __init__(self, name: str, comment: Optional[str] = None):
-        super().__init__(name, comment)
-        self.value: Optional[str] = None
-
-    def set_item(self, filepath: str):
-        self.value = filepath
+    name: str
+    configurator: str
+    required: bool
+    default: Any = None
+    comment: Optional[str] = None
+    is_path: bool = False
+    choices: Optional[List[Any]] = None
 
 
 class OutputParam(Param):
@@ -747,17 +829,62 @@ class BaseConfigurator(ABC):
                 obj.set_output_param(param.name, outputs[param.name])
         return obj
 
+    @classmethod
+    def param_specs(cls, required: bool, inputs: Dict[str, Any]) -> List[ParamSpec]:
+        """A ParamSpec for each input a user gives this configurator: all but
+        the derived ones and the case_* ones the Case fills in.
+
+        required: whether the compset requires this configurator. inputs: its
+        entry's inputs in a config.json ({} for none), which are then the
+        defaults.
+        """
+        signature = inspect.signature(cls.__init__).parameters
+        params = [
+            p for p in cls.input_params if not (p.derived or p.name.startswith("case_"))
+        ]
+        values = {}
+        for param in params:
+            default = signature[param.name].default
+            if default is inspect.Parameter.empty:
+                default = None
+            values[param.name] = inputs.get(param.name, default)
+        return [
+            ParamSpec(
+                name=param.name,
+                configurator=cls.name,
+                required=required
+                and signature[param.name].default is inspect.Parameter.empty,
+                default=copy.deepcopy(values[param.name]),
+                comment=param.comment,
+                is_path=isinstance(param, InputFileParam),
+                choices=param.choices(values) if param.choices else None,
+            )
+            for param in params
+        ]
+
     def make_serializable(self, obj):
         if isinstance(obj, Path):
             return str(obj)
         return obj
 
     def serialize(self) -> Dict[str, Any]:
+        """This configurator's config.json entry. A value JSON can't hold
+        raises TypeError here, naming its param."""
         output_dict = {"name": self.name, "inputs": {}, "outputs": {}}
-        for param in self.input_params:
-            output_dict["inputs"][param.name] = self.make_serializable(param.value)
-        for param in self.output_params:
-            output_dict["outputs"][param.name] = self.make_serializable(param.value)
+        for key, params in (
+            ("inputs", self.input_params),
+            ("outputs", self.output_params),
+        ):
+            for param in params:
+                value = self.make_serializable(param.value)
+                try:
+                    json.dumps(value)
+                except (TypeError, ValueError) as e:
+                    raise TypeError(
+                        f"{self.name}'s {param.name} ({value!r}) can't be "
+                        f"written to config.json: {e}"
+                    ) from None
+                output_dict[key][param.name] = value
         return output_dict
 
     def get_input_param(self, name: str) -> Any:

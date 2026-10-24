@@ -227,9 +227,15 @@ def generate_configure_forcing_args(forcing_config, remove_configs=None):
             configurator_cls
         )
         stored_inputs = forcing_config[key].get("inputs", {})
+        derived = {p.name for p in configurator_cls.input_params if p.derived}
         for arg in all_args:
-            # case_* args are re-derived from the new Case, not round-tripped.
-            if arg.startswith("case_") or arg in configure_forcing_args:
+            # case_* args are re-derived from the new Case, and derived ones
+            # (dates, calendar) from the other args, not round-tripped.
+            if (
+                arg.startswith("case_")
+                or arg in derived
+                or arg in configure_forcing_args
+            ):
                 continue
             if arg in stored_inputs:
                 configure_forcing_args[arg] = stored_inputs[arg]

@@ -197,6 +197,7 @@ class CICEConfigurator(BaseConfigurator):
                 "'reference_ice' / 'get_reference_ice_data' for a fast synthetic "
                 "stand-in."
             ),
+            choices=product_choices(CICEForcingProduct),
         ),
         InputValueParam(
             "cice_function_name",
@@ -205,6 +206,7 @@ class CICEConfigurator(BaseConfigurator):
                 "forcing product. Must be given whenever cice_product_name is; "
                 "there is no implicit default. See cice_product_name."
             ),
+            choices=access_method_choices("cice_product_name"),
         ),
         InputValueParam(
             "cice_function_args",
