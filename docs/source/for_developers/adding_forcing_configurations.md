@@ -72,7 +72,19 @@ class MyConfigurator(BaseConfigurator):
 **Parameter Types:**
 
 - **`InputValueParam`** - Simple values (strings, numbers, booleans)
-- **`InputFileParam`** - File paths (automatically validated as existing files)
+- **`InputFileParam`** - File paths. They aren't checked to exist (config.json may
+  be read on another machine); front-ends treat them as machine-specific.
+
+Both take two optional keywords, which `ForcingConfigRegistry.param_specs()`
+(the creation printout, prompts, the MCP server) reads:
+
+- **`derived=True`** - the constructor computes it from other arguments (e.g.
+  `start_date` from `date_range`), so no one is asked for it.
+- **`choices=`** - a function of the other inputs' values returning the allowed
+  values, e.g. `product_choices(MOM6ForcingProduct)` or
+  `access_method_choices("product_name")`.
+
+Required arguments and defaults come from your `__init__` signature.
 
 :::{important}
 `BaseConfigurator.__init__` calls `validate_args()`, which requires the set of
@@ -83,7 +95,7 @@ user, but they are still ordinary input params and must be declared. Forgetting
 one raises `ValueError: Unexpected inputs: {'case_inputdir'}`.
 :::
 
-**Important:** Input parameters must be **JSON serializable**. They're serialized into `config.json` so the processing step can rebuild the configurator for heavy computational work.
+**Important:** Input parameters must be **JSON serializable**. They're serialized into `config.json` so the processing step can rebuild the configurator for heavy computational work; `serialize()` raises a `TypeError` naming any that isn't.
 
 ## Step 3: Define Output Parameters
 

@@ -17,10 +17,18 @@ class RunoffConfigurator(BaseConfigurator):
         InputValueParam("case_compset_lname", comment="Case compset"),
         InputValueParam("case_inputdir", comment="Case input directory"),
         InputValueParam(
-            "rmax", comment="Smoothing radius (in meters) for runoff mapping generation"
+            "rmax",
+            comment=(
+                "Smoothing radius (km) for runoff mapping generation; "
+                "suggested from the ocean grid if unset"
+            ),
         ),
         InputValueParam(
-            "fold", comment="Smoothing fold parameter for runoff mapping generation"
+            "fold",
+            comment=(
+                "Smoothing fold distance (km) for runoff mapping generation; "
+                "suggested from the ocean grid if unset"
+            ),
         ),
         InputFileParam("case_esmf_mesh_path", comment="Ocean ESMF Mesh File Path"),
     ]
@@ -54,10 +62,10 @@ class RunoffConfigurator(BaseConfigurator):
     ):
         """
         rmax : float, optional
-            If passed, specifies the smoothing radius (in meters) for runoff mapping generation.
+            If passed, specifies the smoothing radius (in km) for runoff mapping generation.
             If not provided, a suggested value based on the ocean grid will be used.
         fold : float, optional
-            If passed, specifies the smoothing fold parameter for runoff mapping generation.
+            If passed, specifies the smoothing fold distance (in km) for runoff mapping generation.
             If not provided, a suggested value based on the ocean grid will be used.
         """
         super().__init__(

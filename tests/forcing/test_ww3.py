@@ -776,7 +776,7 @@ def test_process_ww3_obc_with_cesm_ww3_jra(
 
 def test_ww3_configurator_requires_product():
     # Leaving ww3_obc_product_name unset is an error; 'none' is the opt-out.
-    with pytest.raises(ValueError, match="ww3_obc_product_name is required"):
+    with pytest.raises(TypeError, match="ww3_obc_product_name"):
         WW3Configurator(case_inputdir="dummy", boundaries=["west"])
     WW3Configurator(
         case_inputdir="dummy", boundaries=["west"], ww3_obc_product_name="none"

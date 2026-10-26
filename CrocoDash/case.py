@@ -29,6 +29,11 @@ from visualCaseGen.initialize import initialize as initialize_visualCaseGen
 from visualCaseGen.custom_widget_types.case_creator import CaseCreator
 from visualCaseGen.custom_widget_types.case_tools import append_user_nl
 from CrocoDash.forcing import cice, user_nl_blocks
+from CrocoDash.forcing.mom6 import (
+    DEFAULT_BOUNDARIES,
+    DEFAULT_FUNCTION_NAME,
+    DEFAULT_PRODUCT_NAME,
+)
 from CrocoDash.forcing.driver import run_workflow
 
 from CrocoDash import case_state
@@ -249,19 +254,15 @@ class Case:
             _remove_failed_attempt(case_dirs, preexisting)
             raise
 
-        required_configurators = ForcingConfigRegistry.find_required_configurators(
-            self.compset_lname
-        )
-
-        if len(required_configurators) > 0:
-            print(
-                "The following additional configuration options are required to run and must be provided with any listed arguments in configure_forcings:"
-            )
-
-            for configurator in required_configurators:
-                user_args = ForcingConfigRegistry.get_user_args(configurator)
-                args_str = ", ".join(user_args) if user_args else "no arguments"
-                print(f"  - {configurator.name}: {args_str}")
+        required_specs = [
+            spec
+            for spec in ForcingConfigRegistry.param_specs(self.compset_lname)
+            if spec.required
+        ]
+        if required_specs:
+            print("configure_forcings() needs these arguments for this compset:")
+            for spec in required_specs:
+                print(f"  - {spec.name} ({spec.configurator}): {spec.comment}")
 
     @classmethod
     def from_caseroot(cls, caseroot, *, cesmroot=None):
@@ -587,9 +588,9 @@ class Case:
     def configure_forcings(
         self,
         date_range: list[str],
-        boundaries: list[str] = ["south", "north", "west", "east"],
-        product_name: str = "GLORYS",
-        function_name: str = "get_glorys_data_script_for_cli",
+        boundaries: list[str] = DEFAULT_BOUNDARIES,
+        product_name: str = DEFAULT_PRODUCT_NAME,
+        function_name: str = DEFAULT_FUNCTION_NAME,
         function_overrides: dict = None,
         **kwargs,
     ):
@@ -923,9 +924,16 @@ class Case:
                 configurator_cls
             )
             stored_inputs = entry.get("inputs", {})
+            derived = {p.name for p in configurator_cls.input_params if p.derived}
             for arg in all_args:
-                # case_* args come from forcing_inputs(), not from config.json.
-                if arg.startswith("case_") or arg in args or arg in changes:
+                # case_* args come from forcing_inputs(), and derived ones
+                # (dates, calendar) from the other args, not from config.json.
+                if (
+                    arg.startswith("case_")
+                    or arg in derived
+                    or arg in args
+                    or arg in changes
+                ):
                     continue
                 if arg in stored_inputs:
                     args[arg] = stored_inputs[arg]

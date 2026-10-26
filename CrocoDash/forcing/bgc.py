@@ -181,6 +181,7 @@ class BGCRiverNutrientsConfigurator(BaseConfigurator):
         InputValueParam(
             "calendar",
             comment="Calendar names (cf/cesm/mom6) for the river nutrients output",
+            derived=True,
         ),
     ]
     output_params = [
