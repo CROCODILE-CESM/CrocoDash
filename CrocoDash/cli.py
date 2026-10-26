@@ -1,5 +1,4 @@
 import argparse
-import json
 import sys
 from pathlib import Path
 
@@ -19,18 +18,62 @@ def _interactive(args):
     return not args.no_input and sys.stdin.isatty()
 
 
-def _create(args):
-    from CrocoDash.recipe import load_config, create_case_from_yaml
+# The new case's fields that flags set and that create --from asks for, in
+# this order: the compset decides which forcings there are.
+_CASE_FIELDS = ("caseroot", "inputdir", "cesmroot", "machine", "project", "compset")
 
-    config = load_config(args.config)
+
+def _create(args):
+    from CrocoDash.case import Case
+    from CrocoDash.prompts import ask_case
+    from CrocoDash.recipe import (
+        case_to_yaml,
+        check_new_case,
+        create_case_from_yaml,
+        load_config,
+    )
+
     ask = _interactive(args)
+    source = None
+    if args.source:
+        source = Case.from_caseroot(args.source)
+        config = case_to_yaml(source)
+    else:
+        config = load_config(args.config)
+    flags = {
+        field: getattr(args, field)
+        for field in _CASE_FIELDS
+        if getattr(args, field) is not None
+    }
+    config["case"] |= flags
+
     if "forcings" not in config and not ask:
         raise CrocoDashCliError(
-            f"{args.config} has no forcings: section. Add one, or run on a "
-            "terminal (without --no-input) to be asked for them."
+            f"{args.config or args.source} has no forcings to configure the case "
+            "with. Run on a terminal (without --no-input) to be asked for them."
         )
+    if source is None:
+        # A config's forcings are used as they are.
+        ask = ask and "forcings" not in config
+    else:
+        if ask:
+            ask_case(config["case"], _CASE_FIELDS)
+        elif not {"caseroot", "inputdir"} <= set(flags):
+            raise CrocoDashCliError(
+                "Without prompts, create --from needs the new case's --caseroot "
+                "and --inputdir."
+            )
+        try:
+            check_new_case(config["case"], source)
+        except ValueError as e:
+            raise CrocoDashCliError(str(e)) from e
+
     create_case_from_yaml(
-        config, override=args.override, configure_only=args.configure_only, ask=ask
+        config,
+        override=args.override,
+        configure_only=args.configure_only,
+        ask=ask,
+        source=source,
     )
 
 
@@ -130,28 +173,11 @@ def _process(args):
 
 
 def _bundle(args):
-    from CrocoDash.shareable import CaseBundle  # lazy import for faster startup
+    from CrocoDash.case import Case  # lazy import for faster startup
 
-    case = CaseBundle(args.caseroot)
-    case.identify_non_standard_case_info(
-        cesmroot=args.cesmroot,
-        machine=args.machine,
-        project_number=args.project,
-    )
-    bundle_path = case.bundle(args.output_dir)
+    case = Case.from_caseroot(args.caseroot)
+    bundle_path = case.bundle(Path(args.output_dir) / f"{case.name}_case_bundle")
     print(f"Bundle written to: {bundle_path}")
-
-
-def _duplicate_case(args):
-    from CrocoDash.shareable import duplicate_case
-
-    new_case = duplicate_case(
-        caseroot=args.source,
-        new_caseroot=args.case,
-        new_inputdir=args.inputdir,
-        bundle_dir=args.bundle_dir,
-    )
-    print(f"Duplicated case created at: {new_case.caseroot}")
 
 
 def _template(args):
@@ -204,22 +230,6 @@ def _template(args):
         sys.exit(1)
 
 
-def _fork(args):
-    from CrocoDash.shareable import ForkBundle
-
-    plan = json.loads(args.plan) if args.plan else None
-
-    forker = ForkBundle(args.bundle)
-    forker.fork(
-        cesmroot=args.cesmroot,
-        machine=args.machine,
-        project_number=args.project,
-        new_caseroot=args.caseroot,
-        new_inputdir=args.inputdir,
-        plan=plan,
-    )
-
-
 def main():
     parser = argparse.ArgumentParser(prog="crocodash")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -227,14 +237,30 @@ def main():
     # --- create ---
     create_parser = subparsers.add_parser(
         "create",
-        help="Create a new CrocoDash case from a YAML config file.",
-        description="Create a new CrocoDash case from a YAML config file. "
-        "Without a forcings: section, it asks for the forcings on a terminal "
-        "once the case exists.",
+        help="Create a new CrocoDash case from a YAML config file or another case.",
+        description="Create a new CrocoDash case from a YAML config file, or from "
+        "another case (--from). On a terminal it asks for the forcings once the "
+        "case exists: from a config without a forcings: section, offering the "
+        "defaults, or with --from, offering the source's, after asking for the "
+        "new case's fields.",
     )
-    create_parser.add_argument(
-        "--config", required=True, help="Path to the YAML case config file."
+    create_from = create_parser.add_mutually_exclusive_group(required=True)
+    create_from.add_argument("--config", help="Path to the YAML case config file.")
+    create_from.add_argument(
+        "--from",
+        dest="source",
+        metavar="CASE",
+        help="Start from an existing case: its caseroot, or a bundle (crocodash "
+        "bundle). The new case gets its grids, settings and forcing arguments, "
+        "the changes its user made to it, and its forcing files whose settings "
+        "still match.",
     )
+    for field in _CASE_FIELDS:
+        create_parser.add_argument(
+            f"--{field}",
+            default=None,
+            help=f"The new case's {field}, instead of the config's or the source's.",
+        )
     create_parser.add_argument(
         "--override",
         action="store_true",
@@ -347,7 +373,8 @@ def main():
     # --- bundle ---
     bundle_parser = subparsers.add_parser(
         "bundle",
-        help="Read an existing CrocoDash case and produce a shareable bundle.",
+        help="Write a case to a bundle, which crocodash create --from reads, "
+        "here or on another machine.",
     )
     bundle_parser.add_argument(
         "--caseroot", required=True, help="Path to the existing CESM caseroot."
@@ -356,72 +383,9 @@ def main():
         "--output-dir",
         required=True,
         dest="output_dir",
-        help="Directory to write the bundle into.",
-    )
-    bundle_parser.add_argument(
-        "--cesmroot", required=True, help="Path to the CESM source root."
-    )
-    bundle_parser.add_argument(
-        "--machine", required=True, help="Machine name (e.g. derecho)."
-    )
-    bundle_parser.add_argument(
-        "--project", required=True, help="Project/account number."
+        help="Directory to write the bundle into, as <case name>_case_bundle/.",
     )
     bundle_parser.set_defaults(func=_bundle)
-
-    # --- duplicate ---
-    duplicate_parser = subparsers.add_parser(
-        "duplicate", help="Duplicate an existing CrocoDash case to a new location."
-    )
-    duplicate_parser.add_argument(
-        "--source",
-        required=True,
-        help="Path to the existing CESM caseroot to duplicate from.",
-    )
-    duplicate_parser.add_argument(
-        "--case",
-        required=True,
-        help="Path for the new duplicated caseroot.",
-    )
-    duplicate_parser.add_argument(
-        "--inputdir",
-        required=True,
-        help="Path for the new input directory.",
-    )
-    duplicate_parser.add_argument(
-        "--bundle-dir",
-        default=None,
-        dest="bundle_dir",
-        help="Where to keep the bundle (default: inside new caseroot).",
-    )
-    duplicate_parser.set_defaults(func=_duplicate_case)
-
-    # --- fork ---
-    fork_parser = subparsers.add_parser(
-        "fork", help="Create a new case from a CrocoDash bundle."
-    )
-    fork_parser.add_argument(
-        "--bundle", required=True, help="Path to the bundle directory."
-    )
-    fork_parser.add_argument(
-        "--caseroot", required=True, help="Path for the new caseroot."
-    )
-    fork_parser.add_argument(
-        "--inputdir", required=True, help="Path for the new input directory."
-    )
-    fork_parser.add_argument(
-        "--cesmroot", required=True, help="Path to the CESM source root."
-    )
-    fork_parser.add_argument(
-        "--machine", required=True, help="Machine name (e.g. derecho)."
-    )
-    fork_parser.add_argument("--project", required=True, help="Project/account number.")
-    fork_parser.add_argument(
-        "--plan",
-        default=None,
-        help='JSON object controlling what non-standard CESM state to copy, e.g. \'{"xml_files": true, "user_nl": true, "source_mods": false, "xmlchanges": true}\'.',
-    )
-    fork_parser.set_defaults(func=_fork)
 
     # --- template ---
     template_parser = subparsers.add_parser(

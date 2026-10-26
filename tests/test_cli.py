@@ -5,10 +5,13 @@ handler forwards -- and stub out the work itself. The behaviour behind each flag
 is covered by tests/test_recipe_functions.py.
 """
 
+from unittest.mock import MagicMock
+
 import pytest
 
 import CrocoDash.cli as cli
 import CrocoDash.recipe as recipe
+from CrocoDash.case import Case
 
 
 @pytest.fixture
@@ -22,10 +25,10 @@ def captured_create(monkeypatch):
     calls = {}
 
     monkeypatch.setattr(
-        recipe, "load_config", lambda path: {"path": path, "forcings": {}}
+        recipe, "load_config", lambda path: {"path": path, "case": {}, "forcings": {}}
     )
 
-    def fake_create(config, override=False, configure_only=False, ask=False):
+    def fake_create(config, override=False, configure_only=False, **kwargs):
         calls.update(config=config, override=override, configure_only=configure_only)
 
     monkeypatch.setattr(recipe, "create_case_from_yaml", fake_create)
@@ -67,7 +70,7 @@ def test_create_without_forcings_off_a_terminal_creates_nothing(monkeypatch):
     """A script can't answer the forcing prompts, so a config without a
     forcings: section fails before any case is made, not halfway through."""
     created = []
-    monkeypatch.setattr(recipe, "load_config", lambda path: {"path": path})
+    monkeypatch.setattr(recipe, "load_config", lambda path: {"path": path, "case": {}})
     monkeypatch.setattr(
         recipe, "create_case_from_yaml", lambda *args, **kwargs: created.append(args)
     )
@@ -75,3 +78,24 @@ def test_create_without_forcings_off_a_terminal_creates_nothing(monkeypatch):
     with pytest.raises(SystemExit):
         cli.main()
     assert not created
+
+
+def test_bundle_writes_the_case_into_the_output_dir(monkeypatch, tmp_path):
+    case = MagicMock()
+    case.name = "case"
+    monkeypatch.setattr(Case, "from_caseroot", MagicMock(return_value=case))
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "crocodash",
+            "bundle",
+            "--caseroot",
+            "/some/case",
+            "--output-dir",
+            str(tmp_path),
+        ],
+    )
+    cli.main()
+
+    Case.from_caseroot.assert_called_once_with("/some/case")
+    case.bundle.assert_called_once_with(tmp_path / "case_case_bundle")

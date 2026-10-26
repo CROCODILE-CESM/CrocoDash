@@ -1,4 +1,5 @@
 from pathlib import Path
+import json
 import re
 import sys
 import uuid
@@ -36,7 +37,13 @@ from CrocoDash.forcing.mom6 import (
     DEFAULT_FUNCTION_NAME,
     DEFAULT_PRODUCT_NAME,
 )
-from CrocoDash.forcing.driver import run_workflow
+from CrocoDash.forcing.driver import (
+    FINISHED_STEPS_FILENAME,
+    portable_settings,
+    read_finished_steps,
+    run_workflow,
+    write_finished_steps,
+)
 from CrocoDash.prompts import ask_forcings
 
 from CrocoDash import case_state
@@ -87,6 +94,38 @@ _MACHINE_VARIABLES = re.compile(
 # The kinds of change user_changes() finds; apply_user_changes()'s plan turns
 # each on or off.
 _CHANGE_KINDS = ("xmlchanges", "user_nl", "source_mods", "xml_files")
+
+# A bundle (Case.bundle()) is a directory with this file, a caseroot/ and an
+# inputdir/. Its MAJOR changes when an older CrocoDash couldn't read it.
+BUNDLE_FILENAME = "bundle.json"
+BUNDLE_SCHEMA_VERSION = "2.0.0"
+
+
+def _read_bundle(path):
+    """The bundle.json of the bundle at ``path``, or None if it isn't one."""
+    path = Path(path)
+    if not (path / BUNDLE_FILENAME).exists():
+        if (path / "crocodash_case.yaml").exists() and (
+            path / "non_standard_case_info.json"
+        ).exists():
+            raise ValueError(
+                f"{path} is a bundle from an older CrocoDash, which this version "
+                "can't read. Bundle its case again with this version (crocodash "
+                "bundle), or create a case from its crocodash_case.yaml "
+                "(crocodash create --config)."
+            )
+        return None
+    with open(path / BUNDLE_FILENAME) as f:
+        bundle = json.load(f)
+    major = str(bundle.get("schema_version")).split(".")[0]
+    if major != BUNDLE_SCHEMA_VERSION.split(".")[0]:
+        raise ValueError(
+            f"{path} is a bundle with schema version "
+            f"{bundle.get('schema_version')!r}, but this version of CrocoDash "
+            f"reads {BUNDLE_SCHEMA_VERSION.split('.')[0]}.x bundles. Use the "
+            "CrocoDash version that made it, or bundle its case again."
+        )
+    return bundle
 
 
 def _user_nl_name(line):
@@ -171,6 +210,7 @@ class Case:
         ntasks_ocn: int | None = None,
         job_queue: str | None = None,
         job_wallclock_time: str | None = None,
+        session_id: str | None = None,
     ):
         """
         Initialize a new regional MOM6 case within the CESM framework.
@@ -213,6 +253,11 @@ class Case:
             The queue to submit the CESM case to. If None, defaults to the CESM defaults (usually main)
         job_wallclock_time: str, optional
             Must be in the form hh:mm:ss. If None, defaults to the CESM defaults
+        session_id: str, optional
+            The id in the names of the case's grid files and of the forcing
+            files named after them. If None, a new one. A case created from
+            another (crocodash create --from) takes its source's, so that the
+            source's forcing files apply unrenamed.
         """
 
         # Capture scalar init args for state serialization before any local vars are added.
@@ -268,6 +313,8 @@ class Case:
         self.ntasks_ocn = ntasks_ocn
         self.job_queue = job_queue
         self.job_wallclock_time = job_wallclock_time
+        # _configure_custom_ocean_grid() makes one if None.
+        self.session_id = session_id
 
         # Derived from compset argument
         self.compset_alias = compset_alias
@@ -357,6 +404,8 @@ class Case:
         caseroot : str | Path
             The caseroot of a case created by this version of CrocoDash. A case
             created by an older version is refused and has to be recreated.
+            Or a bundle (see bundle()), which reads like its case's caseroot;
+            its files are read from the bundle.
         cesmroot : str | Path, optional
             The CESM tree to use instead of the one the case was created with,
             e.g. because that one moved. It isn't saved.
@@ -373,10 +422,27 @@ class Case:
         from_caseroot() can't drift apart. is_non_local is whether CIME's
         tools run with --non-local: a case read back may be on another machine
         than its own, so it is True unless the case was just created here.
+
+        In a bundle, the state is in its caseroot/, and the paths it names
+        under the case's inputdir are read from the bundle's inputdir/.
         """
+        caseroot = Path(caseroot)
+        bundle = _read_bundle(caseroot)
+        # bundle.json's {caseroot, inputdir, machine} of the bundled case.
+        self.bundled_from = bundle["source"] if bundle else None
+        if bundle:
+            caseroot = caseroot / "caseroot"
         state = case_state.read(caseroot)
-        self.caseroot = Path(caseroot)
-        self.inputdir = Path(state["inputdir"])
+        source_inputdir = Path(state["inputdir"])
+        self.caseroot = caseroot
+        self.inputdir = caseroot.parent / "inputdir" if bundle else source_inputdir
+
+        def local(path):
+            path = Path(path)
+            if path.is_relative_to(source_inputdir):
+                path = self.inputdir / path.relative_to(source_inputdir)
+            return str(path)
+
         self.cesmroot = Path(cesmroot or state["cesmroot"])
         self.compset_lname = state["compset_lname"]
         self.machine = state["machine"]
@@ -386,10 +452,10 @@ class Case:
         self.rof_grid_name = state["rof_grid_name"]
         self.session_id = state["session_id"]
         self.grid_name = state["grid_name"]
-        self.supergrid_path = state["supergrid_path"]
-        self.topo_path = state["topo_path"]
-        self.vgrid_path = state["vgrid_path"]
-        self.esmf_mesh_path = state["esmf_mesh_path"]
+        self.supergrid_path = local(state["supergrid_path"])
+        self.topo_path = local(state["topo_path"])
+        self.vgrid_path = local(state["vgrid_path"])
+        self.esmf_mesh_path = local(state["esmf_mesh_path"])
         self.is_non_local = is_non_local
         # override=True applies to creating the case only; nothing is deleted
         # after that.
@@ -1202,6 +1268,109 @@ class Case:
             for var, value in changes["xmlchanges"].items():
                 self.xmlchange(var, value)
 
+    def bundle(self, output_dir):
+        """Write this case to the new directory ``output_dir``, a bundle that
+        Case.from_caseroot() reads like the caseroot, here or on another
+        machine, and crocodash create --from makes a new case from:
+
+        - ``bundle.json``: its schema version and the case it was made from;
+        - ``caseroot/``: the state file, replay.sh, the user_nl_* and top-level
+          *.xml files, and SourceMods/;
+        - ``inputdir/``: config.json, finished_steps.json, the grid, topography,
+          vertical grid and mesh files the state names, and the output files
+          of every configured forcing that exist, at their inputdir paths.
+
+        Returns the bundle's path.
+        """
+        output_dir = Path(output_dir)
+        grids = [
+            Path(path)
+            for path in (
+                self.supergrid_path,
+                self.topo_path,
+                self.vgrid_path,
+                self.esmf_mesh_path,
+            )
+        ]
+        missing = [str(path) for path in grids if not path.is_file()]
+        if missing:
+            raise FileNotFoundError(f"The case's grid files are missing: {missing}")
+
+        files = grids + [
+            self.extract_forcings_path / CONFIG_FILENAME,
+            self.extract_forcings_path / FINISHED_STEPS_FILENAME,
+        ]
+        if self._configure_forcings_called:
+            ctx = self.workflow_context()
+            for configurator in self.configurators().values():
+                files += configurator.get_output_filepaths(ctx)
+
+        (output_dir / "caseroot").mkdir(parents=True)
+        for path in [
+            self.caseroot / case_state.FILENAME,
+            self.caseroot / "replay.sh",
+            *self.caseroot.glob("user_nl_*"),
+            *self.caseroot.glob("*.xml"),
+        ]:
+            if path.is_file():
+                shutil.copy2(path, output_dir / "caseroot" / path.name)
+        if (self.caseroot / "SourceMods").is_dir():
+            shutil.copytree(
+                self.caseroot / "SourceMods", output_dir / "caseroot" / "SourceMods"
+            )
+        for path in sorted(set(files)):
+            if path.is_file():
+                target = output_dir / "inputdir" / path.relative_to(self.inputdir)
+                target.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(path, target)
+
+        source = self.bundled_from or {
+            "caseroot": str(self.caseroot),
+            "inputdir": str(self.inputdir),
+            "machine": self.machine,
+        }
+        with open(output_dir / BUNDLE_FILENAME, "w") as f:
+            json.dump(
+                {"schema_version": BUNDLE_SCHEMA_VERSION, "source": source},
+                f,
+                indent=2,
+            )
+        return output_dir
+
+    def copy_forcing_files(self, source):
+        """Copy the files of each forcing step ``source`` (a Case, e.g. read
+        from a bundle) finished with the settings this case's are configured
+        with, and record those steps as finished here, so process_forcings()
+        makes only the others. A step whose settings differ (boundaries
+        reordered, other dates) or with a recorded file missing is left to
+        process. Returns the steps copied."""
+        config = self.forcing_config
+        targets = ForcingConfigRegistry.resolve_process_targets(config)
+        finished = read_finished_steps(self.inputdir)
+        copied = []
+        for step, entry in read_finished_steps(source.inputdir).items():
+            if step not in targets:
+                continue
+            settings = portable_settings(
+                targets[step][0], config, self.inputdir, self.cesmroot
+            )
+            files = entry.get("files", [])
+            if entry.get("settings") != settings:
+                continue
+            if not files or not all(
+                (source.inputdir / name).is_file() for name in files
+            ):
+                continue
+            for name in files:
+                target = self.inputdir / name
+                target.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(source.inputdir / name, target)
+            finished[step] = {"settings": settings, "files": files}
+            copied.append(step)
+        if copied:
+            write_finished_steps(self.inputdir, finished)
+        return copied
+
     @property
     def name(self) -> str:
         return self.caseroot.name
@@ -1398,7 +1567,7 @@ class Case:
             self.ocn_grid.tlat.max().item() - self.ocn_grid.tlat.min().item()
         )
         cvars["CUSTOM_OCN_GRID_NAME"].value = self.ocn_grid.name
-        cvars["MB_ATTEMPT_ID"].value = str(uuid.uuid1())[:6]
+        cvars["MB_ATTEMPT_ID"].value = self.session_id or str(uuid.uuid1())[:6]
         cvars["MOM6_BATHY_STATUS"].value = "Complete"
         if Stage.active().title == "Custom Ocean Grid":
             Stage.active().proceed()

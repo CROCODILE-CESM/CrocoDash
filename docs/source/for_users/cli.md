@@ -6,13 +6,11 @@ CrocoDash ships a `crocodash` command (installed automatically with `pip install
 
 ```
 crocodash template          --output my_case.{yaml,ipynb,py,pbs} [--machine glade] [--notebook ID]
-crocodash create            --config mycase.yaml [--override] [--no-input]
+crocodash create            (--config mycase.yaml | --from /path/to/case_or_bundle) [--caseroot ...] [--override] [--no-input]
 crocodash dump              --caseroot /path/to/case
 crocodash configure         --caseroot /path/to/case [--config forcings.yaml] [--set key=value ...] [--no-input]
 crocodash process  [--caseroot /path/to/case] [--all | --ic --bc ...]  [--skip ...] [--preview] [--force]
-crocodash bundle            --caseroot /path/to/case --output-dir /path/to/bundle_dir ...
-crocodash fork              --bundle /path/to/bundle --caseroot ... --inputdir ... --cesmroot ... --machine ... --project ...
-crocodash duplicate         --source /path/to/case --case /path/to/new_case --inputdir /path/to/new_inputdir
+crocodash bundle            --caseroot /path/to/case --output-dir /path/to/bundle_dir
 ```
 
 ---
@@ -30,6 +28,9 @@ Without a `forcings:` section, `create` asks for the forcings once the case exis
 as `crocodash configure` does (see [Being asked for the forcings](#being-asked-for-the-forcings)).
 That needs a terminal: in a script, or with `--no-input`, a config without a `forcings:`
 section is refused before anything is created.
+
+`crocodash create --from` starts from an existing case or a bundle instead of a config;
+see [Sharing and Copying Cases](sharing.md).
 
 ### YAML config schema
 
@@ -99,7 +100,7 @@ forcings:
   # tpxo_velocity_filepath:  "/path/to/TPXO_velocity.nc"
 ```
 
-After `create` completes the caseroot contains a `_crocodash_state.json` recording all construction parameters, and `inputdir/extract_forcings/config.json` recording the forcing setup. These files are the source of truth for `dump`, `bundle`, and `fork`.
+After `create` completes the caseroot contains a `_crocodash_state.json` recording all construction parameters, and `inputdir/extract_forcings/config.json` recording the forcing setup. These files are the source of truth for `dump`, `bundle` and `create --from`.
 
 ---
 
@@ -241,6 +242,6 @@ If you `cd` into `inputdir/extract_forcings/` (the directory that contains `conf
 
 ---
 
-## `crocodash bundle`, `fork`, `duplicate`
+## `crocodash bundle`, `crocodash create --from`
 
-For sharing cases with others, see [Shareable Configuration](shareable.md).
+To copy a case, here or on another machine, see [Sharing and Copying Cases](sharing.md).

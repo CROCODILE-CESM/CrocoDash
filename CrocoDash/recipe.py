@@ -12,7 +12,7 @@ from pathlib import Path
 import xarray as xr
 import yaml
 
-from CrocoDash.case import Case
+from CrocoDash.case import Case, _CHANGE_KINDS
 from CrocoDash import case_state
 from CrocoDash.grid import Grid
 from CrocoDash.topo import Topo
@@ -20,6 +20,15 @@ from CrocoDash.vgrid import VGrid
 
 _TOPO_SOURCE_TYPES = {"flat", "dataset", "from_file"}
 _VGRID_TYPES = {"uniform", "hyperbolic", "from_file"}
+
+# The source's own run, rather than how it is set up: how far it got and where
+# it builds, runs and archives. A case made from it starts a run of its own
+# (CONTINUE_RUN=TRUE would look for restart files it doesn't have) and must
+# not share the source's directories.
+_SOURCE_RUN_VARIABLES = ("CONTINUE_RUN", "RESUBMIT", "EXEROOT", "RUNDIR", "DOUT_S_ROOT")
+
+# A source's settings for how it runs on its machine; wrong on another.
+_MACHINE_ARGS = ("ntasks_ocn", "job_queue", "job_wallclock_time")
 
 
 def load_config(path):
@@ -124,7 +133,33 @@ def build_vgrid(vgrid_cfg, topo):
         raise ValueError(f"Unknown vgrid.type: '{vgrid_type}'")
 
 
-def create_case_from_yaml(config, override=False, configure_only=False, ask=False):
+def check_new_case(case_config, source):
+    """Raise ValueError if the new case ``case_config`` (a create config's
+    case: section) would clash with ``source``, the case it is made from: an
+    inputdir inside the source's, the source's own caseroot, or the source's
+    name on the source's machine, where CIME would give both the same build
+    and run directories."""
+    caseroot, inputdir = Path(case_config["caseroot"]), Path(case_config["inputdir"])
+    source_name = Path(
+        (source.bundled_from or {}).get("caseroot", source.caseroot)
+    ).name
+    if inputdir.resolve().is_relative_to(source.inputdir.resolve()):
+        raise ValueError(
+            f"The new inputdir {inputdir} is inside the source's, {source.inputdir}."
+        )
+    if caseroot.resolve() == source.caseroot.resolve() or (
+        caseroot.name == source_name and case_config["machine"] == source.machine
+    ):
+        raise ValueError(
+            f"The new case would be named {source_name} on {source.machine}, like "
+            "its source, so CIME would give both the same build and run "
+            "directories. Give the new caseroot another name."
+        )
+
+
+def create_case_from_yaml(
+    config, override=False, configure_only=False, ask=False, source=None
+):
     """
     Run the full case creation workflow from a config dict.
 
@@ -138,15 +173,34 @@ def create_case_from_yaml(config, override=False, configure_only=False, ask=Fals
         configured (e.g. to diff against a reference case) without running
         the expensive forcing extraction step.
     ask : bool
-        Without a forcings section, ask for the forcings at the terminal once
-        the case exists (configure_forcings(ask=True)). Without either, a
-        ValueError, raised before anything is created.
+        Ask for the forcings at the terminal once the case exists
+        (configure_forcings(ask=True)), offering the config's forcings section
+        as the answers. Without ask, the config needs a forcings section; if it
+        has none, a ValueError, raised before anything is created.
+    source : Case, optional
+        The case this one is made from (crocodash create --from), read with
+        Case.from_caseroot() from its caseroot or a bundle; the config is then
+        case_to_yaml(source) with the new case's changes. The source's own xml,
+        user_nl and SourceMods changes are carried over, except those specific
+        to its machine on another machine and its run's CONTINUE_RUN, RESUBMIT
+        and directories. The new case takes its session id, and, on the same
+        machine, its PE layout and batch job. Its forcing files whose settings
+        still match are copied (Case.copy_forcing_files()), so processing makes
+        only the rest.
     """
     if "forcings" not in config and not ask:
         raise ValueError(
             "The config has no forcings section: add one, or run "
             "'crocodash create' on a terminal to be asked for them."
         )
+    case_args = dict(config["case"])
+    if source is not None:
+        check_new_case(case_args, source)
+        # The source's grid and forcing files then apply unrenamed.
+        case_args.setdefault("session_id", source.session_id)
+        if case_args["machine"] != source.machine:
+            for key in _MACHINE_ARGS:
+                case_args.pop(key, None)
     grid = build_grid(config["grid"])
     topo = build_topo(config["topo"], grid)
     vgrid = build_vgrid(config["vgrid"], topo)
@@ -156,13 +210,30 @@ def create_case_from_yaml(config, override=False, configure_only=False, ask=Fals
         ocn_topo=topo,
         ocn_vgrid=vgrid,
         override=override,
-        **config["case"],
+        **case_args,
     )
 
-    if "forcings" in config:
-        case.configure_forcings(**config["forcings"])
+    if source is not None:
+        changes = source.user_changes(target_machine=case.machine)
+        for var in _SOURCE_RUN_VARIABLES:
+            changes["xmlchanges"].pop(var, None)
+        case.apply_user_changes(changes)
+    if ask:
+        case.configure_forcings(ask=True, **config.get("forcings", {}))
     else:
-        case.configure_forcings(ask=True)
+        case.configure_forcings(**config["forcings"])
+    if source is not None:
+        copied = case.copy_forcing_files(source)
+        left_out = sorted(
+            source.user_changes()["xmlchanges"].keys() - changes["xmlchanges"].keys()
+        )
+        print(f"Created {case.caseroot} from {source.caseroot}.")
+        for kind in _CHANGE_KINDS:
+            if changes[kind]:
+                print(f"  Carried over its {kind}: {', '.join(changes[kind])}")
+        if left_out:
+            print(f"  Left out as its machine's or its run's: {', '.join(left_out)}")
+        print(f"  Forcing files copied for: {', '.join(sorted(copied)) or 'none'}")
     if not configure_only:
         case.process_forcings()
 
@@ -171,50 +242,50 @@ def create_case_from_yaml(config, override=False, configure_only=False, ask=Fals
 
 def case_to_yaml(caseroot):
     """
-    Reconstruct a YAML config dict from an existing case's state files.
+    The create config of an existing case: its grid files, the arguments it
+    was created with and its forcing arguments, as a dict for
+    create_case_from_yaml() or yaml.dump().
 
-    Reads _crocodash_state.json (written by Case.__init__) and, if present,
-    extract_forcings/config.json (written by Case.configure_forcings).
-    Returns a dict suitable for passing to create_case_from_yaml or writing
-    to a YAML file with yaml.dump().
+    ``caseroot`` is a caseroot, a bundle (whose files it names in the bundle),
+    or a Case read from either.
     """
-    caseroot = Path(caseroot)
-    state = case_state.read(caseroot)
-
-    topo_ds = xr.open_dataset(state["topo_path"])
-    min_depth = float(topo_ds.attrs.get("min_depth", 0.0))
-    topo_ds.close()
+    case = caseroot if isinstance(caseroot, Case) else Case.from_caseroot(caseroot)
+    state = case_state.read(case.caseroot)
+    with xr.open_dataset(case.topo_path) as topo_ds:
+        min_depth = float(topo_ds.attrs.get("min_depth", 0.0))
+    # A bundle's case is named by the caseroot it was bundled from.
+    bundled_from = case.bundled_from or {}
 
     config = {
         "grid": {
-            "supergrid_path": state["supergrid_path"],
-            "name": state["grid_name"],
+            "supergrid_path": case.supergrid_path,
+            "name": case.grid_name,
         },
         "topo": {
             "min_depth": min_depth,
             "source": {
                 "type": "from_file",
-                "topo_file_path": state["topo_path"],
+                "topo_file_path": case.topo_path,
             },
         },
         "vgrid": {
             "type": "from_file",
-            "filename": state["vgrid_path"],
+            "filename": case.vgrid_path,
         },
         "case": {
             # Derived/resolved fields — require explicit mapping from state keys
-            "cesmroot": state["cesmroot"],
-            "caseroot": str(caseroot),
-            "inputdir": state["inputdir"],
-            "compset": state["compset_lname"],
-            "machine": state["machine"],
+            "cesmroot": str(case.cesmroot),
+            "caseroot": bundled_from.get("caseroot", str(case.caseroot)),
+            "inputdir": bundled_from.get("inputdir", str(case.inputdir)),
+            "compset": case.compset_lname,
+            "machine": case.machine,
             # Scalar init args stored verbatim by Case._init_args — pull dynamically
             # so new Case.__init__ params flow through without touching this function.
             **{k: v for k, v in state.items() if k not in case_state.DERIVED_KEYS},
         },
     }
 
-    forcings = Case.from_caseroot(caseroot).forcing_args()
+    forcings = case.forcing_args()
     if forcings:
         config["forcings"] = forcings
 

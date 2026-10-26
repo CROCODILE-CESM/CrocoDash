@@ -1,5 +1,6 @@
-"""Prompts that walk a user through a case's forcings: ``crocodash create`` and
-``crocodash configure`` on a terminal, and ``case.configure_forcings(ask=True)``.
+"""Prompts that walk a user through a new case's fields (``crocodash create
+--from``) and a case's forcings: ``crocodash create`` and ``crocodash
+configure`` on a terminal, and ``case.configure_forcings(ask=True)``.
 
 The questions come from what each forcing configurator declares (its inputs and
 their ParamSpecs), so a new configurator or input is asked about without any
@@ -46,6 +47,26 @@ def ask_value(label, default, why_not_default=None, as_yaml=True):
             return read_yaml(answer) if as_yaml else answer
         if not why_not_default:
             return default
+
+
+def ask_case(case, fields):
+    """Ask for each of ``fields`` of ``case`` (a create config's case:
+    section), offering its values: a caseroot or inputdir that exists, or a
+    cesmroot that doesn't, has to be replaced. The end of input keeps the
+    values offered for the rest."""
+    print("\nThe new case (Enter keeps the value in brackets):")
+    try:
+        for field in fields:
+            value = case.get(field)
+            why_not = None
+            if field in ("caseroot", "inputdir") and value and Path(value).exists():
+                why_not = "exists already"
+            elif field == "cesmroot" and value and not Path(value).exists():
+                why_not = "not found on this machine"
+            label = "compset (long name)" if field == "compset" else field
+            case[field] = ask_value(label, value, why_not, as_yaml=False)
+    except EOFError:
+        print("\nEnd of input: the rest keep the values offered.")
 
 
 def _needs_user_input(configurator_cls):

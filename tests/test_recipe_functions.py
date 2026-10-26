@@ -10,6 +10,8 @@ Covers:
 """
 
 import copy
+from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 import yaml
@@ -54,9 +56,11 @@ from CrocoDash.recipe import (
     build_topo,
     build_vgrid,
     case_to_yaml,
+    create_case_from_yaml,
     load_config,
     validate_config_structure,
 )
+import CrocoDash.recipe as recipe
 from CrocoDash.case import Case
 from CrocoDash.case_state import check_version as _check_state_schema_version
 from CrocoDash.case_state import SCHEMA_VERSION as STATE_SCHEMA_VERSION
@@ -558,3 +562,49 @@ def test_configure_forcing_args_missing_required_arg_raises(
 
     with pytest.raises(ValueError, match="marbl_ic_filepath"):
         _forcing_args(forcing_config, tmp_path)
+
+
+def test_a_case_from_another_on_a_new_machine_drops_its_machine_settings(
+    monkeypatch, tmp_path
+):
+    """The new case keeps the source's session id, so the source's grid and
+    forcing files apply unrenamed, but not how the source runs on its own
+    machine: its PE layout and batch job."""
+    created = {}
+
+    class FakeCase:
+        def __init__(self, **kwargs):
+            created.update(kwargs)
+            self.machine, self.caseroot = kwargs["machine"], kwargs["caseroot"]
+
+        def apply_user_changes(self, changes):
+            pass
+
+        def configure_forcings(self, **kwargs):
+            pass
+
+        def copy_forcing_files(self, source):
+            return []
+
+    monkeypatch.setattr(recipe, "Case", FakeCase)
+    for builder in ("build_grid", "build_topo", "build_vgrid"):
+        monkeypatch.setattr(recipe, builder, lambda *args: None)
+    no_changes = dict(caseroot="/src/case", xmlchanges={}, user_nl={})
+    source = SimpleNamespace(
+        machine="derecho",
+        session_id="abc123",
+        caseroot=Path("/src/case"),
+        inputdir=Path("/src/input"),
+        bundled_from=None,
+        user_changes=lambda target_machine=None: copy.deepcopy(
+            no_changes | dict(source_mods=[], xml_files=[])
+        ),
+    )
+    case = {"caseroot": str(tmp_path / "new"), "inputdir": str(tmp_path / "in")}
+    case |= {"machine": "ubuntu-latest", "ntasks_ocn": 128, "job_queue": "main"}
+    config = {"grid": {}, "topo": {}, "vgrid": {}, "case": case, "forcings": {}}
+
+    create_case_from_yaml(config, configure_only=True, source=source)
+
+    assert created["session_id"] == "abc123"
+    assert "ntasks_ocn" not in created and "job_queue" not in created
