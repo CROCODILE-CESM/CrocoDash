@@ -68,7 +68,8 @@ DERIVED_KEYS = frozenset(
 def check_version(state, state_path, supported=SCHEMA_VERSION):
     """Raise ValueError if state's schema_version is incompatible with *supported*.
 
-    Only MAJOR.MINOR must match; a higher PATCH is acceptable.
+    Only MAJOR.MINOR must match; a higher PATCH is acceptable. A file from a
+    newer CrocoDash asks for an upgrade, one from an older one for recreating.
     Logs a warning (rather than raising) when schema_version is absent entirely
     (pre-versioning cases). Also used for the forcing config.json
     (see CrocoDash.forcing.base.read_config), which passes its own *supported*.
@@ -87,7 +88,13 @@ def check_version(state, state_path, supported=SCHEMA_VERSION):
         raise ValueError(f"Invalid schema_version {version!r} in {state_path}.")
     sup_parts = supported.split(".")
     sup_major, sup_minor = int(sup_parts[0]), int(sup_parts[1])
-    if (major, minor) != (sup_major, sup_minor):
+    if (major, minor) > (sup_major, sup_minor):
+        raise ValueError(
+            f"{state_path} has schema version {version!r}, from a newer CrocoDash "
+            f"than this one, which supports {sup_major}.{sup_minor}.x. "
+            "Upgrade CrocoDash to read it."
+        )
+    if (major, minor) < (sup_major, sup_minor):
         raise ValueError(
             f"{state_path} has schema version {version!r} but this version of "
             f"CrocoDash supports {sup_major}.{sup_minor}.x. "

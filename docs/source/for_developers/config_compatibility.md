@@ -40,7 +40,9 @@ Bump the MINOR of `CONFIG_SCHEMA_VERSION` when tolerant reading would
 be ignored, and the new param would silently take its default. In the same PR:
 
 1. Add a migration to `CONFIG_MIGRATIONS`, keyed by the version it upgrades
-   from (`"1.0"`), that rewrites the old layout.
+   from (`"1.0"`), that rewrites the old layout and sets `schema_version` to
+   the new version. `read_config` raises if a migration leaves the version
+   unchanged.
 2. Add a config.json from a real case to `tests/forcing/golden_configs/` if
    none of the existing ones covers the change.
 

@@ -138,6 +138,25 @@ def test_read_config_versions(tmp_path):
         read_config(path)
 
 
+def test_read_config_migrates(tmp_path):
+    """An older config.json is upgraded through CONFIG_MIGRATIONS, and a
+    migration that leaves the version alone raises instead of looping."""
+    path = tmp_path / CONFIG_FILENAME
+    path.write_text(json.dumps({"schema_version": "1.0.0", "old": 1}))
+
+    def rename(config):
+        return {"schema_version": "1.1.0", "new": config["old"]}
+
+    with patch("CrocoDash.forcing.base.CONFIG_SCHEMA_VERSION", "1.1.0"):
+        with patch.dict("CrocoDash.forcing.base.CONFIG_MIGRATIONS", {"1.0": rename}):
+            assert read_config(path) == {"schema_version": "1.1.0", "new": 1}
+        with patch.dict(
+            "CrocoDash.forcing.base.CONFIG_MIGRATIONS", {"1.0": lambda config: config}
+        ):
+            with pytest.raises(RuntimeError):
+                read_config(path)
+
+
 @pytest.mark.parametrize(
     "path",
     sorted((Path(__file__).parent / "golden_configs").glob("*.json")),

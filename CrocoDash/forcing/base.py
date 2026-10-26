@@ -40,7 +40,7 @@ def write_config(path, config):
 
 # Upgrades for config.json files an older CrocoDash wrote, keyed by the
 # "MAJOR.MINOR" they upgrade from. Each takes the config dict and returns it at
-# the next version.
+# the next version, with schema_version set to that version.
 CONFIG_MIGRATIONS = {}
 
 
@@ -54,6 +54,11 @@ def read_config(path):
         CONFIG_MIGRATIONS
     ):
         config = CONFIG_MIGRATIONS[from_version](config)
+        if config["schema_version"].rsplit(".", 1)[0] == from_version:
+            raise RuntimeError(
+                f"The config.json migration from {from_version} left "
+                "schema_version unchanged; it must set the version it upgrades to."
+            )
     case_state.check_version(config, path, supported=CONFIG_SCHEMA_VERSION)
     return config
 
