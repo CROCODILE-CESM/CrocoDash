@@ -21,9 +21,11 @@ def captured_create(monkeypatch):
     """
     calls = {}
 
-    monkeypatch.setattr(recipe, "load_config", lambda path: {"path": path})
+    monkeypatch.setattr(
+        recipe, "load_config", lambda path: {"path": path, "forcings": {}}
+    )
 
-    def fake_create(config, override=False, configure_only=False):
+    def fake_create(config, override=False, configure_only=False, ask=False):
         calls.update(config=config, override=override, configure_only=configure_only)
 
     monkeypatch.setattr(recipe, "create_case_from_yaml", fake_create)
@@ -59,3 +61,17 @@ def test_create_forwards_override(captured_create):
     calls = captured_create("--config", "case.yaml", "--override")
     assert calls["override"] is True
     assert calls["configure_only"] is False
+
+
+def test_create_without_forcings_off_a_terminal_creates_nothing(monkeypatch):
+    """A script can't answer the forcing prompts, so a config without a
+    forcings: section fails before any case is made, not halfway through."""
+    created = []
+    monkeypatch.setattr(recipe, "load_config", lambda path: {"path": path})
+    monkeypatch.setattr(
+        recipe, "create_case_from_yaml", lambda *args, **kwargs: created.append(args)
+    )
+    monkeypatch.setattr("sys.argv", ["crocodash", "create", "--config", "case.yaml"])
+    with pytest.raises(SystemExit):
+        cli.main()
+    assert not created

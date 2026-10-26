@@ -6,9 +6,9 @@ CrocoDash ships a `crocodash` command (installed automatically with `pip install
 
 ```
 crocodash template          --output my_case.{yaml,ipynb,py,pbs} [--machine glade] [--notebook ID]
-crocodash create            --config mycase.yaml [--override]
+crocodash create            --config mycase.yaml [--override] [--no-input]
 crocodash dump              --caseroot /path/to/case
-crocodash configure         --caseroot /path/to/case [--config forcings.yaml] [--set key=value ...]
+crocodash configure         --caseroot /path/to/case [--config forcings.yaml] [--set key=value ...] [--no-input]
 crocodash process  [--caseroot /path/to/case] [--all | --ic --bc ...]  [--skip ...]
 crocodash bundle            --caseroot /path/to/case --output-dir /path/to/bundle_dir ...
 crocodash fork              --bundle /path/to/bundle --caseroot ... --inputdir ... --cesmroot ... --machine ... --project ...
@@ -25,6 +25,11 @@ Creates a new CrocoDash case end-to-end from a YAML config file. Equivalent to c
 crocodash create --config mycase.yaml
 crocodash create --config mycase.yaml --override   # overwrite existing caseroot/inputdir
 ```
+
+Without a `forcings:` section, `create` asks for the forcings once the case exists,
+as `crocodash configure` does (see [Being asked for the forcings](#being-asked-for-the-forcings)).
+That needs a terminal: in a script, or with `--no-input`, a config without a `forcings:`
+section is refused before anything is created.
 
 ### YAML config schema
 
@@ -81,7 +86,7 @@ case:
   project:   "NCGD0011"
   atm_grid_name: "TL319"       # optional, default TL319
 
-# --- Forcings (required) ---
+# --- Forcings (left out: asked for on a terminal) ---
 forcings:
   date_range: ["2020-01-01 00:00:00", "2020-02-01 00:00:00"]
   boundaries: ["south", "east", "west"]
@@ -140,8 +145,25 @@ crocodash process --caseroot ~/croc_cases/mycase --all
 | `--caseroot PATH` | The case to configure. |
 | `--config PATH` | YAML file whose `forcings:` section replaces the matching arguments. |
 | `--set KEY=VALUE` | Set one `configure_forcings()` argument, after `--config`. `VALUE` is read as YAML, so lists and numbers work; quote dates. Repeatable. |
+| `--no-input` | Never ask, even on a terminal. |
 
 A case whose forcings were never configured needs at least `date_range`.
+
+### Being asked for the forcings
+
+On a terminal, `crocodash configure` without `--config` or `--set` (and `crocodash
+create` with a config that has no `forcings:` section) asks for the forcings:
+
+1. It lists the forcings that are on for the case's compset (the ones it requires, and
+   the ones it allows that need no input) and the optional ones.
+2. It asks which optional forcings to add.
+3. It asks each input of the chosen forcings, with a note on what it is and its choices.
+
+Each question offers a value in brackets: the case's current one, or the default. Enter
+keeps it; answers are read as YAML, so lists and numbers work. A required input without
+a value has to be given. If the input ends (Ctrl-D, or a script's last line), the rest
+keep the values offered, so a case is configured again unchanged. The same walkthrough
+runs in Python with `case.configure_forcings(ask=True)`.
 
 ---
 

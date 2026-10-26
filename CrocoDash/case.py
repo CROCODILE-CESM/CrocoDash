@@ -35,6 +35,7 @@ from CrocoDash.forcing.mom6 import (
     DEFAULT_PRODUCT_NAME,
 )
 from CrocoDash.forcing.driver import run_workflow
+from CrocoDash.prompts import ask_forcings
 
 from CrocoDash import case_state
 from CrocoDash.logging import quiet_visualcasegen_info
@@ -587,11 +588,12 @@ class Case:
 
     def configure_forcings(
         self,
-        date_range: list[str],
+        date_range: list[str] = None,
         boundaries: list[str] = DEFAULT_BOUNDARIES,
         product_name: str = DEFAULT_PRODUCT_NAME,
         function_name: str = DEFAULT_FUNCTION_NAME,
         function_overrides: dict = None,
+        ask: bool = False,
         **kwargs,
     ):
         """
@@ -621,6 +623,11 @@ class Case:
             key raises a ValueError. Without this, the function's own defaults are used,
             which previously could only be changed by hand-editing `config.json` between
             `configure_forcings()` and `process_forcings()`.
+        ask : bool, optional
+            Ask for the forcings at the terminal instead: which optional forcings
+            to add, then each of their inputs (see CrocoDash.prompts.ask_forcings).
+            The arguments given here, or else the case's current ones, are offered
+            as the answers.
         kwargs :
             These are the configuration options (please see accepted arguments in the configuration classes)
         Raises
@@ -649,6 +656,21 @@ class Case:
         --------
         process_forcings : Executes the actual boundary, initial condition, and tide setup based on the configuration.
         """
+
+        if ask:
+            given = {
+                name: value
+                for name, value, default in (
+                    ("date_range", date_range, None),
+                    ("boundaries", boundaries, DEFAULT_BOUNDARIES),
+                    ("product_name", product_name, DEFAULT_PRODUCT_NAME),
+                    ("function_name", function_name, DEFAULT_FUNCTION_NAME),
+                    ("function_overrides", function_overrides, None),
+                )
+                if value != default
+            }
+            offered = self.forcing_args(given | kwargs)
+            return self.configure_forcings(**ask_forcings(self.compset_lname, offered))
 
         # Set up Forcings Folder
         self.extract_forcings_path = self.inputdir / "extract_forcings"

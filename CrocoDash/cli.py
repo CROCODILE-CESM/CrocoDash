@@ -14,12 +14,23 @@ class CrocoDashCliError(Exception):
     """
 
 
+def _interactive(args):
+    """Whether to ask: on a terminal, unless --no-input."""
+    return not args.no_input and sys.stdin.isatty()
+
+
 def _create(args):
     from CrocoDash.recipe import load_config, create_case_from_yaml
 
     config = load_config(args.config)
+    ask = _interactive(args)
+    if "forcings" not in config and not ask:
+        raise CrocoDashCliError(
+            f"{args.config} has no forcings: section. Add one, or run on a "
+            "terminal (without --no-input) to be asked for them."
+        )
     create_case_from_yaml(
-        config, override=args.override, configure_only=args.configure_only
+        config, override=args.override, configure_only=args.configure_only, ask=ask
     )
 
 
@@ -36,6 +47,13 @@ def _configure(args):
     import yaml
 
     case = Case.from_caseroot(args.caseroot)
+    if not (args.config or args.set) and _interactive(args):
+        case.configure_forcings(ask=True)
+        print(
+            "Forcings configured. Process them with: "
+            f"crocodash process --caseroot {case.caseroot} --all"
+        )
+        return
     # The changes, --config then --set, over the arguments it was configured with.
     changes = {}
     if args.config:
@@ -209,6 +227,9 @@ def main():
     create_parser = subparsers.add_parser(
         "create",
         help="Create a new CrocoDash case from a YAML config file.",
+        description="Create a new CrocoDash case from a YAML config file. "
+        "Without a forcings: section, it asks for the forcings on a terminal "
+        "once the case exists.",
     )
     create_parser.add_argument(
         "--config", required=True, help="Path to the YAML case config file."
@@ -226,6 +247,12 @@ def main():
         dest="configure_only",
         help="Configure forcings but skip process_forcings — for cases that need to "
         "stage custom input data before running the forcing extraction.",
+    )
+    create_parser.add_argument(
+        "--no-input",
+        dest="no_input",
+        action="store_true",
+        help="Never ask, even on a terminal.",
     )
     create_parser.set_defaults(func=_create)
 
@@ -260,6 +287,13 @@ def main():
         metavar="KEY=VALUE",
         help="Set one configure_forcings() argument, after --config. VALUE is "
         "read as YAML, e.g. --set boundaries=[north,east]. Repeatable.",
+    )
+    configure_parser.add_argument(
+        "--no-input",
+        dest="no_input",
+        action="store_true",
+        help="Never ask, even on a terminal: configure with the case's current "
+        "arguments, changed by --config and --set.",
     )
     configure_parser.set_defaults(func=_configure)
 

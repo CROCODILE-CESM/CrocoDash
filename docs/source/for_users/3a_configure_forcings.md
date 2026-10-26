@@ -86,6 +86,11 @@ An optional configurator (tides, say) is active only when all of its arguments
 without a default are given. An argument no active configurator takes is
 ignored, with a warning.
 
+Or let CrocoDash ask: `case.configure_forcings(ask=True)` lists the forcings for
+the compset, asks which optional ones to add, then asks each input of the chosen
+ones, offering the case's current values (see
+[Being asked for the forcings](cli.md#being-asked-for-the-forcings)).
+
 ## Helper Functions
 
 Useful functions for understanding configuration requirements:

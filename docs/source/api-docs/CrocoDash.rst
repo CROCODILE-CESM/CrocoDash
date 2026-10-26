@@ -61,6 +61,14 @@ CrocoDash.logging module
    :show-inheritance:
    :undoc-members:
 
+CrocoDash.prompts module
+------------------------
+
+.. automodule:: CrocoDash.prompts
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 CrocoDash.recipe module
 -----------------------
 

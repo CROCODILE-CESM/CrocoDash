@@ -32,7 +32,7 @@ def load_config(path):
 
 def validate_config_structure(config):
     """Fast pre-flight structural checks on a config dict before any expensive work."""
-    required_top = {"grid", "topo", "vgrid", "case", "forcings"}
+    required_top = {"grid", "topo", "vgrid", "case"}
     missing = required_top - set(config.keys())
     if missing:
         raise ValueError(f"Config missing required top-level sections: {missing}")
@@ -52,6 +52,9 @@ def validate_config_structure(config):
     if vgrid_type is not None and vgrid_type not in _VGRID_TYPES:
         raise ValueError(f"vgrid.type must be one of {_VGRID_TYPES}")
 
+    # Without a forcings section, create_case_from_yaml() asks for them.
+    if "forcings" not in config:
+        return
     forcings_cfg = config["forcings"]
     if "date_range" not in forcings_cfg:
         raise ValueError("forcings.date_range is required")
@@ -121,13 +124,12 @@ def build_vgrid(vgrid_cfg, topo):
         raise ValueError(f"Unknown vgrid.type: '{vgrid_type}'")
 
 
-def create_case_from_yaml(config, override=False, configure_only=False):
+def create_case_from_yaml(config, override=False, configure_only=False, ask=False):
     """
     Run the full case creation workflow from a config dict.
 
     Builds Grid, Topo, and VGrid objects, creates the CESM case, then calls
-    configure_forcings and process_forcings. A forcings section is required.
-    Returns the Case.
+    configure_forcings and process_forcings. Returns the Case.
 
     Parameters
     ----------
@@ -135,7 +137,16 @@ def create_case_from_yaml(config, override=False, configure_only=False):
         If True, skip process_forcings. Useful when you only need the case
         configured (e.g. to diff against a reference case) without running
         the expensive forcing extraction step.
+    ask : bool
+        Without a forcings section, ask for the forcings at the terminal once
+        the case exists (configure_forcings(ask=True)). Without either, a
+        ValueError, raised before anything is created.
     """
+    if "forcings" not in config and not ask:
+        raise ValueError(
+            "The config has no forcings section: add one, or run "
+            "'crocodash create' on a terminal to be asked for them."
+        )
     grid = build_grid(config["grid"])
     topo = build_topo(config["topo"], grid)
     vgrid = build_vgrid(config["vgrid"], topo)
@@ -148,12 +159,10 @@ def create_case_from_yaml(config, override=False, configure_only=False):
         **config["case"],
     )
 
-    if "forcings" not in config:
-        raise ValueError(
-            "Cannot recreate a case without a forcings configuration. "
-            "The original case must have configure_forcings() called before sharing."
-        )
-    case.configure_forcings(**config["forcings"])
+    if "forcings" in config:
+        case.configure_forcings(**config["forcings"])
+    else:
+        case.configure_forcings(ask=True)
     if not configure_only:
         case.process_forcings()
 
