@@ -1017,7 +1017,8 @@ this is the single file to update.</p>
 <dt class="sig sig-object py" id="CrocoDash.case_state.check_version">
 <span class="sig-prename descclassname"><span class="pre">CrocoDash.case_state.</span></span><span class="sig-name descname"><span class="pre">check_version</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">supported</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'1.1.0'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.case_state.check_version" title="Link to this definition">#</a></dt>
 <dd><p>Raise ValueError if state’s schema_version is incompatible with <em>supported</em>.</p>
-<p>Only MAJOR.MINOR must match; a higher PATCH is acceptable.
+<p>Only MAJOR.MINOR must match; a higher PATCH is acceptable. A file from a
+newer CrocoDash asks for an upgrade, one from an older one for recreating.
 Logs a warning (rather than raising) when schema_version is absent entirely
 (pre-versioning cases). Also used for the forcing config.json
 (see CrocoDash.forcing.base.read_config), which passes its own <em>supported</em>.</p>
