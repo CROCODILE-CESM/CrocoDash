@@ -110,19 +110,17 @@ class TidesConfigurator(BaseConfigurator):
         super().configure()
         # You also need to add the files to the OBC string, which is handled in the main case unfortunately
 
-    def get_output_filepaths(self, ocn_ice_directory):
-        # Search directory for tu_* and tz_* files
-        ocn_ice_directory = Path(ocn_ice_directory)
-
-        if not ocn_ice_directory.exists():
-            raise FileNotFoundError(f"{ocn_ice_directory} does not exist")
-
-        return [
-            str(p.resolve())
-            for pattern in ("tu_*", "tz_*")
-            for p in ocn_ice_directory.glob(pattern)
-            if p.is_file()
-        ]
+    def output_files(self, ctx):
+        # regional_mom6 numbers segments by position in `boundaries`, the same
+        # numbering the conditions OBC strings that name these files use.
+        n_segments = len(self.get_input_param("boundaries"))
+        return {
+            "tides": [
+                ctx.output_path / f"{kind}_segment_{n:03d}.nc"
+                for n in range(1, n_segments + 1)
+                for kind in ("tz", "tu")
+            ]
+        }
 
     def process(self, ctx):
         # hgrid_type/vgrid_type take mom6_forge Grid/VGrid objects directly --

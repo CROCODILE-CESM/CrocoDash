@@ -10,7 +10,8 @@ end of ``Case.__init__``.  This module owns:
 - which state-file keys are *derived* (i.e. cannot be passed straight back to
   ``Case.__init__``) and therefore need explicit handling when reconstructing a
   case from the file (``DERIVED_KEYS``);
-- the ``created`` snapshot of what creating the case left in the caseroot;
+- the ``created`` snapshot of what creating the case left in the caseroot, and
+  ``parse_xmlchanges``, which reads the xmlchanges in replay.sh beyond it;
 - the ``write``, ``read``, and ``check_version`` functions.
 
 Keeping both ``INIT_ARGS_EXCLUDE`` and ``DERIVED_KEYS`` here makes the
@@ -19,6 +20,8 @@ this is the single file to update.
 """
 
 import json
+import re
+import shlex
 from pathlib import Path
 
 # 1.2.0 added esmf_mesh_path and created. Older state files are refused: the
@@ -80,6 +83,60 @@ def created_snapshot(caseroot):
         },
         "xml_files": sorted(path.name for path in caseroot.glob("*.xml")),
     }
+
+
+# The xmlchange options that take a value, without their leading dashes.
+_XMLCHANGE_VALUE_OPTIONS = {
+    "caseroot",
+    "subgroup",
+    "id",
+    "val",
+    "file",
+    "delimiter",
+    "loglevel",
+}
+
+
+def parse_xmlchanges(lines):
+    """{variable: last value set} by the xmlchange commands among replay.sh's
+    ``lines``.
+
+    Reads every form CIME records: ``./xmlchange`` or a path to it;
+    ``K=V``, ``K1=V1,K2=V2`` (or split by ``--delimiter``) and ``--id K --val V``
+    (also ``--id=K``); quoted values; and flags such as ``--force``,
+    ``--non-local`` or ``--file F``. A ``--dryrun`` line changes nothing, and an
+    ``--append`` one adds to a value that can't be known here, so both are
+    skipped, as are lines that aren't valid shell.
+    """
+    changes = {}
+    for line in lines:
+        try:
+            words = shlex.split(line, comments=True)
+        except ValueError:
+            continue
+        if not words or Path(words[0]).name != "xmlchange":
+            continue
+        options, settings = {}, []
+        words = iter(words[1:])
+        for word in words:
+            if not word.startswith("-"):
+                settings.append(word)
+                continue
+            name, has_value, value = word.lstrip("-").partition("=")
+            if name in _XMLCHANGE_VALUE_OPTIONS and not has_value:
+                value = next(words, "")
+            options[name] = value
+        if "dryrun" in options or "append" in options:
+            continue
+        if "id" in options:
+            changes[options["id"]] = options.get("val", "")
+        split = r"(?<!\\)" + re.escape(options.get("delimiter") or ",")
+        for setting in settings:
+            for pair in re.split(split, setting):
+                var, is_setting, value = pair.partition("=")
+                if is_setting:
+                    changes[var.strip()] = value
+    return changes
 
 
 def check_version(state, state_path, supported=SCHEMA_VERSION):

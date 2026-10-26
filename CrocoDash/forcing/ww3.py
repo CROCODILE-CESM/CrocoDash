@@ -177,8 +177,8 @@ def to_direction_to(direction, convention):
 
 
 # Where process() writes WW3's generated inputs, and therefore where
-# get_output_filepaths() looks for them. Kept in one place so the writer, the
-# WW3_GRID_INP_DIR setting and the reader cannot drift apart.
+# output_files() declares them. Kept in one place so the writer, the
+# WW3_GRID_INP_DIR setting and the declaration cannot drift apart.
 WAVE_SUBDIR = "wav"
 
 
@@ -566,29 +566,34 @@ class WW3Configurator(BaseConfigurator):
         )
         super().configure()
 
-    def get_output_filepaths(self, ocn_ice_directory):
-        """Everything WW3 generated, which is a whole directory rather than a
-        fixed set of named files.
+    def output_files(self, ctx):
+        """The boundary spectra, spec.list and ww3_bounc.nml in <inputdir>/wav
+        -- nothing with ww3_obc_product_name='none'.
 
-        The base implementation walks output_params for is_file entries, and
-        all of WW3's are XML settings -- WW3_GRID_INP_DIR even holds the
-        directory rather than any single file. Without this override the base
-        returns nothing, so CaseBundle.bundle() copies no WW3 input at all and
-        validate_output_filepaths() passes vacuously.
-
-        Globbing rather than naming files is deliberate: process() writes one
-        ww3.pointN_spec.nc per boundary station, so the count is not known up
-        front, and spec.list references those paths while ww3_bounc.nml
-        references spec.list. The directory is the unit that stays coherent,
-        which is also why WW3_GRID_INP_DIR points at it.
-
-        ocn_ice_directory is <inputdir>/ocn; process() writes to
-        <inputdir>/wav (WAVE_SUBDIR), hence the sibling lookup.
+        The spectra are a glob: process() writes one ww3.pointN_spec.nc per
+        boundary station, so the count isn't known up front. WW3_GRID_INP_DIR
+        points at the directory rather than any one file, and spec.list names
+        the spectra.
         """
-        wave_dir = Path(ocn_ice_directory).parent / WAVE_SUBDIR
-        if not wave_dir.is_dir():
-            return []
-        return sorted(p for p in wave_dir.iterdir() if p.is_file())
+        if self.get_input_param("ww3_obc_product_name") == "none":
+            return {"ww3": []}
+        wave_dir = Path(ctx.inputdir) / WAVE_SUBDIR
+        return {
+            "ww3": [
+                wave_dir / "ww3.point*_spec.nc",
+                wave_dir / "spec.list",
+                wave_dir / "ww3_bounc.nml",
+            ]
+        }
+
+    @classmethod
+    def step_settings(cls, config):
+        # process() also reads the run dates from the conditions entry.
+        dates = config.get("conditions", {}).get("inputs", {})
+        return {
+            **super().step_settings(config),
+            "conditions_dates": [dates.get("start_date"), dates.get("end_date")],
+        }
 
     def stale_outputs(self, previous_config, current_config, inputdir):
         """The spectra in <inputdir>/wav are rewritten on every process() run,

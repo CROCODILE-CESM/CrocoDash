@@ -36,18 +36,17 @@ from uuid import uuid4
 
 import yaml
 from CrocoDash.forcing.base import *
-from CrocoDash.forcing.base import CONFIG_FILENAME, CONFIG_META_KEYS, read_config
+from CrocoDash.forcing.base import CONFIG_FILENAME, read_config
 from CrocoDash.forcing import *
 
 # After the star imports: forcing.base has its own xmlchange, which needs a caseroot.
 from visualCaseGen.custom_widget_types.case_tools import xmlchange, append_user_nl
 from CrocoDash.logging import setup_logger
+from CrocoDash.case import Case
 from CrocoDash.recipe import case_to_yaml, create_case_from_yaml
 from CrocoDash import case_state
 
 logger = setup_logger(__name__)
-
-INPUTDIR_FILE_PREFIXES = ("forcing_obc_segment_", "init_")
 
 
 # ---------------------------------------------------------------------------
@@ -91,16 +90,11 @@ def copy_source_mods_from_case(old_caseroot, new_caseroot, short_filepaths):
 
 def apply_xmlchanges_to_case(old_caseroot, xmlchangeparams):
     replay = Path(old_caseroot) / "replay.sh"
-    with replay.open() as f:
-        for line in f:
-            line = line.strip()
-            if not line.startswith("./xmlchange"):
-                continue
-            _, kv = line.split(None, 1)
-            param, value = kv.split("=", 1)
-            if param in xmlchangeparams:
-                logger.info(f"Running {param}={value} xmlchange to new caseroot")
-                xmlchange(param, value, is_non_local=True)
+    changes = case_state.parse_xmlchanges(replay.read_text().splitlines())
+    for param, value in changes.items():
+        if param in xmlchangeparams:
+            logger.info(f"Running {param}={value} xmlchange to new caseroot")
+            xmlchange(param, value, is_non_local=True)
 
 
 # ---------------------------------------------------------------------------
@@ -180,18 +174,9 @@ class CaseBundle:
 
     def _read_xmlchanges(self):
         replay_path = self.caseroot / "replay.sh"
-        self.xmlchanges = {}
-        for line in replay_path.read_text().splitlines():
-            line = line.strip()
-            if not line or line.startswith("#"):
-                continue
-            if "xmlchange" not in line:
-                continue
-            parts = line.split("xmlchange", 1)[1].strip()
-            if "=" not in parts:
-                continue
-            left, right = parts.split("=", 1)
-            self.xmlchanges[left.strip()] = right.strip().strip('"').strip("'")
+        self.xmlchanges = case_state.parse_xmlchanges(
+            replay_path.read_text().splitlines()
+        )
         return self.xmlchanges
 
     def _read_user_nls(self):
@@ -316,21 +301,16 @@ class CaseBundle:
         ocn_target = case_subfolder / "ocn"
         ocn_target.mkdir(parents=False, exist_ok=True)
 
-        for f in Path(ocn_dir).iterdir():
-            if f.name.startswith(INPUTDIR_FILE_PREFIXES):
-                logger.info(f"Copying {f}")
-                shutil.copy(f, ocn_target)
-
-        for config, value in self.forcing_config.items():
-            if config == "conditions" or config in CONFIG_META_KEYS:
-                continue
-            configurator = ForcingConfigRegistry.get_configurator(value)
-            for path in configurator.get_output_filepaths(ocn_dir):
-                logger.info(f"Copying {config} file: {path}...")
-                # keep the layout under inputdir (ocn/, wav/, ...)
-                target = case_subfolder / Path(path).relative_to(Path(ocn_dir).parent)
-                target.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copy(path, target)
+        if self.forcing_config:
+            case = Case.from_caseroot(self.caseroot)
+            ctx = case.workflow_context()
+            for config, configurator in case.configurators().items():
+                for path in configurator.get_output_filepaths(ctx):
+                    logger.info(f"Copying {config} file: {path}...")
+                    # keep the layout under inputdir (ocn/, wav/, ...)
+                    target = case_subfolder / path.relative_to(ctx.inputdir)
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy(path, target)
 
         for key in ("supergrid_path", "topo_path", "vgrid_path", "esmf_mesh_path"):
             filename = self.init_args.get(key)

@@ -29,7 +29,6 @@ def process_initial_condition(
     raw_data_dir: str | Path,
     output_data_dir: str | Path,
     regrid_fn,
-    preview: bool = False,
 ):
     """
     Process the initial condition (t=0) through the GET → REGRID pipeline.
@@ -52,22 +51,13 @@ def process_initial_condition(
             once the raw snapshot has been downloaded. Owns its own
             idempotency (this engine has no per-chunk state to check --
             IC is a single snapshot, not a date-chunked series).
-        preview: Return metadata dict without executing, default False.
     """
     if not isinstance(start_date, datetime):
         start_date = pd.to_datetime(start_date).to_pydatetime()
 
-    output_file = "ic_unprocessed.nc"
     end_ic_date = start_date + timedelta(days=1)
     end_ic_date_str = end_ic_date.strftime("%Y-%m-%d")
     start_date_str = start_date.strftime("%Y-%m-%d")
-
-    if preview:
-        return {
-            "date": start_date_str,
-            "output_file_names": output_file,
-            "output_folder": output_data_dir,
-        }
 
     # obc.py creates these itself, but the driver can run IC before BC (or
     # without it), so IC cannot rely on that having happened. netCDF4 reports a

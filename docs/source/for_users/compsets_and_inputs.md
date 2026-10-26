@@ -27,7 +27,7 @@ At the end of `Case.__init__`, CrocoDash writes a `_crocodash_state.json` file i
 }
 ```
 
-`created` records what creating the case left in the caseroot: the number of lines in `replay.sh`, the text of every `user_nl_*` file, and the names of the `*.xml` files. Anything beyond it is a change made after the case was created.
+`created` records what creating the case left in the caseroot: the number of lines in `replay.sh`, the text of every `user_nl_*` file, and the names of the `*.xml` files. Anything beyond it is a change made after the case was created (see `case.user_changes()` under [Editing a Case from Python](#editing-a-case-from-python)).
 
 `Case.from_caseroot` (and so `crocodash configure` and `crocodash process`) reads a case back from this file. `crocodash dump` reads it to reconstruct a YAML config, and `bundle`/`fork`/`duplicate` to avoid re-parsing CIME. It is the paired counterpart to `inputdir/extract_forcings/config.json`, which records forcing configuration written by `configure_forcings`.
 
@@ -185,6 +185,28 @@ When using CrocoDash, parameter customization happens after case creation:
 3. **You build and run the case** with modified parameters
 
 For configuration of forcing-specific parameters (tides, BGC, rivers, etc.), see [Configure Forcings](3a_configure_forcings.md) instead.
+
+### Editing a Case from Python
+
+A `Case`, whether just created or read back with `Case.from_caseroot`, can make these changes in its own caseroot:
+
+```python
+from CrocoDash.case import Case
+
+case = Case.from_caseroot("/glade/u/home/<user>/croc_cases/mycase")
+case.xmlchange("DOUT_S", "FALSE")  # ./xmlchange DOUT_S=FALSE, recorded in replay.sh
+case.set_user_nl("mom", {"DT": 1800})  # user_nl_mom
+```
+
+`set_user_nl` replaces the line a variable already has in the file, or appends one, outside the `! >>> CrocoDash configure_forcings` blocks. A multi-instance case gets the setting in every instance's file. A variable that one of those blocks sets is refused: pass it to `configure_forcings` instead.
+
+`case.user_changes()` lists what was changed after the case was created, with values:
+- the xmlchanges in `replay.sh`;
+- the `user_nl_*` lines outside CrocoDash's blocks;
+- SourceMods files;
+- extra xml files.
+
+It leaves out what `configure_forcings` sets. With `target_machine=` set to another machine, it also leaves out the PE layout, batch job, project and directory variables. `other_case.apply_user_changes(changes)` makes those changes in another case.
 
 ## Tips and Best Practices
 
