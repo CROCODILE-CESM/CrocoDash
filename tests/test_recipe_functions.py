@@ -4,7 +4,7 @@ Unit tests for CrocoDash/recipe.py.
 Covers:
 - validate_config_structure: valid/invalid variants
 - load_config: file I/O + validation round-trip
-- build_grid / build_topo / build_vgrid: each source type
+- read_grids: the grid files a config names
 - case_to_yaml: reads state files written by Case.__init__ + configure_forcings
 - Round-trip: case_to_yaml output is a valid input for create_case_from_yaml
 """
@@ -52,12 +52,10 @@ def sample_forcing_config():
 
 
 from CrocoDash.recipe import (
-    build_grid,
-    build_topo,
-    build_vgrid,
     case_to_yaml,
     create_case_from_yaml,
     load_config,
+    read_grids,
     validate_config_structure,
 )
 import CrocoDash.recipe as recipe
@@ -65,9 +63,6 @@ from CrocoDash.case import Case
 from CrocoDash.case_state import check_version as _check_state_schema_version
 from CrocoDash.case_state import SCHEMA_VERSION as STATE_SCHEMA_VERSION
 from CrocoDash.forcing.base import CONFIG_FILENAME, write_config
-from CrocoDash.grid import Grid
-from CrocoDash.topo import Topo
-from CrocoDash.vgrid import VGrid
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -83,25 +78,27 @@ def _forcing_args(forcing_config, tmp_path):
     return case.forcing_args()
 
 
+CASE_KEYS = (
+    "cesmroot",
+    "caseroot",
+    "inputdir",
+    "compset",
+    "machine",
+    "ocn_grid",
+    "ocn_topo",
+    "ocn_vgrid",
+)
+
 MINIMAL_VALID_CONFIG = {
-    "grid": {
-        "lenx": 4.0,
-        "leny": 3.0,
-        "resolution": 0.1,
-        "xstart": 278.0,
-        "ystart": 7.0,
-    },
-    "topo": {
-        "min_depth": 9.5,
-        "source": {"type": "flat", "depth": 100.0},
-    },
-    "vgrid": {"type": "uniform", "nk": 10, "depth": 100.0},
     "case": {
         "cesmroot": "/cesm",
         "caseroot": "/case",
         "inputdir": "/inputdir",
         "compset": "CR_JRA",
         "machine": "derecho",
+        "ocn_grid": "/grids/ocean_hgrid.nc",
+        "ocn_topo": "/grids/ocean_topog.nc",
+        "ocn_vgrid": "/grids/ocean_vgrid.nc",
     },
     "forcings": {
         "date_range": ["2020-01-01 00:00:00", "2020-12-31 00:00:00"],
@@ -122,24 +119,15 @@ def test_validate_valid_config():
 
 
 def test_validate_missing_top_level_sections():
-    bad = {"grid": {}, "topo": {}}  # no vgrid, no case
+    bad = {"forcings": {}}  # no case
     with pytest.raises(ValueError, match="missing required top-level"):
         validate_config_structure(bad)
 
 
-@pytest.mark.parametrize(
-    "missing_key", ["cesmroot", "caseroot", "inputdir", "compset", "machine"]
-)
+@pytest.mark.parametrize("missing_key", CASE_KEYS)
 def test_validate_missing_case_key(missing_key):
     config = {
-        "grid": {},
-        "topo": {},
-        "vgrid": {"type": "uniform"},
-        "case": {
-            k: "x"
-            for k in ("cesmroot", "caseroot", "inputdir", "compset", "machine")
-            if k != missing_key
-        },
+        "case": {k: "x" for k in CASE_KEYS if k != missing_key},
         "forcings": {
             "date_range": ["2020-01-01", "2020-02-01"],
             "boundaries": ["north"],
@@ -148,18 +136,6 @@ def test_validate_missing_case_key(missing_key):
         },
     }
     with pytest.raises(ValueError, match=f"case\\.{missing_key}"):
-        validate_config_structure(config)
-
-
-def test_validate_invalid_topo_type():
-    config = {**MINIMAL_VALID_CONFIG, "topo": {"source": {"type": "bogus"}}}
-    with pytest.raises(ValueError, match="topo\\.source\\.type"):
-        validate_config_structure(config)
-
-
-def test_validate_invalid_vgrid_type():
-    config = {**MINIMAL_VALID_CONFIG, "vgrid": {"type": "bogus"}}
-    with pytest.raises(ValueError, match="vgrid\\.type"):
         validate_config_structure(config)
 
 
@@ -225,7 +201,7 @@ def test_load_config_valid_file(tmp_path):
     config_file = tmp_path / "case.yaml"
     config_file.write_text(yaml.dump(MINIMAL_VALID_CONFIG))
     loaded = load_config(config_file)
-    assert loaded["vgrid"]["type"] == "uniform"
+    assert loaded["case"]["ocn_grid"] == "/grids/ocean_hgrid.nc"
     assert loaded["case"]["machine"] == "derecho"
 
 
@@ -238,126 +214,25 @@ def test_load_config_invalid_file_raises(tmp_path):
 
 
 # ---------------------------------------------------------------------------
-# build_grid
+# read_grids
 # ---------------------------------------------------------------------------
 
 
-def test_build_grid_from_params():
-    cfg = {
-        "lenx": 4.0,
-        "leny": 3.0,
-        "resolution": 0.5,
-        "xstart": 278.0,
-        "ystart": 7.0,
-        "name": "testgrid",
-    }
-    grid = build_grid(cfg)
-    assert isinstance(grid, Grid)
-    assert grid.name == "testgrid"
-    assert grid.lenx == pytest.approx(4.0, rel=0.01)
-    assert grid.leny == pytest.approx(3.0, rel=0.01)
+def test_read_grids_keeps_the_grid_name_and_min_depth(gen_grid_topo_vgrid, tmp_path):
+    """The grid keeps the name it was written with, not its file's name. A case
+    names its grid files and some forcing files after it, so a case created
+    from another needs it to reuse the source's files."""
+    grid, topo, vgrid = gen_grid_topo_vgrid
+    paths = [tmp_path / f"{kind}_{grid.name}_abc123.nc" for kind in ("h", "t", "v")]
+    grid.write_supergrid(paths[0])
+    topo.write_topo(paths[1])
+    vgrid.write(paths[2])
 
+    read_grid, read_topo, read_vgrid = read_grids(*paths)
 
-def test_build_grid_from_supergrid_file(gen_grid_topo_vgrid, tmp_path):
-    orig_grid, _, _ = gen_grid_topo_vgrid
-    supergrid_path = tmp_path / "ocean_hgrid.nc"
-    orig_grid.write_supergrid(supergrid_path)
-
-    cfg = {"supergrid_path": str(supergrid_path), "name": "reloaded"}
-    grid = build_grid(cfg)
-    assert isinstance(grid, Grid)
-    assert grid.name == "reloaded"
-    assert grid.nx == orig_grid.nx
-    assert grid.ny == orig_grid.ny
-
-
-def test_build_grid_from_supergrid_preserves_shape(gen_grid_topo_vgrid, tmp_path):
-    orig_grid, _, _ = gen_grid_topo_vgrid
-    supergrid_path = tmp_path / "ocean_hgrid.nc"
-    orig_grid.write_supergrid(supergrid_path)
-
-    grid = build_grid({"supergrid_path": str(supergrid_path)})
-    assert grid.nx == orig_grid.nx
-    assert grid.ny == orig_grid.ny
-
-
-# ---------------------------------------------------------------------------
-# build_topo
-# ---------------------------------------------------------------------------
-
-
-def test_build_topo_flat(get_rect_grid):
-    cfg = {"min_depth": 9.5, "source": {"type": "flat", "depth": 500.0}}
-    topo = build_topo(cfg, get_rect_grid)
-    assert isinstance(topo, Topo)
-    assert topo.max_depth == pytest.approx(500.0, rel=0.01)
-    assert topo.min_depth == pytest.approx(9.5, rel=0.01)
-
-
-def test_build_topo_from_file(gen_grid_topo_vgrid, tmp_path):
-    grid, orig_topo, _ = gen_grid_topo_vgrid
-    topo_path = tmp_path / "ocean_topog.nc"
-    orig_topo.write_topo(topo_path)
-
-    cfg = {
-        "min_depth": orig_topo.min_depth,
-        "source": {"type": "from_file", "topo_file_path": str(topo_path)},
-    }
-    topo = build_topo(cfg, grid)
-    assert isinstance(topo, Topo)
-    assert topo.max_depth == pytest.approx(orig_topo.max_depth, rel=0.01)
-
-
-def test_build_topo_unknown_type_raises(get_rect_grid):
-    cfg = {"min_depth": 9.5, "source": {"type": "unknown"}}
-    with pytest.raises(ValueError, match="Unknown topo\\.source\\.type"):
-        build_topo(cfg, get_rect_grid)
-
-
-# ---------------------------------------------------------------------------
-# build_vgrid
-# ---------------------------------------------------------------------------
-
-
-def test_build_vgrid_uniform(get_rect_grid_and_topo):
-    _, topo = get_rect_grid_and_topo
-    cfg = {"type": "uniform", "nk": 10, "depth": 200.0}
-    vgrid = build_vgrid(cfg, topo)
-    assert isinstance(vgrid, VGrid)
-    assert vgrid.nk == 10
-    assert vgrid.depth == pytest.approx(200.0, rel=0.01)
-
-
-def test_build_vgrid_hyperbolic(get_rect_grid_and_topo):
-    _, topo = get_rect_grid_and_topo
-    cfg = {"type": "hyperbolic", "nk": 20, "depth": 1000.0, "ratio": 10.0}
-    vgrid = build_vgrid(cfg, topo)
-    assert isinstance(vgrid, VGrid)
-    assert vgrid.nk == 20
-
-
-def test_build_vgrid_depth_defaults_to_topo_max_depth(get_rect_grid_and_topo):
-    _, topo = get_rect_grid_and_topo
-    cfg = {"type": "uniform", "nk": 5}  # no depth key
-    vgrid = build_vgrid(cfg, topo)
-    assert vgrid.depth == pytest.approx(topo.max_depth, rel=0.01)
-
-
-def test_build_vgrid_from_file(get_vgrid, tmp_path):
-    vgrid_path = tmp_path / "vgrid.nc"
-    get_vgrid.write(vgrid_path)
-
-    cfg = {"type": "from_file", "filename": str(vgrid_path)}
-    vgrid = build_vgrid(cfg, topo=None)
-    assert isinstance(vgrid, VGrid)
-    assert vgrid.nk == get_vgrid.nk
-    assert vgrid.depth == pytest.approx(get_vgrid.depth, rel=0.01)
-
-
-def test_build_vgrid_unknown_type_raises(get_rect_grid_and_topo):
-    _, topo = get_rect_grid_and_topo
-    with pytest.raises(ValueError, match="Unknown vgrid\\.type"):
-        build_vgrid({"type": "bogus", "nk": 5}, topo)
+    assert read_grid.name == grid.name
+    assert read_topo.min_depth == topo.min_depth
+    assert read_vgrid.nk == vgrid.nk
 
 
 # ---------------------------------------------------------------------------
@@ -410,16 +285,9 @@ def test_case_to_yaml_structure(get_CrocoDash_case):
     case = get_CrocoDash_case
     config = case_to_yaml(case.caseroot)
 
-    assert set(config.keys()) >= {"grid", "topo", "vgrid", "case"}
-    assert "supergrid_path" in config["grid"]
-    assert "min_depth" in config["topo"]
-    assert config["topo"]["source"]["type"] == "from_file"
-    assert config["vgrid"]["type"] == "from_file"
-    assert "cesmroot" in config["case"]
-    assert "caseroot" in config["case"]
-    assert "inputdir" in config["case"]
-    assert "compset" in config["case"]
-    assert "machine" in config["case"]
+    assert set(config.keys()) >= {"case"}
+    for key in CASE_KEYS:
+        assert key in config["case"]
 
 
 def test_case_to_yaml_values_match_case(get_CrocoDash_case):
@@ -430,7 +298,7 @@ def test_case_to_yaml_values_match_case(get_CrocoDash_case):
     assert config["case"]["machine"] == case.machine
     assert config["case"]["caseroot"] == str(case.caseroot)
     assert config["case"]["inputdir"] == str(case.inputdir)
-    assert config["grid"]["supergrid_path"] == case.supergrid_path
+    assert config["case"]["ocn_grid"] == case.supergrid_path
 
 
 def test_case_to_yaml_with_forcings(get_case_with_cf):
@@ -469,12 +337,8 @@ def test_case_to_yaml_round_trip(get_case_with_cf, tmp_path):
 
     assert reloaded["case"]["compset"] == config["case"]["compset"]
     assert reloaded["case"]["machine"] == config["case"]["machine"]
-    assert reloaded["grid"]["supergrid_path"] == config["grid"]["supergrid_path"]
-    assert (
-        reloaded["topo"]["source"]["topo_file_path"]
-        == config["topo"]["source"]["topo_file_path"]
-    )
-    assert reloaded["vgrid"]["filename"] == config["vgrid"]["filename"]
+    for key in ("ocn_grid", "ocn_topo", "ocn_vgrid"):
+        assert reloaded["case"][key] == config["case"][key]
     assert reloaded["forcings"]["date_range"] == config["forcings"]["date_range"]
     assert reloaded["forcings"]["boundaries"] == config["forcings"]["boundaries"]
     assert reloaded["forcings"]["product_name"] == config["forcings"]["product_name"]
@@ -587,8 +451,7 @@ def test_a_case_from_another_on_a_new_machine_drops_its_machine_settings(
             return []
 
     monkeypatch.setattr(recipe, "Case", FakeCase)
-    for builder in ("build_grid", "build_topo", "build_vgrid"):
-        monkeypatch.setattr(recipe, builder, lambda *args: None)
+    monkeypatch.setattr(recipe, "read_grids", lambda *paths: (None, None, None))
     no_changes = dict(caseroot="/src/case", xmlchanges={}, user_nl={})
     source = SimpleNamespace(
         machine="derecho",
@@ -602,7 +465,8 @@ def test_a_case_from_another_on_a_new_machine_drops_its_machine_settings(
     )
     case = {"caseroot": str(tmp_path / "new"), "inputdir": str(tmp_path / "in")}
     case |= {"machine": "ubuntu-latest", "ntasks_ocn": 128, "job_queue": "main"}
-    config = {"grid": {}, "topo": {}, "vgrid": {}, "case": case, "forcings": {}}
+    case |= {"ocn_grid": "h.nc", "ocn_topo": "t.nc", "ocn_vgrid": "v.nc"}
+    config = {"case": case, "forcings": {}}
 
     create_case_from_yaml(config, configure_only=True, source=source)
 

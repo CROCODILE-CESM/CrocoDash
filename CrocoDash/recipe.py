@@ -4,6 +4,7 @@ recipe.py — Creating a Case directly from a YAML config dict or file.
 Built on top of case.py, which handles the actual case creation through API calls,
 This module adds the layer for creating a case from a yaml file, which is a convenient way to create a case without having to write a script.
 The YAML file can be generated from an existing case using the case_to_yaml function, which reads the case's state files and reconstructs a config dict suitable for passing to create_case_from_yaml.
+A config has two sections: case, the arguments of Case(), with the grids as the files mom6_forge writes (ocn_grid, ocn_topo and ocn_vgrid), and forcings, the arguments of configure_forcings().
 
 """
 
@@ -14,12 +15,10 @@ import yaml
 
 from CrocoDash.case import Case, _CHANGE_KINDS
 from CrocoDash import case_state
+from CrocoDash.forcing.utils import read_min_depth
 from CrocoDash.grid import Grid
 from CrocoDash.topo import Topo
 from CrocoDash.vgrid import VGrid
-
-_TOPO_SOURCE_TYPES = {"flat", "dataset", "from_file"}
-_VGRID_TYPES = {"uniform", "hyperbolic", "from_file"}
 
 # The source's own run, rather than how it is set up: how far it got and where
 # it builds, runs and archives. A case made from it starts a run of its own
@@ -41,25 +40,29 @@ def load_config(path):
 
 def validate_config_structure(config):
     """Fast pre-flight structural checks on a config dict before any expensive work."""
-    required_top = {"grid", "topo", "vgrid", "case"}
-    missing = required_top - set(config.keys())
-    if missing:
-        raise ValueError(f"Config missing required top-level sections: {missing}")
+    if "case" not in config:
+        raise ValueError("Config missing required top-level section: case")
+    if built := sorted({"grid", "topo", "vgrid"} & config.keys()):
+        raise ValueError(
+            f"The config's {', '.join(built)} sections are no longer read: write "
+            "the grid files with mom6_forge (CrocoDash.grid, CrocoDash.topo and "
+            "CrocoDash.vgrid) and name them in case: as ocn_grid, ocn_topo and "
+            "ocn_vgrid."
+        )
 
     case_cfg = config["case"]
-    for key in ("cesmroot", "caseroot", "inputdir", "compset", "machine"):
+    for key in (
+        "cesmroot",
+        "caseroot",
+        "inputdir",
+        "compset",
+        "machine",
+        "ocn_grid",
+        "ocn_topo",
+        "ocn_vgrid",
+    ):
         if key not in case_cfg:
             raise ValueError(f"case.{key} is required")
-
-    topo_cfg = config.get("topo", {})
-    source_cfg = topo_cfg.get("source", {})
-    if "source" in topo_cfg and source_cfg.get("type") not in _TOPO_SOURCE_TYPES:
-        raise ValueError(f"topo.source.type must be one of {_TOPO_SOURCE_TYPES}")
-
-    vgrid_cfg = config.get("vgrid", {})
-    vgrid_type = vgrid_cfg.get("type")
-    if vgrid_type is not None and vgrid_type not in _VGRID_TYPES:
-        raise ValueError(f"vgrid.type must be one of {_VGRID_TYPES}")
 
     # Without a forcings section, create_case_from_yaml() asks for them.
     if "forcings" not in config:
@@ -83,54 +86,17 @@ def validate_config_structure(config):
                 )
 
 
-def build_grid(grid_cfg):
-    """Build a Grid from a config dict. Uses supergrid_path for file-based grids."""
-    if "supergrid_path" in grid_cfg:
-        grid = Grid.from_supergrid(grid_cfg["supergrid_path"])
-        if grid_cfg.get("name"):
-            grid.name = grid_cfg["name"]
-        return grid
-    return Grid(**grid_cfg)
-
-
-def build_topo(topo_cfg, grid):
-    """Build a Topo from a config dict. Dispatches on topo.source.type."""
-    min_depth = topo_cfg["min_depth"]
-    source = topo_cfg.get("source", {})
-    source_type = source.get("type", "flat")
-
-    if source_type == "from_file":
-        return Topo.from_topo_file(grid, source["topo_file_path"], min_depth=min_depth)
-
-    topo = Topo(grid, min_depth)
-
-    if source_type == "flat":
-        topo.set_flat(source["depth"])
-    elif source_type == "dataset":
-        topo.set_from_dataset(**{k: v for k, v in source.items() if k != "type"})
-    else:
-        raise ValueError(f"Unknown topo.source.type: '{source_type}'")
-
-    return topo
-
-
-def build_vgrid(vgrid_cfg, topo):
-    """Build a VGrid from a config dict. If depth is omitted, uses topo.max_depth."""
-    vgrid_type = vgrid_cfg.get("type", "uniform")
-
-    if vgrid_type == "from_file":
-        return VGrid.from_file(**{k: v for k, v in vgrid_cfg.items() if k != "type"})
-
-    depth = vgrid_cfg.get("depth") or topo.max_depth
-    kwargs = {k: v for k, v in vgrid_cfg.items() if k not in ("type", "depth")}
-    kwargs["depth"] = depth
-
-    if vgrid_type == "uniform":
-        return VGrid.uniform(**kwargs)
-    elif vgrid_type == "hyperbolic":
-        return VGrid.hyperbolic(**kwargs)
-    else:
-        raise ValueError(f"Unknown vgrid.type: '{vgrid_type}'")
+def read_grids(ocn_grid, ocn_topo, ocn_vgrid):
+    """The Grid, Topo and VGrid in the grid files a config names, as mom6_forge
+    writes them. The grid takes the name written in its file (or else the
+    file's name), and the topography its min_depth."""
+    with xr.open_dataset(ocn_grid) as ds:
+        name = ds.attrs.get("name")
+    grid = Grid.from_supergrid(ocn_grid, name=name)
+    topo = Topo.from_topo_file(
+        grid, ocn_topo, min_depth=read_min_depth(ocn_topo), git=False
+    )
+    return grid, topo, VGrid.from_file(str(ocn_vgrid))
 
 
 def check_new_case(case_config, source):
@@ -163,8 +129,8 @@ def create_case_from_yaml(
     """
     Run the full case creation workflow from a config dict.
 
-    Builds Grid, Topo, and VGrid objects, creates the CESM case, then calls
-    configure_forcings and process_forcings. Returns the Case.
+    Reads the grid files the case: section names, creates the CESM case, then
+    calls configure_forcings and process_forcings. Returns the Case.
 
     Parameters
     ----------
@@ -201,9 +167,9 @@ def create_case_from_yaml(
         if case_args["machine"] != source.machine:
             for key in _MACHINE_ARGS:
                 case_args.pop(key, None)
-    grid = build_grid(config["grid"])
-    topo = build_topo(config["topo"], grid)
-    vgrid = build_vgrid(config["vgrid"], topo)
+    grid, topo, vgrid = read_grids(
+        case_args.pop("ocn_grid"), case_args.pop("ocn_topo"), case_args.pop("ocn_vgrid")
+    )
 
     case = Case(
         ocn_grid=grid,
@@ -242,8 +208,8 @@ def create_case_from_yaml(
 
 def case_to_yaml(caseroot):
     """
-    The create config of an existing case: its grid files, the arguments it
-    was created with and its forcing arguments, as a dict for
+    The create config of an existing case: the arguments it was created with,
+    its grid files among them, and its forcing arguments, as a dict for
     create_case_from_yaml() or yaml.dump().
 
     ``caseroot`` is a caseroot, a bundle (whose files it names in the bundle),
@@ -251,27 +217,10 @@ def case_to_yaml(caseroot):
     """
     case = caseroot if isinstance(caseroot, Case) else Case.from_caseroot(caseroot)
     state = case_state.read(case.caseroot)
-    with xr.open_dataset(case.topo_path) as topo_ds:
-        min_depth = float(topo_ds.attrs.get("min_depth", 0.0))
     # A bundle's case is named by the caseroot it was bundled from.
     bundled_from = case.bundled_from or {}
 
     config = {
-        "grid": {
-            "supergrid_path": case.supergrid_path,
-            "name": case.grid_name,
-        },
-        "topo": {
-            "min_depth": min_depth,
-            "source": {
-                "type": "from_file",
-                "topo_file_path": case.topo_path,
-            },
-        },
-        "vgrid": {
-            "type": "from_file",
-            "filename": case.vgrid_path,
-        },
         "case": {
             # Derived/resolved fields — require explicit mapping from state keys
             "cesmroot": str(case.cesmroot),
@@ -279,6 +228,9 @@ def case_to_yaml(caseroot):
             "inputdir": bundled_from.get("inputdir", str(case.inputdir)),
             "compset": case.compset_lname,
             "machine": case.machine,
+            "ocn_grid": case.supergrid_path,
+            "ocn_topo": case.topo_path,
+            "ocn_vgrid": case.vgrid_path,
             # Scalar init args stored verbatim by Case._init_args — pull dynamically
             # so new Case.__init__ params flow through without touching this function.
             **{k: v for k, v in state.items() if k not in case_state.DERIVED_KEYS},

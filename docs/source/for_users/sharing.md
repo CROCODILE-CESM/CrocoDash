@@ -35,8 +35,8 @@ The bundle is a folder:
 
 `Case.from_caseroot()` reads a bundle like the case's caseroot. A bundle made by
 an older CrocoDash (one with `crocodash_case.yaml` instead of `bundle.json`) is
-refused: bundle the case again with this version, or create a case from the
-bundle's `crocodash_case.yaml` with `crocodash create --config`.
+refused: bundle the case again with this version, or name the bundle's grid files in
+a create config (see [the YAML config](cli.md#yaml-config-schema)).
 
 ---
 

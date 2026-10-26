@@ -34,49 +34,10 @@ see [Sharing and Copying Cases](sharing.md).
 
 ### YAML config schema
 
+A config has two sections: `case:` holds the arguments of `Case()`, and `forcings:`
+the arguments of `configure_forcings()`.
+
 ```yaml
-# --- Horizontal grid ---
-grid:
-  lenx: 10.0           # domain width in degrees
-  leny: 10.0           # domain height in degrees
-  xstart: -60.0        # western edge longitude
-  ystart: 30.0         # southern edge latitude
-  resolution: 1.0      # degrees per cell (or use nx/ny instead)
-  name: "mygrid"
-
-# --- Bathymetry ---
-topo:
-  min_depth: 10.0      # columns shallower than this are masked
-  source:
-    type: "flat"           # flat | dataset | from_file
-    depth: 1000.0          # for type: flat — constant depth in metres
-
-    # type: dataset — interpolate from a real bathymetry file (e.g. GEBCO)
-    # bathymetry_path: "/path/to/gebco.nc"
-    # longitude_coordinate_name: "lon"
-    # latitude_coordinate_name: "lat"
-    # vertical_coordinate_name: "elevation"
-    # is_input_positive_below_msl: false
-    # fill_channels: false
-
-    # type: from_file — reuse an existing topog.nc
-    # topo_file_path: "/path/to/ocean_topog.nc"
-
-# --- Vertical grid ---
-vgrid:
-  type: "uniform"      # uniform | hyperbolic | from_file
-  nk: 10               # number of layers
-  # depth omitted → uses topo.max_depth automatically
-  name: "myvgrid"
-
-  # type: hyperbolic — surface-intensified levels
-  # nk: 75
-  # depth: 5000.0
-  # ratio: 20.0
-
-  # type: from_file — reuse an existing vgrid.nc
-  # filename: "/path/to/ocean_vgrid.nc"
-
 # --- CESM case ---
 case:
   cesmroot: "/path/to/CROCESM"
@@ -85,6 +46,9 @@ case:
   compset:   "CR_JRA"          # alias or full long name
   machine:   "derecho"
   project:   "NCGD0011"
+  ocn_grid:  "/path/to/ocean_hgrid.nc"   # the grid files (see below)
+  ocn_topo:  "/path/to/ocean_topog.nc"
+  ocn_vgrid: "/path/to/ocean_vgrid.nc"
   atm_grid_name: "TL319"       # optional, default TL319
 
 # --- Forcings (left out: asked for on a terminal) ---
@@ -99,6 +63,28 @@ forcings:
   # tpxo_elevation_filepath: "/path/to/TPXO_elevation.nc"
   # tpxo_velocity_filepath:  "/path/to/TPXO_velocity.nc"
 ```
+
+### The grid files
+
+The config names the grid files instead of describing the grids. Write them once with
+mom6_forge, through `CrocoDash.grid`, `CrocoDash.topo` and `CrocoDash.vgrid` (see
+[Grids](1_grids.md)):
+
+```python
+from CrocoDash.grid import Grid
+from CrocoDash.topo import Topo
+from CrocoDash.vgrid import VGrid
+
+grid = Grid(lenx=10.0, leny=10.0, resolution=1.0, xstart=-60.0, ystart=30.0, name="mygrid")
+grid.write_supergrid("ocean_hgrid.nc")
+topo = Topo(grid, min_depth=10.0)
+topo.set_flat(1000.0)  # or topo.set_from_dataset(...), e.g. from GEBCO
+topo.write_topo("ocean_topog.nc")
+VGrid.uniform(nk=10, depth=topo.max_depth).write("ocean_vgrid.nc")
+```
+
+The case takes the grid's name and the topography's `min_depth` from the files. Any
+case's own grid files work too: `crocodash dump` names them.
 
 After `create` completes the caseroot contains a `_crocodash_state.json` recording all construction parameters, and `inputdir/extract_forcings/config.json` recording the forcing setup. These files are the source of truth for `dump`, `bundle` and `create --from`.
 
@@ -118,7 +104,8 @@ crocodash dump --caseroot ~/croc_cases/mycase > mycase_copy.yaml
 crocodash create --config mycase_copy.yaml --override
 ```
 
-The dumped YAML uses `supergrid_path`/`from_file` references pointing at the existing grid/topo/vgrid files. To create a fully independent copy, either update those paths or re-generate the grid from parameters.
+The dumped YAML names the case's grid files, in its inputdir. A case created from it
+writes its own copies into its own inputdir.
 
 ---
 
