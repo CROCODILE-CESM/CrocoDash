@@ -14,7 +14,7 @@ from CrocoDash.forcing.base import (
     read_config,
     write_config,
 )
-from CrocoDash.raw_data_access.registry import ProductRegistry
+from CrocoDash.raw_data_access.registry import ProductRegistry, json_safe
 from CrocoDash.raw_data_access.base import ForcingProduct
 from ProConPy.config_var import ConfigVar, cvars
 from ProConPy.stage import Stage
@@ -606,10 +606,7 @@ class Case:
         # function_args is written straight to config.json (via ConditionsConfigurator's
         # "function_args" ConfigOutputParam); coerce Path values (e.g. a dataset_path
         # override) to strings so they're JSON-serializable.
-        function_args = {
-            k: (v.as_posix() if isinstance(v, Path) else v)
-            for k, v in function_args.items()
-        }
+        function_args = json_safe(function_args)
 
         inputs = kwargs | {
             "date_range": pd.to_datetime(date_range),

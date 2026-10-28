@@ -17,8 +17,8 @@ from CrocoDash.case import Case
 from CrocoDash import case_state
 from CrocoDash.forcing.base import (
     CONFIG_FILENAME,
-    CONFIG_META_KEYS,
     ForcingConfigRegistry,
+    iter_configurator_entries,
     read_config,
 )
 from CrocoDash.raw_data_access.registry import ProductRegistry
@@ -203,12 +203,9 @@ def generate_configure_forcing_args(forcing_config, remove_configs=None):
     function_args = forcing_config["conditions"]["inputs"].get("function_args") or {}
     if function_args:
         ProductRegistry.load()
-        defaults = {
-            name: value.as_posix() if isinstance(value, Path) else value
-            for name, value in ProductRegistry.get_function_default_args(
-                product_name.lower(), function_name
-            ).items()
-        }
+        defaults = ProductRegistry.get_function_default_args(
+            product_name.lower(), function_name, serializable=True
+        )
         overrides = {
             name: value
             for name, value in function_args.items()
@@ -216,8 +213,8 @@ def generate_configure_forcing_args(forcing_config, remove_configs=None):
         }
         if overrides:
             configure_forcing_args["function_overrides"] = overrides
-    for key in forcing_config:
-        if key == "conditions" or key in CONFIG_META_KEYS or key in remove_configs:
+    for key, _ in iter_configurator_entries(forcing_config):
+        if key == "conditions" or key in remove_configs:
             continue
         configurator_cls = ForcingConfigRegistry.get_configurator_from_name(key)
         # Round-trip every ctor arg, not just required ones -- an all-optional

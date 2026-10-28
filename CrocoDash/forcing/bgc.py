@@ -8,9 +8,6 @@ import xesmf as xe
 from netCDF4 import default_fillvals
 
 from CrocoDash.forcing.base import *
-from CrocoDash.logging import setup_logger
-
-logger = setup_logger(__name__)
 
 
 @register
@@ -217,14 +214,6 @@ class BGCRiverNutrientsConfigurator(BaseConfigurator):
         )
 
     def configure(self):
-        # Not checked in validate_args: that also runs when config.json is
-        # read back, e.g. on another machine, where only process() needs it.
-        if not Path(self.get_input_param("global_river_nutrients_filepath")).exists():
-            logger.warning(
-                "River nutrients file "
-                f"{self.get_input_param('global_river_nutrients_filepath')} does not "
-                "exist; processing bgcrivernutrients will fail until it does."
-            )
         river_nutrients_nnsm_filepath = f"river_nutrients_{self.get_input_param('case_grid_name')}_{self.get_input_param('case_session_id')}_nnsm.nc"
         self.set_output_param("READ_RIV_FLUXES", "True")
         self.set_output_param("RIV_FLUX_FILE", river_nutrients_nnsm_filepath)

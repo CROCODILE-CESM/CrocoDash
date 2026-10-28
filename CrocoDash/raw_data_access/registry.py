@@ -1,6 +1,12 @@
 import inspect
+from pathlib import Path
 
 from CrocoDash.raw_data_access.datasets import load_all_datasets
+
+
+def json_safe(args):
+    """Function arguments as config.json stores them: Paths become strings."""
+    return {k: v.as_posix() if isinstance(v, Path) else v for k, v in args.items()}
 
 
 class ProductRegistry:
@@ -61,17 +67,20 @@ class ProductRegistry:
         return method(**kwargs)
 
     @classmethod
-    def get_function_default_args(cls, product_name, function_name):
-        """Return a dict of {param: default} for all non-required parameters of an access method."""
+    def get_function_default_args(cls, product_name, function_name, serializable=False):
+        """Return a dict of {param: default} for all non-required parameters of
+        an access method; with serializable, as config.json stores them
+        (json_safe)."""
         product = cls.get_product(product_name)
         func = product._access_methods[function_name].__func__
         sig = inspect.signature(func)
         required = set(product.required_args)
-        return {
+        defaults = {
             name: param.default
             for name, param in sig.parameters.items()
             if name not in required and param.default is not inspect.Parameter.empty
         }
+        return json_safe(defaults) if serializable else defaults
 
     @classmethod
     def load(cls):

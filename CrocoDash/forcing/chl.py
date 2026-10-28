@@ -3,10 +3,7 @@ from pathlib import Path
 from regional_mom6 import chl as rm6_chl
 
 from CrocoDash.forcing.base import *
-from CrocoDash.logging import setup_logger
 from CrocoDash.raw_data_access.base import Calendar
-
-logger = setup_logger(__name__)
 
 
 @register
@@ -67,13 +64,6 @@ class ChlConfigurator(BaseConfigurator):
         )
 
     def configure(self):
-        # Not checked in validate_args: that also runs when config.json is
-        # read back, e.g. on another machine, where only process() needs it.
-        if not Path(self.get_input_param("chl_processed_filepath")).exists():
-            logger.warning(
-                f"Chlorophyll file {self.get_input_param('chl_processed_filepath')} "
-                "does not exist; processing chl will fail until it does."
-            )
         regional_chl_file_path = (
             f"seawifs-clim-1997-2010-{self.get_input_param('case_grid_name')}.nc"
         )

@@ -122,8 +122,8 @@ class RunoffConfigurator(BaseConfigurator):
         super().validate_args(**kwargs)
         if (kwargs["rmax"] is None) != (kwargs["fold"] is None):
             raise ValueError("Both rmax and fold must be specified together.")
-        if kwargs["rmax"] is not None:
-            assert "SROF" not in kwargs["case_compset_lname"], (
+        if kwargs["rmax"] is not None and "SROF" in kwargs["case_compset_lname"]:
+            raise ValueError(
                 "When rmax and fold are specified, "
                 "the compset must include an active or data runoff model."
             )

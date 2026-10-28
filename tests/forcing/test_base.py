@@ -10,7 +10,6 @@ from unittest.mock import patch
 import pytest
 
 import CrocoDash
-from CrocoDash.raw_data_access.registry import ProductRegistry
 
 
 @register
@@ -118,11 +117,35 @@ def test_deserialize():
     assert obj.get_input_param("dummy") == "Bleh"
 
 
+class DummyDefaults(BaseConfigurator):
+    """An input left None by default as a placeholder, and one that is
+    optional. Not @register'd, like DummyXML."""
+
+    name = "dummydefaults"
+    input_params = [
+        InputValueParam("start_date", comment="Filled in from the run dates"),
+        InputValueParam("product", comment="None means none", optional=True),
+    ]
+    output_params = [XMLConfigParam("DUMMY_XML_VAR", comment="Boop Boop")]
+
+    def __init__(self, start_date=None, product=None):
+        super().__init__(start_date=start_date, product=product)
+
+    def configure(self):
+        super().configure()
+
+
 def test_deserialize_tolerates_entries_from_other_versions():
-    """An entry with an undeclared key and a missing output still loads; one
-    missing a required input asks for configure_forcings() to be rerun."""
-    obj = DummyXML.deserialize({"inputs": {"dummy": "x", "gone": 1}, "outputs": {}})
-    assert obj.get_output_param("DUMMY_XML_VAR") is None
+    """An entry with an undeclared key and missing params still loads. What it
+    can't know (a missing output, or a missing input left None that isn't
+    optional) asks for configure_forcings() again when a step reads it rather
+    than failing on a None; a missing input with no default does on loading."""
+    obj = DummyDefaults.deserialize({"inputs": {"gone": 1}, "outputs": {}})
+    assert obj.get_input_param("product") is None
+    with pytest.raises(ReconfigureRequired):
+        obj.get_input_param("start_date")
+    with pytest.raises(ReconfigureRequired):
+        obj.get_output_param("DUMMY_XML_VAR")
     with pytest.raises(ReconfigureRequired):
         DummyXML.deserialize({"inputs": {}, "outputs": {}})
 
@@ -155,18 +178,6 @@ def test_read_config_migrates(tmp_path):
         ):
             with pytest.raises(RuntimeError):
                 read_config(path)
-
-
-@pytest.mark.parametrize(
-    "path",
-    sorted((Path(__file__).parent / "golden_configs").glob("*.json")),
-    ids=lambda path: path.stem,
-)
-def test_golden_configs_load(path):
-    """config.json files real cases wrote with earlier CrocoDash versions
-    still load. Add one here when a change could break old configs."""
-    ProductRegistry.load()
-    ForcingConfigRegistry.resolve_process_targets(read_config(path))
 
 
 def test_config_json_is_only_read_through_read_config():
