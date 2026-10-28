@@ -363,6 +363,11 @@ document.write(`
 <code class="docutils literal notranslate"><span class="pre">process_forcings()</span></code>, <code class="docutils literal notranslate"><span class="pre">crocodash</span> <span class="pre">process</span></code> and <code class="docutils literal notranslate"><span class="pre">crocodash</span> <span class="pre">dump</span></code> read it back,
 often with a newer CrocoDash than the one that wrote it. This page explains
 how to change a configurator without breaking the cases that already exist.</p>
+<p>This is about cases this CrocoDash can read at all. Reading a case starts with
+its <code class="docutils literal notranslate"><span class="pre">_crocodash_state.json</span></code>, and a case whose state file is older than this
+CrocoDash supports is refused before its config.json is read: it has to be
+recreated. Tolerant reading keeps the cases it accepts working as configurators
+gain inputs and outputs.</p>
 <section id="reading-and-writing">
 <h2>Reading and writing<a class="headerlink" href="#reading-and-writing" title="Link to this heading">#</a></h2>
 <p>Always go through <code class="docutils literal notranslate"><span class="pre">read_config(path)</span></code> and <code class="docutils literal notranslate"><span class="pre">write_config(path,</span> <span class="pre">config)</span></code> in
@@ -381,31 +386,39 @@ must match, and a file written before versioning counts as <code class="docutils
 <ul class="simple">
 <li><p><strong>Input missing from the entry:</strong> it takes the constructor’s default. If the
 input has no default, <code class="docutils literal notranslate"><span class="pre">ReconfigureRequired</span></code> is raised.</p></li>
-<li><p><strong>Output missing from the entry:</strong> it stays <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><strong>Input missing from the entry whose default is <code class="docutils literal notranslate"><span class="pre">None</span></code>:</strong> <code class="docutils literal notranslate"><span class="pre">None</span></code> is often a
+placeholder that <code class="docutils literal notranslate"><span class="pre">configure_forcings()</span></code> fills in from the case, the run dates
+or the product (a calendar, a start date). Unless the input is declared
+<code class="docutils literal notranslate"><span class="pre">optional=True</span></code>, reading it raises <code class="docutils literal notranslate"><span class="pre">ReconfigureRequired</span></code>.</p></li>
+<li><p><strong>Output missing from the entry:</strong> reading it raises <code class="docutils literal notranslate"><span class="pre">ReconfigureRequired</span></code>.</p></li>
 <li><p><strong>Key the class no longer declares:</strong> it is ignored.</p></li>
-<li><p><strong>Entry that fails <code class="docutils literal notranslate"><span class="pre">validate_args</span></code>:</strong> <code class="docutils literal notranslate"><span class="pre">ReconfigureRequired</span></code> is raised.</p></li>
+<li><p><strong>Entry the constructor rejects</strong> (<code class="docutils literal notranslate"><span class="pre">ValueError</span></code> or <code class="docutils literal notranslate"><span class="pre">TypeError</span></code> from
+<code class="docutils literal notranslate"><span class="pre">validate_args</span></code>), <strong>or an entry for a configurator that no longer exists:</strong>
+<code class="docutils literal notranslate"><span class="pre">ReconfigureRequired</span></code> is raised.</p></li>
 </ul>
-<p>So you can usually add an input (give it a default) or an output without
-touching the version. Only <code class="docutils literal notranslate"><span class="pre">validate_args</span></code> should reject bad inputs. A check
-that only matters when a step runs, such as “this input file exists”, belongs
-in <code class="docutils literal notranslate"><span class="pre">configure()</span></code> (as a warning) or in the process step. <code class="docutils literal notranslate"><span class="pre">validate_args</span></code> also
-runs when config.json is read back, possibly on another machine.</p>
+<p>The entry still loads in the two “reading it raises” cases, so the steps that
+don’t need the missing value still run, and the one that does asks for
+<code class="docutils literal notranslate"><span class="pre">configure_forcings()</span></code> again instead of failing on a <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+<p>So you can usually add an input or an output without touching the version:</p>
+<ul class="simple">
+<li><p>give a new input a default;</p></li>
+<li><p>declare it <code class="docutils literal notranslate"><span class="pre">optional=True</span></code> only if the configurator really works with it
+left <code class="docutils literal notranslate"><span class="pre">None</span></code> (e.g. CICE’s <code class="docutils literal notranslate"><span class="pre">cice_product_name</span></code>: <code class="docutils literal notranslate"><span class="pre">None</span></code> means no restoring).</p></li>
+</ul>
+<p>Only <code class="docutils literal notranslate"><span class="pre">validate_args</span></code> should reject bad inputs, and it runs again whenever
+config.json is read back, possibly on another machine. So it doesn’t check that
+input files exist. <code class="docutils literal notranslate"><span class="pre">BaseConfigurator.configure()</span></code> warns about every
+<code class="docutils literal notranslate"><span class="pre">InputFileParam</span></code> whose file is missing, and processing raises when a step needs
+one.</p>
 </section>
 <section id="when-to-bump-the-version">
 <h2>When to bump the version<a class="headerlink" href="#when-to-bump-the-version" title="Link to this heading">#</a></h2>
 <p>Bump the MINOR of <code class="docutils literal notranslate"><span class="pre">CONFIG_SCHEMA_VERSION</span></code> when tolerant reading would
 <em>misread</em> an old file. Renaming a param is the usual case: the old value would
 be ignored, and the new param would silently take its default. In the same PR:</p>
-<ol class="arabic simple">
-<li><p>Add a migration to <code class="docutils literal notranslate"><span class="pre">CONFIG_MIGRATIONS</span></code>, keyed by the version it upgrades
-from (<code class="docutils literal notranslate"><span class="pre">&quot;1.0&quot;</span></code>), that rewrites the old layout and sets <code class="docutils literal notranslate"><span class="pre">schema_version</span></code> to
-the new version. <code class="docutils literal notranslate"><span class="pre">read_config</span></code> raises if a migration leaves the version
-unchanged.</p></li>
-<li><p>Add a config.json from a real case to <code class="docutils literal notranslate"><span class="pre">tests/forcing/golden_configs/</span></code> if
-none of the existing ones covers the change.</p></li>
-</ol>
-<p>The golden configs in <code class="docutils literal notranslate"><span class="pre">tests/forcing/golden_configs/</span></code> are config.json files
-real cases wrote, with personal paths replaced. Every one must keep loading.</p>
+<p>Add a migration to <code class="docutils literal notranslate"><span class="pre">CONFIG_MIGRATIONS</span></code>, keyed by the version it upgrades from
+(<code class="docutils literal notranslate"><span class="pre">&quot;1.0&quot;</span></code>), that rewrites the old layout and sets <code class="docutils literal notranslate"><span class="pre">schema_version</span></code> to the new
+version. <code class="docutils literal notranslate"><span class="pre">read_config</span></code> raises if a migration leaves the version unchanged.</p>
 </section>
 </section>
 

@@ -453,6 +453,7 @@ document.write(`
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.calendar_as_dict"><code class="docutils literal notranslate"><span class="pre">calendar_as_dict()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.is_serializable"><code class="docutils literal notranslate"><span class="pre">is_serializable()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.iter_configurator_entries"><code class="docutils literal notranslate"><span class="pre">iter_configurator_entries()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.read_config"><code class="docutils literal notranslate"><span class="pre">read_config()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.register"><code class="docutils literal notranslate"><span class="pre">register()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.write_config"><code class="docutils literal notranslate"><span class="pre">write_config()</span></code></a></li>
@@ -750,10 +751,14 @@ enumerated, and CDEPS opens each one to build its time axis.</p>
 <em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">deserialize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.base.BaseConfigurator.deserialize" title="Link to this definition">#</a></dt>
 <dd><p>Rebuild a configurator from its config.json entry.</p>
 <p>Tolerates entries an older or newer CrocoDash wrote: an input missing
-from the entry takes its constructor default, an output missing from
-it stays None, and keys the class no longer declares are ignored. A
-missing input with no default, or an entry the constructor rejects,
-raises ReconfigureRequired.</p>
+from the entry takes its constructor default, and keys the class no
+longer declares are ignored. A missing input with no default, or an
+entry the constructor rejects, raises ReconfigureRequired.</p>
+<p>A missing output, or a missing input left None that isn’t optional
+(a placeholder configure_forcings() fills in, see InputParam), can’t
+be known without configuring again. The entry still loads, so steps
+that don’t need it still run, and reading it raises
+ReconfigureRequired.</p>
 </dd></dl>
 
 <dl class="py attribute">
@@ -1038,7 +1043,7 @@ dispatch generically instead of a hand-maintained if-ladder.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="CrocoDash.forcing.base.InputFileParam">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.forcing.base.</span></span><span class="sig-name descname"><span class="pre">InputFileParam</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">comment</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.base.InputFileParam" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.forcing.base.</span></span><span class="sig-name descname"><span class="pre">InputFileParam</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">comment</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optional</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.base.InputFileParam" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#CrocoDash.forcing.base.InputParam" title="CrocoDash.forcing.base.InputParam"><code class="xref py py-class docutils literal notranslate"><span class="pre">InputParam</span></code></a></p>
 <p>Base class for a single file parameter in our forcing configurations.</p>
 <dl class="py method">
@@ -1051,13 +1056,19 @@ dispatch generically instead of a hand-maintained if-ladder.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="CrocoDash.forcing.base.InputParam">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.forcing.base.</span></span><span class="sig-name descname"><span class="pre">InputParam</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">comment</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.base.InputParam" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.forcing.base.</span></span><span class="sig-name descname"><span class="pre">InputParam</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">comment</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optional</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.base.InputParam" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#CrocoDash.forcing.base.Param" title="CrocoDash.forcing.base.Param"><code class="xref py py-class docutils literal notranslate"><span class="pre">Param</span></code></a></p>
+<p>An input of a configurator.</p>
+<p>optional: the configurator works with this input left None. Any other
+input whose constructor default is None is a placeholder that
+configure_forcings() fills in (from the case, the run dates or the
+product), so a config.json entry without it can’t be processed until the
+forcings are configured again (see BaseConfigurator.deserialize).</p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="CrocoDash.forcing.base.InputValueParam">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.forcing.base.</span></span><span class="sig-name descname"><span class="pre">InputValueParam</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">comment</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.base.InputValueParam" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.forcing.base.</span></span><span class="sig-name descname"><span class="pre">InputValueParam</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">comment</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optional</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.base.InputValueParam" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#CrocoDash.forcing.base.InputParam" title="CrocoDash.forcing.base.InputParam"><code class="xref py py-class docutils literal notranslate"><span class="pre">InputParam</span></code></a></p>
 <p>Base class for a single value parameter in our forcing configurations.</p>
 <dl class="py method">
@@ -1197,6 +1208,13 @@ converted here.</p>
 <dt class="sig sig-object py" id="CrocoDash.forcing.base.is_serializable">
 <span class="sig-prename descclassname"><span class="pre">CrocoDash.forcing.base.</span></span><span class="sig-name descname"><span class="pre">is_serializable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">v</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.base.is_serializable" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.forcing.base.iter_configurator_entries">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.forcing.base.</span></span><span class="sig-name descname"><span class="pre">iter_configurator_entries</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.base.iter_configurator_entries" title="Link to this definition">#</a></dt>
+<dd><p>(key, entry) for each configurator entry in a config.json dict,
+skipping the top-level CONFIG_META_KEYS.</p>
+</dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="CrocoDash.forcing.base.read_config">
@@ -2584,6 +2602,7 @@ needs to import it by name.</p>
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.calendar_as_dict"><code class="docutils literal notranslate"><span class="pre">calendar_as_dict()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.is_serializable"><code class="docutils literal notranslate"><span class="pre">is_serializable()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.iter_configurator_entries"><code class="docutils literal notranslate"><span class="pre">iter_configurator_entries()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.read_config"><code class="docutils literal notranslate"><span class="pre">read_config()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.register"><code class="docutils literal notranslate"><span class="pre">register()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.base.write_config"><code class="docutils literal notranslate"><span class="pre">write_config()</span></code></a></li>
