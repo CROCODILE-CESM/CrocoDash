@@ -59,8 +59,9 @@ def run_workflow(case, *, preview=False, **flags):
         ``Case.from_caseroot``. Its ``workflow_context()`` carries the
         ``config.json`` that ``Case.configure_forcings`` wrote.
     preview : bool
-        Print each selected step and whether its files are present, without
-        running anything.
+        Print each selected step's input and output files, each present or
+        missing, without running anything. Without it, a missing input file
+        of any selected step stops the run before anything is processed.
     **flags : bool
         Which process components to run, e.g. ``ic=True, bc=True, tides=True``.
         Valid names are whatever ``process_components`` keys the forcing
@@ -110,11 +111,28 @@ def run_workflow(case, *, preview=False, **flags):
         for flag_name in order:
             configurator, _ = targets[flag_name]
             print(f"[preview] {flag_name}")
+            missing = configurator.missing_input_files()
+            for name, path in configurator.input_files().items():
+                state = "missing" if name in missing else "present"
+                print(f"    input   {state}  {path}")
             for path in configurator.get_output_filepaths(ctx, flag_name):
-                print(f"    present  {path.relative_to(ctx.inputdir)}")
+                print(f"    output  present  {path.relative_to(ctx.inputdir)}")
             for path in configurator.missing_output_files(ctx, flag_name):
-                print(f"    missing  {path.relative_to(ctx.inputdir)}")
+                print(f"    output  missing  {path.relative_to(ctx.inputdir)}")
         return {}
+
+    # Check every step's input files first, so a run doesn't stop at a missing
+    # one hours in (e.g. in a batch job, after the OBCs).
+    missing = {
+        f"{flag_name}: {name} = {path}": None
+        for flag_name in order
+        for name, path in targets[flag_name][0].missing_input_files().items()
+    }
+    if missing:
+        raise FileNotFoundError(
+            "Input files not found, so nothing was processed:\n  "
+            + "\n  ".join(missing)
+        )
 
     timings = {}
     for flag_name in order:

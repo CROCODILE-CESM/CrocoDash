@@ -195,6 +195,33 @@ def test_run_workflow_skips_unrequested_flag():
     assert len(_DummyDriverConfigurator.calls) == 0
 
 
+def test_run_workflow_stops_before_anything_on_a_missing_input_file():
+    """Every selected step's input files are checked first, so a run doesn't
+    stop at a missing one after the steps before it."""
+    _DummyDriverConfigurator.calls.clear()
+    case = _case(
+        extra_keys={
+            "dummydriver": {"name": "dummydriver", "inputs": {"x": "1"}, "outputs": {}},
+            # Chl reads a chlorophyll file (an InputFileParam).
+            "chl": {
+                "name": "chl",
+                "inputs": {
+                    "chl_processed_filepath": "/no/such/file.nc",
+                    "case_grid_name": "g",
+                    "case_session_id": "s",
+                    "calendar": None,
+                },
+                "outputs": {},
+            },
+        },
+    )
+
+    with pytest.raises(FileNotFoundError, match="/no/such/file.nc"):
+        run_workflow(case, dummyflag=True, chl=True)
+
+    assert _DummyDriverConfigurator.calls == []
+
+
 def test_run_workflow_one_to_many_dispatch():
     _DummyMultiFlagConfigurator.calls.clear()
     case = _case(

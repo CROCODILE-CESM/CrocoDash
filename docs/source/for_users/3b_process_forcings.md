@@ -67,7 +67,8 @@ This flexibility lets you:
 - Resume a partially-completed run
 
 To see what a run covers without running anything, add `--preview`. It lists
-each selected component with the files it writes, marked `present` or `missing`:
+each selected component with the input files it reads and the files it writes,
+each marked `present` or `missing`:
 
 ```bash
 crocodash process --caseroot ~/croc_cases/mycase --all --preview
@@ -75,13 +76,20 @@ crocodash process --caseroot ~/croc_cases/mycase --all --preview
 
 ```
 [preview] ic
-    present  ocn/init_tracers_filled.nc
-    present  ocn/init_eta_filled.nc
-    present  ocn/init_vel_filled.nc
+    output  present  ocn/init_tracers_filled.nc
+    output  present  ocn/init_eta_filled.nc
+    output  present  ocn/init_vel_filled.nc
 [preview] bc
-    missing  ocn/forcing_obc_segment_001.nc
+    output  missing  ocn/forcing_obc_segment_001.nc
     ...
+[preview] chl
+    input   missing  /path/to/SeaWIFS.L3m.MC.CHL.chlor_a.0.25deg.nc
+    output  missing  ocn/seawifs-clim-1997-2010-mycase.nc
 ```
+
+A run checks the input files of every selected component before it processes
+anything: a missing one stops it straight away, naming every missing file,
+instead of partway through.
 
 In Python, `case.process_forcings(preview=True)` prints the same.
 

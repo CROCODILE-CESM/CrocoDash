@@ -151,7 +151,7 @@ crocodash process --caseroot ~/croc_cases/mycase --ic --bc
 # Skip components even when running --all
 crocodash process --caseroot ~/croc_cases/mycase --all --skip tides runoff
 
-# List each component's files, present or missing, without running anything
+# List each component's input and output files, present or missing, without running anything
 crocodash process --caseroot ~/croc_cases/mycase --all --preview
 
 # Run from inside the extract_forcings/ directory — no --caseroot needed
@@ -175,7 +175,7 @@ crocodash process --all
 | `--tides` | Tidal forcing. |
 | `--chl` | Chlorophyll processing. |
 | `--skip NAME...` | Skip one or more components by name (case-insensitive). |
-| `--preview` | List each selected component with its files marked `present` or `missing`, without running anything. |
+| `--preview` | List each selected component's input and output files, marked `present` or `missing`, without running anything. Without it, a missing input file stops the run before anything is processed. |
 
 ### Auto-detection
 

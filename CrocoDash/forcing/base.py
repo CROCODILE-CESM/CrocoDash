@@ -830,6 +830,23 @@ class BaseConfigurator(ABC):
             if not any(match.is_file() for match in path.parent.glob(path.name))
         ]
 
+    def input_files(self) -> Dict[str, str]:
+        """{input name: path}: the files this configurator's steps read
+        (its InputFileParams that are set)."""
+        return {
+            p.name: p.value
+            for p in self.input_params
+            if isinstance(p, InputFileParam) and p.value
+        }
+
+    def missing_input_files(self) -> Dict[str, str]:
+        """The input files that don't exist on this machine."""
+        return {
+            name: path
+            for name, path in self.input_files().items()
+            if not Path(path).exists()
+        }
+
     def validate_output_filepaths(self, ctx) -> bool:
         """True once every declared output file exists."""
         return not self.missing_output_files(ctx)
