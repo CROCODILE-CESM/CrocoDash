@@ -132,9 +132,11 @@ class RunoffConfigurator(BaseConfigurator):
         # Return just the xml file paths (Can be either direct path or in ocn_ice as well)
         ocn_ice_directory = Path(ocn_ice_directory)
 
+        # .value, not get_output_param(): a map name missing from config.json
+        # means no file to copy, not a reason to reconfigure
         params = [
-            self.get_output_param("ROF2OCN_LIQ_RMAPNAME"),
-            self.get_output_param("ROF2OCN_ICE_RMAPNAME"),
+            self.get_output_param_object("ROF2OCN_LIQ_RMAPNAME").value,
+            self.get_output_param_object("ROF2OCN_ICE_RMAPNAME").value,
         ]
 
         valid_paths = []
