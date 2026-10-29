@@ -118,7 +118,8 @@ class Case:
             Number of tasks for the ocean model. If None, defaults to VisualCaseGen Grid Calculation.
         job_queue: str, optional
             The queue to submit the CESM case to. If None, defaults to the CESM defaults (usually main).
-            Ignored, with a warning, on a machine with no batch system (e.g. ubuntu-latest).
+            Must be one of the machine's queues. Ignored, with a warning, on a machine with no
+            batch system (e.g. ubuntu-latest).
         job_wallclock_time: str, optional
             Must be in the form hh:mm:ss. If None, defaults to the CESM defaults
         """
@@ -1098,28 +1099,34 @@ class Case:
         xmlchange(
             "MOM6_MEMORY_MODE",
             "dynamic_symmetric",
-            is_non_local=self.cc._is_non_local(),
+            is_non_local=self.is_non_local,
         )
 
-        # xmlchange("ROOTPE_OCN", 128, is_non_local=self.cc._is_non_local()) -> needs to be before the the setup
+        # xmlchange("ROOTPE_OCN", 128, is_non_local=self.is_non_local) -> needs to be before the the setup
         if ntasks_ocn is not None:
-            xmlchange("NTASKS_OCN", ntasks_ocn, is_non_local=self.cc._is_non_local())
+            xmlchange("NTASKS_OCN", ntasks_ocn, is_non_local=self.is_non_local)
         # This will trigger for both the run and the archiver.
         if job_queue is not None:
-            # A machine with no batch system (e.g. ubuntu-latest) has no queues,
-            # and xmlchange rejects any JOB_QUEUE there.
+            # xmlchange rejects a JOB_QUEUE the machine doesn't list, and a
+            # machine with no batch system (e.g. ubuntu-latest) lists none.
             if self._cime_case.get_value("BATCH_SYSTEM") == "none":
                 print(
                     f"WARNING: ignoring job_queue={job_queue!r}: machine "
                     f"{self.machine} has no batch system."
                 )
             else:
-                xmlchange("JOB_QUEUE", job_queue, is_non_local=self.cc._is_non_local())
+                queues = self._cime_case.get_env("batch")._get_all_queue_names()
+                if job_queue not in queues:
+                    raise ValueError(
+                        f"job_queue={job_queue!r} is not a queue on machine "
+                        f"{self.machine}. Valid queues: {', '.join(queues) or 'none'}."
+                    )
+                xmlchange("JOB_QUEUE", job_queue, is_non_local=self.is_non_local)
         if job_wallclock_time is not None:
             xmlchange(
                 "JOB_WALLCLOCK_TIME",
                 job_wallclock_time,
-                is_non_local=self.cc._is_non_local(),
+                is_non_local=self.is_non_local,
             )
 
     def validate_case(self):
