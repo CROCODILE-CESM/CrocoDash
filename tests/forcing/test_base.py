@@ -10,6 +10,7 @@ from unittest.mock import patch
 import pytest
 
 import CrocoDash
+from CrocoDash.raw_data_access.registry import ProductRegistry
 
 
 @register
@@ -178,6 +179,18 @@ def test_read_config_migrates(tmp_path):
         ):
             with pytest.raises(RuntimeError):
                 read_config(path)
+
+
+@pytest.mark.parametrize(
+    "path",
+    sorted((Path(__file__).parent / "golden_configs").glob("*.json")),
+    ids=lambda path: path.stem,
+)
+def test_golden_configs_load(path):
+    """config.json files real cases wrote with earlier CrocoDash versions
+    still load. Add one here when a change could break old configs."""
+    ProductRegistry.load()
+    ForcingConfigRegistry.resolve_process_targets(read_config(path))
 
 
 def test_config_json_is_only_read_through_read_config():
