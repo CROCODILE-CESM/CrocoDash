@@ -7,7 +7,6 @@ The YAML file can be generated from an existing case using the case_to_yaml func
 
 """
 
-import json
 from datetime import datetime
 from pathlib import Path
 
@@ -16,7 +15,13 @@ import yaml
 
 from CrocoDash.case import Case
 from CrocoDash import case_state
-from CrocoDash.forcing.base import ForcingConfigRegistry
+from CrocoDash.forcing.base import (
+    CONFIG_FILENAME,
+    ForcingConfigRegistry,
+    iter_configurator_entries,
+    read_config,
+)
+from CrocoDash.raw_data_access.registry import ProductRegistry
 from CrocoDash.grid import Grid
 from CrocoDash.topo import Topo
 from CrocoDash.vgrid import VGrid
@@ -183,16 +188,33 @@ def generate_configure_forcing_args(forcing_config, remove_configs=None):
         end_dt.strftime("%Y-%m-%d %H:%M:%S"),
     ]
 
+    product_name = forcing_config["conditions"]["inputs"]["product_name"]
+    function_name = forcing_config["conditions"]["inputs"]["function_name"]
     configure_forcing_args = {
         "date_range": date_range,
         "boundaries": list(
             forcing_config["conditions"]["outputs"]["boundary_number_conversion"].keys()
         ),
-        "product_name": forcing_config["conditions"]["inputs"]["product_name"].upper(),
-        "function_name": forcing_config["conditions"]["inputs"]["function_name"],
+        "product_name": product_name.upper(),
+        "function_name": function_name,
     }
-    for key in forcing_config:
-        if key in {"conditions", "caseroot"} or key in remove_configs:
+    # config.json keeps the access method's merged arguments; hand back only
+    # the ones that differ from its defaults, as configure_forcings takes them.
+    function_args = forcing_config["conditions"]["inputs"].get("function_args") or {}
+    if function_args:
+        ProductRegistry.load()
+        defaults = ProductRegistry.get_function_default_args(
+            product_name.lower(), function_name, serializable=True
+        )
+        overrides = {
+            name: value
+            for name, value in function_args.items()
+            if name in defaults and value != defaults[name]
+        }
+        if overrides:
+            configure_forcing_args["function_overrides"] = overrides
+    for key, _ in iter_configurator_entries(forcing_config):
+        if key == "conditions" or key in remove_configs:
             continue
         configurator_cls = ForcingConfigRegistry.get_configurator_from_name(key)
         # Round-trip every ctor arg, not just required ones -- an all-optional
@@ -262,10 +284,9 @@ def case_to_yaml(caseroot):
         },
     }
 
-    forcing_config_path = Path(state["inputdir"]) / "extract_forcings" / "config.json"
+    forcing_config_path = Path(state["inputdir"]) / "extract_forcings" / CONFIG_FILENAME
     if forcing_config_path.exists():
-        with open(forcing_config_path) as f:
-            forcing_config = json.load(f)
+        forcing_config = read_config(forcing_config_path)
         config["forcings"] = generate_configure_forcing_args(forcing_config)
 
     return config

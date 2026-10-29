@@ -463,6 +463,7 @@ class WW3Configurator(BaseConfigurator):
                 "e.g. {'cdsapi_rc_path': '~/.cdsapirc_cds'}. Defaults (None) to "
                 "the function's own defaults."
             ),
+            optional=True,
         ),
         InputValueParam(
             "get_step_days",
@@ -475,10 +476,12 @@ class WW3Configurator(BaseConfigurator):
                 "run pick up wherever an earlier one left off, since the GET "
                 "step skips any per-chunk file that already exists on disk."
             ),
+            optional=True,
         ),
         InputValueParam(
             "regrid_step_days",
             comment="Chunk the REGRID step by this many days per request. See get_step_days.",
+            optional=True,
         ),
     ]
     output_params = [

@@ -213,12 +213,6 @@ class BGCRiverNutrientsConfigurator(BaseConfigurator):
             calendar=calendar_as_dict(calendar),
         )
 
-    def validate_args(self, **kwargs):
-        if not Path(kwargs["global_river_nutrients_filepath"]).exists():
-            raise FileNotFoundError(
-                f"River Nutrients file {kwargs['global_river_nutrients_filepath']} does not exist."
-            )
-
     def configure(self):
         river_nutrients_nnsm_filepath = f"river_nutrients_{self.get_input_param('case_grid_name')}_{self.get_input_param('case_session_id')}_nnsm.nc"
         self.set_output_param("READ_RIV_FLUXES", "True")

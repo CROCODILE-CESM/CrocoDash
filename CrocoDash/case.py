@@ -2,15 +2,19 @@ from pathlib import Path
 import uuid
 import shutil
 from datetime import datetime
-import json
 import math
 import pandas as pd
 import regional_mom6 as rmom6
 from CrocoDash.grid import Grid
 from CrocoDash.topo import Topo
 from CrocoDash.vgrid import VGrid
-from CrocoDash.forcing.base import ForcingConfigRegistry
-from CrocoDash.raw_data_access.registry import ProductRegistry
+from CrocoDash.forcing.base import (
+    CONFIG_FILENAME,
+    ForcingConfigRegistry,
+    read_config,
+    write_config,
+)
+from CrocoDash.raw_data_access.registry import ProductRegistry, json_safe
 from CrocoDash.raw_data_access.base import ForcingProduct
 from ProConPy.config_var import ConfigVar, cvars
 from ProConPy.stage import Stage
@@ -552,12 +556,12 @@ class Case:
 
         # Set up Forcings Folder
         self.extract_forcings_path = self.inputdir / "extract_forcings"
-        config_path = self.extract_forcings_path / "config.json"
+        config_path = self.extract_forcings_path / CONFIG_FILENAME
         # What an earlier call configured, to tell which of the files its
-        # process_forcings() made still match.
+        # process_forcings() made still match. A config.json from an
+        # incompatible CrocoDash counts as no record, so those files go.
         try:
-            with open(config_path) as f:
-                previous_config = json.load(f)
+            previous_config = read_config(config_path)
         except (OSError, ValueError):
             previous_config = {}
 
@@ -602,10 +606,7 @@ class Case:
         # function_args is written straight to config.json (via ConditionsConfigurator's
         # "function_args" ConfigOutputParam); coerce Path values (e.g. a dataset_path
         # override) to strings so they're JSON-serializable.
-        function_args = {
-            k: (v.as_posix() if isinstance(v, Path) else v)
-            for k, v in function_args.items()
-        }
+        function_args = json_safe(function_args)
 
         inputs = kwargs | {
             "date_range": pd.to_datetime(date_range),
@@ -639,7 +640,7 @@ class Case:
         try:
             edited = user_nl_blocks.strip(self.caseroot)
             config = {"caseroot": str(self.caseroot)}
-            config |= self.fcr.run_configurators(None)
+            config |= self.fcr.run_configurators()
             user_nl_blocks.report_edits(self.caseroot, edited)
 
             stale = self.fcr.stale_outputs(previous_config, config, self.inputdir)
@@ -652,8 +653,7 @@ class Case:
                 shutil.rmtree(self.extract_forcings_path)
             # Last, so that it never describes files that are still to be removed.
             self.extract_forcings_path.mkdir(parents=True, exist_ok=True)
-            with open(config_path, "w") as f:
-                json.dump(config, f, indent=4)
+            write_config(config_path, config)
         except BaseException:
             user_nl_blocks.restore(self.caseroot, user_nl_before)
             raise
@@ -733,9 +733,8 @@ class Case:
                 "configure_forcings() must be called before process_forcings()."
             )
 
-        config_path = self.extract_forcings_path / "config.json"
-        with open(config_path) as f:
-            config = json.load(f)
+        config_path = self.extract_forcings_path / CONFIG_FILENAME
+        config = read_config(config_path)
 
         flag_names = ForcingConfigRegistry.resolve_process_targets(config).keys()
         valid_kwargs = {f"process_{name}" for name in flag_names}

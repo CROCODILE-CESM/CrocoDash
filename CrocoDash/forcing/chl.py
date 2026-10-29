@@ -63,12 +63,6 @@ class ChlConfigurator(BaseConfigurator):
             calendar=calendar_as_dict(calendar),
         )
 
-    def validate_args(self, **kwargs):
-        if not Path(kwargs["chl_processed_filepath"]).exists():
-            raise FileNotFoundError(
-                f"Chlorophyll file {kwargs['chl_processed_filepath']} does not exist."
-            )
-
     def configure(self):
         regional_chl_file_path = (
             f"seawifs-clim-1997-2010-{self.get_input_param('case_grid_name')}.nc"

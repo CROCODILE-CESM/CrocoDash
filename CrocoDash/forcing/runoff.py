@@ -119,11 +119,11 @@ class RunoffConfigurator(BaseConfigurator):
         super().configure()
 
     def validate_args(self, **kwargs):
-
+        super().validate_args(**kwargs)
         if (kwargs["rmax"] is None) != (kwargs["fold"] is None):
             raise ValueError("Both rmax and fold must be specified together.")
-        if kwargs["rmax"] is not None:
-            assert "SROF" not in kwargs["case_compset_lname"], (
+        if kwargs["rmax"] is not None and "SROF" in kwargs["case_compset_lname"]:
+            raise ValueError(
                 "When rmax and fold are specified, "
                 "the compset must include an active or data runoff model."
             )
@@ -132,9 +132,11 @@ class RunoffConfigurator(BaseConfigurator):
         # Return just the xml file paths (Can be either direct path or in ocn_ice as well)
         ocn_ice_directory = Path(ocn_ice_directory)
 
+        # .value, not get_output_param(): a map name missing from config.json
+        # means no file to copy, not a reason to reconfigure
         params = [
-            self.get_output_param("ROF2OCN_LIQ_RMAPNAME"),
-            self.get_output_param("ROF2OCN_ICE_RMAPNAME"),
+            self.get_output_param_object("ROF2OCN_LIQ_RMAPNAME").value,
+            self.get_output_param_object("ROF2OCN_ICE_RMAPNAME").value,
         ]
 
         valid_paths = []
