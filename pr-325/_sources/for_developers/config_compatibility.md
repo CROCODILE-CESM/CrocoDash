@@ -61,6 +61,12 @@ Bump the MINOR of `CONFIG_SCHEMA_VERSION` when tolerant reading would
 *misread* an old file. Renaming a param is the usual case: the old value would
 be ignored, and the new param would silently take its default. In the same PR:
 
-Add a migration to `CONFIG_MIGRATIONS`, keyed by the version it upgrades from
-(`"1.0"`), that rewrites the old layout and sets `schema_version` to the new
-version. `read_config` raises if a migration leaves the version unchanged.
+1. Add a migration to `CONFIG_MIGRATIONS`, keyed by the version it upgrades
+   from (`"1.0"`), that rewrites the old layout and sets `schema_version` to
+   the new version. `read_config` raises if a migration leaves the version
+   unchanged.
+2. Add a config.json from a real case to `tests/forcing/golden_configs/` if
+   none of the existing ones covers the change.
+
+The golden configs in `tests/forcing/golden_configs/` are config.json files
+real cases wrote, with personal paths replaced. Every one must keep loading.

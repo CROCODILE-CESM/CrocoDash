@@ -416,9 +416,16 @@ one.</p>
 <p>Bump the MINOR of <code class="docutils literal notranslate"><span class="pre">CONFIG_SCHEMA_VERSION</span></code> when tolerant reading would
 <em>misread</em> an old file. Renaming a param is the usual case: the old value would
 be ignored, and the new param would silently take its default. In the same PR:</p>
-<p>Add a migration to <code class="docutils literal notranslate"><span class="pre">CONFIG_MIGRATIONS</span></code>, keyed by the version it upgrades from
-(<code class="docutils literal notranslate"><span class="pre">&quot;1.0&quot;</span></code>), that rewrites the old layout and sets <code class="docutils literal notranslate"><span class="pre">schema_version</span></code> to the new
-version. <code class="docutils literal notranslate"><span class="pre">read_config</span></code> raises if a migration leaves the version unchanged.</p>
+<ol class="arabic simple">
+<li><p>Add a migration to <code class="docutils literal notranslate"><span class="pre">CONFIG_MIGRATIONS</span></code>, keyed by the version it upgrades
+from (<code class="docutils literal notranslate"><span class="pre">&quot;1.0&quot;</span></code>), that rewrites the old layout and sets <code class="docutils literal notranslate"><span class="pre">schema_version</span></code> to
+the new version. <code class="docutils literal notranslate"><span class="pre">read_config</span></code> raises if a migration leaves the version
+unchanged.</p></li>
+<li><p>Add a config.json from a real case to <code class="docutils literal notranslate"><span class="pre">tests/forcing/golden_configs/</span></code> if
+none of the existing ones covers the change.</p></li>
+</ol>
+<p>The golden configs in <code class="docutils literal notranslate"><span class="pre">tests/forcing/golden_configs/</span></code> are config.json files
+real cases wrote, with personal paths replaced. Every one must keep loading.</p>
 </section>
 </section>
 
