@@ -41,7 +41,8 @@ need (one static snapshot, no real time evolution to fetch incrementally),
 so this doesn't route through obc.py's shared GET->chunk->REGRID->MERGE
 engine at all -- just resolves the requested product/function via the same
 ``ProductRegistry`` lookup MOM6/WW3 use (``utils.get_data_access_function``)
-instead of hardcoding a single product.
+instead of hardcoding a single product, and calls it the way they do
+(``utils.call_access_method``).
 
 Every variable in the source restart passes through unfiltered (T-point and
 U-point alike) -- a superset of the ``aicen``/``vicen``/``vsnon``/``trcrn``
@@ -63,6 +64,8 @@ from CrocoDash.forcing import utils
 from CrocoDash.forcing.base import *
 from CrocoDash.raw_data_access.registry import ProductRegistry
 from CrocoDash.raw_data_access.base import CICEForcingProduct
+from CrocoDash.raw_data_access.region import Region
+from CrocoDash.raw_data_access.time_request import TimeRequest
 
 # Where process() writes CICE's forcing file, and therefore where
 # output_files() declares it. Kept in one place so the writer and the
@@ -503,20 +506,18 @@ class CICEConfigurator(BaseConfigurator):
         output_dir = Path(ctx.inputdir) / SEA_ICE_SUBDIR
         output_dir.mkdir(parents=True, exist_ok=True)
 
-        conditions = ctx.config["conditions"]
-        date_range = (
-            conditions["inputs"]["start_date"],
-            conditions["inputs"]["end_date"],
-        )
+        conditions = ctx.config["conditions"]["inputs"]
 
-        data_access_fn = utils.get_data_access_function(product_name, function_name)
-        subset_paths = data_access_fn(
-            dates=date_range,
+        # Not through fetch_raw_chunk: nothing removes a subset made from
+        # other cice_function_args, so it is fetched again every run. The box
+        # keeps CICE's own 1 degree margin, on top of the product's buffer.
+        subset_paths = utils.call_access_method(
+            utils.get_data_access_function(product_name, function_name),
+            when=TimeRequest(conditions["start_date"], conditions["end_date"]),
+            region=Region(
+                bbox["lat_min"], bbox["lat_max"], bbox["lon_min"], bbox["lon_max"]
+            ).padded(1),
             output_folder=raw_dir,
-            lat_min=bbox["lat_min"] - 1,
-            lat_max=bbox["lat_max"] + 1,
-            lon_min=bbox["lon_min"] - 1,
-            lon_max=bbox["lon_max"] + 1,
             **(self.get_input_param("cice_function_args") or {}),
         )
         subset = xr.open_dataset(subset_paths[0])

@@ -20,6 +20,14 @@ CrocoDash.raw\_data\_access.base module
    :show-inheritance:
    :undoc-members:
 
+CrocoDash.raw\_data\_access.region module
+-----------------------------------------
+
+.. automodule:: CrocoDash.raw_data_access.region
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 CrocoDash.raw\_data\_access.registry module
 -------------------------------------------
 

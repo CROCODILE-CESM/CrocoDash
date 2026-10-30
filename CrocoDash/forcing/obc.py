@@ -39,6 +39,7 @@ import xarray as xr
 from CrocoDash import logging
 from CrocoDash.forcing import utils
 from CrocoDash.grid import Grid
+from CrocoDash.raw_data_access.region import Region
 from CrocoDash.raw_data_access.time_request import TimeRequest
 from CrocoDash.topo import Topo
 
@@ -70,59 +71,31 @@ def _make_date_pairs(start: datetime, end: datetime, step_days, min_days: int = 
     return pairs
 
 
-def _ocean_bbox_for_boundary(hgrid, supergridmask, boundary: str) -> dict:
-    """Return a lat/lon bounding box covering only the ocean cells on a boundary edge.
+# Each boundary's row or column of the supergrid.
+_EDGES = {
+    "north": (-1, slice(None)),
+    "south": (0, slice(None)),
+    "east": (slice(None), -1),
+    "west": (slice(None), 0),
+}
 
-    Uses supergridmask (shape ny×nx) to exclude land cells, giving a tighter download bbox
-    than the full supergrid extent. Falls back to the full edge extent if all cells
-    are land.
+
+def _ocean_region(hgrid, supergridmask, boundary: str) -> Region:
+    """The box round the ocean points on one boundary edge (all of it if the
+    edge is all land), going the short way round, so an edge across 180E or
+    near a pole doesn't fetch a whole latitude band.
+
+    Uses supergridmask (the supergrid's shape) to exclude land points, giving
+    a tighter download box than the full edge.
     """
-    # T-cell centers are at every other supergrid node starting at index 1
-    cell_lon = hgrid.x.values
-    cell_lat = hgrid.y.values
-
-    supergridmask_arr = (
-        supergridmask.values.astype(bool)
-        if hasattr(supergridmask, "values")
-        else supergridmask.astype(bool)
-    )
-
-    if boundary == "north":
-        edge_lon, edge_lat, mask = (
-            cell_lon[-1, :],
-            cell_lat[-1, :],
-            supergridmask_arr[-1, :],
-        )
-    elif boundary == "south":
-        edge_lon, edge_lat, mask = (
-            cell_lon[0, :],
-            cell_lat[0, :],
-            supergridmask_arr[0, :],
-        )
-    elif boundary == "east":
-        edge_lon, edge_lat, mask = (
-            cell_lon[:, -1],
-            cell_lat[:, -1],
-            supergridmask_arr[:, -1],
-        )
-    elif boundary == "west":
-        edge_lon, edge_lat, mask = (
-            cell_lon[:, 0],
-            cell_lat[:, 0],
-            supergridmask_arr[:, 0],
-        )
-    else:
+    if boundary not in _EDGES:
         raise ValueError(f"Unknown boundary '{boundary}'")
-
-    ocean_lon = edge_lon[mask] if mask.any() else edge_lon
-    ocean_lat = edge_lat[mask] if mask.any() else edge_lat
-
-    return {
-        "lat_min": float(ocean_lat.min()),
-        "lat_max": float(ocean_lat.max()),
-        "lon_min": float(ocean_lon.min()),
-        "lon_max": float(ocean_lon.max()),
-    }
+    edge = _EDGES[boundary]
+    lon, lat = hgrid.x.values[edge], hgrid.y.values[edge]
+    ocean = np.asarray(supergridmask, dtype=bool)[edge]
+    if ocean.any():
+        lon, lat = lon[ocean], lat[ocean]
+    return Region.around(lon, lat)
 
 
 def _parse_raw_filename_dates(path: Path, boundary: str):
@@ -247,7 +220,7 @@ def _get_one_chunk(
     boundary: str,
     product_name: str,
     function_name: str,
-    latlon: dict,
+    region: Region,
     output_dir: str | Path,
     variables: list,
     extra_args: dict,
@@ -267,7 +240,7 @@ def _get_one_chunk(
         return utils.fetch_raw_chunk(
             data_access_fn=data_access_fn,
             when=when,
-            latlon=latlon,
+            region=region,
             name=boundary,
             output_folder=output_dir,
             output_filename=output_filename,
@@ -498,7 +471,7 @@ def _get_boundary(
     boundary: str,
     when: TimeRequest,
     get_step_days,
-    latlon: dict,
+    region: Region,
     output_dir,
     product_name: str,
     function_name: str,
@@ -530,7 +503,7 @@ def _get_boundary(
             utils.fetch_raw_chunk(
                 data_access_fn=data_access_fn,
                 when=chunk,
-                latlon=latlon,
+                region=region,
                 name=boundary,
                 output_folder=output_dir,
                 output_filename=output_filename,
@@ -551,7 +524,7 @@ def _get_boundary(
                     boundary,
                     product_name,
                     function_name,
-                    latlon,
+                    region,
                     output_dir,
                     variables,
                     extra_args,
@@ -757,10 +730,9 @@ def process_obc_conditions(
         min_chunk_days: Shortest GET/REGRID chunk; a shorter trailing chunk
             joins the one before it. Set to the data's record spacing.
         bathymetry_path: Optional path to the case's bathymetry file. When
-            given, download bounding boxes are computed from the bathymetry
-            ocean tmask (tighter than the full supergrid edge extent). When
-            omitted, falls back to the full supergrid bounding box per
-            boundary.
+            given, each boundary's download box is the one round its ocean
+            points (tighter than the full supergrid edge extent). When
+            omitted, falls back to mom6_forge's box for the whole edge.
     """
     start_date = when.start.to_pydatetime()
     end_date = when.end.to_pydatetime()
@@ -770,7 +742,7 @@ def process_obc_conditions(
     output_path = Path(output_path)
     boundaries = list(boundary_number_conversion.keys())
 
-    # Compute per-boundary download bboxes using the bathymetry tmask so we only
+    # Compute per-boundary download boxes using the bathymetry tmask so we only
     # request data over ocean cells (tighter than the full supergrid edge extent).
     with xr.open_dataset(hgrid_path) as hgrid_ds:
         assert not Grid.is_cyclic_x(hgrid_ds), "bboxes not supported for cyclic grids."
@@ -782,14 +754,21 @@ def process_obc_conditions(
                 min_depth=utils.read_min_depth(bathymetry_path),
                 git=False,
             )
-            boundary_bboxes = {
-                b: _ocean_bbox_for_boundary(hgrid_ds, topo.supergridmask, b)
-                for b in boundaries
+            regions = {
+                b: _ocean_region(hgrid_ds, topo.supergridmask, b) for b in boundaries
             }
             logger.info("Using tmask-derived bounding boxes for OBC data download.")
         else:
-            full_bboxes = Grid.get_bounding_boxes(hgrid_ds)
-            boundary_bboxes = {b: full_bboxes[b] for b in boundaries}
+            boxes = Grid.get_bounding_boxes(hgrid_ds)
+            regions = {
+                b: Region(
+                    boxes[b]["lat_min"],
+                    boxes[b]["lat_max"],
+                    boxes[b]["lon_min"],
+                    boxes[b]["lon_max"],
+                )
+                for b in boundaries
+            }
             logger.info(
                 "No bathymetry_path given; using full supergrid bounding boxes."
             )
@@ -806,7 +785,7 @@ def process_obc_conditions(
             boundary=boundary,
             when=when,
             get_step_days=get_step_days,
-            latlon=boundary_bboxes[boundary],
+            region=regions[boundary],
             output_dir=str(raw_path),
             product_name=product_name,
             function_name=function_name,

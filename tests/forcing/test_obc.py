@@ -11,7 +11,7 @@ from CrocoDash.forcing.obc import (
     _merge_boundary,
     _regrid_boundary,
     _validate_coverage,
-    _ocean_bbox_for_boundary,
+    _ocean_region,
 )
 from CrocoDash.forcing.utils import is_valid_netcdf
 from CrocoDash.forcing.mom6 import _regrid_obc_chunk
@@ -121,18 +121,16 @@ def test_process_obc_conditions_uses_tmask_bbox_for_get(
     hgrid_path = Path(kwargs["hgrid_path"])
     hgrid_ds = xr.open_dataset(hgrid_path)
     full_south_bbox = Grid.get_bounding_boxes(hgrid_ds)["south"]
-    expected_tmask_bbox = _ocean_bbox_for_boundary(
-        hgrid_ds, topo.supergridmask, "south"
-    )
+    expected_tmask_region = _ocean_region(hgrid_ds, topo.supergridmask, "south")
 
     # The land carving should have actually narrowed the box -- otherwise
     # this test can't distinguish "tmask bbox used" from "full bbox used".
-    assert expected_tmask_bbox["lon_min"] > full_south_bbox["lon_min"]
+    assert expected_tmask_region.lon_min > full_south_bbox["lon_min"]
 
-    captured_latlon = {}
+    captured_regions = {}
 
-    def fake_get_boundary(boundary, latlon, **_kwargs):
-        captured_latlon[boundary] = latlon
+    def fake_get_boundary(boundary, region, **_kwargs):
+        captured_regions[boundary] = region
         return []
 
     monkeypatch.setattr(obc_module, "_get_boundary", fake_get_boundary)
@@ -142,8 +140,33 @@ def test_process_obc_conditions_uses_tmask_bbox_for_get(
 
     process_obc_conditions(**kwargs, bathymetry_path=bathymetry_path)
 
-    assert captured_latlon["south"] == pytest.approx(expected_tmask_bbox)
-    assert captured_latlon["south"] != pytest.approx(full_south_bbox)
+    assert captured_regions["south"] == expected_tmask_region
+
+
+def test_edge_region_goes_the_short_way_round():
+    """The edge box was a plain min/max of the edge's longitudes, so an edge
+    across 180E fetched a whole latitude band, -180..180: on a grid stored
+    split at +-180, and on a polar grid, whose north edge bends round the
+    pole from 135E to 225E. Each gets the arc it spans."""
+
+    def edge_region(north_lon, north_lat):
+        hgrid = xr.Dataset(
+            {
+                "x": (("nyp", "nxp"), np.stack([north_lon, north_lon])),
+                "y": (("nyp", "nxp"), np.stack([north_lat - 1, north_lat])),
+            }
+        )
+        return _ocean_region(hgrid, np.ones((2, north_lon.size)), "north")
+
+    split = edge_region((np.arange(170.0, 191.0) + 180) % 360 - 180, np.full(21, 50.0))
+    assert (split.lon_min, split.lon_max) == (170, 190)
+
+    # A straight edge across a north polar stereographic grid.
+    x = np.linspace(-1, 1, 21)
+    polar = edge_region(
+        (np.degrees(np.arctan2(x, 1)) + 360) % 360 - 180, 90 - 10 * np.hypot(x, 1)
+    )
+    assert (polar.lon_min, polar.lon_max) == pytest.approx((135, 225))
 
 
 # ---------------------------------------------------------------------------

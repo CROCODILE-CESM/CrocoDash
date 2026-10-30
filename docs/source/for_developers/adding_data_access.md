@@ -102,6 +102,13 @@ def get_my_data(output_folder, output_filename, dates, variables,
 takes neither `self` nor `cls`. Its `description` and `type` are what appear in
 the generated [Datasets](../for_users/datasets.md) table.
 
+A method may take `region`, a `Region`, in place of `lat_min`, `lat_max`,
+`lon_min` and `lon_max`. Give `@accessmethod` its buffer in degrees as `buf=`:
+the method gets `region.padded(buf)`, so it adds none of its own, and users can
+change `buf` through `function_overrides`. Cut files with `region.select(ds)`;
+a remote API that can't take a range across its own seam takes
+`region.lon_ranges()`.
+
 ## Step 4: Set required metadata.
 
 Each class has a certain amount of metadata that is required. Classes inherited from BaseProduct pretty much just need a name. Classes inherited from ForcingProduct require quite a bit of information, which can be seen in a file like GLORYS. You can see what is required by looking at the base.py file. Here is an example in ForcingProduct: 

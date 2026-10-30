@@ -19,10 +19,12 @@ How it was solved:
 """
 
 from CrocoDash.raw_data_access.registry import ProductRegistry
+from CrocoDash.raw_data_access.region import Region
 from CrocoDash.raw_data_access.time_request import TimeRequest
 import dataclasses
 import dataclasses
 from dataclasses import dataclass, replace
+import functools
 import inspect
 import json
 import pandas as pd
@@ -186,6 +188,40 @@ def takes_when(method) -> bool:
     return "when" in inspect.signature(getattr(method, "__func__", method)).parameters
 
 
+def takes_region(method) -> bool:
+    """Whether an access method takes region, a Region, in place of lat_min,
+    lat_max, lon_min and lon_max. Until every one does, fetch_raw_chunk passes
+    the others those four numbers."""
+    return "region" in inspect.signature(getattr(method, "__func__", method)).parameters
+
+
+# The loose arguments that when and region stand in for.
+_STANDS_IN_FOR = {
+    "when": ["dates"],
+    "region": ["lat_min", "lat_max", "lon_min", "lon_max"],
+}
+
+
+def _pad_region(method, default):
+    """method, given its region grown by buf on every side: the default, or
+    whatever buf the caller passes (stored function_args such as {"buf": 1.0}
+    keep working)."""
+    if default is None:
+        raise TypeError(
+            f"{method.__name__} takes region, so @accessmethod needs its buffer: "
+            "pass buf=, in degrees (0 for none)."
+        )
+    signature = inspect.signature(method)
+
+    @functools.wraps(method)
+    def padded(*args, buf=default, **kwargs):
+        call = signature.bind(*args, **kwargs)
+        call.arguments["region"] = call.arguments["region"].padded(buf)
+        return method(*call.args, **call.kwargs)
+
+    return padded
+
+
 def accessmethod(
     func=None,
     *,
@@ -194,14 +230,19 @@ def accessmethod(
     how_to_use=None,
     subsample=False,
     data_freq=False,
+    buf=None,
 ):
     """subsample: the method can fetch every freq instead of every record: it
     takes freq=None, or when, a TimeRequest thinned to those dates. data_freq:
     it reads data from a path the user gives it,
     and takes data_freq=None naming that data's cadence. See
-    resolve_time_sampling."""
+    resolve_time_sampling. buf: for a method that takes region, the buffer
+    in degrees added once, here, to every side of it; a caller may pass
+    another as buf=."""
 
     def decorator(f):
+        if takes_region(f):
+            f = _pad_region(f, buf)
         f = staticmethod(f)
         f._is_access_method = True
         f._description = description
@@ -209,6 +250,7 @@ def accessmethod(
         f._how_to_use = how_to_use
         f._subsample = subsample
         f._data_freq = data_freq
+        f._buf = buf
         return f
 
     # Case 1: decorator used WITHOUT args: @accessmethod
@@ -257,10 +299,12 @@ class BaseProduct:
             func = entry.__func__
             sig = inspect.signature(func)
 
-            # All required args must be present; when stands in for dates.
+            # All required args must be present; when and region stand in for
+            # the loose ones.
             missing = [arg for arg in cls.required_args if arg not in sig.parameters]
-            if takes_when(func):
-                missing = [arg for arg in missing if arg != "dates"]
+            for arg, loose in _STANDS_IN_FOR.items():
+                if arg in sig.parameters:
+                    missing = [m for m in missing if m not in loose]
             if missing:
                 raise ValueError(
                     f"Access method '{name}' in {cls.product_name} missing args {missing}"
@@ -276,8 +320,9 @@ class BaseProduct:
             raise KeyError(f"{method_name} not found for product {cls.product_name}")
 
         missing = [arg for arg in cls.required_args if arg not in kwargs]
-        if "when" in kwargs:
-            missing = [arg for arg in missing if arg != "dates"]
+        for arg, loose in _STANDS_IN_FOR.items():
+            if arg in kwargs:
+                missing = [m for m in missing if m not in loose]
         if missing:
             raise ValueError(f"{cls.product_name}.{method_name} missing args {missing}")
 
@@ -450,12 +495,16 @@ class ForcingProduct(DatedBaseProduct):
     def validate_method(cls, method_name, **kwargs):
 
         # Add child-class defaults
-        extra_defaults = {
-            "lat_min": 30,
-            "lat_max": 30.1,
-            "lon_min": 30,
-            "lon_max": 30.1,
-        }
+        method = cls._access_methods.get(method_name)
+        if method is not None and takes_region(method):
+            extra_defaults = {"region": Region(30, 30.1, 30, 30.1)}
+        else:
+            extra_defaults = {
+                "lat_min": 30,
+                "lat_max": 30.1,
+                "lon_min": 30,
+                "lon_max": 30.1,
+            }
 
         # Delegate to the base implementation
         return super().validate_method(method_name, **{**extra_defaults, **kwargs})

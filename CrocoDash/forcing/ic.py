@@ -10,6 +10,7 @@ from pathlib import Path
 from CrocoDash import logging
 from CrocoDash.grid import Grid
 from CrocoDash.forcing import utils
+from CrocoDash.raw_data_access.region import Region
 from CrocoDash.raw_data_access.time_request import TimeRequest
 import dask
 import xarray as xr
@@ -70,13 +71,13 @@ def process_initial_condition(
             f"[{product_name}.{function_name}] Usage: {data_access_function._how_to_use}"
         )
 
-    # Get lat,lon information for the IC snapshot
+    # The IC snapshot's box: the whole domain
     hgrid = xr.open_dataset(hgrid_path)
-    latlon_info = Grid.get_bounding_boxes(hgrid)["ic"]
+    box = Grid.get_bounding_boxes(hgrid)["ic"]
 
     _download_initial_condition(
         data_access_function=data_access_function,
-        latlon_info=latlon_info,
+        region=Region(box["lat_min"], box["lat_max"], box["lon_min"], box["lon_max"]),
         raw_data_dir=raw_data_dir,
         when=when,
         variables=variables,
@@ -99,7 +100,7 @@ def process_initial_condition(
 
 def _download_initial_condition(
     data_access_function,
-    latlon_info: dict,
+    region: Region,
     raw_data_dir: str | Path,
     when: TimeRequest,
     variables: list[str],
@@ -109,7 +110,7 @@ def _download_initial_condition(
         utils.fetch_raw_chunk(
             data_access_fn=data_access_function,
             when=when,
-            latlon=latlon_info,
+            region=region,
             output_folder=raw_data_dir,
             output_filename="ic_unprocessed.nc",
             variables=variables,

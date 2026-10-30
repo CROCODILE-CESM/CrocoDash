@@ -53,6 +53,7 @@ KNOWN_INCLUSIVE_WITHOUT_HELPER = {
     ("sampled_for_freq_tests", "strided"),
     ("sampled_for_freq_tests", "ranged"),
     ("sampled_for_freq_tests", "declared"),
+    ("boxed_for_buf_tests", "boxed"),
     # Test fixture from test_ww3.py — synthetic ERA5-shaped data, not real
     # date handling.
     ("test_fake_era5_spectra", "get_fake_spectra"),

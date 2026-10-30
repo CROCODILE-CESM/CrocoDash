@@ -336,3 +336,33 @@ def test_sample_dates_strides_from_the_freq_anchor():
 def test_sample_dates_falls_back_to_the_window_start():
     dates = sample_dates("2020-01-10", "2020-01-11", "MS")
     assert list(dates.strftime("%m-%d")) == ["01-10"]
+
+
+class _Boxed(ForcingProduct):
+    product_name = "boxed_for_buf_tests"
+    description = "d"
+    link = "l"
+    time_sampling = TimeSampling("D")
+    time_var_name = "time"
+    time_units = "days since 2000-01-01"
+    calendar = GREGORIAN
+
+    @accessmethod(buf=1.5)
+    def boxed(region, when, output_folder, output_filename, variables=None, name=None):
+        return region
+
+
+def test_accessmethod_pads_the_region_once_by_buf():
+    """The buffer is added in one place, so no caller or product adds its
+    own; a caller's buf, such as stored function_args, replaces the default."""
+    box = Region(10, 20, 170, 190)
+    call = dict(
+        when=TimeRequest("2000-01-01", "2000-01-02"),
+        output_folder=".",
+        output_filename="f.nc",
+    )
+    assert _Boxed.boxed(region=box, **call) == Region(8.5, 21.5, 168.5, 191.5)
+    assert _Boxed.boxed(box, buf=0, **call) == box
+    assert ProductRegistry.get_function_default_args(
+        "boxed_for_buf_tests", "boxed"
+    ) == {"buf": 1.5}
