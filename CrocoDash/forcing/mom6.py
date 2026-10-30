@@ -657,14 +657,7 @@ class ConditionsConfigurator(BaseConfigurator):
             self.get_output_param("information"), self.get_input_param("function_args")
         )
         coverage = product.coverage(function_name, variables=variables, **extra_args)
-        first, last = coverage
-        if (first is not None and start < first) or (last is not None and end > last):
-            held = " → ".join("…" if d is None else f"{d:%Y-%m-%d}" for d in coverage)
-            raise ValueError(
-                f"{product_name} has data {held}; the run {start:%Y-%m-%d} → "
-                f"{end:%Y-%m-%d} is outside it. Move date_range inside it or "
-                "choose another product."
-            )
+        time_windows.check_coverage(product_name, coverage, start, end)
         obc_start, obc_end = time_windows.obc_window(sampling, start, end, coverage)
         self.set_output_param("obc_start_date", obc_start.strftime(self._DATE_FORMAT))
         self.set_output_param("obc_end_date", obc_end.strftime(self._DATE_FORMAT))

@@ -5,6 +5,7 @@ import pytest
 import xarray as xr
 
 from CrocoDash.raw_data_access.datasets import cice_output
+from CrocoDash.raw_data_access.region import Region
 from CrocoDash.raw_data_access.registry import ProductRegistry
 
 GRID_PATH = "/glade/campaign/cesm/community/omwg/grids/tx2_3v3_grid.nc"
@@ -22,45 +23,58 @@ def _skip_if_reference_files_missing():
         )
 
 
-def test_find_cice_index_window_gulf_of_mexico(skip_if_not_glade):
-    _skip_if_reference_files_missing()
-    ni_idx, nj_min, nj_max = cice_output.find_cice_index_window(
-        GRID_PATH, lat_min=18, lat_max=31, lon_min=-98, lon_max=-80
+def test_cice_window_on_degree_grid(tmp_path):
+    """A MOM6 grid file (ny/nx, degrees, U points at the qlon/qlat corners)
+    finds a Gulf of Mexico box on its own values, with each T cell's NE
+    corner as its U point, and an Arctic box whose cells fall either side of
+    the tripole fold keeps every column of its rows."""
+    ny, nx = 18, 36
+    lon_q, lat_q = np.meshgrid(
+        -280.0 + 10 * np.arange(nx + 1), -90.0 + 10 * np.arange(ny + 1)
     )
+    tlon, tlat = lon_q[:-1, :-1] + 5, lat_q[:-1, :-1] + 5
+    tlat[-1, [8, 9, 26, 27]] = 88.0  # the top row's cells either side of the fold
+    east, north = {"units": "degrees_east"}, {"units": "degrees_north"}
+    xr.Dataset(
+        {
+            "tlon": (("ny", "nx"), tlon, east),
+            "tlat": (("ny", "nx"), tlat, north),
+            "ulon": (("ny", "nxp"), lon_q[:-1], east),
+            "ulat": (("ny", "nxp"), tlat[:, [0] * (nx + 1)], north),
+            "qlon": (("nyp", "nxp"), lon_q, east),
+            "qlat": (("nyp", "nxp"), lat_q, north),
+        }
+    ).to_netcdf(tmp_path / "grid.nc")
+    j, i = np.mgrid[:ny, :nx]
+    restart = xr.Dataset({"aicen": (("ncat", "nj", "ni"), [100.0 * j + i])})
+    restart.to_netcdf(tmp_path / "restart.nc")
 
-    assert np.all(np.diff(np.sort(ni_idx)) == 1), "ni window should be contiguous"
-
-    grid = xr.open_dataset(GRID_PATH)
-    tlat = np.rad2deg(grid["tlat"].values)
-    tlon = np.rad2deg(grid["tlon"].values)
-    sub_tlat = tlat[nj_min : nj_max + 1][:, ni_idx]
-    sub_tlon = tlon[nj_min : nj_max + 1][:, ni_idx]
-
-    # Window should cover the requested box (with buffer) and not run away.
-    assert sub_tlat.min() <= 18 <= sub_tlat.max()
-    assert sub_tlat.min() <= 31 <= sub_tlat.max()
-    assert sub_tlon.min() <= -98 <= sub_tlon.max()
-    assert sub_tlon.min() <= -80 <= sub_tlon.max()
-    assert sub_tlat.max() - sub_tlat.min() < 20
-    assert sub_tlon.max() - sub_tlon.min() < 30
-
-
-def test_find_cice_index_window_out_of_bounds_raises(skip_if_not_glade):
-    _skip_if_reference_files_missing()
-    with pytest.raises(ValueError):
-        cice_output.find_cice_index_window(
-            GRID_PATH, lat_min=1000, lat_max=1001, lon_min=0, lon_max=1
+    def subset(region):
+        return cice_output.CICE_RESTART.get_cice_restart_subset(
+            dates=["2000-01-01", "2000-01-01"],
+            region=region,
+            buf=0,
+            restart_path=tmp_path / "restart.nc",
+            grid_path=tmp_path / "grid.nc",
+            preview=True,
         )
+
+    gulf = subset(Region(18, 31, -98, -80))
+    np.testing.assert_array_equal(gulf.tlat, [[25.0, 25.0]])
+    np.testing.assert_array_equal(gulf.tlon, [[-95.0, -85.0]])
+    np.testing.assert_array_equal(gulf.aicen, [[[1118.0, 1119.0]]])
+    np.testing.assert_array_equal(gulf.ulon, gulf.tlon + 5)
+    np.testing.assert_array_equal(gulf.ulat, gulf.tlat + 5)
+
+    arctic = subset(Region(87, 90, -200, 0))
+    np.testing.assert_array_equal(arctic.aicen, [[100.0 * (ny - 1) + np.arange(nx)]])
 
 
 def test_get_cice_restart_subset(skip_if_not_glade, tmp_path):
     _skip_if_reference_files_missing()
     paths = cice_output.CICE_RESTART.get_cice_restart_subset(
         dates=["2000-01-01", "2000-01-04"],
-        lat_min=18,
-        lat_max=31,
-        lon_min=-98,
-        lon_max=-80,
+        region=Region(18, 31, -98, -80),
         output_folder=tmp_path,
         output_filename="cice_restart_subset.nc",
         restart_path=RESTART_PATH,
@@ -91,10 +105,7 @@ def test_get_cice_restart_subset_variable_filter(skip_if_not_glade, tmp_path):
     _skip_if_reference_files_missing()
     paths = cice_output.CICE_RESTART.get_cice_restart_subset(
         dates=["2000-01-01", "2000-01-02"],
-        lat_min=18,
-        lat_max=31,
-        lon_min=-98,
-        lon_max=-80,
+        region=Region(18, 31, -98, -80),
         output_folder=tmp_path,
         output_filename="cice_restart_subset.nc",
         variables=["aicen", "vicen"],
@@ -112,10 +123,7 @@ def test_get_cice_restart_subset_missing_path_raises(tmp_path):
     with pytest.raises(FileNotFoundError):
         cice_output.CICE_RESTART.get_cice_restart_subset(
             dates=["2000-01-01", "2000-01-02"],
-            lat_min=18,
-            lat_max=31,
-            lon_min=-98,
-            lon_max=-80,
+            region=Region(18, 31, -98, -80),
             output_folder=tmp_path,
             restart_path=str(tmp_path / "does_not_exist.nc"),
             grid_path=GRID_PATH,

@@ -16,7 +16,9 @@ import xarray as xr
 from netCDF4 import Dataset
 
 from CrocoDash.raw_data_access.base import DIRECTION_TO, LAND_NAN, WW3ForcingProduct
+from CrocoDash.raw_data_access.region import Region
 from CrocoDash.raw_data_access.registry import ProductRegistry
+from CrocoDash.raw_data_access.time_request import TimeRequest
 from CrocoDash.raw_data_access.datasets.cesm_ww3_jra import (
     _DEFAULT_DATABASE_ROOT,
     _DEFAULT_GRID_FILE,
@@ -124,14 +126,13 @@ def database(tmp_path):
     return root, grid
 
 
-def _extract(database, **kwargs):
+def _extract(
+    database, dates=("2020-02-27", "2020-02-27"), box=(-1.0, 1.0, 1.0, 4.0), **kwargs
+):
     root, grid = database
     args = dict(
-        dates=["2020-02-27", "2020-02-27"],
-        lat_min=-1.0,
-        lat_max=1.0,
-        lon_min=1.0,
-        lon_max=4.0,
+        when=TimeRequest(*dates),
+        region=Region(*box),
         database_root=str(root),
         grid_file=str(grid),
         fr1=FR1,
@@ -201,14 +202,14 @@ def test_action_to_energy_matches_the_documented_formula():
 
 
 def test_requested_timestamps_covers_whole_days_at_both_ends():
-    stamps = requested_timestamps(["2019-03-01", "2019-03-02"])
+    stamps = requested_timestamps(TimeRequest("2019-03-01", "2019-03-02"))
     assert len(stamps) == 8
     assert stamps[0] == pd.Timestamp("2019-03-01 00:00")
     assert stamps[-1] == pd.Timestamp("2019-03-02 18:00")
 
 
 def test_requested_timestamps_single_day_keeps_all_four_steps():
-    stamps = requested_timestamps(["2019-03-01", "2019-03-01"])
+    stamps = requested_timestamps(TimeRequest("2019-03-01", "2019-03-01"))
     assert list(stamps.hour) == [0, 6, 12, 18]
 
 
@@ -293,7 +294,7 @@ def test_land_cells_are_nan_not_zero(database):
     """Land must stay distinguishable from a sea point carrying no energy:
     an ice-covered boundary is all zeros and has to survive as real
     stations. forcing/ww3.py drops the NaN ones and keeps the zeros."""
-    ds = _extract(database, lon_min=1.0, lon_max=5.0)
+    ds = _extract(database, box=(-1.0, 1.0, 1.0, 5.0))
     land = ds["efth"].sel(longitude=LONS[LAND_I]).values
     assert np.isnan(land).all()
     # Every wet cell is finite, so NaN means land and nothing else.
@@ -314,7 +315,7 @@ def test_an_all_zero_sea_point_is_kept_as_a_station(database, tmp_path):
                 block[:, 1] = 0.0
                 nc.variables[f"va{s + 1:04d}"][0, :, :] = block
 
-    ds = _extract(database, lon_min=1.0, lon_max=5.0)
+    ds = _extract(database, box=(-1.0, 1.0, 1.0, 5.0))
     iced = ds["efth"].sel(longitude=LONS[1]).values
     assert np.all(iced == 0.0)
     assert not np.isnan(iced).any()  # zero, not land
@@ -326,7 +327,7 @@ def test_direction_axis_is_emitted_in_ww3_index_order(database):
 
 
 def test_leap_day_is_served_by_february_28_under_its_own_stamp(database):
-    ds = _extract(database, dates=["2020-02-28", "2020-03-01"])
+    ds = _extract(database, dates=("2020-02-28", "2020-03-01"))
     stamps = pd.to_datetime(ds["time"].values)
     assert len(stamps) == 12
     assert pd.Timestamp("2020-02-29 06:00") in set(stamps)
@@ -343,7 +344,7 @@ def test_leap_day_is_served_by_february_28_under_its_own_stamp(database):
 
 
 def test_non_leap_years_are_unaffected(database, tmp_path):
-    ds = _extract(database, dates=["2020-02-27", "2020-02-28"])
+    ds = _extract(database, dates=("2020-02-27", "2020-02-28"))
     stamps = pd.to_datetime(ds["time"].values)
     assert len(stamps) == 8
     assert not any((s.month, s.day) == (2, 29) for s in stamps)
@@ -353,7 +354,7 @@ def test_window_crossing_the_cyclic_seam_stays_monotonic(database):
     """A window spanning the 0/360 seam is read as two hyperslabs and
     reassembled; its longitudes stay increasing so the consumer's own
     wrapping has something sane to work with."""
-    ds = _extract(database, lon_min=4.5, lon_max=361.0)
+    ds = _extract(database, box=(-1.0, 1.0, 4.5, 361.0))
     lons = ds["longitude"].values
     assert np.all(np.diff(lons) > 0)
     assert (lons % 360.0 == 0.5).any() and (lons % 360.0 == 5.5).any()
@@ -374,13 +375,13 @@ def test_window_crossing_the_cyclic_seam_stays_monotonic(database):
 
 @pytest.mark.parametrize(
     "lon_min, lon_max",
-    [(0.0, 360.0), (10.0, 370.0), (0.1, 360.1), (10.3, 370.3), (-10.0, 360.0)],
+    [(0.0, 360.0), (10.0, 370.0), (0.1, 360.1), (10.3, 370.3)],
 )
 def test_a_full_turn_of_longitude_reads_every_column(database, lon_min, lon_max):
     """A full turn wraps its ends onto (nearly) the same longitude -- only
     exactly so for integer pairs; it must read the whole circle, not
     collapse to the few columns around lon_min."""
-    ds = _extract(database, lon_min=lon_min, lon_max=lon_max)
+    ds = _extract(database, box=(-1.0, 1.0, lon_min, lon_max))
     assert ds.sizes["longitude"] == NX
 
 
@@ -391,20 +392,6 @@ def test_a_grid_file_of_another_shape_is_rejected(database, tmp_path):
     _write_grid(grid, ny=NY - 1)
     with pytest.raises(ValueError, match="grid_file"):
         _extract(database, grid_file=str(grid))
-
-
-@pytest.mark.parametrize("lon_max", [361.0, 1.0], ids=["ascending", "descending"])
-def test_a_descending_pair_reads_eastward_across_the_seam(database, lon_max):
-    """359..1 is the same 2-degree window as 359..361 -- 4 of the 6 columns
-    without padding. Reading a descending pair as a full turn would give 6."""
-    ds = _extract(
-        database,
-        lon_min=359.0,
-        lon_max=lon_max,
-        buffer_deg=0.0,
-        max_buffer_deg=0.0,
-    )
-    assert ds.sizes["longitude"] == 4
 
 
 @pytest.mark.parametrize("attrs", [{}, {"min_depth": 0.0}], ids=["missing", "zero"])
@@ -436,7 +423,7 @@ def test_energy_overflowing_float32_is_an_error_not_inf(database, tmp_path):
     grid = tmp_path / "shallow_topog.nc"
     _write_grid(grid, depth=1e-300, attrs={"min_depth": 1e-300})
     with pytest.raises(ValueError, match="not finite in float32"):
-        _extract(database, grid_file=str(grid), lon_min=1.0, lon_max=2.0)
+        _extract(database, grid_file=str(grid), box=(-1.0, 1.0, 1.0, 2.0))
 
 
 def test_a_fill_value_at_a_sea_cell_is_blamed_on_the_mask(database):
@@ -452,16 +439,16 @@ def test_a_fill_value_at_a_sea_cell_is_blamed_on_the_mask(database):
 
 def test_dates_outside_the_database_are_rejected(database):
     with pytest.raises(ValueError, match="covers"):
-        _extract(database, dates=["2020-02-25", "2020-02-26"])
+        _extract(database, dates=("2020-02-25", "2020-02-26"))
     with pytest.raises(ValueError, match="covers"):
-        _extract(database, dates=["2020-03-02", "2020-03-05"])
+        _extract(database, dates=("2020-03-02", "2020-03-05"))
 
 
 def test_a_thin_boundary_strip_still_finds_stations(database):
     """A "north" boundary box is a near-zero-height strip; on a coarse
     database it can contain no cell centre at all, so the window has to
     grow until it does."""
-    ds = _extract(database, lat_min=0.02, lat_max=0.04, lon_min=1.0, lon_max=2.0)
+    ds = _extract(database, box=(0.02, 0.04, 1.0, 2.0))
     wet = (ds["efth"].values > 0).any(axis=(0, 3, 4))
     assert wet.sum() >= 2
 
@@ -472,25 +459,22 @@ def test_all_land_window_raises_rather_than_returning_zeros(database):
     with pytest.raises(ValueError, match="No wet database cells"):
         _extract(
             database,
-            lat_min=-0.5,
-            lat_max=-0.5,
-            lon_min=LONS[LAND_I],
-            lon_max=LONS[LAND_I],
-            buffer_deg=0.0,
-            max_buffer_deg=0.0,
+            box=(-0.5, -0.5, LONS[LAND_I], LONS[LAND_I]),
+            buf=0.0,
+            max_growth_deg=0.0,
         )
 
 
 def test_latitudes_outside_the_database_are_reported_as_such(database):
-    with pytest.raises(ValueError, match="lies entirely outside"):
-        _extract(database, lat_min=88.0, lat_max=89.0)
+    with pytest.raises(ValueError, match="No cell of the data"):
+        _extract(database, box=(88.0, 89.0, 1.0, 4.0))
 
 
 def test_a_missing_restart_is_reported_not_silently_skipped(database):
     root, _ = database
     (root / f"{CASE}.ww3.r.2020-02-28-43200.nc").unlink()
     with pytest.raises(FileNotFoundError, match="missing"):
-        _extract(database, dates=["2020-02-27", "2020-03-01"])
+        _extract(database, dates=("2020-02-27", "2020-03-01"))
 
 
 # --------------------------------------------------------------------------

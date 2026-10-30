@@ -53,7 +53,7 @@ def obc_window(ts: TimeSampling, start, end, coverage):
     The padding stops at the first and last dates the product holds,
     coverage (either may be None). The run itself is never cut: a run
     outside the product's data is refused at configure (see
-    ConditionsConfigurator.configure)."""
+    check_coverage)."""
     pad = timedelta(days=period_days(ts))
     first, last = coverage
     window_start, window_end = start - pad, end + pad
@@ -62,6 +62,19 @@ def obc_window(ts: TimeSampling, start, end, coverage):
     if last is not None:
         window_end = min(window_end, max(last, end))
     return window_start, window_end
+
+
+def check_coverage(product_name, coverage, start, end):
+    """Refuse a run from start to end that leaves coverage, the first and
+    last dates the product holds (either may be None)."""
+    first, last = coverage
+    if (first is not None and start < first) or (last is not None and end > last):
+        held = " → ".join("…" if d is None else f"{d:%Y-%m-%d}" for d in coverage)
+        raise ValueError(
+            f"{product_name} has data {held}; the run {start:%Y-%m-%d} → "
+            f"{end:%Y-%m-%d} is outside it. Move date_range inside it or "
+            "choose another product."
+        )
 
 
 def ic_lookback_days(ts: TimeSampling) -> int:

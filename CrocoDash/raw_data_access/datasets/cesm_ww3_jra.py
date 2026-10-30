@@ -130,6 +130,9 @@ _DEFAULT_DIRECTION_OFFSET = 0.0
 # Restarts are written every 6 hours, on the hour, starting at 00Z.
 _RESTART_HOURS = (0, 6, 12, 18)
 
+# A database run starts cold, so its first weeks are spin-up and not forcing.
+_SPIN_UP = pd.Timedelta(days=30)
+
 _GRAVITY = 9.806  # w3gridmd.F90's GRAV, not 9.81 -- keeps Cg consistent with WW3
 
 
@@ -217,24 +220,14 @@ def action_to_energy(va, sigma, cg):
     return np.asarray(va, dtype=np.float64) * factor[..., None]
 
 
-def requested_timestamps(dates):
-    """Every 6-hourly restart stamp of every whole day in ``dates``.
-
-    Whole-day inclusive on both ends: a plain ``date_range(..., freq="6h")``
-    would stop at the last day's 00:00 and drop its 06/12/18Z steps, so the
-    end day is extended to 18:00 first. Same "every step of every requested
-    day" convention reference.py and era5.py use, which is also what obc.py's
-    filename-based coverage check assumes.
+def requested_timestamps(when):
+    """Every 6-hourly restart stamp of every day ``when`` (a TimeRequest)
+    asks for, the last day's 06/12/18Z steps included. Same "every step of
+    every requested day" convention reference.py and era5.py use, which is
+    also what obc.py's filename-based coverage check assumes.
     """
-    days = pd.date_range(
-        pd.Timestamp(dates[0]).normalize(),
-        pd.Timestamp(dates[-1]).normalize(),
-        freq="D",
-    )
-    if len(days) == 0:
-        raise ValueError(f"No whole days in requested range {dates[0]}..{dates[-1]}.")
-    return pd.date_range(
-        days[0], days[-1] + pd.Timedelta(hours=_RESTART_HOURS[-1]), freq="6h"
+    return pd.DatetimeIndex(
+        [day + pd.Timedelta(hours=h) for day in when.days() for h in _RESTART_HOURS]
     )
 
 
@@ -299,29 +292,6 @@ def available_range(database_root, case_name):
             f"No parseable WW3 restarts for case '{case_name}' in {database_root}."
         )
     return min(stamps), max(stamps)
-
-
-def _axis_indices(coord, lo, hi, cyclic, n):
-    """Index range covering [lo, hi] on a regular 1-D axis.
-
-    Returns an integer array of (possibly out-of-range, for a cyclic axis)
-    indices; the caller mods them into the array and keeps the unmodded
-    values for the coordinate, so a window crossing the seam stays monotonic
-    in longitude instead of jumping 359.5 -> 0.5.
-    """
-    origin, delta = coord[0], coord[1] - coord[0]
-    i0 = int(np.floor((lo - origin) / delta))
-    i1 = int(np.ceil((hi - origin) / delta))
-    if not cyclic:
-        i0, i1 = max(i0, 0), min(i1, n - 1)
-        if i1 < i0:
-            raise ValueError(
-                f"Requested range {lo}..{hi} lies entirely outside the database "
-                f"axis {coord[0]}..{coord[-1]}."
-            )
-    elif i1 - i0 + 1 >= n:
-        i0, i1 = 0, n - 1
-    return np.arange(i0, i1 + 1)
 
 
 def _window_runs(j_idx, i_idx, nx):
@@ -393,9 +363,9 @@ def _read_static_grid(grid_file):
     preprocessor inputs; its `depth` was verified identical to the
     `<grid>_bottom.inp` that actually built `mod_def.ww3`.
 
-    Rectilinearity is asserted rather than assumed: the index arithmetic in
-    `_axis_indices`, and emitting 1-D `latitude`/`longitude` coordinates at
-    all, both depend on it. A curvilinear global WW3 grid would need a
+    Rectilinearity is asserted rather than assumed: finding the window on
+    1-D axes, and emitting 1-D `latitude`/`longitude` coordinates at all,
+    both depend on it. A curvilinear global WW3 grid would need a
     search instead, and should fail loudly here rather than silently pick
     the wrong cells.
 
@@ -463,10 +433,25 @@ class CESM_WW3_JRA(WW3ForcingProduct):
     land_marker = LAND_NAN
 
     @classmethod
+    def coverage(
+        cls, method_name, database_root=_DEFAULT_DATABASE_ROOT, case_name=None, **_
+    ):
+        """The first day after the database run's spin-up, and the last day it
+        holds all four restarts of; (None, None) without the database (off
+        GLADE), where the call itself says what is missing."""
+        if not Path(database_root).is_dir():
+            return None, None
+        first, last = available_range(
+            database_root, case_name or discover_case_name(database_root)
+        )
+        last_day = (last - pd.Timedelta(hours=_RESTART_HOURS[-1])).normalize()
+        return (first + _SPIN_UP).normalize(), last_day
+
+    @classmethod
     def validate_method(cls, method_name, **kwargs):
         # The generic toy dates (2000) predate the database.
         return super().validate_method(
-            method_name, **{"dates": ["2019-01-01", "2019-01-01"], **kwargs}
+            method_name, **{"when": TimeRequest("2019-01-01", "2019-01-01"), **kwargs}
         )
 
     @accessmethod(
@@ -491,13 +476,11 @@ class CESM_WW3_JRA(WW3ForcingProduct):
             "e.g. the 0.5-degree `wi_jra.glo0p5.001` sibling, which also "
             "needs its own `fr1`/`xfr` if its ww3_grid.inp differs."
         ),
+        buf=1.5,
     )
     def get_cesm_ww3_jra_spectra(
-        dates: list,
-        lat_min,
-        lat_max,
-        lon_min,
-        lon_max,
+        when,
+        region,
         name=None,
         output_folder=Path(""),
         output_filename="cesm_ww3_jra_spectra.nc",
@@ -508,9 +491,8 @@ class CESM_WW3_JRA(WW3ForcingProduct):
         fr1=_DEFAULT_FR1,
         xfr=_DEFAULT_XFR,
         direction_offset=_DEFAULT_DIRECTION_OFFSET,
-        buffer_deg=1.5,
         min_stations=2,
-        max_buffer_deg=10.0,
+        max_growth_deg=8.5,
     ):
         """Extract a boundary window's spectra and write them as NetCDF.
 
@@ -518,22 +500,23 @@ class CESM_WW3_JRA(WW3ForcingProduct):
         are the whole spectrum -- and is kept only to satisfy
         ForcingProduct's required_args contract.
 
-        `buffer_deg` pads the requested box before indexing. Some padding is
+        `region` comes padded by `buf` (see @accessmethod). Some padding is
         not optional here: a boundary's box from
         mom6_forge.Grid.get_bounding_boxes is a near-zero-width strip (a
         "north" boundary spans the domain's longitudes at essentially one
         latitude), and on a 1-degree database such a strip can contain no
         cell centre at all. If fewer than `min_stations` wet cells fall in
-        the padded window, the padding grows by one degree at a time up to
-        `max_buffer_deg` before giving up -- ww3_bounc blends boundary
-        points from whatever stations it is given by inverse distance, so
-        two real neighbours beat one exact-but-lonely hit.
+        the window, the box grows by one degree at a time, by up to
+        `max_growth_deg` in all (to 10 degrees of padding with the default
+        buf) before giving up -- ww3_bounc blends boundary points from
+        whatever stations it is given by inverse distance, so two real
+        neighbours beat one exact-but-lonely hit.
 
         Returns the written NetCDF path.
         """
         case_name = case_name or discover_case_name(database_root)
         first, last = available_range(database_root, case_name)
-        stamps = requested_timestamps(dates)
+        stamps = requested_timestamps(when)
 
         if stamps[0] < first or stamps[-1] > last:
             raise ValueError(
@@ -546,22 +529,15 @@ class CESM_WW3_JRA(WW3ForcingProduct):
 
         lons, lats, depth, min_depth = _read_static_grid(grid_file)
         ny, nx = depth.shape
-
-        # Put the request on the database's longitude branch, and keep the
-        # window's own longitudes unwrapped so they stay monotonic across the
-        # seam (forcing/ww3.py::_wrap_lons_like puts them back on the
-        # supergrid's branch afterwards).
-        # Keep the requested span rather than rebuilding it from two wrapped
-        # ends: 0.1..360.1 or -10..360 is a full turn although its ends wrap
-        # onto (nearly) the same longitude, and _axis_indices clamps anything
-        # that wide to the whole axis. The window always runs eastward from
-        # lon_min, so a descending pair wraps: 350..10 crosses the seam
-        # (20 degrees), 100..10 reads 270.
-        lo = lon_min % 360.0
-        span = lon_max - lon_min
-        if span < 0:
-            span %= 360.0
-        hi = lo + span
+        # Region.select finds the window on the grid's axes: its columns come
+        # west to east across the database's cyclic seam, with longitudes
+        # that stay monotonic (forcing/ww3.py::_wrap_lons_like puts them back
+        # on the supergrid's branch afterwards). Only that window of each
+        # restart is then read.
+        cells = xr.Dataset(
+            {"j": ("latitude", np.arange(ny)), "i": ("longitude", np.arange(nx))},
+            coords={"latitude": lats, "longitude": lons},
+        )
 
         paths = [Path(database_root) / restart_filename(case_name, s) for s in stamps]
         missing = [p for p in paths if not p.exists()]
@@ -584,20 +560,19 @@ class CESM_WW3_JRA(WW3ForcingProduct):
             )
         spec_count = nk * nth
 
-        buffer = float(buffer_deg)
+        grown = 0.0
         while True:
-            j_idx = _axis_indices(lats, lat_min - buffer, lat_max + buffer, False, ny)
-            i_idx = _axis_indices(lons, lo - buffer, hi + buffer, True, nx)
+            window = region.select(cells, lon="longitude", lat="latitude")
+            j_idx, i_idx = window["j"].values, window["i"].values
             wet = _read_mapsta_window(paths[0], j_idx, i_idx, nx)
-            if wet.sum() >= min_stations or buffer >= max_buffer_deg:
+            if wet.sum() >= min_stations or grown >= max_growth_deg:
                 break
-            buffer = min(buffer + 1.0, max_buffer_deg)
+            step = min(1.0, max_growth_deg - grown)
+            region, grown = region.padded(step), grown + step
 
         if not wet.any():
             raise ValueError(
-                f"No wet database cells within {buffer} degrees of "
-                f"[{lat_min}, {lat_max}] x [{lon_min}, {lon_max}] -- the whole "
-                "window is land or outside the database's latitude range."
+                f"No wet database cells in {region}: the whole window is land."
             )
 
         frequency, sigma, direction = spectral_axes(
@@ -606,7 +581,7 @@ class CESM_WW3_JRA(WW3ForcingProduct):
 
         # Depth is static and water levels are off in the producing run, so
         # Cg is computed once for the window rather than per timestep.
-        window_depth = np.maximum(depth[np.ix_(j_idx, np.mod(i_idx, nx))], min_depth)
+        window_depth = np.maximum(depth[np.ix_(j_idx, i_idx)], min_depth)
         cg = group_velocity(sigma, window_depth)
 
         efth = np.empty(
@@ -649,8 +624,8 @@ class CESM_WW3_JRA(WW3ForcingProduct):
             },
             coords={
                 "time": stamps,
-                "latitude": lats[j_idx],
-                "longitude": lons[0] + i_idx * (lons[1] - lons[0]),
+                "latitude": window["latitude"].values,
+                "longitude": window["longitude"].values,
                 "frequency": ("frequency", frequency, {"units": "s-1"}),
                 "direction": (
                     "direction",

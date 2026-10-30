@@ -820,6 +820,23 @@ def test_ww3_configurator_accepts_matching_product():
     )
 
 
+def test_cesm_ww3_jra_run_in_its_spin_up_is_refused_at_configure(tmp_path):
+    """The database's run starts cold, so its first 30 days are spin-up, not
+    forcing; a run inside them is refused before anything is fetched."""
+    for stamp in ("2018-11-01-00000", "2019-03-01-64800"):
+        (tmp_path / f"fake_jra.ww3.r.{stamp}.nc").touch()
+    configurator = WW3Configurator(
+        case_inputdir=tmp_path,
+        boundaries=["west"],
+        ww3_obc_product_name="CESM-WW3-JRA",
+        ww3_obc_function_name="get_cesm_ww3_jra_spectra",
+        ww3_obc_function_overrides={"database_root": str(tmp_path)},
+        date_range=pd.to_datetime(["2018-11-15", "2018-12-15"]),
+    )
+    with pytest.raises(ValueError, match="2018-12-01 → 2019-03-01; the run"):
+        configurator.configure()
+
+
 # =============================================================================
 # WW3Configurator.output_files()
 # =============================================================================

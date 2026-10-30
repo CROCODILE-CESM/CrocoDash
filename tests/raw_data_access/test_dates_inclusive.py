@@ -66,10 +66,9 @@ KNOWN_INCLUSIVE_WITHOUT_HELPER = {
     # Same reasoning as cice_restart above -- the output has no `time`
     # dimension at all, so `dates` isn't used for any date-based filtering.
     ("reference_ice", "get_reference_ice_data"),
-    # Reparses `dates` in `requested_timestamps`, which normalizes both ends
-    # to whole days and then extends the last one to 18:00 so that day's
-    # 06/12/18Z restarts are kept -- whole-day inclusive by construction,
-    # and covered directly by
+    # Takes `when`, whose days `requested_timestamps` reads every 6-hourly
+    # restart of, the last day's 06/12/18Z included -- whole-day inclusive by
+    # construction, and covered directly by
     # test_cesm_ww3_jra.py::test_requested_timestamps_covers_whole_days_at_both_ends.
     ("cesm-ww3-jra", "get_cesm_ww3_jra_spectra"),
 }

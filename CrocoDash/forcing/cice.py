@@ -509,14 +509,13 @@ class CICEConfigurator(BaseConfigurator):
         conditions = ctx.config["conditions"]["inputs"]
 
         # Not through fetch_raw_chunk: nothing removes a subset made from
-        # other cice_function_args, so it is fetched again every run. The box
-        # keeps CICE's own 1 degree margin, on top of the product's buffer.
+        # other cice_function_args, so it is fetched again every run.
         subset_paths = utils.call_access_method(
             utils.get_data_access_function(product_name, function_name),
             when=TimeRequest(conditions["start_date"], conditions["end_date"]),
             region=Region(
                 bbox["lat_min"], bbox["lat_max"], bbox["lon_min"], bbox["lon_max"]
-            ).padded(1),
+            ),
             output_folder=raw_dir,
             **(self.get_input_param("cice_function_args") or {}),
         )
