@@ -14,6 +14,7 @@ from CrocoDash.raw_data_access.base import (
     LAND_ZERO,
     WW3ForcingProduct,
 )
+from CrocoDash.raw_data_access.time_request import TimeRequest
 
 
 def write_ww3_boundary_spectrum(file_path, lat, lon, freq, direction, efth, time=None):
@@ -676,8 +677,7 @@ class WW3Configurator(BaseConfigurator):
         boundary_number_conversion = {b: i + 1 for i, b in enumerate(boundaries)}
 
         obc.process_obc_conditions(
-            start_date=start_date,
-            end_date=end_date,
+            when=TimeRequest(start_date, end_date),
             boundary_number_conversion=boundary_number_conversion,
             product_name=product_name,
             function_name=function_name,

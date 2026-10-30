@@ -1,3 +1,4 @@
+import cftime
 import pytest
 import numpy as np
 import pandas as pd
@@ -6,7 +7,9 @@ from types import SimpleNamespace
 
 from CrocoDash.forcing import mom6, user_nl_blocks
 from CrocoDash.forcing.mom6 import _split_bgc_tracers_into_files
+from CrocoDash.raw_data_access.base import TimeSampling
 from CrocoDash.raw_data_access.registry import ProductRegistry
+from CrocoDash.raw_data_access.time_request import TimeRequest
 
 
 def test_build_forcing_request_merges_function_args():
@@ -31,14 +34,19 @@ def test_build_forcing_request_merges_function_args():
 # =============================================================================
 
 
-def _conditions(product_name, function_name="get_glorys_data_script_for_cli", **kwargs):
+def _conditions(
+    product_name,
+    function_name="get_glorys_data_script_for_cli",
+    dates=("20200101", "20200102"),
+    **kwargs,
+):
     return mom6.ConditionsConfigurator(
         boundaries=["north"],
         product_name=product_name,
         function_name=function_name,
         compset="1850_DATM%JRA_SLND_SICE_MOM6%REGIONAL_SROF_SGLC_SWAV",
-        start_date="20200101",
-        end_date="20200102",
+        start_date=dates[0],
+        end_date=dates[1],
         **kwargs,
     )
 
@@ -361,8 +369,7 @@ def test_reference_ocean_obc_thins_dz_to_the_sea_floor(get_rect_grid, tmp_path):
         d.mkdir()
     ProductRegistry.load()
     mom6.obc.process_obc_conditions(
-        start_date="2020-01-01",
-        end_date="2020-01-02",
+        when=TimeRequest("2020-01-01", "2020-01-02"),
         boundary_number_conversion={"south": 1},
         product_name="reference_ocean",
         function_name="get_reference_ocean_data",
@@ -466,13 +473,14 @@ def test_regrid_ic_gives_the_vgrid_check_the_real_min_depth(
         return expt
 
     monkeypatch.setattr(mom6.rm6.experiment, "create_empty", create_empty)
+    monkeypatch.setattr(mom6, "_record_at_start", lambda raw_file, *a: raw_file)
     with pytest.raises(RuntimeError, match="stop"):
         mom6._regrid_ic(
             raw_file=tmp_path / "raw.nc",
             hgrid=xr.open_dataset(tmp_path / "hgrid.nc"),
-            start_date="2020-01-01",
+            when=TimeRequest("2020-01-01", "2020-01-01"),
             output_dir=tmp_path,
-            dataset_varnames={},
+            dataset_varnames={"time_var_name": "time"},
             hgrid_path=tmp_path / "hgrid.nc",
             vgrid_path=tmp_path / "vgrid.nc",
             bathymetry_path=tmp_path / "topog.nc",
@@ -553,8 +561,42 @@ def test_process_steps_hand_the_engines_the_configured_windows(tmp_path, monkeyp
     cfg.process_ic(ctx)
 
     assert bc["min_chunk_days"] == 31
-    assert (bc["start_date"], bc["end_date"]) == ("20191201", "20200202")
-    assert ic["lookback_days"] == 30
+    assert bc["when"] == TimeRequest("20191201", "20200202")
+    assert ic["when"] == TimeRequest("20191202", "20200101")
+
+
+def test_noleap_ic_starting_on_feb_29_gets_the_record_at_or_before_it(
+    tmp_path, monkeypatch
+):
+    """CESM output is noleap, which has no Feb 29, and dates monthly means at
+    their month's first day. The IC reaches back a month for them and must
+    take February's mean: not January's, and no error on the missing day."""
+    product = "cesm_pop_output"
+    cfg = _conditions(
+        product, "get_cesm_single_variable_data", ("20200229", "20200331")
+    )
+    cfg.set_output_param(
+        "information", ProductRegistry.get_product(product).write_metadata()
+    )
+    cfg.set_output_param(
+        "ic_lookback_days", mom6.time_windows.ic_lookback_days(TimeSampling("MS"))
+    )
+    captured = {}
+    monkeypatch.setattr(
+        mom6.ic_mod, "process_initial_condition", lambda **kw: captured.update(kw)
+    )
+    ctx = _bc_context(tmp_path)
+    ctx.vgrid_path = tmp_path / "vgrid.nc"
+    ctx.vgrid_path.touch()
+    cfg.process_ic(ctx)
+
+    months = [cftime.DatetimeNoLeap(2020, m, 1) for m in (1, 2, 3)]
+    raw = tmp_path / "ic_unprocessed.nc"
+    xr.Dataset({"SSH": ("time", [1.0, 2.0, 3.0])}, coords={"time": months}).to_netcdf(
+        raw
+    )
+    with xr.open_dataset(mom6._record_at_start(raw, "time", captured["when"])) as ds:
+        assert list(ds.time.values) == [months[1]]
 
 
 def test_fill_missing_and_write_leaves_no_gaps_for_mom6_to_read(tmp_path):

@@ -51,8 +51,9 @@ def obc_window(ts: TimeSampling, start, end, coverage):
     stamped at noon would otherwise start half a day after the run.
 
     The padding stops at the first and last dates the product holds,
-    coverage (either may be None). The run itself is never cut, so a run
-    outside the product's data still fails when that data is fetched."""
+    coverage (either may be None). The run itself is never cut: a run
+    outside the product's data is refused at configure (see
+    ConditionsConfigurator.configure)."""
     pad = timedelta(days=period_days(ts))
     first, last = coverage
     window_start, window_end = start - pad, end + pad

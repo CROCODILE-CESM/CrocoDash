@@ -35,11 +35,11 @@ import math
 import dask
 import dask.threaded
 import numpy as np
-import pandas as pd
 import xarray as xr
 from CrocoDash import logging
 from CrocoDash.forcing import utils
 from CrocoDash.grid import Grid
+from CrocoDash.raw_data_access.time_request import TimeRequest
 from CrocoDash.topo import Topo
 
 logger = logging.setup_logger(__name__)
@@ -175,7 +175,7 @@ def _files_overlapping_range(
     several regrid chunks (e.g. regrid_step_days=5) -- containment (as
     _files_within_range checks) would drop it for every chunk narrower than
     itself. The overlapping files are opened with xr.open_mfdataset and then
-    trimmed with .sel(time=slice(...)) to the chunk's exact window, so
+    trimmed with TimeRequest.select to the chunk's exact window, so
     overlap is all that's needed here; full, gapless coverage of the whole
     range is already validated once in process_obc_conditions before any
     chunk is ever built.
@@ -243,8 +243,7 @@ def _validate_coverage(
 
 
 def _get_one_chunk(
-    chunk_start: datetime,
-    chunk_end: datetime,
+    when: TimeRequest,
     boundary: str,
     product_name: str,
     function_name: str,
@@ -255,9 +254,9 @@ def _get_one_chunk(
 ):
     """Download one chunk so that it can be called by multiple processes at once."""
 
-    start_str = chunk_start.strftime("%Y-%m-%d")
-    end_str = chunk_end.strftime("%Y-%m-%d")
-    output_filename = f"{boundary}_unprocessed.{start_str}_{end_str}.nc"
+    output_filename = (
+        f"{boundary}_unprocessed.{when.start:%Y-%m-%d}_{when.end:%Y-%m-%d}.nc"
+    )
     data_access_fn = utils.get_data_access_function(product_name, function_name)
 
     # copernicusmarine's to_netcdf() runs dask.compute() internally, which
@@ -267,7 +266,7 @@ def _get_one_chunk(
     with dask.config.set(scheduler="synchronous"):
         return utils.fetch_raw_chunk(
             data_access_fn=data_access_fn,
-            dates=[start_str, end_str],
+            when=when,
             latlon=latlon,
             name=boundary,
             output_folder=output_dir,
@@ -402,17 +401,15 @@ def _regrid_one_chunk(
         coords="minimal",
         parallel=False,
     ) as ds_full:
-        # Daily-mean products like GLORYS timestamp each day's value at noon, so
-        # slice by date strings (pandas partial-string indexing treats the end
-        # string as covering that whole calendar day) to include chunk_end's own
-        # data point instead of a midnight-anchored datetime slice excluding it.
-        chunk_ds = ds_full.sel(time=slice(start_str, end_str))
-        if chunk_ds.sizes.get("time", 1) == 0:
+        # Whole days, so a daily mean stamped at noon on chunk_end is kept, and
+        # in the data's own calendar, so a noleap chunk can end on Feb 29.
+        try:
+            chunk_ds = TimeRequest(chunk_start_date, chunk_end_date).select(ds_full)
+        except ValueError as e:
             raise ValueError(
-                f"[{boundary}] No records between {start_str} and {end_str}. If the "
-                "product's records are further apart than its declared "
-                "time_sampling, give their spacing as data_freq."
-            )
+                f"[{boundary}] {e} If the product's records are further apart "
+                "than its declared time_sampling, give their spacing as data_freq."
+            ) from None
 
         regridders = regrid_chunk_fn(
             ds=chunk_ds,
@@ -499,8 +496,7 @@ def _init_fork_worker():
 
 def _get_boundary(
     boundary: str,
-    start_date: datetime,
-    end_date: datetime,
+    when: TimeRequest,
     get_step_days,
     latlon: dict,
     output_dir,
@@ -510,24 +506,30 @@ def _get_boundary(
     extra_args: dict,
     min_chunk_days: int = 1,
 ) -> list:
-    """Download all raw data for one boundary, chunked by get_step_days."""
+    """Download all raw data for one boundary, chunked by get_step_days. Each
+    chunk is its part of when, so a thinned request keeps its dates."""
     output_dir = Path(output_dir)
 
-    pairs = list(_make_date_pairs(start_date, end_date, get_step_days, min_chunk_days))
+    chunks = [
+        when.between(start, end)
+        for start, end in _make_date_pairs(
+            when.start, when.end, get_step_days, min_chunk_days
+        )
+    ]
 
     # Spread work across processes. If no chunking is prescribed it falls back
     # to one processor. For get_glorys_data_script_for_cli(), generate CLI
     # script that runs serially
     if function_name == "get_glorys_data_script_for_cli":
-        for chunk_start, chunk_end in pairs:
-            start_str = chunk_start.strftime("%Y-%m-%d")
-            end_str = chunk_end.strftime("%Y-%m-%d")
-            output_filename = f"{boundary}_unprocessed.{start_str}_{end_str}.nc"
+        for chunk in chunks:
+            output_filename = (
+                f"{boundary}_unprocessed.{chunk.start:%Y-%m-%d}_{chunk.end:%Y-%m-%d}.nc"
+            )
             data_access_fn = utils.get_data_access_function(product_name, function_name)
 
             utils.fetch_raw_chunk(
                 data_access_fn=data_access_fn,
-                dates=[start_str, end_str],
+                when=chunk,
                 latlon=latlon,
                 name=boundary,
                 output_folder=output_dir,
@@ -536,7 +538,7 @@ def _get_boundary(
                 extra_args=extra_args,
             )
     else:
-        num_workers = max(1, min(available_cpus(), len(pairs)))
+        num_workers = max(1, min(available_cpus(), len(chunks)))
         with ProcessPoolExecutor(
             max_workers=num_workers,
             mp_context=multiprocessing.get_context("fork"),
@@ -545,8 +547,7 @@ def _get_boundary(
             futures = [
                 ex.submit(
                     _get_one_chunk,
-                    chunk_start,
-                    chunk_end,
+                    chunk,
                     boundary,
                     product_name,
                     function_name,
@@ -555,7 +556,7 @@ def _get_boundary(
                     variables,
                     extra_args,
                 )
-                for chunk_start, chunk_end in pairs
+                for chunk in chunks
             ]
             for f in as_completed(futures):
                 f.result()
@@ -708,8 +709,7 @@ def _merge_boundary(boundary_label: str, regridded_files: list, output_folder) -
 
 
 def process_obc_conditions(
-    start_date,
-    end_date,
+    when: TimeRequest,
     boundary_number_conversion: dict,
     product_name: str,
     function_name: str,
@@ -736,8 +736,8 @@ def process_obc_conditions(
     efficiency.
 
     Args:
-        start_date: Forcing start date (datetime or any pandas-parseable string).
-        end_date: Forcing end date (datetime or any pandas-parseable string).
+        when: The boundary data to fetch (see TimeRequest): its whole days,
+            thinned to its dates when it has them.
         boundary_number_conversion: Boundary name -> target-model segment number.
         product_name: Forcing data product name.
         function_name: Download function name for the product.
@@ -762,8 +762,8 @@ def process_obc_conditions(
             omitted, falls back to the full supergrid bounding box per
             boundary.
     """
-    start_date = pd.to_datetime(start_date).to_pydatetime()
-    end_date = pd.to_datetime(end_date).to_pydatetime()
+    start_date = when.start.to_pydatetime()
+    end_date = when.end.to_pydatetime()
 
     raw_path = Path(raw_dataset_path)
     regridded_path = Path(regridded_dataset_path)
@@ -804,8 +804,7 @@ def process_obc_conditions(
         logger.info("GET [%s]: %s → %s", boundary, start_date.date(), end_date.date())
         _get_boundary(
             boundary=boundary,
-            start_date=start_date,
-            end_date=end_date,
+            when=when,
             get_step_days=get_step_days,
             latlon=boundary_bboxes[boundary],
             output_dir=str(raw_path),

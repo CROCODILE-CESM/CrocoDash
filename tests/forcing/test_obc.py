@@ -16,12 +16,12 @@ from CrocoDash.forcing.obc import (
 from CrocoDash.forcing.utils import is_valid_netcdf
 from CrocoDash.forcing.mom6 import _regrid_obc_chunk
 from CrocoDash.grid import Grid
+from CrocoDash.raw_data_access.time_request import TimeRequest
 from CrocoDash.topo import Topo
 
 
-def test_date_string_slice_includes_noon_stamped_trailing_day():
-    """The per-regrid-chunk slice uses date strings (not chunk_start/chunk_end
-    datetimes) because pandas partial-string indexing covers the end string's
+def test_regrid_chunk_slice_includes_noon_stamped_trailing_day():
+    """The per-regrid-chunk slice (TimeRequest.select) covers the end day's
     whole calendar day. Daily-mean products like GLORYS stamp each day's value
     at noon, so a midnight-anchored datetime slice would exclude a single-day
     trailing chunk (e.g. a date range that isn't an exact multiple of
@@ -31,10 +31,8 @@ def test_date_string_slice_includes_noon_stamped_trailing_day():
     ds_full = xr.Dataset({"var": ("time", np.arange(16))}, coords={"time": times})
 
     chunk_start, chunk_end = datetime(2020, 1, 16), datetime(2020, 1, 16)
-    start_str = chunk_start.strftime("%Y-%m-%d")
-    end_str = chunk_end.strftime("%Y-%m-%d")
 
-    sliced = ds_full.sel(time=slice(start_str, end_str))
+    sliced = TimeRequest(chunk_start, chunk_end).select(ds_full)
     assert sliced.sizes["time"] == 1
     assert sliced.time.values[0] == np.datetime64("2020-01-16T12:00:00")
 
@@ -58,8 +56,7 @@ def obc_config(tmp_path, get_rect_grid):
     output_dir.mkdir()
 
     kwargs = dict(
-        start_date="2020-01-01",
-        end_date="2020-01-15",
+        when=TimeRequest("2020-01-01", "2020-01-15"),
         boundary_number_conversion={"east": 1, "south": 2},
         product_name="GLORYS",
         function_name="get_glorys_data_from_rda",

@@ -32,7 +32,9 @@ from CrocoDash.raw_data_access.base import (
     Calendar,
     MOM6ForcingProduct,
     resolve_time_sampling,
+    takes_when,
 )
+from CrocoDash.raw_data_access.time_request import TimeRequest
 
 logger = logging.setup_logger(__name__)
 
@@ -308,17 +310,17 @@ def _all_written(paths):
     return all(p.exists() for p in paths)
 
 
-def _record_at_start(raw_file, time_name, start_date):
-    """The IC request reaches back lookback_days, so coarse (e.g. monthly)
-    data can hold more than one record, and rm6 takes the first. Keep the
-    last record at or before start_date (the first one if none is), written
+def _record_at_start(raw_file, time_name, when):
+    """The IC request, when, reaches back from the start, so coarse (e.g.
+    monthly) data can hold more than one record, and rm6 takes the first.
+    Keep the last one in when (the record at or before the start), written
     next to raw_file."""
     with xr.open_dataset(raw_file) as ds:
-        if time_name not in ds.dims or ds.sizes[time_name] < 2:
+        if time_name not in ds.dims:
             return raw_file
-        before = ds.sel({time_name: slice(None, f"{start_date:%Y-%m-%d %H:%M:%S}")})
-        index = -1 if before.sizes[time_name] else 0
-        record = (before if index == -1 else ds).isel({time_name: [index]})
+        record = when.select(ds, time_name).isel({time_name: [-1]})
+        if ds.sizes[time_name] == 1:
+            return raw_file
         record_file = Path(raw_file).with_name("ic_record.nc")
         record.load().to_netcdf(record_file)
     return record_file
@@ -327,7 +329,7 @@ def _record_at_start(raw_file, time_name, start_date):
 def _regrid_ic(
     raw_file,
     hgrid,
-    start_date,
+    when,
     output_dir,
     dataset_varnames,
     hgrid_path,
@@ -336,7 +338,9 @@ def _regrid_ic(
 ):
     """MOM6's IC regrid step. hgrid_path/vgrid_path/bathymetry_path aren't
     part of ic.py's generic engine signature -- process_ic below binds them
-    via functools.partial before handing this to the engine as regrid_fn."""
+    via functools.partial before handing this to the engine as regrid_fn.
+    when is the IC request, ending on the run's start."""
+    start_date = when.end.to_pydatetime()
     min_depth = utils.read_min_depth(bathymetry_path)
     expt = rm6.experiment.create_empty()
     # hgrid/vgrid are read-only properties derived from m6f_hgrid/m6f_vgrid
@@ -357,7 +361,7 @@ def _regrid_ic(
         logger.info("Initial condition files already exist. They will be skipped.")
     else:
         expt.setup_initial_condition(
-            _record_at_start(raw_file, dataset_varnames["time_var_name"], start_date),
+            _record_at_start(raw_file, dataset_varnames["time_var_name"], when),
             dataset_varnames,
             arakawa_grid=None,
         )
@@ -653,6 +657,14 @@ class ConditionsConfigurator(BaseConfigurator):
             self.get_output_param("information"), self.get_input_param("function_args")
         )
         coverage = product.coverage(function_name, variables=variables, **extra_args)
+        first, last = coverage
+        if (first is not None and start < first) or (last is not None and end > last):
+            held = " → ".join("…" if d is None else f"{d:%Y-%m-%d}" for d in coverage)
+            raise ValueError(
+                f"{product_name} has data {held}; the run {start:%Y-%m-%d} → "
+                f"{end:%Y-%m-%d} is outside it. Move date_range inside it or "
+                "choose another product."
+            )
         obc_start, obc_end = time_windows.obc_window(sampling, start, end, coverage)
         self.set_output_param("obc_start_date", obc_start.strftime(self._DATE_FORMAT))
         self.set_output_param("obc_end_date", obc_end.strftime(self._DATE_FORMAT))
@@ -887,7 +899,8 @@ class ConditionsConfigurator(BaseConfigurator):
 
     def _function_args(self):
         """The access function's arguments: the stored function_args it still
-        takes, and data_freq and subsample_freq (as freq) when set."""
+        takes, and data_freq and subsample_freq (as freq) when set. A method
+        that takes when is thinned by it instead of freq."""
         product_name = self.get_input_param("product_name")
         function_name = self.get_input_param("function_name")
         accepted = ProductRegistry.get_function_default_args(
@@ -895,20 +908,34 @@ class ConditionsConfigurator(BaseConfigurator):
         )
         stored = self.get_output_param("function_args") or {}
         args = {k: v for k, v in stored.items() if k in accepted}
+        method = ProductRegistry.get_access_function(product_name, function_name)
         for name, arg in self._FREQ_ARGS.items():
+            if arg == "freq" and takes_when(method):
+                continue
             if self.get_input_param(name) is not None:
                 args[arg] = self.get_input_param(name)
         return args
 
-    def _obc_dates(self):
-        """The boundary data's date range; a config.json written before it was
-        recorded falls back to the run's."""
-        return {
-            "start_date": self.get_output_param("obc_start_date")
-            or self.get_input_param("start_date"),
-            "end_date": self.get_output_param("obc_end_date")
-            or self.get_input_param("end_date"),
-        }
+    def _obc_request(self):
+        """The boundary data's window, thinned when subsample_freq is coarser
+        than the data: one request, so every GET chunk of it thins on the same
+        dates. A config.json written before the window was recorded falls back
+        to the run's dates."""
+        start = self.get_output_param("obc_start_date") or self.get_input_param(
+            "start_date"
+        )
+        end = self.get_output_param("obc_end_date") or self.get_input_param("end_date")
+        method = (
+            ProductRegistry.get_product(self.get_input_param("product_name")),
+            self.get_input_param("function_name"),
+            self.get_input_param("data_freq"),
+        )
+        sampling = resolve_time_sampling(
+            *method, self.get_input_param("subsample_freq")
+        )
+        if sampling == resolve_time_sampling(*method):
+            return TimeRequest(start, end)
+        return TimeRequest.every(sampling.frequency, start, end)
 
     def process_bc(self, ctx):
         """Process MOM6 boundary conditions through forcing.obc's GET → REGRID →
@@ -923,7 +950,7 @@ class ConditionsConfigurator(BaseConfigurator):
             )
 
         result = obc.process_obc_conditions(
-            **self._obc_dates(),
+            when=self._obc_request(),
             boundary_number_conversion=self.get_output_param(
                 "boundary_number_conversion"
             ),
@@ -963,6 +990,7 @@ class ConditionsConfigurator(BaseConfigurator):
 
         product_info = self.get_output_param("information")
         function_args = self._function_args()
+        function_args.pop("freq", None)  # the IC is never thinned
         regrid_fn = partial(
             _regrid_ic,
             hgrid_path=ctx.supergrid_path,
@@ -971,6 +999,10 @@ class ConditionsConfigurator(BaseConfigurator):
         )
 
         variables, extra_args = build_forcing_request(product_info, function_args)
+        # One record spacing back from the start, so it holds the record at or
+        # before it.
+        start = pd.Timestamp(self.get_input_param("start_date"))
+        lookback = pd.Timedelta(days=self.get_output_param("ic_lookback_days") or 0)
 
         return ic_mod.process_initial_condition(
             product_name=self.get_input_param("product_name").upper(),
@@ -978,10 +1010,9 @@ class ConditionsConfigurator(BaseConfigurator):
             variables=variables,
             extra_args=extra_args,
             dataset_varnames=product_info,
-            start_date=self.get_input_param("start_date"),
+            when=TimeRequest(start - lookback, start),
             hgrid_path=ctx.supergrid_path,
             raw_data_dir=ctx.raw_data_dir,
             output_data_dir=ctx.output_path,
             regrid_fn=regrid_fn,
-            lookback_days=self.get_output_param("ic_lookback_days") or 0,
         )

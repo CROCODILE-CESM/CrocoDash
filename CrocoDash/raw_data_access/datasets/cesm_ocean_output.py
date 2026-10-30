@@ -25,7 +25,6 @@ import numpy as np
 import pandas as pd
 
 from CrocoDash.raw_data_access.base import *
-from CrocoDash.raw_data_access.datasets.utils import make_dates_end_inclusive
 
 
 class CESM_POP_OUTPUT(MOM6ForcingProduct):
@@ -123,7 +122,7 @@ class CESM_POP_OUTPUT(MOM6ForcingProduct):
         ),
     )
     def get_cesm_single_variable_data(
-        dates: list,
+        when,
         lat_min,
         lat_max,
         lon_min,
@@ -141,13 +140,12 @@ class CESM_POP_OUTPUT(MOM6ForcingProduct):
         lon_name="TLONG",
         preview=False,
         data_freq=None,
-        freq=None,
     ):
         resolve_time_sampling(
-            CESM_POP_OUTPUT, "get_cesm_single_variable_data", data_freq, freq
+            CESM_POP_OUTPUT, "get_cesm_single_variable_data", data_freq
         )
         return read_single_variable_tseries_data(
-            dates,
+            when,
             lat_min,
             lat_max,
             lon_min,
@@ -164,7 +162,6 @@ class CESM_POP_OUTPUT(MOM6ForcingProduct):
             lon_name,
             preview,
             data_freq=data_freq or CESM_POP_OUTPUT.time_sampling.frequency,
-            freq=freq,
         )
 
 
@@ -227,7 +224,7 @@ class CESM_MOM_OUTPUT(MOM6ForcingProduct):
         ),
     )
     def get_mom6_output_data(
-        dates: list,
+        when,
         lat_min,
         lat_max,
         lon_min,
@@ -242,9 +239,8 @@ class CESM_MOM_OUTPUT(MOM6ForcingProduct):
         buffer_deg=1.5,
         preview=False,
         data_freq=None,
-        freq=None,
     ):
-        resolve_time_sampling(CESM_MOM_OUTPUT, "get_mom6_output_data", data_freq, freq)
+        resolve_time_sampling(CESM_MOM_OUTPUT, "get_mom6_output_data", data_freq)
         validate_dataset_path(dataset_path)
 
         files = sorted(Path(dataset_path).glob(file_glob))
@@ -255,30 +251,11 @@ class CESM_MOM_OUTPUT(MOM6ForcingProduct):
 
         ds = xr.open_mfdataset(files, combine="by_coords")
         ds = date_means_at_interval_start(ds, time_var_name)
-        ds = select_records(
-            ds, (dates[0], dates[-1]), data_freq, freq, time_var_name, dataset_path
-        )
+        check_data_freq(ds, data_freq, time_var_name, dataset_path)
+        ds = when.select(ds, time_var_name)
         ds = convert_cftime_to_numeric(
             ds, time_var_name=time_var_name, calendar=CESM_MOM_OUTPUT.calendar
         )
-
-        # convert_cftime_to_numeric re-encodes a cftime coordinate as numeric
-        # and stamps its units/calendar onto the coordinate attrs; match dates
-        # to that same encoding so the slice bounds compare correctly. Push the
-        # end date to the last second of its day so sub-daily output on the
-        # last requested day isn't silently dropped by the slice below.
-        start_str, end_str = make_dates_end_inclusive(dates)
-        parsed_dates = pd.to_datetime([start_str, end_str])
-        time_attrs = ds[time_var_name].attrs
-        if "units" in time_attrs and "calendar" in time_attrs:
-            sel_dates = cftime.date2num(
-                parsed_dates.to_pydatetime(),
-                units=time_attrs["units"],
-                calendar=time_attrs["calendar"],
-            )
-        else:
-            sel_dates = parsed_dates
-        ds = ds.sel({time_var_name: slice(sel_dates[0], sel_dates[-1])})
         keep_vars = [v for v in variables if v in ds.data_vars]
         missing_vars = [v for v in variables if v not in ds.data_vars]
         if missing_vars:
@@ -344,7 +321,7 @@ class CESM_MOM_OUTPUT(MOM6ForcingProduct):
         ),
     )
     def get_mom6_single_variable_data(
-        dates: list,
+        when,
         lat_min,
         lat_max,
         lon_min,
@@ -360,13 +337,12 @@ class CESM_MOM_OUTPUT(MOM6ForcingProduct):
         delimiter=".",
         preview=False,
         data_freq=None,
-        freq=None,
     ):
         resolve_time_sampling(
-            CESM_MOM_OUTPUT, "get_mom6_single_variable_data", data_freq, freq
+            CESM_MOM_OUTPUT, "get_mom6_single_variable_data", data_freq
         )
         return read_single_variable_tseries_data(
-            dates,
+            when,
             lat_min,
             lat_max,
             lon_min,
@@ -383,7 +359,6 @@ class CESM_MOM_OUTPUT(MOM6ForcingProduct):
             CESM_MOM_OUTPUT.tracer_x_coord,
             preview,
             data_freq=data_freq,
-            freq=freq,
             grid_coords={
                 CESM_MOM_OUTPUT.u_var_name: (
                     CESM_MOM_OUTPUT.u_y_coord,
@@ -446,7 +421,7 @@ def tseries_coverage(
 
 
 def read_single_variable_tseries_data(
-    dates,
+    when,
     lat_min,
     lat_max,
     lon_min,
@@ -463,7 +438,6 @@ def read_single_variable_tseries_data(
     lon_name,
     preview,
     data_freq=None,
-    freq=None,
     grid_coords=None,
 ):
     """
@@ -473,15 +447,15 @@ def read_single_variable_tseries_data(
     convention (one variable per file series, date range in the filename) shows
     up for both CESM-POP and native MOM6 output.
 
-    data_freq is the cadence of the files, checked against them, and freq thins
-    them to a coarser one (see select_records).
+    when (a TimeRequest) names the records to keep, and data_freq is the
+    cadence of the files, checked against them (see check_data_freq).
 
     grid_coords optionally maps a variable name to its own (lat_name, lon_name)
     pair, overriding lat_name/lon_name for that variable - needed for MOM6's
     C-grid, where uo/vo live on different horizontal dims than the tracer grid.
     """
     validate_dataset_path(dataset_path)
-    start_date, end_date = pd.Timestamp(dates[0]), pd.Timestamp(dates[-1])
+    start_date, end_date = when.start, when.end
     # parse_dataset uses dateutil internally, so pass full ISO dates here -
     # date_format (e.g. "%Y%m" for monthly tseries) is ambiguous/unparseable
     # by dateutil and is only used for matching dates embedded in filenames.
@@ -514,9 +488,8 @@ def read_single_variable_tseries_data(
             end_date.strftime(date_format),
         ),
         preview=preview,
+        when=when,
         data_freq=data_freq,
-        freq=freq,
-        window=(start_date, end_date),
         grid_coords=grid_coords,
     )
 
@@ -633,9 +606,8 @@ def convert_cftime_to_numeric(ds, time_var_name="time", calendar: Calendar = NOL
         return ds
     time_values = ds[time_var_name].values
     units = "days since 1850-01-01 00:00:00"
-    # This file is an intermediate read back by xarray/cftime (see the
-    # date2num against these same attrs in get_mom6_output_data), not by
-    # MOM6, so both roles here want the cf spelling.
+    # This file is an intermediate read back by xarray/cftime, not by MOM6,
+    # so both roles here want the cf spelling.
     cal_name = calendar.cf
     numeric_time = cftime.date2num(time_values, units=units, calendar=cal_name)
     ds = ds.assign_coords(
@@ -687,11 +659,9 @@ def date_means_at_interval_start(ds, time_var_name="time"):
     return ds
 
 
-def select_records(ds, window, data_freq, freq=None, time_var_name="time", source=""):
-    """Check that ds's records are data_freq apart, then, for a freq coarser
-    than that, keep the record that covers each date sample_dates picks from
-    the (start, end) window: the one whose averaging interval (time bounds)
-    holds it, or without bounds the nearest one."""
+def check_data_freq(ds, data_freq, time_var_name="time", source=""):
+    """Check that ds's records are data_freq apart: it only describes the
+    files, so one that doesn't match them is the user's to fix."""
     time = ds[time_var_name].values
     if data_freq is not None and len(time) > 1:
         spacing = np.median(pd.to_timedelta(np.diff(time)) / pd.Timedelta(days=1))
@@ -702,17 +672,6 @@ def select_records(ds, window, data_freq, freq=None, time_var_name="time", sourc
                 f"isn't data_freq={data_freq!r} ({expected:.3g} days). Pass the "
                 "cadence of that data as data_freq."
             )
-    if freq is None or frequency_step(freq) == frequency_step(data_freq):
-        return ds
-    calendar = getattr(time[0], "calendar", "standard")
-    dates = sample_dates(window[0], window[-1], freq, calendar)
-    bounds = ds[time_var_name].attrs.get("bounds")
-    if bounds in ds.variables:
-        lo, hi = ds[bounds].values[:, 0], ds[bounds].values[:, 1]
-        keep = [i for i in range(len(time)) if any(lo[i] <= d < hi[i] for d in dates)]
-    else:
-        keep = sorted({int(np.argmin(abs(time - d))) for d in dates})
-    return ds.isel({time_var_name: keep})
 
 
 def bbox_mask(
@@ -756,9 +715,8 @@ def subset_dataset(
     lon_name="lon",
     dates=None,
     preview: bool = False,
+    when=None,
     data_freq: str | None = None,
-    freq: str | None = None,
-    window: tuple | None = None,
     grid_coords: dict | None = None,
 ) -> None:
     """
@@ -778,11 +736,11 @@ def subset_dataset(
             not listed in grid_coords. Default is "lon".
         dates (tuple): Just used for the file naming
         preview (bool): If True, only previews the subsetting without saving. Default is False.
-        data_freq, freq, window: the files' cadence, checked against them,
-            and a coarser one to thin them to over the (start, end) window
-            (see select_records). None skips both.
-            window, whole days inclusive, also drops every record outside it:
-            the files hold whole years or decades. None keeps every record.
+        when (TimeRequest | None): The records to keep, thinned when it
+            has dates: the files hold whole years or decades. None keeps
+            every record.
+        data_freq (str | None): The files' cadence, checked against them
+            (see check_data_freq). None skips the check.
         grid_coords (dict | None): Optional {var_name: (lat_name, lon_name)}
             override - needed for MOM6's C-grid, where uo/vo live on different
             horizontal dims than the tracer grid, so a single lat_name/lon_name
@@ -803,7 +761,7 @@ def subset_dataset(
             dates = ("NotSpecifiedDate", "NotSpecifiedDate")
         output_file = output_path / (
             f"{var_name}_subset_{lat_min}_{lat_max}_{lon_min}_{lon_max}_{dates[0]}_{dates[1]}"
-            + (f"_{freq}" if freq else "")
+            + ("" if when is None or when.dates is None else f"_{len(when.dates)}dates")
             + ".nc"
         )
 
@@ -818,18 +776,9 @@ def subset_dataset(
         # Load the dataset for the variable
         ds = xr.open_mfdataset(file_paths, decode_timedelta=False)
         ds = date_means_at_interval_start(ds)
-        ds = select_records(
-            ds, window, data_freq, freq, source=Path(file_paths[0]).parent
-        )
-        if window is not None:
-            ds = select_time_range(ds, *window)
-            if ds.sizes["time"] == 0:
-                start, end = (pd.Timestamp(t).date() for t in window)
-                raise ValueError(
-                    f"No {var_name} records fall between {start} and {end}; the "
-                    "source's records are further apart than the requested "
-                    "window (e.g. monthly output)."
-                )
+        check_data_freq(ds, data_freq, source=Path(file_paths[0]).parent)
+        if when is not None:
+            ds = when.select(ds)
 
         # Convert time. Saving to netcdf is not working with cftime objects.
         ds = convert_cftime_to_numeric(ds, time_var_name="time")
@@ -897,33 +846,3 @@ def first_value(da_var):
         return arr.ravel()[0].compute()
     else:
         return arr.ravel()[0]
-
-
-def select_time_range(ds, start, end, time_var_name="time"):
-    """Keep the records from start through the end of end's day.
-
-    The tseries files hold whole years or decades, so without this every
-    request carries all of them. No-op if the time coordinate isn't decoded.
-    """
-    times = ds[time_var_name].values
-    if len(times) == 0:
-        return ds
-    end = pd.Timestamp(end).normalize() + pd.Timedelta(days=1)
-    start = pd.Timestamp(start)
-    if isinstance(times[0], cftime.datetime):
-        lo, hi = (_to_cftime(t, times[0].calendar) for t in (start, end))
-        keep = [lo <= t < hi for t in times]
-    elif np.issubdtype(times.dtype, np.datetime64):
-        keep = (times >= start.to_datetime64()) & (times < end.to_datetime64())
-    else:
-        return ds
-    return ds.isel({time_var_name: np.flatnonzero(keep)})
-
-
-def _to_cftime(ts, calendar):
-    """A pandas Timestamp as a cftime date; Feb 29 rolls to Mar 1 where the
-    calendar has no leap days."""
-    try:
-        return cftime.datetime(ts.year, ts.month, ts.day, calendar=calendar)
-    except ValueError:
-        return cftime.datetime(ts.year, 3, 1, calendar=calendar)

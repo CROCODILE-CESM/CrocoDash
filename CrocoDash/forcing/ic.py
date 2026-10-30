@@ -7,13 +7,12 @@ initial-condition file(s) -- the GET step is shared.
 """
 
 from pathlib import Path
-from datetime import datetime, timedelta
 from CrocoDash import logging
 from CrocoDash.grid import Grid
 from CrocoDash.forcing import utils
+from CrocoDash.raw_data_access.time_request import TimeRequest
 import dask
 import xarray as xr
-import pandas as pd
 
 logger = logging.setup_logger(__name__)
 
@@ -24,12 +23,11 @@ def process_initial_condition(
     variables: list,
     extra_args: dict,
     dataset_varnames: dict,
-    start_date: str | datetime,
+    when: TimeRequest,
     hgrid_path: str | Path,
     raw_data_dir: str | Path,
     output_data_dir: str | Path,
     regrid_fn,
-    lookback_days: int = 0,
 ):
     """
     Process the initial condition (t=0) through the GET → REGRID pipeline.
@@ -43,29 +41,21 @@ def process_initial_condition(
             by the caller).
         dataset_varnames: Opaque metadata dict forwarded to ``regrid_fn`` --
             this module never reads its keys itself.
-        start_date: The start date (any pandas-parseable string or datetime).
+        when: The IC request: whole days ending on the run's start
+            (``when.end``), reaching back far enough that coarse (e.g.
+            monthly) data still holds the record at or before it. Never
+            thinned.
         hgrid_path: Path to the hgrid supergrid file.
         raw_data_dir: Directory for raw downloaded data.
         output_data_dir: Directory for final output files.
         regrid_fn: Target-specific regrid step, called as
-            ``regrid_fn(raw_file, hgrid, start_date, output_dir, dataset_varnames)``
-            once the raw snapshot has been downloaded. Owns its own
-            idempotency (this engine has no per-chunk state to check --
-            IC is a single snapshot, not a date-chunked series).
-        lookback_days: How far before start_date the request reaches, so
-            coarse (e.g. monthly) data still returns the record at or before
-            it. Default 0.
+            ``regrid_fn(raw_file, hgrid, when, output_dir, dataset_varnames)``
+            once the raw snapshot has been downloaded. It takes the record
+            at or before the start from raw_file, which can hold more than
+            one, and owns its own idempotency (this engine has no per-chunk
+            state to check -- IC is a single snapshot, not a date-chunked
+            series).
     """
-    if not isinstance(start_date, datetime):
-        start_date = pd.to_datetime(start_date).to_pydatetime()
-
-    end_ic_date = start_date + timedelta(days=1)
-    end_ic_date_str = end_ic_date.strftime("%Y-%m-%d")
-    start_date_str = start_date.strftime("%Y-%m-%d")
-    request_start_str = (start_date - timedelta(days=lookback_days)).strftime(
-        "%Y-%m-%d"
-    )
-
     # obc.py creates these itself, but the driver can run IC before BC (or
     # without it), so IC cannot rely on that having happened. netCDF4 reports a
     # missing parent directory as a bare EACCES, so skipping this surfaces as a
@@ -88,8 +78,7 @@ def process_initial_condition(
         data_access_function=data_access_function,
         latlon_info=latlon_info,
         raw_data_dir=raw_data_dir,
-        start_date_str=request_start_str,
-        end_date_str=end_ic_date_str,
+        when=when,
         variables=variables,
         extra_args=extra_args,
     )
@@ -98,7 +87,7 @@ def process_initial_condition(
     regrid_fn(
         raw_file=raw_file,
         hgrid=hgrid,
-        start_date=start_date,
+        when=when,
         output_dir=Path(output_data_dir),
         dataset_varnames=dataset_varnames,
     )
@@ -112,15 +101,14 @@ def _download_initial_condition(
     data_access_function,
     latlon_info: dict,
     raw_data_dir: str | Path,
-    start_date_str: str,
-    end_date_str: str,
+    when: TimeRequest,
     variables: list[str],
     extra_args: dict,
 ):
     with dask.config.set(scheduler="synchronous"):
         utils.fetch_raw_chunk(
             data_access_fn=data_access_function,
-            dates=[start_date_str, end_date_str],
+            when=when,
             latlon=latlon_info,
             output_folder=raw_data_dir,
             output_filename="ic_unprocessed.nc",

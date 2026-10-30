@@ -33,11 +33,11 @@ KNOWN_INCLUSIVE_WITHOUT_HELPER = {
     # dimension at all (a CICE restart/initial-condition file is a single
     # static snapshot) -- `dates` isn't used for any date-based filtering.
     ("cice_restart", "get_cice_restart_subset"),
-    # Reparses `dates` via parse_dataset's filename-based day matching
-    # (date_format/regex on the file list), same whole-day-inclusive
-    # construction as the RDA/GLOFAS entries above.
+    # Take `when`, a TimeRequest, whose select keeps every record up to the
+    # end of its last day.
     ("cesm_pop_output", "get_cesm_single_variable_data"),
     ("cesm_mom_output", "get_mom6_single_variable_data"),
+    ("cesm_mom_output", "get_mom6_output_data"),
     # `dates` is an unused placeholder — downloads one fixed pre-processed
     # file via a static URL, no date-based filtering happens at all.
     ("glofas", "get_processed_global_glofas_script_for_cli"),

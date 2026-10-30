@@ -180,12 +180,16 @@ method as `data_freq` and `freq`, and rejects one the method doesn't take:
 A method may take both. Any other method takes neither and returns its
 product's own cadence.
 
+A method may take `when`, a `TimeRequest`, in place of `dates` and `freq`.
+`when.select(ds)` keeps the records it asks for, in the data's own calendar,
+thinned when `subsample_freq` is set (see the CESM output readers).
+
 The boundary data is fetched for one record spacing either side of the run. If
 your product's data starts or ends on a known date, override the classmethod
 `coverage(method_name, **kwargs)` to return `(first, last)` (either may be
 `None`), and that padding stops there instead of asking for data that doesn't
-exist. GLORYS returns its 1993-01-01 start; the CESM tseries readers read the
-span from their file names.
+exist. `configure_forcings` refuses a run outside it. GLORYS returns its
+1993-01-01 start; the CESM tseries readers read the span from their file names.
 :::
 
 ## Step 5: Validation and Tests

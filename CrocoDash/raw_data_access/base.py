@@ -19,6 +19,7 @@ How it was solved:
 """
 
 from CrocoDash.raw_data_access.registry import ProductRegistry
+from CrocoDash.raw_data_access.time_request import TimeRequest
 import dataclasses
 import dataclasses
 from dataclasses import dataclass, replace
@@ -178,6 +179,13 @@ def resolve_time_sampling(
     return replace(native, frequency=freq)
 
 
+def takes_when(method) -> bool:
+    """Whether an access method takes when, a TimeRequest, in place of dates
+    (and freq). Until every dated method does, fetch_raw_chunk passes the
+    others dates."""
+    return "when" in inspect.signature(getattr(method, "__func__", method)).parameters
+
+
 def accessmethod(
     func=None,
     *,
@@ -187,8 +195,9 @@ def accessmethod(
     subsample=False,
     data_freq=False,
 ):
-    """subsample: the method takes freq=None and can fetch every freq instead
-    of every record. data_freq: it reads data from a path the user gives it,
+    """subsample: the method can fetch every freq instead of every record: it
+    takes freq=None, or when, a TimeRequest thinned to those dates. data_freq:
+    it reads data from a path the user gives it,
     and takes data_freq=None naming that data's cadence. See
     resolve_time_sampling."""
 
@@ -248,8 +257,10 @@ class BaseProduct:
             func = entry.__func__
             sig = inspect.signature(func)
 
-            # All required args must be present
+            # All required args must be present; when stands in for dates.
             missing = [arg for arg in cls.required_args if arg not in sig.parameters]
+            if takes_when(func):
+                missing = [arg for arg in missing if arg != "dates"]
             if missing:
                 raise ValueError(
                     f"Access method '{name}' in {cls.product_name} missing args {missing}"
@@ -265,6 +276,8 @@ class BaseProduct:
             raise KeyError(f"{method_name} not found for product {cls.product_name}")
 
         missing = [arg for arg in cls.required_args if arg not in kwargs]
+        if "when" in kwargs:
+            missing = [arg for arg in missing if arg != "dates"]
         if missing:
             raise ValueError(f"{cls.product_name}.{method_name} missing args {missing}")
 
@@ -374,9 +387,11 @@ class DatedBaseProduct(BaseProduct):
     def validate_method(cls, method_name, **kwargs):
 
         # Add child-class defaults
-        extra_defaults = {
-            "dates": ["2000-01-01", "2000-01-02"],
-        }
+        method = cls._access_methods.get(method_name)
+        if method is not None and takes_when(method):
+            extra_defaults = {"when": TimeRequest("2000-01-01", "2000-01-02")}
+        else:
+            extra_defaults = {"dates": ["2000-01-01", "2000-01-02"]}
         final_args = {**extra_defaults, **kwargs}
 
         # Delegate to the base implementation

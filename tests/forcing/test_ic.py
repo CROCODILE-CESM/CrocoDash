@@ -1,11 +1,11 @@
 import numpy as np
 import pytest
 import xarray as xr
-from datetime import datetime
 from pathlib import Path
 
 import CrocoDash.forcing.ic as ic_module
 from CrocoDash.grid import Grid
+from CrocoDash.raw_data_access.time_request import TimeRequest
 
 
 @pytest.fixture
@@ -18,7 +18,7 @@ def ic_kwargs(tmp_path, get_rect_grid):
         variables=["thetao", "so"],
         extra_args={"dataset_path": "/some/path"},
         dataset_varnames={"tracer_var_names": {"temp": "thetao"}},
-        start_date="2020-01-01",
+        when=TimeRequest("2020-01-01", "2020-01-01"),
         hgrid_path=str(tmp_path / "hgrid.nc"),
         raw_data_dir=str(tmp_path / "raw"),
         output_data_dir=str(tmp_path / "out"),
@@ -28,7 +28,7 @@ def ic_kwargs(tmp_path, get_rect_grid):
 def test_process_initial_condition_downloads_then_regrids(
     ic_kwargs, get_rect_grid, monkeypatch
 ):
-    """IC is a single t=0 snapshot: GET asks for [start, start+1day] over the
+    """IC is a single t=0 snapshot: GET asks for the start day over the
     whole-domain box, then hands the file to the caller's regrid_fn."""
     calls, regridded = [], {}
 
@@ -47,7 +47,7 @@ def test_process_initial_condition_downloads_then_regrids(
     )
 
     (call,) = calls
-    assert call["dates"] == ["2020-01-01", "2020-01-02"]
+    assert call["dates"] == ["2020-01-01", "2020-01-01"]
     assert call["dataset_path"] == "/some/path"  # extra_args splatted, not nested
     bbox = Grid.get_bounding_boxes(get_rect_grid)["ic"]
     # Only the geographic bounds are forwarded to the access function.
@@ -64,4 +64,4 @@ def test_process_initial_condition_downloads_then_regrids(
     )
     assert regridded["raw_file"].exists()
     assert regridded["output_dir"] == Path(ic_kwargs["output_data_dir"])
-    assert regridded["start_date"] == datetime(2020, 1, 1)
+    assert regridded["when"] == ic_kwargs["when"]

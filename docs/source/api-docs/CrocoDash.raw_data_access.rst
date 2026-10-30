@@ -28,6 +28,14 @@ CrocoDash.raw\_data\_access.registry module
    :show-inheritance:
    :undoc-members:
 
+CrocoDash.raw\_data\_access.time\_request module
+------------------------------------------------
+
+.. automodule:: CrocoDash.raw_data_access.time_request
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 Module contents
 ---------------
 

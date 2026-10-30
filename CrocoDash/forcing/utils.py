@@ -4,6 +4,7 @@ from pathlib import Path
 from collections import defaultdict
 from datetime import datetime, timedelta
 from CrocoDash import logging
+from CrocoDash.raw_data_access.base import takes_when
 from CrocoDash.raw_data_access.registry import ProductRegistry
 
 logger = logging.setup_logger(__name__)
@@ -118,7 +119,7 @@ def get_data_access_function(product_name: str, function_name: str):
 
 def fetch_raw_chunk(
     data_access_fn,
-    dates: list,
+    when,
     latlon: dict,
     output_folder: str | Path,
     output_filename: str,
@@ -131,6 +132,10 @@ def fetch_raw_chunk(
     Shared by obc.py and ic.py — both fetch a chunk of raw data
     for a given date range and bounding box, and both need to be idempotent
     across re-runs.
+
+    when is the chunk's TimeRequest. A method that takes when gets it; the
+    others get its first and last days as dates, and any freq in extra_args,
+    as before.
     """
     output_file = Path(output_folder) / output_filename
 
@@ -142,8 +147,12 @@ def fetch_raw_chunk(
         logger.info(f"{output_file.name} already exists. Skipping.")
         return output_file
 
+    if takes_when(data_access_fn):
+        time_args = {"when": when}
+    else:
+        time_args = {"dates": [f"{when.start:%Y-%m-%d}", f"{when.end:%Y-%m-%d}"]}
     data_access_fn(
-        dates=dates,
+        **time_args,
         lat_min=latlon["lat_min"],
         lat_max=latlon["lat_max"],
         lon_min=latlon["lon_min"],
