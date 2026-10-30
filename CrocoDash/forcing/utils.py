@@ -3,6 +3,8 @@ import re
 from pathlib import Path
 from collections import defaultdict
 from datetime import datetime, timedelta
+import pandas as pd
+from visualCaseGen.custom_widget_types.case_tools import xmlchange
 from CrocoDash import logging
 from CrocoDash.raw_data_access.registry import ProductRegistry
 
@@ -181,3 +183,64 @@ def check_date_continuity(boundary_file_list: dict):
                 )
 
     return issues
+
+
+def _default_years(cesmroot, component, compset_lname):
+    """The (start, end) years <COMP>_YR_START/_END default to for this
+    compset: for an interannual stream, the years its data covers. None when
+    this CESM's CDEPS doesn't define them."""
+    # CIME is on sys.path once a Case exists.
+    from CIME.XML.component import Component
+
+    config = Path(cesmroot) / "components" / "cdeps" / component / "cime_config"
+    comp = Component(str(config / "config_component.xml"), component[1:].upper())
+    years = []
+    for var in ("START", "END"):
+        node = comp.get_optional_child("entry", {"id": f"{component.upper()}_YR_{var}"})
+        if node is None:
+            return None
+        # How create_newcase picks a compset's default.
+        years.append(int(comp.get_default_value(node, {"compset": compset_lname})))
+    return tuple(years)
+
+
+def set_stream_years(case, component):
+    """Set <COMP>_YR_ALIGN/_START/_END so that ``component`` ("datm" or
+    "drof") reads the run's own years of its interannual streams (JRA, CORE2
+    IAF, GLOFAS), with one data year either side for the time interpolation at
+    the run's ends. CDEPS then lists only those years' files. At its defaults
+    (align 1, data from 1958) model year 2020 would read JRA's 1997.
+
+    Returns the values set. It is {} for a component the case doesn't have or
+    whose streams aren't interannual, and for a run outside the years the data
+    covers (with a warning); those keep the defaults.
+    """
+    comp = component.upper()
+    if f"_{comp}%" not in getattr(case, "compset_lname", ""):
+        return {}
+    coverage = _default_years(case.cesmroot, component, case.compset_lname)
+    if coverage is None:
+        logger.warning(
+            f"This CESM's CDEPS has no {comp}_YR_*; {comp} keeps its stream years."
+        )
+        return {}
+    data_first, data_last = coverage
+    if data_first >= data_last:
+        return {}
+    run_first = case.date_range[0].year
+    run_last = (case.date_range[1] - pd.Timedelta(days=1)).year
+    if run_first < data_first or run_last > data_last:
+        logger.warning(
+            f"{comp} keeps its default stream years: the run's {run_first}-{run_last} "
+            f"fall outside the {data_first}-{data_last} its data covers."
+        )
+        return {}
+    first, last = max(data_first, run_first - 1), min(data_last, run_last + 1)
+    years = {
+        f"{comp}_YR_ALIGN": first,
+        f"{comp}_YR_START": first,
+        f"{comp}_YR_END": last,
+    }
+    for var, year in years.items():
+        xmlchange(var, year, caseroot=case.caseroot, is_non_local=case.is_non_local)
+    return years

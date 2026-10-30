@@ -28,14 +28,6 @@ CrocoDash.forcing.bgc module
    :show-inheritance:
    :undoc-members:
 
-CrocoDash.forcing.cdeps\_streams module
----------------------------------------
-
-.. automodule:: CrocoDash.forcing.cdeps_streams
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
 CrocoDash.forcing.chl module
 ----------------------------
 

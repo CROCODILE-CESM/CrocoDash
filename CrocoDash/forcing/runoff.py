@@ -3,6 +3,7 @@ from pathlib import Path
 from mom6_forge import mapping
 
 from CrocoDash.forcing.base import *
+from CrocoDash.forcing.utils import set_stream_years
 
 
 @register
@@ -101,6 +102,10 @@ class RunoffConfigurator(BaseConfigurator):
         )
         self.set_output_param("ROF2OCN_LIQ_RMAPNAME", self.runoff_mapping_file_nnsm)
         self.set_output_param("ROF2OCN_ICE_RMAPNAME", self.runoff_mapping_file_nnsm)
+        # A JRA or GLOFAS DROF reads the run's own years of its runoff. The
+        # dates come from the case, not from Runoff's inputs, so changing them
+        # leaves Runoff's config.json entry, and the map made from it, alone.
+        set_stream_years(self.registry.case, "drof")
         super().configure()
 
     def validate_args(self, **kwargs):
