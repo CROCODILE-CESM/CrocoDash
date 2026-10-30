@@ -1059,9 +1059,9 @@ them:</p>
 initial and boundary condition extraction. Its arguments all have sensible
 defaults on <code class="docutils literal notranslate"><span class="pre">configure_forcings</span></code> itself, so in practice you only owe it
 <code class="docutils literal notranslate"><span class="pre">date_range</span></code>.</p></li>
-<li><p><strong><code class="docutils literal notranslate"><span class="pre">DATM</span></code></strong> is required by any <code class="docutils literal notranslate"><span class="pre">DATM%JRA</span></code> or <code class="docutils literal notranslate"><span class="pre">DATM%IAF</span></code> compset, and takes no
-arguments. It sets <code class="docutils literal notranslate"><span class="pre">DATM_YR_*</span></code> so the run reads its own years of forcing;
-<code class="docutils literal notranslate"><span class="pre">Runoff</span></code> does the same for a JRA or GLOFAS DROF.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">DATM</span></code></strong> is required by any interannual JRA or CORE2 IAF DATM compset, and
+takes no arguments. It sets <code class="docutils literal notranslate"><span class="pre">DATM_YR_*</span></code> so the run reads its own years of
+forcing; <code class="docutils literal notranslate"><span class="pre">Runoff</span></code> does the same for a JRA or GLOFAS DROF.</p></li>
 </ul>
 <p>Configurators like <code class="docutils literal notranslate"><span class="pre">tides</span></code> aren’t tied to any compset component, so they’re
 never “required” — they’re optional and you add them whenever you want tidal

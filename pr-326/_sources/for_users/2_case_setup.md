@@ -119,9 +119,9 @@ them:
   initial and boundary condition extraction. Its arguments all have sensible
   defaults on `configure_forcings` itself, so in practice you only owe it
   `date_range`.
-- **`DATM`** is required by any `DATM%JRA` or `DATM%IAF` compset, and takes no
-  arguments. It sets `DATM_YR_*` so the run reads its own years of forcing;
-  `Runoff` does the same for a JRA or GLOFAS DROF.
+- **`DATM`** is required by any interannual JRA or CORE2 IAF DATM compset, and
+  takes no arguments. It sets `DATM_YR_*` so the run reads its own years of
+  forcing; `Runoff` does the same for a JRA or GLOFAS DROF.
 
 Configurators like `tides` aren't tied to any compset component, so they're
 never "required" — they're optional and you add them whenever you want tidal
