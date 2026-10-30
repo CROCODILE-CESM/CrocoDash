@@ -2,7 +2,8 @@ from pathlib import Path
 from typing import List, Dict
 from abc import ABC, abstractmethod
 from functools import cached_property
-from CrocoDash.forcing import user_nl_blocks
+from visualCaseGen import user_nl_blocks
+from visualCaseGen.custom_widget_types.case_tools import xmlchange
 from CrocoDash.logging import setup_logger
 import inspect
 from typing import Optional, Any
@@ -13,6 +14,10 @@ import dataclasses
 from CrocoDash.raw_data_access.base import Calendar
 
 logger = setup_logger(__name__)
+
+# Names CrocoDash's blocks in user_nl files (see visualCaseGen.user_nl_blocks).
+# Existing cases carry it, so it must not change.
+USER_NL_TAG = "CrocoDash configure_forcings"
 
 
 def calendar_as_dict(calendar):
@@ -442,26 +447,6 @@ class UserNLConfigParam(OutputParam):
         raise KeyError(f"Parameter {self.name} not found in {user_nl_path }")
 
 
-def xmlchange(var, val, *, caseroot, is_non_local=False):
-    """Run ``./xmlchange var=val`` in ``caseroot``.
-
-    visualCaseGen's xmlchange changes whichever case was created last in this
-    process; this one changes the case it is given.
-    """
-    cmd = ["./xmlchange", f"{var}={val}"]
-    if is_non_local:
-        cmd.append("--non-local")
-    print(" ".join(cmd))
-    try:
-        res = subprocess.run(cmd, cwd=Path(caseroot), capture_output=True)
-    except OSError as e:
-        raise RuntimeError(f"Could not run ./xmlchange in {caseroot}: {e}") from e
-    if res.returncode != 0:
-        raise RuntimeError(
-            f"{' '.join(cmd)} failed in {caseroot}:\n{res.stderr.decode().strip()}"
-        )
-
-
 def xmlquery(var, *, caseroot):
     """The case's current value of ``var``, from ``./xmlquery`` in ``caseroot``."""
     try:
@@ -688,6 +673,7 @@ class BaseConfigurator(ABC):
                 file_groups,
                 caseroot=caseroot,
                 ninst=getattr(case, "ninst", 1),
+                tag=USER_NL_TAG,
             )
         for p in self.output_params:
             if isinstance(p, UserNLConfigParam):

@@ -14,7 +14,8 @@ enumerated, and CDEPS opens each one to build its time axis.
 """
 
 from CrocoDash.forcing.base import *
-from CrocoDash.forcing import cdeps_streams, user_nl_blocks
+from CrocoDash.forcing import cdeps_streams
+from visualCaseGen import user_nl_blocks
 from CrocoDash.logging import setup_logger
 
 logger = setup_logger(__name__)
@@ -152,6 +153,7 @@ class StreamYearConfigurator(BaseConfigurator):
             [(comment, pairs)],
             caseroot=case.caseroot,
             ninst=case.ninst,
+            tag=USER_NL_TAG,
         )
 
     def configure(self):

@@ -110,7 +110,7 @@ def test_coverage(cesmroot, component, mode, first, last):
     )
 
 
-@patch("CrocoDash.forcing.user_nl_blocks.write")
+@patch("visualCaseGen.user_nl_blocks.write")
 def test_configures_jra_streams(mock_append, cesmroot):
     """A run inside the covered range gets every stream aligned and narrowed."""
     configurator = build(
@@ -143,7 +143,7 @@ def test_configures_jra_streams(mock_append, cesmroot):
     assert "CORE_IAF_JRA.PREC:datafiles" in keys
 
 
-@patch("CrocoDash.forcing.user_nl_blocks.write")
+@patch("visualCaseGen.user_nl_blocks.write")
 def test_out_of_range_leaves_streams_untouched(mock_append, cesmroot):
     """CORE_IAF_JRA ends in 2016, so a 2020 run cannot be aligned to real years.
 
@@ -164,7 +164,7 @@ def test_out_of_range_leaves_streams_untouched(mock_append, cesmroot):
     mock_append.assert_not_called()
 
 
-@patch("CrocoDash.forcing.user_nl_blocks.write")
+@patch("visualCaseGen.user_nl_blocks.write")
 def test_single_year_climatology_is_a_noop(mock_append, cesmroot):
     """NYF is a repeating single year: nothing to align, nothing to narrow."""
     configurator = build(
@@ -177,7 +177,7 @@ def test_single_year_climatology_is_a_noop(mock_append, cesmroot):
     mock_append.assert_not_called()
 
 
-@patch("CrocoDash.forcing.user_nl_blocks.write")
+@patch("visualCaseGen.user_nl_blocks.write")
 def test_narrowing_can_be_disabled(mock_append, cesmroot):
     configurator = build(
         cesmroot,
@@ -194,7 +194,7 @@ def test_narrowing_can_be_disabled(mock_append, cesmroot):
     assert not any(key.endswith(":datafiles") for key in keys)
 
 
-@patch("CrocoDash.forcing.user_nl_blocks.write")
+@patch("visualCaseGen.user_nl_blocks.write")
 def test_padding_widens_the_window(mock_append, cesmroot):
     narrow = build(
         cesmroot,
@@ -209,7 +209,7 @@ def test_padding_widens_the_window(mock_append, cesmroot):
     assert (mods["year_first"], mods["year_last"]) == (2014, 2015)
 
 
-@patch("CrocoDash.forcing.user_nl_blocks.write")
+@patch("visualCaseGen.user_nl_blocks.write")
 def test_serializes_to_json(mock_append, cesmroot):
     import json
 
