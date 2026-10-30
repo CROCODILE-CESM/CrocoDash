@@ -369,6 +369,13 @@ class ERA5_WAVE_SPECTRA(WW3ForcingProduct):
             grib_path.unlink()
 
         ds = xr.concat(parts, dim="longitude")
+        # Back on the region's branch, each meridian once: the two areas of a
+        # box across 180E, like a full circle's one, both hold 180E.
+        lon = ds["longitude"].values.astype(float)
+        ds = ds.assign_coords(
+            longitude=lon + 360 * np.ceil((region.lon_min - lon) / 360)
+        )
+        ds = ds.drop_duplicates("longitude").sortby("longitude")
         ds.to_netcdf(nc_path)
         ds.close()
         return nc_path

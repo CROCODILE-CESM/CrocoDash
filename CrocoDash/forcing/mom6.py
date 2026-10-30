@@ -977,7 +977,6 @@ class ConditionsConfigurator(BaseConfigurator):
 
         product_info = self.get_output_param("information")
         function_args = self._function_args()
-        function_args.pop("freq", None)  # the IC is never thinned
         regrid_fn = partial(
             _regrid_ic,
             hgrid_path=ctx.supergrid_path,
