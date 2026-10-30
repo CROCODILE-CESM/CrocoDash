@@ -667,10 +667,22 @@ def check_data_freq(ds, data_freq, time_var_name="time", source=""):
         spacing = np.median(pd.to_timedelta(np.diff(time)) / pd.Timedelta(days=1))
         expected = frequency_step(data_freq) / pd.Timedelta(days=1)
         if not 0.8 <= spacing / expected <= 1.25:
+            # The usual cadence these records match, to name in the message.
+            match = next(
+                (
+                    freq
+                    for freq in ("h", "3h", "6h", "D", "5D", "MS", "QS", "YS")
+                    if 0.8
+                    <= spacing / (frequency_step(freq) / pd.Timedelta(days=1))
+                    <= 1.25
+                ),
+                None,
+            )
             raise ValueError(
                 f"{source} holds records about {spacing:.3g} days apart, which "
                 f"isn't data_freq={data_freq!r} ({expected:.3g} days). Pass the "
-                "cadence of that data as data_freq."
+                "cadence of that data as data_freq"
+                + (f", e.g. data_freq={match!r}." if match else ".")
             )
 
 
@@ -761,7 +773,11 @@ def subset_dataset(
             dates = ("NotSpecifiedDate", "NotSpecifiedDate")
         output_file = output_path / (
             f"{var_name}_subset_{lat_min}_{lat_max}_{lon_min}_{lon_max}_{dates[0]}_{dates[1]}"
-            + ("" if when is None or when.dates is None else f"_{len(when.dates)}dates")
+            + (
+                ""
+                if when is None or when.dates is None
+                else f"_sampled_{when.dates[0]:%Y%m%d}_{when.dates[-1]:%Y%m%d}_{len(when.dates)}"
+            )
             + ".nc"
         )
 
