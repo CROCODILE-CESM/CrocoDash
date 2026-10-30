@@ -517,22 +517,26 @@ document.write(`
 <td><p>Status enums used to check and reset the CaseCreator widget state</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">xmlchange(...)</span></code></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">shareable.py</span></code></p></td>
-<td><p>Applies <code class="docutils literal notranslate"><span class="pre">xmlchange</span></code> commands to modify CESM XML configuration files (<code class="docutils literal notranslate"><span class="pre">case.py</span></code> and <code class="docutils literal notranslate"><span class="pre">forcing/</span></code> use <code class="docutils literal notranslate"><span class="pre">forcing.base.xmlchange</span></code>, which takes the caseroot)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">case.py</span></code>, <code class="docutils literal notranslate"><span class="pre">forcing/base.py</span></code>, <code class="docutils literal notranslate"><span class="pre">shareable.py</span></code></p></td>
+<td><p>Applies <code class="docutils literal notranslate"><span class="pre">xmlchange</span></code> commands to modify CESM XML configuration files. <code class="docutils literal notranslate"><span class="pre">case.py</span></code> and <code class="docutils literal notranslate"><span class="pre">forcing/</span></code> always pass <code class="docutils literal notranslate"><span class="pre">caseroot=</span></code></p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">append_user_nl(...)</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">case.py</span></code>, <code class="docutils literal notranslate"><span class="pre">shareable.py</span></code></p></td>
 <td><p>Appends entries to CESM <code class="docutils literal notranslate"><span class="pre">user_nl_*</span></code> namelist files</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ProConPy.config_var.ConfigVar</span></code>, <code class="docutils literal notranslate"><span class="pre">cvars</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">user_nl_blocks</span></code> (<code class="docutils literal notranslate"><span class="pre">snapshot</span></code>, <code class="docutils literal notranslate"><span class="pre">strip</span></code>, <code class="docutils literal notranslate"><span class="pre">write</span></code>, <code class="docutils literal notranslate"><span class="pre">report_edits</span></code>, <code class="docutils literal notranslate"><span class="pre">restore</span></code>)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">case.py</span></code>, <code class="docutils literal notranslate"><span class="pre">forcing/base.py</span></code></p></td>
+<td><p>Writes each configurator’s <code class="docutils literal notranslate"><span class="pre">user_nl_*</span></code> entries in a block tagged <code class="docutils literal notranslate"><span class="pre">USER_NL_TAG</span></code>, which the next <code class="docutils literal notranslate"><span class="pre">configure_forcings()</span></code> replaces</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ProConPy.config_var.ConfigVar</span></code>, <code class="docutils literal notranslate"><span class="pre">cvars</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">case.py</span></code> (case creation only)</p></td>
 <td><p>Reads and sets visualCaseGen config variables (compset, grid, <code class="docutils literal notranslate"><span class="pre">MB_ATTEMPT_ID</span></code>, …)</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ProConPy.stage.Stage</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ProConPy.stage.Stage</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">case.py</span></code></p></td>
 <td><p>Advances visualCaseGen through its configuration stages</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ProConPy.dev_utils.ConstraintViolation</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ProConPy.dev_utils.ConstraintViolation</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">case.py</span></code></p></td>
 <td><p>Caught to turn solver constraint failures into CrocoDash-level errors</p></td>
 </tr>
