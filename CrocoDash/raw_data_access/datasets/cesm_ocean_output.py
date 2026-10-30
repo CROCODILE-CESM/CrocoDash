@@ -21,6 +21,7 @@ from pathlib import Path
 import xarray as xr
 import cftime
 import dask.base
+import numpy as np
 import pandas as pd
 
 from CrocoDash.raw_data_access.base import *
@@ -51,6 +52,9 @@ class CESM_POP_OUTPUT(MOM6ForcingProduct):
     eta_var_name = "SSH"
     time_units = "days since 1850-01-01"
     calendar = NOLEAP
+    # The default dataset_path is tseries/month_1, monthly means; pass
+    # data_freq for an archive of another cadence (e.g. "D" for day_1).
+    time_sampling = TimeSampling("MS", "mean")
     depth_coord = ["z_t", "z_t_150m"]
     delimiter = "."
     tracer_var_names = {"temp": "TEMP", "salt": "SALT"}
@@ -95,6 +99,8 @@ class CESM_POP_OUTPUT(MOM6ForcingProduct):
     }
 
     @accessmethod(
+        subsample=True,
+        data_freq=True,
         description=(
             "Gets CESM single-variable-per-file (tseries) ocean data from a given "
             "path (by default a POP-MARBL run) — the standard CESM postprocessed "
@@ -130,9 +136,12 @@ class CESM_POP_OUTPUT(MOM6ForcingProduct):
         lat_name="TLAT",
         lon_name="TLONG",
         preview=False,
+        data_freq=None,
+        freq=None,
     ):
-        # CESM-POP tseries output needs the month-shift correction for its
-        # average-endpoint timestamp labeling convention.
+        resolve_time_sampling(
+            CESM_POP_OUTPUT, "get_cesm_single_variable_data", data_freq, freq
+        )
         return read_single_variable_tseries_data(
             dates,
             lat_min,
@@ -150,7 +159,8 @@ class CESM_POP_OUTPUT(MOM6ForcingProduct):
             lat_name,
             lon_name,
             preview,
-            apply_month_shift=True,
+            data_freq=data_freq or CESM_POP_OUTPUT.time_sampling.frequency,
+            freq=freq,
         )
 
 
@@ -182,9 +192,14 @@ class CESM_MOM_OUTPUT(MOM6ForcingProduct):
     eta_var_name = "zos"
     depth_coord = "z_l"
     calendar = NOLEAP
+    # The cadence is whatever the dataset_path given holds, so it can't be
+    # declared here.
+    time_sampling = USER_SPECIFIED
     tracer_var_names = {"temp": "thetao", "salt": "so"}
 
     @accessmethod(
+        subsample=True,
+        data_freq=True,
         description=(
             "Reads native MOM6 output (full history/diagnostic files, or "
             "diag_table-extracted cross-section slices) from any directory and "
@@ -215,7 +230,10 @@ class CESM_MOM_OUTPUT(MOM6ForcingProduct):
         time_var_name="time",
         buffer_deg=1.5,
         preview=False,
+        data_freq=None,
+        freq=None,
     ):
+        resolve_time_sampling(CESM_MOM_OUTPUT, "get_mom6_output_data", data_freq, freq)
         validate_dataset_path(dataset_path)
 
         files = sorted(Path(dataset_path).glob(file_glob))
@@ -225,10 +243,10 @@ class CESM_MOM_OUTPUT(MOM6ForcingProduct):
             )
 
         ds = xr.open_mfdataset(files, combine="by_coords")
-
-        # Unlike CESM_POP_OUTPUT.get_cesm_single_variable_data, no month-shift is
-        # applied here - that shift is specific to the CESM-POP tseries
-        # convention, not native MOM6 output.
+        ds = date_means_at_interval_start(ds, time_var_name)
+        ds = select_records(
+            ds, (dates[0], dates[-1]), data_freq, freq, time_var_name, dataset_path
+        )
         ds = convert_cftime_to_numeric(
             ds, time_var_name=time_var_name, calendar=CESM_MOM_OUTPUT.calendar
         )
@@ -299,6 +317,8 @@ class CESM_MOM_OUTPUT(MOM6ForcingProduct):
         return [output_path]
 
     @accessmethod(
+        subsample=True,
+        data_freq=True,
         description=(
             "Gets native MOM6 output that's organized in the CESM single-"
             "variable-per-file (tseries) convention instead of one multi-"
@@ -328,8 +348,12 @@ class CESM_MOM_OUTPUT(MOM6ForcingProduct):
         regex=r"(\d{6,8})-(\d{6,8})",
         delimiter=".",
         preview=False,
+        data_freq=None,
+        freq=None,
     ):
-        # Native MOM6 output doesn't need the CESM-POP month-shift correction.
+        resolve_time_sampling(
+            CESM_MOM_OUTPUT, "get_mom6_single_variable_data", data_freq, freq
+        )
         return read_single_variable_tseries_data(
             dates,
             lat_min,
@@ -347,7 +371,8 @@ class CESM_MOM_OUTPUT(MOM6ForcingProduct):
             CESM_MOM_OUTPUT.tracer_y_coord,
             CESM_MOM_OUTPUT.tracer_x_coord,
             preview,
-            apply_month_shift=False,
+            data_freq=data_freq,
+            freq=freq,
             grid_coords={
                 CESM_MOM_OUTPUT.u_var_name: (
                     CESM_MOM_OUTPUT.u_y_coord,
@@ -385,7 +410,8 @@ def read_single_variable_tseries_data(
     lat_name,
     lon_name,
     preview,
-    apply_month_shift,
+    data_freq=None,
+    freq=None,
     grid_coords=None,
 ):
     """
@@ -394,6 +420,9 @@ def read_single_variable_tseries_data(
     and CESM_MOM_OUTPUT.get_mom6_single_variable_data - the CESM tseries file
     convention (one variable per file series, date range in the filename) shows
     up for both CESM-POP and native MOM6 output.
+
+    data_freq is the cadence of the files, checked against them, and freq thins
+    them to a coarser one (see select_records).
 
     grid_coords optionally maps a variable name to its own (lat_name, lon_name)
     pair, overriding lat_name/lon_name for that variable - needed for MOM6's
@@ -433,7 +462,9 @@ def read_single_variable_tseries_data(
             end_date.strftime(date_format),
         ),
         preview=preview,
-        apply_month_shift=apply_month_shift,
+        data_freq=data_freq,
+        freq=freq,
+        window=(start_date, end_date),
         grid_coords=grid_coords,
     )
 
@@ -541,20 +572,14 @@ def parse_dataset(
     return variable_info
 
 
-def convert_cftime_to_numeric(
-    ds, time_var_name="time", apply_month_shift=False, calendar: Calendar = NOLEAP
-):
+def convert_cftime_to_numeric(ds, time_var_name="time", calendar: Calendar = NOLEAP):
     """
     Converts a cftime time coordinate to numeric (days since 1850-01-01, noleap)
     for safe NetCDF serialization; a no-op if the coordinate isn't cftime.
-    apply_month_shift is specific to the CESM-POP tseries convention (average-
-    endpoint timestamp labeling) and should not be used for native MOM6 output.
     """
     if not isinstance(ds[time_var_name].values[0], cftime.datetime):
         return ds
     time_values = ds[time_var_name].values
-    if apply_month_shift:
-        time_values = [subtract_month(t) for t in time_values]
     units = "days since 1850-01-01 00:00:00"
     # This file is an intermediate read back by xarray/cftime (see the
     # date2num against these same attrs in get_mom6_output_data), not by
@@ -571,6 +596,71 @@ def convert_cftime_to_numeric(
         }
     )
     return drop_extra_cftime_vars(ds)
+
+
+def _first_day(times):
+    """Each cftime or datetime64 time at midnight of its day."""
+    if isinstance(times[0], cftime.datetime):
+        return np.array(
+            [t.replace(hour=0, minute=0, second=0, microsecond=0) for t in times]
+        )
+    return times.astype("datetime64[D]").astype(times.dtype)
+
+
+def date_means_at_interval_start(ds, time_var_name="time"):
+    """CESM-POP stamps a mean at the end of its averaging interval (a January
+    mean at Feb 1): date those records, and their time bounds, at the first
+    day of the interval instead. The day, because POP's first interval starts
+    a model step after midnight (00:31:40 in CESM-HR). Records stamped
+    anywhere else, like MOM6's mid-interval means, are left as they are."""
+    bounds = ds[time_var_name].attrs.get("bounds")
+    if bounds not in ds.variables:
+        return ds
+    time = ds[time_var_name].values
+    start, end = ds[bounds].values[:, 0], ds[bounds].values[:, 1]
+    at_end = time == end
+    if not at_end.any():
+        return ds
+    start = np.where(at_end, _first_day(start), start)
+    ds = ds.assign_coords(
+        {
+            time_var_name: (
+                time_var_name,
+                np.where(at_end, start, time),
+                ds[time_var_name].attrs,
+            )
+        }
+    )
+    ds[bounds] = (ds[bounds].dims, np.stack([start, end], axis=1))
+    return ds
+
+
+def select_records(ds, window, data_freq, freq=None, time_var_name="time", source=""):
+    """Check that ds's records are data_freq apart, then, for a freq coarser
+    than that, keep the record that covers each date sample_dates picks from
+    the (start, end) window: the one whose averaging interval (time bounds)
+    holds it, or without bounds the nearest one."""
+    time = ds[time_var_name].values
+    if data_freq is not None and len(time) > 1:
+        spacing = np.median(pd.to_timedelta(np.diff(time)) / pd.Timedelta(days=1))
+        expected = frequency_step(data_freq) / pd.Timedelta(days=1)
+        if not 0.8 <= spacing / expected <= 1.25:
+            raise ValueError(
+                f"{source} holds records about {spacing:.3g} days apart, which "
+                f"isn't data_freq={data_freq!r} ({expected:.3g} days). Pass the "
+                "cadence of that data as data_freq."
+            )
+    if freq is None or frequency_step(freq) == frequency_step(data_freq):
+        return ds
+    calendar = getattr(time[0], "calendar", "standard")
+    dates = sample_dates(window[0], window[-1], freq, calendar)
+    bounds = ds[time_var_name].attrs.get("bounds")
+    if bounds in ds.variables:
+        lo, hi = ds[bounds].values[:, 0], ds[bounds].values[:, 1]
+        keep = [i for i in range(len(time)) if any(lo[i] <= d < hi[i] for d in dates)]
+    else:
+        keep = sorted({int(np.argmin(abs(time - d))) for d in dates})
+    return ds.isel({time_var_name: keep})
 
 
 def bbox_mask(
@@ -614,7 +704,9 @@ def subset_dataset(
     lon_name="lon",
     dates=None,
     preview: bool = False,
-    apply_month_shift: bool = True,
+    data_freq: str | None = None,
+    freq: str | None = None,
+    window: tuple | None = None,
     grid_coords: dict | None = None,
 ) -> None:
     """
@@ -634,9 +726,9 @@ def subset_dataset(
             not listed in grid_coords. Default is "lon".
         dates (tuple): Just used for the file naming
         preview (bool): If True, only previews the subsetting without saving. Default is False.
-        apply_month_shift (bool): Apply the CESM-POP tseries average-endpoint
-            timestamp correction. Default True (matches CESM-POP); set False for
-            native MOM6 tseries output.
+        data_freq, freq, window: the files' cadence, checked against them,
+            and a coarser one to thin them to over the (start, end) window
+            (see select_records). None skips both.
         grid_coords (dict | None): Optional {var_name: (lat_name, lon_name)}
             override - needed for MOM6's C-grid, where uo/vo live on different
             horizontal dims than the tracer grid, so a single lat_name/lon_name
@@ -656,7 +748,9 @@ def subset_dataset(
         if dates is None:
             dates = ("NotSpecifiedDate", "NotSpecifiedDate")
         output_file = output_path / (
-            f"{var_name}_subset_{lat_min}_{lat_max}_{lon_min}_{lon_max}_{dates[0]}_{dates[1]}.nc"
+            f"{var_name}_subset_{lat_min}_{lat_max}_{lon_min}_{lon_max}_{dates[0]}_{dates[1]}"
+            + (f"_{freq}" if freq else "")
+            + ".nc"
         )
 
         if output_file.exists():
@@ -669,11 +763,13 @@ def subset_dataset(
 
         # Load the dataset for the variable
         ds = xr.open_mfdataset(file_paths, decode_timedelta=False)
+        ds = date_means_at_interval_start(ds)
+        ds = select_records(
+            ds, window, data_freq, freq, source=Path(file_paths[0]).parent
+        )
 
         # Convert time. Saving to netcdf is not working with cftime objects.
-        ds = convert_cftime_to_numeric(
-            ds, time_var_name="time", apply_month_shift=apply_month_shift
-        )
+        ds = convert_cftime_to_numeric(ds, time_var_name="time")
 
         var_lat_name, var_lon_name = grid_coords.get(var_name, (lat_name, lon_name))
         mask = bbox_mask(
@@ -738,15 +834,3 @@ def first_value(da_var):
         return arr.ravel()[0].compute()
     else:
         return arr.ravel()[0]
-
-
-def subtract_month(dt):
-    # subtract one month, rolling back year if necessary
-    year = dt.year
-    month = dt.month - 1
-    if month == 0:
-        month = 12
-        year -= 1
-    # keep day, hour, minute, second as is
-    day = min(dt.day, 28)  # avoid invalid dates (Feb)
-    return cftime.DatetimeNoLeap(year, month, day, dt.hour, dt.minute, dt.second)

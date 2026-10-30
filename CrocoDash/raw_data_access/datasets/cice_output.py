@@ -89,6 +89,7 @@ class CICE_RESTART(CICEForcingProduct):
     time_var_name = None
     time_units = None
     calendar = GREGORIAN
+    time_sampling = None  # static snapshot; dates are ignored
     # CICE's B-grid stores velocity (uvel/vvel) and tracer-like state on the
     # same (nj, ni) index space -- no separate staggered dims like MOM6's
     # xh/xq. These are real, not placeholders.

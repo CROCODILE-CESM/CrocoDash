@@ -778,11 +778,21 @@ class ConditionsConfigurator(BaseConfigurator):
 
     # ---- process (extraction) ----
 
+    def _function_args(self):
+        """The stored function_args the access function still takes. A
+        config.json from when every dated access method took freq carries
+        "freq": null even for a method that no longer does."""
+        accepted = ProductRegistry.get_function_default_args(
+            self.get_input_param("product_name"), self.get_input_param("function_name")
+        )
+        stored = self.get_output_param("function_args") or {}
+        return {k: v for k, v in stored.items() if k in accepted}
+
     def process_bc(self, ctx):
         """Process MOM6 boundary conditions through forcing.obc's GET → REGRID →
         MERGE engine, using regional_mom6's Segment as the regrid step."""
         product_info = self.get_output_param("information")
-        function_args = self.get_output_param("function_args") or {}
+        function_args = self._function_args()
         preview = ctx.preview
 
         if preview:
@@ -856,7 +866,7 @@ class ConditionsConfigurator(BaseConfigurator):
             )
 
         product_info = self.get_output_param("information")
-        function_args = self.get_output_param("function_args") or {}
+        function_args = self._function_args()
         preview = ctx.preview
         regrid_fn = partial(
             _regrid_ic,
