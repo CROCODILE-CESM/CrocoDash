@@ -4,7 +4,10 @@ import shutil
 from datetime import datetime
 import json
 import math
+import re
+import numpy as np
 import pandas as pd
+import queryearth as qe
 import regional_mom6 as rmom6
 from CrocoDash.grid import Grid
 from CrocoDash.topo import Topo
@@ -23,8 +26,28 @@ from CrocoDash.forcing.driver import run_workflow
 
 from CrocoDash import case_state
 from CrocoDash.logging import quiet_visualcasegen_info
+from CrocoDash.qe import RULES, grid_outline  # RULES is queried in Case()
 
 quiet_visualcasegen_info()
+
+
+def _case_query(case):
+    """What the rules are asked about a case, as RULES.query() keywords: its grid's
+    outline, its range of cell sizes in km and their ratio, and its compset's
+    atmosphere and ice, such as jra and sice."""
+    grid = case.ocn_grid
+    cell_km = np.sqrt(grid.tarea.values) / 1000.0
+    smallest, largest = float(cell_km.min()), float(cell_km.max())
+    query = {
+        "space": grid_outline(grid.qlon.values, grid.qlat.values),
+        "resolution": (smallest, largest),
+        "cell_size_ratio": largest / smallest,
+    }
+    if atmosphere := re.search(r"DATM%([A-Za-z0-9]+)", case.compset_lname):
+        query["atmosphere"] = atmosphere.group(1).lower()
+    if ice := re.search(r"_(CICE|DICE|SICE)", case.compset_lname):
+        query["ice"] = ice.group(1).lower()
+    return query
 
 
 def _remove_previous(path):
@@ -246,6 +269,10 @@ class Case:
                 user_args = ForcingConfigRegistry.get_user_args(configurator)
                 args_str = ", ".join(user_args) if user_args else "no arguments"
                 print(f"  - {configurator.name}: {args_str}")
+
+        # Rules that apply to this grid and compset
+        for rule in RULES.query(**_case_query(self)):
+            print(json.dumps(rule.to_feature(), indent=2, ensure_ascii=False))
 
     @property
     def cice_in_compset(self):
@@ -689,6 +716,12 @@ class Case:
                 "configure_forcings() replaced this case's previous forcing configuration."
             )
         self._configure_forcings_called = True
+
+        # Rules that apply to this grid, compset, run time and forcing product
+        query = _case_query(self)
+        query["product"] = self.forcing_product_name
+        for rule in RULES.query(**query, time=qe.interval(*self.date_range)):
+            print(json.dumps(rule.to_feature(), indent=2, ensure_ascii=False))
 
     def process_forcings(self, **kwargs):
         """
