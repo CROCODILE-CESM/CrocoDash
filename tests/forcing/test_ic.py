@@ -52,9 +52,9 @@ def test_process_initial_condition_downloads_then_regrids(
     bbox = Grid.get_bounding_boxes(get_rect_grid)["ic"]
     # Only the geographic bounds are forwarded to the access function.
     # get_bounding_boxes also reports `crosses_antimeridian`, which is a hint
-    # for callers that slice with a naive lon_min <= lon <= lon_max; the RDA
-    # path hands the (possibly >180) lon_max to longitude_slicer, which
-    # handles the seam itself, so fetch_raw_chunk has no use for the flag.
+    # for callers that slice with a naive lon_min <= lon <= lon_max; a Region
+    # runs east from lon_min past 180 and Region.select handles the seam, so
+    # fetch_raw_chunk has no use for the flag.
     geo = {k: bbox[k] for k in ("lat_min", "lat_max", "lon_min", "lon_max")}
     assert {k: call[k] for k in geo} == pytest.approx(geo)
     # netCDF4 reports a missing parent dir as a bare EACCES, so the engine has
