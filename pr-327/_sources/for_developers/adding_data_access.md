@@ -156,7 +156,7 @@ Every dated product declares a **`time_sampling`**: a `TimeSampling` saying how
 often its records come and whether each is a mean over its interval or an
 instantaneous value. Use `USER_SPECIFIED` when the cadence depends on the
 source the user points the product at (CESM-MOM output), so the user must pass
-it as `freq`, and `None` only for a static snapshot that ignores `dates`.
+it as `data_freq`, and `None` only for a static snapshot that ignores `dates`.
 
 ```python
 class MyDataset(MOM6ForcingProduct):
@@ -164,14 +164,20 @@ class MyDataset(MOM6ForcingProduct):
     time_sampling = TimeSampling("D", cell_method="mean")
 ```
 
-An access method that can do something with a `freq` (users set it with
-`function_overrides={"freq": "MS"}`) takes an optional `freq=None`, calls
-`resolve_time_sampling` first, and says what it does with it:
-`@accessmethod(freq_handling="subsample")` if it can fetch every `freq` instead
-of every record (see GLORYS's RDA method, which uses `sample_dates`), or
-`freq_handling="declare"` if `freq` names the cadence of the source the user
-points it at (the CESM tseries readers). Any other method takes no `freq` and
-returns its product's own cadence.
+An access method calls `resolve_time_sampling` first and says, in its
+decorator, which of two arguments it takes (users set them through
+`function_overrides`):
+
+- `@accessmethod(subsample=True)`: it takes `freq=None` and can fetch every
+  `freq` instead of every record, e.g. `freq="MS"` for one record a month. Use
+  `sample_dates` to pick the dates (see GLORYS's RDA method).
+- `@accessmethod(data_freq=True)`: it reads data from a path the user gives it
+  and takes `data_freq=None`, the cadence of that data (the CESM output
+  readers). It only describes the data: the method reads it the same way
+  whatever the value, and checks it against the records it finds.
+
+A method may take both. Any other method takes neither and returns its
+product's own cadence.
 :::
 
 ## Step 5: Validation and Tests

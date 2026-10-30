@@ -532,20 +532,26 @@ containing at least <code class="docutils literal notranslate"><span class="pre"
 often its records come and whether each is a mean over its interval or an
 instantaneous value. Use <code class="docutils literal notranslate"><span class="pre">USER_SPECIFIED</span></code> when the cadence depends on the
 source the user points the product at (CESM-MOM output), so the user must pass
-it as <code class="docutils literal notranslate"><span class="pre">freq</span></code>, and <code class="docutils literal notranslate"><span class="pre">None</span></code> only for a static snapshot that ignores <code class="docutils literal notranslate"><span class="pre">dates</span></code>.</p>
+it as <code class="docutils literal notranslate"><span class="pre">data_freq</span></code>, and <code class="docutils literal notranslate"><span class="pre">None</span></code> only for a static snapshot that ignores <code class="docutils literal notranslate"><span class="pre">dates</span></code>.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">MyDataset</span><span class="p">(</span><span class="n">MOM6ForcingProduct</span><span class="p">):</span>
     <span class="c1"># Daily means</span>
     <span class="n">time_sampling</span> <span class="o">=</span> <span class="n">TimeSampling</span><span class="p">(</span><span class="s2">"D"</span><span class="p">,</span> <span class="n">cell_method</span><span class="o">=</span><span class="s2">"mean"</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>An access method that can do something with a <code class="docutils literal notranslate"><span class="pre">freq</span></code> (users set it with
-<code class="docutils literal notranslate"><span class="pre">function_overrides={&quot;freq&quot;:</span> <span class="pre">&quot;MS&quot;}</span></code>) takes an optional <code class="docutils literal notranslate"><span class="pre">freq=None</span></code>, calls
-<code class="docutils literal notranslate"><span class="pre">resolve_time_sampling</span></code> first, and says what it does with it:
-<code class="docutils literal notranslate"><span class="pre">&#64;accessmethod(freq_handling=&quot;subsample&quot;)</span></code> if it can fetch every <code class="docutils literal notranslate"><span class="pre">freq</span></code> instead
-of every record (see GLORYS’s RDA method, which uses <code class="docutils literal notranslate"><span class="pre">sample_dates</span></code>), or
-<code class="docutils literal notranslate"><span class="pre">freq_handling=&quot;declare&quot;</span></code> if <code class="docutils literal notranslate"><span class="pre">freq</span></code> names the cadence of the source the user
-points it at (the CESM tseries readers). Any other method takes no <code class="docutils literal notranslate"><span class="pre">freq</span></code> and
-returns its product’s own cadence.</p>
+<p>An access method calls <code class="docutils literal notranslate"><span class="pre">resolve_time_sampling</span></code> first and says, in its
+decorator, which of two arguments it takes (users set them through
+<code class="docutils literal notranslate"><span class="pre">function_overrides</span></code>):</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">&#64;accessmethod(subsample=True)</span></code>: it takes <code class="docutils literal notranslate"><span class="pre">freq=None</span></code> and can fetch every
+<code class="docutils literal notranslate"><span class="pre">freq</span></code> instead of every record, e.g. <code class="docutils literal notranslate"><span class="pre">freq=&quot;MS&quot;</span></code> for one record a month. Use
+<code class="docutils literal notranslate"><span class="pre">sample_dates</span></code> to pick the dates (see GLORYS’s RDA method).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&#64;accessmethod(data_freq=True)</span></code>: it reads data from a path the user gives it
+and takes <code class="docutils literal notranslate"><span class="pre">data_freq=None</span></code>, the cadence of that data (the CESM output
+readers). It only describes the data: the method reads it the same way
+whatever the value, and checks it against the records it finds.</p></li>
+</ul>
+<p>A method may take both. Any other method takes neither and returns its
+product’s own cadence.</p>
 </div>
 </section>
 <section id="step-5-validation-and-tests">
