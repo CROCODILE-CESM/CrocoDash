@@ -86,7 +86,7 @@ class CICE_RESTART(CICEForcingProduct):
     time_var_name = None
     time_units = None
     calendar = GREGORIAN
-    time_sampling = None  # static snapshot; dates are ignored
+    time_sampling = None  # static snapshot; its method takes no when
     # CICE's B-grid stores velocity (uvel/vvel) and tracer-like state on the
     # same (nj, ni) index space -- no separate staggered dims like MOM6's
     # xh/xq. These are real, not placeholders.
@@ -116,7 +116,7 @@ class CICE_RESTART(CICEForcingProduct):
             "tx2_3v3_grid.nc for the tx2_3v3 grid. This isn't a real dated "
             "forcing product yet -- a restart is a single snapshot with no "
             "time axis of its own, and it is written out as-is, with no "
-            "`time` axis added and `dates` ignored. `variables` defaults "
+            "`time` axis added and no dates asked for. `variables` defaults "
             "to keeping every variable in the restart, since which state "
             "variables exist depends on compile-time CICE options (tracer/"
             "layer counts) that this function has no way to know in advance."
@@ -125,7 +125,6 @@ class CICE_RESTART(CICEForcingProduct):
         buf=2.5,
     )
     def get_cice_restart_subset(
-        dates: list,
         region,
         name=None,
         output_folder=Path(""),
@@ -164,12 +163,12 @@ class CICE_RESTART(CICEForcingProduct):
         # Not a real forcing product -- there's no actual time evolution to
         # source, and a CICE restart/initial-condition file is a single
         # static snapshot with no `time` dimension of its own anyway, so the
-        # subset is written as-is regardless of the requested date range.
+        # subset is written as-is whatever the run's dates.
         CICE_RESTART.logger.warning(
             f"cice_restart has no real time evolution -- the single restart "
-            f"snapshot ({restart_path}) is being used unchanged for the "
-            f"requested range ({dates[0]} to {dates[-1]}). This is a "
-            f"stand-in until a real dated CICE forcing product is available."
+            f"snapshot ({restart_path}) is being used unchanged for the whole "
+            f"run. This is a stand-in until a real dated CICE forcing product "
+            f"is available."
         )
 
         if preview:

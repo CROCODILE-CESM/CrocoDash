@@ -388,29 +388,25 @@ class _FakeERA5Spectra(WW3ForcingProduct):
     direction_convention = DIRECTION_COMING_FROM
     land_marker = LAND_ZERO
 
-    @accessmethod
+    @accessmethod(buf=0)
     def get_fake_spectra(
-        dates,
-        lat_min,
-        lat_max,
-        lon_min,
-        lon_max,
+        when,
+        region,
         name=None,
         output_folder=Path(""),
         output_filename="fake_era5.nc",
         variables=None,
     ):
-        start, end = pd.to_datetime(dates[0]), pd.to_datetime(dates[1])
-        time = pd.date_range(start, end, freq="6h")
+        time = pd.date_range(when.start, when.end, freq="6h")
         freq = np.array([0.05, 0.1, 0.15])
         direction = np.array([0.0, 120.0, 240.0])
         n_stations = 3
-        if (lon_max - lon_min) >= (lat_max - lat_min):
-            lons = np.linspace(lon_min, lon_max, n_stations)
-            lats = np.array([(lat_min + lat_max) / 2])
+        if (region.lon_max - region.lon_min) >= (region.lat_max - region.lat_min):
+            lons = np.linspace(region.lon_min, region.lon_max, n_stations)
+            lats = np.array([(region.lat_min + region.lat_max) / 2])
         else:
-            lons = np.array([(lon_min + lon_max) / 2])
-            lats = np.linspace(lat_min, lat_max, n_stations)
+            lons = np.array([(region.lon_min + region.lon_max) / 2])
+            lats = np.linspace(region.lat_min, region.lat_max, n_stations)
         efth = np.zeros((len(time), len(lats), len(lons), len(freq), len(direction)))
         for k in range(n_stations):
             j, i = (k, 0) if len(lats) > 1 else (0, k)

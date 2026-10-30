@@ -1,3 +1,5 @@
+import inspect
+
 import pytest
 from CrocoDash.raw_data_access.registry import ProductRegistry
 from CrocoDash.raw_data_access.base import *
@@ -11,8 +13,8 @@ class DummyProduct(DatedBaseProduct):
     time_sampling = None
 
     @accessmethod
-    def dummy_method(dates, output_folder, output_filename):
-        return f"{dates[0]}{dates[1]}{output_folder}/{output_filename}"
+    def dummy_method(when, output_folder, output_filename):
+        return f"{when.start:%Y%m%d}{when.end:%Y%m%d}{output_folder}/{output_filename}"
 
 
 # Dummy concrete forcing product
@@ -37,15 +39,12 @@ class DummyForcing(MOM6ForcingProduct):
     calendar = GREGORIAN
     time_sampling = TimeSampling("D")
 
-    @accessmethod
+    @accessmethod(buf=0)
     def fetch_dummy(
-        dates,
+        region,
+        when,
         output_folder,
         output_filename,
-        lon_max,
-        lat_max,
-        lon_min,
-        lat_min,
         name=None,
         variables="SSH",
     ):
@@ -74,11 +73,11 @@ def test_call_access_method_success_basic():
     result = ProductRegistry.call(
         "dummy",
         "dummy_method",
-        dates=["asd", "asd"],
+        when=TimeRequest("2000-01-01", "2000-01-02"),
         output_folder="/tmp",
         output_filename="file.nc",
     )
-    assert result == "asdasd/tmp/file.nc"
+    assert result == "2000010120000102/tmp/file.nc"
 
 
 def test_call_access_method_missing_arg():
@@ -97,14 +96,11 @@ def test_call_access_method_success():
     result = ProductRegistry.call(
         "dummy_forcing",
         "fetch_dummy",
-        dates=["!23", "123"],
+        when=TimeRequest("2000-01-01", "2000-01-02"),
         output_folder="/tmp",
         output_filename="file.nc",
         variables=["temp", "salt"],
-        lon_max=10,
-        lat_max=20,
-        lon_min=0,
-        lat_min=0,
+        region=Region(0, 20, 0, 10),
         name="north",
     )
     assert "Fetched" in result
@@ -163,8 +159,7 @@ def test_validate_method_removes_its_temporary_directory(tmp_path, monkeypatch):
 
 
 def test_forcing_validate_method_passes_overrides_through(monkeypatch):
-    """A product overriding validate_method (e.g. for in-range dates) relies
-    on ForcingProduct forwarding its kwargs to the toy call."""
+    """validate_method forwards its kwargs to the toy call."""
     received = {}
     monkeypatch.setitem(
         DummyForcing._access_methods,
@@ -191,7 +186,11 @@ def test_validate_method_returns_false_when_the_toy_call_raises(monkeypatch):
 
 def test_get_access_function(tmp_path):
     func = ProductRegistry.get_access_function("dummy", "dummy_method")
-    func(dates="asdasd", output_folder=tmp_path, output_filename="asdasd")
+    func(
+        when=TimeRequest("2000-01-01", "2000-01-02"),
+        output_folder=tmp_path,
+        output_filename="asdasd",
+    )
 
 
 @pytest.mark.slow
@@ -273,15 +272,15 @@ class _Sampled(DatedBaseProduct):
     time_sampling = TimeSampling("D")
 
     @accessmethod(subsample=True)
-    def strided(dates, output_folder, output_filename, freq=None):
+    def strided(when, output_folder, output_filename):
         pass
 
     @accessmethod
-    def ranged(dates, output_folder, output_filename):
+    def ranged(when, output_folder, output_filename):
         pass
 
     @accessmethod(subsample=True, data_freq=True)
-    def declared(dates, output_folder, output_filename, data_freq=None, freq=None):
+    def declared(when, output_folder, output_filename, data_freq=None):
         pass
 
 
@@ -328,16 +327,6 @@ def test_static_product_takes_no_freq():
         resolve_time_sampling(product, "get_cice_restart_subset", freq="D")
 
 
-def test_sample_dates_strides_from_the_freq_anchor():
-    dates = sample_dates("2020-01-10", "2020-03-05", "MS")
-    assert list(dates.strftime("%m-%d")) == ["02-01", "03-01"]
-
-
-def test_sample_dates_falls_back_to_the_window_start():
-    dates = sample_dates("2020-01-10", "2020-01-11", "MS")
-    assert list(dates.strftime("%m-%d")) == ["01-10"]
-
-
 class _Boxed(ForcingProduct):
     product_name = "boxed_for_buf_tests"
     description = "d"
@@ -366,3 +355,18 @@ def test_accessmethod_pads_the_region_once_by_buf():
     assert ProductRegistry.get_function_default_args(
         "boxed_for_buf_tests", "boxed"
     ) == {"buf": 1.5}
+
+
+def test_dated_methods_take_region_and_when():
+    """No registered dated method takes the loose box numbers, dates or freq
+    that region and when replace."""
+    ProductRegistry.load()
+    loose = {"lat_min", "lat_max", "lon_min", "lon_max", "dates", "freq"}
+    offenders = []
+    for product in ProductRegistry.products.values():
+        if not issubclass(product, DatedBaseProduct):
+            continue
+        for name, method in product._access_methods.items():
+            if loose & set(inspect.signature(method.__func__).parameters):
+                offenders.append(f"{product.product_name}.{name}")
+    assert not offenders, offenders

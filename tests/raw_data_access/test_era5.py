@@ -8,50 +8,43 @@ import pytest
 import xarray as xr
 
 from CrocoDash.raw_data_access.datasets import era5
+from CrocoDash.raw_data_access.region import Region
 from CrocoDash.raw_data_access.registry import ProductRegistry
+from CrocoDash.raw_data_access.time_request import TimeRequest
 
 # Bering Sea demo case bounding box (dev/cice_obc_demo/cice_with_obcs.ipynb).
-_LAT_MIN, _LAT_MAX = 68, 78
-_LON_MIN, _LON_MAX = -170, -155
+_BOX = Region(68, 78, -170, -155)
+_DAY = TimeRequest("2020-01-01", "2020-01-01")
 
 
-def test_build_era5_spectra_request_area_order():
-    request = era5.build_era5_spectra_request(
-        ["2020-01-01", "2020-01-01"], _LAT_MIN, _LAT_MAX, _LON_MIN, _LON_MAX
-    )
-    assert request["area"] == "79.0/-171.0/67.0/-154.0"
-
-
-def test_build_era5_spectra_request_custom_buffer():
-    request = era5.build_era5_spectra_request(
-        ["2020-01-01", "2020-01-01"],
-        _LAT_MIN,
-        _LAT_MAX,
-        _LON_MIN,
-        _LON_MAX,
-        buffer_deg=0.0,
-    )
-    assert request["area"] == "78.0/-170.0/68.0/-155.0"
+def test_era5_area_across_180():
+    """CDS takes an area (N/W/S/E) on -180..180 that can't cross 180E: a box
+    across it is two areas, and a full circle is the globe."""
+    across = era5.build_era5_spectra_requests(_DAY, Region(68, 78, 170, 190))
+    assert [request["area"] for request in across] == [
+        "78.0/170.0/68.0/180.0",
+        "78.0/-180.0/68.0/-170.0",
+    ]
+    (globe,) = era5.build_era5_spectra_requests(_DAY, Region(68, 78, -180, 180))
+    assert globe["area"] == "78.0/-180.0/68.0/180.0"
 
 
 def test_build_era5_spectra_request_single_day():
-    request = era5.build_era5_spectra_request(
-        ["2020-01-15", "2020-01-15"], _LAT_MIN, _LAT_MAX, _LON_MIN, _LON_MAX
+    (request,) = era5.build_era5_spectra_requests(
+        TimeRequest("2020-01-15", "2020-01-15"), _BOX
     )
     assert request["date"] == "2020-01-15/to/2020-01-15"
 
 
 def test_build_era5_spectra_request_multi_day():
-    request = era5.build_era5_spectra_request(
-        ["2020-01-30", "2020-02-02"], _LAT_MIN, _LAT_MAX, _LON_MIN, _LON_MAX
+    (request,) = era5.build_era5_spectra_requests(
+        TimeRequest("2020-01-30", "2020-02-02"), _BOX
     )
     assert request["date"] == "2020-01-30/to/2020-02-02"
 
 
 def test_build_era5_spectra_request_fixed_mars_keys():
-    request = era5.build_era5_spectra_request(
-        ["2020-01-01", "2020-01-01"], _LAT_MIN, _LAT_MAX, _LON_MIN, _LON_MAX
-    )
+    (request,) = era5.build_era5_spectra_requests(_DAY, _BOX)
     assert request["class"] == "ea"
     assert request["expver"] == "1"
     assert request["stream"] == "wave"
@@ -93,11 +86,8 @@ def test_get_era5_2d_spectra(tmp_path):
     on 2026-08-03 with a correctly-scoped CDSAPI_RC.
     """
     path = era5.ERA5_WAVE_SPECTRA.get_era5_2d_spectra(
-        dates=["2020-01-01", "2020-01-01"],
-        lat_min=_LAT_MIN,
-        lat_max=_LAT_MAX,
-        lon_min=_LON_MIN,
-        lon_max=_LON_MAX,
+        when=_DAY,
+        region=_BOX,
         output_folder=tmp_path,
         output_filename="era5_spectra_test.nc",
     )
@@ -296,11 +286,8 @@ def test_get_era5_2d_spectra_returns_netcdf_and_drops_the_grib(tmp_path, monkeyp
     )
 
     path = era5.ERA5_WAVE_SPECTRA.get_era5_2d_spectra(
-        dates=["2020-01-01", "2020-01-01"],
-        lat_min=_LAT_MIN,
-        lat_max=_LAT_MAX,
-        lon_min=_LON_MIN,
-        lon_max=_LON_MAX,
+        when=_DAY,
+        region=_BOX,
         output_folder=tmp_path / "out",
         output_filename="spectra.nc",
     )

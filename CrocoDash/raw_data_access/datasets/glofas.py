@@ -1,7 +1,6 @@
 from pathlib import Path
 from CrocoDash.raw_data_access.datasets import utils
 import cdsapi
-import pandas as pd
 from CrocoDash.raw_data_access.base import *
 
 
@@ -18,33 +17,29 @@ class GLOFAS(DatedBaseProduct):
         how_to_use="Requires a CDS API key — register at https://cds.climate.copernicus.eu and configure ~/.cdsapirc before use.",
     )
     def get_global_data_with_python(
-        dates,
+        when: TimeRequest,
         output_folder=Path(""),
         output_filename="glofas_data.nc",
-        freq=None,
     ):
         """
         Downloads glofas data using cdsapi library. Note that users need to have an account with copernicus and have cdsapi installed and configured.
 
         Parameters
         ----------
-        dates : list of str
-            Two-element ``[start, end]`` range; every day in the range is requested.
+        when : TimeRequest
+            The days to request: every day from its start to its end, or its
+            dates when thinned.
         output_folder : str, optional
             Directory where downloaded files will be saved.
         output_filename : str, optional
             Filename to write inside ``output_folder``.
 
         """
-        freq = resolve_time_sampling(
-            GLOFAS, "get_global_data_with_python", freq=freq
-        ).frequency
         dataset = "cems-glofas-historical"
-        start, end = pd.to_datetime(dates[0]), pd.to_datetime(dates[1])
-        dates = sample_dates(start, end, freq)
-        hyear = sorted(list({d.strftime("%Y") for d in dates}))
-        hmonth = sorted(list({d.strftime("%m") for d in dates}))
-        hday = sorted(list({d.strftime("%d") for d in dates}))
+        days = when.days()
+        hyear = sorted({d.strftime("%Y") for d in days})
+        hmonth = sorted({d.strftime("%m") for d in days})
+        hday = sorted({d.strftime("%d") for d in days})
 
         request = {
             "system_version": ["version_4_0"],
@@ -69,18 +64,16 @@ class GLOFAS(DatedBaseProduct):
         how_to_use="Only requires `curl`. Downloads pre-processed global GloFAS discharge data from CESM inputdata.",
     )
     def get_processed_global_glofas_script_for_cli(
-        dates="UNUSED",
         output_folder=Path(""),
         output_filename="processed_glofas.nc",
     ):
         """
         Downloads pre-processed global GloFAS discharge data from the CESM
         inputdata repository by generating a script users can run in their terminal.
+        It takes no when: the published file is a fixed global dataset.
 
         Parameters
         ----------
-        dates : str, optional
-            Currently unused; the published file is a fixed global dataset.
         output_folder : str, optional
             Directory where downloaded files will be saved.
         output_filename : str, optional

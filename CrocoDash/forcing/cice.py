@@ -41,8 +41,8 @@ need (one static snapshot, no real time evolution to fetch incrementally),
 so this doesn't route through obc.py's shared GET->chunk->REGRID->MERGE
 engine at all -- just resolves the requested product/function via the same
 ``ProductRegistry`` lookup MOM6/WW3 use (``utils.get_data_access_function``)
-instead of hardcoding a single product, and calls it the way they do
-(``utils.call_access_method``).
+instead of hardcoding a single product, and calls it with the domain's
+``Region``. The product is a static snapshot, so it takes no ``when``.
 
 Every variable in the source restart passes through unfiltered (T-point and
 U-point alike) -- a superset of the ``aicen``/``vicen``/``vsnon``/``trcrn``
@@ -63,9 +63,8 @@ from CrocoDash.grid import Grid
 from CrocoDash.forcing import utils
 from CrocoDash.forcing.base import *
 from CrocoDash.raw_data_access.registry import ProductRegistry
-from CrocoDash.raw_data_access.base import CICEForcingProduct, takes_region
+from CrocoDash.raw_data_access.base import CICEForcingProduct
 from CrocoDash.raw_data_access.region import Region
-from CrocoDash.raw_data_access.time_request import TimeRequest
 
 # Where process() writes CICE's forcing file, and therefore where
 # output_files() declares it. Kept in one place so the writer and the
@@ -506,20 +505,14 @@ class CICEConfigurator(BaseConfigurator):
         output_dir = Path(ctx.inputdir) / SEA_ICE_SUBDIR
         output_dir.mkdir(parents=True, exist_ok=True)
 
-        conditions = ctx.config["conditions"]["inputs"]
-
         # Not through fetch_raw_chunk: nothing removes a subset made from
-        # other cice_function_args, so it is fetched again every run. A
-        # method that takes region pads it by its own buf; one that doesn't
-        # yet (reference_ice, until it takes region) keeps CICE's 1 degree.
+        # other cice_function_args, so it is fetched again every run. The
+        # method pads region by its own buf.
         data_access_fn = utils.get_data_access_function(product_name, function_name)
-        region = Region(
-            bbox["lat_min"], bbox["lat_max"], bbox["lon_min"], bbox["lon_max"]
-        )
-        subset_paths = utils.call_access_method(
-            data_access_fn,
-            when=TimeRequest(conditions["start_date"], conditions["end_date"]),
-            region=region if takes_region(data_access_fn) else region.padded(1),
+        subset_paths = data_access_fn(
+            region=Region(
+                bbox["lat_min"], bbox["lat_max"], bbox["lon_min"], bbox["lon_max"]
+            ),
             output_folder=raw_dir,
             **(self.get_input_param("cice_function_args") or {}),
         )

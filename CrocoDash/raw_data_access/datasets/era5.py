@@ -100,24 +100,15 @@ def _era5_cdsapi_client(cdsapi_rc_path=_DEFAULT_ERA5_CDSAPI_RC):
             os.environ["CDSAPI_RC"] = original
 
 
-def build_era5_spectra_request(
-    dates: list,
-    lat_min,
-    lat_max,
-    lon_min,
-    lon_max,
-    buffer_deg=1.0,
-) -> dict:
-    """Pure builder for a CDS `reanalysis-era5-complete` (MARS-style)
-    request dict for ERA5's 2D wave spectra (param 251.140, wave stream) --
-    no network I/O, so it's unit-testable without cdsapi credentials.
+def build_era5_spectra_requests(when, region) -> list[dict]:
+    """Pure builder for the CDS `reanalysis-era5-complete` (MARS-style)
+    requests for ERA5's 2D wave spectra (param 251.140, wave stream) over
+    every hour of when's days and region -- no network I/O, so it's
+    unit-testable without cdsapi credentials.
 
-    `buffer_deg` pads the requested box before slicing -- needed because a
-    boundary's box from mom6_forge.Grid.get_bounding_boxes is a near-zero-
-    width strip (e.g. "north" spans the full domain longitude at essentially
-    one latitude), and a literal zero-height CDS `area` request could miss
-    every real ERA5 grid point. Same reasoning GLORYS's own accessmethods
-    already use (padding lat_min-1/lat_max+1 before slicing).
+    CDS takes an area on -180..180 that can't cross 180E, so region gives
+    one request per range of region.lon_ranges(-180): one, two for a box
+    across 180E, or the globe for a full circle.
 
     VERIFIED against real pulls (2026-08-03): the date/time/area string
     syntax below works. Three things an initial pull got wrong, now fixed:
@@ -135,29 +126,24 @@ def build_era5_spectra_request(
     - "format" is deprecated in favor of "data_format" (CDS now warns but
       still honors "format"; use the current key name).
     """
-    start, end = pd.to_datetime(dates[0]), pd.to_datetime(dates[-1])
-    # CDS wants -180..180; CrocoDash grids are often 0..360.
-    lon_min, lon_max = (((l + 180.0) % 360.0) - 180.0 for l in (lon_min, lon_max))
-    if lon_min > lon_max:
-        raise NotImplementedError("Boundary windows crossing 180E are not supported.")
-    return {
+    request = {
         "class": "ea",
         "expver": "1",
         "stream": "wave",
         "type": "an",
         "levtype": "sfc",
         "param": "251.140",
-        "date": f"{start:%Y-%m-%d}/to/{end:%Y-%m-%d}",
+        "date": f"{when.start:%Y-%m-%d}/to/{when.end:%Y-%m-%d}",
         "time": "00/to/23/by/1",
         "direction": "1/to/24",
         "frequency": "1/to/30",
-        "area": (
-            f"{lat_max + buffer_deg}/{lon_min - buffer_deg}/"
-            f"{lat_min - buffer_deg}/{lon_max + buffer_deg}"
-        ),  # N/W/S/E
         "grid": "0.5/0.5",  # regrid off the native Reduced Lat-Lon grid so "area" cropping works
         "data_format": "grib",
     }
+    return [
+        {**request, "area": f"{region.lat_max}/{west}/{region.lat_min}/{east}"}
+        for west, east in region.lon_ranges(-180)  # area is N/W/S/E
+    ]
 
 
 def _read_era5_grib_messages(path):
@@ -343,13 +329,15 @@ class ERA5_WAVE_SPECTRA(WW3ForcingProduct):
             "that's not ~/.cdsapirc_era5."
         ),
         type="python",
+        # A boundary's box from mom6_forge.Grid.get_bounding_boxes is a
+        # near-zero-width strip (e.g. "north" spans the full domain longitude
+        # at essentially one latitude), and a literal zero-height CDS `area`
+        # request could miss every real ERA5 grid point.
+        buf=1.0,
     )
     def get_era5_2d_spectra(
-        dates: list,
-        lat_min,
-        lat_max,
-        lon_min,
-        lon_max,
+        when,
+        region,
         name=None,
         output_folder=Path(""),
         output_filename="era5_spectra.nc",
@@ -357,28 +345,30 @@ class ERA5_WAVE_SPECTRA(WW3ForcingProduct):
         cdsapi_rc_path=_DEFAULT_ERA5_CDSAPI_RC,
     ):
         """
-        Downloads ERA5's true 2D wave spectra for the requested date range
-        and bounding box using the cdsapi package, decodes the GRIB
-        response, and writes the result as NetCDF at
-        output_folder/output_filename. Note that `variables` is unused --
-        param 251.140 already *is* the whole 2D spectrum -- it's kept only
-        to satisfy ForcingProduct's required_args contract.
+        Downloads ERA5's true 2D wave spectra for every hour of when's days
+        over region using the cdsapi package, decodes the GRIB response, and
+        writes the result as NetCDF at output_folder/output_filename. A box
+        across 180E is two requests, joined along longitude. Note that
+        `variables` is unused -- param 251.140 already *is* the whole 2D
+        spectrum -- it's kept only to satisfy ForcingProduct's required_args
+        contract.
 
         Returns the NetCDF path, not the intermediate GRIB -- downstream
         code (extract_forcings/ww3.py) never touches GRIB/eccodes directly.
         """
-        request = build_era5_spectra_request(dates, lat_min, lat_max, lon_min, lon_max)
-
         output_folder = Path(output_folder)
         output_folder.mkdir(parents=True, exist_ok=True)
-        grib_path = output_folder / f"{Path(output_filename).stem}_raw.grib"
         nc_path = output_folder / output_filename
 
         client = _era5_cdsapi_client(cdsapi_rc_path)
-        client.retrieve("reanalysis-era5-complete", request, grib_path)
+        parts = []
+        for i, request in enumerate(build_era5_spectra_requests(when, region)):
+            grib_path = output_folder / f"{Path(output_filename).stem}_raw{i}.grib"
+            client.retrieve("reanalysis-era5-complete", request, grib_path)
+            parts.append(decode_era5_spectra_grib(grib_path))
+            grib_path.unlink()
 
-        ds = decode_era5_spectra_grib(grib_path)
+        ds = xr.concat(parts, dim="longitude")
         ds.to_netcdf(nc_path)
         ds.close()
-        grib_path.unlink()
         return nc_path

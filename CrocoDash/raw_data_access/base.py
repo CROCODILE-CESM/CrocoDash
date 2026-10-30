@@ -13,7 +13,7 @@ How it was solved:
 2. There is a set of "abstract" classes that specify an array of "required_args". There is no type enforcement. This is checked in the _init_subclass hook.
 3. There is a class called ProductRegistry in the registry.py file that does this
 4. The classes are all static.
-5. There is a validate method in the BaseProduct class that takes in additional default args from child classes, and the _init_subclass hook validates the args.
+5. There is one validate method in the BaseProduct class, which builds a toy call from the args each access method takes, and the _init_subclass hook validates the args.
 6. The metadata is validated in the _init_subclass hook
 7. The ProductRegistry holds all of that.
 """
@@ -123,15 +123,6 @@ def frequency_step(freq: str) -> pd.Timedelta:
     return (stamps[-1] - stamps[0]) / (len(stamps) - 1)
 
 
-def sample_dates(start, end, freq: str, calendar: str = "standard"):
-    """The days to fetch from [start, end] at freq, in calendar (cftime dates
-    for any but "standard"). A window too short to hold one (e.g. an initial
-    condition's single day) falls back to its first day."""
-    start, end = (pd.Timestamp(date).strftime("%Y-%m-%d") for date in (start, end))
-    dates = xr.date_range(start, end, freq=freq, calendar=calendar)
-    return dates if len(dates) else xr.date_range(start, periods=1, calendar=calendar)
-
-
 def resolve_time_sampling(
     product, method_name: str, data_freq: str | None = None, freq: str | None = None
 ):
@@ -181,25 +172,10 @@ def resolve_time_sampling(
     return replace(native, frequency=freq)
 
 
-def takes_when(method) -> bool:
-    """Whether an access method takes when, a TimeRequest, in place of dates
-    (and freq). Until every dated method does, fetch_raw_chunk passes the
-    others dates."""
-    return "when" in inspect.signature(getattr(method, "__func__", method)).parameters
-
-
 def takes_region(method) -> bool:
-    """Whether an access method takes region, a Region, in place of lat_min,
-    lat_max, lon_min and lon_max. Until every one does, fetch_raw_chunk passes
-    the others those four numbers."""
+    """Whether an access method takes region, a Region, which @accessmethod
+    pads by its buf."""
     return "region" in inspect.signature(getattr(method, "__func__", method)).parameters
-
-
-# The loose arguments that when and region stand in for.
-_STANDS_IN_FOR = {
-    "when": ["dates"],
-    "region": ["lat_min", "lat_max", "lon_min", "lon_max"],
-}
 
 
 def _pad_region(method, default):
@@ -232,13 +208,12 @@ def accessmethod(
     data_freq=False,
     buf=None,
 ):
-    """subsample: the method can fetch every freq instead of every record: it
-    takes freq=None, or when, a TimeRequest thinned to those dates. data_freq:
-    it reads data from a path the user gives it,
-    and takes data_freq=None naming that data's cadence. See
-    resolve_time_sampling. buf: for a method that takes region, the buffer
-    in degrees added once, here, to every side of it; a caller may pass
-    another as buf=."""
+    """subsample: the method can fetch fewer records than its data has: it
+    reads only the dates of a thinned when (TimeRequest.every). data_freq: it
+    reads data from a path the user gives it, and takes data_freq=None naming
+    that data's cadence. See resolve_time_sampling. buf: for a method that
+    takes region, the buffer in degrees added once, here, to every side of
+    it; a caller may pass another as buf=."""
 
     def decorator(f):
         if takes_region(f):
@@ -299,12 +274,8 @@ class BaseProduct:
             func = entry.__func__
             sig = inspect.signature(func)
 
-            # All required args must be present; when and region stand in for
-            # the loose ones.
+            # All required args must be present
             missing = [arg for arg in cls.required_args if arg not in sig.parameters]
-            for arg, loose in _STANDS_IN_FOR.items():
-                if arg in sig.parameters:
-                    missing = [m for m in missing if m not in loose]
             if missing:
                 raise ValueError(
                     f"Access method '{name}' in {cls.product_name} missing args {missing}"
@@ -320,16 +291,15 @@ class BaseProduct:
             raise KeyError(f"{method_name} not found for product {cls.product_name}")
 
         missing = [arg for arg in cls.required_args if arg not in kwargs]
-        for arg, loose in _STANDS_IN_FOR.items():
-            if arg in kwargs:
-                missing = [m for m in missing if m not in loose]
         if missing:
             raise ValueError(f"{cls.product_name}.{method_name} missing args {missing}")
 
-    # Default validation — can be overridden
     @classmethod
     def validate_method(cls, method_name, **kwargs):
-        """Default validation just makes a toy call with a temporary directory.
+        """Make a toy call into a temporary directory. A method that takes them
+        gets a small region and the first two days of the product's coverage
+        (2000-01-01 when its start is unknown), and data_freq="D" when the
+        user names the product's cadence. kwargs replace any of these.
 
         Returns True if the call succeeds, False if it raises. The call's own
         result is not passed on: whatever it wrote went to the temporary
@@ -337,18 +307,26 @@ class BaseProduct:
         """
         if method_name not in cls._access_methods:
             raise ValueError(f"{method_name} not in {cls.__name__}")
-        temp_dir = tempfile.mkdtemp()
-        default_args = {
-            "output_folder": temp_dir,
-            "output_filename": "test_file.notreal",
-        }
-        final_args = {**default_args, **kwargs}
-
         func = cls._access_methods[method_name].__func__
-
-        # Default “toy call” signature:
+        params = inspect.signature(func).parameters
+        temp_dir = tempfile.mkdtemp()
         try:
-            func(**final_args)
+            toy = {"output_folder": temp_dir, "output_filename": "test_file.notreal"}
+            if "region" in params:
+                toy["region"] = Region(30, 30.1, 30, 30.1)
+            if "when" in params:
+                # Coverage reads the call's own arguments, e.g. its dataset_path.
+                defaults = {
+                    name: param.default
+                    for name, param in params.items()
+                    if param.default is not inspect.Parameter.empty
+                }
+                first, _ = cls.coverage(method_name, **{**defaults, **kwargs})
+                first = pd.Timestamp("2000-01-01") if first is None else first
+                toy["when"] = TimeRequest(first, first + pd.Timedelta(days=1))
+            if getattr(cls, "time_sampling", None) == USER_SPECIFIED:
+                toy["data_freq"] = "D"
+            func(**{**toy, **kwargs})
         except Exception as e:
             cls.logger.error(
                 f"Validation failed for {cls.product_name}.{method_name}: {e}"
@@ -398,13 +376,10 @@ class DatedBaseProduct(BaseProduct):
 
     Every dated product declares its ``time_sampling``: a TimeSampling,
     USER_SPECIFIED when the cadence depends on the source the user points it
-    at, or None for a static snapshot that ignores ``dates``.
+    at, or None for a static snapshot, whose methods take no ``when``.
     """
 
     required_metadata = BaseProduct.required_metadata + ["time_sampling"]
-    required_args = BaseProduct.required_args + [
-        "dates",
-    ]
 
     def __init_subclass__(cls, **kwargs):
         # Checked before BaseProduct registers the class, so a bad declaration
@@ -423,46 +398,24 @@ class DatedBaseProduct(BaseProduct):
     @classmethod
     def coverage(cls, method_name, **kwargs):
         """The first and last dates method_name holds data for when called
-        with kwargs (its arguments other than dates and the bounding box),
+        with kwargs (its arguments other than when and region),
         either None if unknown, so callers can keep padded requests inside it.
         """
         return None, None
-
-    @classmethod
-    def validate_method(cls, method_name, **kwargs):
-
-        # Add child-class defaults
-        method = cls._access_methods.get(method_name)
-        if method is not None and takes_when(method):
-            extra_defaults = {"when": TimeRequest("2000-01-01", "2000-01-02")}
-        else:
-            extra_defaults = {"dates": ["2000-01-01", "2000-01-02"]}
-        final_args = {**extra_defaults, **kwargs}
-
-        # Delegate to the base implementation
-        return super().validate_method(method_name, **final_args)
 
 
 class ForcingProduct(DatedBaseProduct):
     """Generic enforcement for any gridded, bounding-box-downloadable forcing
     product. Holds the metadata every such product needs regardless of
-    target model: a lat/lon/variables/dates download contract, sane toy-call
-    defaults for that contract's lat/lon args, and its own time-axis naming
-    (``time_var_name``/``time_units``/``calendar``) --
+    target model: a region/variables download contract and its own time-axis
+    naming (``time_var_name``/``time_units``/``calendar``) --
     every dated forcing product has *some* time coordinate to name, even one
     (like a static restart snapshot) that leaves these unused. Velocity/
     tracer grid-point metadata is NOT here -- see
     ``VelocityTracerForcingProduct``/``MOM6ForcingProduct``.
     """
 
-    required_args = DatedBaseProduct.required_args + [
-        "variables",
-        "lon_max",
-        "lat_max",
-        "lon_min",
-        "lat_min",
-        "name",
-    ]
+    required_args = DatedBaseProduct.required_args + ["variables", "region", "name"]
 
     required_metadata = DatedBaseProduct.required_metadata + [
         "time_var_name",
@@ -490,24 +443,6 @@ class ForcingProduct(DatedBaseProduct):
             f"(got {type(calendar).__name__}); use a module-level constant such "
             "as GREGORIAN or NOLEAP rather than bare calendar-name strings."
         )
-
-    @classmethod
-    def validate_method(cls, method_name, **kwargs):
-
-        # Add child-class defaults
-        method = cls._access_methods.get(method_name)
-        if method is not None and takes_region(method):
-            extra_defaults = {"region": Region(30, 30.1, 30, 30.1)}
-        else:
-            extra_defaults = {
-                "lat_min": 30,
-                "lat_max": 30.1,
-                "lon_min": 30,
-                "lon_max": 30.1,
-            }
-
-        # Delegate to the base implementation
-        return super().validate_method(method_name, **{**extra_defaults, **kwargs})
 
 
 class VelocityTracerForcingProduct(ForcingProduct):

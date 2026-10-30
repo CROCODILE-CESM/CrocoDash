@@ -3,23 +3,7 @@
 import os
 import stat
 
-from CrocoDash.raw_data_access.datasets.utils import (
-    convert_lons_to_180_range,
-    write_bash_curl_script,
-)
-
-
-def test_convert_lons_to_180_range_basic():
-    """Longitudes > 180 should wrap into [-180, 180)."""
-    out = convert_lons_to_180_range(190, 0, -10, 360)
-    assert out == [-170, 0, -10, 0]
-
-
-def test_convert_lons_to_180_range_returns_list():
-    """The function always returns a list, even for a single argument."""
-    out = convert_lons_to_180_range(45)
-    assert isinstance(out, list)
-    assert out == [45]
+from CrocoDash.raw_data_access.datasets.utils import write_bash_curl_script
 
 
 def test_write_bash_curl_script_creates_executable_script(tmp_path):

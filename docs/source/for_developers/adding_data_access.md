@@ -19,8 +19,8 @@ Pick the most specific base that fits — each level adds required metadata:
 
 ```
 BaseProduct                    product_name, description, link
- └─ DatedBaseProduct           + a `dates` download arg, time_sampling
-     └─ ForcingProduct         + lat/lon/variables bbox contract,
+ └─ DatedBaseProduct           + time_sampling
+     └─ ForcingProduct         + region/variables download contract,
                                  time_var_name, time_units, calendar
          └─ VelocityTracerForcingProduct
                                + u/v/tracer coordinate and variable names
@@ -69,19 +69,13 @@ You can create an access function for your data by defining a function in your c
 class ForcingProduct(DatedBaseProduct):
     """Specific enforcement needs for Forcing Products"""
 
-    required_args = DatedBaseProduct.required_args + [
-        "variables",
-        "lon_max",
-        "lat_max",
-        "lon_min",
-        "lat_min",
-        "name",
-    ]
+    required_args = DatedBaseProduct.required_args + ["variables", "region", "name"]
 ```
 
 `required_args` accumulates down the chain, so a `ForcingProduct` access
 function must accept `output_folder` and `output_filename` (from `BaseProduct`)
-and `dates` (from `DatedBaseProduct`) as well as the five above.
+as well as the three above. A dated method also takes `when` (see Step 4); a
+static snapshot takes none.
 
 ### Step 3: Register the Dataset
 
@@ -92,9 +86,9 @@ You register the dataset by adding the accessmethod wrapper to your access funct
     description="Gathers your data from what",
     type="python",  # "python" or "script"
     how_to_use="Any setup notes shown to the user, e.g. credentials needed",
+    buf=1.0,  # degrees added to every side of region
 )
-def get_my_data(output_folder, output_filename, dates, variables,
-                lat_min, lat_max, lon_min, lon_max, name):
+def get_my_data(region, when, output_folder, output_filename, variables, name=None):
     ...
 ```
 
@@ -102,12 +96,13 @@ def get_my_data(output_folder, output_filename, dates, variables,
 takes neither `self` nor `cls`. Its `description` and `type` are what appear in
 the generated [Datasets](../for_users/datasets.md) table.
 
-A method may take `region`, a `Region`, in place of `lat_min`, `lat_max`,
-`lon_min` and `lon_max`. Give `@accessmethod` its buffer in degrees as `buf=`:
-the method gets `region.padded(buf)`, so it adds none of its own, and users can
-change `buf` through `function_overrides`. Cut files with `region.select(ds)`;
-a remote API that can't take a range across its own seam takes
-`region.lon_ranges()`.
+`region` is a `Region`, the lat/lon box to fetch. A box across 180E ends past
+180, e.g. 170..190. Give `@accessmethod` its buffer in degrees as `buf=`: the
+method gets `region.padded(buf)`, so it adds none of its own, and users can
+change `buf` through `function_overrides`. Cut files with `region.select(ds)`.
+A remote API that can't take a range across its own seam takes
+`region.lon_ranges()`, one request per range (see ERA5); one that takes
+longitudes past 180 takes the box as it is (see GLORYS's CDS method).
 
 ## Step 4: Set required metadata.
 
@@ -163,7 +158,8 @@ Every dated product declares a **`time_sampling`**: a `TimeSampling` saying how
 often its records come and whether each is a mean over its interval or an
 instantaneous value. Use `USER_SPECIFIED` when the cadence depends on the
 source the user points the product at (CESM-MOM output), so the user must pass
-it as `data_freq`, and `None` only for a static snapshot that ignores `dates`.
+it as `data_freq`, and `None` for a static snapshot, whose methods take no
+`when`.
 
 ```python
 class MyDataset(MOM6ForcingProduct):
@@ -171,15 +167,14 @@ class MyDataset(MOM6ForcingProduct):
     time_sampling = TimeSampling("D", cell_method="mean")
 ```
 
-An access method calls `resolve_time_sampling` first and says, in its
-decorator, which of two arguments it takes. Users set them as
-`configure_forcings`'s `data_freq` and `subsample_freq`, which it passes to the
-method as `data_freq` and `freq`, and rejects one the method doesn't take:
+An access method says, in its decorator, which of two settings it honours.
+Users set them as `configure_forcings`'s `data_freq` and `subsample_freq`, and
+it rejects one the method doesn't take:
 
-- `@accessmethod(subsample=True)`: it can fetch every `freq` instead of every
-  record, e.g. `freq="MS"` for one record a month. A method that takes `when`
-  gets it thinned to those dates and reads `when.days()` (see GLORYS's RDA
-  method); one that takes `freq=None` picks them with `sample_dates`.
+- `@accessmethod(subsample=True)`: it can fetch fewer records than its data
+  has, e.g. `subsample_freq="MS"` for one a month. Its `when` then carries
+  those dates: read `when.days()` (see GLORYS's RDA method), or keep the
+  records `when.select(ds)` picks (see the CESM output readers).
 - `@accessmethod(data_freq=True)`: it reads data from a path the user gives it
   and takes `data_freq=None`, the cadence of that data (the CESM output
   readers). It only describes the data: the method reads it the same way
@@ -188,9 +183,11 @@ method as `data_freq` and `freq`, and rejects one the method doesn't take:
 A method may take both. Any other method takes neither and returns its
 product's own cadence.
 
-A method may take `when`, a `TimeRequest`, in place of `dates` and `freq`.
-`when.select(ds)` keeps the records it asks for, in the data's own calendar,
-thinned when `subsample_freq` is set (see the CESM output readers).
+A dated method takes `when`, a `TimeRequest`: whole days from `when.start` to
+`when.end`, both included. `when.days()` lists the days to read, and
+`when.select(ds)` keeps the records it asks for, in the data's own calendar. An
+API that reads its end time as a cutoff needs the last second of the last day
+(see GLORYS's CDS method).
 
 The boundary data is fetched for one record spacing either side of the run. If
 your product's data starts or ends on a known date, override the classmethod
@@ -203,6 +200,10 @@ exist. `configure_forcings` refuses a run outside it. GLORYS returns its
 ## Step 5: Validation and Tests
 
 When you test your class, it will automatically get registered with the registry and run validation. It will fail on import if you miss metadata or required args in your registered access function, or if `calendar` is missing or is not a `Calendar`, or `time_sampling` is missing or is not a `TimeSampling`, `USER_SPECIFIED` or `None`.
+
+`validate_method` makes a toy call into a temporary directory: a small `region`
+and the first two days of your product's `coverage` (from 2000-01-01 when its
+start is unknown), for a method that takes them.
 
 Create a test file in `tests/raw_data_access` to test your dataset:
 

@@ -103,7 +103,6 @@ def test_reference_ocean_is_deterministic(tmp_path):
 
 def test_reference_ice_edge_tapers_with_latitude(tmp_path):
     paths = REFERENCE_ICE.get_reference_ice_data(
-        when=WHEN,
         region=Region(60.0, 70.0, -30.0, -25.0),
         output_folder=tmp_path,
         output_filename="ice.nc",
@@ -123,7 +122,6 @@ def test_reference_ice_is_a_full_cice_restart(tmp_path):
     """CICE reads every category and thermodynamic field from ice_ic, so the
     file must carry ncat=5 and the full layered state, not just aicen/vicen."""
     paths = REFERENCE_ICE.get_reference_ice_data(
-        when=WHEN,
         region=Region(60.0, 70.0, -30.0, -25.0),
         output_folder=tmp_path,
         output_filename="ice.nc",

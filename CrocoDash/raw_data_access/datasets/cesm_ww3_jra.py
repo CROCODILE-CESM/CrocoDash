@@ -447,13 +447,6 @@ class CESM_WW3_JRA(WW3ForcingProduct):
         last_day = (last - pd.Timedelta(hours=_RESTART_HOURS[-1])).normalize()
         return (first + _SPIN_UP).normalize(), last_day
 
-    @classmethod
-    def validate_method(cls, method_name, **kwargs):
-        # The generic toy dates (2000) predate the database.
-        return super().validate_method(
-            method_name, **{"when": TimeRequest("2019-01-01", "2019-01-01"), **kwargs}
-        )
-
     @accessmethod(
         description=(
             "Reads 2D wave spectra for a boundary window out of a global "

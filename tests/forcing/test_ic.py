@@ -5,6 +5,7 @@ from pathlib import Path
 
 import CrocoDash.forcing.ic as ic_module
 from CrocoDash.grid import Grid
+from CrocoDash.raw_data_access.region import Region
 from CrocoDash.raw_data_access.time_request import TimeRequest
 
 
@@ -47,16 +48,15 @@ def test_process_initial_condition_downloads_then_regrids(
     )
 
     (call,) = calls
-    assert call["dates"] == ["2020-01-01", "2020-01-01"]
+    assert call["when"] == ic_kwargs["when"]
     assert call["dataset_path"] == "/some/path"  # extra_args splatted, not nested
     bbox = Grid.get_bounding_boxes(get_rect_grid)["ic"]
-    # Only the geographic bounds are forwarded to the access function.
-    # get_bounding_boxes also reports `crosses_antimeridian`, which is a hint
-    # for callers that slice with a naive lon_min <= lon <= lon_max; a Region
-    # runs east from lon_min past 180 and Region.select handles the seam, so
-    # fetch_raw_chunk has no use for the flag.
-    geo = {k: bbox[k] for k in ("lat_min", "lat_max", "lon_min", "lon_max")}
-    assert {k: call[k] for k in geo} == pytest.approx(geo)
+    # The whole-domain box as a Region. get_bounding_boxes's
+    # crosses_antimeridian isn't passed on: a box across 180E already ends
+    # past 180.
+    assert call["region"] == Region(
+        bbox["lat_min"], bbox["lat_max"], bbox["lon_min"], bbox["lon_max"]
+    )
     # netCDF4 reports a missing parent dir as a bare EACCES, so the engine has
     # to have made both dirs before writing into them.
     assert (

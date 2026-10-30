@@ -292,7 +292,7 @@ class REFERENCE_ICE(CICEForcingProduct):
     time_var_name = None
     time_units = None
     calendar = GREGORIAN
-    time_sampling = None  # static snapshot; dates are ignored
+    time_sampling = None  # static snapshot; its method takes no when
     u_x_coord = "ni"
     u_y_coord = "nj"
     v_x_coord = "ni"
@@ -306,7 +306,7 @@ class REFERENCE_ICE(CICEForcingProduct):
 
     @accessmethod(
         description=(
-            "Generates a synthetic CICE restart over the requested bbox/dates: "
+            "Generates a synthetic CICE restart over the requested bbox: "
             "its own regular tlon/tlat/ulon/ulat mesh (no real CICE grid file "
             "needed), total ice concentration tapering linearly from the "
             "bbox's poleward edge to zero at its equatorward edge, split over "
@@ -314,12 +314,11 @@ class REFERENCE_ICE(CICEForcingProduct):
             "and thermodynamic state, and a small drift velocity."
         ),
         type="python",
-        # None of its own: forcing/cice.py adds CICE's 1 degree margin.
-        buf=0,
+        # The 1 degree margin forcing/cice.py used to add.
+        buf=1.0,
     )
     def get_reference_ice_data(
         region: Region,
-        when: TimeRequest,
         name=None,
         output_folder=Path(""),
         output_filename="reference_ice.nc",
@@ -328,7 +327,6 @@ class REFERENCE_ICE(CICEForcingProduct):
     ):
         # Coarse by default to keep the downstream ESMF regrid cheap -- pass a
         # smaller resolution_deg for a finer (more expensive) source grid.
-        # when is unused: the restart is one static snapshot.
         lon = np.arange(region.lon_min, region.lon_max + resolution_deg, resolution_deg)
         lat = np.arange(region.lat_min, region.lat_max + resolution_deg, resolution_deg)
         tlon, tlat = np.meshgrid(lon, lat)

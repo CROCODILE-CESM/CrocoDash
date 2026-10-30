@@ -63,14 +63,14 @@ class ProductRegistry:
     @classmethod
     def get_function_default_args(cls, product_name, function_name):
         """Return a dict of {param: default} for all non-required parameters of an
-        access method, except freq and data_freq: users give them as
-        configure_forcings's subsample_freq and data_freq, which are checked
-        against the method (see resolve_time_sampling). A method that takes
-        region also takes buf, the buffer @accessmethod adds to it."""
+        access method, except data_freq: users give it as configure_forcings's
+        data_freq, which is checked against the method (see
+        resolve_time_sampling). A method that takes region also takes buf, the
+        buffer @accessmethod adds to it."""
         product = cls.get_product(product_name)
         method = product._access_methods[function_name]
         sig = inspect.signature(method.__func__)
-        excluded = set(product.required_args) | {"freq", "data_freq"}
+        excluded = set(product.required_args) | {"data_freq"}
         defaults = {
             name: param.default
             for name, param in sig.parameters.items()

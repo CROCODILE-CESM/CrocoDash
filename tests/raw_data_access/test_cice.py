@@ -52,7 +52,6 @@ def test_cice_window_on_degree_grid(tmp_path):
 
     def subset(region):
         return cice_output.CICE_RESTART.get_cice_restart_subset(
-            dates=["2000-01-01", "2000-01-01"],
             region=region,
             buf=0,
             restart_path=tmp_path / "restart.nc",
@@ -85,7 +84,6 @@ def test_cice_window_on_degree_grid(tmp_path):
 def test_get_cice_restart_subset(skip_if_not_glade, tmp_path):
     _skip_if_reference_files_missing()
     paths = cice_output.CICE_RESTART.get_cice_restart_subset(
-        dates=["2000-01-01", "2000-01-04"],
         region=Region(18, 31, -98, -80),
         output_folder=tmp_path,
         output_filename="cice_restart_subset.nc",
@@ -116,7 +114,6 @@ def test_get_cice_restart_subset(skip_if_not_glade, tmp_path):
 def test_get_cice_restart_subset_variable_filter(skip_if_not_glade, tmp_path):
     _skip_if_reference_files_missing()
     paths = cice_output.CICE_RESTART.get_cice_restart_subset(
-        dates=["2000-01-01", "2000-01-02"],
         region=Region(18, 31, -98, -80),
         output_folder=tmp_path,
         output_filename="cice_restart_subset.nc",
@@ -134,7 +131,6 @@ def test_get_cice_restart_subset_variable_filter(skip_if_not_glade, tmp_path):
 def test_get_cice_restart_subset_missing_path_raises(tmp_path):
     with pytest.raises(FileNotFoundError):
         cice_output.CICE_RESTART.get_cice_restart_subset(
-            dates=["2000-01-01", "2000-01-02"],
             region=Region(18, 31, -98, -80),
             output_folder=tmp_path,
             restart_path=str(tmp_path / "does_not_exist.nc"),

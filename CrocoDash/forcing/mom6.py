@@ -32,7 +32,6 @@ from CrocoDash.raw_data_access.base import (
     Calendar,
     MOM6ForcingProduct,
     resolve_time_sampling,
-    takes_when,
 )
 from CrocoDash.raw_data_access.time_request import TimeRequest
 
@@ -606,10 +605,9 @@ class ConditionsConfigurator(BaseConfigurator):
             product, function_name, kwargs["data_freq"], kwargs["subsample_freq"]
         )
 
-    # Each cadence input, the @accessmethod flag of the methods that take it
-    # (see resolve_time_sampling), and the argument it is passed to them as.
+    # Each cadence input and the @accessmethod flag of the methods that take
+    # it (see resolve_time_sampling).
     _FREQ_INPUTS = {"data_freq": "_data_freq", "subsample_freq": "_subsample"}
-    _FREQ_ARGS = {"data_freq": "data_freq", "subsample_freq": "freq"}
 
     @staticmethod
     def _segment_index(boundaries, boundary):
@@ -892,8 +890,8 @@ class ConditionsConfigurator(BaseConfigurator):
 
     def _function_args(self):
         """The access function's arguments: the stored function_args it still
-        takes, and data_freq and subsample_freq (as freq) when set. A method
-        that takes when is thinned by it instead of freq."""
+        takes, and data_freq when set. subsample_freq thins when instead (see
+        _obc_request)."""
         product_name = self.get_input_param("product_name")
         function_name = self.get_input_param("function_name")
         accepted = ProductRegistry.get_function_default_args(
@@ -901,12 +899,8 @@ class ConditionsConfigurator(BaseConfigurator):
         )
         stored = self.get_output_param("function_args") or {}
         args = {k: v for k, v in stored.items() if k in accepted}
-        method = ProductRegistry.get_access_function(product_name, function_name)
-        for name, arg in self._FREQ_ARGS.items():
-            if arg == "freq" and takes_when(method):
-                continue
-            if self.get_input_param(name) is not None:
-                args[arg] = self.get_input_param(name)
+        if self.get_input_param("data_freq") is not None:
+            args["data_freq"] = self.get_input_param("data_freq")
         return args
 
     def _obc_request(self):

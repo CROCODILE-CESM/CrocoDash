@@ -1,11 +1,9 @@
-import dataclasses
 import os
 import re
 from pathlib import Path
 from collections import defaultdict
 from datetime import datetime, timedelta
 from CrocoDash import logging
-from CrocoDash.raw_data_access.base import takes_region, takes_when
 from CrocoDash.raw_data_access.region import Region
 from CrocoDash.raw_data_access.registry import ProductRegistry
 from CrocoDash.raw_data_access.time_request import TimeRequest
@@ -120,22 +118,6 @@ def get_data_access_function(product_name: str, function_name: str):
     return ProductRegistry.get_access_function(product_name, function_name)
 
 
-def call_access_method(data_access_fn, when: TimeRequest, region: Region, **args):
-    """Call an access method for when and region, the one way every forcing
-    step calls one. A method that takes when or region gets it; the others get
-    when's first and last days as dates (and any freq in args, as before), or
-    region's four numbers, until every dated method takes both."""
-    if takes_when(data_access_fn):
-        args["when"] = when
-    else:
-        args["dates"] = [f"{when.start:%Y-%m-%d}", f"{when.end:%Y-%m-%d}"]
-    if takes_region(data_access_fn):
-        args["region"] = region
-    else:
-        args.update(dataclasses.asdict(region))
-    return data_access_fn(**args)
-
-
 def fetch_raw_chunk(
     data_access_fn,
     when: TimeRequest,
@@ -153,7 +135,7 @@ def fetch_raw_chunk(
     across re-runs.
 
     when is the chunk's TimeRequest and region its box, unpadded: the access
-    method's @accessmethod adds its buffer. See call_access_method.
+    method's @accessmethod adds its buffer.
     """
     output_file = Path(output_folder) / output_filename
 
@@ -165,10 +147,9 @@ def fetch_raw_chunk(
         logger.info(f"{output_file.name} already exists. Skipping.")
         return output_file
 
-    call_access_method(
-        data_access_fn,
-        when,
-        region,
+    data_access_fn(
+        when=when,
+        region=region,
         output_folder=output_folder,
         output_filename=output_file.name,
         variables=variables,

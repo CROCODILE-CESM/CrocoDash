@@ -8,8 +8,11 @@ import os
 import copernicusmarine
 from pathlib import Path
 import pandas as pd
-from CrocoDash.raw_data_access.datasets.utils import make_dates_end_inclusive
 from CrocoDash.raw_data_access.base import *
+
+# Copernicus reads an end datetime as a cutoff, so a request ends on the last
+# second of when's last day, or that day is dropped.
+_TO_LAST_SECOND = pd.Timedelta(days=1, seconds=-1)
 
 
 class GLORYS(MOM6ForcingProduct):
@@ -125,7 +128,6 @@ class GLORYS(MOM6ForcingProduct):
         takes longitudes past 180 and wraps them itself, so a box across 180E
         goes as one request.
         """
-        start_datetime, end_datetime = make_dates_end_inclusive([when.start, when.end])
         dataset_id = "cmems_mod_glo_phy_my_0.083deg_P1D-m"
         response = copernicusmarine.subset(
             dataset_id=dataset_id,
@@ -133,8 +135,8 @@ class GLORYS(MOM6ForcingProduct):
             maximum_longitude=region.lon_max,
             minimum_latitude=region.lat_min,
             maximum_latitude=region.lat_max,
-            start_datetime=start_datetime,
-            end_datetime=end_datetime,
+            start_datetime=f"{when.start:%Y-%m-%d %H:%M:%S}",
+            end_datetime=f"{when.end + _TO_LAST_SECOND:%Y-%m-%d %H:%M:%S}",
             variables=variables,
             output_directory=output_folder,
             output_filename=output_filename,
@@ -164,12 +166,11 @@ class GLORYS(MOM6ForcingProduct):
         boundary. A request already in it is not added again. variables=None
         fetches every variable, as it does for the CDS method.
         """
-        start, end = make_dates_end_inclusive([when.start, when.end])
         line = (
             "copernicusmarine subset --dataset-id cmems_mod_glo_phy_my_0.083deg_P1D-m"
             + "".join(f" --variable {variable}" for variable in variables or [])
-            + f" --start-datetime {start.replace(' ', 'T')}"
-            f" --end-datetime {end.replace(' ', 'T')}"
+            + f" --start-datetime {when.start:%Y-%m-%dT%H:%M:%S}"
+            f" --end-datetime {when.end + _TO_LAST_SECOND:%Y-%m-%dT%H:%M:%S}"
             f" --minimum-longitude {region.lon_min:.4f}"
             f" --maximum-longitude {region.lon_max:.4f}"
             f" --minimum-latitude {region.lat_min:.4f}"

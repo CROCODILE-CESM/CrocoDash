@@ -1,4 +1,5 @@
 from CrocoDash.raw_data_access.datasets import glofas as gl
+from CrocoDash.raw_data_access.time_request import TimeRequest
 import os
 import pytest
 
@@ -16,7 +17,7 @@ def test_get_processed_global_glofas_script_for_cli(tmp_path):
 def test_get_global_data_with_python(tmp_path):
 
     path = gl.GLOFAS.get_global_data_with_python(
-        dates=["2020-01-01", "2020-01-03"],
+        when=TimeRequest("2020-01-01", "2020-01-03"),
         output_folder=tmp_path,
         output_filename="glofas_processed_data.nc",
     )
