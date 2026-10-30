@@ -6,12 +6,10 @@ import xarray as xr
 import glob
 import os
 import copernicusmarine
-import regional_mom6 as rm6
 from pathlib import Path
 import pandas as pd
 from CrocoDash.raw_data_access.datasets.utils import make_dates_end_inclusive
 from CrocoDash.raw_data_access.base import *
-from mom6_forge.utils import longitude_slicer
 
 
 class GLORYS(MOM6ForcingProduct):
@@ -53,13 +51,11 @@ class GLORYS(MOM6ForcingProduct):
         description="Gathers GLORYS data from RDA on computers with access to glade/rda",
         type="python",
         how_to_use="Requires read access to /glade/campaign/collections/rda/data/d010049/ and the CrocoDash conda environment.",
+        buf=1.0,
     )
     def get_glorys_data_from_rda(
-        dates: list,
-        lat_min,
-        lat_max,
-        lon_min,
-        lon_max,
+        region: Region,
+        when: TimeRequest,
         name=None,
         output_folder=Path(""),
         output_filename="raw_glorys.nc",
@@ -74,23 +70,18 @@ class GLORYS(MOM6ForcingProduct):
             "so",
             "thetao",
         ],
-        buf=1.0,
-        freq=None,
-    ) -> xr.Dataset:
+    ) -> Path:
         """
-        Gather GLORYS Data on Derecho Computers from the campaign storage and return the dataset sliced to the llc and urc coordinates at the specific dates
+        Gather GLORYS Data on Derecho Computers from the campaign storage: the
+        files for when's days (its dates, when thinned), cut to region
         """
-        freq = resolve_time_sampling(
-            GLORYS, "get_glorys_data_from_rda", freq=freq
-        ).frequency
-        dates = sample_dates(dates[0], dates[1], freq).to_pydatetime().tolist()
         path = Path(output_folder) / output_filename
         GLORYS.logger.info(f"Downloading Glorys data from RDA to {path}")
 
         # Access RDA Path
         ds_in_path = "/glade/campaign/collections/rda/data/d010049/"
         ds_in_files = []
-        date_strings = [date.strftime("%Y%m%d") for date in dates]
+        date_strings = [day.strftime("%Y%m%d") for day in when.days()]
 
         for date in date_strings:
             # Files are filed under a year subdirectory matching their own date
@@ -111,12 +102,7 @@ class GLORYS(MOM6ForcingProduct):
             parallel=True,
         )[variables]
 
-        ds = ds.sel(latitude=slice(lat_min - buf, lat_max + buf))
-        dataset = longitude_slicer(
-            ds, [lon_min - buf, lon_max + buf], longitude_coords="longitude"
-        )
-
-        dataset.to_netcdf(path)
+        region.select(ds, lon="longitude", lat="latitude").to_netcdf(path)
         GLORYS.logger.info(f"Download of {path} complete.")
         return path
 
@@ -124,29 +110,29 @@ class GLORYS(MOM6ForcingProduct):
         description="Python request with copernicusmarine api",
         type="python",
         how_to_use="Requires the CrocoDash conda environment and a Copernicus Marine account. Log in once with `copernicusmarine login` before use.",
+        buf=1.0,
     )
     def get_glorys_data_from_cds_api(
-        dates,
-        lat_min,
-        lat_max,
-        lon_min,
-        lon_max,
+        region: Region,
+        when: TimeRequest,
         name=None,
         output_folder=None,
         output_filename=None,
         variables=["zos", "uo", "vo", "so", "thetao"],
     ):
         """
-        Using the copernucismarine api, query GLORYS data (any dates)
+        Using the copernucismarine api, query GLORYS data (any dates). It
+        takes longitudes past 180 and wraps them itself, so a box across 180E
+        goes as one request.
         """
-        start_datetime, end_datetime = make_dates_end_inclusive(dates)
+        start_datetime, end_datetime = make_dates_end_inclusive([when.start, when.end])
         dataset_id = "cmems_mod_glo_phy_my_0.083deg_P1D-m"
         response = copernicusmarine.subset(
             dataset_id=dataset_id,
-            minimum_longitude=lon_min - 1,
-            maximum_longitude=lon_max + 1,
-            minimum_latitude=lat_min - 1,
-            maximum_latitude=lat_max + 1,
+            minimum_longitude=region.lon_min,
+            maximum_longitude=region.lon_max,
+            minimum_latitude=region.lat_min,
+            maximum_latitude=region.lat_max,
             start_datetime=start_datetime,
             end_datetime=end_datetime,
             variables=variables,
@@ -159,33 +145,44 @@ class GLORYS(MOM6ForcingProduct):
         description="Generates bash script for direct CLI run with the copernicusmarine package",
         type="script",
         how_to_use="The generated get_glorys_data.sh requires the CrocoDash conda environment to run (`conda activate CrocoDash`). A Copernicus Marine account is needed — log in once with `copernicusmarine login` before running the script.",
+        # Just under three GLORYS cells (3 x 1/12), as regional_mom6's script
+        # used.
+        buf=0.24,
     )
     def get_glorys_data_script_for_cli(
-        dates: tuple,
-        lat_min,
-        lat_max,
-        lon_min,
-        lon_max,
+        region: Region,
+        when: TimeRequest,
         output_folder,
         output_filename,
-        variables=None,
+        variables=["zos", "uo", "vo", "so", "thetao"],
         name=None,
         **kwargs,
-    ) -> None:
+    ) -> Path:
         """
-        Script to run the GLORYS data query for the CLI
+        Add this request's copernicusmarine subset line to get_glorys_data.sh
+        in output_folder, so one script fetches every chunk of every
+        boundary. A request already in it is not added again. variables=None
+        fetches every variable, as it does for the CDS method.
         """
-        modify_existing = False
-        if os.path.exists(output_folder / Path("get_glorys_data.sh")):
-            modify_existing = True
-        path = rm6.get_glorys_data(
-            [lon_min, lon_max],
-            [lat_min, lat_max],
-            list(make_dates_end_inclusive(dates)),
-            os.path.splitext(output_filename)[0],
-            output_folder,
-            modify_existing=modify_existing,
+        start, end = make_dates_end_inclusive([when.start, when.end])
+        line = (
+            "copernicusmarine subset --dataset-id cmems_mod_glo_phy_my_0.083deg_P1D-m"
+            + "".join(f" --variable {variable}" for variable in variables or [])
+            + f" --start-datetime {start.replace(' ', 'T')}"
+            f" --end-datetime {end.replace(' ', 'T')}"
+            f" --minimum-longitude {region.lon_min:.4f}"
+            f" --maximum-longitude {region.lon_max:.4f}"
+            f" --minimum-latitude {region.lat_min:.4f}"
+            f" --maximum-latitude {region.lat_max:.4f}"
+            " --minimum-depth 0 --maximum-depth 6000"
+            f" -o {output_folder} -f {output_filename}"
         )
+        path = Path(output_folder) / "get_glorys_data.sh"
+        if not path.exists():
+            path.write_text("#!/bin/bash\n")
+        if line not in path.read_text().splitlines():
+            with open(path, "a") as f:
+                f.write(line + "\n")
         GLORYS.logger.info(
             f"This data access method returns a script at path {path} to run to get access data "
         )

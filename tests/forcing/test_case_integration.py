@@ -41,8 +41,8 @@ def test_case_integration_config(CrocoDash_case_factory, tmp_path):
     assert set(config["conditions"].keys()) == {"name", "inputs", "outputs"}
     assert "caseroot" in config
     assert config["schema_version"] == CONFIG_SCHEMA_VERSION
-    # GLORYS's default download function has no non-required args to override
-    assert config["conditions"]["outputs"]["function_args"] == {}
+    # The CLI script's only overridable arg is buf, the buffer @accessmethod adds
+    assert config["conditions"]["outputs"]["function_args"] == {"buf": 0.24}
 
 
 def test_case_integration_config_cice_round_trip(CrocoDash_case_factory, tmp_path):

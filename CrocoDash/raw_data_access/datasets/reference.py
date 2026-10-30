@@ -5,7 +5,7 @@ Three products -- REFERENCE_OCEAN (MOM6), REFERENCE_ICE (CICE),
 REFERENCE_WAVES (WW3) -- that
 generate plausible-looking forcing data purely in memory via numpy, with no
 network access, credentials, or campaign-storage dependency. Each access
-method is a pure function of its own (dates, lat/lon bbox) arguments: same
+method is a pure function of its own (when, region) arguments: same
 inputs always produce the same output, so these are safe to use in tests
 (real assertions, not just "did it not crash") and in demo notebooks that
 should look identical on every run.
@@ -108,32 +108,25 @@ class REFERENCE_OCEAN(MOM6ForcingProduct):
             "height, and small sinusoidal currents. One value per day."
         ),
         type="python",
+        # A MOM6 boundary's box is a degenerate line (lon_min == lon_max for
+        # an east/west boundary, or lat_min == lat_max for north/south) --
+        # pad by 1 degree on every side (as GLORYS's RDA method does) so
+        # there's always a real 2D grid to regrid from.
+        buf=1.0,
     )
     def get_reference_ocean_data(
-        dates: list,
-        lat_min,
-        lat_max,
-        lon_min,
-        lon_max,
+        region: Region,
+        when: TimeRequest,
         name=None,
         output_folder=Path(""),
         output_filename="reference_ocean.nc",
         variables=None,
         resolution_deg=0.5,
-        freq=None,
     ):
         # Coarse by default to keep the downstream ESMF regrid cheap -- pass a
         # smaller resolution_deg for a finer (more expensive) source grid.
-        #
-        # A MOM6 boundary's bbox is a degenerate line (lon_min == lon_max for
-        # an east/west boundary, or lat_min == lat_max for north/south) --
-        # pad by 1 degree on every side (same convention GLORYS's own access
-        # methods use) so there's always a real 2D grid to regrid from.
-        freq = resolve_time_sampling(
-            REFERENCE_OCEAN, "get_reference_ocean_data", freq=freq
-        ).frequency
-        lon = np.arange(lon_min - 1.0, lon_max + 1.0 + resolution_deg, resolution_deg)
-        lat = np.arange(lat_min - 1.0, lat_max + 1.0 + resolution_deg, resolution_deg)
+        lon = np.arange(region.lon_min, region.lon_max + resolution_deg, resolution_deg)
+        lat = np.arange(region.lat_min, region.lat_max + resolution_deg, resolution_deg)
         # Layer centers, like GLORYS's depth axis: regional_mom6 rebuilds layer
         # thicknesses from the centers, so the axis must not start at the surface.
         # These are the midpoints of the interfaces below.
@@ -141,7 +134,8 @@ class REFERENCE_OCEAN(MOM6ForcingProduct):
             [0, 10, 25, 50, 100, 200, 500, 1000, 2000, 4000, 6000], dtype=float
         )
         depth = 0.5 * (interfaces[:-1] + interfaces[1:])
-        time = sample_dates(dates[0], dates[-1], freq)
+        # One record a day, or one per date when thinned.
+        time = when.days()
         shape_4d = (len(time), len(depth), len(lat), len(lon))
 
         # Warm at the equator, decaying exponentially from the surface to an
@@ -320,13 +314,12 @@ class REFERENCE_ICE(CICEForcingProduct):
             "and thermodynamic state, and a small drift velocity."
         ),
         type="python",
+        # None of its own: forcing/cice.py adds CICE's 1 degree margin.
+        buf=0,
     )
     def get_reference_ice_data(
-        dates: list,
-        lat_min,
-        lat_max,
-        lon_min,
-        lon_max,
+        region: Region,
+        when: TimeRequest,
         name=None,
         output_folder=Path(""),
         output_filename="reference_ice.nc",
@@ -335,8 +328,9 @@ class REFERENCE_ICE(CICEForcingProduct):
     ):
         # Coarse by default to keep the downstream ESMF regrid cheap -- pass a
         # smaller resolution_deg for a finer (more expensive) source grid.
-        lon = np.arange(lon_min, lon_max + resolution_deg, resolution_deg)
-        lat = np.arange(lat_min, lat_max + resolution_deg, resolution_deg)
+        # when is unused: the restart is one static snapshot.
+        lon = np.arange(region.lon_min, region.lon_max + resolution_deg, resolution_deg)
+        lat = np.arange(region.lat_min, region.lat_max + resolution_deg, resolution_deg)
         tlon, tlat = np.meshgrid(lon, lat)
 
         # Total concentration: 0 at the bbox's equatorward edge (min |lat|), 1
@@ -419,13 +413,11 @@ class REFERENCE_WAVES(WW3ForcingProduct):
             "frequency, direction) shape the real decoded ERA5 product uses."
         ),
         type="python",
+        buf=0,
     )
     def get_reference_wave_spectra(
-        dates: list,
-        lat_min,
-        lat_max,
-        lon_min,
-        lon_max,
+        region: Region,
+        when: TimeRequest,
         name=None,
         output_folder=Path(""),
         output_filename="reference_waves.nc",
@@ -433,18 +425,17 @@ class REFERENCE_WAVES(WW3ForcingProduct):
     ):
         # Spread the stations along the long axis of the boundary window.
         n_stations = 3
-        if (lon_max - lon_min) >= (lat_max - lat_min):
-            lons = np.linspace(lon_min, lon_max, n_stations)
-            lats = np.array([(lat_min + lat_max) / 2])
+        if (region.lon_max - region.lon_min) >= (region.lat_max - region.lat_min):
+            lons = np.linspace(region.lon_min, region.lon_max, n_stations)
+            lats = np.array([(region.lat_min + region.lat_max) / 2])
         else:
-            lons = np.array([(lon_min + lon_max) / 2])
-            lats = np.linspace(lat_min, lat_max, n_stations)
+            lons = np.array([(region.lon_min + region.lon_max) / 2])
+            lats = np.linspace(region.lat_min, region.lat_max, n_stations)
         # Whole-day inclusive on both ends: date_range(..., freq="6h") alone
         # would stop at the last day's 00:00 and drop its 06/12/18:00 steps,
         # so build every 6-hour step of every whole day in the range instead
         # (same "every hour of every requested day" convention era5.py uses).
-        days = pd.date_range(dates[0], dates[-1], freq="D")
-        time = pd.date_range(days[0], days[-1] + pd.Timedelta(hours=18), freq="6h")
+        time = pd.date_range(when.start, when.end + pd.Timedelta(hours=18), freq="6h")
         freq = np.linspace(0.03, 0.25, 12)
         direction = np.linspace(0.0, 360.0, 16, endpoint=False)
 

@@ -18,7 +18,6 @@ Imported as `import regional_mom6 as rmom6` / `rm6`.
 | `Segment._regridders` | `forcing/mom6.py` | Cached regridder weights, read back out and fed to the next chunk via `regrid_velocity_tracers(regridders=...)` |
 | `rm6.regridding.fill_missing_data` | `forcing/mom6.py` | Passed as the fill method when regridding boundary forcing datasets |
 | `regional_mom6.chl.interpolate_and_fill_seawifs(...)` | `forcing/chl.py` | Interpolates and fills SeaWiFS chlorophyll data onto the ocean grid |
-| `rm6.get_glorys_data(...)` | `raw_data_access/datasets/glorys.py` | Downloads GLORYS ocean reanalysis data for use as initial/boundary conditions |
 
 ---
 
@@ -43,7 +42,7 @@ Imported as `from mom6_forge import ...` / `import mom6_forge as m6b`.
 | `mapping.get_smoothed_map_filepath(...)` | `forcing/runoff.py` | Generates smoothed runoff-to-ocean mapping file names |
 | `mapping.gen_rof_maps(...)` | `forcing/runoff.py` | Generates the smoothed runoff-to-ocean mapping files |
 | `utils.fill_missing_data(...)` | `forcing/mom6.py` | Fills missing values in ocean state fields during regridding |
-| `utils.longitude_slicer(...)` | `raw_data_access/datasets/glorys.py` | Slices a global dataset across the antimeridian for the requested bounding box |
+| `utils.longitude_slicer(...)` | `raw_data_access/datasets/cice_output.py` | Slices a global dataset across the antimeridian for the requested bounding box |
 
 ---
 

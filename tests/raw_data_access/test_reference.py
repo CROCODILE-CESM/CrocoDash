@@ -1,15 +1,17 @@
 import numpy as np
 import pytest
 import xarray as xr
+from CrocoDash.raw_data_access.region import Region
 from CrocoDash.raw_data_access.registry import ProductRegistry
+from CrocoDash.raw_data_access.time_request import TimeRequest
 from CrocoDash.raw_data_access.datasets.reference import (
     REFERENCE_OCEAN,
     REFERENCE_ICE,
     REFERENCE_WAVES,
 )
 
-BBOX = dict(lat_min=10.0, lat_max=15.0, lon_min=-30.0, lon_max=-25.0)
-DATES = ["2020-01-01", "2020-01-02"]
+REGION = Region(10.0, 15.0, -30.0, -25.0)
+WHEN = TimeRequest("2020-01-01", "2020-01-02")
 
 
 def test_reference_products_registered():
@@ -47,7 +49,7 @@ def test_validate_method_toy_call_succeeds(cls, method_name):
 
 def test_reference_ocean_shape_and_thermocline(tmp_path):
     path = REFERENCE_OCEAN.get_reference_ocean_data(
-        dates=DATES, output_folder=tmp_path, output_filename="ocean.nc", **BBOX
+        when=WHEN, region=REGION, output_folder=tmp_path, output_filename="ocean.nc"
     )
     ds = xr.open_dataset(path)
     assert ds.sizes["time"] == 2
@@ -65,7 +67,7 @@ def test_reference_ocean_depth_is_layer_centers(tmp_path):
     from regional_mom6.regridding import generate_dz_from_centers
 
     path = REFERENCE_OCEAN.get_reference_ocean_data(
-        dates=DATES, output_folder=tmp_path, output_filename="ocean.nc", **BBOX
+        when=WHEN, region=REGION, output_folder=tmp_path, output_filename="ocean.nc"
     )
     ds = xr.open_dataset(path)
     assert ds["depth"].values[0] > 0
@@ -78,11 +80,11 @@ def test_reference_ocean_depth_is_layer_centers(tmp_path):
 
 def test_reference_ocean_variables_filter(tmp_path):
     path = REFERENCE_OCEAN.get_reference_ocean_data(
-        dates=DATES,
+        when=WHEN,
+        region=REGION,
         output_folder=tmp_path,
         output_filename="ocean.nc",
         variables=["temp", "salt"],
-        **BBOX,
     )
     ds = xr.open_dataset(path)
     assert set(ds.data_vars) == {"temp", "salt"}
@@ -90,10 +92,10 @@ def test_reference_ocean_variables_filter(tmp_path):
 
 def test_reference_ocean_is_deterministic(tmp_path):
     path_a = REFERENCE_OCEAN.get_reference_ocean_data(
-        dates=DATES, output_folder=tmp_path, output_filename="a.nc", **BBOX
+        when=WHEN, region=REGION, output_folder=tmp_path, output_filename="a.nc"
     )
     path_b = REFERENCE_OCEAN.get_reference_ocean_data(
-        dates=DATES, output_folder=tmp_path, output_filename="b.nc", **BBOX
+        when=WHEN, region=REGION, output_folder=tmp_path, output_filename="b.nc"
     )
     ds_a, ds_b = xr.open_dataset(path_a), xr.open_dataset(path_b)
     xr.testing.assert_identical(ds_a, ds_b)
@@ -101,11 +103,8 @@ def test_reference_ocean_is_deterministic(tmp_path):
 
 def test_reference_ice_edge_tapers_with_latitude(tmp_path):
     paths = REFERENCE_ICE.get_reference_ice_data(
-        dates=DATES,
-        lat_min=60.0,
-        lat_max=70.0,
-        lon_min=-30.0,
-        lon_max=-25.0,
+        when=WHEN,
+        region=Region(60.0, 70.0, -30.0, -25.0),
         output_folder=tmp_path,
         output_filename="ice.nc",
     )
@@ -124,11 +123,8 @@ def test_reference_ice_is_a_full_cice_restart(tmp_path):
     """CICE reads every category and thermodynamic field from ice_ic, so the
     file must carry ncat=5 and the full layered state, not just aicen/vicen."""
     paths = REFERENCE_ICE.get_reference_ice_data(
-        dates=DATES,
-        lat_min=60.0,
-        lat_max=70.0,
-        lon_min=-30.0,
-        lon_max=-25.0,
+        when=WHEN,
+        region=Region(60.0, 70.0, -30.0, -25.0),
         output_folder=tmp_path,
         output_filename="ice.nc",
     )
@@ -146,7 +142,7 @@ def test_reference_ice_is_a_full_cice_restart(tmp_path):
 
 def test_reference_waves_shape_and_peak(tmp_path):
     path = REFERENCE_WAVES.get_reference_wave_spectra(
-        dates=DATES, output_folder=tmp_path, output_filename="waves.nc", **BBOX
+        when=WHEN, region=REGION, output_folder=tmp_path, output_filename="waves.nc"
     )
     ds = xr.open_dataset(path)
     (var_name,) = ds.data_vars
@@ -160,10 +156,9 @@ def test_reference_waves_shape_and_peak(tmp_path):
 
 def test_reference_ocean_subsamples_with_freq(tmp_path):
     path = REFERENCE_OCEAN.get_reference_ocean_data(
-        dates=["2020-01-01", "2020-12-31"],
+        when=TimeRequest.every("MS", "2020-01-01", "2020-12-31"),
+        region=REGION,
         output_folder=tmp_path,
         output_filename="ocean.nc",
-        freq="MS",
-        **BBOX,
     )
     assert xr.open_dataset(path).sizes["time"] == 12

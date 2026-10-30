@@ -176,9 +176,10 @@ decorator, which of two arguments it takes. Users set them as
 `configure_forcings`'s `data_freq` and `subsample_freq`, which it passes to the
 method as `data_freq` and `freq`, and rejects one the method doesn't take:
 
-- `@accessmethod(subsample=True)`: it takes `freq=None` and can fetch every
-  `freq` instead of every record, e.g. `freq="MS"` for one record a month. Use
-  `sample_dates` to pick the dates (see GLORYS's RDA method).
+- `@accessmethod(subsample=True)`: it can fetch every `freq` instead of every
+  record, e.g. `freq="MS"` for one record a month. A method that takes `when`
+  gets it thinned to those dates and reads `when.days()` (see GLORYS's RDA
+  method); one that takes `freq=None` picks them with `sample_dates`.
 - `@accessmethod(data_freq=True)`: it reads data from a path the user gives it
   and takes `data_freq=None`, the cadence of that data (the CESM output
   readers). It only describes the data: the method reads it the same way
