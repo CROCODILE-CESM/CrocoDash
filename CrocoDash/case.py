@@ -614,6 +614,32 @@ class Case:
         }
 
         self.fcr = ForcingConfigRegistry(self.compset_lname, inputs, self)
+        # The run dates go on the case before the configurators run: DATM and
+        # Runoff read them from its xml.
+        xmlchange(
+            "CALENDAR",
+            self.forcing_product.calendar.cesm,
+            caseroot=self.caseroot,
+            is_non_local=self.is_non_local,
+        )
+        xmlchange(
+            "RUN_STARTDATE",
+            str(self.date_range[0])[:10],
+            caseroot=self.caseroot,
+            is_non_local=self.is_non_local,
+        )
+        xmlchange(
+            "STOP_OPTION",
+            "ndays",
+            caseroot=self.caseroot,
+            is_non_local=self.is_non_local,
+        )
+        xmlchange(
+            "STOP_N",
+            (self.date_range[1] - self.date_range[0]).days,
+            caseroot=self.caseroot,
+            is_non_local=self.is_non_local,
+        )
         # Every input is validated by now, so replace the previous call's
         # user_nl entries. If anything from here on fails, the user_nl files
         # are put back, and config.json -- the record stale_outputs() compares
@@ -647,30 +673,6 @@ class Case:
                 + ", ".join(str(path.relative_to(self.inputdir)) for path in stale)
             )
 
-        xmlchange(
-            "CALENDAR",
-            self.forcing_product.calendar.cesm,
-            caseroot=self.caseroot,
-            is_non_local=self.is_non_local,
-        )
-        xmlchange(
-            "RUN_STARTDATE",
-            str(self.date_range[0])[:10],
-            caseroot=self.caseroot,
-            is_non_local=self.is_non_local,
-        )
-        xmlchange(
-            "STOP_OPTION",
-            "ndays",
-            caseroot=self.caseroot,
-            is_non_local=self.is_non_local,
-        )
-        xmlchange(
-            "STOP_N",
-            (self.date_range[1] - self.date_range[0]).days,
-            caseroot=self.caseroot,
-            is_non_local=self.is_non_local,
-        )
         if self._configure_forcings_called:
             print(
                 "configure_forcings() replaced this case's previous forcing configuration."
