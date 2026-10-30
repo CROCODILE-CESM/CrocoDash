@@ -12,7 +12,7 @@ class GLOFAS(DatedBaseProduct):
     time_sampling = TimeSampling("D", "mean")
 
     @accessmethod(
-        freq_handling="subsample",
+        subsample=True,
         description="Gets glofas raw data through the cdsapi package",
         type="python",
         how_to_use="Requires a CDS API key — register at https://cds.climate.copernicus.eu and configure ~/.cdsapirc before use.",
@@ -37,7 +37,7 @@ class GLOFAS(DatedBaseProduct):
 
         """
         freq = resolve_time_sampling(
-            GLOFAS, "get_global_data_with_python", freq
+            GLOFAS, "get_global_data_with_python", freq=freq
         ).frequency
         dataset = "cems-glofas-historical"
         start, end = pd.to_datetime(dates[0]), pd.to_datetime(dates[1])

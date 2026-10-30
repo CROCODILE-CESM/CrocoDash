@@ -100,7 +100,7 @@ class REFERENCE_OCEAN(MOM6ForcingProduct):
     }
 
     @accessmethod(
-        freq_handling="subsample",
+        subsample=True,
         description=(
             "Generates a synthetic ocean dataset over the requested bbox/dates: "
             "temperature warm at the equator and decaying exponentially with "
@@ -130,7 +130,7 @@ class REFERENCE_OCEAN(MOM6ForcingProduct):
         # pad by 1 degree on every side (same convention GLORYS's own access
         # methods use) so there's always a real 2D grid to regrid from.
         freq = resolve_time_sampling(
-            REFERENCE_OCEAN, "get_reference_ocean_data", freq
+            REFERENCE_OCEAN, "get_reference_ocean_data", freq=freq
         ).frequency
         lon = np.arange(lon_min - 1.0, lon_max + 1.0 + resolution_deg, resolution_deg)
         lat = np.arange(lat_min - 1.0, lat_max + 1.0 + resolution_deg, resolution_deg)

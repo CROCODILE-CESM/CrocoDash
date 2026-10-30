@@ -25,6 +25,7 @@ from dataclasses import dataclass, replace
 import inspect
 import json
 import pandas as pd
+import xarray as xr
 from CrocoDash.logging import setup_logger
 import tempfile
 import shutil
@@ -102,67 +103,78 @@ class TimeSampling:
 
 
 # Declared by a product whose cadence depends on the source the user points it
-# at (e.g. a dataset_path of model output), so the user must give it as freq.
+# at (e.g. a dataset_path of model output), so the user must give it as data_freq.
 USER_SPECIFIED = "user_specified"
 
 
 def frequency_step(freq: str) -> pd.Timedelta:
     """Mean spacing of a pandas frequency alias, to order frequencies by
     coarseness ("MS" has no fixed length, so it can't come from the offset)."""
-    stamps = pd.date_range("2001-01-01", periods=13, freq=freq)
+    try:
+        stamps = pd.date_range("2001-01-01", periods=13, freq=freq)
+    except ValueError:
+        raise ValueError(
+            f"{freq!r} isn't a pandas frequency alias, e.g. 'D', 'MS' or '6h'."
+        ) from None
     return (stamps[-1] - stamps[0]) / (len(stamps) - 1)
 
 
-def sample_dates(start, end, freq: str) -> pd.DatetimeIndex:
-    """The days to fetch from [start, end] at freq. A window too short to hold
-    one (e.g. an initial condition's single day) falls back to its first day."""
-    start, end = pd.Timestamp(start).normalize(), pd.Timestamp(end).normalize()
-    dates = pd.date_range(start, end, freq=freq)
-    return dates if len(dates) else pd.DatetimeIndex([start])
+def sample_dates(start, end, freq: str, calendar: str = "standard"):
+    """The days to fetch from [start, end] at freq, in calendar (cftime dates
+    for any but "standard"). A window too short to hold one (e.g. an initial
+    condition's single day) falls back to its first day."""
+    start, end = (pd.Timestamp(date).strftime("%Y-%m-%d") for date in (start, end))
+    dates = xr.date_range(start, end, freq=freq, calendar=calendar)
+    return dates if len(dates) else xr.date_range(start, periods=1, calendar=calendar)
 
 
-def resolve_time_sampling(product, method_name: str, freq: str | None = None):
-    """The TimeSampling a call to product.method_name(freq=freq) returns.
+def resolve_time_sampling(
+    product, method_name: str, data_freq: str | None = None, freq: str | None = None
+):
+    """The TimeSampling a call to product.method_name returns.
 
-    Raises if freq can't be honoured: a method only sub-samples when declared
-    @accessmethod(freq_handling="subsample"), never finer than its native
-    cadence; with freq_handling="declare", freq instead names the cadence of
-    the source the user points it at. A USER_SPECIFIED product needs freq.
+    data_freq names the cadence of the data a method reads from a path the
+    user gives it (@accessmethod(data_freq=True), the CESM output readers);
+    a USER_SPECIFIED product needs it. freq thins the data to a coarser
+    cadence, for a method that can (@accessmethod(subsample=True)). Raises
+    on a value the method can't honour.
     """
     method = product._access_methods[method_name]
-    declared = product.time_sampling
-    handling = getattr(method, "_freq_handling", None)
     name = f"{product.product_name}.{method_name}"
-    if freq is not None:
-        frequency_step(freq)  # raises on an invalid alias
-    if declared is None:
-        if freq is not None:
+    for value in (data_freq, freq):
+        if value is not None:
+            frequency_step(value)  # raises on an invalid alias
+    native = product.time_sampling
+    if native is None:
+        if data_freq is not None or freq is not None:
             raise ValueError(f"{name} returns a static snapshot; it takes no freq.")
         return None
-    if declared == USER_SPECIFIED:
-        if freq is None:
+    if data_freq is not None:
+        if not getattr(method, "_data_freq", False):
             raise ValueError(
-                f"{name} reads whatever cadence the data you point it at has, so "
-                "it must be given: pass function_overrides={'freq': ...}, e.g. "
-                "'MS' for monthly or 'D' for daily output."
+                f"{name} reads {product.product_name}'s own data, so it takes no "
+                "data_freq."
             )
-        return TimeSampling(freq)
-    if freq is None or handling == "declare":
-        return declared if freq is None else replace(declared, frequency=freq)
-    if frequency_step(freq) == frequency_step(declared.frequency):
-        return declared
-    if handling != "subsample":
-        raise NotImplementedError(
-            f"{name} returns every {declared.frequency} record in the requested "
-            f"range and cannot sub-sample it; drop freq or pass freq="
-            f"{declared.frequency!r}."
-        )
-    if frequency_step(freq) < frequency_step(declared.frequency):
+        native = TimeSampling(data_freq)
+    elif native == USER_SPECIFIED:
         raise ValueError(
-            f"{name} has {declared.frequency} data; freq={freq!r} is finer than "
+            f"{name} reads whatever cadence the data you point it at has, so "
+            "it must be given: pass data_freq, e.g. 'MS' for monthly or 'D' for "
+            "daily output."
+        )
+    if freq is None or frequency_step(freq) == frequency_step(native.frequency):
+        return native
+    if not getattr(method, "_subsample", False):
+        raise NotImplementedError(
+            f"{name} returns every {native.frequency} record in the requested "
+            "range and cannot sub-sample it; drop freq."
+        )
+    if frequency_step(freq) < frequency_step(native.frequency):
+        raise ValueError(
+            f"{name} has {native.frequency} data; freq={freq!r} is finer than "
             "that, so it would silently return fewer records than asked for."
         )
-    return replace(declared, frequency=freq)
+    return replace(native, frequency=freq)
 
 
 def accessmethod(
@@ -171,24 +183,22 @@ def accessmethod(
     description=None,
     type=None,
     how_to_use=None,
-    freq_handling=None,
+    subsample=False,
+    data_freq=False,
 ):
-    """freq_handling says what a dated method does with a freq argument,
-    "subsample" or "declare" (see resolve_time_sampling); None, the default,
-    for one that takes no freq and returns its product's own cadence."""
+    """subsample: the method takes freq=None and can fetch every freq instead
+    of every record. data_freq: it reads data from a path the user gives it,
+    and takes data_freq=None naming that data's cadence. See
+    resolve_time_sampling."""
 
     def decorator(f):
-        if freq_handling not in (None, "subsample", "declare"):
-            raise ValueError(
-                f"{f.__name__}: freq_handling must be None, 'subsample' or "
-                f"'declare' (got {freq_handling!r})."
-            )
         f = staticmethod(f)
         f._is_access_method = True
         f._description = description
         f._type = type
         f._how_to_use = how_to_use
-        f._freq_handling = freq_handling
+        f._subsample = subsample
+        f._data_freq = data_freq
         return f
 
     # Case 1: decorator used WITHOUT args: @accessmethod

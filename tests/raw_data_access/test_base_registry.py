@@ -272,7 +272,7 @@ class _Sampled(DatedBaseProduct):
     link = "l"
     time_sampling = TimeSampling("D")
 
-    @accessmethod(freq_handling="subsample")
+    @accessmethod(subsample=True)
     def strided(dates, output_folder, output_filename, freq=None):
         pass
 
@@ -280,8 +280,8 @@ class _Sampled(DatedBaseProduct):
     def ranged(dates, output_folder, output_filename):
         pass
 
-    @accessmethod(freq_handling="declare")
-    def declared(dates, output_folder, output_filename, freq=None):
+    @accessmethod(subsample=True, data_freq=True)
+    def declared(dates, output_folder, output_filename, data_freq=None, freq=None):
         pass
 
 
@@ -290,29 +290,32 @@ def test_resolve_time_sampling_defaults_to_the_declared_one():
 
 
 def test_resolve_time_sampling_subsamples_coarser():
-    assert resolve_time_sampling(_Sampled, "strided", "MS").frequency == "MS"
+    assert resolve_time_sampling(_Sampled, "strided", freq="MS").frequency == "MS"
 
 
 def test_resolve_time_sampling_rejects_finer_than_native():
     with pytest.raises(ValueError, match="finer"):
-        resolve_time_sampling(_Sampled, "strided", "6h")
+        resolve_time_sampling(_Sampled, "strided", freq="6h")
 
 
 def test_resolve_time_sampling_refuses_freq_a_method_cannot_honour():
-    assert resolve_time_sampling(_Sampled, "ranged", "D") == TimeSampling("D")
+    assert resolve_time_sampling(_Sampled, "ranged", freq="D") == TimeSampling("D")
     with pytest.raises(NotImplementedError, match="cannot sub-sample"):
-        resolve_time_sampling(_Sampled, "ranged", "MS")
+        resolve_time_sampling(_Sampled, "ranged", freq="MS")
 
 
-def test_resolve_time_sampling_declare_takes_freq_as_the_source_cadence():
+def test_resolve_time_sampling_data_freq_names_the_source_cadence():
     assert resolve_time_sampling(_Sampled, "declared", "6h").frequency == "6h"
+    assert resolve_time_sampling(_Sampled, "declared", "6h", "D").frequency == "D"
+    with pytest.raises(ValueError, match="takes no data_freq"):
+        resolve_time_sampling(_Sampled, "strided", "6h")
 
 
-def test_user_specified_product_needs_freq():
+def test_user_specified_product_needs_data_freq():
     ProductRegistry.load()
     product = ProductRegistry.get_product("cesm_mom_output")
     method = "get_mom6_single_variable_data"
-    with pytest.raises(ValueError, match="function_overrides"):
+    with pytest.raises(ValueError, match="pass data_freq"):
         resolve_time_sampling(product, method)
     assert resolve_time_sampling(product, method, "D") == TimeSampling("D")
 
@@ -322,7 +325,7 @@ def test_static_product_takes_no_freq():
     product = ProductRegistry.get_product("cice_restart")
     assert resolve_time_sampling(product, "get_cice_restart_subset") is None
     with pytest.raises(ValueError, match="static"):
-        resolve_time_sampling(product, "get_cice_restart_subset", "D")
+        resolve_time_sampling(product, "get_cice_restart_subset", freq="D")
 
 
 def test_sample_dates_strides_from_the_freq_anchor():

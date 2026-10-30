@@ -598,11 +598,12 @@ class Case:
                     f"valid overridable args are {sorted(function_args)}"
                 )
             function_args.update(function_overrides)
-        # Fail here, not deep inside process_forcings, on a freq the access
-        # method can't honour or a product that needs one.
+        # Fail here, not deep inside process_forcings, on a data_freq or freq
+        # the access method can't honour, or a product that needs a data_freq.
         resolve_time_sampling(
             ProductRegistry.get_product(self.forcing_product_name),
             function_name,
+            function_args.get("data_freq"),
             function_args.get("freq"),
         )
 
