@@ -17,7 +17,8 @@ _DAY = pd.Timedelta(days=1)
 @dataclass(frozen=True)
 class TimeRequest:
     """The records to fetch: every record from start to end, both days included, or,
-    with dates, only the record nearest each of those dates."""
+    with dates, one record per date: the one whose time bounds hold it (the nearest
+    one when the data has no time bounds)."""
 
     start: pd.Timestamp
     end: pd.Timestamp
@@ -66,23 +67,29 @@ class TimeRequest:
         """The records of ds this request asks for, in ds's own calendar
         (cftime and noleap included; a Feb 29 date becomes Mar 1 there):
         those from start to the end of the end day, then, with dates, the
-        nearest record to each date, each once. ValueError naming the window
-        if none is left."""
+        record whose time bounds hold each date (CF `bounds` on the time
+        coordinate), or the nearest record when there are no bounds; each
+        once. This is #327's rule: a mean stamped mid-interval (MOM6) still
+        counts for its own interval. ValueError naming the window if none is
+        left."""
         times = ds[time].values
         keep = []
         if len(times):
             lo, hi = (_like(t, times[0]) for t in (self.start, self.end + _DAY))
             keep = [i for i, t in enumerate(times) if lo <= t < hi]
         if keep and self.dates is not None:
-            # A tie goes to the later record: for means stamped mid-interval
-            # (a daily mean at noon), that is the one whose interval holds
-            # the date.
-            keep = sorted(
-                {
-                    min(keep, key=lambda i: (abs(times[i] - d), -i))
-                    for d in (_like(d, times[0]) for d in self.dates)
-                }
-            )
+            dates = [_like(d, times[0]) for d in self.dates]
+            bounds = ds[time].attrs.get("bounds")
+            if bounds in ds.variables:
+                lo, hi = ds[bounds].values[:, 0], ds[bounds].values[:, 1]
+                keep = [i for i in keep if any(lo[i] <= d < hi[i] for d in dates)]
+            else:
+                # A tie goes to the later record: for means stamped
+                # mid-interval (a daily mean at noon), that is the one whose
+                # interval holds the date.
+                keep = sorted(
+                    {min(keep, key=lambda i: (abs(times[i] - d), -i)) for d in dates}
+                )
         if not keep:
             held = (
                 f"; the data runs {str(times[0])[:10]} → {str(times[-1])[:10]}"
