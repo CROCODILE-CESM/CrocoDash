@@ -618,17 +618,13 @@ class ConditionsConfigurator(BaseConfigurator):
         # Chunk sizes and fetch windows follow the product's time sampling
         # (see forcing/time_windows.py).
         function_name = self.get_input_param("function_name")
-        freq_input = self._freq_input(product_name, function_name)
+        data_freq = self.get_input_param("data_freq")
         sampling = resolve_time_sampling(
-            product,
-            function_name,
-            self.get_input_param(freq_input) if freq_input else None,
+            product, function_name, data_freq, self.get_input_param("subsample_freq")
         )
         # The source's own sampling: data_freq names it, subsample_freq only
         # thins it.
-        native = resolve_time_sampling(
-            product, function_name, self.get_input_param("data_freq")
-        )
+        native = resolve_time_sampling(product, function_name, data_freq)
         chunks = time_windows.chunk_days(sampling)
         for key, value in chunks.items():
             self.set_output_param(key, value)
