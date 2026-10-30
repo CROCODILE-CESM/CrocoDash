@@ -4,14 +4,6 @@ CrocoDash.forcing package
 Submodules
 ----------
 
-CrocoDash.forcing.atm module
-----------------------------
-
-.. automodule:: CrocoDash.forcing.atm
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
 CrocoDash.forcing.base module
 -----------------------------
 
@@ -40,6 +32,14 @@ CrocoDash.forcing.cice module
 -----------------------------
 
 .. automodule:: CrocoDash.forcing.cice
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+CrocoDash.forcing.datm module
+-----------------------------
+
+.. automodule:: CrocoDash.forcing.datm
    :members:
    :show-inheritance:
    :undoc-members:
