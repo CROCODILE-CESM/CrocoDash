@@ -1,0 +1,108 @@
+# Shared CROCODILE analysis stack: CrocoDash (+ rm6, mom6_forge,
+# visualCaseGen, ipyfilechooser, CrocoGallery), model2obs, pyDARTdiags and
+# dartobsgen in one environment.
+#
+# This file lists THIRD-PARTY dependencies only. The packages above are
+# installed on top with `pip install --no-deps` (see install_packages.sh), so
+# conda never sees their own requirements -- the bounds below are copied from
+# them where they actually bind, with the source noted. `pip check` in CI
+# catches it when a package's declared range drifts away from what is locked
+# here.
+#
+# Do not edit conda-lock.yml by hand. Change this file, then regenerate:
+#   conda-lock lock -f stack/environment.yml --lockfile stack/conda-lock.yml
+name: croc-stack
+
+channels:
+  - conda-forge
+
+platforms:
+  - linux-64
+  - osx-arm64
+
+dependencies:
+  - python=3.11.*  # CrocoDash environment.yml: <3.12
+
+  # --- ESMF / regridding ---------------------------------------------------
+  - esmpy>=8.6.1,<8.7.0  # CrocoDash
+  - xesmf>=0.8.10,<0.10.0  # mom6_forge, visualCaseGen
+
+  # --- core scientific stack -----------------------------------------------
+  - numpy>=1.26,<2.5.0  # mom6_forge
+  - scipy>=1.11,<1.18.0  # mom6_forge
+  - pandas>=2.2.3,<3.0.0  # pyDARTdiags (<3), nnja-ai (>=2.2.3)
+  - xarray>=2023.12,<2026.3.0  # mom6_forge, visualCaseGen
+  - dask=2026.3.*  # mom6_forge
+  - distributed  # rm6
+  - bottleneck  # rm6
+  - netcdf4>=1.6,<1.8.0  # mom6_forge, visualCaseGen
+  - h5netcdf>=1.7.3,<1.8.0  # CrocoDash
+  - numcodecs>=0.10.0,<0.16  # CrocoDash
+  - cftime  # model2obs
+  - cf_xarray>=0.11.1,<0.12.0  # mom6_forge
+  - pint-xarray  # rm6
+  - regionmask=0.13.*  # mom6_forge
+  - pyarrow>=18.1.0  # model2obs, dartobsgen, nnja-ai
+  - scikit-image  # dartobsgen
+  - gsw=3.6.19  # dartobsgen pins exactly; model2obs allows it
+
+  # --- geo / plotting ------------------------------------------------------
+  - matplotlib>=3.9.4,<3.10  # mom6_forge (<3.10), pyDARTdiags (>=3.9.4)
+  - cartopy>=0.23,<0.30  # mom6_forge
+  - shapely>=2.0  # dartobsgen, model2obs
+  - pyproj  # model2obs; CrocoDash only gets it transitively
+  - plotly>=5.22.0  # pyDARTdiags
+  - ipympl>=0.9.4,<0.10.0  # mom6_forge
+
+  # --- config / IO / data access -------------------------------------------
+  - f90nml>=1.4.1  # rm6, dartobsgen
+  - ruamel.yaml>=0.18.0,<0.20.0  # CrocoDash (rm6 imports it directly)
+  - pyyaml>=6.0.2,<6.1.0  # visualCaseGen, pyDARTdiags
+  - copernicusmarine>=2.0.0,<2.1.0  # rm6
+  - cdsapi>=0.7.6,<0.8.0  # CrocoDash
+  - python-eccodes>=2.30.0  # CrocoDash (era5.py reads GRIB spectra)
+  - requests  # model2obs
+  - tqdm  # model2obs
+  - gitpython>=3.1,<3.2.0  # mom6_forge
+  - fsspec>=2024.10.0  # nnja-ai
+  - gcsfs>=2024.10.0  # nnja-ai
+  - google-auth>=2.36.0  # nnja-ai
+  - jsonschema>=4.23.0  # nnja-ai
+  - libxml2>=2.13,<2.16  # visualCaseGen
+  - z3-solver>=4.12.3,<4.17.0  # visualCaseGen
+  - networkx>=3.3,<3.7.0  # visualCaseGen
+
+  # --- jupyter -------------------------------------------------------------
+  - jupyterlab>=4.0,<4.6.0  # mom6_forge, visualCaseGen
+  - jupyterlab_server>=2.25,<2.29.0  # visualCaseGen
+  - ipykernel>=6.29,<7.3.0  # visualCaseGen
+  - ipython>=8.2,<9.13  # visualCaseGen
+  - ipywidgets>=8.1.1,<8.2.0  # mom6_forge, visualCaseGen
+  - nbformat  # CrocoGallery
+
+  # --- testing -------------------------------------------------------------
+  - pytest>=8.0,<9.1.0  # mom6_forge, visualCaseGen
+  - pytest-cov>=7.0.0,<7.1.0  # CrocoDash
+  - pytest-mock  # model2obs
+  - pytest-xdist  # model2obs
+  - responses  # model2obs
+  - hypothesis>=6.125.1,<6.152.0  # visualCaseGen
+  - black>=24.1,<26.4.0  # mom6_forge, visualCaseGen
+
+  # --- docs ----------------------------------------------------------------
+  - sphinx>=8.1,<9.2.0  # mom6_forge
+  - sphinx_rtd_theme>=3.0,<3.2.0  # mom6_forge
+  - sphinx-book-theme>=1.1.4,<1.2.0  # CrocoDash
+  - sphinxcontrib-mermaid>=2.0.2,<2.1.0  # CrocoDash
+  - nbsphinx>=0.9.8,<0.10.0  # CrocoDash, mom6_forge
+  - myst-parser>=4.0.0,<4.1.0  # CrocoDash
+  - pydeps>=3.0.01,<3.1.0  # CrocoDash
+  - graphviz>=12.2.1,<12.3.0  # CrocoDash
+  - python-graphviz>=0.20.3,<0.21.0  # CrocoDash
+
+  - setuptools>=69.0,<82.1  # mom6_forge
+  - pip
+  - pip:
+      # PyPI-only (dartobsgen)
+      - nnja-ai
+      - parquet>=1.3.1
