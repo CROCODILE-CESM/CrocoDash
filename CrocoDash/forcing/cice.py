@@ -63,7 +63,7 @@ from CrocoDash.grid import Grid
 from CrocoDash.forcing import utils
 from CrocoDash.forcing.base import *
 from CrocoDash.raw_data_access.registry import ProductRegistry
-from CrocoDash.raw_data_access.base import CICEForcingProduct
+from CrocoDash.raw_data_access.base import CICEForcingProduct, takes_region
 from CrocoDash.raw_data_access.region import Region
 from CrocoDash.raw_data_access.time_request import TimeRequest
 
@@ -509,14 +509,17 @@ class CICEConfigurator(BaseConfigurator):
         conditions = ctx.config["conditions"]["inputs"]
 
         # Not through fetch_raw_chunk: nothing removes a subset made from
-        # other cice_function_args, so it is fetched again every run. The box
-        # keeps CICE's own 1 degree margin, on top of the product's buffer.
+        # other cice_function_args, so it is fetched again every run. A
+        # method that takes region pads it by its own buf; one that doesn't
+        # yet (reference_ice, until it takes region) keeps CICE's 1 degree.
+        data_access_fn = utils.get_data_access_function(product_name, function_name)
+        region = Region(
+            bbox["lat_min"], bbox["lat_max"], bbox["lon_min"], bbox["lon_max"]
+        )
         subset_paths = utils.call_access_method(
-            utils.get_data_access_function(product_name, function_name),
+            data_access_fn,
             when=TimeRequest(conditions["start_date"], conditions["end_date"]),
-            region=Region(
-                bbox["lat_min"], bbox["lat_max"], bbox["lon_min"], bbox["lon_max"]
-            ).padded(1),
+            region=region if takes_region(data_access_fn) else region.padded(1),
             output_folder=raw_dir,
             **(self.get_input_param("cice_function_args") or {}),
         )

@@ -2,9 +2,10 @@ import os
 from pathlib import Path
 
 import numpy as np
+import pandas as pd
 import xarray as xr
 
-from CrocoDash.forcing import obc
+from CrocoDash.forcing import obc, time_windows
 from CrocoDash.forcing.base import *
 from CrocoDash.raw_data_access.registry import ProductRegistry
 from CrocoDash.raw_data_access.base import (
@@ -430,8 +431,13 @@ class WW3Configurator(BaseConfigurator):
     process_components = {"ww3": "process"}
     required_for_compsets = ["WW3"]
     allowed_compsets = ["WW3"]
+
+    _DATE_FORMAT = "%Y%m%d"
+
     input_params = [
         InputValueParam("case_inputdir", comment="Case input directory"),
+        InputValueParam("start_date", comment="Run start date"),
+        InputValueParam("end_date", comment="Run end date"),
         InputValueParam(
             "boundaries",
             comment="Open boundary sides to generate WW3 spectra for (e.g., ['N', 'S', 'E', 'W'])",
@@ -498,9 +504,17 @@ class WW3Configurator(BaseConfigurator):
         ww3_obc_function_overrides=None,
         get_step_days=None,
         regrid_step_days=None,
+        date_range=None,
+        start_date=None,
+        end_date=None,
     ):
+        if date_range is not None:
+            start_date = date_range[0].strftime(self._DATE_FORMAT)
+            end_date = date_range[1].strftime(self._DATE_FORMAT)
         super().__init__(
             case_inputdir=case_inputdir,
+            start_date=start_date,
+            end_date=end_date,
             boundaries=boundaries,
             ww3_obc_product_name=ww3_obc_product_name,
             ww3_obc_function_name=ww3_obc_function_name,
@@ -556,6 +570,19 @@ class WW3Configurator(BaseConfigurator):
             )
 
     def configure(self):
+        # A run outside the product's data is refused here, as the
+        # conditions' is (see time_windows.check_coverage).
+        product_name = self.get_input_param("ww3_obc_product_name")
+        if product_name != "none" and self.get_input_param("start_date"):
+            coverage = ProductRegistry.get_product(product_name).coverage(
+                self.get_input_param("ww3_obc_function_name"),
+                **(self.get_input_param("ww3_obc_function_overrides") or {}),
+            )
+            start, end = (
+                pd.to_datetime(self.get_input_param(k), format=self._DATE_FORMAT)
+                for k in ("start_date", "end_date")
+            )
+            time_windows.check_coverage(product_name, coverage, start, end)
         self.set_output_param(
             "WW3_GRID_INP_DIR",
             str(Path(self.get_input_param("case_inputdir")) / WAVE_SUBDIR),

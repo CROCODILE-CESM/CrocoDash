@@ -120,13 +120,11 @@ class CESM_POP_OUTPUT(MOM6ForcingProduct):
             "tseries/month_1'` and set `member` to the desired ensemble member "
             "(e.g. 'LE2-1001.001')."
         ),
+        buf=2.5,
     )
     def get_cesm_single_variable_data(
         when,
-        lat_min,
-        lat_max,
-        lon_min,
-        lon_max,
+        region,
         name=None,
         output_folder=Path(""),
         output_filename=None,
@@ -146,10 +144,7 @@ class CESM_POP_OUTPUT(MOM6ForcingProduct):
         )
         return read_single_variable_tseries_data(
             when,
-            lat_min,
-            lat_max,
-            lon_min,
-            lon_max,
+            region,
             output_folder,
             output_filename,
             variables,
@@ -222,13 +217,11 @@ class CESM_MOM_OUTPUT(MOM6ForcingProduct):
             "'*.ocean_month_z*.nc' for full history, or "
             "'<case_prefix>.<region_name>*.nc' for a nesting cross-section."
         ),
+        buf=1.5,
     )
     def get_mom6_output_data(
         when,
-        lat_min,
-        lat_max,
-        lon_min,
-        lon_max,
+        region,
         name=None,
         output_folder=Path(""),
         output_filename=None,
@@ -236,7 +229,6 @@ class CESM_MOM_OUTPUT(MOM6ForcingProduct):
         dataset_path=None,
         file_glob="*.nc",
         time_var_name="time",
-        buffer_deg=1.5,
         preview=False,
         data_freq=None,
     ):
@@ -266,12 +258,9 @@ class CESM_MOM_OUTPUT(MOM6ForcingProduct):
         ds = ds[keep_vars]
 
         # MOM6's C-grid staggers uo/vo onto different horizontal dims than the
-        # tracer grid (xq for u-points, yq for v-points). A single tracer-grid
-        # mask broadcast across the whole dataset (ds.where(mask, drop=True))
-        # would add the tracer dims to those variables instead of subsetting
-        # them, since xarray broadcasts unmatched dims by name. Build one mask
-        # per C-grid point - tracer, u, v - and apply each only to the
-        # variables living on that point.
+        # tracer grid (xq for u-points, yq for v-points), so each C-grid point
+        # - tracer, u, v - is cut on its own coordinates, and only the
+        # variables living on that point with it.
         grid_points = {
             (CESM_MOM_OUTPUT.tracer_y_coord, CESM_MOM_OUTPUT.tracer_x_coord),
             (CESM_MOM_OUTPUT.u_y_coord, CESM_MOM_OUTPUT.u_x_coord),
@@ -286,10 +275,7 @@ class CESM_MOM_OUTPUT(MOM6ForcingProduct):
             ]
             if not grid_vars:
                 continue
-            mask = bbox_mask(
-                ds, lat_min, lat_max, lon_min, lon_max, y_dim, x_dim, buffer_deg
-            )
-            subsets.append(ds[grid_vars].where(mask, drop=True))
+            subsets.append(region.select(ds[grid_vars], lon=x_dim, lat=y_dim))
         ds = xr.merge(subsets)
 
         if preview:
@@ -298,7 +284,8 @@ class CESM_MOM_OUTPUT(MOM6ForcingProduct):
         output_folder.mkdir(parents=True, exist_ok=True)
         if output_filename is None:
             output_filename = (
-                f"mom6_output_subset_{lat_min}_{lat_max}_{lon_min}_{lon_max}.nc"
+                f"mom6_output_subset_{region.lat_min}_{region.lat_max}_"
+                f"{region.lon_min}_{region.lon_max}.nc"
             )
         output_path = output_folder / output_filename
         ds.load().to_netcdf(output_path)
@@ -319,13 +306,11 @@ class CESM_MOM_OUTPUT(MOM6ForcingProduct):
             "tseries NetCDF files (one variable per file series, MOM6 native "
             "variable/coordinate names, date range encoded in the filename)."
         ),
+        buf=2.5,
     )
     def get_mom6_single_variable_data(
         when,
-        lat_min,
-        lat_max,
-        lon_min,
-        lon_max,
+        region,
         name=None,
         output_folder=Path(""),
         output_filename=None,
@@ -343,10 +328,7 @@ class CESM_MOM_OUTPUT(MOM6ForcingProduct):
         )
         return read_single_variable_tseries_data(
             when,
-            lat_min,
-            lat_max,
-            lon_min,
-            lon_max,
+            region,
             output_folder,
             output_filename,
             variables,
@@ -407,12 +389,7 @@ def tseries_coverage(
             m = re.search(regex, os.path.basename(f))
             if m is None or (member is not None and member not in f):
                 continue
-            first, last = get_date_range_from_filename(f, regex)
-            # A YYYYMM end names the file's last month, which it covers to
-            # the month's last day (CESM-MOM stamps monthly means mid-month).
-            if len(m.group(2)) == 6:
-                last += pd.offsets.MonthEnd(0)
-            ranges.append((first, last))
+            ranges.append(get_date_range_from_filename(f, regex))
         if ranges:
             spans.append((min(r[0] for r in ranges), max(r[1] for r in ranges)))
     if not spans:
@@ -422,10 +399,7 @@ def tseries_coverage(
 
 def read_single_variable_tseries_data(
     when,
-    lat_min,
-    lat_max,
-    lon_min,
-    lon_max,
+    region,
     output_folder,
     output_filename,
     variables,
@@ -442,7 +416,7 @@ def read_single_variable_tseries_data(
 ):
     """
     Shared implementation for reading single-variable-per-file (tseries) output
-    for a bounding box, used by both CESM_POP_OUTPUT.get_cesm_single_variable_data
+    for region, a Region, used by both CESM_POP_OUTPUT.get_cesm_single_variable_data
     and CESM_MOM_OUTPUT.get_mom6_single_variable_data - the CESM tseries file
     convention (one variable per file series, date range in the filename) shows
     up for both CESM-POP and native MOM6 output.
@@ -477,10 +451,7 @@ def read_single_variable_tseries_data(
     paths = subset_dataset(
         variable_info=variable_info,
         output_path=output_folder,
-        lat_min=lat_min - 1.5,
-        lat_max=lat_max + 1.5,
-        lon_min=lon_min - 1.5,
-        lon_max=lon_max + 1.5,
+        region=region,
         lat_name=lat_name,
         lon_name=lon_name,
         dates=(
@@ -686,43 +657,10 @@ def check_data_freq(ds, data_freq, time_var_name="time", source=""):
             )
 
 
-def bbox_mask(
-    ds, lat_min, lat_max, lon_min, lon_max, lat_name="lat", lon_name="lon", buffer_deg=0
-):
-    """
-    Boolean lat/lon mask for subsetting a dataset, handling both 0-360 and
-    -180-180 longitude conventions.
-
-    ``lon_min``/``lon_max`` name a contiguous arc running eastward from
-    ``lon_min``, the way ``Grid.get_bounding_boxes`` returns one. An arc that
-    crosses the antimeridian ends past 180 -- 170 to 190, say -- because no
-    pair of in-range ends can describe one. Normalising each end on its own
-    turns that into 170 to -170 and selects nothing, so measure each source
-    longitude as an offset eastward from the start of the arc instead: a point
-    is inside when its offset is no wider than the arc. Taking that offset
-    modulo 360 puts both the source's convention and the crossing to rest, so
-    neither needs a branch of its own.
-    """
-    lat_min_buf, lat_max_buf = lat_min - buffer_deg, lat_max + buffer_deg
-    lon_min_buf, lon_max_buf = lon_min - buffer_deg, lon_max + buffer_deg
-
-    width = lon_max_buf - lon_min_buf
-    if width >= 360:
-        lon_inside = xr.ones_like(ds[lon_name], dtype=bool)
-    else:
-        lon_inside = (ds[lon_name] - lon_min_buf) % 360 <= width
-
-    mask = (ds[lat_name] >= lat_min_buf) & (ds[lat_name] <= lat_max_buf) & lon_inside
-    return mask.compute()
-
-
 def subset_dataset(
     variable_info: dict,
     output_path: str | Path,
-    lat_min: float,
-    lat_max: float,
-    lon_min: float,
-    lon_max: float,
+    region: Region,
     lat_name="lat",
     lon_name="lon",
     dates=None,
@@ -738,10 +676,7 @@ def subset_dataset(
     Args:
         variable_info (dict): A dictionary with variable names as keys and their file paths as values.
         output_path (str | Path): The path where the subsetted dataset will be saved.
-        lat_min (float): Minimum latitude for subsetting.
-        lat_max (float): Maximum latitude for subsetting.
-        lon_min (float): Minimum longitude for subsetting.
-        lon_max (float): Maximum longitude for subsetting.
+        region (Region): The box to cut each variable to (see Region.select).
         lat_name (str): Default latitude coordinate name, used for any variable
             not listed in grid_coords. Default is "lat".
         lon_name (str): Default longitude coordinate name, used for any variable
@@ -756,7 +691,7 @@ def subset_dataset(
         grid_coords (dict | None): Optional {var_name: (lat_name, lon_name)}
             override - needed for MOM6's C-grid, where uo/vo live on different
             horizontal dims than the tracer grid, so a single lat_name/lon_name
-            pair can't mask every variable correctly.
+            pair can't cut every variable correctly.
     """
 
     # Create the output directory if it does not exist
@@ -764,15 +699,16 @@ def subset_dataset(
     output_path.mkdir(parents=True, exist_ok=True)
 
     grid_coords = grid_coords or {}
-    # Each variable is loaded from its own file(s), so its mask is computed
-    # fresh per variable (not cached/reused across the loop) - variables can
-    # sit on different horizontal grid points with different lat/lon dims.
+    # Each variable is loaded from its own file(s), so it is cut on its own
+    # coordinates - variables can sit on different horizontal grid points
+    # with different lat/lon dims.
     output_file_paths = []
     for var_name, file_paths in variable_info.items():
         if dates is None:
             dates = ("NotSpecifiedDate", "NotSpecifiedDate")
         output_file = output_path / (
-            f"{var_name}_subset_{lat_min}_{lat_max}_{lon_min}_{lon_max}_{dates[0]}_{dates[1]}"
+            f"{var_name}_subset_{region.lat_min}_{region.lat_max}_{region.lon_min}_"
+            f"{region.lon_max}_{dates[0]}_{dates[1]}"
             + (
                 ""
                 if when is None or when.dates is None
@@ -800,23 +736,9 @@ def subset_dataset(
         ds = convert_cftime_to_numeric(ds, time_var_name="time")
 
         var_lat_name, var_lon_name = grid_coords.get(var_name, (lat_name, lon_name))
-        mask = bbox_mask(
-            ds,
-            lat_min,
-            lat_max,
-            lon_min,
-            lon_max,
-            var_lat_name,
-            var_lon_name,
-            buffer_deg=1,
-        )
+        subset_ds = region.select(ds, lon=var_lon_name, lat=var_lat_name)
 
-        # Subset the dataset based on the provided geographical bounds
         if not preview:
-            subset_ds = ds.where(mask, drop=True)
-
-            # Save the subsetted dataset to the output path
-
             subset_ds.load().to_netcdf(output_file)
 
             print(f"Subsetted dataset for variable '{var_name}' saved to {output_file}")
@@ -841,6 +763,10 @@ def get_date_range_from_filename(path, regex):
 
     start = parse_date(m.group(1))
     end = parse_date(m.group(2))
+    # A YYYYMM end names the file's last month, which it holds to the month's
+    # last day (CESM-MOM stamps monthly means mid-month).
+    if len(m.group(2)) == 6:
+        end += pd.offsets.MonthEnd(0)
     return start, end
 
 

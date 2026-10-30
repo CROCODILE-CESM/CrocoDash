@@ -8,6 +8,7 @@ from pathlib import Path
 from CrocoDash.grid import Grid
 from CrocoDash.raw_data_access.registry import ProductRegistry
 from CrocoDash.raw_data_access.base import MOM6ForcingProduct
+from CrocoDash.raw_data_access.region import Region
 from CrocoDash.raw_data_access.time_request import TimeRequest
 
 
@@ -19,10 +20,7 @@ def test_get_cesm_single_variable_data_fosi(skip_if_not_glade, tmp_path):
     lon_max = 290
     paths = co.CESM_POP_OUTPUT.get_cesm_single_variable_data(
         TimeRequest(*dates),
-        lat_min,
-        lat_max,
-        lon_min,
-        lon_max,
+        Region(lat_min, lat_max, lon_min, lon_max),
         output_folder=tmp_path,
         output_filename="temp.nc",
         variables=["SSH"],
@@ -30,8 +28,8 @@ def test_get_cesm_single_variable_data_fosi(skip_if_not_glade, tmp_path):
     dataset = xr.open_dataset(paths[0])
     assert np.abs(dataset.TLAT.values[-1, 0] - lat_max) <= 4
     assert np.abs(dataset.TLAT.values[0, 0] - lat_min) <= 4
-    assert np.abs(dataset.TLONG.values[0, -1] - lon_max) <= 4
-    assert np.abs(dataset.TLONG.values[0, 0] - lon_min) <= 4
+    assert np.abs(dataset.TLONG.values[0, -1] % 360 - lon_max) <= 4
+    assert np.abs(dataset.TLONG.values[0, 0] % 360 - lon_min) <= 4
 
 
 def test_tseries_subset_keeps_only_the_requested_time_range(tmp_path):
@@ -58,10 +56,7 @@ def test_tseries_subset_keeps_only_the_requested_time_range(tmp_path):
 
     (out,) = co.CESM_POP_OUTPUT.get_cesm_single_variable_data(
         TimeRequest("2000-01-01", "2000-02-28"),
-        30,
-        31,
-        290,
-        291,
+        Region(30, 31, 290, 291),
         output_folder=tmp_path / "out",
         variables=["SSH"],
         dataset_path=tmp_path,
@@ -79,10 +74,7 @@ def test_get_cesm_single_variable_data_lens2_member(skip_if_not_glade, tmp_path)
     lon_max = 290
     paths = co.CESM_POP_OUTPUT.get_cesm_single_variable_data(
         TimeRequest(*dates),
-        lat_min,
-        lat_max,
-        lon_min,
-        lon_max,
+        Region(lat_min, lat_max, lon_min, lon_max),
         output_folder=tmp_path,
         variables=["SSH"],
         dataset_path="/gdex/data/d651056/CESM2-LE/ocn/proc/tseries/month_1",
@@ -94,8 +86,8 @@ def test_get_cesm_single_variable_data_lens2_member(skip_if_not_glade, tmp_path)
 
     assert np.abs(dataset.TLAT.values[-1, 0] - lat_max) <= 4
     assert np.abs(dataset.TLAT.values[0, 0] - lat_min) <= 4
-    assert np.abs(dataset.TLONG.values[0, -1] - lon_max) <= 4
-    assert np.abs(dataset.TLONG.values[0, 0] - lon_min) <= 4
+    assert np.abs(dataset.TLONG.values[0, -1] % 360 - lon_max) <= 4
+    assert np.abs(dataset.TLONG.values[0, 0] % 360 - lon_min) <= 4
 
 
 @pytest.mark.slow
@@ -130,10 +122,7 @@ def test_get_cesm_single_variable_data_dates_and_thins_pop_means(tmp_path):
     def dates_read(out, when=TimeRequest("2000-01-01", "2000-04-30"), **kwargs):
         paths = co.CESM_POP_OUTPUT.get_cesm_single_variable_data(
             when,
-            30,
-            31,
-            289,
-            290,
+            Region(30, 31, 289, 290),
             output_folder=tmp_path / out,
             variables=["SSH"],
             dataset_path=tmp_path,
@@ -177,10 +166,7 @@ def test_get_mom6_output_data_missing_dataset_path(tmp_path):
         co.CESM_MOM_OUTPUT.get_mom6_output_data(
             when=TimeRequest("2000-01-01", "2000-01-10"),
             data_freq="D",
-            lat_min=20,
-            lat_max=25,
-            lon_min=-90,
-            lon_max=-85,
+            region=Region(20, 25, -90, -85),
             output_folder=tmp_path,
             dataset_path=tmp_path / "does_not_exist",
         )
@@ -191,10 +177,7 @@ def test_get_mom6_output_data_no_matching_files(tmp_path):
         co.CESM_MOM_OUTPUT.get_mom6_output_data(
             when=TimeRequest("2000-01-01", "2000-01-10"),
             data_freq="D",
-            lat_min=20,
-            lat_max=25,
-            lon_min=-90,
-            lon_max=-85,
+            region=Region(20, 25, -90, -85),
             output_folder=tmp_path,
             dataset_path=tmp_path,
             file_glob="no_such_files*.nc",
@@ -210,10 +193,7 @@ def test_get_mom6_output_data_reads_multi_var_file(tmp_path):
     paths = co.CESM_MOM_OUTPUT.get_mom6_output_data(
         when=TimeRequest("2000-01-01", "2000-01-10"),
         data_freq="D",
-        lat_min=lat_min,
-        lat_max=lat_max,
-        lon_min=lon_min,
-        lon_max=lon_max,
+        region=Region(lat_min, lat_max, lon_min, lon_max),
         output_folder=tmp_path,
         output_filename="out.nc",
         variables=["thetao", "so", "uo", "vo", "zos"],
@@ -239,10 +219,7 @@ def test_get_mom6_output_data_drops_missing_variables(tmp_path):
     paths = co.CESM_MOM_OUTPUT.get_mom6_output_data(
         when=TimeRequest("2000-01-01", "2000-01-10"),
         data_freq="D",
-        lat_min=lat_min,
-        lat_max=lat_max,
-        lon_min=lon_min,
-        lon_max=lon_max,
+        region=Region(lat_min, lat_max, lon_min, lon_max),
         output_folder=tmp_path,
         output_filename="out.nc",
         variables=["thetao", "not_a_real_variable"],
@@ -289,10 +266,7 @@ def test_get_mom6_single_variable_data(tmp_path):
     co.CESM_MOM_OUTPUT.get_mom6_single_variable_data(
         when=TimeRequest("2000-01-01", "2000-01-10"),
         data_freq="D",
-        lat_min=lat_min,
-        lat_max=lat_max,
-        lon_min=lon_min,
-        lon_max=lon_max,
+        region=Region(lat_min, lat_max, lon_min, lon_max),
         output_folder=tmp_path,
         output_filename="out.nc",
         variables=["thetao", "zos"],
@@ -391,13 +365,13 @@ def test_subset_dataset(dummy_forcing_factory, get_rect_grid, tmp_path):
 
     grid = get_rect_grid
     boundary_info = Grid.get_bounding_boxes(grid)
+    box = boundary_info["ic"]
     co.subset_dataset(
         variable_info=variable_info,
         output_path=tmp_path,
-        lat_min=boundary_info["ic"]["lat_min"] - 1,
-        lat_max=boundary_info["ic"]["lat_max"] + 1,
-        lon_min=boundary_info["ic"]["lon_min"] - 1,
-        lon_max=boundary_info["ic"]["lon_max"] + 1,
+        region=Region(
+            box["lat_min"], box["lat_max"], box["lon_min"], box["lon_max"]
+        ).padded(1),
         lat_name="latitude",
         lon_name="longitude",
         preview=False,
@@ -409,57 +383,3 @@ def test_subset_dataset(dummy_forcing_factory, get_rect_grid, tmp_path):
     assert ds["latitude"].max() < boundary_info["ic"]["lat_max"] + 2
     assert ds["latitude"].min() > boundary_info["ic"]["lat_min"] - 2
     assert len(ds.time) == 64
-
-
-@pytest.mark.parametrize(
-    "source_lon",
-    [
-        pytest.param(np.arange(-180.0, 180.0), id="source_in_-180_180"),
-        pytest.param(np.arange(0.0, 360.0), id="source_in_0_360"),
-    ],
-)
-@pytest.mark.parametrize(
-    ("lon_min", "lon_max", "label"),
-    [
-        (20.0, 40.0, "away_from_any_seam"),
-        (-10.0, 10.0, "straddling_the_prime_meridian"),
-        (170.0, 190.0, "crossing_the_antimeridian"),
-        (-180.0, 180.0, "the_whole_globe"),
-    ],
-)
-def test_bbox_mask_selects_the_arc_whatever_the_conventions(
-    source_lon, lon_min, lon_max, label
-):
-    """lon_min/lon_max name a contiguous arc running east from lon_min, the way
-    Grid.get_bounding_boxes returns one. An arc that crosses the antimeridian
-    ends past 180, and the whole globe is -180 to 180; neither survives having
-    each end normalised on its own, which used to select one meridian's worth of
-    points, or none at all."""
-    ds = xr.Dataset(coords={"lat": np.arange(-10.0, 11.0), "lon": source_lon})
-
-    mask = co.bbox_mask(ds, -5.0, 5.0, lon_min, lon_max)
-
-    width = lon_max - lon_min
-    inside = (
-        np.ones_like(source_lon, dtype=bool)
-        if width >= 360
-        else ((source_lon - lon_min) % 360 <= width)
-    )
-    expected_lat = (ds.lat.values >= -5.0) & (ds.lat.values <= 5.0)
-    assert int(mask.sum()) == int(inside.sum() * expected_lat.sum()), label
-    assert set(np.round(ds.lon.values[mask.any("lat").values], 6)) == set(
-        np.round(source_lon[inside], 6)
-    )
-
-
-def test_bbox_mask_buffer_widens_the_arc_at_both_ends():
-    """A buffer has to grow the arc, not push it off the branch it lives on."""
-    ds = xr.Dataset(
-        coords={"lat": np.arange(-10.0, 11.0), "lon": np.arange(-180.0, 180.0)}
-    )
-
-    tight = co.bbox_mask(ds, -5.0, 5.0, 170.0, 190.0)
-    buffered = co.bbox_mask(ds, -5.0, 5.0, 170.0, 190.0, buffer_deg=1)
-
-    assert int(buffered.sum()) > int(tight.sum())
-    assert bool((buffered | tight == buffered).all()), "buffer must only add points"

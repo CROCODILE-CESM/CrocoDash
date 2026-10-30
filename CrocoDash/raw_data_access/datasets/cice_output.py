@@ -4,8 +4,8 @@ Data Access Module -> CICE restart
 A global CICE restart carries no time or lat/lon coordinates of its own --
 just raw ni/nj/ncat state arrays on the model's native tripole grid index
 space. This module index-subsets a restart to a regional domain's bounding
-box using the companion CICE grid file (tlon/tlat, stored in radians despite
-their degrees_* attrs) to locate the matching (nj, ni) window, so the result
+box using the companion CICE grid file (tlon/tlat, in radians or degrees,
+told apart by their values) to locate the matching (nj, ni) window, so the result
 can be used as a cold-start initial condition for a regional CICE case. The
 same window's tlon/tlat/ulon/ulat are attached to the output (in degrees) so
 downstream regridding has real coordinates without re-opening the grid file.
@@ -15,56 +15,53 @@ from pathlib import Path
 
 import numpy as np
 import xarray as xr
-from mom6_forge.utils import longitude_slicer
 
 from CrocoDash.raw_data_access.base import *
 
 
-def find_cice_index_window(
-    grid_path, lat_min, lat_max, lon_min, lon_max, buffer_deg=1.5
-):
-    """
-    Locate the (ni_index, nj_min, nj_max) window on a CICE tripole grid
-    (T-point tlon/tlat) covering the given lat/lon bounding box.
+def _degrees(var):
+    """var's values in degrees. A CICE grid file holds radians and a MOM6 grid
+    file degrees. The units attribute can't be trusted: the CICE-format
+    tx2_3v3 grid files label their radian tlon/tlat as degrees. A global
+    grid's lon or lat in degrees always reaches past 2*pi, so values that
+    don't are radians."""
+    if np.nanmax(np.abs(var.values)) <= 2 * np.pi + 1e-6:
+        return np.rad2deg(var.values)
+    return var.values
 
-    Longitude is resolved via mom6_forge's longitude_slicer against the
-    grid's row 0 -- every row of a CICE tripole grid is identical and
-    uniformly spaced in longitude below the displaced-pole fold, and row 0
-    (the grid's southern edge) is always below it. Latitude doesn't need the
-    same periodicity handling (no wraparound), so it's a plain argwhere over
-    tlat restricted to the resolved longitude window, which also naturally
-    follows the curvature of latitude lines near the fold.
 
-    Known limitation: this returns a contiguous ni index range and can't
-    represent a window that straddles the tripole seam itself -- not
-    expected for realistic regional domains, since CESM's tripole grids
-    place both displaced poles over land specifically to avoid this.
+def _grid_window(grid_path, region):
+    """The T and U points (tlon, tlat, ulon, ulat, in degrees) of the CICE
+    grid at grid_path over region, cut by Region.select, on dims (nj, ni),
+    with each point's own row and column in the grid as j and i.
+
+    CICE's U points are each T cell's NE corner. A CICE grid file holds them
+    as ulon/ulat, on the T points' shape. A MOM6 grid file's ulon/ulat are
+    its C-grid u-points instead, and the corners are qlon/qlat, one row and
+    one column bigger, so T cell (j, i)'s corner is qlon[j+1, i+1].
     """
     with xr.open_dataset(grid_path) as grid:
-        tlon = np.rad2deg(grid["tlon"].values)
-        tlat = np.rad2deg(grid["tlat"].values)
-    ni = tlon.shape[1]
-
-    lon_row = xr.Dataset(
-        {"ni_index": ("lon", np.arange(ni))},
-        coords={"lon": tlon[0, :]},
-    )
-    sliced = longitude_slicer(
-        lon_row, (lon_min - buffer_deg, lon_max + buffer_deg), "lon"
-    )
-    ni_idx = sliced["ni_index"].values
-
-    lat_window = tlat[:, ni_idx]
-    lat_mask = (lat_window >= lat_min - buffer_deg) & (
-        lat_window <= lat_max + buffer_deg
-    )
-    nj_rows = np.where(lat_mask.any(axis=1))[0]
-    if nj_rows.size == 0:
-        raise ValueError(
-            f"No grid points found in bounding box lat=({lat_min}, {lat_max}) "
-            f"lon=({lon_min}, {lon_max}) on grid {grid_path}."
+        corners = "u" if grid["ulon"].shape == grid["tlon"].shape else "q"
+        points = {
+            "tlon": grid["tlon"],
+            "tlat": grid["tlat"],
+            "ulon": grid[f"{corners}lon"],
+            "ulat": grid[f"{corners}lat"],
+        }
+        ny, nx = grid["tlon"].shape
+        # The last ny rows and nx columns: all of an array on the T points'
+        # shape, and each T cell's NE corner of a corner grid.
+        ds = xr.Dataset(
+            {
+                name: (("nj", "ni"), _degrees(var)[-ny:, -nx:])
+                for name, var in points.items()
+            }
         )
-    return ni_idx, int(nj_rows.min()), int(nj_rows.max())
+    ds["j"], ds["i"] = ("nj", np.arange(ny)), ("ni", np.arange(nx))
+    window = region.select(ds, lon="tlon", lat="tlat")
+    # Each U point on the longitude branch select put its T point on.
+    window["ulon"] = window.tlon + (window.ulon - window.tlon + 180) % 360 - 180
+    return window
 
 
 class CICE_RESTART(CICEForcingProduct):
@@ -125,32 +122,27 @@ class CICE_RESTART(CICEForcingProduct):
             "layer counts) that this function has no way to know in advance."
         ),
         type="python",
+        buf=2.5,
     )
     def get_cice_restart_subset(
         dates: list,
-        lat_min,
-        lat_max,
-        lon_min,
-        lon_max,
+        region,
         name=None,
         output_folder=Path(""),
         output_filename="cice_restart_subset.nc",
         variables=None,
         restart_path="please_provide_a_path",
         grid_path="please_provide_a_path",
-        buffer_deg=1.5,
         preview=False,
     ):
         for label, p in (("restart_path", restart_path), ("grid_path", grid_path)):
             if p is None or not Path(p).exists():
                 raise FileNotFoundError(f"Provided {label} {p} does not exist.")
 
-        ni_idx, nj_min, nj_max = find_cice_index_window(
-            grid_path, lat_min, lat_max, lon_min, lon_max, buffer_deg=buffer_deg
-        )
+        window = _grid_window(grid_path, region)
 
         with xr.open_dataset(restart_path, decode_times=False) as restart:
-            subset = restart.isel(nj=slice(nj_min, nj_max + 1), ni=ni_idx).load()
+            subset = restart.isel(nj=window["j"].values, ni=window["i"].values).load()
         if variables:
             keep = [v for v in variables if v in subset.data_vars]
             missing = [v for v in variables if v not in subset.data_vars]
@@ -161,18 +153,13 @@ class CICE_RESTART(CICEForcingProduct):
             subset = subset[keep]
 
         # The restart itself carries no lat/lon -- attach the same window's
-        # T-point (tlon/tlat) and U-point (ulon/ulat) coordinates from the
-        # grid file, converted to degrees, so downstream regridding (see
-        # forcing/cice.py's _regrid_cice_full_grid) has real coordinates
-        # to interpolate from without re-opening the grid file itself. Always
-        # attached, regardless of the `variables` filter above.
-        with xr.open_dataset(grid_path) as grid_ds:
-            grid_window = grid_ds.isel(nj=slice(nj_min, nj_max + 1), ni=ni_idx)
-            for coord_name in ("tlon", "tlat", "ulon", "ulat"):
-                subset[coord_name] = (
-                    ("nj", "ni"),
-                    np.rad2deg(grid_window[coord_name].values),
-                )
+        # T-point (tlon/tlat) and U-point (ulon/ulat) coordinates, so
+        # downstream regridding (see forcing/cice.py's _regrid_cice_full_grid)
+        # has real coordinates to interpolate from without re-opening the grid
+        # file itself. Always attached, regardless of the `variables` filter
+        # above.
+        for coord_name in ("tlon", "tlat", "ulon", "ulat"):
+            subset[coord_name] = (("nj", "ni"), window[coord_name].values)
 
         # Not a real forcing product -- there's no actual time evolution to
         # source, and a CICE restart/initial-condition file is a single
