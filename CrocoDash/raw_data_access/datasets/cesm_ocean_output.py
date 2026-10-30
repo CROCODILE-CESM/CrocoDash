@@ -781,6 +781,8 @@ def subset_dataset(
         data_freq, freq, window: the files' cadence, checked against them,
             and a coarser one to thin them to over the (start, end) window
             (see select_records). None skips both.
+            window, whole days inclusive, also drops every record outside it:
+            the files hold whole years or decades. None keeps every record.
         grid_coords (dict | None): Optional {var_name: (lat_name, lon_name)}
             override - needed for MOM6's C-grid, where uo/vo live on different
             horizontal dims than the tracer grid, so a single lat_name/lon_name
@@ -819,6 +821,15 @@ def subset_dataset(
         ds = select_records(
             ds, window, data_freq, freq, source=Path(file_paths[0]).parent
         )
+        if window is not None:
+            ds = select_time_range(ds, *window)
+            if ds.sizes["time"] == 0:
+                start, end = (pd.Timestamp(t).date() for t in window)
+                raise ValueError(
+                    f"No {var_name} records fall between {start} and {end}; the "
+                    "source's records are further apart than the requested "
+                    "window (e.g. monthly output)."
+                )
 
         # Convert time. Saving to netcdf is not working with cftime objects.
         ds = convert_cftime_to_numeric(ds, time_var_name="time")
@@ -886,3 +897,33 @@ def first_value(da_var):
         return arr.ravel()[0].compute()
     else:
         return arr.ravel()[0]
+
+
+def select_time_range(ds, start, end, time_var_name="time"):
+    """Keep the records from start through the end of end's day.
+
+    The tseries files hold whole years or decades, so without this every
+    request carries all of them. No-op if the time coordinate isn't decoded.
+    """
+    times = ds[time_var_name].values
+    if len(times) == 0:
+        return ds
+    end = pd.Timestamp(end).normalize() + pd.Timedelta(days=1)
+    start = pd.Timestamp(start)
+    if isinstance(times[0], cftime.datetime):
+        lo, hi = (_to_cftime(t, times[0].calendar) for t in (start, end))
+        keep = [lo <= t < hi for t in times]
+    elif np.issubdtype(times.dtype, np.datetime64):
+        keep = (times >= start.to_datetime64()) & (times < end.to_datetime64())
+    else:
+        return ds
+    return ds.isel({time_var_name: np.flatnonzero(keep)})
+
+
+def _to_cftime(ts, calendar):
+    """A pandas Timestamp as a cftime date; Feb 29 rolls to Mar 1 where the
+    calendar has no leap days."""
+    try:
+        return cftime.datetime(ts.year, ts.month, ts.day, calendar=calendar)
+    except ValueError:
+        return cftime.datetime(ts.year, 3, 1, calendar=calendar)
