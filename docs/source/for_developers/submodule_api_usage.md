@@ -42,7 +42,6 @@ Imported as `from mom6_forge import ...` / `import mom6_forge as m6b`.
 | `mapping.get_smoothed_map_filepath(...)` | `forcing/runoff.py` | Generates smoothed runoff-to-ocean mapping file names |
 | `mapping.gen_rof_maps(...)` | `forcing/runoff.py` | Generates the smoothed runoff-to-ocean mapping files |
 | `utils.fill_missing_data(...)` | `forcing/mom6.py` | Fills missing values in ocean state fields during regridding |
-| `utils.longitude_slicer(...)` | `raw_data_access/datasets/cice_output.py` | Slices a global dataset across the antimeridian for the requested bounding box |
 
 ---
 
