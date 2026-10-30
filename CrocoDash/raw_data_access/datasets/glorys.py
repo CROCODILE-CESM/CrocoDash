@@ -39,8 +39,17 @@ class GLORYS(MOM6ForcingProduct):
     depth_coord = "depth"
     tracer_var_names = {"temp": "thetao", "salt": "so"}
     calendar = GREGORIAN
+    # Daily means, stamped at noon.
+    time_sampling = TimeSampling("D", "mean")
+
+    @classmethod
+    def coverage(cls, method_name, **kwargs):
+        # GLORYS starts on 1993-01-01, on RDA and Copernicus alike. Its end
+        # moves as new days are added, so it is left open.
+        return pd.Timestamp("1993-01-01"), None
 
     @accessmethod(
+        subsample=True,
         description="Gathers GLORYS data from RDA on computers with access to glade/rda",
         type="python",
         how_to_use="Requires read access to /glade/campaign/collections/rda/data/d010049/ and the CrocoDash conda environment.",
@@ -66,11 +75,15 @@ class GLORYS(MOM6ForcingProduct):
             "thetao",
         ],
         buf=1.0,
+        freq=None,
     ) -> xr.Dataset:
         """
         Gather GLORYS Data on Derecho Computers from the campaign storage and return the dataset sliced to the llc and urc coordinates at the specific dates
         """
-        dates = pd.date_range(start=dates[0], end=dates[1]).to_pydatetime().tolist()
+        freq = resolve_time_sampling(
+            GLORYS, "get_glorys_data_from_rda", freq=freq
+        ).frequency
+        dates = sample_dates(dates[0], dates[1], freq).to_pydatetime().tolist()
         path = Path(output_folder) / output_filename
         GLORYS.logger.info(f"Downloading Glorys data from RDA to {path}")
 

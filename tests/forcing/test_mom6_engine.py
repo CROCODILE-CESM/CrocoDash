@@ -31,14 +31,15 @@ def test_build_forcing_request_merges_function_args():
 # =============================================================================
 
 
-def _conditions(product_name):
+def _conditions(product_name, function_name="get_glorys_data_script_for_cli", **kwargs):
     return mom6.ConditionsConfigurator(
         boundaries=["north"],
         product_name=product_name,
-        function_name="get_glorys_data_script_for_cli",
+        function_name=function_name,
         compset="1850_DATM%JRA_SLND_SICE_MOM6%REGIONAL_SROF_SGLC_SWAV",
         start_date="20200101",
         end_date="20200102",
+        **kwargs,
     )
 
 
@@ -56,8 +57,15 @@ def test_conditions_configurator_accepts_mom6_products():
     # Doesn't raise -- GLORYS plus the CESM POP/MOM output readers all feed the
     # MOM6 IC/OBC pipeline.
     _conditions("glorys")
-    _conditions("cesm_pop_output")
-    _conditions("cesm_mom_output")
+    _conditions("cesm_pop_output", "get_cesm_single_variable_data")
+    _conditions("cesm_mom_output", "get_mom6_output_data", data_freq="MS")
+
+
+def test_conditions_configurator_requires_data_freq_for_a_user_specified_product():
+    # CESM-MOM output has whatever cadence its files hold, so only the user
+    # can say what it is -- at configure time, not deep inside process_forcings.
+    with pytest.raises(ValueError, match="data_freq"):
+        _conditions("cesm_mom_output", "get_mom6_output_data")
 
 
 # ---------------------------------------------------------------------------
@@ -516,6 +524,37 @@ def test_process_ic_binds_grid_paths_onto_the_regrid_step(tmp_path, monkeypatch)
     ctx.vgrid_path = tmp_path / "gone.nc"
     with pytest.raises(FileNotFoundError, match="Vgrid file must exist"):
         cfg.process_ic(ctx)
+
+
+def test_process_steps_hand_the_engines_the_configured_windows(tmp_path, monkeypatch):
+    """Monthly data needs its chunks a record spacing long, its boundary data
+    padded past the run and its IC request reaching back; the engines fall
+    back to daily behaviour if any of them is dropped on the way."""
+    cfg = _configured(
+        boundary_number_conversion={"north": 1},
+        get_step_days=31,
+        regrid_step_days=62,
+        min_chunk_days=31,
+        obc_start_date="20191201",
+        obc_end_date="20200202",
+        ic_lookback_days=30,
+    )
+    bc, ic = {}, {}
+    monkeypatch.setattr(mom6.obc, "process_obc_conditions", lambda **kw: bc.update(kw))
+    monkeypatch.setattr(
+        mom6.ic_mod, "process_initial_condition", lambda **kw: ic.update(kw)
+    )
+    monkeypatch.setattr(mom6, "_split_bgc_tracers_into_files", lambda **kw: [])
+    ctx = _bc_context(tmp_path)
+    ctx.vgrid_path = tmp_path / "vgrid.nc"
+    ctx.vgrid_path.touch()
+
+    cfg.process_bc(ctx)
+    cfg.process_ic(ctx)
+
+    assert bc["min_chunk_days"] == 31
+    assert (bc["start_date"], bc["end_date"]) == ("20191201", "20200202")
+    assert ic["lookback_days"] == 30
 
 
 def test_fill_missing_and_write_leaves_no_gaps_for_mom6_to_read(tmp_path):

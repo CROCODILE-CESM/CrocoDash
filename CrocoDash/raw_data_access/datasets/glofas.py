@@ -9,8 +9,10 @@ class GLOFAS(DatedBaseProduct):
     product_name = "glofas"
     description = "	GLOFAS (Global Flood Awareness System) is a public river discharge/runoff Product"
     link = "https://ewds.climate.copernicus.eu/datasets/cems-glofas-historical?tab=download"
+    time_sampling = TimeSampling("D", "mean")
 
     @accessmethod(
+        subsample=True,
         description="Gets glofas raw data through the cdsapi package",
         type="python",
         how_to_use="Requires a CDS API key — register at https://cds.climate.copernicus.eu and configure ~/.cdsapirc before use.",
@@ -19,6 +21,7 @@ class GLOFAS(DatedBaseProduct):
         dates,
         output_folder=Path(""),
         output_filename="glofas_data.nc",
+        freq=None,
     ):
         """
         Downloads glofas data using cdsapi library. Note that users need to have an account with copernicus and have cdsapi installed and configured.
@@ -33,9 +36,12 @@ class GLOFAS(DatedBaseProduct):
             Filename to write inside ``output_folder``.
 
         """
+        freq = resolve_time_sampling(
+            GLOFAS, "get_global_data_with_python", freq=freq
+        ).frequency
         dataset = "cems-glofas-historical"
         start, end = pd.to_datetime(dates[0]), pd.to_datetime(dates[1])
-        dates = pd.date_range(start=start, end=end)
+        dates = sample_dates(start, end, freq)
         hyear = sorted(list({d.strftime("%Y") for d in dates}))
         hmonth = sorted(list({d.strftime("%m") for d in dates}))
         hday = sorted(list({d.strftime("%d") for d in dates}))
