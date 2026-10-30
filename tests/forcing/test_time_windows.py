@@ -18,8 +18,10 @@ from CrocoDash.raw_data_access.base import TimeSampling
 def test_every_regrid_chunk_of_the_boundary_window_holds_a_record(
     frequency, start, first_record
 ):
-    """REGRID fails on a chunk with no record in it (a 30-day chunk of monthly
-    data can fall between two), and GET on a day the data doesn't have."""
+    """MOM6 needs a boundary record at or before the run's start and one at or
+    after its end. REGRID fails on a chunk with no record in it (a 30-day
+    chunk of monthly data can fall between two), and GET on a day the data
+    doesn't have."""
     sampling = TimeSampling(frequency)
     start = pd.Timestamp(start)
     records = pd.date_range(
@@ -30,6 +32,8 @@ def test_every_regrid_chunk_of_the_boundary_window_holds_a_record(
         end = start + pd.Timedelta(days=end_offset)
         lo, hi = tw.obc_window(sampling, start, end, (records[0], records[-1]))
         assert records[0] <= lo and hi <= records[-1]
+        assert ((records >= lo) & (records <= start)).any(), (lo, start)
+        assert ((records >= end) & (records <= hi)).any(), (end, hi)
         for a, b in _make_date_pairs(
             lo, hi, chunks["regrid_step_days"], chunks["min_chunk_days"]
         ):
