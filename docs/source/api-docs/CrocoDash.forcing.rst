@@ -4,14 +4,6 @@ CrocoDash.forcing package
 Submodules
 ----------
 
-CrocoDash.forcing.atm module
-----------------------------
-
-.. automodule:: CrocoDash.forcing.atm
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
 CrocoDash.forcing.base module
 -----------------------------
 
@@ -28,14 +20,6 @@ CrocoDash.forcing.bgc module
    :show-inheritance:
    :undoc-members:
 
-CrocoDash.forcing.cdeps\_streams module
----------------------------------------
-
-.. automodule:: CrocoDash.forcing.cdeps_streams
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
 CrocoDash.forcing.chl module
 ----------------------------
 
@@ -48,6 +32,14 @@ CrocoDash.forcing.cice module
 -----------------------------
 
 .. automodule:: CrocoDash.forcing.cice
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+CrocoDash.forcing.datm module
+-----------------------------
+
+.. automodule:: CrocoDash.forcing.datm
    :members:
    :show-inheritance:
    :undoc-members:
@@ -96,14 +88,6 @@ CrocoDash.forcing.tides module
 ------------------------------
 
 .. automodule:: CrocoDash.forcing.tides
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-CrocoDash.forcing.user\_nl\_blocks module
------------------------------------------
-
-.. automodule:: CrocoDash.forcing.user_nl_blocks
    :members:
    :show-inheritance:
    :undoc-members:

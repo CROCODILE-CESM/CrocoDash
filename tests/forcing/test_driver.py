@@ -291,10 +291,13 @@ def test_run_workflow_auto_enables_dependency(mock_cs, tmp_path):
                     "case_esmf_mesh_path": "/fake.nc",
                     "rmax": 20,
                     "fold": 40,
+                },
+                "outputs": {
                     "rof_grid_name": "GLOFAS",
                     "rof_esmf_mesh_filepath": "/fake2.nc",
+                    "ROF2OCN_LIQ_RMAPNAME": None,
+                    "ROF2OCN_ICE_RMAPNAME": None,
                 },
-                "outputs": {"ROF2OCN_LIQ_RMAPNAME": None, "ROF2OCN_ICE_RMAPNAME": None},
             },
             "bgcrivernutrients": {
                 "name": "BGCRiverNutrients",

@@ -1,13 +1,10 @@
 """Rerunning Case.configure_forcings() on the same case -- as a notebook cell
 rerun does -- leaves the case as if only the latest call had happened."""
 
-import json
 from pathlib import Path
-from types import SimpleNamespace
 
 import pytest
 import xarray as xr
-from ProConPy.config_var import cvars
 
 from CrocoDash.forcing import mom6, obc, tides
 from tests.user_nl_helpers import keys as _keys, mom_parser
@@ -159,19 +156,3 @@ def test_a_failed_call_leaves_the_case_as_it_was(case, monkeypatch):
     assert _user_nl(case) == user_nl
     assert config_path.read_text() == config
     assert (case.inputdir / "ocn" / "init_eta_filled.nc").exists()
-
-
-def test_refuses_to_write_into_a_case_created_later(case, monkeypatch, tmp_path):
-    """Every case created in a session repoints visualCaseGen's CASEROOT, which
-    append_user_nl and xmlchange write into -- so configuring an earlier case
-    used to change the later one."""
-    user_nl = _user_nl(case)
-    config = json.loads((case.inputdir / "extract_forcings/config.json").read_text())
-    monkeypatch.setitem(cvars, "CASEROOT", SimpleNamespace(value=str(tmp_path)))
-    with pytest.raises(RuntimeError, match="created after it in this session"):
-        case.configure_forcings(date_range=DATES)
-    assert _user_nl(case) == user_nl
-    assert (
-        json.loads((case.inputdir / "extract_forcings/config.json").read_text())
-        == config
-    )

@@ -99,7 +99,7 @@ MARBL BGC and GLOFAS runoff (e.g. `CR1850MARBL_JRA_GLOFAS`):
 ```
 The following additional configuration options are required to run and must be
 provided with any listed arguments in configure_forcings:
-  - StreamYears: no arguments
+  - DATM: no arguments
   - BGC: no arguments
   - BGCIC: marbl_ic_filepath
   - BGCIronForcing: no arguments
@@ -119,8 +119,9 @@ them:
   initial and boundary condition extraction. Its arguments all have sensible
   defaults on `configure_forcings` itself, so in practice you only owe it
   `date_range`.
-- **`StreamYears`** is required by any `DATM%JRA` compset, and takes no
-  arguments.
+- **`DATM`** is required by any interannual JRA or CORE2 IAF DATM compset, and
+  takes no arguments. It sets `DATM_YR_*` so the run reads its own years of
+  forcing; `Runoff` does the same for a JRA or GLOFAS DROF.
 
 Configurators like `tides` aren't tied to any compset component, so they're
 never "required" — they're optional and you add them whenever you want tidal

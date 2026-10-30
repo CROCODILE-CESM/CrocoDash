@@ -1,7 +1,6 @@
 from CrocoDash.forcing.base import *
 
 from types import SimpleNamespace
-from ProConPy.config_var import cvars
 from unittest.mock import patch
 
 import pytest
@@ -169,7 +168,9 @@ def test_is_non_local_defaults_false_without_case(mock_xmlchange):
     without DummyXML declaring a case_is_non_local input param."""
     obj = DummyXML("x")
     obj.configure()
-    mock_xmlchange.assert_called_once_with("DUMMY_XML_VAR", "value", is_non_local=False)
+    mock_xmlchange.assert_called_once_with(
+        "DUMMY_XML_VAR", "value", caseroot=None, is_non_local=False
+    )
 
 
 @patch("CrocoDash.forcing.base.xmlchange")
@@ -180,7 +181,9 @@ def test_is_non_local_propagates_from_registry_case(mock_xmlchange):
     obj = DummyXML("x")
     obj.registry = SimpleNamespace(case=SimpleNamespace(is_non_local=True))
     obj.configure()
-    mock_xmlchange.assert_called_once_with("DUMMY_XML_VAR", "value", is_non_local=True)
+    mock_xmlchange.assert_called_once_with(
+        "DUMMY_XML_VAR", "value", caseroot=None, is_non_local=True
+    )
 
 
 def test_depends_on_outputs_targets_exist():
@@ -222,13 +225,12 @@ class DummyUserNL(BaseConfigurator):
         super().configure()
 
 
-def test_user_nl_block_per_file(tmp_path, monkeypatch, capsys):
+def test_user_nl_block_per_file(tmp_path):
     """A configurator's parameters for one file go into one CrocoDash block,
-    each with its own comment, and the "Adding parameter changes to
-    user_nl_<x>" title is printed once per file."""
-    monkeypatch.setitem(cvars, "CASEROOT", SimpleNamespace(value=tmp_path))
-    monkeypatch.setitem(cvars, "NINST", SimpleNamespace(value=1))
-    DummyUserNL("x").configure()
+    each with its own comment."""
+    obj = DummyUserNL("x")
+    obj.registry = SimpleNamespace(case=SimpleNamespace(caseroot=tmp_path, ninst=1))
+    obj.configure()
 
     cice = (tmp_path / "user_nl_cice").read_text().splitlines()
     assert sum(line.startswith("! >>> CrocoDash") for line in cice) == 1
@@ -244,6 +246,24 @@ def test_user_nl_block_per_file(tmp_path, monkeypatch, capsys):
     ]
     assert "ocn_a = 1" in (tmp_path / "user_nl_mom").read_text()
 
-    out = capsys.readouterr().out
-    assert out.count("Adding parameter changes to user_nl_cice") == 1
-    assert out.count("Adding parameter changes to user_nl_mom") == 1
+
+def test_two_cases_in_one_process_each_write_to_their_own_caseroot(tmp_path):
+    """visualCaseGen's global CASEROOT is the case created last, so configuring
+    the first of two cases used to write into the second."""
+    caseroots = [tmp_path / "first", tmp_path / "second"]
+    configurators = []
+    for caseroot in caseroots:
+        caseroot.mkdir()
+        registry = SimpleNamespace(case=SimpleNamespace(caseroot=caseroot, ninst=1))
+        for obj in (DummyUserNL("x"), DummyXML("x")):
+            obj.registry = registry
+            configurators.append(obj)
+
+    with patch("subprocess.run") as run:
+        run.return_value.returncode = 0
+        for obj in configurators:
+            obj.configure()
+
+    for caseroot in caseroots:
+        assert "ice_a = 0" in (caseroot / "user_nl_cice").read_text()
+    assert [call.kwargs["cwd"] for call in run.call_args_list] == caseroots
