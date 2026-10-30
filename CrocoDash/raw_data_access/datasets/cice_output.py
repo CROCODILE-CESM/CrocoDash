@@ -4,8 +4,8 @@ Data Access Module -> CICE restart
 A global CICE restart carries no time or lat/lon coordinates of its own --
 just raw ni/nj/ncat state arrays on the model's native tripole grid index
 space. This module index-subsets a restart to a regional domain's bounding
-box using the companion CICE grid file (tlon/tlat, in degrees or radians as
-their units say) to locate the matching (nj, ni) window, so the result
+box using the companion CICE grid file (tlon/tlat, in radians or degrees,
+told apart by their values) to locate the matching (nj, ni) window, so the result
 can be used as a cold-start initial condition for a regional CICE case. The
 same window's tlon/tlat/ulon/ulat are attached to the output (in degrees) so
 downstream regridding has real coordinates without re-opening the grid file.
@@ -20,9 +20,12 @@ from CrocoDash.raw_data_access.base import *
 
 
 def _degrees(var):
-    """var's values in degrees: its units attribute says whether they are
-    radians (an older CICE grid file) or degrees (a MOM6 grid file)."""
-    if var.attrs.get("units", "").startswith("radian"):
+    """var's values in degrees. A CICE grid file holds radians and a MOM6 grid
+    file degrees. The units attribute can't be trusted: the CICE-format
+    tx2_3v3 grid files label their radian tlon/tlat as degrees. A global
+    grid's lon or lat in degrees always reaches past 2*pi, so values that
+    don't are radians."""
+    if np.nanmax(np.abs(var.values)) <= 2 * np.pi + 1e-6:
         return np.rad2deg(var.values)
     return var.values
 

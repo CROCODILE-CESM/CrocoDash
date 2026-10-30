@@ -27,7 +27,8 @@ def test_cice_window_on_degree_grid(tmp_path):
     """A MOM6 grid file (ny/nx, degrees, U points at the qlon/qlat corners)
     finds a Gulf of Mexico box on its own values, with each T cell's NE
     corner as its U point, and an Arctic box whose cells fall either side of
-    the tripole fold keeps every column of its rows."""
+    the tripole fold keeps every column of its rows. A CICE grid file in
+    radians labelled degrees finds the same Gulf cells."""
     ny, nx = 18, 36
     lon_q, lat_q = np.meshgrid(
         -280.0 + 10 * np.arange(nx + 1), -90.0 + 10 * np.arange(ny + 1)
@@ -68,6 +69,17 @@ def test_cice_window_on_degree_grid(tmp_path):
 
     arctic = subset(Region(87, 90, -200, 0))
     np.testing.assert_array_equal(arctic.aicen, [[100.0 * (ny - 1) + np.arange(nx)]])
+
+    # A CICE grid file in radians whose tlon/tlat say degrees, as tx2_3v3's do.
+    xr.Dataset(
+        {
+            "tlon": (("nj", "ni"), np.deg2rad(tlon), east),
+            "tlat": (("nj", "ni"), np.deg2rad(tlat), north),
+            "ulon": (("nj", "ni"), np.deg2rad(lon_q[1:, 1:]), {"units": "radians"}),
+            "ulat": (("nj", "ni"), np.deg2rad(lat_q[1:, 1:]), {"units": "radians"}),
+        }
+    ).to_netcdf(tmp_path / "grid.nc")
+    np.testing.assert_array_equal(subset(Region(18, 31, -98, -80)).aicen, gulf.aicen)
 
 
 def test_get_cice_restart_subset(skip_if_not_glade, tmp_path):
