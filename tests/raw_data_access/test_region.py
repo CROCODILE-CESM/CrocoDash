@@ -22,3 +22,16 @@ def test_select_crosses_the_source_seam_in_order():
         out = box.select(ds)
         np.testing.assert_array_equal(out.lon, expected)
         np.testing.assert_array_equal(out.v % 360, np.tile(expected % 360, (2, 1)))
+
+    # On a 2-D (curvilinear) source a full circle also starts at its west edge.
+    lon2 = np.tile(lon[:-1], (2, 1))
+    ds2 = xr.Dataset(
+        {"v": (("y", "x"), lon2)},
+        coords={
+            "lon": (("y", "x"), lon2),
+            "lat": (("y", "x"), 0 * lon2 + [[0.0], [1.0]]),
+        },
+    )
+    out = Region(-90, 90, -180, 180).select(ds2)
+    np.testing.assert_array_equal(out.lon[0], np.arange(-180.0, 180.0))
+    np.testing.assert_array_equal(out.v[0] % 360, np.arange(-180.0, 180.0) % 360)

@@ -44,13 +44,14 @@ class Region:
     def around(cls, lon, lat) -> "Region":
         """The smallest box holding these points (any shape), going the short
         way round."""
-        lon = np.unique(np.mod(np.ravel(lon), 360))
-        lat = np.ravel(lat)
-        # The box leaves out the widest gap between neighbouring longitudes.
-        gaps = np.diff(lon, append=lon[0] + 360)
-        widest = np.argmax(gaps)
-        west = lon[(widest + 1) % lon.size]
-        return cls(lat.min(), lat.max(), west, west + 360 - gaps[widest])
+        lon, lat = np.ravel(lon).astype(float), np.ravel(lat)
+        order = np.argsort(np.mod(lon, 360))
+        # The box leaves out the widest gap between neighbouring longitudes,
+        # and ends at the points either side of it, as given.
+        turn = np.mod(lon[order], 360)
+        widest = np.argmax(np.diff(turn, append=turn[0] + 360))
+        west, east = lon[order[(widest + 1) % lon.size]], lon[order[widest]]
+        return cls(lat.min(), lat.max(), west, west + (east - west) % 360)
 
     def padded(self, deg) -> "Region":
         """Grown by deg on every side; latitudes stop at +-90, the width at 360."""
@@ -70,7 +71,7 @@ class Region:
         cells fall in more than one column run (a tripole fold), every column
         of those rows is kept. ValueError if no cell is in the box."""
         lons, lats = ds[lon], ds[lat].values
-        east = (lons.values - self.lon_min) % 360 + self.lon_min
+        east = (lons.values.astype(float) - self.lon_min) % 360 + self.lon_min
         in_lat = (lats >= self.lat_min) & (lats <= self.lat_max)
         in_lon = east <= self.lon_max
         if lons.ndim == 1:
@@ -87,10 +88,14 @@ class Region:
                 rows = np.arange(rows[0], rows[-1] + 1)
                 runs = np.flatnonzero(np.diff(cols, append=cols[0] + lons.shape[1]) > 1)
                 # One run of columns, started past the source's seam if it
-                # crosses it. Every column when all are in, or when the cells
-                # fall in more than one run (a tripole fold).
+                # crosses it. When all are in, every column from the first
+                # row's westmost. When the cells fall in more than one run (a
+                # tripole fold), every column in the source's order.
                 if runs.size == 1:
                     cols = np.roll(cols, -(runs[0] + 1))
+                elif runs.size == 0:
+                    first = np.nanargmin(east[rows[0]])
+                    cols = np.roll(cols, -first)
                 else:
                     cols = np.arange(lons.shape[1])
         if not (rows.size and cols.size):
@@ -100,9 +105,14 @@ class Region:
                 "data covers."
             )
         out = ds.isel({y: rows, x: cols})
+        # Whole turns only, so a longitude already in the box keeps its value.
+        labels = out[lon].values.astype(float)
         out[lon] = out[lon].copy(
-            data=(out[lon].values - self.lon_min) % 360 + self.lon_min
+            data=labels + 360 * np.ceil((self.lon_min - labels) / 360)
         )
+        # The source's valid range would mask the longitudes moved past it.
+        for name in ("valid_min", "valid_max", "valid_range"):
+            out[lon].attrs.pop(name, None)
         return out
 
     def lon_ranges(self, west=-180) -> list[tuple[float, float]]:
