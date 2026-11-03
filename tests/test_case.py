@@ -133,6 +133,50 @@ def test_coupling_interval_rejects_uneven_ncpl():
         _stub_case_for_ncpl(7, 5450.0)._coupling_interval("ICE")
 
 
+def _stub_case_for_xmlchanges(monkeypatch, batch_system, queues):
+    """A Case with only what _apply_final_xmlchanges reads; returns it and
+    the xml variables it changes."""
+    from types import SimpleNamespace
+    import CrocoDash.case as case_mod
+
+    changed = {}
+    monkeypatch.setattr(
+        case_mod, "xmlchange", lambda var, val, **kw: changed.update({var: val})
+    )
+    case = case_mod.Case.__new__(case_mod.Case)
+    case.machine = "some-machine"
+    case.is_non_local = False
+    batch = SimpleNamespace(_get_all_queue_names=lambda: queues)
+    case._cime_case = SimpleNamespace(
+        get_value={"BATCH_SYSTEM": batch_system}.__getitem__,
+        get_env={"batch": batch}.__getitem__,
+    )
+    return case, changed
+
+
+@pytest.mark.parametrize(
+    "batch_system, queues, expected",
+    [
+        ("pbs", ["develop", "main"], "develop"),
+        ("none", [], None),  # ubuntu-latest: xmlchange rejects any queue
+    ],
+)
+def test_job_queue_is_set_only_on_a_machine_with_a_batch_system(
+    monkeypatch, batch_system, queues, expected
+):
+    case, changed = _stub_case_for_xmlchanges(monkeypatch, batch_system, queues)
+    case._apply_final_xmlchanges(job_queue="develop", job_wallclock_time="01:00:00")
+    assert changed.get("JOB_QUEUE") == expected
+    assert changed["JOB_WALLCLOCK_TIME"] == "01:00:00"
+
+
+def test_an_unknown_job_queue_lists_the_valid_ones(monkeypatch):
+    case, changed = _stub_case_for_xmlchanges(monkeypatch, "pbs", ["develop", "main"])
+    with pytest.raises(ValueError, match="Valid queues: develop, main"):
+        case._apply_final_xmlchanges(job_queue="mian")
+    assert "JOB_QUEUE" not in changed
+
+
 def test_a_configuration_error_raises_instead_of_returning_a_half_built_case(
     CrocoDash_case_factory, tmp_path, monkeypatch
 ):
