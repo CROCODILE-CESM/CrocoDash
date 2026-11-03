@@ -177,6 +177,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../for_developers/architecture.html">Architecture</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_developers/adding_data_access.html">Adding Data to the Data Access Module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_developers/adding_forcing_configurations.html">Adding Forcing Configurations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_developers/config_compatibility.html">config.json Compatibility</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_developers/submodule_api_usage.html">Submodule API Usage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_developers/edit_docs.html">Write Documentation</a></li>
 <li class="toctree-l2"><a class="reference external" href="https://github.com/CROCODILE-CESM/CrocoDash/discussions/138">Semi-Official ChangeLog</a></li>
@@ -394,6 +395,7 @@ document.write(`
 </pre></div>
 </div>
 <p>This file is read by <code class="docutils literal notranslate"><span class="pre">crocodash</span> <span class="pre">dump</span></code> to reconstruct a YAML config, and by <code class="docutils literal notranslate"><span class="pre">bundle</span></code>/<code class="docutils literal notranslate"><span class="pre">fork</span></code>/<code class="docutils literal notranslate"><span class="pre">duplicate</span></code> to avoid re-parsing CIME. It is the paired counterpart to <code class="docutils literal notranslate"><span class="pre">inputdir/extract_forcings/config.json</span></code>, which records forcing configuration written by <code class="docutils literal notranslate"><span class="pre">configure_forcings</span></code>.</p>
+<p>Both files carry a <code class="docutils literal notranslate"><span class="pre">schema_version</span></code>, each versioned on its own. Reading a file whose MAJOR.MINOR doesn’t match what the installed CrocoDash supports raises an error; recreate the case with the current CrocoDash. A <code class="docutils literal notranslate"><span class="pre">config.json</span></code> written before versioning has no <code class="docutils literal notranslate"><span class="pre">schema_version</span></code> and is read as <code class="docutils literal notranslate"><span class="pre">1.0.0</span></code>; a <code class="docutils literal notranslate"><span class="pre">_crocodash_state.json</span></code> without one is accepted with a warning.</p>
 </section>
 <section id="available-compset-aliases">
 <h2>Available Compset Aliases<a class="headerlink" href="#available-compset-aliases" title="Link to this heading">#</a></h2>
