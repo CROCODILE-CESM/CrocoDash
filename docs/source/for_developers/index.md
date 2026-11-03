@@ -32,6 +32,7 @@ extension points have dedicated guides:
 architecture
 adding_data_access
 adding_forcing_configurations
+config_compatibility
 submodule_api_usage
 edit_docs
 Semi-Official ChangeLog <https://github.com/CROCODILE-CESM/CrocoDash/discussions/138>
