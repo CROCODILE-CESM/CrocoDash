@@ -2,8 +2,8 @@ from pathlib import Path
 from typing import List, Dict
 from abc import ABC, abstractmethod
 from functools import cached_property
+from visualCaseGen import user_nl_blocks
 from visualCaseGen.custom_widget_types.case_tools import xmlchange
-from CrocoDash.forcing import user_nl_blocks
 from CrocoDash import case_state
 from CrocoDash.logging import setup_logger
 import inspect
@@ -16,6 +16,10 @@ from CrocoDash.raw_data_access.base import Calendar
 
 logger = setup_logger(__name__)
 
+# Names CrocoDash's blocks in user_nl files (see visualCaseGen.user_nl_blocks).
+# Existing cases carry it, so it must not change.
+USER_NL_TAG = "CrocoDash configure_forcings"
+
 # The forcing configuration Case.configure_forcings() writes to
 # <inputdir>/extract_forcings/config.json: one entry per active configurator,
 # plus the top-level CONFIG_META_KEYS. Read it only through read_config(), which
@@ -25,7 +29,7 @@ logger = setup_logger(__name__)
 # an old file, e.g. after a rename, and add a CONFIG_MIGRATIONS entry for it.
 # See docs/source/for_developers/config_compatibility.md.
 CONFIG_FILENAME = "config.json"
-CONFIG_SCHEMA_VERSION = "1.0.0"
+CONFIG_SCHEMA_VERSION = "1.1.0"
 # What a config.json written before versioning is read as.
 CONFIG_UNVERSIONED = "1.0.0"
 CONFIG_META_KEYS = frozenset({"schema_version", "caseroot"})
@@ -49,7 +53,18 @@ def write_config(path, config):
 # Upgrades for config.json files an older CrocoDash wrote, keyed by the
 # "MAJOR.MINOR" they upgrade from. Each takes the config dict and returns it at
 # the next version, with schema_version set to that version.
-CONFIG_MIGRATIONS = {}
+
+
+def _drop_stream_years(config):
+    """1.0 -> 1.1: StreamYears is gone. The stream years are now DATM_YR_* and
+    DROF_YR_* xml variables, set by the DATM and Runoff configurators when
+    configure_forcings() runs, and processing never read the entry."""
+    config = {k: v for k, v in config.items() if k != "streamyears"}
+    config["schema_version"] = "1.1.0"
+    return config
+
+
+CONFIG_MIGRATIONS = {"1.0": _drop_stream_years}
 
 
 def read_config(path):
@@ -508,6 +523,21 @@ class UserNLConfigParam(OutputParam):
         raise KeyError(f"Parameter {self.name} not found in {user_nl_path }")
 
 
+def xmlquery(var, *, caseroot):
+    """The case's current value of ``var``, from ``./xmlquery`` in ``caseroot``."""
+    try:
+        res = subprocess.run(
+            ["./xmlquery", var, "--value"], cwd=Path(caseroot), capture_output=True
+        )
+    except OSError as e:
+        raise RuntimeError(f"Could not run ./xmlquery in {caseroot}: {e}") from e
+    if res.returncode != 0:
+        raise RuntimeError(
+            f"./xmlquery {var} failed in {caseroot}:\n{res.stderr.decode().strip()}"
+        )
+    return res.stdout.decode().strip()
+
+
 class XMLConfigParam(OutputParam):
     """
     Parameter applied via xmlchange.
@@ -525,13 +555,14 @@ class XMLConfigParam(OutputParam):
         super().__init__(name, comment, is_file=is_file)
         self.is_non_local = is_non_local
 
-    def apply(self):
+    def apply(self, caseroot):
         if self.value is None:
             raise ValueError(f"Value for parameter {self.name} has not been set.")
 
         xmlchange(
             self.name,
-            str(self.value),
+            self.value,
+            caseroot=caseroot,
             is_non_local=self.is_non_local,
         )
         self.executed = True
@@ -703,12 +734,16 @@ class BaseConfigurator(ABC):
         # A configurator's user_nl parameters go into one CrocoDash block per
         # file, which the next configure_forcings() call replaces (see
         # user_nl_blocks). Consecutive parameters with the same comment share
-        # one comment line.
+        # one comment line. Every change names the registry case's caseroot;
+        # there is none without a live Case (direct construction in tests).
+        case = getattr(self.registry, "case", None)
+        caseroot = getattr(case, "caseroot", None)
         groups = {}
         for p in self.output_params:
             if isinstance(p, XMLConfigParam):
                 p.is_non_local = self.is_non_local
-            if isinstance(p, UserNLConfigParam):
+                p.apply(caseroot)
+            elif isinstance(p, UserNLConfigParam):
                 file_groups = groups.setdefault(p.user_nl_name, [])
                 if file_groups and file_groups[-1][0] == p.comment:
                     file_groups[-1][1].append(p.pair())
@@ -717,7 +752,14 @@ class BaseConfigurator(ABC):
             else:
                 p.apply()
         for user_nl_name, file_groups in groups.items():
-            user_nl_blocks.write(self.name, user_nl_name, file_groups)
+            user_nl_blocks.write(
+                self.name,
+                user_nl_name,
+                file_groups,
+                caseroot=caseroot,
+                ninst=getattr(case, "ninst", 1),
+                tag=USER_NL_TAG,
+            )
         for p in self.output_params:
             if isinstance(p, UserNLConfigParam):
                 p.executed = True

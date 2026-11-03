@@ -145,6 +145,7 @@ def _stub_case_for_xmlchanges(monkeypatch, batch_system, queues):
     )
     case = case_mod.Case.__new__(case_mod.Case)
     case.machine = "some-machine"
+    case.caseroot = "/nonexistent/caseroot"
     case.is_non_local = False
     batch = SimpleNamespace(_get_all_queue_names=lambda: queues)
     case._cime_case = SimpleNamespace(
