@@ -41,8 +41,7 @@ CrocoDash also needs a CESM install. See the [installation](https://crocodile-ce
 ## Tell us how you use CrocoDash
 
 Using CrocoDash, or any CROCODILE tool, in your work? Please tell us about it in this
-[2-minute form](https://forms.gle/UsgxpqCTyHGn4sLJ9). Knowing who uses CrocoDash, and
-for what, keeps the project funded and decides what we build next.
+[2-minute form](https://forms.gle/UsgxpqCTyHGn4sLJ9).
 
 ## License
 
