@@ -18,6 +18,7 @@ nothing.
 import ast
 import math
 import subprocess
+from pathlib import Path
 
 import xarray as xr
 
@@ -97,51 +98,55 @@ class PELayoutConfigurator(BaseConfigurator):
             case_ntasks_ocn=case_ntasks_ocn,
         )
 
-    def _run(self, *cmd):
-        """Run a case script in the caseroot; its last line of output."""
-        cmd = list(cmd) + (["--non-local"] if self.is_non_local else [])
-        caseroot = self.get_input_param("case_caseroot")
-        try:
-            out = subprocess.run(cmd, cwd=caseroot, capture_output=True, text=True)
-        except FileNotFoundError as e:
-            raise RuntimeError(f"{caseroot} is not a CESM case directory") from e
-        if out.returncode != 0:
-            raise RuntimeError(
-                f"{' '.join(cmd)} failed in {caseroot}:\n{out.stderr or out.stdout}"
-            )
-        return out.stdout.strip().splitlines()[-1] if out.stdout.strip() else ""
-
-    def _has_layout(self, layout):
-        """Whether every component already has the layout's NTASKS and ROOTPE."""
-        for name in ("NTASKS", "ROOTPE"):
-            # e.g. ['CPL:128', 'ATM:128', 'OCN:128', ..., 'ESP:1']
-            current = dict(
-                item.split(":")
-                for item in ast.literal_eval(self._run("./xmlquery", name, "--value"))
-            )
-            current.pop("ESP", None)
-            for component, value in current.items():
-                wanted = layout[f"{name}_OCN" if component == "OCN" else name]
-                if int(value) != wanted:
-                    return False
-        return True
-
     def configure(self):
-        tasks_per_node = int(self._run("./xmlquery", "MAX_TASKS_PER_NODE", "--value"))
+        caseroot = self.get_input_param("case_caseroot")
+        flags = ["--non-local"] if self.is_non_local else []
+        if not Path(caseroot, "xmlquery").exists():
+            raise RuntimeError(f"{caseroot} is not a CESM case directory")
+        # e.g. "128", or "['CPL:128', 'ATM:128', 'OCN:128', ..., 'ESP:1']"
+        case_values = {
+            name: subprocess.run(
+                ["./xmlquery", name, "--value", *flags],
+                cwd=caseroot,
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            .stdout.strip()
+            .splitlines()[-1]
+            for name in ("MAX_TASKS_PER_NODE", "NTASKS", "ROOTPE")
+        }
         with xr.open_dataset(self.get_input_param("case_topo_path")) as topo:
             ocean_points = int(topo["mask"].sum())
         layout = pe_layout(
             ocean_points,
-            tasks_per_node,
+            int(case_values["MAX_TASKS_PER_NODE"]),
             marbl="%MARBL" in self.get_input_param("case_compset_lname"),
             ntasks_ocn=self.get_input_param("case_ntasks_ocn"),
         )
-        changed = not self._has_layout(layout)
+        # Whether any component, ESP aside, has other NTASKS or ROOTPE now.
+        changed = any(
+            int(value) != layout[f"{name}_OCN" if component == "OCN" else name]
+            for name in ("NTASKS", "ROOTPE")
+            for component, value in (
+                item.split(":") for item in ast.literal_eval(case_values[name])
+            )
+            if component != "ESP"
+        )
         for name, value in layout.items():
             self.set_output_param(name, value)
         super().configure()
         if changed:
-            self._run("./case.setup", "--reset")
+            out = subprocess.run(
+                ["./case.setup", "--reset", *flags],
+                cwd=caseroot,
+                capture_output=True,
+                text=True,
+            )
+            if out.returncode != 0:
+                raise RuntimeError(
+                    f"case.setup --reset failed in {caseroot}:\n{out.stderr}"
+                )
             logger.info(
                 "PE layout: MOM6 on %s tasks from PE %s, the other components on %s "
                 "(%s ocean points); ran case.setup --reset",
