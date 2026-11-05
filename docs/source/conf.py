@@ -57,3 +57,13 @@ html_static_path = ["_static"]
 nbsphinx_execute = "never"
 html_logo = "_static/crocodile.png"
 html_favicon = "_static/crocodile.png"
+
+# Banner on every page asking users to tell us how they use CrocoDash.
+USE_CASE_FORM_URL = "https://forms.gle/UsgxpqCTyHGn4sLJ9"
+html_theme_options = {
+    "announcement": (
+        "🐊 <strong>Using CrocoDash?</strong> Tell us about your project in a "
+        f'<a href="{USE_CASE_FORM_URL}" target="_blank" rel="noopener">2-minute form</a>. '
+        "Knowing who uses CrocoDash keeps it funded and shapes what we build next."
+    ),
+}
