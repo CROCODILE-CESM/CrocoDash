@@ -172,6 +172,12 @@ class CICE_RESTART(CICEForcingProduct):
                     ("nj", "ni"),
                     np.rad2deg(grid_window[coord_name].values),
                 )
+            # U-point ANGLE (radians, already -- unlike tlon/tlat/ulon/ulat
+            # the grid file stores this one in the units CICE itself expects,
+            # no rad2deg needed), so forcing/cice.py's _regrid_cice_full_grid
+            # can rotate uvel/vvel out of this restart's own tripole axes
+            # before regridding them onto a differently-oriented target grid.
+            subset["angle"] = (("nj", "ni"), grid_window["angle"].values)
 
         # Not a real forcing product -- there's no actual time evolution to
         # source, and a CICE restart/initial-condition file is a single
