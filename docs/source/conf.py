@@ -62,7 +62,7 @@ html_favicon = "_static/crocodile.png"
 USE_CASE_FORM_URL = "https://forms.gle/UsgxpqCTyHGn4sLJ9"
 html_theme_options = {
     "announcement": (
-        "🐊 <strong>Using CrocoDash?</strong> Tell us about your project in a "
+        "<strong>Using CrocoDash?</strong> Tell us about your project in a "
         f'<a href="{USE_CASE_FORM_URL}" target="_blank" rel="noopener">2-minute form</a>.'
     ),
 }
