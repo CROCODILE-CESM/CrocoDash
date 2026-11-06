@@ -31,7 +31,7 @@ class SeaWIFS(BaseProduct):
             Currently unused; the script names the downloaded file itself.
 
         """
-
+        output_folder = Path(output_folder or Path.cwd())
         script = f"""#!/bin/bash
 
                     # Set output directory
@@ -44,8 +44,7 @@ class SeaWIFS(BaseProduct):
                     grep 'L3m.MC.CHL.chlor_a.9km' | \\
                     (cd "$output_folder" && wget --user={username} --ask-password --auth-no-challenge=on -N --wait=0.5 --random-wait -i -)
                     """
-        output_folder = Path(output_folder)
-        output_folder.mkdir(exist_ok=True)
+        output_folder.mkdir(parents=True, exist_ok=True)
         script_path = output_folder / "get_seawifs_data.sh"
         script_path.write_text(script)
         script_path.chmod(0o755)
