@@ -628,3 +628,26 @@ def test_conditions_drops_its_outputs_once_the_configuration_changed(
         [p for p in ocn.iterdir() if p not in kept]
         + [extract / "raw_data", extract / "regridded_data"]
     )
+
+
+def test_ic_takes_the_record_at_or_before_the_start(tmp_path):
+    """CESM tseries files hold a whole year of monthly means, dated at each
+    month's start; the IC must come from the start date's month, not the
+    file's first record."""
+    months = xr.date_range(
+        "2000-01-01", periods=12, freq="MS", calendar="noleap", use_cftime=True
+    )
+    raw = tmp_path / "ic_unprocessed.nc"
+    xr.Dataset(
+        {"TEMP": ("time", np.arange(1.0, 13.0))}, coords={"time": months}
+    ).to_netcdf(raw)
+
+    def month_of(start):
+        with xr.open_dataset(
+            mom6._record_at_start(raw, "time", pd.Timestamp(start))
+        ) as ds:
+            return int(ds["TEMP"].values[0])
+
+    assert month_of("2000-07-15") == 7
+    assert month_of("2000-07-01") == 7
+    assert month_of("1999-12-15") == 1  # before the data: its first record
