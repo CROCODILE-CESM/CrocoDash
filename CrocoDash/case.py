@@ -686,6 +686,11 @@ class Case:
             (self.date_range[1] - self.date_range[0]).days,
             is_non_local=self.cc._is_non_local(),
         )
+        # Every xml change since Case() went through ./xmlchange, which the
+        # open case object doesn't see, so read the case again.
+        self._cime_case = self.cime.get_case(
+            self.caseroot, non_local=self.cc._is_non_local()
+        )
         if self._configure_forcings_called:
             print(
                 "configure_forcings() replaced this case's previous forcing configuration."
