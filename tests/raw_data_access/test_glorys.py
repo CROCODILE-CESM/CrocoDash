@@ -165,6 +165,8 @@ def test_get_glorys_data_from_cds_api(tmp_path):
     lat_max = 61
     lon_min = -35
     lon_max = -34
+    # A partial file left by an interrupted download is replaced.
+    (tmp_path / "temp.nc").write_bytes(b"partial")
     res = gl.GLORYS.get_glorys_data_from_cds_api(
         dates,
         lat_min,
@@ -174,6 +176,7 @@ def test_get_glorys_data_from_cds_api(tmp_path):
         output_folder=tmp_path,
         output_filename="temp.nc",
     )
+    assert list(tmp_path.iterdir()) == [res]
     dataset = xr.open_dataset(res)
     assert dataset.time.values[0] == np.datetime64("2000-01-01T00:00:00.000000000")
     assert dataset.time.values[-1] == np.datetime64("2000-01-05T00:00:00.000000000")

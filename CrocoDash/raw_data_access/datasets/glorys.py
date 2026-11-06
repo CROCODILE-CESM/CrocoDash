@@ -139,6 +139,9 @@ class GLORYS(MOM6ForcingProduct):
             variables=variables,
             output_directory=output_folder,
             output_filename=output_filename,
+            # Otherwise a file already there (a partial download, say) stays,
+            # and the new one is written as <name>_(1).nc.
+            overwrite=True,
         )
         return Path(output_folder) / output_filename
 
