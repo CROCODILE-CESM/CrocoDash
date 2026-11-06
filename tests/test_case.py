@@ -177,6 +177,27 @@ def test_an_unknown_job_queue_lists_the_valid_ones(monkeypatch):
     assert "JOB_QUEUE" not in changed
 
 
+def test_ntasks_ocn_is_followed_by_a_case_setup_reset(monkeypatch, tmp_path):
+    """case.setup has already locked the PE layout, so changing NTASKS_OCN needs a
+    reset before CIME will build; nothing else in this step changes the layout."""
+    from types import SimpleNamespace
+    import CrocoDash.case as case_mod
+
+    case, changed = _stub_case_for_xmlchanges(monkeypatch, "pbs", ["develop"])
+    case.caseroot = tmp_path
+    ran = []
+    monkeypatch.setattr(
+        case_mod.subprocess,
+        "run",
+        lambda cmd, **kw: ran.append(cmd) or SimpleNamespace(returncode=0, stderr=""),
+    )
+    case._apply_final_xmlchanges(job_queue="develop")
+    assert ran == []
+    case._apply_final_xmlchanges(ntasks_ocn=4)
+    assert changed["NTASKS_OCN"] == 4
+    assert ran == [["./case.setup", "--reset"]]
+
+
 def test_a_configuration_error_raises_instead_of_returning_a_half_built_case(
     CrocoDash_case_factory, tmp_path, monkeypatch
 ):
