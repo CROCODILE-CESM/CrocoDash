@@ -97,3 +97,28 @@ def test_driver_works(CrocoDash_case_factory, tmp_path):
     )
     assert result.returncode == 0
     assert "--all" in result.stdout
+
+
+def test_the_glorys_script_gets_every_request_in_one_pass(
+    CrocoDash_case_factory, tmp_path
+):
+    """With the CLI script, one process_forcings() writes the IC request and every
+    boundary chunk's into one script, then stops; running it again before the
+    script has run adds nothing."""
+    import pytest
+    from CrocoDash.forcing.utils import DownloadScriptWritten
+
+    case = CrocoDash_case_factory(tmp_path)
+    case.configure_forcings(
+        date_range=["2020-01-01 00:00:00", "2020-01-20 00:00:00"],
+        boundaries=["north", "east"],
+        function_name="get_glorys_data_script_for_cli",
+    )
+    script = case.inputdir / "extract_forcings" / "raw_data" / "get_glorys_data.sh"
+    for _ in range(2):
+        with pytest.raises(DownloadScriptWritten, match="get_glorys_data.sh"):
+            case.process_forcings()
+        requests = script.read_text().splitlines()[1:]
+        files = [request.rsplit(" -f ", 1)[1] for request in requests]
+        assert len(set(files)) == len(files)
+        assert {f.split("_unprocessed")[0] for f in files} == {"ic", "north", "east"}

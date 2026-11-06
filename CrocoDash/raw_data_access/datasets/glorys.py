@@ -6,7 +6,6 @@ import xarray as xr
 import glob
 import os
 import copernicusmarine
-import regional_mom6 as rm6
 from pathlib import Path
 import pandas as pd
 from CrocoDash.raw_data_access.datasets.utils import make_dates_end_inclusive
@@ -158,21 +157,34 @@ class GLORYS(MOM6ForcingProduct):
         variables=None,
         name=None,
         **kwargs,
-    ) -> None:
+    ) -> Path:
         """
-        Script to run the GLORYS data query for the CLI
+        Add this request's copernicusmarine subset line to get_glorys_data.sh
+        in output_folder, so one script fetches every chunk of every
+        boundary. A request already in it is not added again. variables=None
+        fetches every variable.
         """
-        modify_existing = False
-        if os.path.exists(output_folder / Path("get_glorys_data.sh")):
-            modify_existing = True
-        path = rm6.get_glorys_data(
-            [lon_min, lon_max],
-            [lat_min, lat_max],
-            list(make_dates_end_inclusive(dates)),
-            os.path.splitext(output_filename)[0],
-            output_folder,
-            modify_existing=modify_existing,
+        # Just under three GLORYS cells (3 x 1/12), as regional_mom6's script used.
+        buf = 0.24
+        start, end = make_dates_end_inclusive(dates)
+        line = (
+            "copernicusmarine subset --dataset-id cmems_mod_glo_phy_my_0.083deg_P1D-m"
+            + "".join(f" --variable {variable}" for variable in variables or [])
+            + f" --start-datetime {start.replace(' ', 'T')}"
+            f" --end-datetime {end.replace(' ', 'T')}"
+            f" --minimum-longitude {lon_min - buf:.4f}"
+            f" --maximum-longitude {lon_max + buf:.4f}"
+            f" --minimum-latitude {lat_min - buf:.4f}"
+            f" --maximum-latitude {lat_max + buf:.4f}"
+            " --minimum-depth 0 --maximum-depth 6000"
+            f" -o {output_folder} -f {output_filename}"
         )
+        path = Path(output_folder) / "get_glorys_data.sh"
+        if not path.exists():
+            path.write_text("#!/bin/bash\n")
+        if line not in path.read_text().splitlines():
+            with open(path, "a") as f:
+                f.write(line + "\n")
         GLORYS.logger.info(
             f"This data access method returns a script at path {path} to run to get access data "
         )
