@@ -1,6 +1,7 @@
 from pathlib import Path
 import uuid
 import shutil
+import subprocess
 from datetime import datetime
 import math
 import pandas as pd
@@ -1101,9 +1102,19 @@ class Case:
             is_non_local=self.is_non_local,
         )
 
-        # xmlchange("ROOTPE_OCN", 128, is_non_local=self.is_non_local) -> needs to be before the the setup
         if ntasks_ocn is not None:
             xmlchange("NTASKS_OCN", ntasks_ocn, is_non_local=self.is_non_local)
+            # visualCaseGen has already run case.setup, which locked the PE
+            # layout, and CIME won't build a case whose layout changed until
+            # case.setup --reset runs.
+            cmd = ["./case.setup", "--reset"]
+            if self.is_non_local:
+                cmd.append("--non-local")
+            out = subprocess.run(cmd, cwd=self.caseroot, capture_output=True, text=True)
+            if out.returncode != 0:
+                raise RuntimeError(
+                    f"{' '.join(cmd)} failed in {self.caseroot}:\n{out.stderr}"
+                )
         # This will trigger for both the run and the archiver.
         if job_queue is not None:
             # xmlchange rejects a JOB_QUEUE the machine doesn't list, and a
