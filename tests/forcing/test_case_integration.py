@@ -105,6 +105,7 @@ def test_the_glorys_script_gets_every_request_in_one_pass(
     """With the CLI script, one process_forcings() writes the IC request and every
     boundary chunk's into one script, then stops; running it again before the
     script has run adds nothing."""
+    import shlex
     import pytest
     from CrocoDash.forcing.utils import DownloadScriptWritten
 
@@ -119,6 +120,6 @@ def test_the_glorys_script_gets_every_request_in_one_pass(
         with pytest.raises(DownloadScriptWritten, match="get_glorys_data.sh"):
             case.process_forcings()
         requests = script.read_text().splitlines()[1:]
-        files = [request.rsplit(" -f ", 1)[1] for request in requests]
+        files = [shlex.split(request)[-1] for request in requests]
         assert len(set(files)) == len(files)
         assert {f.split("_unprocessed")[0] for f in files} == {"ic", "north", "east"}

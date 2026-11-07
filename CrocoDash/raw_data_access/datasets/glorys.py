@@ -5,6 +5,7 @@ Data Access Module -> Glorys
 import xarray as xr
 import glob
 import os
+import shlex
 import copernicusmarine
 from pathlib import Path
 import pandas as pd
@@ -177,7 +178,7 @@ class GLORYS(MOM6ForcingProduct):
             f" --minimum-latitude {lat_min - buf:.4f}"
             f" --maximum-latitude {lat_max + buf:.4f}"
             " --minimum-depth 0 --maximum-depth 6000"
-            f" -o {output_folder} -f {output_filename}"
+            f" -o {shlex.quote(str(output_folder))} -f {shlex.quote(output_filename)}"
         )
         path = Path(output_folder) / "get_glorys_data.sh"
         if not path.exists():

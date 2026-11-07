@@ -1,3 +1,5 @@
+from pathlib import Path
+import shlex
 from CrocoDash.raw_data_access.datasets import glorys as gl
 import os
 import pytest
@@ -189,15 +191,18 @@ def test_get_glorys_data_script_for_cli(tmp_path):
     lat_max = 61
     lon_min = -101
     lon_max = -34
+    folder = tmp_path / "with space"
+    folder.mkdir()
     path = gl.GLORYS.get_glorys_data_script_for_cli(
         dates,
         lat_min,
         lat_max,
         lon_min,
         lon_max,
-        output_folder=tmp_path,
+        output_folder=folder,
         output_filename="temp",
     )
 
-    # Just testing if it exists, this function just calls a regional_mom6 function
-    assert os.path.exists(path)
+    # The script survives a space in the inputdir path.
+    request = shlex.split(Path(path).read_text().splitlines()[-1])
+    assert request[request.index("-o") + 1] == str(folder)
