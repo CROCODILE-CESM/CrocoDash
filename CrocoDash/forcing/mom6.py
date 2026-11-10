@@ -31,6 +31,9 @@ from CrocoDash.raw_data_access.base import Calendar, MOM6ForcingProduct
 
 logger = logging.setup_logger(__name__)
 
+# Days per GET chunk (see ConditionsConfigurator.configure).
+GET_STEP_DAYS = 7
+
 
 def build_forcing_request(
     product_info: dict, function_args: dict = None
@@ -578,7 +581,7 @@ class ConditionsConfigurator(BaseConfigurator):
         # REGRID stays at 30 days. Its per-chunk cost is real work rather than
         # waiting, so slicing it finer mostly buys more chunk files to merge.
         # Power users can override either in config.json.
-        self.set_output_param("get_step_days", 7)
+        self.set_output_param("get_step_days", GET_STEP_DAYS)
         self.set_output_param("regrid_step_days", 30)
         self.set_output_param(
             "boundary_number_conversion",
@@ -736,13 +739,27 @@ class ConditionsConfigurator(BaseConfigurator):
 
     @classmethod
     def _fingerprint(cls, entry):
+        """What the files depend on. Leaves out what a newer CrocoDash adds
+        without changing a file, so upgrading doesn't look like a change: an
+        access-function argument left at None (None and absent both mean its
+        default, while a freq the user sets is a string and still counts) and
+        the product's declared time_sampling, which product_name pins."""
         if entry is None:
             return None
+
+        def set_args(args):
+            return {k: v for k, v in (args or {}).items() if v is not None}
+
+        inputs = dict(entry.get("inputs") or {})
+        inputs["function_args"] = set_args(inputs.get("function_args"))
         outputs = entry.get("outputs", {})
-        return {
-            "inputs": entry.get("inputs"),
-            "outputs": {k: outputs.get(k) for k in cls._PROCESS_OUTPUTS},
-        }
+        outputs = {k: outputs.get(k) for k in cls._PROCESS_OUTPUTS}
+        outputs["function_args"] = set_args(outputs["function_args"])
+        if outputs["information"] is not None:
+            outputs["information"] = {
+                k: v for k, v in outputs["information"].items() if k != "time_sampling"
+            }
+        return {"inputs": inputs, "outputs": outputs}
 
     def stale_outputs(self, previous_config, current_config, inputdir):
         """process_ic/process_bc skip every file they find already written --
@@ -778,21 +795,11 @@ class ConditionsConfigurator(BaseConfigurator):
 
     # ---- process (extraction) ----
 
-    def _function_args(self):
-        """The stored function_args the access function still takes. A
-        config.json from when every dated access method took freq carries
-        "freq": null even for a method that no longer does."""
-        accepted = ProductRegistry.get_function_default_args(
-            self.get_input_param("product_name"), self.get_input_param("function_name")
-        )
-        stored = self.get_output_param("function_args") or {}
-        return {k: v for k, v in stored.items() if k in accepted}
-
     def process_bc(self, ctx):
         """Process MOM6 boundary conditions through forcing.obc's GET → REGRID →
         MERGE engine, using regional_mom6's Segment as the regrid step."""
         product_info = self.get_output_param("information")
-        function_args = self._function_args()
+        function_args = self.get_output_param("function_args") or {}
         preview = ctx.preview
 
         if preview:
@@ -866,7 +873,7 @@ class ConditionsConfigurator(BaseConfigurator):
             )
 
         product_info = self.get_output_param("information")
-        function_args = self._function_args()
+        function_args = self.get_output_param("function_args") or {}
         preview = ctx.preview
         regrid_fn = partial(
             _regrid_ic,

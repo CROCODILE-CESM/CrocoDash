@@ -36,7 +36,7 @@ class REFERENCE_OCEAN(MOM6ForcingProduct):
     time_var_name = "time"
     time_units = "days"
     calendar = GREGORIAN
-    time_sampling = TimeSampling("D", "mean")
+    time_sampling = "D"  # daily means
     boundary_fill_method = "regional_mom6"
     tracer_x_coord = "longitude"
     tracer_y_coord = "latitude"
@@ -100,7 +100,6 @@ class REFERENCE_OCEAN(MOM6ForcingProduct):
     }
 
     @accessmethod(
-        subsample=True,
         description=(
             "Generates a synthetic ocean dataset over the requested bbox/dates: "
             "temperature warm at the equator and decaying exponentially with "
@@ -131,7 +130,7 @@ class REFERENCE_OCEAN(MOM6ForcingProduct):
         # methods use) so there's always a real 2D grid to regrid from.
         freq = resolve_time_sampling(
             REFERENCE_OCEAN, "get_reference_ocean_data", freq=freq
-        ).frequency
+        )
         lon = np.arange(lon_min - 1.0, lon_max + 1.0 + resolution_deg, resolution_deg)
         lat = np.arange(lat_min - 1.0, lat_max + 1.0 + resolution_deg, resolution_deg)
         # Layer centers, like GLORYS's depth axis: regional_mom6 rebuilds layer
@@ -404,7 +403,7 @@ class REFERENCE_WAVES(WW3ForcingProduct):
     time_var_name = "time"
     time_units = None
     calendar = GREGORIAN
-    time_sampling = TimeSampling("6h", "point")
+    time_sampling = "6h"  # instantaneous values
     # The synthetic spectrum below is built around waves "coming from" the
     # west (theta0 = 270), so that is what it declares.
     direction_convention = DIRECTION_COMING_FROM

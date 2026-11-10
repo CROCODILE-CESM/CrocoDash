@@ -11,7 +11,12 @@ from CrocoDash.topo import Topo
 from CrocoDash.vgrid import VGrid
 from CrocoDash.forcing.base import ForcingConfigRegistry
 from CrocoDash.raw_data_access.registry import ProductRegistry
-from CrocoDash.raw_data_access.base import ForcingProduct, resolve_time_sampling
+from CrocoDash.raw_data_access.base import (
+    ForcingProduct,
+    frequency_step,
+    resolve_time_sampling,
+)
+from CrocoDash.forcing.mom6 import GET_STEP_DAYS
 from ProConPy.config_var import ConfigVar, cvars
 from ProConPy.stage import Stage
 from ProConPy.dev_utils import ConstraintViolation
@@ -606,6 +611,19 @@ class Case:
             function_args.get("data_freq"),
             function_args.get("freq"),
         )
+        # Each GET chunk samples freq on its own, from its own first day, so a
+        # freq that doesn't divide the chunk comes out at the wrong cadence
+        # ("MS" weekly, "2D" with a 1-day step at each chunk edge), and thinned
+        # monthly data repeats a record across chunks. Lifted once chunk
+        # sizes follow the data's time sampling.
+        freq = function_args.get("freq")
+        step = pd.Timedelta(days=GET_STEP_DAYS)
+        if freq is not None and step % frequency_step(freq) != pd.Timedelta(0):
+            raise ValueError(
+                f"freq={freq!r} isn't supported yet: forcing is fetched in "
+                f"{GET_STEP_DAYS}-day chunks that each sample freq on their own, "
+                f"so freq must divide {GET_STEP_DAYS} days (e.g. 'D', '7D' or 'W')."
+            )
 
         # function_args is written straight to config.json (via ConditionsConfigurator's
         # "function_args" ConfigOutputParam); coerce Path values (e.g. a dataset_path

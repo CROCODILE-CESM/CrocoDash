@@ -35,7 +35,7 @@ class DummyForcing(MOM6ForcingProduct):
     boundary_fill_method = "nearest"
     time_units = "days since 2000-01-01"
     calendar = GREGORIAN
-    time_sampling = TimeSampling("D")
+    time_sampling = "D"
 
     @accessmethod
     def fetch_dummy(
@@ -134,7 +134,7 @@ def test_tracer_names_check():
             boundary_fill_method = "nearest"
             time_units = "days since 2000-01-01"
             calendar = GREGORIAN
-            time_sampling = TimeSampling("D")
+            time_sampling = "D"
 
 
 def test_write_metadata():
@@ -223,40 +223,14 @@ def test_time_sampling_must_be_declared():
             link = "l"
 
 
-def test_time_sampling_must_be_a_time_sampling():
-    with pytest.raises(TypeError, match="TimeSampling"):
+def test_time_sampling_must_be_a_frequency_alias():
+    with pytest.raises(ValueError, match="pandas frequency alias"):
 
         class Bare(DatedBaseProduct):
             product_name = "bare_time_sampling"
             description = "d"
             link = "l"
-            time_sampling = "D"
-
-
-@pytest.mark.parametrize(
-    ("frequency", "days"), [("D", 1), ("MS", 31), ("6h", 0.25), ("YS", 366)]
-)
-def test_max_period_days(frequency, days):
-    assert TimeSampling(frequency).max_period_days == days
-
-
-@pytest.mark.parametrize(
-    "kwargs",
-    [
-        {"frequency": "not-a-freq"},
-        {"frequency": "D", "cell_method": "sum"},
-    ],
-)
-def test_time_sampling_rejects_bad_values(kwargs):
-    with pytest.raises(ValueError):
-        TimeSampling(**kwargs)
-
-
-def test_time_sampling_is_written_into_metadata():
-    assert DummyForcing.write_metadata()["time_sampling"] == {
-        "frequency": "D",
-        "cell_method": "mean",
-    }
+            time_sampling = "monthly"
 
 
 def test_every_registered_dated_product_declares_time_sampling():
@@ -270,9 +244,9 @@ class _Sampled(DatedBaseProduct):
     product_name = "sampled_for_freq_tests"
     description = "d"
     link = "l"
-    time_sampling = TimeSampling("D")
+    time_sampling = "D"
 
-    @accessmethod(subsample=True)
+    @accessmethod
     def strided(dates, output_folder, output_filename, freq=None):
         pass
 
@@ -280,52 +254,57 @@ class _Sampled(DatedBaseProduct):
     def ranged(dates, output_folder, output_filename):
         pass
 
-    @accessmethod(subsample=True, data_freq=True)
+    @accessmethod
     def declared(dates, output_folder, output_filename, data_freq=None, freq=None):
         pass
 
 
-def test_resolve_time_sampling_defaults_to_the_declared_one():
-    assert resolve_time_sampling(_Sampled, "ranged") == TimeSampling("D")
-
-
-def test_resolve_time_sampling_subsamples_coarser():
-    assert resolve_time_sampling(_Sampled, "strided", freq="MS").frequency == "MS"
-
-
-def test_resolve_time_sampling_rejects_finer_than_native():
-    with pytest.raises(ValueError, match="finer"):
-        resolve_time_sampling(_Sampled, "strided", freq="6h")
-
-
-def test_resolve_time_sampling_refuses_freq_a_method_cannot_honour():
-    assert resolve_time_sampling(_Sampled, "ranged", freq="D") == TimeSampling("D")
-    with pytest.raises(NotImplementedError, match="cannot sub-sample"):
-        resolve_time_sampling(_Sampled, "ranged", freq="MS")
-
-
-def test_resolve_time_sampling_data_freq_names_the_source_cadence():
-    assert resolve_time_sampling(_Sampled, "declared", "6h").frequency == "6h"
-    assert resolve_time_sampling(_Sampled, "declared", "6h", "D").frequency == "D"
-    with pytest.raises(ValueError, match="takes no data_freq"):
-        resolve_time_sampling(_Sampled, "strided", "6h")
-
-
-def test_user_specified_product_needs_data_freq():
+@pytest.mark.parametrize(
+    ("product", "method", "data_freq", "freq", "outcome"),
+    [
+        # The declared cadence, or data_freq for data at a path the user gives.
+        ("sampled_for_freq_tests", "ranged", None, None, "D"),
+        ("sampled_for_freq_tests", "declared", "6h", None, "6h"),
+        ("cesm_mom_output", "get_mom6_single_variable_data", "D", None, "D"),
+        ("cice_restart", "get_cice_restart_subset", None, None, None),
+        # freq thins to a coarser cadence; the native one is always allowed.
+        ("sampled_for_freq_tests", "strided", None, "MS", "MS"),
+        ("sampled_for_freq_tests", "declared", "6h", "D", "D"),
+        ("sampled_for_freq_tests", "ranged", None, "D", "D"),
+        # Values the method can't honour.
+        ("sampled_for_freq_tests", "strided", None, "6h", (ValueError, "finer")),
+        (
+            "sampled_for_freq_tests",
+            "ranged",
+            None,
+            "MS",
+            (NotImplementedError, "cannot sub-sample"),
+        ),
+        (
+            "sampled_for_freq_tests",
+            "strided",
+            "6h",
+            None,
+            (ValueError, "takes no data_freq"),
+        ),
+        (
+            "cesm_mom_output",
+            "get_mom6_single_variable_data",
+            None,
+            None,
+            (ValueError, "pass data_freq"),
+        ),
+        ("cice_restart", "get_cice_restart_subset", None, "D", (ValueError, "static")),
+    ],
+)
+def test_resolve_time_sampling(product, method, data_freq, freq, outcome):
     ProductRegistry.load()
-    product = ProductRegistry.get_product("cesm_mom_output")
-    method = "get_mom6_single_variable_data"
-    with pytest.raises(ValueError, match="pass data_freq"):
-        resolve_time_sampling(product, method)
-    assert resolve_time_sampling(product, method, "D") == TimeSampling("D")
-
-
-def test_static_product_takes_no_freq():
-    ProductRegistry.load()
-    product = ProductRegistry.get_product("cice_restart")
-    assert resolve_time_sampling(product, "get_cice_restart_subset") is None
-    with pytest.raises(ValueError, match="static"):
-        resolve_time_sampling(product, "get_cice_restart_subset", freq="D")
+    product = ProductRegistry.get_product(product)
+    if isinstance(outcome, tuple):
+        with pytest.raises(outcome[0], match=outcome[1]):
+            resolve_time_sampling(product, method, data_freq, freq)
+    else:
+        assert resolve_time_sampling(product, method, data_freq, freq) == outcome
 
 
 def test_sample_dates_strides_from_the_freq_anchor():
@@ -336,3 +315,16 @@ def test_sample_dates_strides_from_the_freq_anchor():
 def test_sample_dates_falls_back_to_the_window_start():
     dates = sample_dates("2020-01-10", "2020-01-11", "MS")
     assert list(dates.strftime("%m-%d")) == ["01-10"]
+
+
+@pytest.mark.parametrize(
+    ("start", "end", "expected"),
+    [
+        ("2000-02-23", "2000-02-29", ["2000-02-23"]),
+        ("2000-02-29", "2000-03-06", ["2000-03-01"]),
+        ("2000-02-29", "2000-02-29", ["2000-02-28"]),
+    ],
+)
+def test_sample_dates_moves_feb_29_into_a_noleap_calendar(start, end, expected):
+    dates = sample_dates(start, end, "MS", "noleap")
+    assert [d.strftime("%Y-%m-%d") for d in dates] == expected

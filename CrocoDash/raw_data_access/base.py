@@ -21,7 +21,7 @@ How it was solved:
 from CrocoDash.raw_data_access.registry import ProductRegistry
 import dataclasses
 import dataclasses
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 import inspect
 import json
 import pandas as pd
@@ -63,45 +63,6 @@ GREGORIAN = Calendar(cf="standard", cesm="GREGORIAN", mom6="gregorian")
 NOLEAP = Calendar(cf="noleap", cesm="NO_LEAP", mom6="noleap")
 
 
-@dataclass(frozen=True)
-class TimeSampling:
-    """How a dated product samples time, so callers can size their requests to it.
-
-    frequency is a pandas frequency alias ("D", "MS", "6h", ...).
-    cell_method says what a record holds: "mean" for an average over its
-    interval (GLORYS daily means), "point" for an instantaneous value (ERA5).
-    """
-
-    frequency: str
-    cell_method: str = "mean"
-
-    def __post_init__(self):
-        try:
-            pd.date_range("2001-01-01", periods=2, freq=self.frequency)
-        except ValueError as e:
-            raise ValueError(
-                f"{self.frequency!r} is not a pandas frequency alias: {e}"
-            ) from e
-        if self.cell_method not in ("mean", "point"):
-            raise ValueError("cell_method must be 'mean' or 'point'")
-
-    @property
-    def max_period_days(self) -> float:
-        """Longest gap between records, in days (31 for monthly, 366 for yearly).
-
-        Calendar offsets like "MS" have no fixed length, so this measures the
-        spacing of a few years of generated stamps rather than the offset.
-        """
-        stamps = pd.date_range("2001-01-01", "2005-01-01", freq=self.frequency)
-        if len(stamps) < 2:
-            stamps = pd.date_range("2001-01-01", periods=2, freq=self.frequency)
-        return stamps.to_series().diff().max() / pd.Timedelta(days=1)
-
-    def describe(self) -> str:
-        values = "means" if self.cell_method == "mean" else "instantaneous values"
-        return f"{self.frequency} {values}"
-
-
 # Declared by a product whose cadence depends on the source the user points it
 # at (e.g. a dataset_path of model output), so the user must give it as data_freq.
 USER_SPECIFIED = "user_specified"
@@ -119,27 +80,37 @@ def frequency_step(freq: str) -> pd.Timedelta:
     return (stamps[-1] - stamps[0]) / (len(stamps) - 1)
 
 
-def sample_dates(start, end, freq: str, calendar: str = "standard"):
+def sample_dates(start, end, freq: str, calendar: str = "standard", use_cftime=None):
     """The days to fetch from [start, end] at freq, in calendar (cftime dates
-    for any but "standard"). A window too short to hold one (e.g. an initial
-    condition's single day) falls back to its first day."""
-    start, end = (pd.Timestamp(date).strftime("%Y-%m-%d") for date in (start, end))
-    dates = xr.date_range(start, end, freq=freq, calendar=calendar)
-    return dates if len(dates) else xr.date_range(start, periods=1, calendar=calendar)
+    for any but "standard", or with use_cftime). A window too short to hold
+    one (e.g. an initial condition's single day) falls back to its first day.
+    An end on Feb 29 moves to Feb 28 in a calendar without leap days."""
+
+    def in_calendar(date):
+        date = pd.Timestamp(date)
+        if calendar in ("noleap", "365_day") and (date.month, date.day) == (2, 29):
+            date -= pd.Timedelta(days=1)
+        return date.strftime("%Y-%m-%d")
+
+    start, end = in_calendar(start), in_calendar(end)
+    kwargs = {"calendar": calendar, "use_cftime": use_cftime}
+    dates = xr.date_range(start, end, freq=freq, **kwargs)
+    return dates if len(dates) else xr.date_range(start, periods=1, **kwargs)
 
 
 def resolve_time_sampling(
     product, method_name: str, data_freq: str | None = None, freq: str | None = None
 ):
-    """The TimeSampling a call to product.method_name returns.
+    """The cadence, a pandas frequency alias, of what a call to
+    product.method_name returns, or None for a static snapshot.
 
     data_freq names the cadence of the data a method reads from a path the
-    user gives it (@accessmethod(data_freq=True), the CESM output readers);
-    a USER_SPECIFIED product needs it. freq thins the data to a coarser
-    cadence, for a method that can (@accessmethod(subsample=True)). Raises
-    on a value the method can't honour.
+    user gives it (one that takes a data_freq argument, the CESM output
+    readers); a USER_SPECIFIED product needs it. freq thins the data to a
+    coarser cadence, for a method that takes a freq argument. Raises on a
+    value the method can't honour.
     """
-    method = product._access_methods[method_name]
+    params = inspect.signature(product._access_methods[method_name].__func__).parameters
     name = f"{product.product_name}.{method_name}"
     for value in (data_freq, freq):
         if value is not None:
@@ -150,55 +121,40 @@ def resolve_time_sampling(
             raise ValueError(f"{name} returns a static snapshot; it takes no freq.")
         return None
     if data_freq is not None:
-        if not getattr(method, "_data_freq", False):
+        if "data_freq" not in params:
             raise ValueError(
                 f"{name} reads {product.product_name}'s own data, so it takes no "
                 "data_freq."
             )
-        native = TimeSampling(data_freq)
+        native = data_freq
     elif native == USER_SPECIFIED:
         raise ValueError(
             f"{name} reads whatever cadence the data you point it at has, so "
             "it must be given: pass data_freq, e.g. 'MS' for monthly or 'D' for "
             "daily output."
         )
-    if freq is None or frequency_step(freq) == frequency_step(native.frequency):
+    if freq is None or frequency_step(freq) == frequency_step(native):
         return native
-    if not getattr(method, "_subsample", False):
+    if "freq" not in params:
         raise NotImplementedError(
-            f"{name} returns every {native.frequency} record in the requested "
+            f"{name} returns every {native} record in the requested "
             "range and cannot sub-sample it; drop freq."
         )
-    if frequency_step(freq) < frequency_step(native.frequency):
+    if frequency_step(freq) < frequency_step(native):
         raise ValueError(
-            f"{name} has {native.frequency} data; freq={freq!r} is finer than "
+            f"{name} has {native} data; freq={freq!r} is finer than "
             "that, so it would silently return fewer records than asked for."
         )
-    return replace(native, frequency=freq)
+    return freq
 
 
-def accessmethod(
-    func=None,
-    *,
-    description=None,
-    type=None,
-    how_to_use=None,
-    subsample=False,
-    data_freq=False,
-):
-    """subsample: the method takes freq=None and can fetch every freq instead
-    of every record. data_freq: it reads data from a path the user gives it,
-    and takes data_freq=None naming that data's cadence. See
-    resolve_time_sampling."""
-
+def accessmethod(func=None, *, description=None, type=None, how_to_use=None):
     def decorator(f):
         f = staticmethod(f)
         f._is_access_method = True
         f._description = description
         f._type = type
         f._how_to_use = how_to_use
-        f._subsample = subsample
-        f._data_freq = data_freq
         return f
 
     # Case 1: decorator used WITHOUT args: @accessmethod
@@ -337,9 +293,10 @@ class BaseProduct:
 class DatedBaseProduct(BaseProduct):
     """Specific enforcement needs for Dated Products.
 
-    Every dated product declares its ``time_sampling``: a TimeSampling,
-    USER_SPECIFIED when the cadence depends on the source the user points it
-    at, or None for a static snapshot that ignores ``dates``.
+    Every dated product declares its ``time_sampling``: how often its records
+    come, as a pandas frequency alias ("D", "MS", "6h"), USER_SPECIFIED when
+    the cadence depends on the source the user points it at, or None for a
+    static snapshot that ignores ``dates``.
     """
 
     required_metadata = BaseProduct.required_metadata + ["time_sampling"]
@@ -348,17 +305,12 @@ class DatedBaseProduct(BaseProduct):
     ]
 
     def __init_subclass__(cls, **kwargs):
-        # Checked before BaseProduct registers the class, so a bad declaration
-        # never reaches the registry. A missing one is left to BaseProduct's
+        # Checked before BaseProduct registers the class, so a bad alias never
+        # reaches the registry. A missing one is left to BaseProduct's
         # required_metadata check.
         ts = getattr(cls, "time_sampling", None)
-        if getattr(cls, "product_name", None) and not (
-            ts is None or ts == USER_SPECIFIED or isinstance(ts, TimeSampling)
-        ):
-            raise TypeError(
-                f"{cls.__name__} must declare time_sampling as a TimeSampling, "
-                f"USER_SPECIFIED or None (got {ts!r})."
-            )
+        if getattr(cls, "product_name", None) and ts not in (None, USER_SPECIFIED):
+            frequency_step(ts)
         super().__init_subclass__(**kwargs)
 
     @classmethod

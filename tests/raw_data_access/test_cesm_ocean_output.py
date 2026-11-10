@@ -4,6 +4,7 @@ import pytest
 import numpy as np
 import cftime
 import pandas as pd
+from datetime import timedelta
 from pathlib import Path
 from CrocoDash.grid import Grid
 from CrocoDash.raw_data_access.registry import ProductRegistry
@@ -119,6 +120,41 @@ def test_get_cesm_single_variable_data_dates_and_thins_pop_means(tmp_path):
     assert dates_read("thinned", freq="2MS") == [months[0], months[2]]
     with pytest.raises(ValueError, match="data_freq='D'"):
         dates_read("daily", data_freq="D")
+
+
+@pytest.mark.parametrize("hours", [6, 24])
+def test_pop_means_are_floored_to_the_day_only_when_a_day_long(hours):
+    """POP's first interval starts a model step after midnight. Daily means
+    are dated at midnight of their day; 6-hourly ones at their own start, so
+    a day's four records don't all land on 00:00."""
+    t0 = cftime.DatetimeNoLeap(2000, 1, 1)
+    ends = [t0 + timedelta(hours=hours * k) for k in range(1, 5)]
+    starts = [cftime.DatetimeNoLeap(2000, 1, 1, 0, 31, 40)] + ends[:-1]
+    ds = xr.Dataset(
+        {"time_bound": (("time", "d2"), np.array([starts, ends]).T)},
+        coords={"time": ends},
+    )
+    ds.time.attrs["bounds"] = "time_bound"
+    midnights = [t0 + timedelta(days=k) for k in range(4)]
+    expected = midnights if hours == 24 else starts
+    assert list(co.date_means_at_interval_start(ds).time.values) == expected
+
+
+def test_pop_means_without_time_bounds_raise():
+    """Without bounds, end-stamped means can't be re-dated, and would come
+    out a month late."""
+    ds = xr.Dataset(coords={"time": [cftime.DatetimeNoLeap(2000, 2, 1)]})
+    with pytest.raises(ValueError, match="time bounds"):
+        co.date_means_at_interval_start(ds)
+
+
+def test_select_records_thins_records_without_time_bounds():
+    """Without time bounds (e.g. MOM6 snapshots, decoded to datetime64), freq
+    keeps the record nearest each sampled date."""
+    time = pd.date_range("2000-01-01", "2000-03-31", freq="D")
+    ds = xr.Dataset({"zos": ("time", np.zeros(len(time)))}, coords={"time": time})
+    kept = co.select_records(ds, (time[0], time[-1]), "D", "MS").time
+    assert list(kept.dt.strftime("%m-%d").values) == ["01-01", "02-01", "03-01"]
 
 
 def _write_mom6_history_file(

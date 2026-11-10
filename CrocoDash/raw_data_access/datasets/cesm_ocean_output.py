@@ -54,7 +54,7 @@ class CESM_POP_OUTPUT(MOM6ForcingProduct):
     calendar = NOLEAP
     # The default dataset_path is tseries/month_1, monthly means; pass
     # data_freq for an archive of another cadence (e.g. "D" for day_1).
-    time_sampling = TimeSampling("MS", "mean")
+    time_sampling = "MS"  # monthly means
     depth_coord = ["z_t", "z_t_150m"]
     delimiter = "."
     tracer_var_names = {"temp": "TEMP", "salt": "SALT"}
@@ -99,8 +99,6 @@ class CESM_POP_OUTPUT(MOM6ForcingProduct):
     }
 
     @accessmethod(
-        subsample=True,
-        data_freq=True,
         description=(
             "Gets CESM single-variable-per-file (tseries) ocean data from a given "
             "path (by default a POP-MARBL run) — the standard CESM postprocessed "
@@ -159,8 +157,9 @@ class CESM_POP_OUTPUT(MOM6ForcingProduct):
             lat_name,
             lon_name,
             preview,
-            data_freq=data_freq or CESM_POP_OUTPUT.time_sampling.frequency,
+            data_freq=data_freq or CESM_POP_OUTPUT.time_sampling,
             freq=freq,
+            end_stamped=True,
         )
 
 
@@ -198,8 +197,6 @@ class CESM_MOM_OUTPUT(MOM6ForcingProduct):
     tracer_var_names = {"temp": "thetao", "salt": "so"}
 
     @accessmethod(
-        subsample=True,
-        data_freq=True,
         description=(
             "Reads native MOM6 output (full history/diagnostic files, or "
             "diag_table-extracted cross-section slices) from any directory and "
@@ -243,7 +240,6 @@ class CESM_MOM_OUTPUT(MOM6ForcingProduct):
             )
 
         ds = xr.open_mfdataset(files, combine="by_coords")
-        ds = date_means_at_interval_start(ds, time_var_name)
         ds = select_records(
             ds, (dates[0], dates[-1]), data_freq, freq, time_var_name, dataset_path
         )
@@ -317,8 +313,6 @@ class CESM_MOM_OUTPUT(MOM6ForcingProduct):
         return [output_path]
 
     @accessmethod(
-        subsample=True,
-        data_freq=True,
         description=(
             "Gets native MOM6 output that's organized in the CESM single-"
             "variable-per-file (tseries) convention instead of one multi-"
@@ -413,6 +407,7 @@ def read_single_variable_tseries_data(
     data_freq=None,
     freq=None,
     grid_coords=None,
+    end_stamped=False,
 ):
     """
     Shared implementation for reading single-variable-per-file (tseries) output
@@ -422,7 +417,8 @@ def read_single_variable_tseries_data(
     up for both CESM-POP and native MOM6 output.
 
     data_freq is the cadence of the files, checked against them, and freq thins
-    them to a coarser one (see select_records).
+    them to a coarser one (see select_records). end_stamped is for CESM-POP
+    means, stamped at the end of their interval (see subset_dataset).
 
     grid_coords optionally maps a variable name to its own (lat_name, lon_name)
     pair, overriding lat_name/lon_name for that variable - needed for MOM6's
@@ -448,6 +444,10 @@ def read_single_variable_tseries_data(
         for var in variable_info:
             variable_info[var] = [f for f in variable_info[var] if member in f]
 
+    # Thinned to freq, a subset holds only the window's records, so its name
+    # needs the window's days; without freq it holds whole files, which every
+    # chunk inside the same date_format period can share.
+    name_format = "%Y%m%d" if freq else date_format
     paths = subset_dataset(
         variable_info=variable_info,
         output_path=output_folder,
@@ -458,14 +458,15 @@ def read_single_variable_tseries_data(
         lat_name=lat_name,
         lon_name=lon_name,
         dates=(
-            start_date.strftime(date_format),
-            end_date.strftime(date_format),
+            start_date.strftime(name_format),
+            end_date.strftime(name_format),
         ),
         preview=preview,
         data_freq=data_freq,
         freq=freq,
         window=(start_date, end_date),
         grid_coords=grid_coords,
+        end_stamped=end_stamped,
     )
 
     # Merge the file into the specified output file.
@@ -607,29 +608,34 @@ def _first_day(times):
     return times.astype("datetime64[D]").astype(times.dtype)
 
 
-def date_means_at_interval_start(ds, time_var_name="time"):
+def date_means_at_interval_start(ds, time_var_name="time", source=""):
     """CESM-POP stamps a mean at the end of its averaging interval (a January
-    mean at Feb 1): date those records, and their time bounds, at the first
-    day of the interval instead. The day, because POP's first interval starts
-    a model step after midnight (00:31:40 in CESM-HR). Records stamped
-    anywhere else, like MOM6's mid-interval means, are left as they are."""
+    mean at Feb 1): date the records, and their time bounds, at the start of
+    the interval instead. Means a day or longer are dated at the start's day,
+    because POP's first interval starts a model step after midnight (00:31:40
+    in CESM-HR); flooring sub-daily ones would put all of a day's records at
+    00:00. The longest interval decides, since that first one is a step short.
+
+    Raises when the time bounds are missing or the stamps aren't at their
+    ends, rather than leave every record dated an interval late."""
     bounds = ds[time_var_name].attrs.get("bounds")
     if bounds not in ds.variables:
-        return ds
+        raise ValueError(
+            f"{source}: CESM-POP output is dated from its time bounds, named by "
+            f"{time_var_name}:bounds, and these files have none. Were they "
+            "reprocessed (e.g. with cdo) and lost the attribute?"
+        )
     time = ds[time_var_name].values
     start, end = ds[bounds].values[:, 0], ds[bounds].values[:, 1]
-    at_end = time == end
-    if not at_end.any():
-        return ds
-    start = np.where(at_end, _first_day(start), start)
+    if not (time == end).all():
+        raise ValueError(
+            f"{source}: CESM-POP output stamps each record at the end of its "
+            f"time bounds ({bounds}), and these files don't."
+        )
+    if pd.to_timedelta(end - start).max() >= pd.Timedelta(days=1):
+        start = _first_day(start)
     ds = ds.assign_coords(
-        {
-            time_var_name: (
-                time_var_name,
-                np.where(at_end, start, time),
-                ds[time_var_name].attrs,
-            )
-        }
+        {time_var_name: (time_var_name, start, ds[time_var_name].attrs)}
     )
     ds[bounds] = (ds[bounds].dims, np.stack([start, end], axis=1))
     return ds
@@ -640,6 +646,10 @@ def select_records(ds, window, data_freq, freq=None, time_var_name="time", sourc
     than that, keep the record that covers each date sample_dates picks from
     the (start, end) window: the one whose averaging interval (time bounds)
     holds it, or without bounds the nearest one."""
+    if freq is not None and data_freq is None:
+        raise ValueError(
+            f"{source}: freq={freq!r} needs data_freq, the cadence of the files."
+        )
     time = ds[time_var_name].values
     if data_freq is not None and len(time) > 1:
         spacing = np.median(pd.to_timedelta(np.diff(time)) / pd.Timedelta(days=1))
@@ -652,14 +662,18 @@ def select_records(ds, window, data_freq, freq=None, time_var_name="time", sourc
             )
     if freq is None or frequency_step(freq) == frequency_step(data_freq):
         return ds
+    # Sampled dates of the same type as the data's (datetime64 or cftime),
+    # even for cftime in the standard calendar, so the two compare.
     calendar = getattr(time[0], "calendar", "standard")
-    dates = sample_dates(window[0], window[-1], freq, calendar)
+    use_cftime = isinstance(time[0], cftime.datetime)
+    dates = sample_dates(window[0], window[-1], freq, calendar, use_cftime)
     bounds = ds[time_var_name].attrs.get("bounds")
     if bounds in ds.variables:
         lo, hi = ds[bounds].values[:, 0], ds[bounds].values[:, 1]
         keep = [i for i in range(len(time)) if any(lo[i] <= d < hi[i] for d in dates)]
     else:
-        keep = sorted({int(np.argmin(abs(time - d))) for d in dates})
+        index = ds.indexes[time_var_name]
+        keep = np.unique(index.get_indexer(dates, method="nearest"))
     return ds.isel({time_var_name: keep})
 
 
@@ -708,6 +722,7 @@ def subset_dataset(
     freq: str | None = None,
     window: tuple | None = None,
     grid_coords: dict | None = None,
+    end_stamped: bool = False,
 ) -> None:
     """
     Subsets (and merges) the dataset based on the provided variable names and
@@ -733,6 +748,9 @@ def subset_dataset(
             override - needed for MOM6's C-grid, where uo/vo live on different
             horizontal dims than the tracer grid, so a single lat_name/lon_name
             pair can't mask every variable correctly.
+        end_stamped (bool): The records are CESM-POP means, stamped at the end
+            of their averaging interval; date them at its start (see
+            date_means_at_interval_start).
     """
 
     # Create the output directory if it does not exist
@@ -763,10 +781,10 @@ def subset_dataset(
 
         # Load the dataset for the variable
         ds = xr.open_mfdataset(file_paths, decode_timedelta=False)
-        ds = date_means_at_interval_start(ds)
-        ds = select_records(
-            ds, window, data_freq, freq, source=Path(file_paths[0]).parent
-        )
+        source = Path(file_paths[0]).parent
+        if end_stamped:
+            ds = date_means_at_interval_start(ds, source=source)
+        ds = select_records(ds, window, data_freq, freq, source=source)
 
         # Convert time. Saving to netcdf is not working with cftime objects.
         ds = convert_cftime_to_numeric(ds, time_var_name="time")

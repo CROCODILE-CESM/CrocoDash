@@ -152,29 +152,27 @@ containing at least `temp` and `salt`.
 :::
 
 :::{important}
-Every dated product declares a **`time_sampling`**: a `TimeSampling` saying how
-often its records come and whether each is a mean over its interval or an
-instantaneous value. Use `USER_SPECIFIED` when the cadence depends on the
-source the user points the product at (CESM-MOM output), so the user must pass
-it as `data_freq`, and `None` only for a static snapshot that ignores `dates`.
+Every dated product declares a **`time_sampling`**: how often its records come,
+as a pandas frequency alias (`"D"`, `"MS"`, `"6h"`). Use `USER_SPECIFIED` when
+the cadence depends on the source the user points the product at (CESM-MOM
+output), so the user must pass it as `data_freq`, and `None` only for a static
+snapshot that ignores `dates`.
 
 ```python
 class MyDataset(MOM6ForcingProduct):
-    # Daily means
-    time_sampling = TimeSampling("D", cell_method="mean")
+    time_sampling = "D"  # daily means
 ```
 
-An access method calls `resolve_time_sampling` first and says, in its
-decorator, which of two arguments it takes (users set them through
-`function_overrides`):
+An access method calls `resolve_time_sampling` first. Its signature says which
+of two arguments it takes (users set them through `function_overrides`):
 
-- `@accessmethod(subsample=True)`: it takes `freq=None` and can fetch every
-  `freq` instead of every record, e.g. `freq="MS"` for one record a month. Use
-  `sample_dates` to pick the dates (see GLORYS's RDA method).
-- `@accessmethod(data_freq=True)`: it reads data from a path the user gives it
-  and takes `data_freq=None`, the cadence of that data (the CESM output
-  readers). It only describes the data: the method reads it the same way
-  whatever the value, and checks it against the records it finds.
+- `freq=None`: the method can fetch every `freq` instead of every record, e.g.
+  `freq="MS"` for one record a month. Use `sample_dates` to pick the dates (see
+  GLORYS's RDA method).
+- `data_freq=None`: the method reads data from a path the user gives it, and
+  `data_freq` is the cadence of that data (the CESM output readers). It only
+  describes the data: the method reads it the same way whatever the value, and
+  checks it against the records it finds.
 
 A method may take both. Any other method takes neither and returns its
 product's own cadence.
@@ -182,7 +180,7 @@ product's own cadence.
 
 ## Step 5: Validation and Tests
 
-When you test your class, it will automatically get registered with the registry and run validation. It will fail on import if you miss metadata or required args in your registered access function, or if `calendar` is missing or is not a `Calendar`, or `time_sampling` is missing or is not a `TimeSampling`, `USER_SPECIFIED` or `None`.
+When you test your class, it will automatically get registered with the registry and run validation. It will fail on import if you miss metadata or required args in your registered access function, or if `calendar` is missing or is not a `Calendar`, or `time_sampling` is missing or is not a pandas frequency alias, `USER_SPECIFIED` or `None`.
 
 Create a test file in `tests/raw_data_access` to test your dataset:
 
