@@ -31,7 +31,6 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
-import math
 import dask
 import dask.threaded
 import numpy as np
@@ -275,41 +274,41 @@ def _get_one_chunk(
 
 def _regrid_per_process(
     proc_id,
-    chunk_pairs,
-    boundary,
-    raw_files,
-    seg_id,
+    items,
     hgrid_path,
     output_folder,
-    scratch_folder,
+    in_process,
     dataset_varnames,
     regrid_chunk_fn,
     start_date,
 ):
-    """Regrid this worker's slice of the chunk list.
+    """Regrid this worker's run of (boundary, seg_id, raw_files, chunk_start,
+    chunk_end) items.
 
-    Runs in its own process, so it opens its own hgrid and keeps its own
-    regridder cache -- ESMF weights are computed on this worker's first chunk
-    and reused for the rest of its slice. ``scratch_folder`` is where
-    ``regrid_chunk_fn`` is pointed: it writes to the fixed filename
-    ``forcing_obc_segment_{seg_id:03d}.nc``, so concurrent workers need
-    separate folders or they would overwrite each other. Finished chunks are
-    moved into ``output_folder`` under their dated name, so the on-disk result
-    does not depend on how many workers ran.
+    Runs in its own process (or in the caller's, with ``in_process``), so it
+    opens its own hgrid and keeps its own regridder cache, one per boundary:
+    ESMF weights are computed on a boundary's first chunk here and reused for
+    the rest of that boundary's chunks, and never cross to another boundary.
+    ``regrid_chunk_fn`` writes to the fixed filename
+    ``forcing_obc_segment_{seg_id:03d}.nc``, so pool workers each get their
+    own scratch folder; finished chunks are moved into ``output_folder`` under
+    their dated name, so the on-disk result does not depend on how many
+    workers ran.
     """
     output_folder = Path(output_folder)
-    scratch_folder = Path(scratch_folder)
-    scratch_folder.mkdir(parents=True, exist_ok=True)
-    (scratch_folder / "weights").mkdir(exist_ok=True)
+    logger.info("PROC [%d] - REGRID: %d chunks", proc_id, len(items))
 
-    logger.info("PROC [%d] - REGRID [%s]: Spun up new proc", proc_id, boundary)
-
-    regridders = None
+    regridders = {}
     proc_regridded_files = []
-
     with xr.open_dataset(hgrid_path) as hgrid:
-        for chunk_start, chunk_end in chunk_pairs:
-            chunk_dated_output, regridders = _regrid_one_chunk(
+        for boundary, seg_id, raw_files, chunk_start, chunk_end in items:
+            scratch_folder = (
+                output_folder
+                if in_process
+                else output_folder / f"_proc_{seg_id:03d}_{proc_id:02d}"
+            )
+            (scratch_folder / "weights").mkdir(parents=True, exist_ok=True)
+            chunk_dated_output, regridders[boundary] = _regrid_one_chunk(
                 proc_id,
                 chunk_start,
                 chunk_end,
@@ -321,10 +320,10 @@ def _regrid_per_process(
                 scratch_folder,
                 dataset_varnames,
                 regrid_chunk_fn,
-                regridders,
+                regridders.get(boundary),
                 start_date,
             )
-            proc_regridded_files.append(chunk_dated_output)
+            proc_regridded_files.append((boundary, chunk_dated_output))
 
     return proc_regridded_files
 
@@ -550,10 +549,8 @@ def _get_boundary(
                 f.result()
 
 
-def _regrid_boundary(
-    boundary: str,
-    seg_id: int,
-    raw_files: list,
+def _regrid_boundaries(
+    boundaries: dict,
     start_date: datetime,
     end_date: datetime,
     regrid_step_days: int,
@@ -561,8 +558,10 @@ def _regrid_boundary(
     output_folder,
     dataset_varnames: dict,
     regrid_chunk_fn,
-) -> list:
-    """Regrid all raw files for one boundary, sliced by regrid_step_days.
+) -> dict:
+    """Regrid every boundary's raw files, sliced by regrid_step_days, on one
+    pool. ``boundaries`` maps each boundary to ``(seg_id, raw_files)``; the
+    result maps it to its regridded files.
 
     Each regrid_step slice is handed to ``regrid_chunk_fn`` (the
     target-specific regrid step -- see ``mom6.py``/``cice.py``/``ww3.py``) as
@@ -570,80 +569,68 @@ def _regrid_boundary(
     manage. If a target's own regrid step needs a file on disk (as
     regional_mom6's does), that's its own business: write one, use it, remove
     it. ``regrid_chunk_fn`` is expected to write its output to
-    ``<its outfolder> / f"forcing_obc_segment_{seg_id:03d}.nc"`` and return the
-    updated regridder cache to reuse on the next chunk (regridder weights are
-    typically computed once and reused).
+    ``<its outfolder> / f"forcing_obc_segment_{seg_id:03d}.nc"`` and return
+    whatever it wants handed back (as ``regridders``) on the same boundary's
+    next chunk in that worker -- its regridders, or, for MOM6, the whole
+    Segment -- so per-boundary setup and weights are built once per worker.
 
-    Chunks are spread across processes. Weight reuse is per worker, not global:
-    each worker computes the regridder on its first chunk and reuses it for the
-    rest of its own slice. One worker (the single-CPU case) is the plain
-    sequential engine, regridding straight into ``output_folder``.
+    The work is every (boundary, slice) pair, boundary by boundary, split into
+    one contiguous run per worker, of sizes that differ by at most one. So the
+    workers finish together whatever their number, a short range keeps every
+    core busy (a single slice on four boundaries runs four at once), each
+    worker starts only once, and a worker's run mostly stays on one boundary,
+    whose weights it then computes once. One worker (the single-CPU case) is
+    the plain sequential engine, regridding in-process straight into
+    ``output_folder``.
     """
     output_folder = Path(output_folder)
     (output_folder / "weights").mkdir(exist_ok=True)
 
     pairs = list(_make_date_pairs(start_date, end_date, regrid_step_days))
-    if not pairs:
-        return []
-
-    num_workers = max(1, min(available_cpus(), len(pairs)))
-
-    if num_workers == 1:
-        return sorted(
-            _regrid_per_process(
-                0,
-                pairs,
-                boundary,
-                raw_files,
-                seg_id,
-                hgrid_path,
-                output_folder,
-                output_folder,
-                dataset_varnames,
-                regrid_chunk_fn,
-                start_date,
-            ),
-            key=os.path.basename,
-        )
-
-    per_worker = math.ceil(len(pairs) / num_workers)
-    worker_slices = [
-        pairs[j : j + per_worker] for j in range(0, len(pairs), per_worker)
+    items = [
+        (boundary, seg_id, raw_files, chunk_start, chunk_end)
+        for boundary, (seg_id, raw_files) in boundaries.items()
+        for chunk_start, chunk_end in pairs
     ]
-    logger.info(
-        "REGRID [%s]: %d chunks across %d processes",
-        boundary,
-        len(pairs),
-        len(worker_slices),
-    )
+    regridded = {boundary: [] for boundary in boundaries}
+    if not items:
+        return regridded
 
-    regridded_files = []
-    with ProcessPoolExecutor(
-        max_workers=num_workers,
-        mp_context=multiprocessing.get_context("fork"),
-        initializer=_init_fork_worker,
-    ) as ex:
-        futures = [
-            ex.submit(
-                _regrid_per_process,
-                proc_id,
-                chunk_pairs,
-                boundary,
-                raw_files,
-                seg_id,
-                hgrid_path,
-                output_folder,
-                output_folder / f"_proc_{seg_id:03d}_{proc_id:02d}",
-                dataset_varnames,
-                regrid_chunk_fn,
-                start_date,
-            )
-            for proc_id, chunk_pairs in enumerate(worker_slices)
-        ]
-        for f in as_completed(futures):
-            regridded_files.extend(f.result())
+    num_workers = max(1, min(available_cpus(), len(items)))
+    args = (output_folder, num_workers == 1, dataset_varnames, regrid_chunk_fn)
+    if num_workers == 1:
+        done = _regrid_per_process(0, items, hgrid_path, *args, start_date)
+    else:
+        size, extra = divmod(len(items), num_workers)
+        runs, start = [], 0
+        for proc_id in range(num_workers):
+            end = start + size + (proc_id < extra)
+            runs.append(items[start:end])
+            start = end
+        logger.info(
+            "REGRID: %d chunks on %d boundaries across %d processes",
+            len(items),
+            len(boundaries),
+            num_workers,
+        )
+        done = []
+        with ProcessPoolExecutor(
+            max_workers=num_workers,
+            mp_context=multiprocessing.get_context("fork"),
+            initializer=_init_fork_worker,
+        ) as ex:
+            futures = [
+                ex.submit(
+                    _regrid_per_process, proc_id, run, hgrid_path, *args, start_date
+                )
+                for proc_id, run in enumerate(runs)
+            ]
+            for f in as_completed(futures):
+                done.extend(f.result())
 
-    return sorted(regridded_files, key=os.path.basename)
+    for boundary, path in done:
+        regridded[boundary].append(path)
+    return {b: sorted(files, key=os.path.basename) for b, files in regridded.items()}
 
 
 def _merge_boundary(boundary_label: str, regridded_files: list, output_folder) -> Path:
@@ -737,7 +724,7 @@ def process_obc_conditions(
         raw_dataset_path: Directory for raw downloaded data.
         regridded_dataset_path: Directory for per-chunk regridded data.
         output_path: Directory for final, merged output files.
-        regrid_chunk_fn: Target-specific regrid step -- see ``_regrid_boundary``.
+        regrid_chunk_fn: Target-specific regrid step -- see ``_regrid_boundaries``.
         get_step_days: GET chunk size in days; None = full range in one request.
         regrid_step_days: REGRID chunk size in days.
         bathymetry_path: Optional path to the case's bathymetry file. When
@@ -808,38 +795,38 @@ def process_obc_conditions(
             extra_args=extra_args,
         )
 
-    regridded_files_by_boundary = {}
+    raw_files_by_boundary = {}
     for boundary in boundaries:
-        seg_id = boundary_number_conversion[boundary]
         parse_raw_dates = lambda f, boundary=boundary: _parse_raw_filename_dates(
             f, boundary
         )
-        raw_files = _validate_coverage(
-            _files_within_range(
-                sorted(raw_path.glob(f"{boundary}_unprocessed.*.nc")),
+        raw_files_by_boundary[boundary] = (
+            boundary_number_conversion[boundary],
+            _validate_coverage(
+                _files_within_range(
+                    sorted(raw_path.glob(f"{boundary}_unprocessed.*.nc")),
+                    parse_raw_dates,
+                    start_date,
+                    end_date,
+                ),
                 parse_raw_dates,
+                boundary,
                 start_date,
                 end_date,
             ),
-            parse_raw_dates,
-            boundary,
-            start_date,
-            end_date,
         )
 
-        logger.info("REGRID [%s]: %s-day slices", boundary, regrid_step_days)
-        regridded_files_by_boundary[boundary] = _regrid_boundary(
-            boundary=boundary,
-            seg_id=seg_id,
-            raw_files=raw_files,
-            start_date=start_date,
-            end_date=end_date,
-            regrid_step_days=regrid_step_days,
-            hgrid_path=str(hgrid_path),
-            output_folder=str(regridded_path),
-            dataset_varnames=dataset_varnames,
-            regrid_chunk_fn=regrid_chunk_fn,
-        )
+    logger.info("REGRID: %s-day slices", regrid_step_days)
+    regridded_files_by_boundary = _regrid_boundaries(
+        boundaries=raw_files_by_boundary,
+        start_date=start_date,
+        end_date=end_date,
+        regrid_step_days=regrid_step_days,
+        hgrid_path=str(hgrid_path),
+        output_folder=str(regridded_path),
+        dataset_varnames=dataset_varnames,
+        regrid_chunk_fn=regrid_chunk_fn,
+    )
 
     for boundary in boundaries:
         seg_id = boundary_number_conversion[boundary]

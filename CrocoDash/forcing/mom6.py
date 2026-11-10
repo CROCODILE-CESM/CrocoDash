@@ -93,13 +93,20 @@ def _regrid_obc_chunk(
     ``bathymetry_path`` isn't part of obc.py's generic engine signature --
     process_bc binds it via functools.partial. Without it the segment has no
     mask and no depth, so rm6 writes the full source column at every point
-    instead of thinning dz to the local water column. The Topo is rebuilt
-    here rather than bound as an object because this runs in forked workers
-    that receive the function pickled; a path is cheap to ship, a Topo is not.
+    instead of thinning dz to the local water column. The Topo is built here
+    rather than bound as an object because this runs in forked workers that
+    receive the function pickled; a path is cheap to ship, a Topo is not.
+
+    ``regridders`` is the engine's per-boundary cache: this boundary's Segment
+    from its previous chunk on this worker, or None on the first. The Segment
+    holds the boundary's slice of the grid and topo and its regridders, so the
+    Topo (which reads the whole domain), the Segment and the ESMF weights are
+    built once per boundary per worker, not once per chunk.
     """
     outfolder = Path(outfolder)
+    seg = regridders
     topo = None
-    if bathymetry_path is not None:
+    if seg is None and bathymetry_path is not None:
         topo = Topo.from_topo_file(
             grid=Grid.from_supergrid_ds(hgrid),
             topo_file_path=bathymetry_path,
@@ -117,12 +124,13 @@ def _regrid_obc_chunk(
     with dask.config.set(scheduler="synchronous"):
         ds.to_netcdf(tmp_file)
     try:
-        seg = Segment.cardinal(
-            hgrid,
-            orientation=boundary,
-            segment_name=f"segment_{seg_id:03d}",
-            topo=topo,
-        )
+        if seg is None:
+            seg = Segment.cardinal(
+                hgrid,
+                orientation=boundary,
+                segment_name=f"segment_{seg_id:03d}",
+                topo=topo,
+            )
         seg.regrid_velocity_tracers(
             infile=tmp_file,
             varnames=dataset_varnames,
@@ -132,7 +140,7 @@ def _regrid_obc_chunk(
             arakawa_grid=None,
             regridding_method="bilinear",
             fill_method=rm6.regridding.fill_missing_data,
-            regridders=regridders,
+            regridders=seg._regridders,
             calendar=dataset_varnames["calendar"]["mom6"],
             time_units=dataset_varnames["time_units"],
             # Opt in to ESMF skipping degenerate (duplicate/collapsed) source
@@ -143,7 +151,7 @@ def _regrid_obc_chunk(
             # is malformed for some other reason still fails loudly.
             ignore_degenerate=True,
         )
-        return seg._regridders
+        return seg
     finally:
         tmp_file.unlink(missing_ok=True)
 

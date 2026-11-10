@@ -9,7 +9,7 @@ import CrocoDash.forcing.obc as obc_module
 from CrocoDash.forcing.obc import (
     process_obc_conditions,
     _merge_boundary,
-    _regrid_boundary,
+    _regrid_boundaries,
     _validate_coverage,
     _ocean_bbox_for_boundary,
 )
@@ -139,7 +139,11 @@ def test_process_obc_conditions_uses_tmask_bbox_for_get(
         return []
 
     monkeypatch.setattr(obc_module, "_get_boundary", fake_get_boundary)
-    monkeypatch.setattr(obc_module, "_regrid_boundary", lambda **_k: [])
+    monkeypatch.setattr(
+        obc_module,
+        "_regrid_boundaries",
+        lambda boundaries, **_k: dict.fromkeys(boundaries, []),
+    )
     monkeypatch.setattr(obc_module, "_validate_coverage", lambda *a, **k: [])
     monkeypatch.setattr(obc_module, "_merge_boundary", lambda *a, **k: None)
 
@@ -286,37 +290,40 @@ def test_merge_rejects_a_non_monotonic_noleap_time_axis(tmp_path):
 
 
 # ---------------------------------------------------------------------------
-# Unit test: _regrid_boundary's num_workers > 1 branch
+# Unit test: _regrid_boundaries's num_workers > 1 branch
 # ---------------------------------------------------------------------------
 
 
-def _fake_regrid_chunk_fn(ds, hgrid, boundary, seg_id, outfolder, **_kwargs):
-    """Stand-in regrid_chunk_fn: writes the chunk straight through.
+def _fake_regrid_chunk_fn(
+    ds, hgrid, boundary, seg_id, outfolder, regridders=None, **_kwargs
+):
+    """Stand-in regrid_chunk_fn: writes the chunk straight through, and fails
+    if it is handed another boundary's regridders.
 
     Must be a module-level function (not a local closure) so it can be
     pickled to the ProcessPoolExecutor workers.
     """
+    if regridders not in (None, {"boundary": boundary}):
+        raise AssertionError(f"{boundary} was handed regridders {regridders}")
     outfolder = Path(outfolder)
     outfolder.mkdir(parents=True, exist_ok=True)
     ds.to_netcdf(outfolder / f"forcing_obc_segment_{seg_id:03d}.nc")
-    return {}
+    return {"boundary": boundary}
 
 
-def test_regrid_boundary_uses_multiple_workers(tmp_path, get_rect_grid, monkeypatch):
-    """The num_workers > 1 branch (worker slicing + os.replace) is only taken
-    when available_cpus() > 1 and there's more than one regrid chunk. CI's
-    other coverage of _regrid_boundary is either @pytest.mark.slow or
-    monkeypatches _regrid_boundary away entirely, so this branch is never
-    exercised for real. available_cpus() is pinned here so the test doesn't
-    depend on how many cores the CI runner happens to have.
+def test_regrid_boundaries_shares_one_pool(tmp_path, get_rect_grid, monkeypatch):
+    """Every boundary's slices go on one pool, each worker taking a contiguous
+    run: 2 boundaries x 3 slices on 4 workers gives runs of 2, 2, 1 and 1, so
+    the second run crosses from east into west and must not hand west east's
+    regridders. CI's other coverage of the engine is either @pytest.mark.slow
+    or monkeypatches it away, so this branch is never exercised for real.
+    available_cpus() is pinned so the test doesn't depend on the runner.
 
     Using one raw file spanning the whole range (get_step_days=None) against
-    two narrower regrid chunks also exercises the get/regrid chunk-size
-    independence _files_overlapping_range restores -- with the old
-    containment-based filter this raw file would be dropped for every chunk
-    narrower than itself.
+    narrower regrid chunks also exercises the get/regrid chunk-size
+    independence _files_overlapping_range restores.
     """
-    monkeypatch.setattr(obc_module, "available_cpus", lambda: 2)
+    monkeypatch.setattr(obc_module, "available_cpus", lambda: 4)
 
     grid = get_rect_grid
     hgrid_path = tmp_path / "hgrid.nc"
@@ -327,16 +334,17 @@ def test_regrid_boundary_uses_multiple_workers(tmp_path, get_rect_grid, monkeypa
     output_dir = tmp_path / "regridded"
     output_dir.mkdir()
 
-    start_date, end_date = datetime(2020, 1, 1), datetime(2020, 1, 4)
-    times = pd.date_range("2020-01-01 12:00", periods=4, freq="D")
-    raw_ds = xr.Dataset({"var": ("time", np.arange(4))}, coords={"time": times})
-    raw_file = raw_dir / "east_unprocessed.2020-01-01_2020-01-04.nc"
-    raw_ds.to_netcdf(raw_file)
+    start_date, end_date = datetime(2020, 1, 1), datetime(2020, 1, 6)
+    times = pd.date_range("2020-01-01 12:00", periods=6, freq="D")
+    raw_ds = xr.Dataset({"var": ("time", np.arange(6))}, coords={"time": times})
+    boundaries = {}
+    for seg_id, boundary in ((1, "east"), (2, "west")):
+        raw_file = raw_dir / f"{boundary}_unprocessed.2020-01-01_2020-01-06.nc"
+        raw_ds.to_netcdf(raw_file)
+        boundaries[boundary] = (seg_id, [raw_file])
 
-    result = _regrid_boundary(
-        boundary="east",
-        seg_id=1,
-        raw_files=[raw_file],
+    result = _regrid_boundaries(
+        boundaries=boundaries,
         start_date=start_date,
         end_date=end_date,
         regrid_step_days=2,
@@ -346,12 +354,12 @@ def test_regrid_boundary_uses_multiple_workers(tmp_path, get_rect_grid, monkeypa
         regrid_chunk_fn=_fake_regrid_chunk_fn,
     )
 
-    assert sorted(Path(p).name for p in result) == [
-        "forcing_obc_segment_001_2020-01-01_2020-01-02.nc",
-        "forcing_obc_segment_001_2020-01-03_2020-01-04.nc",
-    ]
-    for p in result:
-        assert Path(p).exists()
+    for boundary, (seg_id, _) in boundaries.items():
+        assert [Path(p).name for p in result[boundary]] == [
+            f"forcing_obc_segment_{seg_id:03d}_2020-01-0{d}_2020-01-0{d + 1}.nc"
+            for d in (1, 3, 5)
+        ]
+        assert all(Path(p).exists() for p in result[boundary])
 
 
 # ---------------------------------------------------------------------------
