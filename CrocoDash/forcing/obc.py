@@ -828,6 +828,7 @@ def process_obc_conditions(
         regrid_chunk_fn=regrid_chunk_fn,
     )
 
+    merges = []
     for boundary in boundaries:
         seg_id = boundary_number_conversion[boundary]
         regridded_files = regridded_files_by_boundary[boundary]
@@ -838,12 +839,34 @@ def process_obc_conditions(
             start_date,
             end_date,
         )
+        merges.append((boundary, f"{seg_id:03d}", regridded_files))
 
-        logger.info("MERGE [%s]", boundary)
-        _merge_boundary(
-            boundary_label=f"{seg_id:03d}",
-            regridded_files=regridded_files,
-            output_folder=str(output_path),
+    # Each boundary's MERGE reads and writes only its own files, so they run side
+    # by side: one after another, they were the part of a large domain's run that
+    # no number of REGRID workers shortens.
+    num_workers = max(1, min(available_cpus(), len(merges)))
+    if num_workers == 1:
+        for boundary, label, files in merges:
+            logger.info("MERGE [%s]", boundary)
+            _merge_boundary(
+                boundary_label=label,
+                regridded_files=files,
+                output_folder=str(output_path),
+            )
+    else:
+        logger.info(
+            "MERGE: %d boundaries across %d processes", len(merges), num_workers
         )
+        with ProcessPoolExecutor(
+            max_workers=num_workers,
+            mp_context=multiprocessing.get_context("fork"),
+            initializer=_init_fork_worker,
+        ) as ex:
+            futures = [
+                ex.submit(_merge_boundary, label, files, str(output_path))
+                for _, label, files in merges
+            ]
+            for f in as_completed(futures):
+                f.result()
 
     logger.info("OBC processing complete.")

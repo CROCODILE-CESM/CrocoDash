@@ -146,6 +146,8 @@ def test_process_obc_conditions_uses_tmask_bbox_for_get(
     )
     monkeypatch.setattr(obc_module, "_validate_coverage", lambda *a, **k: [])
     monkeypatch.setattr(obc_module, "_merge_boundary", lambda *a, **k: None)
+    # One CPU keeps the stubbed MERGE in-process (a lambda can't go to a pool).
+    monkeypatch.setattr(obc_module, "available_cpus", lambda: 1)
 
     process_obc_conditions(**kwargs, bathymetry_path=bathymetry_path)
 
