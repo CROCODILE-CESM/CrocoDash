@@ -33,7 +33,7 @@ These are not part of the linear workflow but you'll reach for them often:
 
 - **[Compsets & Inputs](compsets_and_inputs.md)** — available CESM compsets, and how to customize MOM6 parameters via `user_nl_mom`.
 - **[Datasets](datasets.md)** — which raw datasets CrocoDash can download, and how the `raw_data_access` registry works.
-- **[Running in a container](container.md)** — build and run a case with crocontainer on a laptop or Derecho, no machine port or batch queue.
+- **[Running in a container](container.md)** — crocontainer, a development and testing container for experienced users.
 - **[Additional resources](additional_resources.md)** — talks, videos, and external tutorials.
 
 ```{toctree}
