@@ -1,0 +1,27 @@
+/* The theme colours links dark teal, which is hard to read on its grey banner. */
+.bd-header-announcement a,
+.bd-header-announcement a:visited,
+.bd-header-announcement a:hover {
+  color: #fff;
+  text-decoration: underline;
+}
+
+/* Leave room for the close button added by announcement.js. */
+.bd-header-announcement {
+  padding-right: 3rem;
+}
+
+.announcement-close {
+  position: absolute;
+  right: 1rem;
+  background: none;
+  border: 0;
+  color: #fff;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+html.announcement-dismissed .bd-header-announcement {
+  display: none;
+}
