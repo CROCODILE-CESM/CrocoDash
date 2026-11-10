@@ -1,6 +1,6 @@
 // Adds a close button to the announcement banner and keeps it closed.
 // Loaded in <head>, so a closed banner never flashes on page load.
-// The key comes from conf.py: a new announcement shows again for everyone.
+// The key is the banner text from conf.py, so new text shows again for everyone.
 (function () {
   var key = "announcement-dismissed:" + document.currentScript.dataset.key;
   var root = document.documentElement;

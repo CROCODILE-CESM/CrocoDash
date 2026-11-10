@@ -59,13 +59,12 @@ html_logo = "_static/crocodile.png"
 html_favicon = "_static/crocodile.png"
 
 # Banner on every page asking users to tell us how they use CrocoDash.
-# Readers can close it; announcement.js remembers that per form URL.
+# Readers can close it; announcement.js keeps it closed until this text changes.
 USE_CASE_FORM_URL = "https://forms.gle/UsgxpqCTyHGn4sLJ9"
-html_theme_options = {
-    "announcement": (
-        "<strong>Using CrocoDash?</strong> Tell us about your project in a "
-        f'<a href="{USE_CASE_FORM_URL}" target="_blank" rel="noopener">2-minute form</a>.'
-    ),
-}
+ANNOUNCEMENT = (
+    "<strong>Using CrocoDash?</strong> Tell us about your project in a "
+    f'<a href="{USE_CASE_FORM_URL}" target="_blank" rel="noopener">2-minute form</a>.'
+)
+html_theme_options = {"announcement": ANNOUNCEMENT}
 html_css_files = ["announcement.css"]
-html_js_files = [("announcement.js", {"data-key": USE_CASE_FORM_URL})]
+html_js_files = [("announcement.js", {"data-key": ANNOUNCEMENT})]

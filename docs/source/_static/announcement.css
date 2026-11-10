@@ -6,9 +6,12 @@
   text-decoration: underline;
 }
 
-/* Leave room for the close button added by announcement.js. */
-.bd-header-announcement {
-  padding-right: 3rem;
+/* Leave room for the close button added by announcement.js. The theme's 12.5% side
+   padding already does on wide screens; below its 960px breakpoint it drops to 2%. */
+@media (max-width: 959.98px) {
+  .bd-header-announcement {
+    padding-right: 3rem;
+  }
 }
 
 .announcement-close {
