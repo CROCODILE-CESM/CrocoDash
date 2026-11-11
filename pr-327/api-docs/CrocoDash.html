@@ -30,6 +30,7 @@
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=eba8b062" />
+    <link rel="stylesheet" type="text/css" href="../_static/announcement.css?v=6bf2414c" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
@@ -42,6 +43,7 @@
     <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'api-docs/CrocoDash';</script>
+    <script data-key="&lt;strong&gt;Using CrocoDash?&lt;/strong&gt; Tell us about your project in a &lt;a href=&quot;https://forms.gle/UsgxpqCTyHGn4sLJ9&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;2-minute form&lt;/a&gt;." src="../_static/announcement.js?v=0d48301c"></script>
     <link rel="icon" href="../_static/crocodile.png"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -98,6 +100,9 @@
   <div class="pst-async-banner-revealer d-none">
   <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
 </div>
+<aside class="bd-header-announcement" aria-label="Announcement">
+  <div class="bd-header-announcement__content"><strong>Using CrocoDash?</strong> Tell us about your project in a <a href="https://forms.gle/UsgxpqCTyHGn4sLJ9" target="_blank" rel="noopener">2-minute form</a>.</div>
+</aside>
 
   
     <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
@@ -168,6 +173,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../for_users/compsets_and_inputs.html">Regional Compsets &amp; Input Parameters</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_users/datasets.html">Accessing Raw Data (raw_data_access)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_users/shareable.html">Sharing Cases</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_users/container.html">Running in a Container</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_users/template.html">Templates</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_users/additional_resources.html">Additional Resources</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_users/cli.html">Command Line Interface</a></li>
@@ -177,6 +183,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../for_developers/architecture.html">Architecture</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_developers/adding_data_access.html">Adding Data to the Data Access Module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_developers/adding_forcing_configurations.html">Adding Forcing Configurations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_developers/config_compatibility.html">config.json Compatibility</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_developers/submodule_api_usage.html">Submodule API Usage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_developers/edit_docs.html">Write Documentation</a></li>
 <li class="toctree-l2"><a class="reference external" href="https://github.com/CROCODILE-CESM/CrocoDash/discussions/138">Semi-Official ChangeLog</a></li>
@@ -533,6 +540,7 @@ document.write(`
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.base.Param.set_item"><code class="docutils literal notranslate"><span class="pre">Param.set_item()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.base.ReconfigureRequired"><code class="docutils literal notranslate"><span class="pre">ReconfigureRequired</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.base.UndeclaredParamError"><code class="docutils literal notranslate"><span class="pre">UndeclaredParamError</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.base.UserNLConfigParam"><code class="docutils literal notranslate"><span class="pre">UserNLConfigParam</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.base.UserNLConfigParam.inspect"><code class="docutils literal notranslate"><span class="pre">UserNLConfigParam.inspect()</span></code></a></li>
@@ -551,7 +559,10 @@ document.write(`
 </li>
 <li class="toctree-l3"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.base.calendar_as_dict"><code class="docutils literal notranslate"><span class="pre">calendar_as_dict()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.base.is_serializable"><code class="docutils literal notranslate"><span class="pre">is_serializable()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.base.iter_configurator_entries"><code class="docutils literal notranslate"><span class="pre">iter_configurator_entries()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.base.read_config"><code class="docutils literal notranslate"><span class="pre">read_config()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.base.register"><code class="docutils literal notranslate"><span class="pre">register()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.base.write_config"><code class="docutils literal notranslate"><span class="pre">write_config()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="CrocoDash.forcing.html#module-CrocoDash.forcing.bgc">CrocoDash.forcing.bgc module</a><ul>
@@ -595,7 +606,6 @@ document.write(`
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.bgc.BGCRiverNutrientsConfigurator.output_params"><code class="docutils literal notranslate"><span class="pre">BGCRiverNutrientsConfigurator.output_params</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.bgc.BGCRiverNutrientsConfigurator.process"><code class="docutils literal notranslate"><span class="pre">BGCRiverNutrientsConfigurator.process()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.bgc.BGCRiverNutrientsConfigurator.process_components"><code class="docutils literal notranslate"><span class="pre">BGCRiverNutrientsConfigurator.process_components</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.bgc.BGCRiverNutrientsConfigurator.validate_args"><code class="docutils literal notranslate"><span class="pre">BGCRiverNutrientsConfigurator.validate_args()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -615,7 +625,6 @@ document.write(`
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.chl.ChlConfigurator.output_params"><code class="docutils literal notranslate"><span class="pre">ChlConfigurator.output_params</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.chl.ChlConfigurator.process"><code class="docutils literal notranslate"><span class="pre">ChlConfigurator.process()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.chl.ChlConfigurator.process_components"><code class="docutils literal notranslate"><span class="pre">ChlConfigurator.process_components</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="CrocoDash.forcing.html#CrocoDash.forcing.chl.ChlConfigurator.validate_args"><code class="docutils literal notranslate"><span class="pre">ChlConfigurator.validate_args()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -800,13 +809,6 @@ document.write(`
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.base.MOM6ForcingProduct.write_metadata"><code class="docutils literal notranslate"><span class="pre">MOM6ForcingProduct.write_metadata()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.base.TimeSampling"><code class="docutils literal notranslate"><span class="pre">TimeSampling</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.base.TimeSampling.cell_method"><code class="docutils literal notranslate"><span class="pre">TimeSampling.cell_method</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.base.TimeSampling.describe"><code class="docutils literal notranslate"><span class="pre">TimeSampling.describe()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.base.TimeSampling.frequency"><code class="docutils literal notranslate"><span class="pre">TimeSampling.frequency</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.base.TimeSampling.max_period_days"><code class="docutils literal notranslate"><span class="pre">TimeSampling.max_period_days</span></code></a></li>
-</ul>
-</li>
 <li class="toctree-l3"><a class="reference internal" href="CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.base.VelocityTracerForcingProduct"><code class="docutils literal notranslate"><span class="pre">VelocityTracerForcingProduct</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.base.VelocityTracerForcingProduct.required_metadata"><code class="docutils literal notranslate"><span class="pre">VelocityTracerForcingProduct.required_metadata</span></code></a></li>
 </ul>
@@ -838,6 +840,7 @@ document.write(`
 <li class="toctree-l4"><a class="reference internal" href="CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.registry.ProductRegistry.validate_function"><code class="docutils literal notranslate"><span class="pre">ProductRegistry.validate_function()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.registry.json_safe"><code class="docutils literal notranslate"><span class="pre">json_safe()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="CrocoDash.raw_data_access.html#module-CrocoDash.raw_data_access">Module contents</a></li>
@@ -1024,11 +1027,13 @@ serialisation contract visible and co-located: when the state schema changes,
 this is the single file to update.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="CrocoDash.case_state.check_version">
-<span class="sig-prename descclassname"><span class="pre">CrocoDash.case_state.</span></span><span class="sig-name descname"><span class="pre">check_version</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state_path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.case_state.check_version" title="Link to this definition">#</a></dt>
-<dd><p>Raise ValueError if state’s schema_version is incompatible with SCHEMA_VERSION.</p>
-<p>Only MAJOR.MINOR must match; a higher PATCH is acceptable.
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.case_state.</span></span><span class="sig-name descname"><span class="pre">check_version</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">supported</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'1.1.0'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">remedy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Recreate</span> <span class="pre">the</span> <span class="pre">case</span> <span class="pre">with</span> <span class="pre">the</span> <span class="pre">current</span> <span class="pre">version</span> <span class="pre">of</span> <span class="pre">CrocoDash.'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.case_state.check_version" title="Link to this definition">#</a></dt>
+<dd><p>Raise ValueError if state’s schema_version is incompatible with <em>supported</em>.</p>
+<p>Only MAJOR.MINOR must match; a higher PATCH is acceptable. A file from a
+newer CrocoDash asks for an upgrade, one from an older one for <em>remedy</em>.
 Logs a warning (rather than raising) when schema_version is absent entirely
-(pre-versioning cases).</p>
+(pre-versioning cases). Also used for the forcing config.json
+(see CrocoDash.forcing.base.read_config), which passes its own <em>supported</em>.</p>
 </dd></dl>
 
 <dl class="py function">

@@ -30,6 +30,7 @@
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=eba8b062" />
+    <link rel="stylesheet" type="text/css" href="../_static/announcement.css?v=6bf2414c" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
@@ -42,6 +43,7 @@
     <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'api-docs/CrocoDash.raw_data_access.datasets';</script>
+    <script data-key="&lt;strong&gt;Using CrocoDash?&lt;/strong&gt; Tell us about your project in a &lt;a href=&quot;https://forms.gle/UsgxpqCTyHGn4sLJ9&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;2-minute form&lt;/a&gt;." src="../_static/announcement.js?v=0d48301c"></script>
     <link rel="icon" href="../_static/crocodile.png"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -97,6 +99,9 @@
   <div class="pst-async-banner-revealer d-none">
   <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
 </div>
+<aside class="bd-header-announcement" aria-label="Announcement">
+  <div class="bd-header-announcement__content"><strong>Using CrocoDash?</strong> Tell us about your project in a <a href="https://forms.gle/UsgxpqCTyHGn4sLJ9" target="_blank" rel="noopener">2-minute form</a>.</div>
+</aside>
 
   
     <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
@@ -167,6 +172,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../for_users/compsets_and_inputs.html">Regional Compsets &amp; Input Parameters</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_users/datasets.html">Accessing Raw Data (raw_data_access)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_users/shareable.html">Sharing Cases</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_users/container.html">Running in a Container</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_users/template.html">Templates</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_users/additional_resources.html">Additional Resources</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_users/cli.html">Command Line Interface</a></li>
@@ -176,6 +182,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../for_developers/architecture.html">Architecture</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_developers/adding_data_access.html">Adding Data to the Data Access Module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_developers/adding_forcing_configurations.html">Adding Forcing Configurations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_developers/config_compatibility.html">config.json Compatibility</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_developers/submodule_api_usage.html">Submodule API Usage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_developers/edit_docs.html">Write Documentation</a></li>
 <li class="toctree-l2"><a class="reference external" href="https://github.com/CROCODILE-CESM/CrocoDash/discussions/138">Semi-Official ChangeLog</a></li>
@@ -905,7 +912,7 @@ output for nesting a child domain)</p></li>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.cesm_ocean_output.CESM_POP_OUTPUT.time_sampling">
-<span class="sig-name descname"><span class="pre">time_sampling</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">TimeSampling(frequency='MS',</span> <span class="pre">cell_method='mean')</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.cesm_ocean_output.CESM_POP_OUTPUT.time_sampling" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">time_sampling</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'MS'</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.cesm_ocean_output.CESM_POP_OUTPUT.time_sampling" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -1025,12 +1032,15 @@ for safe NetCDF serialization; a no-op if the coordinate isn’t cftime.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.cesm_ocean_output.date_means_at_interval_start">
-<span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.datasets.cesm_ocean_output.</span></span><span class="sig-name descname"><span class="pre">date_means_at_interval_start</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_var_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'time'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.cesm_ocean_output.date_means_at_interval_start" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.datasets.cesm_ocean_output.</span></span><span class="sig-name descname"><span class="pre">date_means_at_interval_start</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_var_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'time'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.cesm_ocean_output.date_means_at_interval_start" title="Link to this definition">#</a></dt>
 <dd><p>CESM-POP stamps a mean at the end of its averaging interval (a January
-mean at Feb 1): date those records, and their time bounds, at the first
-day of the interval instead. The day, because POP’s first interval starts
-a model step after midnight (00:31:40 in CESM-HR). Records stamped
-anywhere else, like MOM6’s mid-interval means, are left as they are.</p>
+mean at Feb 1): date the records, and their time bounds, at the start of
+the interval instead. Means a day or longer are dated at the start’s day,
+because POP’s first interval starts a model step after midnight (00:31:40
+in CESM-HR); flooring sub-daily ones would put all of a day’s records at
+00:00. The longest interval decides, since that first one is a step short.</p>
+<p>Raises when the time bounds are missing or the stamps aren’t at their
+ends, rather than leave every record dated an interval late.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -1071,14 +1081,15 @@ anywhere else, like MOM6’s mid-interval means, are left as they are.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.cesm_ocean_output.read_single_variable_tseries_data">
-<span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.datasets.cesm_ocean_output.</span></span><span class="sig-name descname"><span class="pre">read_single_variable_tseries_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dates</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_folder</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variables</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">member</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date_format</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regex</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delimiter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preview</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_freq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_coords</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.cesm_ocean_output.read_single_variable_tseries_data" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.datasets.cesm_ocean_output.</span></span><span class="sig-name descname"><span class="pre">read_single_variable_tseries_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dates</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_folder</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variables</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">member</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date_format</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regex</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delimiter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preview</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_freq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_coords</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_stamped</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.cesm_ocean_output.read_single_variable_tseries_data" title="Link to this definition">#</a></dt>
 <dd><p>Shared implementation for reading single-variable-per-file (tseries) output
 for a bounding box, used by both CESM_POP_OUTPUT.get_cesm_single_variable_data
 and CESM_MOM_OUTPUT.get_mom6_single_variable_data - the CESM tseries file
 convention (one variable per file series, date range in the filename) shows
 up for both CESM-POP and native MOM6 output.</p>
 <p>data_freq is the cadence of the files, checked against them, and freq thins
-them to a coarser one (see select_records).</p>
+them to a coarser one (see select_records). end_stamped is for CESM-POP
+means, stamped at the end of their interval (see subset_dataset).</p>
 <p>grid_coords optionally maps a variable name to its own (lat_name, lon_name)
 pair, overriding lat_name/lon_name for that variable - needed for MOM6’s
 C-grid, where uo/vo live on different horizontal dims than the tracer grid.</p>
@@ -1095,7 +1106,7 @@ holds it, or without bounds the nearest one.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.cesm_ocean_output.subset_dataset">
-<span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.datasets.cesm_ocean_output.</span></span><span class="sig-name descname"><span class="pre">subset_dataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variable_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat_min</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat_max</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon_min</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon_max</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'lat'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'lon'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dates</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preview</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_freq</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freq</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_coords</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.cesm_ocean_output.subset_dataset" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.datasets.cesm_ocean_output.</span></span><span class="sig-name descname"><span class="pre">subset_dataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variable_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat_min</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat_max</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon_min</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon_max</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'lat'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'lon'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dates</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preview</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_freq</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freq</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_coords</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_stamped</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.cesm_ocean_output.subset_dataset" title="Link to this definition">#</a></dt>
 <dd><p>Subsets (and merges) the dataset based on the provided variable names and
 geographical bounds into the output path.</p>
 <dl class="field-list simple">
@@ -1126,6 +1137,9 @@ and a coarser one to thin them to over the (start, end) window
 override - needed for MOM6’s C-grid, where uo/vo live on different
 horizontal dims than the tracer grid, so a single lat_name/lon_name
 pair can’t mask every variable correctly.</p></li>
+<li><p><strong>end_stamped</strong> (<em>bool</em>) – The records are CESM-POP means, stamped at the end
+of their averaging interval; date them at its start (see
+date_means_at_interval_start).</p></li>
 </ul>
 </dd>
 </dl>
@@ -1310,7 +1324,7 @@ two real neighbours beat one exact-but-lonely hit.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.cesm_ww3_jra.CESM_WW3_JRA.time_sampling">
-<span class="sig-name descname"><span class="pre">time_sampling</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">TimeSampling(frequency='6h',</span> <span class="pre">cell_method='point')</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.cesm_ww3_jra.CESM_WW3_JRA.time_sampling" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">time_sampling</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'6h'</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.cesm_ww3_jra.CESM_WW3_JRA.time_sampling" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -1731,7 +1745,7 @@ code (extract_forcings/ww3.py) never touches GRIB/eccodes directly.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.era5.ERA5_WAVE_SPECTRA.time_sampling">
-<span class="sig-name descname"><span class="pre">time_sampling</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">TimeSampling(frequency='h',</span> <span class="pre">cell_method='point')</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.era5.ERA5_WAVE_SPECTRA.time_sampling" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">time_sampling</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'h'</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.era5.ERA5_WAVE_SPECTRA.time_sampling" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -1841,7 +1855,7 @@ why this can’t just be <cite>xr.open_dataset(path, engine=”cfgrib”)</cite>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.glofas.GLOFAS.get_global_data_with_python">
-<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_global_data_with_python</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dates</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_folder</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">PosixPath('.')</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_filename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'glofas_data.nc'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.glofas.GLOFAS.get_global_data_with_python" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_global_data_with_python</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dates</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_folder</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">PosixPath('.')</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_filename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'glofas_data.nc'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.glofas.GLOFAS.get_global_data_with_python" title="Link to this definition">#</a></dt>
 <dd><p>Downloads glofas data using cdsapi library. Note that users need to have an account with copernicus and have cdsapi installed and configured.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1887,7 +1901,7 @@ inputdata repository by generating a script users can run in their terminal.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.glofas.GLOFAS.time_sampling">
-<span class="sig-name descname"><span class="pre">time_sampling</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">TimeSampling(frequency='D',</span> <span class="pre">cell_method='mean')</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.glofas.GLOFAS.time_sampling" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">time_sampling</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'D'</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.glofas.GLOFAS.time_sampling" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -1960,7 +1974,7 @@ inputdata repository by generating a script users can run in their terminal.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.glorys.GLORYS.time_sampling">
-<span class="sig-name descname"><span class="pre">time_sampling</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">TimeSampling(frequency='D',</span> <span class="pre">cell_method='mean')</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.time_sampling" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">time_sampling</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'D'</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.glorys.GLORYS.time_sampling" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -2223,7 +2237,7 @@ pipelines have something sensible to chew on, fast.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.reference.REFERENCE_OCEAN.time_sampling">
-<span class="sig-name descname"><span class="pre">time_sampling</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">TimeSampling(frequency='D',</span> <span class="pre">cell_method='mean')</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.reference.REFERENCE_OCEAN.time_sampling" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">time_sampling</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'D'</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.reference.REFERENCE_OCEAN.time_sampling" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -2359,7 +2373,7 @@ pipelines have something sensible to chew on, fast.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.reference.REFERENCE_WAVES.time_sampling">
-<span class="sig-name descname"><span class="pre">time_sampling</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">TimeSampling(frequency='6h',</span> <span class="pre">cell_method='point')</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.reference.REFERENCE_WAVES.time_sampling" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">time_sampling</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'6h'</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.reference.REFERENCE_WAVES.time_sampling" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">

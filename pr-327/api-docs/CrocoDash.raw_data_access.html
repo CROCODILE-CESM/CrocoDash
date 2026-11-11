@@ -30,6 +30,7 @@
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=eba8b062" />
+    <link rel="stylesheet" type="text/css" href="../_static/announcement.css?v=6bf2414c" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
@@ -42,6 +43,7 @@
     <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'api-docs/CrocoDash.raw_data_access';</script>
+    <script data-key="&lt;strong&gt;Using CrocoDash?&lt;/strong&gt; Tell us about your project in a &lt;a href=&quot;https://forms.gle/UsgxpqCTyHGn4sLJ9&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;2-minute form&lt;/a&gt;." src="../_static/announcement.js?v=0d48301c"></script>
     <link rel="icon" href="../_static/crocodile.png"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -98,6 +100,9 @@
   <div class="pst-async-banner-revealer d-none">
   <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
 </div>
+<aside class="bd-header-announcement" aria-label="Announcement">
+  <div class="bd-header-announcement__content"><strong>Using CrocoDash?</strong> Tell us about your project in a <a href="https://forms.gle/UsgxpqCTyHGn4sLJ9" target="_blank" rel="noopener">2-minute form</a>.</div>
+</aside>
 
   
     <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
@@ -168,6 +173,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../for_users/compsets_and_inputs.html">Regional Compsets &amp; Input Parameters</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_users/datasets.html">Accessing Raw Data (raw_data_access)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_users/shareable.html">Sharing Cases</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_users/container.html">Running in a Container</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_users/template.html">Templates</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_users/additional_resources.html">Additional Resources</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_users/cli.html">Command Line Interface</a></li>
@@ -177,6 +183,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../for_developers/architecture.html">Architecture</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_developers/adding_data_access.html">Adding Data to the Data Access Module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_developers/adding_forcing_configurations.html">Adding Forcing Configurations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_developers/config_compatibility.html">config.json Compatibility</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_developers/submodule_api_usage.html">Submodule API Usage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_developers/edit_docs.html">Write Documentation</a></li>
 <li class="toctree-l2"><a class="reference external" href="https://github.com/CROCODILE-CESM/CrocoDash/discussions/138">Semi-Official ChangeLog</a></li>
@@ -378,13 +385,6 @@ document.write(`
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.MOM6ForcingProduct.write_metadata"><code class="docutils literal notranslate"><span class="pre">MOM6ForcingProduct.write_metadata()</span></code></a></li>
 </ul>
 </li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.TimeSampling"><code class="docutils literal notranslate"><span class="pre">TimeSampling</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.TimeSampling.cell_method"><code class="docutils literal notranslate"><span class="pre">TimeSampling.cell_method</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.TimeSampling.describe"><code class="docutils literal notranslate"><span class="pre">TimeSampling.describe()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.TimeSampling.frequency"><code class="docutils literal notranslate"><span class="pre">TimeSampling.frequency</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.TimeSampling.max_period_days"><code class="docutils literal notranslate"><span class="pre">TimeSampling.max_period_days</span></code></a></li>
-</ul>
-</li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.VelocityTracerForcingProduct"><code class="docutils literal notranslate"><span class="pre">VelocityTracerForcingProduct</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.VelocityTracerForcingProduct.required_metadata"><code class="docutils literal notranslate"><span class="pre">VelocityTracerForcingProduct.required_metadata</span></code></a></li>
 </ul>
@@ -416,6 +416,7 @@ document.write(`
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.registry.ProductRegistry.validate_function"><code class="docutils literal notranslate"><span class="pre">ProductRegistry.validate_function()</span></code></a></li>
 </ul>
 </li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.registry.json_safe"><code class="docutils literal notranslate"><span class="pre">json_safe()</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.raw_data_access">Module contents</a></li>
@@ -886,9 +887,10 @@ OBC step; it does not come through here.</p>
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.base.</span></span><span class="sig-name descname"><span class="pre">DatedBaseProduct</span></span><a class="headerlink" href="#CrocoDash.raw_data_access.base.DatedBaseProduct" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#CrocoDash.raw_data_access.base.BaseProduct" title="CrocoDash.raw_data_access.base.BaseProduct"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseProduct</span></code></a></p>
 <p>Specific enforcement needs for Dated Products.</p>
-<p>Every dated product declares its <code class="docutils literal notranslate"><span class="pre">time_sampling</span></code>: a TimeSampling,
-USER_SPECIFIED when the cadence depends on the source the user points it
-at, or None for a static snapshot that ignores <code class="docutils literal notranslate"><span class="pre">dates</span></code>.</p>
+<p>Every dated product declares its <code class="docutils literal notranslate"><span class="pre">time_sampling</span></code>: how often its records
+come, as a pandas frequency alias (“D”, “MS”, “6h”), USER_SPECIFIED when
+the cadence depends on the source the user points it at, or None for a
+static snapshot that ignores <code class="docutils literal notranslate"><span class="pre">dates</span></code>.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.base.DatedBaseProduct.required_args">
 <span class="sig-name descname"><span class="pre">required_args</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['output_folder',</span> <span class="pre">'output_filename',</span> <span class="pre">'dates']</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.base.DatedBaseProduct.required_args" title="Link to this definition">#</a></dt>
@@ -967,39 +969,6 @@ extend this.</p>
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="CrocoDash.raw_data_access.base.TimeSampling">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.base.</span></span><span class="sig-name descname"><span class="pre">TimeSampling</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">frequency</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell_method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'mean'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.base.TimeSampling" title="Link to this definition">#</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>How a dated product samples time, so callers can size their requests to it.</p>
-<p>frequency is a pandas frequency alias (“D”, “MS”, “6h”, …).
-cell_method says what a record holds: “mean” for an average over its
-interval (GLORYS daily means), “point” for an instantaneous value (ERA5).</p>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="CrocoDash.raw_data_access.base.TimeSampling.cell_method">
-<span class="sig-name descname"><span class="pre">cell_method</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'mean'</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.base.TimeSampling.cell_method" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="CrocoDash.raw_data_access.base.TimeSampling.describe">
-<span class="sig-name descname"><span class="pre">describe</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#CrocoDash.raw_data_access.base.TimeSampling.describe" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="CrocoDash.raw_data_access.base.TimeSampling.frequency">
-<span class="sig-name descname"><span class="pre">frequency</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.base.TimeSampling.frequency" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="CrocoDash.raw_data_access.base.TimeSampling.max_period_days">
-<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">max_period_days</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#CrocoDash.raw_data_access.base.TimeSampling.max_period_days" title="Link to this definition">#</a></dt>
-<dd><p>Longest gap between records, in days (31 for monthly, 366 for yearly).</p>
-<p>Calendar offsets like “MS” have no fixed length, so this measures the
-spacing of a few years of generated stamps rather than the offset.</p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.base.VelocityTracerForcingProduct">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.base.</span></span><span class="sig-name descname"><span class="pre">VelocityTracerForcingProduct</span></span><a class="headerlink" href="#CrocoDash.raw_data_access.base.VelocityTracerForcingProduct" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#CrocoDash.raw_data_access.base.ForcingProduct" title="CrocoDash.raw_data_access.base.ForcingProduct"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForcingProduct</span></code></a></p>
@@ -1036,12 +1005,8 @@ the product knows which it is emitting.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.base.accessmethod">
-<span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.base.</span></span><span class="sig-name descname"><span class="pre">accessmethod</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">how_to_use</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subsample</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_freq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.base.accessmethod" title="Link to this definition">#</a></dt>
-<dd><p>subsample: the method takes freq=None and can fetch every freq instead
-of every record. data_freq: it reads data from a path the user gives it,
-and takes data_freq=None naming that data’s cadence. See
-resolve_time_sampling.</p>
-</dd></dl>
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.base.</span></span><span class="sig-name descname"><span class="pre">accessmethod</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">how_to_use</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.base.accessmethod" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.base.frequency_step">
@@ -1053,20 +1018,22 @@ coarseness (“MS” has no fixed length, so it can’t come from the offset).</
 <dl class="py function">
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.base.resolve_time_sampling">
 <span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.base.</span></span><span class="sig-name descname"><span class="pre">resolve_time_sampling</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">product</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_freq</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freq</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.base.resolve_time_sampling" title="Link to this definition">#</a></dt>
-<dd><p>The TimeSampling a call to product.method_name returns.</p>
+<dd><p>The cadence, a pandas frequency alias, of what a call to
+product.method_name returns, or None for a static snapshot.</p>
 <p>data_freq names the cadence of the data a method reads from a path the
-user gives it (&#64;accessmethod(data_freq=True), the CESM output readers);
-a USER_SPECIFIED product needs it. freq thins the data to a coarser
-cadence, for a method that can (&#64;accessmethod(subsample=True)). Raises
-on a value the method can’t honour.</p>
+user gives it (one that takes a data_freq argument, the CESM output
+readers); a USER_SPECIFIED product needs it. freq thins the data to a
+coarser cadence, for a method that takes a freq argument. Raises on a
+value the method can’t honour.</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.base.sample_dates">
-<span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.base.</span></span><span class="sig-name descname"><span class="pre">sample_dates</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freq</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calendar</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'standard'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.base.sample_dates" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.base.</span></span><span class="sig-name descname"><span class="pre">sample_dates</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freq</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calendar</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'standard'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_cftime</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.base.sample_dates" title="Link to this definition">#</a></dt>
 <dd><p>The days to fetch from [start, end] at freq, in calendar (cftime dates
-for any but “standard”). A window too short to hold one (e.g. an initial
-condition’s single day) falls back to its first day.</p>
+for any but “standard”, or with use_cftime). A window too short to hold
+one (e.g. an initial condition’s single day) falls back to its first day.
+An end on Feb 29 moves to Feb 28 in a calendar without leap days.</p>
 </dd></dl>
 
 </section>
@@ -1090,8 +1057,10 @@ condition’s single day) falls back to its first day.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.registry.ProductRegistry.get_function_default_args">
-<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_function_default_args</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">product_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.registry.ProductRegistry.get_function_default_args" title="Link to this definition">#</a></dt>
-<dd><p>Return a dict of {param: default} for all non-required parameters of an access method.</p>
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_function_default_args</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">product_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">serializable</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.registry.ProductRegistry.get_function_default_args" title="Link to this definition">#</a></dt>
+<dd><p>Return a dict of {param: default} for all non-required parameters of
+an access method; with serializable, as config.json stores them
+(json_safe).</p>
 </dd></dl>
 
 <dl class="py method">
@@ -1145,6 +1114,12 @@ condition’s single day) falls back to its first day.</p>
 <em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">validate_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">product_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.registry.ProductRegistry.validate_function" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="CrocoDash.raw_data_access.registry.json_safe">
+<span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.registry.</span></span><span class="sig-name descname"><span class="pre">json_safe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.registry.json_safe" title="Link to this definition">#</a></dt>
+<dd><p>Function arguments as config.json stores them: Paths become strings.</p>
 </dd></dl>
 
 </section>
@@ -1234,13 +1209,6 @@ condition’s single day) falls back to its first day.</p>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.MOM6ForcingProduct.write_metadata"><code class="docutils literal notranslate"><span class="pre">MOM6ForcingProduct.write_metadata()</span></code></a></li>
 </ul>
 </li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.TimeSampling"><code class="docutils literal notranslate"><span class="pre">TimeSampling</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.TimeSampling.cell_method"><code class="docutils literal notranslate"><span class="pre">TimeSampling.cell_method</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.TimeSampling.describe"><code class="docutils literal notranslate"><span class="pre">TimeSampling.describe()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.TimeSampling.frequency"><code class="docutils literal notranslate"><span class="pre">TimeSampling.frequency</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.TimeSampling.max_period_days"><code class="docutils literal notranslate"><span class="pre">TimeSampling.max_period_days</span></code></a></li>
-</ul>
-</li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.VelocityTracerForcingProduct"><code class="docutils literal notranslate"><span class="pre">VelocityTracerForcingProduct</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.base.VelocityTracerForcingProduct.required_metadata"><code class="docutils literal notranslate"><span class="pre">VelocityTracerForcingProduct.required_metadata</span></code></a></li>
 </ul>
@@ -1272,6 +1240,7 @@ condition’s single day) falls back to its first day.</p>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.registry.ProductRegistry.validate_function"><code class="docutils literal notranslate"><span class="pre">ProductRegistry.validate_function()</span></code></a></li>
 </ul>
 </li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.raw_data_access.registry.json_safe"><code class="docutils literal notranslate"><span class="pre">json_safe()</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.raw_data_access">Module contents</a></li>

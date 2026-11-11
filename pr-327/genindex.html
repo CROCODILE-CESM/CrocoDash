@@ -29,6 +29,7 @@
 
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="_static/styles/sphinx-book-theme.css?v=eba8b062" />
+    <link rel="stylesheet" type="text/css" href="_static/announcement.css?v=6bf2414c" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
@@ -558,6 +559,7 @@ mermaid.initialize(
 window.addEventListener("load", load);
 window.runMermaid = runMermaid;</script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'genindex';</script>
+    <script data-key="&lt;strong&gt;Using CrocoDash?&lt;/strong&gt; Tell us about your project in a &lt;a href=&quot;https://forms.gle/UsgxpqCTyHGn4sLJ9&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;2-minute form&lt;/a&gt;." src="_static/announcement.js?v=0d48301c"></script>
     <link rel="icon" href="_static/crocodile.png"/>
     <link rel="index" title="Index" href="#" />
     <link rel="search" title="Search" href="search.html" />
@@ -612,6 +614,9 @@ window.runMermaid = runMermaid;</script>
   <div class="pst-async-banner-revealer d-none">
   <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
 </div>
+<aside class="bd-header-announcement" aria-label="Announcement">
+  <div class="bd-header-announcement__content"><strong>Using CrocoDash?</strong> Tell us about your project in a <a href="https://forms.gle/UsgxpqCTyHGn4sLJ9" target="_blank" rel="noopener">2-minute form</a>.</div>
+</aside>
 
   
     <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
@@ -684,6 +689,7 @@ window.runMermaid = runMermaid;</script>
 <li class="toctree-l2"><a class="reference internal" href="for_users/compsets_and_inputs.html">Regional Compsets &amp; Input Parameters</a></li>
 <li class="toctree-l2"><a class="reference internal" href="for_users/datasets.html">Accessing Raw Data (raw_data_access)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="for_users/shareable.html">Sharing Cases</a></li>
+<li class="toctree-l2"><a class="reference internal" href="for_users/container.html">Running in a Container</a></li>
 <li class="toctree-l2"><a class="reference internal" href="for_users/template.html">Templates</a></li>
 <li class="toctree-l2"><a class="reference internal" href="for_users/additional_resources.html">Additional Resources</a></li>
 <li class="toctree-l2"><a class="reference internal" href="for_users/cli.html">Command Line Interface</a></li>
@@ -693,6 +699,7 @@ window.runMermaid = runMermaid;</script>
 <li class="toctree-l2"><a class="reference internal" href="for_developers/architecture.html">Architecture</a></li>
 <li class="toctree-l2"><a class="reference internal" href="for_developers/adding_data_access.html">Adding Data to the Data Access Module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="for_developers/adding_forcing_configurations.html">Adding Forcing Configurations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="for_developers/config_compatibility.html">config.json Compatibility</a></li>
 <li class="toctree-l2"><a class="reference internal" href="for_developers/submodule_api_usage.html">Submodule API Usage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="for_developers/edit_docs.html">Write Documentation</a></li>
 <li class="toctree-l2"><a class="reference external" href="https://github.com/CROCODILE-CESM/CrocoDash/discussions/138">Semi-Official ChangeLog</a></li>
@@ -825,6 +832,7 @@ document.write(`
  | <a href="#G"><strong>G</strong></a>
  | <a href="#H"><strong>H</strong></a>
  | <a href="#I"><strong>I</strong></a>
+ | <a href="#J"><strong>J</strong></a>
  | <a href="#K"><strong>K</strong></a>
  | <a href="#L"><strong>L</strong></a>
  | <a href="#M"><strong>M</strong></a>
@@ -992,8 +1000,6 @@ document.write(`
       <li><a href="api-docs/CrocoDash.html#CrocoDash.recipe.case_to_yaml">case_to_yaml() (in module CrocoDash.recipe)</a>
 </li>
       <li><a href="api-docs/CrocoDash.html#CrocoDash.shareable.CaseBundle">CaseBundle (class in CrocoDash.shareable)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.base.TimeSampling.cell_method">cell_method (CrocoDash.raw_data_access.base.TimeSampling attribute)</a>
 </li>
       <li><a href="api-docs/CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.base.Calendar.cesm">cesm (CrocoDash.raw_data_access.base.Calendar attribute)</a>
 </li>
@@ -1450,8 +1456,6 @@ document.write(`
         <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.reference.REFERENCE_OCEAN.depth_coord">(CrocoDash.raw_data_access.datasets.reference.REFERENCE_OCEAN attribute)</a>
 </li>
       </ul></li>
-      <li><a href="api-docs/CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.base.TimeSampling.describe">describe() (CrocoDash.raw_data_access.base.TimeSampling method)</a>
-</li>
       <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.cesm_ocean_output.CESM_MOM_OUTPUT.description">description (CrocoDash.raw_data_access.datasets.cesm_ocean_output.CESM_MOM_OUTPUT attribute)</a>
 
       <ul>
@@ -1602,13 +1606,11 @@ document.write(`
 </li>
       <li><a href="api-docs/CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.base.ForcingProduct">ForcingProduct (class in CrocoDash.raw_data_access.base)</a>
 </li>
-      <li><a href="api-docs/CrocoDash.html#CrocoDash.shareable.ForkBundle.fork">fork() (CrocoDash.shareable.ForkBundle method)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api-docs/CrocoDash.html#CrocoDash.shareable.ForkBundle">ForkBundle (class in CrocoDash.shareable)</a>
+      <li><a href="api-docs/CrocoDash.html#CrocoDash.shareable.ForkBundle.fork">fork() (CrocoDash.shareable.ForkBundle method)</a>
 </li>
-      <li><a href="api-docs/CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.base.TimeSampling.frequency">frequency (CrocoDash.raw_data_access.base.TimeSampling attribute)</a>
+      <li><a href="api-docs/CrocoDash.html#CrocoDash.shareable.ForkBundle">ForkBundle (class in CrocoDash.shareable)</a>
 </li>
       <li><a href="api-docs/CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.base.frequency_step">frequency_step() (in module CrocoDash.raw_data_access.base)</a>
 </li>
@@ -1810,10 +1812,10 @@ document.write(`
       </ul></li>
       <li><a href="api-docs/CrocoDash.forcing.html#CrocoDash.forcing.base.InputFileParam">InputFileParam (class in CrocoDash.forcing.base)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api-docs/CrocoDash.forcing.html#CrocoDash.forcing.base.InputParam">InputParam (class in CrocoDash.forcing.base)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api-docs/CrocoDash.forcing.html#CrocoDash.forcing.base.InputValueParam">InputValueParam (class in CrocoDash.forcing.base)</a>
 </li>
       <li><a href="api-docs/CrocoDash.forcing.html#CrocoDash.forcing.base.BaseConfigurator.inspect">inspect() (CrocoDash.forcing.base.BaseConfigurator class method)</a>
@@ -1845,6 +1847,16 @@ document.write(`
       <li><a href="for_users/1_grids.html#CrocoDash.grid.Grid.is_tripolar">is_tripolar() (CrocoDash.grid.Grid static method)</a>
 </li>
       <li><a href="api-docs/CrocoDash.forcing.html#CrocoDash.forcing.utils.is_valid_netcdf">is_valid_netcdf() (in module CrocoDash.forcing.utils)</a>
+</li>
+      <li><a href="api-docs/CrocoDash.forcing.html#CrocoDash.forcing.base.iter_configurator_entries">iter_configurator_entries() (in module CrocoDash.forcing.base)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="J">J</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api-docs/CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.registry.json_safe">json_safe() (in module CrocoDash.raw_data_access.registry)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -1979,8 +1991,6 @@ document.write(`
       <li><a href="for_users/1_grids.html#CrocoDash.topo.Topo.masked_depth">masked_depth (CrocoDash.topo.Topo property)</a>
 </li>
       <li><a href="for_users/1_grids.html#CrocoDash.topo.Topo.max_depth">max_depth (CrocoDash.topo.Topo property)</a>
-</li>
-      <li><a href="api-docs/CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.base.TimeSampling.max_period_days">max_period_days (CrocoDash.raw_data_access.base.TimeSampling property)</a>
 </li>
       <li><a href="for_users/1_grids.html#CrocoDash.topo.Topo.min_depth">min_depth (CrocoDash.topo.Topo property)</a>
 </li>
@@ -2321,9 +2331,13 @@ document.write(`
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api-docs/CrocoDash.html#CrocoDash.case_state.read">read() (in module CrocoDash.case_state)</a>
 </li>
+      <li><a href="api-docs/CrocoDash.forcing.html#CrocoDash.forcing.base.read_config">read_config() (in module CrocoDash.forcing.base)</a>
+</li>
       <li><a href="api-docs/CrocoDash.forcing.html#CrocoDash.forcing.utils.read_min_depth">read_min_depth() (in module CrocoDash.forcing.utils)</a>
 </li>
       <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.cesm_ocean_output.read_single_variable_tseries_data">read_single_variable_tseries_data() (in module CrocoDash.raw_data_access.datasets.cesm_ocean_output)</a>
+</li>
+      <li><a href="api-docs/CrocoDash.forcing.html#CrocoDash.forcing.base.ReconfigureRequired">ReconfigureRequired</a>
 </li>
       <li><a href="for_users/1_grids.html#CrocoDash.topo_editor.TopoEditor.redo_last_edit">redo_last_edit() (CrocoDash.topo_editor.TopoEditor method)</a>
 </li>
@@ -2575,14 +2589,12 @@ document.write(`
         <li><a href="api-docs/CrocoDash.raw_data_access.datasets.html#CrocoDash.raw_data_access.datasets.reference.REFERENCE_WAVES.time_var_name">(CrocoDash.raw_data_access.datasets.reference.REFERENCE_WAVES attribute)</a>
 </li>
       </ul></li>
-      <li><a href="api-docs/CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.base.TimeSampling">TimeSampling (class in CrocoDash.raw_data_access.base)</a>
-</li>
       <li><a href="for_users/1_grids.html#CrocoDash.grid.Grid.tlat">tlat (CrocoDash.grid.Grid attribute)</a>
+</li>
+      <li><a href="for_users/1_grids.html#CrocoDash.grid.Grid.tlon">tlon (CrocoDash.grid.Grid attribute)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="for_users/1_grids.html#CrocoDash.grid.Grid.tlon">tlon (CrocoDash.grid.Grid attribute)</a>
-</li>
       <li><a href="for_users/1_grids.html#CrocoDash.topo.Topo.tmask">tmask (CrocoDash.topo.Topo property)</a>
 </li>
       <li><a href="api-docs/CrocoDash.forcing.html#CrocoDash.forcing.ww3.to_direction_to">to_direction_to() (in module CrocoDash.forcing.ww3)</a>
@@ -2822,10 +2834,6 @@ document.write(`
       <li><a href="api-docs/CrocoDash.forcing.html#CrocoDash.forcing.base.BaseConfigurator.validate_args">validate_args() (CrocoDash.forcing.base.BaseConfigurator method)</a>
 
       <ul>
-        <li><a href="api-docs/CrocoDash.forcing.html#CrocoDash.forcing.bgc.BGCRiverNutrientsConfigurator.validate_args">(CrocoDash.forcing.bgc.BGCRiverNutrientsConfigurator method)</a>
-</li>
-        <li><a href="api-docs/CrocoDash.forcing.html#CrocoDash.forcing.chl.ChlConfigurator.validate_args">(CrocoDash.forcing.chl.ChlConfigurator method)</a>
-</li>
         <li><a href="api-docs/CrocoDash.forcing.html#CrocoDash.forcing.cice.CICEConfigurator.validate_args">(CrocoDash.forcing.cice.CICEConfigurator method)</a>
 </li>
         <li><a href="api-docs/CrocoDash.forcing.html#CrocoDash.forcing.mom6.ConditionsConfigurator.validate_args">(CrocoDash.forcing.mom6.ConditionsConfigurator method)</a>
@@ -2891,6 +2899,8 @@ document.write(`
 </li>
       <li><a href="for_users/1_grids.html#CrocoDash.topo.Topo.write_cice_grid">write_cice_grid() (CrocoDash.topo.Topo method)</a>
 </li>
+      <li><a href="api-docs/CrocoDash.forcing.html#CrocoDash.forcing.base.write_config">write_config() (in module CrocoDash.forcing.base)</a>
+</li>
       <li><a href="for_users/1_grids.html#CrocoDash.topo.Topo.write_esmf_mesh">write_esmf_mesh() (CrocoDash.topo.Topo method)</a>
 </li>
       <li><a href="api-docs/CrocoDash.raw_data_access.html#CrocoDash.raw_data_access.base.BaseProduct.write_metadata">write_metadata() (CrocoDash.raw_data_access.base.BaseProduct class method)</a>
@@ -2901,10 +2911,10 @@ document.write(`
       </ul></li>
       <li><a href="for_users/1_grids.html#CrocoDash.topo.Topo.write_scrip_grid">write_scrip_grid() (CrocoDash.topo.Topo method)</a>
 </li>
-      <li><a href="api-docs/CrocoDash.forcing.html#CrocoDash.forcing.ww3.write_spec_list">write_spec_list() (in module CrocoDash.forcing.ww3)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api-docs/CrocoDash.forcing.html#CrocoDash.forcing.ww3.write_spec_list">write_spec_list() (in module CrocoDash.forcing.ww3)</a>
+</li>
       <li><a href="for_users/1_grids.html#CrocoDash.grid.Grid.write_supergrid">write_supergrid() (CrocoDash.grid.Grid method)</a>
 </li>
       <li><a href="for_users/1_grids.html#CrocoDash.topo.Topo.write_topo">write_topo() (CrocoDash.topo.Topo method)</a>

@@ -30,6 +30,7 @@
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=eba8b062" />
+    <link rel="stylesheet" type="text/css" href="../_static/announcement.css?v=6bf2414c" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
@@ -42,6 +43,7 @@
     <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'for_developers/adding_data_access';</script>
+    <script data-key="&lt;strong&gt;Using CrocoDash?&lt;/strong&gt; Tell us about your project in a &lt;a href=&quot;https://forms.gle/UsgxpqCTyHGn4sLJ9&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;2-minute form&lt;/a&gt;." src="../_static/announcement.js?v=0d48301c"></script>
     <link rel="icon" href="../_static/crocodile.png"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -98,6 +100,9 @@
   <div class="pst-async-banner-revealer d-none">
   <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
 </div>
+<aside class="bd-header-announcement" aria-label="Announcement">
+  <div class="bd-header-announcement__content"><strong>Using CrocoDash?</strong> Tell us about your project in a <a href="https://forms.gle/UsgxpqCTyHGn4sLJ9" target="_blank" rel="noopener">2-minute form</a>.</div>
+</aside>
 
   
     <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
@@ -168,6 +173,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../for_users/compsets_and_inputs.html">Regional Compsets &amp; Input Parameters</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_users/datasets.html">Accessing Raw Data (raw_data_access)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_users/shareable.html">Sharing Cases</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../for_users/container.html">Running in a Container</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_users/template.html">Templates</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_users/additional_resources.html">Additional Resources</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../for_users/cli.html">Command Line Interface</a></li>
@@ -177,6 +183,7 @@
 <li class="toctree-l2"><a class="reference internal" href="architecture.html">Architecture</a></li>
 <li class="toctree-l2 current active"><a class="current reference internal" href="#">Adding Data to the Data Access Module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="adding_forcing_configurations.html">Adding Forcing Configurations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="config_compatibility.html">config.json Compatibility</a></li>
 <li class="toctree-l2"><a class="reference internal" href="submodule_api_usage.html">Submodule API Usage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="edit_docs.html">Write Documentation</a></li>
 <li class="toctree-l2"><a class="reference external" href="https://github.com/CROCODILE-CESM/CrocoDash/discussions/138">Semi-Official ChangeLog</a></li>
@@ -528,27 +535,26 @@ containing at least <code class="docutils literal notranslate"><span class="pre"
 </div>
 <div class="admonition important">
 <p class="admonition-title">Important</p>
-<p>Every dated product declares a <strong><code class="docutils literal notranslate"><span class="pre">time_sampling</span></code></strong>: a <code class="docutils literal notranslate"><span class="pre">TimeSampling</span></code> saying how
-often its records come and whether each is a mean over its interval or an
-instantaneous value. Use <code class="docutils literal notranslate"><span class="pre">USER_SPECIFIED</span></code> when the cadence depends on the
-source the user points the product at (CESM-MOM output), so the user must pass
-it as <code class="docutils literal notranslate"><span class="pre">data_freq</span></code>, and <code class="docutils literal notranslate"><span class="pre">None</span></code> only for a static snapshot that ignores <code class="docutils literal notranslate"><span class="pre">dates</span></code>.</p>
+<p>Every dated product declares a <strong><code class="docutils literal notranslate"><span class="pre">time_sampling</span></code></strong>: how often its records come,
+as a pandas frequency alias (<code class="docutils literal notranslate"><span class="pre">&quot;D&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;MS&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;6h&quot;</span></code>). Use <code class="docutils literal notranslate"><span class="pre">USER_SPECIFIED</span></code> when
+the cadence depends on the source the user points the product at (CESM-MOM
+output), so the user must pass it as <code class="docutils literal notranslate"><span class="pre">data_freq</span></code>, and <code class="docutils literal notranslate"><span class="pre">None</span></code> only for a static
+snapshot that ignores <code class="docutils literal notranslate"><span class="pre">dates</span></code>.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">MyDataset</span><span class="p">(</span><span class="n">MOM6ForcingProduct</span><span class="p">):</span>
-    <span class="c1"># Daily means</span>
-    <span class="n">time_sampling</span> <span class="o">=</span> <span class="n">TimeSampling</span><span class="p">(</span><span class="s2">"D"</span><span class="p">,</span> <span class="n">cell_method</span><span class="o">=</span><span class="s2">"mean"</span><span class="p">)</span>
+    <span class="n">time_sampling</span> <span class="o">=</span> <span class="s2">"D"</span>  <span class="c1"># daily means</span>
 </pre></div>
 </div>
-<p>An access method calls <code class="docutils literal notranslate"><span class="pre">resolve_time_sampling</span></code> first and says, in its
-decorator, which of two arguments it takes (users set them through
-<code class="docutils literal notranslate"><span class="pre">function_overrides</span></code>):</p>
+<p>An access method calls <code class="docutils literal notranslate"><span class="pre">resolve_time_sampling</span></code> first. Its signature says which
+of two arguments it takes (users set them through <code class="docutils literal notranslate"><span class="pre">function_overrides</span></code>):</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">&#64;accessmethod(subsample=True)</span></code>: it takes <code class="docutils literal notranslate"><span class="pre">freq=None</span></code> and can fetch every
-<code class="docutils literal notranslate"><span class="pre">freq</span></code> instead of every record, e.g. <code class="docutils literal notranslate"><span class="pre">freq=&quot;MS&quot;</span></code> for one record a month. Use
-<code class="docutils literal notranslate"><span class="pre">sample_dates</span></code> to pick the dates (see GLORYS’s RDA method).</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">&#64;accessmethod(data_freq=True)</span></code>: it reads data from a path the user gives it
-and takes <code class="docutils literal notranslate"><span class="pre">data_freq=None</span></code>, the cadence of that data (the CESM output
-readers). It only describes the data: the method reads it the same way
-whatever the value, and checks it against the records it finds.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">freq=None</span></code>: the method can fetch every <code class="docutils literal notranslate"><span class="pre">freq</span></code> instead of every record, e.g.
+<code class="docutils literal notranslate"><span class="pre">freq=&quot;7D&quot;</span></code> for one record a week. Use <code class="docutils literal notranslate"><span class="pre">sample_dates</span></code> to pick the dates (see
+GLORYS’s RDA method). For now <code class="docutils literal notranslate"><span class="pre">configure_forcings</span></code> only accepts a <code class="docutils literal notranslate"><span class="pre">freq</span></code> that
+divides the 7-day fetch chunks (<code class="docutils literal notranslate"><span class="pre">&quot;D&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;7D&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;W&quot;</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">data_freq=None</span></code>: the method reads data from a path the user gives it, and
+<code class="docutils literal notranslate"><span class="pre">data_freq</span></code> is the cadence of that data (the CESM output readers). It only
+describes the data: the method reads it the same way whatever the value, and
+checks it against the records it finds.</p></li>
 </ul>
 <p>A method may take both. Any other method takes neither and returns its
 product’s own cadence.</p>
@@ -556,7 +562,7 @@ product’s own cadence.</p>
 </section>
 <section id="step-5-validation-and-tests">
 <h2>Step 5: Validation and Tests<a class="headerlink" href="#step-5-validation-and-tests" title="Link to this heading">#</a></h2>
-<p>When you test your class, it will automatically get registered with the registry and run validation. It will fail on import if you miss metadata or required args in your registered access function, or if <code class="docutils literal notranslate"><span class="pre">calendar</span></code> is missing or is not a <code class="docutils literal notranslate"><span class="pre">Calendar</span></code>, or <code class="docutils literal notranslate"><span class="pre">time_sampling</span></code> is missing or is not a <code class="docutils literal notranslate"><span class="pre">TimeSampling</span></code>, <code class="docutils literal notranslate"><span class="pre">USER_SPECIFIED</span></code> or <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+<p>When you test your class, it will automatically get registered with the registry and run validation. It will fail on import if you miss metadata or required args in your registered access function, or if <code class="docutils literal notranslate"><span class="pre">calendar</span></code> is missing or is not a <code class="docutils literal notranslate"><span class="pre">Calendar</span></code>, or <code class="docutils literal notranslate"><span class="pre">time_sampling</span></code> is missing or is not a pandas frequency alias, <code class="docutils literal notranslate"><span class="pre">USER_SPECIFIED</span></code> or <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
 <p>Create a test file in <code class="docutils literal notranslate"><span class="pre">tests/raw_data_access</span></code> to test your dataset:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># tests/raw_data_access/test_my_dataset.py</span>
 
