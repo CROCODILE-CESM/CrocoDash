@@ -65,3 +65,32 @@ def test_script_methods_work_on_their_defaults(
     script = Path(method())
     assert script == tmp_path / script_name
     assert "None" not in script.read_text()
+
+
+def test_gebco_python_download_returns_the_grid_not_the_zip(tmp_path, monkeypatch):
+    """The method unzips the download; callers need the grid file it holds."""
+    import io
+    import zipfile
+    from types import SimpleNamespace
+    import CrocoDash.raw_data_access.datasets.gebco as gebco
+
+    payload = io.BytesIO()
+    with zipfile.ZipFile(payload, "w") as z:
+        z.writestr("GEBCO_2024.nc", b"grid")
+        z.writestr("README.pdf", b"doc")
+
+    class Response(SimpleNamespace):
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            return False
+
+        def raise_for_status(self):
+            pass
+
+        def iter_content(self, chunk_size):
+            yield payload.getvalue()
+
+    monkeypatch.setattr(gebco.requests, "get", lambda url, stream: Response())
+    assert GEBCO.get_gebco_data_with_python(tmp_path) == tmp_path / "GEBCO_2024.nc"
