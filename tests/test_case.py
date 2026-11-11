@@ -177,6 +177,35 @@ def test_an_unknown_job_queue_lists_the_valid_ones(monkeypatch):
     assert "JOB_QUEUE" not in changed
 
 
+@pytest.mark.parametrize("inputdir", ["case", "case/input"])
+def test_an_inputdir_in_the_caseroot_is_refused_up_front(tmp_path, inputdir):
+    """create_newcase needs the caseroot not to exist yet, and inputdir is written
+    first, so an inputdir at or inside the caseroot used to fail with an unclear
+    error later on."""
+    from CrocoDash.case import Case
+
+    with pytest.raises(ValueError, match="can't be the caseroot"):
+        Case.init_args_check(
+            **dict.fromkeys(
+                [
+                    "cime",
+                    "ocn_grid",
+                    "ocn_topo",
+                    "ocn_vgrid",
+                    "compset_lname",
+                    "atm_grid_name",
+                    "rof_grid_name",
+                    "ninst",
+                    "machine",
+                    "project",
+                ]
+            ),
+            caseroot=tmp_path / "case",
+            inputdir=tmp_path / inputdir,
+            override=False,
+        )
+
+
 def test_a_configuration_error_raises_instead_of_returning_a_half_built_case(
     CrocoDash_case_factory, tmp_path, monkeypatch
 ):

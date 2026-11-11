@@ -296,6 +296,20 @@ class Case:
     ):
         """Perform sanity checks on the input arguments to ensure they are valid and consistent."""
 
+        # The grid files are written to inputdir before create_newcase runs, and
+        # create_newcase refuses a caseroot that already exists.
+        resolved_caseroot, resolved_inputdir = (
+            Path(caseroot).resolve(),
+            Path(inputdir).resolve(),
+        )
+        if (
+            resolved_inputdir == resolved_caseroot
+            or resolved_caseroot in resolved_inputdir.parents
+        ):
+            raise ValueError(
+                f"inputdir {inputdir} can't be the caseroot {caseroot} or inside it. "
+                "Put the inputdir beside the caseroot instead."
+            )
         if Path(caseroot).exists() and not override:
             raise ValueError(
                 f"Given caseroot {caseroot} already exists! "
