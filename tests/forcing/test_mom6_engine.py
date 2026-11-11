@@ -4,7 +4,8 @@ import pandas as pd
 import xarray as xr
 from types import SimpleNamespace
 
-from CrocoDash.forcing import mom6, user_nl_blocks
+from CrocoDash.forcing import mom6
+from visualCaseGen import user_nl_blocks
 from CrocoDash.forcing.mom6 import _split_bgc_tracers_into_files
 from CrocoDash.raw_data_access.registry import ProductRegistry
 

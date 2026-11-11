@@ -122,15 +122,6 @@ def CrocoDash_case_factory(
 
 
 @pytest.fixture
-def fake_cime():
-    class DummyCaseCIME:
-        def get_mesh_path(self, comp, grid):
-            return f"/dummy/meshes/{comp}/{grid}"
-
-    return DummyCaseCIME()
-
-
-@pytest.fixture
 def fake_forcing_product():
     class DummyForcingProduct:
         # Duck-types a ForcingProduct as the configurators see it: they read the

@@ -4,7 +4,6 @@ import ast
 import json
 import re
 from types import SimpleNamespace
-from ProConPy.config_var import cvars
 from unittest.mock import patch
 
 import pytest
@@ -152,12 +151,12 @@ def test_deserialize_tolerates_entries_from_other_versions():
 
 
 def test_read_config_versions(tmp_path):
-    """An unversioned config.json reads as 1.0.0; one from a newer CrocoDash
-    is refused rather than misread."""
+    """An unversioned config.json reads as 1.0.0 and is migrated to the
+    current version; one from a newer CrocoDash is refused rather than misread."""
     path = tmp_path / CONFIG_FILENAME
     path.write_text(json.dumps({"caseroot": "/case"}))
-    assert read_config(path)["schema_version"] == "1.0.0"
-    path.write_text(json.dumps({"schema_version": "1.1.0", "caseroot": "/case"}))
+    assert read_config(path)["schema_version"] == CONFIG_SCHEMA_VERSION
+    path.write_text(json.dumps({"schema_version": "1.99.0", "caseroot": "/case"}))
     with pytest.raises(ValueError):
         read_config(path)
 
@@ -179,6 +178,17 @@ def test_read_config_migrates(tmp_path):
         ):
             with pytest.raises(RuntimeError):
                 read_config(path)
+
+
+def test_read_config_drops_stream_years(tmp_path):
+    """1.0 configs carry a StreamYears entry; it is dropped on read."""
+    path = tmp_path / CONFIG_FILENAME
+    path.write_text(
+        json.dumps({"caseroot": "/case", "streamyears": {"name": "StreamYears"}})
+    )
+    config = read_config(path)
+    assert "streamyears" not in config
+    assert config["schema_version"] == CONFIG_SCHEMA_VERSION
 
 
 @pytest.mark.parametrize(
@@ -269,7 +279,9 @@ def test_is_non_local_defaults_false_without_case(mock_xmlchange):
     without DummyXML declaring a case_is_non_local input param."""
     obj = DummyXML("x")
     obj.configure()
-    mock_xmlchange.assert_called_once_with("DUMMY_XML_VAR", "value", is_non_local=False)
+    mock_xmlchange.assert_called_once_with(
+        "DUMMY_XML_VAR", "value", caseroot=None, is_non_local=False
+    )
 
 
 @patch("CrocoDash.forcing.base.xmlchange")
@@ -280,7 +292,9 @@ def test_is_non_local_propagates_from_registry_case(mock_xmlchange):
     obj = DummyXML("x")
     obj.registry = SimpleNamespace(case=SimpleNamespace(is_non_local=True))
     obj.configure()
-    mock_xmlchange.assert_called_once_with("DUMMY_XML_VAR", "value", is_non_local=True)
+    mock_xmlchange.assert_called_once_with(
+        "DUMMY_XML_VAR", "value", caseroot=None, is_non_local=True
+    )
 
 
 def test_depends_on_outputs_targets_exist():
@@ -322,13 +336,12 @@ class DummyUserNL(BaseConfigurator):
         super().configure()
 
 
-def test_user_nl_block_per_file(tmp_path, monkeypatch, capsys):
+def test_user_nl_block_per_file(tmp_path):
     """A configurator's parameters for one file go into one CrocoDash block,
-    each with its own comment, and the "Adding parameter changes to
-    user_nl_<x>" title is printed once per file."""
-    monkeypatch.setitem(cvars, "CASEROOT", SimpleNamespace(value=tmp_path))
-    monkeypatch.setitem(cvars, "NINST", SimpleNamespace(value=1))
-    DummyUserNL("x").configure()
+    each with its own comment."""
+    obj = DummyUserNL("x")
+    obj.registry = SimpleNamespace(case=SimpleNamespace(caseroot=tmp_path, ninst=1))
+    obj.configure()
 
     cice = (tmp_path / "user_nl_cice").read_text().splitlines()
     assert sum(line.startswith("! >>> CrocoDash") for line in cice) == 1
@@ -344,6 +357,24 @@ def test_user_nl_block_per_file(tmp_path, monkeypatch, capsys):
     ]
     assert "ocn_a = 1" in (tmp_path / "user_nl_mom").read_text()
 
-    out = capsys.readouterr().out
-    assert out.count("Adding parameter changes to user_nl_cice") == 1
-    assert out.count("Adding parameter changes to user_nl_mom") == 1
+
+def test_two_cases_in_one_process_each_write_to_their_own_caseroot(tmp_path):
+    """visualCaseGen's global CASEROOT is the case created last, so configuring
+    the first of two cases used to write into the second."""
+    caseroots = [tmp_path / "first", tmp_path / "second"]
+    configurators = []
+    for caseroot in caseroots:
+        caseroot.mkdir()
+        registry = SimpleNamespace(case=SimpleNamespace(caseroot=caseroot, ninst=1))
+        for obj in (DummyUserNL("x"), DummyXML("x")):
+            obj.registry = registry
+            configurators.append(obj)
+
+    with patch("subprocess.run") as run:
+        run.return_value.returncode = 0
+        for obj in configurators:
+            obj.configure()
+
+    for caseroot in caseroots:
+        assert "ice_a = 0" in (caseroot / "user_nl_cice").read_text()
+    assert [call.kwargs["cwd"] for call in run.call_args_list] == caseroots
