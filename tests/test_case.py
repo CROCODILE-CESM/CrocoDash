@@ -86,6 +86,20 @@ def test_configure_forcings_invalid_function_overrides(get_CrocoDash_case):
         )
 
 
+def test_configure_forcings_rejects_freq_the_get_chunks_cannot_honour(
+    get_CrocoDash_case,
+):
+    """Each 7-day GET chunk samples freq on its own, so "MS" would come out
+    weekly: it fails at configure time instead."""
+    with pytest.raises(ValueError, match="must divide"):
+        get_CrocoDash_case.configure_forcings(
+            date_range=["2020-01-01 00:00:00", "2020-02-01 00:00:00"],
+            boundaries=["north"],
+            function_name="get_glorys_data_from_rda",
+            function_overrides={"freq": "MS"},
+        )
+
+
 def _stub_case_for_ncpl(ncpl, dx_m, base_period="day"):
     """A Case with only what _set_cice_ndtd/_coupling_interval read."""
     from types import SimpleNamespace
