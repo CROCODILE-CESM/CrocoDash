@@ -197,6 +197,15 @@ def test_ntasks_ocn_is_followed_by_a_case_setup_reset(monkeypatch, tmp_path):
     assert changed["NTASKS_OCN"] == 4
     assert ran == [["./case.setup", "--reset"]]
 
+    # A failed reset says why, with CIME's own message.
+    monkeypatch.setattr(
+        case_mod.subprocess,
+        "run",
+        lambda cmd, **kw: SimpleNamespace(returncode=1, stderr="ERROR: locked file"),
+    )
+    with pytest.raises(RuntimeError, match="ERROR: locked file"):
+        case._apply_final_xmlchanges(ntasks_ocn=4)
+
 
 def test_a_configuration_error_raises_instead_of_returning_a_half_built_case(
     CrocoDash_case_factory, tmp_path, monkeypatch
