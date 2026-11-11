@@ -20,12 +20,11 @@ Typical Python usage::
 """
 
 import graphlib
-import json
 import time
 from pathlib import Path
 
 from CrocoDash import case_state
-from CrocoDash.forcing.base import ForcingConfigRegistry, WorkflowContext
+from CrocoDash.forcing.base import ForcingConfigRegistry, WorkflowContext, read_config
 
 
 def _resolve_process_order_overrides(targets):
@@ -49,8 +48,7 @@ def _resolve_process_order_overrides(targets):
 
 def _load(config_path):
     """Load config.json, read case state, and derive common paths."""
-    with open(config_path) as f:
-        config = json.load(f)
+    config = read_config(config_path)
     caseroot = config["caseroot"]
     state = case_state.read(caseroot)
     inputdir = Path(state["inputdir"])

@@ -38,6 +38,11 @@ CrocoDash also needs a CESM install. See the [installation](https://crocodile-ce
 2. Browse the [gallery of demos](https://crocodile-cesm.github.io/CrocoGallery/latest/) for more use cases.
 3. Read the [user guide](https://crocodile-cesm.github.io/CrocoDash/latest/for_users/index.html) for step-by-step docs.
 
+## Tell us how you use CrocoDash
+
+Using CrocoDash, or any CROCODILE tool, in your work? Please tell us about it in this
+[2-minute form](https://forms.gle/UsgxpqCTyHGn4sLJ9). It helps us show CrocoDash is being used!
+
 ## License
 
 CrocoDash is released under the [Apache 2.0 License](https://github.com/CROCODILE-CESM/CrocoDash/blob/main/LICENSE.md).

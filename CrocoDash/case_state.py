@@ -65,12 +65,19 @@ DERIVED_KEYS = frozenset(
 )
 
 
-def check_version(state, state_path):
-    """Raise ValueError if state's schema_version is incompatible with SCHEMA_VERSION.
+def check_version(
+    state,
+    state_path,
+    supported=SCHEMA_VERSION,
+    remedy="Recreate the case with the current version of CrocoDash.",
+):
+    """Raise ValueError if state's schema_version is incompatible with *supported*.
 
-    Only MAJOR.MINOR must match; a higher PATCH is acceptable.
+    Only MAJOR.MINOR must match; a higher PATCH is acceptable. A file from a
+    newer CrocoDash asks for an upgrade, one from an older one for *remedy*.
     Logs a warning (rather than raising) when schema_version is absent entirely
-    (pre-versioning cases).
+    (pre-versioning cases). Also used for the forcing config.json
+    (see CrocoDash.forcing.base.read_config), which passes its own *supported*.
     """
     version = state.get("schema_version")
     if version is None:
@@ -84,13 +91,18 @@ def check_version(state, state_path):
         major, minor = int(parts[0]), int(parts[1])
     except (ValueError, IndexError):
         raise ValueError(f"Invalid schema_version {version!r} in {state_path}.")
-    sup_parts = SCHEMA_VERSION.split(".")
+    sup_parts = supported.split(".")
     sup_major, sup_minor = int(sup_parts[0]), int(sup_parts[1])
-    if (major, minor) != (sup_major, sup_minor):
+    if (major, minor) > (sup_major, sup_minor):
+        raise ValueError(
+            f"{state_path} has schema version {version!r}, from a newer CrocoDash "
+            f"than this one, which supports {sup_major}.{sup_minor}.x. "
+            "Upgrade CrocoDash to read it."
+        )
+    if (major, minor) < (sup_major, sup_minor):
         raise ValueError(
             f"{state_path} has schema version {version!r} but this version of "
-            f"CrocoDash supports {sup_major}.{sup_minor}.x. "
-            "Recreate the case with the current version of CrocoDash."
+            f"CrocoDash supports {sup_major}.{sup_minor}.x. {remedy}"
         )
 
 

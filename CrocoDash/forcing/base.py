@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod
 from functools import cached_property
 from visualCaseGen.custom_widget_types.case_tools import xmlchange
 from CrocoDash.forcing import user_nl_blocks
+from CrocoDash import case_state
 from CrocoDash.logging import setup_logger
 import inspect
 from typing import Optional, Any
@@ -14,6 +15,66 @@ import dataclasses
 from CrocoDash.raw_data_access.base import Calendar
 
 logger = setup_logger(__name__)
+
+# The forcing configuration Case.configure_forcings() writes to
+# <inputdir>/extract_forcings/config.json: one entry per active configurator,
+# plus the top-level CONFIG_META_KEYS. Read it only through read_config(), which
+# rejects a config.json written by an incompatible CrocoDash (MAJOR.MINOR must
+# match, as for the case state file). Entries are read tolerantly (see
+# BaseConfigurator.deserialize), so bump the MINOR only when that would misread
+# an old file, e.g. after a rename, and add a CONFIG_MIGRATIONS entry for it.
+# See docs/source/for_developers/config_compatibility.md.
+CONFIG_FILENAME = "config.json"
+CONFIG_SCHEMA_VERSION = "1.0.0"
+# What a config.json written before versioning is read as.
+CONFIG_UNVERSIONED = "1.0.0"
+CONFIG_META_KEYS = frozenset({"schema_version", "caseroot"})
+
+
+def iter_configurator_entries(config):
+    """(key, entry) for each configurator entry in a config.json dict,
+    skipping the top-level CONFIG_META_KEYS."""
+    return (
+        (key, entry) for key, entry in config.items() if key not in CONFIG_META_KEYS
+    )
+
+
+def write_config(path, config):
+    """Write *config* to *path*, injecting schema_version as the first key."""
+    full_config = {"schema_version": CONFIG_SCHEMA_VERSION, **config}
+    with open(path, "w") as f:
+        json.dump(full_config, f, indent=4)
+
+
+# Upgrades for config.json files an older CrocoDash wrote, keyed by the
+# "MAJOR.MINOR" they upgrade from. Each takes the config dict and returns it at
+# the next version, with schema_version set to that version.
+CONFIG_MIGRATIONS = {}
+
+
+def read_config(path):
+    """Read the config.json at *path*, upgrade it if a migration applies,
+    validate its schema version, and return it."""
+    with open(path) as f:
+        config = json.load(f)
+    config.setdefault("schema_version", CONFIG_UNVERSIONED)
+    while (from_version := config["schema_version"].rsplit(".", 1)[0]) in (
+        CONFIG_MIGRATIONS
+    ):
+        config = CONFIG_MIGRATIONS[from_version](config)
+        if config["schema_version"].rsplit(".", 1)[0] == from_version:
+            raise RuntimeError(
+                f"The config.json migration from {from_version} left "
+                "schema_version unchanged; it must set the version it upgrades to."
+            )
+    # An old config.json only needs its forcings configured again, not a new case.
+    case_state.check_version(
+        config,
+        path,
+        supported=CONFIG_SCHEMA_VERSION,
+        remedy="Rerun configure_forcings() to rewrite it.",
+    )
+    return config
 
 
 def calendar_as_dict(calendar):
@@ -31,6 +92,11 @@ def calendar_as_dict(calendar):
 
 def is_serializable(v):
     return isinstance(v, (str, int, float, bool, type(None), Path, list, dict))
+
+
+class ReconfigureRequired(ValueError):
+    """config.json lacks something this version of CrocoDash needs, so the
+    case's forcings must be configured again before they can be processed."""
 
 
 class UndeclaredParamError(KeyError):
@@ -138,7 +204,10 @@ class ForcingConfigRegistry:
         for thing in cls.registered_types:
             if name.lower() == thing.name.lower():
                 return thing
-        raise ValueError("Configurator Not Found")
+        raise ReconfigureRequired(
+            f"config.json has a '{name}' entry, which this version of CrocoDash "
+            "doesn't know. Rerun configure_forcings() to rewrite config.json."
+        )
 
     @classmethod
     def get_configurator(cls, obj_dict):
@@ -227,23 +296,12 @@ class ForcingConfigRegistry:
                 configurator_cls, inputs
             )
 
-    def run_configurators(self, config_path):
-
-        if config_path is not None:
-            with open(config_path) as f:
-                general_config = json.load(f)
-        else:
-            general_config = {}
-
-        # Run Configurators
+    def run_configurators(self):
+        general_config = {}
         for configurator in self.active_configurators.values():
             logger.info(f"Configuring {configurator.name}")
             configurator.configure()
             general_config[configurator.name.lower()] = configurator.serialize()
-
-        if config_path is not None:
-            with open(config_path, "w") as f:
-                json.dump(general_config, f, indent=4)
         return general_config
 
     def stale_outputs(self, previous_config, current_config, inputdir):
@@ -283,9 +341,7 @@ class ForcingConfigRegistry:
         resolve_components/cli.py to answer "does this flag exist" without
         needing working configurator instances the way actual dispatch does."""
         flags = set()
-        for key, entry in config.items():
-            if key == "caseroot":
-                continue
+        for _, entry in iter_configurator_entries(config):
             configurator_cls = cls.get_configurator_from_name(entry["name"])
             flags.update(configurator_cls.process_components.keys())
         return flags
@@ -297,9 +353,7 @@ class ForcingConfigRegistry:
         every process component any of them declare. Used by driver.py to
         dispatch generically instead of a hand-maintained if-ladder."""
         targets = {}
-        for key, entry in config.items():
-            if key == "caseroot":
-                continue
+        for _, entry in iter_configurator_entries(config):
             configurator = cls.get_configurator(entry)
             for flag_name, method_name in configurator.process_components.items():
                 targets[flag_name] = (configurator, method_name)
@@ -350,7 +404,18 @@ class Param(ABC):
 
 
 class InputParam(Param):
-    pass
+    """An input of a configurator.
+
+    optional: the configurator works with this input left None. Any other
+    input whose constructor default is None is a placeholder that
+    configure_forcings() fills in (from the case, the run dates or the
+    product), so a config.json entry without it can't be processed until the
+    forcings are configured again (see BaseConfigurator.deserialize).
+    """
+
+    def __init__(self, name: str, comment: Optional[str] = None, optional=False):
+        super().__init__(name, comment)
+        self.optional = optional
 
 
 class InputValueParam(InputParam):
@@ -358,8 +423,8 @@ class InputValueParam(InputParam):
     Base class for a single value parameter in our forcing configurations.
     """
 
-    def __init__(self, name: str, comment: Optional[str] = None):
-        super().__init__(name, comment)
+    def __init__(self, name: str, comment: Optional[str] = None, optional=False):
+        super().__init__(name, comment, optional)
         self.value: Optional[str] = None
 
     def set_item(self, item):
@@ -371,8 +436,8 @@ class InputFileParam(InputParam):
     Base class for a single file parameter in our forcing configurations.
     """
 
-    def __init__(self, name: str, comment: Optional[str] = None):
-        super().__init__(name, comment)
+    def __init__(self, name: str, comment: Optional[str] = None, optional=False):
+        super().__init__(name, comment, optional)
         self.value: Optional[str] = None
 
     def set_item(self, filepath: str):
@@ -626,6 +691,15 @@ class BaseConfigurator(ABC):
     @abstractmethod
     def configure(self):
         """Bind input values to parameters and files."""
+        # Input files are checked here, not in validate_args: that also runs
+        # when config.json is read back, e.g. where the case won't be processed
+        # (a bundle created into crocontainer), and only processing reads them.
+        for p in self.input_params:
+            if isinstance(p, InputFileParam) and p.value and not Path(p.value).exists():
+                logger.warning(
+                    f"{self.name}: {p.name} {p.value} does not exist; processing "
+                    f"{self.name} will fail until it does."
+                )
         # A configurator's user_nl parameters go into one CrocoDash block per
         # file, which the next configure_forcings() call replaces (see
         # user_nl_blocks). Consecutive parameters with the same comment share
@@ -675,17 +749,53 @@ class BaseConfigurator(ABC):
 
     @classmethod
     def deserialize(cls, data: Dict[str, Any]):
-        input_kwargs = {}
-        for param in cls.input_params:
-            if param.name not in data["inputs"]:
-                raise KeyError(f"Input param '{param.name}' not found in data")
-            input_kwargs[param.name] = data["inputs"][param.name]
+        """Rebuild a configurator from its config.json entry.
 
-        obj = cls(**input_kwargs)
+        Tolerates entries an older or newer CrocoDash wrote: an input missing
+        from the entry takes its constructor default, and keys the class no
+        longer declares are ignored. A missing input with no default, or an
+        entry the constructor rejects, raises ReconfigureRequired.
+
+        A missing output, or a missing input left None that isn't optional
+        (a placeholder configure_forcings() fills in, see InputParam), can't
+        be known without configuring again. The entry still loads, so steps
+        that don't need it still run, and reading it raises
+        ReconfigureRequired.
+        """
+        inputs, outputs = data.get("inputs", {}), data.get("outputs", {})
+        defaults = inspect.signature(cls.__init__).parameters
+        input_kwargs, missing = {}, []
+        for param in cls.input_params:
+            if param.name in inputs:
+                input_kwargs[param.name] = inputs[param.name]
+            elif (
+                param.name not in defaults
+                or defaults[param.name].default is inspect.Parameter.empty
+            ):
+                raise ReconfigureRequired(
+                    f"config.json's '{cls.name.lower()}' entry has no "
+                    f"'{param.name}', which this version of CrocoDash requires. "
+                    "Rerun configure_forcings() to rewrite config.json."
+                )
+            elif not param.optional:
+                missing.append(param.name)
+
+        try:
+            obj = cls(**input_kwargs)
+        except (ValueError, TypeError) as e:
+            raise ReconfigureRequired(
+                f"config.json's '{cls.name.lower()}' entry is no longer valid ({e}). "
+                "Rerun configure_forcings() to rewrite config.json."
+            ) from e
         for param in cls.output_params:
-            if param.name not in data["outputs"]:
-                raise KeyError(f"Output param '{param.name}' not found in data")
-            obj.set_output_param(param.name, data["outputs"][param.name])
+            if param.name in outputs:
+                obj.set_output_param(param.name, outputs[param.name])
+        obj._unknown_inputs = {
+            name for name in missing if obj.get_input_param(name) is None
+        }
+        obj._unknown_outputs = {
+            p.name for p in cls.output_params if p.name not in outputs
+        }
         return obj
 
     def make_serializable(self, obj):
@@ -701,7 +811,19 @@ class BaseConfigurator(ABC):
             output_dict["outputs"][param.name] = self.make_serializable(param.value)
         return output_dict
 
+    # The params deserialize() couldn't read from config.json.
+    _unknown_inputs = frozenset()
+    _unknown_outputs = frozenset()
+
+    def _reconfigure_for(self, name):
+        return ReconfigureRequired(
+            f"config.json's '{self.name.lower()}' entry has no '{name}', which "
+            "this step needs. Rerun configure_forcings() to rewrite config.json."
+        )
+
     def get_input_param(self, name: str) -> Any:
+        if name in self._unknown_inputs:
+            raise self._reconfigure_for(name)
         return self.get_input_param_object(name).value
 
     def get_input_param_object(self, name: str) -> InputParam:
@@ -711,6 +833,8 @@ class BaseConfigurator(ABC):
             raise UndeclaredParamError(f"Input param '{name}' not found")
 
     def get_output_param(self, name: str) -> Any:
+        if name in self._unknown_outputs:
+            raise self._reconfigure_for(name)
         return self.get_output_param_object(name).value
 
     def get_output_param_object(self, name: str) -> OutputParam:
@@ -721,9 +845,11 @@ class BaseConfigurator(ABC):
 
     def set_output_param(self, name: str, value):
         self.get_output_param_object(name).set_item(value)
+        self._unknown_outputs = self._unknown_outputs - {name}
 
     def set_input_param(self, name: str, value):
         self.get_input_param_object(name).set_item(value)
+        self._unknown_inputs = self._unknown_inputs - {name}
 
     # ---- compset logic ----
 

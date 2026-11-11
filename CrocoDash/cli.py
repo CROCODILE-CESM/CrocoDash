@@ -34,30 +34,33 @@ def _dump(args):
 def _process(args):
     from CrocoDash import case_state
     from CrocoDash.forcing.driver import run_workflow, resolve_components
-    from CrocoDash.forcing.base import ForcingConfigRegistry
+    from CrocoDash.forcing.base import (
+        CONFIG_FILENAME,
+        ForcingConfigRegistry,
+        read_config,
+    )
 
     if args.config:
         config_path = Path(args.config)
     elif args.caseroot:
         caseroot = Path(args.caseroot)
         state = case_state.read(caseroot)
-        config_path = Path(state["inputdir"]) / "extract_forcings" / "config.json"
+        config_path = Path(state["inputdir"]) / "extract_forcings" / CONFIG_FILENAME
         if not config_path.exists():
             raise CrocoDashCliError(
                 f"Forcing configuration not found at {config_path}\n"
                 "Run case.configure_forcings() before calling 'crocodash process'."
             )
-    elif (Path.cwd() / "config.json").exists():
+    elif (Path.cwd() / CONFIG_FILENAME).exists():
         # Ran directly from inside the extract_forcings/ directory
-        config_path = Path.cwd() / "config.json"
+        config_path = Path.cwd() / CONFIG_FILENAME
     else:
         raise CrocoDashCliError(
             "No config.json found in the current directory and no --config or --caseroot provided.\n"
             "Run from inside an extract_forcings/ directory, or pass --caseroot <path> or --config <path>."
         )
 
-    with open(config_path) as f:
-        config = json.load(f)
+    config = read_config(config_path)
 
     args = resolve_components(args, config)
 
