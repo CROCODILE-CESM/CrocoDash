@@ -68,7 +68,7 @@ and which model components each activates.
 | `project` | `None` | Project/account code. Required on machines that use accounting. |
 | `atm_grid_name` | `"TL319"` | Atmosphere grid (data-atmosphere resolution). |
 | `rof_grid_name` | `None` | Runoff grid. Auto-inferred from compset; required only when multiple options are available. |
-| `ntasks_ocn` | From ocean points | Number of MPI tasks for MOM6. Without it, `configure_forcings()` sets the layout from the number of ocean points. |
+| `ntasks_ocn` | From ocean points | Number of MPI tasks for MOM6, and for CICE and WW3 when active. Without it, `configure_forcings()` gives one task per 170 ocean points (60 with MARBL). DATM, DROF and the mediator get at least 56 tasks, up to one node. |
 | `job_queue` | CESM default | Batch queue. |
 | `job_wallclock_time` | CESM default | Wallclock (`hh:mm:ss`). |
 | `ninst` | `1` | Number of model instances (ensemble size). |

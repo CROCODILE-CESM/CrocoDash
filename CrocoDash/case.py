@@ -123,8 +123,9 @@ class Case:
         override : bool, optional
             Whether to override existing caseroot and inputdir directories. Default is False.
         ntasks_ocn : int, optional
-            Number of tasks for the ocean model. If None, configure_forcings() picks the
-            PE layout from the number of ocean points (see forcing/pe_layout.py).
+            Number of tasks for MOM6, and for CICE and WW3 when active. If None,
+            configure_forcings() sets it from the number of ocean points (see
+            forcing/pe_layout.py).
         job_queue: str, optional
             The queue to submit the CESM case to. If None, defaults to the CESM defaults (usually main).
             Must be one of the machine's queues. Ignored, with a warning, on a machine with no

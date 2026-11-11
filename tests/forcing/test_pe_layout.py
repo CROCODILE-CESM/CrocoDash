@@ -4,25 +4,30 @@ from CrocoDash.forcing.pe_layout import pe_layout
 
 
 @pytest.mark.parametrize(
-    "ocean_points, marbl, ntasks_ocn, expected",
+    "ocean_points, marbl, ntasks_ocn, tasks_per_node, expected",
     [
-        # (NTASKS, ROOTPE, NTASKS_OCN, ROOTPE_OCN) on a 128-task node
-        (100, False, None, (1, 0, 1, 0)),  # 1 task: MOM_interface's XS
-        (5_000, False, None, (1, 0, 32, 0)),  # 30 tasks: the 32 tier, one node
-        (15_000, False, None, (128, 0, 128, 128)),  # 89: S
-        (30_000, False, None, (128, 0, 384, 128)),  # 177, two nodes: M
-        (200_000, False, None, (128, 0, 896, 128)),  # 1177, ten nodes: L
-        (5_000, True, None, (128, 0, 384, 128)),  # 84 with MARBL: MARBL's S
-        (30_000, False, 8, (1, 0, 8, 0)),  # ntasks_ocn replaces the count
+        # (MOM6/CICE/WW3 tasks, DATM/DROF/mediator tasks)
+        (100, False, None, 128, (1, 56)),  # one task; data at least 56
+        (5_000, False, None, 128, (30, 56)),  # 5000/170 -> 30
+        (15_000, False, None, 128, (89, 89)),  # data matches MOM6 above 56
+        (200_000, False, None, 128, (1177, 128)),  # data up to one node
+        (5_000, True, None, 128, (84, 84)),  # MARBL: 60 points per task
+        (30_000, False, 8, 128, (8, 56)),  # ntasks_ocn replaces the count
+        (100, False, None, 1, (1, 1)),  # a one-task machine (crocontainer)
     ],
 )
-def test_pe_layout_picks_the_smallest_tier_that_fits(
-    ocean_points, marbl, ntasks_ocn, expected
+def test_pe_layout_gives_mom6_one_task_per_170_ocean_points(
+    ocean_points, marbl, ntasks_ocn, tasks_per_node, expected
 ):
-    layout = pe_layout(ocean_points, 128, marbl=marbl, ntasks_ocn=ntasks_ocn)
-    assert layout == dict(
-        zip(("NTASKS", "ROOTPE", "NTASKS_OCN", "ROOTPE_OCN"), expected)
-    )
+    layout = pe_layout(ocean_points, tasks_per_node, marbl=marbl, ntasks_ocn=ntasks_ocn)
+    ntasks, data = expected
+    assert layout == {
+        "NTASKS": ntasks,
+        "ROOTPE": 0,
+        "NTASKS_ATM": data,
+        "NTASKS_ROF": data,
+        "NTASKS_CPL": data,
+    }
 
 
 def test_a_layout_change_is_followed_by_a_case_setup_reset(monkeypatch, tmp_path):
@@ -46,9 +51,9 @@ def test_a_layout_change_is_followed_by_a_case_setup_reset(monkeypatch, tmp_path
     )
     # CIME's default layout: one node for every component.
     case_values = {
-        "MAX_TASKS_PER_NODE": "128",
-        "NTASKS": "['CPL:128', 'ATM:128', 'OCN:128', 'ESP:1']",
-        "ROOTPE": "['CPL:0', 'ATM:0', 'OCN:0', 'ESP:0']",
+        "MAX_MPITASKS_PER_NODE": "128",
+        "NTASKS": "['CPL:128', 'ATM:128', 'OCN:128', 'ICE:128', 'ROF:128', 'ESP:1']",
+        "ROOTPE": "['CPL:0', 'ATM:0', 'OCN:0', 'ICE:0', 'ROF:0', 'ESP:0']",
     }
     resets = []
 
@@ -67,18 +72,21 @@ def test_a_layout_change_is_followed_by_a_case_setup_reset(monkeypatch, tmp_path
     assert changed == {
         "NTASKS": "1",
         "ROOTPE": "0",
-        "NTASKS_OCN": "1",
-        "ROOTPE_OCN": "0",
+        "NTASKS_ATM": "56",
+        "NTASKS_ROF": "56",
+        "NTASKS_CPL": "56",
     }
     assert resets == [["./case.setup", "--reset"]]
 
     # Configured again with that layout in place: nothing to reset.
-    case_values["NTASKS"] = "['CPL:1', 'ATM:1', 'OCN:1', 'ESP:1']"
+    case_values["NTASKS"] = "['CPL:56', 'ATM:56', 'OCN:1', 'ICE:1', 'ROF:56', 'ESP:1']"
     configurator().configure()
     assert len(resets) == 1
 
     # A case made for another machine needs --non-local, as xmlchange does.
-    case_values["NTASKS"] = "['CPL:128', 'ATM:128', 'OCN:128', 'ESP:1']"
+    case_values["NTASKS"] = (
+        "['CPL:128', 'ATM:128', 'OCN:128', 'ICE:128', 'ROF:128', 'ESP:1']"
+    )
     non_local = configurator()
     non_local.registry = SimpleNamespace(case=SimpleNamespace(is_non_local=True))
     non_local.configure()
