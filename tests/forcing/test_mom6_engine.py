@@ -447,6 +447,7 @@ def test_regrid_ic_gives_the_vgrid_check_the_real_min_depth(
     topo.set_flat(100.0)
     topo.write_topo(tmp_path / "topog.nc")
     xr.Dataset({"dz": ("z", np.full(5, 20.0))}).to_netcdf(tmp_path / "vgrid.nc")
+    xr.Dataset(coords={"time": [0.0]}).to_netcdf(tmp_path / "raw.nc")  # one IC record
 
     seen = {}
     real_create_empty = mom6.rm6.experiment.create_empty
@@ -466,7 +467,7 @@ def test_regrid_ic_gives_the_vgrid_check_the_real_min_depth(
             hgrid=xr.open_dataset(tmp_path / "hgrid.nc"),
             start_date="2020-01-01",
             output_dir=tmp_path,
-            dataset_varnames={},
+            dataset_varnames={"time_var_name": "time"},
             hgrid_path=tmp_path / "hgrid.nc",
             vgrid_path=tmp_path / "vgrid.nc",
             bathymetry_path=tmp_path / "topog.nc",
