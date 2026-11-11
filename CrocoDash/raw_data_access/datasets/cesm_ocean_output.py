@@ -16,7 +16,7 @@ from pathlib import Path
 from dateutil import parser
 import os
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 import xarray as xr
 import cftime
@@ -25,7 +25,6 @@ import numpy as np
 import pandas as pd
 
 from CrocoDash.raw_data_access.base import *
-from CrocoDash.raw_data_access.datasets.utils import make_dates_end_inclusive
 
 
 class CESM_POP_OUTPUT(MOM6ForcingProduct):
@@ -246,24 +245,6 @@ class CESM_MOM_OUTPUT(MOM6ForcingProduct):
         ds = convert_cftime_to_numeric(
             ds, time_var_name=time_var_name, calendar=CESM_MOM_OUTPUT.calendar
         )
-
-        # convert_cftime_to_numeric re-encodes a cftime coordinate as numeric
-        # and stamps its units/calendar onto the coordinate attrs; match dates
-        # to that same encoding so the slice bounds compare correctly. Push the
-        # end date to the last second of its day so sub-daily output on the
-        # last requested day isn't silently dropped by the slice below.
-        start_str, end_str = make_dates_end_inclusive(dates)
-        parsed_dates = pd.to_datetime([start_str, end_str])
-        time_attrs = ds[time_var_name].attrs
-        if "units" in time_attrs and "calendar" in time_attrs:
-            sel_dates = cftime.date2num(
-                parsed_dates.to_pydatetime(),
-                units=time_attrs["units"],
-                calendar=time_attrs["calendar"],
-            )
-        else:
-            sel_dates = parsed_dates
-        ds = ds.sel({time_var_name: slice(sel_dates[0], sel_dates[-1])})
         keep_vars = [v for v in variables if v in ds.data_vars]
         missing_vars = [v for v in variables if v not in ds.data_vars]
         if missing_vars:
@@ -444,10 +425,8 @@ def read_single_variable_tseries_data(
         for var in variable_info:
             variable_info[var] = [f for f in variable_info[var] if member in f]
 
-    # Thinned to freq, a subset holds only the window's records, so its name
-    # needs the window's days; without freq it holds whole files, which every
-    # chunk inside the same date_format period can share.
-    name_format = "%Y%m%d" if freq else date_format
+    # A subset holds only the window's records, so its name needs the
+    # window's days, not date_format's (e.g. a month that several chunks share).
     paths = subset_dataset(
         variable_info=variable_info,
         output_path=output_folder,
@@ -457,10 +436,7 @@ def read_single_variable_tseries_data(
         lon_max=lon_max + 1.5,
         lat_name=lat_name,
         lon_name=lon_name,
-        dates=(
-            start_date.strftime(name_format),
-            end_date.strftime(name_format),
-        ),
+        dates=(start_date.strftime("%Y%m%d"), end_date.strftime("%Y%m%d")),
         preview=preview,
         data_freq=data_freq,
         freq=freq,
@@ -642,10 +618,15 @@ def date_means_at_interval_start(ds, time_var_name="time", source=""):
 
 
 def select_records(ds, window, data_freq, freq=None, time_var_name="time", source=""):
-    """Check that ds's records are data_freq apart, then, for a freq coarser
-    than that, keep the record that covers each date sample_dates picks from
-    the (start, end) window: the one whose averaging interval (time bounds)
-    holds it, or without bounds the nearest one."""
+    """Check that ds's records are data_freq apart, then keep the ones for the
+    (start, end) window of whole days: those whose averaging interval (time
+    bounds) overlaps it, or without bounds those stamped in it, and the
+    nearest to its start if none are. The bounds, not the stamps, say which
+    mean covers a day: CESM-POP's are dated at the start of their interval
+    (once re-dated), MOM6's in the middle. A freq coarser than data_freq keeps
+    instead the record that covers each date sample_dates picks from the
+    window: the one whose interval holds it, or without bounds the nearest
+    one. window=None keeps every record."""
     if freq is not None and data_freq is None:
         raise ValueError(
             f"{source}: freq={freq!r} needs data_freq, the cadence of the files."
@@ -660,19 +641,30 @@ def select_records(ds, window, data_freq, freq=None, time_var_name="time", sourc
                 f"isn't data_freq={data_freq!r} ({expected:.3g} days). Pass the "
                 "cadence of that data as data_freq."
             )
-    if freq is None or frequency_step(freq) == frequency_step(data_freq):
+    if window is None:
         return ds
-    # Sampled dates of the same type as the data's (datetime64 or cftime),
-    # even for cftime in the standard calendar, so the two compare.
+    # Dates of the same type as the data's (datetime64 or cftime), even for
+    # cftime in the standard calendar, so the two compare.
     calendar = getattr(time[0], "calendar", "standard")
     use_cftime = isinstance(time[0], cftime.datetime)
-    dates = sample_dates(window[0], window[-1], freq, calendar, use_cftime)
     bounds = ds[time_var_name].attrs.get("bounds")
     if bounds in ds.variables:
         lo, hi = ds[bounds].values[:, 0], ds[bounds].values[:, 1]
+    index = ds.indexes[time_var_name]
+    if freq is None or frequency_step(freq) == frequency_step(data_freq):
+        days = sample_dates(window[0], window[-1], "D", calendar, use_cftime)
+        start, end = days[0], days[-1] + timedelta(days=1)
+        if bounds in ds.variables:
+            keep = np.flatnonzero((lo < end) & (hi > start))
+        else:
+            keep = np.flatnonzero((time >= start) & (time < end))
+        if not len(keep):
+            keep = index.get_indexer([start], method="nearest")
+        return ds.isel({time_var_name: keep})
+    dates = sample_dates(window[0], window[-1], freq, calendar, use_cftime)
+    if bounds in ds.variables:
         keep = [i for i in range(len(time)) if any(lo[i] <= d < hi[i] for d in dates)]
     else:
-        index = ds.indexes[time_var_name]
         keep = np.unique(index.get_indexer(dates, method="nearest"))
     return ds.isel({time_var_name: keep})
 
@@ -742,8 +734,9 @@ def subset_dataset(
         dates (tuple): Just used for the file naming
         preview (bool): If True, only previews the subsetting without saving. Default is False.
         data_freq, freq, window: the files' cadence, checked against them,
-            and a coarser one to thin them to over the (start, end) window
-            (see select_records). None skips both.
+            the (start, end) window to keep the records of, and a coarser
+            cadence to thin them to (see select_records). window=None keeps
+            every record.
         grid_coords (dict | None): Optional {var_name: (lat_name, lon_name)}
             override - needed for MOM6's C-grid, where uo/vo live on different
             horizontal dims than the tracer grid, so a single lat_name/lon_name

@@ -157,6 +157,42 @@ def test_select_records_thins_records_without_time_bounds():
     assert list(kept.dt.strftime("%m-%d").values) == ["01-01", "02-01", "03-01"]
 
 
+@pytest.mark.parametrize("stamp", ["start", "middle"], ids=["pop_redated", "mom6"])
+def test_a_window_keeps_the_months_whose_bounds_overlap_it(stamp):
+    """Monthly means are dated at their month's start (CESM-POP, once
+    re-dated) or its middle (MOM6: January at Jan 16 12:00). The IC asks for
+    its start day and the next, and must get the start's month, not the
+    file's first or the month before."""
+    firsts = [cftime.DatetimeNoLeap(2000 + m // 12, m % 12 + 1, 1) for m in range(13)]
+    lo, hi = np.array(firsts[:-1]), np.array(firsts[1:])
+    ds = xr.Dataset(
+        {
+            "thetao": ("time", np.arange(1, 13)),  # the month's number
+            "time_bnds": (("time", "nv"), np.stack([lo, hi], axis=1)),
+        },
+        coords={"time": lo if stamp == "start" else lo + (hi - lo) / 2},
+    )
+    ds.time.attrs["bounds"] = "time_bnds"
+
+    def months(*window):
+        return list(co.select_records(ds, window, "MS").thetao.values)
+
+    assert months("2000-07-01", "2000-07-02") == [7]
+    assert months("2000-07-15", "2000-07-16") == [7]
+    assert months("2000-07-31", "2000-08-01") == [7, 8]
+
+
+def test_consecutive_windows_split_the_records_between_them():
+    """Boundary chunks are back-to-back day ranges. Each keeps only its own
+    records, or the merged boundary data repeats times and fails (#353).
+    Daily means without bounds, stamped at noon."""
+    time = pd.date_range("2000-01-01 12:00", periods=31, freq="D")
+    ds = xr.Dataset({"zos": ("time", np.zeros(31))}, coords={"time": time})
+    chunks = [("2000-01-01", "2000-01-07"), ("2000-01-08", "2000-01-14")]
+    days = [list(co.select_records(ds, w, "D").time.dt.day.values) for w in chunks]
+    assert days == [list(range(1, 8)), list(range(8, 15))]
+
+
 def _write_mom6_history_file(
     path, lat_min=20, lat_max=25, lon_min=-90, lon_max=-85, ntime=10
 ):
