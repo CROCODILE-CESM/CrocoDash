@@ -383,6 +383,7 @@ class _FakeERA5Spectra(WW3ForcingProduct):
     time_var_name = "time"
     time_units = None
     calendar = GREGORIAN
+    time_sampling = "h"
     direction_convention = DIRECTION_COMING_FROM
     land_marker = LAND_ZERO
 

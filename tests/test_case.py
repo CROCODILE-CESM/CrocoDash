@@ -86,6 +86,20 @@ def test_configure_forcings_invalid_function_overrides(get_CrocoDash_case):
         )
 
 
+def test_configure_forcings_rejects_freq_the_get_chunks_cannot_honour(
+    get_CrocoDash_case,
+):
+    """Each 7-day GET chunk samples freq on its own, so "MS" would come out
+    weekly: it fails at configure time instead."""
+    with pytest.raises(ValueError, match="must divide"):
+        get_CrocoDash_case.configure_forcings(
+            date_range=["2020-01-01 00:00:00", "2020-02-01 00:00:00"],
+            boundaries=["north"],
+            function_name="get_glorys_data_from_rda",
+            function_overrides={"freq": "MS"},
+        )
+
+
 def _stub_case_for_ncpl(ncpl, dx_m, base_period="day"):
     """A Case with only what _set_cice_ndtd/_coupling_interval read."""
     from types import SimpleNamespace
@@ -175,6 +189,41 @@ def test_an_unknown_job_queue_lists_the_valid_ones(monkeypatch):
     with pytest.raises(ValueError, match="Valid queues: develop, main"):
         case._apply_final_xmlchanges(job_queue="mian")
     assert "JOB_QUEUE" not in changed
+
+
+def test_ntasks_ocn_is_followed_by_a_case_setup_reset(monkeypatch, tmp_path):
+    """case.setup has already locked the PE layout, so changing NTASKS_OCN needs a
+    reset before CIME will build; nothing else in this step changes the layout."""
+    from types import SimpleNamespace
+    import CrocoDash.case as case_mod
+
+    case, changed = _stub_case_for_xmlchanges(monkeypatch, "pbs", ["develop"])
+    case.caseroot = tmp_path
+    ran = []
+    monkeypatch.setattr(
+        case_mod.subprocess,
+        "run",
+        lambda cmd, **kw: ran.append(cmd) or SimpleNamespace(returncode=0, stderr=""),
+    )
+    case._apply_final_xmlchanges(job_queue="develop")
+    assert ran == []
+    case._apply_final_xmlchanges(ntasks_ocn=4)
+    assert changed["NTASKS_OCN"] == 4
+    assert ran == [["./case.setup", "--reset"]]
+
+    # A case made for another machine needs --non-local, as xmlchange does.
+    case.is_non_local = True
+    case._apply_final_xmlchanges(ntasks_ocn=4)
+    assert ran[-1] == ["./case.setup", "--reset", "--non-local"]
+
+    # A failed reset says why, with CIME's own message.
+    monkeypatch.setattr(
+        case_mod.subprocess,
+        "run",
+        lambda cmd, **kw: SimpleNamespace(returncode=1, stderr="ERROR: locked file"),
+    )
+    with pytest.raises(RuntimeError, match="ERROR: locked file"):
+        case._apply_final_xmlchanges(ntasks_ocn=4)
 
 
 def test_a_configuration_error_raises_instead_of_returning_a_half_built_case(
