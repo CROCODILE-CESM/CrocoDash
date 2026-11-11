@@ -197,6 +197,11 @@ def test_ntasks_ocn_is_followed_by_a_case_setup_reset(monkeypatch, tmp_path):
     assert changed["NTASKS_OCN"] == 4
     assert ran == [["./case.setup", "--reset"]]
 
+    # A case made for another machine needs --non-local, as xmlchange does.
+    case.is_non_local = True
+    case._apply_final_xmlchanges(ntasks_ocn=4)
+    assert ran[-1] == ["./case.setup", "--reset", "--non-local"]
+
     # A failed reset says why, with CIME's own message.
     monkeypatch.setattr(
         case_mod.subprocess,
