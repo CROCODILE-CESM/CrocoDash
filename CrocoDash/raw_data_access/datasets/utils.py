@@ -25,6 +25,7 @@ def convert_lons_to_180_range(*lons):
 
 
 def write_bash_curl_script(url, script_name, output_folder, output_filename):
+    os.makedirs(output_folder, exist_ok=True)
     full_script_path = os.path.join(output_folder, script_name)
     full_path = os.path.join(output_folder, output_filename)
     script_lines = [
