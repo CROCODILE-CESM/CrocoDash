@@ -133,6 +133,35 @@ def test_get_glorys_data_from_rda_near_global_box_has_no_duplicate_longitudes(
     assert len(out_lon) == len(np.unique(out_lon))
 
 
+def test_get_glorys_data_from_rda_reads_only_the_sampled_days(tmp_path, monkeypatch):
+    """freq="MS" reads the month starts in the window and nothing else;
+    without freq it reads every day."""
+    requested = []
+    monkeypatch.setattr(
+        gl.glob, "glob", lambda pattern: requested.append(pattern) or ["dummy.nc"]
+    )
+    monkeypatch.setattr(gl.xr, "open_mfdataset", lambda *a, **k: _fake_full_globe_ds())
+
+    def days_read(**kwargs):
+        requested.clear()
+        gl.GLORYS.get_glorys_data_from_rda(
+            ["2020-01-10", "2020-03-05"],
+            30,
+            31,
+            10,
+            20,
+            output_folder=tmp_path,
+            output_filename="temp.nc",
+            variables=["zos"],
+            **kwargs,
+        )
+        return [os.path.basename(pattern).split("_")[1] for pattern in requested]
+
+    assert days_read(freq="MS") == ["20200201", "20200301"]
+    daily = days_read()
+    assert (len(daily), daily[0], daily[-1]) == (56, "20200110", "20200305")
+
+
 @pytest.mark.slow
 def test_get_glorys_data_from_rda(skip_if_not_glade, tmp_path):
     dates = ["2000-01-01", "2000-01-05"]
