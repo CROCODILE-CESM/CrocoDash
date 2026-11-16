@@ -19,7 +19,7 @@ Pick the most specific base that fits — each level adds required metadata:
 
 ```
 BaseProduct                    product_name, description, link
- └─ DatedBaseProduct           + a `dates` download arg
+ └─ DatedBaseProduct           + a `dates` download arg, time_sampling
      └─ ForcingProduct         + lat/lon/variables bbox contract,
                                  time_var_name, time_units, calendar
          └─ VelocityTracerForcingProduct
@@ -151,9 +151,37 @@ class MyDataset(MOM6ForcingProduct):
 containing at least `temp` and `salt`.
 :::
 
+:::{important}
+Every dated product declares a **`time_sampling`**: how often its records come,
+as a pandas frequency alias (`"D"`, `"MS"`, `"6h"`). Use `USER_SPECIFIED` when
+the cadence depends on the source the user points the product at (CESM-MOM
+output), so the user must pass it as `data_freq`, and `None` only for a static
+snapshot that ignores `dates`.
+
+```python
+class MyDataset(MOM6ForcingProduct):
+    time_sampling = "D"  # daily means
+```
+
+An access method calls `resolve_time_sampling` first. Its signature says which
+of two arguments it takes (users set them through `function_overrides`):
+
+- `freq=None`: the method can fetch every `freq` instead of every record, e.g.
+  `freq="7D"` for one record a week. Use `sample_dates` to pick the dates (see
+  GLORYS's RDA method). For now `configure_forcings` only accepts a `freq` that
+  divides the 7-day fetch chunks (`"D"`, `"7D"`, `"W"`).
+- `data_freq=None`: the method reads data from a path the user gives it, and
+  `data_freq` is the cadence of that data (the CESM output readers). It only
+  describes the data: the method reads it the same way whatever the value, and
+  checks it against the records it finds.
+
+A method may take both. Any other method takes neither and returns its
+product's own cadence.
+:::
+
 ## Step 5: Validation and Tests
 
-When you test your class, it will automatically get registered with the registry and run validation. It will fail on import if you miss metadata or required args in your registered access function, or if `calendar` is missing or is not a `Calendar`.
+When you test your class, it will automatically get registered with the registry and run validation. It will fail on import if you miss metadata or required args in your registered access function, or if `calendar` is missing or is not a `Calendar`, or `time_sampling` is missing or is not a pandas frequency alias, `USER_SPECIFIED` or `None`.
 
 Create a test file in `tests/raw_data_access` to test your dataset:
 
