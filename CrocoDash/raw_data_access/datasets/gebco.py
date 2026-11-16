@@ -38,8 +38,13 @@ class GEBCO(BaseProduct):
         with ZipFile(local_zip_path, "r") as zip_ref:
             zip_ref.extractall(output_folder)
             grids = [n for n in zip_ref.namelist() if n.endswith(".nc")]
+        if len(grids) != 1:
+            raise ValueError(
+                f"{local_zip_path} should hold exactly one .nc grid, but holds "
+                f"{len(grids)}: {grids}. Has GEBCO changed its download?"
+            )
         # The grid itself, not the zip it came in.
-        return Path(output_folder) / grids[0] if grids else Path(output_folder)
+        return Path(output_folder) / grids[0]
 
     @accessmethod(
         description="get script to download global bathymetry data",

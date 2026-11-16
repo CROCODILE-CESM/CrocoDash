@@ -67,8 +67,8 @@ def test_script_methods_work_on_their_defaults(
     assert "None" not in script.read_text()
 
 
-def test_gebco_python_download_returns_the_grid_not_the_zip(tmp_path, monkeypatch):
-    """The method unzips the download; callers need the grid file it holds."""
+def _serve_gebco_zip(monkeypatch, members):
+    """Make GEBCO's download return a zip holding these (empty) files."""
     import io
     import zipfile
     from types import SimpleNamespace
@@ -76,8 +76,8 @@ def test_gebco_python_download_returns_the_grid_not_the_zip(tmp_path, monkeypatc
 
     payload = io.BytesIO()
     with zipfile.ZipFile(payload, "w") as z:
-        z.writestr("GEBCO_2024.nc", b"grid")
-        z.writestr("README.pdf", b"doc")
+        for name in members:
+            z.writestr(name, b"")
 
     class Response(SimpleNamespace):
         def __enter__(self):
@@ -93,4 +93,16 @@ def test_gebco_python_download_returns_the_grid_not_the_zip(tmp_path, monkeypatc
             yield payload.getvalue()
 
     monkeypatch.setattr(gebco.requests, "get", lambda url, stream: Response())
+
+
+def test_gebco_python_download_returns_the_grid_not_the_zip(tmp_path, monkeypatch):
+    """The method unzips the download; callers need the grid file it holds."""
+    _serve_gebco_zip(monkeypatch, ["GEBCO_2024.nc", "README.pdf"])
     assert GEBCO.get_gebco_data_with_python(tmp_path) == tmp_path / "GEBCO_2024.nc"
+
+
+def test_gebco_python_download_without_a_grid_raises(tmp_path, monkeypatch):
+    """A zip with no grid says so, instead of handing back the folder."""
+    _serve_gebco_zip(monkeypatch, ["README.pdf"])
+    with pytest.raises(ValueError, match="exactly one .nc grid"):
+        GEBCO.get_gebco_data_with_python(tmp_path)
