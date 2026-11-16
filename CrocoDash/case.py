@@ -93,7 +93,9 @@ class Case:
         caseroot : str | Path
             Path to the case root directory to be created.
         inputdir : str | Path
-            Path to the input directory to be created.
+            Path to the input directory to be created. It can't be the caseroot
+            or inside it, and the caseroot can't be inside the folders CrocoDash
+            makes in it (ocn, ice, wav, mapping, extract_forcings).
         compset : str
             The component set alias (e.g. "G_JRA") or long name
             (e.g. "1850_DATM%JRA_SLND_SICE_MOM6_SROF_SGLC_SWAV_SESP") for the case.
@@ -297,19 +299,23 @@ class Case:
         """Perform sanity checks on the input arguments to ensure they are valid and consistent."""
 
         # The grid files are written to inputdir before create_newcase runs, and
-        # create_newcase refuses a caseroot that already exists.
-        resolved_caseroot, resolved_inputdir = (
-            Path(caseroot).resolve(),
-            Path(inputdir).resolve(),
-        )
-        if (
-            resolved_inputdir == resolved_caseroot
-            or resolved_caseroot in resolved_inputdir.parents
-        ):
+        # create_newcase refuses a caseroot that already exists. The same goes
+        # for the folders CrocoDash makes in the inputdir, and configure_forcings
+        # deletes extract_forcings on override.
+        caseroot_path = Path(caseroot).resolve()
+        inputdir_path = Path(inputdir).resolve()
+        if inputdir_path.is_relative_to(caseroot_path):
             raise ValueError(
                 f"inputdir {inputdir} can't be the caseroot {caseroot} or inside it. "
                 "Put the inputdir beside the caseroot instead."
             )
+        for folder in ("ocn", "ice", "wav", "mapping", "extract_forcings"):
+            if caseroot_path.is_relative_to(inputdir_path / folder):
+                raise ValueError(
+                    f"caseroot {caseroot} can't be inside the inputdir's {folder} "
+                    "folder, which CrocoDash writes to. Put the caseroot beside the "
+                    "inputdir instead."
+                )
         if Path(caseroot).exists() and not override:
             raise ValueError(
                 f"Given caseroot {caseroot} already exists! "

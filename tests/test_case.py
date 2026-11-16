@@ -177,14 +177,26 @@ def test_an_unknown_job_queue_lists_the_valid_ones(monkeypatch):
     assert "JOB_QUEUE" not in changed
 
 
-@pytest.mark.parametrize("inputdir", ["case", "case/input"])
-def test_an_inputdir_in_the_caseroot_is_refused_up_front(tmp_path, inputdir):
-    """create_newcase needs the caseroot not to exist yet, and inputdir is written
-    first, so an inputdir at or inside the caseroot used to fail with an unclear
-    error later on."""
+@pytest.mark.parametrize(
+    "caseroot, inputdir",
+    [
+        ("case", "case"),
+        ("case", "case/input"),
+        ("input/ocn", "input"),
+        ("input/extract_forcings/case", "input"),
+    ],
+)
+def test_overlapping_caseroot_and_inputdir_are_refused_up_front(
+    tmp_path, caseroot, inputdir
+):
+    """create_newcase needs the caseroot not to exist yet, and inputdir and its
+    ocn/ice/wav folders are written first, so either inside the other used to fail
+    with an unclear error later on. A caseroot in extract_forcings was deleted by
+    configure_forcings on override."""
     from CrocoDash.case import Case
 
-    with pytest.raises(ValueError, match="can't be the caseroot"):
+    # The paths are checked before any other argument is read, so those can be None.
+    with pytest.raises(ValueError, match="can't be"):
         Case.init_args_check(
             **dict.fromkeys(
                 [
@@ -200,7 +212,7 @@ def test_an_inputdir_in_the_caseroot_is_refused_up_front(tmp_path, inputdir):
                     "project",
                 ]
             ),
-            caseroot=tmp_path / "case",
+            caseroot=tmp_path / caseroot,
             inputdir=tmp_path / inputdir,
             override=False,
         )
