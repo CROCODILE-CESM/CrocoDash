@@ -6,6 +6,7 @@ from types import SimpleNamespace
 
 from CrocoDash.forcing import mom6, user_nl_blocks
 from CrocoDash.forcing.mom6 import _split_bgc_tracers_into_files
+from CrocoDash.forcing.obc import _make_date_pairs
 from CrocoDash.raw_data_access.registry import ProductRegistry
 
 
@@ -246,6 +247,34 @@ def test_process_bc_hands_the_engine_mom6s_own_pieces(tmp_path, monkeypatch):
     cfg.get_output_param("information")["boundary_fill_method"] = "something_else"
     with pytest.raises(ValueError, match="is not supported"):
         cfg.process_bc(ctx)
+
+
+@pytest.mark.parametrize(
+    "freq, stamp",
+    [
+        ("MS", "start"),  # CESM-POP monthly means, dated at the month's start
+        ("MS", "middle"),  # MOM6 monthly means, dated mid-month
+        ("5D", "start"),  # CESM-POP 5-day means
+    ],
+)
+def test_boundary_records_bracket_the_run_and_fill_every_chunk(freq, stamp):
+    """MOM6 interpolates boundary data in time and stops on a model time
+    outside its records. GET and REGRID fail on a chunk with no record, as a
+    30-day chunk of monthly data can be."""
+    edges = pd.date_range("1999-01-01", "2003-01-01", freq=freq)
+    offset = (edges[1:] - edges[:-1]) / 2 if stamp == "middle" else pd.Timedelta(0)
+    records = edges[:-1] + offset
+    spacing = mom6.record_spacing_days(freq)
+    day = pd.Timedelta(days=1)
+    for start in pd.date_range("2000-01-01", "2000-12-31", freq="3D"):
+        for run_days in (1, 9, 31, 45, 92, 366):
+            end = start + run_days * day
+            lo, hi = mom6.boundary_window(start, end, spacing)
+            assert ((records >= lo) & (records <= start)).any(), (lo, start)
+            assert ((records >= end) & (records < hi + day)).any(), (end, hi)
+            for step in mom6.chunk_days(spacing):
+                for a, b in _make_date_pairs(lo, hi, step, spacing):
+                    assert ((records >= a) & (records < b + day)).any(), (a, b)
 
 
 @pytest.mark.parametrize("with_bathymetry", [True, False])
