@@ -1,6 +1,7 @@
 from pathlib import Path
 import uuid
 import shutil
+import subprocess
 from datetime import datetime
 import math
 import pandas as pd
@@ -15,7 +16,12 @@ from CrocoDash.forcing.base import (
     write_config,
 )
 from CrocoDash.raw_data_access.registry import ProductRegistry, json_safe
-from CrocoDash.raw_data_access.base import ForcingProduct
+from CrocoDash.raw_data_access.base import (
+    ForcingProduct,
+    frequency_step,
+    resolve_time_sampling,
+)
+from CrocoDash.forcing.mom6 import GET_STEP_DAYS
 from ProConPy.config_var import ConfigVar, cvars
 from ProConPy.stage import Stage
 from ProConPy.dev_utils import ConstraintViolation
@@ -93,7 +99,9 @@ class Case:
         caseroot : str | Path
             Path to the case root directory to be created.
         inputdir : str | Path
-            Path to the input directory to be created.
+            Path to the input directory to be created. It can't be the caseroot
+            or inside it, and the caseroot can't be inside the folders CrocoDash
+            makes in it (ocn, ice, wav, mapping, extract_forcings).
         compset : str
             The component set alias (e.g. "G_JRA") or long name
             (e.g. "1850_DATM%JRA_SLND_SICE_MOM6_SROF_SGLC_SWAV_SESP") for the case.
@@ -296,6 +304,24 @@ class Case:
     ):
         """Perform sanity checks on the input arguments to ensure they are valid and consistent."""
 
+        # The grid files are written to inputdir before create_newcase runs, and
+        # create_newcase refuses a caseroot that already exists. The same goes
+        # for the folders CrocoDash makes in the inputdir, and configure_forcings
+        # deletes extract_forcings on override.
+        caseroot_path = Path(caseroot).resolve()
+        inputdir_path = Path(inputdir).resolve()
+        if inputdir_path.is_relative_to(caseroot_path):
+            raise ValueError(
+                f"inputdir {inputdir} can't be the caseroot {caseroot} or inside it. "
+                "Put the inputdir beside the caseroot instead."
+            )
+        for folder in ("ocn", "ice", "wav", "mapping", "extract_forcings"):
+            if caseroot_path.is_relative_to(inputdir_path / folder):
+                raise ValueError(
+                    f"caseroot {caseroot} can't be inside the inputdir's {folder} "
+                    "folder, which CrocoDash writes to. Put the caseroot beside the "
+                    "inputdir instead."
+                )
         if Path(caseroot).exists() and not override:
             raise ValueError(
                 f"Given caseroot {caseroot} already exists! "
@@ -604,6 +630,27 @@ class Case:
                     f"valid overridable args are {sorted(function_args)}"
                 )
             function_args.update(function_overrides)
+        # Fail here, not deep inside process_forcings, on a data_freq or freq
+        # the access method can't honour, or a product that needs a data_freq.
+        resolve_time_sampling(
+            ProductRegistry.get_product(self.forcing_product_name),
+            function_name,
+            function_args.get("data_freq"),
+            function_args.get("freq"),
+        )
+        # Each GET chunk samples freq on its own, from its own first day, so a
+        # freq that doesn't divide the chunk comes out at the wrong cadence
+        # ("MS" weekly, "2D" with a 1-day step at each chunk edge), and thinned
+        # monthly data repeats a record across chunks. Lifted once chunk
+        # sizes follow the data's time sampling.
+        freq = function_args.get("freq")
+        step = pd.Timedelta(days=GET_STEP_DAYS)
+        if freq is not None and step % frequency_step(freq) != pd.Timedelta(0):
+            raise ValueError(
+                f"freq={freq!r} isn't supported yet: forcing is fetched in "
+                f"{GET_STEP_DAYS}-day chunks that each sample freq on their own, "
+                f"so freq must divide {GET_STEP_DAYS} days (e.g. 'D', '7D' or 'W')."
+            )
 
         # function_args is written straight to config.json (via ConditionsConfigurator's
         # "function_args" ConfigOutputParam); coerce Path values (e.g. a dataset_path
@@ -1101,9 +1148,19 @@ class Case:
             is_non_local=self.is_non_local,
         )
 
-        # xmlchange("ROOTPE_OCN", 128, is_non_local=self.is_non_local) -> needs to be before the the setup
         if ntasks_ocn is not None:
             xmlchange("NTASKS_OCN", ntasks_ocn, is_non_local=self.is_non_local)
+            # visualCaseGen has already run case.setup, which locked the PE
+            # layout, and CIME won't build a case whose layout changed until
+            # case.setup --reset runs.
+            cmd = ["./case.setup", "--reset"]
+            if self.is_non_local:
+                cmd.append("--non-local")
+            out = subprocess.run(cmd, cwd=self.caseroot, capture_output=True, text=True)
+            if out.returncode != 0:
+                raise RuntimeError(
+                    f"{' '.join(cmd)} failed in {self.caseroot}:\n{out.stderr}"
+                )
         # This will trigger for both the run and the archiver.
         if job_queue is not None:
             # xmlchange rejects a JOB_QUEUE the machine doesn't list, and a
