@@ -83,6 +83,12 @@ def test_all_configurators_smoke(fake_param_case, fake_cime, fake_forcing_produc
                 # Typed arg: the configurators expand it with asdict(), so the
                 # generic dummy_str fallback below would not do.
                 ctor_args[a] = NOLEAP
+            elif a == "function_name":
+                # configure() looks up this function's time sampling on product_name.
+                ctor_args[a] = "get_glorys_data_from_rda"
+            elif a == "function_args":
+                # A dict of access-function args: configure() reads its freq.
+                ctor_args[a] = {}
             else:
                 ctor_args[a] = dummy_str
         instance = config_class(**ctor_args)
