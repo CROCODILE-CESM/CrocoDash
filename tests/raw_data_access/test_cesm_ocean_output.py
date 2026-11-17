@@ -182,6 +182,24 @@ def test_a_window_keeps_the_months_whose_bounds_overlap_it(stamp):
     assert months("2000-07-31", "2000-08-01") == [7, 8]
 
 
+@pytest.mark.parametrize(
+    ("bounded", "window"),
+    [(False, ("2000-07-01", "2000-07-02")), (True, ("2001-03-01", "2001-03-02"))],
+    ids=["mom6_month_start_without_bounds", "past_the_end_of_the_data"],
+)
+def test_a_window_without_a_record_raises(bounded, window):
+    """The nearest record would be the wrong month: July 1 is nearer June's
+    mid-month stamp than July's, and March 2001 would get December 2000."""
+    firsts = [cftime.DatetimeNoLeap(2000 + m // 12, m % 12 + 1, 1) for m in range(13)]
+    lo, hi = np.array(firsts[:-1]), np.array(firsts[1:])
+    ds = xr.Dataset(coords={"time": lo + (hi - lo) / 2})  # MOM6: Jan 16 12:00
+    if bounded:
+        ds["time_bnds"] = (("time", "nv"), np.stack([lo, hi], axis=1))
+        ds.time.attrs["bounds"] = "time_bnds"
+    with pytest.raises(ValueError, match="no record"):
+        co.select_records(ds, window, "MS")
+
+
 def test_consecutive_windows_split_the_records_between_them():
     """Boundary chunks are back-to-back day ranges. Each keeps only its own
     records, or the merged boundary data repeats times and fails (#353).

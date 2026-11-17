@@ -620,13 +620,15 @@ def date_means_at_interval_start(ds, time_var_name="time", source=""):
 def select_records(ds, window, data_freq, freq=None, time_var_name="time", source=""):
     """Check that ds's records are data_freq apart, then keep the ones for the
     (start, end) window of whole days: those whose averaging interval (time
-    bounds) overlaps it, or without bounds those stamped in it, and the
-    nearest to its start if none are. The bounds, not the stamps, say which
-    mean covers a day: CESM-POP's are dated at the start of their interval
-    (once re-dated), MOM6's in the middle. A freq coarser than data_freq keeps
-    instead the record that covers each date sample_dates picks from the
-    window: the one whose interval holds it, or without bounds the nearest
-    one. window=None keeps every record."""
+    bounds) overlaps it, or without bounds those stamped in it. Raises if
+    there are none rather than guess, as for a window past the end of the
+    data, or July 1 in MOM6 monthly means without bounds (the nearest stamp
+    is June's). The bounds, not the stamps, say which mean covers a day:
+    CESM-POP's are dated at the start of their interval (once re-dated),
+    MOM6's in the middle. A freq coarser than data_freq keeps instead the
+    record that covers each date sample_dates picks from the window: the one
+    whose interval holds it, or without bounds the nearest one. window=None
+    keeps every record."""
     if freq is not None and data_freq is None:
         raise ValueError(
             f"{source}: freq={freq!r} needs data_freq, the cadence of the files."
@@ -659,7 +661,20 @@ def select_records(ds, window, data_freq, freq=None, time_var_name="time", sourc
         else:
             keep = np.flatnonzero((time >= start) & (time < end))
         if not len(keep):
-            keep = index.get_indexer([start], method="nearest")
+            window_days = days[[0, -1]].strftime("%Y-%m-%d")
+            data_days = index[[0, -1]].strftime("%Y-%m-%d")
+            message = (
+                f"{source} has no record for {window_days[0]} to "
+                f"{window_days[1]}; its records run from {data_days[0]} to "
+                f"{data_days[1]}."
+            )
+            if bounds not in ds.variables:
+                message += (
+                    " Without time bounds, CrocoDash can't tell which mean "
+                    "covers a day: use files that have them, or start on a "
+                    "record's own date."
+                )
+            raise ValueError(message)
         return ds.isel({time_var_name: keep})
     dates = sample_dates(window[0], window[-1], freq, calendar, use_cftime)
     if bounds in ds.variables:
