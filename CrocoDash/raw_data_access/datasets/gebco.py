@@ -37,7 +37,14 @@ class GEBCO(BaseProduct):
         # Unzip the file
         with ZipFile(local_zip_path, "r") as zip_ref:
             zip_ref.extractall(output_folder)
-        return
+            grids = [n for n in zip_ref.namelist() if n.endswith(".nc")]
+        if len(grids) != 1:
+            raise ValueError(
+                f"{local_zip_path} should hold exactly one .nc grid, but holds "
+                f"{len(grids)}: {grids}. Has GEBCO changed its download?"
+            )
+        # The grid itself, not the zip it came in.
+        return Path(output_folder) / grids[0]
 
     @accessmethod(
         description="get script to download global bathymetry data",
@@ -49,6 +56,7 @@ class GEBCO(BaseProduct):
         output_filename=None,
     ):
         filename = output_filename or "GEBCO_2024.zip"
+        output_folder = Path(output_folder or os.getcwd())
         script = f"""#!/bin/bash
     set -e
 
@@ -67,8 +75,7 @@ class GEBCO(BaseProduct):
     # Unzip the file
     unzip -o "$ZIP_PATH" -d "$output_folder"
     """
-        output_folder = Path(output_folder)
-        output_folder.mkdir(exist_ok=True)
+        output_folder.mkdir(parents=True, exist_ok=True)
         script_path = output_folder / "get_gebco_data.sh"
         script_path.write_text(script)
         script_path.chmod(0o755)

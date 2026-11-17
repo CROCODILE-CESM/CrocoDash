@@ -610,6 +610,26 @@ def test_conditions_keeps_its_outputs_when_only_tides_change(tmp_path):
     assert _conditions("glorys").stale_outputs(previous, current, tmp_path) == []
 
 
+def test_conditions_keeps_its_outputs_across_the_time_sampling_upgrade(tmp_path):
+    """A config.json from before products declared time_sampling and access
+    methods took freq describes the same files, so configuring again with the
+    same settings keeps them. A freq the user sets still counts as a change."""
+    _touch_forcing_outputs(tmp_path)
+
+    def config(info, args):
+        config = _conditions_config()
+        config["conditions"]["inputs"]["function_args"] = args
+        config["conditions"]["outputs"] |= {"information": info, "function_args": args}
+        return config
+
+    upgraded = {"product_name": "glorys", "time_sampling": "D"}
+    before = config({"product_name": "glorys"}, {"buf": 1.0})
+    after = config(upgraded, {"buf": 1.0, "freq": None})
+    thinned = config(upgraded, {"buf": 1.0, "freq": "7D"})
+    assert _conditions("glorys").stale_outputs(before, after, tmp_path) == []
+    assert _conditions("glorys").stale_outputs(after, thinned, tmp_path) != []
+
+
 @pytest.mark.parametrize(
     "previous", [{}, {"caseroot": "/case"}, _conditions_config(start_date="20200102")]
 )
