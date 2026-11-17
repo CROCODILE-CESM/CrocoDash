@@ -402,6 +402,9 @@ def _regrid_one_chunk(
         coords="minimal",
         parallel=False,
     ) as ds_full:
+        # A record whose averaging interval overlaps two GET chunks (a monthly
+        # or 5-day mean) is in both chunks' raw files.
+        ds_full = ds_full.drop_duplicates("time")
         # Daily-mean products like GLORYS timestamp each day's value at noon, so
         # slice by date strings (pandas partial-string indexing treats the end
         # string as covering that whole calendar day) to include chunk_end's own

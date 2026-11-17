@@ -354,6 +354,41 @@ def test_regrid_boundary_uses_multiple_workers(tmp_path, get_rect_grid, monkeypa
         assert Path(p).exists()
 
 
+def test_regrid_keeps_one_copy_of_a_record_two_raw_chunks_share(
+    tmp_path, get_rect_grid, monkeypatch
+):
+    """July's monthly mean overlaps the GET chunks on both sides of Jul 1/2,
+    so both raw files hold it. MERGE and MOM6 need each time once."""
+    monkeypatch.setattr(obc_module, "available_cpus", lambda: 1)
+    hgrid_path = tmp_path / "hgrid.nc"
+    get_rect_grid.write_supergrid(hgrid_path)
+    (tmp_path / "regridded").mkdir()
+    raw_files = []
+    for dates, months in [("06-01_2000-07-01", (6, 7)), ("07-02_2000-08-01", (7, 8))]:
+        raw = xr.Dataset(
+            {"var": ("time", [float(m) for m in months])},
+            coords={"time": [datetime(2000, m, 1) for m in months]},
+        )
+        raw_files.append(tmp_path / f"east_unprocessed.2000-{dates}.nc")
+        raw.to_netcdf(raw_files[-1])
+
+    [regridded] = _regrid_boundary(
+        boundary="east",
+        seg_id=1,
+        raw_files=raw_files,
+        start_date=datetime(2000, 6, 1),
+        end_date=datetime(2000, 8, 1),
+        regrid_step_days=62,
+        hgrid_path=str(hgrid_path),
+        output_folder=str(tmp_path / "regridded"),
+        dataset_varnames={},
+        regrid_chunk_fn=_fake_regrid_chunk_fn,
+    )
+
+    with xr.open_dataset(regridded) as ds:
+        assert ds["var"].values.tolist() == [6.0, 7.0, 8.0]
+
+
 # ---------------------------------------------------------------------------
 # Slow integration tests (require real data access)
 # ---------------------------------------------------------------------------
