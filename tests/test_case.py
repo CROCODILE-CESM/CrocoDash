@@ -191,6 +191,47 @@ def test_an_unknown_job_queue_lists_the_valid_ones(monkeypatch):
     assert "JOB_QUEUE" not in changed
 
 
+@pytest.mark.parametrize(
+    "caseroot, inputdir",
+    [
+        ("case", "case"),
+        ("case", "case/input"),
+        ("input/ocn", "input"),
+        ("input/extract_forcings/case", "input"),
+    ],
+)
+def test_overlapping_caseroot_and_inputdir_are_refused_up_front(
+    tmp_path, caseroot, inputdir
+):
+    """create_newcase needs the caseroot not to exist yet, and inputdir and its
+    ocn/ice/wav folders are written first, so either inside the other used to fail
+    with an unclear error later on. A caseroot in extract_forcings was deleted by
+    configure_forcings on override."""
+    from CrocoDash.case import Case
+
+    # The paths are checked before any other argument is read, so those can be None.
+    with pytest.raises(ValueError, match="can't be"):
+        Case.init_args_check(
+            **dict.fromkeys(
+                [
+                    "cime",
+                    "ocn_grid",
+                    "ocn_topo",
+                    "ocn_vgrid",
+                    "compset_lname",
+                    "atm_grid_name",
+                    "rof_grid_name",
+                    "ninst",
+                    "machine",
+                    "project",
+                ]
+            ),
+            caseroot=tmp_path / caseroot,
+            inputdir=tmp_path / inputdir,
+            override=False,
+        )
+
+
 def test_ntasks_ocn_is_followed_by_a_case_setup_reset(monkeypatch, tmp_path):
     """case.setup has already locked the PE layout, so changing NTASKS_OCN needs a
     reset before CIME will build; nothing else in this step changes the layout."""
