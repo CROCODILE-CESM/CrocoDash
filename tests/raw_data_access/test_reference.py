@@ -156,3 +156,14 @@ def test_reference_waves_shape_and_peak(tmp_path):
     spectrum_by_freq = da.isel(time=0, latitude=0, longitude=0).sum(dim="direction")
     peak_freq = float(ds["frequency"][spectrum_by_freq.argmax(dim="frequency")])
     assert 0.08 < peak_freq < 0.2
+
+
+def test_reference_ocean_subsamples_with_freq(tmp_path):
+    path = REFERENCE_OCEAN.get_reference_ocean_data(
+        dates=["2020-01-01", "2020-12-31"],
+        output_folder=tmp_path,
+        output_filename="ocean.nc",
+        freq="MS",
+        **BBOX,
+    )
+    assert xr.open_dataset(path).sizes["time"] == 12
