@@ -28,18 +28,8 @@ def test_get_cesm_single_variable_data_fosi(skip_if_not_glade, tmp_path):
         variables=["SSH"],
     )
     dataset = xr.open_dataset(paths[0])
-    start = cftime.DatetimeNoLeap(2000, 1, 1, 12, 0, 0)
-    end = cftime.DatetimeNoLeap(2000, 1, 5, 12, 0, 0)
-    time_vals = dataset.time.values
-
-    assert time_vals[0] <= start <= time_vals[-1], (
-        f"Start date {start} not within dataset time range "
-        f"({time_vals[0]} to {time_vals[-1]})"
-    )
-    assert time_vals[0] <= end <= time_vals[-1], (
-        f"End date {end} not within dataset time range "
-        f"({time_vals[0]} to {time_vals[-1]})"
-    )
+    # Jan 1-5 lies inside one monthly mean: January's, dated at its start.
+    assert list(dataset.time.values) == [cftime.DatetimeNoLeap(2000, 1, 1)]
     assert np.abs(dataset.TLAT.values[-1, 0] - lat_max) <= 4
     assert np.abs(dataset.TLAT.values[0, 0] - lat_min) <= 4
     assert np.abs(dataset.TLONG.values[0, -1] - lon_max) <= 4
