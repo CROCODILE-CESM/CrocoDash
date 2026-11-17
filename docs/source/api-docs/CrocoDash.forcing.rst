@@ -84,6 +84,14 @@ CrocoDash.forcing.obc module
    :show-inheritance:
    :undoc-members:
 
+CrocoDash.forcing.pe\_layout module
+-----------------------------------
+
+.. automodule:: CrocoDash.forcing.pe_layout
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 CrocoDash.forcing.runoff module
 -------------------------------
 

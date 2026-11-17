@@ -1,11 +1,29 @@
 """Set the case's PE layout (NTASKS/ROOTPE) from how much ocean it has.
 
-MOM6 gets one task per 170 ocean points, 60 with MARBL (from tx2_3v3
-benchmarks), or ``ntasks_ocn`` from the Case. CICE, WW3 and the stub components
-get the same count. DATM, DROF and the mediator get at least DATA_NTASKS, up to
-one node: on 4 tasks, reading the global JRA and GLOFAS streams took over an
-hour at startup (CrocoDashChecks' weekly Derecho runs). Every component starts
-at PE 0.
+The PELayout configurator runs in configure_forcings() for every MOM6 case and
+sets this layout:
+
+- Every component starts at PE 0. The components share the same cores and
+  take turns on them, so the case's run time is the sum of the components'
+  times, and the job uses as many PEs as the largest count below.
+- MOM6 gets one task per 170 ocean points, or one per 60 with MARBL (from
+  tx2_3v3 benchmarks), counted from the topography file's mask. ``ntasks_ocn``
+  given to the Case replaces this count.
+- CICE and WW3, when the compset has them, get MOM6's count. They run on
+  MOM6's grid and on its cores, so fewer tasks would only leave cores idle
+  while they run. Their own cost is not benchmarked: the count is sized for
+  MOM6 alone, so a case with CICE or WW3 runs slower than MOM6 alone would on
+  the same count.
+- The stub components (SICE, SWAV, SLND, SGLC) get MOM6's count too. They do
+  no work, so the count costs nothing; it lets one NTASKS xmlchange set every
+  component.
+- DATM, DROF and the mediator get MOM6's count, raised to at least
+  DATA_NTASKS (56) and capped at one node (MAX_MPITASKS_PER_NODE). On 4 tasks,
+  reading the global JRA and GLOFAS streams took over an hour at startup in
+  CrocoDashChecks' weekly Derecho runs. The cap keeps a case whose MOM6 fits
+  on one node on one node. The runoff gets this count even when it's a stub
+  (SROF).
+- ESP keeps CIME's 1 task.
 
 visualCaseGen has already run case.setup by the time forcings are configured,
 and CIME won't build a case whose layout changed until ``case.setup --reset``
@@ -134,10 +152,10 @@ class PELayoutConfigurator(BaseConfigurator):
                     f"case.setup --reset failed in {caseroot}:\n{out.stderr}"
                 )
             logger.info(
-                "PE layout: MOM6, CICE and WW3 on %s tasks, DATM, DROF and the "
-                "mediator on %s, all from PE 0 (%s ocean points); ran "
-                "case.setup --reset",
+                "PE layout from %s ocean points: MOM6 and every other model "
+                "component (CICE, WW3 and the stubs) on %s tasks, DATM, DROF "
+                "and the mediator on %s, all from PE 0; ran case.setup --reset",
+                ocean_points,
                 layout["NTASKS"],
                 layout["NTASKS_ATM"],
-                ocean_points,
             )
