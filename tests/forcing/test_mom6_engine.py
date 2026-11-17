@@ -460,18 +460,33 @@ def test_all_written_needs_every_file(tmp_path):
         mom6._all_written(paths)
 
 
-def test_regrid_ic_gives_the_vgrid_check_the_real_min_depth(
-    get_rect_grid, tmp_path, monkeypatch
-):
-    """create_empty() defaults minimum_depth to 4 m, which made _make_vgrid
-    warn about a minimum depth the case doesn't have."""
-    grid = get_rect_grid
+def _regrid_ic_until_setup(grid, tmp_path, dataset_varnames):
+    """Run _regrid_ic on a flat 100 m case (min depth 9.5 m) up to rm6's
+    setup_initial_condition. create_empty is patched by the caller, and its
+    setup_initial_condition must raise RuntimeError("stop")."""
     grid.write_supergrid(tmp_path / "hgrid.nc")
     topo = mom6.Topo(grid=grid, min_depth=9.5, git=False)
     topo.set_flat(100.0)
     topo.write_topo(tmp_path / "topog.nc")
     xr.Dataset({"dz": ("z", np.full(5, 20.0))}).to_netcdf(tmp_path / "vgrid.nc")
+    with pytest.raises(RuntimeError, match="stop"):
+        mom6._regrid_ic(
+            raw_file=tmp_path / "raw.nc",
+            hgrid=xr.open_dataset(tmp_path / "hgrid.nc"),
+            start_date="2020-01-01",
+            output_dir=tmp_path,
+            dataset_varnames=dataset_varnames,
+            hgrid_path=tmp_path / "hgrid.nc",
+            vgrid_path=tmp_path / "vgrid.nc",
+            bathymetry_path=tmp_path / "topog.nc",
+        )
 
+
+def test_regrid_ic_gives_the_vgrid_check_the_real_min_depth(
+    get_rect_grid, tmp_path, monkeypatch
+):
+    """create_empty() defaults minimum_depth to 4 m, which made _make_vgrid
+    warn about a minimum depth the case doesn't have."""
     seen = {}
     real_create_empty = mom6.rm6.experiment.create_empty
 
@@ -484,18 +499,33 @@ def test_regrid_ic_gives_the_vgrid_check_the_real_min_depth(
         return expt
 
     monkeypatch.setattr(mom6.rm6.experiment, "create_empty", create_empty)
-    with pytest.raises(RuntimeError, match="stop"):
-        mom6._regrid_ic(
-            raw_file=tmp_path / "raw.nc",
-            hgrid=xr.open_dataset(tmp_path / "hgrid.nc"),
-            start_date="2020-01-01",
-            output_dir=tmp_path,
-            dataset_varnames={},
-            hgrid_path=tmp_path / "hgrid.nc",
-            vgrid_path=tmp_path / "vgrid.nc",
-            bathymetry_path=tmp_path / "topog.nc",
-        )
+    _regrid_ic_until_setup(get_rect_grid, tmp_path, {})
     assert seen["min_depth"] == 9.5
+
+
+def test_regrid_ic_leaves_the_mapping_the_boundaries_use_unchanged(
+    get_rect_grid, tmp_path, monkeypatch
+):
+    """rm6's setup_initial_condition narrows a list depth_coord to its first
+    entry in the mapping it is given. process_bc then hands that same mapping
+    to the boundaries, where POP's BGC tracers on z_t_150m lost their vertical
+    encoding and dz."""
+    real_create_empty = mom6.rm6.experiment.create_empty
+
+    def narrow_depth_coord(raw_file, varnames, **kwargs):
+        varnames["depth_coord"] = varnames["depth_coord"][0]
+        raise RuntimeError("stop")
+
+    def create_empty():
+        expt = real_create_empty()
+        expt._make_vgrid = lambda dz: None
+        expt.setup_initial_condition = narrow_depth_coord
+        return expt
+
+    monkeypatch.setattr(mom6.rm6.experiment, "create_empty", create_empty)
+    mapping = {"depth_coord": ["z_t", "z_t_150m"]}
+    _regrid_ic_until_setup(get_rect_grid, tmp_path, mapping)
+    assert mapping == {"depth_coord": ["z_t", "z_t_150m"]}
 
 
 def test_conditions_turns_off_legacy_bugs(monkeypatch):

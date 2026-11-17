@@ -11,6 +11,7 @@ the GET step (turning a forcing product's own u/v/eta/tracer var-name
 metadata into a download request).
 """
 
+import copy
 import os
 from functools import partial
 from pathlib import Path
@@ -351,7 +352,13 @@ def _regrid_ic(
     if _all_written([output_dir / f"{n}.nc" for n in names]):
         logger.info("Initial condition files already exist. They will be skipped.")
     else:
-        expt.setup_initial_condition(raw_file, dataset_varnames, arakawa_grid=None)
+        # rm6 narrows a list depth_coord (POP's ["z_t", "z_t_150m"]) to its
+        # first entry in the mapping it is given. This mapping is also the one
+        # process_bc hands to the boundaries, where tracers on z_t_150m then
+        # lose their vertical encoding and dz, so rm6 gets a copy.
+        expt.setup_initial_condition(
+            raw_file, copy.deepcopy(dataset_varnames), arakawa_grid=None
+        )
 
     if _all_written([output_dir / f"{n}_filled.nc" for n in names]):
         logger.info(
