@@ -8,8 +8,8 @@ The rules are two queryearth rule files next to this file: rules.geojson holds
 Manish's rules, and rules_claude.geojson the rules Claude added from the
 interviews on its own, until they are reviewed.
 
-To add or change a rule, edit its GeoJSON Feature in one of the files. Its code
-is its category's path plus a name, unique across both files, such as
+To add or change a rule, edit its GeoJSON Feature in one of the files. Its name
+is its category's path plus a last part, unique across both files, such as
 "REGION/ITF/ITF007" for the Indonesian Throughflow; Claude's rules go in
 rules_claude.geojson, under "CLAUDE/".
 """

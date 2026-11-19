@@ -1,6 +1,6 @@
 {
   "type": "FeatureCollection",
-  "queryearth": "0.7",
+  "queryearth": "0.8",
   "features": [
     {
       "type": "Feature",
@@ -8,7 +8,7 @@
       "geometry": null,
       "time": null,
       "properties": {
-        "code": "DOMAIN/GRID/GRID001",
+        "name": "DOMAIN/GRID/GRID001",
         "title": "Turn off GM parametrization at high resolution",
         "message": "Below 8 km, eddies are partly resolved, so GM thickness diffusion is usually turned off.",
         "level": "info",
@@ -27,7 +27,7 @@
       "geometry": null,
       "time": null,
       "properties": {
-        "code": "DOMAIN/GRID/GRID002",
+        "name": "DOMAIN/GRID/GRID002",
         "title": "The time step is set by the smallest cells",
         "message": "Cell sizes in this grid differ by a factor of 2 or more, and the time step must suit the smallest cells everywhere. A grid with more even cells can run with a longer step: an area-conserving projection, or at high latitudes a polar one.",
         "level": "info",
@@ -82,7 +82,7 @@
       },
       "time": null,
       "properties": {
-        "code": "DOMAIN/OBC/OBC001",
+        "name": "DOMAIN/OBC/OBC001",
         "title": "The domain reaches the Gulf Stream",
         "message": "If an edge of the domain lies across the Gulf Stream, make the current cross it at right angles: where a strong current enters an open boundary at a steep angle, it reflects and causes artifacts.",
         "level": "info",
@@ -130,7 +130,7 @@
       },
       "time": null,
       "properties": {
-        "code": "DOMAIN/OBC/OBC002",
+        "name": "DOMAIN/OBC/OBC002",
         "title": "The domain reaches the Kuroshio",
         "message": "If an edge of the domain lies across the Kuroshio, make the current cross it at right angles: where a strong current enters an open boundary at a steep angle, it reflects and causes artifacts.",
         "level": "info",
@@ -172,7 +172,7 @@
       },
       "time": null,
       "properties": {
-        "code": "DOMAIN/OBC/OBC003",
+        "name": "DOMAIN/OBC/OBC003",
         "title": "The domain reaches the Agulhas Current",
         "message": "If an edge of the domain lies across the Agulhas Current, make the current cross it at right angles: where a strong current enters an open boundary at a steep angle, it reflects and causes artifacts.",
         "level": "info",
@@ -210,7 +210,7 @@
       },
       "time": null,
       "properties": {
-        "code": "DOMAIN/OBC/OBC004",
+        "name": "DOMAIN/OBC/OBC004",
         "title": "The domain reaches the East Australian Current",
         "message": "If an edge of the domain lies across the East Australian Current, make the current cross it at right angles: where a strong current enters an open boundary at a steep angle, it reflects and causes artifacts.",
         "level": "info",
@@ -248,7 +248,7 @@
       },
       "time": null,
       "properties": {
-        "code": "DOMAIN/OBC/OBC005",
+        "name": "DOMAIN/OBC/OBC005",
         "title": "The domain reaches the North Brazil Retroflection",
         "message": "If an edge of the domain lies across the North Brazil Retroflection, expect trouble: strong currents are fine at a boundary, but chaotic flow, with eddies in every direction, is not.",
         "level": "info",
@@ -286,7 +286,7 @@
       },
       "time": null,
       "properties": {
-        "code": "REGION/BENGUELA/BENGUELA001",
+        "name": "REGION/BENGUELA/BENGUELA001",
         "title": "Benguela: resolution helps, but biases persist",
         "message": "Models keep a warm SST bias here even at high resolution. Local causes include coarse coastal winds that weaken the coastal jet and the upwelling; remote causes include tropical Atlantic SST biases that reach the region through the boundaries. The front between the Angola and Benguela currents, near 16°S, is tied to the bathymetry.",
         "level": "info",
@@ -326,7 +326,7 @@
       },
       "time": null,
       "properties": {
-        "code": "REGION/ITF/ITF001",
+        "name": "REGION/ITF/ITF001",
         "title": "Force tides: tidal mixing dominates here",
         "message": "This region is a maze of shallow basins and narrow straits where tidal mixing dominates, amplified by resonance in the passages. Models without tides make up for it by raising local mixing; with tides, the model mixes where it really happens.",
         "level": "info",
@@ -361,7 +361,7 @@
       },
       "time": null,
       "properties": {
-        "code": "REGION/ITF/ITF002",
+        "name": "REGION/ITF/ITF002",
         "title": "Measure transport through the Indonesian Throughflow straits",
         "message": "The Throughflow branches across several passages, and observations give the transport through each. Matching them is the main test of a model here.",
         "level": "info",
@@ -425,7 +425,7 @@
       },
       "time": null,
       "properties": {
-        "code": "REGION/ITF/ITF003",
+        "name": "REGION/ITF/ITF003",
         "title": "Expect to edit the bathymetry of the Throughflow straits",
         "message": "Realistic transport through each strait took 20 or more rounds of bathymetry edits; tuning viscosity was not enough. Interpolated, smoothed bathymetry often lowers sills or closes channels where a cell centre falls on land.",
         "level": "warning",
@@ -460,7 +460,7 @@
       },
       "time": null,
       "properties": {
-        "code": "REGION/ITF/ITF004",
+        "name": "REGION/ITF/ITF004",
         "title": "Lombok Strait spans only a few cells",
         "message": "Lombok Strait is thousands of metres deep on either side of a sill about 200 m deep. Even at 5 km it spans only a few cells, and its steep slopes cause spurious diapycnal mixing unless smoothed.",
         "level": "warning",
@@ -501,7 +501,7 @@
       },
       "time": null,
       "properties": {
-        "code": "REGION/ITF/ITF005",
+        "name": "REGION/ITF/ITF005",
         "title": "Torres Strait is too coarse to leave open",
         "message": "Torres Strait is very shallow, with near-zero mean transport. At coarse resolution one cell is too wide or too deep and lets far too much through, so many models close it.",
         "level": "warning",
@@ -543,7 +543,7 @@
       },
       "time": null,
       "properties": {
-        "code": "REGION/ITF/ITF006",
+        "name": "REGION/ITF/ITF006",
         "title": "Keep Torres Strait open",
         "message": "At this resolution the model can resolve the tidal reversals that dominate the strait's flow, while its mean transport stays near zero.",
         "level": "info",
@@ -599,7 +599,7 @@
       },
       "time": null,
       "properties": {
-        "code": "REGION/POLAR/POLAR001",
+        "name": "REGION/POLAR/POLAR001",
         "title": "Consider active sea ice (CICE)",
         "message": "Part of this domain is poleward of 60 degrees, where sea ice forms in winter.",
         "level": "warning",
@@ -630,7 +630,7 @@
       },
       "time": null,
       "properties": {
-        "code": "REGION/POLAR/POLAR002",
+        "name": "REGION/POLAR/POLAR002",
         "title": "Finer resolution pays off in the Arctic",
         "message": "Global models struggle at high latitudes, where resolution is coarse and data sparse. A regional domain at about 1/10 of a degree can improve the simulation markedly.",
         "level": "info",

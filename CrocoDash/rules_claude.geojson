@@ -1,6 +1,6 @@
 {
   "type": "FeatureCollection",
-  "queryearth": "0.7",
+  "queryearth": "0.8",
   "features": [
     {
       "type": "Feature",
@@ -21,7 +21,7 @@
       },
       "time": null,
       "properties": {
-        "code": "CLAUDE/CLAUDE001",
+        "name": "CLAUDE/CLAUDE001",
         "title": "For Antarctic overflows, topography is the main gain",
         "message": "Higher resolution brings better dynamics and better topography. For dense-water overflows the topography matters most, because it sets their pathways; for SST or heat transport the dynamics matter more.",
         "level": "info",
@@ -55,7 +55,7 @@
       },
       "time": null,
       "properties": {
-        "code": "CLAUDE/CLAUDE002",
+        "name": "CLAUDE/CLAUDE002",
         "title": "The domain reaches the Agulhas Retroflection",
         "message": "If an edge of the domain lies across the Agulhas Retroflection, expect trouble: strong currents are fine at a boundary, but chaotic flow, with eddies in every direction, is not.",
         "level": "info",
@@ -93,7 +93,7 @@
       },
       "time": null,
       "properties": {
-        "code": "CLAUDE/CLAUDE003",
+        "name": "CLAUDE/CLAUDE003",
         "title": "The domain reaches the Agulhas Return Current",
         "message": "If an edge of the domain lies across the Agulhas Return Current, expect trouble: strong currents are fine at a boundary, but chaotic flow, with eddies in every direction, is not.",
         "level": "info",
@@ -131,7 +131,7 @@
       },
       "time": null,
       "properties": {
-        "code": "CLAUDE/CLAUDE004",
+        "name": "CLAUDE/CLAUDE004",
         "title": "The domain reaches the Brazil–Malvinas Confluence",
         "message": "If an edge of the domain lies across the Brazil–Malvinas Confluence, expect trouble: strong currents are fine at a boundary, but chaotic flow, with eddies in every direction, is not.",
         "level": "info",
@@ -169,7 +169,7 @@
       },
       "time": null,
       "properties": {
-        "code": "CLAUDE/CLAUDE005",
+        "name": "CLAUDE/CLAUDE005",
         "title": "The domain reaches the Angola–Benguela Front",
         "message": "If an edge of the domain lies across the Angola–Benguela Front, expect trouble: strong currents are fine at a boundary, but chaotic flow, with eddies in every direction, is not.",
         "level": "info",
@@ -207,7 +207,7 @@
       },
       "time": null,
       "properties": {
-        "code": "CLAUDE/CLAUDE006",
+        "name": "CLAUDE/CLAUDE006",
         "title": "Coral Triangle: consider rotating the grid to follow the flow",
         "message": "A Coral Triangle configuration rotated by about 20 degrees lined its boundaries up with the main flows, and was about 30% smaller than a latitude-longitude box.",
         "level": "info",
@@ -242,7 +242,7 @@
       },
       "time": null,
       "properties": {
-        "code": "CLAUDE/CLAUDE007",
+        "name": "CLAUDE/CLAUDE007",
         "title": "Evaluate coral heat stress the way satellites do",
         "message": "Degree Heating Weeks come from satellite SST. Process the model's SST the same way before comparing. A high-resolution model can show local warming, as in upwelling zones, that satellite products miss.",
         "level": "info",
@@ -276,7 +276,7 @@
       },
       "time": null,
       "properties": {
-        "code": "CLAUDE/CLAUDE008",
+        "name": "CLAUDE/CLAUDE008",
         "title": "Coarse winds weaken the Benguela upwelling",
         "message": "This atmospheric forcing is coarse next to the coastal winds that drive the upwelling. Smoothed winds weaken the coastal jet and the upwelling, which warms the SST.",
         "level": "warning",
@@ -318,7 +318,7 @@
       },
       "time": null,
       "properties": {
-        "code": "CLAUDE/CLAUDE009",
+        "name": "CLAUDE/CLAUDE009",
         "title": "Where to put the edges of a Benguela domain",
         "message": "Include the Benguela upwelling and part of the Angola coast. Extend west to at least 0°E, past the Cape of Good Hope, to take in the Agulhas retroflection. Stop short of the tropical Atlantic, where the flow turns zonal and would cross the northern boundary at a steep angle; the expert suggested a northern edge around 7°S.",
         "level": "info",
@@ -352,7 +352,7 @@
       },
       "time": null,
       "properties": {
-        "code": "CLAUDE/CLAUDE010",
+        "name": "CLAUDE/CLAUDE010",
         "title": "Keep the Strait of Gibraltar open",
         "message": "Gibraltar is under 50 km wide, about half a cell at 1 degree, but it is the Mediterranean's only exchange with the Atlantic. Closed, the Mediterranean grows far too salty.",
         "level": "warning",

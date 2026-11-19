@@ -21,7 +21,7 @@ def test_an_itf_domain_finds_the_itf_rules():
         ice="sice",
     )
     itf = [f"REGION/ITF/ITF00{n}" for n in (1, 2, 3, 4, 6)]
-    assert sorted(rule.code for rule in found) == [
+    assert sorted(rule.name for rule in found) == [
         "CLAUDE/CLAUDE006",
         "CLAUDE/CLAUDE007",
         *itf,
