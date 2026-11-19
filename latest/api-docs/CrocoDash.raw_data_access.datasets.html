@@ -1098,10 +1098,17 @@ C-grid, where uo/vo live on different horizontal dims than the tracer grid.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="CrocoDash.raw_data_access.datasets.cesm_ocean_output.select_records">
 <span class="sig-prename descclassname"><span class="pre">CrocoDash.raw_data_access.datasets.cesm_ocean_output.</span></span><span class="sig-name descname"><span class="pre">select_records</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_freq</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_var_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'time'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.raw_data_access.datasets.cesm_ocean_output.select_records" title="Link to this definition">#</a></dt>
-<dd><p>Check that ds’s records are data_freq apart, then, for a freq coarser
-than that, keep the record that covers each date sample_dates picks from
-the (start, end) window: the one whose averaging interval (time bounds)
-holds it, or without bounds the nearest one.</p>
+<dd><p>Check that ds’s records are data_freq apart, then keep the ones for the
+(start, end) window of whole days: those whose averaging interval (time
+bounds) overlaps it, or without bounds those stamped in it. Raises if
+there are none rather than guess, as for a window past the end of the
+data, or July 1 in MOM6 monthly means without bounds (the nearest stamp
+is June’s). The bounds, not the stamps, say which mean covers a day:
+CESM-POP’s are dated at the start of their interval (once re-dated),
+MOM6’s in the middle. A freq coarser than data_freq keeps instead the
+record that covers each date sample_dates picks from the window: the one
+whose interval holds it, or without bounds the nearest one. window=None
+keeps every record.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -1125,14 +1132,17 @@ not listed in grid_coords. Default is “lon”.</p></li>
 <li><p><strong>dates</strong> (<em>tuple</em>) – Just used for the file naming</p></li>
 <li><p><strong>preview</strong> (<em>bool</em>) – If True, only previews the subsetting without saving. Default is False.</p></li>
 <li><p><strong>data_freq</strong> – the files’ cadence, checked against them,
-and a coarser one to thin them to over the (start, end) window
-(see select_records). None skips both.</p></li>
+the (start, end) window to keep the records of, and a coarser
+cadence to thin them to (see select_records). window=None keeps
+every record.</p></li>
 <li><p><strong>freq</strong> – the files’ cadence, checked against them,
-and a coarser one to thin them to over the (start, end) window
-(see select_records). None skips both.</p></li>
+the (start, end) window to keep the records of, and a coarser
+cadence to thin them to (see select_records). window=None keeps
+every record.</p></li>
 <li><p><strong>window</strong> – the files’ cadence, checked against them,
-and a coarser one to thin them to over the (start, end) window
-(see select_records). None skips both.</p></li>
+the (start, end) window to keep the records of, and a coarser
+cadence to thin them to (see select_records). window=None keeps
+every record.</p></li>
 <li><p><strong>grid_coords</strong> (<em>dict</em><em> | </em><em>None</em>) – Optional {var_name: (lat_name, lon_name)}
 override - needed for MOM6’s C-grid, where uo/vo live on different
 horizontal dims than the tracer grid, so a single lat_name/lon_name
