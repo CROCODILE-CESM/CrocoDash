@@ -9,6 +9,19 @@ from CrocoDash.raw_data_access.registry import ProductRegistry
 logger = logging.setup_logger(__name__)
 
 
+class DownloadScriptWritten(RuntimeError):
+    """A script-type access method wrote download requests instead of
+    downloading, so the data isn't there until the script runs."""
+
+    def __init__(self, scripts):
+        self.scripts = set(scripts)
+        super().__init__(
+            "Wrote the download requests to "
+            + ", ".join(str(script) for script in sorted(self.scripts))
+            + ". Run it, then run process_forcings() again."
+        )
+
+
 def read_min_depth(bathymetry_path) -> float:
     """The ``min_depth`` global attribute of a topog file.
 
@@ -130,7 +143,8 @@ def fetch_raw_chunk(
 
     Shared by obc.py and ic.py — both fetch a chunk of raw data
     for a given date range and bounding box, and both need to be idempotent
-    across re-runs.
+    across re-runs. Returns the raw file, or, for a script-type access method
+    whose file isn't there yet, the script it added the request to.
     """
     output_file = Path(output_folder) / output_filename
 
@@ -142,7 +156,7 @@ def fetch_raw_chunk(
         logger.info(f"{output_file.name} already exists. Skipping.")
         return output_file
 
-    data_access_fn(
+    made = data_access_fn(
         dates=dates,
         lat_min=latlon["lat_min"],
         lat_max=latlon["lat_max"],
@@ -154,6 +168,8 @@ def fetch_raw_chunk(
         name=name,
         **extra_args,
     )
+    if getattr(data_access_fn, "_type", None) == "script":
+        return Path(made)
     return output_file
 
 
