@@ -71,6 +71,9 @@ def test_configure_forcings(get_case_with_cf):
                 found_user_nl_mom_adjusted_var = True
                 break
     assert found_user_nl_mom_adjusted_var
+    # The run dates went through ./xmlchange; the case object must see them.
+    assert case._cime_case.get_value("RUN_STARTDATE") == "2020-01-01"
+    assert case._cime_case.get_value("STOP_N") == 31
 
 
 def test_configure_forcings_invalid_function_overrides(get_CrocoDash_case):
