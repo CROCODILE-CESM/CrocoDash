@@ -235,3 +235,5 @@ def test_get_glorys_data_script_for_cli(tmp_path):
     # The script survives a space in the inputdir path.
     request = shlex.split(Path(path).read_text().splitlines()[-1])
     assert request[request.index("-o") + 1] == str(folder)
+    # Rerunning the script after a failure skips the chunks already fetched.
+    assert "--skip-existing" in request

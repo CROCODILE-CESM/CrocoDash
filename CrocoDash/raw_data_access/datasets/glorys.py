@@ -183,6 +183,9 @@ class GLORYS(MOM6ForcingProduct):
             f" --maximum-latitude {lat_max + buf:.4f}"
             " --minimum-depth 0 --maximum-depth 6000"
             f" -o {shlex.quote(str(output_folder))} -f {shlex.quote(output_filename)}"
+            # A rerun after a failed download skips the chunks already fetched,
+            # instead of fetching them again as *_(1).nc copies.
+            " --skip-existing"
         )
         path = Path(output_folder) / "get_glorys_data.sh"
         if not path.exists():
