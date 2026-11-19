@@ -38,6 +38,9 @@ KNOWN_INCLUSIVE_WITHOUT_HELPER = {
     # construction as the RDA/GLOFAS entries above.
     ("cesm_pop_output", "get_cesm_single_variable_data"),
     ("cesm_mom_output", "get_mom6_single_variable_data"),
+    # Cuts time with select_records, which reparses `dates` into whole days
+    # (sample_dates, freq="D") and keeps records through the end of the last.
+    ("cesm_mom_output", "get_mom6_output_data"),
     # `dates` is an unused placeholder — downloads one fixed pre-processed
     # file via a static URL, no date-based filtering happens at all.
     ("glofas", "get_processed_global_glofas_script_for_cli"),
