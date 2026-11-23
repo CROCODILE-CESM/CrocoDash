@@ -102,6 +102,8 @@ class Case:
             Path to the input directory to be created. It can't be the caseroot
             or inside it, and the caseroot can't be inside the folders CrocoDash
             makes in it (ocn, ice, wav, mapping, extract_forcings).
+            Its full path plus "/ocn" must be under 128 characters (MOM6 cuts a
+            longer INPUTDIR), and neither it nor the caseroot can contain spaces.
         compset : str
             The component set alias (e.g. "G_JRA") or long name
             (e.g. "1850_DATM%JRA_SLND_SICE_MOM6_SROF_SGLC_SWAV_SESP") for the case.
@@ -321,6 +323,24 @@ class Case:
                     f"caseroot {caseroot} can't be inside the inputdir's {folder} "
                     "folder, which CrocoDash writes to. Put the caseroot beside the "
                     "inputdir instead."
+                )
+        # MOM6 reads INPUTDIR (<inputdir>/ocn) into a 128-character buffer and
+        # then appends "/", so from 128 characters on the end of the path is lost.
+        ocn_dir = str(inputdir_path / "ocn")
+        if len(ocn_dir) >= 128:
+            raise ValueError(
+                f"inputdir {inputdir} is too long: MOM6's INPUTDIR {ocn_dir} is "
+                f"{len(ocn_dir)} characters. MOM6 reads it into a 128-character buffer "
+                'and appends "/", so the end is lost and the run can\'t find its input '
+                'files. Use an inputdir whose path plus "/ocn" is at most 127 characters.'
+            )
+        # CIME and NUOPC split the paths written into the case on whitespace.
+        for name, path in (("inputdir", inputdir_path), ("caseroot", caseroot_path)):
+            if any(c.isspace() for c in str(path)):
+                raise ValueError(
+                    f"{name} {path} contains whitespace. CIME and the model's run "
+                    "config (nuopc.runconfig) split paths on whitespace, so the run "
+                    "aborts at start without naming the path. Use a path without spaces."
                 )
         if Path(caseroot).exists() and not override:
             raise ValueError(
