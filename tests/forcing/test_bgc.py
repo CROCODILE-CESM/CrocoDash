@@ -14,6 +14,19 @@ from CrocoDash.forcing.bgc import (
     BGCRiverNutrientsConfigurator,
 )
 
+# The river fluxes MOM6's MARBL_tracers.F90 reads, all in mmol/m^2/s.
+RIVER_FLUXES = [
+    "din_riv_flux",
+    "dip_riv_flux",
+    "don_riv_flux",
+    "dop_riv_flux",
+    "dsi_riv_flux",
+    "dfe_riv_flux",
+    "dic_riv_flux",
+    "alk_riv_flux",
+    "doc_riv_flux",
+]
+
 
 def _make_ctx(tmp_path, **overrides):
     defaults = dict(
@@ -109,20 +122,10 @@ def test_bgcrivernutrients_process(tmp_path, is_glade_file_system, gen_grid_topo
     riv_file = xr.open_dataset(output_file)
     assert riv_file.sizes["ny"] == mapping_ds.sizes["nj_b"]
     assert riv_file.sizes["nx"] == mapping_ds.sizes["ni_b"]
-    required_vars = [
-        "din_riv_flux",
-        "dip_riv_flux",
-        "don_riv_flux",
-        "dsi_riv_flux",
-        "dic_riv_flux",
-        "alk_riv_flux",
-        "doc_riv_flux",
-    ]
-
-    for v in required_vars:
+    for v in RIVER_FLUXES:
         assert v in riv_file
         assert riv_file[v].dims == ("time", "ny", "nx")
-        assert riv_file[v].attrs["units"] == "mmol/cm^2/s"
+        assert riv_file[v].attrs["units"] == "mmol/m^2/s"
 
 
 # =============================================================================
@@ -141,18 +144,9 @@ def _make_fake_global_river_nutrients(nx_src=6, ny_src=5, nt=3):
     # Use cftime DatetimeNoLeap so downstream cftime.date2num works.
     time = np.array([cftime.DatetimeNoLeap(2000 + i, 1, 1) for i in range(nt)])
 
-    flux_vars = [
-        "din_riv_flux",
-        "dip_riv_flux",
-        "don_riv_flux",
-        "dsi_riv_flux",
-        "dic_riv_flux",
-        "alk_riv_flux",
-        "doc_riv_flux",
-    ]
     data_vars = {
         v: (("time", "lat", "lon"), rng.random((nt, ny_src, nx_src)).astype("f4"))
-        for v in flux_vars
+        for v in RIVER_FLUXES
     }
     # Extra vars that get dropped later
     data_vars.update(
@@ -176,9 +170,9 @@ def _make_fake_global_river_nutrients(nx_src=6, ny_src=5, nt=3):
 def test_bgcrivernutrients_process_mocked(tmp_path, monkeypatch):
     """Fast test of BGCRiverNutrientsConfigurator.process with xe.Regridder mocked out.
 
-    The regridder is replaced by a passthrough callable that returns a dataset
-    with the same variables regridded onto a small (ny, nx) target grid, which
-    is all that process() requires downstream.
+    The regridder is replaced by a passthrough that returns the source values
+    unchanged on a (ny, nx) grid of the same shape, so each output flux can be
+    checked against its source.
     """
     import numpy as np
 
@@ -188,7 +182,7 @@ def test_bgcrivernutrients_process_mocked(tmp_path, monkeypatch):
     src_ds.to_netcdf(src_path)
 
     # ---- Build a small target ocn grid (mock with tlon/tlat DataArrays) ----
-    ny_tgt, nx_tgt = 3, 4
+    ny_tgt, nx_tgt = src_ds.sizes["lat"], src_ds.sizes["lon"]
     tlon = xr.DataArray(
         np.broadcast_to(np.linspace(0.0, 10.0, nx_tgt), (ny_tgt, nx_tgt)).copy(),
         dims=("ny", "nx"),
@@ -203,26 +197,9 @@ def test_bgcrivernutrients_process_mocked(tmp_path, monkeypatch):
     ocn_grid.tlon = tlon
     ocn_grid.tlat = tlat
 
-    # ---- Mock xe.Regridder so it returns a (ny, nx)-shaped dataset ----
+    # ---- Mock xe.Regridder so it passes the source values through ----
     def _fake_regridder_call(ds):
-        nt = ds.sizes.get("time", 3)
-        new_data_vars = {}
-        for v in ds.data_vars:
-            if "time" in ds[v].dims:
-                new_data_vars[v] = (
-                    ("time", "ny", "nx"),
-                    np.ones((nt, ny_tgt, nx_tgt), dtype="f4"),
-                )
-            else:
-                # non-time-varying (LAT, LON, xc, xv, yc, yv, area, etc.)
-                new_data_vars[v] = (
-                    ("ny", "nx"),
-                    np.ones((ny_tgt, nx_tgt), dtype="f4"),
-                )
-        return xr.Dataset(
-            new_data_vars,
-            coords={"time": ds["time"].values},
-        )
+        return ds.drop_vars(["lat", "lon"]).rename_dims({"lat": "ny", "lon": "nx"})
 
     fake_regridder_instance = MagicMock(side_effect=_fake_regridder_call)
     fake_Regridder = MagicMock(return_value=fake_regridder_instance)
@@ -252,18 +229,13 @@ def test_bgcrivernutrients_process_mocked(tmp_path, monkeypatch):
     fake_regridder_instance.assert_called_once()
 
     out = xr.open_dataset(out_path)
-    required = [
-        "din_riv_flux",
-        "dip_riv_flux",
-        "don_riv_flux",
-        "dsi_riv_flux",
-        "dic_riv_flux",
-        "alk_riv_flux",
-        "doc_riv_flux",
-    ]
-    for v in required:
-        assert v in out
-        assert out[v].attrs["units"] == "mmol/cm^2/s"
+    # process() moves lon to 0..360 and sorts it; time 0 of the output is an
+    # added copy of the first source time.
+    src = src_ds.isel(lon=np.argsort((src_ds.lon.values + 360) % 360))
+    for v in RIVER_FLUXES:
+        # Each flux is converted once: nmol/cm^2/s * 0.01 = mmol/m^2/s.
+        np.testing.assert_allclose(out[v].values[1:], 0.01 * src[v].values, rtol=1e-6)
+        assert out[v].attrs["units"] == "mmol/m^2/s"
     # The dropped vars should NOT be present
     for dropped in ["LAT", "LON", "xc", "xv", "yc", "yv", "area"]:
         assert dropped not in out
