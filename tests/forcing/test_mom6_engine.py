@@ -474,6 +474,36 @@ def test_regrid_ic_gives_the_vgrid_check_the_real_min_depth(
     assert seen["min_depth"] == 9.5
 
 
+def test_regrid_ic_leaves_no_init_file_from_an_interrupted_run(
+    get_rect_grid, tmp_path, monkeypatch
+):
+    """rm6 writes init_vel, init_tracers, then init_eta. A run killed during the
+    last one left all three in place, so the rerun skipped the IC and kept a
+    file that reads back as all NaN."""
+
+    def killed(self, *args, **kwargs):
+        for name in ("init_vel", "init_tracers", "init_eta"):
+            xr.Dataset().to_netcdf(self.mom_input_dir / f"{name}.nc")
+        raise RuntimeError("killed mid-write")
+
+    monkeypatch.setattr(mom6.rm6.experiment, "setup_initial_condition", killed)
+    get_rect_grid.write_supergrid(tmp_path / "hgrid.nc")
+    xr.Dataset(attrs={"min_depth": 10.0}).to_netcdf(tmp_path / "topog.nc")
+    xr.Dataset({"dz": ("z", np.full(5, 20.0))}).to_netcdf(tmp_path / "vgrid.nc")
+    with pytest.raises(RuntimeError, match="killed"):
+        mom6._regrid_ic(
+            raw_file=tmp_path / "raw.nc",
+            hgrid=xr.open_dataset(tmp_path / "hgrid.nc"),
+            start_date="2020-01-01",
+            output_dir=tmp_path,
+            dataset_varnames={},
+            hgrid_path=tmp_path / "hgrid.nc",
+            vgrid_path=tmp_path / "vgrid.nc",
+            bathymetry_path=tmp_path / "topog.nc",
+        )
+    assert not list(tmp_path.glob("init_*.nc"))
+
+
 def test_conditions_turns_off_legacy_bugs(monkeypatch):
     """Thinned segment dz diverges with MOM6's legacy OBC bug flags on."""
     written = []

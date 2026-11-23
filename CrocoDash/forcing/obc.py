@@ -687,7 +687,8 @@ def _merge_boundary(boundary_label: str, regridded_files: list, output_folder) -
     # the identical pattern, and a deadlock that strikes one write in four is
     # not something to leave to chance two functions away from a known one.
     with dask.config.set(scheduler="synchronous"):
-        ds.to_netcdf(output_path)
+        with utils.atomic_write(output_path) as tmp:
+            ds.to_netcdf(tmp)
     ds.close()
     logger.info(f"Saved merged boundary at {output_path}")
     return output_path

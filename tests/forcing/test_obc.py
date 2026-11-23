@@ -13,7 +13,7 @@ from CrocoDash.forcing.obc import (
     _validate_coverage,
     _ocean_bbox_for_boundary,
 )
-from CrocoDash.forcing.utils import is_valid_netcdf
+from CrocoDash.forcing.utils import fetch_raw_chunk, is_valid_netcdf
 from CrocoDash.forcing.mom6 import _regrid_obc_chunk
 from CrocoDash.grid import Grid
 from CrocoDash.topo import Topo
@@ -464,6 +464,27 @@ def test_is_valid_netcdf_corrupt_file(tmp_path):
     bad = tmp_path / "corrupt.nc"
     bad.write_bytes(b"not a netcdf file at all")
     assert not is_valid_netcdf(bad)
+
+
+def test_fetch_raw_chunk_refetches_after_an_interrupted_download(tmp_path):
+    """netCDF4 puts its signature on disk before the data, so a download killed
+    partway passed is_valid_netcdf and the rerun kept it, all NaN."""
+
+    def download(output_folder, output_filename, killed, **_):
+        temp = np.nan if killed else 1.0
+        xr.Dataset({"temp": ("t", [temp])}).to_netcdf(output_folder / output_filename)
+        if killed:
+            raise RuntimeError("killed mid-write")
+
+    bbox = dict.fromkeys(["lat_min", "lat_max", "lon_min", "lon_max"], 0.0)
+    fetch = lambda killed: fetch_raw_chunk(
+        download, [], bbox, tmp_path, "east.nc", [], {"killed": killed}
+    )
+    with pytest.raises(RuntimeError, match="killed"):
+        fetch(killed=True)
+    with xr.open_dataset(fetch(killed=False)) as ds:
+        assert ds["temp"].item() == 1.0
+    assert [p.name for p in tmp_path.iterdir()] == ["east.nc"]
 
 
 def test_merge_boundary_corrupt_existing_raises(
