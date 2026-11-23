@@ -307,7 +307,7 @@ class Case:
         # The grid files are written to inputdir before create_newcase runs, and
         # create_newcase refuses a caseroot that already exists. The same goes
         # for the folders CrocoDash makes in the inputdir, and configure_forcings
-        # deletes extract_forcings on override.
+        # deletes folders in extract_forcings made for another configuration.
         caseroot_path = Path(caseroot).resolve()
         inputdir_path = Path(inputdir).resolve()
         if inputdir_path.is_relative_to(caseroot_path):
@@ -698,8 +698,6 @@ class Case:
                     shutil.rmtree(path)
                 else:
                     path.unlink()
-            if self.override is True and self.extract_forcings_path.exists():
-                shutil.rmtree(self.extract_forcings_path)
             # Last, so that it never describes files that are still to be removed.
             self.extract_forcings_path.mkdir(parents=True, exist_ok=True)
             write_config(config_path, config)
