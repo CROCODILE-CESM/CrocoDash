@@ -1,4 +1,7 @@
+from types import SimpleNamespace
 from unittest.mock import patch
+
+from ProConPy.config_var import cvars
 
 from CrocoDash.forcing.base import WorkflowContext
 from CrocoDash.forcing.tides import TidesConfigurator
@@ -44,3 +47,24 @@ def test_tides_process(mock_tides, tmp_path, gen_grid_topo_vgrid, dummy_tidal_da
     configurator.process(ctx)
 
     assert mock_tides.called
+
+
+def test_tides_configure_turns_on_each_requested_constituent(tmp_path, monkeypatch):
+    """MOM6 applies interior tidal forcing only at constituents whose
+    TIDE_<C> is True, so those must match tidal_constituents."""
+    monkeypatch.setitem(cvars, "CASEROOT", SimpleNamespace(value=tmp_path))
+    monkeypatch.setitem(cvars, "NINST", SimpleNamespace(value=1))
+    (tmp_path / "user_nl_mom").touch()
+
+    TidesConfigurator(
+        tpxo_elevation_filepath=tmp_path / "h.nc",
+        tpxo_velocity_filepath=tmp_path / "u.nc",
+        tidal_constituents=["K1", "O1"],
+        boundaries=["east"],
+        start_date="2000, 1, 1",
+    ).configure()
+
+    mom = (tmp_path / "user_nl_mom").read_text()
+    assert "TIDE_K1 = True" in mom
+    assert "TIDE_O1 = True" in mom
+    assert "TIDE_M2" not in mom
