@@ -461,7 +461,9 @@ def read_single_variable_tseries_data(
             merged = xr.open_mfdataset(
                 existing_files, combine="by_coords", decode_timedelta=False
             )
-            merged.to_netcdf(Path(output_folder) / output_filename)
+            # Loaded first: a time_bounds merged from several files is lazy and
+            # gets time's units but no dtype, which xarray can't write lazily.
+            merged.load().to_netcdf(Path(output_folder) / output_filename)
 
     return paths
 
@@ -811,7 +813,13 @@ def subset_dataset(
 
         # Subset the dataset based on the provided geographical bounds
         if not preview:
-            subset_ds = ds.where(mask, drop=True)
+            # Mask only the variables on the mask's grid: where() on the whole
+            # dataset would broadcast the others (e.g. time_bounds) onto it.
+            off_grid = [
+                v for v in ds.data_vars if not set(mask.dims) <= set(ds[v].dims)
+            ]
+            subset_ds = ds.drop_vars(off_grid).where(mask, drop=True)
+            subset_ds = subset_ds.assign(ds[off_grid].data_vars)
 
             # Save the subsetted dataset to the output path
 
