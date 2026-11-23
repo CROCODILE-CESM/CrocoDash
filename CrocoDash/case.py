@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 import uuid
 import shutil
 import subprocess
@@ -103,8 +104,9 @@ class Case:
             or inside it, and the caseroot can't be inside the folders CrocoDash
             makes in it (ocn, ice, wav, mapping, extract_forcings).
         compset : str
-            The component set alias (e.g. "G_JRA") or long name
-            (e.g. "1850_DATM%JRA_SLND_SICE_MOM6_SROF_SGLC_SWAV_SESP") for the case.
+            The component set alias (e.g. "CR_JRA") or long name
+            (e.g. "1850_DATM%JRA_SLND_SICE_MOM6%REGIONAL_SROF_SGLC_SWAV") for the case.
+            MOM6 must have the %REGIONAL modifier.
         ocn_grid : Grid
             The ocean grid object to be used in the case.
         ocn_topo : Topo
@@ -344,6 +346,15 @@ class Case:
         assert (
             "MOM6" in compset_lname
         ), "In CrocoDash, only MOM6-based compsets are supported."
+        if not re.search(r"_MOM6%[^_]*REGIONAL", compset_lname):
+            raise ValueError(
+                f"compset {compset_lname} has no %REGIONAL modifier on MOM6. "
+                "%REGIONAL sets MOM6_DOMAIN_TYPE=REGIONAL, which gives MOM6 its "
+                "regional parameter defaults; without it the case silently gets the "
+                "global ones. Use a regional alias (CR_*, GR_*, CWR_* or GWR_*, e.g. "
+                "CR_JRA) or add %REGIONAL to MOM6 in the long name "
+                "(e.g. 1850_DATM%JRA_SLND_SICE_MOM6%REGIONAL_SROF_SGLC_SWAV)."
+            )
         assert "SLND" in compset_lname, (
             "Currently, active or data land models are not supported by CrocoDash."
             "Please use a compset with SLND."
