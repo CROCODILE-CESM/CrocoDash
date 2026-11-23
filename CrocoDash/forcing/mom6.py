@@ -12,6 +12,7 @@ metadata into a download request).
 """
 
 import os
+import shutil
 from functools import partial
 from pathlib import Path
 
@@ -224,7 +225,8 @@ def _split_bgc_tracers_into_files(
                     ds_var[dz_var_name] = ds[dz_var_name]
 
             out_file = output_path / f"{var}_obc_segment.nc"
-            ds_var.to_netcdf(out_file, unlimited_dims="time")
+            with utils.atomic_write(out_file) as tmp:
+                ds_var.to_netcdf(tmp, unlimited_dims="time")
             written.append(out_file)
             logger.info("BGC SPLIT: wrote %s", out_file.name)
     finally:
@@ -278,7 +280,8 @@ def _fill_missing_and_write(input_path, output_path, var_specs, z_dim="zl"):
         ds[name] = final_cleanliness_fill(ds[name], *dims)
         encoding[name] = spec["encoding"]
     ds = ds.fillna(0)
-    ds.to_netcdf(output_path, encoding=encoding)
+    with utils.atomic_write(output_path) as tmp:
+        ds.to_netcdf(tmp, encoding=encoding)
 
 
 def final_cleanliness_fill(var, x_dim, y_dim, z_dim=None):
@@ -338,7 +341,17 @@ def _regrid_ic(
     if _all_written([output_dir / f"{n}.nc" for n in names]):
         logger.info("Initial condition files already exist. They will be skipped.")
     else:
+        # rm6 writes these under fixed names into mom_input_dir, so point it at
+        # a scratch folder and move them in once all three are written (see
+        # utils.atomic_write for why).
+        scratch = output_dir / "_tmp_ic"
+        shutil.rmtree(scratch, ignore_errors=True)
+        scratch.mkdir()
+        expt.mom_input_dir = scratch
         expt.setup_initial_condition(raw_file, dataset_varnames, arakawa_grid=None)
+        for n in names:
+            os.replace(scratch / f"{n}.nc", output_dir / f"{n}.nc")
+        shutil.rmtree(scratch)
 
     if _all_written([output_dir / f"{n}_filled.nc" for n in names]):
         logger.info(

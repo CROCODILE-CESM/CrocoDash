@@ -1,5 +1,6 @@
 import os
 import re
+from contextlib import contextmanager, nullcontext
 from pathlib import Path
 from collections import defaultdict
 from datetime import datetime, timedelta
@@ -110,6 +111,26 @@ def is_valid_netcdf(path: Path) -> bool:
         return False
 
 
+@contextmanager
+def atomic_write(path):
+    """Yield a temp path beside ``path`` to write to, and move it onto ``path``
+    only once the block finishes.
+
+    Resuming skips any output that exists and starts with a netCDF signature.
+    netCDF4 puts that signature and all metadata on disk before the data, so a
+    write killed partway would leave a file that passes, reads back as fill
+    values, and is kept. Written this way, the final name only ever holds a
+    finished file. A temp left by a killed run is removed before the next try.
+    """
+    path = Path(path)
+    # A prefix, not a suffix: copernicusmarine appends .nc to any other ending,
+    # and REGRID globs <boundary>_unprocessed.*.nc.
+    tmp = path.with_name(f"_tmp_{path.name}")
+    tmp.unlink(missing_ok=True)
+    yield tmp
+    os.replace(tmp, path)
+
+
 def get_data_access_function(product_name: str, function_name: str):
     """Load the product registry and return the raw access function for (product_name, function_name)."""
     ProductRegistry.load()
@@ -142,18 +163,25 @@ def fetch_raw_chunk(
         logger.info(f"{output_file.name} already exists. Skipping.")
         return output_file
 
-    data_access_fn(
-        dates=dates,
-        lat_min=latlon["lat_min"],
-        lat_max=latlon["lat_max"],
-        lon_min=latlon["lon_min"],
-        lon_max=latlon["lon_max"],
-        output_folder=output_folder,
-        output_filename=output_file.name,
-        variables=variables,
-        name=name,
-        **extra_args,
-    )
+    # A "script" function only writes a download script. The download runs
+    # later, outside this process, and must land under the final name.
+    if getattr(data_access_fn, "_type", None) == "script":
+        target = nullcontext(output_file)
+    else:
+        target = atomic_write(output_file)
+    with target as path:
+        data_access_fn(
+            dates=dates,
+            lat_min=latlon["lat_min"],
+            lat_max=latlon["lat_max"],
+            lon_min=latlon["lon_min"],
+            lon_max=latlon["lon_max"],
+            output_folder=output_folder,
+            output_filename=path.name,
+            variables=variables,
+            name=name,
+            **extra_args,
+        )
     return output_file
 
 
