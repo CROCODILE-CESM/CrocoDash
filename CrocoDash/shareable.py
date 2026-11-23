@@ -388,6 +388,10 @@ def duplicate_case(caseroot, new_caseroot, new_inputdir, bundle_dir=None):
     identifies any non-standard CESM state, recreates the case via recipe.py, and
     transfers the non-standard state to the new location. Pass bundle_dir to also save
     a portable bundle as a side effect.
+
+    The new caseroot and inputdir must not exist yet, and the new case needs
+    its own name: CIME keeps each case's bld and run dirs in
+    <CIME_OUTPUT_ROOT>/<case name>, so a copy with the source's name is refused.
     """
     rcc = CaseBundle(caseroot)
     rcc.identify_non_standard_case_info(
@@ -399,7 +403,7 @@ def duplicate_case(caseroot, new_caseroot, new_inputdir, bundle_dir=None):
     config["case"]["caseroot"] = str(new_caseroot)
     config["case"]["inputdir"] = str(new_inputdir)
 
-    result = create_case_from_yaml(config, override=True, configure_only=True)
+    result = create_case_from_yaml(config, override=False, configure_only=True)
 
     # Grid files are split across ocn/, ice/ and wav/ (visualCaseGen expects
     # them there); carry over whichever of those the source case wrote.
@@ -550,7 +554,7 @@ class ForkBundle:
         self._resolve_copy_plan(plan)
 
         logger.info("Creating new case from YAML...")
-        self.case = create_case_from_yaml(config, override=True, configure_only=True)
+        self.case = create_case_from_yaml(config, override=False, configure_only=True)
 
         logger.info("Copying forcing files from bundle...")
         bundle_wav = self.bundle_location / "wav"
