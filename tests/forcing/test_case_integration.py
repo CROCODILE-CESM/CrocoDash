@@ -120,6 +120,7 @@ def test_the_glorys_script_gets_every_request_in_one_pass(
         with pytest.raises(DownloadScriptWritten, match="get_glorys_data.sh"):
             case.process_forcings()
         requests = script.read_text().splitlines()[1:]
-        files = [shlex.split(request)[-1] for request in requests]
+        args = [shlex.split(request) for request in requests]
+        files = [a[a.index("-f") + 1] for a in args]
         assert len(set(files)) == len(files)
         assert {f.split("_unprocessed")[0] for f in files} == {"ic", "north", "east"}
