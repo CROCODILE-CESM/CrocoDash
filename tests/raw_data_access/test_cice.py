@@ -103,9 +103,17 @@ def test_get_cice_restart_subset_variable_filter(skip_if_not_glade, tmp_path):
     )
 
     ds = xr.open_dataset(paths[0])
-    # tlon/tlat/ulon/ulat are always attached, regardless of the requested
-    # variable filter -- downstream regridding always needs them.
-    assert set(ds.data_vars) == {"aicen", "vicen", "tlon", "tlat", "ulon", "ulat"}
+    # tlon/tlat/ulon/ulat/angle are always attached, regardless of the
+    # requested variable filter -- downstream regridding always needs them.
+    assert set(ds.data_vars) == {
+        "aicen",
+        "vicen",
+        "tlon",
+        "tlat",
+        "ulon",
+        "ulat",
+        "angle",
+    }
 
 
 def test_get_cice_restart_subset_missing_path_raises(tmp_path):

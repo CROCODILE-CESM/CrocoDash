@@ -55,8 +55,10 @@ acts when ``restore_flds`` lists ``velocity``.
 import math
 from pathlib import Path
 
+import numpy as np
 import xarray as xr
 from mom6_forge.mapping import regrid_dataset_via_xesmf
+from regional_mom6.utils import rotate
 
 from CrocoDash.grid import Grid
 from CrocoDash.forcing import utils
@@ -117,6 +119,26 @@ def _is_u_point_var(name):
     return name in U_POINT_VARS or name.startswith(U_POINT_VAR_PREFIXES)
 
 
+def _rotate_u_point_fields(ds, angle):
+    """Rotate the vector and tensor U-point fields of ``ds`` counterclockwise by
+    ``angle`` (radians), in place.
+
+    CICE's ANGLE is the angle from the grid's local x axis to true east, so
+    ``+angle`` takes grid-local components to east/north and ``-angle`` takes
+    them back (ice_import_export.F90). ``uvel``/``vvel`` rotate by ``angle``.
+    The EVP stress at each corner N rotates as a tensor: ``stressp_N``
+    (sigma11+sigma22) is invariant, and (``stressm_N``/2, ``stress12_N``)
+    rotates by ``2*angle``.
+    """
+    if "uvel" in ds and "vvel" in ds:
+        ds["uvel"], ds["vvel"] = rotate(ds["uvel"], ds["vvel"], angle)
+    for stressm in [v for v in ds.data_vars if v.startswith("stressm_")]:
+        stress12 = "stress12_" + stressm.removeprefix("stressm_")
+        half_m, ds[stress12] = rotate(ds[stressm] / 2, ds[stress12], 2 * angle)
+        ds[stressm] = 2 * half_m
+    return ds
+
+
 def _regrid_point_group(ds, vars_, src_lon, src_lat, tgt_lon, tgt_lat):
     if not vars_:
         return xr.Dataset()
@@ -140,12 +162,18 @@ def _regrid_cice_full_grid(ds, grid):
 
     Nearest-neighbor, not bilinear: CICE's category/state fields are
     discrete-like, so sharp ice edges shouldn't be smeared by interpolation.
+
+    Velocity and stress are stored along each grid's own local axes, which
+    differ between the source and a rotated or polar target. They are rotated
+    to east/north with the source ``angle`` before the regrid and onto the
+    target's axes with ``grid.angle_q`` after it (the U-point ANGLE that
+    ``Topo.write_cice_grid`` writes for this grid).
     """
 
     t_vars = [
         v
         for v in ds.data_vars
-        if v not in ("tlon", "tlat", "ulon", "ulat") and not _is_u_point_var(v)
+        if v not in ("tlon", "tlat", "ulon", "ulat", "angle") and not _is_u_point_var(v)
     ]
     u_vars = [v for v in ds.data_vars if _is_u_point_var(v)]
 
@@ -157,15 +185,27 @@ def _regrid_cice_full_grid(ds, grid):
         grid.tlon.values,
         grid.tlat.values,
     )
-    u_out = _regrid_point_group(
-        ds,
-        u_vars,
-        ds["ulon"].values,
-        ds["ulat"].values,
-        grid.qlon.values[1:, 1:],
-        grid.qlat.values[1:, 1:],
-    )
+
+    u_out = xr.Dataset()
     if u_vars:
+        if "angle" not in ds:
+            raise ValueError(
+                "CICE forcing source has U-point fields but no 'angle' to "
+                "rotate velocity and stress by. Attach the source grid's "
+                "U-point ANGLE (radians) as 'angle'."
+            )
+        u_out = _regrid_point_group(
+            _rotate_u_point_fields(ds[u_vars], ds["angle"]),
+            u_vars,
+            ds["ulon"].values,
+            ds["ulat"].values,
+            grid.qlon.values[1:, 1:],
+            grid.qlat.values[1:, 1:],
+        )
+        target_angle = xr.DataArray(
+            np.radians(grid.angle_q.values[1:, 1:]), dims=("ny", "nx")
+        )
+        u_out = _rotate_u_point_fields(u_out, -target_angle)
         u_out = u_out.rename({"lon": "u_lon", "lat": "u_lat"})
 
     # CICE's restart reader indexes on ni/nj, not the ny/nx the regrid target

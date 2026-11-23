@@ -7,6 +7,8 @@ import numpy as np
 import pytest
 import xarray as xr
 
+from mom6_forge.grid import Grid
+
 from CrocoDash.forcing.base import WorkflowContext
 from CrocoDash.forcing import cice as cice_mod
 from CrocoDash.forcing.cice import (
@@ -415,3 +417,66 @@ def test_dynamics_substeps(ice_dt, min_dx, expected):
     ndtd = dynamics_substeps(ice_dt, min_dx)
     assert ndtd == expected
     assert MAX_ICE_SPEED * ice_dt / ndtd <= MAX_CELL_FRACTION * min_dx
+
+
+def _to_grid_axes(angle):
+    """R with earth = R @ local for a grid whose local x is ``angle`` radians
+    counterclockwise from true east (CICE's ANGLE)."""
+    c, s = np.cos(angle), np.sin(angle)
+    return np.stack([np.stack([c, -s], -1), np.stack([s, c], -1)], -2)
+
+
+def test_regrid_cice_full_grid_rotates_velocity_and_stress():
+    """A uniform eastward velocity and a uniform stress tensor, given in a
+    rotated source grid's own axes, come out as the same earth-frame values on
+    a polar target grid whose axes point elsewhere."""
+    source = Grid.from_center(
+        center_lat=85.0,
+        center_lon=0.0,
+        width_m=1_200_000,
+        height_m=1_200_000,
+        resolution_m=50_000,
+        angle_deg=30.0,
+    )
+    target = Grid.from_projection("EPSG:3995", 100e3, 400e3, -150e3, 150e3, 50e3)
+    vel_e = np.array([1.0, 0.0])
+    sig_e = np.array([[3.0, 1.0], [1.0, -2.0]])
+
+    src_angle = np.radians(source.angle_q.values[1:, 1:])
+    r = _to_grid_axes(src_angle)
+    vel = np.einsum("...ji,j->...i", r, vel_e)
+    sig = np.einsum("...ki,kl,...lj->...ij", r, sig_e, r)
+    dims = ("nj", "ni")
+    ds = xr.Dataset(
+        {
+            "uvel": (dims, vel[..., 0]),
+            "vvel": (dims, vel[..., 1]),
+            "stressp_1": (dims, sig[..., 0, 0] + sig[..., 1, 1]),
+            "stressm_1": (dims, sig[..., 0, 0] - sig[..., 1, 1]),
+            "stress12_1": (dims, sig[..., 0, 1]),
+            "angle": (dims, src_angle),
+            "tlon": (dims, source.tlon.values),
+            "tlat": (dims, source.tlat.values),
+            "ulon": (dims, source.qlon.values[1:, 1:]),
+            "ulat": (dims, source.qlat.values[1:, 1:]),
+        }
+    )
+
+    out = cice_mod._regrid_cice_full_grid(ds, target)
+
+    r = _to_grid_axes(np.radians(target.angle_q.values[1:, 1:]))
+    vel = np.stack([out["uvel"].values, out["vvel"].values], -1)
+    np.testing.assert_allclose(
+        np.einsum("...ij,...j->...i", r, vel),
+        np.broadcast_to(vel_e, vel.shape),
+        atol=1e-12,
+    )
+    p, m, s12 = (out[f"stress{c}_1"].values for c in ("p", "m", "12"))
+    sig = np.stack(
+        [np.stack([(p + m) / 2, s12], -1), np.stack([s12, (p - m) / 2], -1)], -2
+    )
+    np.testing.assert_allclose(
+        np.einsum("...ik,...kl,...jl->...ij", r, sig, r),
+        np.broadcast_to(sig_e, sig.shape),
+        atol=1e-12,
+    )
