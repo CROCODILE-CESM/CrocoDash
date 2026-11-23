@@ -73,7 +73,7 @@ def CrocoDash_case_factory(
     def _CrocoDash_case_factory(
         directory,
         configure_forcings=False,
-        compset: str = "1850_DATM%JRA_SLND_SICE_MOM6_SROF_SGLC_SWAV",
+        compset: str = "1850_DATM%JRA_SLND_SICE_MOM6%REGIONAL_SROF_SGLC_SWAV",
         atm_grid_name: str = "TL319",
     ):
         """

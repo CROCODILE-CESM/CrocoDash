@@ -341,3 +341,24 @@ def test_a_failed_attempt_leaves_a_preexisting_dir_alone(tmp_path):
     )
     assert sorted(p.name for p in tmp_path.iterdir()) == ["bld_run"]
     assert (bld_run / "marker").read_text() == "earlier run"
+
+
+def test_a_mom6_compset_without_regional_is_refused(tmp_path, gen_grid_topo_vgrid):
+    """Without %REGIONAL the case silently gets MOM6's global parameter defaults."""
+    from CrocoDash.case import Case
+
+    grid, topo, vgrid = gen_grid_topo_vgrid
+    unread = dict.fromkeys(["cime", "atm_grid_name", "rof_grid_name", "ninst"])
+    with pytest.raises(ValueError, match="%REGIONAL"):
+        Case.init_args_check(
+            **unread,
+            caseroot=tmp_path / "case",
+            inputdir=tmp_path / "input",
+            ocn_grid=grid,
+            ocn_topo=topo,
+            ocn_vgrid=vgrid,
+            compset_lname="1850_DATM%JRA_SLND_SICE_MOM6_SROF_SGLC_SWAV",
+            machine=None,
+            project=None,
+            override=False,
+        )

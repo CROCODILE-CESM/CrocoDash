@@ -50,7 +50,7 @@ def test_case_integration_config_cice_round_trip(CrocoDash_case_factory, tmp_pat
     through config.json into the exact keys CICEConfigurator.process reads
     (forcing/cice.py)."""
     case = CrocoDash_case_factory(
-        tmp_path, compset="2000_DATM%JRA_SLND_CICE%PRES_MOM6_SROF_SGLC_SWAV"
+        tmp_path, compset="2000_DATM%JRA_SLND_CICE%PRES_MOM6%REGIONAL_SROF_SGLC_SWAV"
     )
     case.configure_forcings(
         date_range=["2020-01-01 00:00:00", "2020-01-02 00:00:00"],

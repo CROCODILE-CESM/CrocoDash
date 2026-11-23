@@ -12,7 +12,7 @@ from ProConPy.config_var import cvars
 from CrocoDash.forcing import mom6, obc, tides
 from tests.user_nl_helpers import keys as _keys, mom_parser
 
-COMPSET = "2000_DATM%JRA_SLND_CICE%PRES_MOM6_SROF_SGLC_SWAV"
+COMPSET = "2000_DATM%JRA_SLND_CICE%PRES_MOM6%REGIONAL_SROF_SGLC_SWAV"
 DATES = ["2015-01-01 00:00:00", "2015-01-11 00:00:00"]
 TIDES = dict(
     tidal_constituents=["M2"],
