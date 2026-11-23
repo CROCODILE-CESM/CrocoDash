@@ -112,6 +112,43 @@ def test_get_cesm_single_variable_data_dates_and_thins_pop_means(tmp_path):
         dates_read("daily", data_freq="D")
 
 
+def test_pop_velocities_are_rotated_to_east_north(tmp_path):
+    """POP stores 0.5 m/s due east on a grid turned 30 degrees along the
+    grid's axes; the merged file holds it as east/north (#359)."""
+    angle = np.deg2rad(30.0)
+    months = [cftime.DatetimeNoLeap(2000, m, 1) for m in (1, 2)]
+    for name, value in [("UVEL", np.cos(angle) / 2), ("VVEL", -np.sin(angle) / 2)]:
+        ds = xr.Dataset(
+            {
+                name: (("time", "nlat", "nlon"), np.full((1, 2, 2), value)),
+                "time_bound": (("time", "d2"), [months]),
+                "ANGLE": (("nlat", "nlon"), np.full((2, 2), angle)),
+            },
+            coords={
+                "time": months[1:],
+                "TLAT": (("nlat", "nlon"), [[30.0, 30.0], [31.0, 31.0]]),
+                "TLONG": (("nlat", "nlon"), [[289.0, 290.0], [289.0, 290.0]]),
+            },
+        )
+        ds.time.attrs["bounds"] = "time_bound"
+        ds.to_netcdf(tmp_path / f"pop.{name}.200001-200001.nc")
+
+    bbox = dict(lat_min=30, lat_max=31, lon_min=289, lon_max=290)
+    co.CESM_POP_OUTPUT.get_cesm_single_variable_data(
+        ["2000-01-01", "2000-01-05"],
+        **bbox,
+        output_folder=tmp_path / "out",
+        output_filename="merged.nc",
+        variables=["UVEL", "VVEL"],
+        dataset_path=tmp_path,
+    )
+    merged = xr.open_dataset(tmp_path / "out" / "merged.nc")
+    np.testing.assert_allclose(merged.UVEL, 0.5)
+    np.testing.assert_allclose(merged.VVEL, 0.0, atol=1e-12)
+    with pytest.raises(ValueError, match="ANGLE"):  # never pass them unrotated
+        co.rotate_to_east_north(merged.drop_vars("ANGLE"), "UVEL", "VVEL", "ANGLE")
+
+
 @pytest.mark.parametrize("hours", [6, 24])
 def test_pop_means_are_floored_to_the_day_only_when_a_day_long(hours):
     """POP's first interval starts a model step after midnight. Daily means

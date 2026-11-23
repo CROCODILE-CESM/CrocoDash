@@ -23,6 +23,7 @@ import cftime
 import dask.base
 import numpy as np
 import pandas as pd
+from regional_mom6.utils import rotate
 
 from CrocoDash.raw_data_access.base import *
 
@@ -159,6 +160,11 @@ class CESM_POP_OUTPUT(MOM6ForcingProduct):
             data_freq=data_freq or CESM_POP_OUTPUT.time_sampling,
             freq=freq,
             end_stamped=True,
+            grid_relative_velocities=(
+                CESM_POP_OUTPUT.u_var_name,
+                CESM_POP_OUTPUT.v_var_name,
+                "ANGLE",
+            ),
         )
 
 
@@ -389,6 +395,7 @@ def read_single_variable_tseries_data(
     freq=None,
     grid_coords=None,
     end_stamped=False,
+    grid_relative_velocities=None,
 ):
     """
     Shared implementation for reading single-variable-per-file (tseries) output
@@ -404,6 +411,10 @@ def read_single_variable_tseries_data(
     grid_coords optionally maps a variable name to its own (lat_name, lon_name)
     pair, overriding lat_name/lon_name for that variable - needed for MOM6's
     C-grid, where uo/vo live on different horizontal dims than the tracer grid.
+
+    grid_relative_velocities is (u, v, angle) for velocities along the source
+    grid's axes, as POP's UVEL/VVEL are: the merged file gets them rotated to
+    east/north by the angle variable (see rotate_to_east_north).
     """
     validate_dataset_path(dataset_path)
     start_date, end_date = pd.Timestamp(dates[0]), pd.Timestamp(dates[-1])
@@ -461,9 +472,36 @@ def read_single_variable_tseries_data(
             merged = xr.open_mfdataset(
                 existing_files, combine="by_coords", decode_timedelta=False
             )
+            if grid_relative_velocities is not None:
+                merged = rotate_to_east_north(
+                    merged, *grid_relative_velocities, source=dataset_path
+                )
             merged.to_netcdf(Path(output_folder) / output_filename)
 
     return paths
+
+
+def rotate_to_east_north(ds, u_name, v_name, angle_name, source=""):
+    """Rotate velocities along the source grid's axes to east/north. The
+    angle (radians) is the grid's x axis counterclockwise from east, as POP's
+    ANGLE is at its U points; the IC and OBC take u/v to be east/north. Raises
+    if only one velocity, or no angle, is there to rotate with."""
+    present = [name for name in (u_name, v_name) if name in ds]
+    if not present:
+        return ds
+    missing = [n for n in (u_name, v_name, angle_name) if n not in ds.variables]
+    if missing:
+        raise ValueError(
+            f"{source}: {u_name}/{v_name} are along the grid's axes and are "
+            f"rotated to east/north with {angle_name}, but these files have no "
+            f"{', '.join(missing)}."
+        )
+    u, v = rotate(ds[u_name], ds[v_name], ds[angle_name])
+    for name, rotated, direction in ((u_name, u, "Eastward"), (v_name, v, "Northward")):
+        ds[name] = rotated.astype(ds[name].dtype).assign_attrs(
+            ds[name].attrs, long_name=f"{direction} velocity"
+        )
+    return ds
 
 
 def parse_dataset(
