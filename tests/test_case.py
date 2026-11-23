@@ -315,6 +315,38 @@ def test_a_failed_create_leaves_nothing_behind(
     assert list(tmp_path.iterdir()) == []
 
 
+def test_override_leaves_the_rest_of_the_output_dir_alone(
+    CrocoDash_case_factory, tmp_path, monkeypatch
+):
+    """<CIME_OUTPUT_ROOT>/<case name> can be any folder there, such as archive/,
+    which holds every case's short-term archive. Override removes only the bld
+    and run in it, which create_newcase refuses to reuse."""
+    import CrocoDash.case as case_mod
+
+    scratch = tmp_path / "scratch"  # stands in for CIME_OUTPUT_ROOT
+    name = f"shared-{uuid4().hex}"
+    for file in ("bld/old.o", "run/old.nc", "othercase/hist/h.nc"):
+        (scratch / name / file).parent.mkdir(parents=True)
+        (scratch / name / file).write_text("")
+    initialize = case_mod.initialize_visualCaseGen
+
+    def initialize_with_scratch(cesmroot):
+        cime = initialize(cesmroot)
+        cime.cime_output_root = str(scratch)
+        return cime
+
+    monkeypatch.setattr(case_mod, "initialize_visualCaseGen", initialize_with_scratch)
+    _fail_create_case(monkeypatch, RuntimeError("create_newcase failed"))
+    with pytest.raises(RuntimeError, match="create_newcase failed"):
+        CrocoDash_case_factory(tmp_path / "cases", name=name)
+    left = sorted(p.relative_to(scratch / name) for p in (scratch / name).rglob("*"))
+    assert [str(p) for p in left] == [
+        "othercase",
+        "othercase/hist",
+        "othercase/hist/h.nc",
+    ]
+
+
 def test_override_says_what_it_removes(tmp_path, capsys):
     from CrocoDash.case import _remove_previous
 
