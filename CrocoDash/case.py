@@ -142,6 +142,12 @@ class Case:
             k: v for k, v in _locals.items() if k not in case_state.INIT_ARGS_EXCLUDE
         }
 
+        # Absolute paths: these are written into the case (user_nl_mom INPUTDIR, the
+        # mesh paths, the state file), which is read from other folders later.
+        cesmroot = Path(cesmroot).expanduser().resolve()
+        caseroot = Path(caseroot).expanduser().resolve()
+        inputdir = Path(inputdir).expanduser().resolve()
+
         # Initialize visualCaseGen system and get the CIME interface
         self.cime = initialize_visualCaseGen(cesmroot)
 
@@ -198,6 +204,10 @@ class Case:
         self.ProductRegistry = ProductRegistry
         self.forcing_product_name = None
         self._configure_forcings_called = False
+
+        # visualCaseGen refuses a caseroot or inputdir whose parent folder is missing.
+        self.caseroot.parent.mkdir(parents=True, exist_ok=True)
+        self.inputdir.parent.mkdir(parents=True, exist_ok=True)
 
         # Using visualCaseGen's configuration system, set the configuration variables for the case
         # based on the provided arguments. This includes setting the compset, grid, and launch variables.
@@ -499,9 +509,6 @@ class Case:
 
     def _create_newcase(self):
         """Create the case instance."""
-        if not self.caseroot.parent.exists():
-            self.caseroot.parent.mkdir(parents=True, exist_ok=False)
-
         self.cc = CaseCreator(
             self.cime, allow_xml_override=self.override, add_grids_to_ccs_config=False
         )

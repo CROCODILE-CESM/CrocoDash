@@ -284,6 +284,22 @@ def test_a_configuration_error_raises_instead_of_returning_a_half_built_case(
         CrocoDash_case_factory(tmp_path)
 
 
+def test_relative_paths_in_missing_folders_give_a_case_with_absolute_paths(
+    CrocoDash_case_factory, tmp_path, monkeypatch
+):
+    """visualCaseGen refused a path whose parent folder was missing. A relative
+    inputdir went as is into user_nl_mom and the state file, which are read from
+    other folders, and create_newcase put a relative caseroot under $HOME."""
+    monkeypatch.chdir(tmp_path)
+    name = f"case-{uuid4().hex}"  # the run dir is named after it
+    case = CrocoDash_case_factory(
+        tmp_path, caseroot=f"cases/{name}", inputdir=f"input/{name}"
+    )
+    assert case.caseroot == tmp_path.resolve() / "cases" / name
+    ocn = tmp_path.resolve() / "input" / name / "ocn"
+    assert f"INPUTDIR = {ocn}\n" in (case.caseroot / "user_nl_mom").read_text()
+
+
 def _fail_create_case(monkeypatch, exc):
     from visualCaseGen.custom_widget_types.case_creator import CaseCreator
 

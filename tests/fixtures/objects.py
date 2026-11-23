@@ -75,6 +75,8 @@ def CrocoDash_case_factory(
         configure_forcings=False,
         compset: str = "1850_DATM%JRA_SLND_SICE_MOM6_SROF_SGLC_SWAV",
         atm_grid_name: str = "TL319",
+        caseroot=None,
+        inputdir=None,
     ):
         """
         Factory function to create a CrocoDash Case object with sensible defaults.
@@ -86,8 +88,8 @@ def CrocoDash_case_factory(
         grid, topo, vgrid = gen_grid_topo_vgrid
 
         # Set paths
-        caseroot = directory / f"case-{uuid4().hex}"
-        inputdir = directory / "inputdir"
+        caseroot = caseroot or directory / f"case-{uuid4().hex}"
+        inputdir = inputdir or directory / "inputdir"
 
         # Decide machine
         if is_github_actions:
