@@ -3,6 +3,7 @@ from CrocoDash.shareable import duplicate_case, CaseBundle, ForkBundle
 from unittest.mock import patch
 import subprocess
 from pathlib import Path
+from uuid import uuid4
 import pytest
 
 
@@ -23,7 +24,7 @@ def press_enter_yes_no(prompt, default=True):
 @pytest.mark.slow
 def test_duplicate_case(get_case_with_cf, tmp_path):
     case = get_case_with_cf
-    new_caseroot = tmp_path / "duplicated_case"
+    new_caseroot = tmp_path / f"duplicated_case-{uuid4().hex}"
     new_inputdir = tmp_path / "duplicated_inputdir"
 
     # configure_forcings doesn't produce NetCDF files — seed the ocn dir
@@ -43,6 +44,19 @@ def test_duplicate_case(get_case_with_cf, tmp_path):
         assert (new_ocn / fname).exists()
 
 
+def test_duplicate_refuses_an_existing_inputdir(get_case_with_cf, tmp_path):
+    """duplicate used to delete whatever was at the new inputdir or caseroot,
+    such as a folder holding the source case's processed forcing."""
+    existing = tmp_path / "inputdirs"
+    existing.mkdir()
+    (existing / "keep.nc").write_text("processed forcing")
+    with pytest.raises(ValueError, match="already exists"):
+        duplicate_case(
+            get_case_with_cf.caseroot, tmp_path / f"dup-{uuid4().hex}", existing
+        )
+    assert (existing / "keep.nc").exists()
+
+
 @pytest.mark.slow
 def test_pass_from_inspect_to_fork_no_change(get_case_with_cf, tmp_path):
     case = get_case_with_cf
@@ -57,7 +71,7 @@ def test_pass_from_inspect_to_fork_no_change(get_case_with_cf, tmp_path):
             rcc.cesmroot,
             case.machine,
             case.project,
-            tmp_path / "caseroot",
+            tmp_path / f"forked_case-{uuid4().hex}",
             tmp_path / "inputdir",
         )
         # Every copy-plan prompt defaults to False, so nothing is transferred.
@@ -99,7 +113,7 @@ def test_pass_from_inspect_to_fork_with_changes(get_case_with_cf, tmp_path):
             rcc.cesmroot,
             case.machine,
             case.project,
-            tmp_path / "caseroot",
+            tmp_path / f"forked_case-{uuid4().hex}",
             tmp_path / "inputdir",
             plan={
                 "xml_files": True,

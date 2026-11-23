@@ -105,6 +105,9 @@ case = fork.fork(
 After confirmation, `fork()` recreates the case via recipe.py and applies the
 non-standard state per the plan.
 
+The new caseroot and inputdir must not exist yet. `fork()` stops with an error
+rather than delete them.
+
 ### Non-interactive fork
 
 Pass `plan=` to skip the CESM-state copy prompts (the YAML review still runs):
@@ -126,7 +129,10 @@ case = fork.fork(
 
 For copying a case within your own environment — same machine, new paths — use
 `duplicate_case()`. It reads `cesmroot`, `machine`, and `project` directly from
-the original case's `_crocodash_state.json`, so no arguments are needed for those:
+the original case's `_crocodash_state.json`, so no arguments are needed for those.
+The new caseroot and inputdir must not exist yet, and the new case needs its own
+name: CIME keeps each case's build and run folders in `CIME_OUTPUT_ROOT/<case name>`,
+so a copy with the source's name is refused there.
 
 ```python
 from CrocoDash.shareable import duplicate_case
