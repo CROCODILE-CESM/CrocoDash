@@ -321,15 +321,21 @@ def test_get_mom6_output_data_registered():
 def _write_mom6_tseries_files(
     dataset_path, variables, lat_min=20, lat_max=25, lon_min=-90, lon_max=-85, ntime=10
 ):
-    """Writes synthetic single-variable-per-file MOM6 tseries files (MOM6 native names)."""
+    """Writes synthetic single-variable-per-file MOM6 tseries files (MOM6
+    native names), with time_bounds on a real-date calendar as CESM's are."""
     time = pd.date_range("2000-01-01", periods=ntime, freq="D")
     yh = np.linspace(lat_min, lat_max, 6)
     xh = np.linspace(lon_min, lon_max, 6)
+    bounds = np.stack([time, time + pd.Timedelta(days=1)], axis=1)
     for var in variables:
         ds = xr.Dataset(
-            {var: (("time", "yh", "xh"), np.random.rand(ntime, 6, 6))},
+            {
+                var: (("time", "yh", "xh"), np.random.rand(ntime, 6, 6)),
+                "time_bounds": (("time", "nbnd"), bounds),
+            },
             coords={"time": time, "yh": yh, "xh": xh},
         )
+        ds.time.attrs["bounds"] = "time_bounds"
         ds.to_netcdf(dataset_path / f"mom_case.{var}.20000101-20000110.nc")
 
 
@@ -356,6 +362,8 @@ def test_get_mom6_single_variable_data(tmp_path):
     assert "zos" in ds.data_vars
     assert ds.yh.max() <= lat_max + 1.5
     assert ds.yh.min() >= lat_min - 1.5
+    # Merged as is, not spread over the grid by the subset's mask (#386).
+    assert ds.time_bounds.dims == ("time", "nbnd")
 
 
 def test_get_mom6_single_variable_data_registered():
