@@ -270,9 +270,9 @@ class BGCRiverNutrientsConfigurator(BaseConfigurator):
             "din_riv_flux",
             "dip_riv_flux",
             "don_riv_flux",
-            "don_riv_flux",
+            "dop_riv_flux",
             "dsi_riv_flux",
-            "dsi_riv_flux",
+            "dfe_riv_flux",
             "dic_riv_flux",
             "alk_riv_flux",
             "doc_riv_flux",
@@ -280,7 +280,7 @@ class BGCRiverNutrientsConfigurator(BaseConfigurator):
         conversion_factor = 0.01  # nmol/cm^2/s -> mmol/m^2/s
         for v in vars:
             global_river_nutrients[v] = global_river_nutrients[v] * conversion_factor
-            global_river_nutrients[v].attrs["units"] = "mmol/cm^2/s"
+            global_river_nutrients[v].attrs["units"] = "mmol/m^2/s"
 
         print("Regridding river nutrients...")
         river_nutrients_remapped = regridder(global_river_nutrients)
@@ -331,7 +331,7 @@ class BGCRiverNutrientsConfigurator(BaseConfigurator):
 
         # add units to all data vars
         for var in vars:
-            river_nutrients_remapped_time_added[var].attrs["units"] = "mmol/cm^2/s"
+            river_nutrients_remapped_time_added[var].attrs["units"] = "mmol/m^2/s"
         time_units = "days since 0001-01-01 00:00:00"
         time_calendar = calendar.cf
         time_num = cftime.date2num(
