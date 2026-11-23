@@ -124,12 +124,17 @@ def test_a_new_date_range_regenerates_the_ic_and_obcs(case):
     case.configure_forcings(date_range=DATES)
     ic, ic_filled, merged = _write_forcing_outputs(case)
     ocn = merged.parent
+    raw = case.inputdir / "extract_forcings" / "raw_data" / "east_unprocessed.nc"
+    raw.parent.mkdir(exist_ok=True)
+    raw.write_text("fetched, or downloaded by the GLORYS script")
 
-    # Same arguments, or only tides toggled: process_forcings() still skips them.
+    # Same arguments, or only tides toggled: process_forcings() still skips them,
+    # and the fetched data stays, though the case was made with override=True.
     case.configure_forcings(date_range=DATES)
     case.configure_forcings(date_range=DATES, **TIDES)
     assert mom6._all_written(ic) and mom6._all_written(ic_filled)
     assert obc._merge_boundary("001", [], ocn) == merged
+    assert raw.exists()
 
     # New dates: they're gone, so process_forcings() makes them again.
     case.configure_forcings(date_range=["2015-01-02 00:00:00", "2015-01-11 00:00:00"])
