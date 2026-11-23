@@ -195,6 +195,29 @@ def test_an_unknown_job_queue_lists_the_valid_ones(monkeypatch):
 
 
 @pytest.mark.parametrize(
+    "caseroot, inputdir, match",
+    [
+        ("case", "my input", "whitespace"),
+        ("my case", "input", "whitespace"),
+        ("case", "x" * 128, "128-character"),
+    ],
+)
+def test_paths_the_model_cant_read_are_refused_up_front(
+    tmp_path, caseroot, inputdir, match
+):
+    """MOM6 cuts INPUTDIR at 128 characters, and CIME and NUOPC split paths on
+    whitespace. Either way the run failed at start without naming the path."""
+    import inspect
+    from CrocoDash.case import Case
+
+    # The paths are checked before any other argument is read, so those can be None.
+    args = dict.fromkeys(inspect.signature(Case.init_args_check).parameters)
+    args.update(caseroot=tmp_path / caseroot, inputdir=tmp_path / inputdir)
+    with pytest.raises(ValueError, match=match):
+        Case.init_args_check(**args)
+
+
+@pytest.mark.parametrize(
     "caseroot, inputdir",
     [
         ("case", "case"),
