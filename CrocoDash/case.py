@@ -44,6 +44,14 @@ def _remove_previous(path):
         shutil.rmtree(path)
 
 
+def _remove_if_empty(path):
+    """Delete a directory only if nothing is left in it."""
+    try:
+        path.rmdir()
+    except OSError:
+        pass
+
+
 def _remove_failed_attempt(paths, preexisting):
     """Delete the dirs a failed Case() created, so that retrying it is not
     refused with "already exists". One that was already there before the
@@ -125,7 +133,9 @@ class Case:
             The project name to be used in the case. Default is None.
             If the machine requires a project, this argument must be provided.
         override : bool, optional
-            Whether to override existing caseroot and inputdir directories. Default is False.
+            Whether to delete an existing caseroot and inputdir first, along with the
+            bld and run directories a case of the same name left in
+            <CIME_OUTPUT_ROOT>/<case name>. Nothing else there is deleted. Default is False.
         ntasks_ocn : int, optional
             Number of tasks for the ocean model. If None, defaults to VisualCaseGen Grid Calculation.
         job_queue: str, optional
@@ -210,14 +220,21 @@ class Case:
         except Exception as e:
             raise RuntimeError(f"Case configuration failed: {e}") from e
 
+        # Of <CIME_OUTPUT_ROOT>/<case name>, only bld and run (EXEROOT and
+        # RUNDIR) are the case's own: create_newcase refuses them if they
+        # exist. The rest can be anything, such as archive/, which holds every
+        # case's short-term archive.
+        output_dir = Path(self.cime.cime_output_root) / self.caseroot.name
         case_dirs = [
             self.inputdir,
             self.caseroot,
-            Path(self.cime.cime_output_root) / self.caseroot.name,
+            output_dir / "bld",
+            output_dir / "run",
         ]
         if override:
             for path in case_dirs:
                 _remove_previous(path)
+            _remove_if_empty(output_dir)
         preexisting = {path for path in case_dirs if path.exists()}
         try:
             # Before creating the case, we need to create the grid input files (except for mapping files,
@@ -245,6 +262,7 @@ class Case:
             self._write_state()
         except BaseException:
             _remove_failed_attempt(case_dirs, preexisting)
+            _remove_if_empty(output_dir)
             raise
 
         required_configurators = ForcingConfigRegistry.find_required_configurators(

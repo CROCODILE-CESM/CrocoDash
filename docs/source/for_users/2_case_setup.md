@@ -72,7 +72,7 @@ and which model components each activates.
 | `job_queue` | CESM default | Batch queue. |
 | `job_wallclock_time` | CESM default | Wallclock (`hh:mm:ss`). |
 | `ninst` | `1` | Number of model instances (ensemble size). |
-| `override` | `False` | Allow overwriting an existing `caseroot` / `inputdir`. |
+| `override` | `False` | Delete an existing `caseroot` / `inputdir` first, along with the `bld` and `run` folders a case of the same name left in `CIME_OUTPUT_ROOT/<case name>`. Nothing else there is deleted. |
 
 ## What `Case.__init__` does, in order
 
