@@ -33,7 +33,6 @@ class TidesConfigurator(BaseConfigurator):
     ]
     output_params = [
         UserNLConfigParam("TIDES", comment="Enable tidal forcing in MOM6"),
-        UserNLConfigParam("TIDE_M2", comment="Enable M2 tidal constituent"),
         UserNLConfigParam("CD_TIDES", comment="Drag coefficient for tidal forcing"),
         UserNLConfigParam(
             "TIDE_USE_EQ_PHASE", comment="Use equilibrium phase for tides"
@@ -83,7 +82,6 @@ class TidesConfigurator(BaseConfigurator):
     def configure(self):
         # Set the output params
         self.set_output_param("TIDES", "True")
-        self.set_output_param("TIDE_M2", "True")
         self.set_output_param("CD_TIDES", 0.0018)
         self.set_output_param("TIDE_USE_EQ_PHASE", "True")
         self.set_output_param(
@@ -103,8 +101,32 @@ class TidesConfigurator(BaseConfigurator):
             "OBC_TIDE_REF_DATE",
             self.get_input_param("start_date"),
         )
+        # MOM6 applies body (interior) tidal forcing only for the
+        # constituents whose TIDE_<C> is True, so turn on each requested one.
+        for constituent in self.get_input_param("tidal_constituents"):
+            param = self._constituent_flag(constituent)
+            param.set_item("True")
+            self.output_params.append(param)
         super().configure()
         # You also need to add the files to the OBC string, which is handled in the main case unfortunately
+
+    @staticmethod
+    def _constituent_flag(constituent):
+        return UserNLConfigParam(
+            f"TIDE_{constituent.upper()}", comment="Enable tidal constituent"
+        )
+
+    @classmethod
+    def deserialize(cls, data):
+        """Rebuild the per-constituent TIDE_<C> params alongside the static ones."""
+        obj = super().deserialize(data)
+        outputs = data.get("outputs", {})
+        for constituent in obj.get_input_param("tidal_constituents"):
+            param = cls._constituent_flag(constituent)
+            if param.name in outputs:
+                param.set_item(outputs[param.name])
+                obj.output_params.append(param)
+        return obj
 
     def get_output_filepaths(self, ocn_ice_directory):
         # Search directory for tu_* and tz_* files
