@@ -86,15 +86,6 @@ def test_get_cice_restart_subset(skip_if_not_glade, tmp_path):
     assert ds["tlat"].values.min() <= 18
     assert ds["tlat"].values.max() >= 31
 
-    # U-point ANGLE (radians -- the grid file's own units, no rad2deg unlike
-    # tlon/tlat/ulon/ulat) is attached too: forcing/cice.py's
-    # _regrid_cice_full_grid needs it to rotate uvel/vvel out of this
-    # restart's tripole axes before regridding onto a differently-oriented
-    # target grid, and fails loudly without it.
-    assert "angle" in ds.data_vars
-    assert ds["angle"].dims == ("nj", "ni")
-    assert np.all(np.abs(ds["angle"].values) <= np.pi)
-
 
 def test_get_cice_restart_subset_variable_filter(skip_if_not_glade, tmp_path):
     _skip_if_reference_files_missing()

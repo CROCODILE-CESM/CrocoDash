@@ -58,6 +58,7 @@ from pathlib import Path
 import numpy as np
 import xarray as xr
 from mom6_forge.mapping import regrid_dataset_via_xesmf
+from regional_mom6.utils import rotate
 
 from CrocoDash.grid import Grid
 from CrocoDash.forcing import utils
@@ -112,37 +113,30 @@ RESTORE_PARAMS = (
 
 U_POINT_VARS = {"uvel", "vvel", "iceumask"}
 U_POINT_VAR_PREFIXES = ("stressp_", "stressm_", "stress12_")
-# Tensor components of the EVP internal ice stress (one per cell corner).
-# stressp_N is the trace (sigma11+sigma22): rotation-invariant, so it
-# regrids fine as a plain scalar, same as everything else in U_POINT_VARS.
-# stressm_N (sigma11-sigma22) and stress12_N (sigma12) are NOT invariant --
-# a true tensor component rotates with 2*theta, not theta, so the vector
-# rotation below cannot be reused for them. Rather than implement a separate
-# 2*theta tensor rotation for a restoring target that only lasts until EVP's
-# own sub-cycles rebuild the stress state from the (correctly rotated)
-# velocity field, they are zeroed in the output -- see _regrid_cice_full_grid.
-STRESS_TENSOR_VAR_PREFIXES = ("stressm_", "stress12_")
 
 
 def _is_u_point_var(name):
     return name in U_POINT_VARS or name.startswith(U_POINT_VAR_PREFIXES)
 
 
-def _rotate(u, v, angle):
-    """Counterclockwise-rotate vector (u, v) by ``angle`` radians.
+def _rotate_u_point_fields(ds, angle):
+    """Rotate the vector and tensor U-point fields of ``ds`` counterclockwise by
+    ``angle`` (radians), in place.
 
-    Used both directions of CICE's own ANGLE convention (``ice_grid.F90``:
-    "ANGLE = angle between local x direction and true east", reproduced
-    identically by mom6_forge's ``angle_q``/``angle`` -- see
-    ``Topo.write_cice_grid``, no sign flip applied there): grid-local axes
-    -> true east/north is ``_rotate(u, v, +angle)``; the inverse, true
-    east/north -> grid-local axes, is ``_rotate(u, v, -angle)``. This matches
-    ``ice_import_export.F90``'s ANGLET formula exactly (its
-    ``uocn = workx*cos(ANGLET) + worky*sin(ANGLET)`` earth->grid rotation is
-    this function called with ``-ANGLET``).
+    CICE's ANGLE is the angle from the grid's local x axis to true east, so
+    ``+angle`` takes grid-local components to east/north and ``-angle`` takes
+    them back (ice_import_export.F90). ``uvel``/``vvel`` rotate by ``angle``.
+    The EVP stress at each corner N rotates as a tensor: ``stressp_N``
+    (sigma11+sigma22) is invariant, and (``stressm_N``/2, ``stress12_N``)
+    rotates by ``2*angle``.
     """
-    c, s = np.cos(angle), np.sin(angle)
-    return u * c - v * s, u * s + v * c
+    if "uvel" in ds and "vvel" in ds:
+        ds["uvel"], ds["vvel"] = rotate(ds["uvel"], ds["vvel"], angle)
+    for stressm in [v for v in ds.data_vars if v.startswith("stressm_")]:
+        stress12 = "stress12_" + stressm.removeprefix("stressm_")
+        half_m, ds[stress12] = rotate(ds[stressm] / 2, ds[stress12], 2 * angle)
+        ds[stressm] = 2 * half_m
+    return ds
 
 
 def _regrid_point_group(ds, vars_, src_lon, src_lat, tgt_lon, tgt_lat):
@@ -169,20 +163,11 @@ def _regrid_cice_full_grid(ds, grid):
     Nearest-neighbor, not bilinear: CICE's category/state fields are
     discrete-like, so sharp ice edges shouldn't be smeared by interpolation.
 
-    ``uvel``/``vvel`` are components along the SOURCE grid's own local axes
-    (a real CICE restart, not lat/lon-aligned), and the target grid has its
-    own, generally different, local axes -- nearest-neighbor regridding them
-    unrotated silently carries the source's axes onto the target's, which is
-    wrong wherever the two grids' ANGLE differs (any rotated or polar target,
-    e.g. any grid crossing the tripole seam's own convergence). So they are
-    rotated source-axes -> true east/north (source ``angle``) before the
-    regrid and true east/north -> target-axes (target U-point ANGLE,
-    ``grid.angle_q``) after -- see ``_rotate``. The source's U-point ``angle``
-    must come from the forcing product itself (e.g.
-    ``get_cice_restart_subset`` attaches it from the grid file, the same way
-    it already attaches ulon/ulat); there is no reliable way to recover it
-    from ulon/ulat alone, so its absence is a hard error rather than a silent
-    unrotated regrid.
+    Velocity and stress are stored along each grid's own local axes, which
+    differ between the source and a rotated or polar target. They are rotated
+    to east/north with the source ``angle`` before the regrid and onto the
+    target's axes with ``grid.angle_q`` after it (the U-point ANGLE that
+    ``Topo.write_cice_grid`` writes for this grid).
     """
 
     t_vars = [
@@ -191,17 +176,6 @@ def _regrid_cice_full_grid(ds, grid):
         if v not in ("tlon", "tlat", "ulon", "ulat", "angle") and not _is_u_point_var(v)
     ]
     u_vars = [v for v in ds.data_vars if _is_u_point_var(v)]
-    has_velocity = "uvel" in u_vars and "vvel" in u_vars
-
-    if has_velocity and "angle" not in ds:
-        raise ValueError(
-            "CICE forcing source has uvel/vvel but no U-point 'angle' field "
-            "(radians, grid-x direction from true east -- ice_grid.F90's "
-            "ANGLE) to rotate ice velocity into earth coordinates before "
-            "regridding onto the target grid. Attach it (e.g. the way "
-            "get_cice_restart_subset attaches ulon/ulat) rather than "
-            "regridding uvel/vvel as unrotated scalars."
-        )
 
     t_out = _regrid_point_group(
         ds,
@@ -212,43 +186,27 @@ def _regrid_cice_full_grid(ds, grid):
         grid.tlat.values,
     )
 
-    # Rotate uvel/vvel source-axes -> earth (east/north) before handing them
-    # to the nearest-neighbor regrid, which is only valid for scalars.
-    regrid_source = ds
-    if has_velocity:
-        u_east, v_north = _rotate(ds["uvel"], ds["vvel"], ds["angle"])
-        regrid_source = ds.copy()
-        regrid_source["uvel"], regrid_source["vvel"] = u_east, v_north
-
-    u_out = _regrid_point_group(
-        regrid_source,
-        u_vars,
-        ds["ulon"].values,
-        ds["ulat"].values,
-        grid.qlon.values[1:, 1:],
-        grid.qlat.values[1:, 1:],
-    )
+    u_out = xr.Dataset()
     if u_vars:
-        u_out = u_out.rename({"lon": "u_lon", "lat": "u_lat"})
-
-    if has_velocity:
-        # Earth (east/north) -> target grid's own local axes, at the same
-        # U-point locations (grid.qlon/qlat[1:, 1:]) the regrid above used --
-        # Topo.write_cice_grid slices grid.angle_q the same way when it
-        # writes this grid's own CICE ANGLE, so this is that grid's real
-        # ANGLE, not an approximation of it.
-        target_angle = np.radians(grid.angle_q.values[1:, 1:])
-        u_out["uvel"], u_out["vvel"] = _rotate(
-            u_out["uvel"], u_out["vvel"], -target_angle
+        if "angle" not in ds:
+            raise ValueError(
+                "CICE forcing source has U-point fields but no 'angle' to "
+                "rotate velocity and stress by. Attach the source grid's "
+                "U-point ANGLE (radians) as 'angle'."
+            )
+        u_out = _regrid_point_group(
+            _rotate_u_point_fields(ds[u_vars], ds["angle"]),
+            u_vars,
+            ds["ulon"].values,
+            ds["ulat"].values,
+            grid.qlon.values[1:, 1:],
+            grid.qlat.values[1:, 1:],
         )
-
-    # stressm_N/stress12_N are true tensor components (rotate with 2*theta,
-    # not theta) -- zeroed rather than left as wrongly-rotated scalars; see
-    # STRESS_TENSOR_VAR_PREFIXES. stressp_N (the trace) is rotation-invariant
-    # and needs no special handling, so it stays as the regridded scalar.
-    for var in u_out.data_vars:
-        if var.startswith(STRESS_TENSOR_VAR_PREFIXES):
-            u_out[var] = xr.zeros_like(u_out[var])
+        target_angle = xr.DataArray(
+            np.radians(grid.angle_q.values[1:, 1:]), dims=("ny", "nx")
+        )
+        u_out = _rotate_u_point_fields(u_out, -target_angle)
+        u_out = u_out.rename({"lon": "u_lon", "lat": "u_lat"})
 
     # CICE's restart reader indexes on ni/nj, not the ny/nx the regrid target
     # was built with -- rename now that the source grid's own nj/ni are out of
