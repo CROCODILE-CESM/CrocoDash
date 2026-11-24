@@ -1280,7 +1280,7 @@ configurators that actually produce BGC forcing files.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="CrocoDash.forcing.bgc.BGCConfigurator.output_params">
-<span class="sig-name descname"><span class="pre">output_params</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#CrocoDash.forcing.base.OutputParam" title="CrocoDash.forcing.base.OutputParam"><span class="pre">OutputParam</span></a><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[UserNLConfigParam(name='MAX_FIELDS')]</span></em><a class="headerlink" href="#CrocoDash.forcing.bgc.BGCConfigurator.output_params" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">output_params</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#CrocoDash.forcing.base.OutputParam" title="CrocoDash.forcing.base.OutputParam"><span class="pre">OutputParam</span></a><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[UserNLConfigParam(name='MAX_FIELDS'),</span> <span class="pre">UserNLConfigParam(name='READ_RIV_FLUXES'),</span> <span class="pre">UserNLConfigParam(name='lvariable_NtoC')]</span></em><a class="headerlink" href="#CrocoDash.forcing.bgc.BGCConfigurator.output_params" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -1365,13 +1365,15 @@ configurators that actually produce BGC forcing files.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="CrocoDash.forcing.bgc.BGCIronForcingConfigurator.output_params">
-<span class="sig-name descname"><span class="pre">output_params</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#CrocoDash.forcing.base.OutputParam" title="CrocoDash.forcing.base.OutputParam"><span class="pre">OutputParam</span></a><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[UserNLConfigParam(name='MARBL_FESEDFLUX_FILE'),</span> <span class="pre">UserNLConfigParam(name='MARBL_FEVENTFLUX_FILE'),</span> <span class="pre">UserNLConfigParam(name='MARBL_FESEDFLUXRED_FILE')]</span></em><a class="headerlink" href="#CrocoDash.forcing.bgc.BGCIronForcingConfigurator.output_params" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">output_params</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#CrocoDash.forcing.base.OutputParam" title="CrocoDash.forcing.base.OutputParam"><span class="pre">OutputParam</span></a><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[UserNLConfigParam(name='MARBL_FE_INTERIOR_SOURCE_FILE')]</span></em><a class="headerlink" href="#CrocoDash.forcing.bgc.BGCIronForcingConfigurator.output_params" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="CrocoDash.forcing.bgc.BGCIronForcingConfigurator.process">
 <span class="sig-name descname"><span class="pre">process</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.bgc.BGCIronForcingConfigurator.process" title="Link to this definition">#</a></dt>
-<dd><p>Create dummy iron forcing files for MARBL.</p>
+<dd><p>Create a zero iron source file for MARBL, laid out like CESM’s
+fe_sources_*.nc files (FE_SOURCE_SED, FE_SOURCE_REDSED and
+FE_SOURCE_VENT on DEPTH x ny x nx).</p>
 </dd></dl>
 
 <dl class="py attribute">
@@ -1418,7 +1420,7 @@ configurators that actually produce BGC forcing files.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="CrocoDash.forcing.bgc.BGCRiverNutrientsConfigurator.output_params">
-<span class="sig-name descname"><span class="pre">output_params</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#CrocoDash.forcing.base.OutputParam" title="CrocoDash.forcing.base.OutputParam"><span class="pre">OutputParam</span></a><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[UserNLConfigParam(name='READ_RIV_FLUXES'),</span> <span class="pre">UserNLConfigParam(name='RIV_FLUX_FILE')]</span></em><a class="headerlink" href="#CrocoDash.forcing.bgc.BGCRiverNutrientsConfigurator.output_params" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">output_params</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#CrocoDash.forcing.base.OutputParam" title="CrocoDash.forcing.base.OutputParam"><span class="pre">OutputParam</span></a><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[UserNLConfigParam(name='RIV_FLUX_FILE')]</span></em><a class="headerlink" href="#CrocoDash.forcing.bgc.BGCRiverNutrientsConfigurator.output_params" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
