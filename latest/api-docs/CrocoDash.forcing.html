@@ -618,6 +618,7 @@ document.write(`
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.forcing.utils">CrocoDash.forcing.utils module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.utils.DownloadScriptWritten"><code class="docutils literal notranslate"><span class="pre">DownloadScriptWritten</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.utils.check_date_continuity"><code class="docutils literal notranslate"><span class="pre">check_date_continuity()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.utils.fetch_raw_chunk"><code class="docutils literal notranslate"><span class="pre">fetch_raw_chunk()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.utils.get_data_access_function"><code class="docutils literal notranslate"><span class="pre">get_data_access_function()</span></code></a></li>
@@ -2114,6 +2115,14 @@ blocks are left out (see the module docstring).</p>
 </section>
 <section id="module-CrocoDash.forcing.utils">
 <span id="crocodash-forcing-utils-module"></span><h2>CrocoDash.forcing.utils module<a class="headerlink" href="#module-CrocoDash.forcing.utils" title="Link to this heading">#</a></h2>
+<dl class="py exception">
+<dt class="sig sig-object py" id="CrocoDash.forcing.utils.DownloadScriptWritten">
+<em class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">CrocoDash.forcing.utils.</span></span><span class="sig-name descname"><span class="pre">DownloadScriptWritten</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scripts</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.utils.DownloadScriptWritten" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">RuntimeError</span></code></p>
+<p>A script-type access method wrote download requests instead of
+downloading, so the data isn’t there until the script runs.</p>
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="CrocoDash.forcing.utils.check_date_continuity">
 <span class="sig-prename descclassname"><span class="pre">CrocoDash.forcing.utils.</span></span><span class="sig-name descname"><span class="pre">check_date_continuity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">boundary_file_list</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#CrocoDash.forcing.utils.check_date_continuity" title="Link to this definition">#</a></dt>
@@ -2126,7 +2135,8 @@ blocks are left out (see the module docstring).</p>
 <dd><p>Download one raw data chunk, skipping if a valid output file already exists.</p>
 <p>Shared by obc.py and ic.py — both fetch a chunk of raw data
 for a given date range and bounding box, and both need to be idempotent
-across re-runs.</p>
+across re-runs. Returns the raw file, or, for a script-type access method
+whose file isn’t there yet, the script it added the request to.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -2767,6 +2777,7 @@ needs to import it by name.</p>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-CrocoDash.forcing.utils">CrocoDash.forcing.utils module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.utils.DownloadScriptWritten"><code class="docutils literal notranslate"><span class="pre">DownloadScriptWritten</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.utils.check_date_continuity"><code class="docutils literal notranslate"><span class="pre">check_date_continuity()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.utils.fetch_raw_chunk"><code class="docutils literal notranslate"><span class="pre">fetch_raw_chunk()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#CrocoDash.forcing.utils.get_data_access_function"><code class="docutils literal notranslate"><span class="pre">get_data_access_function()</span></code></a></li>
