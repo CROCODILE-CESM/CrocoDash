@@ -136,7 +136,7 @@ def test_process_obc_conditions_uses_tmask_bbox_for_get(
 
     def fake_get_boundary(boundary, latlon, **_kwargs):
         captured_latlon[boundary] = latlon
-        return []
+        return set()
 
     monkeypatch.setattr(obc_module, "_get_boundary", fake_get_boundary)
     monkeypatch.setattr(obc_module, "_regrid_boundary", lambda **_k: [])

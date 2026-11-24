@@ -59,3 +59,31 @@ def test_create_forwards_override(captured_create):
     calls = captured_create("--config", "case.yaml", "--override")
     assert calls["override"] is True
     assert calls["configure_only"] is False
+
+
+def test_create_says_which_command_to_run_after_a_download_script(
+    monkeypatch, tmp_path, capsys
+):
+    """A script-type product stops `crocodash create` with the command to run
+    once the script has fetched the data, not a traceback."""
+    from CrocoDash.forcing.utils import DownloadScriptWritten
+
+    script = tmp_path / "get_glorys_data.sh"
+    monkeypatch.setattr(
+        recipe, "load_config", lambda path: {"case": {"caseroot": "~/cases/mycase"}}
+    )
+
+    def fake_create(config, override=False, configure_only=False):
+        raise DownloadScriptWritten([script])
+
+    monkeypatch.setattr(recipe, "create_case_from_yaml", fake_create)
+    monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.setattr("sys.argv", ["crocodash", "create", "--config", "case.yaml"])
+
+    with pytest.raises(SystemExit) as exc:
+        cli.main()
+
+    assert exc.value.code == 1
+    err = capsys.readouterr().err
+    assert str(script) in err
+    assert f"crocodash process --caseroot {tmp_path}/cases/mycase --all" in err

@@ -11,6 +11,7 @@ the GET step (turning a forcing product's own u/v/eta/tracer var-name
 metadata into a download request).
 """
 
+import copy
 import math
 import os
 from functools import partial
@@ -67,6 +68,11 @@ def boundary_window(start, end, spacing: int):
     padded: every day of the run holds its own record."""
     pad = pd.Timedelta(days=spacing if spacing > 1 else 0)
     return pd.Timestamp(start) - pad, pd.Timestamp(end) + pad
+
+
+# rm6's mask_dataset fills OBC land points with -1e20; values at or below this
+# are land, not data.
+_LAND_FILL_THRESHOLD = -1e19
 
 
 def build_forcing_request(
@@ -250,9 +256,18 @@ def _split_bgc_tracers_into_files(
                         f"{seg_files[seg]}. Expected it there because {var!r} was "
                         "included in the regridded tracer set."
                     )
-                # Left lazy so to_netcdf streams from the open source file
-                # rather than materialising every segment first.
-                ds_var[var_name] = ds[var_name]
+                # Clipped at zero: source models such as POP don't keep BGC
+                # tracers positive (e.g. NO3 and DOC in oxygen-minimum zones,
+                # phytoplankton below the euphotic zone). MARBL clips them
+                # internally, so a negative boundary value breaks its column
+                # conservation checks. Land points keep rm6's -1e20 fill
+                # (and any NaN), and this stays lazy, so to_netcdf still
+                # streams from the open source file.
+                da = ds[var_name]
+                ds_var[var_name] = da.clip(min=0, keep_attrs=True).where(
+                    da > _LAND_FILL_THRESHOLD, da
+                )
+                ds_var[var_name].encoding = da.encoding
                 dz_var_name = f"dz_{var_name}"
                 if dz_var_name in ds:
                     ds_var[dz_var_name] = ds[dz_var_name]
@@ -372,7 +387,13 @@ def _regrid_ic(
     if _all_written([output_dir / f"{n}.nc" for n in names]):
         logger.info("Initial condition files already exist. They will be skipped.")
     else:
-        expt.setup_initial_condition(raw_file, dataset_varnames, arakawa_grid=None)
+        # rm6 narrows a list depth_coord (POP's ["z_t", "z_t_150m"]) to its
+        # first entry in the mapping it is given. This mapping is also the one
+        # process_bc hands to the boundaries, where tracers on z_t_150m then
+        # lose their vertical encoding and dz, so rm6 gets a copy.
+        expt.setup_initial_condition(
+            raw_file, copy.deepcopy(dataset_varnames), arakawa_grid=None
+        )
 
     if _all_written([output_dir / f"{n}_filled.nc" for n in names]):
         logger.info(
@@ -880,8 +901,10 @@ class ConditionsConfigurator(BaseConfigurator):
                 output_path=ctx.output_path,
                 regrid_chunk_fn=_regrid_obc_chunk,
                 bathymetry_path=ctx.topo_path,
-                get_step_days=int(self.get_output_param("get_step_days")),
-                regrid_step_days=int(self.get_output_param("regrid_step_days")),
+                get_step_days=max(int(self.get_output_param("get_step_days")), spacing),
+                regrid_step_days=max(
+                    int(self.get_output_param("regrid_step_days")), spacing
+                ),
                 min_chunk_days=spacing,
                 preview=True,
             )
@@ -910,8 +933,10 @@ class ConditionsConfigurator(BaseConfigurator):
             output_path=ctx.output_path,
             regrid_chunk_fn=partial(_regrid_obc_chunk, bathymetry_path=ctx.topo_path),
             bathymetry_path=ctx.topo_path,
-            get_step_days=int(self.get_output_param("get_step_days")),
-            regrid_step_days=int(self.get_output_param("regrid_step_days")),
+            get_step_days=max(int(self.get_output_param("get_step_days")), spacing),
+            regrid_step_days=max(
+                int(self.get_output_param("regrid_step_days")), spacing
+            ),
             min_chunk_days=spacing,
             preview=False,
         )

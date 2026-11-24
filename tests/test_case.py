@@ -71,6 +71,9 @@ def test_configure_forcings(get_case_with_cf):
                 found_user_nl_mom_adjusted_var = True
                 break
     assert found_user_nl_mom_adjusted_var
+    # The run dates went through ./xmlchange; the case object must see them.
+    assert case._cime_case.get_value("RUN_STARTDATE") == "2020-01-01"
+    assert case._cime_case.get_value("STOP_N") == 31
 
 
 def test_configure_forcings_invalid_function_overrides(get_CrocoDash_case):
@@ -189,6 +192,47 @@ def test_an_unknown_job_queue_lists_the_valid_ones(monkeypatch):
     with pytest.raises(ValueError, match="Valid queues: develop, main"):
         case._apply_final_xmlchanges(job_queue="mian")
     assert "JOB_QUEUE" not in changed
+
+
+@pytest.mark.parametrize(
+    "caseroot, inputdir",
+    [
+        ("case", "case"),
+        ("case", "case/input"),
+        ("input/ocn", "input"),
+        ("input/extract_forcings/case", "input"),
+    ],
+)
+def test_overlapping_caseroot_and_inputdir_are_refused_up_front(
+    tmp_path, caseroot, inputdir
+):
+    """create_newcase needs the caseroot not to exist yet, and inputdir and its
+    ocn/ice/wav folders are written first, so either inside the other used to fail
+    with an unclear error later on. A caseroot in extract_forcings was deleted by
+    configure_forcings on override."""
+    from CrocoDash.case import Case
+
+    # The paths are checked before any other argument is read, so those can be None.
+    with pytest.raises(ValueError, match="can't be"):
+        Case.init_args_check(
+            **dict.fromkeys(
+                [
+                    "cime",
+                    "ocn_grid",
+                    "ocn_topo",
+                    "ocn_vgrid",
+                    "compset_lname",
+                    "atm_grid_name",
+                    "rof_grid_name",
+                    "ninst",
+                    "machine",
+                    "project",
+                ]
+            ),
+            caseroot=tmp_path / caseroot,
+            inputdir=tmp_path / inputdir,
+            override=False,
+        )
 
 
 def test_ntasks_ocn_is_followed_by_a_case_setup_reset(monkeypatch, tmp_path):

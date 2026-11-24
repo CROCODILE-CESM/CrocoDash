@@ -506,9 +506,11 @@ def _get_boundary(
     variables: list,
     extra_args: dict,
     min_chunk_days: int = 1,
-) -> list:
-    """Download all raw data for one boundary, chunked by get_step_days."""
+) -> set:
+    """Download all raw data for one boundary, chunked by get_step_days.
+    Returns the scripts that hold requests still to be run."""
     output_dir = Path(output_dir)
+    scripts = set()
 
     pairs = list(_make_date_pairs(start_date, end_date, get_step_days, min_chunk_days))
 
@@ -522,7 +524,7 @@ def _get_boundary(
             output_filename = f"{boundary}_unprocessed.{start_str}_{end_str}.nc"
             data_access_fn = utils.get_data_access_function(product_name, function_name)
 
-            utils.fetch_raw_chunk(
+            fetched = utils.fetch_raw_chunk(
                 data_access_fn=data_access_fn,
                 dates=[start_str, end_str],
                 latlon=latlon,
@@ -532,6 +534,8 @@ def _get_boundary(
                 variables=variables,
                 extra_args=extra_args,
             )
+            if fetched != output_dir / output_filename:
+                scripts.add(fetched)
     else:
         num_workers = max(1, min(available_cpus(), len(pairs)))
         with ProcessPoolExecutor(
@@ -556,6 +560,7 @@ def _get_boundary(
             ]
             for f in as_completed(futures):
                 f.result()
+    return scripts
 
 
 def _regrid_boundary(
@@ -809,11 +814,12 @@ def process_obc_conditions(
     regridded_path.mkdir(exist_ok=True)
     output_path.mkdir(exist_ok=True)
 
+    scripts = set()
     for j, boundary in enumerate(boundaries):
         seg_id = boundary_number_conversion[boundary]
 
         logger.info("GET [%s]: %s → %s", boundary, start_date.date(), end_date.date())
-        _get_boundary(
+        scripts |= _get_boundary(
             boundary=boundary,
             start_date=start_date,
             end_date=end_date,
@@ -826,6 +832,9 @@ def process_obc_conditions(
             extra_args=extra_args,
             min_chunk_days=min_chunk_days,
         )
+
+    if scripts:
+        raise utils.DownloadScriptWritten(scripts)
 
     regridded_files_by_boundary = {}
     for boundary in boundaries:
