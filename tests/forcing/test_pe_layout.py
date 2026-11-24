@@ -43,6 +43,8 @@ def test_a_layout_change_is_followed_by_a_case_setup_reset(monkeypatch, tmp_path
     import CrocoDash.forcing.pe_layout as pe_mod
 
     (tmp_path / "xmlquery").touch()
+    (tmp_path / "LockedFiles").mkdir()
+    (tmp_path / "LockedFiles" / "env_mach_pes.xml").touch()
     topo = tmp_path / "topo.nc"
     xr.Dataset({"mask": (("ny", "nx"), np.ones((10, 10)))}).to_netcdf(topo)
     changed = {}

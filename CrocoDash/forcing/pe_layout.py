@@ -107,10 +107,9 @@ class PELayoutConfigurator(BaseConfigurator):
         flags = ["--non-local"] if self.is_non_local else []
         if not Path(caseroot, "xmlquery").exists():
             raise RuntimeError(f"{caseroot} is not a CESM case directory")
-        # e.g. "128", or "['CPL:128', 'ATM:128', 'OCN:128', ..., 'ESP:1']"
-        case_values = {
-            name: subprocess.run(
-                ["./xmlquery", name, "--value", *flags],
+        max_tasks_per_node = (
+            subprocess.run(
+                ["./xmlquery", "MAX_MPITASKS_PER_NODE", "--value", *flags],
                 cwd=caseroot,
                 capture_output=True,
                 text=True,
@@ -118,25 +117,43 @@ class PELayoutConfigurator(BaseConfigurator):
             )
             .stdout.strip()
             .splitlines()[-1]
-            for name in ("MAX_MPITASKS_PER_NODE", "NTASKS", "ROOTPE")
-        }
+        )
         with xr.open_dataset(self.get_input_param("case_topo_path")) as topo:
             ocean_points = int(topo["mask"].sum())
         layout = pe_layout(
             ocean_points,
-            int(case_values["MAX_MPITASKS_PER_NODE"]),
+            int(max_tasks_per_node),
             marbl="%MARBL" in self.get_input_param("case_compset_lname"),
             ntasks_ocn=self.get_input_param("case_ntasks_ocn"),
         )
-        # Whether any component, ESP aside, has other NTASKS or ROOTPE now.
-        changed = any(
-            int(value) != layout.get(f"{name}_{component}", layout[name])
-            for name in ("NTASKS", "ROOTPE")
-            for component, value in (
-                item.split(":") for item in ast.literal_eval(case_values[name])
+        # Compare against the locked copy of env_mach_pes.xml — that is what
+        # CIME checks at build time. If a previous reset was interrupted, the
+        # xmlchange is already in env_mach_pes.xml but not in the locked copy,
+        # so reading env_mach_pes.xml would see "no change" and skip the reset.
+        locked_file = "LockedFiles/env_mach_pes.xml"
+        if not (Path(caseroot) / locked_file).exists():
+            changed = True
+        else:
+            locked_values = {
+                name: subprocess.run(
+                    ["./xmlquery", name, "--value", "--file", locked_file, *flags],
+                    cwd=caseroot,
+                    capture_output=True,
+                    text=True,
+                    check=True,
+                )
+                .stdout.strip()
+                .splitlines()[-1]
+                for name in ("NTASKS", "ROOTPE")
+            }
+            changed = any(
+                int(value) != layout.get(f"{name}_{component}", layout[name])
+                for name in ("NTASKS", "ROOTPE")
+                for component, value in (
+                    item.split(":") for item in ast.literal_eval(locked_values[name])
+                )
+                if component != "ESP"
             )
-            if component != "ESP"
-        )
         for name, value in layout.items():
             self.set_output_param(name, value)
         super().configure()
