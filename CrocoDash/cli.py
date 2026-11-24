@@ -1,5 +1,6 @@
 import argparse
 import json
+import shlex
 import sys
 from pathlib import Path
 
@@ -14,13 +15,30 @@ class CrocoDashCliError(Exception):
     """
 
 
+def _download_script_error(written, rerun):
+    """DownloadScriptWritten's message with the crocodash command to run next.
+
+    Its own message says to run process_forcings() again, the Python call.
+    """
+    scripts = ", ".join(str(script) for script in sorted(written.scripts))
+    return CrocoDashCliError(
+        f"Wrote the download requests to {scripts}. Run it, then run:\n  {rerun}"
+    )
+
+
 def _create(args):
     from CrocoDash.recipe import load_config, create_case_from_yaml
+    from CrocoDash.forcing.utils import DownloadScriptWritten
 
     config = load_config(args.config)
-    create_case_from_yaml(
-        config, override=args.override, configure_only=args.configure_only
-    )
+    try:
+        create_case_from_yaml(
+            config, override=args.override, configure_only=args.configure_only
+        )
+    except DownloadScriptWritten as written:
+        caseroot = Path(config["case"]["caseroot"]).expanduser()
+        rerun = ["crocodash", "process", "--caseroot", str(caseroot), "--all"]
+        raise _download_script_error(written, shlex.join(rerun))
 
 
 def _dump(args):
@@ -34,6 +52,7 @@ def _dump(args):
 def _process(args):
     from CrocoDash import case_state
     from CrocoDash.forcing.driver import run_workflow, resolve_components
+    from CrocoDash.forcing.utils import DownloadScriptWritten
     from CrocoDash.forcing.base import (
         CONFIG_FILENAME,
         ForcingConfigRegistry,
@@ -69,11 +88,15 @@ def _process(args):
         args.subparser.print_help()
         return
 
-    run_workflow(
-        config_path=config_path,
-        **{name: getattr(args, name) for name in flag_names},
-        preview=config["conditions"]["outputs"].get("preview", False),
-    )
+    try:
+        run_workflow(
+            config_path=config_path,
+            **{name: getattr(args, name) for name in flag_names},
+            preview=config["conditions"]["outputs"].get("preview", False),
+        )
+    except DownloadScriptWritten as written:
+        # The same command picks up where this one stopped.
+        raise _download_script_error(written, shlex.join(["crocodash", *sys.argv[1:]]))
 
 
 def _bundle(args):

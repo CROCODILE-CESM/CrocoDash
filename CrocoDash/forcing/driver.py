@@ -25,6 +25,7 @@ from pathlib import Path
 
 from CrocoDash import case_state
 from CrocoDash.forcing.base import ForcingConfigRegistry, WorkflowContext, read_config
+from CrocoDash.forcing.utils import DownloadScriptWritten
 
 
 def _resolve_process_order_overrides(targets):
@@ -127,12 +128,16 @@ def run_workflow(config_path, preview=False, **flags):
             f"Circular process-order dependency among forcing components: {exc.args[1]}"
         ) from exc
 
-    timings = {}
+    timings, scripts = {}, set()
     for flag_name in order:
         configurator, method_name = targets[flag_name]
         _t = time.perf_counter()
         # Each process_*() decides what preview means for it, off ctx.preview.
-        getattr(configurator, method_name)(ctx)
+        try:
+            getattr(configurator, method_name)(ctx)
+        except DownloadScriptWritten as written:
+            # Carry on, so that one run of the script fetches every component.
+            scripts |= written.scripts
         timings[flag_name] = time.perf_counter() - _t
 
     if timings:
@@ -140,6 +145,8 @@ def run_workflow(config_path, preview=False, **flags):
         parts.append(f"total: {sum(timings.values()):.1f}s")
         print("[timing] " + "  ".join(parts))
 
+    if scripts:
+        raise DownloadScriptWritten(scripts)
     return timings
 
 

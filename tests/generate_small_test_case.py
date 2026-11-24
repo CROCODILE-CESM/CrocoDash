@@ -279,7 +279,11 @@ def main() -> None:
 
     for f in files:
         url = f"{base_url}/{f}"
-        dest = os.path.join(output_dir, f)
+        # The bucket's boundary files have undashed dates. Save them under the
+        # names CrocoDash looks for, or it writes a download script instead.
+        dest = os.path.join(
+            output_dir, f.replace("20200101_20200105", "2020-01-01_2020-01-05")
+        )
         print(f"Downloading {f}...")
         subprocess.run(["wget", "-O", dest, url], check=True)
     case.process_forcings()

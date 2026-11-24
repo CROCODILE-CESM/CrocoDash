@@ -87,7 +87,7 @@ def process_initial_condition(
     hgrid = xr.open_dataset(hgrid_path)
     latlon_info = Grid.get_bounding_boxes(hgrid)["ic"]
 
-    _download_initial_condition(
+    fetched = _download_initial_condition(
         data_access_function=data_access_function,
         latlon_info=latlon_info,
         raw_data_dir=raw_data_dir,
@@ -98,6 +98,8 @@ def process_initial_condition(
     )
 
     raw_file = Path(raw_data_dir) / "ic_unprocessed.nc"
+    if fetched != raw_file:
+        raise utils.DownloadScriptWritten([fetched])
     regrid_fn(
         raw_file=raw_file,
         hgrid=hgrid,
@@ -121,7 +123,7 @@ def _download_initial_condition(
     extra_args: dict,
 ):
     with dask.config.set(scheduler="synchronous"):
-        utils.fetch_raw_chunk(
+        return utils.fetch_raw_chunk(
             data_access_fn=data_access_function,
             dates=[start_date_str, end_date_str],
             latlon=latlon_info,
