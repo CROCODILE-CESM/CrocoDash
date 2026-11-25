@@ -12,6 +12,7 @@ metadata into a download request).
 """
 
 import copy
+import math
 import os
 from functools import partial
 from pathlib import Path
@@ -21,6 +22,7 @@ import netCDF4
 import regional_mom6 as rm6
 from regional_mom6.segment import Segment
 import mom6_forge as m6b
+import pandas as pd
 import xarray as xr
 from CrocoDash import logging
 from CrocoDash.forcing import ic as ic_mod, obc, utils
@@ -28,12 +30,45 @@ from CrocoDash.forcing.base import *
 from CrocoDash.grid import Grid
 from CrocoDash.topo import Topo
 from CrocoDash.raw_data_access.registry import ProductRegistry
-from CrocoDash.raw_data_access.base import Calendar, MOM6ForcingProduct
+from CrocoDash.raw_data_access.base import (
+    Calendar,
+    MOM6ForcingProduct,
+    resolve_time_sampling,
+)
 
 logger = logging.setup_logger(__name__)
 
-# Days per GET chunk (see ConditionsConfigurator.configure).
+# Days per GET and REGRID chunk for daily data (see
+# ConditionsConfigurator.configure and chunk_days).
 GET_STEP_DAYS = 7
+REGRID_STEP_DAYS = 30
+
+
+def record_spacing_days(freq) -> int:
+    """The longest gap between records at freq, a pandas alias, in whole days
+    and at least one: 31 for "MS", 1 for daily or finer data and for a static
+    snapshot (freq None)."""
+    if freq is None:
+        return 1
+    stamps = pd.date_range("2000-01-01", periods=25, freq=freq)
+    return max(1, math.ceil((stamps[1:] - stamps[:-1]).max() / pd.Timedelta(days=1)))
+
+
+def chunk_days(spacing: int) -> tuple[int, int]:
+    """GET and REGRID chunk sizes for records spacing days apart: at least one
+    spacing per GET chunk and two per REGRID chunk, so no chunk falls between
+    two records (a 30-day chunk of monthly data can)."""
+    return max(GET_STEP_DAYS, spacing), max(REGRID_STEP_DAYS, 2 * spacing)
+
+
+def boundary_window(start, end, spacing: int):
+    """The days to fetch boundary data for: the run, padded by one record
+    spacing on each side so its records bracket the run (MOM6 interpolates
+    between them and stops on a model time outside them). Daily data isn't
+    padded: every day of the run holds its own record."""
+    pad = pd.Timedelta(days=spacing if spacing > 1 else 0)
+    return pd.Timestamp(start) - pad, pd.Timestamp(end) + pad
+
 
 # rm6's mask_dataset fills OBC land points with -1e20; values at or below this
 # are land, not data.
@@ -600,9 +635,11 @@ class ConditionsConfigurator(BaseConfigurator):
         #
         # REGRID stays at 30 days. Its per-chunk cost is real work rather than
         # waiting, so slicing it finer mostly buys more chunk files to merge.
-        # Power users can override either in config.json.
-        self.set_output_param("get_step_days", GET_STEP_DAYS)
-        self.set_output_param("regrid_step_days", 30)
+        # Data coarser than daily gets longer chunks (see chunk_days). Power
+        # users can override either in config.json.
+        get_step, regrid_step = chunk_days(self._record_spacing_days())
+        self.set_output_param("get_step_days", get_step)
+        self.set_output_param("regrid_step_days", regrid_step)
         self.set_output_param(
             "boundary_number_conversion",
             {b: i + 1 for i, b in enumerate(boundaries)},
@@ -813,6 +850,22 @@ class ConditionsConfigurator(BaseConfigurator):
         candidates += [extract / "raw_data", extract / "regridded_data"]
         return [path for path in candidates if path.exists()]
 
+    def _record_spacing_days(self):
+        """The longest gap, in whole days, between the records the access
+        function returns: freq if it thins them, else data_freq or the
+        product's own time sampling."""
+        product = ProductRegistry.get_product(
+            self.get_input_param("product_name").lower()
+        )
+        args = self.get_input_param("function_args") or {}
+        freq = resolve_time_sampling(
+            product,
+            self.get_input_param("function_name"),
+            args.get("data_freq"),
+            args.get("freq"),
+        )
+        return record_spacing_days(freq)
+
     # ---- process (extraction) ----
 
     def process_bc(self, ctx):
@@ -821,11 +874,19 @@ class ConditionsConfigurator(BaseConfigurator):
         product_info = self.get_output_param("information")
         function_args = self.get_output_param("function_args") or {}
         preview = ctx.preview
+        spacing = self._record_spacing_days()
+        start_date, end_date = boundary_window(
+            pd.to_datetime(
+                self.get_input_param("start_date"), format=self._DATE_FORMAT
+            ),
+            pd.to_datetime(self.get_input_param("end_date"), format=self._DATE_FORMAT),
+            spacing,
+        )
 
         if preview:
             return obc.process_obc_conditions(
-                start_date=self.get_input_param("start_date"),
-                end_date=self.get_input_param("end_date"),
+                start_date=start_date,
+                end_date=end_date,
                 boundary_number_conversion=self.get_output_param(
                     "boundary_number_conversion"
                 ),
@@ -840,8 +901,11 @@ class ConditionsConfigurator(BaseConfigurator):
                 output_path=ctx.output_path,
                 regrid_chunk_fn=_regrid_obc_chunk,
                 bathymetry_path=ctx.topo_path,
-                get_step_days=int(self.get_output_param("get_step_days")),
-                regrid_step_days=int(self.get_output_param("regrid_step_days")),
+                get_step_days=max(int(self.get_output_param("get_step_days")), spacing),
+                regrid_step_days=max(
+                    int(self.get_output_param("regrid_step_days")), spacing
+                ),
+                min_chunk_days=spacing,
                 preview=True,
             )
 
@@ -853,8 +917,8 @@ class ConditionsConfigurator(BaseConfigurator):
             )
 
         result = obc.process_obc_conditions(
-            start_date=self.get_input_param("start_date"),
-            end_date=self.get_input_param("end_date"),
+            start_date=start_date,
+            end_date=end_date,
             boundary_number_conversion=self.get_output_param(
                 "boundary_number_conversion"
             ),
@@ -869,8 +933,11 @@ class ConditionsConfigurator(BaseConfigurator):
             output_path=ctx.output_path,
             regrid_chunk_fn=partial(_regrid_obc_chunk, bathymetry_path=ctx.topo_path),
             bathymetry_path=ctx.topo_path,
-            get_step_days=int(self.get_output_param("get_step_days")),
-            regrid_step_days=int(self.get_output_param("regrid_step_days")),
+            get_step_days=max(int(self.get_output_param("get_step_days")), spacing),
+            regrid_step_days=max(
+                int(self.get_output_param("regrid_step_days")), spacing
+            ),
+            min_chunk_days=spacing,
             preview=False,
         )
 
