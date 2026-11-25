@@ -45,7 +45,7 @@ class GLORYS(MOM6ForcingProduct):
     @accessmethod(
         description="Gathers GLORYS data from RDA on computers with access to glade/rda",
         type="python",
-        how_to_use="Requires read access to /glade/campaign/collections/rda/data/d010049/ and the CrocoDash conda environment.",
+        how_to_use="Requires read access to /glade/campaign/collections/rda/data/d010049/ (or to a copy laid out the same way, given as data_path) and the CrocoDash conda environment.",
     )
     def get_glorys_data_from_rda(
         dates: list,
@@ -69,17 +69,22 @@ class GLORYS(MOM6ForcingProduct):
         ],
         buf=1.0,
         freq=None,
+        data_path="/glade/campaign/collections/rda/data/d010049/",
     ) -> xr.Dataset:
         """
         Gather GLORYS Data on Derecho Computers from the campaign storage and return the dataset sliced to the llc and urc coordinates at the specific dates
+
+        data_path is the folder holding the archive: one folder per year of daily files named
+        ``*_YYYYMMDD_*.nc``, as GDEX (RDA d010049) has it. Point it at a copy laid out the same
+        way (e.g. one rechunked for faster regional reads) with
+        ``configure_forcings(function_overrides={"data_path": ...})``.
         """
         freq = resolve_time_sampling(GLORYS, "get_glorys_data_from_rda", freq=freq)
         dates = sample_dates(dates[0], dates[1], freq).to_pydatetime().tolist()
         path = Path(output_folder) / output_filename
-        GLORYS.logger.info(f"Downloading Glorys data from RDA to {path}")
+        GLORYS.logger.info(f"Downloading Glorys data from {data_path} to {path}")
 
-        # Access RDA Path
-        ds_in_path = "/glade/campaign/collections/rda/data/d010049/"
+        ds_in_path = data_path
         ds_in_files = []
         date_strings = [date.strftime("%Y%m%d") for date in dates]
 
