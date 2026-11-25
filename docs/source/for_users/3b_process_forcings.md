@@ -70,6 +70,15 @@ This flexibility lets you:
 
 Large regional domains require large datasets. CrocoDash automatically switches to parallel downloading and regridding of Glorys data if multiple CPUs are available and a regridding step is provided in `config.json` ([see example here](https://crocodile-cesm.github.io/CrocoGallery/latest/crocodash/process-forcings/)). External infrastructure may set limits: for example, if using `get_glorys_data_from_cds_api`, Copernicus Marine Services may throw a "Too many requests" error if too many CPUs are used and they all contact the server at once. `get_glorys_data_from_rda` does not have this limitation but implies permission to access to NCAR's RDA repository. Regridding has no limitations per se.
 
+`get_glorys_data_from_rda` reads GDEX's copy of GLORYS by default. To read another copy laid out the same way (one folder per year of daily files), give its folder in `configure_forcings`:
+
+```python
+case.configure_forcings(
+    date_range=["2000-01-02 00:00:00", "2000-12-30 00:00:00"],
+    function_overrides={"data_path": "/path/to/glorys"},
+)
+```
+
 ## Python API
 
 You can also call the driver directly from Python:

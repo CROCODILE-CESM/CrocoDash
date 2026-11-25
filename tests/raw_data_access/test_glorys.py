@@ -240,3 +240,33 @@ def test_get_glorys_data_script_for_cli(tmp_path):
     assert request[request.index("-o") + 1] == str(folder)
     # Rerunning the script after a failure skips the chunks already fetched.
     assert "--skip-existing" in request
+
+
+def test_get_glorys_data_from_rda_reads_from_data_path(tmp_path, monkeypatch):
+    """data_path replaces GDEX as the archive root: each day's file is found
+    under data_path/<year>/, so a copy laid out like GDEX (e.g. a rechunked
+    one) can be used through configure_forcings(function_overrides=...)."""
+    day_file = tmp_path / "2000" / "mercatorglorys12v1_gl12_mean_20000115_R20000119.nc"
+    day_file.parent.mkdir()
+    day_file.touch()
+    opened = []
+
+    class Opened(Exception):
+        pass
+
+    def fake_open_mfdataset(files, **kwargs):
+        opened.extend(files)
+        raise Opened  # only the file lookup is under test
+
+    monkeypatch.setattr(gl.xr, "open_mfdataset", fake_open_mfdataset)
+    with pytest.raises(Opened):
+        gl.GLORYS.get_glorys_data_from_rda(
+            ["2000-01-15", "2000-01-15"],
+            30,
+            31,
+            -91,
+            -90,
+            output_folder=tmp_path,
+            data_path=str(tmp_path),
+        )
+    assert opened == [str(day_file)]
