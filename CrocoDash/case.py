@@ -1085,6 +1085,25 @@ class Case:
         """Apply final XML changes after the case has been configured, and before the user
         configures the forcings."""
 
+        # visualCaseGen gives the components on standard grids (atm, lnd, rof, wav) a
+        # mesh but leaves their NX/NY at 0. CDEPS (cdeps1.0.105+) stops at startup
+        # unless NX*NY equals the mesh size, so set them from the grid's ccs_config entry.
+        for comp in ("ATM", "LND", "ROF", "WAV"):
+            domain = self.cime.domains[comp.lower()].get(
+                self._cime_case.get_value(f"{comp}_GRID")
+            )
+            if domain is not None and domain.nx and domain.ny:
+                for var, value in (
+                    (f"{comp}_NX", domain.nx),
+                    (f"{comp}_NY", domain.ny),
+                ):
+                    xmlchange(
+                        var,
+                        value,
+                        caseroot=self.caseroot,
+                        is_non_local=self.is_non_local,
+                    )
+
         xmlchange(
             "MOM6_MEMORY_MODE",
             "dynamic_symmetric",

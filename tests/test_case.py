@@ -148,11 +148,29 @@ def _stub_case_for_xmlchanges(monkeypatch, batch_system, queues):
     case.caseroot = "/nonexistent/caseroot"
     case.is_non_local = False
     batch = SimpleNamespace(_get_all_queue_names=lambda: queues)
+    grids = {
+        "ATM_GRID": "TL319",
+        "LND_GRID": "TL319",
+        "ROF_GRID": "null",
+        "WAV_GRID": "null",
+    }
     case._cime_case = SimpleNamespace(
-        get_value={"BATCH_SYSTEM": batch_system}.__getitem__,
+        get_value={"BATCH_SYSTEM": batch_system, **grids}.__getitem__,
         get_env={"batch": batch}.__getitem__,
     )
+    tl319 = SimpleNamespace(nx="640", ny="320")
+    case.cime = SimpleNamespace(
+        domains={"atm": {"TL319": tl319}, "lnd": {"TL319": tl319}, "rof": {}, "wav": {}}
+    )
     return case, changed
+
+
+def test_standard_grids_get_their_nx_and_ny(monkeypatch):
+    """CDEPS stops at startup when a data component's NX*NY isn't its mesh size."""
+    case, changed = _stub_case_for_xmlchanges(monkeypatch, "pbs", [])
+    case._apply_final_xmlchanges()
+    assert (changed["ATM_NX"], changed["ATM_NY"]) == ("640", "320")
+    assert "ROF_NX" not in changed
 
 
 @pytest.mark.parametrize(
