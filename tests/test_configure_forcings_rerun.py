@@ -13,8 +13,8 @@ COMPSET = "2000_DATM%JRA_SLND_CICE%PRES_MOM6_SROF_SGLC_SWAV"
 DATES = ["2015-01-01 00:00:00", "2015-01-11 00:00:00"]
 TIDES = dict(
     tidal_constituents=["M2"],
-    tpxo_elevation_filepath="s3://crocodile-cesm/CrocoDash/data/tpxo/h_tpxo9.v1.zarr/",
-    tpxo_velocity_filepath="s3://crocodile-cesm/CrocoDash/data/tpxo/u_tpxo9.v1.zarr/",
+    tpxo_elevation_filepath="/nonexistent/tpxo/h_tpxo9.v1.zarr",
+    tpxo_velocity_filepath="/nonexistent/tpxo/u_tpxo9.v1.zarr",
 )
 RESTORE = dict(
     restore_ice=True,

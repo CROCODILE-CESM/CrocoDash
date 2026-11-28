@@ -128,9 +128,6 @@ jobs:
       - name: Run setup_case.py
         shell: bash -el {0}
         run: |
-          copernicusmarine login \
-            --username ${{ secrets.GLORYS_USERNAME }} \
-            --password ${{ secrets.GLORYS_PASSWORD }}
           mkdir -p ${{ github.workspace }}/croc_cases
           mkdir -p ${{ github.workspace }}/croc_input
           python -u tests/generate_small_test_case.py \
@@ -139,8 +136,7 @@ jobs:
             --inputdir ${{ github.workspace }}/croc_input \
             --casename actions_case \
             --machine ubuntu-latest \
-            --project PLACEHOLDER \
-            --forcing-fn get_glorys_data_script_for_cli
+            --project PLACEHOLDER
 
       - name: Bundle case with crocodash bundle
         if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'

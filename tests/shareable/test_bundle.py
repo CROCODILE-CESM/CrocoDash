@@ -111,8 +111,8 @@ def test_load_state_from_crocodash_forcing_config(
     case1.configure_forcings(
         date_range=["2020-01-01 00:00:00", "2020-01-09 00:00:00"],
         tidal_constituents=["M2"],
-        tpxo_elevation_filepath="s3://crocodile-cesm/CrocoDash/data/tpxo/h_tpxo9.v1.zarr/",
-        tpxo_velocity_filepath="s3://crocodile-cesm/CrocoDash/data/tpxo/u_tpxo9.v1.zarr/",
+        tpxo_elevation_filepath="/nonexistent/tpxo/h_tpxo9.v1.zarr",
+        tpxo_velocity_filepath="/nonexistent/tpxo/u_tpxo9.v1.zarr",
     )
     rcc = CaseBundle(case1.caseroot)
     assert "tides" in rcc.forcing_config
@@ -193,8 +193,8 @@ def test_bundle_with_modifications(CrocoDash_case_factory, tmp_path_factory, tmp
     case.configure_forcings(
         date_range=["2020-01-01 00:00:00", "2020-01-09 00:00:00"],
         tidal_constituents=["M2"],
-        tpxo_elevation_filepath="s3://crocodile-cesm/CrocoDash/data/tpxo/h_tpxo9.v1.zarr/",
-        tpxo_velocity_filepath="s3://crocodile-cesm/CrocoDash/data/tpxo/u_tpxo9.v1.zarr/",
+        tpxo_elevation_filepath="/nonexistent/tpxo/h_tpxo9.v1.zarr",
+        tpxo_velocity_filepath="/nonexistent/tpxo/u_tpxo9.v1.zarr",
     )
 
     # Create fake files in ocn directory

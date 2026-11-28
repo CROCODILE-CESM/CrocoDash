@@ -4,18 +4,16 @@ CESM Regional Ocean Case Setup Script
 
 Configures and runs a MOM6 regional ocean case using CrocoDash,
 including grid definition, topography, vertical grid, and CESM case setup.
+Flat bathymetry and the synthetic reference ocean: nothing is downloaded.
 """
 
 import argparse
 import os
-import sys
 from pathlib import Path
-import subprocess
 from CrocoDash.grid import Grid
 from CrocoDash.topo import Topo
 from CrocoDash.vgrid import VGrid
 from CrocoDash.case import Case
-from CrocoDash.raw_data_access.datasets.gebco import GEBCO
 
 
 def parse_args() -> argparse.Namespace:
@@ -49,29 +47,7 @@ def parse_args() -> argparse.Namespace:
         "--min-depth", type=float, default=9.5, help="Minimum ocean depth in meters"
     )
     topo.add_argument(
-        "--bathymetry-path",
-        type=Path,
-        default=None,
-        help="Path to existing bathymetry file (GEBCO .nc). "
-        "If omitted, GEBCO data will be downloaded to ./GEBCO.nc",
-    )
-    topo.add_argument(
-        "--lon-coord",
-        type=str,
-        default="lon",
-        help="Longitude coordinate name in the bathymetry dataset",
-    )
-    topo.add_argument(
-        "--lat-coord",
-        type=str,
-        default="lat",
-        help="Latitude coordinate name in the bathymetry dataset",
-    )
-    topo.add_argument(
-        "--elev-coord",
-        type=str,
-        default="elevation",
-        help="Vertical/elevation coordinate name in the bathymetry dataset",
+        "--depth", type=float, default=1000.0, help="Flat ocean depth in meters"
     )
 
     # --- Vertical grid ---
@@ -149,13 +125,6 @@ def parse_args() -> argparse.Namespace:
         default="2020-01-05 00:00:00",
         help="Forcing end date (YYYY-MM-DD HH:MM:SS)",
     )
-    forcings.add_argument(
-        "--forcing-fn",
-        type=str,
-        default="get_glorys_data_from_cds_api",
-        help="Name of the forcing retrieval function",
-    )
-
     return parser.parse_args()
 
 
@@ -166,33 +135,6 @@ def resolve_paths(args: argparse.Namespace) -> argparse.Namespace:
     if args.caseroot is None:
         args.caseroot = Path.home() / "croc_cases" / args.casename
     return args
-
-
-def get_bathymetry(args: argparse.Namespace) -> Path:
-    """Return a resolved bathymetry path, downloading if necessary."""
-    if args.bathymetry_path is not None:
-        bathy = args.bathymetry_path
-        if not bathy.exists():
-            raise FileNotFoundError(
-                f"Bathymetry file not found at specified path: {bathy}\n"
-                "Pass a valid --bathymetry-path, or omit the flag to download GEBCO data."
-            )
-        print(f"Using existing bathymetry file: {bathy}")
-        return bathy
-
-    # Default: download GEBCO alongside this script
-    bathy = Path("gebco_regional.nc")
-    s3_path = "https://crocodile-cesm.s3.us-east-1.amazonaws.com/CrocoDash/data/testing_data/gebco_2026_n20.0_s0.0_w-90.0_e-70.0.nc"
-    print(f"No --bathymetry-path provided. Downloading GEBCO data → {bathy}")
-    subprocess.run(["wget", "-O", str(bathy), s3_path], check=True)
-
-    if not bathy.exists():
-        raise FileNotFoundError(
-            "GEBCO download succeeded but the output file was not found. "
-            "Check GEBCO credentials / connectivity, or supply --bathymetry-path manually.\n"
-            "  Derecho path: <GEBCO>"
-        )
-    return bathy
 
 
 def main() -> None:
@@ -217,13 +159,7 @@ def main() -> None:
     # ------------------------------------------------------------------ #
     print("[2/5] Setting up topography …")
     topo = Topo(grid=grid, min_depth=args.min_depth)
-    bathymetry_path = get_bathymetry(args)
-    topo.set_from_dataset(
-        bathymetry_path=bathymetry_path,
-        longitude_coordinate_name=args.lon_coord,
-        latitude_coordinate_name=args.lat_coord,
-        vertical_coordinate_name=args.elev_coord,
-    )
+    topo.set_flat(args.depth)
 
     # ------------------------------------------------------------------ #
     # Vertical grid
@@ -260,28 +196,9 @@ def main() -> None:
     print("[5/5] Configuring and processing forcings …")
     case.configure_forcings(
         date_range=[args.date_start, args.date_end],
-        function_name=args.forcing_fn,
+        product_name="reference_ocean",
+        function_name="get_reference_ocean_data",
     )
-
-    # Get the raw data fast through AWS
-    output_dir = case.extract_forcings_path / "raw_data"
-    os.makedirs(output_dir, exist_ok=True)
-    base_url = (
-        "https://crocodile-cesm.s3.us-east-1.amazonaws.com/CrocoDash/data/testing_data"
-    )
-    files = [
-        "east_unprocessed.20200101_20200105.nc",
-        "ic_unprocessed.nc",
-        "north_unprocessed.20200101_20200105.nc",
-        "south_unprocessed.20200101_20200105.nc",
-        "west_unprocessed.20200101_20200105.nc",
-    ]
-
-    for f in files:
-        url = f"{base_url}/{f}"
-        dest = os.path.join(output_dir, f)
-        print(f"Downloading {f}...")
-        subprocess.run(["wget", "-O", dest, url], check=True)
     case.process_forcings()
     print("\nDone.")
 

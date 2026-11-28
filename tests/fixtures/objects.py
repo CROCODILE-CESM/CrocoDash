@@ -43,8 +43,8 @@ def get_shareable_CrocoDash_case(CrocoDash_case_factory, tmp_path_factory):
     case.configure_forcings(
         date_range=["2020-01-01 00:00:00", "2020-01-09 00:00:00"],
         tidal_constituents=["M2"],
-        tpxo_elevation_filepath="s3://crocodile-cesm/CrocoDash/data/tpxo/h_tpxo9.v1.zarr/",
-        tpxo_velocity_filepath="s3://crocodile-cesm/CrocoDash/data/tpxo/u_tpxo9.v1.zarr/",
+        tpxo_elevation_filepath="/nonexistent/tpxo/h_tpxo9.v1.zarr",
+        tpxo_velocity_filepath="/nonexistent/tpxo/u_tpxo9.v1.zarr",
     )
     return case
 
