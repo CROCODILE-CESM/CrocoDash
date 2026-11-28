@@ -527,7 +527,9 @@ def xmlquery(var, *, caseroot):
     """The case's current value of ``var``, from ``./xmlquery`` in ``caseroot``."""
     try:
         res = subprocess.run(
-            ["./xmlquery", var, "--value"], cwd=Path(caseroot), capture_output=True
+            ["./xmlquery", var, "--value", "--non-local"],
+            cwd=Path(caseroot),
+            capture_output=True,
         )
     except OSError as e:
         raise RuntimeError(f"Could not run ./xmlquery in {caseroot}: {e}") from e
