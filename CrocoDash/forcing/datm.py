@@ -86,7 +86,12 @@ class DATMConfigurator(BaseConfigurator):
         "DATM%JRA-1p5-2023",
         "DATM%IAF",
     ]
-    allowed_compsets = ["DATM"]
+
+    @classmethod
+    def validate_compset_compatibility(cls, compset):
+        # Only these modes have years to align. Taking no inputs, DATM would
+        # otherwise activate, and fail, on every DATM compset (NYF, RYF).
+        return cls.is_required(compset)
 
     input_params = []
     output_params = [

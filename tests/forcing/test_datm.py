@@ -40,6 +40,9 @@ def test_stream_years_cover_the_run_with_a_year_either_side(monkeypatch):
         "DATM_YR_END": 2016,
     }
 
-    # A climatology (NYF, RYF) has nothing to align.
+    # A climatology (NYF, RYF) has nothing to align: DATM doesn't activate.
+    assert not datm.DATMConfigurator.validate_compset_compatibility(
+        "1850_DATM%NYF_SLND_SICE_MOM6%REGIONAL_SROF_SGLC_SWAV"
+    )
     coverage["datm"] = (2004, 2004)
     assert datm.stream_years("/x", "datm") is None
