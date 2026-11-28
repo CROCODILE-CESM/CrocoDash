@@ -12,22 +12,23 @@ _STOP_UNITS = {"ndays": "days", "nmonths": "months", "nyears": "years"}
 
 
 def _default_years(srcroot, component, compset):
-    """The (start, end) years <COMP>_YR_START/_END default to for this
-    compset: for an interannual stream, the years its data covers. None when
+    """This compset's defaults of <COMP>_YR_ALIGN/_START/_END, by name: for
+    an interannual stream, START-END are the years its data covers. None when
     this CESM's CDEPS doesn't define them."""
     # CIME is on sys.path once a Case exists.
     from CIME.XML.component import Component
 
     config = Path(srcroot) / "components" / "cdeps" / component / "cime_config"
     comp = Component(str(config / "config_component.xml"), component[1:].upper())
-    years = []
-    for var in ("START", "END"):
-        node = comp.get_optional_child("entry", {"id": f"{component.upper()}_YR_{var}"})
+    years = {}
+    for var in ("ALIGN", "START", "END"):
+        name = f"{component.upper()}_YR_{var}"
+        node = comp.get_optional_child("entry", {"id": name})
         if node is None:
             return None
         # How create_newcase picks a compset's default.
-        years.append(int(comp.get_default_value(node, {"compset": compset})))
-    return tuple(years)
+        years[name] = int(comp.get_default_value(node, {"compset": compset}))
+    return years
 
 
 def stream_years(caseroot, component):
@@ -39,28 +40,34 @@ def stream_years(caseroot, component):
     interannual.
 
     CDEPS then lists only those years' files. At its defaults (align 1, data
-    from 1958) model year 2020 would read JRA's 1997.
+    from 1958) model year 2020 would read JRA's 1997. A run outside the
+    data's years keeps those defaults, cycling through the data, with a
+    warning.
     """
     comp = component.upper()
     compset = xmlquery("COMPSET", caseroot=caseroot)
     if f"_{comp}%" not in compset:
         return None
-    coverage = _default_years(
+    defaults = _default_years(
         xmlquery("SRCROOT", caseroot=caseroot), component, compset
     )
-    if coverage is None or coverage[0] >= coverage[1]:
+    if defaults is None:
         return None
-    data_first, data_last = coverage
+    data_first, data_last = defaults[f"{comp}_YR_START"], defaults[f"{comp}_YR_END"]
+    if data_first >= data_last:
+        return None
 
     start = pd.Timestamp(xmlquery("RUN_STARTDATE", caseroot=caseroot))
     unit = _STOP_UNITS[xmlquery("STOP_OPTION", caseroot=caseroot)]
     end = start + pd.DateOffset(**{unit: int(xmlquery("STOP_N", caseroot=caseroot))})
     run_first, run_last = start.year, (end - pd.Timedelta(days=1)).year
     if run_first < data_first or run_last > data_last:
-        raise ValueError(
+        logger.warning(
             f"The run's {run_first}-{run_last} fall outside the "
-            f"{data_first}-{data_last} that {comp}'s data covers."
+            f"{data_first}-{data_last} that {comp}'s data covers: {comp} cycles "
+            f"through its data at CDEPS's default years."
         )
+        return defaults
     first, last = max(data_first, run_first - 1), min(data_last, run_last + 1)
     return {
         f"{comp}_YR_ALIGN": first,

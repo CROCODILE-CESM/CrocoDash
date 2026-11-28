@@ -15,7 +15,14 @@ def test_stream_years_cover_the_run_with_a_year_either_side(monkeypatch):
     coverage = {"datm": (1958, 2023), "drof": (1979, 2024)}
     monkeypatch.setattr(datm, "xmlquery", lambda var, caseroot: xml[var])
     monkeypatch.setattr(
-        datm, "_default_years", lambda root, comp, lname: coverage[comp]
+        datm,
+        "_default_years",
+        lambda root, comp, lname: dict(
+            zip(
+                [f"{comp.upper()}_YR_{v}" for v in ("ALIGN", "START", "END")],
+                (1, *coverage[comp]),
+            )
+        ),
     )
 
     assert datm.stream_years("/x", "datm") == {
@@ -24,6 +31,14 @@ def test_stream_years_cover_the_run_with_a_year_either_side(monkeypatch):
         "DATM_YR_END": 2023,
     }
     assert datm.stream_years("/x", "drof")["DROF_YR_END"] == 2024
+
+    # A run past the data (JRA 1.4 ends in 2016) keeps CDEPS's defaults.
+    coverage["datm"] = (1958, 2016)
+    assert datm.stream_years("/x", "datm") == {
+        "DATM_YR_ALIGN": 1,
+        "DATM_YR_START": 1958,
+        "DATM_YR_END": 2016,
+    }
 
     # A climatology (NYF, RYF) has nothing to align.
     coverage["datm"] = (2004, 2004)
